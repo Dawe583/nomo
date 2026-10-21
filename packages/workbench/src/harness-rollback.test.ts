@@ -171,6 +171,9 @@ test("the rollback lands as one signed record naming what it undid", async (t) =
     unknown
   >;
   assert.equal(body.decision, "refinement:rolled-back");
+  // The ratchet counts a rollback as `event: "rollback"` on the signed record,
+  // so the writer and the metric agree on one chain.
+  assert.equal(body.event, "rollback");
   const refinement = body.harnessRefinement as Record<string, unknown>;
   assert.equal(refinement.rolledBackDigest, second);
   // Not "operator": the operator rolled back a digest without reading the

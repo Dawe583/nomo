@@ -4145,6 +4145,7 @@ export class Workbench {
         undefined,
         { by: "operator" },
         {
+          event: "rollback",
           harnessLifecycle: {
             digest,
             events: [
@@ -4870,6 +4871,10 @@ export class Workbench {
       blastRadius: number | undefined;
       reason: string;
       arguments: JsonObject;
+      // True when the registry had no case for this tool, so the call was
+      // denied as r3 by default. Recorded so the ratchet can measure how often
+      // the registry's coverage is the limiting factor.
+      unclassified?: boolean;
     },
     decision: PolicyDecision | { kind: "deny" },
     policy: ValidPolicy,
@@ -4885,7 +4890,10 @@ export class Workbench {
         decision.kind,
         undefined,
         undefined,
-        { klass: call.klass },
+        {
+          klass: call.klass,
+          ...(call.unclassified ? { classification: "unclassified" } : {}),
+        },
         this.sessionAttribution(session, policy, decision),
       ),
     );
@@ -5391,6 +5399,7 @@ export class Workbench {
       blastRadius: undefined,
       reason: callReason,
       arguments: args,
+      unclassified: classification.outcome !== "classified",
     };
     // Decided under the operator's own policy. The loader requires the
     // terminal catch-all (match: {}) as the last rule and decide is

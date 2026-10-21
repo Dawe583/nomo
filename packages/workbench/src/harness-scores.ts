@@ -337,6 +337,8 @@ export function measureBoard(
   const rollbackCases: number[][] = [];
   const recoveryCases: number[][] = [];
   const costCases: number[][] = [];
+  const unknownCases: number[][] = [];
+  let unknownUnmeasuredTotal = 0;
   let caseCount = 0;
 
   for (const entries of cases) {
@@ -356,9 +358,14 @@ export function measureBoard(
     const rollbacks: number[] = [];
     const recoveries: number[] = [];
     const costs: number[] = [];
+    let unknownCount = 0;
+    let hasClassification = false;
+    let localUnclassifiedUnmeasured = 0;
     for (const entry of entries) {
       const record = body(entry);
       if (record === null) continue;
+      const tool = str(record, "tool");
+      const isAttempt = tool !== "" && !tool.startsWith("harness.");
       const approval = num(record, "approvalMs");
       if (approval !== undefined) approvals.push(approval);
       if (str(record, "event") === "rollback") rollbacks.push(1);
@@ -370,11 +377,25 @@ export function measureBoard(
       if (cost !== undefined) {
         costs.push(cost);
       }
+      if (Object.prototype.hasOwnProperty.call(record, "classification")) {
+        hasClassification = true;
+        if (str(record, "classification") === "unclassified") unknownCount += 1;
+      } else if (isAttempt) {
+        localUnclassifiedUnmeasured += 1;
+      }
     }
     approvalCases.push(approvals);
     rollbackCases.push(localDecided > 0 ? [rollbacks.length] : []);
     recoveryCases.push(recoveries);
     costCases.push(costs);
+    // A case is measured only when at least one record actually carried a
+    // classification outcome. Chains written before that field existed, or
+    // chains with no connector call, stay unmeasured rather than reporting a
+    // measured zero that nobody observed.
+    unknownCases.push(
+      localDecided > 0 && hasClassification ? [unknownCount] : [],
+    );
+    unknownUnmeasuredTotal += localUnclassifiedUnmeasured;
   }
 
   const unmeasured = totals.unmeasured;
@@ -383,7 +404,7 @@ export function measureBoard(
   const metrics: Record<string, SplitSummary> = {
     hold_rate: summariseCases(holdCases, unmeasured),
     deny_rate: summariseCases(denyCases, unmeasured),
-    unknown_tool_rate: summariseCases([], totals.attempts),
+    unknown_tool_rate: summariseCases(unknownCases, unknownUnmeasuredTotal),
     first_pass_rate: summariseCases([], totals.attempts),
     median_approval_ms: summariseCases(approvalCases, unmeasured),
     recovery_success_rate: summariseCases(recoveryCases, 0),
