@@ -143,16 +143,22 @@ separately from the compaction, because the compaction is synchronous and the
 terminal reads its result without awaiting; a host that wants the summary
 asks for it first and passes it in.
 
-The test `packages/workbench/src/promoted-rules.test.ts` proves the promoted
-rules: the refusals an operator never wrote, mined into a rule the operator
-has to approve. A refusal three or more times of the same shape promotes a
-deny rule, an execute:failed or an execute:unknown teaches nothing, a hold the
-operator let through teaches nothing, and a self-caused refusal does not vote
-for itself. The rule carries the provenance, and the same five rules that
-govern a learned rule govern it: the decision is deny, the rule is appended
-after the operator's own rules, it is replayable from the chain alone, self-
-caused refusals do not vote for themselves, and what counts as a failure is
-an operator denial.
+No mined rule is merged into the policy a call is decided under. The policy
+loader requires the terminal catch-all (`match: {}`) to be the last rule and
+`decide` takes the first match, so a rule appended behind it can never fire,
+and a merge that cannot bind would still tell a reader that learning governs
+calls. Learning is evidence: `nomo harness entries` shows the rule and the
+number of refusals behind it, and an operator who agrees writes it into their
+own file, where it is reviewed and diffed like every other rule. The test
+`packages/workbench/src/learned-rules.test.ts` proves both halves: the
+operator's own rule decides, and a mined rule appended behind the catch-all
+never does.
+
+The harness mints a `hold` rule and never a `deny` rule. Three refusals of the
+same shape are a pattern worth asking about, not a permanent prohibition, and
+a refusal the operator never asked for should pause for a human who can undo
+it. Promotion to `deny` is an operator act: they read the count and write the
+rule themselves.
 
 The test `packages/workbench/src/harness-tools.test.ts` proves the two tools
 the agent may call: `void_harness_add` proposes a lesson and

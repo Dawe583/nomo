@@ -123,7 +123,7 @@ import {
   listPolicyProfiles,
   resolvePolicyProfile,
 } from "./policy-profile.ts";
-import { mineLearnedRules, minePromotedRules } from "./learned-rules.ts";
+import { mineLearnedRules } from "./learned-rules.ts";
 import { mineHarnessEntries, type HarnessEntry } from "./learned-harness.ts";
 import type { SpawnSubagentOptions } from "./subagents.ts";
 import {
@@ -4535,19 +4535,6 @@ export class Workbench {
     if (!provider)
       throw new Error("Connect the provider before requesting a harness review.");
     const id = session.view.id;
-    // The promoted rules the chain now supports are reported to the
-    // operator, because the operator is the one who approves them. The
-    // count, not the text: the text is a proposal that has not been
-    // approved yet.
-    const promoted = minePromotedRules(this.evidence[session.view.workspace] ?? []).length;
-    if (promoted > 0)
-      this.event(
-        session,
-        "tool",
-        `${promoted} promoted rule${promoted === 1 ? "" : "s"} mined from the chain. They wait for an operator to approve them.`,
-        { outcome: "promoted-rules", count: promoted },
-        "harness.review",
-      );
     const result = await serviceHarnessBoundary(state, {
       // The gate decides when the harness spends a model call, so an operator
       // has to be able to move it. It was passed DEFAULT_REFINE_GATES
@@ -4871,30 +4858,6 @@ export class Workbench {
       }
     });
   }
-  /**
-   * The policy a call is decided under: the operator's own rules first, then
-   * whatever has been mined from this workspace's signed chain.
-   *
-   * Learned rules go last on purpose. `decide` takes the first matching rule,
-   * so anything placed earlier could let a pattern a model happened to repeat
-   * override a decision an operator made deliberately. A learned rule is
-   * evidence, not authority, it may only fill a gap the operator left open.
-   *
-   * The rules are not written back: this is derived on read, so a chain that
-   * is truncated or rolled back cannot leave a stale rule in force.
-   */
-  private policyWithLearned(
-    policy: ValidPolicy,
-    workspace: string,
-  ): ValidPolicy {
-    const learned = mineLearnedRules(this.evidence[workspace] ?? []);
-    if (learned.length === 0) return policy;
-    return {
-      ok: true,
-      policy: { ...policy.policy, rules: [...policy.policy.rules, ...learned] },
-    };
-  }
-
   private async authorizeTool(
     session: Session,
     call: {
@@ -5260,10 +5223,13 @@ export class Workbench {
               : "Managed document policy.",
           arguments: args,
         };
-        const policy = this.policyWithLearned(
-          profile.policy,
-          session.view.workspace,
-        );
+        // The operator's own policy, never a merge with mined rules. A merged
+        // list would place mined rules after the terminal catch-all, where
+        // first-match-wins makes them unreachable, and a merge that cannot
+        // bind would still tell a reader that learned rules govern calls.
+        // Learning is evidence, not authority: `nomo harness entries` shows
+        // the rule, and an operator who agrees writes it into their own file.
+        const policy = profile.policy;
         const decision = decide(policy, call);
         const allowed = await this.authorizeTool(
           session,
@@ -5424,12 +5390,11 @@ export class Workbench {
       reason: callReason,
       arguments: args,
     };
-    // Decided under the raw operator policy by design: learned rules are
-    // deliberately not merged here. The loader requires the terminal catch-all
-    // (match: {}) as the last rule and decide is first-match-wins, so any rule
-    // appended after it, which is where policyWithLearned puts mined rules, is
-    // structurally unreachable. Merging here would suggest learned rules bind
-    // connector calls when they cannot, and evidence stays evidence.
+    // Decided under the operator's own policy. The loader requires the
+    // terminal catch-all (match: {}) as the last rule and decide is
+    // first-match-wins, so a mined rule appended after it is structurally
+    // unreachable. Merging would suggest learned rules bind connector calls
+    // when they cannot, and evidence stays evidence.
     const policy = loadPolicy(config.policy ?? DEFAULT_POLICY);
     if (!policy.ok) throw new Error("Invalid policy.");
     const decision =

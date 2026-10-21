@@ -142,51 +142,37 @@ test("the threshold is a count, and a useless one is rejected", () => {
   assert.throws(() => mineLearnedRules(chain, 1.5), /positive integer/);
 });
 
-test("learned rules are appended, so an operator's own rule is still reached first", async (t) => {
-  // Nothing here reaches a provider, the workbench is only built so its
-  // evidence map and policy merge exist to be inspected. Without a fetcher
-  // `configure` tries a real endpoint and the test fails on the network
-  // instead of on the ordering it exists to prove.
-  const fetcher = (async (url: unknown) =>
-    String(url).endsWith("/models")
-      ? Response.json({ data: [{ id: "fixture" }] })
-      : Response.json({ choices: [{ message: { role: "assistant", content: "Done" } }] })) as typeof fetch;
-  const { app } = await isolatedWorkbench(t, fetcher, {}, {
-    prefix: "void-learned-order-",
-  });
-  await app.shutdown();
-
-  const internals = app as unknown as {
-    evidence: Record<string, unknown[]>;
-    policyWithLearned(policy: unknown, workspace: string): unknown;
-  };
-  const workspace = "w";
-  internals.evidence[workspace] = [
-    { body: { tool: "void_workspace_delete", klass: "r1", decision: "deny:policy" } },
-    { body: { tool: "void_workspace_delete", klass: "r1", decision: "deny:policy" } },
-    { body: { tool: "void_workspace_delete", klass: "r1", decision: "hold:denied" } },
+test("a mined rule never overrides the rule an operator wrote", () => {
+  // A real policy always ends with the terminal catch-all and `decide` takes
+  // the first matching rule. The operator's own allow is reached first; the
+  // mined hold is appended behind the catch-all and never runs. The miner is
+  // evidence the operator can read, not a rule that binds.
+  const loaded = loadPolicy(
+    "version: 1\nrules:\n  - match:\n      class: r1\n      tool: void_workspace_delete\n    decision: allow\n    rationale: the operator allows this on purpose\n  - match: {}\n    decision: hold\n    seconds: 30\n",
+  );
+  if (!loaded.ok)
+    throw new Error(`fixture policy failed to load: ${loaded.errors.join("; ")}`);
+  const chain = [
+    entry("void_workspace_delete", "r1", "deny:policy"),
+    entry("void_workspace_delete", "r1", "deny:policy"),
+    entry("void_workspace_delete", "r1", "hold:denied"),
   ];
-
-  // The operator explicitly allows what the chain shows being refused. Were a
-  // learned rule placed first, `decide` would hold a call the operator allowed
-  // on purpose - a model observation overriding a human decision.
-  const operator = {
+  const mined = mineLearnedRules(chain);
+  assert.equal(mined.length, 1);
+  const merged = {
     ok: true as const,
-    policy: {
-      version: 1,
-      rules: [{ match: { class: "r1", tool: "void_workspace_delete" }, decision: "allow" as const }],
-    },
+    policy: { ...loaded.policy, rules: [...loaded.policy.rules, ...mined] },
   };
-  const merged = internals.policyWithLearned(operator, workspace) as {
-    ok: true;
-    policy: { rules: ReadonlyArray<{ decision: string; rationale?: string }> };
-  };
-  assert.equal(merged.ok, true);
-  assert.equal(merged.policy.rules.length, 2);
-  assert.equal(merged.policy.rules[0].decision, "allow", "the operator's rule must come first");
-  assert.equal(merged.policy.rules[1].decision, "hold", "the learned rule fills the gap behind it");
-  assert.match(merged.policy.rules[1].rationale ?? "", /Not written by an operator/);
-  assert.equal(operator.policy.rules.length, 1, "the operator's policy must not be mutated");
+  const decision = decide(merged, {
+    tool: "void_workspace_delete",
+    connector: "workspace",
+    workspace: undefined,
+    klass: "r1",
+    blastRadius: undefined,
+    unclassified: false,
+  });
+  assert.equal(decision.kind, "allow", "the operator's decision stands");
+  assert.equal(decision.ruleIndex, 0, "the operator's rule is the one that decides");
 });
 
 describe("self-caused refusals are not learned evidence", () => {
