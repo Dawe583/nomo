@@ -43,7 +43,12 @@
  */
 
 import type { Rule } from "../../policy/src/rules.ts";
-import { LEARNED_RULE_MIN_REPEATS, mineLearnedRules } from "./learned-rules.ts";
+import {
+  LEARNED_RULE_MIN_REPEATS,
+  learnedRule,
+  learnedRuleGroups,
+  type LearnedRuleGroup,
+} from "./learned-rules.ts";
 
 /**
  * An entry as this module reads it.
@@ -283,10 +288,44 @@ export type MineOptions = {
 
 export type Mined = {
   readonly entries: readonly HarnessEntry[];
-  /** The refusal rules, separated so a caller can hand them to `decide`
+  /** The refusal rules, separated so a caller can read them as policy text
    * without having to filter the lessons back out. */
   readonly rules: readonly Rule[];
+  /** The same rules as entries, carrying the count and the sequences they were
+   * minted from, so an operator can read the rule rather than a count of it. */
+  readonly ruleEntries: readonly HarnessEntry[];
 };
+
+/**
+ * The mined rules as entries an operator can read and copy.
+ *
+ * A rule is a decision shape and a lesson is an observation, so they stay
+ * apart; the entry exists because the operator needs the rule text. Nothing
+ * decides from this module: the operator copies the rule into their own file,
+ * and that copy is the only way a mined rule ever enters policy.
+ */
+export function minedRuleEntries(
+  groups: readonly LearnedRuleGroup[],
+  generatedAt: string,
+): HarnessEntry[] {
+  return groups.map((group) => {
+    const title = "refused this call shape";
+    const rule = learnedRule(group);
+    return {
+      id: entryId("rule", group.klass, group.tool, title),
+      kind: "rule",
+      scope: "workspace",
+      tool: group.tool,
+      klass: group.klass,
+      title,
+      content: rule.rationale ?? "",
+      derivedFromSeq: group.seqs,
+      repeats: group.repeats,
+      createdAt: generatedAt,
+      rule,
+    };
+  });
+}
 
 /**
  * Mine the chain for entries, refusing to produce an entry with no provenance.
@@ -312,7 +351,12 @@ export function mineHarnessEntries(
       throw new Error(`${name} must be a positive integer.`);
   }
 
-  const rules = mineLearnedRules(entries, options.minRepeats ?? LEARNED_RULE_MIN_REPEATS);
+  const groups = learnedRuleGroups(
+    entries,
+    options.minRepeats ?? LEARNED_RULE_MIN_REPEATS,
+  );
+  const rules = groups.map(learnedRule);
+  const ruleEntries = minedRuleEntries(groups, options.generatedAt);
   const entriesOut: HarnessEntry[] = [];
 
   for (const group of approvedGroups(entries).sort(byShape)) {
@@ -353,5 +397,5 @@ export function mineHarnessEntries(
     });
   }
 
-  return { entries: entriesOut, rules };
+  return { entries: entriesOut, rules, ruleEntries };
 }

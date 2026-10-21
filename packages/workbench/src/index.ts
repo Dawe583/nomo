@@ -3550,7 +3550,7 @@ export class Workbench {
       typeof latestBody?.at === "string"
         ? latestBody.at
         : "1970-01-01T00:00:00.000Z";
-    const mined = mineHarnessEntries(entries, { generatedAt }).entries;
+    const mined = mineHarnessEntries(entries, { generatedAt });
     let overrides: HarnessEntry[] = [];
     let suppressedIds = new Set<string>();
     let approvedByOperator = false;
@@ -3566,7 +3566,9 @@ export class Workbench {
       break;
     }
     const byId = new Map<string, HarnessEntry>();
-    for (const entry of mined)
+    // The rules first: they are the strongest thing the chain supports, and an
+    // operator who reads only the top of the list still sees them.
+    for (const entry of [...mined.ruleEntries, ...mined.entries])
       if (!suppressedIds.has(entry.id)) byId.set(entry.id, entry);
     // Only the approval path writes overrides, but the flag is gated on the
     // signed record rather than inferred from that: a future write that was

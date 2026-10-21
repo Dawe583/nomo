@@ -49,6 +49,12 @@ export function HarnessEntries({ sessionId }: { sessionId?: string }) {
                   {entry.tool} {entry.klass}
                 </span>
               )}
+              {entry.ruleDecision && (
+                <p className="muted">
+                  {t("navrhuje pravidlo", "proposes a rule")}: {entry.ruleDecision}
+                  {entry.ruleSeconds > 0 ? ` ${entry.ruleSeconds}s` : ""}
+                </p>
+              )}
               <p className="approval-rationale">{entry.content}</p>
               {entry.derivedFromSeq.length > 0 && (
                 <p className="muted">

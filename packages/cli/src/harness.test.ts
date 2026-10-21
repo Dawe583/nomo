@@ -3,7 +3,8 @@ import assert from "node:assert/strict";
 import { existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { runHarnessCommand, type HarnessSurface } from "./harness.ts";
+import { ruleAsPolicyText, runHarnessCommand, type HarnessSurface } from "./harness.ts";
+import { loadPolicy } from "../../policy/src/rules.ts";
 
 /**
  * The harness command, at the boundary an operator or a script touches.
@@ -309,4 +310,60 @@ test("no action prints the usage and fails", async () => {
   });
   assert.equal(code, 1);
   assert.match(terminal.out.join("\n"), /nomo harness list --session/);
+});
+
+test("a mined rule prints as policy text the loader accepts", () => {
+  // The rule is not in force. Printing it is only useful if the operator can
+  // paste it into their own file, so the text is loaded by the same loader
+  // the runtime uses, ahead of the terminal catch-all it has to sit before.
+  const text = ruleAsPolicyText({
+    match: { class: "r3", tool: "fs.delete" },
+    decision: "hold",
+    seconds: 300,
+    notify: ["cli"],
+    rationale: "Refused 3 times on the signed ledger. Not written by an operator.",
+  }).join("\n");
+  const loaded = loadPolicy(
+    `version: 1\nrules:\n${text}\n- match: {}\n  decision: allow\n`,
+  );
+  assert.equal(loaded.ok, true, loaded.ok ? "" : loaded.errors.join("; "));
+  if (!loaded.ok) return;
+  assert.deepEqual(loaded.policy.rules[0]?.match, { class: "r3", tool: "fs.delete" });
+  assert.equal(loaded.policy.rules[0]?.decision, "hold");
+});
+
+test("entries prints a mined rule as policy text under the entry", async () => {
+  const { surface } = fake();
+  const withRule: HarnessSurface = {
+    ...surface,
+    harnessEntries: async () => [
+      {
+        id: "le_rule_1",
+        kind: "rule",
+        title: "refused this call shape",
+        content: "Refused 3 times on the signed ledger. Not written by an operator.",
+        tool: "fs.delete",
+        klass: "r3",
+        repeats: 3,
+        rule: {
+          match: { class: "r3", tool: "fs.delete" },
+          decision: "hold",
+          seconds: 300,
+          notify: ["cli"],
+          rationale: "Refused 3 times on the signed ledger. Not written by an operator.",
+        },
+      },
+    ],
+  };
+  const terminal = io();
+  const code = await runHarnessCommand(["entries", "--session", "s1"], terminal, {
+    workbench: async () => withRule,
+  });
+  assert.equal(code, 0);
+  const text = terminal.out.join("\n");
+  assert.match(text, /\ble_rule_1\b/);
+  assert.match(text, /policy rule, paste it into your own file/);
+  assert.match(text, /- match:/);
+  assert.match(text, /decision: hold/);
+  assert.match(text, /tool: fs\.delete/);
 });

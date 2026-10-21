@@ -4,6 +4,8 @@ import assert from "node:assert/strict";
 
 import {
   LEARNED_RULE_MIN_REPEATS,
+  learnedRule,
+  learnedRuleGroups,
   learnedRuleRationale,
   mineLearnedRules,
 } from "./learned-rules.ts";
@@ -362,4 +364,43 @@ test("the rationale builder and the matcher cannot drift apart", () => {
   const [rule] = mineLearnedRules(seed);
   assert.ok(rule, "the seed must mint a rule");
   assert.equal(rule.rationale, learnedRuleRationale(3));
+});
+
+describe("the group is the one thing both the rule and the entry read", () => {
+  test("a group carries the count and the chain sequences behind it", () => {
+    const chain = [
+      { seq: 4, body: { tool: "t", klass: "r2", decision: "deny:policy" } },
+      { seq: 9, body: { tool: "t", klass: "r2", decision: "hold:denied" } },
+      { seq: 12, body: { tool: "t", klass: "r2", decision: "hold:expired" } },
+    ];
+    const groups = learnedRuleGroups(chain);
+    assert.equal(groups.length, 1);
+    assert.deepEqual(
+      { tool: groups[0]!.tool, klass: groups[0]!.klass, repeats: groups[0]!.repeats, seqs: groups[0]!.seqs },
+      { tool: "t", klass: "r2", repeats: 3, seqs: [4, 9, 12] },
+    );
+  });
+
+  test("a group without sequences still counts, and reports none", () => {
+    const chain = [
+      { body: { tool: "t", klass: "r2", decision: "deny:policy" } },
+      { body: { tool: "t", klass: "r2", decision: "deny:policy" } },
+      { body: { tool: "t", klass: "r2", decision: "deny:policy" } },
+    ];
+    assert.deepEqual(learnedRuleGroups(chain)[0]?.seqs, []);
+    assert.equal(mineLearnedRules(chain).length, 1, "the rule is still minted");
+  });
+
+  test("the rule builder is the one the miner uses", () => {
+    const [group] = learnedRuleGroups([
+      { body: { tool: "t", klass: "r2", decision: "deny:policy" } },
+      { body: { tool: "t", klass: "r2", decision: "deny:policy" } },
+      { body: { tool: "t", klass: "r2", decision: "deny:policy" } },
+    ]);
+    assert.deepEqual(learnedRule(group!), mineLearnedRules([
+      { body: { tool: "t", klass: "r2", decision: "deny:policy" } },
+      { body: { tool: "t", klass: "r2", decision: "deny:policy" } },
+      { body: { tool: "t", klass: "r2", decision: "deny:policy" } },
+    ])[0]);
+  });
 });

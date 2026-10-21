@@ -231,5 +231,27 @@ test("mining lessons does not disturb the rules the sibling produces", () => {
 });
 
 test("an empty chain proposes nothing and proves nothing", () => {
-  assert.deepEqual(mine([]), { entries: [], rules: [] });
+  assert.deepEqual(mine([]), { entries: [], rules: [], ruleEntries: [] });
+});
+test("the rule the operator reads is the rule the miner minted", () => {
+  // The operator copies this text into their own policy file, so the entry and
+  // the rule cannot be built by two different constructions.
+  const mined = mine(repeat(3, "fs.delete", "r3", "deny:policy"));
+  assert.equal(mined.ruleEntries.length, 1);
+  const [readable] = mined.ruleEntries;
+  assert.equal(readable.kind, "rule");
+  assert.equal(readable.scope, "workspace");
+  assert.equal(readable.tool, "fs.delete");
+  assert.equal(readable.klass, "r3");
+  assert.equal(readable.repeats, 3);
+  assert.deepEqual(readable.derivedFromSeq, [1, 2, 3]);
+  assert.deepEqual(readable.rule, mined.rules[0]);
+  assert.equal(readable.rule?.decision, "hold");
+  assert.match(readable.content, /Not written by an operator/);
+});
+
+test("a chain below the threshold produces no rule entry either", () => {
+  const mined = mine(repeat(2, "fs.delete", "r3", "deny:policy"));
+  assert.deepEqual(mined.rules, []);
+  assert.deepEqual(mined.ruleEntries, []);
 });

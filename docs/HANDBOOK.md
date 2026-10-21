@@ -793,6 +793,9 @@ nomo update [--check] [--force]
 
 Notes that save time:
 
+- `nomo harness entries` prints each mined rule as policy file text. The rule is
+  not in force: the text is what an operator pastes into their own policy file,
+  ahead of the terminal catch-all, if they agree with it.
 - `nomo config` prints the resolved data, ledger and approvals directories and
   whether a verification key is set. It never prints the key.
 - `nomo verify` on a ledger with no entries in the current directory fails with a

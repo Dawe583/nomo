@@ -18,6 +18,51 @@ import { join } from "node:path";
 import { Workbench } from "../../workbench/src/index.ts";
 import { dataDir } from "../../ledger/src/paths.ts";
 
+/** The parts of a mined rule this command prints. Structural, because the
+ * command is a reader and does not need the policy package's whole type. */
+export type RuleShape = {
+  readonly match?: {
+    readonly class?: string | readonly string[];
+    readonly tool?: string | readonly string[];
+    readonly connector?: string | readonly string[];
+    readonly workspace?: string | readonly string[];
+  };
+  readonly decision: string;
+  readonly seconds?: number;
+  readonly notify?: readonly string[];
+  readonly rationale?: string;
+};
+
+function policyScalar(value: string | readonly string[]): string {
+  return Array.isArray(value) ? `[${value.join(", ")}]` : String(value);
+}
+
+/**
+ * A mined rule as policy file text.
+ *
+ * The rule is not in force, so the point of printing it is that the operator
+ * can paste it into their own file. That only works if the loader accepts the
+ * text, so the shape follows the grammar the loader enforces rather than a
+ * pretty rendering of the object.
+ */
+export function ruleAsPolicyText(rule: RuleShape): string[] {
+  const lines = ["- match:"];
+  const match = rule.match ?? {};
+  if (match.class !== undefined) lines.push(`    class: ${policyScalar(match.class)}`);
+  if (match.tool !== undefined) lines.push(`    tool: ${policyScalar(match.tool)}`);
+  if (match.connector !== undefined)
+    lines.push(`    connector: ${policyScalar(match.connector)}`);
+  if (match.workspace !== undefined)
+    lines.push(`    workspace: ${policyScalar(match.workspace)}`);
+  lines.push(`  decision: ${rule.decision}`);
+  if (rule.decision === "hold" && typeof rule.seconds === "number")
+    lines.push(`  seconds: ${rule.seconds}`);
+  if (rule.notify?.length) lines.push(`  notify: [${rule.notify.join(", ")}]`);
+  if (rule.rationale !== undefined)
+    lines.push(`  rationale: ${JSON.stringify(rule.rationale)}`);
+  return lines;
+}
+
 export type HarnessIo = {
   readonly stdout: (line: string) => void;
   readonly stderr: (line: string) => void;
@@ -53,6 +98,9 @@ export type HarnessSurface = {
       readonly klass: string;
       readonly repeats: number;
       readonly decidedByOperator?: boolean;
+      /** The mined rule, when the entry is one. Printed as policy text below
+       * so an operator can copy it into their own file. */
+      readonly rule?: RuleShape;
     }[]
   >;
   /** The reviewer model selection, as resolved. */
@@ -394,6 +442,10 @@ export async function runHarnessCommand(
         );
         io.stdout(`    ${entry.title}`);
         io.stdout(`    ${content}`);
+        if (entry.rule) {
+          io.stdout("    policy rule, paste it into your own file:");
+          for (const line of ruleAsPolicyText(entry.rule)) io.stdout(`      ${line}`);
+        }
       }
       return 0;
     }

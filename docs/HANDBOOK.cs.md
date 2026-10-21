@@ -692,6 +692,9 @@ nomo update [--check] [--force]
 
 Poznámky, které ušetří čas:
 
+- `nomo harness entries` vypíše každé vytěžené pravidlo jako text policy
+  souboru. Pravidlo není v platnosti: text slouží k vložení do vlastního policy
+  souboru, před koncové catch-all pravidlo, pokud s ním operátor souhlasí.
 - `nomo config` vypíše rozřešené adresáře dat, ledgeru a schválení a zda je
   nastaven ověřovací klíč. Klíč nikdy nevypíše.
 - `nomo verify` na ledgeru s prázdným adresářem selže prostým `ENOENT` se

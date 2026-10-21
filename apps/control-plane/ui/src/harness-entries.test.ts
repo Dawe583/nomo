@@ -49,6 +49,35 @@ test("a missing field shows an empty value, never undefined", () => {
   assert.equal(entries[0]!.content, "");
   assert.equal(entries[0]!.decidedByOperator, false);
   assert.deepEqual(entries[0]!.derivedFromSeq, []);
+  assert.equal(entries[0]!.ruleDecision, "");
+  assert.equal(entries[0]!.ruleSeconds, 0);
+});
+
+test("a mined rule carries the decision it proposes, not only a count", () => {
+  const entries = harnessEntries({
+    entries: [
+      {
+        id: "le_rule_1",
+        kind: "rule",
+        title: "refused this call shape",
+        content: "Refused 3 times on the signed ledger. Not written by an operator.",
+        tool: "fs.delete",
+        klass: "r3",
+        repeats: 3,
+        derivedFromSeq: [1, 2, 3],
+        rule: {
+          match: { class: "r3", tool: "fs.delete" },
+          decision: "hold",
+          seconds: 300,
+          notify: ["cli"],
+          rationale: "Refused 3 times on the signed ledger. Not written by an operator.",
+        },
+      },
+    ],
+  });
+  assert.equal(entries[0]!.ruleDecision, "hold");
+  assert.equal(entries[0]!.ruleSeconds, 300);
+  assert.equal(entries[0]!.repeats, 3);
 });
 
 test("no entries show nothing rather than a broken card", () => {

@@ -4,16 +4,18 @@
  * A learned rule is *evidence, not authority*. Two consequences are load-bearing
  * and both are enforced by the caller rather than here:
  *
- * - Learned rules are appended after the operator's own rules, because `decide`
- *   takes the first matching rule. Anything earlier could shadow a deliberate
- *   operator decision with an observation made by a model.
+ * - A learned rule never enters a decided policy. The policy loader requires
+ *   the terminal catch-all as the last rule and `decide` takes the first
+ *   match, so anything appended behind it can never fire; merging would only
+ *   suggest that learning governs calls. The rule is shown to the operator and
+ *   the operator copies it into their own file, where it is reviewed.
  * - The decision is `hold`, never `deny`. A refusal the operator did not ask
  *   for should pause for a human who can undo it, not permanently forbid an
  *   action on the strength of one pattern.
  *
- * Nothing here writes. Promotion, recording the rule into the chain so it
- * survives a restart, is the caller's job, and it goes through `commitWorkspace`
- * so the record is signed by the same key as everything else.
+ * Nothing here writes and nothing here decides. `learnedRuleGroups` is the one
+ * counting pass; the rule and the entry the operator reads are built from the
+ * same group, so the number beside the rule is the number behind it.
  *
  * This is deliberately a pure function over entries. It cannot be trusted to
  * decide anything on its own, and giving it no way to reach state is what makes
@@ -48,7 +50,7 @@ export function learnedRuleRationale(repeats: number): string {
 const SELF_CAUSED_RATIONALE =
   /^Refused \d+ times on the signed ledger\. Not written by an operator\.$/;
 
-type Entry = { readonly body: unknown };
+type Entry = { readonly body: unknown; readonly seq?: number };
 
 /**
  * Whether a recorded decision is a refusal.
@@ -72,19 +74,35 @@ function field(body: Record<string, unknown>, key: string): string {
   return typeof value === "string" ? value : "";
 }
 
+export type LearnedRuleGroup = {
+  readonly tool: string;
+  readonly klass: string;
+  readonly repeats: number;
+  /** Chain sequences the group was counted from, in chain order. */
+  readonly seqs: readonly number[];
+};
+
 /**
- * Refusals grouped by the shape that caused them, promoted to `hold` rules once
- * a group repeats. Ordering is deterministic so two runs over the same chain
- * produce the same rules and the same digests.
+ * Refusals grouped by the shape that caused them.
+ *
+ * Exported so the rule and the entry the operator reads carry the same count
+ * and the same sequences. A second counting pass could disagree with the
+ * miner, and the number beside a rule would then not be the number behind it.
+ *
+ * Ordering is deterministic so two runs over the same chain produce the same
+ * rules and the same entry ids.
  */
-export function mineLearnedRules(
+export function learnedRuleGroups(
   entries: readonly Entry[],
   minRepeats: number = LEARNED_RULE_MIN_REPEATS,
-): Rule[] {
+): LearnedRuleGroup[] {
   if (!Number.isInteger(minRepeats) || minRepeats < 1)
     throw new Error("minRepeats must be a positive integer.");
 
-  const counts = new Map<string, { tool: string; klass: string; repeats: number }>();
+  const counts = new Map<
+    string,
+    { tool: string; klass: string; repeats: number; seqs: number[] }
+  >();
   for (const entry of entries) {
     const body = entry.body;
     if (body === null || typeof body !== "object" || Array.isArray(body)) continue;
@@ -93,6 +111,7 @@ export function mineLearnedRules(
     const tool = field(record, "tool");
     const klass = field(record, "klass");
     if (!tool || !klass) continue;
+
     // A refusal produced by firing a learned rule carries that rule's own
     // rationale in body.attribution.rule.rationale. Counting it would let the
     // rule vote for itself, so it is dropped here, never deleted. Any other
@@ -133,8 +152,17 @@ export function mineLearnedRules(
     // a backslash, so this cannot collide either.
     const key = JSON.stringify([klass, tool]);
     const seen = counts.get(key);
-    if (seen) seen.repeats += 1;
-    else counts.set(key, { tool, klass, repeats: 1 });
+    if (seen) {
+      seen.repeats += 1;
+      if (typeof entry.seq === "number") seen.seqs.push(entry.seq);
+    } else {
+      counts.set(key, {
+        tool,
+        klass,
+        repeats: 1,
+        seqs: typeof entry.seq === "number" ? [entry.seq] : [],
+      });
+    }
   }
 
   return [...counts.values()]
@@ -151,12 +179,31 @@ export function mineLearnedRules(
           : 1,
     )
     .map((group) => ({
-      match: { class: group.klass, tool: group.tool },
-      decision: "hold",
-      seconds: 300,
-      notify: ["cli"],
-      // The model reads this in the hold message, so it states the observation
-      // rather than claiming a conclusion the chain does not support.
-      rationale: learnedRuleRationale(group.repeats),
+      tool: group.tool,
+      klass: group.klass,
+      repeats: group.repeats,
+      seqs: group.seqs,
     }));
+}
+
+/**
+ * The rule a group mints. One builder, because `mineLearnedRules` and the entry
+ * the operator reads must carry the same text: a second construction could
+ * print a rule nobody minted.
+ */
+export function learnedRule(group: LearnedRuleGroup): Rule {
+  return {
+    match: { class: group.klass, tool: group.tool },
+    decision: "hold",
+    seconds: 300,
+    notify: ["cli"],
+    rationale: learnedRuleRationale(group.repeats),
+  };
+}
+
+export function mineLearnedRules(
+  entries: readonly Entry[],
+  minRepeats: number = LEARNED_RULE_MIN_REPEATS,
+): Rule[] {
+  return learnedRuleGroups(entries, minRepeats).map(learnedRule);
 }

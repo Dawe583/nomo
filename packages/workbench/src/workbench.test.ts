@@ -1375,11 +1375,15 @@ function gatedToolProvider(
     const request = JSON.parse(String(options?.body));
     seen.push(request);
     const messages = (request.messages ?? []) as { role: string }[];
-    if (messages.at(-1)?.role === "tool")
+    // The learned-entry digest is a system message appended after the user
+    // message on a follow-up turn, so the last message is not always the one
+    // the fixture should answer.
+    const last = [...messages].reverse().find((message) => message.role !== "system");
+    if (last?.role === "tool")
       return reply({
         choices: [{ message: { role: "assistant", content: "done" } }],
       });
-    if (messages.at(-1)?.role === "user" && gate.wantCall) {
+    if (last?.role === "user" && gate.wantCall) {
       gate.wantCall = false;
       const tool = (request.tools as { function: { name: string; description: string } }[]).find(
         (item) => String(item.function.description ?? "").startsWith(toolPrefix),
