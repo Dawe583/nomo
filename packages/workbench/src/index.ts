@@ -4292,7 +4292,15 @@ export class Workbench {
   }
 
   async ledger(workspace: string) {
-    if (!Object.hasOwn(this.documents, workspace)) return undefined;
+    // A workspace with a signed chain but no managed-document record is still
+    // a workspace. A session that only calls tools never creates that record,
+    // and its evidence is signed like any other; requiring it here made every
+    // reader below report no evidence for exactly those sessions.
+    if (
+      !Object.hasOwn(this.documents, workspace) &&
+      !Object.hasOwn(this.evidence, workspace)
+    )
+      return undefined;
     const entries = this.evidence[workspace] ?? [],
       key = await this.verificationKey(() => this.retainedSigner());
     const result = await verifyChain(entries, { publicKey: key.publicKey });

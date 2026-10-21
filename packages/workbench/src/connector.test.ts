@@ -9,6 +9,10 @@ import type { Workbench } from "./index.ts";
 import { loadPolicy } from "../../policy/src/rules.ts";
 import { policyDigest } from "../../policy/src/digest.ts";
 import { mineLearnedRules } from "./learned-rules.ts";
+import { entryHash, GENESIS_PREV } from "../../ledger/src/canonical.ts";
+import { signingPreimage } from "../../ledger/src/index.ts";
+import { devKeyProvider, sha256Hex } from "../../ledger/src/sign.ts";
+import type { JsonlEntry } from "../../ledger/src/index.ts";
 
 /** A minimal MCP server over loopback HTTP that answers the catalog handshake
  * and counts the requests it received, so a test can prove that a staged
@@ -263,7 +267,11 @@ function phasedProvider(
       return Response.json({
         choices: [{ message: { role: "assistant", content: "done" } }],
       });
-    const last = messages.at(-1);
+    // The learned-entry digest rides after the user message as a system
+    // message, so the last message is not always the one to answer.
+    const last = [...messages]
+      .reverse()
+      .find((message) => message.role !== "system");
     if (last?.role === "user" && gate.wantCall) {
       gate.wantCall = false;
       return Response.json({
@@ -310,6 +318,53 @@ function refusalSeed(tool: string, klass: string) {
   ];
 }
 
+/**
+ * The same refusals, signed into the workspace chain.
+ *
+ * A seed that is only a body teaches the miner and nothing else: the chain
+ * reader verifies every entry, so an unsigned seed turns any path that reads
+ * the chain into a signature failure. The records are built the way the
+ * workbench builds them, with the workbench's own key.
+ */
+async function signRefusals(
+  app: unknown,
+  workspace: string,
+  bodies: readonly { body: Record<string, unknown> }[],
+) {
+  const internals = app as unknown as {
+    evidence: Record<string, JsonlEntry[]>;
+    storage: { directory: string };
+    env: Record<string, string | undefined>;
+  };
+  const key = await devKeyProvider({
+    dir: join(internals.storage.directory, "keys"),
+    env: internals.env,
+  });
+  const keyId = await key.currentKeyId();
+  const current = internals.evidence[workspace] ?? [];
+  for (const seed of bodies) {
+    // The verifier binds a record to its workspace through the signed body,
+    // so a seed that leaves it out is rejected at the first entry.
+    const body = { workspace, ...seed.body };
+    const prev = current.at(-1)?.hash ?? GENESIS_PREV;
+    const hash = await entryHash(body, prev, sha256Hex);
+    current.push({
+      workspace,
+      seq: current.length + 1,
+      body,
+      prev_hash: prev,
+      hash,
+      key_id: keyId,
+      alg: key.alg,
+      signature: `${key.alg}:${Buffer.from(
+        await key.sign(signingPreimage(key.alg, keyId, hash)),
+      ).toString("base64")}`,
+    } as JsonlEntry);
+  }
+  internals.evidence[workspace] = current;
+  return current;
+}
+
 test("workspace-mined refusal never holds a connector call", async (t) => {
   const server = await catalogServer([DELETE_TOOL]);
   t.after(() => server.close());
@@ -349,10 +404,7 @@ test("workspace-mined refusal never holds a connector call", async (t) => {
     "the seed mines the hold rule this test claims is ignored",
   );
   const internals = app as unknown as SeededEvidence;
-  internals.evidence[session.workspace] = [
-    ...(internals.evidence[session.workspace] ?? []),
-    ...seed,
-  ];
+  await signRefusals(app, session.workspace, seed);
   const before = (internals.evidence[session.workspace] ?? []).length;
 
   gate.wantCall = true;
@@ -450,10 +502,7 @@ test("unclassified tool fails closed on the connector path", async (t) => {
   // before any policy, merged or raw, is consulted.
   const seeded = await app.start("hello", "fixture");
   await app.settled();
-  internals.evidence[seeded.workspace] = [
-    ...(internals.evidence[seeded.workspace] ?? []),
-    ...refusalSeed("unmapped_unknown_thing", "r3"),
-  ];
+  await signRefusals(app, seeded.workspace, refusalSeed("unmapped_unknown_thing", "r3"));
   const seededFrom = (internals.evidence[seeded.workspace] ?? []).length;
   const callsBeforeSeeded = calls();
   gate.wantCall = true;
