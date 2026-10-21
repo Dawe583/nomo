@@ -797,3 +797,30 @@ test("an approved addendum reaches a later prompt marked as operator-decided", a
     "the approval is rebuilt from the chain, not kept in memory",
   );
 });
+
+test("a session that never wrote a document still shows what its chain holds", async (t) => {
+  // A root session has no managed-document record until it edits a document.
+  // The ledger reader used to treat that as an unknown workspace, so a chain
+  // full of tool calls was invisible to the harness that reads it.
+  const { app, session } = await fixture(t, {}, { seedDocument: false });
+  const internals = app as unknown as {
+    sessions: Map<string, unknown>;
+    commitWorkspace: (...args: unknown[]) => Promise<void>;
+  };
+  const internalSession = internals.sessions.get(session.id);
+  assert.ok(internalSession);
+  const state = app.workspace(session.id);
+  for (const decision of ["deny:policy", "deny:policy", "hold:denied"])
+    await internals.commitWorkspace(
+      internalSession,
+      state,
+      "postgres.row.delete",
+      {},
+      decision,
+    );
+
+  const entries = await app.harnessEntries(session.workspace);
+  const rules = entries.filter((entry) => entry.kind === "rule");
+  assert.equal(rules.length, 1, "three refusals of one shape mine one rule");
+  assert.equal(rules[0]!.tool, "postgres.row.delete");
+});
