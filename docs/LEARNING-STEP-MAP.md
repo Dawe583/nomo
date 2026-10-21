@@ -83,3 +83,39 @@ exists on this machine, so any test that reaches the stdio branch reads real
 signing key material, and `devKeyProvider` will create one if it is missing.
 Whether that hardcoding is deliberate (the proxy's keys always live there) is
 unresolved. Fix or document it before adding a code path that reads the chain.
+
+## The five decisions, as the shipped miner answers them
+
+The miner is `learnedRuleGroups` and `learnedRule` in
+`packages/workbench/src/learned-rules.ts`; the entry an operator reads is
+`minedRuleEntries` in `packages/workbench/src/learned-harness.ts`. The answers
+are narrower than the options above, so they are recorded here rather than in
+`docs/DECISIONS.md`: none of them changes a product or security contract.
+
+1. **A failure is a refusal.** `deny*`, `hold:denied` and `hold:expired` teach.
+   `execute:unknown` and `proxy` do not, for the reasons in `isRefusal`, which
+   is the one place that list lives.
+2. **Recurring is three refusals of the same `(class, tool)` in the chain the
+   caller passes.** The miner has no clock and no window of its own: the caller
+   decides the slice, and the CLI and the panel pass the whole workspace chain.
+   The consequence is stated rather than hidden: a refusal from months ago
+   still counts, because nothing expires a group. A window belongs to whoever
+   calls the miner, and the one that ships does not narrow it.
+3. **A promoted rule lives nowhere but the chain.** It is derived on read,
+   printed as policy text by `nomo harness entries`, and enters policy only when
+   an operator pastes it into their own YAML file. Nothing writes the operator's
+   configuration, and nothing appends the rule to a decided policy: that append
+   existed, sat behind the terminal catch-all where first-match-wins makes it
+   unreachable, and was removed rather than left as a claim it could not keep.
+4. **Replayable means the rule is a function of the records.** The chain holds
+   the tool, the class, the decision and the attribution; the entry carries
+   `derivedFromSeq`. The rule text is regenerated from those fields, so a chain
+   that changes changes the rule, and no stored copy can drift from the records
+   it came from.
+5. **Precedence is moot, which is the strongest form of the answer.** A mined
+   rule never reaches `decide`, so it can neither shadow operator intent nor
+   fill a gap. It is evidence an operator reads and a rule an operator writes.
+
+The harness also never proposes `deny`. Three refusals are a pattern worth
+asking about, not a permanent prohibition, and promotion to `deny` is an
+operator act performed in their own file.
