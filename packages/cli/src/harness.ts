@@ -219,7 +219,7 @@ export async function runHarnessCommand(
     io.stdout(USAGE);
     return action ? 0 : 1;
   }
-  if (!["list", "entries", "approve", "reject", "rollback", "model"].includes(action)) {
+  if (!["list", "entries", "approve", "reject", "rollback", "model", "ratchet"].includes(action)) {
     io.stderr(`Unknown harness action ${action}.`);
     io.stderr(USAGE);
     return 1;
