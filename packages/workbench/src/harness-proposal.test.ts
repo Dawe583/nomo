@@ -173,3 +173,35 @@ test("proposals are workspace isolated", async (t) => {
   assert.equal(internals.harnessProposalsFor("ws-c").length, 0);
   await app.shutdown();
 });
+
+
+test("supersession tombstones the older proposal", async (t) => {
+  const directory = await mkdtemp(join(tmpdir(), "void-hp7-"));
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  const fetcher = (async (url: unknown) =>
+    String(url).endsWith("/models")
+      ? Response.json({ data: [{ id: "fixture" }] })
+      : Response.json({ choices: [{ message: { role: "assistant", content: "Done" } }] })) as typeof fetch;
+  const app = new Workbench({ VOID_DATA_DIR: directory }, fetcher);
+  await app.configure({ baseUrl: "https://fixture.test/v1", apiKey: "fixture" });
+  const internals = app as unknown as {
+    evidence: Record<string, unknown[]>;
+    proposeHarnessLearning(workspace: string): Promise<{ id: string }>;
+    supersedeHarnessProposal(oldId: string, newId: string): { status: string; tombstoneReason?: string };
+  };
+  const workspace = "w";
+  const mk = () => {
+    internals.evidence[workspace] = [
+      { body: { tool: "t", klass: "r1", decision: "deny:policy", source: "harness", runId: "r" } },
+      { body: { tool: "t", klass: "r1", decision: "deny:policy", source: "harness", runId: "r" } },
+      { body: { tool: "t", klass: "r1", decision: "deny:policy", source: "harness", runId: "r" } },
+    ];
+    return internals.proposeHarnessLearning(workspace);
+  };
+  const a = await mk();
+  const b = await mk();
+  const old = internals.supersedeHarnessProposal(a.id, b.id);
+  assert.equal(old.status, "tombstoned");
+  assert.match(old.tombstoneReason ?? "", /superseded/);
+  await app.shutdown();
+});

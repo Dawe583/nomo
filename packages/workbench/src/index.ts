@@ -3264,7 +3264,51 @@ export class Workbench {
     return proposal;
   }
 
+  supersedeHarnessProposal(oldId: string, newId: string): HarnessProposal {
+    const oldP = this.harnessProposals.get(oldId);
+    const newP = this.harnessProposals.get(newId);
+    if (!oldP || !newP) throw new Error("Harness proposal not found.");
+    oldP.status = "tombstoned";
+    oldP.tombstonedAt = new Date().toISOString();
+    oldP.tombstoneReason = `superseded by ${newId}`;
+    return oldP;
+  }
+
+  /** Reconstruct proposals from the signed chain for a workspace. Idempotent. */
+  reconstructHarnessProposals(workspace: string): void {
+    const entries = this.evidence[workspace] ?? [];
+    for (const entry of entries) {
+      const body = entry.body as Record<string, unknown> | undefined;
+      if (!body) continue;
+      if (body.harnessProposalId && typeof body.harnessProposalId === "string") {
+        const id = body.harnessProposalId;
+        if (!this.harnessProposals.has(id)) {
+          const digest =
+            typeof body.harnessProposalDigest === "string"
+              ? body.harnessProposalDigest
+              : "";
+          this.harnessProposals.set(id, {
+            id,
+            workspace,
+            digest,
+            rules: [],
+            provenance: { runIds: [], entryCount: 0 },
+            policyDigest: undefined,
+            status: "inert",
+            createdAt: typeof body.at === "string" ? body.at : new Date().toISOString(),
+          });
+        }
+        const p = this.harnessProposals.get(id)!;
+        const status = body.harnessProposalStatus;
+        if (status === "approved" || status === "activated" || status === "rejected" || status === "tombstoned") {
+          p.status = status as HarnessProposal["status"];
+        }
+      }
+    }
+  }
+
   harnessProposalsFor(workspace: string): HarnessProposal[] {
+    this.reconstructHarnessProposals(workspace);
     return [...this.harnessProposals.values()].filter(
       (p) => p.workspace === workspace,
     );
@@ -3318,6 +3362,7 @@ export class Workbench {
     const entryBudget = options.entryBudget ?? 8;
     const maxAgeMs = options.maxAgeMs ?? 7 * 24 * 60 * 60 * 1000;
     const now = Date.now();
+    this.reconstructHarnessProposals(workspace);
     const activated = [...this.harnessProposals.values()]
       .filter((p) => p.workspace === workspace && p.status === "activated")
       .filter((p) => !p.provenance.runIds.includes(currentRunId ?? ""))
