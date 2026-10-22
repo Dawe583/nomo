@@ -16,11 +16,11 @@ async function setup(t: any) {
   await app.configure({ baseUrl: "https://fixture.test/v1", apiKey: "fixture" });
   const internals = app as unknown as {
     evidence: Record<string, unknown[]>;
-    proposeHarnessLearning(workspace: string): Promise<{ id: string; digest: string }>;
+    proposeHarnessLearning(workspace: string, policyDigest?: string): Promise<{ id: string; digest: string }>;
     approveHarnessProposal(id: string, operator: string, expectedDigest: string): unknown;
     activateHarnessProposal(id: string): unknown;
     retrieveHarnessContext(workspace: string, currentRunId: string | undefined, options?: any): { entries: any[]; truncated: boolean };
-    canProposeHarnessLearning(workspace: string, cooldownMs?: number): { ok: boolean; reason: string };
+    canProposeHarnessLearning(workspace: string, cooldownMs?: number, settledTurns?: number, policyDigest?: string): { ok: boolean; reason: string };
     harnessEvaluation(workspace: string): { firstPassRate: string; activatedCount: number };
   };
   const workspace = "w";
