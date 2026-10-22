@@ -104,3 +104,18 @@ bare repeat count.
 Mutation check: removing the provenance gate in `isHarnessEvidence` makes the
 eligibility tests fail, because entries without provenance no longer produce
 rules.
+
+
+## Implemented: review gate and subsequent-session retrieval (Milestone C, items 3 and 5)
+
+`canProposeHarnessLearning` refuses while a harness run is in flight or before
+the cooldown elapses. `proposeHarnessLearningGated` wraps proposal creation with
+that gate.
+
+`retrieveHarnessContext` rebuilds bounded context from activated proposals of
+the same workspace, ranked deterministically, with token and entry budgets. It
+excludes the producing run (no self-injection) and expired proposals. It returns
+context only and never mutates policy or permissions.
+
+`harnessEvaluation` reports counts and an explicitly unavailable
+`firstPassRate`; no fabricated metric.

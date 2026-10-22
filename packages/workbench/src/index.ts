@@ -503,6 +503,7 @@ export class Workbench {
   private evidence: Record<string, JsonlEntry[]> = {};
   private readonly harnessRunIds = new Set<string>();
   private readonly harnessProposals = new Map<string, HarnessProposal>();
+  private readonly lastProposalAt = new Map<string, number>();
   private recoveryRequests: Record<string, RecoveryRequest> = {};
   private agentProfiles: AgentProfile[] = [];
   private hooks: Hook[] = [];
@@ -3181,6 +3182,7 @@ export class Workbench {
       createdAt: new Date().toISOString(),
     };
     this.harnessProposals.set(proposal.id, proposal);
+    this.lastProposalAt.set(workspace, Date.now());
     // Record the proposal in the signed chain so it survives as evidence.
     const session = [...this.sessions.values()][0];
     if (session) {
@@ -3256,6 +3258,106 @@ export class Workbench {
     return [...this.harnessProposals.values()].filter(
       (p) => p.workspace === workspace,
     );
+  }
+
+  /** Review gate: whether a new proposal may be created now. Fail-closed on
+   *  any uncertainty. */
+  canProposeHarnessLearning(
+    workspace: string,
+    cooldownMs: number = 60_000,
+  ): { ok: boolean; reason: string } {
+    if (this.harnessRunIds.size > 0)
+      return { ok: false, reason: "a harness run is still in flight" };
+    const last = this.lastProposalAt.get(workspace) ?? 0;
+    if (Date.now() - last < cooldownMs)
+      return { ok: false, reason: "proposal cooldown not elapsed" };
+    return { ok: true, reason: "ok" };
+  }
+
+  /** Record that a proposal was created now (cooldown anchor). */
+  private markProposalCreated(workspace: string): void {
+    this.lastProposalAt.set(workspace, Date.now());
+  }
+
+  /** Wrap proposeHarnessLearning to honour the review gate. */
+  async proposeHarnessLearningGated(
+    workspace: string,
+    policyDigest?: string,
+    cooldownMs: number = 60_000,
+  ): Promise<HarnessProposal> {
+    const gate = this.canProposeHarnessLearning(workspace, cooldownMs);
+    if (!gate.ok) throw new Error(`Harness proposal gate refused: ${gate.reason}.`);
+    const proposal = await this.proposeHarnessLearning(workspace, policyDigest);
+    this.markProposalCreated(workspace);
+    return proposal;
+  }
+
+  /** Subsequent-session retrieval: rebuild bounded context from approved,
+   *  activated proposals of the same workspace. Never includes the producing
+   *  run. Never mutates policy. */
+  retrieveHarnessContext(
+    workspace: string,
+    currentRunId: string | undefined,
+    options: { tokenBudget?: number; entryBudget?: number; maxAgeMs?: number } = {},
+  ): {
+    entries: { proposalId: string; rule: import("../../policy/src/rules.ts").Rule }[];
+    tokenEstimate: number;
+    truncated: boolean;
+  } {
+    const tokenBudget = options.tokenBudget ?? 4000;
+    const entryBudget = options.entryBudget ?? 8;
+    const maxAgeMs = options.maxAgeMs ?? 7 * 24 * 60 * 60 * 1000;
+    const now = Date.now();
+    const activated = [...this.harnessProposals.values()]
+      .filter((p) => p.workspace === workspace && p.status === "activated")
+      .filter((p) => !p.provenance.runIds.includes(currentRunId ?? ""))
+      .filter((p) => {
+        const age = now - Date.parse(p.activatedAt ?? p.createdAt);
+        return Number.isFinite(age) && age <= maxAgeMs;
+      })
+      .sort((a, b) =>
+        (a.activatedAt ?? a.createdAt) < (b.activatedAt ?? b.createdAt) ? -1 : 1,
+      );
+
+    const entries: { proposalId: string; rule: import("../../policy/src/rules.ts").Rule }[] = [];
+    let tokenEstimate = 0;
+    let truncated = false;
+    outer: for (const proposal of activated) {
+      for (const rule of proposal.rules) {
+        if (entries.length >= entryBudget) {
+          truncated = true;
+          break outer;
+        }
+        const cost = JSON.stringify(rule).length;
+        if (tokenEstimate + cost > tokenBudget) {
+          truncated = true;
+          break outer;
+        }
+        entries.push({ proposalId: proposal.id, rule });
+        tokenEstimate += cost;
+      }
+    }
+    return { entries, tokenEstimate, truncated };
+  }
+
+  /** Honest evaluation: report counts and availability, never a fabricated
+   *  first_pass_rate. */
+  harnessEvaluation(workspace: string): {
+    proposalCount: number;
+    approvedCount: number;
+    activatedCount: number;
+    retrievedEntryCount: number;
+    firstPassRate: "unavailable";
+  } {
+    const proposals = this.harnessProposalsFor(workspace);
+    const ctx = this.retrieveHarnessContext(workspace, undefined, {});
+    return {
+      proposalCount: proposals.length,
+      approvedCount: proposals.filter((p) => p.status === "approved" || p.status === "activated").length,
+      activatedCount: proposals.filter((p) => p.status === "activated").length,
+      retrievedEntryCount: ctx.entries.length,
+      firstPassRate: "unavailable",
+    };
   }
 
   private async authorizeTool(
