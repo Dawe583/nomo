@@ -119,3 +119,57 @@ test("tombstone marks a proposal", async (t) => {
   assert.equal(tombstoned.status, "tombstoned");
   await app.shutdown();
 });
+
+
+test("secret-bearing evidence refuses proposal creation", async (t) => {
+  const directory = await mkdtemp(join(tmpdir(), "void-hp5-"));
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  const fetcher = (async (url: unknown) =>
+    String(url).endsWith("/models")
+      ? Response.json({ data: [{ id: "fixture" }] })
+      : Response.json({ choices: [{ message: { role: "assistant", content: "Done" } }] })) as typeof fetch;
+  const app = new Workbench({ VOID_DATA_DIR: directory }, fetcher);
+  await app.configure({ baseUrl: "https://fixture.test/v1", apiKey: "fixture" });
+  const internals = app as unknown as {
+    evidence: Record<string, unknown[]>;
+    proposeHarnessLearning(workspace: string): Promise<unknown>;
+  };
+  const workspace = "w";
+  internals.evidence[workspace] = [
+    { body: { tool: "t", klass: "r1", decision: "deny:policy", source: "harness", runId: "r", token: "secret" } },
+    { body: { tool: "t", klass: "r1", decision: "deny:policy", source: "harness", runId: "r" } },
+    { body: { tool: "t", klass: "r1", decision: "deny:policy", source: "harness", runId: "r" } },
+  ];
+  await assert.rejects(() => internals.proposeHarnessLearning(workspace), /secret-bearing/);
+  await app.shutdown();
+});
+
+test("proposals are workspace isolated", async (t) => {
+  const directory = await mkdtemp(join(tmpdir(), "void-hp6-"));
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  const fetcher = (async (url: unknown) =>
+    String(url).endsWith("/models")
+      ? Response.json({ data: [{ id: "fixture" }] })
+      : Response.json({ choices: [{ message: { role: "assistant", content: "Done" } }] })) as typeof fetch;
+  const app = new Workbench({ VOID_DATA_DIR: directory }, fetcher);
+  await app.configure({ baseUrl: "https://fixture.test/v1", apiKey: "fixture" });
+  const internals = app as unknown as {
+    evidence: Record<string, unknown[]>;
+    proposeHarnessLearning(workspace: string): Promise<{ id: string }>;
+    harnessProposalsFor(workspace: string): { id: string }[];
+  };
+  const make = (ws: string) => {
+    internals.evidence[ws] = [
+      { body: { tool: "t", klass: "r1", decision: "deny:policy", source: "harness", runId: "r" } },
+      { body: { tool: "t", klass: "r1", decision: "deny:policy", source: "harness", runId: "r" } },
+      { body: { tool: "t", klass: "r1", decision: "deny:policy", source: "harness", runId: "r" } },
+    ];
+    return internals.proposeHarnessLearning(ws);
+  };
+  await make("ws-a");
+  await make("ws-b");
+  assert.equal(internals.harnessProposalsFor("ws-a").length, 1);
+  assert.equal(internals.harnessProposalsFor("ws-b").length, 1);
+  assert.equal(internals.harnessProposalsFor("ws-c").length, 0);
+  await app.shutdown();
+});

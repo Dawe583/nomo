@@ -3151,6 +3151,16 @@ export class Workbench {
     policyDigest?: string,
   ): Promise<HarnessProposal> {
     const entries = this.evidence[workspace] ?? [];
+    // Secret rejection: a proposal must never carry a secret-bearing entry.
+    // Fail closed if any evidence body names a secret-like field.
+    for (const entry of entries) {
+      const body = entry.body as Record<string, unknown> | undefined;
+      if (!body) continue;
+      for (const key of Object.keys(body)) {
+        if (/token|secret|password|apikey|credential/i.test(key))
+          throw new Error("Harness proposal refused: secret-bearing evidence.");
+      }
+    }
     // Mine only from eligible harness evidence.
     const learned = mineLearnedRules(entries);
     const runIds = [
