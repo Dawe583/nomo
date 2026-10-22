@@ -69,3 +69,20 @@ test("evaluation reports first_pass_rate as unavailable", async (t) => {
   assert.equal(ev.firstPassRate, "unavailable");
   assert.ok(ev.activatedCount >= 1);
 });
+
+
+test("review gate refuses without a settled turn", async (t) => {
+  const { internals, workspace } = await setup(t);
+  const gate = internals.canProposeHarnessLearning(workspace, 0, 0, undefined);
+  assert.equal(gate.ok, false);
+  assert.match(gate.reason, /settled/);
+});
+
+test("review gate refuses on policy version mismatch", async (t) => {
+  const { internals, workspace } = await setup(t);
+  // store a policy digest by creating a proposal
+  await internals.proposeHarnessLearning(workspace, "pd-1");
+  const gate = internals.canProposeHarnessLearning(workspace, 0, 1, "pd-2");
+  assert.equal(gate.ok, false);
+  assert.match(gate.reason, /version/);
+});

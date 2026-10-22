@@ -2403,6 +2403,28 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       this.scroll = 0;
       return;
     }
+    if (cmd === "proposals") {
+      // Proposals are reconstructed from the signed chain, so a tampered or
+      // unverified proposal cannot appear here. Status is authoritative.
+      const lines: string[] = ["HARNESS PROPOSALS, reconstructed from the signed chain", ""];
+      let any = false;
+      for (const [id, entries] of this.proofs.entries()) {
+        const proposals = this.workbench.harnessProposalsFor(id);
+        if (proposals.length === 0) continue;
+        any = true;
+        lines.push(`${id.slice(0, 8)}: ${proposals.length} proposal(s)`);
+        for (const p of proposals) {
+          lines.push(`  ${p.id.slice(0, 8)} ${p.status} digest=${p.digest.slice(0, 12)}`);
+          lines.push(`    rules: ${p.rules.length}, runs: ${p.provenance.runIds.length}`);
+        }
+        lines.push("");
+      }
+      if (!any) lines.push("No proposals recorded for any verified workspace.");
+      lines.push("A proposal is inert until an operator approves its exact digest.");
+      this.detail = lines;
+      this.scroll = 0;
+      return;
+    }
     if (cmd === "config") {
       this.detail = [
         "CONFIG, secret values never print",

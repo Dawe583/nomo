@@ -504,6 +504,7 @@ export class Workbench {
   private readonly harnessRunIds = new Set<string>();
   private readonly harnessProposals = new Map<string, HarnessProposal>();
   private readonly lastProposalAt = new Map<string, number>();
+  private readonly lastPolicyDigest = new Map<string, string>();
   private recoveryRequests: Record<string, RecoveryRequest> = {};
   private agentProfiles: AgentProfile[] = [];
   private hooks: Hook[] = [];
@@ -3193,6 +3194,7 @@ export class Workbench {
     };
     this.harnessProposals.set(proposal.id, proposal);
     this.lastProposalAt.set(workspace, Date.now());
+    if (policyDigest) this.lastPolicyDigest.set(workspace, policyDigest);
     // Record the proposal in the signed chain so it survives as evidence.
     const session = [...this.sessions.values()][0];
     if (session) {
@@ -3319,12 +3321,21 @@ export class Workbench {
   canProposeHarnessLearning(
     workspace: string,
     cooldownMs: number = 60_000,
+    settledTurns?: number,
+    policyDigest?: string,
   ): { ok: boolean; reason: string } {
     if (this.harnessRunIds.size > 0)
       return { ok: false, reason: "a harness run is still in flight" };
     const last = this.lastProposalAt.get(workspace) ?? 0;
     if (Date.now() - last < cooldownMs)
       return { ok: false, reason: "proposal cooldown not elapsed" };
+    if (settledTurns !== undefined && settledTurns < 1)
+      return { ok: false, reason: "no settled turn observed" };
+    if (policyDigest !== undefined) {
+      const stored = this.lastPolicyDigest.get(workspace);
+      if (stored !== undefined && stored !== policyDigest)
+        return { ok: false, reason: "policy version mismatch" };
+    }
     return { ok: true, reason: "ok" };
   }
 
@@ -3338,8 +3349,9 @@ export class Workbench {
     workspace: string,
     policyDigest?: string,
     cooldownMs: number = 60_000,
+    settledTurns?: number,
   ): Promise<HarnessProposal> {
-    const gate = this.canProposeHarnessLearning(workspace, cooldownMs);
+    const gate = this.canProposeHarnessLearning(workspace, cooldownMs, settledTurns, policyDigest);
     if (!gate.ok) throw new Error(`Harness proposal gate refused: ${gate.reason}.`);
     const proposal = await this.proposeHarnessLearning(workspace, policyDigest);
     this.markProposalCreated(workspace);
