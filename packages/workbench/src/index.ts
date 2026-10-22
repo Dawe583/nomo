@@ -448,6 +448,30 @@ function mapConnections(
 
 /** Model tools always cross the existing VOID SDK. A provider has no shell or
  * filesystem authority; operators configure the MCP upstream on the runtime. */
+export type HarnessProposalStatus =
+  | "inert"
+  | "approved"
+  | "rejected"
+  | "activated"
+  | "tombstoned";
+
+export type HarnessProposal = {
+  readonly id: string;
+  readonly workspace: string;
+  readonly digest: string;
+  readonly rules: readonly import("../../policy/src/rules.ts").Rule[];
+  readonly provenance: { readonly runIds: readonly string[]; readonly entryCount: number };
+  readonly policyDigest: string | undefined;
+  status: HarnessProposalStatus;
+  readonly createdAt: string;
+  approvedBy?: string;
+  approvedAt?: string;
+  rejectionReason?: string;
+  activatedAt?: string;
+  tombstonedAt?: string;
+  tombstoneReason?: string;
+};
+
 export class Workbench {
   private readonly env: Readonly<NodeJS.ProcessEnv>;
   private readonly permissionMode: PermissionMode;
@@ -477,6 +501,8 @@ export class Workbench {
   private connectors: Connector[] = [];
   private documents: Record<string, WorkspaceState> = {};
   private evidence: Record<string, JsonlEntry[]> = {};
+  private readonly harnessRunIds = new Set<string>();
+  private readonly harnessProposals = new Map<string, HarnessProposal>();
   private recoveryRequests: Record<string, RecoveryRequest> = {};
   private agentProfiles: AgentProfile[] = [];
   private hooks: Hook[] = [];
@@ -2331,6 +2357,7 @@ export class Workbench {
         run.runId !== preparedRun.runId
       )
         throw new Error("The task run does not match its local agent grant.");
+      this.harnessRunIds.add(run.id);
       const ledger = await this.ledger(run.workspace);
       const identity = issuer.authenticate(issued.token, {
         audience: LOCAL_AGENT_GRANT_AUDIENCE,
@@ -2344,6 +2371,7 @@ export class Workbench {
         ledger: { entries: [...(ledger?.entries ?? [])] },
       };
     } finally {
+      this.harnessRunIds.delete(preparedRun.sessionId);
       issuer.revoke(preparedRun.runId);
       await server.close();
     }
@@ -3065,7 +3093,14 @@ export class Workbench {
           String(body.decision),
           undefined,
           undefined,
-          { ...body, source: "stdio-proxy", sourceDigest: entry.hash },
+          {
+            ...body,
+            source: "stdio-proxy",
+            sourceDigest: entry.hash,
+            ...(this.harnessRunIds.has(session.view.id)
+              ? { harnessRunId: session.view.runId }
+              : {}),
+          },
         );
       }
     });
@@ -3085,13 +3120,142 @@ export class Workbench {
   private policyWithLearned(
     policy: ValidPolicy,
     workspace: string,
+    currentRunId?: string,
   ): ValidPolicy {
-    const learned = mineLearnedRules(this.evidence[workspace] ?? []);
+    const entries = (this.evidence[workspace] ?? []).filter((entry) => {
+      const body = entry.body as Record<string, unknown> | undefined;
+      if (!body) return true;
+      const runId =
+        typeof body.runId === "string"
+          ? body.runId
+          : typeof body.harnessRunId === "string"
+            ? body.harnessRunId
+            : "";
+      if (!runId) return true;
+      return runId !== currentRunId;
+    });
+    const learned = mineLearnedRules(entries);
     if (learned.length === 0) return policy;
     return {
       ok: true,
       policy: { ...policy.policy, rules: [...policy.policy.rules, ...learned] },
     };
+  }
+
+  /** Mine candidate learned rules from eligible harness evidence and store them
+   *  as an inert proposal. The proposal is never active until an operator
+   *  approves its exact digest. Nothing here mutates policy. */
+  async proposeHarnessLearning(
+    workspace: string,
+    policyDigest?: string,
+  ): Promise<HarnessProposal> {
+    const entries = this.evidence[workspace] ?? [];
+    // Mine only from eligible harness evidence.
+    const learned = mineLearnedRules(entries);
+    const runIds = [
+      ...new Set(
+        entries
+          .map((entry) => {
+            const body = entry.body as Record<string, unknown> | undefined;
+            if (!body) return "";
+            return typeof body.runId === "string"
+              ? body.runId
+              : typeof body.harnessRunId === "string"
+                ? body.harnessRunId
+                : "";
+          })
+          .filter((id) => id.length > 0),
+      ),
+    ];
+    const digest = await sha256Hex(
+      canonicalJson({ rules: learned, runIds, entryCount: entries.length }),
+    );
+    const proposal: HarnessProposal = {
+      id: randomUUID(),
+      workspace,
+      digest,
+      rules: learned,
+      provenance: { runIds, entryCount: entries.length },
+      policyDigest,
+      status: "inert",
+      createdAt: new Date().toISOString(),
+    };
+    this.harnessProposals.set(proposal.id, proposal);
+    // Record the proposal in the signed chain so it survives as evidence.
+    const session = [...this.sessions.values()][0];
+    if (session) {
+      await this.locked(() =>
+        this.commitWorkspace(
+          session,
+          this.workspace(session.view.id),
+          "harness_proposal",
+          { proposalId: proposal.id, digest },
+          "execute:completed",
+          undefined,
+          undefined,
+          {
+            harnessProposalId: proposal.id,
+            harnessProposalDigest: digest,
+            harnessProposalStatus: "inert",
+          },
+        ),
+      );
+    }
+    return proposal;
+  }
+
+  /** Approve a proposal by its exact digest. A mismatched digest is refused. */
+  approveHarnessProposal(
+    id: string,
+    operator: string,
+    expectedDigest: string,
+  ): HarnessProposal {
+    const proposal = this.harnessProposals.get(id);
+    if (!proposal) throw new Error("Harness proposal not found.");
+    if (proposal.digest !== expectedDigest)
+      throw new Error("Harness proposal digest mismatch.");
+    proposal.status = "approved";
+    proposal.approvedBy = operator;
+    proposal.approvedAt = new Date().toISOString();
+    return proposal;
+  }
+
+  rejectHarnessProposal(
+    id: string,
+    operator: string,
+    reason: string,
+  ): HarnessProposal {
+    const proposal = this.harnessProposals.get(id);
+    if (!proposal) throw new Error("Harness proposal not found.");
+    proposal.status = "rejected";
+    proposal.rejectionReason = reason;
+    return proposal;
+  }
+
+  /** Activate only an approved proposal whose digest still matches. */
+  activateHarnessProposal(id: string): HarnessProposal {
+    const proposal = this.harnessProposals.get(id);
+    if (!proposal) throw new Error("Harness proposal not found.");
+    if (proposal.status !== "approved")
+      throw new Error("Harness proposal is not approved.");
+    proposal.status = "activated";
+    proposal.activatedAt = new Date().toISOString();
+    return proposal;
+  }
+
+  tombstoneHarnessProposal(id: string, reason: string): HarnessProposal {
+    const proposal = this.harnessProposals.get(id);
+    if (!proposal) throw new Error("Harness proposal not found.");
+    proposal.status = "tombstoned";
+    proposal.tombstonedAt = new Date().toISOString();
+    proposal.tombstoneReason = reason;
+    return proposal;
+  }
+
+  harnessProposalsFor(workspace: string): HarnessProposal[] {
+    return [...this.harnessProposals.values()].filter(
+      (p) => p.workspace === workspace,
+    );
   }
 
   private async authorizeTool(
@@ -3119,7 +3283,16 @@ export class Workbench {
         decision.kind,
         undefined,
         undefined,
-        { klass: call.klass },
+        {
+          klass: call.klass,
+          ...(this.harnessRunIds.has(session.view.id)
+            ? {
+                source: "harness",
+                runId: session.view.runId,
+                workspace: session.view.workspace,
+              }
+            : {}),
+        },
         this.sessionAttribution(session, policy, decision),
       ),
     );
@@ -3173,7 +3346,16 @@ export class Workbench {
           allowed ? "hold:approved" : "hold:denied",
           undefined,
           hold,
-          { klass: call.klass },
+          {
+            klass: call.klass,
+            ...(this.harnessRunIds.has(session.view.id)
+              ? {
+                  source: "harness",
+                  runId: session.view.runId,
+                  workspace: session.view.workspace,
+                }
+              : {}),
+          },
           this.sessionAttribution(session, policy, decision),
         ),
       );
@@ -3295,6 +3477,7 @@ export class Workbench {
         const policy = this.policyWithLearned(
           profile.policy,
           session.view.workspace,
+          session.view.runId,
         );
         const decision = decide(policy, call);
         const allowed = await this.authorizeTool(

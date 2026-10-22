@@ -8,7 +8,7 @@ import assert from "node:assert/strict";
 import { LEARNED_RULE_MIN_REPEATS, mineLearnedRules } from "./learned-rules.ts";
 
 const entry = (tool: string, klass: string, decision: string) => ({
-  body: { tool, klass, decision },
+  body: { tool, klass, decision, source: "harness" },
 });
 
 test("a repeated refusal becomes a hold rule naming the tool and the class", () => {
@@ -108,9 +108,9 @@ test("entries that are not records are skipped rather than crashing the chain", 
     { body: ["deny:policy"] },
     { body: {} },
     { body: { decision: "deny:policy" } },
-    { body: { tool: "t", klass: "r1", decision: "deny:policy" } },
-    { body: { tool: "t", klass: "r1", decision: "deny:policy" } },
-    { body: { tool: "t", klass: "r1", decision: "deny:policy" } },
+    { body: { tool: "t", klass: "r1", decision: "deny:policy", source: "harness" } },
+    { body: { tool: "t", klass: "r1", decision: "deny:policy", source: "harness" } },
+    { body: { tool: "t", klass: "r1", decision: "deny:policy", source: "harness" } },
   ]);
   assert.equal(rules.length, 1);
   assert.deepEqual(rules[0].match, { class: "r1", tool: "t" });
@@ -149,9 +149,9 @@ test("learned rules are appended, so an operator's own rule is still reached fir
   };
   const workspace = "w";
   internals.evidence[workspace] = [
-    { body: { tool: "void_workspace_delete", klass: "r1", decision: "deny:policy" } },
-    { body: { tool: "void_workspace_delete", klass: "r1", decision: "deny:policy" } },
-    { body: { tool: "void_workspace_delete", klass: "r1", decision: "hold:denied" } },
+    { body: { tool: "void_workspace_delete", klass: "r1", decision: "deny:policy", source: "harness" } },
+    { body: { tool: "void_workspace_delete", klass: "r1", decision: "deny:policy", source: "harness" } },
+    { body: { tool: "void_workspace_delete", klass: "r1", decision: "hold:denied", source: "harness" } },
   ];
 
   // The operator explicitly allows what the chain shows being refused. Were a
@@ -174,4 +174,26 @@ test("learned rules are appended, so an operator's own rule is still reached fir
   assert.equal(merged.policy.rules[1].decision, "hold", "the learned rule fills the gap behind it");
   assert.match(merged.policy.rules[1].rationale ?? "", /Not written by an operator/);
   assert.equal(operator.policy.rules.length, 1, "the operator's policy must not be mutated");
+});
+
+test("an entry without harness provenance teaches nothing", () => {
+  // Operational noise must not manufacture a standing hold: only verified
+  // harness runs are evidence. Removing the provenance gate makes this fail.
+  assert.deepEqual(
+    mineLearnedRules([
+      { body: { tool: "void_workspace_delete", klass: "r1", decision: "deny:policy" } },
+      { body: { tool: "void_workspace_delete", klass: "r1", decision: "deny:policy" } },
+      { body: { tool: "void_workspace_delete", klass: "r1", decision: "deny:policy" } },
+    ]),
+    [],
+  );
+});
+
+test("a mirrored stdio-proxy entry with a harness run id is eligible", () => {
+  const rules = mineLearnedRules([
+    { body: { tool: "echo", klass: "r3", decision: "deny:policy", source: "stdio-proxy", harnessRunId: "run-1" } },
+    { body: { tool: "echo", klass: "r3", decision: "deny:policy", source: "stdio-proxy", harnessRunId: "run-1" } },
+    { body: { tool: "echo", klass: "r3", decision: "deny:policy", source: "stdio-proxy", harnessRunId: "run-1" } },
+  ]);
+  assert.equal(rules.length, 1);
 });

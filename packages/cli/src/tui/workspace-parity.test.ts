@@ -1194,9 +1194,9 @@ test("/learned reports what the signed chain taught, and what it may not overrid
   // Seeded into the same map a refresh fills from `ledger()`, so this renders
   // what a real verified chain would teach without forging one in a test.
   internals.proofs.set(id, [
-    { body: { tool: "void_workspace_delete", klass: "r1", decision: "deny:policy" } },
-    { body: { tool: "void_workspace_delete", klass: "r1", decision: "deny:policy" } },
-    { body: { tool: "void_workspace_delete", klass: "r1", decision: "deny:policy" } },
+    { body: { tool: "void_workspace_delete", klass: "r1", decision: "deny:policy", source: "harness" } },
+    { body: { tool: "void_workspace_delete", klass: "r1", decision: "deny:policy", source: "harness" } },
+    { body: { tool: "void_workspace_delete", klass: "r1", decision: "deny:policy", source: "harness" } },
   ]);
 
   await ui.command("/learned");
@@ -1208,8 +1208,8 @@ test("/learned reports what the signed chain taught, and what it may not overrid
 
   // Two refusals sit below the threshold, so they teach nothing.
   internals.proofs.set(id, [
-    { body: { tool: "void_workspace_delete", klass: "r1", decision: "deny:policy" } },
-    { body: { tool: "void_workspace_delete", klass: "r1", decision: "deny:policy" } },
+    { body: { tool: "void_workspace_delete", klass: "r1", decision: "deny:policy", source: "harness" } },
+    { body: { tool: "void_workspace_delete", klass: "r1", decision: "deny:policy", source: "harness" } },
   ]);
   await ui.command("/learned");
   assert.doesNotMatch(ui.lines().join("\n"), /void_workspace_delete \(r1\) -> hold/);

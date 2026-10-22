@@ -57,7 +57,7 @@ const learnedRows = (ui: WorkspaceTui): Row[] =>
  */
 const refusal = (tool: string, klass: string) =>
   ({
-    body: { tool, klass, decision: "deny:policy" },
+    body: { tool, klass, decision: "deny:policy", source: "harness" },
   }) as unknown as JsonlEntry;
 
 test("one tool refused under two classes is two rows, and two identities", async (t) => {

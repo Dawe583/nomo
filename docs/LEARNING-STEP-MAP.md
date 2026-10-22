@@ -83,3 +83,24 @@ exists on this machine, so any test that reaches the stdio branch reads real
 signing key material, and `devKeyProvider` will create one if it is missing.
 Whether that hardcoding is deliberate (the proxy's keys always live there) is
 unresolved. Fix or document it before adding a code path that reads the chain.
+
+
+## Implemented: provenance-bound mining (Milestone C, item 2)
+
+`mineLearnedRules` now refuses any entry that does not carry harness provenance.
+An entry is eligible only when its body has `source: "harness"`, `harness: true`,
+or a non-empty `harnessRunId`. Mirrored stdio-proxy entries become eligible by
+carrying `harnessRunId` naming the run they came from.
+
+Self-injection is prevented in `policyWithLearned`: entries whose `runId` or
+`harnessRunId` equals the current run id are excluded before mining, so a run
+never teaches itself. `policyWithLearned` takes an optional `currentRunId`
+third argument.
+
+Each mined rule's rationale records the distinct harness run count that
+produced the pattern, so an operator can see the provenance rather than a
+bare repeat count.
+
+Mutation check: removing the provenance gate in `isHarnessEvidence` makes the
+eligibility tests fail, because entries without provenance no longer produce
+rules.
