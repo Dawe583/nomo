@@ -2416,6 +2416,9 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         for (const p of proposals) {
           lines.push(`  ${p.id.slice(0, 8)} ${p.status} digest=${p.digest.slice(0, 12)}`);
           lines.push(`    rules: ${p.rules.length}, runs: ${p.provenance.runIds.length}`);
+          for (const rule of p.rules) {
+            lines.push(`    - ${rule.match.tool} (${rule.match.class}) -> ${rule.decision}`);
+          }
         }
         lines.push("");
       }

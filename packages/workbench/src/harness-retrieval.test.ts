@@ -19,7 +19,8 @@ async function setup(t: any) {
     proposeHarnessLearning(workspace: string, policyDigest?: string): Promise<{ id: string; digest: string }>;
     approveHarnessProposal(id: string, operator: string, expectedDigest: string): unknown;
     activateHarnessProposal(id: string): unknown;
-    retrieveHarnessContext(workspace: string, currentRunId: string | undefined, options?: any): { entries: any[]; truncated: boolean };
+    retrieveHarnessContext(workspace: string, currentRunId: string | undefined, options?: any): { entries: any[]; truncated: boolean; tokenEstimate: number };
+    harnessProposalsFor(workspace: string): { id: string }[];
     canProposeHarnessLearning(workspace: string, cooldownMs?: number, settledTurns?: number, policyDigest?: string): { ok: boolean; reason: string };
     harnessEvaluation(workspace: string): { firstPassRate: string; activatedCount: number };
   };
@@ -85,4 +86,22 @@ test("review gate refuses on policy version mismatch", async (t) => {
   const gate = internals.canProposeHarnessLearning(workspace, 0, 1, "pd-2");
   assert.equal(gate.ok, false);
   assert.match(gate.reason, /version/);
+});
+
+
+test("retrieval is deterministic for the same chain", async (t) => {
+  const { internals, workspace } = await setup(t);
+  const a = internals.retrieveHarnessContext(workspace, "other-run", {});
+  const b = internals.retrieveHarnessContext(workspace, "other-run", {});
+  assert.deepEqual(a.entries.map((e: any) => e.proposalId), b.entries.map((e: any) => e.proposalId));
+  assert.equal(a.tokenEstimate, b.tokenEstimate);
+});
+
+test("retrieval does not change policy decisions", async (t) => {
+  const { internals, workspace } = await setup(t);
+  // Retrieval returns context only; policy stays untouched (no mutation).
+  const before = internals.harnessProposalsFor(workspace).length;
+  internals.retrieveHarnessContext(workspace, "other-run", {});
+  const after = internals.harnessProposalsFor(workspace).length;
+  assert.equal(before, after);
 });
