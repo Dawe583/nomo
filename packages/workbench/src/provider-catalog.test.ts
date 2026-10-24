@@ -16,7 +16,17 @@ import assert from "node:assert/strict";
 import { isolatedWorkbench } from "./test-fixture.ts";
 import { PUTER_URL } from "./provider-defaults.ts";
 import { BLOCKED_PROVIDER_APIS_BY_PROVIDER, IMPLEMENTED_PROVIDER_TRANSPORTS, PROVIDER_API_BLOCKERS } from "./provider-adapters/types.ts";
-import { PROVIDER_API_ROSTER, PROVIDER_MODEL_MANIFEST, PROVIDER_MODEL_PROVIDER_ROSTER, PROVIDER_SOURCE_BASELINE, PROVIDER_SOURCE_ROSTER } from "./provider-catalog.ts";
+import { CONFIGURABLE_PROVIDER_DESCRIPTORS, PROVIDER_API_ROSTER, PROVIDER_MODEL_MANIFEST, PROVIDER_MODEL_PROVIDER_ROSTER, PROVIDER_SOURCE_BASELINE, PROVIDER_SOURCE_ROSTER } from "./provider-catalog.ts";
+
+test("configurable descriptors exclude static Bedrock auth when the manifest does not list it", () => {
+  assert.equal(
+    CONFIGURABLE_PROVIDER_DESCRIPTORS.some(
+      (descriptor) => descriptor.providerId === "amazon-bedrock",
+    ),
+    false,
+  );
+});
+
 
 test("a provider that answers 404 for its catalog accepts the model the operator named", async (t) => {
   const fetcher: typeof fetch = async () => new Response("no catalog", { status: 404 });

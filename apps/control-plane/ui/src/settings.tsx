@@ -33,6 +33,18 @@ export function Settings({
     [error, setError] = useState<unknown>(),
     [busy, setBusy] = useState(false),
     [message, setMessage] = useState<"" | "connected" | "disconnected">("");
+  const [descriptorFields, setDescriptorFields] = useState({
+    id: "",
+    endpoint: "",
+    model: "",
+    apiKey: "",
+    accessKeyId: "",
+    secretAccessKey: "",
+    sessionToken: "",
+  });
+  const selectedDescriptor = provider.data?.availableProviderDescriptors?.find(
+    (descriptor: Row) => descriptor.id === descriptorFields.id,
+  );
   async function preference(body: Row) {
     try {
       await api("/api/preferences", "PATCH", body);
@@ -222,6 +234,208 @@ export function Settings({
             "Existing conversations retain their settings.",
           )}
         </p>
+        <h3>{t("Manifestoví poskytovatelé", "Manifest providers")}</h3>
+        <p className="muted">
+          {t(
+            "Zde lze připojit pouze manifestované transporty, které NOMO skutečně implementuje.",
+            "Only manifest-listed transports implemented by NOMO can be connected here.",
+          )}
+        </p>
+        <form
+          onSubmit={async (e) => {
+            e.preventDefault();
+            if (!selectedDescriptor) return;
+            setBusy(true);
+            setError(undefined);
+            setMessage("");
+            const auth =
+              selectedDescriptor.authKind === "aws-credentials"
+                ? {
+                    kind: "aws-credentials",
+                    accessKeyId: descriptorFields.accessKeyId,
+                    secretAccessKey: descriptorFields.secretAccessKey,
+                    ...(descriptorFields.sessionToken
+                      ? { sessionToken: descriptorFields.sessionToken }
+                      : {}),
+                  }
+                : selectedDescriptor.authKind === "none"
+                  ? { kind: "none" }
+                  : { kind: "api-key", apiKey: descriptorFields.apiKey };
+            try {
+              await api("/api/provider", "POST", {
+                providerId: selectedDescriptor.providerId,
+                transport: selectedDescriptor.transport,
+                endpoint: descriptorFields.endpoint,
+                model: descriptorFields.model,
+                auth,
+              });
+              setMessage("connected");
+              await client.invalidateQueries();
+            } catch (e) {
+              setError(e);
+            } finally {
+              setDescriptorFields((current) => ({
+                ...current,
+                apiKey: "",
+                accessKeyId: "",
+                secretAccessKey: "",
+                sessionToken: "",
+              }));
+              setBusy(false);
+            }
+          }}
+        >
+          <label>
+            {t("Implementovaný poskytovatel", "Implemented provider")}
+            <select
+              required
+              value={descriptorFields.id}
+              onChange={(e) => {
+                const descriptor =
+                  provider.data?.availableProviderDescriptors?.find(
+                    (item: Row) => item.id === e.target.value,
+                  );
+                setDescriptorFields({
+                  id: descriptor?.id ?? "",
+                  endpoint: descriptor?.endpoint ?? "",
+                  model: descriptor?.model ?? "",
+                  apiKey: "",
+                  accessKeyId: "",
+                  secretAccessKey: "",
+                  sessionToken: "",
+                });
+              }}
+            >
+              <option value="">
+                {t("Vyberte poskytovatele…", "Choose a provider…")}
+              </option>
+              {provider.data?.availableProviderDescriptors?.map(
+                (descriptor: Row) => (
+                  <option key={descriptor.id} value={descriptor.id}>
+                    {descriptor.providerId} — {descriptor.transport}
+                    {descriptor.endpoint ? ` — ${descriptor.endpoint}` : ""}
+                  </option>
+                ),
+              )}
+            </select>
+          </label>
+          <label>
+            {t("Adresa API", "API endpoint")}
+            <input
+              type="url"
+              required
+              value={descriptorFields.endpoint}
+              readOnly={
+                selectedDescriptor?.endpoint !== null &&
+                selectedDescriptor?.transport !== "bedrock-converse-stream"
+              }
+              onChange={(e) =>
+                setDescriptorFields((current) => ({
+                  ...current,
+                  endpoint: e.target.value,
+                }))
+              }
+            />
+          </label>
+          <label>
+            {t("Model z manifestu", "Manifest model")}
+            <select
+              required
+              disabled={!selectedDescriptor}
+              value={descriptorFields.model}
+              onChange={(e) =>
+                setDescriptorFields((current) => ({
+                  ...current,
+                  model: e.target.value,
+                }))
+              }
+            >
+              {selectedDescriptor?.models?.map((model: string) => (
+                <option key={model} value={model}>
+                  {model}
+                </option>
+              ))}
+            </select>
+          </label>
+          {selectedDescriptor?.authKind === "api-key" && (
+            <label>
+              API key
+              <input
+                type="password"
+                required
+                autoComplete="off"
+                value={descriptorFields.apiKey}
+                onChange={(e) =>
+                  setDescriptorFields((current) => ({
+                    ...current,
+                    apiKey: e.target.value,
+                  }))
+                }
+              />
+            </label>
+          )}
+          {selectedDescriptor?.authKind === "aws-credentials" && (
+            <>
+              <label>
+                AWS access key ID
+                <input
+                  required
+                  autoComplete="off"
+                  value={descriptorFields.accessKeyId}
+                  onChange={(e) =>
+                    setDescriptorFields((current) => ({
+                      ...current,
+                      accessKeyId: e.target.value,
+                    }))
+                  }
+                />
+              </label>
+              <label>
+                AWS secret access key
+                <input
+                  type="password"
+                  required
+                  autoComplete="off"
+                  value={descriptorFields.secretAccessKey}
+                  onChange={(e) =>
+                    setDescriptorFields((current) => ({
+                      ...current,
+                      secretAccessKey: e.target.value,
+                    }))
+                  }
+                />
+              </label>
+              <label>
+                AWS session token ({t("volitelné", "optional")})
+                <input
+                  type="password"
+                  autoComplete="off"
+                  value={descriptorFields.sessionToken}
+                  onChange={(e) =>
+                    setDescriptorFields((current) => ({
+                      ...current,
+                      sessionToken: e.target.value,
+                    }))
+                  }
+                />
+              </label>
+            </>
+          )}
+          {selectedDescriptor?.authKind === "none" && (
+            <p className="muted">
+              {t("Tento transport nepoužívá přihlašovací údaje.", "This transport does not use credentials.")}
+            </p>
+          )}
+          <button className="primary" disabled={busy || !selectedDescriptor}>
+            {busy
+              ? t("Připojuji…", "Connecting…")
+              : t("Připojit manifestovaného poskytovatele", "Connect provider")}
+          </button>
+        </form>
+        <details>
+          <summary>
+            {t("Vlastní nebo starší konfigurace API", "Custom or legacy API configuration")}
+          </summary>
         <form
           onSubmit={async (e) => {
             e.preventDefault();
@@ -350,6 +564,7 @@ export function Settings({
             </button>
           </div>
         </form>
+        </details>
       </section>
       <ErrorBox error={error} />
       {message && (

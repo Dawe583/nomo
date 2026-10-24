@@ -270,6 +270,8 @@ const INVENTORY = {
   // implemented transport files now exist in this checkout.
   "apps/control-plane/api/provider-auth.ts":
     "planned provider credential lifecycle; individual auth contracts remain blocked by the approved spec",
+  "apps/control-plane/ui/src/ui.test.ts":
+    "deleted during H38 because all 104 assertions inspected source text rather than observable behavior; Settings was verified in the browser and API suite",
 };
 
 /** Plans nobody maintains any more. Each must announce that at its head. */

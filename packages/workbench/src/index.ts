@@ -17,7 +17,11 @@ import {
   type Json,
 } from "../../runtime/src/index.ts";
 import { NVIDIA_URL, QWEN_URL, PROVIDER_PRESETS } from "./provider-defaults.ts";
-import { PROVIDER_MODEL_MANIFEST } from "./provider-catalog.ts";
+import {
+  assertProviderDescriptorInManifest,
+  CONFIGURABLE_PROVIDER_DESCRIPTORS,
+  PROVIDER_MODEL_MANIFEST,
+} from "./provider-catalog.ts";
 
 import {
   documentView,
@@ -203,7 +207,10 @@ import {
   type ProviderConfig,
 } from "./provider.ts";
 import { createProviderClient } from "./provider-adapters/factory.ts";
-import type { ProviderClient } from "./provider-adapters/types.ts";
+import type {
+  ProviderAdapterConfig,
+  ProviderClient,
+} from "./provider-adapters/types.ts";
 import type { JsonObject } from "../../proxy/src/rpc.ts";
 
 /** How much of a compaction summary is kept, and how much of the dropped
@@ -512,6 +519,82 @@ function projectSystemContext(access: ProjectAccess | undefined): string {
   ];
   return `\n\nProject access context:\n${context.join("\n")}`;
 }
+type WorkbenchProviderConfig = ProviderConfig | ProviderAdapterConfig;
+type ProviderSessionIdentity = {
+  baseUrl: string;
+  kind?: string;
+  providerId?: string;
+  api?: string;
+  transport?: string;
+  profileKey?: string;
+};
+
+function providerConfigKey(config: WorkbenchProviderConfig): string {
+  return "auth" in config
+    ? JSON.stringify([config.providerId, config.transport, config.baseUrl])
+    : config.baseUrl;
+}
+
+function providerSessionIdentity(
+  config: WorkbenchProviderConfig,
+): ProviderSessionIdentity {
+  if ("auth" in config) {
+    return {
+      baseUrl: config.baseUrl,
+      providerId: config.providerId,
+      transport: config.transport,
+      profileKey: providerConfigKey(config),
+    };
+  }
+  return {
+    baseUrl: config.baseUrl,
+    kind: config.kind,
+  };
+}
+
+function providerMatchesSession(
+  config: WorkbenchProviderConfig,
+  identity: ProviderSessionIdentity,
+): boolean {
+  if (identity.profileKey && providerConfigKey(config) !== identity.profileKey)
+    return false;
+  const candidate = providerSessionIdentity(config);
+  return (
+    candidate.baseUrl === identity.baseUrl &&
+    (identity.kind === undefined || candidate.kind === identity.kind) &&
+    (identity.providerId === undefined ||
+      candidate.providerId === identity.providerId) &&
+    (identity.api === undefined || candidate.api === identity.api) &&
+    (identity.transport === undefined ||
+      candidate.transport === identity.transport)
+  );
+}
+
+function providerSecretValues(
+  config: WorkbenchProviderConfig | undefined,
+): string[] {
+  if (!config) return [];
+  if (!("auth" in config)) return [config.apiKey ?? ""];
+  switch (config.auth.kind) {
+    case "api-key":
+      return [config.auth.apiKey];
+    case "aws-credentials":
+      return [
+        config.auth.accessKeyId,
+        config.auth.secretAccessKey,
+        config.auth.sessionToken ?? "",
+      ];
+    case "none":
+      return [];
+  }
+}
+
+function providerHasCredential(config: WorkbenchProviderConfig): boolean {
+  return providerSecretValues(config).some(
+    (secret) => secret.trim().length > 0,
+  );
+}
+
 type Session = {
   /** The run that passed its before-run gate, or undefined once it is
    * torn down. A local agent grant is only issued against a gated run. */
@@ -536,7 +619,7 @@ type Session = {
   projectRootDigest?: string;
   projectSkillDigests?: readonly { readonly id: string; readonly digest: string }[];
   projectBinding?: ProjectAccess;
-  config?: Pick<ProviderConfig, "baseUrl" | "kind">;
+  config?: ProviderSessionIdentity;
   controller: AbortController;
   provider?: ProviderClient;
 };
@@ -587,9 +670,9 @@ function refinementTextIsSensitive(
  */
 function knownSecretValues(
   env: Readonly<NodeJS.ProcessEnv>,
-  config: { readonly apiKey?: string } | undefined,
+  config: WorkbenchProviderConfig | undefined,
   workspaceKeySecret: string | undefined,
-  profiles: Readonly<Record<string, { readonly apiKey?: string }>>,
+  profiles: Readonly<Record<string, WorkbenchProviderConfig>>,
   connectors: readonly { readonly token?: string }[],
 ): string[] {
   return [
@@ -599,9 +682,9 @@ function knownSecretValues(
           /secret|token|password|credential|api[_-]?key|private[_-]?key|authorization/i.test(name) && value,
       )
       .map(([, value]) => value!),
-    config?.apiKey,
+    ...providerSecretValues(config),
     workspaceKeySecret,
-    ...Object.values(profiles).map((profile) => profile.apiKey),
+    ...Object.values(profiles).flatMap(providerSecretValues),
     ...connectors.map((connector) => connector.token),
   ].filter((secret): secret is string => typeof secret === "string" && secret.length >= 4);
 }
@@ -672,11 +755,11 @@ export class Workbench {
   private approvalHistory: unknown[] = [];
   private readonly keyStorage: string;
   private readonly workspaceKeySecret: string | undefined;
-  private config: ProviderConfig | undefined;
+  private config: WorkbenchProviderConfig | undefined;
   private providerGeneration = 0;
   private providerSetupCount = 0;
   private sessionSetupCount = 0;
-  private profiles: Record<string, ProviderConfig> = {};
+  private profiles: Record<string, WorkbenchProviderConfig> = {};
   private connectors: Connector[] = [];
   private documents: Record<string, WorkspaceState> = {};
   private evidence: Record<string, JsonlEntry[]> = {};
@@ -831,9 +914,9 @@ export class Workbench {
       harnessTextSettings?: Record<string, unknown>;
       requests?: Record<string, { digest: string; sessionId: string }>;
       approvalHistory?: unknown[];
-      config?: ProviderConfig;
+      config?: WorkbenchProviderConfig;
       ignoreEnvironment?: boolean;
-      profiles?: Record<string, ProviderConfig>;
+      profiles?: Record<string, WorkbenchProviderConfig>;
       catalog: readonly Model[];
       connectors: Array<
         Omit<Connector, "consentState"> & {
@@ -852,7 +935,7 @@ export class Workbench {
         agentProfile?: AgentProfile;
         recoveryBlock?: Session["recoveryBlock"];
         queuedPrompt?: string;
-        config?: { baseUrl: string; kind?: string };
+        config?: ProviderSessionIdentity;
         connections?: Session["connections"];
         tools?: McpTool[];
         projectAccessRequired?: boolean;
@@ -868,11 +951,19 @@ export class Workbench {
     }>();
     if (saved) {
       let migrated = false;
-      const loadConfig = (value: ProviderConfig | undefined) => {
+      const loadConfig = (
+        value: WorkbenchProviderConfig | undefined,
+      ): WorkbenchProviderConfig | undefined => {
         if (!value) return undefined;
-        const config = normalizeProviderConfig(value);
-        if (value.kind !== config.kind) migrated = true;
+        let config: WorkbenchProviderConfig;
+        if ("auth" in value) {
+          config = value;
+        } else {
+          config = normalizeProviderConfig(value);
+          if (value.kind !== config.kind) migrated = true;
+        }
         try {
+          if ("auth" in config) assertProviderDescriptorInManifest(config);
           createProviderClient(config, fetcher, () => this.harness);
           return config;
         } catch {
@@ -929,9 +1020,13 @@ export class Workbench {
       this.ignoreEnvironment = saved.ignoreEnvironment === true;
       this.config = loadConfig(saved.config);
       this.profiles = {};
-      for (const [baseUrl, value] of Object.entries(saved.profiles ?? {})) {
+      for (const [savedKey, value] of Object.entries(saved.profiles ?? {})) {
         const profile = loadConfig(value);
-        if (profile) this.profiles[baseUrl] = profile;
+        if (profile) {
+          const key = providerConfigKey(profile);
+          if (savedKey !== key) migrated = true;
+          this.profiles[key] = profile;
+        }
       }
       this.catalog = saved.catalog;
       // A snapshot written before the consent gate records no consent state.
@@ -1029,13 +1124,37 @@ export class Workbench {
                 item.config?.kind === "openai"
               ? "compatible"
               : undefined;
-        if (item.config && item.config.kind !== sessionKind) migrated = true;
-        const savedProvider = sessionBaseUrl
-          ? (this.profiles[sessionBaseUrl] ??
-            (this.config?.baseUrl === sessionBaseUrl ? this.config : undefined))
+        const typedIdentity =
+          typeof item.config?.baseUrl === "string" &&
+          typeof item.config.providerId === "string" &&
+          typeof item.config.transport === "string" &&
+          typeof item.config.profileKey === "string";
+        const sessionIdentity: ProviderSessionIdentity | undefined =
+          typedIdentity
+            ? {
+                baseUrl: item.config!.baseUrl,
+                providerId: item.config!.providerId,
+                transport: item.config!.transport,
+                profileKey: item.config!.profileKey,
+              }
+            : sessionKind && typeof item.config?.baseUrl === "string"
+              ? { baseUrl: item.config.baseUrl, kind: sessionKind }
+              : undefined;
+        if (item.config && item.config.kind !== sessionIdentity?.kind)
+          migrated = true;
+        const profileKey = sessionIdentity?.profileKey ?? sessionBaseUrl;
+        const savedProvider = profileKey
+          ? (this.profiles[profileKey] ??
+            (this.config &&
+            providerConfigKey(this.config) === profileKey
+              ? this.config
+              : undefined))
           : undefined;
         const provider =
-          sessionKind && savedProvider?.kind === sessionKind
+          savedProvider &&
+          sessionIdentity &&
+          (sessionIdentity.kind || sessionIdentity.transport) &&
+          providerMatchesSession(savedProvider, sessionIdentity)
             ? savedProvider
             : undefined;
         this.sessions.set(item.view.id, {
@@ -1045,9 +1164,7 @@ export class Workbench {
           projectAccessRequired:
             item.projectAccessRequired === true ||
             typeof item.projectRootDigest === "string",
-          config: sessionBaseUrl
-            ? { baseUrl: sessionBaseUrl, kind: sessionKind }
-            : undefined,
+          config: sessionIdentity,
           view: {
             ...item.view,
             status:
@@ -1113,9 +1230,7 @@ export class Workbench {
           agentProfile,
           recoveryBlock,
           queuedPrompt,
-          config: config
-            ? { baseUrl: config.baseUrl, kind: config.kind }
-            : undefined,
+          config,
           tools,
           connections: connections
             ? Object.fromEntries(
@@ -1171,14 +1286,24 @@ export class Workbench {
       );
     return [...new Set(parsed.map((item) => (item as string).trim()))];
   }
-  async configure(config: ProviderConfig): Promise<readonly Model[]> {
+  async configure(input: WorkbenchProviderConfig): Promise<readonly Model[]> {
     const generation = ++this.providerGeneration;
     this.providerSetupCount++;
     try {
-      config = normalizeProviderConfig({
-        ...config,
-        apiKey: config.apiKey || this.profiles[config.baseUrl]?.apiKey || "",
-      });
+      let config: WorkbenchProviderConfig;
+      if ("auth" in input) {
+        assertProviderDescriptorInManifest(input);
+        config = input;
+      } else {
+        const existing = this.profiles[providerConfigKey(input)];
+        config = normalizeProviderConfig({
+          ...input,
+          apiKey:
+            input.apiKey ||
+            (existing && !("auth" in existing) ? existing.apiKey : "") ||
+            "",
+        });
+      }
       const provider = createProviderClient(
         config,
         this.fetcher,
@@ -1191,6 +1316,10 @@ export class Workbench {
         throw new Error(
           "Provider returned no available models. Previous configuration was kept.",
         );
+      if ("auth" in config && !models.some((model) => model.id === config.model))
+        throw new Error(
+          "Selected manifest model is unavailable. Previous configuration was kept.",
+        );
       const previous = {
         provider: this.provider,
         config: this.config,
@@ -1198,20 +1327,25 @@ export class Workbench {
         catalog: this.catalog,
         preferences: this.preferences,
       };
-      // The preference the operator already made is honoured when this provider
-      // serves it; otherwise the first model of the validated catalog is used.
-      // No vendor's model is inserted on the operator's behalf.
       const preferred =
         models.find((model) => model.id === this.preferences.defaultModel)
-          ?.id ?? models[0]!.id;
+          ?.id ??
+        ("auth" in config
+          ? models.find((model) => model.id === config.model)?.id
+          : undefined) ??
+        models[0]!.id;
       this.provider = provider;
       this.config = config;
-      this.profiles = { ...this.profiles, [config.baseUrl]: config };
+      this.profiles = {
+        ...this.profiles,
+        [providerConfigKey(config)]: config,
+      };
       this.catalog = models;
       this.preferences = {
         ...this.preferences,
         defaultModel: preferred,
         defaultProvider:
+          ("auth" in config ? config.providerId : undefined) ??
           PROVIDER_PRESETS.find((p) => p.baseUrl === config.baseUrl)?.id ??
           "custom",
       };
@@ -1287,30 +1421,40 @@ export class Workbench {
       }
     }
     const hasCredential = Boolean(
-      this.config?.apiKey ||
-      (!this.ignoreEnvironment &&
-        (this.env.NVIDIA_API_KEY || this.env.DASHSCOPE_API_KEY)),
+      (this.config && providerHasCredential(this.config)) ||
+        (!this.ignoreEnvironment &&
+          (this.env.NVIDIA_API_KEY || this.env.DASHSCOPE_API_KEY)),
     );
     const derived = providerStateFromFailure(
       this.provider !== undefined,
       this.providerFailureState,
       hasCredential,
     );
+    const typedConfig =
+      this.config && "auth" in this.config ? this.config : undefined;
     return {
       connected: this.provider !== undefined,
       setupRequired: derived.status === "setup-required",
       models: this.catalog,
       keyStorage: this.keyStorage,
       baseUrl: this.config?.baseUrl,
-      kind: this.config?.kind,
-      profiles: Object.keys(this.profiles),
+      kind:
+        this.config && !("auth" in this.config)
+          ? this.config.kind
+          : undefined,
+      transport: typedConfig?.transport,
+      authKind: typedConfig?.auth.kind,
+      availableProviderDescriptors: CONFIGURABLE_PROVIDER_DESCRIPTORS,
+      profiles: [...new Set(Object.values(this.profiles).map((config) => config.baseUrl))],
       unavailableProviders: UNAVAILABLE_PROVIDER_APIS,
       presets: PROVIDER_PRESETS,
       // A workspace with nothing configured has no provider, and says so
       // instead of naming one vendor.
       providerId: this.config
-        ? (PROVIDER_PRESETS.find((p) => p.baseUrl === this.config?.baseUrl)
-            ?.id ?? "custom")
+        ? ("auth" in this.config
+            ? this.config.providerId
+            : PROVIDER_PRESETS.find((p) => p.baseUrl === this.config?.baseUrl)
+                ?.id ?? this.config.providerId ?? "custom")
         : null,
       defaultModel: this.preferences.defaultModel ?? null,
       upstreamConfigured: true,
@@ -1880,7 +2024,7 @@ export class Workbench {
       ).filter((tool) => this.toolAllowedInMode(tool)),
       connections,
       config: selectedConfig
-        ? { baseUrl: selectedConfig.baseUrl, kind: selectedConfig.kind }
+        ? providerSessionIdentity(selectedConfig)
         : undefined,
       controller: new AbortController(),
       projectAccessRequired: !!projectBinding,
@@ -1952,15 +2096,14 @@ export class Workbench {
     if (!session.provider) {
       const config = this.config;
       const identity = session.config;
-      if (!identity?.kind)
+      if (!identity || (!identity.kind && !identity.transport))
         throw new Error(
           "This conversation has no saved provider protocol. Start a new conversation rather than switching providers.",
         );
       if (
         !this.provider ||
         !config ||
-        identity.baseUrl !== config.baseUrl ||
-        identity.kind !== config.kind
+        !providerMatchesSession(config, identity)
       )
         throw new Error(
           "Reconnect the provider used by this conversation before continuing.",
@@ -2797,7 +2940,7 @@ export class Workbench {
         tools: finalTools,
         connections,
         config: selectedConfig
-          ? { baseUrl: selectedConfig.baseUrl, kind: selectedConfig.kind }
+          ? providerSessionIdentity(selectedConfig)
           : undefined,
         controller: new AbortController(),
         projectAccessRequired: !!projectBinding,

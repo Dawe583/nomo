@@ -1,4 +1,9 @@
-import type { ProviderApiAvailability } from "./provider-adapters/types.ts";
+import type {
+  ImplementedProviderTransport,
+  ProviderAdapterConfig,
+  ProviderApiAvailability,
+  ProviderAuthProfile,
+} from "./provider-adapters/types.ts";
 
 import { readFileSync } from "node:fs";
 
@@ -127,3 +132,220 @@ export type ProviderModelManifest = {
 export const PROVIDER_MODEL_MANIFEST = JSON.parse(
   readFileSync(new URL("./provider-manifest.json", import.meta.url), "utf8"),
 ) as ProviderModelManifest;
+
+export type ConfigurableProviderDescriptor = {
+  readonly id: string;
+  readonly providerId: string;
+  readonly transport: ImplementedProviderTransport;
+  readonly endpoint: string | null;
+  readonly endpointRule: string | null;
+  readonly model: string;
+  readonly models: readonly string[];
+  readonly authKind: ProviderAuthProfile["kind"];
+};
+
+function authKindForTransport(
+  transport: ImplementedProviderTransport,
+): ProviderAuthProfile["kind"] {
+  if (transport === "bedrock-converse-stream") return "aws-credentials";
+  if (transport === "ollama-chat") return "none";
+  return "api-key";
+}
+function supportsManifestAuth(
+  provider: ProviderModelManifest["providers"][number],
+  transport: ImplementedProviderTransport,
+  authKind: ProviderAuthProfile["kind"],
+): boolean {
+  const methods = provider.authentication.methods;
+  if (authKind === "api-key")
+    return methods.includes("api-key") || methods.includes("optional-api-key");
+  if (authKind === "aws-credentials") {
+    // Static AWS keys are not the manifest's native, host, or credential-chain auth.
+    return (
+      provider.providerId === "amazon-bedrock" &&
+      transport === "bedrock-converse-stream" &&
+      methods.includes("aws-credentials")
+    );
+  }
+  return methods.includes("none") || methods.includes("optional-api-key");
+}
+
+
+const IMPLEMENTED_TRANSPORTS = new Set(
+  PROVIDER_MODEL_MANIFEST.apiTransports
+    .filter((api) => api.status === "implemented")
+    .map((api) => api.apiId),
+);
+
+const descriptorMap = new Map<
+  string,
+  ConfigurableProviderDescriptor & { models: string[] }
+>();
+for (const provider of PROVIDER_MODEL_MANIFEST.providers) {
+  if (provider.status !== "in-scope") continue;
+  for (const model of provider.models) {
+    if (model.kind !== "chat" || !IMPLEMENTED_TRANSPORTS.has(model.transport))
+      continue;
+    const transport = model.transport as ImplementedProviderTransport;
+    if (
+      !supportsManifestAuth(
+        provider,
+        transport,
+        authKindForTransport(transport),
+      ) ||
+      (typeof model.endpoint === "string" && /[<>{}]/.test(model.endpoint)) ||
+      (model.endpoint === null && !model.endpointRule)
+    )
+      continue;
+    const id = JSON.stringify([
+      provider.providerId,
+      transport,
+      model.endpoint,
+      model.endpointRule,
+    ]);
+    const existing = descriptorMap.get(id);
+    if (existing) {
+      if (!existing.models.includes(model.id)) existing.models.push(model.id);
+      continue;
+    }
+    const defaultModel = provider.models.find(
+      (candidate) =>
+        candidate.id === provider.defaultModel &&
+        candidate.kind === "chat" &&
+        candidate.transport === transport &&
+        candidate.endpoint === model.endpoint &&
+        candidate.endpointRule === model.endpointRule,
+    )?.id ?? model.id;
+    descriptorMap.set(id, {
+      id,
+      providerId: provider.providerId,
+      transport,
+      endpoint: model.endpoint,
+      endpointRule: model.endpointRule,
+      model: defaultModel,
+      models: [model.id],
+      authKind: authKindForTransport(transport),
+    });
+  }
+}
+export const CONFIGURABLE_PROVIDER_DESCRIPTORS:
+  readonly ConfigurableProviderDescriptor[] = Object.freeze(
+    [...descriptorMap.values()]
+      .sort(
+        (left, right) =>
+          left.providerId.localeCompare(right.providerId) ||
+          left.transport.localeCompare(right.transport) ||
+          (left.endpoint ?? "").localeCompare(right.endpoint ?? ""),
+      )
+      .map((descriptor) =>
+        Object.freeze({
+          ...descriptor,
+          models: Object.freeze([...descriptor.models]),
+        }),
+      ),
+  );
+
+function matchesDynamicEndpointRule(
+  model: ProviderModelManifest["providers"][number]["models"][number],
+  transport: ImplementedProviderTransport,
+  baseUrl: string,
+): boolean {
+  if (model.endpoint !== null || model.endpointRule === null) return false;
+  // Endpoint rules are source-backed prose. Support only the dynamic rule with
+  // a transport-level host contract; unknown rules stay unavailable.
+  if (transport !== "azure-openai-responses") return false;
+  try {
+    const endpoint = new URL(baseUrl);
+    const path = endpoint.pathname.replace(/\/$/, "");
+    return (
+      endpoint.protocol === "https:" &&
+      /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.openai\.azure\.com$/i.test(endpoint.hostname) &&
+      !endpoint.username &&
+      !endpoint.password &&
+      !endpoint.port &&
+      !endpoint.search &&
+      !endpoint.hash &&
+      ["", "/openai", "/openai/v1"].includes(path)
+    );
+  } catch {
+    return false;
+  }
+}
+
+function matchesManifestEndpoint(
+  model: ProviderModelManifest["providers"][number]["models"][number],
+  transport: ImplementedProviderTransport,
+  baseUrl: string,
+): boolean {
+  return (
+    model.endpoint === baseUrl ||
+    matchesDynamicEndpointRule(model, transport, baseUrl)
+  );
+}
+
+export function assertProviderDescriptorInManifest(
+  config: ProviderAdapterConfig,
+): void {
+  if (!IMPLEMENTED_TRANSPORTS.has(config.transport))
+    throw new Error(`Provider transport ${config.transport} is not implemented.`);
+  const transport = config.transport as ImplementedProviderTransport;
+  const authKind = authKindForTransport(transport);
+  if (config.auth.kind !== authKind)
+    throw new Error(`Provider transport ${transport} requires ${authKind} authentication.`);
+  if (
+    typeof config.model !== "string" ||
+    config.model.trim().length === 0 ||
+    config.model !== config.model.trim()
+  )
+    throw new Error("A manifest model is required.");
+
+  const providers = PROVIDER_MODEL_MANIFEST.providers.filter(
+    (provider) =>
+      provider.status === "in-scope" &&
+      provider.providerId === config.providerId,
+  );
+  const modelMatches = (
+    model: ProviderModelManifest["providers"][number]["models"][number],
+  ) =>
+    model.kind === "chat" &&
+    model.transport === transport &&
+    model.id === config.model;
+  const matchingProviders = providers.filter((provider) =>
+    provider.models.some(modelMatches),
+  );
+  if (!matchingProviders.length)
+    throw new Error("Provider, transport and model do not match the manifest.");
+  const authProviders = matchingProviders.filter((provider) =>
+    supportsManifestAuth(provider, transport, authKind),
+  );
+  if (!authProviders.length)
+    throw new Error("Provider authentication is not supported by this setup.");
+  const models = authProviders.flatMap((provider) =>
+    provider.models.filter(modelMatches),
+  );
+
+  const endpointMatches = models.some((model) =>
+    matchesManifestEndpoint(model, transport, config.baseUrl),
+  );
+  const bedrockRegionEndpoint =
+    transport === "bedrock-converse-stream" &&
+    (() => {
+      try {
+        const endpoint = new URL(config.baseUrl);
+        return (
+          endpoint.protocol === "https:" &&
+          !endpoint.username &&
+          !endpoint.password &&
+          !endpoint.port &&
+          !endpoint.search &&
+          !endpoint.hash &&
+          endpoint.pathname === "/" &&
+          /^bedrock-runtime\.[a-z0-9-]+\.amazonaws\.com$/i.test(endpoint.hostname)
+        );
+      } catch {
+        return false;
+      }
+    })();
+  if (!endpointMatches && !bedrockRegionEndpoint)
+    throw new Error("Provider endpoint does not match the manifest.");
+}

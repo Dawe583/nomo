@@ -151,6 +151,9 @@ Každý následující úkol je samostatný bounded loop: nejprve fixture test, 
 
 **Test:** deterministický UI/API test napojený na fixture provider; ověřit přístupnost ovládacích prvků a bezpečné zobrazení chyb bez tokenu.
 
+**Kontrolní bod H38 — typované nastavení:** Settings a `/api/provider` předávají a ukládají typované `providerId`, transport, endpoint, model a autentizaci pouze pro kombinace výslovně povolené manifestem. Manifestové Settings nezobrazuje statické AWS klíče Bedrocku a typed `/api/provider` odmítá `aws-credentials`: manifest uvádí jen native, host a credential-chain autentizaci. Backend před šifrovaným uložením ověřuje autentizaci i endpoint; neplatný požadavek zachová aktivního providera. Důkazy: Workbench/API testy, workspace typecheck, produkční GUI build a browser smoke 91 položek s OpenAI Responses formulářem; bez provider requestu. H38 uzavírá jen dosažitelnou část konfigurace. Úkol 13 zůstává otevřený kvůli provider-specific OAuth/loginu, ověření spojení, upozornění na schopnosti a úplnému pokrytí providerů v rozsahu; H31–H33 zůstávají blokované.
+
+
 ## Fáze 5: tester feedback
 
 ### Úkol 14: Soukromý issue form a quickstart

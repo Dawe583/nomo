@@ -10,7 +10,8 @@ import { entryHash } from "../../../packages/ledger/src/canonical.ts";
 import { jsonlStore } from "../../../packages/ledger/src/store.ts";
 import { listenControlPlane, type ApprovalBroker, type PendingApproval } from "./server.ts";
 import { Workbench } from "../../../packages/workbench/src/index.ts";
-import { PROVIDER_MODEL_MANIFEST } from "../../../packages/workbench/src/provider-catalog.ts";
+import { assertProviderDescriptorInManifest, PROVIDER_MODEL_MANIFEST } from "../../../packages/workbench/src/provider-catalog.ts";
+import type { ProviderAdapterConfig } from "../../../packages/workbench/src/provider-adapters/types.ts";
 
 type FeedBody = {
   readonly workspace: string;
@@ -134,6 +135,149 @@ describe("control plane API", () => {
         );
       }
     }, { env: { NVIDIA_API_KEY: "", DASHSCOPE_API_KEY: "" } });
+  });
+
+  test("provider API persists typed manifest descriptors without exposing auth", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "void-typed-provider-"));
+    const secret = "typed-provider-secret-never-return";
+    const calls: string[] = [];
+    const env = {
+      NOMO_DATA_DIR: directory,
+      NVIDIA_API_KEY: "",
+      DASHSCOPE_API_KEY: "",
+    };
+    const request: typeof fetch = async (input) => {
+      calls.push(String(input));
+      return Response.json({ data: [{ id: "gpt-5.4" }] });
+    };
+    const workbench = new Workbench(env, request);
+    let workbenchClosed = false;
+    let restarted: Workbench | undefined;
+    try {
+      await withServer("unused.jsonl", async (origin) => {
+        const connected = await fetch(origin + "/api/provider", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            providerId: "openai",
+            transport: "openai-responses",
+            endpoint: "https://api.openai.com/v1",
+            model: "gpt-5.4",
+            auth: { kind: "api-key", apiKey: secret },
+          }),
+        });
+        assert.equal(connected.status, 200);
+        assert.doesNotMatch(await connected.text(), /typed-provider-secret-never-return/);
+
+        const response = await fetch(origin + "/api/provider");
+        assert.equal(response.status, 200);
+        const state = await response.json() as Record<string, unknown>;
+        assert.equal(state.connected, true);
+        assert.equal(state.providerId, "openai");
+        assert.equal(state.transport, "openai-responses");
+        assert.equal(state.defaultModel, "gpt-5.4");
+        assert.equal(state.authKind, "api-key");
+        assert.equal(state.keyStorage, "encrypted-local");
+        const descriptors = state.availableProviderDescriptors as
+          | { providerId: string; transport: string; authKind: string; endpoint: string | null }[]
+          | undefined;
+        assert.ok(descriptors?.length);
+        const implemented = new Set(
+          PROVIDER_MODEL_MANIFEST.apiTransports
+            .filter((api) => api.status === "implemented")
+            .map((api) => api.apiId),
+        );
+        assert.ok(descriptors.every((descriptor) => implemented.has(descriptor.transport)));
+        assert.ok(
+          descriptors.every(
+            (descriptor) =>
+              ["api-key", "aws-credentials", "none"].includes(descriptor.authKind) &&
+              (descriptor.endpoint === null || !/[<>{}]/.test(descriptor.endpoint)),
+          ),
+        );
+        for (const providerId of ["kimi-code", "muse-code", "ollama-cloud", "amazon-bedrock"]) {
+          assert.ok(
+            !descriptors.some((descriptor) => descriptor.providerId === providerId),
+            `${providerId} does not satisfy this setup's manifest auth contract`,
+          );
+        }
+        assert.doesNotMatch(JSON.stringify(state), /typed-provider-secret-never-return/);
+        const invalidBodies = [
+          { providerId: "openai", transport: "openai-responses", endpoint: "https://api.openai.com/v1", model: "unknown-model", auth: { kind: "api-key", apiKey: secret } },
+          { providerId: "openai", transport: "openai-responses", endpoint: "https://api.openai.com/v1", model: "gpt-5.4", auth: { kind: "none" } },
+          { providerId: "openai", transport: "openai-responses", endpoint: "https://api.openai.com/v1", model: "gpt-5.4", auth: { kind: "api-key", apiKey: secret, unexpected: true } },
+          { providerId: "azure", transport: "azure-openai-responses", endpoint: "https://attacker.example", model: "gpt-4o", auth: { kind: "api-key", apiKey: secret } },
+          { providerId: "amazon-bedrock", transport: "bedrock-converse-stream", endpoint: "https://bedrock-runtime.us-west-2.amazonaws.com/", model: "amazon.nova-2-lite-v1:0", auth: { kind: "aws-credentials", accessKeyId: secret, secretAccessKey: secret } },
+          { providerId: "kimi-code", transport: "openai-completions", endpoint: "https://api.kimi.com/coding/v1", model: "kimi-for-coding", auth: { kind: "api-key", apiKey: secret } },
+          { providerId: "ollama-cloud", transport: "ollama-chat", endpoint: "https://ollama.com", model: "nemotron-3-ultra", auth: { kind: "none" } },
+        ];
+        for (const invalidBody of invalidBodies) {
+          const rejected = await fetch(origin + "/api/provider", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify(invalidBody),
+          });
+          assert.equal(rejected.status, 400);
+          assert.doesNotMatch(await rejected.text(), /typed-provider-secret-never-return/);
+        }
+        const retained = await fetch(origin + "/api/provider");
+        const retainedState = await retained.json() as Record<string, unknown>;
+        assert.equal(retainedState.providerId, "openai");
+        assert.equal(retainedState.defaultModel, "gpt-5.4");
+        assert.deepEqual(calls, ["https://api.openai.com/v1/models"]);
+      }, { workbench });
+
+      const encrypted = await readFile(join(directory, "workspace.enc"));
+      assert.equal(encrypted.includes(Buffer.from(secret)), false);
+      workbench.close();
+      workbenchClosed = true;
+      restarted = new Workbench(env, async () => {
+        throw new Error("restart must not make a provider request");
+      });
+      const state = await restarted.providerState();
+      assert.equal(state.connected, true);
+      assert.equal(state.providerId, "openai");
+      assert.equal(state.transport, "openai-responses");
+      assert.equal(state.defaultModel, "gpt-5.4");
+    } finally {
+      if (!workbenchClosed) workbench.close();
+      restarted?.close();
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+  test("manifest descriptor validation confines Azure endpoints and rejects unsupported Bedrock auth", () => {
+    const descriptor: ProviderAdapterConfig = {
+      providerId: "azure",
+      transport: "azure-openai-responses",
+      baseUrl: "https://attacker.example",
+      model: "gpt-4o",
+      auth: { kind: "api-key", apiKey: "fixture-only" },
+    };
+    assert.throws(
+      () => assertProviderDescriptorInManifest(descriptor),
+      /endpoint/,
+    );
+    assert.doesNotThrow(() =>
+      assertProviderDescriptorInManifest({
+        ...descriptor,
+        baseUrl: "https://fixture-resource.openai.azure.com/openai/v1",
+      }),
+    );
+    const bedrock: ProviderAdapterConfig = {
+      providerId: "amazon-bedrock",
+      transport: "bedrock-converse-stream",
+      baseUrl: "https://bedrock-runtime.us-west-2.amazonaws.com/",
+      model: "amazon.nova-2-lite-v1:0",
+      auth: {
+        kind: "aws-credentials",
+        accessKeyId: "fixture-only",
+        secretAccessKey: "fixture-only",
+      },
+    };
+    assert.throws(
+      () => assertProviderDescriptorInManifest(bedrock),
+      /Provider authentication is not supported by this setup/,
+    );
   });
 
   test("rejects direct provider hosts before an upstream request", async () => {

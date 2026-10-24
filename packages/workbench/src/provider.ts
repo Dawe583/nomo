@@ -1,4 +1,7 @@
-import type { ProviderClient } from "./provider-adapters/types.ts";
+import type {
+  ProviderAdapterConfig,
+  ProviderClient,
+} from "./provider-adapters/types.ts";
 import { OpenAICompletionsAdapter } from "./provider-adapters/openai-completions.ts";
 import { AnthropicMessagesAdapter } from "./provider-adapters/anthropic-messages.ts";
 import {
@@ -80,7 +83,7 @@ export function normalizeProviderConfig(config: {
  */
 export async function catalogFor(
   provider: ProviderClient,
-  config: ProviderConfig,
+  config: ProviderConfig | ProviderAdapterConfig,
 ): Promise<readonly Model[]> {
   try {
     const models = await provider.models();

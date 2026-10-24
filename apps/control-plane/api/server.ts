@@ -46,7 +46,15 @@ import {
 } from "../../../packages/ledger/src/feed.ts";
 import type { PublicKeyLookup } from "../../../packages/ledger/src/verify.ts";
 import { Workbench } from "../../../packages/workbench/src/index.ts";
-import { normalizeProviderConfig } from "../../../packages/workbench/src/provider.ts";
+import {
+  normalizeProviderConfig,
+  type Model,
+} from "../../../packages/workbench/src/provider.ts";
+import { assertProviderDescriptorInManifest } from "../../../packages/workbench/src/provider-catalog.ts";
+import type {
+  ProviderAdapterConfig,
+  ProviderAuthProfile,
+} from "../../../packages/workbench/src/provider-adapters/types.ts";
 import { authorizedRemote } from "./auth.ts";
 import { localApprovals } from "./local-approvals.ts";
 import { desktopSetup, importDesktopProvider } from "./desktop-setup.ts";
@@ -871,20 +879,37 @@ async function route(
         return sendJson(response, 200, { ok: true });
       }
       if (request.method === "POST") {
-        const body = (await readJsonBody(request)) as {
-          baseUrl?: string;
-          apiKey?: string;
-          kind?: string;
-        } | null;
-        const { baseUrl, apiKey, kind } = body ?? {};
-        if (typeof baseUrl !== "string" || typeof apiKey !== "string")
+        const body = await readJsonBody(request);
+        if (!jsonObject(body))
           return sendJson(response, 400, {
             error: "invalid_provider",
-            message: "baseUrl and apiKey must be strings",
+            message: "Provider configuration must be an object.",
           });
-        const models = await options.workbench.configure(
-          normalizeProviderConfig({ baseUrl, apiKey, kind }),
-        );
+        const typed =
+          "providerId" in body ||
+          "transport" in body ||
+          "endpoint" in body ||
+          "auth" in body;
+        let models: readonly Model[];
+        if (typed) {
+          models = await options.workbench.configure(
+            parseTypedProviderConfig(body),
+          );
+        } else {
+          const { baseUrl, apiKey, kind } = body;
+          if (
+            typeof baseUrl !== "string" ||
+            typeof apiKey !== "string" ||
+            (kind !== undefined && typeof kind !== "string")
+          )
+            return sendJson(response, 400, {
+              error: "invalid_provider",
+              message: "baseUrl, apiKey, and optional kind must be strings",
+            });
+          models = await options.workbench.configure(
+            normalizeProviderConfig({ baseUrl, apiKey, kind }),
+          );
+        }
         return sendJson(response, 200, {
           connected: true,
           models,
@@ -1784,6 +1809,88 @@ function sendRequestError(
     return;
   }
   sendOnce(response, status, body);
+}
+
+function jsonObject(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function exactKeys(
+  value: Record<string, unknown>,
+  keys: readonly string[],
+): boolean {
+  return (
+    Object.keys(value).length === keys.length &&
+    keys.every((key) => Object.hasOwn(value, key))
+  );
+}
+
+function nonEmptyString(value: unknown): value is string {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+function parseTypedProviderConfig(
+  body: Record<string, unknown>,
+): ProviderAdapterConfig {
+  if (
+    !exactKeys(body, ["providerId", "transport", "endpoint", "model", "auth"]) ||
+    !nonEmptyString(body.providerId) ||
+    !nonEmptyString(body.transport) ||
+    !nonEmptyString(body.endpoint) ||
+    !nonEmptyString(body.model) ||
+    !jsonObject(body.auth) ||
+    typeof body.auth.kind !== "string"
+  )
+    throw new Error("Typed provider descriptor is incomplete or malformed.");
+
+  let auth: ProviderAuthProfile;
+  if (body.auth.kind === "api-key") {
+    if (
+      !exactKeys(body.auth, ["kind", "apiKey"]) ||
+      !nonEmptyString(body.auth.apiKey)
+    )
+      throw new Error("API-key authentication is incomplete or malformed.");
+    auth = { kind: "api-key", apiKey: body.auth.apiKey };
+  } else if (body.auth.kind === "aws-credentials") {
+    if (
+      !(exactKeys(body.auth, ["kind", "accessKeyId", "secretAccessKey"]) ||
+        exactKeys(body.auth, [
+          "kind",
+          "accessKeyId",
+          "secretAccessKey",
+          "sessionToken",
+        ])) ||
+      !nonEmptyString(body.auth.accessKeyId) ||
+      !nonEmptyString(body.auth.secretAccessKey) ||
+      (Object.hasOwn(body.auth, "sessionToken") &&
+        !nonEmptyString(body.auth.sessionToken))
+    )
+      throw new Error("AWS credentials are incomplete or malformed.");
+    auth = {
+      kind: "aws-credentials",
+      accessKeyId: body.auth.accessKeyId,
+      secretAccessKey: body.auth.secretAccessKey,
+      ...(typeof body.auth.sessionToken === "string"
+        ? { sessionToken: body.auth.sessionToken }
+        : {}),
+    };
+  } else if (body.auth.kind === "none") {
+    if (!exactKeys(body.auth, ["kind"]))
+      throw new Error("Unauthenticated provider descriptor is malformed.");
+    auth = { kind: "none" };
+  } else {
+    throw new Error("Provider authentication kind is not supported.");
+  }
+
+  const config: ProviderAdapterConfig = {
+    providerId: body.providerId,
+    transport: body.transport as ProviderAdapterConfig["transport"],
+    baseUrl: body.endpoint,
+    model: body.model,
+    auth,
+  };
+  assertProviderDescriptorInManifest(config);
+  return config;
 }
 
 async function readJsonBody(request: IncomingMessage): Promise<unknown> {
