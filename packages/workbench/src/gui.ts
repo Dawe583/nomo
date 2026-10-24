@@ -476,6 +476,7 @@ export function connectorInput(
     name?: string;
     token?: string;
     policy?: string;
+    connectionless?: boolean;
     facts?: Record<string, boolean | string>;
     mapping?: Record<string, string>;
   } = { url: String(previous.url ?? "") };
@@ -490,6 +491,12 @@ export function connectorInput(
       result[key] =
         key === "token" && value === "" ? String(previous.token ?? "") : value;
     }
+  }
+  const connectionless = body.connectionless ?? previous.connectionless;
+  if (connectionless !== undefined) {
+    if (typeof connectionless !== "boolean")
+      throw new Error("Invalid connector connectionless.");
+    result.connectionless = connectionless;
   }
   for (const key of ["facts", "mapping"] as const) {
     const value = body[key] ?? previous[key] ?? {};

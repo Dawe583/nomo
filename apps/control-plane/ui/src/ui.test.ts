@@ -6,6 +6,7 @@ const main = readFileSync(new URL("./main.tsx", import.meta.url), "utf8");
 const ui = readFileSync(new URL("./ui.tsx", import.meta.url), "utf8");
 const pages = readFileSync(new URL("./pages.tsx", import.meta.url), "utf8");
 
+
 test("a run stop shows server acknowledgement, never a local success guess", () => {
   // The dialog gates the ack line on the server response: "acknowledged" only
   // after /stop returns ack: acknowledged, and the scope note names this

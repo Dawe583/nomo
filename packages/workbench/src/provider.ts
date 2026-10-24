@@ -1,5 +1,6 @@
-import { setTimeout as delay } from "node:timers/promises";
-import { FREE_MODEL_BY_ORIGIN } from "./provider-defaults.ts";
+import type { ProviderClient } from "./provider-adapters/types.ts";
+import { OpenAICompletionsAdapter } from "./provider-adapters/openai-completions.ts";
+import { AnthropicMessagesAdapter } from "./provider-adapters/anthropic-messages.ts";
 import {
   defaultHarnessSettings,
   type HarnessSettings,
@@ -26,6 +27,8 @@ export type ProviderConfig = {
   readonly baseUrl: string;
   readonly apiKey: string;
   readonly kind?: ProviderKind;
+  readonly providerId?: string;
+  readonly api?: string;
   /** A model to use when the provider cannot list one.
    *
    * Some OpenAI-compatible endpoints serve chat completions and answer the
@@ -38,12 +41,16 @@ export function normalizeProviderConfig(config: {
   readonly baseUrl: string;
   readonly apiKey: string;
   readonly kind?: string;
+  readonly providerId?: string;
+  readonly api?: string;
   readonly model?: string;
 }): ProviderConfig {
   return {
     baseUrl: config.baseUrl,
     apiKey: config.apiKey,
     kind: config.kind === "anthropic" ? "anthropic" : "compatible",
+    ...(config.providerId ? { providerId: config.providerId } : {}),
+    ...(config.api ? { api: config.api } : {}),
     ...(config.model ? { model: config.model } : {}),
   };
 }
@@ -72,7 +79,7 @@ export function normalizeProviderConfig(config: {
  * intentions while changing nothing an operator can act on, so it stays.
  */
 export async function catalogFor(
-  provider: CompatibleProvider,
+  provider: ProviderClient,
   config: ProviderConfig,
 ): Promise<readonly Model[]> {
   try {
@@ -95,6 +102,7 @@ export type Model = {
   readonly inputPrice?: string;
   readonly outputPrice?: string;
   readonly capabilities?: readonly string[];
+  readonly maxTokens?: number;
 };
 export type ModelMessage = {
   readonly role: "system" | "user" | "assistant" | "tool";
@@ -109,6 +117,7 @@ export type ToolCall = {
 };
 export type ModelReply = {
   readonly message: ModelMessage;
+  readonly response_id?: string;
   readonly usage?: {
     prompt_tokens?: number;
     completion_tokens?: number;
@@ -116,7 +125,7 @@ export type ModelReply = {
   };
 };
 
-export class CompatibleProvider {
+export class CompatibleProvider implements ProviderClient {
   private readonly base: URL;
   private readonly config: ProviderConfig;
   private readonly request: typeof fetch;
@@ -127,6 +136,8 @@ export class CompatibleProvider {
    * patched. A partial merges over the defaults so a caller with no resolved
    * settings still gets NOMO's conservative ones. */
   private readonly resolveSettings: () => HarnessSettings;
+  private readonly completions: OpenAICompletionsAdapter;
+  private readonly anthropic: AnthropicMessagesAdapter;
   constructor(
     config: ProviderConfig,
     request: typeof fetch = fetch,
@@ -165,6 +176,18 @@ export class CompatibleProvider {
       throw new Error(
         "Provider URL cannot contain credentials or query parameters.",
       );
+    this.completions = new OpenAICompletionsAdapter({
+      origin: this.base.origin,
+      primeInferenceUsage: this.config.providerId === "prime-inference",
+      resolveSettings: this.resolveSettings,
+      response: (path, body, signal) => this.response(path, body, signal),
+      decode: response => this.decode(response),
+      streamReply: (response, signal, onDelta) => this.streamReply(response, signal, onDelta),
+    });
+    this.anthropic = new AnthropicMessagesAdapter({
+      send: (body, signal) => this.json("messages", body, signal),
+      resolveSettings: this.resolveSettings,
+    });
   }
   async models(): Promise<readonly Model[]> {
     const body = await this.json("models");
@@ -198,194 +221,8 @@ export class CompatibleProvider {
     onDelta?: (text: string) => void | Promise<void>,
   ): Promise<ModelReply> {
     if (this.config.kind === "anthropic")
-      return this.anthropic(model, messages, tools, signal);
-    signal = AbortSignal.any([signal, AbortSignal.timeout(60000)]);
-    const settings = this.resolveSettings();
-    const body = {
-      model,
-      messages,
-      ...(tools.length ? { tools } : {}),
-      max_tokens: settings.maxOutputTokens,
-      stream: !!onDelta,
-      ...(onDelta ? { stream_options: { include_usage: true } } : {}),
-    };
-    let response: Response;
-    for (let attempt = 0; ; attempt++) {
-      try {
-        response = await this.response("chat/completions", body, signal);
-        break;
-      } catch (error) {
-        // Only retry explicit transient rejection of the free model this origin
-        // serves, before any reply or tool dispatch. Nothing about a model the
-        // operator typed makes it free, so an unknown model is never retried.
-        // Never substitute a paid model or replay a stream.
-        if (
-          FREE_MODEL_BY_ORIGIN[this.base.origin] !== model ||
-          attempt >= settings.retryAttempts - 1 ||
-          signal.aborted ||
-          !(error instanceof ProviderRequestError) ||
-          ![429, 502, 503, 504].includes(error.status) ||
-          (error.retryAfter ?? 0) > 5
-        )
-          throw error;
-        await delay(
-          Math.min(
-            (error.retryAfter ?? attempt + 1) * settings.retryBaseDelayMs,
-            settings.retryMaxDelayMs,
-          ),
-          undefined,
-          { signal },
-        );
-      }
-    }
-    if (response.headers.get("content-type")?.includes("text/event-stream"))
-      return this.streamReply(response, signal, onDelta);
-    const decoded = await this.decode(response);
-    const choice = decoded.choices?.[0];
-    if (
-      choice?.finish_reason === "length" ||
-      choice?.finish_reason === "content_filter"
-    )
-      throw new Error(
-        "Provider response was truncated. No tools were executed.",
-      );
-    const message = choice?.message;
-    if (
-      message?.role !== "assistant" ||
-      (message.content !== null &&
-        typeof message.content !== "string" &&
-        message.content !== undefined)
-    )
-      throw new Error("Provider returned an invalid response.");
-    if (
-      message.tool_calls !== undefined &&
-      (!Array.isArray(message.tool_calls) ||
-        !message.tool_calls.every(
-          (call: ToolCall) =>
-            typeof call.id === "string" &&
-            call.type === "function" &&
-            typeof call.function?.name === "string" &&
-            typeof call.function?.arguments === "string",
-        ))
-    )
-      throw new Error("Provider returned invalid tool calls.");
-    if (!message.content?.trim() && !message.tool_calls?.length)
-      throw new Error("Provider returned no answer. Retry the response.");
-    return {
-      message: {
-        role: "assistant",
-        content: message.content ?? null,
-        ...(message.tool_calls ? { tool_calls: message.tool_calls } : {}),
-      },
-      usage: decoded.usage,
-    };
-  }
-  private async anthropic(
-    model: string,
-    messages: readonly ModelMessage[],
-    tools: readonly unknown[],
-    signal: AbortSignal,
-  ): Promise<ModelReply> {
-    const converted: Array<{ role: string; content: unknown }> = [];
-    for (const m of messages.filter((item) => item.role !== "system")) {
-      if (m.role === "tool") {
-        const block = {
-          type: "tool_result",
-          tool_use_id: m.tool_call_id,
-          content: m.content ?? "",
-        };
-        const previous = converted.at(-1);
-        if (previous?.role === "user" && Array.isArray(previous.content))
-          previous.content.push(block);
-        else converted.push({ role: "user", content: [block] });
-      } else if (m.tool_calls?.length)
-        converted.push({
-          role: "assistant",
-          content: [
-            ...(m.content ? [{ type: "text", text: m.content }] : []),
-            ...m.tool_calls.map((call) => ({
-              type: "tool_use",
-              id: call.id,
-              name: call.function.name,
-              input: JSON.parse(call.function.arguments) as unknown,
-            })),
-          ],
-        });
-      else converted.push({ role: m.role, content: m.content ?? "" });
-    }
-    const body = await this.json(
-      "messages",
-      {
-        model,
-        max_tokens: this.resolveSettings().maxOutputTokens,
-        system: messages
-          .filter((m) => m.role === "system")
-          .map((m) => m.content)
-          .join("\n"),
-        messages: converted,
-        ...(tools.length
-          ? {
-              tools: tools.map((value) => {
-                const tool = value as {
-                  function: {
-                    name: string;
-                    description: string;
-                    parameters: unknown;
-                  };
-                };
-                return {
-                  name: tool.function.name,
-                  description: tool.function.description,
-                  input_schema: tool.function.parameters,
-                };
-              }),
-            }
-          : {}),
-      },
-      signal,
-    );
-    const result = body as unknown as {
-      content?: Array<{
-        type: string;
-        text?: string;
-        id?: string;
-        name?: string;
-        input?: unknown;
-      }>;
-      usage?: { input_tokens?: number; output_tokens?: number };
-    };
-    if (!Array.isArray(result.content))
-      throw new Error("Provider returned an invalid Anthropic response.");
-    const calls: ToolCall[] = result.content
-      .filter((b) => b.type === "tool_use")
-      .map((b) => {
-        if (!b.id || !b.name || !b.input || typeof b.input !== "object")
-          throw new Error("Invalid Anthropic tool call.");
-        return {
-          id: b.id,
-          type: "function",
-          function: { name: b.name, arguments: JSON.stringify(b.input) },
-        };
-      });
-    return {
-      message: {
-        role: "assistant",
-        content: result.content
-          .filter((b) => b.type === "text")
-          .map((b) => b.text ?? "")
-          .join("\n"),
-        ...(calls.length ? { tool_calls: calls } : {}),
-      },
-      usage: result.usage
-        ? {
-            prompt_tokens: result.usage.input_tokens,
-            completion_tokens: result.usage.output_tokens,
-            total_tokens:
-              (result.usage.input_tokens ?? 0) +
-              (result.usage.output_tokens ?? 0),
-          }
-        : undefined,
-    };
+      return this.anthropic.complete(model, messages, tools, signal);
+    return this.completions.complete(model, messages, tools, signal, onDelta);
   }
   redact(text: string): string {
     return this.config.apiKey

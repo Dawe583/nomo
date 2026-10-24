@@ -248,6 +248,7 @@ export function Settings({
             <label>
               {t("Poskytovatel", "Provider")}
               <select
+                aria-describedby="provider-availability"
                 value={
                   provider.data.presets.find((p: Row) => p.baseUrl === baseUrl)
                     ?.id ?? (baseUrl ? "custom" : "")
@@ -271,9 +272,35 @@ export function Settings({
                     {p.name}
                   </option>
                 ))}
+                {!!provider.data?.unavailableProviders?.length && (
+                  <optgroup label={t("Poskytovatelé nedostupní", "Unavailable providers")}>
+                    {provider.data.unavailableProviders.map((provider: Row) => (
+                      <option
+                        key={`${provider.source}:${provider.apiId}`}
+                        value={`unavailable:${provider.source}:${provider.apiId}`}
+                        disabled={provider.disabled}
+                      >
+                        {provider.name} — {provider.source}
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
                 <option value="custom">{t("Vlastní API", "Custom API")}</option>
               </select>
             </label>
+          )}
+          {!!provider.data?.unavailableProviders?.length && (
+            <ul
+              id="provider-availability"
+              aria-label={t("Dostupnost API poskytovatelů", "Provider API availability")}
+              className="muted"
+            >
+              {provider.data.unavailableProviders.map((provider: Row) => (
+                <li key={`${provider.source}:${provider.apiId}`}>
+                  <strong>{provider.name}</strong>: {provider.reason} ({provider.apiId}, {provider.source}, {provider.status})
+                </li>
+              ))}
+            </ul>
           )}
           <label>
             {t("Adresa API", "API URL")}

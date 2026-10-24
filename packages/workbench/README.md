@@ -18,6 +18,166 @@ run without a cloud key on loopback endpoints. Direct `openai.com` provider URLs
 are rejected. Model provider credentials and MCP OAuth are separate flows.
 Prompts and tool results are sent to the selected model provider.
 
+The typed `mistral-conversations` transport is Prime's stateless Mistral chat
+completion API (`POST /v1/chat/completions` with SSE), not the separate
+stateful Beta Conversations API; it uses the official
+[Mistral chat](https://docs.mistral.ai/api/endpoint/chat) and
+[models](https://docs.mistral.ai/api/endpoint/models) endpoints. The typed
+`ollama-chat` transport uses Ollama's native `POST /api/chat` NDJSON stream and
+`GET /api/tags` catalog over loopback HTTP, with no auth header or cloud key;
+the native contracts are documented at
+[Ollama chat](https://docs.ollama.com/api/chat) and
+[Ollama tags](https://docs.ollama.com/api/tags). Ollama tags are returned as
+local model identifiers without claiming a chat capability.
+
+## Prime Inference
+
+Prime Inference uses the existing `openai-completions` wire, not a separate
+transport. For the explicit `providerId: "prime-inference"` only, Workbench
+requires an API key and binds requests to the official HTTPS endpoint:
+`GET https://api.pinference.ai/api/v1/models` and
+`POST https://api.pinference.ai/api/v1/chat/completions`, with
+`Authorization: Bearer <API key>`.
+
+Completion is gated to model IDs returned by that key's successful live catalog
+request. HTTP 404, empty or malformed catalogs, and IDs absent from the latest
+catalog fail closed; additional entitled IDs remain runtime-only and are not
+added to the shared manifest. The Prime usage extension is
+`{"usage":{"include":true}}`. These catalog and usage rules do not apply to
+custom compatible endpoints without that explicit provider identity. Workbench
+does not read a shell/CLI key or send `X-Prime-Team-ID`.
+
+Official contracts: [Prime chat completions](https://docs.primeintellect.ai/api-reference/inference-chat-completions)
+and [Prime models](https://docs.primeintellect.ai/api-reference/inference-models).
+
+## OpenAI Responses
+
+The explicit `providerId: "openai"` and `transport: "openai-responses"`
+descriptor uses `POST https://api.openai.com/v1/responses` with a Bearer API
+key; custom hosts are rejected. This is a separate wire from Chat Completions.
+SSE function-call argument chunks are finalized in output order from the
+completed response; its `response_id` and usage are returned to the caller.
+The text-only `onDelta` callback redacts API-key matches across SSE delta
+boundaries; tool arguments and usage remain unchanged.
+Incomplete, truncated, malformed, and failed streams are rejected; the reader stops and is
+cancelled after the terminal completion event. OpenAI API keys and Responses
+contracts are documented in the official
+[API key guidance](https://developers.openai.com/api/docs/guides/production-best-practices),
+[create response reference](https://developers.openai.com/api/reference/resources/responses/methods/create),
+[streaming guide](https://developers.openai.com/api/docs/guides/streaming-responses),
+and [function-call streaming guide](https://developers.openai.com/api/docs/guides/function-calling#streaming).
+
+## OpenAI Codex Responses — blocked
+
+The pinned OMP 18.6.2 and Prime 0.10.1 implementations identify this API as
+ChatGPT-account Codex, not the public OpenAI Responses API: both target
+`https://chatgpt.com/backend-api/codex/responses` with a Bearer access token
+and account-routing metadata. OMP implements browser and device-code login;
+Prime implements a browser/callback login and stores the resulting OAuth
+credential. These are facts about those implementations, not a public
+third-party OAuth contract.
+
+OpenAI's [Codex authentication docs](https://developers.openai.com/codex/auth/)
+describe ChatGPT sign-in for the Codex desktop app, CLI, and IDE extension,
+with browser credentials returned to Codex; the
+[app-server](https://learn.chatgpt.com/docs/app-server) is the documented
+rich-client integration. Workbench has no provider OAuth lifecycle or
+Codex app-server bridge. **Blocker inference:** without that consent,
+credential storage/refresh/revocation path and a supported Codex request
+endpoint, this harness cannot safely implement the account flow. An API key
+is not an OAuth substitute. `openai-codex` and `openai-codex-responses` are
+therefore fail-closed; generic Completions/Responses configurations cannot
+target the Codex backend. The provider-availability UI shows the manifest
+reason; no Codex adapter or login is implemented.
+
+## Azure OpenAI Responses
+
+The typed `azure-openai-responses` transport accepts the pinned OMP
+`providerId: "azure"` and Prime `providerId: "azure-openai-responses"` identities.
+The current Azure Responses v1 route is `POST https://{resource}.openai.azure.com/openai/v1/responses?api-version=v1`.
+The configured `baseUrl` may be the Azure resource root or its `/openai/v1`
+base; `model` is the Azure deployment name. `azureOptions.apiVersion` accepts
+only `v1` or `preview` and defaults to `v1`. The adapter sends an API key only
+as `api-key`, rejects other hosts/paths and redirects, and does not implement
+Microsoft Entra authentication. The matching catalog request is
+`GET /openai/v1/models` with the same API-version and key header.
+
+This follows Microsoft's current v1 REST contract and OMP 18.6.2 Azure SDK
+request shape; the pinned Prime 0.10.1 source constructs a
+`/deployments/{name}/responses` path, which differs from Microsoft's current
+documented v1 route and is not emitted by this adapter. Official references:
+[Responses API](https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/responses),
+[Responses REST reference](https://learn.microsoft.com/en-us/rest/api/microsoft-foundry/azureopenai/responses?view=rest-microsoft-foundry-v1-preview),
+[models list](https://learn.microsoft.com/en-us/rest/api/microsoft-foundry/azureopenai/models?view=rest-microsoft-foundry-v1-preview),
+[endpoint and deployment routing](https://learn.microsoft.com/en-us/azure/foundry/foundry-models/concepts/endpoints),
+and [API version lifecycle](https://learn.microsoft.com/en-us/azure/foundry/openai/api-version-lifecycle).
+
+Gateway adapters keep each wire format and credential header bound to its
+official HTTPS host. OpenRouter uses Chat Completions for OMP's `openrouter`
+transport and Prime's `openai-completions` row. API-key auth is supported;
+OAuth-code login is not implemented. OpenRouter and Vercel require a successful
+`/models` request before returning pinned manifest models; Cloudflare returns
+its pinned manifest list without a model-discovery request. Model metadata
+preserves supported input, reasoning, tools, context-window and max-output-token
+values. Optional provider routing and attribution values are sent only to
+OpenRouter. See the official
+[OpenRouter API](https://openrouter.ai/docs/api_reference/overview) and
+[provider routing](https://openrouter.ai/docs/guides/routing/provider-selection)
+contracts.
+
+Cloudflare AI Gateway accepts explicit `/anthropic`, `/compat`, or `/openai`
+routes with resolved account and gateway IDs. Its API-key profile represents
+the gateway token only; requests send it only as `cf-aig-authorization` and do
+not send an upstream provider key. This supports the BYOK path where provider
+keys are stored in the gateway; separate upstream and gateway credentials are
+not represented. The compatibility route preserves official `provider/model`
+IDs. Vercel supports the pinned Anthropic Messages route with API-key auth and
+optional attribution headers; OIDC is not implemented. Chat Completions
+provider-routing options are not applied to Vercel's Anthropic route. Official
+references: [Cloudflare Anthropic](https://developers.cloudflare.com/ai-gateway/usage/providers/anthropic/),
+[Cloudflare compatibility](https://developers.cloudflare.com/ai-gateway/usage/chat-completion/),
+and [Vercel Anthropic Messages](https://vercel.com/docs/ai-gateway/sdks-and-apis/anthropic-messages-api).
+
+## Pinned OMP agent APIs not implemented
+
+The generated `apiTransports` table records `source`, `apiId`, `status`, `reason`,
+and source evidence for every OMP 18.6.2 and Prime 0.10.1 API roster entry;
+catalog model rows do not imply adapter support. OMP's Cursor, Factory Droid,
+GitLab Duo Agent, and Devin model rows use distinct agent protocols, not generic
+chat APIs. Their typed transport IDs fail closed with provider-specific reasons;
+the factory never falls back to OpenAI Chat Completions or reads local CLI
+credentials.
+
+- `cursor-agent` uses Cursor-specific Connect/protobuf Run and RunSSE calls,
+  plus Cursor OAuth. Cursor's public CLI API-key docs do not establish
+  compatibility with that private wire: [Cursor CLI authentication](https://cursor.com/docs/cli/reference/authentication).
+- `factory-droid-agent` uses a WorkOS access token and Factory identity headers;
+  the pinned OMP source says Factory API keys are rejected by its LLM proxy.
+  The official [Droid CLI reference](https://docs.factory.ai/reference/cli-reference)
+  describes CLI authentication, not this proxy contract.
+- `gitlab-duo-agent` creates and streams GitLab Duo workflows over REST and
+  WebSocket rather than serving a model completion. Official docs describe the
+  [multi-token authentication chain](https://docs.gitlab.com/user/duo_agent_platform/authentication/)
+  and [workflow API](https://docs.gitlab.com/api/duo_agent_platform_flows/).
+- `devin-agent` uses the Devin Cascade Connect/protobuf service and its OAuth
+  session-token exchange. Devin's documented [API credentials](https://docs.devin.ai/api-reference/authentication)
+  apply to its separate REST API, not this transport.
+- `apple-foundation-models` requires OMP's native `pi-natives` bridge and
+  runtime availability checks. Workbench does not link that bridge; upstream
+  also gates availability on a built bridge, macOS 27+, and an
+  Apple-Intelligence-eligible device. See Apple's
+  [Foundation Models framework](https://developer.apple.com/documentation/foundationmodels).
+The Workbench provider-state API returns unavailable API rows to the existing
+Settings screen, which exposes disabled choices and an accessible status/reason
+list. Apple Foundation Models is marked `platform-unavailable` with its missing
+native bridge and upstream macOS/device requirements.
+
+Pinned source review used OMP 18.6.2 `packages/ai/src/providers/{cursor.ts,
+factory-droid.ts,gitlab-duo-workflow.ts,devin.ts,apple-foundation-models.ts}`
+and `packages/catalog/src/compat/rules/auth/*.kdl`. Prime 0.10.1 has none of
+these five API IDs. No provider requests or local credential reads are part of
+this support boundary.
+
 ## Connectors and operator consent
 
 An external MCP server is added, edited, loaded and removed without a single
@@ -35,6 +195,13 @@ with an empty catalog, which leaves an existing connector inert until the
 operator probes and confirms it again. That is deliberate rather than
 convenient: a server nobody confirmed is one whose tools nobody has read.
 
+Local proxy connectors may set `connectionless: true` and provide a
+process-local `tokenProvider`. The callback supplies a fresh token for each MCP
+request; it is never serialized or exposed in connection state. A connector
+whose callback is unavailable after restart loads staged with an empty catalog
+and must be probed and confirmed again. A static `token` cannot be combined
+with `tokenProvider`.
+
 `policyPreview(id)` answers what a connector's policy would do to every tool it
 lists: the registry classification, the mapped registry id, the decision, the
 rule that produced it, and the blast radius, which stays `unknown` until a
@@ -42,6 +209,10 @@ measured probe produces one. It sends nothing and writes nothing. A tool the
 registry cannot classify is shown as denied, which is what a conversation does
 with it, and a tool the provider invents is refused before the connector is
 contacted at all.
+
+A provider that returns an exact configured connector mapping instead of the
+positional function name is accepted only when one confirmed catalog entry
+matches. Duplicate mappings remain ambiguous and fail closed.
 
 
 Provider profiles and conversations are stored in the encrypted local workspace

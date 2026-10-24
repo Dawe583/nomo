@@ -1,0 +1,177 @@
+import type { Model, ModelMessage, ModelReply } from "../provider.ts";
+
+/**
+ * Pinned provider APIs not implemented by Workbench. These names remain
+ * typeable so callers receive a specific fail-closed explanation, not a
+ * generic unknown-transport error or a protocol fallback.
+ */
+export const IMPLEMENTED_PROVIDER_TRANSPORTS = [
+  "openai-completions",
+  "openai-responses",
+  "azure-openai-responses",
+  "anthropic-messages",
+  "google-generative-ai",
+  "bedrock-converse-stream",
+  "mistral-conversations",
+  "ollama-chat",
+  "openrouter",
+] as const;
+
+export type ImplementedProviderTransport = typeof IMPLEMENTED_PROVIDER_TRANSPORTS[number];
+export type ProviderApiAvailability = "implemented" | "blocked" | "platform-unavailable";
+
+/** Source-backed provider APIs that must not fall through to a different wire. */
+export const PROVIDER_API_BLOCKERS = {
+  "google-gemini-cli": {
+    providerId: "google-gemini-cli",
+    name: "Google Gemini CLI / Cloud Code Assist",
+    status: "blocked",
+    reason: "Google Gemini CLI Cloud Code OAuth/SSE is a first-party CLI path with no documented third-party Cloud Code contract; Workbench has no OAuth lifecycle. Free/AI Pro/Ultra consumer Gemini CLI service access retired on June 18, 2026; enterprise/API-key access remains a first-party CLI path. Do not read or reuse CLI credentials; Google Generative AI API-key auth remains separate.",
+    evidence: "OMP 18.6.2 packages/ai/src/providers/google-gemini-cli.ts:315,507-515,584-595,934-944; packages/ai/src/registry/oauth/google-gemini-cli.ts:12,61-79,101-130,181-230,234-263. Prime 0.10.1 has no google-gemini-cli API ID; its Google provider is google-generative-ai (crates/pa-ai/src/providers/google.rs:1-3,240-263). Official https://geminicli.com/docs/get-started/authentication/ and https://developers.googleblog.com/an-important-update-transitioning-gemini-cli-to-antigravity-cli/.",
+  },
+  "google-vertex": {
+    providerId: "google-vertex",
+    name: "Google Vertex GenerateContent",
+    status: "blocked",
+    reason: "Workbench's persisted provider configuration has no explicit Vertex mode, project, or location fields. Express mode is global-only; standard Vertex URLs bind project and location. Until that configuration can be safely persisted and exposed, this API fails closed rather than falling back to Google Generative AI or generic chat. ADC is unsupported; never read gcloud credentials.",
+    evidence: "Workbench `packages/workbench/src/provider.ts:26-55`, `apps/control-plane/api/server.ts:873-887`, and `apps/control-plane/ui/src/settings.tsx:231-236` expose no mode/project/location fields. OMP 18.6.2 `packages/ai/src/providers/google-vertex.ts:14-17,66-98` and `packages/catalog/src/compat/rules/auth/google-vertex.kdl:1-5`; Prime 0.10.1 `crates/pa-ai/src/providers/google_vertex.rs:37-45,59-93,296-337`. Official https://docs.cloud.google.com/gemini-enterprise-agent-platform/reference/express-mode/api-reference, https://docs.cloud.google.com/gemini-enterprise-agent-platform/reference/rest/v1/projects.locations.endpoints/streamGenerateContent, https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/start/api-keys, https://docs.cloud.google.com/gemini-enterprise-agent-platform/resources/locations, and https://docs.cloud.google.com/gemini-enterprise-agent-platform/reference/rest/v1/projects.locations.publishers.models.",
+  },
+  "openai-codex-responses": {
+    providerId: "openai-codex",
+    name: "OpenAI Codex Responses",
+    status: "blocked",
+    reason: "Codex Responses requires ChatGPT account sign-in; the private backend route and Workbench OAuth lifecycle/app-server bridge are unavailable. API keys are not OAuth credentials.",
+    evidence: "OMP 18.6.2 packages/ai/src/registry/oauth/openai-codex.ts:130-151,207-297; packages/ai/src/providers/openai-codex-responses.ts:1431-1439,4813-4820,4915-4921; Prime 0.10.1 crates/pa-ai/src/oauth/openai_codex.rs:69-95; crates/pa-ai/src/providers/openai_codex_responses/request.rs:11-27,66-91; official https://developers.openai.com/codex/auth/ and https://learn.chatgpt.com/docs/app-server.",
+  },
+  "cursor-agent": {
+    providerId: "cursor",
+    name: "Cursor Agent",
+    status: "blocked",
+    reason: "Cursor Connect/protobuf agent transport and OAuth lifecycle are not implemented.",
+    evidence: "OMP 18.6.2 packages/ai/src/providers/cursor.ts:1165-1189,1202-1225; packages/ai/src/registry/oauth/cursor.ts:5-7,21-34,37-64,89-149.",
+  },
+  "factory-droid-agent": {
+    providerId: "factory-droid",
+    name: "Factory Droid",
+    status: "blocked",
+    reason: "Factory LLM proxy requires WorkOS device-code auth and identity headers; Factory API keys are rejected.",
+    evidence: "OMP 18.6.2 packages/ai/src/providers/factory-droid.ts:31-56; packages/catalog/src/compat/rules/auth/factory-droid.kdl:1-27.",
+  },
+  "gitlab-duo-agent": {
+    providerId: "gitlab-duo-agent",
+    name: "GitLab Duo Agent",
+    status: "blocked",
+    reason: "GitLab Duo Workflow protocol and its remote workflow setup are not implemented.",
+    evidence: "OMP 18.6.2 packages/ai/src/providers/gitlab-duo-workflow.ts:482-527,979-982; packages/ai/src/stream.ts:1015-1023; packages/catalog/src/compat/rules/auth/gitlab-duo-agent.kdl:1-22.",
+  },
+  "devin-agent": {
+    providerId: "devin",
+    name: "Devin Agent",
+    status: "blocked",
+    reason: "Devin Cascade Connect/protobuf transport and OAuth session-token exchange are not implemented.",
+    evidence: "OMP 18.6.2 packages/ai/src/providers/devin.ts:220-265,544-595; packages/ai/src/registry/oauth/devin.ts; packages/catalog/src/wire/devin.ts:8-30,47-68.",
+  },
+  "apple-foundation-models": {
+    providerId: "apple",
+    name: "Apple Foundation Models",
+    status: "platform-unavailable",
+    reason: "Apple Foundation Models native pi-natives bridge is not linked in Workbench; upstream requires a built bridge on macOS 27+ and an Apple Intelligence-eligible device.",
+    evidence: "OMP 18.6.2 packages/ai/src/providers/apple-foundation-models.ts:1-13; packages/coding-agent/src/config/model-discovery.ts:449-470; crates/pi-natives/src/applefm/mod.rs:75-109.",
+  },
+} as const;
+
+export type BlockedProviderApi = keyof typeof PROVIDER_API_BLOCKERS;
+
+export const BLOCKED_PROVIDER_APIS_BY_PROVIDER: Readonly<Record<string, BlockedProviderApi>> = {
+  "google-gemini-cli": "google-gemini-cli",
+  "google-vertex": "google-vertex",
+  "openai-codex": "openai-codex-responses",
+  cursor: "cursor-agent",
+  "factory-droid": "factory-droid-agent",
+  "gitlab-duo-agent": "gitlab-duo-agent",
+  devin: "devin-agent",
+  apple: "apple-foundation-models",
+};
+
+export type ProviderTransport = ImplementedProviderTransport | BlockedProviderApi;
+
+export type OpenRouterSort =
+  | string
+  | { readonly by?: string; readonly partition?: string };
+export type OpenRouterThreshold =
+  | number
+  | { readonly p50?: number; readonly p75?: number; readonly p90?: number; readonly p99?: number };
+export type OpenRouterMaxPrice = {
+  readonly prompt?: number | string;
+  readonly completion?: number | string;
+  readonly image?: number | string;
+  readonly audio?: number | string;
+  readonly request?: number | string;
+};
+export type OpenRouterProviderPreferences = {
+  readonly order?: readonly string[];
+  readonly allow_fallbacks?: boolean;
+  readonly require_parameters?: boolean;
+  readonly data_collection?: "allow" | "deny";
+  readonly zdr?: boolean;
+  readonly enforce_distillable_text?: boolean;
+  readonly only?: readonly string[];
+  readonly ignore?: readonly string[];
+  readonly quantizations?: readonly string[];
+  readonly sort?: OpenRouterSort;
+  readonly preferred_min_throughput?: OpenRouterThreshold;
+  readonly preferred_max_latency?: OpenRouterThreshold;
+  readonly max_price?: OpenRouterMaxPrice;
+};
+export type ProviderGatewayOptions = {
+  readonly openrouter?: {
+    readonly referer?: string;
+    readonly title?: string;
+    readonly categories?: readonly string[];
+    readonly provider?: OpenRouterProviderPreferences;
+  };
+  readonly vercel?: {
+    readonly referer?: string;
+    readonly title?: string;
+  };
+};
+export type ProviderAzureOptions = {
+  readonly apiVersion?: "v1" | "preview";
+};
+
+export type ProviderAuthProfile =
+  | {
+      readonly kind: "api-key";
+      readonly apiKey: string;
+    }
+  | {
+      readonly kind: "aws-credentials";
+      readonly accessKeyId: string;
+      readonly secretAccessKey: string;
+      readonly sessionToken?: string;
+    }
+  | {
+      readonly kind: "none";
+    };
+export type ProviderAdapterConfig = {
+  readonly providerId: string;
+  readonly transport: ProviderTransport;
+  readonly baseUrl: string;
+  readonly auth: ProviderAuthProfile;
+  readonly model?: string;
+  readonly gatewayOptions?: ProviderGatewayOptions;
+  readonly azureOptions?: ProviderAzureOptions;
+};
+
+
+export interface ProviderClient {
+  models(): Promise<readonly Model[]>;
+  complete(
+    model: string,
+    messages: readonly ModelMessage[],
+    tools: readonly unknown[],
+    signal: AbortSignal,
+    onDelta?: (text: string) => void | Promise<void>,
+  ): Promise<ModelReply>;
+  redact(text: string): string;
+}

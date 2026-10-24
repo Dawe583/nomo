@@ -17,6 +17,8 @@ import {
   type Json,
 } from "../../runtime/src/index.ts";
 import { NVIDIA_URL, QWEN_URL, PROVIDER_PRESETS } from "./provider-defaults.ts";
+import { PROVIDER_MODEL_MANIFEST } from "./provider-catalog.ts";
+
 import {
   documentView,
   sessionPatch,
@@ -38,6 +40,7 @@ import {
 } from "./gui.ts";
 import {
   validateAgentProfile,
+  AGENT_LIMITS,
   validateHook,
   type AgentProfile,
   type Hook,
@@ -120,6 +123,7 @@ import type { JsonlEntry } from "../../ledger/src/store.ts";
 import { classifyTool } from "../../registry/src/evaluate.ts";
 import {
   DEFAULT_POLICY,
+  DEFAULT_POLICY_PROFILE,
   listPolicyProfiles,
   resolvePolicyProfile,
 } from "./policy-profile.ts";
@@ -192,13 +196,14 @@ import { createNomoClient, type NomoClient } from "../../sdk/src/client.ts";
 import { HoldDeniedError } from "../../sdk/src/errors.ts";
 import {
   catalogFor,
-  CompatibleProvider,
   ProviderRequestError,
   normalizeProviderConfig,
   type Model,
   type ModelMessage,
   type ProviderConfig,
 } from "./provider.ts";
+import { createProviderClient } from "./provider-adapters/factory.ts";
+import type { ProviderClient } from "./provider-adapters/types.ts";
 import type { JsonObject } from "../../proxy/src/rpc.ts";
 
 /** How much of a compaction summary is kept, and how much of the dropped
@@ -474,7 +479,15 @@ type Connector = McpConfig & {
   name: string;
   tools: McpTool[];
   consentState: "staged" | "probed" | "confirmed";
+  runtimeTokenProviderRequired?: true;
 };
+function persistedConnector<T extends McpConfig>(
+  config: T,
+): Omit<T, "tokenProvider"> {
+  const persisted = { ...config };
+  delete persisted.tokenProvider;
+  return persisted;
+}
 type ProjectAccess = {
   readonly root: string;
   readonly rootDigest: string;
@@ -525,7 +538,7 @@ type Session = {
   projectBinding?: ProjectAccess;
   config?: Pick<ProviderConfig, "baseUrl" | "kind">;
   controller: AbortController;
-  provider?: CompatibleProvider;
+  provider?: ProviderClient;
 };
 
 /** Model tools always cross the existing VOID SDK. A provider has no shell or
@@ -624,10 +637,14 @@ export type ManualReviewResult = {
   readonly kind: "refused" | "armed" | "ran" | "declined" | "failed";
   readonly note: string;
 };
+const UNAVAILABLE_PROVIDER_APIS = PROVIDER_MODEL_MANIFEST.apiTransports
+  .filter((api) => api.status !== "implemented")
+  .map((api) => ({ ...api, disabled: true }));
+
 export class Workbench {
   private readonly env: Readonly<NodeJS.ProcessEnv>;
   private readonly permissionMode: PermissionMode;
-  private provider: CompatibleProvider | undefined;
+  private provider: ProviderClient | undefined;
   private providerFailureState: {
     status: number;
     retryAt: string | null;
@@ -837,6 +854,7 @@ export class Workbench {
         queuedPrompt?: string;
         config?: { baseUrl: string; kind?: string };
         connections?: Session["connections"];
+        tools?: McpTool[];
         projectAccessRequired?: boolean;
         projectRootDigest?: string;
         projectSkillDigests?: readonly { readonly id: string; readonly digest: string }[];
@@ -855,7 +873,7 @@ export class Workbench {
         const config = normalizeProviderConfig(value);
         if (value.kind !== config.kind) migrated = true;
         try {
-          new CompatibleProvider(config, fetcher, () => this.harness);
+          createProviderClient(config, fetcher, () => this.harness);
           return config;
         } catch {
           migrated = true;
@@ -919,6 +937,18 @@ export class Workbench {
       // A snapshot written before the consent gate records no consent state.
       // It loads as staged with no catalog: the operator probes it explicitly.
       this.connectors = saved.connectors.map((item): Connector => {
+        if (
+          item.runtimeTokenProviderRequired &&
+          typeof item.tokenProvider !== "function"
+        ) {
+          migrated = true;
+          return {
+            ...item,
+            tokenProvider: undefined,
+            consentState: "staged",
+            tools: [],
+          };
+        }
         if (item.consentState)
           return { ...item, consentState: item.consentState };
         migrated = true;
@@ -943,12 +973,47 @@ export class Workbench {
       });
       this.projectList = saved.projects ?? [];
       if (this.config)
-        this.provider = new CompatibleProvider(
+        this.provider = createProviderClient(
           this.config,
           fetcher,
           () => this.harness,
         );
       for (const item of saved.sessions) {
+        const unavailableRuntimeConnectorIds = new Set(
+          this.connectors
+            .filter(
+              (connector) =>
+                connector.runtimeTokenProviderRequired &&
+                typeof connector.tokenProvider !== "function",
+            )
+            .map((connector) => connector.id),
+        );
+        const connections = item.connections
+          ? Object.fromEntries(
+              Object.entries(item.connections).map(([id, connection]) => {
+                if (!unavailableRuntimeConnectorIds.has(id))
+                  return [id, connection];
+                migrated = true;
+                return [
+                  id,
+                  {
+                    ...connection,
+                    tokenProvider: undefined,
+                    consentState: "staged",
+                    tools: [],
+                  },
+                ];
+              }),
+            )
+          : undefined;
+        const savedTools = item.tools ?? [];
+        const tools = savedTools.filter(
+          (tool) =>
+            !tool.connectorId ||
+            !unavailableRuntimeConnectorIds.has(tool.connectorId),
+        );
+        if (tools.length !== savedTools.length) migrated = true;
+
         const sessionBaseUrl =
           typeof item.config?.baseUrl === "string"
             ? item.config.baseUrl
@@ -975,6 +1040,8 @@ export class Workbench {
             : undefined;
         this.sessions.set(item.view.id, {
           ...item,
+          tools,
+          connections,
           projectAccessRequired:
             item.projectAccessRequired === true ||
             typeof item.projectRootDigest === "string",
@@ -991,7 +1058,7 @@ export class Workbench {
                   : item.view.status,
           },
           provider: provider
-            ? new CompatibleProvider(provider, fetcher, () => this.harness)
+            ? createProviderClient(provider, fetcher, () => this.harness)
             : undefined,
           controller: new AbortController(),
         });
@@ -1018,7 +1085,7 @@ export class Workbench {
       ignoreEnvironment: this.ignoreEnvironment,
       profiles: this.profiles,
       catalog: this.catalog,
-      connectors: this.connectors,
+      connectors: this.connectors.map(persistedConnector),
       documents: this.documents,
       evidence: this.evidence,
       recoveryRequests: this.recoveryRequests,
@@ -1050,7 +1117,14 @@ export class Workbench {
             ? { baseUrl: config.baseUrl, kind: config.kind }
             : undefined,
           tools,
-          connections,
+          connections: connections
+            ? Object.fromEntries(
+                Object.entries(connections).map(([id, connection]) => [
+                  id,
+                  persistedConnector(connection),
+                ]),
+              )
+            : undefined,
           projectAccessRequired,
           projectRootDigest,
           projectSkillDigests,
@@ -1105,7 +1179,7 @@ export class Workbench {
         ...config,
         apiKey: config.apiKey || this.profiles[config.baseUrl]?.apiKey || "",
       });
-      const provider = new CompatibleProvider(
+      const provider = createProviderClient(
         config,
         this.fetcher,
         () => this.harness,
@@ -1230,6 +1304,7 @@ export class Workbench {
       baseUrl: this.config?.baseUrl,
       kind: this.config?.kind,
       profiles: Object.keys(this.profiles),
+      unavailableProviders: UNAVAILABLE_PROVIDER_APIS,
       presets: PROVIDER_PRESETS,
       // A workspace with nothing configured has no provider, and says so
       // instead of naming one vendor.
@@ -2546,17 +2621,24 @@ export class Workbench {
         }
       }
 
-      // ---- agent / model resolve ----
       const requestedAgent = options?.agent;
       let selectedAgent: (typeof AGENT_PRESETS)[number] | undefined;
       let selectedProfile: AgentProfile | undefined;
       if (requestedAgent) {
-        selectedAgent = AGENT_PRESETS.find(
-          (item) => item.id === requestedAgent,
-        );
-        selectedProfile = this.agentProfiles.find(
+        const workspaceProfiles = await this.promotedAgentProfiles(parent.view.workspace);
+        const workspaceProfile = workspaceProfiles.find(
           (profile) => profile.id === requestedAgent,
         );
+        selectedAgent = AGENT_PRESETS.find((item) => item.id === requestedAgent);
+        const globalProfile = this.agentProfiles.find(
+          (profile) => profile.id === requestedAgent,
+        );
+        if (
+          workspaceProfile &&
+          (selectedAgent || globalProfile)
+        )
+          throw new Error("Workspace profile id collides with another agent.");
+        selectedProfile = workspaceProfile ?? globalProfile;
         if (!selectedAgent && !selectedProfile)
           throw new Error("Unknown agent preset or profile.");
       } else {
@@ -2963,6 +3045,13 @@ export class Workbench {
   }
   async addConnector(input: McpConfig & { name?: string }) {
     return this.locked(async () => {
+      const tokenProvider = input.tokenProvider;
+      if (tokenProvider !== undefined && typeof tokenProvider !== "function")
+        throw new Error("Connector token provider must be a function.");
+      if (tokenProvider && input.token !== undefined)
+        throw new Error(
+          "An MCP config takes either a static token or a token provider, never both.",
+        );
       input = connectorInput(input);
       const url = validateEndpoint(input.url, true);
       const policy = input.policy || DEFAULT_POLICY;
@@ -2971,6 +3060,10 @@ export class Workbench {
         throw new Error("Connector limit reached. Remove an unused connector.");
       const connector: Connector = {
         ...input,
+        ...(tokenProvider && {
+          tokenProvider,
+          runtimeTokenProviderRequired: true as const,
+        }),
         url,
         policy,
         id: randomUUID(),
@@ -2983,12 +3076,12 @@ export class Workbench {
       return this.connectionState();
     });
   }
-  /** Stage an edit. No network request: the URL and policy are validated, the
-   * connector returns to staged, and the operator probes it again explicitly. */
+  /** Stage an edit without probing; process-local auth survives in memory only. */
   async updateConnector(id: string, body: Record<string, unknown>) {
     return this.locked(async () => {
       const previous = this.connectors.find((item) => item.id === id);
       if (!previous) throw new Error("Connector not found.");
+      const tokenProvider = previous.tokenProvider;
       const input = connectorInput(body, previous),
         url = validateEndpoint(input.url, true),
         policy = input.policy || DEFAULT_POLICY;
@@ -2996,6 +3089,10 @@ export class Workbench {
       const replacement: Connector = {
         ...previous,
         ...input,
+        ...(tokenProvider && {
+          tokenProvider,
+          runtimeTokenProviderRequired: true as const,
+        }),
         id,
         url,
         policy,
@@ -3578,10 +3675,53 @@ export class Workbench {
     return [...byId.values()];
   }
 
+  async promotedAgentProfiles(workspace: string): Promise<AgentProfile[]> {
+    const entries = (await this.ledger(workspace))?.entries ?? [];
+    const profiles = new Map<string, AgentProfile>();
+    for (const entry of entries) {
+      const body = entry.body as Record<string, unknown>;
+      const refinement = body.harnessRefinement;
+      if (!refinement || typeof refinement !== "object") continue;
+      const profileRecord = (refinement as Record<string, unknown>).profiles;
+      if (!profileRecord || typeof profileRecord !== "object") continue;
+      const event = profileRecord as Record<string, unknown>;
+      const refinementRecord = refinement as Record<string, unknown>;
+      const expectedDigest =
+        refinementRecord.digest ?? refinementRecord.rolledBackDigest;
+      if (
+        typeof event.digest !== "string" ||
+        !/^[a-f0-9]{64}$/.test(event.digest) ||
+        event.digest !== expectedDigest
+      )
+        throw new Error("The signed profile digest does not match its refinement.");
+      if (!Array.isArray(event.changes))
+        throw new Error("The signed profile activation is malformed.");
+      for (const raw of event.changes) {
+        if (!raw || typeof raw !== "object")
+          throw new Error("The signed profile change is malformed.");
+        const change = raw as Record<string, unknown>;
+        if (typeof change.id !== "string" || !change.id)
+          throw new Error("The signed profile change has no id.");
+        const before = profiles.get(change.id) ?? null;
+        if (JSON.stringify(before) !== JSON.stringify(change.before))
+          throw new Error("The signed profile history does not replay consistently.");
+        if (change.after === null) {
+          profiles.delete(change.id);
+          continue;
+        }
+        const after = validateAgentProfile(change.after, "signed workspace profile");
+        if (after.id !== change.id)
+          throw new Error("The signed profile change id does not match its snapshot.");
+        profiles.set(change.id, after);
+      }
+    }
+    return [...profiles.values()].map((profile) => structuredClone(profile));
+  }
+
   /**
    * Record a validated refinement as an inert, signed workspace proposal.
-   * Every supported edit waits for an operator decision. Skill and subagent
-   * edits remain refused until their schema is supported.
+   * Skills activate as lessons; subagent profiles activate only after exact
+   * digest approval and remain scoped to this workspace's verified chain.
    */
   async refineHarness(
     sessionId: string,
@@ -3603,8 +3743,6 @@ export class Workbench {
     if (!validated.ok)
       throw new Error(`Invalid refinement proposal: ${validated.rejections.map((item) => item.reason).join("; ")}`);
     const proposal = validated.proposal;
-    if (proposal.edits.some((edit) => edit.kind === "skill" || edit.kind === "subagent"))
-      throw new Error("Skill and subagent edits are proposal-only until their schema is supported.");
     if (refinementTextIsSensitive(proposal, this.knownSecretValues()))
       throw new Error("Refinement contains secret-like content and was not recorded.");
     if (proposal.edits.length === 0)
@@ -3766,8 +3904,67 @@ export class Workbench {
         generatedAt,
         { by: "operator", digest, atSeq: pending.atSeq },
       );
-      if (!result.applied.length)
+      if (!result.applied.length && !result.profileEdits.length)
         throw new Error("The approved proposal has no supported edit to activate.");
+      const profiles = new Map(
+        (await this.promotedAgentProfiles(workspace)).map((profile) => [
+          profile.id,
+          profile,
+        ]),
+      );
+      const profileChanges: Array<{
+        id: string;
+        before: AgentProfile | null;
+        after: AgentProfile | null;
+      }> = [];
+      const seenProfileIds = new Set<string>();
+      const parentTools = new Set(
+        (session.tools ?? []).map((tool) => tool.name),
+      );
+      const parentPolicy =
+        session.agentProfile?.policyProfile ?? DEFAULT_POLICY_PROFILE;
+      const parentTurns =
+        session.agentProfile?.maxTurns ?? this.harness.maxTurns;
+      const parentContext =
+        session.agentProfile?.maxContextTokens ?? AGENT_LIMITS.maxContextTokens;
+      for (const edit of result.profileEdits) {
+        const id = edit.profile?.id ?? edit.id!;
+        if (seenProfileIds.has(id))
+          throw new Error(`Only one subagent profile edit per id is allowed: ${id}.`);
+        seenProfileIds.add(id);
+        const before = profiles.get(id) ?? null;
+        if (edit.action === "create" && before)
+          throw new Error(`Workspace profile ${id} already exists.`);
+        if (edit.action !== "create" && !before)
+          throw new Error(`Workspace profile ${id} does not exist.`);
+        if (edit.action !== "delete") {
+          const profile = validateAgentProfile(edit.profile, "subagent profile");
+          if (
+            AGENT_PRESETS.some((preset) => preset.id === id) ||
+            this.agentProfiles.some((candidate) => candidate.id === id)
+          )
+            throw new Error(`Workspace profile ${id} collides with an existing agent.`);
+          if (profile.allowedTools.some((name) => !parentTools.has(name)))
+            throw new Error(`Subagent profile ${id} exceeds the parent tool scope.`);
+          if (
+            profile.policyProfile !== parentPolicy ||
+            profile.maxTurns > parentTurns ||
+            profile.maxContextTokens > parentContext
+          )
+            throw new Error(`Subagent profile ${id} exceeds the parent run bounds or policy.`);
+          profiles.set(id, profile);
+        } else {
+          profiles.delete(id);
+        }
+        profileChanges.push({
+          id,
+          before,
+          after: edit.action === "delete" ? null : profiles.get(id)!,
+        });
+      }
+      const signedProfiles = profileChanges.length
+        ? { digest, changes: profileChanges }
+        : undefined;
       const { overrides, suppressedIds } = this.refinementDelta(
         workspace,
         result.entries,
@@ -3796,6 +3993,7 @@ export class Workbench {
           harnessLifecycle: {
             digest,
             events: [
+              ...(signedProfiles ? ["profile:activated"] : []),
               "proposal:approved",
               "proposal:activated",
               ...(tombstones.length ? ["entry:tombstone"] : []),
@@ -3812,6 +4010,7 @@ export class Workbench {
             applied: result.applied,
             overrides,
             suppressedIds,
+            ...(signedProfiles ? { profiles: signedProfiles } : {}),
             approvedBy: "operator",
             digest,
             atSeq: pending.atSeq,
@@ -3953,9 +4152,28 @@ export class Workbench {
           break;
         }
       }
-      const applied = activation.record.applied;
-      if (!Array.isArray(applied) || applied.length === 0)
+      const applied = Array.isArray(activation.record.applied)
+        ? activation.record.applied
+        : [];
+      const profileRecord = activation.record.profiles;
+      const profileEvent = profileRecord && typeof profileRecord === "object"
+        ? profileRecord as Record<string, unknown>
+        : undefined;
+      const activatedProfileChanges = Array.isArray(profileEvent?.changes)
+        ? profileEvent.changes as Array<Record<string, unknown>>
+        : [];
+      if (!applied.length && !activatedProfileChanges.length)
         throw new Error("The activated refinement carries no applied edit to roll back.");
+      const activeProfiles = new Map(
+        (await this.promotedAgentProfiles(workspace)).map((profile) => [profile.id, profile]),
+      );
+      const rollbackProfiles = activatedProfileChanges.map((change) => {
+        const id = change.id;
+        if (typeof id !== "string" ||
+          JSON.stringify(activeProfiles.get(id) ?? null) !== JSON.stringify(change.after))
+          throw new Error("The active profile no longer matches the signed activation.");
+        return { id, before: change.after, after: change.before };
+      });
       const edits: RefinementEdit[] = [];
       // Backwards, because the inverse of a sequence of edits on one entry is
       // that sequence reversed. Applied forwards, two updates of the same id
@@ -4075,7 +4293,7 @@ export class Workbench {
               },
         );
       }
-      if (!edits.length)
+      if (!edits.length && !rollbackProfiles.length)
         throw new Error("The activated refinement carries no edit a rollback can restore.");
       const inverse: RefinementProposal = {
         summary: `Rollback of refinement ${digest}`,
@@ -4096,7 +4314,10 @@ export class Workbench {
       // through the rollback, and the guarantee the write path gives has to
       // be re-established here rather than assumed.
       const secrets = this.knownSecretValues();
-      if (refinementTextIsSensitive(inverse, secrets))
+      if (
+        refinementTextIsSensitive(inverse, secrets) ||
+        secretLikeText(JSON.stringify(rollbackProfiles), secrets)
+      )
         throw new Error("Refinement contains secret-like content and was not recorded.");
       const generatedAt = new Date().toISOString();
       const current = await this.harnessEntries(workspace);
@@ -4105,13 +4326,14 @@ export class Workbench {
         digest,
         atSeq: activation.seq,
       });
-      if (!result.applied.length)
+      if (!result.applied.length && !rollbackProfiles.length)
         throw new Error("The rollback applied no edit, so it would record a change of nothing.");
       // The applied count is not the evidence: a delete that hit no entry is
       // still counted as applied, and the view would read exactly as before.
       const beforeIds = new Set(current.map((entry) => entry.id));
       const afterIds = new Set(result.entries.map((entry) => entry.id));
       const changed =
+        rollbackProfiles.length > 0 ||
         beforeIds.size !== afterIds.size ||
         current.some((entry) => {
           const next = result.entries.find((item) => item.id === entry.id);
@@ -4149,6 +4371,7 @@ export class Workbench {
           harnessLifecycle: {
             digest,
             events: [
+              ...(rollbackProfiles.length ? ["profile:rolled-back"] : []),
               "refinement:rolled-back",
               ...(tombstones.length ? ["entry:tombstone"] : []),
             ],
@@ -4162,6 +4385,9 @@ export class Workbench {
             applied: result.applied,
             overrides,
             suppressedIds,
+            ...(rollbackProfiles.length
+              ? { profiles: { digest, changes: rollbackProfiles } }
+              : {}),
             // Not "operator". That label decides whether the harness shows
             // a restored entry as an instruction to follow, and the operator
             // rolled back a digest without reading the restored text again.
@@ -5555,17 +5781,37 @@ export class Workbench {
         );
       session.proxyGrantReadyRunId = session.view.runId;
       const listed = { tools: session.tools ?? [...workspaceTools] };
-      const mapping = new Map(
-        listed.tools.map((tool, index) => [`tool_${index}`, tool]),
-      );
-      const tools = listed.tools.map((tool, index) => ({
-        type: "function",
-        function: {
-          name: `tool_${index}`,
-          description: `${tool.name}: ${tool.description ?? ""}`,
-          parameters: tool.inputSchema ?? { type: "object", properties: {} },
-        },
-      }));
+      const mapping = new Map<string, (typeof listed.tools)[number]>();
+      // Providers can return the configured registry ID from the tool description.
+      // Only unique catalog matches are accepted.
+      const canonicalTools = new Map<
+        string,
+        (typeof listed.tools)[number] | null
+      >();
+      const tools = listed.tools.map((tool, index) => {
+        const functionName = `tool_${index}`;
+        mapping.set(functionName, tool);
+        if ("connectorId" in tool && tool.connectorId) {
+          const canonicalName =
+            session.connections?.[tool.connectorId]?.mapping?.[tool.name];
+          if (canonicalName)
+            canonicalTools.set(
+              canonicalName,
+              canonicalTools.has(canonicalName) ? null : tool,
+            );
+        }
+        return {
+          type: "function",
+          function: {
+            name: functionName,
+            description: `${tool.name}: ${tool.description ?? ""}`,
+            parameters: tool.inputSchema ?? {
+              type: "object",
+              properties: {},
+            },
+          },
+        };
+      });
       // An agent profile's own maxTurns still wins: it was validated against
       // AGENT_LIMITS.maxTurns when the profile was accepted, so it is a limit
       // somebody chose for that session. The harness setting is the fallback
@@ -5730,7 +5976,10 @@ export class Workbench {
         }
         for (const [callIndex, call] of reply.message.tool_calls.entries()) {
           if (session.controller.signal.aborted) return;
-          const tool = mapping.get(call.function.name);
+          const tool =
+            mapping.get(call.function.name) ??
+            canonicalTools.get(call.function.name) ??
+            undefined;
           const name = tool?.name;
           if (!name)
             throw new Error(

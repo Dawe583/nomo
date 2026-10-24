@@ -66,6 +66,60 @@ test("spawn creates a child with parentId and fresh history", async (t) => {
   assert.equal((await app.list()).find((s) => s.id === parent.id)!.parentId, undefined);
 });
 
+test("a promoted workspace profile configures a child without widening its tool set", async (t) => {
+  const { app } = await isolatedWorkbench(t, successFetcher, {});
+  const parent = await app.start("Parent request", "fixture");
+  await app.settled();
+  await app.editDocument(parent.id, {
+    path: "source.md",
+    content: "signed source record",
+    expectedRevision: null,
+  });
+  const profile = {
+    id: "promoted-helper",
+    name: "Helper",
+    systemPrompt: "Inspect only.",
+    allowedTools: ["void_workspace_list"],
+    policyProfile: "default",
+    maxTurns: 1,
+    maxContextTokens: 4096,
+  };
+  const evidenceSeq = (await app.ledger(parent.workspace))!.entries.at(-1)!.seq;
+  const proposal = {
+    summary: "bounded subagent profile",
+    rationale: "delegated work needs a narrow profile",
+    expectedOutcome: "the child receives only approved capabilities",
+    edits: [{
+      action: "create",
+      kind: "subagent",
+      profile,
+      derivedFromSeq: [evidenceSeq],
+      reason: "the signed history supports this profile",
+    }],
+  } as Parameters<Workbench["refineHarness"]>[1];
+  const pending = await app.refineHarness(parent.id, proposal);
+  await app.approveHarnessProposal(parent.id, pending.proposalDigest!);
+
+  const child = await app.spawnSubagent(parent.id, "Inspect one record", {
+    agent: profile.id,
+  });
+  await app.settled();
+  const childSession = (app as unknown as {
+    sessions: Map<string, {
+      agentProfile?: typeof profile;
+      messages: Array<{ role: string; content: string }>;
+      tools: Array<{ name: string }>;
+    }>;
+  }).sessions.get(child.id)!;
+  assert.equal(childSession.agentProfile?.id, profile.id);
+  assert.match(
+    childSession.messages[0]!.content,
+    /Active agent profile \(promoted-helper\): Inspect only\./,
+  );
+  assert.deepEqual(childSession.tools.map((tool) => tool.name), ["void_workspace_list"]);
+  assert.equal(child.agent, profile.id);
+});
+
 test("spawn refuses an unknown parent without creating a session", async (t) => {
   const { app } = await isolatedWorkbench(t, ((u: string) => models()) as unknown as typeof fetch, {});
   const before = (await app.list()).length;

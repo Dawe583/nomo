@@ -10,6 +10,7 @@ import { entryHash } from "../../../packages/ledger/src/canonical.ts";
 import { jsonlStore } from "../../../packages/ledger/src/store.ts";
 import { listenControlPlane, type ApprovalBroker, type PendingApproval } from "./server.ts";
 import { Workbench } from "../../../packages/workbench/src/index.ts";
+import { PROVIDER_MODEL_MANIFEST } from "../../../packages/workbench/src/provider-catalog.ts";
 
 type FeedBody = {
   readonly workspace: string;
@@ -111,6 +112,28 @@ describe("control plane API", () => {
         404,
       );
     });
+  });
+  test("provider API exposes per-API availability reasons through the existing read endpoint", async () => {
+    await withServer("unused.jsonl", async (origin) => {
+      const response = await fetch(origin + "/api/provider");
+      assert.equal(response.status, 200);
+      const expected = PROVIDER_MODEL_MANIFEST.apiTransports
+        .filter(item => item.status !== "implemented")
+        .map(item => ({ ...item, disabled: true }));
+      const state = await response.json() as {
+        unavailableProviders: typeof expected;
+      };
+      assert.deepEqual(state.unavailableProviders, expected);
+      for (const apiId of [
+        "cursor-agent", "factory-droid-agent", "gitlab-duo-agent",
+        "devin-agent", "apple-foundation-models", "openai-codex-responses",
+      ]) {
+        assert.ok(
+          state.unavailableProviders.some(item => item.apiId === apiId && item.disabled),
+          `${apiId} is explicitly unavailable in the real provider-state response`,
+        );
+      }
+    }, { env: { NVIDIA_API_KEY: "", DASHSCOPE_API_KEY: "" } });
   });
 
   test("rejects direct provider hosts before an upstream request", async () => {

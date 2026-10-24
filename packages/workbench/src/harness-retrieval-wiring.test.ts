@@ -94,6 +94,25 @@ test("a follow-up turn carries the retrieved lesson, the mining turn does not", 
   await app.settled();
 
   const followup = bodies.map(systemTexts).join("\n");
+  const initialMessages = miningBodies[0]!.messages as Array<{
+    role: string;
+    content?: unknown;
+  }>;
+  const followupMessages = bodies[0]!.messages as Array<{
+    role: string;
+    content?: unknown;
+  }>;
+  assert.deepEqual(
+    followupMessages.slice(0, initialMessages.length),
+    initialMessages,
+    "learning leaves the previous request prefix byte-for-byte unchanged",
+  );
+  assert.equal(followupMessages.at(-1)?.role, "system");
+  assert.match(
+    String(followupMessages.at(-1)?.content ?? ""),
+    /^NOMO learned-entry digest,/,
+    "the learned context is appended after existing conversation messages",
+  );
   assert.ok(
     followup.includes("learned-entry digest"),
     "a later turn in the same workspace must carry the digest",
@@ -101,6 +120,11 @@ test("a follow-up turn carries the retrieved lesson, the mining turn does not", 
   assert.ok(
     followup.includes(LESSON),
     "the digest must carry the approved lesson text",
+  );
+  assert.equal(
+    JSON.stringify(app.get(session.id)!.events).includes("learned-entry digest"),
+    false,
+    "the transient suffix is removed before the conversation is stored",
   );
 });
 

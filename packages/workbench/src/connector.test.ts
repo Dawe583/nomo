@@ -6,6 +6,7 @@ import { createServer, type Server } from "node:http";
 import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
 import { isolatedWorkbench } from "./test-fixture.ts";
 import type { Workbench } from "./index.ts";
+import { LocalStorage } from "./storage.ts";
 import { loadPolicy } from "../../policy/src/rules.ts";
 import { policyDigest } from "../../policy/src/digest.ts";
 import { mineLearnedRules } from "./learned-rules.ts";
@@ -174,6 +175,140 @@ test("a connector token never appears in the public state", async (t) => {
     name: "Secret",
   });
   assert.doesNotMatch(JSON.stringify(app.connectionState()), /super-secret-token-12345/);
+});
+
+test("runtime connector grants authenticate each request and expire across restart", async (t) => {
+  const grant = "runtime-only-grant";
+  const methods: string[] = [];
+  const authorizations: string[] = [];
+  const server = createServer(async (request, response) => {
+    let text = "";
+    for await (const chunk of request) text += chunk;
+    const body = JSON.parse(text || "{}");
+    methods.push(body.method);
+    authorizations.push(request.headers.authorization ?? "");
+    if (request.headers.authorization !== `Bearer ${grant}`) {
+      response.writeHead(401);
+      response.end();
+      return;
+    }
+    response.setHeader("content-type", "application/json");
+    response.end(
+      JSON.stringify({
+        jsonrpc: "2.0",
+        id: body.id,
+        result:
+          body.method === "tools/list"
+            ? {
+                tools: [
+                  {
+                    name: "runtime-tool",
+                    description: "runtime-tool: fixture",
+                    inputSchema: { type: "object" },
+                  },
+                ],
+              }
+            : { content: [{ type: "text", text: "fixture result" }] },
+      }),
+    );
+  });
+  server.listen(0, "127.0.0.1");
+  await new Promise<void>((resolve) => server.once("listening", resolve));
+  const address = server.address();
+  assert.ok(address && typeof address !== "string");
+  t.after(
+    () =>
+      new Promise<void>((resolve) =>
+        server.close(() => resolve()),
+      ),
+  );
+
+  let grantsIssued = 0;
+  const gate = { wantCall: true };
+  const fixture = await isolatedWorkbench(
+    t,
+    phasedProvider((tools) => {
+      const selected = tools.find((tool) =>
+        String(tool.function.description ?? "").startsWith("runtime-tool:"),
+      );
+      assert.ok(selected, "the confirmed connector tool reaches the model");
+      return selected.function.name;
+    }, gate) as typeof fetch,
+    {},
+    { prefix: "void-runtime-grant-" },
+  );
+  const { app } = fixture;
+  await app.addConnector({
+    url: `http://127.0.0.1:${address.port}/mcp`,
+    name: "Runtime proxy",
+    connectionless: true,
+    tokenProvider: () => {
+      grantsIssued += 1;
+      return grant;
+    },
+    mapping: { "runtime-tool": DELETE },
+    facts: connectorFacts,
+    policy: allowAll,
+  });
+  const connectorId = app.connectionState().connectors.at(-1)!.id;
+  await app.probeConnector(connectorId);
+  await app.confirmConnector(connectorId);
+  const session = await app.start("Call the runtime fixture tool", "fixture");
+  await app.settled();
+
+  assert.ok(methods.includes("tools/call"), "the model call reaches the connector");
+  assert.equal(grantsIssued, methods.length, "a fresh grant is requested per MCP call");
+  assert.ok(
+    authorizations.every((authorization) => authorization === `Bearer ${grant}`),
+    "each MCP request carries the runtime grant",
+  );
+  assert.equal(gate.wantCall, false);
+  assert.doesNotMatch(
+    JSON.stringify(app.connectionState()),
+    /runtime-only-grant/,
+    "public connector state never contains the grant",
+  );
+
+  const internals = app as unknown as { storage: { directory: string } };
+  const saved = new LocalStorage(internals.storage.directory).read<{
+    connectors: Record<string, unknown>[];
+    sessions: {
+      tools: { connectorId?: string }[];
+      connections: Record<string, Record<string, unknown>>;
+    }[];
+  }>();
+  assert.ok(saved);
+  assert.equal(saved.connectors[0]!.tokenProvider, undefined);
+  assert.equal(saved.connectors[0]!.runtimeTokenProviderRequired, true);
+  assert.equal(saved.sessions.at(-1)!.connections[connectorId]!.tokenProvider, undefined);
+  assert.equal(
+    saved.sessions.at(-1)!.connections[connectorId]!.runtimeTokenProviderRequired,
+    true,
+  );
+
+  assert.equal(app.get(session.id)?.status, "idle");
+  const reopened = fixture.restart();
+  assert.equal(
+    connectorState(reopened, connectorId).consentState,
+    "staged",
+    "a connector whose runtime grant provider vanished cannot retain consent",
+  );
+  assert.deepEqual(connectorState(reopened, connectorId).tools, []);
+  const restored = (reopened as unknown as {
+    sessions: Map<string, {
+      tools: { connectorId?: string }[];
+      connections: Record<string, { consentState: string; tools: unknown[] }>;
+    }>;
+  }).sessions.get(session.id)!;
+  assert.equal(restored.connections[connectorId]!.consentState, "staged");
+  assert.deepEqual(restored.connections[connectorId]!.tools, []);
+  assert.equal(
+    restored.tools.some((tool) => tool.connectorId === connectorId),
+    false,
+    "a restored session cannot retain a catalog from a vanished runtime provider",
+  );
+  assert.equal(gate.wantCall, false);
+
 });
 
 test("twelve connectors is the limit", async (t) => {
@@ -473,6 +608,65 @@ test("connector attribution names the raw operator policy digest", async (t) => 
     attribution?.rule?.index,
     0,
     "the operator catch-all decided, at its own index",
+  );
+});
+
+test("a canonical registry name resolves to one explicitly mapped connector tool", async (t) => {
+  const server = await catalogServer([DELETE_TOOL]);
+  t.after(() => server.close());
+  const gate = { wantCall: true };
+  const { app } = await isolatedWorkbench(
+    t,
+    phasedProvider(() => DELETE, gate),
+    {},
+    { prefix: "void-connector-canonical-alias-" },
+  );
+  await confirmedConnector(
+    app,
+    server.url,
+    "Fixture",
+    allowAll,
+    { delete: DELETE },
+    connectorFacts,
+  );
+
+  const session = await app.start("Delete it", "fixture");
+  await app.settled();
+
+  assert.ok(
+    server.methods.includes("tools/call"),
+    "the uniquely mapped canonical name dispatches the advertised tool",
+  );
+});
+
+test("an ambiguous canonical name never dispatches a connector tool", async (t) => {
+  const server = await catalogServer([
+    DELETE_TOOL,
+    { name: "remove", description: "remove: fixture" },
+  ]);
+  t.after(() => server.close());
+  const { app } = await isolatedWorkbench(
+    t,
+    phasedProvider(() => DELETE, { wantCall: true }),
+    {},
+    { prefix: "void-connector-ambiguous-alias-" },
+  );
+  await confirmedConnector(
+    app,
+    server.url,
+    "Fixture",
+    allowAll,
+    { delete: DELETE, remove: DELETE },
+    connectorFacts,
+  );
+
+  await app.start("Delete it", "fixture");
+  await app.settled();
+
+  assert.equal(
+    server.methods.includes("tools/call"),
+    false,
+    "ambiguous canonical names fail closed before upstream dispatch",
   );
 });
 
