@@ -10,7 +10,11 @@ import { entryHash } from "../../../packages/ledger/src/canonical.ts";
 import { jsonlStore } from "../../../packages/ledger/src/store.ts";
 import { listenControlPlane, type ApprovalBroker, type PendingApproval } from "./server.ts";
 import { Workbench } from "../../../packages/workbench/src/index.ts";
-import { assertProviderDescriptorInManifest, PROVIDER_MODEL_MANIFEST } from "../../../packages/workbench/src/provider-catalog.ts";
+import {
+  assertProviderDescriptorInManifest,
+  CONFIGURABLE_PROVIDER_DESCRIPTORS,
+  PROVIDER_MODEL_MANIFEST,
+} from "../../../packages/workbench/src/provider-catalog.ts";
 import type { ProviderAdapterConfig } from "../../../packages/workbench/src/provider-adapters/types.ts";
 
 type FeedBody = {
@@ -744,4 +748,67 @@ test("oversized JSON request bodies return 413 across API error handlers", async
       );
     }
   });
+});
+
+test("provider model capability lookup is manifest-bound and fails closed on source conflicts", async () => {
+  const openai = CONFIGURABLE_PROVIDER_DESCRIPTORS.find(
+    descriptor =>
+      descriptor.providerId === "openai" &&
+      descriptor.transport === "openai-responses" &&
+      descriptor.models.includes("gpt-5.4"),
+  );
+  const cerebras = CONFIGURABLE_PROVIDER_DESCRIPTORS.find(
+    descriptor =>
+      descriptor.providerId === "cerebras" &&
+      descriptor.transport === "openai-completions" &&
+      descriptor.models.includes("gemma-4-31b"),
+  );
+  assert.ok(openai);
+  assert.ok(cerebras);
+
+  let providerRequests = 0;
+  const directory = await mkdtemp(join(tmpdir(), "void-provider-capabilities-"));
+  const workbench = new Workbench(
+    { NOMO_DATA_DIR: directory, NVIDIA_API_KEY: "", DASHSCOPE_API_KEY: "" },
+    async () => {
+      providerRequests++;
+      throw new Error("manifest capability lookup must not call a provider");
+    },
+  );
+  try {
+    await withServer("unused.jsonl", async origin => {
+      const lookup = (descriptorId: string, modelId: string) =>
+        fetch(
+          `${origin}/api/provider/model-capabilities?${new URLSearchParams({ descriptorId, modelId })}`,
+        );
+      const known = await lookup(openai.id, "gpt-5.4");
+      assert.equal(known.status, 200);
+      assert.deepEqual(await known.json(), {
+        status: "known",
+        modelId: "gpt-5.4",
+        input: ["text", "image"],
+        reasoning: true,
+        tools: true,
+        contextWindow: 1_050_000,
+        maxTokens: 128_000,
+      });
+
+      const conflicting = await lookup(cerebras.id, "gemma-4-31b");
+      assert.equal(conflicting.status, 200);
+      assert.deepEqual(await conflicting.json(), {
+        status: "conflict",
+        modelId: "gemma-4-31b",
+      });
+
+      const unknown = await lookup(openai.id, "not-in-manifest");
+      assert.equal(unknown.status, 404);
+      assert.deepEqual(await unknown.json(), {
+        error: "model_capabilities_unavailable",
+      });
+      assert.equal(providerRequests, 0);
+    }, { workbench });
+  } finally {
+    workbench.close();
+    await rm(directory, { recursive: true, force: true });
+  }
 });

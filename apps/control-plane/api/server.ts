@@ -50,7 +50,10 @@ import {
   normalizeProviderConfig,
   type Model,
 } from "../../../packages/workbench/src/provider.ts";
-import { assertProviderDescriptorInManifest } from "../../../packages/workbench/src/provider-catalog.ts";
+import {
+  assertProviderDescriptorInManifest,
+  modelCapabilityDisclosure,
+} from "../../../packages/workbench/src/provider-catalog.ts";
 import type {
   ProviderAdapterConfig,
   ProviderAuthProfile,
@@ -869,6 +872,31 @@ async function route(
     return sendRequestError(response, error, 409, {
       message: error instanceof Error ? error.message : "Request failed.",
     });
+  }
+  if (parsed.pathname === "/api/provider/model-capabilities") {
+    if (request.method !== "GET")
+      return sendJson(response, 405, { error: "method_not_allowed" });
+    const parameters = [...parsed.searchParams.entries()];
+    const descriptorId = parsed.searchParams.get("descriptorId");
+    const modelId = parsed.searchParams.get("modelId");
+    if (
+      parameters.length !== 2 ||
+      new Set(parameters.map(([key]) => key)).size !== 2 ||
+      parameters.some(([key]) => key !== "descriptorId" && key !== "modelId") ||
+      !nonEmptyString(descriptorId) ||
+      descriptorId.length > 512 ||
+      !nonEmptyString(modelId) ||
+      modelId.length > 512
+    )
+      return sendJson(response, 400, {
+        error: "invalid_model_capability_query",
+      });
+    const disclosure = modelCapabilityDisclosure(descriptorId, modelId);
+    if (!disclosure)
+      return sendJson(response, 404, {
+        error: "model_capabilities_unavailable",
+      });
+    return sendJson(response, 200, disclosure);
   }
   if (parsed.pathname === "/api/provider") {
     try {

@@ -2,7 +2,7 @@ import { ProviderNotice } from "./workspace-status";
 import { WorkspaceControls } from "./workspace-controls";
 import { Integrations } from "./integrations";
 import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, items, json, type Row } from "./api";
 import { Badge, Dialog, ErrorBox, JsonDetail, useApi, useText } from "./ui";
 import { DESKTOP_DOWNLOADS } from "./desktop-downloads";
@@ -45,6 +45,43 @@ export function Settings({
   const selectedDescriptor = provider.data?.availableProviderDescriptors?.find(
     (descriptor: Row) => descriptor.id === descriptorFields.id,
   );
+  const capabilityPath =
+    selectedDescriptor && descriptorFields.model
+      ? `/api/provider/model-capabilities?${new URLSearchParams({
+          descriptorId: selectedDescriptor.id,
+          modelId: descriptorFields.model,
+        })}`
+      : "";
+  const modelCapabilitiesQuery = useQuery({
+    queryKey: [
+      "provider-model-capabilities",
+      selectedDescriptor?.id,
+      descriptorFields.model,
+    ],
+    queryFn: () => api(capabilityPath),
+    enabled: Boolean(selectedDescriptor && descriptorFields.model),
+    retry: false,
+  });
+  const capabilityValue = modelCapabilitiesQuery.data;
+  const inputModalities = Array.isArray(capabilityValue?.input)
+    ? capabilityValue.input.filter(
+        (value): value is string => typeof value === "string",
+      )
+    : [];
+  const describeSupport = (value: unknown) =>
+    value === true
+      ? t("podporováno", "supported")
+      : value === false
+        ? t("nepodporováno", "unsupported")
+        : t("neznámé", "unknown");
+  const inputSupport = (modality: string) =>
+    Array.isArray(capabilityValue?.input)
+      ? inputModalities.includes(modality)
+      : null;
+  const describeLimit = (value: unknown) =>
+    typeof value === "number" && Number.isSafeInteger(value) && value > 0
+      ? value.toLocaleString(locale)
+      : t("neznámé", "unknown");
   async function preference(body: Row) {
     try {
       await api("/api/preferences", "PATCH", body);
@@ -357,6 +394,72 @@ export function Settings({
               ))}
             </select>
           </label>
+          {selectedDescriptor && descriptorFields.model && (
+            <section aria-labelledby="model-capability-heading">
+              <h4 id="model-capability-heading">
+                {t("Schopnosti modelu", "Model capabilities")}
+              </h4>
+              {modelCapabilitiesQuery.isPending ? (
+                <p role="status">
+                  {t("Načítám schopnosti z manifestu…", "Loading manifest capabilities…")}
+                </p>
+              ) : modelCapabilitiesQuery.isError ? (
+                <p role="alert">
+                  {t(
+                    "Metadata schopností nejsou dostupná; považujte je za neznámá.",
+                    "Capability metadata are unavailable; treat them as unknown.",
+                  )}
+                </p>
+              ) : capabilityValue?.status === "conflict" ? (
+                <p role="status">
+                  {t(
+                    "Připnuté katalogy se rozcházejí; schopnosti považujte za neznámé.",
+                    "Pinned catalogs disagree; treat this model's capabilities as unknown.",
+                  )}
+                </p>
+              ) : capabilityValue?.status === "known" ? (
+                <ul className="muted">
+                  <li>
+                    {t("Volání nástrojů", "Tool calls")}:{" "}
+                    {describeSupport(capabilityValue.tools)}
+                  </li>
+                  <li>
+                    {t("Reasoning", "Reasoning")}:{" "}
+                    {describeSupport(capabilityValue.reasoning)}
+                  </li>
+                  <li>
+                    {t("Textový vstup", "Text input")}:{" "}
+                    {describeSupport(inputSupport("text"))}
+                  </li>
+                  <li>
+                    {t("Obrazový vstup", "Image input")}:{" "}
+                    {describeSupport(inputSupport("image"))}
+                  </li>
+                  <li>
+                    {t("Vstupní modality", "Input modalities")}:{" "}
+                    {inputModalities.length
+                      ? inputModalities.join(", ")
+                      : t("neznámé", "unknown")}
+                  </li>
+                  <li>
+                    {t("Kontextové okno", "Context window")}:{" "}
+                    {describeLimit(capabilityValue.contextWindow)}
+                  </li>
+                  <li>
+                    {t("Maximální výstup", "Maximum output")}:{" "}
+                    {describeLimit(capabilityValue.maxTokens)}
+                  </li>
+                </ul>
+              ) : (
+                <p role="status">
+                  {t(
+                    "Metadata schopností nejsou dostupná; považujte je za neznámá.",
+                    "Capability metadata are unavailable; treat them as unknown.",
+                  )}
+                </p>
+              )}
+            </section>
+          )}
           {selectedDescriptor?.authKind === "api-key" && (
             <label>
               API key

@@ -228,12 +228,16 @@ test("Workbench issues grants from stored active session identity and revokes at
     () => app.issueLocalAgentGrant(session.id, connectorId),
     /before-run|ready/i,
   );
-  await new Promise((resolve) => setTimeout(resolve, 2000));
-  const hookResult = app
-    .get(session.id)
-    ?.events.find((event) => event.type === "hook.result")?.payload?.hook as
-    | { outcome?: string; code?: number }
-    | undefined;
+  // The hook runs in a real child process; wait for its session event, not a guessed delay.
+  const hookDeadline = Date.now() + 10_000;
+  let hookResult: { outcome?: string; code?: number } | undefined;
+  while (!hookResult && Date.now() < hookDeadline) {
+    const hookEvent = app
+      .get(session.id)
+      ?.events.find((event) => event.type === "hook.result");
+    hookResult = hookEvent?.payload?.hook as typeof hookResult;
+    if (!hookResult) await new Promise((resolve) => setTimeout(resolve, 25));
+  }
   assert.equal(
     hookResult?.outcome,
     "exited",

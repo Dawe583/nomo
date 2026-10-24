@@ -245,6 +245,88 @@ export const CONFIGURABLE_PROVIDER_DESCRIPTORS:
       ),
   );
 
+export type ModelCapabilityDisclosure =
+  | {
+      readonly status: "known";
+      readonly modelId: string;
+      readonly input: readonly string[];
+      readonly reasoning: boolean;
+      readonly tools: boolean | null;
+      readonly contextWindow: number | null;
+      readonly maxTokens: number | null;
+    }
+  | {
+      readonly status: "conflict";
+      readonly modelId: string;
+    };
+
+type ModelCapabilities =
+  ProviderModelManifest["providers"][number]["models"][number]["capabilities"];
+
+function sameCapabilities(left: ModelCapabilities, right: ModelCapabilities): boolean {
+  if (
+    left.input.length !== right.input.length ||
+    left.reasoning !== right.reasoning ||
+    left.tools !== right.tools ||
+    left.contextWindow !== right.contextWindow ||
+    left.maxTokens !== right.maxTokens
+  )
+    return false;
+  for (const input of left.input) {
+    let leftCount = 0;
+    let rightCount = 0;
+    for (const candidate of left.input)
+      if (candidate === input) leftCount++;
+    for (const candidate of right.input)
+      if (candidate === input) rightCount++;
+    if (leftCount !== rightCount) return false;
+  }
+  return true;
+}
+
+export function modelCapabilityDisclosure(
+  descriptorId: string,
+  modelId: string,
+): ModelCapabilityDisclosure | undefined {
+  const descriptor = CONFIGURABLE_PROVIDER_DESCRIPTORS.find(
+    candidate => candidate.id === descriptorId,
+  );
+  if (!descriptor || !descriptor.models.includes(modelId)) return undefined;
+
+  let first: ModelCapabilities | undefined;
+  for (const provider of PROVIDER_MODEL_MANIFEST.providers) {
+    if (
+      provider.status !== "in-scope" ||
+      provider.providerId !== descriptor.providerId
+    )
+      continue;
+    for (const model of provider.models) {
+      if (
+        model.kind !== "chat" ||
+        model.id !== modelId ||
+        model.transport !== descriptor.transport ||
+        model.endpoint !== descriptor.endpoint ||
+        model.endpointRule !== descriptor.endpointRule
+      )
+        continue;
+      if (first && !sameCapabilities(first, model.capabilities))
+        return { status: "conflict", modelId };
+      first ??= model.capabilities;
+    }
+  }
+  if (!first) return undefined;
+
+  return {
+    status: "known",
+    modelId,
+    input: [...first.input],
+    reasoning: first.reasoning,
+    tools: first.tools,
+    contextWindow: first.contextWindow,
+    maxTokens: first.maxTokens,
+  };
+}
+
 function matchesDynamicEndpointRule(
   model: ProviderModelManifest["providers"][number]["models"][number],
   transport: ImplementedProviderTransport,
