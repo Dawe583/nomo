@@ -22,16 +22,16 @@ Pozor na strukturu: kořen `omp-src/packages/` má 18 balíčků. Agent runtime 
 `packages/agent`, CLI je `packages/coding-agent` (`omp-src/AGENTS.md`, tabulka
 Package Structure).
 
-| Oblast | Kde | Co to je |
-| --- | --- | --- |
-| Agent loop | `packages/agent/` | Základní smyčka: stav, tool calling, fronty zpráv |
-| Nástroj `learn` | `omp-src/packages/coding-agent/src/tools/learn.ts` | Zapíše trvalou lekci do paměti; volitelně i vygeneruje/rozšíří skill |
-| Nástroj `manage_skill` | `omp-src/packages/coding-agent/src/tools/manage-skill.ts` | create/update/delete izolovaného skillu |
-| `AutoLearnController` | `omp-src/packages/coding-agent/src/autolearn/controller.ts` | Naslouchá event streamu; po podstatném tahu volitelně spustí syntetický capture turn |
-| Paměť | `omp-src/docs/memory.md` | Pět backendů: `off`, `local`, `hindsight`, `mnemopi`, `sharpshooter` |
-| Ratchet | `omp-src/packages/coding-agent/src/ratchet/ratchet.ts` | Hillclimb evaluací s confidence intervalami a keep/revert bránou |
-| Metaharness | `omp-src/packages/metaharness/README.md` | Jeden správce benchmarků: experiment → run → trace, SQLite, REST/SSE, dashboard |
-| Subagenti | `omp-src/docs/agent-hub.md` | TUI roster subagentů: stav, lineage, steer, revive, kill |
+| Oblast                 | Kde                                                         | Co to je                                                                             |
+| ---------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| Agent loop             | `packages/agent/`                                           | Základní smyčka: stav, tool calling, fronty zpráv                                    |
+| Nástroj `learn`        | `omp-src/packages/coding-agent/src/tools/learn.ts`          | Zapíše trvalou lekci do paměti; volitelně i vygeneruje/rozšíří skill                 |
+| Nástroj `manage_skill` | `omp-src/packages/coding-agent/src/tools/manage-skill.ts`   | create/update/delete izolovaného skillu                                              |
+| `AutoLearnController`  | `omp-src/packages/coding-agent/src/autolearn/controller.ts` | Naslouchá event streamu; po podstatném tahu volitelně spustí syntetický capture turn |
+| Paměť                  | `omp-src/docs/memory.md`                                    | Pět backendů: `off`, `local`, `hindsight`, `mnemopi`, `sharpshooter`                 |
+| Ratchet                | `omp-src/packages/coding-agent/src/ratchet/ratchet.ts`      | Hillclimb evaluací s confidence intervalami a keep/revert bránou                     |
+| Metaharness            | `omp-src/packages/metaharness/README.md`                    | Jeden správce benchmarků: experiment → run → trace, SQLite, REST/SSE, dashboard      |
+| Subagenti              | `omp-src/docs/agent-hub.md`                                 | TUI roster subagentů: stav, lineage, steer, revive, kill                             |
 
 ### 1.1 Paměť, jak se učí
 
@@ -104,7 +104,7 @@ Klíčové vlastnosti, které je nutné převzít:
 - **Split na train/test + kontrola leakage.** Drží `train_ids`, `test_ids`,
   `split_seed` a `baseline_inputs_sha`. Jiná sada případů = nový flow.
 - **Schválení je hashem obsahu.** `approvals: Partial<Record<RatchetStage,
-  { sha: string; at: string }>>`, když se změní vstupy, schválení je neplatné.
+{ sha: string; at: string }>>`, když se změní vstupy, schválení je neplatné.
 - **Plateau detekce** (`stop.plateau`) a `flat_rounds`.
 - **Všechno mimo model.** Komentář nahoře: "Everything the model must not be
   able to argue with lives here, approval freshness (content hashes), the
@@ -122,17 +122,17 @@ Prime je Rust port. `crates/pa-agent/src/agent.rs` je port `omp-src/packages/age
 (ten portovaný originál je zřejmě tentýž kód jako v omp, oba stromy
 pocházejí ze stejné rodiny).
 
-| Oblast | Kde | Co to je |
-| --- | --- | --- |
-| Agent loop | `crates/pa-agent/src/agent_loop/` | `run.rs`, `tool_call.rs`, `entry.rs`, `response.rs`, `abort.rs` |
-| Session engine | `crates/pa-core/src/session_engine/` | 62 souborů, největší kus |
-| **Continual harness** | `crates/pa-core/src/refinement/` | `mod.rs` (state), `planner.rs` (edity), `ranking.rs` (relevance), `executor.rs` (aplikace) |
-| Skills | `crates/pa-core/src/skills/` | `loader.rs`, `discovery.rs`, `frontmatter.rs`, `prompt_templates.rs` |
-| Semantic edges | `crates/pa-core/src/session_engine/semantic_edges.rs` | Append-only ledger model-request událostí |
-| Auto retry | `crates/pa-core/src/session_engine/auto_retry.rs` | Klasifikace chyb a retry politika |
-| Compaction | `crates/pa-core/src/session_engine/compaction*.rs` | 9 souborů |
-| Agent messaging | `crates/pa-core/src/session_engine/agent_messaging.rs` | Rodič ↔ dítě |
-| RLM runtime | `prime-agent-runtime/src/rlm/` | Python: `harness.py`, `skill.py`, `mcp.py`, `factory.py`, `bash.py` |
+| Oblast                | Kde                                                    | Co to je                                                                                   |
+| --------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------ |
+| Agent loop            | `crates/pa-agent/src/agent_loop/`                      | `run.rs`, `tool_call.rs`, `entry.rs`, `response.rs`, `abort.rs`                            |
+| Session engine        | `crates/pa-core/src/session_engine/`                   | 62 souborů, největší kus                                                                   |
+| **Continual harness** | `crates/pa-core/src/refinement/`                       | `mod.rs` (state), `planner.rs` (edity), `ranking.rs` (relevance), `executor.rs` (aplikace) |
+| Skills                | `crates/pa-core/src/skills/`                           | `loader.rs`, `discovery.rs`, `frontmatter.rs`, `prompt_templates.rs`                       |
+| Semantic edges        | `crates/pa-core/src/session_engine/semantic_edges.rs`  | Append-only ledger model-request událostí                                                  |
+| Auto retry            | `crates/pa-core/src/session_engine/auto_retry.rs`      | Klasifikace chyb a retry politika                                                          |
+| Compaction            | `crates/pa-core/src/session_engine/compaction*.rs`     | 9 souborů                                                                                  |
+| Agent messaging       | `crates/pa-core/src/session_engine/agent_messaging.rs` | Rodič ↔ dítě                                                                               |
+| RLM runtime           | `prime-agent-runtime/src/rlm/`                         | Python: `harness.py`, `skill.py`, `mcp.py`, `factory.py`, `bash.py`                        |
 
 ### 2.1 Continual harness, nejzajímavější věc v obou stromech
 
@@ -250,7 +250,7 @@ warningem** a volajé přestanou posílat request ids na wire, místo aby oslabi
 invariant. Edge sémantika zůstává v TS, protože „nothing in the Rust product
 reads or derives edges yet".
 
-Tenhle vzorec, *ledger before wire*, je přesně to, co NOMO dělá v
+Tenhle vzorec, _ledger before wire_, je přesně to, co NOMO dělá v
 `commitWorkspace`, a je to nejlepší jednotlivá věc v prime pro NOMO.
 
 ---
@@ -262,16 +262,16 @@ ani omp, ani prime nemají.**
 
 ### 3.1 Co NOMO má a oni nemají
 
-| Vlastnost | Kde v NOMO |
-| --- | --- |
-| Podepsaný hash-chain ledger jako autoritativní záznam | `packages/workbench/src/index.ts`, `commitWorkspace` |
-| Fail-closed klasifikace r0-r3 s registry | `packages/registry/src/evaluate.ts:113` (`classifyTool`) |
-| Uzavřená gramatika policy na 5 klíčích | `packages/policy/src/grammar.ts:16-23` |
-| Dvě implementace hold (workbench-local, SDK/proxy) | `docs/CODING-TOOLS-MAP.md` §4 |
-| Neprůstrelný alias gate (`tool_${index}`) | `packages/workbench/src/index.ts:3408-3413` |
-| Důkazní odmítnutí: typed error + ověřený digest | `packages/workbench/src/index.ts:3059-3068` |
-| Recovery planner s cross-host fencing | `packages/runtime/src/recovery/` |
-| Nález pravidla z refusals v podepsaném chainu | `packages/workbench/src/learned-rules.ts` |
+| Vlastnost                                             | Kde v NOMO                                               |
+| ----------------------------------------------------- | -------------------------------------------------------- |
+| Podepsaný hash-chain ledger jako autoritativní záznam | `packages/workbench/src/index.ts`, `commitWorkspace`     |
+| Fail-closed klasifikace r0-r3 s registry              | `packages/registry/src/evaluate.ts:113` (`classifyTool`) |
+| Uzavřená gramatika policy na 5 klíčích                | `packages/policy/src/grammar.ts:16-23`                   |
+| Dvě implementace hold (workbench-local, SDK/proxy)    | `docs/CODING-TOOLS-MAP.md` §4                            |
+| Neprůstrelný alias gate (`tool_${index}`)             | `packages/workbench/src/index.ts:3408-3413`              |
+| Důkazní odmítnutí: typed error + ověřený digest       | `packages/workbench/src/index.ts:3059-3068`              |
+| Recovery planner s cross-host fencing                 | `packages/runtime/src/recovery/`                         |
+| Nález pravidla z refusals v podepsaném chainu         | `packages/workbench/src/learned-rules.ts`                |
 
 Poslední řádek je důležitý a zároveň jediný existující „učicí“ mechanismus.
 
@@ -294,7 +294,7 @@ Další vlastnosti, které je nutné zachovat:
 - `isRefusal` záměrně **vyřazuje** `execute:unknown` (mezera v našem vědomí není
   důvod pro trvalý zákaz) a `proxy` (rozhodl upstream, ledger už zaznamenal
   delegování).
-- Klíč je `JSON.stringify([klass, tool])`, s komentářem proč ne surový NUL , 
+- Klíč je `JSON.stringify([klass, tool])`, s komentářem proč ne surový NUL ,
   doslovný NUL v souboru nechá git považovat soubor za binární.
 - Řazení je deterministické, aby dva průchody stejným chainem daly stejná pravidla
   a stejné digesty.
@@ -334,23 +334,20 @@ konzumenta.** Bez toho je to jen přání operátora.
 
 ### 3.4 Co NOMO nemá
 
-| Chybí | Kdo to má |
-| --- | --- |
-| Učení se z **úspěchů**, ne jen z refusals | oba |
-| Čisté lokální učení (local scope) oddělené od trvalého | prime (`HarnessScope`) |
-| Relevance ranking, co do promptu patří | prime (`ranking.rs`) |
-| Brána, která rozhodne „učit se nyní není vyhodné“ | prime (`auto_refine_trigger`) |
-| Editovatelná stavová vrstva mimo token historii | prime (continual harness) |
-| Cooldown proti thrashingu | prime |
-| Branch versioning učicích editů | prime |
-| Jakákoliv statistika / confidence interval | **nikdo** |
-| Benchmark harness se split a guardraily | omp (ratchet, metaharness) |
-| Roster subagentů | omp (agent-hub) |
-| Prompt-cache neutralita při učení | omp (autolearn) |
+| Schopnost | Stav podle zdrojového kódu a testů | Zbývající limit |
+| --- | --- | --- |
+| Učení z úspěchů i refusals | Implementováno: odmítnutí vytvářejí návrhy pravidel `hold`; opakovaná schválení vytvářejí oddělené lessons, které nerozhodují policy. | Mined lessons jsou pozorování, ne automaticky schválená pravidla. |
+| Session a workspace scope | Implementováno: session entries zanikají se session; workspace entries se odvozují z podepsaného řetězce. | Workspace scope není sdílená globální paměť napříč pracovními prostory. |
+| Relevance ranking | Implementováno: deterministické rankování a omezený retrieval do promptu. | Výsledek závisí na aktuálním lokálním korpusu; nejde o benchmark kvality. |
+| Brána a cooldown refinementu | Implementováno: brána rozhoduje před placenou kontrolou, trigger a cooldown řídí další pokus. | Neprokazuje optimální cenu ani kvalitu živého modelu. |
+| Editovatelný stav a evidence | Částečně implementováno: digestem schválené změny workspace a profile se zapisují do podepsaného řetězce a lze je vrátit. | Nejde o obecný externí memory backend. |
+| Branch versioning učicích změn | Částečně implementováno: review zneplatní změna větve; konkrétní návrh má digest, schválení a rollback. | Není doložená trvalá historie větví s libovolným návratem na starý stav. |
+| Statistiky a intervaly | Implementováno pro bezpečnostní scoreboards: intervaly jsou nad průměry případů a nedostatek dat zůstává explicitní. | Bez coding benchmarku nejde o interval výkonu agentů. |
+| Benchmark coding agentů se split a guardraily | Kontrakt je specifikován v §8; lokální `bench.mjs` měří forwarding, zápis ledgeru a klasifikaci. | Není zmrazená veřejná sada, párové běhy ani změřená parita s Prime Agentem či OMP. |
+| Roster subagentů | Částečně implementováno: Workbench má omezené agent profiles a spawn API. | Plný OMP agent-hub lifecycle ani parita nejsou doložené. |
+| Prompt-cache neutralita při učení | Mechanicky implementováno: learned digest se přidá jako dočasný suffix za dosavadní session messages a po běhu se odstraní. | Regresní test porovnává dřívější provider message prefix byte-for-byte, ověřuje suffix na konci requestu a jeho nepersistenci. |
 
-Poslední řádek je důležitý: **NOMO nemá žádnou statistiku.** Ani omp, ani prime
-nemají statistiku nad bezpečnostními rozhodnutími. To je prostor, kde může být
-NOMO lepší než oba, a nemusí se nijak ohrožovat.
+Tato tabulka odděluje implementované mechanismy od neověřené parity. NOMO má statistiku bezpečnostních rozhodnutí, ale žádný z těchto lokálních scoreboards ani proxy smoke běhů nedokazuje kvalitu coding agenta vůči Prime Agentu nebo OMP. Coding benchmark zůstává blokovaný zmrazením veřejného tasksetu, opakování, rozpočtu a schválení živých běhů.
 
 ---
 
@@ -422,13 +419,13 @@ writes".
 
 Co se dá vytěžit **bez modelu**, z toho co ledger už obsahuje:
 
-| Vzor | Podmínka | Návrh |
-| --- | --- | --- |
-| Opakované refusals | `isRefusal` a `repeats >= 3` | `rule` (dnes) |
-| Opakované hold-approved | `hold:approved` a `repeats >= N` | `lesson`: „operator tohle opakovaně schválil“ |
-| Stálé rychlé vykonání | class r0 a `elapsed < p95` a `repeats >= N` | `lesson`: „tato cesta je bezpečná a levná“ |
-| Chybová dominanta | stejný `errorCode` a `repeats >= N` | `lesson` s návrhem, ne pravidlem |
-| Drift klasifikace | stejný tool, r0 v některých a r2 v jiných | `lesson`: „klasifikace tohoto nástroje není stabilní“ |
+| Vzor                    | Podmínka                                    | Návrh                                                 |
+| ----------------------- | ------------------------------------------- | ----------------------------------------------------- |
+| Opakované refusals      | `isRefusal` a `repeats >= 3`                | `rule` (dnes)                                         |
+| Opakované hold-approved | `hold:approved` a `repeats >= N`            | `lesson`: „operator tohle opakovaně schválil“         |
+| Stálé rychlé vykonání   | class r0 a `elapsed < p95` a `repeats >= N` | `lesson`: „tato cesta je bezpečná a levná“            |
+| Chybová dominanta       | stejný `errorCode` a `repeats >= N`         | `lesson` s návrhem, ne pravidlem                      |
+| Drift klasifikace       | stejný tool, r0 v některých a r2 v jiných   | `lesson`: „klasifikace tohoto nástroje není stabilní“ |
 
 Poslední řádek je NOMO-specifický a oba reference ho nemají: **nestabilní
 klasifikace je bezpečnostní nález**, ne jen statistická zajímavost.
@@ -517,7 +514,7 @@ export function rankEntries(
 ```
 
 Termíny se váží zdrojem: explicitní prompt uživatele váží nejvíc, systémový
-prompt nejmíň, ledger-derived obsah někde mezi. Obě reference toto nemají , 
+prompt nejmíň, ledger-derived obsah někde mezi. Obě reference toto nemají ,
 mají ploché váhy termů. Vážení podle původu je správnější, protože „co se
 opakovalo v chainu" není totéž jako „co teď napsal uživatel".
 
@@ -557,16 +554,16 @@ export type ScoreBoard = {
 
 Metriky (a proč právě tyhle):
 
-| Metrika | Směr | Proč |
-| --- | --- | --- |
-| `hold_rate` | lower | Kolik čeká na člověka. Vysoká = příliš těžká pravidla. |
-| `deny_rate` | lower | Kolik se blokuje. Vysoká = agent zbytečně riskuje. |
-| `unknown_tool_rate` | lower | Kolik volání nešlo klasifikovat. |
-| `first_pass_rate` | higher | Podíl pokusů, které nepotřebovaly opravu. |
-| `median_approval_ms` | lower | Rychlost člověka. |
-| `recovery_success_rate` | higher | Podíl recovery, které doběhly. |
-| `rollback_count` | lower | Kolikrát bylo třeba vracet. |
-| `cost_usd` | lower | Přes `calculateUsageCost` ekvivalent. |
+| Metrika                 | Směr   | Proč                                                   |
+| ----------------------- | ------ | ------------------------------------------------------ |
+| `hold_rate`             | lower  | Kolik čeká na člověka. Vysoká = příliš těžká pravidla. |
+| `deny_rate`             | lower  | Kolik se blokuje. Vysoká = agent zbytečně riskuje.     |
+| `unknown_tool_rate`     | lower  | Kolik volání nešlo klasifikovat.                       |
+| `first_pass_rate`       | higher | Podíl pokusů, které nepotřebovaly opravu.              |
+| `median_approval_ms`    | lower  | Rychlost člověka.                                      |
+| `recovery_success_rate` | higher | Podíl recovery, které doběhly.                         |
+| `rollback_count`        | lower  | Kolikrát bylo třeba vracet.                            |
+| `cost_usd`              | lower  | Přes `calculateUsageCost` ekvivalent.                  |
 
 Guardraily, které nesmějí regresovat mimo šum: `deny_rate`, `rollback_count`,
 `unknown_tool_rate`. **Bez guardrailů by šlo optimalizovat `hold_rate` na nulu
@@ -660,15 +657,15 @@ Proto je v návrhu cache podle `evidence[workspace]` povinná, ne volitelná.
 
 ## 6. Pořadí práce
 
-| # | Kus | Soubory | Závisí na |
-| --- | --- | --- | --- |
-| 1 | Scoring | `harness-scores.ts` + test |, |
-| 2 | Trigger + gate | `refine-trigger.ts`, `refine-gate.ts` + test | 1 |
-| 3 | Těžba entries | `learned-harness.ts` + test | 1 |
-| 4 | Ranking | `harness-ranking.ts` + test | 3 |
-| 5 | Modelový refinement pass | nový soubor + test | 2, 3, 4 |
-| 6 | Zápis do chainu | `commitWorkspace` | 5 |
-| 7 | TUI řádek + `/harness scores` | `cli/src/tui/` | 1 |
+| #   | Kus                           | Soubory                                      | Závisí na |
+| --- | ----------------------------- | -------------------------------------------- | --------- |
+| 1   | Scoring                       | `harness-scores.ts` + test                   | ,         |
+| 2   | Trigger + gate                | `refine-trigger.ts`, `refine-gate.ts` + test | 1         |
+| 3   | Těžba entries                 | `learned-harness.ts` + test                  | 1         |
+| 4   | Ranking                       | `harness-ranking.ts` + test                  | 3         |
+| 5   | Modelový refinement pass      | nový soubor + test                           | 2, 3, 4   |
+| 6   | Zápis do chainu               | `commitWorkspace`                            | 5         |
+| 7   | TUI řádek + `/harness scores` | `cli/src/tui/`                               | 1         |
 
 Kus 6 je jediný, který mění existující kód mimo nové soubory, a je záměrně
 poslední, do té doby je celá věc přidaná a neprovozovaná, takže odebrání je
@@ -732,3 +729,50 @@ Vlastník schválil work package pro projektové schopnosti v
   před souhlasem. Izolace kontejneru před modelem neskryje tajemství uložená
   uvnitř připojeného projektu.
 - `/compact` zůstává ruční deterministickou operací bez sumarizačního modelu.
+
+## 8. Benchmark coding agentů
+
+Stávající měření nestačí k tvrzení, že NOMO dosahuje výsledků Prime Agentu.
+`scripts/src/bench.mjs` měří lokální forwarding, zápis ledgeru a klasifikaci.
+`packages/workbench/src/harness-scores.ts` popisuje bezpečnostní a provozní
+události v podepsaných řetězcích. Ani jedno neměří úspěšnost programovacích
+úloh a tato dvě skóre se nesmějí vydávat za coding benchmark.
+
+Coding benchmark patří do oddělených vývojových evaluačních nástrojů. Nesmí
+vstoupit do `decide`, policy ani oprávnění při běhu agenta. Plný ratchet zůstává
+vývojovou smyčkou, ne funkcí běžícího produktu.
+
+Než lze porovnat NOMO s Prime Agentem, musí být splněno:
+
+1. **Zamčená sada úloh.** Každý případ určuje revizi projektu, vstupní zadání,
+   reprodukovatelné prostředí, nezávislý test správnosti a případné testy
+   regresí. Test oracle se agentovi nezpřístupní. Změna sady, oracle nebo
+   prostředí vytváří novou verzi benchmarku.
+2. **Párované běhy.** Oba systémy dostanou stejnou úlohu, provider a model,
+   pokud jsou dostupné oběma. Rozdíly v systémových promtech, nástrojích,
+   verzích, rozpočtu tokenů, čase nebo retry pravidlech se zaznamenají, nikdy
+   nezamlčí. Pořadí běhů se střídá nebo randomizuje.
+3. **Měřený výsledek.** Primární metrika je podíl úloh, které nezávislý oracle
+   přijme. Další metriky zahrnují čas, tokeny, počet volání nástrojů, cenu,
+   zásahy člověka a regresní či bezpečnostní porušení. Neznámý výsledek není
+   úspěch.
+4. **Opakování a nejistota.** Ukládají se výsledky po úlohách a opakováních.
+   Porovnání používá párované rozdíly na úrovni úloh a interval spolehlivosti;
+   počet případů a opakování musí být viditelný. Trénovací a validační případy
+   se nesmějí použít jako finální test. Požadavky na počet běhů a statistickou
+   sílu se určí před měřením, ne podle výsledku.
+5. **Bezpečnost a reprodukovatelnost.** Každý výsledek nese hashe revizí,
+   benchmarku, konfigurace a identity obou běhů, plus záznam verifikace. Běhy
+   používají izolované pracovní kopie bez produkčních dat a tajemství.
+   Uchovávají se agregáty a bezpečné diagnostiky, nikoli surové konverzace,
+   credentials nebo obsah projektu s tajemstvími.
+6. **Poctivé závěry.** Výrok o paritě jmenuje benchmark, verze binárek,
+   modely, podmínky a nejistotu. Výsledek platí jen pro tyto podmínky.
+   Zlepšení primární metriky se nepřijme, pokud poruší předem určený
+   bezpečnostní nebo správnostní guardrail.
+
+Tato specifikace zatím neurčuje veřejný taskset, počet opakování, prahovou
+hodnotu parity ani rozpočet živých modelových volání. Dokud nejsou zmrazené a
+schválené, výsledek z lokálních fixture testů ani smoke benchmarku není důkazem
+rovnosti či převahy nad Prime Agentem. Živý benchmark nesmí běžet bez výslovně
+schválených podmínek a rozpočtu.

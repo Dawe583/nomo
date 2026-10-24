@@ -150,6 +150,43 @@ For the native macOS application use `pnpm desktop:setup`, `pnpm desktop`, or
 [desktop packaging](../apps/desktop/README.md) for artifacts, native smoke checks,
 Keychain migration and signing requirements. macOS 13.5 or newer is required.
 
+## Private desktop beta tester guide and feedback
+
+This repository is private. Use only a desktop package explicitly shared through its private repository access. This guide does not provide a download: H34 did not verify a current-worktree clean install, and the `1.0.1` value in desktop metadata is a local candidate version, not proof of a released or tested installer.
+
+### Supported install prerequisites
+
+- Packaged macOS app: macOS 13.5 or newer, using the matching arm64 or x64 build.
+- Packaged Windows app: Windows 10 or 11 x64 with WebView2. The current NSIS package is unsigned and may show a SmartScreen warning.
+- Packaged apps include Node and the backend. Testers do not need Node, pnpm, Rust, or a source checkout. Linux packages are not verified.
+- Building from source is a developer workflow, not a tester install. It requires Node 24 or newer, pnpm, the desktop package setup, and Rust. macOS needs Xcode Command Line Tools. Windows needs Rust MSVC, Visual Studio C++ build tools, and WebView2.
+
+`scripts/install-nomo.sh` installs the CLI launcher, not the desktop app. `scripts/fresh-install.sh` installs workspace dependencies and runs a CLI onboarding check; neither is a clean desktop installer.
+
+### Safe first-run checklist
+
+1. Use a fresh OS user account or a disposable test machine. Do not uninstall an existing copy, clear an existing NOMO data directory, or reuse an existing workspace.
+2. Install only the exact package shared through private repository access. Do not use an arbitrary build or bypass an OS security warning for an unverified artifact.
+3. Start NOMO without configuring a provider, entering an API key, signing in, or connecting an MCP server. This manual beta check does not test model calls.
+4. Check that the app opens, the local workbench renders, navigation and Settings respond, the provider remains disconnected, and closing then reopening the app does not break first-run access.
+5. Use built-in local documents only. Do not use real prompts, model responses, customer data, project files, or accounts.
+6. Report only a reproducible, sanitized issue through the private issue form below. Do not attach screenshots, logs, or files.
+
+### Private feedback process
+
+Submit manually through the [private beta feedback issue form](https://github.com/Dawe583/void/issues/new?template=feedback.yml). The repository is private; submitted issues are visible to repository collaborators, and GitHub displays the reporter's account to them. The form does not ask for a name or email. Do not submit if that visibility is unsuitable.
+
+This process adds no analytics, telemetry, automatic upload, diagnostic collection, or feedback server. A tester chooses what to type and submits it to the repository issue tracker. No other feedback address or private channel is documented. If GitHub does not let your role create an issue, do not send feedback or diagnostics elsewhere; request issue access through the same private repository access path that granted your repo access.
+
+The form asks for:
+
+- app version, OS version, architecture, and artifact type/filename only;
+- numbered reproduction steps using local test content;
+- expected result, actual result, and how often it reproduces;
+- an optional safe error category or short manually redacted excerpt.
+
+Before submitting, remove API keys, passwords, OAuth tokens, provider URLs, prompts, responses, conversation transcripts, project contents, raw logs, screenshots, filesystem paths, IP addresses, user or device names, email addresses, and all other personal information. Do not paste a raw log even if the app produced it. Never add an attachment in a follow-up comment. The issue template requires confirmation that the content is sanitized and that repository collaborators can see the issue and GitHub account.
+
 Local sessions, provider profiles, connector credentials, documents and signed
 history persist in an atomic AES-256-GCM snapshot under `NOMO_DATA_DIR` (default
 `~/.nomo/workbench`). The desktop keeps its encryption key in macOS Keychain;

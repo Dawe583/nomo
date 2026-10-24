@@ -1,0 +1,70 @@
+name: Private beta feedback
+description: Manually report a reproducible NOMO desktop beta issue in this private repository
+title: "[Private beta feedback] "
+body:
+  - type: markdown
+    attributes:
+      value: >-
+        This creates an issue in the private NOMO repository. Repository collaborators can read it, and GitHub shows your account to them. This form sends nothing automatically and adds no analytics, telemetry, upload service, or feedback server. Do not include credentials, API keys, prompts, responses, transcripts, project files, raw logs, screenshots, paths, or personal information.
+  - type: dropdown
+    id: area
+    attributes:
+      label: What were you testing?
+      options:
+        - Install or first launch
+        - Startup or local runtime
+        - Desktop interface
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: App and platform version
+      description: App version, macOS version and architecture or Windows edition/build and architecture, plus artifact type and filename only. Do not include device, account, or file paths.
+      placeholder: NOMO 1.0.1; macOS 15.x arm64; private DMG filename
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Use numbered steps. Use built-in local content only. Do not include prompts, provider details, credentials, or personal/project data.
+      placeholder: 1. Launch NOMO in a fresh test account. 2. Open Settings. 3. Describe the observed action.
+    validations:
+      required: true
+  - type: textarea
+    id: expected-actual
+    attributes:
+      label: Expected and actual result
+      description: State what you expected and what happened. Do not paste user content or model output.
+    validations:
+      required: true
+  - type: dropdown
+    id: frequency
+    attributes:
+      label: Reproducibility
+      options:
+        - Every attempt
+        - Intermittent
+        - Happened once
+        - Not reproduced again
+    validations:
+      required: true
+  - type: textarea
+    id: safe-evidence
+    attributes:
+      label: Minimal safe evidence (optional)
+      description: Give a non-sensitive error category/code or a short manually redacted excerpt only. Do not attach files, screenshots, or raw logs. Remove credentials, URLs, paths, prompts, workspace/project content, account or device names, IP addresses, and all personal information.
+      placeholder: "Error category: RUNTIME_EXITED"
+    validations:
+      required: false
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Privacy check
+      options:
+        - label: I removed secrets, API keys, tokens, provider URLs, prompts, responses, transcripts, project data, paths, logs with identifying details, and personal information.
+          required: true
+        - label: I understand this issue and my GitHub account are visible to collaborators in the private repository.
+          required: true

@@ -178,3 +178,29 @@ operator approval before execution, non-zero/timeout/output-limit outcomes,
 and actual container isolation. Typechecks and relevant Workbench/TUI suites
 run sequentially. A runtime smoke uses a real configured Docker/Podman image;
 host execution is never an acceptable substitute.
+
+## H4: workspace-scoped profile promotion
+
+1. A `skill` proposal is advisory text only. After exact-digest operator
+   approval, it becomes the existing workspace-scoped, retrievable lesson in
+   the signed chain. It never writes a project skill file, creates a global
+   skill store, changes policy, or adds a tool.
+2. A `subagent` proposal carries a complete validated `AgentProfile`. Its
+   create, update, or delete is scoped to the proposing workspace and is
+   available only to `spawnSubagent` calls from that workspace. Existing
+   operator-managed `upsertAgent` profiles remain separate and unchanged.
+3. The signed activation record stores each profile's exact `before` and
+   `after` value, profile ID, and proposal digest. Active profiles are derived
+   by replaying these changes from the verified workspace chain; no unsigned
+   profile cache is authoritative. Approval still requires the reviewed
+   digest and an unchanged chain.
+4. Rollback appends inverse profile changes to the same chain, restoring the
+   exact prior values. It never rewrites history. Only the latest eligible
+   activation can be rolled back, matching the existing refinement rule.
+5. A promoted profile cannot widen its parent: its tool names must be a subset
+   of the parent's tools, its policy profile must match the parent's effective
+   policy profile, and its turn/context bounds cannot exceed the parent's.
+   Built-in, global-profile, or workspace-profile ID collisions fail closed.
+6. The existing secret scan, profile schema, verified-ledger boundary, and
+   explicit operator digest approval apply before any profile change is
+   recorded or used. No new subagent execution engine is added.

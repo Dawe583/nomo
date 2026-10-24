@@ -173,3 +173,45 @@ mobile toolbar. `--smoke-runtime-exit` remains a hidden lifecycle-only check.
 Every smoke result exits directly with its verdict; if the application run loop
 returns before a download verdict, the smoke fails rather than reporting a
 false pass.
+
+## Private beta tester guide
+
+See [private desktop beta onboarding and feedback](../../docs/BETA.md#private-desktop-beta-tester-guide-and-feedback) for supported install prerequisites, a safe first-run checklist, the private issue form, and strict redaction rules. This worktree has no verified clean-install artifact; `1.0.1` is a local candidate version, not a released download.
+
+### Private CI artifacts and gated release workflow
+
+`.github/workflows/desktop-macos.yml` and
+`.github/workflows/desktop-windows.yml` are manual `workflow_dispatch` builds.
+The macOS workflow uses the matching GitHub-hosted arm64 (`macos-14`) and Intel
+x64 (`macos-15-intel`) runners; Windows builds x64. Each workflow runs desktop
+tests; macOS mounts its DMG read-only and starts the packaged
+`NOMO.app` executable with `--smoke-test` from that image before checksumming it.
+Windows smoke installs into the disposable runner temp directory, launches
+`--smoke-test`, then runs the NSIS uninstaller and checks an unrelated temp
+sentinel survives. Each checksum
+is uploaded with its private Actions artifact for seven days.
+These workflow files have not been dispatched from this worktree; their
+existence is not evidence of a successful remote build or tester clean install.
+GitHub's [hosted-runner reference](https://docs.github.com/en/actions/reference/runners/github-hosted-runners)
+identifies these labels and architectures.
+
+The manual `.github/workflows/desktop-release.yml` is narrower: it accepts only
+the `main` branch in a private repository, requires the exact
+`PUBLISH_PRIVATE_RELEASE` confirmation and matching desktop version, and
+publishes only after the `private-release` GitHub Environment check. Before
+publishing it also fails closed unless that environment has a required-reviewer
+rule with self-review disabled. The repository owner must configure that rule
+and branch restrictions in GitHub settings. GitHub's [environment documentation]
+(https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments)
+describes plan eligibility for required-reviewer protection in private repositories. The
+workflow creates a private prerelease/tag only when deliberately dispatched
+and approved; no push or tag event invokes it. No workflow was dispatched and
+no artifact, tag, or release was created for this change.
+
+The artifact/release paths are explicitly internal and unsigned: the Mac
+matrix forces an ad-hoc signature and does not notarize; the Windows installer
+is unsigned. Gatekeeper and SmartScreen can warn or block installation. The
+private prerelease notes enumerate platforms, signing state, OS warnings,
+checksums, and the existing private feedback form. This does not change the
+tester guide above or establish native clean-install evidence; H34 remains
+blocked until an actual current-worktree build and installed smoke is recorded.

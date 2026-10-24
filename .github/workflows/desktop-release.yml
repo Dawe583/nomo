@@ -1,0 +1,205 @@
+name: Gated private desktop beta release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Exact version shared by all desktop manifests (without v)
+        required: true
+        type: string
+      confirm_private_release:
+        description: Type PUBLISH_PRIVATE_RELEASE to authorize the private prerelease after environment approval
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: desktop-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.ref == 'refs/heads/main' && github.event.repository.visibility == 'private' && inputs.confirm_private_release == 'PUBLISH_PRIVATE_RELEASE'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos
+            arch: arm64
+            runner: macos-14
+          - platform: macos
+            arch: x64
+            runner: macos-15-intel
+          - platform: windows
+            arch: x64
+            runner: windows-latest
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    env:
+      NOMO_DISTRIBUTION: direct
+      APPLE_SIGNING_IDENTITY: '-'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.0
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/desktop/src-tauri
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+      - run: pnpm desktop:setup
+      - run: pnpm desktop:test
+      - run: cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml --locked
+      - if: matrix.platform == 'windows'
+        run: pnpm desktop:build
+        env:
+          NOMO_DISTRIBUTION: direct
+      - if: matrix.platform == 'windows'
+        name: Install, smoke-test, uninstall, and checksum NSIS package
+        shell: pwsh
+        run: |
+          $installer = Get-ChildItem apps/desktop/src-tauri/target/release/bundle/nsis/*.exe | Select-Object -First 1
+          if (!$installer) { throw 'NSIS installer missing' }
+          $destination = Join-Path $env:RUNNER_TEMP 'NOMO-installed'
+          if ($destination.Contains(' ')) { throw 'NSIS custom install path must not contain spaces' }
+          $setup = Start-Process -FilePath $installer.FullName -ArgumentList @('/S', "/D=$destination") -Wait -PassThru
+          if ($setup.ExitCode -ne 0) { throw "Installer failed: $($setup.ExitCode)" }
+          $binary = Join-Path $destination 'nomo-desktop.exe'
+          if (!(Test-Path $binary)) { throw "Installed application missing: $binary" }
+          $smoke = Start-Process -FilePath $binary -ArgumentList '--smoke-test' -PassThru
+          if (!$smoke.WaitForExit(60000)) { $smoke.Kill(); throw 'Native smoke timed out' }
+          if ($smoke.ExitCode -ne 0) { throw "Native smoke failed: $($smoke.ExitCode)" }
+          $sentinel = Join-Path $env:RUNNER_TEMP 'nomo-unrelated-sentinel.txt'
+          Set-Content -Path $sentinel -Value 'keep'
+          $uninstaller = Get-ChildItem -Path $destination -Filter 'uninstall.exe' -Recurse | Select-Object -First 1
+          if (!$uninstaller) { throw 'NSIS uninstaller missing' }
+          $remove = Start-Process -FilePath $uninstaller.FullName -ArgumentList '/S' -Wait -PassThru
+          if ($remove.ExitCode -ne 0) { throw "Uninstaller failed: $($remove.ExitCode)" }
+          if (!(Test-Path $sentinel)) { throw 'Uninstall touched an unrelated runner-temp file' }
+          Remove-Item $sentinel
+          $hash = (Get-FileHash $installer.FullName -Algorithm SHA256).Hash.ToLower()
+          "$hash  $($installer.Name)" | Set-Content -Encoding utf8NoBOM (Join-Path $installer.DirectoryName 'SHA256SUMS-windows.txt')
+      - if: matrix.platform == 'macos'
+        run: pnpm desktop:build
+        env:
+          NOMO_DISTRIBUTION: direct
+          APPLE_SIGNING_IDENTITY: '-'
+      - if: matrix.platform == 'macos'
+        name: Smoke-test packaged app and checksum DMG
+        shell: bash
+        run: |
+          set -euo pipefail
+          executable='apps/desktop/src-tauri/target/release/bundle/macos/NOMO.app/Contents/MacOS/nomo-desktop'
+          test -x "$executable"
+          "$executable" --smoke-test
+          dmg="$(find apps/desktop/src-tauri/target/release/bundle/macos -maxdepth 1 -type f -name '*.dmg' -print -quit)"
+          test -n "$dmg"
+          artifact="$RUNNER_TEMP/NOMO-macos-${{ matrix.arch }}.dmg"
+          cp "$dmg" "$artifact"
+          shasum -a 256 "$artifact" > "$RUNNER_TEMP/SHA256SUMS-macos-${{ matrix.arch }}.txt"
+      - if: matrix.platform == 'windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: NOMO-windows-x64
+          path: |
+            apps/desktop/src-tauri/target/release/bundle/nsis/*.exe
+            apps/desktop/src-tauri/target/release/bundle/nsis/SHA256SUMS-windows.txt
+          if-no-files-found: error
+          retention-days: 7
+      - if: matrix.platform == 'macos'
+        uses: actions/upload-artifact@v4
+        with:
+          name: NOMO-macos-${{ matrix.arch }}
+          path: |
+            ${{ runner.temp }}/NOMO-macos-${{ matrix.arch }}.dmg
+            ${{ runner.temp }}/SHA256SUMS-macos-${{ matrix.arch }}.txt
+          if-no-files-found: error
+          retention-days: 7
+
+  release:
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event.repository.visibility == 'private' && inputs.confirm_private_release == 'PUBLISH_PRIVATE_RELEASE'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: private-release
+    permissions:
+      actions: read
+      contents: write
+    steps:
+      - name: Require reviewer protection on the private environment
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          reviewers="$(gh api "repos/${GITHUB_REPOSITORY}/environments/private-release" --jq '[.protection_rules[]? | select(.type == "required_reviewers" and .prevent_self_review == true)] | length')"
+          if [ "$reviewers" -lt 1 ]; then
+            echo 'private-release must require reviewers and prevent self-review before a release can proceed.' >&2
+            exit 1
+          fi
+      - name: Validate release version and repository visibility
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          [[ "$RELEASE_VERSION" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]
+          package_version="$(node -p "require('./apps/desktop/package.json').version")"
+          tauri_version="$(node -p "require('./apps/desktop/src-tauri/tauri.conf.json').version")"
+          test "$RELEASE_VERSION" = "$package_version"
+          test "$RELEASE_VERSION" = "$tauri_version"
+          test "$(gh api "repos/${GITHUB_REPOSITORY}" --jq .private)" = true
+      - uses: actions/download-artifact@v4
+        with:
+          name: NOMO-macos-arm64
+          path: release-assets/macos-arm64
+      - uses: actions/download-artifact@v4
+        with:
+          name: NOMO-macos-x64
+          path: release-assets/macos-x64
+      - uses: actions/download-artifact@v4
+        with:
+          name: NOMO-windows-x64
+          path: release-assets/windows-x64
+      - name: Create checksums and private beta notes
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          cat release-assets/macos-arm64/SHA256SUMS-macos-arm64.txt \
+              release-assets/macos-x64/SHA256SUMS-macos-x64.txt \
+              release-assets/windows-x64/SHA256SUMS-windows.txt > release-assets/SHA256SUMS.txt
+          cat > release-assets/release-notes.md <<EOF
+          Internal private desktop beta $RELEASE_VERSION
+
+          Platforms: macOS arm64 and x64; Windows x64.
+          Signing: macOS ad-hoc signed and not notarized; Windows installer unsigned.
+          OS warnings: macOS Gatekeeper may refuse or warn; Windows SmartScreen may warn. This is not a public or production release.
+          Checksums: SHA256SUMS.txt.
+          Manual private feedback: https://github.com/${GITHUB_REPOSITORY}/issues/new?template=feedback.yml
+
+          Do not use with real provider credentials or production data.
+          EOF
+      - name: Publish private prerelease on the approved main commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          gh release create "v${RELEASE_VERSION}" \
+            release-assets/macos-arm64/NOMO-macos-arm64.dmg \
+            release-assets/macos-x64/NOMO-macos-x64.dmg \
+            release-assets/windows-x64/*.exe \
+            release-assets/SHA256SUMS.txt \
+            --target "$GITHUB_SHA" \
+            --title "NOMO desktop beta ${RELEASE_VERSION}" \
+            --notes-file release-assets/release-notes.md \
+            --prerelease

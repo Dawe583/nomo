@@ -177,16 +177,3 @@ test('non-macOS platforms keep the Mac identity out of the policy', () => {
     assert.doesNotThrow(() => resolveBuildPolicy({ platform, distribution: 'store', env: {}, listIdentities: discovery }));
   }
 });
-
-test('Mac release documentation names the exact local provenance and external blockers', async () => {
-  const readme = await readFile(new URL('./README.md', import.meta.url), 'utf8');
-  assert.match(readme, /1\.0\.1/);
-  assert.match(readme, /apps\/desktop\/package\.json/);
-  assert.match(readme, /apps\/desktop\/src-tauri\/Cargo\.toml/);
-  assert.match(readme, /apps\/desktop\/src-tauri\/tauri\.conf\.json/);
-  assert.match(readme, /ad-hoc signature/);
-  assert.match(readme, /notarization/);
-  assert.match(readme, /Mac App Store/);
-  assert.match(readme, /diagnostic/);
-  assert.match(readme, /smoke/);
-});

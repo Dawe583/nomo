@@ -266,6 +266,10 @@ const INVENTORY = {
     "planned module name; the refinement pass lives in harness-runtime.ts instead",
   "packages/workbench/src/harness-retrieval.test.ts":
     "planned module name; retrieval lives in learned-harness.ts instead",
+  // Keep only the approved provider-auth service here; the manifest and
+  // implemented transport files now exist in this checkout.
+  "apps/control-plane/api/provider-auth.ts":
+    "planned provider credential lifecycle; individual auth contracts remain blocked by the approved spec",
 };
 
 /** Plans nobody maintains any more. Each must announce that at its head. */

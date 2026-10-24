@@ -1,0 +1,73 @@
+name: Private macOS desktop beta artifacts
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: desktop-macos-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.event.repository.visibility == 'private'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: arm64
+            runner: macos-14
+          - arch: x64
+            runner: macos-15-intel
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    env:
+      NOMO_DISTRIBUTION: direct
+      APPLE_SIGNING_IDENTITY: '-'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.0
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/desktop/src-tauri
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+      - run: pnpm desktop:setup
+      - run: pnpm desktop:test
+      - run: cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml --locked
+      - run: pnpm desktop:build
+      - name: Smoke-test app mounted from DMG and checksum image
+        shell: bash
+        run: |
+          set -euo pipefail
+          dmg="$(find apps/desktop/src-tauri/target/release/bundle/macos -maxdepth 1 -type f -name '*.dmg' -print -quit)"
+          test -n "$dmg"
+          mount_point="$(mktemp -d "$RUNNER_TEMP/NOMO-mounted-XXXXXX")"
+          trap 'hdiutil detach -quiet "$mount_point" || true; rmdir "$mount_point"' EXIT
+          hdiutil attach -quiet -readonly -nobrowse -mountpoint "$mount_point" "$dmg"
+          executable="$mount_point/NOMO.app/Contents/MacOS/nomo-desktop"
+          test -x "$executable"
+          "$executable" --smoke-test
+          hdiutil detach -quiet "$mount_point"
+          rmdir "$mount_point"
+          trap - EXIT
+          artifact="$RUNNER_TEMP/NOMO-macos-${{ matrix.arch }}.dmg"
+          cp "$dmg" "$artifact"
+          shasum -a 256 "$artifact" > "$RUNNER_TEMP/SHA256SUMS-macos-${{ matrix.arch }}.txt"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: NOMO-macos-${{ matrix.arch }}
+          path: |
+            ${{ runner.temp }}/NOMO-macos-${{ matrix.arch }}.dmg
+            ${{ runner.temp }}/SHA256SUMS-macos-${{ matrix.arch }}.txt
+          if-no-files-found: error
+          retention-days: 7
