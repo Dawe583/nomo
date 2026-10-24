@@ -224,7 +224,7 @@ Platformní install smokes běží jen na odpovídajících CI runners a bez sku
 - [x] Spustit `pnpm run typecheck`; při selhání zastavit, určit jedinou příčinu a neopakovat bez opravy.
 - [x] Prohlédnout celý staged kandidát včetně nových souborů; ověřit secret redaction, endpoint policy, workflow approval, checksum a TUI absenci.
 - [x] Stageovat jen ověřené Harness cesty; před commitem zkontrolovat celý staged diff a seznam staged paths.
-- [ ] Vytvořit dva kohezi zachovávající commity: (1) Workbench runtime, provider transporty a API/UI dohromady, protože sdílejí provider dispatch a `index.ts`; (2) desktop beta distribuci, onboarding, specifikaci, plán a předání. Pushnout pouze ověřený `HEAD` na `origin/feat/wp-regress`.
-- [ ] Ověřit remote SHA vůči lokálnímu `HEAD`; zaznamenat přesné příkazy, výsledky a neověřené GA podmínky.
+- [x] Vytvořit dva kohezi zachovávající commity: (1) Workbench runtime, provider transporty a API/UI dohromady, protože sdílejí provider dispatch a `index.ts`; (2) desktop beta distribuci, onboarding, specifikaci, plán a předání. Pushnout pouze ověřený `HEAD` na `origin/feat/wp-regress`. Commity: `92d66fd`, `7c341d2`.
+- [x] Ověřit remote SHA vůči lokálnímu `HEAD`; zaznamenat přesné příkazy, výsledky a neověřené GA podmínky. `git ls-remote origin refs/heads/feat/wp-regress` i `git rev-parse HEAD` vrátily `7c341d25709ae4992daf8c6ea691e9e0989fe6ae`; remote CI a instalovaný smoke zůstávají neověřené.
 
 **Zastavit:** při souběžné změně Harness souboru, test/typecheck selhání, secret nálezu, nejasném vlastnictví cesty, změně remote větve nebo pokusu zahrnout TUI/cizí změnu. Neprovádět merge, release ani reálné provider volání.
