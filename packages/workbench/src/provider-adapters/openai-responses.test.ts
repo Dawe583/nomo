@@ -284,3 +284,30 @@ test("Responses onDelta redacts an API key split across events without changing 
   ]);
   assert.deepEqual(reply.usage, { prompt_tokens: 4, completion_tokens: 3, total_tokens: 7 });
 });
+
+
+test("Responses streaming returns a tool-only reply without text deltas", async () => {
+  const events = [
+    { type: "response.output_item.added", output_index: 0, item: { id: "item-tool", type: "function_call", call_id: "call-tool", name: "inspect", arguments: "" } },
+    { type: "response.function_call_arguments.delta", output_index: 0, item_id: "item-tool", delta: '{"path":' },
+    { type: "response.function_call_arguments.delta", output_index: 0, item_id: "item-tool", delta: '"README.md"}' },
+    { type: "response.function_call_arguments.done", output_index: 0, item_id: "item-tool", arguments: '{"path":"README.md"}' },
+    { type: "response.output_item.done", output_index: 0, item: { id: "item-tool", type: "function_call", call_id: "call-tool", name: "inspect", arguments: '{"path":"README.md"}' } },
+    { type: "response.completed", response: { id: "resp-tool-only", status: "completed", output: [{ id: "item-tool", type: "function_call", call_id: "call-tool", name: "inspect", arguments: '{"path":"README.md"}' }], usage: { input_tokens: 5, output_tokens: 2, total_tokens: 7 } } },
+  ];
+  const response = new Response(events.map(event => `data: ${JSON.stringify(event)}\n\n`).join(""), {
+    headers: { "content-type": "text/event-stream" },
+  });
+  const client = createProviderClient(config, async () => response);
+  const visibleDeltas: string[] = [];
+  const reply = await client.complete("gpt-fixture", [{ role: "user", content: "inspect" }], [], new AbortController().signal, delta => {
+    visibleDeltas.push(delta);
+  });
+  assert.equal(visibleDeltas.join(""), "");
+  assert.deepEqual(reply.message.tool_calls?.map(call => [call.id, call.function.name, call.function.arguments]), [
+    ["call-tool", "inspect", '{"path":"README.md"}'],
+  ]);
+  assert.equal(reply.message.content, null);
+  assert.deepEqual(reply.usage, { prompt_tokens: 5, completion_tokens: 2, total_tokens: 7 });
+  assert.equal(reply.response_id, "resp-tool-only");
+});
