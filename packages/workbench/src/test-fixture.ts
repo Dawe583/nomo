@@ -26,6 +26,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Workbench } from "./index.ts";
+import type { AgentRunner } from "./agent-runners/agent-runner.ts";
 
 /** The minimum of `node:test`'s context that a fixture needs. */
 export type FixtureContext = {
@@ -49,6 +50,7 @@ export type FixtureOptions = {
    * hang.
    */
   beforeShutdown?: () => void | Promise<void>;
+  agentRunners?: readonly AgentRunner[];
 };
 
 export type WorkbenchFixture = {
@@ -117,6 +119,7 @@ export async function isolatedWorkbench(
     apiKey = "fixture",
     prefix = "void-test-",
     beforeShutdown,
+    agentRunners = [],
   } = options;
 
   const root = await mkdtemp(join(tmpdir(), prefix));
@@ -128,7 +131,7 @@ export async function isolatedWorkbench(
   // `assertIsolated` at a directory nobody wrote to.
   const env = { ...extraEnv, NOMO_DATA_DIR: root } as NodeJS.ProcessEnv;
 
-  let app = new Workbench(env, fetcher);
+  let app = new Workbench(env, fetcher, { agentRunners });
   assertIsolated(root, env);
   if (configure) await app.configure({ baseUrl, apiKey });
 
@@ -147,7 +150,7 @@ export async function isolatedWorkbench(
     },
     restart({ keepOpen = false }: { keepOpen?: boolean } = {}) {
       if (!keepOpen) app.close();
-      app = new Workbench(env, fetcher);
+      app = new Workbench(env, fetcher, { agentRunners });
       assertIsolated(root, env);
       // Configuration is not repeated here. It was persisted by the first
       // `configure` and the constructor reads it back out of the same

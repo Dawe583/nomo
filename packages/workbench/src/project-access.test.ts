@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
+import { execFileSync } from "node:child_process";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 import { PROJECT_EXEC_TOOL } from "./project-sandbox.ts";
+import { PROJECT_CHANGES_TOOL } from "./project-workspace.ts";
 import { isolatedWorkbench } from "./test-fixture.ts";
 
 const profile = {
@@ -33,6 +35,7 @@ test("project context is opt-in, custom-profile-only, and must be reconfirmed af
   );
   await fixture.app.configure({ baseUrl: "https://fixture.test/v1", apiKey: "fixture" });
   const root = await mkdtemp(join(tmpdir(), "nomo-project-access-"));
+  execFileSync("git", ["init", "--quiet"], { cwd: root, stdio: "ignore" });
   t.after(() => rm(root, { recursive: true, force: true }));
   fixture.app.upsertAgent(profile);
   await fixture.app.confirmProjectAccess(root, []);
@@ -40,6 +43,10 @@ test("project context is opt-in, custom-profile-only, and must be reconfirmed af
   await fixture.app.settled();
   assert.equal(
     requests[0]!.tools.some((tool) => tool.function.description.startsWith(`${PROJECT_EXEC_TOOL.name}:`)),
+    false,
+  );
+  assert.equal(
+    requests[0]!.tools.some((tool) => tool.function.description.startsWith(`${PROJECT_CHANGES_TOOL.name}:`)),
     false,
   );
 
@@ -54,6 +61,10 @@ test("project context is opt-in, custom-profile-only, and must be reconfirmed af
   assert.equal(
     requests[1]!.tools.some((tool) => tool.function.description.startsWith(`${PROJECT_EXEC_TOOL.name}:`)),
     true,
+  );
+  assert.equal(
+    requests[1]!.tools.some((tool) => tool.function.description.startsWith(`${PROJECT_CHANGES_TOOL.name}:`)),
+    false,
   );
   assert.match(requests[1]!.messages[0]!.content!, /isolated, network-disabled container/);
   assert.equal(fixture.app.get(defaultSession.id)?.status, "idle");
@@ -70,6 +81,140 @@ test("project context is opt-in, custom-profile-only, and must be reconfirmed af
   assert.equal(requests.length, 3);
 });
 
+test("read-only project changes are available only to the confirmed allowlisted session", async (t) => {
+  type RequestBody = {
+    messages: Array<{ role: string; content?: string }>;
+    tools: Array<{ function: { name: string; description: string } }>;
+  };
+  const requests: RequestBody[] = [];
+  let reviewed = false;
+  const fetcher: typeof fetch = async (url, init) => {
+    if (String(url).endsWith("/models"))
+      return Response.json({ data: [{ id: "fixture" }] });
+    const body = JSON.parse(String(init?.body)) as RequestBody;
+    requests.push(body);
+    const tool = body.tools.find((candidate) =>
+      candidate.function.description.startsWith(`${PROJECT_CHANGES_TOOL.name}:`),
+    );
+    if (!tool || reviewed)
+      return Response.json({ choices: [{ message: { role: "assistant", content: "Reviewed" } }] });
+    reviewed = true;
+    assert.equal(
+      body.tools.some((candidate) =>
+        candidate.function.description.startsWith(`${PROJECT_EXEC_TOOL.name}:`),
+      ),
+      false,
+    );
+    return Response.json({
+      choices: [{
+        message: {
+          role: "assistant",
+          content: null,
+          tool_calls: [{
+            id: "review-call",
+            type: "function",
+            function: {
+              name: tool.function.name,
+              arguments: JSON.stringify({ operation: "status" }),
+            },
+          }],
+        },
+      }],
+    });
+  };
+  const fixture = await isolatedWorkbench(
+    t,
+    fetcher,
+    { NOMO_PERMISSION_MODE: "normal" },
+    { configure: false },
+  );
+  await fixture.app.configure({ baseUrl: "https://fixture.test/v1", apiKey: "fixture" });
+  const root = await mkdtemp(join(tmpdir(), "nomo-project-review-"));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  await mkdir(join(root, "src"));
+  await writeFile(join(root, "src/main.ts"), "export const answer = 42;\n");
+  execFileSync("git", ["init", "--quiet"], { cwd: root, stdio: "ignore" });
+  execFileSync("git", ["add", "-A"], { cwd: root, stdio: "ignore" });
+  const reviewProfile = {
+    ...profile,
+    id: "project-reviewer",
+    allowedTools: [PROJECT_CHANGES_TOOL.name],
+  };
+  fixture.app.upsertAgent(reviewProfile);
+  const { rootDigest } = await fixture.app.confirmProjectAccess(root, []);
+  const copiedFile = join(
+    fixture.root,
+    "project-workspaces",
+    rootDigest.slice("sha256:".length),
+    "source",
+    "src/main.ts",
+  );
+  await writeFile(copiedFile, "export const answer = 43;\n");
+
+  const session = await fixture.app.start(
+    "Review the project changes",
+    "fixture",
+    undefined,
+    undefined,
+    reviewProfile.id,
+  );
+  await fixture.app.settled();
+  const exposedRequest = requests.find((request) =>
+    request.tools.some((tool) =>
+      tool.function.description.startsWith(`${PROJECT_CHANGES_TOOL.name}:`),
+    ),
+  );
+  assert.ok(
+    exposedRequest,
+    JSON.stringify(requests.map((request) => request.tools.map((tool) => tool.function.name))),
+  );
+  const resultRequest = requests.find((request) =>
+    request.messages.some((message) => message.role === "tool"),
+  );
+  assert.ok(resultRequest);
+  assert.equal(await readFile(join(root, "src/main.ts"), "utf8"), "export const answer = 42;\n");
+  assert.match(JSON.stringify(resultRequest.messages), /modified/);
+  assert.doesNotMatch(JSON.stringify(resultRequest.messages), /answer = 42/);
+  assert.ok(fixture.app.availableTools(session.id).tools.some(
+    (tool) => tool.name === PROJECT_CHANGES_TOOL.name,
+  ));
+  await fixture.app.revokeProjectAccess();
+  assert.equal(fixture.app.availableTools(session.id).tools.some(
+    (tool) => tool.name === PROJECT_CHANGES_TOOL.name,
+  ), false);
+});
+
+test("Workbench summarizes, revokes, and deletes only the owned project copy", async (t) => {
+  const fixture = await isolatedWorkbench(
+    t,
+    async (url) => String(url).endsWith("/models")
+      ? Response.json({ data: [{ id: "fixture" }] })
+      : Response.json({ choices: [{ message: { role: "assistant", content: "Ready" } }] }),
+    {},
+    { configure: false },
+  );
+  const root = await mkdtemp(join(tmpdir(), "nomo-project-lifecycle-"));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  execFileSync("git", ["init", "--quiet"], { cwd: root, stdio: "ignore" });
+  const { rootDigest } = await fixture.app.confirmProjectAccess(root, []);
+
+  const summary = await fixture.app.projectWorkspaceSummary();
+  assert.deepEqual(summary.project, {
+    rootDigest,
+    displayName: root.split(/[\\/]/).at(-1),
+  });
+  assert.equal(JSON.stringify(summary).includes(root), false);
+  const saved = await fixture.app.listProjectWorkspaces();
+  assert.equal(saved.length, 1);
+  assert.equal(saved[0]!.rootDigest, rootDigest);
+  await fixture.app.deleteProjectWorkspace(rootDigest);
+  assert.deepEqual(await fixture.app.projectWorkspaceSummary(), {
+    project: null,
+    workspace: null,
+  });
+  assert.deepEqual(await fixture.app.listProjectWorkspaces(), []);
+});
+
 test("an allowlisted R3 project command runs in the pinned sandbox and records dispatch evidence", {
   skip:
     !process.env.NOMO_PROJECT_SANDBOX_RUNTIME ||
@@ -81,6 +226,7 @@ test("an allowlisted R3 project command runs in the pinned sandbox and records d
   const projectRoot = join(directory, "project");
   const policyDir = join(directory, "policies");
   await mkdir(projectRoot);
+  execFileSync("git", ["init", "--quiet"], { cwd: projectRoot, stdio: "ignore" });
   await mkdir(policyDir);
   const policyPath = join(policyDir, "operator.yaml");
   await writeFile(
@@ -126,8 +272,7 @@ test("an allowlisted R3 project command runs in the pinned sandbox and records d
   const fixture = await isolatedWorkbench(t, fetcher, env, { configure: false });
   t.after(() => rm(directory, { recursive: true, force: true }));
   await fixture.app.configure({ baseUrl: "https://fixture.test/v1", apiKey: "fixture" });
-  fixture.app.upsertAgent({ ...profile, policyProfile: "open" });
-  await fixture.app.confirmProjectAccess(projectRoot, []);
+  const { rootDigest } = await fixture.app.confirmProjectAccess(projectRoot, []);
   const session = await fixture.app.start(
     "Write one file in the project",
     "fixture",
@@ -136,7 +281,11 @@ test("an allowlisted R3 project command runs in the pinned sandbox and records d
     profile.id,
   );
   await fixture.app.settled();
-  assert.equal(await readFile(join(projectRoot, "result.txt"), "utf8"), "sandbox-ok");
+  assert.equal(
+    await readFile(join(fixture.root, "project-workspaces", rootDigest, "source", "result.txt"), "utf8"),
+    "sandbox-ok",
+  );
+  await assert.rejects(readFile(join(projectRoot, "result.txt"), "utf8"), { code: "ENOENT" });
   const ledger = await fixture.app.ledger(session.workspace);
   assert.equal(ledger?.result.ok, true);
   const projectRecords = ledger!.entries

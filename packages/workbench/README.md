@@ -18,6 +18,79 @@ run without a cloud key on loopback endpoints. Direct `openai.com` provider URLs
 are rejected. Model provider credentials and MCP OAuth are separate flows.
 Prompts and tool results are sent to the selected model provider.
 
+## Filtered project workspace
+
+Open `/project-workspace` in the local Control Plane and enter the absolute
+root of a Git working tree. Workbench stores a private filtered copy under
+`project-workspaces/<rootDigest>` in its data directory. Only `source/` is
+available to the project sandbox; the original repository is never mounted.
+The private `control/baseline/` retains the confirmed snapshot for stable
+diffs and can use up to 1 GiB in addition to the filtered copy.
+
+The copy excludes VCS metadata, `.env*`, `.ssh`, `secrets` and `credentials`
+directories, known key/certificate/token file patterns, Git-ignored files,
+build/cache directories, and `packages/cli/src/tui/**`. Symlinks, hardlinks,
+cross-filesystem files, and copies beyond 100,000 files, 32 MiB per file, or
+1 GiB total are rejected. Name filtering cannot detect secrets embedded in
+ordinary source files; those files may be sent to the selected model.
+
+Project tools are absent by default. A custom agent profile must explicitly
+allowlist `nomo_project_changes` for read-only status/diff and
+`nomo_project_exec` for commands in the filtered copy. Allowlisting
+`nomo_project_exec` alone does not enable review. Reconfirm the project after
+a Workbench restart; the saved-workspace catalog exposes metadata only, never
+the original path.
+
+Review changes in the local Control Plane. The UI pages paths by 50, shows one
+file diff and its exact digest, and requires a separate confirmation to apply
+that one file. The API rejects stale digests or changed original files with
+`409`; it makes a backup before an atomic single-file write. Apply does not
+create commits, push, merge, or switch branches. Revoke removes agent access
+without deleting the copy; deleting a saved copy is a separate confirmed
+action and permanently loses its unapplied changes.
+
+## AgentRunner broker
+
+Workbench exposes an injectable `AgentRunner` contract for future coding-agent
+adapters. `prepareAgentRun()` builds a consent preview bound to the selected
+task, runner description, profile, filtered-project manifest and current
+changes; `startAgentRun()` requires the preview's single-use digest and
+revalidates that snapshot before starting. The broker gives the runner a
+Workbench-issued run/grant identity and only the tools allowed by the chosen
+profile and permission mode. Each tool request is rechecked against the active
+grant, project binding, profile, runner capabilities, allowlist and current
+policy, then dispatched through the existing Workbench path. Ambiguous tool
+outcomes are recorded as unknown and are never retried automatically.
+
+The current implementation does not include a vendor adapter or Control Plane
+consent UI/API route. The consent preview declares whether transfer is remote
+and which categories may be sent (`task`, `system-prompt`, `tool-arguments`,
+`tool-results`). Provider, endpoint, execution and transfer-scope values remain
+adapter claims, not independently verified properties. No live provider
+request, authentication flow or remote execution has been proven; the offline
+fixtures exercise only synthetic runners.
+
+Every `/api/project-workspace` route is local-only, even when
+`NOMO_CONTROL_TOKEN` is configured for other Control Plane routes. The typed
+absolute path is sent in the local access request, not put in the browser URL
+or saved browser storage. The local API is a same-user boundary, not
+authentication between users of the same machine.
+
+## Google Vertex AI Standard
+
+The typed `google-vertex` transport supports the pinned Standard Vertex
+`streamGenerateContent` route with an API key. Configure a Google Cloud project
+and location; Workbench derives the HTTPS endpoint and sends the key only in
+the `x-goog-api-key` header. Model selection comes from the pinned manifest,
+not a live Vertex model-list request. The project must have Vertex AI enabled
+and billing configured.
+
+This does not implement Application Default Credentials, gcloud credential
+discovery, or Vertex Express mode. API-key and project requirements follow
+Google's [Standard Vertex API-key guide](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/start/api-keys?usertype=standard),
+[API-key header guidance](https://docs.cloud.google.com/docs/authentication/api-keys-use),
+and [streamGenerateContent REST reference](https://docs.cloud.google.com/gemini-enterprise-agent-platform/reference/rest/v1/projects.locations.endpoints/streamGenerateContent).
+
 The typed `mistral-conversations` transport is Prime's stateless Mistral chat
 completion API (`POST /v1/chat/completions` with SSE), not the separate
 stateful Beta Conversations API; it uses the official
@@ -67,7 +140,7 @@ contracts are documented in the official
 [streaming guide](https://developers.openai.com/api/docs/guides/streaming-responses),
 and [function-call streaming guide](https://developers.openai.com/api/docs/guides/function-calling#streaming).
 
-## OpenAI Codex Responses — blocked
+## OpenAI Codex Responses: blocked
 
 The pinned OMP 18.6.2 and Prime 0.10.1 implementations identify this API as
 ChatGPT-account Codex, not the public OpenAI Responses API: both target
