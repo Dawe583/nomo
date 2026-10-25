@@ -21,6 +21,24 @@ test('remote control refuses absent, short, wrong tokens and browser origins', (
   assert.equal(authorizedRemote(request({ authorization: `Bearer ${token}`, origin: 'https://evil.test' }), { NOMO_CONTROL_TOKEN: token }), false);
 });
 
+test('NOMO control token overrides the legacy alias, including when empty', () => {
+  const nomoToken = 'a'.repeat(64);
+  const legacyToken = 'b'.repeat(64);
+  const request = (token: string) => ({
+    headers: { authorization: `Bearer ${token}` },
+  }) as IncomingMessage;
+  const configured = { NOMO_CONTROL_TOKEN: nomoToken, VOID_CONTROL_TOKEN: legacyToken };
+  assert.equal(authorizedRemote(request(nomoToken), configured), true);
+  assert.equal(authorizedRemote(request(legacyToken), configured), false);
+  assert.equal(
+    authorizedRemote(request(legacyToken), {
+      NOMO_CONTROL_TOKEN: '',
+      VOID_CONTROL_TOKEN: legacyToken,
+    }),
+    false,
+  );
+});
+
 test('standalone HTTP decision reaches the proxy broker through durable state', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'nomo-beta-approvals-'));
   const broker = new ApprovalBroker({ stateDir: dir });
