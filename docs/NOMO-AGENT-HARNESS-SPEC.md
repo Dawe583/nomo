@@ -712,22 +712,26 @@ nejsou, se v tomhle stromu objevují jako falešné tvrzení později.
 Vlastník schválil work package pro projektové schopnosti v
 `docs/superpowers/graphs/2026-10-15-nomo-harness-workstream.md`.
 
-- Spouštění projektu se zapíná pouze přes `nomo tui --project PATH` a před
-  předáním projektových dat modelu vyžaduje viditelný souhlas v TUI. Nástroj
-  `nomo_project_exec` dostane jen explicitně nakonfigurovaný profil a podléhá
-  existující R3 policy a approval cestě.
+- CLI projektový workflow zůstává dostupný přes `nomo tui --project PATH` a
+  vyžaduje viditelný souhlas v TUI. Schválená H19 hranice z 2026-10-24 přidává
+  oddělenou lokální cestu `/project-workspace` v Control Plane: ručně zadaný
+  Git root, filtrovanou pracovní kopii a explicitní per-file potvrzení. Nové
+  rozhraní TUI nenahrazuje ani nemění.
+- `nomo_project_changes` je read-only; `nomo_project_exec` spouští příkazy
+  pouze ve filtrované kopii. Oba nástroje vyžadují explicitní allowlist
+  vlastního profilu; exec navíc podléhá existující R3 policy a approval cestě.
 - Příkazy běží výhradně v jednorázovém Docker/Podman kontejneru s lokálním
-  připnutým image ID, bez sítě a bez host environmentu či credentialů. Pouze
-  zvolený projekt se připojí pro zápis. Chybějící runtime nebo image znamená
-  odmítnutí, nikdy host fallback.
+  připnutým image ID, bez sítě a bez host environmentu či credentialů. Do
+  `/workspace` se připojí pouze `source/` filtrované kopie. Chybějící runtime
+  nebo image znamená odmítnutí, nikdy host fallback.
 - Skills se čtou pouze z `.agents/skills/` zvoleného projektu a jeho
   `skills-lock.json`, explicitně přes `--skill`. Kontroluje se drift a do
   session se vloží neměnný snapshot jako nedůvěryhodný, nevykonatelný prompt
   context. Bez globálního lookupu a bez změny policy či allowlistu.
-- Projekt i výstupy příkazů mohou obsahovat secrets; mohou odejít zvolenému
-  provideru a zůstat v lokální historii session. TUI musí toto riziko říct
-  před souhlasem. Izolace kontejneru před modelem neskryje tajemství uložená
-  uvnitř připojeného projektu.
+- Projekt i výstupy příkazů mohou obsahovat inline secrets; mohou odejít
+  zvolenému provideru a zůstat v lokální historii session. TUI i Control Plane
+  musí toto riziko říct před souhlasem. Filtrování názvů cest neskryje tajemství
+  uložená uvnitř běžných zdrojových souborů.
 - `/compact` zůstává ruční deterministickou operací bez sumarizačního modelu.
 
 ## 8. Benchmark coding agentů

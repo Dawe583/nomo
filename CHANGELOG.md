@@ -3,6 +3,23 @@
 All notable user-facing changes since the first repository commit.
 
 ## Unreleased
+- Workbench now has an injectable AgentRunner broker with single-use consent
+  previews bound to the task, runner description, profile and filtered project
+  snapshot. Tool calls recheck grant, project binding, profile, capabilities,
+  allowlist and current policy, then use Workbench's existing dispatch and
+  signed-ledger path. Ambiguous outcomes remain unknown and are not retried.
+  This is not a shipped vendor adapter or Control Plane consent route. The
+  preview names possible transfer categories (task, system prompt, tool
+  arguments and results), but provider metadata and transfer scope remain
+  adapter claims; no live provider or remote execution was verified. Coverage
+  uses offline synthetic runners only.
+- Google Vertex AI Standard now supports typed project and location settings.
+  Workbench derives the HTTPS endpoint, sends the key only in
+  `x-goog-api-key`, and lists models from the pinned manifest. ADC, gcloud
+  credential discovery and Vertex Express remain unsupported.
+- Local project workspaces use a private filtered copy. The local Control Plane
+  reviews one-file diffs and requires the exact digest before applying a change.
+  Saved workspaces require renewed confirmation after a Workbench restart.
 - Spawned children now use the parent's connector snapshots and inherit tools
   only when both the name and connector identity match. Later connector
   additions or edits cannot widen the child's scope.
