@@ -15,6 +15,7 @@ import {
   workspaceTab,
   commandSuggestions,
   filterKeyForTab,
+  isDoublePress,
   isDoubleEscape,
   mentionCandidates,
   mentionToken,
@@ -468,6 +469,7 @@ export async function runWorkspaceTui(
   let stashCursor = 0;
   let lastCtrlL = 0;
   let lastCtrlD = 0;
+  let lastCtrlC = 0;
   const chord = new ChordTracker();
   const startedAt = Date.now();
   // NOMO has its own explicit color preference; inherited NO_COLOR must not hide its UI.
@@ -616,7 +618,7 @@ export async function runWorkspaceTui(
       process.stdout.off("resize", draw);
       process.stdin.setRawMode(wasRaw);
       process.stdin.pause();
-      process.off("SIGINT", stop);
+      process.off("SIGINT", handleCtrlC);
       process.off("SIGTERM", stop);
       process.off("SIGHUP", stop);
       process.off("exit", restoreTerminal);
@@ -652,6 +654,17 @@ export async function runWorkspaceTui(
         },
       );
     };
+    const handleCtrlC = () => {
+      const now = Date.now();
+      if (isDoublePress(now, lastCtrlC)) {
+        lastCtrlC = 0;
+        stop();
+        return;
+      }
+      lastCtrlC = now;
+      ui.notice = "Press Ctrl+C again within 800 ms to exit.";
+      draw();
+    };
     const submit = async () => {
       const original = input.value,
         oldSession = ui.sessionId ?? "new";
@@ -677,9 +690,14 @@ export async function runWorkspaceTui(
     };
     const onKey = async (value: string | undefined, key: Key) => {
       if (stopped || suspended) return;
+      const ctrlC = !input.pasting && key.ctrl && key.name === "c";
+      if (!ctrlC) lastCtrlC = 0;
+      if (ctrlC) {
+        handleCtrlC();
+        return;
+      }
       // An open palette consumes every key except the ones it binds itself.
       // Letting the key fall through would move tabs or run a shortcut behind
-      // a filter surface, which is how a search box starts deleting work.
       if (ui.palette) {
         if (key.name === "escape") {
           ui.palette = undefined;
@@ -838,11 +856,7 @@ export async function runWorkspaceTui(
       //
       // Double Escape must be consecutive, not span commands typed in between.
       if (key.name !== "escape") lastEsc = 0;
-      if (
-        !input.pasting &&
-        ((key.ctrl && key.name === "c") || key.name === "escape") &&
-        app.running()
-      ) {
+      if (!input.pasting && key.name === "escape" && app.running()) {
         try {
           const session = ui.session();
           if (session?.status === "running") {
@@ -865,19 +879,6 @@ export async function runWorkspaceTui(
           ui.announce("cancel-failed", "danger", message(error));
         }
         draw();
-        return;
-      }
-      if (key.ctrl && key.name === "c") {
-        if (input.editing && input.value) {
-          input.set("");
-          suggestion = 0;
-          try {
-            saveDraft();
-          } catch (error) {
-            ui.notice = message(error);
-          }
-          draw();
-        } else stop();
         return;
       }
       const shortcut = ui.confirmation
@@ -1324,7 +1325,7 @@ export async function runWorkspaceTui(
     process.stdin.resume();
     process.stdin.on("keypress", onKey);
     process.stdout.on("resize", draw);
-    process.once("SIGINT", stop);
+    process.on("SIGINT", handleCtrlC);
     process.once("SIGTERM", stop);
     process.once("SIGHUP", stop);
     process.once("exit", restoreTerminal);

@@ -110,8 +110,9 @@ Alt+Enter, Ctrl+J or backslash+Enter inserts a newline; Esc stops a run; Esc Esc
 clears input or opens checkpoints when empty; Shift+Tab or Alt+M cycles modes;
 Ctrl+R searches history; Ctrl+O toggles tool output; Ctrl+L redraws, twice
 clears; Ctrl+S stashes input; Ctrl+G opens the editor; Meta+P opens models;
-Ctrl+C clears, cancels or exits; Ctrl+D exits from empty input. Ctrl+B
-background tasks, image paste, suspend and Vim editing have no NOMO equivalent.
+Ctrl+C twice in succession within 800 ms exits without clearing the draft;
+Ctrl+D exits from empty input after a double press. Ctrl+B background tasks,
+image paste, suspend and Vim editing have no NOMO equivalent.
 `/conformance [adapter]` runs the disposable adapter checks behind the TUI.
 `/providers` lists model providers including local open models.
 `/harness cloud|prime-agent` switches the agent harness; detection reads

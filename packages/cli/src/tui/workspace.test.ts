@@ -25,8 +25,10 @@ import {
   transcript,
   wrap,
   TUI_COMMANDS,
+  isDoublePress,
 } from "./workspace.ts";
 import { WorkspaceInput, workspaceShortcut } from "./workspace-runner.ts";
+
 import {
   filterPalette,
   paletteFromCommands,
@@ -39,6 +41,13 @@ import {
   stripAnsi,
   unifiedDiff,
 } from "./layout.ts";
+
+test("TUI Ctrl+C exit needs a second press within 800 ms", () => {
+  assert.equal(isDoublePress(1000, 0), false, "a first press never exits");
+  assert.equal(isDoublePress(1800, 1000), true, "the 800 ms boundary counts");
+  assert.equal(isDoublePress(1801, 1000), false, "late presses start over");
+  assert.equal(isDoublePress(999, 1000), false, "clock reversal is not a chord");
+});
 
 test("Ctrl+P requests the command palette through the input, not a submit", () => {
   const input = new WorkspaceInput();

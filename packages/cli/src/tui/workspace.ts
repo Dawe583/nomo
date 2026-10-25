@@ -364,9 +364,14 @@ type ConnectorRow = {
 export type TuiMode = "normal" | "accept" | "plan";
 export const TUI_MODES: readonly TuiMode[] = ["normal", "accept", "plan"];
 
+/** A consecutive keypress must fall inside a short confirmation window. */
+export function isDoublePress(now: number, last: number, windowMs = 800) {
+  return last > 0 && now - last >= 0 && now - last <= windowMs;
+}
+
 /** Double Escape in a short window opens the checkpoint list. */
 export function isDoubleEscape(now: number, last: number, windowMs = 800) {
-  return last > 0 && now - last >= 0 && now - last <= windowMs;
+  return isDoublePress(now, last, windowMs);
 }
 
 /** Approval rows show class, radius and the matched case, never a bare tool name.
@@ -7242,8 +7247,8 @@ const KEYBINDING_ROWS: readonly {
   },
   {
     group: "session",
-    keys: "Ctrl+C",
-    action: "Clear, then cancel, then exit",
+    keys: "Ctrl+C twice",
+    action: "Exit within 800 ms; Esc stops a run",
   },
 ];
 
