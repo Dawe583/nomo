@@ -271,3 +271,39 @@ test("factory routes typed AWS credential profiles to Bedrock and rejects auth m
     /different authentication profile/,
   );
 });
+
+test("Bedrock aborts an in-flight stream without accepting partial output", async () => {
+  const controller = new AbortController();
+  let canceled = false;
+  let terminalQueued = false;
+  const body = new ReadableStream<Uint8Array>({
+    start(stream) {
+      stream.enqueue(event("contentBlockDelta", {
+        contentBlockDelta: { contentBlockIndex: 0, delta: { text: "partial" } },
+      }));
+    },
+    pull(stream) {
+      if (terminalQueued) {
+        stream.close();
+        return;
+      }
+      terminalQueued = true;
+      stream.enqueue(completeEvent);
+    },
+    cancel() { canceled = true; },
+  });
+  const client = new BedrockConverseStreamAdapter(config, async () => new Response(body, {
+    headers: { "content-type": "application/vnd.amazon.eventstream" },
+  }));
+  const deltas: string[] = [];
+
+  await assert.rejects(
+    client.complete(config.model!, [{ role: "user", content: "stop" }], [], controller.signal, delta => {
+      deltas.push(delta);
+      controller.abort();
+    }),
+    error => error instanceof Error && error.name === "AbortError",
+  );
+  assert.deepEqual(deltas, ["partial"]);
+  assert.equal(canceled, true);
+});

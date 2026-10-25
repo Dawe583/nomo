@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { createServer } from "node:http";
 import { CompatibleProvider, ProviderRequestError } from "./provider.ts";
 const config = {
   baseUrl: "https://api.tokenrouter.com/v1",
@@ -177,4 +178,73 @@ test("completed empty stream is reported as failure instead of a successful blan
     frame({ choices: [{ delta: {}, finish_reason: "stop" }] }) + "data: [DONE]\n\n",
   ));
   await assert.rejects(provider.complete("m", [], [], new AbortController().signal, () => {}), /no answer/);
+});
+
+test("Compatible and Anthropic JSON completions preserve cancellation during body decoding", async (t) => {
+  const server = createServer((_request, response) => {
+    response.writeHead(200, { "content-type": "application/json" });
+    response.write('{"content":[');
+    const fallbackTimer = setTimeout(() => response.end("]}"), 500);
+    response.on("close", () => clearTimeout(fallbackTimer));
+  });
+  await new Promise<void>(resolve => server.listen(0, "127.0.0.1", resolve));
+  t.after(() => new Promise<void>(resolve => server.close(() => resolve())));
+  const address = server.address();
+  if (!address || typeof address === "string") throw new Error("fixture did not bind");
+
+  const baseUrl = `http://127.0.0.1:${address.port}/v1`;
+  for (const kind of ["anthropic", "compatible"] as const) {
+    let resolveHeaders!: () => void;
+    const headersReady = new Promise<void>(resolve => { resolveHeaders = resolve; });
+    const request: typeof fetch = async (input, init) => {
+      const response = await fetch(input, init);
+      resolveHeaders();
+      return response;
+    };
+    const provider = new CompatibleProvider({ baseUrl, apiKey: "fixture-secret", kind }, request);
+    const controller = new AbortController();
+    const pending = provider.complete("fixture-model", [{ role: "user", content: "stop" }], [], controller.signal);
+
+    await headersReady;
+    controller.abort();
+    await assert.rejects(pending, /Session cancelled\./);
+  }
+});
+
+test("OpenAI-compatible stream abort rejects before accepting later output", async () => {
+  const controller = new AbortController();
+  const encoder = new TextEncoder();
+  let canceled = false;
+  let terminalQueued = false;
+  const body = new ReadableStream<Uint8Array>({
+    start(stream) {
+      stream.enqueue(encoder.encode(frame({ choices: [{ delta: { content: "partial" } }] })));
+    },
+    pull(stream) {
+      if (terminalQueued) {
+        stream.close();
+        return;
+      }
+      terminalQueued = true;
+      stream.enqueue(encoder.encode(
+        frame({ choices: [{ delta: { content: "after cancel" }, finish_reason: "stop" }] }) +
+          "data: [DONE]\n\n",
+      ));
+    },
+    cancel() { canceled = true; },
+  });
+  const provider = new CompatibleProvider(config, async () => new Response(body, {
+    headers: { "content-type": "text/event-stream" },
+  }));
+  const deltas: string[] = [];
+
+  await assert.rejects(
+    provider.complete("fixture-model", [], [], controller.signal, delta => {
+      deltas.push(delta);
+      controller.abort();
+    }),
+    error => error instanceof Error && error.name === "AbortError",
+  );
+  assert.deepEqual(deltas, ["partial"]);
+  assert.equal(canceled, true);
 });

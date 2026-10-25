@@ -8,7 +8,7 @@ export type OpenAICompletionsDependencies = {
   readonly primeInferenceUsage?: boolean;
   readonly resolveSettings: () => HarnessSettings;
   readonly response: (path: string, body?: unknown, signal?: AbortSignal) => Promise<Response>;
-  readonly decode: (response: Response) => Promise<{
+  readonly decode: (response: Response, signal: AbortSignal) => Promise<{
     choices?: Array<{ message?: ModelMessage; finish_reason?: string }>;
     usage?: ModelReply["usage"];
   }>;
@@ -73,7 +73,7 @@ export class OpenAICompletionsAdapter {
     if (response.headers.get("content-type")?.includes("text/event-stream")) {
       return this.dependencies.streamReply(response, signal, onDelta);
     }
-    const decoded = await this.dependencies.decode(response);
+    const decoded = await this.dependencies.decode(response, signal);
     const choice = decoded.choices?.[0];
     if (choice?.finish_reason === "length" || choice?.finish_reason === "content_filter") {
       throw new Error("Provider response was truncated. No tools were executed.");

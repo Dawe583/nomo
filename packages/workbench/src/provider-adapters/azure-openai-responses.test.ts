@@ -126,3 +126,53 @@ test("Azure Responses rejects malformed and unterminated streams", async () => {
     /ended before completion/,
   );
 });
+
+test("Azure Responses aborts an in-flight stream without accepting later output", async () => {
+  const controller = new AbortController();
+  const encoder = new TextEncoder();
+  let canceled = false;
+  let terminalQueued = false;
+  let requestUrl = "";
+  let requestInit: RequestInit | undefined;
+  const body = new ReadableStream<Uint8Array>({
+    start(stream) {
+      const event = { type: "response.output_text.delta", delta: "partial" };
+      stream.enqueue(encoder.encode(`event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`));
+    },
+    pull(stream) {
+      if (terminalQueued) {
+        stream.close();
+        return;
+      }
+      terminalQueued = true;
+      const event = {
+        type: "response.completed",
+        response: {
+          status: "completed",
+          output: [{ type: "message", content: [{ type: "output_text", text: "after cancel" }] }],
+        },
+      };
+      stream.enqueue(encoder.encode(`event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`));
+    },
+    cancel() { canceled = true; },
+  });
+  const client = createProviderClient(config, async (input, init) => {
+    requestUrl = String(input);
+    requestInit = init;
+    return new Response(body, { headers: { "content-type": "text/event-stream" } });
+  });
+  const deltas: string[] = [];
+
+  await assert.rejects(
+    client.complete("deployment-fixture", [{ role: "user", content: "stop" }], [], controller.signal, delta => {
+      deltas.push(delta);
+      controller.abort();
+    }),
+    error => error instanceof Error && error.name === "AbortError",
+  );
+  assert.deepEqual(deltas, ["partial"]);
+  assert.equal(requestUrl, "https://fixture-resource.openai.azure.com/openai/v1/responses?api-version=v1");
+  assert.equal(new Headers(requestInit?.headers).get("api-key"), "azure-fixture-key");
+  assert.equal((requestInit?.signal as AbortSignal).aborted, true);
+  assert.equal(canceled, true);
+});

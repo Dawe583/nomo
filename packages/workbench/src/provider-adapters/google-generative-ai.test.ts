@@ -93,3 +93,38 @@ test("Google truncation is rejected before partial content can be accepted", asy
     /truncated/,
   );
 });
+
+test("Google GenAI aborts an in-flight stream without accepting partial output", async () => {
+  const controller = new AbortController();
+  const encoder = new TextEncoder();
+  let canceled = false;
+  let terminalQueued = false;
+  const body = new ReadableStream<Uint8Array>({
+    start(stream) {
+      stream.enqueue(encoder.encode('data: {"candidates":[{"content":{"role":"model","parts":[{"text":"partial"}]}}]}\n\n'));
+    },
+    pull(stream) {
+      if (terminalQueued) {
+        stream.close();
+        return;
+      }
+      terminalQueued = true;
+      stream.enqueue(encoder.encode('data: {"candidates":[{"content":{"role":"model","parts":[{"text":"after cancel"}]},"finishReason":"STOP"}]}\n\n'));
+    },
+    cancel() { canceled = true; },
+  });
+  const client = createProviderClient(config, async () => new Response(body, {
+    headers: { "content-type": "text/event-stream" },
+  }));
+  const deltas: string[] = [];
+
+  await assert.rejects(
+    client.complete("gemini-fixture", [{ role: "user", content: "Hi" }], [], controller.signal, value => {
+      deltas.push(value);
+      controller.abort();
+    }),
+    error => error instanceof Error && error.name === "AbortError",
+  );
+  assert.deepEqual(deltas, ["partial"]);
+  assert.equal(canceled, true);
+});

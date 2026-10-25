@@ -240,3 +240,26 @@ test("Mistral rejects an empty completed assistant reply", async (t) => {
     /no answer/i,
   );
 });
+
+test("Mistral aborts an in-flight stream without accepting partial output", async (t) => {
+  const controller = new AbortController();
+  let fallbackTimer: ReturnType<typeof setTimeout> | undefined;
+  const fixture = await listen((_request, response) => {
+    response.writeHead(200, { "content-type": "text/event-stream" });
+    response.write('data: {"choices":[{"delta":{"content":"partial"},"finish_reason":null}]}\n\n');
+    fallbackTimer = setTimeout(() => response.end("data: [DONE]\n\n"), 500);
+    response.on("close", () => clearTimeout(fallbackTimer));
+  });
+  t.after(() => new Promise<void>(resolve => fixture.server.close(() => resolve())));
+  const client = createProviderClient({ ...config, baseUrl: fixture.url });
+  const deltas: string[] = [];
+
+  await assert.rejects(
+    client.complete("mistral-small-latest", [{ role: "user", content: "stop" }], [], controller.signal, delta => {
+      deltas.push(delta);
+      controller.abort();
+    }),
+    error => error instanceof Error && error.name === "AbortError",
+  );
+  assert.deepEqual(deltas, ["partial"]);
+});

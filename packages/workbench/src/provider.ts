@@ -184,7 +184,7 @@ export class CompatibleProvider implements ProviderClient {
       primeInferenceUsage: this.config.providerId === "prime-inference",
       resolveSettings: this.resolveSettings,
       response: (path, body, signal) => this.response(path, body, signal),
-      decode: response => this.decode(response),
+      decode: (response, signal) => this.decode(response, signal),
       streamReply: (response, signal, onDelta) => this.streamReply(response, signal, onDelta),
     });
     this.anthropic = new AnthropicMessagesAdapter({
@@ -433,9 +433,9 @@ export class CompatibleProvider implements ProviderClient {
     return response;
   }
   private async json(path: string, body?: unknown, signal?: AbortSignal) {
-    return this.decode(await this.response(path, body, signal));
+    return this.decode(await this.response(path, body, signal), signal);
   }
-  private async decode(response: Response) {
+  private async decode(response: Response, signal?: AbortSignal) {
     // Provider JSON is untrusted. Runtime validation below narrows the fields
     // consumed by the workbench without exposing provider error payloads.
     try {
@@ -445,6 +445,7 @@ export class CompatibleProvider implements ProviderClient {
         usage?: ModelReply["usage"];
       };
     } catch {
+      if (signal?.aborted) throw new Error("Session cancelled.");
       throw new Error("Provider returned invalid JSON.");
     }
   }
