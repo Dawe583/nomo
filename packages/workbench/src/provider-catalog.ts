@@ -4,6 +4,7 @@ import type {
   ProviderApiAvailability,
   ProviderAuthProfile,
 } from "./provider-adapters/types.ts";
+import { isStandardVertexOptions, standardVertexBaseUrl } from "./provider-adapters/google-vertex-config.ts";
 
 import { readFileSync } from "node:fs";
 
@@ -187,13 +188,18 @@ for (const provider of PROVIDER_MODEL_MANIFEST.providers) {
     if (model.kind !== "chat" || !IMPLEMENTED_TRANSPORTS.has(model.transport))
       continue;
     const transport = model.transport as ImplementedProviderTransport;
+    const vertexDynamic =
+      transport === "google-vertex" &&
+      model.endpoint === "https://{location}-aiplatform.googleapis.com";
     if (
       !supportsManifestAuth(
         provider,
         transport,
         authKindForTransport(transport),
       ) ||
-      (typeof model.endpoint === "string" && /[<>{}]/.test(model.endpoint)) ||
+      (typeof model.endpoint === "string" &&
+        /[<>{}]/.test(model.endpoint) &&
+        !vertexDynamic) ||
       (model.endpoint === null && !model.endpointRule)
     )
       continue;
@@ -220,8 +226,8 @@ for (const provider of PROVIDER_MODEL_MANIFEST.providers) {
       id,
       providerId: provider.providerId,
       transport,
-      endpoint: model.endpoint,
-      endpointRule: model.endpointRule,
+      endpoint: vertexDynamic ? null : model.endpoint,
+      endpointRule: vertexDynamic ? "google-vertex-standard" : model.endpointRule,
       model: defaultModel,
       models: [model.id],
       authKind: authKindForTransport(transport),
@@ -358,10 +364,15 @@ function matchesManifestEndpoint(
   model: ProviderModelManifest["providers"][number]["models"][number],
   transport: ImplementedProviderTransport,
   baseUrl: string,
+  vertexOptions?: ProviderAdapterConfig["vertexOptions"],
 ): boolean {
   return (
     model.endpoint === baseUrl ||
-    matchesDynamicEndpointRule(model, transport, baseUrl)
+    matchesDynamicEndpointRule(model, transport, baseUrl) ||
+    (transport === "google-vertex" &&
+      model.endpoint === "https://{location}-aiplatform.googleapis.com" &&
+      isStandardVertexOptions(vertexOptions) &&
+      standardVertexBaseUrl(vertexOptions.location) === baseUrl)
   );
 }
 
@@ -374,6 +385,15 @@ export function assertProviderDescriptorInManifest(
   const authKind = authKindForTransport(transport);
   if (config.auth.kind !== authKind)
     throw new Error(`Provider transport ${transport} requires ${authKind} authentication.`);
+  if (transport === "google-vertex") {
+    if (
+      config.providerId !== "google-vertex" ||
+      !isStandardVertexOptions(config.vertexOptions)
+    )
+      throw new Error("Google Vertex requires Standard mode, project ID and location.");
+  } else if (config.vertexOptions !== undefined) {
+    throw new Error("Vertex options are valid only for Google Vertex.");
+  }
   if (
     typeof config.model !== "string" ||
     config.model.trim().length === 0 ||
@@ -407,7 +427,7 @@ export function assertProviderDescriptorInManifest(
   );
 
   const endpointMatches = models.some((model) =>
-    matchesManifestEndpoint(model, transport, config.baseUrl),
+    matchesManifestEndpoint(model, transport, config.baseUrl, config.vertexOptions),
   );
   const bedrockRegionEndpoint =
     transport === "bedrock-converse-stream" &&

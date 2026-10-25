@@ -1,7 +1,9 @@
 import type { Model, ModelMessage, ModelReply, ToolCall } from "../provider.ts";
 import { ProviderRequestError } from "../provider.ts";
 import { defaultHarnessSettings, type HarnessSettings } from "../harness-settings.ts";
-import type { ProviderAdapterConfig, ProviderClient } from "./types.ts";
+import type { ProviderAdapterConfig, ProviderClient, ProviderVertexOptions } from "./types.ts";
+import { PROVIDER_MODEL_MANIFEST } from "../provider-catalog.ts";
+import { isStandardVertexOptions, standardVertexBaseUrl } from "./google-vertex-config.ts";
 
 type GooglePart = { text?: string; functionCall?: { name?: string; args?: unknown } };
 type GoogleChunk = {
@@ -14,21 +16,48 @@ export class GoogleGenerativeAIAdapter implements ProviderClient {
   private readonly apiKey: string;
   private readonly request: typeof fetch;
   private readonly resolveSettings: () => HarnessSettings;
+  private readonly vertexOptions?: ProviderVertexOptions;
 
   constructor(
     config: ProviderAdapterConfig,
     request: typeof fetch = fetch,
     settings: Partial<HarnessSettings> | (() => HarnessSettings) = {},
   ) {
-    if (config.providerId !== "google" || config.transport !== "google-generative-ai" || config.auth.kind !== "api-key") {
-      throw new Error("Google Generative AI requires its explicit provider descriptor.");
+    const isGoogle =
+      config.providerId === "google" &&
+      config.transport === "google-generative-ai";
+    const isVertex =
+      config.providerId === "google-vertex" &&
+      config.transport === "google-vertex";
+    if ((!isGoogle && !isVertex) || config.auth.kind !== "api-key") {
+      throw new Error("Google GenAI requires its explicit API-key provider descriptor.");
+    }
+    if (isVertex) {
+      if (!isStandardVertexOptions(config.vertexOptions)) {
+        throw new Error("Google Vertex requires Standard mode, project ID and location.");
+      }
+      const endpoint = standardVertexBaseUrl(config.vertexOptions.location);
+      if (!endpoint || config.baseUrl !== endpoint) {
+        throw new Error("Google Vertex requires its derived project/location endpoint.");
+      }
+      this.vertexOptions = config.vertexOptions;
+    } else if (config.vertexOptions !== undefined) {
+      throw new Error("Vertex options are valid only for Google Vertex.");
     }
     this.base = new URL(config.baseUrl.endsWith("/") ? config.baseUrl : `${config.baseUrl}/`);
     if (
       this.base.protocol !== "https:" ||
-      this.base.hostname.toLowerCase() !== "generativelanguage.googleapis.com" ||
-      this.base.username || this.base.password || this.base.search || this.base.hash
-    ) throw new Error("Google Generative AI requires the official HTTPS API endpoint.");
+      this.base.username ||
+      this.base.password ||
+      this.base.search ||
+      this.base.hash ||
+      (isVertex
+        ? this.base.hostname !== new URL(standardVertexBaseUrl(config.vertexOptions!.location)!).hostname ||
+          this.base.pathname !== "/"
+        : this.base.hostname.toLowerCase() !== "generativelanguage.googleapis.com")
+    ) throw new Error(isVertex
+      ? "Google Vertex requires its official HTTPS project/location endpoint."
+      : "Google Generative AI requires the official HTTPS API endpoint.");
     this.apiKey = config.auth.apiKey;
     this.request = request;
     this.resolveSettings =
@@ -38,6 +67,18 @@ export class GoogleGenerativeAIAdapter implements ProviderClient {
   }
 
   async models(): Promise<readonly Model[]> {
+    if (this.vertexOptions) {
+      const models = new Map<string, Model>();
+      for (const provider of PROVIDER_MODEL_MANIFEST.providers) {
+        if (provider.status !== "in-scope" || provider.providerId !== "google-vertex")
+          continue;
+        for (const model of provider.models) {
+          if (model.kind === "chat" && model.transport === "google-vertex")
+            models.set(model.id, { id: model.id, name: model.name });
+        }
+      }
+      return [...models.values()];
+    }
     const response = await this.fetch(new URL("models", this.base), undefined, AbortSignal.timeout(15000));
     let body: { models?: unknown };
     try { body = await response.json() as typeof body; }
@@ -98,7 +139,10 @@ export class GoogleGenerativeAIAdapter implements ProviderClient {
       ...(functionDeclarations.length ? { tools: [{ functionDeclarations }] } : {}),
       generationConfig: { maxOutputTokens: this.resolveSettings().maxOutputTokens },
     };
-    const url = new URL(`models/${encodeURIComponent(model)}:streamGenerateContent?alt=sse`, this.base);
+    const modelPath = this.vertexOptions
+      ? `v1/projects/${encodeURIComponent(this.vertexOptions.projectId)}/locations/${encodeURIComponent(this.vertexOptions.location)}/publishers/google/models/${encodeURIComponent(model)}:streamGenerateContent?alt=sse`
+      : `models/${encodeURIComponent(model)}:streamGenerateContent?alt=sse`;
+    const url = new URL(modelPath, this.base);
     const response = await this.fetch(url, body, AbortSignal.any([signal, AbortSignal.timeout(60000)]));
     return this.consume(response, signal, onDelta);
   }

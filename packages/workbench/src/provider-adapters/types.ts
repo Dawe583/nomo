@@ -11,6 +11,7 @@ export const IMPLEMENTED_PROVIDER_TRANSPORTS = [
   "azure-openai-responses",
   "anthropic-messages",
   "google-generative-ai",
+  "google-vertex",
   "bedrock-converse-stream",
   "mistral-conversations",
   "ollama-chat",
@@ -28,13 +29,6 @@ export const PROVIDER_API_BLOCKERS = {
     status: "blocked",
     reason: "Google Gemini CLI Cloud Code OAuth/SSE is a first-party CLI path with no documented third-party Cloud Code contract; Workbench has no OAuth lifecycle. Free/AI Pro/Ultra consumer Gemini CLI service access retired on June 18, 2026; enterprise/API-key access remains a first-party CLI path. Do not read or reuse CLI credentials; Google Generative AI API-key auth remains separate.",
     evidence: "OMP 18.6.2 packages/ai/src/providers/google-gemini-cli.ts:315,507-515,584-595,934-944; packages/ai/src/registry/oauth/google-gemini-cli.ts:12,61-79,101-130,181-230,234-263. Prime 0.10.1 has no google-gemini-cli API ID; its Google provider is google-generative-ai (crates/pa-ai/src/providers/google.rs:1-3,240-263). Official https://geminicli.com/docs/get-started/authentication/ and https://developers.googleblog.com/an-important-update-transitioning-gemini-cli-to-antigravity-cli/.",
-  },
-  "google-vertex": {
-    providerId: "google-vertex",
-    name: "Google Vertex GenerateContent",
-    status: "blocked",
-    reason: "Workbench's persisted provider configuration has no explicit Vertex mode, project, or location fields. Express mode is global-only; standard Vertex URLs bind project and location. Until that configuration can be safely persisted and exposed, this API fails closed rather than falling back to Google Generative AI or generic chat. ADC is unsupported; never read gcloud credentials.",
-    evidence: "Workbench `packages/workbench/src/provider.ts:26-55`, `apps/control-plane/api/server.ts:873-887`, and `apps/control-plane/ui/src/settings.tsx:231-236` expose no mode/project/location fields. OMP 18.6.2 `packages/ai/src/providers/google-vertex.ts:14-17,66-98` and `packages/catalog/src/compat/rules/auth/google-vertex.kdl:1-5`; Prime 0.10.1 `crates/pa-ai/src/providers/google_vertex.rs:37-45,59-93,296-337`. Official https://docs.cloud.google.com/gemini-enterprise-agent-platform/reference/express-mode/api-reference, https://docs.cloud.google.com/gemini-enterprise-agent-platform/reference/rest/v1/projects.locations.endpoints/streamGenerateContent, https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/start/api-keys, https://docs.cloud.google.com/gemini-enterprise-agent-platform/resources/locations, and https://docs.cloud.google.com/gemini-enterprise-agent-platform/reference/rest/v1/projects.locations.publishers.models.",
   },
   "openai-codex-responses": {
     providerId: "openai-codex",
@@ -84,7 +78,6 @@ export type BlockedProviderApi = keyof typeof PROVIDER_API_BLOCKERS;
 
 export const BLOCKED_PROVIDER_APIS_BY_PROVIDER: Readonly<Record<string, BlockedProviderApi>> = {
   "google-gemini-cli": "google-gemini-cli",
-  "google-vertex": "google-vertex",
   "openai-codex": "openai-codex-responses",
   cursor: "cursor-agent",
   "factory-droid": "factory-droid-agent",
@@ -139,6 +132,12 @@ export type ProviderAzureOptions = {
   readonly apiVersion?: "v1" | "preview";
 };
 
+export type ProviderVertexOptions = {
+  readonly mode: "standard";
+  readonly projectId: string;
+  readonly location: string;
+};
+
 export type ProviderAuthProfile =
   | {
       readonly kind: "api-key";
@@ -161,6 +160,7 @@ export type ProviderAdapterConfig = {
   readonly model?: string;
   readonly gatewayOptions?: ProviderGatewayOptions;
   readonly azureOptions?: ProviderAzureOptions;
+  readonly vertexOptions?: ProviderVertexOptions;
 };
 
 

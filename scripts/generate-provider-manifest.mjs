@@ -233,6 +233,7 @@ const implementedTransportFiles = {
   "azure-openai-responses": "packages/workbench/src/provider-adapters/openai-responses.ts",
   "anthropic-messages": "packages/workbench/src/provider-adapters/anthropic-messages.ts",
   "google-generative-ai": "packages/workbench/src/provider-adapters/google-generative-ai.ts",
+  "google-vertex": "packages/workbench/src/provider-adapters/google-generative-ai.ts",
   "bedrock-converse-stream": "packages/workbench/src/provider-adapters/bedrock-converse-stream.ts",
   "mistral-conversations": "packages/workbench/src/provider-adapters/mistral-conversations.ts",
   "ollama-chat": "packages/workbench/src/provider-adapters/ollama-chat.ts",

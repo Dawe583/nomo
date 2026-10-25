@@ -213,11 +213,10 @@ test("agent APIs stay distinct from model rows and Apple exposes its native plat
   }
   assert.deepEqual(Object.keys(PROVIDER_API_BLOCKERS).sort(), [
     "apple-foundation-models", "cursor-agent", "devin-agent", "factory-droid-agent",
-    "gitlab-duo-agent", "google-gemini-cli", "google-vertex", "openai-codex-responses",
+    "gitlab-duo-agent", "google-gemini-cli", "openai-codex-responses",
   ]);
   assert.deepEqual(BLOCKED_PROVIDER_APIS_BY_PROVIDER, {
     "google-gemini-cli": "google-gemini-cli",
-    "google-vertex": "google-vertex",
     "openai-codex": "openai-codex-responses",
     cursor: "cursor-agent",
     "factory-droid": "factory-droid-agent",

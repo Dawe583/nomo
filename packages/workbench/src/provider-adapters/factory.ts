@@ -53,6 +53,9 @@ export function createProviderClient(
   if (blockedApi) {
     throw new Error(`Provider API ${blockedApi} is unavailable: ${PROVIDER_API_BLOCKERS[blockedApi].reason}`);
   }
+  const requestedTransport = "auth" in config ? config.transport : config.api;
+  if (config.providerId === "google-vertex" && requestedTransport !== "google-vertex")
+    throw new Error("Google Vertex requires its explicit transport.");
 
   const adapterConfig = "auth" in config;
   if (!adapterConfig && config.providerId && isGatewayProvider(config.providerId)) {
@@ -120,6 +123,9 @@ export function createProviderClient(
       return new CompatibleProvider({ ...normalized, kind: "anthropic" }, request, settings);
     case "google-generative-ai":
       if (!adapterConfig) throw new Error("Google Generative AI requires a typed provider descriptor.");
+      return new GoogleGenerativeAIAdapter(config as ProviderAdapterConfig, request, settings);
+    case "google-vertex":
+      if (!adapterConfig) throw new Error("Google Vertex requires a typed provider descriptor.");
       return new GoogleGenerativeAIAdapter(config as ProviderAdapterConfig, request, settings);
     default:
       throw new Error(`Unsupported provider transport: ${transport}`);
