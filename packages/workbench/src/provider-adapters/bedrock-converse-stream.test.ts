@@ -307,3 +307,34 @@ test("Bedrock aborts an in-flight stream without accepting partial output", asyn
   assert.deepEqual(deltas, ["partial"]);
   assert.equal(canceled, true);
 });
+
+
+test("Bedrock resolves AWS credentials from the environment when the typed config omits them", async () => {
+  const previousAccess = process.env.AWS_ACCESS_KEY_ID;
+  const previousSecret = process.env.AWS_SECRET_ACCESS_KEY;
+  const previousSession = process.env.AWS_SESSION_TOKEN;
+  process.env.AWS_ACCESS_KEY_ID = "ENVAKID";
+  process.env.AWS_SECRET_ACCESS_KEY = "ENVSECRET";
+  process.env.AWS_SESSION_TOKEN = "ENVSESSION";
+  try {
+    const envConfig: ProviderAdapterConfig = {
+      providerId: "amazon-bedrock",
+      transport: "bedrock-converse-stream",
+      baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
+      auth: { kind: "aws-credentials" },
+      model: "anthropic.claude-3-5-sonnet-20240620-v1:0",
+    };
+    const adapter = new BedrockConverseStreamAdapter(envConfig);
+    assert.ok(adapter);
+    // Re-running with missing env values must still fail closed.
+    delete process.env.AWS_ACCESS_KEY_ID;
+    assert.throws(() => new BedrockConverseStreamAdapter({
+      ...envConfig,
+      auth: { kind: "aws-credentials" },
+    }), /AWS credentials are invalid/);
+  } finally {
+    if (previousAccess === undefined) delete process.env.AWS_ACCESS_KEY_ID; else process.env.AWS_ACCESS_KEY_ID = previousAccess;
+    if (previousSecret === undefined) delete process.env.AWS_SECRET_ACCESS_KEY; else process.env.AWS_SECRET_ACCESS_KEY = previousSecret;
+    if (previousSession === undefined) delete process.env.AWS_SESSION_TOKEN; else process.env.AWS_SESSION_TOKEN = previousSession;
+  }
+});

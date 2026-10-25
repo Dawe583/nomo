@@ -107,11 +107,14 @@ export class BedrockConverseStreamAdapter implements ProviderClient {
     if (this.endpoint.protocol !== "https:" || !match || this.endpoint.port || this.endpoint.pathname !== "/" || this.endpoint.username || this.endpoint.password || this.endpoint.search || this.endpoint.hash) {
       throw new Error("Amazon Bedrock requires an official Bedrock Runtime endpoint.");
     }
-    if (!config.auth.accessKeyId || !config.auth.secretAccessKey || /[\r\n]/.test(config.auth.accessKeyId + config.auth.secretAccessKey + (config.auth.sessionToken ?? ""))) {
+    const accessKeyId = config.auth.accessKeyId ?? process.env.AWS_ACCESS_KEY_ID;
+    const secretAccessKey = config.auth.secretAccessKey ?? process.env.AWS_SECRET_ACCESS_KEY;
+    const sessionToken = config.auth.sessionToken ?? process.env.AWS_SESSION_TOKEN;
+    if (!accessKeyId || !secretAccessKey || /[\r\n]/.test(accessKeyId + secretAccessKey + (sessionToken ?? ""))) {
       throw new Error("AWS credentials are invalid.");
     }
     this.region = match[1]!;
-    this.credentials = config.auth;
+    this.credentials = { accessKeyId, secretAccessKey, sessionToken };
     this.model = config.model;
     this.request = request;
     this.now = now;

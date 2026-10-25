@@ -145,8 +145,8 @@ export type ProviderAuthProfile =
     }
   | {
       readonly kind: "aws-credentials";
-      readonly accessKeyId: string;
-      readonly secretAccessKey: string;
+      readonly accessKeyId?: string;
+      readonly secretAccessKey?: string;
       readonly sessionToken?: string;
     }
   | {

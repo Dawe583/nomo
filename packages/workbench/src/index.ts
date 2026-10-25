@@ -612,8 +612,8 @@ function providerSecretValues(
       return [config.auth.apiKey];
     case "aws-credentials":
       return [
-        config.auth.accessKeyId,
-        config.auth.secretAccessKey,
+        config.auth.accessKeyId ?? "",
+        config.auth.secretAccessKey ?? "",
         config.auth.sessionToken ?? "",
       ];
     case "none":
