@@ -1,15 +1,17 @@
 import test, { describe } from "node:test";
 import assert from "node:assert/strict";
 import { request as httpRequest } from "node:http";
-import { mkdtemp, readFile, writeFile, rm, mkdir } from "node:fs/promises";
+import { execFileSync } from "node:child_process";
+import { mkdtemp, readFile, writeFile, rm, mkdir, truncate } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
-
 import { devKeyProvider, sha256Hex } from "../../../packages/ledger/src/sign.ts";
 import { entryHash } from "../../../packages/ledger/src/canonical.ts";
 import { jsonlStore } from "../../../packages/ledger/src/store.ts";
 import { listenControlPlane, type ApprovalBroker, type PendingApproval } from "./server.ts";
 import { Workbench } from "../../../packages/workbench/src/index.ts";
+import type { AgentRunner } from "../../../packages/workbench/src/agent-runners/agent-runner.ts";
+import { PROJECT_WORKSPACE_LIMITS } from "../../../packages/workbench/src/project-workspace.ts";
 import {
   assertProviderDescriptorInManifest,
   CONFIGURABLE_PROVIDER_DESCRIPTORS,
@@ -52,6 +54,7 @@ type WithServerOptions = {
   readonly approvals?: ApprovalBroker;
   readonly env?: Readonly<NodeJS.ProcessEnv>;
   readonly workbench?: Workbench;
+  readonly agentRunners?: readonly AgentRunner[];
 };
 
 async function withServer<T>(
@@ -66,6 +69,7 @@ async function withServer<T>(
     webRoot: join(import.meta.dirname, '../web'),
     approvals: options.approvals,
     workbench: options.workbench,
+    agentRunners: options.agentRunners,
     env: { VOID_DATA_DIR: dataDir, ...options.env },
   });
   try {
@@ -76,6 +80,250 @@ async function withServer<T>(
     await rm(home, { recursive: true, force: true });
   }
 }
+
+test("project workspace API reviews and applies one exact local file change", async (t) => {
+  const dataDirectory = await mkdtemp(join(tmpdir(), "nomo-project-api-data-"));
+  const projectRoot = await mkdtemp(join(tmpdir(), "nomo-project-api-root-"));
+  await mkdir(join(projectRoot, "src"));
+  await writeFile(join(projectRoot, "src/main.ts"), "before\n");
+  await writeFile(join(projectRoot, "src/other.ts"), "untouched\n");
+  execFileSync("git", ["init", "--quiet"], { cwd: projectRoot, stdio: "ignore" });
+  t.after(async () => {
+    await rm(dataDirectory, { recursive: true, force: true });
+    await rm(projectRoot, { recursive: true, force: true });
+  });
+  const workbench = new Workbench({ NOMO_DATA_DIR: dataDirectory });
+  await withServer(
+    "unused.jsonl",
+    async (origin) => {
+      const local = {
+        origin,
+        authorization: "Bearer workspace-api-token-0123456789abcdef",
+        "content-type": "application/json",
+      };
+      const access = await fetch(`${origin}/api/project-workspace/access`, {
+        method: "POST",
+        headers: local,
+        body: JSON.stringify({ path: projectRoot }),
+      });
+      assert.equal(access.status, 201);
+      const confirmed = await access.json() as {
+        project: { rootDigest: string };
+        workspace: { fileCount: number };
+      };
+      assert.equal(confirmed.workspace.fileCount, 2);
+      const summaryResponse = await fetch(`${origin}/api/project-workspace`, { headers: local });
+      assert.equal(summaryResponse.status, 200);
+      const summary = await summaryResponse.json() as {
+        project: { rootDigest: string } | null;
+      };
+      assert.equal(summary.project?.rootDigest, confirmed.project.rootDigest);
+      const unsupportedMethod = await fetch(`${origin}/api/project-workspace`, {
+        method: "PUT",
+        headers: local,
+      });
+      assert.equal(unsupportedMethod.status, 405);
+
+      const sourcePath = join(
+        dataDirectory,
+        "project-workspaces",
+        confirmed.project.rootDigest.slice("sha256:".length),
+        "source",
+        "src/main.ts",
+      );
+      const secondSourcePath = join(
+        dataDirectory,
+        "project-workspaces",
+        confirmed.project.rootDigest.slice("sha256:".length),
+        "source",
+        "src/other.ts",
+      );
+      await writeFile(secondSourcePath, "second change\n");
+      await writeFile(sourcePath, "after\n");
+      const page = await fetch(`${origin}/api/project-workspace/diff?limit=1`, { headers: local });
+      assert.equal(page.status, 200);
+      const pageBody = await page.json() as {
+        files: Array<{ path: string; operation: string; digest: string }>;
+        snapshotDigest: string;
+        nextCursor: string | null;
+      };
+      assert.equal(pageBody.snapshotDigest.length, 64);
+      assert.match(pageBody.files[0]?.digest ?? "", /^[a-f0-9]{64}$/);
+      assert.deepEqual(pageBody.files.map(({ path, operation }) => ({ path, operation })), [
+        { path: "src/main.ts", operation: "update" },
+      ]);
+      assert.ok(pageBody.nextCursor);
+      await writeFile(secondSourcePath, "newer second change\n");
+      const stalePage = await fetch(
+        `${origin}/api/project-workspace/diff?limit=1&cursor=${encodeURIComponent(pageBody.nextCursor!)}`,
+        { headers: local },
+      );
+      assert.equal(stalePage.status, 409);
+      for (const protectedPath of [
+        "packages/cli/src/tui/workspace.ts",
+        "secrets/token",
+        ".env.production",
+      ]) {
+        const protectedDiff = await fetch(
+          `${origin}/api/project-workspace/diff?path=${encodeURIComponent(protectedPath)}`,
+          { headers: local },
+        );
+        assert.equal(protectedDiff.status, 400, protectedPath);
+      }
+      const diff = await fetch(
+        `${origin}/api/project-workspace/diff?path=${encodeURIComponent("src/main.ts")}`,
+        { headers: local },
+      );
+      assert.equal(diff.status, 200);
+      const diffBody = await diff.json() as {
+        digest: string;
+        file: { path: string; diff: string };
+      };
+      assert.equal(diffBody.file.path, "src/main.ts");
+      assert.match(diffBody.file.diff, /-before\n\+after/);
+      const applied = await fetch(`${origin}/api/project-workspace/apply`, {
+        method: "POST",
+        headers: local,
+        body: JSON.stringify({ path: "src/main.ts", digest: diffBody.digest }),
+      });
+      assert.equal(applied.status, 200);
+      const missingDigest = await fetch(`${origin}/api/project-workspace/apply`, {
+        method: "POST",
+        headers: local,
+        body: JSON.stringify({ path: "src/main.ts" }),
+      });
+      assert.equal(missingDigest.status, 400);
+      const staleApply = await fetch(`${origin}/api/project-workspace/apply`, {
+        method: "POST",
+        headers: local,
+        body: JSON.stringify({ path: "src/main.ts", digest: "0".repeat(64) }),
+      });
+      assert.equal(staleApply.status, 409);
+      assert.equal(await readFile(join(projectRoot, "src/main.ts"), "utf8"), "after\n");
+      const revoked = await fetch(`${origin}/api/project-workspace`, {
+        method: "DELETE",
+        headers: local,
+      });
+      assert.equal(revoked.status, 200);
+      const retained = await fetch(`${origin}/api/project-workspace`, { headers: local });
+      const retainedBody = await retained.json() as {
+        project: null;
+        savedWorkspaces: Array<{ requiresConfirmation: boolean; hasChanges: boolean }>;
+      };
+      assert.equal(retainedBody.project, null);
+      assert.equal(retainedBody.savedWorkspaces[0]?.requiresConfirmation, true);
+      assert.equal(retainedBody.savedWorkspaces[0]?.hasChanges, true);
+      assert.doesNotMatch(JSON.stringify(retainedBody), new RegExp(projectRoot));
+      const deleted = await fetch(`${origin}/api/project-workspace/workspace`, {
+        method: "DELETE",
+        headers: local,
+        body: JSON.stringify({ rootDigest: confirmed.project.rootDigest }),
+      });
+      assert.equal(deleted.status, 200);
+      const catalog = await fetch(`${origin}/api/project-workspace`, { headers: local });
+      assert.deepEqual(
+        (await catalog.json() as { savedWorkspaces: unknown[] }).savedWorkspaces,
+        [],
+      );
+      const badContentType = await fetch(`${origin}/api/project-workspace/access`, {
+        method: "POST",
+        headers: {
+          origin,
+          authorization: "Bearer workspace-api-token-0123456789abcdef",
+          "content-type": "text/plain",
+        },
+        body: JSON.stringify({ path: projectRoot }),
+      });
+      assert.equal(badContentType.status, 415);
+    },
+    { workbench, env: { NOMO_CONTROL_TOKEN: "workspace-api-token-0123456789abcdef" } },
+  );
+});
+
+test("project workspace API rejects invalid roots and file limits without activation", async (t) => {
+  const dataDirectory = await mkdtemp(join(tmpdir(), "nomo-project-api-limit-data-"));
+  const nonGitRoot = await mkdtemp(join(tmpdir(), "nomo-project-api-nongit-"));
+  const largeRoot = await mkdtemp(join(tmpdir(), "nomo-project-api-large-"));
+  const largeFile = join(largeRoot, "large.bin");
+  await writeFile(largeFile, "");
+  await truncate(largeFile, PROJECT_WORKSPACE_LIMITS.fileBytes + 1);
+  execFileSync("git", ["init", "--quiet"], { cwd: largeRoot, stdio: "ignore" });
+  t.after(async () => {
+    await rm(dataDirectory, { recursive: true, force: true });
+    await rm(nonGitRoot, { recursive: true, force: true });
+    await rm(largeRoot, { recursive: true, force: true });
+  });
+  const workbench = new Workbench({ NOMO_DATA_DIR: dataDirectory });
+  await withServer(
+    "unused.jsonl",
+    async (origin) => {
+      const request = (path: string) => fetch(`${origin}/api/project-workspace/access`, {
+        method: "POST",
+        headers: { origin, "content-type": "application/json" },
+        body: JSON.stringify({ path }),
+      });
+      assert.equal((await request("relative/path")).status, 400);
+      assert.equal((await request(nonGitRoot)).status, 400);
+      assert.equal((await request(largeRoot)).status, 413);
+      const response = await fetch(`${origin}/api/project-workspace`, { headers: { origin } });
+      const summary = await response.json() as {
+        project: unknown;
+        savedWorkspaces: unknown[];
+      };
+      assert.equal(summary.project, null);
+      assert.deepEqual(summary.savedWorkspaces, []);
+    },
+    { workbench },
+  );
+});
+
+test("project workspace routes reject a hostile origin even with the control token", async (t) => {
+  const dataDirectory = await mkdtemp(join(tmpdir(), "nomo-project-api-auth-"));
+  t.after(() => rm(dataDirectory, { recursive: true, force: true }));
+  const workbench = new Workbench({ NOMO_DATA_DIR: dataDirectory });
+  await withServer(
+    "unused.jsonl",
+    async (origin) => {
+      for (const [path, method, body] of [
+        ["/api/project-workspace", "GET", undefined],
+        ["/api/project-workspace/access", "POST", JSON.stringify({ path: "/tmp" })],
+        ["/api/project-workspace/diff?limit=50", "GET", undefined],
+        ["/api/project-workspace/apply", "POST", JSON.stringify({})],
+        ["/api/project-workspace", "DELETE", undefined],
+        ["/api/project-workspace/workspace", "DELETE", JSON.stringify({})],
+      ] as const) {
+        const response = await fetch(origin + path, {
+          method,
+          headers: {
+            authorization: "Bearer workspace-api-token-0123456789abcdef",
+            origin: "https://attacker.invalid",
+            ...(body === undefined ? {} : { "content-type": "application/json" }),
+          },
+          ...(body === undefined ? {} : { body }),
+        });
+        assert.equal(response.status, 403, `${method} ${path}`);
+      }
+    },
+    { workbench, env: { NOMO_CONTROL_TOKEN: "workspace-api-token-0123456789abcdef" } },
+  );
+});
+
+test("remote API auth recognizes NOMO_CONTROL_TOKEN with a non-local Host", async () => {
+  const token = "nomo-control-token-0123456789abcdef";
+  await withServer(
+    "unused.jsonl",
+    async (origin) => {
+      const response = await fetch(`${origin}/api/not-a-route`, {
+        headers: {
+          host: "harness.remote.test",
+          authorization: `Bearer ${token}`,
+        },
+      });
+      assert.equal(response.status, 404);
+    },
+    { env: { NOMO_CONTROL_TOKEN: token } },
+  );
+});
 
 describe("control plane API", () => {
   test("serves built assets on every host and refuses Windows path separators", async () => {
@@ -89,6 +337,7 @@ describe("control plane API", () => {
     try {
       const origin = `http://127.0.0.1:${handle.port}`;
       for (const [path, mime] of [["/", "text/html"], ["/chat/new", "text/html"],
+        ["/project-workspace", "text/html"],
         ["/assets/app-123.js", "application/javascript"], ["/assets/app-123.css", "text/css"]]) {
         const response = await fetch(origin + path);
         assert.equal(response.status, 200, path);
@@ -243,6 +492,91 @@ describe("control plane API", () => {
       assert.equal(state.providerId, "openai");
       assert.equal(state.transport, "openai-responses");
       assert.equal(state.defaultModel, "gpt-5.4");
+    } finally {
+      if (!workbenchClosed) workbench.close();
+      restarted?.close();
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+  test("provider API configures Standard Vertex without leaking its key and restores encrypted config", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "void-vertex-provider-"));
+    const secret = "vertex-fixture-secret-never-return";
+    const calls: string[] = [];
+    const env = {
+      NOMO_DATA_DIR: directory,
+      NVIDIA_API_KEY: "",
+      DASHSCOPE_API_KEY: "",
+    };
+    const request: typeof fetch = async (input) => {
+      calls.push(String(input));
+      throw new Error("Vertex setup must use the pinned catalog without provider requests.");
+    };
+    const workbench = new Workbench(env, request);
+    let workbenchClosed = false;
+    let restarted: Workbench | undefined;
+    const descriptor = {
+      providerId: "google-vertex",
+      transport: "google-vertex",
+      vertexOptions: {
+        mode: "standard",
+        projectId: "nomo-test-12345",
+        location: "us-central1",
+      },
+      model: "gemini-2.5-flash",
+      auth: { kind: "api-key", apiKey: secret },
+    };
+    try {
+      await withServer("unused.jsonl", async (origin) => {
+        const connected = await fetch(origin + "/api/provider", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(descriptor),
+        });
+        assert.equal(connected.status, 200);
+        assert.doesNotMatch(await connected.text(), /vertex-fixture-secret-never-return/);
+
+        const response = await fetch(origin + "/api/provider");
+        assert.equal(response.status, 200);
+        const state = await response.json() as Record<string, unknown>;
+        assert.equal(state.connected, true);
+        assert.equal(state.providerId, "google-vertex");
+        assert.equal(state.transport, "google-vertex");
+        assert.equal(state.defaultModel, "gemini-2.5-flash");
+        assert.equal(state.keyStorage, "encrypted-local");
+        assert.deepEqual(state.vertexOptions, descriptor.vertexOptions);
+        assert.doesNotMatch(JSON.stringify(state), /vertex-fixture-secret-never-return/);
+
+        for (const vertexOptions of [
+          { ...descriptor.vertexOptions, projectId: "bad" },
+          { ...descriptor.vertexOptions, location: "us-central1/attacker" },
+          { ...descriptor.vertexOptions, extra: true },
+        ]) {
+          const rejected = await fetch(origin + "/api/provider", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ ...descriptor, vertexOptions }),
+          });
+          assert.equal(rejected.status, 400);
+          assert.doesNotMatch(await rejected.text(), /vertex-fixture-secret-never-return/);
+        }
+        const retained = await (await fetch(origin + "/api/provider")).json() as Record<string, unknown>;
+        assert.equal(retained.providerId, "google-vertex");
+        assert.deepEqual(retained.vertexOptions, descriptor.vertexOptions);
+        assert.deepEqual(calls, []);
+      }, { workbench });
+
+      const encrypted = await readFile(join(directory, "workspace.enc"));
+      assert.equal(encrypted.includes(Buffer.from(secret)), false);
+      workbench.close();
+      workbenchClosed = true;
+      restarted = new Workbench(env, async () => {
+        throw new Error("restoring Vertex config must not make a provider request");
+      });
+      const state = await restarted.providerState();
+      assert.equal(state.connected, true);
+      assert.equal(state.providerId, "google-vertex");
+      assert.deepEqual(state.vertexOptions, descriptor.vertexOptions);
+      assert.deepEqual(calls, []);
     } finally {
       if (!workbenchClosed) workbench.close();
       restarted?.close();
@@ -811,4 +1145,186 @@ test("provider model capability lookup is manifest-bound and fails closed on sou
     workbench.close();
     await rm(directory, { recursive: true, force: true });
   }
+});
+
+test("AgentRunner API exposes safe metadata and enforces one exact consent before start", async (t) => {
+  const dataDirectory = await mkdtemp(join(tmpdir(), "nomo-agent-runner-api-"));
+  const projectRoot = await mkdtemp(join(tmpdir(), "nomo-agent-runner-api-project-"));
+  await mkdir(join(projectRoot, "src"));
+  await writeFile(join(projectRoot, "src/main.ts"), "export const value = 1;\n");
+  execFileSync("git", ["init", "--quiet"], { cwd: projectRoot, stdio: "ignore" });
+
+  let startCount = 0;
+  const runner: AgentRunner = {
+    describe: () => ({
+      id: "fixture-runner",
+      displayName: "Local API fixture",
+      provider: "fixture",
+      endpoint: "https://fixture.invalid/v1",
+      dataTransfer: "remote",
+      dataSent: ["task", "system-prompt"],
+      profiles: ["safe"],
+      execution: "local",
+      toolAccess: "mediated",
+      workspaceMode: "approved-copy",
+      cancellation: "confirmed",
+    }),
+    async start() {
+      startCount++;
+      return {
+        id: "fixture-run",
+        events: (async function* () {
+          yield {
+            type: "assistant-message",
+            runId: "fixture-run",
+            sequence: 1,
+            text: "Synthetic runner completed the task.",
+          } as const;
+          yield {
+            type: "terminal",
+            runId: "fixture-run",
+            sequence: 2,
+            status: "completed",
+            message: "Synthetic terminal summary.",
+          } as const;
+        })(),
+        async respondToTool() {},
+      };
+    },
+    async cancel() {
+      return "confirmed";
+    },
+  };
+  const workbench = new Workbench(
+    { NOMO_DATA_DIR: dataDirectory, NOMO_PERMISSION_MODE: "normal" },
+    undefined,
+    { agentRunners: [runner] },
+  );
+  t.after(async () => {
+    await workbench.shutdown();
+    await rm(dataDirectory, { recursive: true, force: true });
+    await rm(projectRoot, { recursive: true, force: true });
+  });
+  workbench.upsertAgent({
+    id: "project-reader",
+    name: "Project reader",
+    systemPrompt: "Read the approved copy only.",
+    allowedTools: [],
+    policyProfile: "default",
+    maxTurns: 2,
+    maxContextTokens: 8192,
+  });
+  await workbench.confirmProjectAccess(projectRoot, []);
+
+  await withServer(
+    "unused.jsonl",
+    async (origin) => {
+      const catalogResponse = await fetch(`${origin}/api/agent-runners`);
+      assert.equal(catalogResponse.status, 200);
+      const catalog = await catalogResponse.json() as {
+        runners: Array<Record<string, unknown>>;
+      };
+      assert.deepEqual(catalog.runners, [{
+        id: "fixture-runner",
+        displayName: "Local API fixture",
+        provider: "fixture",
+        endpoint: "https://fixture.invalid/v1",
+        dataTransfer: "remote",
+        dataSent: ["task", "system-prompt"],
+        profiles: ["safe"],
+        execution: "local",
+        toolAccess: "mediated",
+        workspaceMode: "approved-copy",
+        cancellation: "confirmed",
+      }]);
+      assert.doesNotMatch(JSON.stringify(catalog), /apiKey|credential|secret/i);
+
+      const previewResponse = await fetch(`${origin}/api/agent-runs/preview`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          runnerId: "fixture-runner",
+          task: "inspect the approved copy",
+          profileId: "project-reader",
+          runnerProfileId: "safe",
+        }),
+      });
+      assert.equal(previewResponse.status, 201);
+      const preview = await previewResponse.json() as {
+        id: string;
+        consentDigest: string;
+        task: string;
+        runner: { provider: string; endpoint: string; dataSent: string[]; toolAccess: string; workspaceMode: string; cancellation: string };
+        project: { manifest: { digest: string; files: Array<{ path: string }> } };
+        tools: unknown[];
+      };
+      assert.equal(preview.task, "inspect the approved copy");
+      assert.equal(preview.runner.provider, "fixture");
+      assert.equal(preview.runner.endpoint, "https://fixture.invalid/v1");
+      assert.deepEqual(preview.runner.dataSent, ["task", "system-prompt"]);
+      assert.equal(preview.runner.toolAccess, "mediated");
+      assert.equal(preview.runner.workspaceMode, "approved-copy");
+      assert.equal(preview.runner.cancellation, "confirmed");
+      assert.match(preview.project.manifest.digest, /^sha256:[a-f0-9]{64}$/);
+      assert.equal(preview.project.manifest.files.some((file) => file.path === ".git"), false);
+
+      const start = (consentDigest: string) => fetch(`${origin}/api/agent-runs`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ consentId: preview.id, consentDigest }),
+      });
+      assert.equal((await start("sha256:" + "0".repeat(64))).status, 409);
+      assert.equal(startCount, 0);
+      const startedResponse = await start(preview.consentDigest);
+      assert.equal(startedResponse.status, 201);
+      const started = await startedResponse.json() as {
+        session: { id: string };
+      };
+      assert.ok(started.session.id);
+      assert.equal((await start(preview.consentDigest)).status, 409);
+      await workbench.settled();
+      assert.equal(startCount, 1);
+      const sessionResponse = await fetch(`${origin}/api/sessions/${started.session.id}`);
+      assert.equal(sessionResponse.status, 200);
+      const sessionPayload = await sessionResponse.json() as {
+        session: { events: Array<{ kind: string; text: string }> };
+      };
+      assert.equal(sessionPayload.session.events.some(
+        (event) =>
+          event.kind === "assistant" &&
+          event.text === "Synthetic runner completed the task.",
+      ), true);
+      assert.equal(sessionPayload.session.events.some(
+        (event) =>
+          event.kind === "assistant" &&
+          event.text === "Synthetic terminal summary.",
+      ), true);
+      assert.equal(workbench.get(started.session.id)?.status, "idle");
+    },
+    { workbench },
+  );
+  await withServer("unused.jsonl", async (origin) => {
+    const response = await fetch(`${origin}/api/agent-runners`);
+    assert.equal(response.status, 200);
+    assert.deepEqual(await response.json(), {
+      runners: [{
+        id: "fixture-runner",
+        displayName: "Local API fixture",
+        provider: "fixture",
+        endpoint: "https://fixture.invalid/v1",
+        dataTransfer: "remote",
+        dataSent: ["task", "system-prompt"],
+        profiles: ["safe"],
+        execution: "local",
+        toolAccess: "mediated",
+        workspaceMode: "approved-copy",
+        cancellation: "confirmed",
+      }],
+    });
+  }, { agentRunners: [runner] });
+  await withServer("unused.jsonl", async (origin) => {
+    const response = await fetch(`${origin}/api/agent-runners`);
+    assert.equal(response.status, 200);
+    assert.deepEqual(await response.json(), { runners: [] });
+  });
 });

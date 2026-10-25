@@ -6,6 +6,7 @@ import {
   serverPermissionMode,
   DEFAULT_HTTP_PERMISSION_MODE,
 } from "../../../packages/workbench/src/gui.ts";
+import { createHash } from "node:crypto";
 import { createReadStream, existsSync } from "node:fs";
 import { stat } from "node:fs/promises";
 import {
@@ -14,7 +15,7 @@ import {
   type Server,
   type ServerResponse,
 } from "node:http";
-import { basename, extname, join, posix, relative, resolve } from "node:path";
+import { basename, extname, isAbsolute, join, posix, relative, resolve } from "node:path";
 import { homedir } from "node:os";
 import { envValue } from "../../../packages/ledger/src/env-compat.ts";
 import { fileURLToPath } from "node:url";
@@ -45,7 +46,13 @@ import {
   type LedgerFeedRecord,
 } from "../../../packages/ledger/src/feed.ts";
 import type { PublicKeyLookup } from "../../../packages/ledger/src/verify.ts";
+import type { AgentRunner } from "../../../packages/workbench/src/agent-runners/agent-runner.ts";
 import { Workbench } from "../../../packages/workbench/src/index.ts";
+import {
+  isAllowedProjectWorkspacePath,
+  ProjectWorkspaceConflictError,
+  ProjectWorkspaceLimitError,
+} from "../../../packages/workbench/src/project-workspace.ts";
 import {
   normalizeProviderConfig,
   type Model,
@@ -58,6 +65,10 @@ import type {
   ProviderAdapterConfig,
   ProviderAuthProfile,
 } from "../../../packages/workbench/src/provider-adapters/types.ts";
+import {
+  isStandardVertexOptions,
+  standardVertexBaseUrl,
+} from "../../../packages/workbench/src/provider-adapters/google-vertex-config.ts";
 import { authorizedRemote } from "./auth.ts";
 import { localApprovals } from "./local-approvals.ts";
 import { desktopSetup, importDesktopProvider } from "./desktop-setup.ts";
@@ -110,6 +121,8 @@ export type ControlPlaneOptions = {
   readonly replay?: ReplayCommandOptions;
   /** Test seam: a pre-configured Workbench replaces the default instance. */
   readonly workbench?: Workbench;
+  /** Trusted adapters for the default Workbench; an injected Workbench owns its own registry. */
+  readonly agentRunners?: readonly AgentRunner[];
   /** Per-server fleet event store; tests create many servers, so no module singleton. */
   readonly fleetEvents?: FleetEventStore;
 };
@@ -332,18 +345,25 @@ export function createControlPlaneServer(
   // expressions in two files.
   const workbench =
     options.workbench ??
-    new Workbench({
-      ...env,
-      VOID_PERMISSION_MODE: serverPermissionMode(
-        envValue(env, "NOMO_PERMISSION_MODE") ?? DEFAULT_HTTP_PERMISSION_MODE,
-      ),
-    });
+    new Workbench(
+      {
+        ...env,
+        VOID_PERMISSION_MODE: serverPermissionMode(
+          envValue(env, "NOMO_PERMISSION_MODE") ?? DEFAULT_HTTP_PERMISSION_MODE,
+        ),
+      },
+      undefined,
+      { agentRunners: options.agentRunners },
+    );
   const fleetEventStore = options.fleetEvents ?? new FleetEventStore();
   const server = createServer((request, response) => {
+    const projectWorkspaceRequest = isProjectWorkspaceRequest(request.url);
     if (
-      envValue(env, "NOMO_CONTROL_TOKEN")
-        ? !authorizedRemote(request, env)
-        : !isLocalRequest(request)
+      projectWorkspaceRequest
+        ? !isLocalRequest(request)
+        : envValue(env, "NOMO_CONTROL_TOKEN")
+          ? !authorizedRemote(request, env)
+          : !isLocalRequest(request)
     ) {
       sendJson(response, 403, { error: "local_origin_required" });
       return;
@@ -428,6 +448,11 @@ async function route(
   const query = parsed.searchParams,
     wb = options.workbench;
   try {
+    if (isProjectWorkspaceRoutePath(parsed.pathname)) {
+      if (!isLocalRequest(request))
+        return sendJson(response, 403, { error: "local_origin_required" });
+      return handleProjectWorkspaceRoute(request, response, parsed, wb);
+    }
     const desktop =
       !!desktopWebRoot &&
       !controlToken &&
@@ -482,6 +507,81 @@ async function route(
         ack: options.fleetEvents.stopAck(stopRun[1]!),
         scope: "this process only",
       });
+    }
+    if (parsed.pathname === "/api/agent-runners") {
+      if (request.method !== "GET")
+        return sendJson(response, 405, { error: "method_not_allowed" });
+      return sendJson(response, 200, { runners: wb.agentRunnerCatalog() });
+    }
+    if (parsed.pathname === "/api/agent-runs/preview") {
+      if (request.method !== "POST")
+        return sendJson(response, 405, { error: "method_not_allowed" });
+      let body: unknown;
+      try {
+        body = await readJsonBody(request);
+      } catch {
+        return sendJson(response, 400, { error: "invalid_agent_run_preview" });
+      }
+      if (
+        !jsonObject(body) ||
+        Object.keys(body).some((key) =>
+          !["runnerId", "task", "profileId", "runnerProfileId"].includes(key)
+        ) ||
+        !nonEmptyString(body.runnerId) ||
+        body.runnerId.length > 256 ||
+        !nonEmptyString(body.task) ||
+        body.task.length > 32_000 ||
+        !nonEmptyString(body.profileId) ||
+        body.profileId.length > 256 ||
+        (body.runnerProfileId !== undefined &&
+          (!nonEmptyString(body.runnerProfileId) ||
+            body.runnerProfileId.length > 256))
+      )
+        return sendJson(response, 400, { error: "invalid_agent_run_preview" });
+      try {
+        return sendJson(
+          response,
+          201,
+          await wb.prepareAgentRun({
+            runnerId: body.runnerId,
+            task: body.task,
+            profileId: body.profileId,
+            ...(body.runnerProfileId === undefined
+              ? {}
+              : { runnerProfileId: body.runnerProfileId }),
+          }),
+        );
+      } catch {
+        return sendJson(response, 409, { error: "agent_run_preview_unavailable" });
+      }
+    }
+    if (parsed.pathname === "/api/agent-runs") {
+      if (request.method !== "POST")
+        return sendJson(response, 405, { error: "method_not_allowed" });
+      let body: unknown;
+      try {
+        body = await readJsonBody(request);
+      } catch {
+        return sendJson(response, 400, { error: "invalid_agent_run_consent" });
+      }
+      if (
+        !jsonObject(body) ||
+        Object.keys(body).length !== 2 ||
+        !nonEmptyString(body.consentId) ||
+        body.consentId.length > 256 ||
+        typeof body.consentDigest !== "string" ||
+        !/^sha256:[a-f0-9]{64}$/.test(body.consentDigest)
+      )
+        return sendJson(response, 400, { error: "invalid_agent_run_consent" });
+      try {
+        const session = await wb.startAgentRun({
+          consentId: body.consentId,
+          consentDigest: body.consentDigest,
+        });
+        return sendJson(response, 201, { session });
+      } catch {
+        return sendJson(response, 409, { error: "agent_run_consent_stale" });
+      }
     }
     if (request.method === "GET" && parsed.pathname === "/api/agents")
       return sendJson(response, 200, options.workbench.agents());
@@ -1719,6 +1819,186 @@ function toApiApproval(record: PendingApproval): JsonObject {
   };
 }
 
+function isProjectWorkspaceRequest(url: string | undefined): boolean {
+  const pathname = url?.split(/[?#]/, 1)[0] ?? "";
+  return isProjectWorkspaceRoutePath(pathname);
+}
+
+function isProjectWorkspaceRoutePath(pathname: string): boolean {
+  return pathname === "/api/project-workspace" ||
+    pathname.startsWith("/api/project-workspace/");
+}
+
+class InvalidProjectWorkspaceRequest extends Error {}
+class UnsupportedProjectWorkspaceContentType extends Error {}
+
+async function handleProjectWorkspaceRoute(
+  request: IncomingMessage,
+  response: ServerResponse,
+  url: URL,
+  workbench: Workbench,
+): Promise<void> {
+  const pathname = url.pathname;
+  try {
+    if (pathname === "/api/project-workspace") {
+      if (request.method === "GET") {
+        const [summary, entries] = await Promise.all([
+          workbench.projectWorkspaceSummary(),
+          workbench.listProjectWorkspaces(),
+        ]);
+        return sendJson(response, 200, {
+          ...summary,
+          savedWorkspaces: entries.map((entry) => ({
+            ...entry,
+            requiresConfirmation:
+              entry.rootDigest !== summary.project?.rootDigest,
+          })),
+        });
+      }
+      if (request.method === "DELETE") {
+        await workbench.revokeProjectAccess();
+        return sendJson(response, 200, { revoked: true });
+      }
+      return sendJson(response, 405, { error: "method_not_allowed" });
+    }
+    if (pathname === "/api/project-workspace/access") {
+      if (request.method !== "POST")
+        return sendJson(response, 405, { error: "method_not_allowed" });
+      const body = await readProjectWorkspaceBody(request);
+      if (
+        !jsonObject(body) ||
+        Object.keys(body).length !== 1 ||
+        !nonEmptyString(body.path) ||
+        body.path.length > 4096 ||
+        !isAbsolute(body.path)
+      )
+        throw new InvalidProjectWorkspaceRequest();
+      await workbench.confirmProjectAccess(body.path, []);
+      const summary = await workbench.projectWorkspaceSummary();
+      if (!summary.project || !summary.workspace)
+        throw new Error("Confirmed project workspace is unavailable.");
+      return sendJson(response, 201, {
+        project: summary.project,
+        workspace: {
+          fileCount: summary.workspace.fileCount,
+          totalBytes: summary.workspace.totalBytes,
+        },
+      });
+    }
+    if (pathname === "/api/project-workspace/diff") {
+      if (request.method !== "GET")
+        return sendJson(response, 405, { error: "method_not_allowed" });
+      const query = [...url.searchParams.entries()];
+      const keys = query.map(([key]) => key);
+      if (new Set(keys).size !== keys.length)
+        throw new InvalidProjectWorkspaceRequest();
+      if (keys.length === 1 && keys[0] === "path") {
+        const path = url.searchParams.get("path")!;
+        if (!isAllowedProjectWorkspacePath(path))
+          throw new InvalidProjectWorkspaceRequest();
+        return sendJson(response, 200, await workbench.projectWorkspaceDiff(path));
+      }
+      if (keys.some((key) => key !== "cursor" && key !== "limit"))
+        throw new InvalidProjectWorkspaceRequest();
+      const rawLimit = url.searchParams.get("limit") ?? "50";
+      if (!/^[0-9]{1,3}$/.test(rawLimit))
+        throw new InvalidProjectWorkspaceRequest();
+      const limit = Number(rawLimit);
+      if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100)
+        throw new InvalidProjectWorkspaceRequest();
+      const review = await workbench.projectWorkspaceReviewSnapshot();
+      if (!review)
+        return sendJson(response, 409, { error: "project_workspace_not_confirmed" });
+      const status = review.status;
+      const snapshotDigest = createHash("sha256")
+        .update(JSON.stringify({ rootDigest: review.project.rootDigest, changes: status.changes }))
+        .digest("hex");
+      const cursor = url.searchParams.get("cursor");
+      let offset = 0;
+      if (cursor !== null) {
+        if (!/^[A-Za-z0-9_-]+$/.test(cursor))
+          throw new InvalidProjectWorkspaceRequest();
+        const decoded = Buffer.from(cursor, "base64url").toString("utf8");
+        if (Buffer.from(decoded).toString("base64url") !== cursor)
+          throw new InvalidProjectWorkspaceRequest();
+        const match = /^([a-f0-9]{64}):([0-9]+)$/.exec(decoded);
+        if (!match || match[1] !== snapshotDigest)
+          return sendJson(response, 409, { error: "project_workspace_snapshot_changed" });
+        offset = Number(match[2]);
+        if (!Number.isSafeInteger(offset) || offset > status.changes.length)
+          throw new InvalidProjectWorkspaceRequest();
+      }
+      const changes = status.changes.slice(offset, offset + limit);
+      const next = offset + changes.length;
+      return sendJson(response, 200, {
+        snapshotDigest,
+        files: changes.map(({ path, operation, beforeHash, afterHash, digest }) => ({
+          path,
+          operation,
+          beforeHash,
+          afterHash,
+          digest,
+        })),
+        nextCursor: next < status.changes.length
+          ? Buffer.from(`${snapshotDigest}:${next}`).toString("base64url")
+          : null,
+      });
+    }
+    if (pathname === "/api/project-workspace/apply") {
+      if (request.method !== "POST")
+        return sendJson(response, 405, { error: "method_not_allowed" });
+      const body = await readProjectWorkspaceBody(request);
+      if (
+        !jsonObject(body) ||
+        Object.keys(body).length !== 2 ||
+        !nonEmptyString(body.path) ||
+        !isAllowedProjectWorkspacePath(body.path) ||
+        typeof body.digest !== "string" ||
+        !/^[a-f0-9]{64}$/.test(body.digest)
+      )
+        throw new InvalidProjectWorkspaceRequest();
+      await workbench.applyProjectWorkspaceChange(body.path, body.digest);
+      return sendJson(response, 200, { applied: true, path: body.path, digest: body.digest });
+    }
+    if (pathname === "/api/project-workspace/workspace") {
+      if (request.method !== "DELETE")
+        return sendJson(response, 405, { error: "method_not_allowed" });
+      const body = await readProjectWorkspaceBody(request);
+      if (
+        !jsonObject(body) ||
+        Object.keys(body).length !== 1 ||
+        typeof body.rootDigest !== "string" ||
+        !/^sha256:[a-f0-9]{64}$/.test(body.rootDigest)
+      )
+        throw new InvalidProjectWorkspaceRequest();
+      await workbench.deleteProjectWorkspace(body.rootDigest);
+      return sendJson(response, 200, { deleted: true, rootDigest: body.rootDigest });
+    }
+    return sendJson(response, 404, { error: "not_found" });
+  } catch (error) {
+    if (error instanceof RequestBodyTooLarge || error instanceof ProjectWorkspaceLimitError)
+      return sendJson(response, 413, { error: "project_workspace_limit_exceeded" });
+    if (error instanceof ProjectWorkspaceConflictError)
+      return sendJson(response, 409, { error: "project_workspace_conflict" });
+    if (error instanceof UnsupportedProjectWorkspaceContentType)
+      return sendJson(response, 415, { error: "application_json_required" });
+    if (error instanceof InvalidProjectWorkspaceRequest || error instanceof SyntaxError)
+      return sendJson(response, 400, { error: "invalid_project_workspace_request" });
+    if (error instanceof Error)
+      return sendJson(response, 400, { error: "project_workspace_request_failed" });
+    return sendJson(response, 500, { error: "internal_error" });
+  }
+}
+
+async function readProjectWorkspaceBody(request: IncomingMessage): Promise<unknown> {
+  const contentType = request.headers["content-type"];
+  if (contentType === undefined || !applicationJsonContentType(contentType))
+    throw new UnsupportedProjectWorkspaceContentType();
+  const body = await readJsonBody(request);
+  if (body === null) throw new InvalidProjectWorkspaceRequest();
+  return body;
+}
+
 // Host validation blocks DNS rebinding; Origin and Fetch Metadata block hostile
 // browser pages. This is a local boundary, not authentication between local users.
 function isLocalRequest(request: IncomingMessage): boolean {
@@ -1860,11 +2140,16 @@ function nonEmptyString(value: unknown): value is string {
 function parseTypedProviderConfig(
   body: Record<string, unknown>,
 ): ProviderAdapterConfig {
+  const isVertex = body.transport === "google-vertex";
   if (
-    !exactKeys(body, ["providerId", "transport", "endpoint", "model", "auth"]) ||
+    !exactKeys(
+      body,
+      isVertex
+        ? ["providerId", "transport", "vertexOptions", "model", "auth"]
+        : ["providerId", "transport", "endpoint", "model", "auth"],
+    ) ||
     !nonEmptyString(body.providerId) ||
     !nonEmptyString(body.transport) ||
-    !nonEmptyString(body.endpoint) ||
     !nonEmptyString(body.model) ||
     !jsonObject(body.auth) ||
     typeof body.auth.kind !== "string"
@@ -1910,12 +2195,27 @@ function parseTypedProviderConfig(
     throw new Error("Provider authentication kind is not supported.");
   }
 
+  let baseUrl: string;
+  let vertexOptions: ProviderAdapterConfig["vertexOptions"];
+  if (isVertex) {
+    if (!isStandardVertexOptions(body.vertexOptions))
+      throw new Error("Google Vertex Standard settings are incomplete or malformed.");
+    vertexOptions = body.vertexOptions;
+    const endpoint = standardVertexBaseUrl(vertexOptions.location);
+    if (!endpoint) throw new Error("Google Vertex location is invalid.");
+    baseUrl = endpoint;
+  } else {
+    if (!nonEmptyString(body.endpoint))
+      throw new Error("Typed provider endpoint is incomplete or malformed.");
+    baseUrl = body.endpoint;
+  }
   const config: ProviderAdapterConfig = {
     providerId: body.providerId,
     transport: body.transport as ProviderAdapterConfig["transport"],
-    baseUrl: body.endpoint,
+    baseUrl,
     model: body.model,
     auth,
+    ...(vertexOptions ? { vertexOptions } : {}),
   };
   assertProviderDescriptorInManifest(config);
   return config;
@@ -1975,7 +2275,7 @@ function sendOnce(
 function staticPath(webRoot: string, pathname: string): string | null {
   if (pathname.startsWith("/api/")) return null;
   const spa =
-    /^\/(chat(?:\/[^/]*)?|demo|overview|sessions|runs|documents|approvals|ledger|connections|models|settings|gallery)$/.test(
+    /^\/(chat(?:\/[^/]*)?|demo|overview|sessions|runs|documents|approvals|ledger|connections|models|settings|gallery|project-workspace)$/.test(
       pathname,
     );
   const legacySpa =
