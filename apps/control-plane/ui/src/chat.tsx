@@ -18,7 +18,7 @@ import {
   modePrefix,
   usePermissionMode,
 } from "./permission-mode.tsx";
-import { lastUserMessage, transcriptEvents, usageSummary } from "./events";
+import { isTextTruncated, lastUserMessage, transcriptEvents, usageSummary } from "./events";
 import {
   Children,
   useContext,
@@ -993,6 +993,14 @@ export function Chat({
                   <div className="prose">
                     <RichText text={text} />
                   </div>
+                )}
+                {!isTool && kind === "assistant" && isTextTruncated(event) && (
+                  <p className="notice" role="status">
+                    {t(
+                      "Zpráva byla zkrácena kvůli limitu výstupu.",
+                      "Message was truncated due to the output limit.",
+                    )}
+                  </p>
                 )}
                 {/* Copying, branching from or retrying a message that is still
                     arriving would act on text the server has not settled. */}

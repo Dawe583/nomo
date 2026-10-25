@@ -19,6 +19,7 @@ const paths: Record<string, string> = {
   connections:
     "m9 15 6-6M7 14l-2 2a3 3 0 0 0 4 4l3-3M12 7l3-3a3 3 0 0 1 4 4l-2 2",
   models: "m12 3 9 5-9 5-9-5Zm-9 9 9 5 9-5M3 16l9 5 9-5",
+  "project-workspace": "M4 4h16v16H4ZM8 8h8M8 12h8M8 16h4",
   settings: "M4 6h16M4 12h16M4 18h16M8 3v6M16 9v6M10 15v6",
   undo: "M8 4 3 9l5 5M3 9h10a6 6 0 0 1 0 12",
   send: "M12 20V4m-7 7 7-7 7 7",

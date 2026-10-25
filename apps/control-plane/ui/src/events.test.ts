@@ -1,6 +1,15 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { lastUserMessage, transcriptEvents, usageSummary } from "./events.ts";
+import * as eventHelpers from "./events.ts";
+
+test("truncation helper recognizes only an explicit true flag", () => {
+  assert.equal(typeof eventHelpers.isTextTruncated, "function");
+  if (typeof eventHelpers.isTextTruncated !== "function") return;
+  assert.equal(eventHelpers.isTextTruncated({ payload: { textTruncated: true } }), true);
+  assert.equal(eventHelpers.isTextTruncated({ payload: { textTruncated: false } }), false);
+  assert.equal(eventHelpers.isTextTruncated({ payload: { textTruncated: "true" } }), false);
+});
 test("stream fragments render once and reconcile with authoritative completion", () => {
   const deltas = [
     { seq: 1, type: "message.delta", payload: { text: "Hello " }, at: "a" },

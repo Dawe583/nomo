@@ -48,6 +48,9 @@ export function transcriptEvents(source: Row[]): Row[] {
     result.push({ seq: "stream-" + seq, kind: "assistant", text: delta, at });
   return result;
 }
+export function isTextTruncated(event: Row): boolean {
+  return event.payload?.textTruncated === true;
+}
 
 export function usageSummary(source: Row[]) {
   const usage = [...source]

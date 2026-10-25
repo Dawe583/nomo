@@ -37,6 +37,8 @@ export function Settings({
     id: "",
     endpoint: "",
     model: "",
+    projectId: "",
+    location: "",
     apiKey: "",
     accessKeyId: "",
     secretAccessKey: "",
@@ -250,6 +252,12 @@ export function Settings({
               "No model provider is connected yet.",
             )}
         </p>
+        {provider.data?.vertexOptions && (
+          <p className="muted">
+            Google Vertex AI Standard: {provider.data.vertexOptions.projectId} /{" "}
+            {provider.data.vertexOptions.location}
+          </p>
+        )}
         {provider.data?.setupRequired && (
           <p className="notice">
             {t(
@@ -299,10 +307,20 @@ export function Settings({
                   ? { kind: "none" }
                   : { kind: "api-key", apiKey: descriptorFields.apiKey };
             try {
+              const vertexOptions =
+                selectedDescriptor.endpointRule === "google-vertex-standard"
+                  ? {
+                      mode: "standard",
+                      projectId: descriptorFields.projectId,
+                      location: descriptorFields.location,
+                    }
+                  : undefined;
               await api("/api/provider", "POST", {
                 providerId: selectedDescriptor.providerId,
                 transport: selectedDescriptor.transport,
-                endpoint: descriptorFields.endpoint,
+                ...(vertexOptions
+                  ? { vertexOptions }
+                  : { endpoint: descriptorFields.endpoint }),
                 model: descriptorFields.model,
                 auth,
               });
@@ -336,6 +354,8 @@ export function Settings({
                   id: descriptor?.id ?? "",
                   endpoint: descriptor?.endpoint ?? "",
                   model: descriptor?.model ?? "",
+                  projectId: "",
+                  location: "",
                   apiKey: "",
                   accessKeyId: "",
                   secretAccessKey: "",
@@ -349,31 +369,72 @@ export function Settings({
               {provider.data?.availableProviderDescriptors?.map(
                 (descriptor: Row) => (
                   <option key={descriptor.id} value={descriptor.id}>
-                    {descriptor.providerId} — {descriptor.transport}
-                    {descriptor.endpoint ? ` — ${descriptor.endpoint}` : ""}
+                    {descriptor.providerId} ({descriptor.transport})
+                    {descriptor.endpoint ? ` (${descriptor.endpoint})` : ""}
                   </option>
                 ),
               )}
             </select>
           </label>
-          <label>
-            {t("Adresa API", "API endpoint")}
-            <input
-              type="url"
-              required
-              value={descriptorFields.endpoint}
-              readOnly={
-                selectedDescriptor?.endpoint !== null &&
-                selectedDescriptor?.transport !== "bedrock-converse-stream"
-              }
-              onChange={(e) =>
-                setDescriptorFields((current) => ({
-                  ...current,
-                  endpoint: e.target.value,
-                }))
-              }
-            />
-          </label>
+          {selectedDescriptor?.endpointRule === "google-vertex-standard" && (
+            <>
+              <p className="muted">
+                {t(
+                  "Google Vertex AI Standard používá projekt a region; klíč se posílá pouze v hlavičce x-goog-api-key.",
+                  "Google Vertex AI Standard uses a project and location; the key is sent only in the x-goog-api-key header.",
+                )}
+              </p>
+              <label>
+                Google Cloud project ID
+                <input
+                  required
+                  autoComplete="off"
+                  value={descriptorFields.projectId}
+                  onChange={(e) =>
+                    setDescriptorFields((current) => ({
+                      ...current,
+                      projectId: e.target.value,
+                    }))
+                  }
+                />
+              </label>
+              <label>
+                {t("Umístění", "Location")}
+                <input
+                  required
+                  autoComplete="off"
+                  placeholder="us-central1"
+                  value={descriptorFields.location}
+                  onChange={(e) =>
+                    setDescriptorFields((current) => ({
+                      ...current,
+                      location: e.target.value,
+                    }))
+                  }
+                />
+              </label>
+            </>
+          )}
+          {selectedDescriptor?.endpointRule !== "google-vertex-standard" && (
+            <label>
+              {t("Adresa API", "API endpoint")}
+              <input
+                type="url"
+                required
+                value={descriptorFields.endpoint}
+                readOnly={
+                  selectedDescriptor?.endpoint !== null &&
+                  selectedDescriptor?.transport !== "bedrock-converse-stream"
+                }
+                onChange={(e) =>
+                  setDescriptorFields((current) => ({
+                    ...current,
+                    endpoint: e.target.value,
+                  }))
+                }
+              />
+            </label>
+          )}
           <label>
             {t("Model z manifestu", "Manifest model")}
             <select
@@ -597,7 +658,7 @@ export function Settings({
                         value={`unavailable:${provider.source}:${provider.apiId}`}
                         disabled={provider.disabled}
                       >
-                        {provider.name} — {provider.source}
+                        {provider.name} ({provider.source})
                       </option>
                     ))}
                   </optgroup>

@@ -89,6 +89,11 @@ const Connections = lazy(() =>
 const Settings = lazy(() =>
   import("./settings").then((module) => ({ default: module.Settings })),
 );
+const ProjectWorkspace = lazy(() =>
+  import("./project-workspace").then((module) => ({
+    default: module.ProjectWorkspace,
+  })),
+);
 const pageMap: Record<string, ComponentType<PageProps>> = {
   overview: Overview,
   sessions: Sessions,
@@ -99,6 +104,7 @@ const pageMap: Record<string, ComponentType<PageProps>> = {
   connections: Connections,
   models: Models,
   settings: Settings,
+  "project-workspace": ProjectWorkspace,
 };
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 1000, refetchOnWindowFocus: true } },
@@ -113,6 +119,7 @@ const routes = [
   ["ledger", "▦", "Ledger", "Ledger"],
   ["connections", "⌘", "Nástroje a konektory", "Tools and connections"],
   ["models", "◎", "Modely a spotřeba", "Models and usage"],
+  ["project-workspace", "▧", "Projektový pracovní prostor", "Project workspace"],
   ["settings", "⚙", "Nastavení", "Settings"],
 ];
 class AppBoundary extends Component<
