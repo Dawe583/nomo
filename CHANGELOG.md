@@ -12,6 +12,7 @@ All notable user-facing changes since the first repository commit.
 - Empty TUI lists center their existing placeholder in the available body.
 - Status rows retain model names when the displayed row has enough room.
 - Spacious workspaces identify the active panel in the header.
+- Compact overview shows the attention summary without wasting a row.
 - The narrow `/settings` heading wraps on a word boundary at 40 columns.
 - Compact chat keeps the full conversation and approval counts visible at 40 columns.
 - Narrow TUI status docks reflow full authority and context labels across rows.

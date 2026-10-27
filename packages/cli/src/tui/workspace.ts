@@ -6788,6 +6788,17 @@ export function renderWorkspace(
             "  > Example: Create a project plan and save it to plan.md",
           ];
   }
+  if (
+    height < 14 &&
+    ui.tab === "overview" &&
+    !ui.detail &&
+    !ui.confirmation &&
+    !paletteView &&
+    content[0] === "NOMO / LOCAL WORKSPACE" &&
+    content[1] === ""
+  ) {
+    content.splice(1, 1);
+  }
   if (ui.confirmation && height < 14 && content[1] === "") {
     content.splice(1, 1);
   }

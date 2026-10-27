@@ -759,6 +759,29 @@ test("spacious workspace identifies the active panel", async (t) => {
   }
 });
 
+test("compact overview shows the current attention summary", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-compact-overview-"));
+  const app = new Workbench({ NOMO_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
+  ui.choose("overview");
+  for (const [width, height] of [[40, 12], [80, 24]] as const) {
+    for (const color of [true, false]) {
+      const frame = renderWorkspace(ui, width, height, "", false, false, {
+        color,
+        motion: false,
+      });
+      const rows = stripAnsi(frame).split("\n");
+      assert.ok(rows.some((row) => row.includes("Nothing waiting.")), `${width}x${height} hides attention summary`);
+      assert.equal(rows.length, height);
+      assert.ok(rows.every((row) => visibleLength(row) <= width));
+    }
+  }
+});
+
 test("compact confirmation preview and decisions stay visible at 40x12", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "nomo-tui-compact-review-"));
   const app = new Workbench({ NOMO_DATA_DIR: root });
