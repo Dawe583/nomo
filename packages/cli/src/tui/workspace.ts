@@ -55,6 +55,7 @@ import {
   visibleLength,
 } from "./layout.ts";
 import { detectCapabilities } from "./caps.ts";
+import type { TerminalCapabilities } from "./types.ts";
 import { renderShortcutLegend } from "./shortcuts.ts";
 import {
   advanceSelection as advancePaletteSelection,
@@ -159,6 +160,7 @@ export const WORKSPACE_TABS = [
   "usage",
   "help",
 ] as const;
+const SPACIOUS_NAVIGATION_HINT = ["⇥ Tab panels"];
 export type WorkspaceTab = (typeof WORKSPACE_TABS)[number];
 export const WORKSPACE_VIEWS = {
   overview: "runs",
@@ -675,6 +677,17 @@ export function modeAuthorityLabel(mode: TuiMode): string {
   return `mode: ${mode} (local only, not enforced)`;
 }
 
+const APPROVAL_EVIDENCE_LABELS = {
+  tool: "tool           ",
+  class: "class          ",
+  blastRadius: "blast radius   ",
+  matchedRule: "matched rule   ",
+  precondition: "precondition   ",
+  postcondition: "postcondition  ",
+} as const;
+const UNDO_OPERATION_LABEL = "Operation: ";
+
+
 /** Approval evidence for the decision screen. Tool, class, radius and the
  * matched registry case prose come from the hold when the server supplies
  * them. Rule id, precondition details and postcondition render as unknown
@@ -725,12 +738,12 @@ export function approvalEvidenceLines(hold: {
         textOf(call.policyRule) ??
         "unknown (the server did not supply a matched rule id)");
   return [
-    `tool           ${sanitizeText(tool)}`,
-    `class          ${sanitizeText(klass)}`,
-    `blast radius   ${sanitizeText(radius)}`,
-    `matched rule   ${sanitizeText(ruleIndex)}`,
-    `precondition   ${sanitizeText(precondition)}`,
-    `postcondition  ${sanitizeText(postcondition)}`,
+    `${APPROVAL_EVIDENCE_LABELS.tool}${sanitizeText(tool)}`,
+    `${APPROVAL_EVIDENCE_LABELS.class}${sanitizeText(klass)}`,
+    `${APPROVAL_EVIDENCE_LABELS.blastRadius}${sanitizeText(radius)}`,
+    `${APPROVAL_EVIDENCE_LABELS.matchedRule}${sanitizeText(ruleIndex)}`,
+    `${APPROVAL_EVIDENCE_LABELS.precondition}${sanitizeText(precondition)}`,
+    `${APPROVAL_EVIDENCE_LABELS.postcondition}${sanitizeText(postcondition)}`,
   ];
 }
 
@@ -955,6 +968,9 @@ Describe what this workspace should achieve.
 
 Decisions and open questions live here.
 `;
+
+const COMMAND_PALETTE_NOTICE =
+  "Palette: type to filter, Up/Down select, Enter run, Esc close.";
 
 /** Same persistent workbench as the web. Rendering never grants tool authority. */
 export class WorkspaceTui {
@@ -2329,7 +2345,10 @@ ${(doc.content ?? "").slice(0, 2000)}`;
   }
   settingsLines() {
     return [
-      "HARNESS SETTINGS, limits this workspace runs under",
+      "HARNESS SETTINGS",
+      "Limits this workspace runs under",
+      "",
+      "/settings KEY VALUE sets one limit; the range is what the run path can honour.",
       "",
       ...harnessSettingsView(this.workbench.harnessSettings()).flatMap(
         (row) => [
@@ -2338,8 +2357,6 @@ ${(doc.content ?? "").slice(0, 2000)}`;
           `  read by ${row.consumer}`,
         ],
       ),
-      "",
-      "/settings KEY VALUE sets one limit; the range is what the run path can honour.",
     ];
   }
   session() {
@@ -4194,6 +4211,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       this.keybindingDetail = true;
       this.detail = keybindingLines(this.keybindingQuery, 72);
       this.scroll = 0;
+      if (this.notice === COMMAND_PALETTE_NOTICE) this.notice = "";
       return;
     }
     if (cmd === "theme") {
@@ -4208,6 +4226,9 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         this.detail = [
           `THEME: ${this.themeConfig.colorTheme} + ${this.themeConfig.symbolPreset}`,
           "",
+          "Usage: /theme <color-theme> [symbol-preset] | preview <color-theme> [symbol-preset] | list | reset",
+          "Persist: NOMO_TUI_THEME=<color> NOMO_TUI_SYMBOLS=<preset> in your shell rc.",
+          "",
           "Color themes:",
           ...themes.map(
             (t) => `  ${t === this.themeConfig.colorTheme ? "▸" : " "} ${t}`,
@@ -4218,9 +4239,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
             (s) => `  ${s === this.themeConfig.symbolPreset ? "▸" : " "} ${s}`,
           ),
           "",
-          "Usage: /theme <color-theme> [symbol-preset] | preview <color-theme> [symbol-preset] | list | reset",
           "Examples: /theme paper unicode  |  /theme dark  |  /theme preview solarized-dark classic",
-          "Persist: NOMO_TUI_THEME=<color> NOMO_TUI_SYMBOLS=<preset> in your shell rc.",
         ];
         this.scroll = 0;
         return;
@@ -5266,8 +5285,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       if (seed) this.palette = typeInPalette(this.palette, seed);
       this.choose("help");
       this.detail = undefined;
-      this.notice =
-        "Palette: type to filter, Up/Down select, Enter run, Esc close.";
+      this.notice = COMMAND_PALETTE_NOTICE;
       return;
     }
     throw Error("Unknown command. Use /help to see available commands.");
@@ -5863,6 +5881,7 @@ export function chatRows(
     value: string,
     kind: SessionEvent["kind"],
     label: string,
+    spacerAfter = true,
   ) => {
     add(label, kind === "usage" ? "text" : kind);
     let fence = "",
@@ -5895,21 +5914,34 @@ export function chatRows(
             (i ? " ".repeat(prefix.length - 2) + "│ " : prefix) + chunk,
             "code",
           );
-      } else
+      } else {
+        const heading = kind === "assistant" && /^#{1,6}\s/.test(raw);
         add(
-          raw,
-          kind === "error"
-            ? "error"
-            : kind === "tool"
-              ? "tool"
-              : kind === "assistant" && /^#{1,6}\s/.test(raw)
-                ? "heading"
-                : "text",
+          heading ? raw.replace(/^#{1,6}\s+/, "") : raw,
+          kind === "user"
+            ? "user"
+            : kind === "error"
+              ? "error"
+              : kind === "tool"
+                ? "tool"
+                : heading
+                  ? "heading"
+                  : "text",
         );
+      }
     }
-    add("", "text");
+    if (spacerAfter) add("", "text");
   };
-  for (const event of events) {
+  const nextVisibleKind = (start: number): SessionEvent["kind"] | undefined => {
+    for (let index = start; index < events.length; index++) {
+      const event = events[index]!;
+      if (event.type === "run.status" || event.kind === "usage") continue;
+      return event.kind;
+    }
+    return undefined;
+  };
+  for (let eventIndex = 0; eventIndex < events.length; eventIndex++) {
+    const event = events[eventIndex]!;
     if (event.type === "message.delta") {
       partial += event.text;
       continue;
@@ -5939,7 +5971,12 @@ export function chatRows(
         continue;
       }
     }
-    messageRows(event.text, event.kind, `${label}  ${event.at.slice(11, 19)}`);
+    messageRows(
+      event.text,
+      event.kind,
+      `${label}  ${event.at.slice(11, 19)}`,
+      !(event.kind === "user" && nextVisibleKind(eventIndex + 1) === "error"),
+    );
   }
   if (partial)
     messageRows(
@@ -5953,12 +5990,36 @@ export function wrap(lines: readonly string[], width: number): string[] {
   const out: string[] = [];
   for (const line of lines) {
     let part = "";
+    let partWidth = 0;
+    let spaceStart = -1;
+    let spaceEnd = -1;
     for (const point of sanitizeText(line)) {
-      if (part && visibleLength(part + point) > width) {
-        out.push(part);
-        part = "";
+      const pointWidth = visibleLength(point);
+      const whitespace = point.trim() === "";
+      if (part && partWidth + pointWidth > width) {
+        if (spaceStart > 0) {
+          out.push(part.slice(0, spaceStart));
+          part = part.slice(spaceEnd);
+          partWidth = visibleLength(part);
+          spaceStart = -1;
+          spaceEnd = -1;
+        }
+        if (part && partWidth + pointWidth > width) {
+          out.push(part);
+          part = "";
+          partWidth = 0;
+          spaceStart = -1;
+          spaceEnd = -1;
+        }
+        if (whitespace && part === "") continue;
       }
+      const pointStart = part.length;
       part += point;
+      partWidth += pointWidth;
+      if (whitespace) {
+        if (spaceEnd !== pointStart) spaceStart = pointStart;
+        spaceEnd = part.length;
+      }
     }
     out.push(part);
   }
@@ -6259,6 +6320,31 @@ export const SPINNER_FRAMES = [
   "⠇",
   "⠏",
 ];
+function hasVisibleTextFrom(value: string, start = 0): boolean {
+  for (let index = start; index < value.length; index++) {
+    const code = value.charCodeAt(index);
+    if (
+      code !== 0x09 &&
+      code !== 0x0a &&
+      code !== 0x0b &&
+      code !== 0x0c &&
+      code !== 0x0d &&
+      code !== 0x20 &&
+      code !== 0x00a0 &&
+      code !== 0x1680 &&
+      !(code >= 0x2000 && code <= 0x200a) &&
+      code !== 0x2028 &&
+      code !== 0x2029 &&
+      code !== 0x202f &&
+      code !== 0x205f &&
+      code !== 0x3000 &&
+      code !== 0xfeff
+    )
+      return true;
+  }
+  return false;
+}
+
 export function renderWorkspace(
   ui: WorkspaceTui,
   columns: number,
@@ -6270,6 +6356,7 @@ export function renderWorkspace(
 ): string {
   const width = Math.max(20, columns),
     height = Math.max(8, rows);
+  const spaciousShell = height >= 22 && width >= 78 && !ui.confirmation;
   // The keybinding table sizes its columns to the terminal, so a resize has to
   // re-lay it out. Re-rendering on every frame would be wasteful, so it only
   // happens when the width actually moved.
@@ -6281,13 +6368,21 @@ export function renderWorkspace(
   if (ui.showingCheatSheet && ui.cheatWidth !== width)
     ui.refreshCheatSheet(width);
   // Terminal capabilities for theme rendering (omp-style)
-  const caps = detectCapabilities(ui.env, {
+  const detectedCaps = detectCapabilities(ui.env, {
     columns: width,
     rows: height,
     isTTY: true,
   });
+  const caps: TerminalCapabilities =
+    visuals.color === undefined
+      ? detectedCaps
+      : {
+          ...detectedCaps,
+          ansi: visuals.color,
+          colorDepth: visuals.color ? (24 as const) : (0 as const),
+        };
   const ink = (value: string, code: string) =>
-    visuals.color ? `\x1b[${code}m${value}\x1b[0;48;5;234;38;5;252m` : value;
+    visuals.color ? `\x1b[${code}m${value}\x1b[0;38;5;252m` : value;
   const text = (value: string) => fit(sanitizeText(value), width);
   const amber = "38;5;215",
     ice = "38;5;117",
@@ -6307,6 +6402,7 @@ export function renderWorkspace(
   ui.editingInput = editing;
   const pending = ui.workbench.pending();
   const holds = pending.length + ui.proxy.holds.length;
+  const conversationCount = ui.workbench.list().length;
   const waiting = pending.some((hold) =>
     hold.holdId.startsWith(`${ui.sessionId}:`),
   );
@@ -6349,28 +6445,40 @@ export function renderWorkspace(
   });
   const header: string[] = [];
   if (
+    (visuals.boot || (height >= 22 && width >= 78)) &&
     height >= 22 &&
     width >= 50 &&
-    !ui.confirmation &&
-    (!ui.session() || ui.tab !== "chat" || visuals.boot)
+    !ui.confirmation
   ) {
-    // Web aperture mark plus the wordmark, the same pair as the site
-    // header. The mark is 7 rows, the wordmark 5, so the wordmark rides
-    // centered with one blank row top and bottom.
-    const aside = [
-      "NOMO / local workspace",
-      ui.session()?.model || ui.model || "Connect a model with /connect",
-      // While nothing is happening the breathing dot says the process is
-      // alive and idle. It is decoration on a line that already says what is
-      // going on, and it is the first thing to go when motion is off.
-      running
-        ? "Working / Esc to stop"
-        : `${idleBreath(motion)} Your work. Your control.`,
-      `${ui.workbench.list().length} conversations / ${holds} pending approvals`,
-      "[/] commands   [Esc] navigation",
-      "/keybindings lists every shortcut",
-      "Shift+Tab mode | Tab panels",
-    ];
+    const model =
+      ui.session()?.model || ui.model || "Connect a model with /connect";
+    const aside = visuals.boot
+      ? spaciousShell
+        ? [
+            "NOMO / local workspace",
+            model,
+            running
+              ? "Working / Esc to stop"
+              : `${idleBreath(motion)} Your work. Your control.`,
+            `${conversationCount} conversations / ${holds} pending approvals`,
+          ]
+        : [
+            "NOMO / local workspace",
+            model,
+            running
+              ? "Working / Esc to stop"
+              : `${idleBreath(motion)} Your work. Your control.`,
+            `${conversationCount} conversations / ${holds} pending approvals`,
+            "[/] commands   [Esc] navigation",
+            "/keybindings lists every shortcut",
+            "Shift+Tab mode | Tab panels",
+          ]
+      : [
+          ui.tab === "chat" ? "NOMO / local workspace" : `NOMO / ${ui.tab}`,
+          model,
+          running ? "Working / Esc to stop" : "Ready",
+          `${conversationCount} conversations / ${holds} pending approvals`,
+        ];
     const mark = brandHeader("", {
       interactive: true,
       ansi: visuals.color === true,
@@ -6381,10 +6489,7 @@ export function renderWorkspace(
     });
     mark.forEach((markRow, i) => {
       header.push(
-        ink(
-          markRow,
-          (visuals.boot || running) && frame % 5 === i ? ice : mutedAnsi,
-        ) +
+        ink(markRow, visuals.boot && frame % 5 !== i ? mutedAnsi : ice) +
           (width >= 78
             ? ink(
                 fit(
@@ -6396,35 +6501,43 @@ export function renderWorkspace(
             : ""),
       );
     });
-  } else
+  } else {
+    const model = ui.session()?.model || ui.model || "Connect a model with /connect";
     header.push(
-      ink(
-        text(
-          ` /V/  NOMO  ${ui.session()?.model || ui.model || ui.tab}  |  ${holds} approvals`,
-        ),
-        `1;${amber}`,
+      fit(
+        ink("▣ NOMO", `1;${ice}`) +
+          ink(`  ${sanitizeText(model)}`, mutedAnsi) +
+          ink(
+            `  ·  ${conversationCount} conversations / ${holds} pending approvals`,
+            mutedAnsi,
+          ),
+        width,
       ),
     );
-  const tabIndex = WORKSPACE_TABS.indexOf(ui.tab);
-  const tabs =
-    WORKSPACE_TABS.join("  ").length < width - 2
-      ? WORKSPACE_TABS
-      : WORKSPACE_TABS.slice(Math.max(0, tabIndex - 1), tabIndex + 3);
-  header.push(
-    fit(
-      tabs
-        .map((t) => {
-          const icon = ink(`${TAB_ICONS[t]}`, TAB_ICON_TONE[t]);
-          const active = t === ui.tab;
-          const name = active
-            ? ink(` [${t}] `, `1;${ice};48;5;24`)
-            : ink(` ${t} `, mutedAnsi);
-          return `${icon}${name}`;
-        })
-        .join(""),
-      width,
-    ),
-  );
+    // "Working / Esc to stop" moved to the bottom status dock to keep the
+    // header to two rows on small terminals; the dock already names the phase.
+  }
+  if (!spaciousShell) {
+    const tabIndex = WORKSPACE_TABS.indexOf(ui.tab);
+    const tabs =
+      WORKSPACE_TABS.join("  ").length < width - 2
+        ? WORKSPACE_TABS
+        : WORKSPACE_TABS.slice(Math.max(0, tabIndex - 1), tabIndex + 3);
+    header.push(
+      fit(
+        tabs
+          .map((t) => {
+            const icon = ink(`${TAB_ICONS[t]}`, TAB_ICON_TONE[t]);
+            const active = t === ui.tab;
+            const name = active
+              ? ink(` [${t}] `, `1;${ice};48;5;24`)
+              : ink(` ${t} `, mutedAnsi);
+            return `${icon}${name}`;
+          })
+          .join(""),
+        width,
+      ),
+    );
   // An underline under the tab row gives the selected panel a second signal
   // that survives a monochrome terminal, and the active bar animates its
   // weight so the eye lands on it without any colour change.
@@ -6452,10 +6565,11 @@ export function renderWorkspace(
         width,
       ),
     );
+  }
   // A travelling wave under the header while a run is in flight. It is
   // attention, never the only signal: the status row below still names the
   // phase in words.
-  if (running && height - header.length >= 13)
+  if (running && !spaciousShell && height - header.length >= 13)
     header.push(
       ink(
         phaseWave("Working", width, motion, {
@@ -6486,8 +6600,8 @@ export function renderWorkspace(
     editing && !ui.confirmation && /^\/\S*\s/.test(typedCommand)
       ? commandArgumentHint(typedCommand)
       : undefined;
-  // Inside the frame the row keeps 2 side cells plus a 2 cell prompt prefix,
-  // so text wraps at width - 6 and the border never breaks mid line.
+  // The prompt keeps two gutter cells and a two-cell prompt prefix, so its
+  // text width stays aligned in both the flat and compact framed surfaces.
   const composerInner = Math.max(1, width - 6);
   // The palette query stands in for the draft while the overlay is open, so
   // the same wrapping and cursor arithmetic serve both surfaces.
@@ -6531,7 +6645,9 @@ export function renderWorkspace(
   // height is known, because the body height is what decides how many legend
   // rows fit. Measuring it here is what keeps the frame exactly height rows
   // tall on every terminal size, which the parity tests pin.
-  const legendRows = paletteView
+  const legendRows = spaciousShell
+    ? SPACIOUS_NAVIGATION_HINT
+    : paletteView
     ? renderShortcutLegend(
         { editing: false, confirming: false, running: false, pending: 0 },
         { width, caps },
@@ -6548,7 +6664,7 @@ export function renderWorkspace(
           caps,
           symbolPreset: ui.themeConfig.symbolPreset,
           colorTheme: ui.themeConfig.colorTheme,
-          paint: visuals.color
+          paint: visuals.color && !spaciousShell
             ? (text, tone, bold) =>
                 paintWithPalette(
                   text,
@@ -6589,25 +6705,18 @@ export function renderWorkspace(
               : value,
         })
       : [];
-  // One budget for every row that is not the body.
+  // The spacious composer uses two padded rows; compact layouts use two rules.
   //
-  // The earlier version gave each optional band its own guessed reserve, and
-  // three guesses that cannot see each other add up to more than the terminal
-  // has. On a twelve row terminal with three toasts they overcommitted by one
-  // row and the prompt frame lost its bottom rule, which is the one row an
-  // operator cannot afford to lose.
-  //
-  // The rows that must always exist are counted first and never traded away:
-  // the header, the approval banner, the prompt frame with its two rules, the
-  // summary and status rows, the suggestion menu and one row of body. What is
-  // left is the only pool the optional bands may draw from, and each takes
-  // what is still there when its turn comes.
+  // Header, approval banner, composer rows/frame, summary/status, suggestions,
+  // and one body row are reserved first. Optional bands share only what remains.
+  const summaryRowsCount = width < 100 ? 2 : 1;
+  const composerFrameRows = 2;
   const reserved =
     header.length +
     banner.length +
     composerHeight +
-    2 /* the prompt frame's own top and bottom rules */ +
-    2 /* the summary and status rows */ +
+    composerFrameRows +
+    summaryRowsCount + 1 /* the summary rows plus the final status row */ +
     menu.length +
     1; /* one row of body, always */
   let spare = Math.max(0, height - reserved);
@@ -6629,12 +6738,18 @@ export function renderWorkspace(
   // Then the rule that marks where the body ends and the controls begin. It
   // breathes while a run is in flight, which is the only reason it earns a
   // row ahead of the legend below it.
-  const shownRuleRows = spare >= 1 ? [separator(width, motion, running)] : [];
+  const shownRuleRows =
+    !spaciousShell &&
+    (spare > legendRows.length ||
+      (summaryRowsCount === 1 && spare >= 1))
+      ? [separator(width, motion, running)]
+      : [];
   spare -= shownRuleRows.length;
 
   // The legend is advice, and /keybindings carries the same list, so it takes
   // whatever is left and no more.
-  const shownLegendRows = spare >= legendRows.length ? legendRows : [];
+  const shownLegendRows =
+    spare >= legendRows.length ? legendRows : [];
   spare -= shownLegendRows.length;
 
   const ruleRows = shownRuleRows;
@@ -6657,31 +6772,60 @@ export function renderWorkspace(
     !ui.detail &&
     !ui.confirmation &&
     !paletteView
-  )
-    content = [
-      "",
-      "  Welcome to NOMO.",
-      "  Describe what you want to build. Follow the work here.",
-      "",
-      "  > Create a project plan and save it to plan.md",
-      "",
-      "  + Documents    Captured changes and confirmed Undo",
-      "  + Ledger       Signed history of every operation",
-      "  + Approvals    Your decision before an external tool",
-      "",
-      "  / commands     Tab complete     Esc navigate",
-    ];
+  ) {
+    content =
+      width < 50 || height < 14
+        ? [
+            "  Describe what you want to build.",
+            "  Example: Plan a project",
+            ` ${conversationCount} conversations·${holds} pending approvals`,
+          ]
+        : [
+            "",
+            "  Welcome to NOMO.",
+            "  Describe what you want to build.",
+            "",
+            "  > Example: Create a project plan and save it to plan.md",
+          ];
+  }
+  if (ui.confirmation && height < 14 && content[1] === "") {
+    content.splice(1, 1);
+  }
   const styled = richChat
     ? chatRows(ui.session()!.events, width - 4, ui.compactTools)
     : undefined;
-  const lines = styled?.map((row) => row.text) ?? wrap(content, width - 4);
+  const lines =
+    styled?.map((row) => row.text) ??
+    (paletteView ? paletteView.lines : wrap(content, width - 4));
   let offset = ui.scroll;
   // The palette windows its own list internally and the window follows the
   // selection, so the body always starts at the top here.
   if (paletteView) offset = 0;
-  else if (!ui.detail && !ui.confirmation && ui.tab === "chat" && ui.scroll < 0)
-    offset = Math.max(0, lines.length - bodyHeight);
-  else if (
+  else if (!ui.detail && !ui.confirmation && ui.tab === "chat" && ui.scroll < 0) {
+    // A one-row live chat viewport must follow content, not the blank code row
+    // after a streamed newline.
+    let followEnd = lines.length;
+    if (running && bodyHeight === 1 && styled) {
+      followEnd = 0;
+      for (let index = styled.length - 1; index >= 0; index--) {
+        const row = styled[index]!;
+        const pipe = row.style === "code" ? row.text.indexOf("│") : -1;
+        if (hasVisibleTextFrom(row.text, pipe < 0 ? 0 : pipe + 1)) {
+          followEnd = index + 1;
+          break;
+        }
+      }
+    } else if (running) {
+      followEnd = 0;
+      for (let index = lines.length - 1; index >= 0; index--) {
+        if (hasVisibleTextFrom(lines[index]!)) {
+          followEnd = index + 1;
+          break;
+        }
+      }
+    }
+    offset = Math.max(0, followEnd - bodyHeight);
+  } else if (
     !ui.detail &&
     !ui.confirmation &&
     !["chat", "overview", "policy", "help"].includes(ui.tab)
@@ -6705,12 +6849,23 @@ export function renderWorkspace(
     .filter((index) => index >= 0);
   const body = lines.slice(offset, offset + bodyHeight);
   while (body.length < bodyHeight) body.push("");
+  if (
+    lines[0] === "No entries yet." &&
+    (lines.length === 1 || (lines.length === 2 && lines[1] === ""))
+  ) {
+    body.fill("");
+    body[Math.floor((body.length - 1) / 2)] = "No entries yet.";
+  }
   // Build minimap events for chat tab (just events, no palette needed)
   const minimapEvents =
     richChat && ui.session() ? buildMinimapEvents(ui.session()!.events) : [];
   // Placeholder, will be re-rendered after palette is available
   let minimapRows: string[] = [];
   const frameColor = ui.confirmation ? amber : mutedAnsi;
+  const approvalReviewOpen =
+    ui.confirmation?.title.startsWith("APPROVE ") ?? false;
+  const undoConfirmationOpen =
+    ui.confirmation?.title.startsWith("UNDO ") ?? false;
   const bodyRows = body.map((line, index) => {
     const style = styled?.[offset + index]?.style;
     const tone =
@@ -6749,10 +6904,34 @@ export function renderWorkspace(
           paint: (value) => (visuals.color ? ink(value, `1;${amber}`) : value),
         })
       : pad(line, width - 4);
+    const approvalTitle =
+      approvalReviewOpen && line === ui.confirmation?.title;
+    const undoTitle =
+      undoConfirmationOpen && line === ui.confirmation?.title;
+    const approvalField =
+      approvalReviewOpen &&
+      (line.startsWith(APPROVAL_EVIDENCE_LABELS.tool) ||
+        line.startsWith(APPROVAL_EVIDENCE_LABELS.class) ||
+        line.startsWith(APPROVAL_EVIDENCE_LABELS.blastRadius) ||
+        line.startsWith(APPROVAL_EVIDENCE_LABELS.matchedRule) ||
+        line.startsWith(APPROVAL_EVIDENCE_LABELS.precondition) ||
+        line.startsWith(APPROVAL_EVIDENCE_LABELS.postcondition));
+    const operationLabel =
+      undoConfirmationOpen && line.startsWith(UNDO_OPERATION_LABEL);
+    const contentLabelLength = approvalField
+      ? 15
+      : operationLabel
+        ? UNDO_OPERATION_LABEL.length
+        : 0;
+    const contentRow = contentLabelLength
+      ? ink(painted.slice(0, contentLabelLength), `1;${ice}`) +
+        ink(painted.slice(contentLabelLength), tone)
+      : ink(painted, approvalTitle || undoTitle ? `1;${amber}` : tone);
+    const sideTone = style === "user" ? tone : frameColor;
     return (
-      ink(ui.confirmation ? "! " : "  ", frameColor) +
-      ink(painted, tone) +
-      (ui.confirmation ? ink(" !", frameColor) : "  ") +
+      ink(ui.confirmation ? "! " : "  ", sideTone) +
+      contentRow +
+      (ui.confirmation ? ink(" !", frameColor) : ink("  ", sideTone)) +
       (richChat && minimapRows[index]
         ? paintWithPalette(" " + minimapRows[index], "muted", palette, caps)
         : "")
@@ -6831,8 +7010,8 @@ export function renderWorkspace(
           totalEvents: minimapEvents.length,
         })
       : [];
-  const accent = paintWithPalette("●", "accent", palette, caps, true);
-  const muted = paintWithPalette("│", "muted", palette, caps);
+  // ink() takes an SGR code, not a pre-painted glyph.
+  const muted = mutedAnsi;
   const seg = (
     label: string,
     value: string,
@@ -6983,22 +7162,43 @@ export function renderWorkspace(
   // Join with theme separator, respecting width
   const sep = paintWithPalette(symbols.separator.dot, "muted", palette, caps);
   let summary = segments.join(` ${sep} `);
-  // Measure the raw model value. Fitting the ANSI-painted segment sees only
-  // visible cells, returns it unchanged, and can leave this loop stuck.
-  while (visibleLength(summary) > width - 4 && visibleLength(modelShown) > 8) {
+  // Measure the row that actually contains the model, not the unsplit summary.
+  while (
+    visibleLength(
+      width < 50
+        ? `${segments[0]} ${sep} ${segments[2]}`
+        : width < 100
+          ? segments.slice(0, 2).join(` ${sep} `)
+          : summary,
+    ) > width &&
+    visibleLength(modelShown) > 8
+  ) {
     const next = fit(modelShown, visibleLength(modelShown) - 1);
     if (next === modelShown) break;
     modelShown = next;
     segments[0] = seg("model", modelShown, "accent");
     summary = segments.join(` ${sep} `);
   }
-  const summaryLine = summary;
-  // The legend strings were measured above, before the body was sliced, so the
-  // body height could subtract what they actually took. Paint them here, where
-  // the muted helper exists.
-  const paintedLegendRows = visibleLegendRows.map((row) =>
-    ink(text(row), muted),
-  );
+  const summaryRows =
+    width < 50
+      ? [
+          paintWithPalette(modeLabel, "info", palette, caps),
+          `${segments[0]} ${sep} ${segments[2]}`,
+        ]
+      : width < 100
+        ? [
+            segments.slice(0, 2).join(` ${sep} `),
+            segments.slice(2).join(` ${sep} `),
+          ]
+        : [summary];
+  // Compact color legends arrive painted; spacious-shell hints are kept plain
+  // until this point so they can be quieted without exposing escape bytes.
+  const paintedLegendRows =
+    visuals.color === true
+      ? spaciousShell
+        ? visibleLegendRows.map((row) => ink(row, mutedAnsi))
+        : visibleLegendRows
+      : visibleLegendRows.map((row) => ink(text(row), muted));
   const todoBadge = (() => {
     try {
       const todos = extractTodos(ui.session()?.events ?? []);
@@ -7015,12 +7215,14 @@ export function renderWorkspace(
   // selection, because an empty result set and a closed overlay look the
   // same otherwise.
   const status = paletteView
-    ? `${paletteMatches} command${paletteMatches === 1 ? "" : "s"} match / Enter run / Esc close`
+    ? `${paletteMatches} command${paletteMatches === 1 ? "" : "s"}${width < 50 ? "" : " match"} / Enter run / Esc close`
     : ui.confirmation
-      ? "[!] REVIEW / y accept / n reject / Esc cancel / PgDn preview"
+      ? width < 50
+        ? "Review y accept n reject Esc cancel"
+        : "[!] REVIEW / y accept / n reject / Esc cancel / PgDn preview"
       : running && (busy || ui.session()?.status === "running")
         ? `${spinner} ${ui.session()?.status === "running" ? (waiting ? "[wait] Waiting for approval" : `● ${phase}${dots}`) : `[run] Finishing operation${dots}`}${elapsed} / Esc stop${historyStatus ? " / [history] reading history" : ""}${todoBadge}${chatContextBadge ? ` / ${chatContextBadge}` : ""}`
-        : `${historyStatus ?? ui.notice}${chatContextBadge ? `${historyStatus ? " / " : ""}${chatContextBadge}` : ""}`;
+      : `${historyStatus ?? (spaciousShell && ui.notice === "Tab: panels | i: type | /help: commands" ? "Ready" : ui.notice)}${chatContextBadge ? `${historyStatus ? " / " : ""}${chatContextBadge}` : ""}`;
   const menuRows = menu.map(([name, description], i) =>
     ink(
       text(
@@ -7034,31 +7236,33 @@ export function renderWorkspace(
     ui.mode === "plan" ? "○" : ui.mode === "accept" ? "●" : "◆";
   // While the palette is open the composer shows the query rather than the
   // prompt draft, because that is the text the operator is editing.
-  const frameTitle = paletteView
-    ? `⌘ ${ui.palette?.query || "all commands"}`
-    : editing
-      ? `${modeIndicator} Write a prompt [${ui.mode.toUpperCase()}]`
-      : `${TAB_ICONS[ui.tab]} ${ui.tab} / navigation`;
-  // The caret the runner splices into the draft is a single cell placeholder.
-  // Swapping it for the animated glyph here is what makes the caret blink,
-  // and it is safe to do at render time because both glyphs are exactly one
-  // cell, so no wrapping or padding downstream can notice the difference.
+  const frameTitle = spaciousShell
+    ? ""
+    : paletteView
+      ? `⌘ ${ui.palette?.query || "all commands"}`
+      : editing
+        ? `${modeIndicator} Write a prompt [${ui.mode.toUpperCase()}]`
+        : `${TAB_ICONS[ui.tab]} ${ui.tab} / navigation`;
+  // The caret marker is a one-cell placeholder so animation cannot alter
+  // wrapping. Inactive spacious composers deliberately keep the hint static.
   const caret = typeCursor(ui.palette ? true : editing, motion);
-  const promptBox = [
-    promptFrameTop(frameTitle, width),
-    ...composer
-      .slice(composerStart, composerStart + composerHeight)
-      .map((value, i) =>
-        promptFrameRow(
-          `${i === 0 ? (editing ? "› " : ": ") : "  "}${value.replace("▌", caret)}`,
-          width,
-        ),
+  const composerRows = composer
+    .slice(composerStart, composerStart + composerHeight)
+    .map((value, i) =>
+      promptFrameRow(
+        `${i === 0 ? "> " : "  "}${value.replace("▌", caret)}`,
+        width,
       ),
-    promptFrameBottom(width),
-  ];
-  // The frame border follows the permission mode, like the reference
-  // terminal: ice for normal, green for accept, blue for plan. The title
-  // always states the mode in text, so color stays redundant information.
+    );
+  const promptBox = spaciousShell
+    ? [promptFrameRow("", width), ...composerRows, promptFrameRow("", width)]
+    : [
+        promptFrameTop(frameTitle, width),
+        ...composerRows,
+        promptFrameBottom(width),
+      ];
+  // Composer tone follows permission mode; compact layouts reuse it for their
+  // frame while the mode text keeps color redundant.
   const frameTone = !editing
     ? muted
     : ui.mode === "plan"
@@ -7066,6 +7270,26 @@ export function renderWorkspace(
       : ui.mode === "accept"
         ? "38;5;78"
         : ice;
+  // Narrow overflows cannot fit a page hint in the status row, so reuse the
+  // body/control divider only when the current view has more content.
+  const scrollCue = ui.confirmation
+    ? " PgDn preview "
+    : ui.showingKeybindings
+      ? " PgDn scroll "
+      : undefined;
+  const scrollCueRuleRows =
+    scrollCue &&
+    width >= scrollCue.length &&
+    width < 50 &&
+    ui.viewport.total > ui.viewport.height
+      ? ruleRows.map((row) => {
+          const start = Math.floor((row.length - scrollCue.length) / 2);
+          return (
+            `${row.slice(0, start)}${scrollCue}` +
+            row.slice(start + scrollCue.length)
+          );
+        })
+      : ruleRows;
   return [
     ...header,
     // The leading marker pulses in place rather than adding a row. The banner
@@ -7082,16 +7306,13 @@ export function renderWorkspace(
     // away, which is the only signal separating a danger from a success.
     ...shownToastRows,
     ...bodyRows,
-    // The timeline sits between the body and the summary, so it reads as
-    // belonging to the run the body is showing rather than to the controls
-    // below it.
+    // The timeline follows the run this process started and stays with its
+    // transcript, ahead of the controls and bottom status dock.
     ...shownTimelineRows,
     // The rule marks where the body ends and the controls begin, so the
     // operator does not have to read the composer frame to know it is about
     // to type into it.
-    ...ruleRows.map((row) => ink(row, muted)),
-    ink(fit(summary, width), ice),
-    ink(text(status), ui.confirmation ? `1;${amber}` : running ? amber : muted),
+    ...scrollCueRuleRows.map((row) => ink(row, muted)),
     ...menuRows,
     ...(argumentHint
       ? [
@@ -7105,11 +7326,19 @@ export function renderWorkspace(
     // below would be the last thing the slice(0, height) drops on a short
     // terminal, and the operator would lose the prompt frame's bottom rule.
     ...paintedLegendRows,
-    ...promptBox.map((row) => ink(row, frameTone)),
+    ...promptBox.map((row) =>
+      ink(row, visuals.color ? `${frameTone};48;5;236` : frameTone),
+    ),
+    // The status dock follows the composer; narrow layouts reserve extra
+    // rows for the full model, authority and context values.
+    ...summaryRows.map((row) =>
+      ink(fit(row, width), spaciousShell ? mutedAnsi : ice),
+    ),
+    ink(text(status), ui.confirmation ? `1;${amber}` : running ? amber : muted),
   ]
     .slice(0, height)
     .map((row) =>
-      visuals.color ? `\x1b[48;5;234;38;5;252m${pad(row, width)}\x1b[0m` : row,
+      visuals.color ? `\x1b[38;5;252m${pad(row, width)}\x1b[0m` : row,
     )
     .join("\n");
 }

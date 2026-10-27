@@ -3,6 +3,28 @@
 All notable user-facing changes since the first repository commit.
 
 ## Unreleased
+- TUI text wrapping now prefers word boundaries while retaining hard wraps for overlong tokens.
+- A one-row live chat viewport now follows non-empty streamed code rows instead
+  of the blank separator after a newline.
+- Removed a width-40 debug diagnostic that leaked renderer details to stderr.
+- Spacious NOMO TUI views keep the pale aperture and live metadata, dock a full-width flat charcoal composer and compact counts, suppress verbose shortcut chrome, and render user/error messages as a flat sequence.
+- Spacious prompt surfaces now include vertical padding, and the workspace canvas uses the terminal's default background.
+- Empty TUI lists center their existing placeholder in the available body.
+- Status rows retain model names when the displayed row has enough room.
+- Spacious workspaces identify the active panel in the header.
+- The narrow `/settings` heading wraps on a word boundary at 40 columns.
+- Compact chat keeps the full conversation and approval counts visible at 40 columns.
+- Narrow TUI status docks reflow full authority and context labels across rows.
+- Compact confirmation reviews show a preview and accept/reject/cancel controls at 40 columns.
+- Compact confirmation previews retain a PgDn cue when content scrolls at 40 columns.
+- The color command palette keeps selected commands visible without wrapping ANSI styling as text.
+- The 40-column command palette keeps its selected result inside the visible viewport.
+- Compact keybindings show a PageDown cue when details overflow at 40 columns.
+- The compact command palette keeps its Enter and Esc controls visible at 40 columns.
+- Opening keybindings clears palette guidance and preserves other notices.
+- Assistant Markdown headings now render as clean NOMO-styled terminal titles without changing the event or transcript text.
+- Approval review overlays emphasize their existing title and evidence labels without changing review values.
+- Undo confirmations distinguish the existing Operation label from its value without changing preview content.
 - Spawned children now use the parent's connector snapshots and inherit tools
   only when both the name and connector identity match. Later connector
   additions or edits cannot widen the child's scope.

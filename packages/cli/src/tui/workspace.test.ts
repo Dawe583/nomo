@@ -86,6 +86,205 @@ test("command palette opens a live filter over the real command list", async (t)
     "every command is listed, none dropped",
   );
 });
+test("palette keeps selected commands visible across color modes", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-palette-frames-"));
+  const app = new Workbench({ NOMO_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
+  await ui.command("/command-palette");
+  const visualFailures: string[] = [];
+
+  for (const color of [true, false]) {
+    const frame = renderWorkspace(ui, 40, 12, "", false, false, {
+      color,
+      motion: false,
+    });
+    const text = stripAnsi(frame);
+    if (!text.includes("> ◆ /agent"))
+      visualFailures.push(`40x12 ${color ? "color" : "mono"} lacks selected /agent`);
+    if (!text.includes("Select a profile"))
+      visualFailures.push(`40x12 ${color ? "color" : "mono"} lacks selected /agent hint`);
+    if (!text.includes("all commands") || !text.includes("NOMO"))
+      visualFailures.push(`40x12 ${color ? "color" : "mono"} lacks composer or identity`);
+    if (!text.includes(`${TUI_COMMANDS.length} commands`))
+      visualFailures.push(`40x12 ${color ? "color" : "mono"} lacks command count`);
+    if (!text.includes("Enter run"))
+      visualFailures.push(`40x12 ${color ? "color" : "mono"} lacks Enter run control`);
+    if (!text.includes("Esc close"))
+      visualFailures.push(`40x12 ${color ? "color" : "mono"} lacks Esc close control`);
+    assert.ok(text.includes("Tab panels"));
+    assert.equal(frame.split("\n").length, 12);
+    assert.ok(frame.split("\n").every((line) => visibleLength(line) <= 40));
+    assert.equal(frame.includes("\x1b["), color);
+  }
+
+  const opened = ui.palette as PaletteState | undefined;
+  if (!opened) throw Error("command palette did not remain open");
+  ui.palette = { ...opened, query: "settings" };
+  for (const color of [true, false]) {
+    const frame = renderWorkspace(ui, 80, 24, "", false, false, {
+      color,
+      motion: false,
+    });
+    const text = stripAnsi(frame);
+    assert.ok(text.includes("Enter run"));
+    assert.ok(text.includes("Esc close"));
+    const rows = text.split("\n");
+    const selected = rows.findIndex((row) => row.includes("/settings"));
+    if (selected < 0) {
+      visualFailures.push(`80x24 ${color ? "color" : "mono"} lacks selected /settings`);
+    } else if (rows[selected + 1]?.trim().startsWith("value")) {
+      visualFailures.push(`80x24 ${color ? "color" : "mono"} splits the settings hint before value`);
+    }
+    assert.equal(rows.length, 24);
+    assert.ok(rows.every((line) => visibleLength(line) <= 80));
+    assert.equal(frame.includes("\x1b["), color);
+  }
+
+  assert.deepEqual(visualFailures, []);
+});
+
+test("keybindings preserves direct notices and clears palette-only guidance", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-palette-keybindings-"));
+  const app = new Workbench({ NOMO_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
+  const directNotice =
+    "Decision accepted. Check the ledger for tool completion.";
+  ui.notice = directNotice;
+  await ui.command("/keybindings");
+  assert.equal(ui.showingKeybindings, true);
+  const directFrame = renderWorkspace(ui, 80, 24, "", false, false, {
+    color: false,
+    motion: false,
+  });
+  assert.ok(
+    stripAnsi(directFrame).includes(directNotice),
+    "direct /keybindings dropped the prior decision status",
+  );
+
+  await ui.command("/command-palette");
+  const palette = ui.palette as PaletteState | undefined;
+  if (!palette) throw Error("command palette did not open");
+  const commands = filterPalette(
+    paletteFromCommands(TUI_COMMANDS),
+    "keybindings",
+  );
+  const selectedIndex = commands.findIndex(
+    (command) => command.id === "/keybindings",
+  );
+  assert.notEqual(selectedIndex, -1, "real keybindings command is selectable");
+  ui.palette = { ...palette, query: "keybindings", selected: selectedIndex };
+
+  // Match the runner's Enter route: remove the overlay, then dispatch the
+  // command selected from the filtered real command list.
+  const selected = filterPalette(
+    paletteFromCommands(TUI_COMMANDS),
+    ui.palette.query,
+  )[ui.palette.selected];
+  assert.equal(selected?.id, "/keybindings");
+  ui.palette = undefined;
+  await ui.command(selected.id);
+  assert.equal(ui.showingKeybindings, true);
+
+  for (const [width, height] of [
+    [40, 12],
+    [80, 24],
+  ]) {
+    for (const color of [true, false]) {
+      const frame = renderWorkspace(ui, width!, height!, "", false, false, {
+        color,
+        motion: false,
+      });
+      const text = stripAnsi(frame);
+      assert.ok(
+        !text.includes("Palette: type to filter"),
+        `${width}x${height} ${color ? "color" : "mono"} retained palette-only footer`,
+      );
+      assert.ok(text.includes("KEYBINDINGS"));
+      assert.ok(text.includes("Tab panels"));
+      assert.ok(text.includes("Enter details"));
+      if (width === 80) assert.ok(text.includes("Send the prompt"));
+      assert.equal(frame.split("\n").length, height);
+      assert.ok(frame.split("\n").every((line) => visibleLength(line) <= width!));
+      assert.equal(frame.includes("\x1b["), color);
+    }
+  }
+});
+
+
+test("compact keybindings disclose PageDown and reveal a binding", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-keybindings-viewport-"));
+  const app = new Workbench({ NOMO_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
+  ui.choose("chat");
+  ui.model = "fixture-model";
+  await ui.command("/keybindings");
+  const missingCue: string[] = [];
+
+  for (const color of [true, false]) {
+    ui.scroll = 0;
+    const initial = renderWorkspace(ui, 40, 12, "", false, false, {
+      color,
+      motion: false,
+    });
+    const text = stripAnsi(initial);
+    if (!text.includes("PgDn scroll"))
+      missingCue.push(`40x12 ${color ? "color" : "mono"} lacks PgDn scroll cue`);
+    assert.ok(text.includes("KEYBINDINGS"));
+    assert.ok(text.includes("Tab panels"));
+    assert.ok(text.includes("Enter details"));
+    assert.ok(text.includes("/help: commands"));
+    assert.equal(initial.split("\n").length, 12);
+    assert.ok(initial.split("\n").every((line) => visibleLength(line) <= 40));
+    assert.equal(initial.includes("\x1b["), color);
+
+    let afterPageDown = initial;
+    for (let page = 0; page < ui.viewport.total; page++) {
+      ui.scrollPage(1);
+      afterPageDown = renderWorkspace(ui, 40, 12, "", false, false, {
+        color,
+        motion: false,
+      });
+      if (stripAnsi(afterPageDown).includes("Send the prompt")) break;
+    }
+    const scrolled = stripAnsi(afterPageDown);
+    assert.ok(scrolled.includes("Send the prompt"), "PageDown reveals first binding");
+    assert.ok(scrolled.includes("Tab panels"));
+    assert.ok(scrolled.includes("Enter details"));
+    assert.ok(scrolled.includes("/help: commands"));
+    assert.equal(afterPageDown.split("\n").length, 12);
+    assert.ok(afterPageDown.split("\n").every((line) => visibleLength(line) <= 40));
+    assert.equal(afterPageDown.includes("\x1b["), color);
+  }
+  assert.deepEqual(missingCue, []);
+
+  for (const color of [true, false]) {
+    ui.scroll = 0;
+    const frame = renderWorkspace(ui, 80, 24, "", false, false, {
+      color,
+      motion: false,
+    });
+    const text = stripAnsi(frame);
+    assert.ok(text.includes("31 of 31 bindings"));
+    assert.ok(text.includes("Send the prompt"));
+    assert.equal(frame.split("\n").length, 24);
+    assert.ok(frame.split("\n").every((line) => visibleLength(line) <= 80));
+    assert.equal(frame.includes("\x1b["), color);
+  }
+});
+
 
 test("queuePrompt(undefined) cancels a queued prompt", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "nomo-tui-queue-"));
@@ -253,6 +452,7 @@ test("composer follows the actual cursor beyond literal underscores", async (t) 
     cursor: [...value].length,
   });
   assert.ok(result.includes("last_"));
+  assert.ok(result.includes("> third"), "active prompt uses the screenshot's prompt marker");
 });
 
 test("TUI real document lifecycle: model tool, edit, conflict, reviewed Undo, signed export and restart", async (t) => {
@@ -466,9 +666,541 @@ test("styled frames stay bounded, motion can stop, and slash choices never inclu
   assert.ok(commandSuggestions("/rs").some(([name]) => name === "/resume"));
   assert.ok(commandSuggestions("/rw").some(([name]) => name === "/rewind"));
   assert.equal(commandSuggestions("/new delete everything").length, 0);
-  assert.ok(
-    stripAnsi(renderWorkspace(ui, 100, 32)).includes("NOMO / local workspace"),
+});
+
+test("regular chat uses the NOMO aperture shell across sizes and preserves boot splash", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-compact-chat-"));
+  const app = new Workbench({ NOMO_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
+  ui.choose("chat");
+  ui.model = "fixture-model";
+
+  for (const [width, height] of [
+    [40, 12],
+    [80, 24],
+    [120, 40],
+    [200, 48],
+  ] as const) {
+    for (const color of [true, false]) {
+      const frame = renderWorkspace(ui, width, height, "", false, false, {
+        color,
+        motion: false,
+      });
+      const text = stripAnsi(frame);
+      if (width >= 80 && height >= 22) {
+        const rows = text.split("\n");
+        assert.ok(rows[0]!.startsWith("████"), `${width}x${height} lacks the NOMO aperture mark`);
+        assert.ok(rows[1]!.includes("fixture-model"), `${width}x${height} lacks adjacent live model metadata`);
+        assert.ok(rows[3]!.includes("0 conversations / 0 pending approvals"));
+        assert.ok(!text.includes("▣ NOMO"), `${width}x${height} uses compact identity`);
+      } else {
+        assert.ok(text.includes("▣ NOMO"), `${width}x${height} lacks compact NOMO identity`);
+      }
+      assert.ok(text.includes("fixture-model"), `${width}x${height} lacks model status`);
+      assert.ok(text.includes("> i type / Enter details"), `${width}x${height} loses the visible prompt marker`);
+      assert.ok(text.includes("0 conversations"), `${width}x${height} lacks conversation count`);
+      assert.ok(text.includes("0 pending approvals"), `${width}x${height} lacks approval count`);
+      if (width >= 50 && height >= 14) {
+        assert.ok(text.includes("Describe what you want to build."), `${width}x${height} lacks invitation`);
+      }
+      if (width < 50 || height < 14) {
+        assert.ok(text.includes("Example: Plan a project"), `${width}x${height} lacks compact example`);
+      } else {
+        assert.ok(text.includes("Welcome to NOMO."), `${width}x${height} lacks welcome title`);
+        assert.ok(text.includes("Create a project plan"), `${width}x${height} lacks example`);
+        assert.ok(text.includes("save it to plan.md"), `${width}x${height} lacks example tail`);
+      }
+      assert.ok(!/Follow the work here|Captured changes and confirmed Undo|Signed history of every operation|Your decision before an external tool|\/ commands\s+Tab complete/.test(text));
+      assert.ok(frame.split("\n").length <= height);
+      assert.ok(frame.split("\n").every((line) => visibleLength(line) <= width));
+      assert.ok(!frame.includes("\x1b[│m"), `${width}x${height} contains a malformed color escape`);
+      assert.ok(!/\?\[[0-9;]*m/.test(text), `${width}x${height} shows escaped shortcut styles`);
+      if (color && width >= 80) {
+        assert.ok(frame.includes("\x1b[38;5;245;48;5;236m"), `${width}x${height} lacks charcoal composer fill`);
+      }
+    }
+  }
+
+  const boot = stripAnsi(
+    renderWorkspace(ui, 80, 24, "", false, false, {
+      boot: true,
+      color: false,
+      motion: false,
+    }),
   );
+  assert.ok(boot.includes("NOMO / local workspace"));
+  assert.ok(boot.includes("Your work. Your control."));
+});
+
+
+test("spacious workspace identifies the active panel", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-panel-heading-"));
+  const app = new Workbench({ NOMO_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
+  for (const tab of ["sessions", "documents", "approvals", "models", "usage"] as const) {
+    ui.choose(tab);
+    for (const [width, height] of [[80, 24], [120, 40], [200, 48]] as const) {
+      for (const color of [true, false]) {
+        const frame = stripAnsi(renderWorkspace(ui, width, height, "", false, false, {
+          color,
+          motion: false,
+        }));
+        assert.ok(frame.includes(`NOMO / ${tab}`), `${width}x${height} hides ${tab}`);
+      }
+    }
+  }
+});
+
+test("compact confirmation preview and decisions stay visible at 40x12", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-compact-review-"));
+  const app = new Workbench({ NOMO_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
+  ui.choose("chat");
+  ui.model = "fixture-model";
+  ui.confirmation = {
+    title: "SAVE plan.md?",
+    lines: ["REVIEW PREVIEW: local-fixture-change"],
+    apply: async () => {},
+  };
+
+  for (const color of [true, false]) {
+    const frame = renderWorkspace(ui, 40, 12, "", false, false, {
+      color,
+      motion: false,
+    });
+    const text = stripAnsi(frame);
+    assert.ok(text.includes("REVIEW PREVIEW: local-fixture-change"));
+    assert.ok(text.includes("y accept"));
+    assert.ok(text.includes("n reject"));
+    assert.ok(text.includes("Esc cancel"));
+    assert.ok(text.includes("fixture-model"));
+    assert.ok(text.includes("mode: normal (local only, not enforced)"));
+    assert.ok(text.includes("ctx no session"));
+    assert.ok(text.includes("Enter details"));
+    assert.equal(frame.split("\n").length, 12);
+    assert.ok(frame.split("\n").every((line) => visibleLength(line) <= 40));
+    assert.equal(frame.includes("\x1b["), color);
+  }
+});
+test("compact confirmation exposes PageDown scrolling in the existing preview", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-review-pagedown-"));
+  const app = new Workbench({ NOMO_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
+  ui.choose("chat");
+  ui.model = "fixture-model";
+  let applyCalls = 0;
+  ui.confirmation = {
+    title: "SAVE plan.md?",
+    lines: Array.from({ length: 8 }, (_, index) => `PREVIEW-ROW-${index + 1}`),
+    apply: async () => {
+      applyCalls++;
+    },
+  };
+  const missing: string[] = [];
+
+  for (const color of [true, false]) {
+    ui.scroll = 0;
+    const frame = renderWorkspace(ui, 40, 12, "", false, false, {
+      color,
+      motion: false,
+    });
+    const text = stripAnsi(frame);
+    const rows = frame.split("\n");
+    if (!text.includes("PgDn preview")) {
+      missing.push(`40x12 ${color ? "color" : "mono"} omits PgDn preview`);
+    }
+    assert.ok(text.includes("PREVIEW-ROW-1"));
+    assert.ok(text.includes("y accept"));
+    assert.ok(text.includes("n reject"));
+    assert.ok(text.includes("Esc cancel"));
+    assert.ok(text.includes("fixture-model"));
+    assert.ok(text.includes("mode: normal (local only, not enforced)"));
+    assert.ok(text.includes("ctx no session"));
+    assert.ok(text.includes("⇥ Tab panels"));
+    assert.ok(text.includes("Enter details"));
+    assert.equal(rows.length, 12);
+    assert.ok(rows.every((row) => visibleLength(row) <= 40));
+    assert.equal(frame.includes("\x1b["), color);
+
+    ui.scrollPage(1);
+    const next = renderWorkspace(ui, 40, 12, "", false, false, {
+      color,
+      motion: false,
+    });
+    assert.ok(stripAnsi(next).includes("PREVIEW-ROW-2"));
+    assert.equal(applyCalls, 0);
+    assert.equal(next.split("\n").length, 12);
+    assert.ok(next.split("\n").every((row) => visibleLength(row) <= 40));
+    assert.equal(next.includes("\x1b["), color);
+  }
+
+  for (const color of [true, false]) {
+    const frame = renderWorkspace(ui, 80, 24, "", false, false, {
+      color,
+      motion: false,
+    });
+    const text = stripAnsi(frame);
+    assert.ok(text.includes("PgDn preview"));
+    assert.ok(text.includes("y accept"));
+    assert.ok(text.includes("n reject"));
+    assert.ok(text.includes("Esc cancel"));
+    assert.equal(frame.split("\n").length, 24);
+    assert.ok(frame.split("\n").every((row) => visibleLength(row) <= 80));
+    assert.equal(frame.includes("\x1b["), color);
+  }
+  assert.deepEqual(missing, []);
+  assert.equal(applyCalls, 0);
+});
+
+
+test("status dock keeps full authority and context at narrow sizes", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-status-visibility-"));
+  const app = new Workbench({ NOMO_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
+  ui.choose("chat");
+  ui.model = "offline";
+
+  const missing: string[] = [];
+  for (const [width, height, required] of [
+    [40, 12, "mode: normal (local only, not enforced)"],
+    [80, 24, "ctx no session"],
+  ] as const) {
+    for (const color of [true, false]) {
+      const frame = renderWorkspace(ui, width, height, "", false, false, {
+        color,
+        motion: false,
+      });
+      const lines = stripAnsi(frame).split("\n");
+      const text = lines.join("\n");
+      const spacious = width >= 78 && height >= 22;
+      assert.ok(text.includes("model offline"), `${width}x${height} loses model`);
+      if (!text.includes(required)) {
+        missing.push(
+          `${width}x${height} ${color ? "color" : "mono"}: ${required}`,
+        );
+      }
+      assert.ok(text.includes("⇥ Tab panels"), `${width}x${height} loses panel navigation hint`);
+      assert.equal(
+        lines.some((line) => line.trim().startsWith("└")),
+        !spacious,
+        `${width}x${height} composer framing`,
+      );
+      assert.ok(text.includes("i type / Enter details"), `${width}x${height} loses composer`);
+      assert.ok(
+        text.includes(
+          spacious ? "Ready" : "Tab: panels | i: type | /help: commands",
+        ),
+        `${width}x${height} loses status`,
+      );
+      assert.equal(lines.length, height);
+      assert.ok(lines.every((line) => visibleLength(line) <= width));
+      assert.equal(frame.includes("\x1b["), color);
+    }
+  }
+  assert.deepEqual(missing, []);
+});
+
+test("status dock keeps the model name when its own row has room", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-model-dock-"));
+  const app = new Workbench({ NOMO_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
+  ui.choose("chat");
+  ui.model = "fixture-model";
+  for (const [width, height] of [[40, 12], [80, 24]] as const) {
+    for (const color of [true, false]) {
+      const rows = stripAnsi(renderWorkspace(ui, width, height, "", false, false, {
+        color,
+        motion: false,
+      })).split("\n");
+      const status = rows.find((row) => row.startsWith("model "));
+      assert.ok(status?.includes("fixture-model"), `${width}x${height} truncates the model`);
+      assert.ok(rows.every((row) => visibleLength(row) <= width));
+    }
+  }
+});
+
+test("status and activity dock render beneath the composer across sizes", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-bottom-dock-"));
+  const app = new Workbench({ NOMO_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
+  ui.choose("chat");
+  ui.model = "fixture-model";
+
+  for (const [width, height] of [
+    [40, 12],
+    [80, 24],
+    [120, 40],
+    [200, 48],
+  ] as const) {
+    const lines = stripAnsi(
+      renderWorkspace(ui, width, height, "", false, true, {
+        color: false,
+        motion: false,
+      }),
+    ).split("\n");
+    let composerBottom = -1;
+    for (let row = lines.length - 1; row >= 0; row--) {
+      if (lines[row]!.trim().startsWith("└")) {
+        composerBottom = row;
+        break;
+      }
+    }
+    const spacious = width >= 78 && height >= 22;
+    const composer = spacious
+      ? lines.findIndex((line) => line.includes("i type / Enter details"))
+      : composerBottom;
+    const summary = lines.findIndex((line) => line.startsWith("model "));
+    const activity = lines.findIndex((line) =>
+      line.includes("Finishing operation / Esc stop"),
+    );
+    assert.ok(composer >= 0, `${width}x${height} loses the composer surface`);
+    assert.equal(composerBottom >= 0, !spacious, `${width}x${height} composer framing`);
+    assert.ok(summary > composer, `${width}x${height} summary is above composer`);
+    assert.ok(activity > composer, `${width}x${height} activity is above composer`);
+    assert.equal(activity, height - 1, `${width}x${height} activity is not the bottom rail`);
+    assert.ok(lines.some((line) => line.includes("⇥ Tab panels")));
+    assert.equal(lines.some((line) => line.includes("Enter open/details")), !spacious);
+    assert.equal(lines.length, height);
+    assert.ok(lines.every((line) => visibleLength(line) <= width));
+  }
+});
+
+test("spacious shell keeps an open canvas and docks a quiet flat composer", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-spacious-dock-"));
+  const app = new Workbench({ NOMO_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
+  ui.choose("chat");
+  ui.model = "fixture-model";
+
+  for (const [width, height] of [
+    [80, 24],
+    [120, 40],
+    [200, 48],
+  ] as const) {
+    const mono = stripAnsi(
+      renderWorkspace(ui, width, height, "", false, false, {
+        color: false,
+        motion: false,
+      }),
+    ).split("\n");
+    assert.equal(mono.length, height);
+    assert.ok(mono.every((line) => visibleLength(line) <= width));
+    assert.ok(
+      !mono.slice(7, 10).some((line) => /[╌━─]{4}/.test(line)),
+      `${width}x${height} retains the upper tab separator`,
+    );
+    assert.ok(
+      !mono.some((line) => line.trim().startsWith("┌") || line.trim().startsWith("└")),
+      `${width}x${height} retains a boxed composer`,
+    );
+
+    const composer = mono.findIndex((line) => line.includes("i type / Enter details"));
+    const model = mono.findIndex((line) => line.startsWith("model "));
+    const counts = mono.findIndex((line) => line.includes("ctx "));
+    assert.ok(composer >= 0, `${width}x${height} loses the details hint`);
+    assert.ok(composer < model && model <= counts, `${width}x${height} misorders the dock`);
+    const panelHintRows = mono.filter((line) => line.trim() === "⇥ Tab panels");
+    assert.equal(panelHintRows.length, 1, `${width}x${height} loses the quiet navigation hint`);
+    assert.ok(
+      !mono.some(
+        (line) =>
+          line.includes("Enter open/details") ||
+          line.includes("Shift+Tab") ||
+          line.includes("⇒ u undo"),
+      ),
+      `${width}x${height} restores verbose shortcut hints`,
+    );
+    assert.ok(counts < height - 1, `${width}x${height} loses compact live counts`);
+    assert.ok(mono[height - 1]!.includes("Ready"));
+
+    const color = renderWorkspace(ui, width, height, "", false, false, {
+      color: true,
+      motion: false,
+    }).split("\n");
+    assert.ok(
+      /\x1b\[[0-9;]*48;5;236m/.test(color[composer]!),
+      `${width}x${height} lacks the broad charcoal composer fill`,
+    );
+    assert.ok(
+      color[composer - 1]?.includes("48;5;236") &&
+      color[composer + 1]?.includes("48;5;236"),
+      `${width}x${height} needs a three-row prompt surface`,
+    );
+    assert.ok(!color.some((row) => row.includes("48;5;234")), "canvas uses terminal background");
+    assert.equal(visibleLength(stripAnsi(color[composer]!)), width);
+    assert.ok(!mono[composer]!.includes("▌"), "inactive composer must not fake an editing cursor");
+  }
+  const boot = stripAnsi(
+    renderWorkspace(ui, 80, 24, "", false, false, {
+      color: false,
+      motion: false,
+      boot: true,
+    }),
+  ).split("\n");
+  assert.equal(boot.length, 24);
+  assert.ok(
+    boot.slice(4, 7).every((line) => line.slice(13).trim() === ""),
+    "spacious boot keeps the logo-side metadata compact",
+  );
+  assert.ok(boot.some((line) => line.trim() === "⇥ Tab panels"));
+});
+
+test("empty workspace views center the existing placeholder in the body", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-empty-placement-"));
+  const app = new Workbench({ NOMO_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
+  const tabs = ["sessions", "documents", "approvals", "models", "usage"] as const;
+  const sizes = [
+    [40, 12],
+    [80, 24],
+    [120, 40],
+    [200, 48],
+  ] as const;
+
+  for (const tab of tabs) {
+    ui.choose(tab);
+    for (const [width, height] of sizes) {
+      for (const color of [true, false]) {
+        const frame = renderWorkspace(ui, width, height, "", false, false, {
+          color,
+          motion: false,
+        });
+        const rows = stripAnsi(frame).split("\n");
+        const spacious = width >= 78 && height >= 22;
+        let bodyStart = -1;
+        if (spacious) {
+          for (let row = 0; row < rows.length; row++) {
+            if (rows[row]!.startsWith("█████████████")) bodyStart = row + 1;
+          }
+        } else {
+          bodyStart = rows.findIndex((row) => row.includes(`[${tab}]`)) + 1;
+        }
+        const bodyEnd = bodyStart + ui.viewport.height - 1;
+        const placeholder = rows.findIndex((row) =>
+          row.includes("No entries yet."),
+        );
+        const panelsHint = rows.findIndex((row) =>
+          row.includes("⇥ Tab panels"),
+        );
+
+        assert.ok(bodyStart > 0, `${tab} ${width}x${height} loses its header`);
+        assert.ok(
+          placeholder >= bodyStart,
+          `${tab} ${width}x${height} loses its empty message`,
+        );
+        assert.ok(
+          placeholder <= bodyEnd,
+          `${tab} ${width}x${height} moves its message outside the body`,
+        );
+        assert.equal(
+          placeholder,
+          bodyStart + Math.floor((ui.viewport.height - 1) / 2),
+          `${tab} ${width}x${height} does not center the empty message`,
+        );
+        assert.ok(
+          panelsHint > bodyEnd,
+          `${tab} ${width}x${height} overlaps the bottom dock`,
+        );
+        assert.equal(rows.length, height);
+        assert.ok(rows.every((row) => visibleLength(row) <= width));
+        assert.equal(frame.includes("\x1b["), color);
+      }
+    }
+  }
+});
+
+
+test("settings and theme controls render under the NOMO shell", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-settings-shell-"));
+  const app = new Workbench({ NOMO_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
+  ui.choose("chat");
+
+  await ui.command("/settings");
+  const settings = stripAnsi(
+    renderWorkspace(ui, 80, 24, "", false, false, {
+      color: false,
+      motion: false,
+    }),
+  );
+  assert.ok(settings.includes("NOMO / local workspace"));
+  assert.ok(settings.includes("HARNESS SETTINGS"));
+  assert.ok(settings.includes("/settings KEY VALUE sets one limit"));
+  assert.ok(
+    settings.includes("honour."),
+    "settings descriptions should not split words",
+  );
+  const narrowSettings = stripAnsi(
+    renderWorkspace(ui, 40, 12, "", false, false, {
+      color: false,
+      motion: false,
+    }),
+  );
+  assert.match(
+    narrowSettings,
+    /HARNESS SETTINGS\s*\n\s*Limits this workspace runs under/,
+  );
+  await ui.command("/settings maxTurns 19");
+  assert.equal(app.harnessSettings().maxTurns, 19);
+
+  await ui.command("/theme");
+  const theme = stripAnsi(
+    renderWorkspace(ui, 80, 24, "", false, false, {
+      color: false,
+      motion: false,
+    }),
+  );
+  assert.ok(theme.includes("NOMO / local workspace"));
+  assert.ok(theme.includes("Usage: /theme <color-theme>"));
+  assert.ok(
+    theme.includes("symbol-preset"),
+    "theme usage should wrap before whole words",
+  );
+  assert.ok(theme.includes("NOMO_TUI_THEME"));
+});
+test("TUI text wrapping prefers words and hard-wraps long tokens", () => {
+  assert.deepEqual(wrap(["alpha beta"], 7), ["alpha", "beta"]);
+  assert.deepEqual(wrap(["abcdefghij"], 4), ["abcd", "efgh", "ij"]);
 });
 
 test("chat presentation preserves code, sanitizes escapes, and distinguishes event roles", async () => {
@@ -482,7 +1214,7 @@ test("chat presentation preserves code, sanitizes escapes, and distinguishes eve
     { ...base, text: "# Plan\n```ts\nconst x = '界';\n```\nDone \x1b[2J" },
   ];
   const rows = chatRows(events, 40);
-  assert.ok(rows.some((r) => r.style === "heading" && r.text === "# Plan"));
+  assert.ok(rows.some((r) => r.style === "heading" && r.text === "Plan"));
   assert.ok(
     rows.some((r) => r.style === "code" && r.text.includes("const x = '界';")),
   );
@@ -499,6 +1231,12 @@ test("chat presentation preserves code, sanitizes escapes, and distinguishes eve
         r.style === "code" || r.style === "heading" || r.style === "assistant",
     ),
   );
+  assert.ok(
+    chatRows([{ ...base, kind: "user", text: "# Plan" }], 40).some(
+      (r) => r.text === "# Plan",
+    ),
+    "a plain user-authored # Plan remains literal outside a code fence",
+  );
   const streamed = chatRows(
     [
       { ...base, type: "message.delta", text: "partial" },
@@ -510,6 +1248,196 @@ test("chat presentation preserves code, sanitizes escapes, and distinguishes eve
   assert.equal(streamed.filter((r) => r.text === "complete").length, 1);
   const fences = chatRows([{ ...base, text: "````ts\n```\nkept\n````" }], 40);
   assert.ok(fences.some((r) => r.style === "code" && r.text.includes("```")));
+});
+test("user message and existing error form a flat charcoal sequence", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-user-error-strip-"));
+  const app = new Workbench({ NOMO_DATA_DIR: root }, async (url) => {
+    const target = String(url);
+    if (target.endsWith("/models"))
+      return Response.json({ data: [{ id: "fixture-model" }] });
+    if (target.endsWith("/chat/completions"))
+      return Response.json(
+        { error: { message: "Synthetic local fixture failure" } },
+        { status: 503 },
+      );
+    return new Response("{}", { status: 404 });
+  });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  await app.configure({
+    baseUrl: "https://fixture.invalid/v1",
+    apiKey: "local-fixture-only",
+  });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
+  ui.model = "fixture-model";
+  ui.choose("chat");
+  await ui.command("Local fixture user note");
+  await app.settled();
+  const events = ui.session()?.events ?? [];
+  assert.ok(events.some((event) => event.kind === "user" && event.text === "Local fixture user note"));
+  assert.ok(events.some((event) => event.kind === "error"));
+
+  for (const [width, height] of [
+    [40, 12],
+    [80, 24],
+    [120, 40],
+    [200, 48],
+  ] as const) {
+    for (const color of [true, false]) {
+      const frame = renderWorkspace(ui, width, height, "", false, false, {
+        color,
+        motion: false,
+      });
+      const rows = frame.split("\n");
+      const plainRows = stripAnsi(frame).split("\n");
+      assert.equal(rows.length, height);
+      assert.ok(rows.every((row) => visibleLength(row) <= width));
+      assert.equal(frame.includes("\x1b["), color);
+      if (width === 40) {
+        assert.ok(plainRows.some((row) => row.includes("rate limits.")));
+        assert.ok(!plainRows.some((row) => row.includes("Local fixture user note")));
+        continue;
+      }
+
+      const userRow = plainRows.findIndex((row) => row.includes("Local fixture user note"));
+      const errorRow = plainRows.findIndex((row) => row.includes("× ERROR"));
+      assert.ok(userRow >= 0, `${width}x${height} hides the existing user message`);
+      assert.equal(errorRow, userRow + 1, `${width}x${height} inserts space before the error`);
+      assert.ok(plainRows[errorRow]!.includes("ERROR"));
+      if (color)
+        assert.ok(
+          /\x1b\[[0-9;]*48;5;236m/.test(rows[userRow]!),
+          `${width}x${height} lacks charcoal fill across the user strip`,
+        );
+    }
+  }
+});
+
+
+test("streaming code remains visible in a one-row chat viewport", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-streaming-code-"));
+  const encoder = new TextEncoder();
+  let streamController: ReadableStreamDefaultController<Uint8Array> | undefined;
+  let deltaTimer: ReturnType<typeof setTimeout> | undefined;
+  const deltaFrame = (content: string) =>
+    `data: ${JSON.stringify({ choices: [{ delta: { content } }] })}\n\n`;
+  const app = new Workbench({ NOMO_DATA_DIR: root }, async (url) => {
+    const target = String(url);
+    if (target.endsWith("/models"))
+      return Response.json({ data: [{ id: "fixture-model" }] });
+    if (target.endsWith("/chat/completions")) {
+      const stream = new ReadableStream<Uint8Array>({
+        start(controller) {
+          streamController = controller;
+          controller.enqueue(encoder.encode(deltaFrame("```ts\n")));
+          deltaTimer = setTimeout(
+            () =>
+              controller.enqueue(
+                encoder.encode(deltaFrame("console.log(42);\n")),
+              ),
+            320,
+          );
+        },
+      });
+      return new Response(stream, {
+        headers: { "content-type": "text/event-stream" },
+      });
+    }
+    return new Response("{}", { status: 404 });
+  });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  await app.configure({
+    baseUrl: "https://fixture.invalid/v1",
+    apiKey: "local-fixture-only",
+  });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
+  ui.model = "fixture-model";
+  await ui.command("Render local code fixture");
+  const sessionId = ui.sessionId;
+
+  let accumulatedDelta = "";
+  let frame = "";
+  const diagnostics: string[] = [];
+  let failed = false;
+  let failure: unknown;
+  const rememberFailure = (error: unknown) => {
+    if (failed) return;
+    failed = true;
+    failure = error;
+  };
+  try {
+    const deadline = Date.now() + 5000;
+    while (Date.now() < deadline && sessionId) {
+      accumulatedDelta = (app.get(sessionId)?.events ?? [])
+        .filter((event) => event.type === "message.delta")
+        .map((event) => event.text)
+        .join("");
+      if (accumulatedDelta.includes("console.log(42);")) break;
+      await new Promise((resolve) => setTimeout(resolve, 25));
+    }
+
+    if (sessionId && accumulatedDelta.includes("console.log(42);")) {
+      const originalConsoleError = console.error;
+      try {
+        console.error = (...args: unknown[]) =>
+          diagnostics.push(args.map(String).join(" "));
+        frame = renderWorkspace(ui, 40, 12, "", false, false, {
+          color: false,
+          motion: false,
+        });
+      } finally {
+        console.error = originalConsoleError;
+      }
+    }
+  } catch (error) {
+    rememberFailure(error);
+  } finally {
+    if (deltaTimer) clearTimeout(deltaTimer);
+    if (streamController) {
+      try {
+        streamController.enqueue(
+          encoder.encode(
+            `data: ${JSON.stringify({
+              choices: [{ delta: { content: "```\n" }, finish_reason: "stop" }],
+            })}\n\n`,
+          ),
+        );
+        streamController.enqueue(encoder.encode("data: [DONE]\n\n"));
+      } catch (error) {
+        rememberFailure(error);
+      }
+      try {
+        streamController.close();
+      } catch (error) {
+        rememberFailure(error);
+      }
+    }
+    try {
+      await app.settled();
+    } catch (error) {
+      rememberFailure(error);
+    }
+  }
+
+  if (failed) throw failure;
+  assert.ok(sessionId);
+  assert.ok(accumulatedDelta.includes("console.log(42);"));
+  assert.deepEqual(
+    diagnostics,
+    [],
+    `width-40 renderer emitted diagnostics: ${diagnostics.join("; ")}`,
+  );
+  const text = stripAnsi(frame);
+  assert.ok(text.includes("console.log(42);"));
+  assert.ok(text.includes("Writing response"));
+  assert.ok(text.includes("⇥ Tab panels"), "running 40x12 chat hides tab navigation");
+  assert.ok(text.includes("Enter open/details"), "running 40x12 chat hides panel details control");
+  assert.ok(frame.split("\n").every((line) => visibleLength(line) <= 40));
 });
 
 test("search and paging use real conversation data and return to live follow", async (t) => {
@@ -817,6 +1745,124 @@ test("A3 evidence renders class, radius, case prose and honest unknowns", () => 
   assert.match(view, /precondition {3}keyed before image captured/);
   assert.match(view, /matched rule {3}unknown/);
   assert.match(view, /postcondition +unknown/);
+});
+
+
+test("approval overlay content uses a NOMO title and field hierarchy without changing values", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-approval-content-"));
+  const app = new Workbench({ NOMO_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
+  ui.choose("approvals");
+  const review = approvalReview({
+    holdId: "fixture-approval",
+    call: {
+      tool: "fixture.db.update",
+      klass: "r2",
+      blastRadius: 1,
+      precondition: "fixture row remains present",
+      postcondition: "fixture row would change",
+    },
+    matchedRule: "fixture rule",
+  });
+  ui.confirmation = {
+    title: "APPROVE LOCAL FIXTURE?",
+    lines: [...review.lines],
+    apply: async () => {},
+  };
+
+  for (const [width, height] of [
+    [40, 12],
+    [80, 24],
+    [120, 40],
+    [200, 48],
+  ] as const) {
+    for (const color of [true, false]) {
+      const frame = renderWorkspace(ui, width, height, "", false, false, {
+        color,
+        motion: false,
+      });
+      const text = stripAnsi(frame);
+      assert.ok(text.includes("APPROVE LOCAL FIXTURE?"));
+      assert.ok(text.includes("tool           fixture.db.update"));
+      assert.equal(frame.includes("\x1b["), color);
+      assert.equal(frame.split("\n").length, height);
+      assert.ok(frame.split("\n").every((line) => visibleLength(line) <= width));
+      if (width >= 80) {
+        assert.ok(text.includes("class          R2"));
+        assert.ok(text.includes("blast radius   1 targets, measured"));
+        assert.ok(text.includes("matched rule   fixture rule"));
+        assert.ok(text.includes("precondition   fixture row remains present"));
+        assert.ok(text.includes("postcondition  fixture row would change"));
+      }
+      if (color && width === 80) {
+        assert.ok(frame.includes("\x1b[1;38;5;215mAPPROVE LOCAL FIXTURE?"));
+        assert.ok(frame.includes("\x1b[1;38;5;117mtool           "));
+      }
+    }
+  }
+});
+test("undo confirmation emphasizes only the Operation label", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-undo-content-"));
+  const app = new Workbench({ NOMO_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
+  const previewLines = [
+    "Operation: fixture-operation-42",
+    "Drift check passed: the document still matches the captured image,",
+    "and no newer change to this document exists. The preview is",
+    "rechecked before anything is applied.",
+    "--- fixture-plan.md",
+    "- previous fixture value",
+    "+ replacement fixture value",
+  ];
+  ui.confirmation = {
+    title: "UNDO fixture-plan.md?",
+    lines: previewLines,
+    apply: async () => {},
+  };
+
+  for (const [width, height] of [
+    [40, 12],
+    [80, 24],
+    [120, 40],
+    [200, 48],
+  ] as const) {
+    for (const color of [true, false]) {
+      const frame = renderWorkspace(ui, width, height, "", false, false, {
+        color,
+        motion: false,
+      });
+      const text = stripAnsi(frame);
+      const rows = text.split("\n");
+      const operationRow = rows.findIndex((row) =>
+        row.includes(previewLines[0]),
+      );
+      assert.ok(text.includes("UNDO fixture-plan.md?"));
+      assert.ok(operationRow >= 0, "operation value remains visible");
+      assert.equal(frame.includes("\x1b["), color);
+      assert.equal(frame.split("\n").length, height);
+      assert.ok(frame.split("\n").every((line) => visibleLength(line) <= width));
+      if (color) {
+        assert.ok(frame.includes("\x1b[1;38;5;215mUNDO fixture-plan.md?"));
+        assert.ok(frame.includes("\x1b[1;38;5;117mOperation: "));
+        assert.ok(frame.includes("\x1b[38;5;252mfixture-operation-42"));
+      }
+      if (width >= 80) {
+        const driftRow = rows.findIndex((row) =>
+          row.includes(previewLines[1]),
+        );
+        assert.ok(driftRow > operationRow, "preview body follows the label");
+        for (const line of previewLines) assert.ok(text.includes(line));
+      }
+    }
+  }
 });
 
 test("A3 evidence never fabricates a missing precondition or rule", () => {
