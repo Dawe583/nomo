@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 360" role="img" aria-labelledby="title desc">
+<title id="title">NOMO x YC validation and product roadmap</title>
+<desc id="desc">Czech-first discovery precedes a paid workflow pilot. Own Your Intelligence and air-gapped deployment follow only when their evidence gates pass.</desc>
+<rect width="1440" height="360" rx="24" fill="#f7f8fb"/>
+<text x="64" y="54" font-family="Arial,sans-serif" font-size="17" font-weight="700" fill="#172033">NOMO × YC · evidence-gated roadmap</text>
+<line x1="90" y1="120" x2="1350" y2="120" stroke="#cbd3e5" stroke-width="5"/>
+<circle cx="90.0" cy="120" r="15" fill="#3455fa" stroke="white" stroke-width="5"/>
+<text x="90.0" y="166" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" font-weight="700" fill="#273044">Discovery</text>
+<text x="90.0" y="190" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="#626875">Interview and reconstruct a real task</text>
+<circle cx="300.0" cy="120" r="15" fill="#3455fa" stroke="white" stroke-width="5"/>
+<text x="300.0" y="166" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" font-weight="700" fill="#273044">Workflow</text>
+<text x="300.0" y="190" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="#626875">Operator, expert, and data permission</text>
+<circle cx="510.0" cy="120" r="15" fill="#3455fa" stroke="white" stroke-width="5"/>
+<text x="510.0" y="166" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" font-weight="700" fill="#273044">Concierge</text>
+<text x="510.0" y="190" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="#626875">Blind review and measured baseline</text>
+<circle cx="720.0" cy="120" r="15" fill="#3455fa" stroke="white" stroke-width="5"/>
+<text x="720.0" y="166" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" font-weight="700" fill="#273044">Paid pilot</text>
+<text x="720.0" y="190" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="#626875">Read-only, one team, one workflow</text>
+<circle cx="930.0" cy="120" r="15" fill="#3455fa" stroke="white" stroke-width="5"/>
+<text x="930.0" y="166" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" font-weight="700" fill="#273044">Product</text>
+<text x="930.0" y="190" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="#626875">Only after paid evidence</text>
+<circle cx="1140.0" cy="120" r="15" fill="#3455fa" stroke="white" stroke-width="5"/>
+<text x="1140.0" y="166" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" font-weight="700" fill="#273044">Intelligence</text>
+<text x="1140.0" y="190" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="#626875">Reviewed learning loop</text>
+<circle cx="1350.0" cy="120" r="15" fill="#3455fa" stroke="white" stroke-width="5"/>
+<text x="1350.0" y="166" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" font-weight="700" fill="#273044">Air-gap</text>
+<text x="1350.0" y="190" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="#626875">Only with funded no-egress demand</text>
+<rect x="255" y="246" width="560" height="54" rx="12" fill="#e9edff"/>
+<text x="535" y="269" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" font-weight="700" fill="#3455fa">NOMO Harness / TUI / first-live: independent engineering gate</text>
+<text x="535" y="288" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="#555b68">Customer discovery runs in parallel; product integration uses released capabilities only.</text>
+<text x="64" y="332" font-family="Arial,sans-serif" font-size="10" fill="#737b89">No paid pilot, workflow, data permission, or market demand has been confirmed.</text>
+</svg>
