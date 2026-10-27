@@ -6797,7 +6797,17 @@ export function renderWorkspace(
     content[0] === "NOMO / LOCAL WORKSPACE" &&
     content[1] === ""
   ) {
+    const summary = content[2];
     content.splice(1, 1);
+    const sentenceEnd = summary?.indexOf(". ") ?? -1;
+    if (width < 50 && summary && sentenceEnd >= 0) {
+      content.splice(
+        1,
+        1,
+        summary.slice(0, sentenceEnd + 1),
+        summary.slice(sentenceEnd + 2),
+      );
+    }
   }
   if (ui.confirmation && height < 14 && content[1] === "") {
     content.splice(1, 1);

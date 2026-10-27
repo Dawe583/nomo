@@ -770,12 +770,23 @@ test("compact overview shows the current attention summary", async (t) => {
   ui.choose("overview");
   for (const [width, height] of [[40, 12], [80, 24]] as const) {
     for (const color of [true, false]) {
+      ui.scroll = 0;
       const frame = renderWorkspace(ui, width, height, "", false, false, {
         color,
         motion: false,
       });
       const rows = stripAnsi(frame).split("\n");
       assert.ok(rows.some((row) => row.includes("Nothing waiting.")), `${width}x${height} hides attention summary`);
+      if (width === 40) {
+        const summary = rows.find((row) => row.includes("Nothing waiting."));
+        assert.ok(summary?.trim().endsWith("Nothing waiting."), "compact summary ends mid-sentence");
+        ui.scrollPage(1);
+        const scrolled = stripAnsi(renderWorkspace(ui, width, height, "", false, false, {
+          color,
+          motion: false,
+        }));
+        assert.ok(scrolled.includes("No approvals, no errors"), "scrolling loses summary details");
+      }
       assert.equal(rows.length, height);
       assert.ok(rows.every((row) => visibleLength(row) <= width));
     }
