@@ -293,10 +293,14 @@ export function renderPalette(
   }
   const selected =
     ((state.selected % filtered.length) + filtered.length) % filtered.length;
-  // The window follows the selection page by page, so advancing past the
-  // visible rows scrolls the list instead of hiding the cursor. visible 0
-  // means the window is the whole list.
-  const windowSize = state.visible > 0 ? state.visible : filtered.length;
+  // At compact widths the renderer only has room for one grouped result;
+  // keep the active command on screen instead of clipping it below the body.
+  const windowSize =
+    width < 40
+      ? 1
+      : state.visible > 0
+        ? state.visible
+        : filtered.length;
   const offset =
     windowSize > 0 ? Math.floor(selected / windowSize) * windowSize : 0;
   const page = filtered.slice(offset, offset + windowSize);
