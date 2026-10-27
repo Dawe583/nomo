@@ -2,7 +2,7 @@
 
 **Status:** implementation runbook
 **Reviewed:** 27 October 2026
-**Canonical page source:** `docs/strategy/2026-10-27-nomoyc-integrated-roadmap.md`
+**Canonical page sources:** integrated roadmap and three-idea execution playbook in `docs/strategy/`
 **Scope:** local source-to-encrypted-snapshot workflow for `/nomoyc` in DavidSak.
 
 ## Prerequisites
@@ -31,7 +31,7 @@ node scripts/sync-nomoyc-content.mjs \
   --check
 ```
 
-Expected output: `OK: N documents match encrypted manifest` and exit code 0. The check decrypts the checked-in payload locally, compares the dated strategy Markdown files by ID and SHA-256, and prints no document contents or key material.
+Expected output: `OK: N documents match encrypted manifest` and exit code 0. The check decrypts the checked-in payload locally, compares dated NOMO/YC strategy Markdown files from 27–28 October 2026 by ID and SHA-256, and prints no document contents or key material.
 
 If the check reports `NOMOYC_MANIFEST_MISMATCH`, it names only missing, extra, or changed `.md` paths. Regenerate the encrypted snapshot with the same source and key arguments and `--write`, then run `--check` again. A wrong key returns `NOMOYC_KEY_MISMATCH`; check the key file without pasting it into chat, a shell command, or Git. A key permission error is fixed with `chmod 600 ~/.config/nomoyc/content-key-v2`.
 
