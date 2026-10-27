@@ -1,6 +1,6 @@
 # NOMO x YC: evaluation and pilot plan
 
-> **State:** proposed evaluation contract. Populate with the selected customer workflow before implementation.
+> **State:** proposed pilot checklist. The canonical metric definitions and thresholds are in `2026-10-27-nomoyc-evaluation-and-economics.md`; agree all numerical gates with the buyer and expert before the pilot.
 
 ## North-star outcome
 
@@ -8,11 +8,11 @@ Reduce time to correctly complete one defined workflow while preserving evidence
 
 ## Baseline
 
-For at least 20 historical or observed cases, measure: total completion time; wait time for expert help; number of handoffs; corrections or rework; missing-field rate; outcome quality; source search time; and cost per completed case. Record the case-selection method and exclude cases that cannot be compared fairly.
+For every available, authorized, comparable historical or observed case, measure: total completion time; wait time for expert help; number of handoffs; corrections or rework; missing-field rate; outcome quality; source search time; and cost per completed case. Agree the sample size and decision uncertainty with the buyer and expert; 20 cases may be a planning target, not a universal minimum.
 
 ## Evaluation dataset
 
-Start with 30 to 50 authorized, de-identified cases. Expert reviewers define the expected outcome, acceptable evidence, required context, and escalation behavior. Include:
+Build an authorized, de-identified evaluation set sized for the question and available volume. Thirty to fifty cases is a planning range, not a universal minimum or statistical guarantee. Expert reviewers define the expected outcome, acceptable evidence, required context, and escalation behavior. Include:
 
 - ordinary cases and common variants;
 - missing context and ambiguous language;
@@ -30,15 +30,15 @@ Keep a hidden holdout set after tuning. Avoid putting sensitive examples in publ
 
 | Metric | Definition | Initial gate |
 |---|---|---:|
-| Evidence support | Material answer claims supported by cited approved evidence | At least 95% on adjudicated set |
+| Evidence support | Material answer claims supported by cited approved evidence; denominator is all graded material claims | Provisional target only; canonical gate must be agreed with buyer/expert |
 | Critical unsupported instruction | High-impact claim without support | Zero in release set |
-| Required abstention | Out-of-scope or insufficient-evidence cases refused/escalated correctly | At least 95% |
+| Required abstention | Out-of-scope or insufficient-evidence cases refused/escalated correctly; denominator is all cases labeled for escalation | Provisional target only; canonical gate must be agreed with buyer/expert |
 | Evidence resolution | User can open cited source and correct version | 100% |
 | Tenant boundary violations | Any cross-tenant retrieval or result | Zero |
-| Workflow completion time | Median versus baseline on comparable cases | At least 25% lower, pilot target only |
+| Workflow completion time | Median total operator plus reviewer time versus baseline on comparable cases | Provisional 25% lower target; buyer must confirm value threshold |
 | Rework rate | Cases requiring correction after assistant support | No worse than baseline, target improvement |
 | Expert interrupts | Interruptions per completed case | Downward trend after week 2 |
-| Local inference reliability | Completed responses under agreed model/hardware | At least 99% over pilot window, if local mode is required |
+| Local inference reliability | Completed responses under agreed model/hardware | Set only if buyer-selected local mode is required; define denominator, window, exclusions, and recovery behavior before pilot |
 
 These are proposed gates, not claims. Set final thresholds with the domain expert before the test. Separate quality and economic gates from infrastructure uptime.
 

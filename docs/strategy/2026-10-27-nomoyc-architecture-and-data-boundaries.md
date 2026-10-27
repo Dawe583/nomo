@@ -46,13 +46,13 @@ sequenceDiagram
 
 ## Deployment modes
 
-### Recommendation for the first finance workflow
+### Deployment decision for the first validated workflow
 
-Keep sensitive prompts, retrieved records, model inference, and outputs in a customer-controlled data plane. Run one local model service on a managed customer node or approved private environment. Block model-payload egress and disable silent cloud fallback. Allow the existing finance system to remain the system of record; an authorized connector may fetch only the case data needed for the task. The system of record being SaaS does not mean its contents should be forwarded to a separate model API.
+Do not select a deployment mode before a buyer states the relevant data boundary. First map the system of record, source content, prompt and output handling, model inference, retention, training, telemetry, support access, metadata, storage location, and network egress. Then compare approved API, customer cloud/VPC, local inference, on-premises, and disconnected options against that requirement and their total deployment and support cost. No mode is the default until discovery and a reproducible data-flow review support it.
 
 Keep the NOMO control plane separate from the data plane. It may receive policy version, agent identity, approval state, operation status, and integrity metadata only when the customer approves that path. It must not receive prompts, retrieved passages, files, or model outputs by default. If the buyer disallows even this metadata egress, use a disconnected control profile with manually signed policy and software updates.
 
-This is a product hypothesis, not yet a customer requirement. First validate the buyer's exact boundary and the cost of a local node. Eurostat reports paid cloud services are common among EU enterprises with 10 or more employees, including accounting and finance applications. That supports integration with existing SaaS systems, but does not establish willingness to run a private model or buy an air-gapped system. Do not turn “local” into an expensive hard requirement until a buyer confirms it.
+This is a product hypothesis, not yet a customer requirement. First validate the buyer's exact boundary and compare lifecycle costs. Eurostat reports that 52.7% of surveyed EU enterprises with at least 10 employees or self-employed persons used paid cloud services in 2025. The 58.2% figure for finance/accounting software is a share of enterprises already using paid cloud services, not all enterprises. Neither figure establishes willingness to run a private model or buy an air-gapped system. Do not turn “local” into an expensive hard requirement until a buyer confirms it.
 
 1. **Managed cloud, approved API:** the fastest pilot if buyer accepts the provider's current terms and data path. “No model training” is not equivalent to zero retention or zero egress.
 2. **Customer VPC or private cloud:** customer controls network, storage, identity, and potentially model access. Still requires a provider and telemetry review.

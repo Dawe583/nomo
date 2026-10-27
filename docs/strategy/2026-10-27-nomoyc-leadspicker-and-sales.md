@@ -29,15 +29,15 @@ Czech ÚOOÚ says a publicly available email address alone does not authorize un
 
 ## Discovery motion
 
-### Stage A: first CFO conversation
+### Stage A: first customer discovery conversation
 
-Use the interview script in `2026-10-27-nomoyc-first-customer-interview.md`. Ask for one recent completed case, not an imagined future use. Capture trigger, actors, systems, evidence, exception, waiting, minutes, review, rework, consequence, frequency, and current workaround. Ask which parts the CFO performed personally.
+Use the interview script in `2026-10-27-nomoyc-first-customer-interview.md`. Ask for one recent completed case, not an imagined future use. Capture trigger, actors, systems, evidence, exception, waiting, minutes, review, rework, consequence, frequency, and current workaround. Ask which steps the interviewee performed personally and who performs the rest.
 
 Exit only when there is a specific job and a permissioned route to the operator. If the CFO cannot name a recent task or introduce the operator, keep researching other candidates rather than building.
 
 ### Stage B: narrow the segment
 
-Use the scorecard as a ranking aid, then interview similar roles. A first screening threshold is at least 5 of 8 qualified interviews describing the same job, costly exception, and current workaround. This is a heuristic for a next test, not statistical proof of a market.
+Use the scorecard as an evidence ledger, not a ranking aid. Only after one concrete workflow emerges should similar roles be interviewed. A provisional screen is at least 5 of 8 qualified interviews describing the same recent job and workaround; this is a founder-set heuristic for another test, not statistical proof of a market. Record the real denominator and never use it alone to select a segment.
 
 For every interview log:
 

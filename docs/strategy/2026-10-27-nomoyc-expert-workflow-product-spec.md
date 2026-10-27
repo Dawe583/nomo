@@ -34,7 +34,7 @@ Before any customer product build, complete this evidence record for one task:
 9. Data boundary, retention, and allowed inference profile.
 10. Dated next step and buyer's response to a priced pilot.
 
-Candidate scores can prioritize interviews but cannot select a workflow. A default screening signal is that at least five of eight same-segment interviews independently reconstruct the same recent job. This is a heuristic, not statistical market proof. A paid pilot, authorized cases, and repeat use are stronger evidence.
+Do not rank candidates from speculative scores. Compare hypotheses only when evidence is recorded using the same criteria, with source, confidence, and an observed-fact-versus-assumption label. A default screening signal is that at least five of eight qualified interviews about the same workflow independently reconstruct the same recent job. This is a founder-set heuristic, not statistical market proof. A paid pilot, authorized cases, and repeat use are stronger evidence.
 
 ## Initial product boundary
 

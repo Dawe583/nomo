@@ -2,6 +2,8 @@
 
 > Status: proposed measurement protocol. Thresholds below are starting gates, not achieved results. Adapt with the customer and domain expert before a pilot.
 
+This is the single source of pilot metric definitions and decision thresholds. The companion `evaluation-and-pilot-plan.md` is a checklist, not an independent source of numerical gates. No percentage target below is externally validated or universal. Before a pilot, the buyer and domain expert must set the eligible-case denominator, sample and holdout sizes, severity definitions, confidence/uncertainty treatment, stop conditions, and pass thresholds in writing. Small samples support a bounded pilot decision only; they do not establish general safety or market demand.
+
 ## Core question
 
 Does one workflow produce a customer-valued outcome with acceptable quality, security, and delivery cost? Do not count model accuracy alone. Measure the complete task, including corrections, escalations, review, support, and customer change effort.
@@ -22,12 +24,12 @@ Use a representative case set, not only easy examples. Keep a holdout set. Domai
 
 | Dimension | Measurement | Initial pilot gate |
 |---|---|---|
-| Evidence support | Claims tied to an approved, current source and precise passage | At least 95% of supported claims; expert confirms denominator |
+| Evidence support | Material claims tied to an approved, current source and precise passage, divided by all material claims graded | Provisional 95% target; set after rubric and sample are defined |
 | Critical unsupported instruction | Unsafe or materially false instruction that reaches operator | Zero in pilot cases; any event pauses use and triggers review |
-| Abstention / escalation | Correctly asks for missing evidence, conflict, or expert judgment | At least 95% on cases rubric marks as requiring escalation |
+| Abstention / escalation | Correctly asks for missing evidence, conflict, or expert judgment, divided by all cases labeled for escalation | Provisional 95% target; buyer and expert set the gate and minimum sample |
 | Source version | Correct version and effective date used | 100% of evaluated cases |
 | Tenant / access boundary | Unauthorized source or cross-customer access | Zero |
-| Task time | End-to-end operator plus reviewer time versus baseline | Target 25% lower; include review time and support |
+| Task time | End-to-end operator plus reviewer time versus baseline on comparable in-scope cases | Provisional target 25% lower; validate the value threshold with buyer and include review time and support |
 | Completion | In-scope case completed without preventable rework | Customer-defined non-inferiority and improvement target |
 
 These are proposed pilot gates. They do not establish safety for another workflow or customer.

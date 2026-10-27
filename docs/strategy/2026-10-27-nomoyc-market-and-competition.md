@@ -4,7 +4,7 @@
 
 ## Executive conclusion
 
-The market is large enough to test, but existing public evidence does not establish a company opportunity by itself. AI use is rising among European firms. Finance and knowledge products are also shipping AI features quickly. NOMO should not compete as a generic company chatbot, local model host, or reconciliation assistant. Test a single high-cost exception or expert-gated workflow where the buyer's current software leaves a measurable gap.
+Public evidence justifies a small discovery experiment; it does not establish market size or a viable company opportunity. AI use is rising among the enterprises covered by the survey, while finance and knowledge products are shipping AI features quickly. NOMO should not compete as a generic company chatbot, local model host, or reconciliation assistant. Test one expert-gated workflow only after buyer evidence shows a measurable gap in current software.
 
 The first geography is Czechia because founder access exists there. The product ambition is a general company knowledge and work platform across industries; the first vertical remains unselected. Use the SME owner/CFO contact as an interview route to one recent completed task, then find the operator and expert who know the workflow. Do not build a broad horizontal platform before proving one narrow repeated workflow. Do not build around a task that appears attractive only in a YC essay or a repository name.
 
@@ -22,12 +22,12 @@ YC explicitly says RFS is extra validation to explore, not a market validation s
 
 | Evidence | What it supports | What it does not support |
 |---|---|---|
-| Eurostat: 20.0% of EU enterprises with 10+ employees used AI in 2025; Czechia is about 17.6% in Czech Statistical Office data | Business AI adoption is growing, with Czech uptake below the EU average in this measure | No willingness to pay, no SME micro-enterprise result, and no evidence about one workflow |
-| Eurostat: 52.7% of EU enterprises used paid cloud in 2025; 58.2% used paid cloud finance/accounting apps | Cloud is already accepted in many surveyed enterprises, including finance software | No proof that any particular processor, model, retention setting, data category, or cross-border processing is accepted |
+| Eurostat: 20.0% of its 2025 ICT survey population used AI; the Czech Statistical Office reports 17.6% for Czech enterprises with 10+ employees | Adoption context for the covered enterprise populations | Eurostat covers 10+ employees or self-employed persons in NACE Rev. 2 C–J, L–N and group 95.1; it excludes micro-enterprises and financial/insurance activities (NACE K). Neither statistic is demand or willingness-to-pay evidence. |
+| Eurostat: 52.7% of surveyed EU enterprises used paid cloud in 2025; 58.2% of paid-cloud users used finance/accounting applications | Paid cloud is common among the surveyed 10+ employee/self-employed enterprise population; finance applications are common among paid-cloud users | No proof that any particular processor, model, retention setting, data category, or cross-border processing is accepted |
 | Eurostat size split: 17.0% small, 30.4% medium, and 55.0% large enterprises used AI in 2025 | Adoption differs by size; onboarding and budget assumptions should not treat all SMEs alike | Survey covers firms with at least 10 employees and excludes micro-enterprises |
 | UK Business Data Survey 2026 reports concern about external-model training among some firms | Data-use concern belongs in discovery | UK attitude to training is not the same as refusing API inference, nor a Czech or EU demand estimate |
 
-Do not use a percentage of companies with AI as a top-down TAM. The bottom-up market should be measured after workflow selection: eligible companies in a named geography, reachable lawful buyer roles, repeated cases per year, current spend, and a workable deployment margin.
+Do not use these survey percentages as a top-down TAM. The bottom-up market should be measured after workflow selection: eligible companies in a named geography, reachable lawful buyer roles, repeated cases per year, current spend, and a workable deployment margin.
 
 ## Competitive facts from current first-party sources
 

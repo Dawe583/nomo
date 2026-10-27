@@ -22,7 +22,7 @@ The YC RFS items most closely aligned are **The $15-an-Hour Expert**, **AI for t
 | Claim | Type | Evidence or test |
 |---|---|---|
 | YC is asking for AI that lets non-experts perform expert-gated work. | Public fact | YC Winter 2027 RFS. It is a request for founders, not market validation. |
-| EU enterprise AI adoption rose to 20% in 2025, with Czechia at 17%. | Public fact | Eurostat, enterprises with at least 10 employees. Not a measure of willingness to buy NOMO. |
+| Eurostat reports 20.0% AI use in its 2025 ICT survey population; ČSÚ reports 17.6% for Czech enterprises with 10+ employees. | Public fact | Eurostat covers 10+ employees or self-employed persons in NACE C–J, L–N and group 95.1, excluding micro-enterprises and financial/insurance activities. Neither figure measures demand or willingness to buy NOMO. |
 | Some organizations dislike their data being used to train external models. | Public fact | UKBDS 2026: 73% reported discomfort with external-model training. This does not show refusal of API inference or prove demand for local models. |
 | AI remains weakly integrated into many business processes. | Public fact with scope limits | UKBDS describes integration as limited; McKinsey reports broad regular use but limited scaling. Survey samples and definitions differ. |
 | A workflow product can outperform a generic assistant in a narrow task. | Hypothesis | Compare against current workflow and incumbent AI using customer-provided cases. |
@@ -33,7 +33,7 @@ The YC RFS items most closely aligned are **The $15-an-Hour Expert**, **AI for t
 
 ### Wedge A: expert workbench for one role
 
-Turn one internal procedure into guided work: gather inputs, retrieve approved evidence, draft a result, validate required fields, and prepare the next action. Start read-only. Candidate workflows include complex claims intake, accounting exception handling, equipment service documentation, and regulated document processing. Score customer access and risk before choosing.
+Turn one internal procedure into guided work: gather inputs, retrieve approved evidence, draft a result, validate required fields, and prepare the next action. Start read-only. Candidate workflows include complex claims intake, accounting exception handling, equipment service documentation, and regulated document processing. Keep them unranked until comparable customer evidence shows a repeat task, operator, expert, permission path, measurable burden, and buyer-backed next step.
 
 ### Wedge B: secure company knowledge and workflow control
 
@@ -62,20 +62,15 @@ flowchart LR
   L --> E[Evaluation and reviewed learning]
 ```
 
-## First 30 days
+## First discovery cycle
 
-1. Audit NOMO, Leadora, and relevant portfolio projects. Mark every capability as shipped, partial, planned, or unknown.
-2. Build an evidence-backed list of 20 accessible buyers or operators across 3 candidate workflows. Do not use repository names as proof of access.
-3. Conduct 12 interviews around a recent completed case. Capture baseline, source of truth, error cost, authority boundary, and next step.
-4. Request 3 consented, anonymized sample cases and one paid-pilot proposal.
-5. Compare manual work, incumbent software, generic AI, and a local workflow prototype.
-6. Choose a workflow only if it has an owner, repeat frequency, approved source, measurable time or quality target, and a reachable buyer.
+Use the ten-working-day Phase 0 in the integrated roadmap, with a dated decision review. Request the warm owner/CFO interview without assuming a finance workflow; compare at least three plausible workflow/buyer hypotheses and label each item as observed evidence or assumption with source and confidence. If evidence is too thin, report that result and carry the hypotheses forward rather than ranking them. Audit only NOMO, Papayai, and repositories created in the month before the research cutoff. After a specific repeated job emerges, recruit the relevant operator and expert, obtain permission for cases, and compare the existing process with the simplest approved concierge test. The paid pilot commitment follows successful evaluation; do not treat indicative pilot terms as demand.
 
 ## Kill or pivot conditions
 
-- Fewer than 5 of 12 interviewees describe a recent recurring instance of the same job.
+- A focused cohort cannot reproduce the same recent job and workaround with enough evidence to justify a further test; report the actual sample and uncertainty rather than treating a fixed interview count as proof.
 - No owner will provide authorized representative cases.
-- A usable outcome cannot be measured within 30 days.
+- The buyer and domain expert cannot define a measurable, bounded outcome in a timebox justified by the workflow.
 - Buyers already solve the job with an accepted incumbent and will not pay to improve it.
 - Local execution adds cost or latency without changing purchase intent.
 - The workflow requires unsafe autonomous decisions before value appears.
@@ -85,6 +80,7 @@ flowchart LR
 
 - YC Winter 2027 Requests for Startups: https://www.ycombinator.com/rfs
 - Eurostat, enterprises using AI technologies, 2025: https://ec.europa.eu/eurostat/web/products-eurostat-news/w/ddn-20251211-2
+- Czech Statistical Office, ICT in enterprises: https://csu.gov.cz/ict-in-enterprises
 - Eurostat, European enterprises by size: https://ec.europa.eu/eurostat/documents/15216629/23732306/KS-01-26-010-EN-N.pdf
 - UK Business Data Survey 2026: https://www.gov.uk/government/statistics/uk-business-data-survey-2026/uk-business-data-survey-2026
 - McKinsey, State of AI 2025: https://www.mckinsey.com/capabilities/quantumblack/our-insights/the-state-of-ai-2025

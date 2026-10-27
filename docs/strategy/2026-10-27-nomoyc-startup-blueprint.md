@@ -35,8 +35,8 @@ Do not declare invoice reconciliation, month-end close, accounting, construction
 ### Verified public facts
 
 - YC describes The $15-an-Hour Expert as AI augmenting ordinary workers to complete work that previously required specialists. YC lists benefits, taxes, insurance claims, medical billing, immigration paperwork, mergers and acquisitions, supply chain, and global trade as examples. YC explicitly says its RFS list is only a fraction of what it funds and is not a requirement for applying.
-- Eurostat reports about 20% of EU enterprises with at least 10 employees used AI in 2025. Czech Statistical Office reports about 18% for Czech enterprises with at least 10 employees. Micro-enterprises are not covered by this comparison.
-- Eurostat reports 52.7% of EU enterprises used paid cloud services in 2025, and 58.2% used paid cloud finance or accounting applications. These figures do not establish that a buyer permits an external model to process every class of data.
+- Eurostat reports that 20.0% of its 2025 ICT survey population used AI. The survey covers enterprises with 10+ employees or self-employed persons in NACE Rev. 2 C–J, L–N and group 95.1, excluding micro-enterprises and financial/insurance activities (NACE K). ČSÚ reports 17.6% for Czech enterprises with 10+ employees. Neither figure measures buyer demand or willingness to pay.
+- Eurostat reports 52.7% of surveyed EU enterprises with at least 10 employees or self-employed persons used paid cloud services in 2025. The 58.2% figure for paid finance/accounting applications is among enterprises using paid cloud services, not all surveyed enterprises. Neither figure establishes permission for a separate model API.
 - Microsoft's Finance Agent, Intuit's accounting AI, and Xero's reconciliation capabilities make generic finance chat or reconciliation a weak differentiation claim.
 - Glean, Dust, and Onyx already market enterprise knowledge, agents, governance, or customer-controlled deployment. Onyx publicly offers air-gapped deployment. These are vendor claims and product evidence, not proof of market success or an exhaustive competitor list.
 - Czech ÚOOÚ says publicly available contact details alone do not permit unsolicited commercial email, including to legal entities. A company database is not an outreach permission record.
@@ -94,9 +94,11 @@ The first pilot may use only a subset of NOMO. Do not force a distributed fleet,
 | `2026-10-27-nomoyc-own-your-intelligence.md` | Later customer-owned intelligence product and gates |
 | `2026-10-27-nomoyc-air-gapped-deployment.md` | Air-gap product and operational readiness |
 | `2026-10-27-nomoyc-leadspicker-and-sales.md` | Czech-first discovery, sales process, lead provenance, and legal guardrails |
-| `2026-10-27-nomoyc-evaluation-and-economics.md` | Quality, outcome, cost, and paid-pilot measurement |
+| `2026-10-27-nomoyc-evaluation-and-economics.md` | Canonical quality, outcome, cost, and paid-pilot measurement protocol |
+| `2026-10-27-nomoyc-evaluation-and-pilot-plan.md` | Pilot checklist; use with the canonical measurement protocol, not as a second independent threshold source |
 | `2026-10-27-nomoyc-integrated-roadmap.md` | Cross-idea timeline and release gates |
-| Existing NOMO x YC docs dated 2026-10-27 | Initial research, interviews, segment hypotheses, reuse audit, risk register, and product explorations. Treat earlier candidate scores as hypotheses, not decisions. |
+| `2026-10-27-nomoyc-index.md` | Navigation for the complete document set; this blueprint is the canonical decision frame |
+| `2026-10-27-nomo-field-expert-*.md` | Superseded alternate field-service scenario; do not execute unless new buyer evidence reopens it |
 
 ## Sources
 

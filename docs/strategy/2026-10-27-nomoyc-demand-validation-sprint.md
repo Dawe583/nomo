@@ -13,15 +13,16 @@ In ten working days, decide whether one narrowly defined workflow merits a paid 
 - One domain expert who can judge correct work and unacceptable errors.
 - One technical owner who can inspect customer data boundaries and assemble a manual prototype.
 
-## Days 1 and 2: find the repeated job
+## Days 1 and 2: find a real repeated job
 
-- Request the 45-minute interview with the reachable owner or CFO. Reconstruct the most recent concrete finance task without showing the product idea.
-- From that case, write down at most 3 candidate tasks. Keep only tasks the interviewee says recur and can name a process owner for.
-- Find 7 more qualified people in the same SME finance segment. Ask each to reconstruct a recent case of the same task before comparing alternatives.
+- Request the 45-minute interview with the reachable owner or CFO. Reconstruct the most recent costly or difficult operational job across the company, without steering toward finance or showing the product idea.
+- Ask which role performs the job, which role has expertise, and who owns the result and budget. Do not assume the CFO is the operator or the buyer for a workflow outside finance.
+- From the case, record up to three candidate jobs. Keep only jobs the interviewee says recur, can identify an owner for, and can illustrate with a recent example.
+- If one job is concrete and repeated, recruit up to seven people who perform, supervise, or expert-review that same job. If no job emerges, interview across a different reachable company or role; do not fill the cohort with finance contacts by default.
 - Record the current workaround, artifact trail, time, delays, handoffs, corrections, error cost, and owner.
 - Ask what exactly may or may not leave their environment. Separate training, retention, inference, telemetry, storage, and internet egress.
 
-**Exit:** at least one workflow appears in 5 of 8 interviews in a segment, with consistent language, an identifiable process owner, and recent examples. If not, do not build. Expand or change interviews.
+**Screening signal, not market validation:** the same job appears in at least 5 of 8 qualified interviews, with consistent evidence, a named operator, and recent cases. This is a founder-set heuristic. It is not statistical proof, product-market fit, or permission to build. If fewer than eight qualified interviews are feasible, report the denominator and uncertainty; never inflate the count.
 
 ## Days 3 and 4: obtain evidence and measure baseline
 
@@ -31,7 +32,7 @@ In ten working days, decide whether one narrowly defined workflow merits a paid 
 - Ask the expert to define required evidence, missing-context questions, abstentions, and escalations.
 - Compare the incumbent workflow and any existing AI feature on the same cases.
 
-**Exit:** named data owner approves sources and handling. No approved data or no expert rubric means no model experiment.
+**Exit:** a named data owner approves sources and handling, and a domain expert defines the rubric. Twenty examples is a target, not a prerequisite to discovery; only run a model evaluation when the available sample is authorized and adequate for the stated question. No permission or rubric means no customer-data model experiment.
 
 ## Days 5 and 6: concierge dry run
 
@@ -47,8 +48,8 @@ In ten working days, decide whether one narrowly defined workflow merits a paid 
 
 - Present a one-workflow paid pilot with explicit boundaries and a baseline.
 - Ask the budget owner to choose a budget source and a realistic price range.
-- Present one initial technical hypothesis: sensitive inputs stay in a customer-controlled data plane, local inference has no prompt egress, and cloud fallback is disabled.
-- Record whether the buyer requires metadata isolation, full no-egress, or only no third-party model API, plus the cost, procurement gate, and approver for each requirement.
+- Ask neutrally what the buyer permits and prohibits for source data, prompts, inference, retention, model training, telemetry, metadata, support access, storage location, and network egress. Do not recommend local inference before hearing the restriction.
+- Compare only deployment options that satisfy the buyer's stated boundary. Record required controls, cost, procurement gate, and approver. Treat local inference and no-egress as testable options, not the default answer.
 - Compare an external model only on public or synthetic cases, or on customer-approved data that the buyer explicitly classifies as safe for that route. Never send sensitive customer cases to a model API for a comparison.
 - Request a concrete next step: paid pilot, authorized sample, security review date, or rejection.
 
