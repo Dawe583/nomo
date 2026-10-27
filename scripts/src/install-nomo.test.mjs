@@ -415,6 +415,20 @@ test("the installer reuses an existing tree and skips current dependencies", () 
   }
 });
 
+test("prints the command that its installed launcher actually provides", () => {
+  const box = sandbox({ fakeNode: true, fakePnpm: true });
+  try {
+    makeTree(box.home);
+    const run = box.sh(installer, []);
+    assert.equal(run.status, 0, outputOf(run));
+    assert.match(run.stdout, /^  nomo$/m);
+    assert.doesNotMatch(run.stdout, /^  void$/m);
+    assert.equal(existsSync(join(box.home, ".local", "bin", "nomo")), true);
+  } finally {
+    rmSync(box.home, { recursive: true, force: true });
+  }
+});
+
 test("dependencies install when node_modules is absent or older than the lockfile", () => {
   for (const shape of [
     { withModules: false, stale: false },
