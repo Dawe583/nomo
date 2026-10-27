@@ -5,11 +5,12 @@ Reviewed 2026-10-27. This page is navigation only. The [startup blueprint](2026-
 ## Start here
 
 1. [Startup blueprint](2026-10-27-nomoyc-startup-blueprint.md)
-2. [Integrated roadmap](2026-10-27-nomoyc-integrated-roadmap.md)
-3. [Demand validation sprint](2026-10-27-nomoyc-demand-validation-sprint.md)
-4. [First customer interview](2026-10-27-nomoyc-first-customer-interview.md)
-5. [LeadsPicker and sales](2026-10-27-nomoyc-leadspicker-and-sales.md)
-6. [Developer runbook for /nomoyc](2026-10-27-nomoyc-developer-runbook.md)
+2. [Three-idea execution playbook](2026-10-28-nomoyc-three-idea-execution-playbook.md)
+3. [Integrated roadmap](2026-10-27-nomoyc-integrated-roadmap.md)
+4. [Demand validation sprint](2026-10-27-nomoyc-demand-validation-sprint.md)
+5. [First customer interview](2026-10-27-nomoyc-first-customer-interview.md)
+6. [LeadsPicker and sales](2026-10-27-nomoyc-leadspicker-and-sales.md)
+7. [Developer runbook for /nomoyc](2026-10-27-nomoyc-developer-runbook.md)
 
 ## Market and product
 
