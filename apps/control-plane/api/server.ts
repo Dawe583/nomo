@@ -55,7 +55,9 @@ import {
 } from "../../../packages/workbench/src/project-workspace.ts";
 import {
   normalizeProviderConfig,
+  type ImageMimeType,
   type Model,
+  type ModelImageInput,
 } from "../../../packages/workbench/src/provider.ts";
 import {
   assertProviderDescriptorInManifest,
@@ -162,6 +164,9 @@ type RouteOptions = {
 const here = fileURLToPath(new URL(".", import.meta.url));
 const defaultWebRoot = resolve(here, "../web");
 const maxBodyBytes = 64 * 1024;
+const maxSessionBodyBytes = 2 * 1024 * 1024;
+const maxImageBytes = 1024 * 1024;
+const maxImagesPerMessage = 4;
 
 /**
  * Transport bounds for a session event stream. A subscriber that stops
@@ -357,9 +362,13 @@ export function createControlPlaneServer(
     );
   const fleetEventStore = options.fleetEvents ?? new FleetEventStore();
   const server = createServer((request, response) => {
-    const projectWorkspaceRequest = isProjectWorkspaceRequest(request.url);
+    const parsedRequestUrl = parseRequestUrl(request);
+    const localOnlyRequest = parsedRequestUrl !== null && (
+      isProjectWorkspaceRoutePath(parsedRequestUrl.pathname) ||
+      SESSION_IMAGE_ROUTE.test(parsedRequestUrl.pathname)
+    );
     if (
-      projectWorkspaceRequest
+      localOnlyRequest
         ? !isLocalRequest(request)
         : envValue(env, "NOMO_CONTROL_TOKEN")
           ? !authorizedRemote(request, env)
@@ -370,7 +379,7 @@ export function createControlPlaneServer(
     }
     void resolveVerifyKey(env)
       .then((verificationKey) =>
-        route(request, response, {
+        route(request, response, parsedRequestUrl, {
           ...options,
           env,
           webRoot,
@@ -432,9 +441,9 @@ export async function listenControlPlane(
 async function route(
   request: IncomingMessage,
   response: ServerResponse,
+  parsed: URL | null,
   options: RouteOptions,
 ): Promise<void> {
-  const parsed = parseRequestUrl(request);
   const desktopWebRoot = envValue(
     options.env,
     "NOMO_DESKTOP_WEB_ROOT",
@@ -998,10 +1007,31 @@ async function route(
       });
     return sendJson(response, 200, disclosure);
   }
+  if (parsed.pathname === "/api/provider/probe-environment") {
+    if (request.method !== "POST")
+      return sendJson(response, 405, { error: "method_not_allowed" });
+    try {
+      return sendJson(
+        response,
+        200,
+        await options.workbench.providerState({ reconnectEnvironment: true }),
+      );
+    } catch (error) {
+      return sendRequestError(response, error, 400, {
+        error: "provider_unavailable",
+        message:
+          error instanceof Error ? error.message : "Provider unavailable",
+      });
+    }
+  }
   if (parsed.pathname === "/api/provider") {
     try {
       if (request.method === "GET")
-        return sendJson(response, 200, await options.workbench.providerState());
+        return sendJson(
+          response,
+          200,
+          await options.workbench.providerState({ probeEnvironment: false }),
+        );
       if (request.method === "DELETE") {
         options.workbench.clearProvider();
         return sendJson(response, 200, { ok: true });
@@ -1241,14 +1271,21 @@ async function route(
     if (request.method === "GET")
       return sendJson(response, 200, options.workbench.sessionPage(query));
     if (request.method === "POST") {
-      const body = (await readJsonBody(request)) as {
+      const body = (await readJsonBody(
+        request,
+        maxSessionBodyBytes,
+      )) as {
         prompt?: string;
         model?: string;
         project?: string;
         agent?: string;
         background?: boolean;
         idempotencyKey?: string;
+        images?: unknown;
       } | null;
+      const images = parseSessionImages(body?.images);
+      if (images === null)
+        return sendJson(response, 400, { error: "invalid_session_images" });
       if (
         typeof body?.prompt !== "string" ||
         (body.model !== undefined && typeof body.model !== "string") ||
@@ -1265,6 +1302,7 @@ async function route(
           body.project,
           body.agent,
           body.background,
+          images,
         );
         options.fleetEvents.record({
           kind: "run_started",
@@ -1281,6 +1319,23 @@ async function route(
         });
       }
     }
+  }
+  const sessionImageMatch = SESSION_IMAGE_ROUTE.exec(parsed.pathname);
+  if (request.method === "GET" && sessionImageMatch) {
+    const image = options.workbench.getImage(
+      sessionImageMatch[1]!,
+      sessionImageMatch[2]!,
+    );
+    if (!image)
+      return sendJson(response, 404, { error: "session_image_not_found" });
+    response.setHeader("cache-control", "no-store");
+    response.setHeader("content-type", image.mimeType);
+    response.setHeader("content-length", image.bytes.length);
+    response.setHeader("x-content-type-options", "nosniff");
+    response.setHeader("cross-origin-resource-policy", "same-origin");
+    response.statusCode = 200;
+    response.end(image.bytes);
+    return;
   }
   const sessionMatch = /^\/api\/sessions\/([a-f0-9-]+)$/.exec(parsed.pathname);
   if (sessionMatch) {
@@ -1314,14 +1369,26 @@ async function route(
       return sendJson(response, 200, { ok: true });
     }
     if (request.method === "POST") {
-      const body = (await readJsonBody(request)) as {
+      const body = (await readJsonBody(
+        request,
+        maxSessionBodyBytes,
+      )) as {
         prompt?: string;
         idempotencyKey?: string;
+        images?: unknown;
       } | null;
+      const images = parseSessionImages(body?.images);
+      if (images === null)
+        return sendJson(response, 400, { error: "invalid_session_images" });
       if (typeof body?.prompt !== "string")
         return sendJson(response, 400, { error: "invalid_message" });
       try {
-        options.workbench.send(id, body.prompt, body.idempotencyKey);
+        options.workbench.send(
+          id,
+          body.prompt,
+          body.idempotencyKey,
+          images,
+        );
         return sendJson(response, 202, { ok: true });
       } catch (error) {
         return sendJson(response, 409, {
@@ -1819,10 +1886,8 @@ function toApiApproval(record: PendingApproval): JsonObject {
   };
 }
 
-function isProjectWorkspaceRequest(url: string | undefined): boolean {
-  const pathname = url?.split(/[?#]/, 1)[0] ?? "";
-  return isProjectWorkspaceRoutePath(pathname);
-}
+const SESSION_IMAGE_ROUTE =
+  /^\/api\/sessions\/([a-f0-9-]+)\/images\/([a-f0-9-]+)$/;
 
 function isProjectWorkspaceRoutePath(pathname: string): boolean {
   return pathname === "/api/project-workspace" ||
@@ -2101,7 +2166,7 @@ function parseBranchInput(value: unknown): {
 
 class RequestBodyTooLarge extends Error {
   constructor() {
-    super("request body exceeds 64 KiB");
+    super("request body exceeds the route limit");
     this.name = "RequestBodyTooLarge";
   }
 }
@@ -2137,17 +2202,134 @@ function nonEmptyString(value: unknown): value is string {
   return typeof value === "string" && value.trim().length > 0;
 }
 
+function stringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every((item) => typeof item === "string");
+}
+
+function finiteNumberRecord(
+  value: unknown,
+  keys: readonly string[],
+): boolean {
+  return (
+    jsonObject(value) &&
+    Object.keys(value).every((key) => keys.includes(key)) &&
+    Object.values(value).every(
+      (item) => typeof item === "number" && Number.isFinite(item),
+    )
+  );
+}
+
+function openRouterThreshold(value: unknown): boolean {
+  return (
+    (typeof value === "number" && Number.isFinite(value)) ||
+    finiteNumberRecord(value, ["p50", "p75", "p90", "p99"])
+  );
+}
+
+function openRouterProviderPreferences(value: unknown): boolean {
+  if (!jsonObject(value)) return false;
+  const allowed = [
+    "order",
+    "allow_fallbacks",
+    "require_parameters",
+    "data_collection",
+    "zdr",
+    "enforce_distillable_text",
+    "only",
+    "ignore",
+    "quantizations",
+    "sort",
+    "preferred_min_throughput",
+    "preferred_max_latency",
+    "max_price",
+  ];
+  if (Object.keys(value).some((key) => !allowed.includes(key))) return false;
+  for (const key of ["order", "only", "ignore", "quantizations"]) {
+    if (key in value && !stringArray(value[key])) return false;
+  }
+  for (const key of [
+    "allow_fallbacks",
+    "require_parameters",
+    "zdr",
+    "enforce_distillable_text",
+  ]) {
+    if (key in value && typeof value[key] !== "boolean") return false;
+  }
+  if (
+    "data_collection" in value &&
+    value.data_collection !== "allow" &&
+    value.data_collection !== "deny"
+  )
+    return false;
+  if (
+    "sort" in value &&
+    typeof value.sort !== "string" &&
+    (!jsonObject(value.sort) ||
+      Object.keys(value.sort).some(
+        (key) => key !== "by" && key !== "partition",
+      ) ||
+      Object.values(value.sort).some((item) => typeof item !== "string"))
+  )
+    return false;
+  for (const key of ["preferred_min_throughput", "preferred_max_latency"]) {
+    if (key in value && !openRouterThreshold(value[key])) return false;
+  }
+  if ("max_price" in value) {
+    const price = value.max_price;
+    if (
+      !jsonObject(price) ||
+      Object.keys(price).some(
+        (key) =>
+          !["prompt", "completion", "image", "audio", "request"].includes(key),
+      ) ||
+      Object.values(price).some(
+        (item) =>
+          !(typeof item === "string" && item.length > 0) &&
+          !(typeof item === "number" && Number.isFinite(item)),
+      )
+    )
+      return false;
+  }
+  return true;
+}
+
+function parseGatewayOptions(
+  value: unknown,
+  providerId: string,
+): ProviderAdapterConfig["gatewayOptions"] {
+  if (
+    providerId !== "openrouter" ||
+    !jsonObject(value) ||
+    !exactKeys(value, ["openrouter"]) ||
+    !jsonObject(value.openrouter)
+  )
+    throw new Error("Gateway options are only supported for OpenRouter.");
+  const openrouter = value.openrouter;
+  if (
+    Object.keys(openrouter).some(
+      (key) => !["referer", "title", "categories", "provider"].includes(key),
+    ) ||
+    ("referer" in openrouter && !nonEmptyString(openrouter.referer)) ||
+    ("title" in openrouter && !nonEmptyString(openrouter.title)) ||
+    ("categories" in openrouter && !stringArray(openrouter.categories)) ||
+    ("provider" in openrouter &&
+      !openRouterProviderPreferences(openrouter.provider))
+  )
+    throw new Error("OpenRouter gateway options are malformed.");
+  return value as NonNullable<ProviderAdapterConfig["gatewayOptions"]>;
+}
+
 function parseTypedProviderConfig(
   body: Record<string, unknown>,
 ): ProviderAdapterConfig {
   const isVertex = body.transport === "google-vertex";
+  const expectedKeys = isVertex
+    ? ["providerId", "transport", "vertexOptions", "model", "auth"]
+    : ["providerId", "transport", "endpoint", "model", "auth"];
+  if (Object.hasOwn(body, "gatewayOptions"))
+    expectedKeys.push("gatewayOptions");
   if (
-    !exactKeys(
-      body,
-      isVertex
-        ? ["providerId", "transport", "vertexOptions", "model", "auth"]
-        : ["providerId", "transport", "endpoint", "model", "auth"],
-    ) ||
+    !exactKeys(body, expectedKeys) ||
     !nonEmptyString(body.providerId) ||
     !nonEmptyString(body.transport) ||
     !nonEmptyString(body.model) ||
@@ -2156,6 +2338,9 @@ function parseTypedProviderConfig(
   )
     throw new Error("Typed provider descriptor is incomplete or malformed.");
 
+  const gatewayOptions = Object.hasOwn(body, "gatewayOptions")
+    ? parseGatewayOptions(body.gatewayOptions, body.providerId)
+    : undefined;
   let auth: ProviderAuthProfile;
   if (body.auth.kind === "api-key") {
     if (
@@ -2164,29 +2349,10 @@ function parseTypedProviderConfig(
     )
       throw new Error("API-key authentication is incomplete or malformed.");
     auth = { kind: "api-key", apiKey: body.auth.apiKey };
-  } else if (body.auth.kind === "aws-credentials") {
-    if (
-      !(exactKeys(body.auth, ["kind", "accessKeyId", "secretAccessKey"]) ||
-        exactKeys(body.auth, [
-          "kind",
-          "accessKeyId",
-          "secretAccessKey",
-          "sessionToken",
-        ])) ||
-      !nonEmptyString(body.auth.accessKeyId) ||
-      !nonEmptyString(body.auth.secretAccessKey) ||
-      (Object.hasOwn(body.auth, "sessionToken") &&
-        !nonEmptyString(body.auth.sessionToken))
-    )
-      throw new Error("AWS credentials are incomplete or malformed.");
-    auth = {
-      kind: "aws-credentials",
-      accessKeyId: body.auth.accessKeyId,
-      secretAccessKey: body.auth.secretAccessKey,
-      ...(typeof body.auth.sessionToken === "string"
-        ? { sessionToken: body.auth.sessionToken }
-        : {}),
-    };
+  } else if (body.auth.kind === "aws-credential-chain") {
+    if (!exactKeys(body.auth, ["kind"]))
+      throw new Error("AWS credential-chain authentication is malformed.");
+    auth = { kind: "aws-credential-chain" };
   } else if (body.auth.kind === "none") {
     if (!exactKeys(body.auth, ["kind"]))
       throw new Error("Unauthenticated provider descriptor is malformed.");
@@ -2216,12 +2382,16 @@ function parseTypedProviderConfig(
     model: body.model,
     auth,
     ...(vertexOptions ? { vertexOptions } : {}),
+    ...(gatewayOptions ? { gatewayOptions } : {}),
   };
   assertProviderDescriptorInManifest(config);
   return config;
 }
 
-async function readJsonBody(request: IncomingMessage): Promise<unknown> {
+async function readJsonBody(
+  request: IncomingMessage,
+  maxBytes = maxBodyBytes,
+): Promise<unknown> {
   // Browsers block cross-origin application/json form posts behind a preflight,
   // but a text/plain form body can still be crafted to parse as JSON. Requiring
   // the explicit content type keeps the decision endpoint a fetch-only surface,
@@ -2234,7 +2404,7 @@ async function readJsonBody(request: IncomingMessage): Promise<unknown> {
   for await (const chunk of request) {
     const buffer = typeof chunk === "string" ? Buffer.from(chunk) : chunk;
     size += buffer.length;
-    if (size > maxBodyBytes) throw new RequestBodyTooLarge();
+    if (size > maxBytes) throw new RequestBodyTooLarge();
     chunks.push(buffer);
   }
   if (chunks.length === 0) return null;
@@ -2244,6 +2414,53 @@ async function readJsonBody(request: IncomingMessage): Promise<unknown> {
 function applicationJsonContentType(header: string): boolean {
   const [mediaType] = header.split(";", 2);
   return mediaType.trim().toLowerCase() === "application/json";
+}
+function isImageMimeType(value: unknown): value is ImageMimeType {
+  return (
+    value === "image/jpeg" ||
+    value === "image/png" ||
+    value === "image/webp"
+  );
+}
+
+function parseSessionImages(
+  value: unknown,
+): readonly ModelImageInput[] | null {
+  if (value === undefined) return [];
+  if (!Array.isArray(value) || value.length > maxImagesPerMessage) return null;
+  const images: ModelImageInput[] = [];
+  let totalBytes = 0;
+  for (const item of value) {
+    if (
+      !jsonObject(item) ||
+      Object.keys(item).some((key) => key !== "mimeType" && key !== "data") ||
+      !isImageMimeType(item.mimeType) ||
+      typeof item.data !== "string" ||
+      !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(item.data)
+    )
+      return null;
+    const bytes = Buffer.from(item.data, "base64");
+    if (!bytes.length || bytes.toString("base64") !== item.data) return null;
+    totalBytes += bytes.length;
+    if (totalBytes > maxImageBytes) return null;
+    const validSignature =
+      item.mimeType === "image/png"
+        ? bytes.length >= 8 &&
+          bytes.subarray(0, 8).equals(
+            Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+          )
+        : item.mimeType === "image/jpeg"
+          ? bytes.length >= 3 &&
+            bytes[0] === 0xff &&
+            bytes[1] === 0xd8 &&
+            bytes[2] === 0xff
+          : bytes.length >= 12 &&
+            bytes.subarray(0, 4).toString("ascii") === "RIFF" &&
+            bytes.subarray(8, 12).toString("ascii") === "WEBP";
+    if (!validSignature) return null;
+    images.push({ mimeType: item.mimeType, data: item.data });
+  }
+  return images;
 }
 
 function sendJson(

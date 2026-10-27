@@ -12,7 +12,7 @@ test("legacy compatible configuration keeps catalog and completion behavior thro
       const url = String(input);
       calls.push(url);
       if (url.endsWith("/models")) return Response.json({ data: [{ id: "fixture-model" }] });
-      return Response.json({ choices: [{ message: { role: "assistant", content: "ok" } }] });
+      return Response.json({ choices: [{ message: { role: "assistant", content: "ok" }, finish_reason: "stop" }] });
     },
   );
 
@@ -380,9 +380,7 @@ test("Prime-only request semantics do not apply to custom compatible endpoints",
     },
     async (_input, init) => {
       body = JSON.parse(String(init?.body));
-      return Response.json({
-        choices: [{ message: { role: "assistant", content: "custom fixture" } }],
-      });
+      return Response.json({ choices: [{ message: { role: "assistant", content: "custom fixture" }, finish_reason: "stop" }] });
     },
   );
   await client.complete("fixture-model", [], [], new AbortController().signal);

@@ -3,6 +3,204 @@
 All notable user-facing changes since the first repository commit.
 
 ## Unreleased
+- Cloudflare AI Gateway now exposes manifest-backed descriptors for pinned OMP
+  and Prime chat rows across Anthropic Messages (`/anthropic`), OMP Chat
+  Completions (`/compat`) and Prime Responses (`/openai`). Endpoint validation
+  binds each transport to its official host and route, rejecting custom ports,
+  query strings, unresolved IDs and encoded path separators. The API-key profile
+  is the Cloudflare gateway token only; separate upstream-provider keys remain
+  unsupported. Cloudflare marks `/compat` deprecated for new single-model calls
+  but continues supporting existing integrations; its newer REST route is not
+  part of this pinned manifest. RED reproduced missing descriptors and accepted
+  encoded path separators. GREEN: provider catalog 22/22, gateway 7/7 and HTTP
+  setup 1/1. Synthetic local fixtures only; no real provider request or
+  credential access. H21 and full OMP/Prime parity remain incomplete. Sources:
+  [Cloudflare Anthropic](https://developers.cloudflare.com/ai-gateway/usage/providers/anthropic/),
+  [Cloudflare OpenAI](https://developers.cloudflare.com/ai-gateway/usage/providers/openai/),
+  [Cloudflare Unified API](https://developers.cloudflare.com/ai-gateway/usage/chat-completion/).
+
+- OMP Bedrock Mantle now has an API-key Responses route for all five pinned
+  GPT-5.4, GPT-5.5 and GPT-5.6 Luna/Sol/Terra models. The adapter accepts only
+  HTTPS `bedrock-mantle.{region}.api.aws/openai/v1` endpoints and sends the
+  Bedrock API key as Bearer auth. The host-credential SigV4 route and OMP
+  bearer-token lifecycle remain unsupported. API tests verify encrypted key
+  persistence, non-disclosure and endpoint rejection. Full Workbench: 804
+  (802 passed, 2 skipped); typecheck, API 38/38, API TypeScript and docs-truth
+  9/9 passed. Fixture-only; no provider requests, credential reads, GUI/TUI or
+  OMP runtime. H21 and full OMP/Prime parity remain incomplete.
+- OMP Ollama Cloud now has exact API-key descriptors for all 51 pinned chat
+  models. It uses canonical `https://ollama.com`, Bearer auth on `/api/chat`,
+  and the selected manifest model; it never probes undocumented Cloud
+  `/api/tags`. Local Ollama remains loopback/no-auth. Streamed output redacts
+  the key across chunk boundaries. The coverage API now lists 136 remaining
+  blocked rows in 9 groups. Sources: [pinned OMP adapter](https://raw.githubusercontent.com/can1357/oh-my-pi/v18.6.2/packages/ai/src/providers/ollama.ts),
+  [Ollama auth](https://docs.ollama.com/api/authentication).
+  Verification: Workbench 804 (802 passed, 2 skipped), Workbench typecheck,
+  API 38/38, API TypeScript and docs-truth 9/9. Fixture-only; no provider
+  request, credential access, OMP runtime, GUI or TUI. H21 and full OMP/Prime
+  parity remain incomplete.
+- All 209 pinned in-scope OMP Bedrock chat rows now have Workbench descriptors
+  using the existing AWS credential chain when their manifest declares the
+  host-credential path. OMP bearer-token auth remains unsupported; no OMP
+  runtime, credentials or provider request. Coverage RED found 209 uncovered
+  rows; GREEN and full Workbench passed (799 total, 797 passed, 2 skipped),
+  Workbench typecheck passed, API tests passed 37/37, docs-truth 9/9. H21 and
+  full OMP/Prime parity remain incomplete.
+
+- OpenRouter typed provider setup now accepts host-bound routing and attribution
+  preferences through `/api/provider`; the Settings form exposes the OpenRouter
+  object as optional JSON and reloads saved values. API validation rejects
+  malformed preferences and use with other provider IDs. API suite: 35/35,
+  gateway suite: 7/7, UI suite: 138/138, full Workbench: 791 total, 789 passed,
+  2 skipped; workspace typecheck passed. Browser smoke captured the exact local
+  request payload with an intercepted response; no upstream provider request
+  or credentials. H21 remains active; no parity claim or TUI change.
+
+- Anthropic Messages now streams text and tool calls over SSE when the agent
+  provides `onDelta`. It preserves indexed block order, assembles fragmented
+  tool JSON and cumulative usage, redacts split API-key prefixes from emitted
+  text, and rejects incomplete, malformed, oversized or out-of-order streams
+  and unsupported stop reasons. Thinking/signature deltas are not emitted;
+  unknown event types are ignored per the documented contract. Provider-native
+  tests: 9/9; full Workbench: 784 total, 782 passed, 2 skipped, 0 failed;
+  typecheck passed. Source: https://platform.claude.com/docs/en/build-with-claude/streaming.
+
+- Cloudflare Anthropic gateway now preserves `Accept: text/event-stream` for
+  streamed Messages requests and retains `application/json` for non-stream
+  calls. A local end-to-end SSE fixture verifies text deltas, fragmented tool
+  JSON, tool IDs and usage. RED reproduced invalid event-stream decoding after
+  the gateway overwrote Accept. Gateway tests: 7/7; full Workbench: 785 total,
+  783 passed, 2 skipped, 0 failed; typecheck passed. No live provider requests
+  or credentials. Cloudflare documents the Anthropic route at
+  https://developers.cloudflare.com/ai-gateway/usage/providers/anthropic/index;
+  Anthropic defines SSE streaming at
+  https://platform.claude.com/docs/en/build-with-claude/streaming.
+
+- Google GenAI now rejects candidate content in later SSE frames after
+  `finishReason: STOP`, while retaining independent usage-only metadata frames.
+  RED reproduced late text and functionCall acceptance (`Missing expected
+  rejection`); GREEN Google fixtures: 10/10. Full Workbench: 787 total, 785
+  passed, 2 skipped, 0 failed; workspace `pnpm run typecheck` passed. No live
+  provider request or credentials. Google defines `finishReason` as the reason
+  generation stopped, says it is empty while generation continues, and defines
+  `STOP` as a natural stop point:
+  https://ai.google.dev/api/generate-content#v1beta.Candidate.
+
+- Bedrock ConverseStream now rejects non-metadata events after `messageStop`
+  while allowing the documented trailing usage `metadata`. AWS diagrams
+  `messageStart`, content blocks, `messageStop`, then metadata:
+  https://docs.aws.amazon.com/bedrock/latest/userguide/conversation-inference.html#conversation-inference-call-response-converse-stream.
+  RED fixture failed with `Missing expected rejection`; Bedrock suite: 13/13.
+  Full Workbench: 788 total, 786 passed, 2 skipped, 0 failed; workspace
+  `pnpm run typecheck` passed. No live AWS request or credentials.
+
+- OpenAI-compatible Chat Completions now rejects choice data after a
+  `finish_reason` and nonempty SSE data after `[DONE]`, while retaining the
+  documented trailing usage-only chunk with `choices: []`. OpenAI defines
+  `finish_reason` as why generation stopped and documents usage before `[DONE]`:
+  https://developers.openai.com/api/reference/resources/chat/subresources/completions/streaming-events
+  and https://developers.openai.com/api/reference/resources/chat/subresources/completions/methods/create.
+  RED fixtures first failed with missing expected rejection; focused stream
+  tests: 16/16. Full Workbench: 790 total, 788 passed, 2 skipped, 0 failed;
+  workspace `pnpm run typecheck` passed. No provider requests or credentials.
+
+- Mistral Conversations now rejects event data following
+  `conversation.response.done` instead of silently discarding later events.
+  The official API documents `conversation.response.done` within the
+  `ConversationEvents` stream type but does not explicitly define post-terminal
+  ordering; this guard treats the named completion event as terminal:
+  https://docs.mistral.ai/api/endpoint/beta/conversations.
+  RED reproduced silent acceptance; Mistral adapter tests: 14/14. Full
+  Workbench: 791 total, 789 passed, 2 skipped, 0 failed; workspace
+  `pnpm run typecheck` passed. No live provider request or credentials.
+
+- Anthropic Messages now validates non-stream `stop_reason` before content or
+  tool mapping. The official contract documents `end_turn`, `max_tokens`,
+  `stop_sequence`, `tool_use`, `pause_turn`, `refusal`, and
+  `model_context_window_exceeded`, and states non-stream values are non-null:
+  https://platform.claude.com/docs/en/api/messages (lines 4095-4103).
+  Missing/unknown reasons fail closed; `max_tokens`, context-window overflow,
+  and `pause_turn` retain explicit errors; other documented reasons are
+  accepted. RED provider-native: 5 passed/1 failed (`Missing expected
+  rejection` for missing status); after adding the guard, gateway fixtures
+  needed documented `end_turn`. GREEN native + gateway: 12/12. Full Workbench:
+  781 total, 779 passed, 2 skipped, 0 failed; `npm run typecheck` exit 0.
+  Independent review found no issues. No provider requests or credentials.
+
+- OpenAI Chat Completions now normalizes supported `text`/`refusal` content
+  parts and uses top-level `message.refusal` when nonempty text is absent.
+  Unknown content/refusal parts fail closed. Provider-retry fixtures passed
+  8/8; full Workbench: 772 total, 770 passed, 2 skipped, 0 failed; typecheck
+  passed. No provider request or credentials.
+- OpenAI-compatible Chat Completions now supports legacy `function_call`:
+  non-stream calls become one Workbench tool call with a generated ID, while
+  streaming fragments accumulate into one ID-preserving call. Malformed or
+  mixed legacy/modern forms fail closed. Targeted fixtures passed 24/24; full
+  Workbench: 779 total, 777 passed, 2 skipped, 0 failed; typecheck passed.
+  No provider request or credentials.
+- OpenAI-compatible streaming now appends `delta.refusal` through the same
+  path as `delta.content`, including redaction, response-size limits,
+  `onDelta`, and assistant content. Refusal-only streams are preserved.
+  Provider-stream fixtures passed 12/12; full Workbench: 775 total, 773 passed,
+  2 skipped, 0 failed; typecheck passed. No provider request or credentials.
+- OpenAI-compatible streaming completions now validate terminal
+  `finish_reason`: intermediate `null` chunks remain valid, but only
+  `stop`/`tool_calls`/`function_call` may finish a response. `length` and
+  `content_filter` retain truncation errors; unknown reasons and `[DONE]` with
+  content but no terminal reason are rejected. Targeted suite passed 11/11;
+  full Workbench: 774 total, 772 passed, 2 skipped, 0 failed; typecheck passed.
+  No provider request or credentials.
+- OpenAI-compatible non-stream completions now validate `finish_reason`:
+  `length` and `content_filter` retain explicit truncation errors, while only
+  `stop`, `tool_calls` and `function_call` are accepted terminal reasons.
+  Missing/unknown reasons are rejected. Targeted fixtures passed 10/10; full
+  Workbench: 770 total, 768 passed, 2 skipped, 0 failed; typecheck passed.
+  No provider request or credentials.
+- Anthropic Messages now rejects `stop_reason: "model_context_window_exceeded"`
+  before content or tool-call mapping, returning an explicit context-window
+  error rather than accepting partial text. Targeted fixtures passed 4/4; full
+  Workbench passed 766/766 (2 skipped), with typecheck passing. No provider
+  request or credential was used.
+- Mistral SSE handling now explicitly permits `conversation.response.started`
+  and rejects unhandled event types instead of silently ignoring them. This
+  prevents partial message/tool output from being accepted after an incomplete
+  stream. Targeted fixtures passed 13/13; full Workbench passed 767/767
+  (2 skipped), with typecheck passing. No provider request or credentials.
+- Anthropic Messages now rejects responses with `stop_reason: "max_tokens"`
+  before parsing content, reporting output truncation instead of accepting an
+  incomplete text/tool response. Targeted fixtures passed 3/3; full Workbench
+  passed 765/765 (2 skipped), with typecheck passing. Fixture/stub only; no
+  provider request or credentials.
+- Google GenAI function calls now preserve provider-supplied call IDs through
+  tool-call conversion and replayed function responses, while retaining the
+  synthetic-ID fallback when the provider omits an ID. Focused fixtures passed
+  7/7; full Workbench suite passed 763/763 (2 skipped), with typecheck passing.
+  Verification used fixtures and stub fetch only; no provider request or
+  credential was used.
+- Google GenAI model discovery now follows `nextPageToken` using `pageToken`,
+  shares one 15s timeout, validates pagination tokens and filters models by
+  `supportedGenerationMethods`. Vertex remains manifest-pinned. Google GenAI
+  fixtures passed 8/8; full Workbench passed 764/764 (2 skipped), with
+  typecheck passing. Fixtures/stub fetch only; no provider request or
+  credentials.
+- Provider status polling no longer triggers environment-provider discovery.
+  Settings exposes an explicit server-side check for NVIDIA and DashScope
+  environment credentials; keys stay out of the renderer. Workbench session
+  start keeps its existing environment resolution. Regressions use synthetic
+  credentials and stub fetch only.
+
+- OpenAI and Azure Responses now preserve refusal output as assistant message
+  content and stream refusal deltas through the same content and delta callback
+  paths as other text. OpenAI and Azure Responses fixture suites passed 20/20;
+  no live provider request was made.
+
+- Mistral now uses the source-backed Conversations API at
+  `POST /v1/conversations`, not Chat Completions. Ordered history is serialized
+  into `inputs`, including `function.call` and `function.result`. Official
+  delta/done events and usage are mapped. Existing auth, redaction, limits and
+  cancellation boundaries remain. Focused fixtures passed 12/12; no live
+  provider or network request was made.
+
 - Workbench now has an injectable AgentRunner broker with single-use consent
   previews bound to the task, runner description, profile and filtered project
   snapshot. Tool calls recheck grant, project binding, profile, capabilities,

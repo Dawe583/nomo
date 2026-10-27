@@ -4,8 +4,11 @@ import { defaultHarnessSettings, type HarnessSettings } from "../harness-setting
 import type { ProviderAdapterConfig, ProviderClient } from "./types.ts";
 import { isLoopbackHostname, isRecord } from "./guards.ts";
 
-type MistralDelta = { content?: unknown; tool_calls?: unknown };
-type ToolDelta = { index?: unknown; id?: unknown; type?: unknown; function?: { name?: unknown; arguments?: unknown } };
+type MistralInput =
+  | { role: "system" | "user" | "assistant"; content: string }
+  | { type: "function.call"; tool_call_id: string; name: string; arguments: Record<string, unknown> }
+  | { type: "function.result"; tool_call_id: string; result: string };
+type FunctionCallDelta = { id?: unknown; name?: unknown; tool_call_id?: unknown; arguments?: unknown };
 const MAX_STREAM_CHARS = 2_000_000;
 const MAX_TOOL_ARGUMENT_CHARS = 1_000_000;
 
@@ -45,12 +48,12 @@ export class MistralConversationsAdapter implements ProviderClient {
   async complete(model: string, messages: readonly ModelMessage[], tools: readonly unknown[], signal: AbortSignal, onDelta?: (text: string) => void | Promise<void>): Promise<ModelReply> {
     const body = {
       model,
-      messages,
+      inputs: inputsFrom(messages),
       ...(tools.length ? { tools } : {}),
-      max_tokens: this.resolveSettings().maxOutputTokens,
+      completion_args: { max_tokens: this.resolveSettings().maxOutputTokens },
       stream: true,
     };
-    const response = await this.fetch("/v1/chat/completions", {
+    const response = await this.fetch("/v1/conversations", {
       method: "POST",
       headers: { authorization: `Bearer ${this.apiKey}`, "content-type": "application/json", accept: "text/event-stream" },
       body: JSON.stringify(body),
@@ -69,12 +72,12 @@ export class MistralConversationsAdapter implements ProviderClient {
     let buffer = "";
     let dataLines: string[] = [];
     let dataLength = 0;
+    let eventName = "";
     let emission = "";
     let done = false;
     let text = "";
-    let finishReason: string | undefined;
     let usage: ModelReply["usage"];
-    const toolDeltas = new Map<number, { id: string; name: string; arguments: string }>();
+    const toolDeltas = new Map<string, { name: string; arguments: string }>();
     let totalToolArgumentLength = 0;
     const emit = async (value: string, flush = false): Promise<void> => {
       if (!onDelta) return;
@@ -90,60 +93,61 @@ export class MistralConversationsAdapter implements ProviderClient {
       if (visible) await onDelta(visible);
     };
     const consumeData = async (): Promise<void> => {
-      if (!dataLines.length || done) { dataLines = []; return; }
+      if (!dataLines.length) {
+        eventName = "";
+        return;
+      }
+      if (done) throw new Error("Mistral returned data after completion.");
       const data = dataLines.join("\n");
+      const sourceEventName = eventName;
       dataLines = [];
       dataLength = 0;
-      if (data === "[DONE]") { done = true; return; }
+      eventName = "";
       let event: unknown;
       try { event = JSON.parse(data); } catch { throw new Error("Mistral returned an invalid event stream."); }
-      if (!isRecord(event)) throw new Error("Mistral returned an invalid event stream.");
-      if (isRecord(event.usage)) usage = usageFrom(event.usage);
-      if (event.choices === undefined && event.usage !== undefined) return;
-      if (!Array.isArray(event.choices)) throw new Error("Mistral returned an invalid event stream.");
-      for (const choice of event.choices) {
-        if (!isRecord(choice) || !isRecord(choice.delta)) throw new Error("Mistral returned an invalid event stream.");
-        const delta = choice.delta as MistralDelta;
-        if (delta.content !== undefined) {
-          if (typeof delta.content !== "string") throw new Error("Mistral returned an invalid event stream.");
-          text += delta.content;
-          if (text.length > MAX_STREAM_CHARS) throw new Error("Provider response exceeded the supported size.");
-          await emit(delta.content);
-        }
-        if (delta.tool_calls !== undefined) {
-          if (!Array.isArray(delta.tool_calls)) throw new Error("Mistral returned an invalid tool-call stream.");
-          for (const rawTool of delta.tool_calls) {
-            if (!isRecord(rawTool)) throw new Error("Mistral returned an invalid tool-call stream.");
-            const tool = rawTool as ToolDelta;
-            if (typeof tool.index !== "number" || !Number.isInteger(tool.index) || tool.index < 0 || tool.index > 31) {
-              throw new Error("Mistral returned an invalid tool-call stream.");
-            }
-            const index = tool.index;
-            const prior = toolDeltas.get(index) ?? { id: "", name: "", arguments: "" };
-            if (tool.id !== undefined) {
-              if (typeof tool.id !== "string") throw new Error("Mistral returned an invalid tool-call stream.");
-              prior.id = tool.id;
-            }
-            if (tool.type !== undefined && tool.type !== "function") throw new Error("Mistral returned an invalid tool-call stream.");
-            if (tool.function?.name !== undefined) {
-              if (typeof tool.function.name !== "string") throw new Error("Mistral returned an invalid tool-call stream.");
-              prior.name += tool.function.name;
-            }
-            if (tool.function?.arguments !== undefined) {
-              if (typeof tool.function.arguments !== "string") throw new Error("Mistral returned an invalid tool-call stream.");
-              totalToolArgumentLength += tool.function.arguments.length;
-              if (totalToolArgumentLength > MAX_TOOL_ARGUMENT_CHARS) throw new Error("Mistral tool arguments exceeded the supported size.");
-              prior.arguments += tool.function.arguments;
-            }
-            toolDeltas.set(index, prior);
+      if (!isRecord(event) || typeof event.type !== "string" || (sourceEventName && sourceEventName !== event.type)) {
+        throw new Error("Mistral returned an invalid event stream.");
+      }
+      switch (event.type) {
+        case "message.output.delta": {
+          if (typeof event.id !== "string" || !event.id || event.role !== undefined && event.role !== "assistant") {
+            throw new Error("Mistral returned an invalid event stream.");
           }
+          const content = event.content;
+          let value: string;
+          if (typeof content === "string") value = content;
+          else if (isRecord(content) && typeof content.text === "string") value = content.text;
+          else throw new Error("Mistral returned unsupported output content.");
+          text += value;
+          if (text.length > MAX_STREAM_CHARS) throw new Error("Provider response exceeded the supported size.");
+          await emit(value);
+          break;
         }
-        if (choice.finish_reason !== undefined && choice.finish_reason !== null) {
-          if (typeof choice.finish_reason !== "string") throw new Error("Mistral returned an invalid completion status.");
-          if (choice.finish_reason === "length") throw new Error("Mistral completion was truncated.");
-          if (choice.finish_reason !== "stop" && choice.finish_reason !== "tool_calls") throw new Error("Mistral completion did not finish successfully.");
-          finishReason = choice.finish_reason;
+        case "function.call.delta": {
+          const delta = event as FunctionCallDelta;
+          if (typeof delta.id !== "string" || !delta.id || typeof delta.name !== "string" || !delta.name ||
+              typeof delta.tool_call_id !== "string" || !delta.tool_call_id || typeof delta.arguments !== "string") {
+            throw new Error("Mistral returned an invalid tool-call stream.");
+          }
+          const prior = toolDeltas.get(delta.tool_call_id) ?? { name: "", arguments: "" };
+          prior.name = delta.name;
+          totalToolArgumentLength += delta.arguments.length;
+          if (totalToolArgumentLength > MAX_TOOL_ARGUMENT_CHARS) throw new Error("Mistral tool arguments exceeded the supported size.");
+          prior.arguments += delta.arguments;
+          toolDeltas.set(delta.tool_call_id, prior);
+          break;
         }
+        case "conversation.response.done":
+          if (!isRecord(event.usage)) throw new Error("Mistral returned an invalid completion status.");
+          usage = usageFrom(event.usage);
+          done = true;
+          break;
+        case "conversation.response.error":
+          throw new Error("Mistral returned an error event.");
+        case "conversation.response.started":
+          break;
+        default:
+          throw new Error("Mistral returned an unsupported response event.");
       }
     };
     try {
@@ -156,7 +160,8 @@ export class MistralConversationsAdapter implements ProviderClient {
           let line = buffer.slice(0, newline);
           buffer = buffer.slice(newline + 1);
           if (line.endsWith("\r")) line = line.slice(0, -1);
-          if (!line && dataLines.length) await consumeData();
+          if (!line) await consumeData();
+          else if (line.startsWith("event:")) eventName = line.slice(6).trim();
           else if (line.startsWith("data:")) {
             const dataLine = line.slice(5).replace(/^ /, "");
             dataLength += dataLine.length + (dataLines.length ? 1 : 0);
@@ -170,13 +175,13 @@ export class MistralConversationsAdapter implements ProviderClient {
       await reader.cancel().catch(() => {});
       reader.releaseLock();
     }
-    if (!done || !finishReason || dataLines.length || buffer.trim()) throw new Error("Mistral stream ended before completion.");
-    const toolCalls: ToolCall[] = [...toolDeltas.entries()].sort(([a], [b]) => a - b).map(([index, call]) => {
-      if (!call.id || !call.name) throw new Error("Mistral returned an invalid tool-call stream.");
+    if (!done || dataLines.length || buffer.trim()) throw new Error("Mistral stream ended before completion.");
+    const toolCalls: ToolCall[] = [...toolDeltas.entries()].map(([id, call]) => {
+      if (!call.name) throw new Error("Mistral returned an invalid tool-call stream.");
       const args = call.arguments || "{}";
       try { if (!isRecord(JSON.parse(args))) throw new Error(); }
       catch { throw new Error("Mistral returned an invalid tool-call stream."); }
-      return { id: call.id, type: "function", function: { name: call.name, arguments: args } };
+      return { id, type: "function", function: { name: call.name, arguments: args } };
     });
     if (!text.trim() && !toolCalls.length) throw new Error("Mistral returned no answer.");
     await emit("", true);
@@ -201,6 +206,27 @@ export class MistralConversationsAdapter implements ProviderClient {
       throw new Error("Provider connection failed.", { cause: error });
     }
   }
+}
+
+function inputsFrom(messages: readonly ModelMessage[]): MistralInput[] {
+  const inputs: MistralInput[] = [];
+  for (const message of messages) {
+    if (message.role === "tool") {
+      if (typeof message.tool_call_id !== "string" || !message.tool_call_id) throw new Error("Mistral received invalid tool history.");
+      inputs.push({ type: "function.result", tool_call_id: message.tool_call_id, result: message.content ?? "" });
+      continue;
+    }
+    if (message.content !== null) inputs.push({ role: message.role, content: message.content });
+    for (const call of message.tool_calls ?? []) {
+      if (!call.id || !call.function.name) throw new Error("Mistral received invalid tool-call history.");
+      let argumentsValue: unknown;
+      try { argumentsValue = JSON.parse(call.function.arguments); }
+      catch { throw new Error("Mistral received invalid tool-call history."); }
+      if (!isRecord(argumentsValue)) throw new Error("Mistral received invalid tool-call history.");
+      inputs.push({ type: "function.call", tool_call_id: call.id, name: call.function.name, arguments: argumentsValue });
+    }
+  }
+  return inputs;
 }
 
 function ensureSlash(url: URL): URL { const base = new URL(url); if (!base.pathname.endsWith("/")) base.pathname += "/"; return base; }

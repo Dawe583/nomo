@@ -100,6 +100,73 @@ test("Ollama native chat lists local tags and handles NDJSON tool/usage events w
   assert.deepEqual(reply.usage, { prompt_tokens: 3, completion_tokens: 4, total_tokens: 7 });
   assert.deepEqual(deltas, ["checking ", "ready"]);
 });
+test("Ollama Cloud sends its API key to the hosted native API", async () => {
+  const requests: Array<{ url: string; authorization: string | undefined }> = [];
+  const client = createProviderClient(
+    {
+      providerId: "ollama-cloud",
+      transport: "ollama-chat",
+      baseUrl: "https://ollama.com",
+      auth: { kind: "api-key", apiKey: "fixture-cloud-secret" },
+      model: "gpt-oss:120b",
+    },
+    async (input, init) => {
+      requests.push({
+        url: String(input),
+        authorization: new Headers(init?.headers).get("authorization") ?? undefined,
+      });
+      assert.equal(String(input), "https://ollama.com/api/chat");
+      return new Response(
+        [
+          { message: { role: "assistant", content: "fixture-" }, done: false },
+          { message: { role: "assistant", content: "cloud-secret" }, done: false },
+          { message: { role: "assistant", content: "ready" }, done: true, done_reason: "stop" },
+        ].map((event) => JSON.stringify(event)).join("\n") + "\n",
+        { headers: { "content-type": "application/x-ndjson" } },
+      );
+    },
+  );
+
+  assert.deepEqual(await client.models(), [
+    { id: "gpt-oss:120b", name: "gpt-oss:120b" },
+  ]);
+  const deltas: string[] = [];
+  const reply = await client.complete(
+    "gpt-oss:120b",
+    [{ role: "user", content: "check" }],
+    [],
+    new AbortController().signal,
+    (delta) => { deltas.push(delta); },
+  );
+  assert.equal(reply.message.content, "fixture-cloud-secretready");
+  assert.deepEqual(deltas, ["[redacted]", "ready"]);
+  assert.equal(client.redact("error: fixture-cloud-secret"), "error: [redacted]");
+  assert.deepEqual(requests, [
+    {
+      url: "https://ollama.com/api/chat",
+      authorization: "Bearer fixture-cloud-secret",
+    },
+  ]);
+});
+
+test("Ollama Cloud refuses noncanonical endpoints", () => {
+  for (const baseUrl of [
+    "https://ollama.evil",
+    "https://user:pass@ollama.com",
+    "https://ollama.com/other",
+    "http://127.0.0.1:11434",
+  ]) {
+    assert.throws(
+      () => createProviderClient({
+        providerId: "ollama-cloud",
+        transport: "ollama-chat",
+        baseUrl,
+        auth: { kind: "api-key", apiKey: "fixture-cloud-secret" },
+      }, async () => { throw new Error("must not request"); }),
+      /Ollama Cloud requires the hosted HTTPS endpoint/,
+    );
+  }
+});
 
 test("Ollama refuses streams without a final done event", async (t) => {
   const fixture = await listen((_request, response) => {

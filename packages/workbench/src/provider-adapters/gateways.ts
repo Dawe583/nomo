@@ -6,6 +6,10 @@ import {
 import { PROVIDER_MODEL_MANIFEST } from "../provider-catalog.ts";
 import type { HarnessSettings } from "../harness-settings.ts";
 import type { ProviderAdapterConfig, ProviderClient } from "./types.ts";
+import {
+  cloudflareAiGatewayRouteForTransport,
+  normalizeCloudflareAiGatewayEndpoint,
+} from "./cloudflare-ai-gateway-config.ts";
 import { OpenAIResponsesAdapter } from "./openai-responses.ts";
 
 const GATEWAYS: Readonly<Record<string, true>> = {
@@ -70,17 +74,18 @@ function validateGatewayEndpoint(config: ProviderAdapterConfig): string {
   if (config.providerId === "cloudflare-ai-gateway") {
     if (url.hostname !== "gateway.ai.cloudflare.com") throw new Error("Cloudflare AI Gateway requires its official HTTPS endpoint.");
     const match = /^\/v1\/([^/]+)\/([^/]+)\/(anthropic|compat|openai)(?:\/v1)?$/.exec(path);
-    if (!match || /[<>]/.test(decodeURIComponent(`${match[1]}${match[2]}`))) {
+    const expected = cloudflareAiGatewayRouteForTransport(config.transport);
+    const normalized = normalizeCloudflareAiGatewayEndpoint(url, config.transport);
+    if (!normalized) {
+      if (
+        match &&
+        (!expected ||
+          match[3] !== expected ||
+          (match[3] !== "anthropic" && path.endsWith("/v1")))
+      ) throw new Error("Cloudflare route conflicts with the declared provider transport.");
       throw new Error("Cloudflare AI Gateway endpoint must include resolved account, gateway, and route IDs.");
     }
-    const route = match[3];
-    const expected = config.transport === "anthropic-messages" ? "anthropic"
-      : config.transport === "openai-completions" ? "compat"
-      : config.transport === "openai-responses" ? "openai" : "";
-    if (!expected || route !== expected || (route !== "anthropic" && path.endsWith("/v1"))) {
-      throw new Error("Cloudflare route conflicts with the declared provider transport.");
-    }
-    return `https://gateway.ai.cloudflare.com${path}${route === "anthropic" && !path.endsWith("/v1") ? "/v1" : ""}`;
+    return normalized;
   }
   if (config.providerId === "vercel-ai-gateway") {
     if (config.transport !== "anthropic-messages" || url.hostname !== "ai-gateway.vercel.sh" || !["", "/v1"].includes(path)) {
@@ -120,7 +125,9 @@ function createGatewayFetch(config: ProviderAdapterConfig, request: typeof fetch
       headers.delete("x-api-key");
       headers.set("cf-aig-authorization", `Bearer ${config.auth.kind === "api-key" ? config.auth.apiKey : ""}`);
       if (config.transport === "anthropic-messages") {
-        headers.set("accept", "application/json");
+        if (!headers.get("accept")?.toLowerCase().includes("text/event-stream")) {
+          headers.set("accept", "application/json");
+        }
         headers.set("anthropic-dangerous-direct-browser-access", "true");
       }
     }

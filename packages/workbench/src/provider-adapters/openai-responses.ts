@@ -2,11 +2,12 @@ import type { Model, ModelMessage, ModelReply, ToolCall } from "../provider.ts";
 import { ProviderRequestError } from "../provider.ts";
 import { defaultHarnessSettings, type HarnessSettings } from "../harness-settings.ts";
 import type { ProviderAdapterConfig, ProviderClient } from "./types.ts";
+import { isBedrockMantleBaseUrl } from "./bedrock-mantle-config.ts";
 
 type ResponsesOutputItem = {
   readonly type?: string;
   readonly role?: string;
-  readonly content?: readonly { readonly type?: string; readonly text?: string }[];
+  readonly content?: readonly { readonly type?: string; readonly text?: string; readonly refusal?: string }[];
   readonly id?: string;
   readonly call_id?: string;
   readonly name?: string;
@@ -35,12 +36,13 @@ class ResponsesAdapter implements ProviderClient {
     protocol: "openai" | "azure",
   ) {
     const cloudflare = config.providerId === "cloudflare-ai-gateway";
+    const bedrockMantle = config.providerId === "bedrock-mantle";
     if (config.auth.kind !== "api-key") {
       throw new Error("Responses requires an API-key authentication profile.");
     }
     if (protocol === "openai") {
       if (
-        (config.providerId !== "openai" && !cloudflare) ||
+        (config.providerId !== "openai" && !cloudflare && !bedrockMantle) ||
         config.transport !== "openai-responses" ||
         config.azureOptions
       ) {
@@ -48,9 +50,12 @@ class ResponsesAdapter implements ProviderClient {
       }
       this.base = new URL(config.baseUrl.endsWith("/") ? config.baseUrl : `${config.baseUrl}/`);
       const path = this.base.pathname.replace(/\/$/, "");
+      const validHost = bedrockMantle
+        ? isBedrockMantleBaseUrl(config.baseUrl)
+        : this.base.hostname.toLowerCase() === (cloudflare ? "gateway.ai.cloudflare.com" : "api.openai.com");
       if (
         this.base.protocol !== "https:" ||
-        this.base.hostname.toLowerCase() !== (cloudflare ? "gateway.ai.cloudflare.com" : "api.openai.com") ||
+        !validHost ||
         (cloudflare && !/^\/v1\/[^/]+\/[^/]+\/openai$/.test(path)) ||
         this.base.username || this.base.password || this.base.search || this.base.hash
       ) throw new Error("OpenAI Responses requires its declared official HTTPS API endpoint.");
@@ -220,7 +225,10 @@ class ResponsesAdapter implements ProviderClient {
     const calls: ToolCall[] = [];
     for (const item of value.output ?? []) {
       if (item.type === "message") {
-        for (const block of item.content ?? []) if (block.type === "output_text" && typeof block.text === "string") text.push(block.text);
+        for (const block of item.content ?? []) {
+          if (block.type === "output_text" && typeof block.text === "string") text.push(block.text);
+          else if (block.type === "refusal" && typeof block.refusal === "string") text.push(block.refusal);
+        }
       } else if (item.type === "function_call") {
         if (!item.call_id || !item.name || typeof item.arguments !== "string") throw new Error("Provider returned an invalid function call.");
         try {
@@ -276,7 +284,10 @@ class ResponsesAdapter implements ProviderClient {
           let event: { type?: string; delta?: string; response?: ResponsesObject; message?: string };
           try { event = JSON.parse(data) as typeof event; }
           catch { throw new Error("Provider returned malformed stream data."); }
-          if (event.type === "response.output_text.delta" && typeof event.delta === "string") {
+          if (
+            (event.type === "response.output_text.delta" || event.type === "response.refusal.delta") &&
+            typeof event.delta === "string"
+          ) {
             text += event.delta;
             if (text.length > 2_000_000) throw new Error("Provider response exceeded the supported size.");
             await emit(event.delta);

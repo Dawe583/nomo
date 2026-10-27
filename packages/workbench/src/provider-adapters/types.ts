@@ -74,6 +74,19 @@ export const PROVIDER_API_BLOCKERS = {
   },
 } as const;
 
+/** Model transports intentionally unavailable in the dependency-free Harness. */
+export const PROVIDER_MODEL_TRANSPORT_BLOCKERS = {
+  "local-inference": {
+    source: "omp",
+    providerId: "local",
+    name: "OMP Local Inference",
+    status: "blocked",
+    reason: "NOMO keeps the default Harness dependency-free; the OMP local-inference transport requires an ONNX/MLX worker and downloaded model weights, not a generic HTTP API.",
+    evidence: "https://raw.githubusercontent.com/can1357/oh-my-pi/v18.6.2/packages/catalog/src/compat/rules/providers/local.kdl; https://raw.githubusercontent.com/can1357/oh-my-pi/v18.6.2/docs/local-models.md",
+  },
+} as const;
+
+
 export type BlockedProviderApi = keyof typeof PROVIDER_API_BLOCKERS;
 
 export const BLOCKED_PROVIDER_APIS_BY_PROVIDER: Readonly<Record<string, BlockedProviderApi>> = {
@@ -144,14 +157,20 @@ export type ProviderAuthProfile =
       readonly apiKey: string;
     }
   | {
-      readonly kind: "aws-credentials";
-      readonly accessKeyId?: string;
-      readonly secretAccessKey?: string;
-      readonly sessionToken?: string;
+      readonly kind: "aws-credential-chain";
     }
   | {
       readonly kind: "none";
     };
+export type AwsCredentialProvider = () => Promise<{
+  readonly accessKeyId: string;
+  readonly secretAccessKey: string;
+  readonly sessionToken?: string;
+}>;
+export type ProviderAdapterDependencies = {
+  readonly awsCredentialProvider?: AwsCredentialProvider;
+};
+
 export type ProviderAdapterConfig = {
   readonly providerId: string;
   readonly transport: ProviderTransport;

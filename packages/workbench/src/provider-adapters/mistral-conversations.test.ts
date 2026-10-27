@@ -44,18 +44,18 @@ test("Mistral typed transport lists models and streams text, incremental tools, 
           response.end(JSON.stringify({ data: [{ id: "mistral-small-latest", name: "Mistral Small" }] }));
           return;
         }
-        assert.equal(request.url, "/v1/chat/completions");
+        assert.equal(request.url, "/v1/conversations");
         assert.equal(request.method, "POST");
         assert.equal(request.headers.accept, "text/event-stream");
         completionBody = JSON.parse(await readBody(request));
         response.writeHead(200, { "content-type": "text/event-stream" });
         response.end([
-          'data: {"choices":[{"index":0,"delta":{"content":"hello "},"finish_reason":null}]}\n\n',
-          'data: {"choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"id":"call-1","type":"function","function":{"name":"inspect","arguments":"{\\"x\\":"}}]},"finish_reason":null}]}\n\n',
-          'data: {"choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"function":{"arguments":"1}"}}]},"finish_reason":null}]}\n\n',
-          'data: {"choices":[],"usage":{"prompt_tokens":4,"completion_tokens":2,"total_tokens":6}}\n\n',
-          'data: {"choices":[{"index":0,"delta":{"content":"world"},"finish_reason":"tool_calls"}]}\n\n',
-          "data: [DONE]\n\n",
+          'event: conversation.response.started\ndata: {"type":"conversation.response.started","conversation_id":"conversation-1"}\n\n',
+          'event: message.output.delta\ndata: {"type":"message.output.delta","id":"message-1","role":"assistant","content":"hello "}\n\n',
+          'event: function.call.delta\ndata: {"type":"function.call.delta","id":"function-1","name":"inspect","tool_call_id":"call-1","arguments":"{\\"x\\":"}\n\n',
+          'event: function.call.delta\ndata: {"type":"function.call.delta","id":"function-1","name":"inspect","tool_call_id":"call-1","arguments":"1}"}\n\n',
+          'event: message.output.delta\ndata: {"type":"message.output.delta","id":"message-2","role":"assistant","content":"world"}\n\n',
+          'event: conversation.response.done\ndata: {"type":"conversation.response.done","usage":{"prompt_tokens":4,"completion_tokens":2,"total_tokens":6}}\n\n',
         ].join(""));
       } catch (error) {
         fixtureError = error;
@@ -85,13 +85,17 @@ test("Mistral typed transport lists models and streams text, incremental tools, 
   assert.equal(modelRequest, true);
   assert.equal(completionBody?.model, "mistral-small-latest");
   assert.equal(completionBody?.stream, true);
-  assert.equal(completionBody?.max_tokens, 4096);
-  assert.deepEqual(completionBody?.messages, [
+  assert.deepEqual(completionBody?.inputs, [
     { role: "system", content: "Be concise" },
     { role: "user", content: "inspect" },
-    { role: "assistant", content: null, tool_calls: [{ id: "prior", type: "function", function: { name: "inspect", arguments: "{}" } }] },
-    { role: "tool", content: "prior result", tool_call_id: "prior" },
+    { type: "function.call", tool_call_id: "prior", name: "inspect", arguments: {} },
+    { type: "function.result", tool_call_id: "prior", result: "prior result" },
   ]);
+  assert.deepEqual(completionBody?.tools, [
+    { type: "function", function: { name: "inspect", description: "Inspect", parameters: { type: "object" } } },
+  ]);
+  assert.equal("messages" in (completionBody ?? {}), false);
+  assert.equal("max_tokens" in (completionBody ?? {}), false);
   assert.equal(reply.message.content, "hello world");
   assert.deepEqual(reply.message.tool_calls, [{ id: "call-1", type: "function", function: { name: "inspect", arguments: "{\"x\":1}" } }]);
   assert.deepEqual(reply.usage, { prompt_tokens: 4, completion_tokens: 2, total_tokens: 6 });
@@ -112,10 +116,10 @@ test("Mistral transport requires its typed API-key auth profile", () => {
   );
 });
 
-test("Mistral rejects an unterminated or length-finished completion", async (t) => {
+test("Mistral rejects a stream that ends before conversation.response.done", async (t) => {
   const fixture = await listen((_request, response) => {
     response.writeHead(200, { "content-type": "text/event-stream" });
-    response.end('data: {"choices":[{"delta":{"content":"partial"},"finish_reason":"length"}]}\n\n');
+    response.end('event: message.output.delta\ndata: {"type":"message.output.delta","id":"message-1","content":"partial"}\n\n');
   });
   t.after(() => new Promise<void>(resolve => fixture.server.close(() => resolve())));
   const client = createProviderClient({ ...config, baseUrl: fixture.url });
@@ -125,10 +129,10 @@ test("Mistral rejects an unterminated or length-finished completion", async (t) 
   );
 });
 
-test("Mistral refuses a clean SSE event stream that omits [DONE]", async (t) => {
+test("Mistral refuses a clean SSE event stream that omits conversation.response.done", async (t) => {
   const fixture = await listen((_request, response) => {
     response.writeHead(200, { "content-type": "text/event-stream" });
-    response.end('data: {"choices":[{"delta":{"content":"partial"},"finish_reason":"stop"}]}\n\n');
+    response.end('event: message.output.delta\ndata: {"type":"message.output.delta","id":"message-1","content":"partial"}\n\n');
   });
   t.after(() => new Promise<void>(resolve => fixture.server.close(() => resolve())));
   const client = createProviderClient({ ...config, baseUrl: fixture.url });
@@ -136,6 +140,31 @@ test("Mistral refuses a clean SSE event stream that omits [DONE]", async (t) => 
     client.complete("mistral-small-latest", [{ role: "user", content: "go" }], [], new AbortController().signal),
     /ended before completion/i,
   );
+});
+
+test("Mistral rejects data after conversation.response.done", async (t) => {
+  const fixture = await listen((_request, response) => {
+    response.writeHead(200, { "content-type": "text/event-stream" });
+    response.end([
+      'event: message.output.delta\ndata: {"type":"message.output.delta","id":"message-1","content":"before"}\n\n',
+      'event: conversation.response.done\ndata: {"type":"conversation.response.done","usage":{}}\n\n',
+      'event: message.output.delta\ndata: {"type":"message.output.delta","id":"message-2","content":"after"}\n\n',
+    ].join(""));
+  });
+  t.after(() => new Promise<void>(resolve => fixture.server.close(() => resolve())));
+  const client = createProviderClient({ ...config, baseUrl: fixture.url });
+  const deltas: string[] = [];
+  await assert.rejects(
+    client.complete(
+      "mistral-small-latest",
+      [{ role: "user", content: "go" }],
+      [],
+      new AbortController().signal,
+      delta => { deltas.push(delta); },
+    ),
+    /data after completion/i,
+  );
+  assert.deepEqual(deltas, ["before"]);
 });
 
 test("Mistral non-success responses expose status without the provider error body", async (t) => {
@@ -155,9 +184,9 @@ test("Mistral redacts an API key split across content deltas", async (t) => {
   const fixture = await listen((_request, response) => {
     response.writeHead(200, { "content-type": "text/event-stream" });
     response.end([
-      `data: ${JSON.stringify({ choices: [{ delta: { content: "prefix mistral-fixture-" }, finish_reason: null }] })}\n\n`,
-      `data: ${JSON.stringify({ choices: [{ delta: { content: "secret suffix" }, finish_reason: "stop" }] })}\n\n`,
-      "data: [DONE]\n\n",
+      `event: message.output.delta\ndata: ${JSON.stringify({ type: "message.output.delta", id: "message-1", content: "prefix mistral-fixture-" })}\n\n`,
+      `event: message.output.delta\ndata: ${JSON.stringify({ type: "message.output.delta", id: "message-1", content: "secret suffix" })}\n\n`,
+      `event: conversation.response.done\ndata: ${JSON.stringify({ type: "conversation.response.done", usage: {} })}\n\n`,
     ].join(""));
   });
   t.after(() => new Promise<void>(resolve => fixture.server.close(() => resolve())));
@@ -171,7 +200,7 @@ test("Mistral redacts an API key split across content deltas", async (t) => {
 test("Mistral rejects an oversized SSE frame", async (t) => {
   const fixture = await listen((_request, response) => {
     response.writeHead(200, { "content-type": "text/event-stream" });
-    response.end(`data: ${JSON.stringify({ choices: [{ delta: { content: "x".repeat(2_000_001) }, finish_reason: "stop" }] })}\n\n`);
+    response.end(`event: message.output.delta\ndata: ${JSON.stringify({ type: "message.output.delta", id: "message-1", content: "x".repeat(2_000_001) })}\n\n`);
   });
   t.after(() => new Promise<void>(resolve => fixture.server.close(() => resolve())));
   const client = createProviderClient({ ...config, baseUrl: fixture.url });
@@ -187,11 +216,11 @@ test("Mistral caps cumulative response text across bounded SSE frames", async (t
   const fixture = await listen((_request, response) => {
     response.writeHead(200, { "content-type": "text/event-stream" });
     void (async () => {
-      response.write(`data: ${JSON.stringify({ choices: [{ delta: { content: "x".repeat(1_100_000) }, finish_reason: null }] })}\n\n`);
+      response.write(`event: message.output.delta\ndata: ${JSON.stringify({ type: "message.output.delta", id: "message-1", content: "x".repeat(1_100_000) })}\n\n`);
       await firstFrameConsumed;
       response.end([
-        `data: ${JSON.stringify({ choices: [{ delta: { content: "y".repeat(1_000_001) }, finish_reason: "stop" }] })}\n\n`,
-        "data: [DONE]\n\n",
+        `event: message.output.delta\ndata: ${JSON.stringify({ type: "message.output.delta", id: "message-1", content: "y".repeat(1_000_001) })}\n\n`,
+        `event: conversation.response.done\ndata: ${JSON.stringify({ type: "conversation.response.done", usage: {} })}\n\n`,
       ].join(""));
     })();
   });
@@ -210,11 +239,12 @@ test("Mistral bounds cumulative streamed tool arguments", async (t) => {
   const argumentsText = JSON.stringify({ value: "x".repeat(1_000_001) });
   const fixture = await listen((_request, response) => {
     response.writeHead(200, { "content-type": "text/event-stream" });
-    response.end(`data: ${JSON.stringify({
-      choices: [{
-        delta: { tool_calls: [{ index: 0, id: "call-1", type: "function", function: { name: "inspect", arguments: argumentsText } }] },
-        finish_reason: null,
-      }],
+    response.end(`event: function.call.delta\ndata: ${JSON.stringify({
+      type: "function.call.delta",
+      id: "function-1",
+      name: "inspect",
+      tool_call_id: "call-1",
+      arguments: argumentsText,
     })}\n\n`);
   });
   t.after(() => new Promise<void>(resolve => fixture.server.close(() => resolve())));
@@ -229,8 +259,7 @@ test("Mistral rejects an empty completed assistant reply", async (t) => {
   const fixture = await listen((_request, response) => {
     response.writeHead(200, { "content-type": "text/event-stream" });
     response.end([
-      `data: ${JSON.stringify({ choices: [{ delta: {}, finish_reason: "stop" }] })}\n\n`,
-      "data: [DONE]\n\n",
+      `event: conversation.response.done\ndata: ${JSON.stringify({ type: "conversation.response.done", usage: {} })}\n\n`,
     ].join(""));
   });
   t.after(() => new Promise<void>(resolve => fixture.server.close(() => resolve())));
@@ -246,8 +275,8 @@ test("Mistral aborts an in-flight stream without accepting partial output", asyn
   let fallbackTimer: ReturnType<typeof setTimeout> | undefined;
   const fixture = await listen((_request, response) => {
     response.writeHead(200, { "content-type": "text/event-stream" });
-    response.write('data: {"choices":[{"delta":{"content":"partial"},"finish_reason":null}]}\n\n');
-    fallbackTimer = setTimeout(() => response.end("data: [DONE]\n\n"), 500);
+    response.write('event: message.output.delta\ndata: {"type":"message.output.delta","id":"message-1","content":"partial"}\n\n');
+    fallbackTimer = setTimeout(() => response.end(`event: conversation.response.done\ndata: ${JSON.stringify({ type: "conversation.response.done", usage: {} })}\n\n`), 500);
     response.on("close", () => clearTimeout(fallbackTimer));
   });
   t.after(() => new Promise<void>(resolve => fixture.server.close(() => resolve())));
@@ -262,4 +291,22 @@ test("Mistral aborts an in-flight stream without accepting partial output", asyn
     error => error instanceof Error && error.name === "AbortError",
   );
   assert.deepEqual(deltas, ["partial"]);
+});
+
+test("Mistral rejects unsupported tool execution events instead of returning partial text", async (t) => {
+  const fixture = await listen((_request, response) => {
+    response.writeHead(200, { "content-type": "text/event-stream" });
+    response.end([
+      'event: message.output.delta\ndata: {"type":"message.output.delta","id":"message-1","content":"partial"}\n\n',
+      'event: tool.execution.started\ndata: {"type":"tool.execution.started","id":"execution-1","name":"web_search"}\n\n',
+      'event: conversation.response.done\ndata: {"type":"conversation.response.done","usage":{}}\n\n',
+    ].join(""));
+  });
+  t.after(() => new Promise<void>(resolve => fixture.server.close(() => resolve())));
+  const client = createProviderClient({ ...config, baseUrl: fixture.url });
+
+  await assert.rejects(
+    client.complete("mistral-small-latest", [{ role: "user", content: "Search then answer." }], [], new AbortController().signal),
+    /unsupported.*event|unsupported.*tool/i,
+  );
 });

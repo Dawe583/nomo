@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import type {
   ProviderAdapterConfig,
   ProviderClient,
@@ -107,9 +108,19 @@ export type Model = {
   readonly capabilities?: readonly string[];
   readonly maxTokens?: number;
 };
+export type ImageMimeType = "image/jpeg" | "image/png" | "image/webp";
+export type ModelImageInput = {
+  readonly mimeType: ImageMimeType;
+  /** Canonical standard-base64 image bytes; persisted inside encrypted workspace state. */
+  readonly data: string;
+};
+export type ModelImage = ModelImageInput & { readonly id: string };
+
 export type ModelMessage = {
   readonly role: "system" | "user" | "assistant" | "tool";
   readonly content: string | null;
+  /** Images are accepted on user messages only and are not copied into events. */
+  readonly images?: readonly ModelImage[];
   readonly tool_calls?: readonly ToolCall[];
   readonly tool_call_id?: string;
 };
@@ -189,6 +200,9 @@ export class CompatibleProvider implements ProviderClient {
     });
     this.anthropic = new AnthropicMessagesAdapter({
       send: (body, signal) => this.json("messages", body, signal),
+      stream: (body, signal) => this.response("messages", body, signal, "text/event-stream"),
+      redact: text => this.redact(text),
+      apiKey: this.config.apiKey,
       resolveSettings: this.resolveSettings,
     });
   }
@@ -224,7 +238,7 @@ export class CompatibleProvider implements ProviderClient {
     onDelta?: (text: string) => void | Promise<void>,
   ): Promise<ModelReply> {
     if (this.config.kind === "anthropic")
-      return this.anthropic.complete(model, messages, tools, signal);
+      return this.anthropic.complete(model, messages, tools, signal, onDelta);
     return this.completions.complete(model, messages, tools, signal, onDelta);
   }
   redact(text: string): string {
@@ -255,6 +269,14 @@ export class CompatibleProvider implements ProviderClient {
       emission = hold ? emission.slice(-hold) : "";
       if (visible) await onDelta?.(visible);
     };
+    const appendContent = async (text: string) => {
+      content += text;
+      if (content.length > 2_000_000)
+        throw new Error("Provider response exceeded the supported size.");
+      await emit(text);
+    };
+    let legacyFunctionCall = false;
+    let finishReason: string | undefined;
     let usage: ModelReply["usage"];
     const calls = new Map<number, ToolCall>();
     const consume = async (frame: string) => {
@@ -264,6 +286,7 @@ export class CompatibleProvider implements ProviderClient {
         .map((line) => line.slice(5).trimStart())
         .join("\n");
       if (!raw) return;
+      if (terminal) throw new Error("Provider returned data after completion.");
       if (raw === "[DONE]") {
         terminal = true;
         return;
@@ -280,23 +303,50 @@ export class CompatibleProvider implements ProviderClient {
         (item: { index?: number }) => (item.index ?? 0) === 0,
       );
       if (!choice) return;
-      if (
-        choice.finish_reason === "length" ||
-        choice.finish_reason === "content_filter"
-      )
+      if (finish) throw new Error("Provider returned data after completion.");
+      const chunkFinishReason = choice.finish_reason;
+      if (chunkFinishReason === "length" || chunkFinishReason === "content_filter")
         throw new Error(
           "Provider response was truncated. No tools were executed.",
         );
-      if (choice.finish_reason) finish = true;
+      if (chunkFinishReason !== undefined && chunkFinishReason !== null) {
+        if (
+          chunkFinishReason !== "stop" &&
+          chunkFinishReason !== "tool_calls" &&
+          chunkFinishReason !== "function_call"
+        ) throw new Error("Provider returned an invalid completion status.");
+        finish = true;
+        finishReason = chunkFinishReason;
+      }
       const delta = choice.delta;
       if (!delta) return;
-      if (typeof delta.content === "string") {
-        content += delta.content;
-        if (content.length > 2_000_000)
-          throw new Error("Provider response exceeded the supported size.");
-        await emit(delta.content);
+      if (typeof delta.content === "string") await appendContent(delta.content);
+      if (typeof delta.refusal === "string") await appendContent(delta.refusal);
+      const functionDelta = delta.function_call;
+      if (functionDelta !== undefined && functionDelta !== null) {
+        if (
+          typeof functionDelta !== "object" ||
+          Array.isArray(functionDelta) ||
+          (functionDelta.name !== undefined && typeof functionDelta.name !== "string") ||
+          (functionDelta.arguments !== undefined && typeof functionDelta.arguments !== "string") ||
+          (calls.size > 0 && !legacyFunctionCall)
+        ) throw new Error("Provider returned invalid tool stream data.");
+        const previous = calls.get(0);
+        const args = (previous?.function.arguments ?? "") + (functionDelta.arguments ?? "");
+        if (args.length > 1_000_000)
+          throw new Error("Provider returned invalid tool stream data.");
+        calls.set(0, {
+          id: previous?.id ?? `call_${randomUUID()}`,
+          type: "function",
+          function: {
+            name: (previous?.function.name ?? "") + (functionDelta.name ?? ""),
+            arguments: args,
+          },
+        });
+        legacyFunctionCall = true;
       }
       for (const part of delta.tool_calls ?? []) {
+        if (legacyFunctionCall) throw new Error("Provider returned invalid tool stream data.");
         if (!Number.isInteger(part.index) || part.index < 0 || part.index > 31)
           throw new Error("Provider returned invalid tool stream index.");
         const previous = calls.get(part.index);
@@ -341,8 +391,10 @@ export class CompatibleProvider implements ProviderClient {
         throw new Error(
           "Provider stream ended before completion. Retry the response.",
         );
-      if (calls.size && !finish)
-        throw new Error("Provider tool stream ended without a finish reason.");
+      if (legacyFunctionCall && finishReason !== "function_call")
+        throw new Error("Provider returned an invalid completion status.");
+      if (!finish)
+        throw new Error("Provider stream ended without a finish reason.");
       const toolCalls = [...calls.entries()]
         .sort(([a], [b]) => a - b)
         .map(([, call]) => {
@@ -373,7 +425,7 @@ export class CompatibleProvider implements ProviderClient {
       reader.releaseLock();
     }
   }
-  private async response(path: string, body?: unknown, signal?: AbortSignal) {
+  private async response(path: string, body?: unknown, signal?: AbortSignal, accept?: string) {
     let response: Response;
     try {
       response = await this.request(new URL(path, this.base), {
@@ -388,6 +440,7 @@ export class CompatibleProvider implements ProviderClient {
               ? { authorization: `Bearer ${this.config.apiKey}` }
               : {}),
           "content-type": "application/json",
+          ...(accept ? { accept } : {}),
         },
         ...(body === undefined ? {} : { body: JSON.stringify(body) }),
         redirect: "error",

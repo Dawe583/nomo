@@ -5,9 +5,13 @@ import type { ProviderAdapterConfig, ProviderClient, ProviderVertexOptions } fro
 import { PROVIDER_MODEL_MANIFEST } from "../provider-catalog.ts";
 import { isStandardVertexOptions, standardVertexBaseUrl } from "./google-vertex-config.ts";
 
-type GooglePart = { text?: string; functionCall?: { name?: string; args?: unknown } };
+type GooglePart = {
+  text?: string;
+  inlineData?: { mimeType: string; data: string };
+  functionCall?: { id?: string; name?: string; args?: unknown };
+};
 type GoogleChunk = {
-  candidates?: Array<{ content?: { parts?: GooglePart[] }; finishReason?: string }>;
+  candidates?: Array<{ index?: number; content?: { parts?: GooglePart[] }; finishReason?: string }>;
   usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number; totalTokenCount?: number };
 };
 
@@ -79,17 +83,31 @@ export class GoogleGenerativeAIAdapter implements ProviderClient {
       }
       return [...models.values()];
     }
-    const response = await this.fetch(new URL("models", this.base), undefined, AbortSignal.timeout(15000));
-    let body: { models?: unknown };
-    try { body = await response.json() as typeof body; }
-    catch { throw new Error("Provider returned invalid JSON."); }
-    if (!Array.isArray(body.models)) throw new Error("Provider returned an invalid model catalog.");
-    return body.models.flatMap((item: unknown) => {
-      if (!item || typeof item !== "object" || !("name" in item) || typeof item.name !== "string") return [];
-      const id = item.name.startsWith("models/") ? item.name.slice("models/".length) : item.name;
-      if (!id || ("supportedGenerationMethods" in item && Array.isArray(item.supportedGenerationMethods) && !item.supportedGenerationMethods.includes("generateContent"))) return [];
-      return [{ id, name: "displayName" in item && typeof item.displayName === "string" ? item.displayName : id }];
-    });
+    const signal = AbortSignal.timeout(15000);
+    const models: Model[] = [];
+    const pageTokens = new Set<string>();
+    let pageToken: string | undefined;
+    while (true) {
+      const url = new URL("models", this.base);
+      if (pageToken !== undefined) url.searchParams.set("pageToken", pageToken);
+      const response = await this.fetch(url, undefined, signal);
+      let body: { models?: unknown; nextPageToken?: unknown };
+      try { body = await response.json() as typeof body; }
+      catch { throw new Error("Provider returned invalid JSON."); }
+      if (!Array.isArray(body.models)) throw new Error("Provider returned an invalid model catalog.");
+      models.push(...body.models.flatMap((item: unknown) => {
+        if (!item || typeof item !== "object" || !("name" in item) || typeof item.name !== "string") return [];
+        const id = item.name.startsWith("models/") ? item.name.slice("models/".length) : item.name;
+        if (!id || ("supportedGenerationMethods" in item && Array.isArray(item.supportedGenerationMethods) && !item.supportedGenerationMethods.includes("generateContent"))) return [];
+        return [{ id, name: "displayName" in item && typeof item.displayName === "string" ? item.displayName : id }];
+      }));
+      if (!Object.prototype.hasOwnProperty.call(body, "nextPageToken")) return models;
+      const nextPageToken = body.nextPageToken;
+      if (typeof nextPageToken !== "string" || !nextPageToken || pageTokens.has(nextPageToken))
+        throw new Error("Provider returned an invalid model catalog.");
+      pageTokens.add(nextPageToken);
+      pageToken = nextPageToken;
+    }
   }
 
   async complete(
@@ -104,13 +122,16 @@ export class GoogleGenerativeAIAdapter implements ProviderClient {
     for (const message of messages) for (const call of message.tool_calls ?? []) toolNames.set(call.id, call.function.name);
     const contents: Array<{ role: "user" | "model"; parts: unknown[] }> = [];
     for (const message of messages) {
+      if (message.images?.length && message.role !== "user") {
+        throw new Error("Google GenAI images are supported only on user messages.");
+      }
       if (message.role === "system") continue;
       if (message.role === "tool") {
         if (!message.tool_call_id) throw new Error("Google function response is missing its call ID.");
         const name = toolNames.get(message.tool_call_id);
         if (!name) throw new Error("Google function response has no matching prior tool call.");
         const previous = contents.at(-1);
-        const part = { functionResponse: { name, response: { result: message.content ?? "" } } };
+        const part = { functionResponse: { id: message.tool_call_id, name, response: { result: message.content ?? "" } } };
         if (previous?.role === "user") previous.parts.push(part);
         else contents.push({ role: "user", parts: [part] });
       } else if (message.role === "assistant" && message.tool_calls?.length) {
@@ -121,11 +142,22 @@ export class GoogleGenerativeAIAdapter implements ProviderClient {
           try { args = JSON.parse(call.function.arguments); }
           catch { throw new Error("Prior tool arguments are invalid."); }
           if (!args || typeof args !== "object" || Array.isArray(args)) throw new Error("Prior tool arguments are invalid.");
-          parts.push({ functionCall: { name: call.function.name, args } });
+          parts.push({ functionCall: { id: call.id, name: call.function.name, args } });
         }
         contents.push({ role: "model", parts });
       } else {
-        contents.push({ role: message.role === "assistant" ? "model" : "user", parts: [{ text: message.content ?? "" }] });
+        const parts: unknown[] = [{ text: message.content ?? "" }];
+        for (const image of message.images ?? []) {
+          if (
+            (image.mimeType !== "image/jpeg" && image.mimeType !== "image/png" && image.mimeType !== "image/webp") ||
+            (typeof image.data !== "string" || !image.data) ||
+            !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(image.data)
+          ) {
+            throw new Error("Google GenAI image has an unsupported MIME type or invalid data.");
+          }
+          parts.push({ inlineData: { mimeType: image.mimeType, data: image.data } });
+        }
+        contents.push({ role: message.role === "assistant" ? "model" : "user", parts });
       }
     }
     const functionDeclarations = tools.map(value => {
@@ -192,6 +224,12 @@ export class GoogleGenerativeAIAdapter implements ProviderClient {
           let chunk: GoogleChunk;
           try { chunk = JSON.parse(data) as GoogleChunk; }
           catch { throw new Error("Provider returned malformed stream data."); }
+          if (chunk.candidates && (chunk.candidates.length > 1 || chunk.candidates.some(candidate => candidate.index !== undefined && candidate.index !== 0))) {
+            throw new Error("Provider returned an unexpected candidate count or index.");
+          }
+          if (finished && chunk.candidates?.some(candidate => (candidate.content?.parts?.length ?? 0) > 0)) {
+            throw new Error("Provider returned candidate content after completion.");
+          }
           if (chunk.usageMetadata) usage = {
             prompt_tokens: chunk.usageMetadata.promptTokenCount,
             completion_tokens: chunk.usageMetadata.candidatesTokenCount,
@@ -211,7 +249,7 @@ export class GoogleGenerativeAIAdapter implements ProviderClient {
               }
               if (part.functionCall) {
                 if (!part.functionCall.name || !part.functionCall.args || typeof part.functionCall.args !== "object" || Array.isArray(part.functionCall.args)) throw new Error("Provider returned an invalid function call.");
-                calls.push({ id: `google-call-${calls.length}`, type: "function", function: { name: part.functionCall.name, arguments: JSON.stringify(part.functionCall.args) } });
+                calls.push({ id: part.functionCall.id ?? `google-call-${calls.length}`, type: "function", function: { name: part.functionCall.name, arguments: JSON.stringify(part.functionCall.args) } });
               }
             }
           }

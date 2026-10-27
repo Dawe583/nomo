@@ -1,7 +1,20 @@
 import { setTimeout as delay } from "node:timers/promises";
+import { randomUUID } from "node:crypto";
 import { FREE_MODEL_BY_ORIGIN } from "../provider-defaults.ts";
 import { ProviderRequestError, type ModelMessage, type ModelReply, type ToolCall } from "../provider.ts";
 import type { HarnessSettings } from "../harness-settings.ts";
+
+type OpenAICompletionMessage = {
+  readonly role?: string;
+  readonly content?: string | null | readonly {
+    readonly type?: string;
+    readonly text?: string;
+    readonly refusal?: string;
+  }[];
+  readonly refusal?: string | null;
+  readonly tool_calls?: readonly ToolCall[];
+  readonly function_call?: { readonly name?: string; readonly arguments?: string } | null;
+};
 
 export type OpenAICompletionsDependencies = {
   readonly origin: string;
@@ -9,7 +22,7 @@ export type OpenAICompletionsDependencies = {
   readonly resolveSettings: () => HarnessSettings;
   readonly response: (path: string, body?: unknown, signal?: AbortSignal) => Promise<Response>;
   readonly decode: (response: Response, signal: AbortSignal) => Promise<{
-    choices?: Array<{ message?: ModelMessage; finish_reason?: string }>;
+    choices?: Array<{ message?: OpenAICompletionMessage; finish_reason?: string }>;
     usage?: ModelReply["usage"];
   }>;
   readonly streamReply: (
@@ -78,11 +91,34 @@ export class OpenAICompletionsAdapter {
     if (choice?.finish_reason === "length" || choice?.finish_reason === "content_filter") {
       throw new Error("Provider response was truncated. No tools were executed.");
     }
+    if (
+      choice?.finish_reason !== "stop" &&
+      choice?.finish_reason !== "tool_calls" &&
+      choice?.finish_reason !== "function_call"
+    ) throw new Error("Provider returned an invalid completion status.");
     const message = choice?.message;
     if (
       message?.role !== "assistant" ||
-      (message.content !== null && typeof message.content !== "string" && message.content !== undefined)
+      (message.content !== null && typeof message.content !== "string" &&
+        !Array.isArray(message.content) && message.content !== undefined)
     ) throw new Error("Provider returned an invalid response.");
+    if (
+      message.refusal !== undefined &&
+      message.refusal !== null &&
+      typeof message.refusal !== "string"
+    ) throw new Error("Provider returned an invalid response.");
+    let content = typeof message.content === "string" ? message.content : null;
+    if (Array.isArray(message.content)) {
+      const parts: string[] = [];
+      for (const part of message.content) {
+        if (!part || typeof part !== "object") throw new Error("Provider returned an invalid response.");
+        if (part.type === "text" && typeof part.text === "string") parts.push(part.text);
+        else if (part.type === "refusal" && typeof part.refusal === "string") parts.push(part.refusal);
+        else throw new Error("Provider returned an invalid response.");
+      }
+      content = parts.join("");
+    }
+    if (!content?.trim() && message.refusal?.trim()) content = message.refusal;
     if (
       message.tool_calls !== undefined &&
       (!Array.isArray(message.tool_calls) || !message.tool_calls.every((call: ToolCall) =>
@@ -91,14 +127,31 @@ export class OpenAICompletionsAdapter {
         typeof call.function?.name === "string" &&
         typeof call.function?.arguments === "string"))
     ) throw new Error("Provider returned invalid tool calls.");
-    if (!message.content?.trim() && !message.tool_calls?.length) {
+    let toolCalls = message.tool_calls;
+    if (message.function_call !== undefined && message.function_call !== null) {
+      if (
+        choice?.finish_reason !== "function_call" ||
+        typeof message.function_call.name !== "string" ||
+        typeof message.function_call.arguments !== "string" ||
+        toolCalls?.length
+      ) throw new Error("Provider returned invalid tool calls.");
+      toolCalls = [{
+        id: `call_${randomUUID()}`,
+        type: "function",
+        function: {
+          name: message.function_call.name,
+          arguments: message.function_call.arguments,
+        },
+      }];
+    }
+    if (!content?.trim() && !toolCalls?.length) {
       throw new Error("Provider returned no answer. Retry the response.");
     }
     return {
       message: {
         role: "assistant",
-        content: message.content ?? null,
-        ...(message.tool_calls ? { tool_calls: message.tool_calls } : {}),
+        content,
+        ...(toolCalls ? { tool_calls: toolCalls } : {}),
       },
       usage: decoded.usage,
     };

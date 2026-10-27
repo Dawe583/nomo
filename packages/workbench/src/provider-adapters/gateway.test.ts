@@ -16,12 +16,12 @@ function fixtureFetch(calls: Array<{ url: string; init?: RequestInit }>): typeof
       ] });
     }
     if (url.endsWith("/messages")) {
-      return Response.json({ content: [{ type: "text", text: "ok" }], usage: { input_tokens: 1, output_tokens: 1 } });
+      return Response.json({ content: [{ type: "text", text: "ok" }], stop_reason: "end_turn", usage: { input_tokens: 1, output_tokens: 1 } });
     }
     if (url.endsWith("/responses")) {
       return Response.json({ status: "completed", output: [{ type: "message", role: "assistant", content: [{ type: "output_text", text: "ok" }] }] });
     }
-    return Response.json({ choices: [{ message: { role: "assistant", content: "ok" } }] });
+    return Response.json({ choices: [{ message: { role: "assistant", content: "ok" }, finish_reason: "stop" }] });
   };
 }
 
@@ -119,6 +119,54 @@ test("Cloudflare Anthropic gateway sends only its gateway credential to its Anth
   assert.equal(headers.get("anthropic-dangerous-direct-browser-access"), "true");
   assert.equal(headers.has("authorization"), false);
   assert.equal(headers.has("x-api-key"), false);
+});
+test("Cloudflare Anthropic gateway preserves SSE negotiation end to end", async () => {
+  const calls: Array<{ url: string; init?: RequestInit }> = [];
+  const config: ProviderAdapterConfig = {
+    providerId: "cloudflare-ai-gateway",
+    transport: "anthropic-messages",
+    baseUrl: "https://gateway.ai.cloudflare.com/v1/account/gateway/anthropic",
+    auth: { kind: "api-key", apiKey: "fixture-cf-token" },
+    model: "alibaba/qwen3-max",
+  };
+  const events = [
+    { type: "message_start", message: { content: [], usage: { input_tokens: 2 } } },
+    { type: "content_block_start", index: 0, content_block: { type: "text", text: "" } },
+    { type: "content_block_delta", index: 0, delta: { type: "text_delta", text: "answer" } },
+    { type: "content_block_stop", index: 0 },
+    { type: "content_block_start", index: 1, content_block: { type: "tool_use", id: "toolu_fixture", name: "write_file", input: {} } },
+    { type: "content_block_delta", index: 1, delta: { type: "input_json_delta", partial_json: "{\"path\":\"file.txt\"}" } },
+    { type: "content_block_stop", index: 1 },
+    { type: "message_delta", delta: { stop_reason: "tool_use" }, usage: { output_tokens: 5 } },
+    { type: "message_stop" },
+  ];
+  const request: typeof fetch = async (input, init) => {
+    calls.push({ url: String(input), init });
+    const accept = new Headers(init?.headers).get("accept");
+    if (accept !== "text/event-stream") return Response.json({ content: [], stop_reason: "end_turn" });
+    const body = events.map(event => `event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`).join("");
+    return new Response(body, { headers: { "content-type": "text/event-stream" } });
+  };
+  const client = createProviderClient(config, request);
+  const deltas: string[] = [];
+  const reply = await client.complete(
+    config.model!,
+    [],
+    [{ type: "function", function: { name: "write_file", description: "Write a file", parameters: { type: "object" } } }],
+    new AbortController().signal,
+    delta => { if (delta) deltas.push(delta); },
+  );
+  const headers = new Headers(calls[0]?.init?.headers);
+  assert.equal(headers.get("accept"), "text/event-stream");
+  assert.equal(headers.get("cf-aig-authorization"), "Bearer fixture-cf-token");
+  assert.deepEqual(deltas, ["answer"]);
+  assert.equal(reply.message.content, "answer");
+  assert.deepEqual(reply.message.tool_calls?.map(call => ({
+    id: call.id,
+    name: call.function.name,
+    arguments: call.function.arguments,
+  })), [{ id: "toolu_fixture", name: "write_file", arguments: "{\"path\":\"file.txt\"}" }]);
+  assert.deepEqual(reply.usage, { prompt_tokens: 2, completion_tokens: 5, total_tokens: 7 });
 });
 
 test("Cloudflare OpenAI-compatible routes preserve model names and provider-specific auth", async () => {

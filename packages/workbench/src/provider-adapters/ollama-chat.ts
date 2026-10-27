@@ -10,18 +10,61 @@ const MAX_TOOL_ARGUMENT_CHARS = 1_000_000;
 
 export class OllamaChatAdapter implements ProviderClient {
   private readonly base: URL;
+  private readonly apiKey: string | undefined;
+  private readonly model: string | undefined;
+  private readonly authorization: string | undefined;
   private readonly request: typeof fetch;
   private readonly resolveSettings: () => HarnessSettings;
-
   constructor(config: ProviderAdapterConfig, request: typeof fetch = fetch, settings: Partial<HarnessSettings> | (() => HarnessSettings) = {}) {
-    if (config.providerId !== "ollama" || config.transport !== "ollama-chat" || config.auth.kind !== "none") {
-      throw new Error("Ollama Chat requires an explicit no-auth provider descriptor.");
+    if (config.transport !== "ollama-chat") {
+      throw new Error("Ollama requires an explicit native chat descriptor.");
     }
     let base: URL;
     try { base = new URL(config.baseUrl); }
-    catch { throw new Error("Ollama Chat requires a loopback HTTP endpoint."); }
-    if (base.protocol !== "http:" || !isLoopbackHostname(base.hostname) || base.username || base.password || base.search || base.hash || base.pathname !== "/") {
-      throw new Error("Ollama Chat requires a loopback HTTP endpoint.");
+    catch {
+      throw new Error(config.providerId === "ollama-cloud"
+        ? "Ollama Cloud requires the hosted HTTPS endpoint."
+        : "Ollama Chat requires a loopback HTTP endpoint.");
+    }
+    if (config.providerId === "ollama-cloud") {
+      if (
+        config.auth.kind !== "api-key" ||
+        !config.auth.apiKey.trim() ||
+        base.origin !== "https://ollama.com" ||
+        base.username ||
+        base.password ||
+        base.pathname !== "/" ||
+        base.search ||
+        base.hash
+      ) {
+        throw new Error("Ollama Cloud requires the hosted HTTPS endpoint and an API key.");
+      }
+      if (!config.model?.trim() || config.model !== config.model.trim()) {
+        throw new Error("Ollama Cloud requires a manifest model.");
+      }
+      this.apiKey = config.auth.apiKey;
+      this.model = config.model;
+      this.authorization = `Bearer ${this.apiKey}`;
+    } else if (
+      config.providerId === "ollama" &&
+      config.auth.kind === "none" &&
+      base.protocol === "http:" &&
+      isLoopbackHostname(base.hostname) &&
+      !base.username &&
+      !base.password &&
+      !base.search &&
+      !base.hash &&
+      base.pathname === "/"
+    ) {
+      this.apiKey = undefined;
+      this.model = undefined;
+      this.authorization = undefined;
+    } else if (config.providerId === "ollama") {
+      throw new Error(config.auth.kind === "none"
+        ? "Ollama Chat requires a loopback HTTP endpoint."
+        : "Ollama Chat requires no authentication.");
+    } else {
+      throw new Error("Ollama requires an explicit native chat descriptor.");
     }
     this.base = base;
     this.request = request;
@@ -29,6 +72,10 @@ export class OllamaChatAdapter implements ProviderClient {
   }
 
   async models(): Promise<readonly Model[]> {
+    if (this.apiKey) {
+      if (!this.model) throw new Error("Ollama Cloud requires a manifest model.");
+      return [{ id: this.model, name: this.model }];
+    }
     const body = await this.json("tags");
     if (!Array.isArray(body.models)) throw new Error("Ollama returned an invalid model catalog.");
     const seen = new Set<string>();
@@ -63,9 +110,23 @@ export class OllamaChatAdapter implements ProviderClient {
     let done = false;
     let doneReason: string | undefined;
     let text = "";
+    let emission = "";
     let promptTokens: number | undefined;
     let completionTokens: number | undefined;
     const calls = new Map<number, { name: string; arguments: Record<string, unknown> }>();
+    const emit = async (value: string, flush = false): Promise<void> => {
+      if (!onDelta) return;
+      emission = this.redact(emission + value);
+      let hold = 0;
+      if (!flush && this.apiKey) {
+        for (let index = 1; index < this.apiKey.length; index++) {
+          if (emission.endsWith(this.apiKey.slice(0, index))) hold = index;
+        }
+      }
+      const visible = emission.slice(0, emission.length - hold);
+      emission = hold ? emission.slice(-hold) : "";
+      if (visible) await onDelta(visible);
+    };
     const processLine = async (line: string): Promise<void> => {
       if (!line.trim()) return;
       if (done) throw new Error("Ollama returned data after completion.");
@@ -78,7 +139,7 @@ export class OllamaChatAdapter implements ProviderClient {
           if (typeof event.message.content !== "string") throw new Error("Ollama returned an invalid chat event.");
           text += event.message.content;
           if (text.length > MAX_STREAM_CHARS) throw new Error("Provider response exceeded the supported size.");
-          if (event.message.content && onDelta) await onDelta(event.message.content);
+          if (event.message.content) await emit(event.message.content);
         }
         if (event.message.tool_calls !== undefined) {
           if (!Array.isArray(event.message.tool_calls) || event.message.tool_calls.length > 32) throw new Error("Ollama returned an invalid tool-call stream.");
@@ -141,10 +202,13 @@ export class OllamaChatAdapter implements ProviderClient {
       ...(promptTokens !== undefined && completionTokens !== undefined ? { total_tokens: promptTokens + completionTokens } : {}),
     } : undefined;
     if (!text.trim() && !toolCalls.length) throw new Error("Ollama returned no answer.");
+    await emit("", true);
     return { message: { role: "assistant", content: text, ...(toolCalls.length ? { tool_calls: toolCalls } : {}) }, ...(usage ? { usage } : {}) };
   }
 
-  redact(text: string): string { return text; }
+  redact(text: string): string {
+    return this.apiKey ? text.split(this.apiKey).join("[redacted]") : text;
+  }
 
   private async json(path: string): Promise<Record<string, unknown>> {
     const response = await this.fetch(path, { headers: { accept: "application/json" } });
@@ -156,8 +220,15 @@ export class OllamaChatAdapter implements ProviderClient {
   }
 
   private async fetch(path: string, init: RequestInit): Promise<Response> {
-    try { return await this.request(new URL(`/api/${path}`, this.base), { ...init, redirect: "error" }); }
-    catch (error) {
+    const headers = new Headers(init.headers);
+    if (this.authorization) headers.set("authorization", this.authorization);
+    try {
+      return await this.request(new URL(`/api/${path}`, this.base), {
+        ...init,
+        headers,
+        redirect: "error",
+      });
+    } catch (error) {
       if (init.signal?.aborted) throw new Error("Provider request cancelled.");
       throw new Error("Provider connection failed.", { cause: error });
     }

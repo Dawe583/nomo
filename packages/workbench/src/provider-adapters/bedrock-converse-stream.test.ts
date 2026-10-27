@@ -1,24 +1,33 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 
 import { ProviderRequestError } from "../provider.ts";
-import { BedrockConverseStreamAdapter } from "./bedrock-converse-stream.ts";
+import { BedrockConverseStreamAdapter as BedrockAdapter } from "./bedrock-converse-stream.ts";
 import { createProviderClient } from "./factory.ts";
 import { signSigV4String } from "./aws-sigv4.ts";
 import type { ProviderAdapterConfig } from "./types.ts";
 
-const auth = {
-  kind: "aws-credentials" as const,
+const auth = { kind: "aws-credential-chain" as const };
+const fixtureCredentials = {
   accessKeyId: "AKIDEXAMPLE",
   secretAccessKey: "wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY",
   sessionToken: "fixture-session-token",
 };
+const fixtureCredentialProvider = async () => fixtureCredentials;
 const config: ProviderAdapterConfig = {
   providerId: "amazon-bedrock",
   transport: "bedrock-converse-stream",
   baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
   auth,
   model: "anthropic.claude-3-5-sonnet-20240620-v1:0",
+};
+
+const BedrockConverseStreamAdapter = class extends BedrockAdapter {
+  constructor(...args: ConstructorParameters<typeof BedrockAdapter>) {
+    const [config, request, now, settings, credentialProvider] = args;
+    super(config, request, now, settings, credentialProvider ?? fixtureCredentialProvider);
+  }
 };
 
 function crc32(data: Uint8Array): number {
@@ -110,7 +119,7 @@ test("signs Bedrock ConverseStream request and maps streamed text, tool calls an
   assert.equal(sentInit?.redirect, "error");
   const headers = new Headers(sentInit?.headers);
   assert.equal(headers.get("x-amz-date"), "20150830T123600Z");
-  assert.equal(headers.get("x-amz-security-token"), auth.sessionToken);
+  assert.equal(headers.get("x-amz-security-token"), fixtureCredentials.sessionToken);
   // Independently calculated from AWS SigV4 steps with Node crypto (no AWS SDK).
   const expectedSignature = [
     "2d6cb2e3589bb179",
@@ -134,7 +143,7 @@ test("signs Bedrock ConverseStream request and maps streamed text, tool calls an
     },
     usage: { prompt_tokens: 17, completion_tokens: 4, total_tokens: 21 },
   });
-  assert.equal(adapter.redact(`failed ${auth.secretAccessKey} ${auth.sessionToken}`), "failed [redacted] [redacted]");
+  assert.equal(adapter.redact(`failed ${fixtureCredentials.secretAccessKey} ${fixtureCredentials.sessionToken}`), "failed [redacted] [redacted]");
 });
 
 test("maps system prompts, prior tool results and function declarations", async () => {
@@ -253,16 +262,43 @@ test("refuses foreign endpoints, corrupt or truncated frames and partial model o
   const limited = new BedrockConverseStreamAdapter(config, async () => stream(event("messageStop", { messageStop: { stopReason: "max_tokens" } })), () => new Date("2015-08-30T12:36:00.000Z"));
   await assert.rejects(limited.complete(config.model!, [{ role: "user", content: "x" }], [], new AbortController().signal), /blocked or truncated/);
 });
-test("factory routes typed AWS credential profiles to Bedrock and rejects auth mismatches", async () => {
-  let called = false;
-  const client = createProviderClient(config, async (_input, init) => {
-    called = true;
-    assert.equal(new Headers(init?.headers).get("x-amz-security-token"), auth.sessionToken);
-    return stream(
-      event("contentBlockDelta", { contentBlockDelta: { contentBlockIndex: 0, delta: { text: "ok" } } }),
+
+test("Bedrock rejects content events after messageStop but keeps usage metadata", async () => {
+  const adapter = new BedrockConverseStreamAdapter(
+    config,
+    async () => stream(
+      event("contentBlockDelta", { contentBlockDelta: { contentBlockIndex: 0, delta: { text: "before" } } }),
       completeEvent,
-    );
-  });
+      event("metadata", { metadata: { usage: { inputTokens: 2, outputTokens: 1, totalTokens: 3 } } }),
+      event("contentBlockDelta", { contentBlockDelta: { contentBlockIndex: 0, delta: { text: "after" } } }),
+    ),
+    () => new Date("2015-08-30T12:36:00.000Z"),
+  );
+  const deltas: string[] = [];
+
+  await assert.rejects(
+    adapter.complete(config.model!, [{ role: "user", content: "hello" }], [], new AbortController().signal, delta => {
+      deltas.push(delta);
+    }),
+    /Bedrock returned data after messageStop/,
+  );
+  assert.deepEqual(deltas, ["before"]);
+});
+test("factory routes AWS credential-chain profiles to Bedrock and rejects auth mismatches", async () => {
+  let called = false;
+  const client = createProviderClient(
+    config,
+    async (_input, init) => {
+      called = true;
+      assert.equal(new Headers(init?.headers).get("x-amz-security-token"), fixtureCredentials.sessionToken);
+      return stream(
+        event("contentBlockDelta", { contentBlockDelta: { contentBlockIndex: 0, delta: { text: "ok" } } }),
+        completeEvent,
+      );
+    },
+    {},
+    { awsCredentialProvider: fixtureCredentialProvider },
+  );
   const reply = await client.complete(config.model!, [{ role: "user", content: "hello" }], [], new AbortController().signal);
   assert.equal(called, true);
   assert.equal(reply.message.content, "ok");
@@ -309,32 +345,87 @@ test("Bedrock aborts an in-flight stream without accepting partial output", asyn
 });
 
 
-test("Bedrock resolves AWS credentials from the environment when the typed config omits them", async () => {
-  const previousAccess = process.env.AWS_ACCESS_KEY_ID;
-  const previousSecret = process.env.AWS_SECRET_ACCESS_KEY;
-  const previousSession = process.env.AWS_SESSION_TOKEN;
-  process.env.AWS_ACCESS_KEY_ID = "ENVAKID";
-  process.env.AWS_SECRET_ACCESS_KEY = "ENVSECRET";
-  process.env.AWS_SESSION_TOKEN = "ENVSESSION";
-  try {
-    const envConfig: ProviderAdapterConfig = {
+test("Bedrock validates the selected AWS credential chain before exposing its model", async () => {
+  let calls = 0;
+  const adapter = new BedrockConverseStreamAdapter(
+    {
+      ...config,
+      auth: { kind: "aws-credential-chain" },
+    },
+    undefined,
+    undefined,
+    {},
+    async () => {
+      calls += 1;
+      return {
+        accessKeyId: "SYNTHETIC_ACCESS_ID",
+        secretAccessKey: "SYNTHETIC_SECRET_KEY",
+        sessionToken: "SYNTHETIC_SESSION_TOKEN",
+      };
+    },
+  );
+  assert.deepEqual(await adapter.models(), [{ id: config.model, name: config.model }]);
+  assert.equal(calls, 1);
+});
+
+test("Bedrock hides failed credential-chain errors", async () => {
+  const adapter = new BedrockConverseStreamAdapter(
+    {
+      ...config,
+      auth: { kind: "aws-credential-chain" },
+    },
+    undefined,
+    undefined,
+    {},
+    async () => {
+      throw new Error("SYNTHETIC_CHAIN_ERROR");
+    },
+  );
+  await assert.rejects(
+    adapter.models(),
+    (error) =>
+      error instanceof Error &&
+      /AWS credential chain could not resolve/.test(error.message) &&
+      !error.message.includes("SYNTHETIC_CHAIN_ERROR"),
+  );
+});
+
+test("Bedrock's AWS SDK default chain signs only an isolated synthetic request", () => {
+  const adapterUrl = new URL("./bedrock-converse-stream.ts", import.meta.url).href;
+  const script = `
+    import { BedrockConverseStreamAdapter } from ${JSON.stringify(adapterUrl)};
+    let signed = false;
+    const adapter = new BedrockConverseStreamAdapter({
       providerId: "amazon-bedrock",
       transport: "bedrock-converse-stream",
       baseUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
-      auth: { kind: "aws-credentials" },
-      model: "anthropic.claude-3-5-sonnet-20240620-v1:0",
-    };
-    const adapter = new BedrockConverseStreamAdapter(envConfig);
-    assert.ok(adapter);
-    // Re-running with missing env values must still fail closed.
-    delete process.env.AWS_ACCESS_KEY_ID;
-    assert.throws(() => new BedrockConverseStreamAdapter({
-      ...envConfig,
-      auth: { kind: "aws-credentials" },
-    }), /AWS credentials are invalid/);
-  } finally {
-    if (previousAccess === undefined) delete process.env.AWS_ACCESS_KEY_ID; else process.env.AWS_ACCESS_KEY_ID = previousAccess;
-    if (previousSecret === undefined) delete process.env.AWS_SECRET_ACCESS_KEY; else process.env.AWS_SECRET_ACCESS_KEY = previousSecret;
-    if (previousSession === undefined) delete process.env.AWS_SESSION_TOKEN; else process.env.AWS_SESSION_TOKEN = previousSession;
-  }
+      model: "amazon.nova-2-lite-v1:0",
+      auth: { kind: "aws-credential-chain" },
+    }, async (_url, init) => {
+      const headers = new Headers(init?.headers);
+      signed =
+        headers.get("authorization")?.includes("SYNTHETIC_ACCESS_ID") === true &&
+        headers.get("x-amz-security-token") === "SYNTHETIC_SESSION_TOKEN";
+      throw new Error("fixture stops before any network request");
+    });
+    try {
+      await adapter.complete(
+        "amazon.nova-2-lite-v1:0",
+        [{ role: "user", content: "fixture" }],
+        [],
+        new AbortController().signal,
+      );
+    } catch {}
+    if (!signed) process.exit(1);
+  `;
+  const result = spawnSync(process.execPath, ["--input-type=module", "--eval", script], {
+    env: {
+      AWS_ACCESS_KEY_ID: "SYNTHETIC_ACCESS_ID",
+      AWS_SECRET_ACCESS_KEY: "SYNTHETIC_SECRET_KEY",
+      AWS_SESSION_TOKEN: "SYNTHETIC_SESSION_TOKEN",
+      AWS_EC2_METADATA_DISABLED: "true",
+    },
+    encoding: "utf8",
+  });
+  assert.equal(result.status, 0, result.stderr);
 });

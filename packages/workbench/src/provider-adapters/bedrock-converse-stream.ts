@@ -1,7 +1,12 @@
+import { defaultProvider } from "@aws-sdk/credential-provider-node";
 import type { Model, ModelMessage, ModelReply, ToolCall } from "../provider.ts";
 import { ProviderRequestError } from "../provider.ts";
 import { defaultHarnessSettings, type HarnessSettings } from "../harness-settings.ts";
-import type { ProviderAdapterConfig, ProviderClient } from "./types.ts";
+import type {
+  AwsCredentialProvider,
+  ProviderAdapterConfig,
+  ProviderClient,
+} from "./types.ts";
 import { signBedrockRequest, type AwsCredentials } from "./aws-sigv4.ts";
 
 const MAX_FRAME_BYTES = 2_000_000;
@@ -84,45 +89,48 @@ function encodeModelPath(model: string): string {
   return encodeURIComponent(model).replace(/[!'()*]/g, char => `%${char.charCodeAt(0).toString(16).toUpperCase()}`);
 }
 
+
 export class BedrockConverseStreamAdapter implements ProviderClient {
   private readonly endpoint: URL;
-  private readonly credentials: AwsCredentials;
   private readonly region: string;
   private readonly model: string | undefined;
   private readonly request: typeof fetch;
   private readonly now: () => Date;
   private readonly resolveSettings: () => HarnessSettings;
+  private readonly credentialProvider: AwsCredentialProvider;
+  private credentials?: AwsCredentials;
 
   constructor(
     config: ProviderAdapterConfig,
     request: typeof fetch = fetch,
     now: () => Date = () => new Date(),
     settings: Partial<HarnessSettings> | (() => HarnessSettings) = {},
+    credentialProvider: AwsCredentialProvider = defaultProvider(),
   ) {
-    if (config.providerId !== "amazon-bedrock" || config.transport !== "bedrock-converse-stream" || config.auth.kind !== "aws-credentials") {
-      throw new Error("Amazon Bedrock requires its explicit AWS credential descriptor.");
+    if (
+      config.providerId !== "amazon-bedrock" ||
+      config.transport !== "bedrock-converse-stream" ||
+      config.auth.kind !== "aws-credential-chain"
+    ) {
+      throw new Error("Amazon Bedrock requires its manifest-approved AWS credential chain.");
     }
     this.endpoint = new URL(config.baseUrl.endsWith("/") ? config.baseUrl : `${config.baseUrl}/`);
     const match = this.endpoint.hostname.match(/^bedrock-runtime\.([a-z0-9-]+)\.amazonaws\.com$/);
     if (this.endpoint.protocol !== "https:" || !match || this.endpoint.port || this.endpoint.pathname !== "/" || this.endpoint.username || this.endpoint.password || this.endpoint.search || this.endpoint.hash) {
       throw new Error("Amazon Bedrock requires an official Bedrock Runtime endpoint.");
     }
-    const accessKeyId = config.auth.accessKeyId ?? process.env.AWS_ACCESS_KEY_ID;
-    const secretAccessKey = config.auth.secretAccessKey ?? process.env.AWS_SECRET_ACCESS_KEY;
-    const sessionToken = config.auth.sessionToken ?? process.env.AWS_SESSION_TOKEN;
-    if (!accessKeyId || !secretAccessKey || /[\r\n]/.test(accessKeyId + secretAccessKey + (sessionToken ?? ""))) {
-      throw new Error("AWS credentials are invalid.");
-    }
     this.region = match[1]!;
-    this.credentials = { accessKeyId, secretAccessKey, sessionToken };
     this.model = config.model;
     this.request = request;
     this.now = now;
     this.resolveSettings = typeof settings === "function" ? settings : () => ({ ...defaultHarnessSettings(), ...settings });
+    this.credentialProvider = credentialProvider;
   }
 
   async models(): Promise<readonly Model[]> {
-    return this.model ? [{ id: this.model, name: this.model }] : [];
+    if (!this.model) return [];
+    await this.resolveCredentials();
+    return [{ id: this.model, name: this.model }];
   }
 
   async complete(
@@ -135,8 +143,9 @@ export class BedrockConverseStreamAdapter implements ProviderClient {
     if (!model || model.length > 2048) throw new Error("Bedrock model ID is invalid.");
     const request = this.requestBody(messages, tools);
     const body = JSON.stringify(request);
+    const credentials = await this.resolveCredentials();
     const url = new URL(`model/${encodeModelPath(model)}/converse-stream`, this.endpoint);
-    const headers = signBedrockRequest(url, body, this.credentials, this.region, this.now());
+    const headers = signBedrockRequest(url, body, credentials, this.region, this.now());
     let response: Response;
     try {
       response = await this.request(url, {
@@ -158,10 +167,35 @@ export class BedrockConverseStreamAdapter implements ProviderClient {
   }
 
   redact(text: string): string {
-    return [this.credentials.secretAccessKey, this.credentials.accessKeyId, this.credentials.sessionToken]
+    return [
+      this.credentials?.secretAccessKey,
+      this.credentials?.accessKeyId,
+      this.credentials?.sessionToken,
+    ]
       .filter((secret): secret is string => Boolean(secret))
       .reduce((result, secret) => result.split(secret).join("[redacted]"), text);
   }
+  private async resolveCredentials(): Promise<AwsCredentials> {
+    try {
+      const credentials = await this.credentialProvider();
+      const { accessKeyId, secretAccessKey, sessionToken } = credentials;
+      if (
+        typeof accessKeyId !== "string" ||
+        !accessKeyId ||
+        typeof secretAccessKey !== "string" ||
+        !secretAccessKey ||
+        (sessionToken !== undefined && typeof sessionToken !== "string") ||
+        /[\r\n]/.test(accessKeyId + secretAccessKey + (sessionToken ?? ""))
+      ) {
+        throw new Error("invalid credentials");
+      }
+      this.credentials = { accessKeyId, secretAccessKey, sessionToken };
+      return this.credentials;
+    } catch {
+      throw new Error("AWS credential chain could not resolve valid credentials.");
+    }
+  }
+
 
   private requestBody(messages: readonly ModelMessage[], tools: readonly unknown[]): Record<string, unknown> {
     const system: Array<{ text: string }> = [];
@@ -217,6 +251,7 @@ export class BedrockConverseStreamAdapter implements ProviderClient {
     let pending = Buffer.alloc(0);
     let text = "";
     let stopReason: string | undefined;
+    let messageStopped = false;
     let usage: ModelReply["usage"];
     const tools = new Map<number, ToolBlock>();
     try {
@@ -232,6 +267,7 @@ export class BedrockConverseStreamAdapter implements ProviderClient {
           pending = pending.subarray(totalLength);
           const event = decodeFrame(frame);
           const payload = event.payload;
+          if (messageStopped && event.type !== "metadata") throw new Error("Bedrock returned data after messageStop.");
           if (event.exceptionType) {
             const exceptionName = `${event.exceptionType[0]?.toUpperCase()}${event.exceptionType.slice(1)}`;
             const status = Object.hasOwn(STREAM_EXCEPTION_STATUSES, exceptionName)
@@ -282,6 +318,7 @@ export class BedrockConverseStreamAdapter implements ProviderClient {
             const stop = payload.messageStop as { stopReason?: unknown } | undefined;
             if (typeof stop?.stopReason !== "string") throw new Error("Bedrock returned no stop reason.");
             stopReason = stop.stopReason;
+            messageStopped = true;
           } else if (event.type === "metadata") {
             const metadata = payload.metadata as { usage?: { inputTokens?: unknown; outputTokens?: unknown; totalTokens?: unknown } } | undefined;
             if (metadata?.usage) usage = {

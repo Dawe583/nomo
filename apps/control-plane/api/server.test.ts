@@ -325,6 +325,63 @@ test("remote API auth recognizes NOMO_CONTROL_TOKEN with a non-local Host", asyn
   );
 });
 
+test("session image routes remain local when remote token auth is enabled", async () => {
+  const token = "nomo-control-token-0123456789abcdef";
+  await withServer(
+    "unused.jsonl",
+    async (origin) => {
+      const response = await fetch(
+        `${origin}/api/sessions/00000000-0000-0000-0000-000000000000/images/00000000-0000-0000-0000-000000000000`,
+        {
+          headers: {
+            host: "harness.remote.test",
+            "sec-fetch-site": "cross-site",
+            authorization: `Bearer ${token}`,
+          },
+        },
+      );
+      assert.equal(response.status, 403);
+      assert.deepEqual(await response.json(), { error: "local_origin_required" });
+      const endpoint = new URL(origin);
+      const absolute = await new Promise<{ status: number; body: string }>(
+        (resolve, reject) => {
+          const request = httpRequest(
+            {
+              hostname: endpoint.hostname,
+              port: Number(endpoint.port),
+              method: "GET",
+              path: "http://harness.remote.test/api/sessions/00000000-0000-0000-0000-000000000000/images/00000000-0000-0000-0000-000000000000",
+              headers: {
+                host: "harness.remote.test",
+                "sec-fetch-site": "cross-site",
+                authorization: `Bearer ${token}`,
+              },
+            },
+            (response) => {
+              let body = "";
+              response.setEncoding("utf8");
+              response.on("data", (chunk) => { body += chunk; });
+              response.on("end", () =>
+                resolve({ status: response.statusCode ?? 0, body }),
+              );
+            },
+          );
+          request.on("error", reject);
+          request.end();
+        },
+      );
+      assert.equal(absolute.status, 403, absolute.body);
+      assert.deepEqual(JSON.parse(absolute.body), { error: "local_origin_required" });
+      const local = await fetch(
+        `${origin}/api/sessions/00000000-0000-0000-0000-000000000000/images/00000000-0000-0000-0000-000000000000`,
+      );
+      assert.equal(local.status, 404);
+      assert.deepEqual(await local.json(), { error: "session_image_not_found" });
+    },
+    { env: { NOMO_CONTROL_TOKEN: token } },
+  );
+});
+
 describe("control plane API", () => {
   test("serves built assets on every host and refuses Windows path separators", async () => {
     const dir = await mkdtemp(join(tmpdir(), "void-built-assets-"));
@@ -376,8 +433,69 @@ describe("control plane API", () => {
         .map(item => ({ ...item, disabled: true }));
       const state = await response.json() as {
         unavailableProviders: typeof expected;
+        unavailableModelTransports: Array<{
+          source: string;
+          providerId: string;
+          transportId: string;
+          status: string;
+          modelIds: string[];
+          disabled: boolean;
+        }>;
+        unavailableProviderModels?: Array<{
+          source: string;
+          providerId: string;
+          transportId: string;
+          status: string;
+          modelIds: string[];
+          reason: string;
+          evidence: string;
+          disabled: boolean;
+        }>;
       };
       assert.deepEqual(state.unavailableProviders, expected);
+      const unavailableModels = state.unavailableModelTransports;
+      assert.deepEqual(
+        unavailableModels?.map(({ source, providerId, transportId, status, modelIds, disabled }) =>
+          [source, providerId, transportId, status, modelIds, disabled],
+        ),
+        [[
+          "omp",
+          "local",
+          "local-inference",
+          "blocked",
+          [
+            "falcon-h1-90m",
+            "gemma-3-1b",
+            "lfm2-1.2b",
+            "lfm2.5-230m",
+            "lfm2.5-350m",
+            "llama3.2:3b",
+            "qwen2.5-1.5b",
+            "qwen3-1.7b",
+          ],
+          true,
+        ]],
+      );
+      const blockedModelGroups = state.unavailableProviderModels;
+      assert.deepEqual(
+        blockedModelGroups?.map(({ source, providerId, transportId, status, modelIds, disabled }) =>
+          `${source}:${providerId}/${transportId}:${status}:${modelIds.length}:${disabled}`,
+        ).sort(),
+        [
+          "omp:google-vertex/anthropic-messages:blocked:13:true",
+          "omp:google-vertex/openai-completions:blocked:7:true",
+          "omp:kimi-code/openai-completions:blocked:7:true",
+          "omp:muse-code/openai-responses:blocked:5:true",
+          "prime:cloudflare-workers-ai/openai-completions:blocked:1:true",
+        ].sort(),
+      );
+      assert.equal(
+        blockedModelGroups?.reduce((sum, group) => sum + group.modelIds.length, 0),
+        33,
+      );
+      assert.ok(
+        blockedModelGroups?.every(group => group.reason.length > 0 && group.evidence.length > 0),
+      );
       for (const apiId of [
         "cursor-agent", "factory-droid-agent", "gitlab-duo-agent",
         "devin-agent", "apple-foundation-models", "openai-codex-responses",
@@ -388,6 +506,69 @@ describe("control plane API", () => {
         );
       }
     }, { env: { NVIDIA_API_KEY: "", DASHSCOPE_API_KEY: "" } });
+  });
+  test("provider status stays passive until the environment check is requested", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "void-provider-probe-api-"));
+    const requests: string[] = [];
+    const workbench = new Workbench(
+      {
+        NOMO_DATA_DIR: directory,
+        NVIDIA_API_KEY: "fixture-provider-key",
+        DASHSCOPE_API_KEY: "",
+      },
+      async (input) => {
+        requests.push(String(input));
+        return Response.json({ data: [{ id: "fixture-model" }] });
+      },
+    );
+    let workbenchClosed = false;
+    try {
+      await withServer("unused.jsonl", async (origin) => {
+        const passive = await fetch(origin + "/api/provider");
+        assert.equal(passive.status, 200);
+        const passiveBody = await passive.text();
+        assert.doesNotMatch(passiveBody, /fixture-provider-key/);
+        const status = JSON.parse(passiveBody) as {
+          connected: boolean;
+          status: string;
+          detail: string | null;
+          environmentProbePending: boolean;
+        };
+        assert.equal(status.connected, false);
+        assert.equal(status.status, "unavailable");
+        assert.equal(status.detail, "Environment provider has not been checked.");
+        assert.equal(status.environmentProbePending, true);
+        assert.equal(requests.length, 0);
+
+        const wrongMethod = await fetch(origin + "/api/provider/probe-environment");
+        assert.equal(wrongMethod.status, 405);
+        assert.equal(requests.length, 0);
+
+        const checked = await fetch(origin + "/api/provider/probe-environment", {
+          method: "POST",
+        });
+        assert.equal(checked.status, 200);
+        const body = await checked.text();
+        assert.doesNotMatch(body, /fixture-provider-key/);
+        const result = JSON.parse(body) as {
+          connected: boolean;
+          providerId: string | null;
+        };
+        assert.equal(result.connected, true);
+        assert.equal(result.providerId, "nvidia");
+        assert.equal(requests.length, 1);
+
+        const afterCheck = await fetch(origin + "/api/provider");
+        assert.equal(afterCheck.status, 200);
+        assert.equal((await afterCheck.json() as { connected: boolean }).connected, true);
+        assert.equal(requests.length, 1);
+      }, { workbench });
+      workbench.close();
+      workbenchClosed = true;
+    } finally {
+      if (!workbenchClosed) workbench.close();
+      await rm(directory, { recursive: true, force: true });
+    }
   });
 
   test("provider API persists typed manifest descriptors without exposing auth", async () => {
@@ -444,17 +625,54 @@ describe("control plane API", () => {
         assert.ok(
           descriptors.every(
             (descriptor) =>
-              ["api-key", "aws-credentials", "none"].includes(descriptor.authKind) &&
+              ["api-key", "aws-credential-chain", "none"].includes(descriptor.authKind) &&
               (descriptor.endpoint === null || !/[<>{}]/.test(descriptor.endpoint)),
           ),
         );
-        for (const providerId of ["kimi-code", "muse-code", "ollama-cloud", "amazon-bedrock"]) {
+        assert.ok(
+          descriptors.some(
+            (descriptor) =>
+              descriptor.providerId === "amazon-bedrock" &&
+              descriptor.authKind === "aws-credential-chain",
+          ),
+        );
+        assert.ok(
+          descriptors.some(
+            (descriptor) =>
+              descriptor.providerId === "ollama-cloud" &&
+              descriptor.transport === "ollama-chat" &&
+              descriptor.authKind === "api-key" &&
+              descriptor.endpoint === "https://ollama.com",
+          ),
+        );
+        for (const providerId of ["kimi-code", "muse-code"]) {
           assert.ok(
             !descriptors.some((descriptor) => descriptor.providerId === providerId),
             `${providerId} does not satisfy this setup's manifest auth contract`,
           );
         }
         assert.doesNotMatch(JSON.stringify(state), /typed-provider-secret-never-return/);
+        const cloudConnected = await fetch(origin + "/api/provider", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            providerId: "ollama-cloud",
+            transport: "ollama-chat",
+            endpoint: "https://ollama.com",
+            model: "gpt-oss:120b",
+            auth: { kind: "api-key", apiKey: secret },
+          }),
+        });
+        assert.equal(cloudConnected.status, 200);
+        assert.doesNotMatch(await cloudConnected.text(), /typed-provider-secret-never-return/);
+        const cloudResponse = await fetch(origin + "/api/provider");
+        const cloudState = await cloudResponse.json() as Record<string, unknown>;
+        assert.equal(cloudState.providerId, "ollama-cloud");
+        assert.equal(cloudState.transport, "ollama-chat");
+        assert.equal(cloudState.defaultModel, "gpt-oss:120b");
+        assert.equal(cloudState.authKind, "api-key");
+        assert.equal(cloudState.keyStorage, "encrypted-local");
+        assert.doesNotMatch(JSON.stringify(cloudState), /typed-provider-secret-never-return/);
         const invalidBodies = [
           { providerId: "openai", transport: "openai-responses", endpoint: "https://api.openai.com/v1", model: "unknown-model", auth: { kind: "api-key", apiKey: secret } },
           { providerId: "openai", transport: "openai-responses", endpoint: "https://api.openai.com/v1", model: "gpt-5.4", auth: { kind: "none" } },
@@ -475,8 +693,9 @@ describe("control plane API", () => {
         }
         const retained = await fetch(origin + "/api/provider");
         const retainedState = await retained.json() as Record<string, unknown>;
-        assert.equal(retainedState.providerId, "openai");
-        assert.equal(retainedState.defaultModel, "gpt-5.4");
+        assert.equal(retainedState.providerId, "ollama-cloud");
+        assert.equal(retainedState.defaultModel, "gpt-oss:120b");
+        assert.equal(retainedState.transport, "ollama-chat");
         assert.deepEqual(calls, ["https://api.openai.com/v1/models"]);
       }, { workbench });
 
@@ -489,9 +708,143 @@ describe("control plane API", () => {
       });
       const state = await restarted.providerState();
       assert.equal(state.connected, true);
-      assert.equal(state.providerId, "openai");
-      assert.equal(state.transport, "openai-responses");
-      assert.equal(state.defaultModel, "gpt-5.4");
+      assert.equal(state.providerId, "ollama-cloud");
+      assert.equal(state.transport, "ollama-chat");
+      assert.equal(state.defaultModel, "gpt-oss:120b");
+    } finally {
+      if (!workbenchClosed) workbench.close();
+      restarted?.close();
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+  test("provider API uses the Bedrock host credential chain without exposing credentials", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "void-bedrock-chain-"));
+    let credentialCalls = 0;
+    let providerRequests = 0;
+    let credentialChainAvailable = false;
+    const awsCredentialProvider = async () => {
+      credentialCalls += 1;
+      if (!credentialChainAvailable) throw new Error("SYNTHETIC_CHAIN_ERROR");
+      return {
+        accessKeyId: "SYNTHETIC_ACCESS_KEY",
+        secretAccessKey: "SYNTHETIC_SECRET_KEY",
+        sessionToken: "SYNTHETIC_SESSION_TOKEN",
+      };
+    };
+    const env = {
+      NOMO_DATA_DIR: directory,
+      NVIDIA_API_KEY: "",
+      DASHSCOPE_API_KEY: "",
+    };
+    const workbench = new Workbench(
+      env,
+      async () => {
+        providerRequests += 1;
+        return Response.json({ data: [{ id: "gpt-5.4" }] });
+      },
+      {},
+      { awsCredentialProvider },
+    );
+    let workbenchClosed = false;
+    let restarted: Workbench | undefined;
+    try {
+      await workbench.configure({
+        baseUrl: "https://fixture.test/v1",
+        apiKey: "fixture-openai",
+        model: "gpt-5.4",
+      });
+      await withServer(
+        "unused.jsonl",
+        async (origin) => {
+          const bedrockConfiguration = {
+            providerId: "amazon-bedrock",
+            transport: "bedrock-converse-stream",
+            endpoint: "https://bedrock-runtime.us-west-2.amazonaws.com/",
+            model: "amazon.nova-2-lite-v1:0",
+            auth: { kind: "aws-credential-chain" },
+          };
+          const rejected = await fetch(origin + "/api/provider", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify(bedrockConfiguration),
+          });
+          const rejectionBody = await rejected.text();
+          assert.equal(rejected.status, 400);
+          assert.doesNotMatch(
+            rejectionBody,
+            /SYNTHETIC_CHAIN_ERROR|SYNTHETIC_(ACCESS_KEY|SECRET_KEY|SESSION_TOKEN)/,
+          );
+          const previous = await fetch(origin + "/api/provider");
+          const previousState = await previous.json() as Record<string, unknown>;
+          assert.equal(previousState.connected, true);
+          assert.equal(previousState.baseUrl, "https://fixture.test/v1");
+          assert.equal(previousState.defaultModel, "gpt-5.4");
+          credentialChainAvailable = true;
+          const connected = await fetch(origin + "/api/provider", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify(bedrockConfiguration),
+          });
+          const connectedBody = await connected.text();
+          assert.equal(connected.status, 200);
+          assert.doesNotMatch(
+            connectedBody,
+            /SYNTHETIC_(ACCESS_KEY|SECRET_KEY|SESSION_TOKEN)|accessKeyId|secretAccessKey|sessionToken/,
+          );
+          const response = await fetch(origin + "/api/provider");
+          assert.equal(response.status, 200);
+          const state = await response.json() as Record<string, unknown>;
+          assert.equal(state.connected, true);
+          assert.equal(state.providerId, "amazon-bedrock");
+          assert.equal(state.transport, "bedrock-converse-stream");
+          assert.equal(state.authKind, "aws-credential-chain");
+          assert.equal(state.defaultModel, "amazon.nova-2-lite-v1:0");
+          assert.doesNotMatch(
+            JSON.stringify(state),
+            /SYNTHETIC_(ACCESS_KEY|SECRET_KEY|SESSION_TOKEN)|accessKeyId|secretAccessKey|sessionToken/,
+          );
+          const staticKeys = await fetch(origin + "/api/provider", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({
+              providerId: "amazon-bedrock",
+              transport: "bedrock-converse-stream",
+              endpoint: "https://bedrock-runtime.us-west-2.amazonaws.com/",
+              model: "amazon.nova-2-lite-v1:0",
+              auth: {
+                kind: "aws-credentials",
+                accessKeyId: "SYNTHETIC_ACCESS_KEY",
+                secretAccessKey: "SYNTHETIC_SECRET_KEY",
+              },
+            }),
+          });
+          assert.equal(staticKeys.status, 400);
+          const retained = await fetch(origin + "/api/provider");
+          const retainedState = await retained.json() as Record<string, unknown>;
+          assert.equal(retainedState.providerId, "amazon-bedrock");
+          assert.equal(retainedState.authKind, "aws-credential-chain");
+          assert.equal(credentialCalls, 2);
+          assert.equal(providerRequests, 1);
+        },
+        { workbench },
+      );
+      const encrypted = await readFile(join(directory, "workspace.enc"));
+      for (const secret of [
+        "SYNTHETIC_ACCESS_KEY",
+        "SYNTHETIC_SECRET_KEY",
+        "SYNTHETIC_SESSION_TOKEN",
+      ]) {
+        assert.equal(encrypted.includes(Buffer.from(secret)), false);
+      }
+      workbench.close();
+      workbenchClosed = true;
+      restarted = new Workbench(env, async () => {
+        throw new Error("Restoring a credential-chain profile must not request the provider.");
+      }, {}, { awsCredentialProvider });
+      const restored = await restarted.providerState();
+      assert.equal(restored.connected, true);
+      assert.equal(restored.authKind, "aws-credential-chain");
+      assert.equal(credentialCalls, 2);
     } finally {
       if (!workbenchClosed) workbench.close();
       restarted?.close();
@@ -583,6 +936,144 @@ describe("control plane API", () => {
       await rm(directory, { recursive: true, force: true });
     }
   });
+  test("provider API accepts regional Bedrock Mantle Responses without leaking its key", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "nomo-mantle-provider-"));
+    const secret = "mantle-fixture-secret-never-return";
+    const endpoint = "https://bedrock-mantle.us-east-1.api.aws/openai/v1";
+    const calls: Array<{ url: string; authorization: string }> = [];
+    const env = {
+      NOMO_DATA_DIR: directory,
+      NVIDIA_API_KEY: "",
+      DASHSCOPE_API_KEY: "",
+    };
+    const request: typeof fetch = async (input, init) => {
+      calls.push({
+        url: String(input instanceof Request ? input.url : input),
+        authorization: new Headers(init?.headers).get("authorization") ?? "",
+      });
+      return Response.json({ data: [{ id: "openai.gpt-5.6-terra" }] });
+    };
+    const workbench = new Workbench(env, request);
+    try {
+      await withServer("unused.jsonl", async (origin) => {
+        const descriptor = {
+          providerId: "bedrock-mantle",
+          transport: "openai-responses",
+          endpoint,
+          model: "openai.gpt-5.6-terra",
+          auth: { kind: "api-key", apiKey: secret },
+        };
+        const connected = await fetch(origin + "/api/provider", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(descriptor),
+        });
+        assert.equal(connected.status, 200);
+        assert.doesNotMatch(await connected.text(), /mantle-fixture-secret-never-return/);
+
+        const state = await (await fetch(origin + "/api/provider")).json() as Record<string, unknown>;
+        assert.equal(state.connected, true);
+        assert.equal(state.providerId, "bedrock-mantle");
+        assert.equal(state.transport, "openai-responses");
+        assert.equal(state.defaultModel, "openai.gpt-5.6-terra");
+        assert.equal(state.authKind, "api-key");
+        assert.equal(state.keyStorage, "encrypted-local");
+        assert.doesNotMatch(JSON.stringify(state), /mantle-fixture-secret-never-return/);
+
+        for (const invalidEndpoint of [
+          "https://bedrock-mantle.attacker.test/openai/v1",
+          "https://bedrock-mantle.us-east-1.api.aws/v1",
+          "https://bedrock-mantle.us-east-1.api.aws/openai/v1?x=1",
+        ]) {
+          const rejected = await fetch(origin + "/api/provider", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ ...descriptor, endpoint: invalidEndpoint }),
+          });
+          assert.equal(rejected.status, 400, invalidEndpoint);
+        }
+      }, { workbench });
+      assert.deepEqual(calls, [{
+        url: `${endpoint}/models`,
+        authorization: `Bearer ${secret}`,
+      }]);
+      const encrypted = await readFile(join(directory, "workspace.enc"));
+      assert.equal(encrypted.includes(Buffer.from(secret)), false);
+    } finally {
+      workbench.close();
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+  test("provider API configures manifest-backed Cloudflare Gateway routes without probing", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "nomo-cloudflare-provider-"));
+    const secret = "cloudflare-fixture-secret-never-return";
+    let providerRequests = 0;
+    const env = {
+      NOMO_DATA_DIR: directory,
+      NVIDIA_API_KEY: "",
+      DASHSCOPE_API_KEY: "",
+    };
+    const request: typeof fetch = async () => {
+      providerRequests++;
+      throw new Error("Cloudflare setup must not probe provider catalogs.");
+    };
+    const workbench = new Workbench(env, request);
+    const routes = {
+      "anthropic-messages": "anthropic",
+      "openai-completions": "compat",
+      "openai-responses": "openai",
+    } as const;
+    try {
+      await withServer("unused.jsonl", async (origin) => {
+        for (const descriptor of CONFIGURABLE_PROVIDER_DESCRIPTORS.filter(
+          (item) => item.providerId === "cloudflare-ai-gateway",
+        )) {
+          const route = routes[descriptor.transport as keyof typeof routes];
+          assert.ok(route);
+          const config = {
+            providerId: descriptor.providerId,
+            transport: descriptor.transport,
+            endpoint: `https://gateway.ai.cloudflare.com/v1/account-id/default/${route}`,
+            model: descriptor.model,
+            auth: { kind: "api-key", apiKey: secret },
+          };
+          const connected = await fetch(origin + "/api/provider", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify(config),
+          });
+          assert.equal(connected.status, 200);
+          assert.doesNotMatch(await connected.text(), /cloudflare-fixture-secret-never-return/);
+
+          const state = await (await fetch(origin + "/api/provider")).json() as Record<string, unknown>;
+          assert.equal(state.connected, true);
+          assert.equal(state.providerId, descriptor.providerId);
+          assert.equal(state.transport, descriptor.transport);
+          assert.equal(state.defaultModel, descriptor.model);
+          assert.equal(state.authKind, "api-key");
+          assert.equal(state.keyStorage, "encrypted-local");
+          assert.doesNotMatch(JSON.stringify(state), /cloudflare-fixture-secret-never-return/);
+
+          const rejected = await fetch(origin + "/api/provider", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({
+              ...config,
+              endpoint: `https://gateway.ai.cloudflare.com/v1/account-id/default/wrong`,
+            }),
+          });
+          assert.equal(rejected.status, 400);
+          assert.doesNotMatch(await rejected.text(), /cloudflare-fixture-secret-never-return/);
+        }
+      }, { workbench });
+      assert.equal(providerRequests, 0);
+      const encrypted = await readFile(join(directory, "workspace.enc"));
+      assert.equal(encrypted.includes(Buffer.from(secret)), false);
+    } finally {
+      workbench.close();
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
   test("manifest descriptor validation confines Azure endpoints and rejects unsupported Bedrock auth", () => {
     const descriptor: ProviderAdapterConfig = {
       providerId: "azure",
@@ -606,15 +1097,11 @@ describe("control plane API", () => {
       transport: "bedrock-converse-stream",
       baseUrl: "https://bedrock-runtime.us-west-2.amazonaws.com/",
       model: "amazon.nova-2-lite-v1:0",
-      auth: {
-        kind: "aws-credentials",
-        accessKeyId: "fixture-only",
-        secretAccessKey: "fixture-only",
-      },
+      auth: { kind: "none" },
     };
     assert.throws(
       () => assertProviderDescriptorInManifest(bedrock),
-      /Provider authentication is not supported by this setup/,
+      /requires aws-credential-chain authentication/,
     );
   });
 
@@ -1064,11 +1551,18 @@ test("registering an agent emits agent_started", async () => {
 
 test("oversized JSON request bodies return 413 across API error handlers", async () => {
   await withServer("unused.jsonl", async (origin) => {
-    const body = JSON.stringify({
+    const generalBody = JSON.stringify({
       name: "oversized",
       payload: "x".repeat(70 * 1024),
     });
-    for (const pathname of ["/api/agents", "/api/provider", "/api/sessions"]) {
+    const oversizedSessionBody = JSON.stringify({
+      payload: "x".repeat(2 * 1024 * 1024),
+    });
+    for (const [pathname, body] of [
+      ["/api/agents", generalBody],
+      ["/api/provider", generalBody],
+      ["/api/sessions", oversizedSessionBody],
+    ] as const) {
       const response = await fetch(origin + pathname, {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -1326,5 +1820,170 @@ test("AgentRunner API exposes safe metadata and enforces one exact consent befor
     const response = await fetch(`${origin}/api/agent-runners`);
     assert.equal(response.status, 200);
     assert.deepEqual(await response.json(), { runners: [] });
+  });
+});
+test("typed OpenRouter configuration preserves routing preferences and rejects misplaced options", async (t) => {
+  const directory = await mkdtemp(join(tmpdir(), "nomo-openrouter-config-"));
+  t.after(async () => rm(directory, { recursive: true, force: true }));
+  const requests: string[] = [];
+  const workbench = new Workbench(
+    { NOMO_DATA_DIR: directory },
+    async (input) => {
+      requests.push(String(input));
+      return Response.json({ data: [{ id: "ai21/jamba-large-1.7" }] });
+    },
+  );
+  const gatewayOptions = {
+    openrouter: {
+      referer: "https://nomo.example",
+      title: "NOMO Harness",
+      categories: ["coding"],
+      provider: {
+        order: ["anthropic"],
+        allow_fallbacks: false,
+        data_collection: "deny",
+        zdr: true,
+      },
+    },
+  };
+  try {
+    await withServer(
+      "unused.jsonl",
+      async (origin) => {
+        const descriptor = {
+          providerId: "openrouter",
+          transport: "openrouter",
+          endpoint: "https://openrouter.ai/api/v1",
+          model: "ai21/jamba-large-1.7",
+          auth: { kind: "api-key", apiKey: "openrouter-secret-not-returned" },
+        };
+        const configured = await fetch(`${origin}/api/provider`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ ...descriptor, gatewayOptions }),
+        });
+        assert.equal(configured.status, 200);
+        assert.doesNotMatch(await configured.text(), /openrouter-secret-not-returned/);
+
+        const state = await fetch(`${origin}/api/provider`);
+        assert.equal(state.status, 200);
+        const body = await state.json() as Record<string, unknown>;
+        assert.equal(body.providerId, "openrouter");
+        assert.deepEqual(body.gatewayOptions, gatewayOptions);
+        assert.doesNotMatch(JSON.stringify(body), /openrouter-secret-not-returned/);
+
+        for (const invalid of [
+          {
+            ...descriptor,
+            gatewayOptions: {
+              openrouter: {
+                provider: { data_collection: "sometimes" },
+              },
+            },
+          },
+          {
+            providerId: "openai",
+            transport: "openai-responses",
+            endpoint: "https://api.openai.com/v1",
+            model: "gpt-5.4",
+            auth: descriptor.auth,
+            gatewayOptions,
+          },
+        ]) {
+          const rejected = await fetch(`${origin}/api/provider`, {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify(invalid),
+          });
+          assert.equal(rejected.status, 400);
+        }
+
+        const retained = await (await fetch(`${origin}/api/provider`)).json() as Record<string, unknown>;
+        assert.deepEqual(retained.gatewayOptions, gatewayOptions);
+        assert.deepEqual(requests, ["https://openrouter.ai/api/v1/models"]);
+      },
+      { workbench },
+    );
+  } finally {
+    workbench.close();
+  }
+});
+async function responseErrorCode(response: Response): Promise<unknown> {
+  const body: unknown = await response.json();
+  return body &&
+    typeof body === "object" &&
+    !Array.isArray(body) &&
+    "error" in body
+    ? body.error
+    : undefined;
+}
+
+test("session image bodies use a bounded route-specific limit and reject invalid image bytes", async () => {
+  const pngSignature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+  const acceptedSize = Buffer.concat([
+    pngSignature,
+    Buffer.alloc(1024 * 1024 - pngSignature.length),
+  ]).toString("base64");
+  await withServer("unused.jsonl", async (origin) => {
+    const post = (body: unknown) =>
+      fetch(origin + "/api/sessions", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(body),
+      });
+    const accepted = await post({
+      prompt: "Inspect this image",
+      model: "fixture-model",
+      images: [{ mimeType: "image/png", data: acceptedSize }],
+    });
+    assert.equal(accepted.status, 409);
+    assert.notEqual(await responseErrorCode(accepted), "body_too_large");
+
+    const invalid = await post({
+      prompt: "Inspect this file",
+      model: "fixture-model",
+      images: [{ mimeType: "image/png", data: Buffer.from("not an image").toString("base64") }],
+    });
+    assert.equal(invalid.status, 400);
+    assert.equal(await responseErrorCode(invalid), "invalid_session_images");
+
+    const tooManyBytes = await post({
+      prompt: "Inspect this image",
+      model: "fixture-model",
+      images: [{
+        mimeType: "image/png",
+        data: Buffer.concat([pngSignature, Buffer.alloc(1024 * 1024)]).toString("base64"),
+      }],
+    });
+    assert.equal(tooManyBytes.status, 400);
+    assert.equal(await responseErrorCode(tooManyBytes), "invalid_session_images");
+    const tooManyImages = await post({
+      prompt: "Inspect these images",
+      images: Array.from({ length: 5 }, () => ({
+        mimeType: "image/png",
+        data: pngSignature.toString("base64"),
+      })),
+    });
+    assert.equal(tooManyImages.status, 400);
+    assert.equal(await responseErrorCode(tooManyImages), "invalid_session_images");
+
+    const unsupportedMime = await post({
+      prompt: "Inspect this image",
+      images: [{ mimeType: "image/gif", data: pngSignature.toString("base64") }],
+    });
+    assert.equal(unsupportedMime.status, 400);
+    assert.equal(await responseErrorCode(unsupportedMime), "invalid_session_images");
+
+    const oversizedBody = await fetch(origin + "/api/sessions", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        prompt: "Inspect this image",
+        model: "fixture-model",
+        images: [{ mimeType: "image/png", data: "A".repeat(2 * 1024 * 1024) }],
+      }),
+    });
+    assert.equal(oversizedBody.status, 413);
+    assert.equal(await responseErrorCode(oversizedBody), "body_too_large");
   });
 });

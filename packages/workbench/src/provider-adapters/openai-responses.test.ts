@@ -80,6 +80,35 @@ test("OpenAI Responses rejects custom hosts instead of sending credentials to an
     /official HTTPS API endpoint/,
   );
 });
+test("Bedrock Mantle Responses uses the regional path and Bearer API key", async () => {
+  const mantleConfig: ProviderAdapterConfig = {
+    providerId: "bedrock-mantle",
+    transport: "openai-responses",
+    baseUrl: "https://bedrock-mantle.us-east-1.api.aws/openai/v1",
+    auth: { kind: "api-key", apiKey: "mantle-fixture-secret" },
+  };
+  let requestUrl = "";
+  let authorization = "";
+  const client = createProviderClient(mantleConfig, async (input, init) => {
+    requestUrl = String(input);
+    authorization = (init?.headers as Record<string, string>).authorization ?? "";
+    return Response.json({
+      status: "completed",
+      output: [{ type: "message", content: [{ type: "output_text", text: "ok" }] }],
+    });
+  });
+
+  const reply = await client.complete(
+    "openai.gpt-5.4",
+    [{ role: "user", content: "fixture only" }],
+    [],
+    new AbortController().signal,
+  );
+  assert.equal(requestUrl, "https://bedrock-mantle.us-east-1.api.aws/openai/v1/responses");
+  assert.equal(authorization, "Bearer mantle-fixture-secret");
+  assert.equal(client.redact("Bearer mantle-fixture-secret"), "Bearer [redacted]");
+  assert.equal(reply.message.content, "ok");
+});
 test("typed OpenAI descriptor routes to Responses with host-bound Bearer auth", async () => {
   let requestUrl = "";
   let requestInit: RequestInit | undefined;
@@ -310,4 +339,65 @@ test("Responses streaming returns a tool-only reply without text deltas", async 
   assert.equal(reply.message.content, null);
   assert.deepEqual(reply.usage, { prompt_tokens: 5, completion_tokens: 2, total_tokens: 7 });
   assert.equal(reply.response_id, "resp-tool-only");
+});
+test("Responses maps a refusal output block to assistant content", async () => {
+  const client = createProviderClient(config, async () => Response.json({
+    id: "resp-refusal",
+    status: "completed",
+    output: [{
+      type: "message",
+      content: [{
+        type: "refusal",
+        refusal: "I cannot help with that request.",
+      }],
+    }],
+  }));
+
+  const reply = await client.complete(
+    "gpt-fixture",
+    [{ role: "user", content: "do this" }],
+    [],
+    new AbortController().signal,
+  );
+
+  assert.equal(reply.message.role, "assistant");
+  assert.equal(reply.message.content, "I cannot help with that request.");
+});
+
+test("Responses streams refusal deltas to assistant content", async () => {
+  const refusalParts = ["I cannot help with ", "that request."];
+  const refusal = refusalParts.join("");
+  const events = [
+    { type: "response.refusal.delta", delta: refusalParts[0] },
+    { type: "response.refusal.delta", delta: refusalParts[1] },
+    {
+      type: "response.completed",
+      response: {
+        id: "resp-refusal-stream",
+        status: "completed",
+        output: [{
+          type: "message",
+          content: [{ type: "refusal", refusal }],
+        }],
+      },
+    },
+  ];
+  const response = new Response(
+    events.map(event => `event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`).join(""),
+    { headers: { "content-type": "text/event-stream" } },
+  );
+  const client = createProviderClient(config, async () => response);
+  const deltas: string[] = [];
+
+  const reply = await client.complete(
+    "gpt-fixture",
+    [{ role: "user", content: "do this" }],
+    [],
+    new AbortController().signal,
+    delta => { deltas.push(delta); },
+  );
+
+  assert.equal(reply.message.content, refusalParts.join(""));
+  assert.deepEqual(deltas, refusalParts);
+  assert.equal(deltas.join(""), refusalParts.join(""));
 });

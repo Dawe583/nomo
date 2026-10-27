@@ -16,6 +16,9 @@ A successful model catalog request is required before showing connected.
 `NVIDIA_API_KEY` can connect the NVIDIA preset. Ollama and LM Studio presets can
 run without a cloud key on loopback endpoints. Direct `openai.com` provider URLs
 are rejected. Model provider credentials and MCP OAuth are separate flows.
+The Control Plane's `GET /api/provider` is passive. Settings can explicitly run
+`POST /api/provider/probe-environment`; direct `Workbench.providerState()` and
+session start keep their existing environment resolution behavior.
 Prompts and tool results are sent to the selected model provider.
 
 ## Filtered project workspace
@@ -62,6 +65,9 @@ grant, project binding, profile, runner capabilities, allowlist and current
 policy, then dispatched through the existing Workbench path. Ambiguous tool
 outcomes are recorded as unknown and are never retried automatically.
 
+When emitted, status events may progress from `starting` to `running` but
+cannot regress from `running` to `starting`.
+
 The current implementation does not include a vendor adapter or Control Plane
 consent UI/API route. The consent preview declares whether transfer is remote
 and which categories may be sent (`task`, `system-prompt`, `tool-arguments`,
@@ -90,6 +96,15 @@ discovery, or Vertex Express mode. API-key and project requirements follow
 Google's [Standard Vertex API-key guide](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/start/api-keys?usertype=standard),
 [API-key header guidance](https://docs.cloud.google.com/docs/authentication/api-keys-use),
 and [streamGenerateContent REST reference](https://docs.cloud.google.com/gemini-enterprise-agent-platform/reference/rest/v1/projects.locations.endpoints/streamGenerateContent).
+
+Google GenAI and Standard Vertex user messages accept up to four JPEG, PNG, or
+WebP images, with 1 MiB decoded bytes total. The Control Plane validates
+canonical base64 and file signatures; session create/send routes allow 2 MiB
+JSON while the general API body limit stays 64 KiB. Unsent browser drafts stay
+in memory. Sent bytes live only in encrypted local `workspace.enc` history;
+events and ledgers store image IDs and MIME metadata, not bytes. Other
+providers reject image-bearing messages. See Google's
+[image understanding guide](https://ai.google.dev/gemini-api/docs/image-understanding).
 
 The typed `mistral-conversations` transport is Prime's stateless Mistral chat
 completion API (`POST /v1/chat/completions` with SSE), not the separate
@@ -192,24 +207,31 @@ OAuth-code login is not implemented. OpenRouter and Vercel require a successful
 `/models` request before returning pinned manifest models; Cloudflare returns
 its pinned manifest list without a model-discovery request. Model metadata
 preserves supported input, reasoning, tools, context-window and max-output-token
-values. Optional provider routing and attribution values are sent only to
-OpenRouter. See the official
+values. The Settings form accepts the optional `openrouter` object as JSON;
+typed `/api/provider` validates and persists its attribution and routing
+preferences, and the provider state returns them for editing. Gateway values
+are bound to the OpenRouter descriptor and sent only to OpenRouter. See the official
+OpenRouter references:
 [OpenRouter API](https://openrouter.ai/docs/api_reference/overview) and
-[provider routing](https://openrouter.ai/docs/guides/routing/provider-selection)
-contracts.
+[provider routing](https://openrouter.ai/docs/guides/routing/provider-selection).
 
-Cloudflare AI Gateway accepts explicit `/anthropic`, `/compat`, or `/openai`
-routes with resolved account and gateway IDs. Its API-key profile represents
-the gateway token only; requests send it only as `cf-aig-authorization` and do
-not send an upstream provider key. This supports the BYOK path where provider
-keys are stored in the gateway; separate upstream and gateway credentials are
-not represented. The compatibility route preserves official `provider/model`
-IDs. Vercel supports the pinned Anthropic Messages route with API-key auth and
+Cloudflare AI Gateway now has manifest-backed descriptors for the pinned OMP
+and Prime chat rows. Workbench maps Anthropic Messages to `/anthropic`, OMP
+OpenAI Chat Completions to `/compat`, and Prime OpenAI Responses to `/openai`;
+the base URL must include the resolved account and gateway IDs. Its API-key
+profile represents the gateway token only, sent as `cf-aig-authorization`.
+Separate upstream-provider and gateway credentials are not represented; this
+supports keys stored in Cloudflare. Cloudflare marks `/compat` deprecated for
+new single-model calls but says existing integrations continue to work. New
+integrations should use its REST `/ai/v1/chat/completions` route, which is not
+declared by this pinned manifest. Official references: [Cloudflare Anthropic](https://developers.cloudflare.com/ai-gateway/usage/providers/anthropic/),
+[Cloudflare OpenAI](https://developers.cloudflare.com/ai-gateway/usage/providers/openai/),
+[Cloudflare compatibility](https://developers.cloudflare.com/ai-gateway/usage/chat-completion/).
+
+Vercel supports the pinned Anthropic Messages route with API-key auth and
 optional attribution headers; OIDC is not implemented. Chat Completions
-provider-routing options are not applied to Vercel's Anthropic route. Official
-references: [Cloudflare Anthropic](https://developers.cloudflare.com/ai-gateway/usage/providers/anthropic/),
-[Cloudflare compatibility](https://developers.cloudflare.com/ai-gateway/usage/chat-completion/),
-and [Vercel Anthropic Messages](https://vercel.com/docs/ai-gateway/sdks-and-apis/anthropic-messages-api).
+provider-routing options are not applied to Vercel's Anthropic route. See
+[Vercel Anthropic Messages](https://vercel.com/docs/ai-gateway/sdks-and-apis/anthropic-messages-api).
 
 ## Pinned OMP agent APIs not implemented
 

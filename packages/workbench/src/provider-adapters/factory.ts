@@ -3,8 +3,12 @@ import {
   normalizeProviderConfig,
   type ProviderConfig,
 } from "../provider.ts";
-import type { HarnessSettings } from "../harness-settings.ts";
-import type { ProviderAdapterConfig, ProviderClient, ProviderTransport } from "./types.ts";
+import type {
+  ProviderAdapterConfig,
+  ProviderAdapterDependencies,
+  ProviderClient,
+  ProviderTransport,
+} from "./types.ts";
 import { OpenAIResponsesAdapter } from "./openai-responses.ts";
 import { AzureOpenAIResponsesAdapter } from "./openai-responses.ts";
 import { GoogleGenerativeAIAdapter } from "./google-generative-ai.ts";
@@ -18,6 +22,7 @@ import {
   PROVIDER_API_BLOCKERS,
   type BlockedProviderApi,
 } from "./types.ts";
+import type { HarnessSettings } from "../harness-settings.ts";
 
 function blockedProviderApi(config: ProviderConfig | ProviderAdapterConfig): BlockedProviderApi | undefined {
   const transport = "auth" in config ? config.transport : config.api;
@@ -48,6 +53,7 @@ export function createProviderClient(
   config: ProviderConfig | ProviderAdapterConfig,
   request: typeof fetch = fetch,
   settings: Partial<HarnessSettings> | (() => HarnessSettings) = {},
+  dependencies: ProviderAdapterDependencies = {},
 ): ProviderClient {
   const blockedApi = blockedProviderApi(config);
   if (blockedApi) {
@@ -72,14 +78,19 @@ export function createProviderClient(
     return createGatewayProvider(config, request, settings);
   }
   if (adapterConfig && config.transport === "bedrock-converse-stream") {
-    return new BedrockConverseStreamAdapter(config, request, undefined, settings);
+    return new BedrockConverseStreamAdapter(
+      config,
+      request,
+      undefined,
+      settings,
+      dependencies.awsCredentialProvider,
+    );
   }
   if (adapterConfig && config.transport === "mistral-conversations") {
     if (config.auth.kind !== "api-key") throw new Error("Mistral Conversations requires an API-key authentication profile.");
     return new MistralConversationsAdapter(config, request, settings);
   }
   if (adapterConfig && config.transport === "ollama-chat") {
-    if (config.auth.kind !== "none") throw new Error("Ollama Chat requires no authentication.");
     return new OllamaChatAdapter(config, request, settings);
   }
   if ("auth" in config && config.auth.kind !== "api-key") {
