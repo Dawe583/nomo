@@ -6382,7 +6382,7 @@ export function renderWorkspace(
           colorDepth: visuals.color ? (24 as const) : (0 as const),
         };
   const ink = (value: string, code: string) =>
-    visuals.color ? `\x1b[${code}m${value}\x1b[0;38;5;252m` : value;
+    visuals.color ? `\x1b[${code}m${value}\x1b[0m` : value;
   const text = (value: string) => fit(sanitizeText(value), width);
   const amber = "38;5;215",
     ice = "38;5;117",
@@ -6880,7 +6880,7 @@ export function renderWorkspace(
               : style === "error"
                 ? "38;5;203"
                 : style === "text"
-                  ? "38;5;252"
+                  ? "39"
                   : /^>/.test(line)
                     ? `1;${ice}`
                     : / YOU$/.test(line)
@@ -6889,7 +6889,7 @@ export function renderWorkspace(
                         ? `1;${amber}`
                         : /^(Error|Invalid|Failed)/.test(line)
                           ? "38;5;203"
-                          : "38;5;252";
+                          : "39";
     // A sweep crosses the newest run's last row while it is live, so the eye
     // is drawn to the line that just changed. It rides on a row that is
     // already coloured and already scrolled to, so it adds attention without
@@ -7338,7 +7338,7 @@ export function renderWorkspace(
   ]
     .slice(0, height)
     .map((row) =>
-      visuals.color ? `\x1b[38;5;252m${pad(row, width)}\x1b[0m` : row,
+      visuals.color ? `${pad(row, width)}\x1b[0m` : row,
     )
     .join("\n");
 }

@@ -1077,6 +1077,33 @@ test("spacious shell keeps an open canvas and docks a quiet flat composer", asyn
   assert.ok(boot.some((line) => line.trim() === "⇥ Tab panels"));
 });
 
+test("ordinary workspace text follows the terminal foreground", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-terminal-foreground-"));
+  const app = new Workbench({ NOMO_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
+  ui.choose("documents");
+  for (const [width, height] of [[40, 12], [80, 24], [120, 40], [200, 48]] as const) {
+    const color = renderWorkspace(ui, width, height, "", false, false, {
+      color: true,
+      motion: false,
+    });
+    const mono = renderWorkspace(ui, width, height, "", false, false, {
+      color: false,
+      motion: false,
+    });
+    assert.match(color, /\x1b\[39mNo entries yet\./, `${width}x${height} forces a foreground`);
+    assert.doesNotMatch(color, /\x1b\[(?:0;)?38;5;252m/);
+    assert.deepEqual(
+      stripAnsi(color).split("\n").map((row) => row.trimEnd()),
+      mono.split("\n").map((row) => row.trimEnd()),
+    );
+  }
+});
+
 test("empty workspace views center the existing placeholder in the body", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "nomo-tui-empty-placement-"));
   const app = new Workbench({ NOMO_DATA_DIR: root });
