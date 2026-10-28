@@ -3,6 +3,15 @@
 All notable user-facing changes since the first repository commit.
 
 ## Unreleased
+- Cloudflare Workers AI exposes the single pinned Prime DeepSeek V4 Flash model
+  through its official account-scoped OpenAI Chat Completions URL. Workbench
+  requires HTTPS `api.cloudflare.com/client/v4/accounts/{accountId}/ai/v1`,
+  rejects other hosts, paths and URL decorations, sends the standard API-key
+  Bearer header, and returns the pinned model without probing `/models`. This
+  does not imply support for other Workers AI models or tool calling. Local
+  fixtures cover route, auth, endpoint rejection and secret redaction; no live
+  provider request or credential access. Source:
+  [Cloudflare OpenAI compatibility](https://developers.cloudflare.com/workers-ai/configuration/open-ai-compatibility/).
 - Cloudflare AI Gateway now exposes manifest-backed descriptors for pinned OMP
   and Prime chat rows across Anthropic Messages (`/anthropic`), OMP Chat
   Completions (`/compat`) and Prime Responses (`/openai`). Endpoint validation

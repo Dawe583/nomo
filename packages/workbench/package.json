@@ -30,6 +30,7 @@
   },
   "homepage": "https://github.com/Dawe583/void/tree/main/packages/workbench",
   "dependencies": {
+    "@aws-sdk/credential-provider-node": "3.972.83",
     "@cursor/sdk": "1.0.40",
     "@void/proxy": "workspace:*",
     "@void/runtime": "workspace:*"

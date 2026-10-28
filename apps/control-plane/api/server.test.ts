@@ -486,12 +486,11 @@ describe("control plane API", () => {
           "omp:google-vertex/openai-completions:blocked:7:true",
           "omp:kimi-code/openai-completions:blocked:7:true",
           "omp:muse-code/openai-responses:blocked:5:true",
-          "prime:cloudflare-workers-ai/openai-completions:blocked:1:true",
         ].sort(),
       );
       assert.equal(
         blockedModelGroups?.reduce((sum, group) => sum + group.modelIds.length, 0),
-        33,
+        32,
       );
       assert.ok(
         blockedModelGroups?.every(group => group.reason.length > 0 && group.evidence.length > 0),
@@ -1064,6 +1063,72 @@ describe("control plane API", () => {
           });
           assert.equal(rejected.status, 400);
           assert.doesNotMatch(await rejected.text(), /cloudflare-fixture-secret-never-return/);
+        }
+      }, { workbench });
+      assert.equal(providerRequests, 0);
+      const encrypted = await readFile(join(directory, "workspace.enc"));
+      assert.equal(encrypted.includes(Buffer.from(secret)), false);
+    } finally {
+      workbench.close();
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
+  test("provider API configures Cloudflare Workers AI with its account-scoped route without discovery", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "nomo-cloudflare-workers-ai-"));
+    const secret = "cloudflare-workers-fixture-secret-never-return";
+    const accountId = "a".repeat(32);
+    const endpoint = `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/v1`;
+    let providerRequests = 0;
+    const env = {
+      NOMO_DATA_DIR: directory,
+      NVIDIA_API_KEY: "",
+      DASHSCOPE_API_KEY: "",
+    };
+    const workbench = new Workbench(env, async () => {
+      providerRequests++;
+      throw new Error("Workers AI setup must not probe a model catalog.");
+    });
+    const model = "@cf/deepseek-ai/deepseek-v4-flash-0731";
+    const config = {
+      providerId: "cloudflare-workers-ai",
+      transport: "openai-completions",
+      endpoint,
+      model,
+      auth: { kind: "api-key", apiKey: secret },
+    };
+    try {
+      await withServer("unused.jsonl", async (origin) => {
+        const connected = await fetch(origin + "/api/provider", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(config),
+        });
+        assert.equal(connected.status, 200);
+        assert.doesNotMatch(await connected.text(), /cloudflare-workers-fixture-secret-never-return/);
+
+        const state = await (await fetch(origin + "/api/provider")).json() as Record<string, unknown>;
+        assert.equal(state.connected, true);
+        assert.equal(state.providerId, "cloudflare-workers-ai");
+        assert.equal(state.transport, "openai-completions");
+        assert.equal(state.defaultModel, model);
+        assert.equal(state.authKind, "api-key");
+        assert.equal(state.keyStorage, "encrypted-local");
+        assert.doesNotMatch(JSON.stringify(state), /cloudflare-workers-fixture-secret-never-return/);
+
+        for (const invalidEndpoint of [
+          `https://attacker.example/client/v4/accounts/${accountId}/ai/v1`,
+          `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/v1?x=1`,
+          `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/v1/extra`,
+          `https://api.cloudflare.com/client/v4/accounts/${accountId}%2Fother/ai/v1`,
+        ]) {
+          const rejected = await fetch(origin + "/api/provider", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ ...config, endpoint: invalidEndpoint }),
+          });
+          assert.equal(rejected.status, 400, invalidEndpoint);
+          assert.doesNotMatch(await rejected.text(), /cloudflare-workers-fixture-secret-never-return/);
         }
       }, { workbench });
       assert.equal(providerRequests, 0);

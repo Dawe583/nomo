@@ -11,6 +11,7 @@ import {
   cloudflareAiGatewayRouteForTransport,
   normalizeCloudflareAiGatewayEndpoint,
 } from "./provider-adapters/cloudflare-ai-gateway-config.ts";
+import { normalizeCloudflareWorkersAiEndpoint } from "./provider-adapters/cloudflare-workers-ai-config.ts";
 
 import { readFileSync } from "node:fs";
 
@@ -192,13 +193,6 @@ const PROVIDER_MODEL_BLOCKERS = [
     reason: "Muse Code declares device-code authentication, which Workbench does not implement.",
     evidence: "OMP 18.6.2 packages/catalog/src/compat/rules.json:auth.providers; Workbench has no device-code authentication profile.",
   },
-  {
-    source: "prime",
-    providerId: "cloudflare-workers-ai",
-    transportId: "openai-completions",
-    reason: "Prime's Cloudflare Workers AI endpoint requires an account ID that Workbench does not model.",
-    evidence: "Prime 0.10.1 crates/pa-ai/src/models_generated.rs:RawModel and crates/pa-ai/src/env_api_keys.rs; endpoint contains {CLOUDFLARE_ACCOUNT_ID}.",
-  },
 ] as const;
 
 export type ConfigurableProviderDescriptor = {
@@ -264,6 +258,17 @@ function isCloudflareAiGatewayManifestEndpoint(
     endpoint === `https://gateway.ai.cloudflare.com/v1/{CLOUDFLARE_ACCOUNT_ID}/{CLOUDFLARE_GATEWAY_ID}/${route}`
   );
 }
+function isCloudflareWorkersAiManifestEndpoint(
+  providerId: string,
+  endpoint: string | null,
+  transport: ImplementedProviderTransport,
+): boolean {
+  return (
+    providerId === "cloudflare-workers-ai" &&
+    transport === "openai-completions" &&
+    endpoint === "https://api.cloudflare.com/client/v4/accounts/{CLOUDFLARE_ACCOUNT_ID}/ai/v1"
+  );
+}
 
 const descriptorMap = new Map<
   string,
@@ -283,6 +288,11 @@ for (const provider of PROVIDER_MODEL_MANIFEST.providers) {
       model.endpoint,
       transport,
     );
+    const cloudflareWorkersAiDynamic = isCloudflareWorkersAiManifestEndpoint(
+      provider.providerId,
+      model.endpoint,
+      transport,
+    );
     const bedrockMantleDynamic =
       provider.providerId === "bedrock-mantle" &&
       transport === "openai-responses" &&
@@ -297,19 +307,24 @@ for (const provider of PROVIDER_MODEL_MANIFEST.providers) {
         /[<>{}]/.test(model.endpoint) &&
         !vertexDynamic &&
         !bedrockMantleDynamic &&
-        !cloudflareDynamic) ||
+        !cloudflareDynamic &&
+        !cloudflareWorkersAiDynamic) ||
       (model.endpoint === null && !model.endpointRule)
     )
       continue;
     const id = JSON.stringify([
       provider.providerId,
       transport,
-      bedrockMantleDynamic || cloudflareDynamic ? null : model.endpoint,
+      bedrockMantleDynamic || cloudflareDynamic || cloudflareWorkersAiDynamic
+        ? null
+        : model.endpoint,
       bedrockMantleDynamic
         ? "aws-bedrock-mantle"
         : cloudflareDynamic
           ? "cloudflare-ai-gateway"
-          : model.endpointRule,
+          : cloudflareWorkersAiDynamic
+            ? "cloudflare-workers-ai"
+            : model.endpointRule,
     ]);
     const existing = descriptorMap.get(id);
     if (existing) {
@@ -328,14 +343,19 @@ for (const provider of PROVIDER_MODEL_MANIFEST.providers) {
       id,
       providerId: provider.providerId,
       transport,
-      endpoint: vertexDynamic || bedrockMantleDynamic || cloudflareDynamic ? null : model.endpoint,
+      endpoint:
+        vertexDynamic || bedrockMantleDynamic || cloudflareDynamic || cloudflareWorkersAiDynamic
+          ? null
+          : model.endpoint,
       endpointRule: vertexDynamic
         ? "google-vertex-standard"
         : bedrockMantleDynamic
           ? "aws-bedrock-mantle"
           : cloudflareDynamic
             ? "cloudflare-ai-gateway"
-            : model.endpointRule,
+            : cloudflareWorkersAiDynamic
+              ? "cloudflare-workers-ai"
+              : model.endpointRule,
       model: defaultModel,
       models: [model.id],
       authKind: authKindForTransport(provider.providerId, transport),
@@ -499,6 +519,17 @@ function matchesDynamicEndpointRule(
   ) {
     try {
       return normalizeCloudflareAiGatewayEndpoint(new URL(baseUrl), transport) !== null;
+    } catch {
+      return false;
+    }
+  }
+  if (
+    model.endpoint ===
+      "https://api.cloudflare.com/client/v4/accounts/{CLOUDFLARE_ACCOUNT_ID}/ai/v1" &&
+    transport === "openai-completions"
+  ) {
+    try {
+      return normalizeCloudflareWorkersAiEndpoint(new URL(baseUrl)) !== null;
     } catch {
       return false;
     }

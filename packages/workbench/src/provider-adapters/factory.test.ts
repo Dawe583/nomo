@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { createProviderClient } from "./factory.ts";
 import { catalogFor } from "../provider.ts";
 import type { ProviderAdapterConfig } from "./types.ts";
+import { assertProviderDescriptorInManifest } from "../provider-catalog.ts";
 
 test("legacy compatible configuration keeps catalog and completion behavior through the factory", async () => {
   const calls: string[] = [];
@@ -385,4 +386,55 @@ test("Prime-only request semantics do not apply to custom compatible endpoints",
   );
   await client.complete("fixture-model", [], [], new AbortController().signal);
   assert.equal(body?.usage, undefined);
+});
+
+test("Cloudflare Workers AI uses its pinned Prime model and account-scoped completions route", async () => {
+  const model = "@cf/deepseek-ai/deepseek-v4-flash-0731";
+  const baseUrl = `https://api.cloudflare.com/client/v4/accounts/${"a".repeat(32)}/ai/v1`;
+  const config = {
+    providerId: "cloudflare-workers-ai",
+    transport: "openai-completions",
+    baseUrl,
+    model,
+    auth: { kind: "api-key", apiKey: "fixture-cloudflare-key" },
+  } satisfies ProviderAdapterConfig;
+  assert.doesNotThrow(() => assertProviderDescriptorInManifest(config));
+  for (const invalidBaseUrl of [
+    `http://api.cloudflare.com/client/v4/accounts/${"a".repeat(32)}/ai/v1`,
+    `https://attacker.example/client/v4/accounts/${"a".repeat(32)}/ai/v1`,
+    `${baseUrl}?next=https://attacker.example`,
+    `${baseUrl}/extra`,
+    `https://api.cloudflare.com/client/v4/accounts/${"a".repeat(31)}%2Fother/ai/v1`,
+  ]) {
+    assert.throws(
+      () => assertProviderDescriptorInManifest({ ...config, baseUrl: invalidBaseUrl }),
+      /endpoint/i,
+    );
+  }
+  const requests: Array<{ url: string; init?: RequestInit }> = [];
+  const client = createProviderClient(config, async (input, init) => {
+    requests.push({ url: String(input), init });
+    return Response.json({
+      choices: [{
+        message: { role: "assistant", content: "fixture answer" },
+        finish_reason: "stop",
+      }],
+    });
+  });
+  assert.deepEqual((await client.models()).map(({ id }) => id), [model]);
+  assert.equal(requests.length, 0);
+  const reply = await client.complete(model, [], [], new AbortController().signal);
+  assert.equal(reply.message.content, "fixture answer");
+  assert.deepEqual(requests.map(({ url }) => url), [`${baseUrl}/chat/completions`]);
+  const request = requests[0]!;
+  assert.equal(request.init?.method, "POST");
+  assert.equal(
+    new Headers(request.init?.headers).get("authorization"),
+    "Bearer fixture-cloudflare-key",
+  );
+  assert.equal(
+    JSON.parse(String(request.init?.body)).model,
+    model,
+  );
+  assert.equal(client.redact("failed: fixture-cloudflare-key"), "failed: [redacted]");
 });

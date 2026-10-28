@@ -10,11 +10,13 @@ import {
   cloudflareAiGatewayRouteForTransport,
   normalizeCloudflareAiGatewayEndpoint,
 } from "./cloudflare-ai-gateway-config.ts";
+import { normalizeCloudflareWorkersAiEndpoint } from "./cloudflare-workers-ai-config.ts";
 import { OpenAIResponsesAdapter } from "./openai-responses.ts";
 
 const GATEWAYS: Readonly<Record<string, true>> = {
   openrouter: true,
   "cloudflare-ai-gateway": true,
+  "cloudflare-workers-ai": true,
   "vercel-ai-gateway": true,
 };
 
@@ -46,7 +48,10 @@ export function createGatewayProvider(
       );
   return {
     models: async () => {
-      if (config.providerId !== "cloudflare-ai-gateway") await delegate.models();
+      if (
+        config.providerId !== "cloudflare-ai-gateway" &&
+        config.providerId !== "cloudflare-workers-ai"
+      ) await delegate.models();
       return pinnedModels(config);
     },
     complete: (...args) => delegate.complete(...args),
@@ -87,6 +92,14 @@ function validateGatewayEndpoint(config: ProviderAdapterConfig): string {
     }
     return normalized;
   }
+  if (config.providerId === "cloudflare-workers-ai") {
+    if (config.transport !== "openai-completions")
+      throw new Error("Cloudflare Workers AI requires OpenAI Chat Completions.");
+    const normalized = normalizeCloudflareWorkersAiEndpoint(url);
+    if (!normalized)
+      throw new Error("Cloudflare Workers AI requires its official account-scoped HTTPS endpoint.");
+    return normalized;
+  }
   if (config.providerId === "vercel-ai-gateway") {
     if (config.transport !== "anthropic-messages" || url.hostname !== "ai-gateway.vercel.sh" || !["", "/v1"].includes(path)) {
       throw new Error("Vercel AI Gateway supports its official Anthropic Messages endpoint in this manifest.");
@@ -111,7 +124,9 @@ function createGatewayFetch(config: ProviderAdapterConfig, request: typeof fetch
           : `${gatewayPath}/chat/completions`;
   return async (input, init) => {
     const url = new URL(input instanceof Request ? input.url : String(input));
-    const modelListing = config.providerId !== "cloudflare-ai-gateway" &&
+    const modelListing =
+      config.providerId !== "cloudflare-ai-gateway" &&
+      config.providerId !== "cloudflare-workers-ai" &&
       init?.method === "GET" &&
       url.origin === endpoint.origin &&
       url.pathname === `${gatewayPath}/models`;
