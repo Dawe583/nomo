@@ -287,7 +287,7 @@ export type SessionView = {
   readonly continuationCount: number;
   readonly runTokenCount: number;
 };
-/** Model ids VOID once shipped as its default. They are retired on sight: the
+/** Model ids that earlier releases shipped as defaults are retired on sight: the
  * workspace picks from its own validated catalog or has no model at all. */
 const RETIRED_MODEL_IDS = [
   "openai-fast",
@@ -384,21 +384,21 @@ export const AGENT_PRESETS = [
     name: "Planner",
     description: "Break work into an explicit, reviewable plan.",
     instruction:
-      "You are the VOID planner. Start with a concise plan, identify risks and dependencies, then execute only after the plan is clear.",
+      "You are the NOMO planner. Start with a concise plan, identify risks and dependencies, then execute only after the plan is clear.",
   },
   {
     id: "reviewer",
     name: "Reviewer",
     description: "Inspect changes for correctness, security and regressions.",
     instruction:
-      "You are the VOID reviewer. Prioritize concrete defects, security risks and missing verification; do not invent praise or rewrite unrelated code.",
+      "You are the NOMO reviewer. Prioritize concrete defects, security risks and missing verification; do not invent praise or rewrite unrelated code.",
   },
   {
     id: "implementer",
     name: "Implementer",
     description: "Implement the requested change with focused verification.",
     instruction:
-      "You are the VOID implementer. Make the smallest complete change, preserve existing contracts and verify the changed behavior before claiming success.",
+      "You are the NOMO implementer. Make the smallest complete change, preserve existing contracts and verify the changed behavior before claiming success.",
   },
 ] as const;
 // Standards rule 10: a denial names the rule id, the class and what approval
@@ -421,7 +421,7 @@ export function denialText(
     decision.kind === "hold"
       ? "It needed operator approval before expiry."
       : "Change the connector policy or ask the operator to approve this class.";
-  return `VOID denied ${tool} (${klass}) by ${basis}.${why} ${remedy} Do not retry with reworded arguments.`;
+  return `NOMO denied ${tool} (${klass}) by ${basis}.${why} ${remedy} Do not retry with reworded arguments.`;
 }
 /**
  * The learned-entry block for one prompt, or "" when there is nothing to add.
@@ -683,7 +683,7 @@ type ActiveAgentRunnerRun = {
   cancelPromise?: Promise<AgentCancelResult>;
 };
 
-/** Model tools always cross the existing VOID SDK. A provider has no shell or
+/** Model tools always cross NOMO's SDK. A provider has no shell or
  * filesystem authority; operators configure the MCP upstream on the runtime. */
 const REFINEMENT_SECRET_PATTERNS = [
   /\b(?:api[_-]?key|token|password|secret|authorization)\s*[:=]\s*["']?[^\s,;"']+/i,
@@ -802,7 +802,7 @@ export class Workbench {
   private readonly envProbeFailures = new Set<string>();
   private readonly storage: LocalStorage;
   private hasState = false;
-  /** VOID ships no default model and no default provider, so neither key is
+  /** NOMO ships no default model and no default provider, so neither key is
    * present until a provider is configured or a preference is patched. */
   private preferences: Record<string, string | undefined> = {
     defaultAgentPreset: "default",
@@ -2764,7 +2764,7 @@ export class Workbench {
         `Concurrent run limit reached (${this.harness.maxConcurrentRuns}). Wait for a running session to finish or increase the limit.`,
       );
     }
-    const systemInstruction = `You are operating through VOID. Tool calls are classified, governed by policy, and recorded. Respect denied calls; do not retry them with reworded arguments. Wait for operator approval of held calls. Only claim completed actions when they are proven by tool results. You have a managed document workspace with list, read, write and delete tools. Changes in that workspace are captured and can be undone by the operator. These tools do not access the host filesystem. Use them when asked to create or edit documents.${selectedAgent?.instruction ? `\n\nActive agent preset (${selectedAgent.id}): ${selectedAgent.instruction}` : ""}${selectedProfile ? `\n\nActive agent profile (${selectedProfile.id}): ${selectedProfile.systemPrompt}` : ""}${projectSystemContext(projectBinding)}`;
+    const systemInstruction = `You are operating through NOMO. Tool calls are classified, governed by policy, and recorded. Respect denied calls; do not retry them with reworded arguments. Wait for operator approval of held calls. Only claim completed actions when they are proven by tool results. You have a managed document workspace with list, read, write and delete tools. Changes in that workspace are captured and can be undone by the operator. These tools do not access the host filesystem. Use them when asked to create or edit documents.${selectedAgent?.instruction ? `\n\nActive agent preset (${selectedAgent.id}): ${selectedAgent.instruction}` : ""}${selectedProfile ? `\n\nActive agent profile (${selectedProfile.id}): ${selectedProfile.systemPrompt}` : ""}${projectSystemContext(projectBinding)}`;
     const queued =
       background &&
       (this.jobs.size > 0 ||
@@ -3697,7 +3697,7 @@ export class Workbench {
         );
       }
 
-      const systemInstruction = `You are operating through VOID. Tool calls are classified, governed by policy, and recorded. Respect denied calls; do not retry them with reworded arguments. Wait for operator approval of held calls. Only claim completed actions when they are proven by tool results. You have a managed document workspace with list, read, write and delete tools. Changes in that workspace are captured and can be undone by the operator. These tools do not access the host filesystem. Use them when asked to create or edit documents.${selectedAgent?.instruction ? `\n\nActive agent preset (${selectedAgent.id}): ${selectedAgent.instruction}` : ""}${selectedProfile ? `\n\nActive agent profile (${selectedProfile.id}): ${selectedProfile.systemPrompt}` : ""}${projectSystemContext(projectBinding)}`;
+      const systemInstruction = `You are operating through NOMO. Tool calls are classified, governed by policy, and recorded. Respect denied calls; do not retry them with reworded arguments. Wait for operator approval of held calls. Only claim completed actions when they are proven by tool results. You have a managed document workspace with list, read, write and delete tools. Changes in that workspace are captured and can be undone by the operator. These tools do not access the host filesystem. Use them when asked to create or edit documents.${selectedAgent?.instruction ? `\n\nActive agent preset (${selectedAgent.id}): ${selectedAgent.instruction}` : ""}${selectedProfile ? `\n\nActive agent profile (${selectedProfile.id}): ${selectedProfile.systemPrompt}` : ""}${projectSystemContext(projectBinding)}`;
 
       // ---- effective tool list (mirrors startSession) then narrowed to parent ----
       const baseTools = (selectedProfile
@@ -4001,7 +4001,7 @@ export class Workbench {
       input = connectorInput(input);
       const url = validateEndpoint(input.url, true);
       const policy = input.policy || DEFAULT_POLICY;
-      if (!loadPolicy(policy).ok) throw new Error("Invalid VOID policy.");
+      if (!loadPolicy(policy).ok) throw new Error("Invalid NOMO policy.");
       if (this.connectors.length >= 12)
         throw new Error("Connector limit reached. Remove an unused connector.");
       const connector: Connector = {
@@ -4031,7 +4031,7 @@ export class Workbench {
       const input = connectorInput(body, previous),
         url = validateEndpoint(input.url, true),
         policy = input.policy || DEFAULT_POLICY;
-      if (!loadPolicy(policy).ok) throw new Error("Invalid VOID policy.");
+      if (!loadPolicy(policy).ok) throw new Error("Invalid NOMO policy.");
       const replacement: Connector = {
         ...previous,
         ...input,
@@ -7148,7 +7148,7 @@ export class Workbench {
           this.event(
             session,
             "tool",
-            `Requested ${name}. VOID will decide before execution.`,
+            `Requested ${name}. NOMO will decide before execution.`,
             { tool: name, callId: call.id, arguments: args },
             "tool.started",
           );

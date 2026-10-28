@@ -5,7 +5,7 @@ import { isolatedWorkbench } from "./test-fixture.ts";
 import type { Workbench } from "./index.ts";
 
 /** An MCP server that answers the catalog handshake and records every method
- * it was asked for, so a test can prove a call never left VOID. */
+ * it was asked for, so a test can prove a call never left NOMO. */
 async function mcpServer(tools: { name: string; description: string }[]) {
   const methods: string[] = [];
   const server: Server = createServer(async (req, res) => {
@@ -97,7 +97,7 @@ test("a tool the provider invented never reaches the connector", async (t) => {
   assert.equal(app.get(session.id)?.status, "failed");
   assert.ok(
     !server.methods.includes("tools/call"),
-    "the connector is never asked to run a tool VOID does not know",
+    "the connector is never asked to run a tool NOMO does not know",
   );
   assert.ok(
     app

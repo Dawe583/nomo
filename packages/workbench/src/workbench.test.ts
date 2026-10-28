@@ -121,8 +121,8 @@ test("migrates legacy generic provider state to compatible and retires the legac
   await rm(bare, { recursive: true, force: true });
 });
 
-test("model tool calls cross a real VOID proxy and produce a ledger", async (t) => {
-  const dir = await mkdtemp(join(tmpdir(), "void-agent-beta-"));
+test("model tool calls cross a real NOMO proxy and produce a ledger", async (t) => {
+  const dir = await mkdtemp(join(tmpdir(), "nomo-agent-beta-"));
   let turn = 0;
   const fetcher: typeof fetch = async (url, options) => {
     assert.equal(
@@ -311,7 +311,7 @@ test("a destructive model call waits for an operator in its own workspace", asyn
   const hold = workbench.pending()[0]!;
   assert.ok(hold);
   assert.equal(hold.call.workspace, session.workspace);
-  assert.equal(turn, 1, "model must wait on VOID approval");
+  assert.equal(turn, 1, "model must wait on NOMO approval");
   assert.equal(
     workbench.decide(hold.holdId, { kind: "denied", by: "beta-test" }),
     true,
@@ -335,7 +335,7 @@ test("denial text names the rule id, the class and the approval path", async (t)
       ruleIndex: 2,
       rationale: "only fixture tools are allowed",
     }),
-    "VOID denied orders_delete (r3) by policy rule 2. Reason: only fixture tools are allowed. Change the connector policy or ask the operator to approve this class. Do not retry with reworded arguments.",
+    "NOMO denied orders_delete (r3) by policy rule 2. Reason: only fixture tools are allowed. Change the connector policy or ask the operator to approve this class. Do not retry with reworded arguments.",
   );
   assert.match(
     denialText("orders_delete", "r3", {
@@ -433,9 +433,9 @@ test("context compaction preserves recent work and records the reduction", async
     "First",
     "fixture-model",
     undefined,
-    "VOID project",
+    "NOMO project",
   );
-  assert.equal(started.project, "VOID project");
+  assert.equal(started.project, "NOMO project");
   for (let turn = 0; turn < 5; turn++) {
     for (
       let poll = 0;
