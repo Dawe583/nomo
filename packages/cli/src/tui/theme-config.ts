@@ -41,7 +41,6 @@ export interface SymbolSet {
 }
 
 export interface ColorPalette {
-  readonly bg: string;
   readonly fg: string;
   readonly accent: string;
   readonly muted: string;
@@ -56,6 +55,7 @@ export interface ColorPalette {
   readonly r3: string;
   readonly ink: string;
   readonly rule: string;
+  readonly userBubble: string;
 }
 
 export const SYMBOL_SETS: Record<SymbolPreset, SymbolSet> = {
@@ -177,26 +177,25 @@ export const SYMBOL_SETS: Record<SymbolPreset, SymbolSet> = {
 
 export const COLOR_THEMES: Record<ColorTheme, ColorPalette> = {
   default: {
-    bg: "#0d0d0f",
-    fg: "#e8e8eb",
-    accent: "#bd4206",
-    muted: "#86868b",
-    border: "#2a2a2e",
-    success: "#5cc094",
-    warning: "#dcbc63",
-    error: "#f47a88",
-    info: "#2997ff",
-    r0: "#5cc094",
-    r1: "#2997ff",
-    r2: "#dcbc63",
-    r3: "#f47a88",
-    ink: "#f5f5f7",
-    rule: "#38383a",
+    fg: "#ffffff",
+    accent: "#fa6b5d",
+    muted: "#a2adba",
+    border: "#4b596c",
+    success: "#50c99b",
+    warning: "#f4b55f",
+    error: "#f16470",
+    info: "#16b8c8",
+    r0: "#50c99b",
+    r1: "#16b8c8",
+    r2: "#f4b55f",
+    r3: "#f16470",
+    ink: "#ffffff",
+    rule: "#536176",
+    userBubble: "#263443",
   },
   paper: {
-    bg: "#f6f0e3",
     fg: "#12100a",
-    accent: "#bd4206",
+    accent: "#005fcc",
     muted: "#8b7d6b",
     border: "#d4c4a8",
     success: "#3d8b3d",
@@ -209,11 +208,11 @@ export const COLOR_THEMES: Record<ColorTheme, ColorPalette> = {
     r3: "#c0392b",
     ink: "#1d1d1f",
     rule: "#d4c4a8",
+    userBubble: "#e4d9c7",
   },
   dark: {
-    bg: "#000000",
     fg: "#ffffff",
-    accent: "#ff6b00",
+    accent: "#55c3ff",
     muted: "#888888",
     border: "#333333",
     success: "#00ff00",
@@ -226,11 +225,11 @@ export const COLOR_THEMES: Record<ColorTheme, ColorPalette> = {
     r3: "#ff0000",
     ink: "#ffffff",
     rule: "#333333",
+    userBubble: "#202020",
   },
   "high-contrast": {
-    bg: "#000000",
     fg: "#ffffff",
-    accent: "#ffff00",
+    accent: "#55c3ff",
     muted: "#aaaaaa",
     border: "#ffffff",
     success: "#00ff00",
@@ -243,11 +242,11 @@ export const COLOR_THEMES: Record<ColorTheme, ColorPalette> = {
     r3: "#ff0000",
     ink: "#ffffff",
     rule: "#ffffff",
+    userBubble: "#000000",
   },
   "solarized-light": {
-    bg: "#fdf6e3",
     fg: "#657b83",
-    accent: "#cb4b16",
+    accent: "#0066b3",
     muted: "#93a1a1",
     border: "#eee8d5",
     success: "#859900",
@@ -260,11 +259,11 @@ export const COLOR_THEMES: Record<ColorTheme, ColorPalette> = {
     r3: "#dc322f",
     ink: "#657b83",
     rule: "#eee8d5",
+    userBubble: "#fdf6e3",
   },
   "solarized-dark": {
-    bg: "#002b36",
     fg: "#839496",
-    accent: "#cb4b16",
+    accent: "#55c3ff",
     muted: "#586e75",
     border: "#073642",
     success: "#859900",
@@ -277,6 +276,7 @@ export const COLOR_THEMES: Record<ColorTheme, ColorPalette> = {
     r3: "#dc322f",
     ink: "#839496",
     rule: "#073642",
+    userBubble: "#073642",
   },
 };
 
@@ -332,12 +332,32 @@ export function ansi16(hex: string): number {
   const r = Number.parseInt(hex.slice(1, 3), 16);
   const g = Number.parseInt(hex.slice(3, 5), 16);
   const b = Number.parseInt(hex.slice(5, 7), 16);
-  const gray = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
-  if (gray > 200) return 97;
-  if (gray > 150) return 37;
-  if (gray > 100) return 90;
-  if (gray > 50) return 30;
-  return 30;
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const delta = max - min;
+
+  if (delta < 24) {
+    const gray = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
+    if (gray > 200) return 97;
+    if (gray > 150) return 37;
+    if (gray > 100) return 90;
+    return 30;
+  }
+
+  let hue =
+    max === r
+      ? (g - b) / delta + (g < b ? 6 : 0)
+      : max === g
+        ? (b - r) / delta + 2
+        : (r - g) / delta + 4;
+  hue *= 60;
+  const bright = max >= 160;
+  if (hue < 30 || hue >= 330) return bright ? 91 : 31;
+  if (hue < 90) return bright ? 93 : 33;
+  if (hue < 150) return bright ? 92 : 32;
+  if (hue < 210) return bright ? 96 : 36;
+  if (hue < 270) return bright ? 94 : 34;
+  return bright ? 95 : 35;
 }
 
 export function paintWithPalette(

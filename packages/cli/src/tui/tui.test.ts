@@ -46,10 +46,14 @@ describe("terminal capabilities", () => {
     );
   });
 
-  test("NO_COLOR, TERM dumb and CI degrade independently", () => {
+  test("NOMO_TUI_COLOR, TERM dumb and CI control ANSI independently", () => {
     assert.equal(
-      detectCapabilities({ NO_COLOR: "1" }, { isTTY: true }).reason,
+      detectCapabilities({ NOMO_TUI_COLOR: "0" }, { isTTY: true }).reason,
       "no-color",
+    );
+    assert.equal(
+      detectCapabilities({ NO_COLOR: "1" }, { isTTY: true }).ansi,
+      true,
     );
     assert.equal(
       detectCapabilities({ TERM: "dumb" }, { isTTY: true }).reason,
@@ -61,7 +65,7 @@ describe("terminal capabilities", () => {
 
 describe("NOMO visual language", () => {
   test("uses the product palette and a non-colour marker for every class", () => {
-    assert.equal(NOMO_PALETTE.r3, "#f47a88");
+    assert.equal(NOMO_PALETTE.r3, "#f16470");
     assert.deepEqual(CLASS_MARKER, {
       r0: "[0]",
       r1: "[1]",
@@ -281,6 +285,91 @@ describe("watch dashboard", () => {
     const frame = renderWatchFrame(previewState, capabilities(80, 48));
     assert.match(frame, /DECISION RECORD/);
     assert.match(frame, /postgres\.table\.drop/);
+  });
+
+  test("selected activity markers use the NOMO accent", () => {
+    const frame = renderWatchFrame(
+      previewState,
+      capabilities(120, 40, true),
+    );
+    const selectedRow = frame
+      .split("\n")
+      .find((line) => stripAnsi(line).includes("postgres.table.drop"));
+    assert.ok(selectedRow);
+    assert.match(selectedRow, /^\s{2}\u001b\[[0-9;]*m>/);
+    assert.match(stripAnsi(selectedRow), /^\s{2}>\s/);
+  });
+
+  test("selected dashboard marker preserves the NOMO accent in basic ANSI", () => {
+    const frame = renderWatchFrame(
+      previewState,
+      { ...capabilities(120, 40, true), colorDepth: 4 },
+    );
+    const selectedRow = frame
+      .split("\n")
+      .find((line) => stripAnsi(line).includes("postgres.table.drop"));
+    assert.ok(selectedRow);
+    assert.match(selectedRow, /^\s{2}\u001b\[1;91m>/);
+    assert.doesNotMatch(selectedRow, /\u001b\[[0-9;]*;5;/);
+  });
+
+
+  test("short narrow dashboard preserves the selected decision summary", () => {
+    const frame = renderWatchFrame(previewState, capabilities(80, 24));
+    const text = stripAnsi(frame).replace(/\s+/g, " ");
+    assert.match(text, /DECISION RECORD/);
+    assert.match(text, /postgres\.table\.drop/);
+    assert.match(text, /deny/);
+    assert.match(text, /cancelled/);
+    assert.match(text, /destructive DDL is irreversible after commit/);
+    for (const line of frame.split("\n"))
+      assert.ok(
+        visibleLength(line) <= 80,
+        `${visibleLength(line)} > 80: ${stripAnsi(line)}`,
+      );
+  });
+  test("short narrow pending hold retains the action footer", () => {
+    const hold = { ...previewHold, openedAt: 0, expiresAt: 10_000 };
+    const frame = renderWatchFrame(
+      { ...previewState, holds: [hold] },
+      capabilities(80, 24),
+      1_000,
+    );
+    assert.match(frame, /ACTION REQUIRED/);
+    assert.match(frame, /\[a\] approve/);
+    assert.match(frame, /q quit/);
+    for (const line of frame.split("\n"))
+      assert.ok(
+        visibleLength(line) <= 80,
+        `${visibleLength(line)} > 80: ${stripAnsi(line)}`,
+      );
+  });
+
+  for (const width of [120, 200]) {
+    test(`dashboard decision reason stays complete at ${width} columns`, () => {
+      const frame = renderWatchFrame(
+        previewState,
+        capabilities(width, width === 120 ? 40 : 48),
+      );
+      const frameText = stripAnsi(frame);
+      assert.ok(frameText.includes("destructive DDL is"));
+      assert.ok(frameText.includes("irreversible"));
+      assert.ok(frameText.includes("after"));
+      assert.ok(frameText.includes("commit"));
+      for (const line of frame.split("\n"))
+        assert.ok(
+          visibleLength(line) <= width,
+          `${visibleLength(line)} > ${width}: ${stripAnsi(line)}`,
+        );
+    });
+  }
+  test("wide dashboard preserves complete signal values", () => {
+    const frame = stripAnsi(
+      renderWatchFrame(previewState, capabilities(200, 48)),
+    );
+    assert.match(frame, /\$15\.80/);
+    assert.match(frame, /\$3\.20/);
+    assert.match(frame, /dev-ed25519:a41c9d70/);
   });
 
   test("hold prompt includes risk, measured radius and explicit actions without colour", () => {
@@ -588,4 +677,12 @@ describe("A6 cost panel", () => {
     const frame = renderWatchFrame(stateWithBilling, caps);
     assert.match(frame, /5h 42% \(resets 2h 10m\)/);
   });
+});
+test("watch frames preserve terminal gutters and never set a background", () => {
+  const frame = renderWatchFrame(previewState, capabilities(80, 24, true), 1_000);
+  const rows = stripAnsi(frame).split("\n");
+  assert.equal(rows.length, 24);
+  assert.ok(rows.every((row) => row.startsWith("  ") && row.endsWith("  ")));
+  assert.ok(rows.every((row) => visibleLength(row) === 80));
+  assert.doesNotMatch(frame, /\u001b\[[0-9;]*48(?:;[0-9;]*)?m/);
 });

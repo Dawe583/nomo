@@ -6,11 +6,9 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
-// The hostile-text test asserts no raw escape sequences in renderWorkspace
-// output. Other tests pass because detectCapabilities honours NO_COLOR, but
-// this file has many tests and the assertion is unconditional: force the flag
-// here so the test does not depend on the caller's environment.
-process.env.NO_COLOR = "1";
+// Keep this file deterministic in shells that request monochrome output.
+// Explicit color visuals still exercise ANSI paths in their own assertions.
+process.env.NOMO_TUI_COLOR = "0";
 import { Workbench } from "../../../workbench/src/index.ts";
 import {
   WorkspaceTui,
@@ -21,15 +19,27 @@ import {
   commandSuggestions,
   holdDiffRows,
   modeAuthorityLabel,
+  renderWelcome,
   renderWorkspace,
   transcript,
   wrap,
   TUI_COMMANDS,
+  WORKSPACE_TABS,
 } from "./workspace.ts";
-import { WorkspaceInput, workspaceShortcut } from "./workspace-runner.ts";
+import { renderInspector } from "./inspector.ts";
+import {
+  WorkspaceInput,
+  WorkspaceVimMode,
+  workspaceShortcut,
+} from "./workspace-runner.ts";
+import {
+  DEFAULT_WORKSPACE_KEYBINDINGS,
+  parseWorkspaceKeybindings,
+} from "./workspace-keybindings.ts";
 import {
   filterPalette,
   paletteFromCommands,
+  renderPalette,
   type PaletteState,
 } from "./palette.ts";
 import {
@@ -39,6 +49,752 @@ import {
   stripAnsi,
   unifiedDiff,
 } from "./layout.ts";
+
+test("welcome screen keeps context and command hints bounded at terminal widths", () => {
+  const model = "model-" + "界".repeat(24);
+  const project = "project-" + "x".repeat(48);
+  const render = (width: number) =>
+    renderWelcome(model, project, "agent-reviewer", width);
+
+  for (const width of [20, 40, 80, 120, 160]) {
+    const lines = render(width);
+    assert.ok(
+      lines.every((line) => visibleLength(line) <= width),
+      `welcome row exceeds ${width} columns`,
+    );
+    assert.ok(lines.every((line) => !line.includes("\x1b[")));
+  }
+
+  const text = render(120).join("");
+  assert.ok(text.includes(model));
+  assert.ok(text.includes(project));
+  assert.ok(text.includes("agent-reviewer"));
+  assert.match(text, new RegExp("commands \\(" + TUI_COMMANDS.length + "\\)"));
+  assert.match(text, /Ctrl\+P/);
+  assert.match(text, /\/connect/);
+
+  const hostile = renderWelcome("\x1b[2J", "project\nforged", "agent", 80);
+  assert.ok(hostile.every((line) => !line.includes("\x1b")));
+  assert.ok(hostile.every((line) => !line.includes("\n")));
+  assert.ok(hostile.join("\n").includes("Model: ?[2J"));
+});
+test("workspace preserves terminal-edge gutters without losing narrow content", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-gutters-"));
+  const app = new Workbench({ NOMO_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
+  await ui.initialize();
+
+  for (const [width, height, inset, verticalInset] of [
+    [24, 12, 0, 0],
+    [40, 12, 0, 0],
+    [80, 24, 2, 0],
+    [120, 40, 2, 1],
+    [20, 8, 0, 0],
+  ] as const) {
+    const frame = renderWorkspace(ui, width, height, "", false, false, {
+      color: false,
+      motion: false,
+    });
+    const rows = frame.split("\n");
+    assert.equal(rows.length, height, `${width}x${height} retains its height`);
+    assert.ok(
+      rows.every((row) => visibleLength(row) === width),
+      `${width}x${height} rows stay terminal-width safe`,
+    );
+    if (inset > 0) {
+      assert.ok(
+        rows.every((row) =>
+          row.startsWith(" ".repeat(inset)) &&
+          row.endsWith(" ".repeat(inset))
+        ),
+        `${width}x${height} keeps side gutters`,
+      );
+    }
+    if (verticalInset > 0) {
+      assert.equal(rows[0], " ".repeat(width), "top gutter is clear");
+      assert.equal(rows.at(-1), " ".repeat(width), "bottom gutter is clear");
+    }
+  }
+});
+
+test("workspace never sets terminal background colors", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-background-"));
+  const app = new Workbench({ NOMO_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
+  await ui.initialize();
+
+  const frame = renderWorkspace(ui, 80, 24, "", false, false, {
+    color: true,
+    colorDepth: 24,
+    motion: false,
+  });
+  assert.doesNotMatch(frame, /\u001b\[[0-9;]*48(?:;[0-9;]*)?m/);
+});
+
+test("keybindings render their icon indent and complete keys", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-keybindings-"));
+  const app = new Workbench({ NOMO_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, {
+    NOMO_DATA_DIR: root,
+    NOMO_TUI_KEYBINDINGS: '{"redraw":"Ctrl+V"}',
+  });
+  await ui.initialize();
+  await ui.command("/keybindings");
+
+  const frame = renderWorkspace(ui, 80, 24, "", false, false, {
+    color: false,
+    motion: false,
+  });
+  assert.match(frame, /^      > SENDING *$/m);
+  assert.match(frame, /^      Enter  Send the prompt *$/m);
+  assert.ok(
+    frame.includes(
+      "Alt+B / Alt+F or Ctrl+Left / Ctrl+Right  Jump by word",
+    ),
+  );
+  assert.match(ui.detail?.join("\n") ?? "", /Ctrl\+V.*Redraw/);
+  assert.ok(frame.split("\n").every((line) => visibleLength(line) <= 80));
+  assert.ok(frame.split("\n").every((line) => !line.includes("\x1b[")));
+});
+
+test("inline command suggestions use a full-width foreground accent", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-suggestions-"));
+  const app = new Workbench({ NOMO_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
+  ui.choose("chat");
+
+  for (const [width, height] of [[80, 24], [120, 40], [200, 48]]) {
+    const render = (visuals: { color: boolean; colorDepth?: 4 | 8 }) =>
+      renderWorkspace(ui, width, height, "/set▌", true, false, {
+        ...visuals,
+        command: "/set",
+        suggestion: 0,
+        motion: false,
+      });
+    const colorFrame = render({ color: true, colorDepth: 8 });
+    const selected = colorFrame
+      .split("\n")
+      .find((line) => stripAnsi(line).includes("› /settings"));
+    assert.ok(selected, `${width}: selected suggestion remains visible`);
+    assert.equal(visibleLength(selected!), width);
+    assert.match(selected!, /\u001b\[1;38;5;\d+m/);
+
+    const basicColorFrame = render({ color: true, colorDepth: 4 });
+    const basicSelected = basicColorFrame
+      .split("\n")
+      .find((line) => stripAnsi(line).includes("› /settings"));
+    assert.ok(basicSelected, `${width}: basic-color suggestion remains visible`);
+    assert.equal(visibleLength(basicSelected!), width);
+    assert.ok(basicSelected!.includes("\x1b[1;91m"));
+
+    const monochromeFrame = render({ color: false });
+    assert.doesNotMatch(monochromeFrame, /\x1b\[/);
+  }
+});
+test("short confirmation preserves operation identity without the inactive composer", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-short-confirmation-"));
+  const app = new Workbench({ NOMO_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
+  const operationId = "12345678-1234-1234-1234-123456789abc";
+  ui.confirmation = {
+    title: "UNDO visual-review.md?",
+    lines: [`Operation: ${operationId}`, "Drift check passed."],
+    apply: async () => {},
+  };
+  const frame = stripAnsi(
+    renderWorkspace(ui, 40, 12, "", false, false, {
+      color: false,
+      motion: false,
+    }),
+  );
+  assert.ok(frame.includes(operationId));
+  assert.match(frame, /Drift check passed/);
+  assert.match(frame, /y accept \/ n reject \/ Esc cancel/);
+  assert.match(frame, /PgDn: preview/);
+  assert.match(frame, /mode: normal \(local\)/);
+  assert.match(frame, /server normal/);
+  assert.ok(
+    !frame.split("\n").some((line) => /^ >\s*$/.test(line)),
+    "confirmation keeps the inactive composer off screen",
+  );
+  assert.ok(frame.split("\n").every((line) => visibleLength(line) <= 40));
+});
+test("short detail compacts idle composer spacing while keeping the prompt visible", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-short-detail-"));
+  const app = new Workbench({ NOMO_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
+  ui.choose("documents");
+  ui.detail = [
+    "DOCUMENT",
+    "path: visual-review.md",
+    "revision: fixture-revision",
+    "Document body begins here.",
+    "Document body remains visible.",
+  ];
+  const frame = stripAnsi(
+    renderWorkspace(ui, 40, 12, "", false, false, {
+      color: false,
+      motion: false,
+    }),
+  );
+  assert.match(frame, /Document body begins here/);
+  assert.match(frame, /Document body remains visible/);
+  assert.ok(frame.split("\n").some((line) => /^ >\s*$/.test(line)));
+  assert.match(frame, /mode: normal \(local\)/);
+  assert.match(frame, /server normal/);
+  assert.ok(frame.split("\n").every((line) => visibleLength(line) <= 40));
+});
+
+
+
+
+test("short usage view shows numeric totals and the selected record before its chart", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-short-usage-"));
+  const app = new Workbench({ NOMO_DATA_DIR: root }, async (url) =>
+    String(url).endsWith("/models")
+      ? Response.json({ data: [{ id: "fixture-model" }] })
+      : Response.json({
+          choices: [
+            {
+              message: {
+                role: "assistant",
+                content: "Local fixture response.",
+              },
+            },
+          ],
+          usage: { prompt_tokens: 12, completion_tokens: 8, total_tokens: 20 },
+        }),
+  );
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  await app.configure({
+    baseUrl: "https://fixture.test/v1",
+    apiKey: "fixture",
+  });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
+  await ui.initialize();
+  await ui.command("Create local usage fixture.");
+  await app.settled();
+  ui.choose("usage");
+
+  const frame = stripAnsi(
+    renderWorkspace(ui, 40, 12, "", false, false, {
+      color: false,
+      motion: false,
+    }),
+  );
+  assert.match(frame, /USAGE, 1 record \/ 1 conversation/);
+  assert.match(frame, /median 20 \/ peak 20 \/ total 20\s+tokens/);
+  assert.match(frame, /▸ .*fixture-model/);
+  assert.doesNotMatch(frame, /[▁▂▃▄▅▆▇█]/);
+  assert.match(frame, /mode: normal \(local\)/);
+  assert.match(frame, /server normal/);
+  assert.ok(frame.split("\n").every((line) => visibleLength(line) <= 40));
+  const standard = stripAnsi(
+    renderWorkspace(ui, 80, 24, "", false, false, {
+      color: false,
+      motion: false,
+    }),
+  );
+  assert.match(standard, /[▁▂▃▄▅▆▇█]{2,}/);
+  await ui.command("Add a second local usage record.");
+  await app.settled();
+  ui.choose("usage");
+  ui.selected = 1;
+  const secondRecord = stripAnsi(
+    renderWorkspace(ui, 40, 12, "", false, false, {
+      color: false,
+      motion: false,
+    }),
+  );
+  assert.match(secondRecord, /▸ 2\. .*fixture-model/);
+  assert.match(secondRecord, /cost unknown/);
+  assert.doesNotMatch(secondRecord, /[▁▂▃▄▅▆▇█]/);
+  assert.ok(
+    secondRecord.split("\n").every((line) => visibleLength(line) <= 40),
+  );
+});
+test("new conversation keeps the welcome view and composer", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-welcome-"));
+  const app = new Workbench({ NOMO_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
+  ui.choose("chat");
+
+  for (const [width, height] of [
+    [20, 8],
+    [40, 12],
+    [80, 24],
+    [120, 30],
+    [120, 40],
+    [160, 45],
+    [200, 48],
+  ]) {
+    const frame = renderWorkspace(ui, width!, height!, "", false, false, {
+      color: false,
+      motion: false,
+    });
+    const plain = stripAnsi(frame);
+    assert.match(plain, /NOMO/);
+    assert.equal(ui.viewport.offset, 0);
+    assert.ok(frame.split("\n").length <= height!);
+    assert.ok(
+      frame.split("\n").every((line) => visibleLength(line) <= width!),
+      `frame exceeds ${width}x${height}`,
+    );
+    if (height! >= 18) assert.match(plain, /Welcome to a new conversation/);
+    if (width! >= 80 && height! >= 24) {
+      const lines = plain.split("\n");
+      assert.ok(lines.some((line) => line.includes("LOCAL WORKSPACE")), `${width}: workspace eyebrow`);
+      assert.ok(plain.includes("Model: not connected"), `${width}: model metadata`);
+      assert.ok(plain.includes("Project: none"), `${width}: project metadata`);
+      assert.ok(plain.includes("Agent: runtime default"), `${width}: agent metadata`);
+      const legend = lines.findIndex((line) => line.includes("open/details"));
+      const composer = lines.findIndex((line) => line.trim() === ">");
+      assert.ok(composer >= 0, `${width}x${height}: composer row visible`);
+      assert.ok(
+        lines[composer]!.startsWith("   > "),
+        `${width}x${height}: composer matches Prime's one-cell inset`,
+      );
+      const summary = lines.findIndex((line) => line.includes("model offline"));
+      const status = lines.findIndex((line) =>
+        line.includes("i: type | /help: commands"),
+      );
+      assert.ok(
+        lines.some((line) => line.includes("Tab panels")),
+        `${width}x${height}: tab navigation hint remains visible`,
+      );
+      assert.ok(status >= 0, `${width}x${height}: composer hints remain visible`);
+      assert.doesNotMatch(
+        lines[status]!,
+        /Tab: panels/,
+        `${width}x${height}: tab hint is not repeated`,
+      );
+      assert.ok(
+        legend >= 0 && legend < composer,
+        `${width}x${height}: legend above composer`,
+      );
+      assert.ok(summary < status, `${width}x${height}: status below summary`);
+    }
+  }
+});
+test("empty chat welcome block is vertically centered above the composer", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-welcome-center-"));
+  const app = new Workbench({ NOMO_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
+  ui.choose("chat");
+
+  for (const [width, height] of [
+    [80, 24],
+    [120, 40],
+    [200, 48],
+  ]) {
+    for (const color of [false, true]) {
+      const rows = stripAnsi(
+        renderWorkspace(ui, width!, height!, "", false, false, {
+          color,
+          ...(color ? { colorDepth: 8 } : {}),
+          motion: false,
+        }),
+      ).split("\n");
+      const mode = color ? "color" : "monochrome";
+      const navigation = rows.findIndex((row) => row.includes("› chat"));
+      const footer = rows.findIndex((row) => row.includes("Tab panels"));
+      const start = rows.findIndex((row) => row.includes("LOCAL WORKSPACE"));
+      const end = rows.findIndex((row) => row.includes("Ctrl+P commands"));
+      assert.ok(
+        navigation >= 0 && footer > navigation,
+        `${width}x${height} ${mode}: shell rows`,
+      );
+      assert.ok(
+        start > navigation && end >= start,
+        `${width}x${height} ${mode}: welcome block`,
+      );
+
+      const topGap = start - navigation - 1;
+      const bottomGap = footer - end - 1;
+      assert.ok(
+        Math.abs(topGap - bottomGap) <= 1,
+        `${width}x${height} ${mode}: welcome block should balance; ` +
+          `got ${topGap} top rows and ${bottomGap} bottom rows`,
+      );
+    }
+  }
+});
+
+
+test("welcome workspace eyebrow uses the NOMO accent", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-welcome-accent-"));
+  const app = new Workbench({ NOMO_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
+  ui.choose("chat");
+
+  for (const [width, height] of [[80, 24], [120, 40], [200, 48]]) {
+    const colorFrame = renderWorkspace(ui, width!, height!, "▌", true, false, {
+      color: true,
+      colorDepth: 8,
+      motion: false,
+    });
+    const accentRow = colorFrame
+      .split("\n")
+      .find((line) => stripAnsi(line).includes("LOCAL WORKSPACE"));
+    assert.ok(accentRow, `${width}x${height}: welcome eyebrow stays visible`);
+    assert.ok(
+      /\x1b\[1;38;5;\d+m/.test(accentRow!),
+      `${width}x${height}: welcome eyebrow uses NOMO accent`,
+    );
+
+    const monochrome = renderWorkspace(ui, width!, height!, "▌", true, false, {
+      color: false,
+      motion: false,
+    });
+    assert.match(stripAnsi(monochrome), /LOCAL WORKSPACE/);
+    assert.doesNotMatch(monochrome, /\x1b\[/);
+  }
+});
+
+test("empty workspace panels use readable states within terminal bounds", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-empty-panels-"));
+  const app = new Workbench({ NOMO_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
+  await ui.initialize();
+
+  for (const tab of ["sessions", "documents", "approvals", "models", "usage"] as const) {
+    ui.choose(tab);
+    for (const [width, height] of [[80, 24], [120, 40], [200, 48]]) {
+      for (const color of [false, true]) {
+        const frame = renderWorkspace(ui, width!, height!, "▌", true, false, {
+          color,
+          colorDepth: 8,
+          motion: false,
+        });
+        const lines = stripAnsi(frame).split("\n");
+        const navigation = lines.findIndex((line) => line.includes(`› ${tab} `));
+        const legend = lines.findIndex((line) => line.includes("Tab panels"));
+
+        if (tab === "approvals" || tab === "usage") {
+          const heading =
+            tab === "approvals"
+              ? "APPROVALS, none waiting"
+              : "USAGE, no records yet";
+          const guidance =
+            tab === "approvals"
+              ? "Held tool requests appear here before they run."
+              : "Token counts appear when your provider reports them.";
+          const readable = lines.join(" ").replace(/\s+/g, " ");
+          assert.ok(readable.includes(heading), `${tab} ${width}x${height}: heading`);
+          assert.ok(readable.includes(guidance), `${tab} ${width}x${height}: guidance`);
+        } else {
+          const empty = lines.findIndex((line) => line.includes("No entries yet."));
+          assert.ok(empty >= 0, `${tab} ${width}x${height}: message remains visible`);
+          assert.ok(
+            Math.abs(empty - Math.floor((navigation + legend) / 2)) <= 1,
+            `${tab} ${width}x${height}: message is centered vertically`,
+          );
+          assert.equal(
+            lines[empty]!.indexOf("No entries yet."),
+            Math.floor((width! - "No entries yet.".length) / 2),
+            `${tab} ${width}x${height}: message is centered horizontally`,
+          );
+        }
+        assert.equal(lines.length, height);
+        assert.ok(frame.split("\n").every((line) => visibleLength(line) <= width!));
+      }
+    }
+  }
+});
+
+test("footer hints and status use muted NOMO hierarchy", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-footer-styles-"));
+  const app = new Workbench({ NOMO_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
+  ui.choose("chat");
+
+  for (const [width, height] of [
+    [80, 24],
+    [120, 40],
+    [200, 48],
+  ]) {
+    const colorFrame = renderWorkspace(ui, width!, height!, "", false, false, {
+      color: true,
+      colorDepth: 8,
+      motion: false,
+    });
+    const colorRows = colorFrame.split("\n");
+    const legend = colorRows.find((row) =>
+      stripAnsi(row).includes("open/details"),
+    );
+    const status = colorRows.find((row) =>
+      stripAnsi(row).includes("i: type | /help: commands"),
+    );
+    assert.ok(legend, `${width}: shortcut hints remain visible`);
+    assert.ok(status, `${width}: status hints remain visible`);
+    assert.match(legend!, /\x1b\[[0-9;]*m/, `${width}: hints retain color`);
+    assert.doesNotMatch(
+      legend!,
+      /\?\[[0-9;]+m/,
+      `${width}: ANSI paint is not printed as literal question-mark text`,
+    );
+    assert.match(
+      status!,
+      /\x1b\[38;5;\d+m/,
+      `${width}: idle status uses muted ink`,
+    );
+    const basicColorFrame = renderWorkspace(
+      ui,
+      width!,
+      height!,
+      "",
+      false,
+      false,
+      { color: true, motion: false, colorDepth: 4 },
+    );
+    assert.doesNotMatch(basicColorFrame, /\u001b\[[0-9;]*;5;/);
+    assert.match(basicColorFrame, /\u001b\[1;96m/);
+
+
+    const monochromeFrame = renderWorkspace(
+      ui,
+      width!,
+      height!,
+      "",
+      false,
+      false,
+      { color: false, motion: false },
+    );
+    assert.doesNotMatch(monochromeFrame, /\x1b\[/, `${width}: no color escapes`);
+    const monochrome = stripAnsi(monochromeFrame);
+    assert.match(monochrome, /open\/details/);
+    assert.match(monochrome, /i: type \| \/help: commands/);
+  }
+  await ui.command("/command-palette");
+  for (const [width, height] of [
+    [80, 24],
+    [120, 40],
+    [200, 48],
+  ]) {
+    const paletteFrame = renderWorkspace(
+      ui,
+      width!,
+      height!,
+      "",
+      false,
+      false,
+      { color: true, motion: false, colorDepth: 8 },
+    );
+    const rows = paletteFrame.split("\n");
+    const legend = rows.find((row) =>
+      stripAnsi(row).includes("open/details"),
+    );
+    const status = rows.find((row) =>
+      stripAnsi(row).includes("commands match / Enter run / Esc close"),
+    );
+    assert.ok(legend, `${width}: command palette retains shortcut hints`);
+    assert.ok(status, `${width}: command palette retains status`);
+    assert.match(legend!, /\x1b\[[0-9;]*m/, `${width}: palette hints use theme`);
+    assert.doesNotMatch(legend!, /\?\[[0-9;]+m/);
+    assert.match(status!, /\x1b\[38;5;\d+m/);
+    const groupHeading = rows.find((row) =>
+      stripAnsi(row).includes("● CHAT"),
+    );
+    const selected = rows.find((row) =>
+      stripAnsi(row).includes("> ◆ /agent"),
+    );
+    assert.ok(groupHeading, `${width}: command groups remain visible`);
+    assert.ok(selected, `${width}: selected command remains visible`);
+    assert.doesNotMatch(groupHeading!, /\?\[[0-9;]+m/);
+    assert.doesNotMatch(selected!, /\?\[[0-9;]+m/);
+    assert.match(groupHeading!, /\x1b\[1;38;5;\d+m/);
+    assert.match(selected!, /\x1b\[1;38;5;\d+m/);
+
+  }
+
+});
+
+test("overview uses the shared workspace eyebrow below NOMO branding", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-overview-title-"));
+  const app = new Workbench({ NOMO_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
+  const rows = stripAnsi(
+    renderWorkspace(ui, 80, 24, "", false, false, {
+      color: false,
+      motion: false,
+    }),
+  ).split("\n");
+  assert.ok(rows[0]!.includes("NOMO"));
+  assert.equal(rows[2]!.trim(), "LOCAL WORKSPACE");
+});
+
+test("help explains grouped navigation and inspector scrolling", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-help-nav-"));
+  const app = new Workbench({ NOMO_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
+  ui.choose("help");
+  const help = ui.lines().join("\n");
+  assert.match(help, /folds a group/);
+  assert.match(help, /scroll.*detail/i);
+  assert.match(help, /keeps the draft/i);
+  const frame = stripAnsi(
+    renderWorkspace(ui, 80, 24, "", false, false, {
+      color: false,
+      motion: false,
+    }),
+  );
+  assert.ok(
+    frame.replace(/\s+/g, " ").includes("configure mod-enter in /settings."),
+  );
+});
+
+test("narrow tab navigation names the selected panel and its position", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-tabs-"));
+  const app = new Workbench({ NOMO_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
+
+  for (const [index, tab] of WORKSPACE_TABS.entries()) {
+    ui.choose(tab);
+    for (const width of [20, 24, 30, 40, 80, 120]) {
+      const lines = stripAnsi(
+        renderWorkspace(ui, width, 12, "", false, false, {
+          color: false,
+          motion: false,
+        }),
+      ).split("\n");
+      assert.ok(lines[1]!.includes(tab), `${tab} at ${width}: ${lines[1]}`);
+      if (width < 24)
+        assert.ok(
+          lines[1]!.includes(`${index + 1}/${WORKSPACE_TABS.length}`),
+          `${tab}: ${lines[1]}`,
+        );
+      else assert.ok(lines[1]!.includes(`› ${tab}`), `${tab}: ${lines[1]}`);
+      assert.ok(
+        visibleLength(lines[1]!) <= width,
+        `${tab} at ${width}: ${lines[1]}`,
+      );
+      assert.ok(lines[0]!.includes(" NOMO"), `${width}: ${lines[0]}`);
+      assert.ok(!lines[0]!.includes("⌜⊡⌝"), `${width}: ${lines[0]}`);
+      assert.ok(!lines[0]!.includes("/V/"), `${width}: ${lines[0]}`);
+    }
+  }
+  const colored = renderWorkspace(ui, 20, 12, "", false, false, {
+    color: true,
+    motion: false,
+    colorDepth: 8,
+  });
+  const coloredHeader = colored.split("\n")[0]!;
+  assert.match(stripAnsi(coloredHeader), /^ NOMO/);
+  assert.match(coloredHeader, /\x1b\[/);
+});
+test("narrow scrolling keeps the complete composer hint", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-narrow-scroll-hint-"));
+  const app = new Workbench({ NOMO_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
+  ui.choose("help");
+  const lines = stripAnsi(
+    renderWorkspace(ui, 40, 12, "", false, false, {
+      color: false,
+      motion: false,
+    }),
+  ).split("\n");
+  const status = lines.find((line) => line.includes("i: type | /help"));
+  assert.ok(status, "complete composer hint remains visible");
+  assert.match(status!, /↓ \d+ more · PgDn · i: type \| \/help/);
+  assert.ok(!status!.includes("Tab: panels"), "reuse the existing tab legend");
+  assert.ok(
+    lines.every((line) => visibleLength(line) <= 40),
+    "narrow frame stays within its terminal width",
+  );
+});
+
+test("tab navigation centers its existing window at reference widths", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-tab-centering-"));
+  const app = new Workbench({ NOMO_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
+  ui.choose("chat");
+
+  for (const color of [false, true]) {
+    for (const width of [80, 120, 200]) {
+      const line = stripAnsi(
+        renderWorkspace(ui, width, 24, "", false, false, {
+          color,
+          motion: false,
+        }),
+      ).split("\n")[1]!;
+      assert.ok(line.includes("› chat"), `${width} color=${color}: ${line}`);
+      const content = line.trim();
+      const left = line.indexOf(content);
+      const right = width - left - visibleLength(content);
+      assert.ok(
+        Math.abs(left - right) <= 1,
+        `${width} color=${color}: tab strip left=${left}, right=${right}: ${line}`,
+      );
+    }
+  }
+});
 
 test("Ctrl+P requests the command palette through the input, not a submit", () => {
   const input = new WorkspaceInput();
@@ -87,6 +843,109 @@ test("command palette opens a live filter over the real command list", async (t)
   );
 });
 
+test("command palette selection uses a full-width NOMO accent", () => {
+  const item = {
+    id: "/safe",
+    label: "Safe command",
+    hint: "A safe fixture",
+    icon: "◆",
+    group: "chat" as const,
+  };
+  const state = {
+    query: "",
+    selected: 0,
+    visible: 0,
+    recent: new Map<string, { count: number; lastUsed: number }>(),
+  };
+
+  for (const width of [76, 116, 196]) {
+    const color = renderPalette(state, [item], width, { color: true });
+    const selected = color.lines.find((line) => line.includes("/safe"));
+    assert.ok(selected);
+    assert.match(selected, /^\u001b\[1;38;5;\d+m/);
+    assert.ok(selected.endsWith("\x1b[0m"));
+    assert.equal(visibleLength(stripAnsi(selected)), width);
+    const basicColor = renderPalette(
+      state,
+      [item],
+      width,
+      { color: true, colorDepth: 4 },
+    );
+    const basicSelected = basicColor.lines.find((line) => line.includes("/safe"));
+    assert.ok(basicSelected);
+    assert.match(basicSelected, /^\u001b\[1;91m/);
+    assert.doesNotMatch(basicSelected, /\u001b\[[0-9;]*;5;/);
+
+
+    const monochrome = renderPalette(state, [item], width);
+    const monoSelected = monochrome.lines.find((line) => line.includes("/safe"));
+    assert.ok(monoSelected?.startsWith("> "));
+    assert.doesNotMatch(monoSelected!, /\x1b\[/);
+    assert.equal(visibleLength(monoSelected!), width);
+
+    const emptyColor = renderPalette(
+      { ...state, query: "no match" },
+      [item],
+      width,
+      { color: true },
+    ).lines[0]!;
+    assert.ok(stripAnsi(emptyColor).includes('No matches for "no match".'));
+    assert.match(emptyColor, /^\x1b\[[0-9;]*m/);
+    assert.doesNotMatch(emptyColor, /\u001b\[[0-9;]*48(?:;[0-9;]*)?m/);
+
+    const emptyMonochrome = renderPalette(
+      { ...state, query: "no match" },
+      [item],
+      width,
+    ).lines[0]!;
+    assert.ok(
+      stripAnsi(emptyMonochrome).includes('No matches for "no match".'),
+    );
+    assert.doesNotMatch(emptyMonochrome, /\x1b\[/);
+  }
+});
+
+test("command palette sanitizes dynamic text before applying ANSI paint", () => {
+  const noMatches = renderPalette(
+    { query: "\x1b[2J", selected: 0, visible: 0, recent: new Map() },
+    [
+      {
+        id: "/safe",
+        label: "Safe command",
+        hint: "A safe fixture",
+        icon: "◆",
+        group: "chat",
+      },
+    ],
+    80,
+    { color: true },
+  );
+  const noMatchesText = stripAnsi(noMatches.lines.join("\n"));
+  assert.ok(!noMatchesText.includes("\x1b"));
+  assert.ok(noMatchesText.includes('No matches for "?[2J".'));
+
+  const hostileItem = renderPalette(
+    { query: "", selected: 0, visible: 0, recent: new Map() },
+    [
+      {
+        id: "/bad\x1b[2J",
+        label: "Ignored",
+        hint: "Unsafe\x1b[3J",
+        icon: "◆\x1b[4J",
+        group: "chat",
+      },
+    ],
+    80,
+    { color: true },
+  );
+  const hostileText = stripAnsi(hostileItem.lines.join("\n"));
+  assert.ok(!hostileText.includes("\x1b"));
+  assert.match(hostileText, /> ◆\?\[4J \/bad\?\[2J  Unsafe\?\[3J/);
+  assert.match(hostileItem.lines[0]!, /\x1b\[1;38;5;\d+m/);
+  assert.match(hostileItem.lines[1]!, /\x1b\[1;38;5;\d+m/);
+});
+
+
 test("queuePrompt(undefined) cancels a queued prompt", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "nomo-tui-queue-"));
   const app = new Workbench({ NOMO_DATA_DIR: root });
@@ -126,6 +985,132 @@ test("Claude style shortcuts map only the intended control keys", () => {
   );
   assert.equal(workspaceShortcut({ name: "r" }, true, ""), undefined);
 });
+test("configured workspace shortcuts override only mapped actions", () => {
+  const bindings = parseWorkspaceKeybindings('{"redraw":"Ctrl+V"}').bindings;
+  assert.equal(
+    workspaceShortcut({ name: "v", ctrl: true }, false, "", bindings),
+    "redraw",
+  );
+  assert.equal(
+    workspaceShortcut({ name: "z", ctrl: true }, false, "", bindings),
+    undefined,
+  );
+  assert.equal(
+    workspaceShortcut({ name: "l", ctrl: true }, false, "", bindings),
+    undefined,
+  );
+  assert.equal(
+    workspaceShortcut({ name: "d", ctrl: true }, false, "", bindings),
+    "quit",
+    "Ctrl+D remains an immutable exit binding",
+  );
+});
+
+test("workspace keybinding overrides reject unsafe, unknown, and conflicting keys atomically", () => {
+  const valid = parseWorkspaceKeybindings(
+    '{"redraw":"Ctrl+O","toggle-tools":"Ctrl+L","search-history":"Ctrl+R","stash":"Ctrl+S","external-editor":"Ctrl+G","show-todos":"Ctrl+T"}',
+  );
+  assert.equal(valid.error, undefined);
+  assert.equal(valid.bindings.redraw.name, "o");
+  assert.equal(valid.bindings["show-todos"].name, "t");
+  for (const [key, action] of [
+    ["o", "redraw"],
+    ["l", "toggle-tools"],
+    ["r", "search-history"],
+    ["s", "stash"],
+    ["g", "external-editor"],
+    ["t", "show-todos"],
+  ] as const) {
+    assert.equal(
+      workspaceShortcut({ name: key, ctrl: true }, true, "", valid.bindings),
+      action,
+    );
+  }
+  assert.equal(
+    workspaceShortcut({ name: "o", ctrl: true }, false, "", valid.bindings),
+    "redraw",
+  );
+  assert.equal(
+    workspaceShortcut({ name: "l", ctrl: true }, false, "", valid.bindings),
+    "toggle-tools",
+  );
+
+  for (const raw of [
+    "{",
+    '{"redraw":"Ctrl+D"}',
+    '{"redraw":"Ctrl+O"}',
+    '{"approve":"Ctrl+V"}',
+  ]) {
+    const invalid = parseWorkspaceKeybindings(raw);
+    assert.match(invalid.error ?? "", /NOMO_TUI_KEYBINDINGS ignored/);
+    assert.deepEqual(invalid.bindings, DEFAULT_WORKSPACE_KEYBINDINGS);
+  }
+  assert.equal(
+    workspaceShortcut({ name: "d", ctrl: true }, false, "", valid.bindings),
+    "quit",
+    "Ctrl+D remains immutable",
+  );
+  assert.equal(
+    workspaceShortcut({ name: "y" }, false, "", valid.bindings),
+    undefined,
+    "plain confirmation keys cannot be routed through configurable shortcuts",
+  );
+});
+test("opt-in Vim composer edits text without changing normal send behavior", () => {
+  const vim = new WorkspaceVimMode();
+  const input = new WorkspaceInput();
+  input.editing = true;
+  input.set("one two\nthree");
+  input.cursor = 0;
+
+  assert.equal(vim.mode, "normal");
+  assert.equal(vim.handle(input, "w", { name: "w" }), true);
+  assert.equal(input.cursor, 4);
+  assert.equal(vim.handle(input, "b", { name: "b" }), true);
+  assert.equal(input.cursor, 0);
+  assert.equal(vim.handle(input, "l", { name: "l" }), true);
+  assert.equal(vim.handle(input, "x", { name: "x" }), true);
+  assert.equal(input.value, "oe two\nthree");
+  assert.equal(input.cursor, 1);
+
+  assert.equal(vim.handle(input, "a", { name: "a" }), true);
+  assert.equal(vim.mode, "insert");
+  assert.equal(input.cursor, 2);
+  input.insert("X");
+  assert.equal(input.value, "oeX two\nthree");
+  assert.equal(vim.leaveInsert(), true);
+  assert.equal(vim.mode, "normal");
+
+  assert.equal(vim.handle(input, "h", { name: "h" }), true);
+  assert.equal(input.cursor, 2);
+  assert.equal(vim.handle(input, "j", { name: "j" }), true);
+  assert.equal(input.cursor, 10);
+  assert.equal(vim.handle(input, "k", { name: "k" }), true);
+  assert.equal(input.cursor, 2);
+  assert.equal(vim.handle(input, "0", { name: "0" }), true);
+  assert.equal(input.cursor, 0);
+  assert.equal(vim.handle(input, "$", { name: "$" }), true);
+  assert.equal(input.cursor, 7);
+  assert.equal(vim.handle(input, "A", { name: "A" }), true);
+  assert.equal(input.cursor, 7);
+  assert.equal(vim.leaveInsert(), true);
+  assert.equal(vim.handle(input, "I", { name: "I" }), true);
+  assert.equal(input.cursor, 0);
+  assert.equal(vim.leaveInsert(), true);
+  assert.equal(vim.handle(input, "i", { name: "i" }), true);
+  assert.equal(vim.mode, "insert");
+  assert.equal(vim.leaveInsert(), true);
+  const value = input.value;
+  assert.equal(vim.handle(input, "q", { name: "q" }), true);
+  assert.equal(input.value, value, "normal mode never types unknown letters");
+  assert.equal(
+    vim.handle(input, undefined, { name: "return" }),
+    false,
+    "Enter retains the existing submit action",
+  );
+});
+
+
 
 test("multiline editing moves across Unicode lines and deletes words without touching other lines", () => {
   const input = new WorkspaceInput();
@@ -149,6 +1134,19 @@ test("multiline editing moves across Unicode lines and deletes words without tou
   input.cursor = 1;
   input.key(undefined, { name: "up" });
   assert.equal(input.cursor, 0);
+});
+
+test("tool filter with no matches explains the empty result", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-tool-filter-"));
+  const app = new Workbench({ NOMO_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app);
+  await ui.command("/tools nomo-filter-miss");
+
+  assert.ok(ui.lines().some((line) => /no tools match/i.test(line)));
 });
 
 test("tools show actual managed capabilities, searchable schemas and no execution on inspection", async (t) => {
@@ -214,7 +1212,7 @@ test("Claude style management aliases open real NOMO views", async (t) => {
   assert.match(ui.notice, /select a conversation to rewind/i);
   assert.match(
     stripAnsi(renderWorkspace(ui, 140, 32)),
-    /model offline.*mode .*mode: normal \(local only, not enforced\).*tok \?.*tools compact/i,
+    /model offline.*mode: normal \(local only, not enforced\).*permission normal \(server\).*tok \?.*tools compact/i,
   );
 });
 
@@ -230,11 +1228,11 @@ test("compact tool output keeps complete events available and never hides assist
   assert.ok(compact.some((row) => row.text.includes("17 more lines /expand")));
   assert.ok(!compact.some((row) => row.text === "result 19"));
   assert.ok(
-    chatRows([event], 80, false).some((row) => row.text === "result 19"),
+    chatRows([event], 80, false).some((row) => row.text.includes("result 19")),
   );
   assert.ok(
-    chatRows([{ ...event, kind: "error" }], 80, true).some(
-      (row) => row.text === "result 19",
+    chatRows([{ ...event, kind: "error" }], 80, true).some((row) =>
+      row.text.includes("result 19"),
     ),
   );
   assert.equal(event.text.split("\n").length, 20);
@@ -253,6 +1251,115 @@ test("composer follows the actual cursor beyond literal underscores", async (t) 
     cursor: [...value].length,
   });
   assert.ok(result.includes("last_"));
+});
+test("composer keeps Prime-like prompt spacing without setting backgrounds", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-composer-surface-"));
+  const app = new Workbench({ NOMO_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app);
+  for (const [width, height] of [
+    [80, 24],
+    [120, 40],
+    [200, 48],
+  ]) {
+    const colorFrame = renderWorkspace(
+      ui,
+      width!,
+      height!,
+      "",
+      false,
+      false,
+      { color: true, motion: false, colorDepth: 8 },
+    );
+    const frameLines = colorFrame.split("\n");
+    const contextIndex = frameLines.findIndex((line) =>
+      line.includes("mode: normal"),
+    );
+    const promptIndex = frameLines.findIndex(
+      (line) =>
+        line.includes("\x1b[1;38;5;") && line.includes("> "),
+    );
+    const hintIndex = frameLines.findIndex((line) =>
+      line.includes("i: type | /help: commands"),
+    );
+    assert.ok(
+      contextIndex >= 0 && contextIndex < promptIndex,
+      `context status precedes the prompt at ${width} columns`,
+    );
+    assert.ok(
+      promptIndex < hintIndex,
+      `the prompt precedes the trailing help hint at ${width} columns`,
+    );
+    const promptRow = frameLines[promptIndex]!;
+    assert.equal(visibleLength(promptRow), width);
+    assert.match(promptRow, /\x1b\[1;38;5;\d+m> /);
+    assert.doesNotMatch(colorFrame, /\u001b\[[0-9;]*48(?:;[0-9;]*)?m/);
+    const basicColorFrame = renderWorkspace(
+      ui,
+      width!,
+      height!,
+      "",
+      false,
+      false,
+      { color: true, motion: false, colorDepth: 4 },
+    );
+    const basicPromptRow = basicColorFrame
+      .split("\n")
+      .find((line) => line.includes("\x1b[1;91m> "));
+    assert.ok(basicPromptRow, `basic ANSI prompt stays visible at ${width} columns`);
+    assert.equal(visibleLength(basicPromptRow!), width);
+    assert.doesNotMatch(basicColorFrame, /\u001b\[[0-9;]*48(?:;[0-9;]*)?m/);
+    const typedColorFrame = renderWorkspace(
+      ui,
+      width!,
+      height!,
+      "safe typed prompt▌",
+      true,
+      false,
+      { color: true, motion: false, colorDepth: 8 },
+    );
+    const typedPrompt = typedColorFrame
+      .split("\n")
+      .find((line) => line.includes("safe typed prompt"));
+    assert.ok(
+      typedPrompt?.includes("\x1b[0;38;5;231m safe typed prompt█"),
+      `typed prompt stays white on the user's terminal background at ${width} columns`,
+    );
+
+    const monochromeFrame = renderWorkspace(
+      ui,
+      width!,
+      height!,
+      "",
+      false,
+      false,
+      { color: false, motion: false },
+    );
+    assert.doesNotMatch(monochromeFrame, /\x1b\[/);
+    assert.ok(
+      monochromeFrame.split("\n").some((line) => line.startsWith("   >  ")),
+      `monochrome prompt keeps one-cell separation at ${width} columns`,
+    );
+    const typedMonochromeFrame = renderWorkspace(
+      ui,
+      width!,
+      height!,
+      "safe typed prompt▌",
+      true,
+      false,
+      { color: false, motion: false },
+    );
+    assert.doesNotMatch(typedMonochromeFrame, /\x1b\[/);
+    assert.ok(
+      typedMonochromeFrame
+        .split("\n")
+        .some((line) => line.includes(">  safe typed prompt█")),
+      `typed monochrome prompt remains readable at ${width} columns`,
+    );
+  }
 });
 
 test("TUI real document lifecycle: model tool, edit, conflict, reviewed Undo, signed export and restart", async (t) => {
@@ -307,6 +1414,14 @@ test("TUI real document lifecycle: model tool, edit, conflict, reviewed Undo, si
   await ui.refresh();
   const id = ui.sessionId!;
   assert.equal(app.workspace(id).files["plan.md"], "first");
+  ui.choose("documents");
+  await ui.openSelected();
+  const documentPane = stripAnsi(renderWorkspace(ui, 160, 32));
+  assert.match(documentPane, /plan\.md/);
+  assert.match(documentPane, /DOCUMENT/);
+  await ui.prepareUndo();
+  assert.equal(ui.confirmation?.title, "UNDO plan.md?");
+  ui.confirmation = undefined;
   await ui.command("/document plan.md");
   const target = ui.editTarget();
   ui.prepareEdit(target, "second");
@@ -365,6 +1480,46 @@ test("TUI real document lifecycle: model tool, edit, conflict, reviewed Undo, si
   assert.equal(app.workspace(id).files["plan.md"], undefined);
 });
 
+test("composer Enter behavior follows the saved sendBehavior preference", () => {
+  const input = new WorkspaceInput();
+  input.editing = true;
+  input.sendBehavior = "mod-enter";
+  input.set("first");
+  assert.equal(input.key("\r", { name: "return" }), undefined);
+  assert.equal(input.value, "first\n");
+
+  input.set("second");
+  assert.equal(input.key("\r", { name: "return", ctrl: true }), "submit");
+
+  input.set("continued\\");
+  assert.equal(input.key("\r", { name: "return" }), undefined);
+  assert.equal(input.value, "continued\n");
+
+  input.sendBehavior = "enter";
+  input.set("third");
+  assert.equal(input.key("\r", { name: "return" }), "submit");
+});
+
+test("newline keys stay available in both composer send modes", () => {
+  const input = new WorkspaceInput();
+  input.editing = true;
+
+  for (const key of [
+    { name: "return", shift: true },
+    { name: "return", meta: true },
+    { name: "j", ctrl: true },
+  ]) {
+    input.set("draft");
+    assert.equal(input.key("\r", key), undefined);
+    assert.equal(input.value, "draft\n");
+  }
+
+  input.sendBehavior = "mod-enter";
+  input.set("draft");
+  assert.equal(input.key("\r", { name: "return", shift: true }), undefined);
+  assert.equal(input.value, "draft\n");
+});
+
 test("input preserves Unicode and multiline paste, never submits pasted Enter", () => {
   const input = new WorkspaceInput();
   input.key(undefined, { name: "paste-start" });
@@ -400,7 +1555,116 @@ test("terminal rendering contains hostile control text and complete Unicode wrap
     assert.ok(result.split("\n").every((line) => visibleLength(line) <= w!));
   }
   assert.equal(wrap(["😀界é".repeat(80)], 20).join(""), "😀界é".repeat(80));
+  assert.deepEqual(
+    wrap(["LEDGER, 8 entries: 4 agent, 1 verification, 1 entry"], 36),
+    ["LEDGER, 8 entries: 4 agent, 1", "verification, 1 entry"],
+  );
 });
+test("wrapped descriptions retain continuation indentation", () => {
+  assert.deepEqual(
+    wrap(["    Alpha beta gamma delta"], 12),
+    ["    Alpha", "    beta", "    gamma", "    delta"],
+  );
+});
+test("inspector wraps values and body text between words", () => {
+  const rows = renderInspector(
+    {
+      title: "HELP",
+      sections: [
+        {
+          title: "working",
+          fields: [
+            {
+              label: "chat",
+              value:
+                "Start typing. i types. Enter sends by default; configure mod-enter in /settings.",
+            },
+          ],
+          body: ["The line breaks only between complete words."],
+        },
+      ],
+    },
+    { width: 36 },
+  );
+  const text = rows.join(" ").replace(/\s+/g, " ");
+  assert.ok(text.includes("configure mod-enter in /settings."));
+  assert.ok(text.includes("complete words."));
+});
+test("inspector uses the shared thin divider at every width", () => {
+  for (const width of [4, 36, 120]) {
+    const rows = renderInspector(
+      { title: "DETAIL", sections: [] },
+      { width },
+    );
+    assert.equal(rows[1], "─".repeat(width));
+  }
+});
+test("wide detail uses full width without a master list and splits when populated", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-wide-inspector-"));
+  const app = new Workbench({ NOMO_DATA_DIR: root }, async (url) =>
+    String(url).endsWith("/models")
+      ? Response.json({ data: [{ id: "visual-model" }] })
+      : Response.json({
+          choices: [
+            {
+              message: {
+                role: "assistant",
+                content: "A plain local reply.",
+              },
+            },
+          ],
+        }),
+  );
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  await app.configure({
+    baseUrl: "https://local.test/v1",
+    apiKey: "nomo-visual-test-key",
+  });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
+  await ui.initialize();
+  ui.choose("documents");
+  ui.detail = ["DOCUMENT", "-".repeat(76), "─".repeat(76), "RAW RECORD"];
+  for (const [width, height] of [
+    [120, 40],
+    [200, 48],
+  ]) {
+    const emptyMaster = stripAnsi(
+      renderWorkspace(ui, width!, height!),
+    ).split("\n");
+    assert.ok(emptyMaster.some((row) => row.includes("DOCUMENT")));
+    assert.ok(
+      !emptyMaster.some((row) => row.includes("│")),
+      `${width}x${height}: detail-only screens must not reserve a blank master pane`,
+    );
+  }
+
+  ui.choose("overview");
+  ui.detail = ui.settingsLines();
+  const emptySettings = stripAnsi(renderWorkspace(ui, 200, 48)).split("\n");
+  assert.ok(emptySettings.some((row) => row.includes("APPLICATION SETTINGS")));
+  assert.ok(!emptySettings.some((row) => row.includes("│")));
+
+  await ui.command("Create a safe local session.");
+  await app.settled();
+  ui.choose("sessions");
+  ui.detail = ["SESSION DETAIL", "-".repeat(76), "─".repeat(76), "RAW RECORD"];
+  const populatedMaster = stripAnsi(
+    renderWorkspace(ui, 200, 48),
+  ).split("\n");
+  assert.ok(
+    populatedMaster.some((row) => row.includes("▸") && row.includes("│")),
+    "a populated master list keeps the split layout",
+  );
+  const rules = populatedMaster.filter((row) => {
+    const divider = row.indexOf("│");
+    return divider >= 0 && /^[-─]+$/.test(row.slice(divider + 1).trim());
+  });
+  assert.equal(rules.length, 2);
+});
+
 
 test("stream deltas are shown once and replaced by the completed assistant message", () => {
   const base = {
@@ -471,7 +1735,406 @@ test("styled frames stay bounded, motion can stop, and slash choices never inclu
   );
 });
 
-test("chat presentation preserves code, sanitizes escapes, and distinguishes event roles", async () => {
+test("streamed code uses NOMO syntax colors and a live type cursor", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-streamed-code-"));
+  const app = new Workbench({ NOMO_DATA_DIR: root }, async (url) =>
+    String(url).endsWith("/models")
+      ? Response.json({ data: [{ id: "visual-model" }] })
+      : Response.json({
+          choices: [
+            {
+              message: { role: "assistant", content: "Fixture reply." },
+            },
+          ],
+        }),
+  );
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  await app.configure({
+    baseUrl: "https://local.test/v1",
+    apiKey: "nomo-visual-test-key",
+  });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
+  await ui.initialize();
+  await ui.command("Render a code sample.");
+  await app.settled();
+  const session = ui.session();
+  assert.ok(session);
+  const streamingSession = {
+    ...session,
+    status: "running",
+    events: [
+      ...session.events,
+      {
+        seq: session.events.length + 1,
+        at: "2026-10-23T13:40:01.000Z",
+        kind: "assistant" as const,
+        type: "message.delta",
+        text: '### Live heading\n- item\n> quote\n```ts\nconst answer: string = "NOMO";',
+      },
+    ],
+  };
+  Object.defineProperty(ui, "session", { value: () => streamingSession });
+  const streamedRows = chatRows(streamingSession.events, 120, false, "⠋", "▌");
+  assert.ok(
+    streamedRows.some((row) => row.style === "heading" && row.text === "Live heading"),
+  );
+  assert.ok(
+    streamedRows.some((row) => row.style === "list" && row.text === "• item"),
+  );
+  assert.ok(
+    streamedRows.some((row) => row.style === "quote" && row.text === "| quote"),
+  );
+
+  const render = (
+    width: number,
+    height: number,
+    frame: number,
+    color = true,
+    motion = true,
+  ) =>
+    renderWorkspace(ui, width, height, "", true, true, {
+      color,
+      colorDepth: 8,
+      frame,
+      motion,
+    });
+  for (const [width, height] of [
+    [40, 12],
+    [80, 24],
+    [120, 40],
+    [200, 48],
+  ]) {
+    const first = render(width!, height!, 0);
+    const codeLines = first
+      .split("\n")
+      .filter((line) => /const|"NOMO"/.test(stripAnsi(line)));
+    const colorAt = (text: string) => {
+      const line = codeLines.find((row) => stripAnsi(row).includes(text));
+      assert.ok(line, `${width} columns: missing ${text}`);
+      return line.slice(0, line.indexOf(text)).match(/\x1b\[([^m]+)m/g)?.at(-1);
+    };
+    if (width === 40) {
+      assert.doesNotMatch(colorAt('"NOMO"') ?? "", /48;/);
+    } else {
+      assert.notEqual(colorAt("const"), colorAt('"NOMO"'), `${width} columns`);
+    }
+    const plainLines = codeLines.map(stripAnsi).join("\n");
+    assert.ok(plainLines.includes('"NOMO";▌'), `${width} columns: live caret`);
+    assert.ok(
+      codeLines
+        .map(stripAnsi)
+        .every((line) => visibleLength(line) <= width!),
+      `${width} columns: code rows stay within the terminal`,
+    );
+    const nextFrame = stripAnsi(render(width!, height!, 4));
+    assert.ok(nextFrame.includes('"NOMO";█'), `${width} columns: cursor animates`);
+    const monochrome = render(width!, height!, 0, false, false);
+    assert.doesNotMatch(monochrome, /\x1b\[/);
+    assert.ok(stripAnsi(monochrome).includes('"NOMO";█'));
+    assert.equal(
+      monochrome,
+      render(width!, height!, 4, false, false),
+      `${width} columns: motion-off frame stays fixed`,
+    );
+  }
+});
+
+test("conversation transcript follows OMP user-bubble and assistant-prose hierarchy", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-plain-chat-"));
+  const app = new Workbench({ NOMO_DATA_DIR: root }, async (url) =>
+    String(url).endsWith("/models")
+      ? Response.json({ data: [{ id: "visual-model" }] })
+      : Response.json({
+          choices: [
+            {
+              message: {
+                role: "assistant",
+                content: "A plain local reply.",
+              },
+            },
+          ],
+        }),
+  );
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  await app.configure({
+    baseUrl: "https://local.test/v1",
+    apiKey: "nomo-visual-test-key",
+  });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
+  await ui.initialize();
+  await ui.command("Show a plain chat reply.");
+  await app.settled();
+
+  const frame = stripAnsi(renderWorkspace(ui, 120, 40, "", true));
+  assert.ok(!frame.includes("▸ YOU"));
+  assert.ok(!frame.includes("● NOMO"));
+  assert.ok(frame.includes("A plain local reply."));
+  const chat = chatRows(ui.session()!.events, 116);
+  const userStart = chat.find((row) => row.style === "user");
+  assert.equal(userStart?.text, "");
+  assert.equal(userStart?.userBubble, true);
+  const userBody = chat.find((row) => row.text.includes("Show a plain chat reply."));
+  assert.equal(userBody?.style, "user-body");
+  assert.equal(userBody?.userBubble, true);
+  const assistantBody = chat.find((row) => row.text.includes("A plain local reply."));
+  assert.equal(assistantBody?.style, "text");
+  const colorFrame = renderWorkspace(ui, 120, 40, "", true, false, {
+    color: true,
+    colorDepth: 8,
+  });
+  const userBodyRow = colorFrame
+    .split("\n")
+    .find((line) => line.includes("Show a plain chat reply."));
+  assert.ok(userBodyRow);
+  assert.ok(userBodyRow!.includes("\x1b[38;5;231m"), "user prose stays white");
+  assert.match(userBodyRow!, /\x1b\[48;5;\d+m/, "the OMP-like user bubble has a local surface");
+  const assistantBodyRow = colorFrame
+    .split("\n")
+    .find((line) => line.includes("A plain local reply."));
+  assert.ok(assistantBodyRow);
+  assert.doesNotMatch(assistantBodyRow!, /\x1b\[48;/, "assistant prose stays on the terminal canvas");
+  assert.doesNotMatch(colorFrame.split("\n")[0]!, /\x1b\[48;/, "shell chrome does not paint a background");
+
+  const session = ui.session();
+  assert.ok(session);
+  const fixtureSession = {
+    ...session,
+    events: [
+      ...session.events,
+      {
+        seq: session.events.length + 1,
+        at: "2026-10-23T13:40:00.000Z",
+        kind: "tool" as const,
+        type: "tool.started",
+        text: "Synthetic requested tool output.",
+        payload: { tool: "requested_tool" },
+      },
+      {
+        seq: session.events.length + 2,
+        at: "2026-10-23T13:40:00.000Z",
+        kind: "tool" as const,
+        type: "tool.result",
+        text: "Synthetic complete tool output.",
+        payload: { tool: "complete_tool", result: { isError: false } },
+      },
+      {
+        seq: session.events.length + 3,
+        at: "2026-10-23T13:40:00.000Z",
+        kind: "tool" as const,
+        type: "tool.result",
+        text: "Synthetic error tool output.",
+        payload: { tool: "error_tool", result: { isError: true } },
+      },
+      {
+        seq: session.events.length + 4,
+        at: "2026-10-23T13:40:00.000Z",
+        kind: "tool" as const,
+        type: "tool.future",
+        text: "Synthetic unknown tool output.",
+        payload: { tool: "future_tool" },
+      },
+    ],
+  };
+  Object.defineProperty(ui, "session", { value: () => fixtureSession });
+  const toolFrame = renderWorkspace(ui, 120, 40, "", true, false, {
+    color: true,
+    colorDepth: 8,
+  });
+  const lines = toolFrame.split("\n");
+  const rowContaining = (value: string) =>
+    lines.find((line) => line.includes(value));
+  for (const name of ["requested_tool", "complete_tool", "future_tool"]) {
+    const toolHeader = rowContaining(name);
+    assert.ok(toolHeader);
+    assert.ok(toolHeader.includes("\x1b[1;38;5;"));
+  }
+  const errorHeader = rowContaining("error_tool");
+  assert.ok(errorHeader?.includes("\x1b[38;5;"));
+  assert.ok(
+    rowContaining("Synthetic complete tool output.")?.includes("\x1b[38;5;"),
+  );
+  assert.ok(
+    rowContaining("Synthetic error tool output.")?.includes("\x1b[38;5;"),
+  );
+  assert.ok(
+    rowContaining("Synthetic unknown tool output.")?.includes("\x1b[38;5;"),
+  );
+  ui.choose("sessions");
+  for (const [width, height] of [[80, 24], [120, 40], [200, 48]] as const) {
+    const selectedRow = renderWorkspace(
+      ui,
+      width,
+      height,
+      "",
+      false,
+      false,
+      { color: true, motion: false, colorDepth: 8 },
+    )
+      .split("\n")
+      .find((line) => line.includes("▸ [-]"));
+    assert.ok(
+      selectedRow?.includes("\x1b[1;38;5;"),
+      `${width} columns: selected session row uses the NOMO accent without a wash`,
+    );
+    const monochromeSessions = renderWorkspace(
+      ui,
+      width,
+      height,
+      "",
+      false,
+      false,
+      { color: false, motion: false },
+    );
+    assert.ok(monochromeSessions.includes("▸ [-]"));
+    assert.doesNotMatch(monochromeSessions, /\x1b\[/);
+  }
+  ui.choose("models");
+  assert.equal(ui.provider?.providerId, "custom");
+  assert.equal(ui.lines()[0], "MODELS, 1 available from custom");
+  const selectedModelRow = renderWorkspace(
+    ui,
+    120,
+    40,
+    "",
+    false,
+    false,
+    { color: true, motion: false, colorDepth: 8 },
+  )
+    .split("\n")
+    .find((line) => line.includes("▸ 1.") && line.includes("visual-model"));
+  assert.ok(
+    selectedModelRow?.includes("\x1b[1;38;5;"),
+    "selected model row uses the NOMO accent without a wash",
+  );
+});
+test("user prompts render Markdown inside the padded OMP-style bubble", () => {
+  const rows = chatRows(
+    [
+      {
+        seq: 1,
+        at: "2026-10-27T12:00:00Z",
+        kind: "user",
+        text: "## Prompt\n- **Plan** and `nomo`\n```ts\nconst answer = 42;\n```",
+      },
+    ],
+    40,
+  );
+  const bubble = rows.filter((row) => row.userBubble);
+  assert.equal(bubble[0]?.text, "", "the bubble has one top-padding row");
+  assert.equal(bubble.at(-1)?.text, "", "the bubble has one bottom-padding row");
+  assert.ok(bubble.some((row) => row.style === "heading" && row.text.includes("Prompt")));
+  assert.ok(bubble.some((row) => row.style === "list" && row.text.includes("Plan and nomo")));
+  assert.ok(bubble.some((row) => row.style === "code" && row.text.includes("const answer = 42;")));
+  assert.ok(bubble.every((row) => visibleLength(row.text) <= 40));
+});
+test("detail titles and section headings keep the NOMO brand hierarchy", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-detail-hierarchy-"));
+  const app = new Workbench({ NOMO_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
+  ui.choose("documents");
+  ui.detail = renderInspector(
+    {
+      title: "plan.md",
+      subtitle: "session-123",
+      icon: "▤",
+      sections: [
+        {
+          title: "document",
+          fields: [
+            { label: "path", value: "plan.md" },
+            { label: "size", value: "84 B" },
+          ],
+        },
+      ],
+    },
+    { width: 76 },
+  );
+
+  for (const [width, height] of [
+    [80, 24],
+    [120, 40],
+    [200, 48],
+  ]) {
+    const colorFrame = renderWorkspace(ui, width!, height!, "", false, false, {
+      color: true,
+      colorDepth: 8,
+      motion: false,
+    });
+    const inspectorRows = colorFrame.split("\n");
+    const paneRow = (text: string) =>
+      inspectorRows.find(
+        (line) =>
+          line.includes(text),
+      );
+    assert.ok(
+      paneRow("plan.md")?.includes("\x1b[1;38;5;"),
+      `detail title uses NOMO accent at ${width} columns`,
+    );
+    assert.ok(
+      paneRow("DOCUMENT")?.includes("\x1b[1;38;5;"),
+      `section heading uses NOMO accent at ${width} columns`,
+    );
+    const fieldRow = paneRow("path");
+    assert.ok(
+      fieldRow?.includes("\x1b[1;38;5;"),
+      `field label remains bold and muted at ${width} columns`,
+    );
+    assert.ok(
+      fieldRow?.includes("\x1b[38;5;231m"),
+      `field value remains readable white at ${width} columns`,
+    );
+    assert.ok(
+      colorFrame
+        .split("\n")
+        .every((line) => visibleLength(line) <= width!),
+      `detail frame stays within ${width} columns`,
+    );
+    const monochromeFrame = renderWorkspace(
+      ui,
+      width!,
+      height!,
+      "",
+      false,
+      false,
+      { color: false, motion: false },
+    );
+    assert.doesNotMatch(monochromeFrame, /\x1b\[/);
+    assert.ok(monochromeFrame.includes("DOCUMENT"));
+  }
+});
+test("standard-width detail keeps its content full width instead of splitting", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-standard-detail-"));
+  const app = new Workbench({ NOMO_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
+  ui.choose("documents");
+  const revision = `revision: ${"a".repeat(70)}`;
+  ui.detail = ["DOCUMENT", revision];
+
+  const frame = stripAnsi(
+    renderWorkspace(ui, 120, 40, "", false, false, {
+      color: false,
+      motion: false,
+    }),
+  );
+  assert.ok(frame.split("\n").some((line) => line.includes(revision)));
+  assert.ok(!frame.split("\n").some((line) => line.includes("│")));
+});
+
+test("chat presentation preserves Markdown, sanitizes terminal escapes, and keeps stream activity visible", async () => {
   const { chatRows } = await import("./workspace.ts");
   const base = {
     seq: 1,
@@ -482,7 +2145,7 @@ test("chat presentation preserves code, sanitizes escapes, and distinguishes eve
     { ...base, text: "# Plan\n```ts\nconst x = '界';\n```\nDone \x1b[2J" },
   ];
   const rows = chatRows(events, 40);
-  assert.ok(rows.some((r) => r.style === "heading" && r.text === "# Plan"));
+  assert.ok(rows.some((r) => r.style === "heading" && r.text === "Plan"));
   assert.ok(
     rows.some((r) => r.style === "code" && r.text.includes("const x = '界';")),
   );
@@ -490,14 +2153,21 @@ test("chat presentation preserves code, sanitizes escapes, and distinguishes eve
     rows.every((r) => !r.text.includes("\x1b") && visibleLength(r.text) <= 40),
   );
   const hostile = chatRows(
-    [{ ...base, kind: "user", text: "```ts\n# I am not a heading\nVOID" }],
+    [
+      {
+        ...base,
+        kind: "user",
+        text: "## Prompt\n```ts\n# I am code\nVOID\x1b[2J\n```",
+      },
+    ],
     40,
   );
   assert.ok(
-    !hostile.some(
-      (r) =>
-        r.style === "code" || r.style === "heading" || r.style === "assistant",
-    ),
+    hostile.some((row) => row.style === "heading" && row.userBubble),
+  );
+  assert.ok(hostile.some((row) => row.style === "code" && row.userBubble));
+  assert.ok(
+    hostile.every((row) => !row.text.includes("\x1b") && visibleLength(row.text) <= 40),
   );
   const streamed = chatRows(
     [
@@ -508,8 +2178,395 @@ test("chat presentation preserves code, sanitizes escapes, and distinguishes eve
   );
   assert.ok(!streamed.some((r) => r.text.includes("partial")));
   assert.equal(streamed.filter((r) => r.text === "complete").length, 1);
+  const writing = chatRows(
+    [{ ...base, type: "message.delta", text: "partial" }],
+    40,
+    false,
+    "⠋",
+  );
+  const nextFrame = chatRows(
+    [{ ...base, type: "message.delta", text: "partial" }],
+    40,
+    false,
+    "⠙",
+  );
+  assert.ok(writing.some((row) => row.text.includes("⠋")));
+  assert.ok(nextFrame.some((row) => row.text.includes("⠙")));
+  const thinking = chatRows([], 40, false, "⠋");
+  assert.ok(thinking.some((row) => row.text.includes("Thinking")));
   const fences = chatRows([{ ...base, text: "````ts\n```\nkept\n````" }], 40);
   assert.ok(fences.some((r) => r.style === "code" && r.text.includes("```")));
+});
+
+test("Markdown table rows keep escaped and code span pipes inside their cells", async () => {
+  const { chatRows } = await import("./workspace.ts");
+  const rows = chatRows(
+    [
+      {
+        seq: 1,
+        at: "2026-10-14T12:00:00Z",
+        kind: "assistant",
+        text: [
+          "| Name | Note | Code |",
+          "| --- | --- | --- |",
+          "| left | literal \\| mark | `inside | mark` |",
+          "| longer | more | tail |",
+        ].join("\n"),
+      },
+    ],
+    80,
+  );
+  const table = rows
+    .filter((row) => row.style === "table")
+    .map((row) => row.text);
+  assert.deepEqual(table, [
+    "Name   | Note           | Code         ",
+    "left   | literal | mark | inside | mark",
+    "longer | more           | tail         ",
+  ]);
+});
+
+test("Markdown table rendering aligns cells and preserves delimiter alignment", async () => {
+  const { chatRows } = await import("./workspace.ts");
+  const rows = chatRows(
+    [
+      {
+        seq: 1,
+        at: "2026-10-14T12:00:00Z",
+        kind: "assistant",
+        text: [
+          "| Name | State |",
+          "| :--- | ---: |",
+          "| run | unknown |",
+          "| longer | done |",
+          "| 界 | unknown |",
+          "| 界界 | unknown |",
+          "```text",
+          "literal | code pipe",
+          "```",
+        ].join("\n"),
+      },
+    ],
+    80,
+  );
+  assert.deepEqual(
+    rows.filter((row) => row.style === "table").map((row) => row.text),
+    [
+      "Name   |   State",
+      "run    | unknown",
+      "longer |    done",
+      "界     | unknown",
+      "界界   | unknown",
+    ],
+  );
+  assert.ok(
+    rows.some(
+      (row) => row.style === "code" && row.text.includes("literal | code pipe"),
+    ),
+  );
+});
+
+test("Markdown tables without outer pipes still align and drop their separator", async () => {
+  const { chatRows } = await import("./workspace.ts");
+  const rows = chatRows(
+    [
+      {
+        seq: 1,
+        at: "2026-10-14T12:00:00Z",
+        kind: "assistant",
+        text: [
+          "Name | State",
+          "--- | ---",
+          "run | ready",
+          "Normal prose follows.",
+        ].join("\n"),
+      },
+    ],
+    80,
+  );
+  assert.deepEqual(
+    rows.filter((row) => row.style === "table").map((row) => row.text),
+    ["Name | State", "run  | ready"],
+  );
+  assert.ok(
+    rows.some(
+      (row) => row.style === "text" && row.text === "Normal prose follows.",
+    ),
+  );
+  const plain = chatRows(
+    [
+      {
+        seq: 2,
+        at: "2026-10-14T12:00:01Z",
+        kind: "assistant",
+        text: "Status | all 5 stages",
+      },
+    ],
+    80,
+  );
+  assert.ok(
+    plain.some(
+      (row) => row.style === "text" && row.text === "Status | all 5 stages",
+    ),
+  );
+});
+
+test("assistant chat rows render common Markdown as inert readable text", () => {
+  const at = "2026-09-14T10:00:00Z";
+  const rows = chatRows(
+    [
+      {
+        seq: 1,
+        at,
+        kind: "assistant",
+        text: [
+          "## Heading",
+          "- **Bold** and `const x`",
+          "> quoted text",
+          "[manual](https://docs.example.test/start)",
+          "| Name | State |",
+          "| --- | --- |",
+          "| Run | **unknown** |",
+          "<script>alert(1)</script>",
+          "[unsafe](javascript:alert(1))",
+        ].join("\n"),
+      },
+    ],
+    32,
+  );
+  assert.ok(
+    rows.some((row) => row.style === "heading" && row.text === "Heading"),
+  );
+  assert.ok(
+    rows.some(
+      (row) => row.style === "list" && row.text === "• Bold and const x",
+    ),
+  );
+  assert.ok(
+    rows.some((row) => row.style === "quote" && row.text === "| quoted text"),
+  );
+  const readableLink = rows.map((row) => row.text).join("\n");
+  assert.ok(readableLink.includes("manual"));
+  assert.ok(readableLink.includes("https://docs.example.test/start"));
+  assert.ok(
+    rows.some(
+      (row) => row.style === "table" && /Name\s+\| State/.test(row.text),
+    ),
+  );
+  assert.ok(
+    rows.some(
+      (row) => row.style === "table" && /Run\s+\| unknown/.test(row.text),
+    ),
+  );
+  assert.ok(!rows.some((row) => row.text.includes("---")));
+  assert.ok(rows.some((row) => row.text === "<script>alert(1)</script>"));
+  assert.ok(
+    rows.some((row) => row.text.includes("unsafe (javascript:alert(1))")),
+  );
+  assert.ok(
+    rows.every(
+      (row) => !row.text.includes("\x1b") && visibleLength(row.text) <= 32,
+    ),
+  );
+});
+
+test("tool failures stay explicit when compact output hides successful details", () => {
+  const at = "2026-10-14T12:00:00Z";
+  const rows = chatRows(
+    [
+      {
+        seq: 1,
+        at,
+        kind: "tool",
+        type: "tool.started",
+        text: "Requested write_file.",
+        payload: { tool: "write_file", callId: "call-1" },
+      },
+      {
+        seq: 2,
+        at,
+        kind: "tool",
+        type: "tool.result",
+        text: "write_file refused.\nline 2\nline 3\nline 4\nline 5",
+        payload: {
+          tool: "write_file",
+          callId: "call-1",
+          result: { isError: true },
+        },
+      },
+    ],
+    80,
+    true,
+  );
+  assert.ok(rows.some((row) => row.text.includes("TOOL REQUEST")));
+  assert.ok(
+    rows.some(
+      (row) => row.text.includes("TOOL ERROR") && row.style === "error",
+    ),
+  );
+  assert.ok(rows.some((row) => row.text.includes("line 5")));
+  assert.ok(rows.some((row) => row.text.includes("TOOL ERROR / write_file")));
+  const unknown = chatRows(
+    [
+      {
+        seq: 3,
+        at,
+        kind: "tool",
+        type: "tool.custom.future",
+        text: "Future event",
+        payload: { tool: "future_tool" },
+      },
+    ],
+    80,
+  );
+  assert.ok(
+    unknown.some((row) => row.text.includes("TOOL UNKNOWN / future_tool")),
+  );
+  assert.ok(!rows.some((row) => row.text.includes("more lines /expand")));
+});
+test("harness review events retain their metadata identity in chat", () => {
+  const at = "2026-10-23T23:09:01.000Z";
+  const rows = chatRows(
+    [
+      {
+        seq: 1,
+        at,
+        kind: "tool",
+        type: "harness.review",
+        text: "No trigger is armed and no review is retained.",
+        payload: { outcome: "not-run" },
+      },
+      {
+        seq: 2,
+        at,
+        kind: "tool",
+        type: "harness.review.failed",
+        text: "Harness review did not complete: local fixture failure.",
+        payload: { status: "idle" },
+      },
+      {
+        seq: 3,
+        at,
+        kind: "tool",
+        type: "harness.review",
+        text: "Harness review failed: provider rejected.",
+        payload: { outcome: "failed" },
+      },
+    ],
+    80,
+  );
+  const transcript = rows.map((row) => row.text).join("\n");
+  assert.match(transcript, /HARNESS REVIEW/);
+  assert.match(transcript, /No trigger is armed/);
+  assert.match(transcript, /HARNESS REVIEW FAILED/);
+  assert.match(transcript, /did not complete/);
+  assert.equal((transcript.match(/HARNESS REVIEW FAILED/g) ?? []).length, 2);
+  assert.ok(
+    rows.some(
+      (row) => row.text.includes("provider rejected") && row.style === "error",
+    ),
+  );
+  assert.ok(
+    rows.some(
+      (row) => row.text.includes("HARNESS REVIEW FAILED") && row.style === "error",
+    ),
+  );
+  assert.doesNotMatch(transcript, /TOOL UNKNOWN|TOOL RESULT/);
+});
+test("known Workbench metadata keeps its identity in chat", () => {
+  const at = "2026-10-23T23:25:00.000Z";
+  const rows = chatRows(
+    [
+      {
+        seq: 1,
+        at,
+        kind: "tool",
+        type: "hook.result",
+        text: "format: hook exited 0",
+        payload: { hook: { outcome: "exited", code: 0 } },
+      },
+      {
+        seq: 2,
+        at,
+        kind: "tool",
+        type: "context.compacted",
+        text: "Context compacted.",
+        payload: {
+          beforeMessages: 12,
+          afterMessages: 4,
+          omittedMessages: 8,
+        },
+      },
+    ],
+    80,
+  );
+  const transcript = rows.map((row) => row.text).join("\n");
+  assert.match(transcript, /HOOK RESULT/);
+  assert.match(transcript, /format: hook exited 0/);
+  assert.match(transcript, /CONTEXT COMPACTED/);
+  assert.match(transcript, /Context compacted/);
+  assert.doesNotMatch(transcript, /TOOL UNKNOWN|TOOL RESULT/);
+});
+
+test("chat Markdown keeps ordinary underscores and inline code literal", () => {
+  const rows = chatRows(
+    [
+      {
+        seq: 1,
+        at: "2026-10-14T12:00:00Z",
+        kind: "assistant",
+        text: "foo_bar_baz some__thing__ **strong** *italic* _under_ ~~deleted~~ `code ** stays`",
+      },
+    ],
+    80,
+  );
+  assert.ok(
+    rows.some(
+      (row) =>
+        row.text ===
+        "foo_bar_baz something strong italic under deleted code ** stays",
+    ),
+  );
+  assert.ok(rows.every((row) => visibleLength(row.text) <= 80));
+});
+
+test("chat Markdown leaves links inside inline code untouched", () => {
+  const rows = chatRows(
+    [
+      {
+        seq: 1,
+        at: "2026-10-14T12:00:00Z",
+        kind: "assistant",
+        text: "literal `[manual](https://example.test)`",
+      },
+    ],
+    80,
+  );
+  assert.ok(
+    rows.some((row) => row.text === "literal [manual](https://example.test)"),
+  );
+});
+
+test("streaming Markdown stays readable before inline code closes", () => {
+  const partial = `Open \`code **still literal** ${"界".repeat(40)}\x1b[2J\u202e`;
+  const rows = chatRows(
+    [
+      {
+        seq: 1,
+        at: "2026-10-14T12:00:00Z",
+        kind: "assistant",
+        type: "message.delta",
+        text: partial,
+      },
+    ],
+    32,
+  );
+  const text = rows.map((row) => row.text).join("");
+  assert.ok(text.includes("**still literal**"));
+  assert.ok(text.includes("Open `code"));
+  assert.ok(text.includes("?[2J?"));
+  assert.ok(!text.includes("\u202e"));
+  assert.ok(rows.every((row) => visibleLength(row.text) <= 32));
 });
 
 test("search and paging use real conversation data and return to live follow", async (t) => {
@@ -662,7 +2719,8 @@ test("rewind selects the latest recoverable operation", async (t) => {
     row?.operationId,
     "expected the selected row to carry an operation",
   );
-  assert.match(ui.notice, /press u/i);
+  assert.match(ui.notice, /dependency order has not been checked/i);
+  assert.match(ui.notice, /press u for reviewed undo/i);
 });
 
 test("rewind without a conversation asks for selection", async (t) => {
@@ -719,6 +2777,29 @@ test("A2 approval banner names the hold and its keys, and counts the rest", () =
     100,
   );
   assert.match(two[0]!, /\(\+1 more/);
+});
+test("A2 narrow approval banner wraps complete decision hints", () => {
+  const rows = approvalBannerLines(
+    [
+      {
+        holdId: "visualfixture01",
+        call: { tool: "fixture.workspace.delete", klass: "r2" },
+      },
+    ],
+    80,
+  );
+  assert.ok(rows.length > 1);
+  assert.ok(rows.every((row) => visibleLength(row) <= 80));
+  const banner = rows.join(" ");
+  for (const text of [
+    "fixture.workspace.delete",
+    "visualfi",
+    "[a] approve",
+    "[d] deny",
+    "(/approvals)",
+  ]) {
+    assert.ok(banner.includes(text), text);
+  }
 });
 
 test("A2 banner sanitizes hostile tool ids", () => {
@@ -782,22 +2863,49 @@ test("A4 mode label always says local only, never server enforced", () => {
   );
 });
 
-test("A4 status bar and status detail carry the local only label", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "nomo-tui-modelabel-"));
-  const app = new Workbench({ NOMO_DATA_DIR: root });
+test("A4 status distinguishes local TUI mode from server permission mode", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-server-mode-"));
+  const env = { NOMO_DATA_DIR: root, NOMO_PERMISSION_MODE: "read-only" };
+  const app = new Workbench(env);
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
   });
-  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
+  const ui = new WorkspaceTui(app, env);
   ui.mode = "plan";
+  assert.equal(app.permissionModeState(), "read-only");
+
+  for (const [width, height] of [
+    [20, 8],
+    [40, 12],
+    [80, 24],
+    [160, 32],
+  ]) {
+    const status = stripAnsi(renderWorkspace(ui, width!, height!));
+    if (width! < 56)
+      assert.match(status, /server read-only/, `${width} columns`);
+    else assert.match(status, /permission read-only \(server\)/, `${width} columns`);
+    if (width! < 32) {
+      assert.doesNotMatch(status, /mode: plan/);
+    } else if (width! < 56) {
+      assert.match(status, /mode: plan \(local\)/);
+    } else {
+      assert.match(status, /permission read-only \(server\)/);
+      if (width! >= 100)
+        assert.match(status, /mode: plan \(local only, not enforced\)/);
+      else assert.match(status, /mode: plan \(not enforced\)/);
+    }
+  }
+
+  ui.cycleMode();
+  ui.cycleMode();
+  assert.equal(ui.mode, "accept");
+  assert.equal(app.permissionModeState(), "read-only");
   assert.match(
-    stripAnsi(renderWorkspace(ui, 100, 32)),
-    /mode: plan \(local only, not enforced\)/,
+    stripAnsi(renderWorkspace(ui, 160, 32)),
+    /permission read-only \(server\)/,
   );
-  assert.ok(
-    ui.statusLines().some((line) => line.includes("local only, not enforced")),
-  );
+
 });
 
 test("A3 evidence renders class, radius, case prose and honest unknowns", () => {
@@ -995,4 +3103,27 @@ test("A1 hunk toggle flips scope and the suffix rides with the decision", async 
   };
   ui.toggleHunk(0);
   assert.match(ui.notice, /no diff hunks/);
+});
+test("chat composer stays borderless like the Prime editor dock", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-composer-dock-"));
+  const app = new Workbench({ NOMO_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
+  await ui.initialize();
+  ui.choose("chat");
+
+  const frame = renderWorkspace(ui, 80, 24, "", true, false, {
+    color: false,
+    motion: false,
+  });
+  const rows = frame.split("\n");
+  const prompt = rows.findIndex((row) => row.startsWith("   > "));
+  assert.ok(prompt >= 0, "chat keeps its prompt");
+  assert.ok(
+    !rows.slice(prompt + 1, prompt + 3).some((row) => /^─+$/.test(row.trim())),
+    "the editor dock has no heavy rule under the prompt",
+  );
 });

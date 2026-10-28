@@ -97,7 +97,7 @@ test("workspace model labels are sanitized before summary rendering", async (t) 
     // Check that this specific line has no control characters.
     const modelLine = plain
       .split("\n")
-      .find((line) => line.startsWith("  Model:"));
+      .find((line) => line.trimStart().startsWith("Model:"));
     assert.ok(modelLine, "model line should exist in overview");
     assert.doesNotMatch(
       modelLine,

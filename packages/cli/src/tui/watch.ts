@@ -1,6 +1,19 @@
 import { brandHeader } from "./brand.ts";
 import { CLASS_MARKER, classLabel, decisionLabel, paint } from "./theme.ts";
-import { box, columns, crop, fit, meter, pad, progressBar, rule, sanitizeText } from "./layout.ts";
+import { renderInspector, type Field } from "./inspector.ts";
+import {
+  box,
+  columns,
+  crop,
+  fit,
+  frameViewport,
+  insetFrame,
+  meter,
+  pad,
+  progressBar,
+  rule,
+  sanitizeText,
+} from "./layout.ts";
 import type {
   CostRecord,
   DashboardState,
@@ -15,20 +28,12 @@ const CONTEXT_THRESHOLD_RED = 90;
 
 const STAGES = ["intent", "classify", "decide", "seal"] as const;
 
-function stageLine(
-  call: InterceptedCall,
-  capabilities: TerminalCapabilities,
-  width: number,
-): string {
+function stageLine(call: InterceptedCall, width: number): string {
   const active = STAGES.indexOf(call.stage);
   const parts = STAGES.map(
     (stage, index) => `${index <= active ? "#" : "."} ${stage}`,
   );
-  return paint(
-    fit(parts.join(" -> "), width),
-    call.status === "failed" ? "r3" : "muted",
-    capabilities,
-  );
+  return fit(parts.join(" -> "), width);
 }
 
 function header(
@@ -70,7 +75,7 @@ function header(
     right,
     ctxLine,
     billingLine,
-    paint(rule(capabilities.columns), "rule", capabilities),
+    paint(rule(capabilities.columns, "─"), "rule", capabilities),
   ];
 }
 
@@ -87,50 +92,134 @@ function activityRows(
   if (rows.length === 0)
     return ["No intercepted calls. Start an agent through nomo run."];
   return rows.map((call) => {
-    const selected = call.id === state.selectedCallId ? ">" : " ";
+    const active = call.id === state.selectedCallId;
     const radius =
       call.blastRadius === null ? "   ?" : String(call.blastRadius).padStart(4);
     const toolWidth = Math.max(10, width - 45);
     const tool = sanitizeText(call.tool);
     const time = sanitizeText(call.time);
-    return fit(
-      `${selected} ${time} ${classLabel(call.class, capabilities)} ${decisionLabel(call.decision, capabilities)} status:${call.status} ${pad(fit(tool, toolWidth, "left"), toolWidth)} ${radius}`,
+    const row = fit(
+      `${active ? ">" : " "} ${time} ${classLabel(call.class, capabilities)} ${decisionLabel(call.decision, capabilities)} status:${call.status} ${pad(fit(tool, toolWidth, "left"), toolWidth)} ${radius}`,
       width,
     );
+    return active && row.startsWith(">")
+      ? `${paint(">", "accent", capabilities, true)}${row.slice(1)}`
+      : row;
   });
+}
+
+function decisionTone(call: InterceptedCall): "error" | "warning" | "success" {
+  if (call.decision === "deny") return "error";
+  if (call.decision === "hold") return "warning";
+  return "success";
+}
+
+function classTone(call: InterceptedCall): "default" | "warning" | "error" {
+  if (call.class === "r3") return "error";
+  if (call.class === "r2") return "warning";
+  return "default";
+}
+
+function blastRadius(call: InterceptedCall): string {
+  return call.blastRadius === null
+    ? "not measured"
+    : `${call.blastRadius} targets, measured`;
 }
 
 function detailRows(
   call: InterceptedCall | undefined,
   capabilities: TerminalCapabilities,
   width: number,
+  compact = false,
 ): string[] {
-  if (call === undefined) return ["Select a call to inspect its decision."];
-  const labelWidth = 13;
-  const row = (label: string, value: string): string =>
-    `${pad(paint(label, "muted", capabilities), labelWidth)}${fit(sanitizeText(value), width - labelWidth)}`;
+  let fields: Field[];
+  if (call === undefined) {
+    fields = [{ label: "call", value: "Select a call to inspect its decision." }];
+  } else {
+    const tool: Field = { label: "tool", value: call.tool };
+    const stage: Field = {
+      label: "stage",
+      value: stageLine(call, width),
+      tone: call.status === "failed" ? "error" : "muted",
+    };
+    const decision: Field = {
+      label: "decision",
+      value: `${call.decision} / ${call.status}`,
+      tone: decisionTone(call),
+    };
+    const risk: Field = {
+      label: "class",
+      value: `${CLASS_MARKER[call.class]} ${call.class.toUpperCase()} / ${call.reason}`,
+      tone: classTone(call),
+    };
+    const radius: Field = {
+      label: "blast radius",
+      value: blastRadius(call),
+    };
+    fields = compact
+      ? [stage, tool, decision, risk, radius]
+      : [
+          { label: "call", value: call.id },
+          tool,
+          { label: "agent", value: `${call.agent} / ${call.workspace}` },
+          risk,
+          stage,
+          { label: "status", value: call.status },
+          { label: "decision", value: call.decision, tone: decisionTone(call) },
+          radius,
+          { label: "inverse", value: call.inverse ?? "none" },
+          { label: "compensation", value: call.compensation ?? "none" },
+          { label: "snapshot", value: call.snapshotRef ?? "none" },
+          { label: "ledger", value: call.ledgerHash ?? "pending seal" },
+        ];
+  }
+  return renderInspector(
+    {
+      title: "DECISION RECORD",
+      sections: [
+        {
+          title: compact ? "Risk summary" : "Selected call",
+          fields,
+        },
+      ],
+    },
+    {
+      width,
+      paint: (text, tone, bold) =>
+        paint(text, tone === "default" ? "fg" : tone, capabilities, bold),
+    },
+  );
+}
+
+function condensedDetailRows(
+  call: InterceptedCall | undefined,
+  capabilities: TerminalCapabilities,
+  width: number,
+): string[] {
+  if (call === undefined) return detailRows(call, capabilities, width, true);
+  const riskTone = classTone(call);
+  const risk =
+    `${CLASS_MARKER[call.class]} ${call.class.toUpperCase()} / ` +
+    sanitizeText(call.reason);
   return [
-    stageLine(call, capabilities, width),
-    "",
-    row("call", call.id),
-    row("tool", call.tool),
-    row("agent", `${call.agent} / ${call.workspace}`),
-    row(
-      "class",
-      `${CLASS_MARKER[call.class]} ${call.class.toUpperCase()} / ${call.reason}`,
+    paint("DECISION RECORD", "accent", capabilities, true),
+    paint(
+      stageLine(call, width),
+      call.status === "failed" ? "r3" : "muted",
+      capabilities,
     ),
-    row("status", call.status),
-    row("decision", call.decision),
-    row(
-      "blast radius",
-      call.blastRadius === null
-        ? "not measured"
-        : `${call.blastRadius} targets, measured`,
+    fit(sanitizeText(call.tool), width),
+    paint(
+      fit(`${call.decision} / ${call.status}`, width),
+      decisionTone(call),
+      capabilities,
     ),
-    row("inverse", call.inverse ?? "none"),
-    row("compensation", call.compensation ?? "none"),
-    row("snapshot", call.snapshotRef ?? "none"),
-    row("ledger", call.ledgerHash ?? "pending seal"),
+    paint(
+      fit(risk, width),
+      riskTone === "default" ? "fg" : riskTone,
+      capabilities,
+    ),
+    fit(`blast radius: ${blastRadius(call)}`, width),
   ];
 }
 
@@ -281,7 +370,7 @@ function footer(
   return fit(`${mode} | ${keys}`, capabilities.columns);
 }
 
-export function renderWatchFrame(
+function renderWatchFrameContent(
   state: DashboardState,
   capabilities: TerminalCapabilities,
   now = Date.now(),
@@ -300,80 +389,96 @@ export function renderWatchFrame(
     state.calls.at(-1);
   const availableRows = Math.max(5, capabilities.rows - lines.length - 9);
 
-  function activityRowBlock(
-    width: number,
-    limit: number,
-  ): string[] {
+  function activityRowBlock(width: number, limit: number): string[] {
     if (width < 100) {
+      if (capabilities.rows < 30) {
+        const detail =
+          pending !== undefined || resolved !== undefined
+            ? condensedDetailRows(selected, capabilities, width)
+            : detailRows(selected, capabilities, width, true);
+        const costs = costPanel(state, capabilities, width);
+        const contentRows = Math.max(0, capabilities.rows - lines.length - 2);
+        const listRows = contentRows - detail.length - costs.length;
+        const list =
+          listRows > 1
+            ? [
+                paint("WRITE PATH", "accent", capabilities, true),
+                ...activityRows(
+                  state,
+                  capabilities,
+                  width,
+                  Math.min(limit, Math.max(0, listRows - 1)),
+                ),
+              ]
+            : [];
+        return [...list, ...detail, ...costs];
+      }
       return [
-        ...box(
-          "WRITE PATH",
-          activityRows(state, capabilities, width - 4, limit),
-          width,
-        ),
-        // Narrow terminals stack the decision record below the write path.
-        // Hiding it made a selected run's class, policy and blast radius
-        // unreachable at exactly the width operators use most often.
-        ...box(
-          "DECISION RECORD",
-          detailRows(selected, capabilities, width - 4).slice(
-            0,
-            Math.max(1, limit - 5),
-          ),
-          width,
-        ),
-        // Cost panel stays visible on narrow terminals (A6): unknown price
-        // renders `unknown`, never `$0.00`.
-        ...costPanel(state, capabilities, width - 4),
+        paint("WRITE PATH", "accent", capabilities, true),
+        ...activityRows(state, capabilities, width, limit),
+        ...detailRows(selected, capabilities, width),
+        ...costPanel(state, capabilities, width),
       ];
     }
     if (width < 160) {
       const leftWidth = Math.floor(width * 0.61);
       const rightWidth = width - leftWidth - 1;
-      const left = box(
-        "WRITE PATH",
-        activityRows(state, capabilities, leftWidth - 4, limit),
-        leftWidth,
-      );
-      const right = box(
-        "DECISION RECORD",
-        detailRows(selected, capabilities, rightWidth - 4).slice(0, limit),
-        rightWidth,
-      );
+      const left = [
+        paint("WRITE PATH", "accent", capabilities, true),
+        ...activityRows(state, capabilities, leftWidth, limit),
+      ];
+      const right = detailRows(selected, capabilities, rightWidth);
       return [...columns(left, right, leftWidth)];
     }
-    const activityWidth = Math.floor(width * 0.49);
-    const detailWidth = Math.floor(width * 0.31);
+    const activityWidth = Math.floor(width * 0.35);
+    const detailWidth = Math.floor(width * 0.3);
     const signalWidth = width - activityWidth - detailWidth - 2;
-    const left = box(
-      "WRITE PATH",
-      activityRows(state, capabilities, activityWidth - 4, limit),
-      activityWidth,
-    );
-    const middle = box(
-      "DECISION RECORD",
-      detailRows(selected, capabilities, detailWidth - 4).slice(0, limit),
-      detailWidth,
-    );
-    const right = box(
-      "SIGNALS",
-      [
-        ...metrics(state, capabilities, signalWidth - 4),
+    const left = [
+      paint("WRITE PATH", "accent", capabilities, true),
+      ...activityRows(state, capabilities, activityWidth, limit),
+    ];
+    const middle = detailRows(selected, capabilities, detailWidth);
+    const right = [
+      paint("SIGNALS", "accent", capabilities, true),
+      ...[
+        ...metrics(state, capabilities, signalWidth),
         "",
-        ...costPanel(state, capabilities, signalWidth - 4),
-        ...health(state, capabilities, signalWidth - 4),
+        ...costPanel(state, capabilities, signalWidth),
+        ...health(state, capabilities, signalWidth),
       ].slice(0, limit),
-      signalWidth,
-    );
+    ];
     return [...columns(columns(left, middle, activityWidth), right, activityWidth + 1 + detailWidth)];
   }
 
   lines.push(...activityRowBlock(width, availableRows));
 
-  lines.push(paint(rule(width), "rule", capabilities));
+  lines.push(paint(rule(width, "─"), "rule", capabilities));
   lines.push(footer(state, capabilities));
 
   return crop(lines, width, capabilities.rows).join("\n");
+}
+export function renderWatchFrame(
+  state: DashboardState,
+  capabilities: TerminalCapabilities,
+  now = Date.now(),
+): string {
+  const viewport = frameViewport(
+    capabilities.columns,
+    capabilities.rows,
+    20,
+    8,
+  );
+  const contentCapabilities = {
+    ...capabilities,
+    columns: viewport.columns,
+    rows: viewport.rows,
+  };
+  return insetFrame(
+    renderWatchFrameContent(state, contentCapabilities, now),
+    capabilities.columns,
+    capabilities.rows,
+    viewport,
+  );
 }
 
 export class DiffScreenWriter {

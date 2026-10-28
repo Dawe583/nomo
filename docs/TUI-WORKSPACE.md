@@ -76,36 +76,39 @@ zachovají vlastní profil.
 9. `q` v navigaci nebo Ctrl+C ukončí TUI a obnoví terminál. Již odeslaný
    externí nástroj může ještě dobíhat; automaticky se neopakuje.
 
-TUI má velké ASCII logo, barevné role zpráv, zvýrazněná rozhodnutí a nabídku
-příkazů. `/` nabídku otevře, šipky vybírají, Tab doplní a Enter spustí příkaz.
-Nabídka přijímá i fuzzy zkratku, například `/rs` pro `/resume`. `/clear`,
-`/status`, `/cost`, `/context`, `/permissions`, `/resume` a `/rewind`
-používají existující chat, přehled, usage, dokumenty, policy, historii
-konverzací a kontrolovaný Undo tok. Nevytvářejí druhou management vrstvu.
-`/mcp` je naopak správa MCP konektorů a má vlastní podpříkazy; popis je níže.
-Ctrl+R připraví hledání historie, Ctrl+O přepne úplný výpis nástrojů, Ctrl+L
-překreslí terminál a Ctrl+D ukončí pouze prázdný vstup. Potvrzení editace
-a Undo ukazuje unified diff se změněnými úseky místo plného textu před a po.
+NOMO používá dodané logo `nomo-logo.png` beze změn: podporované terminály ho
+zobrazí přes Kitty graphics, ostatní použijí textový wordmark. Logo se
+nevykresluje z náhradních znaků. Příkaz `/` otevře nabídku, šipky vybírají,
+Tab doplní a Enter spustí příkaz. Nabídka přijímá i fuzzy zkratku, například
+`/rs` pro `/resume`. `/clear`, `/status`, `/cost`, `/context`, `/permissions`,
+`/resume` a `/rewind` používají existující chat, přehled, usage, dokumenty,
+policy, historii konverzací a kontrolovaný Undo tok. Nevytvářejí druhou
+management vrstvu. `/mcp` je naopak správa MCP konektorů a má vlastní
+podpříkazy; popis je níže. Ctrl+R připraví hledání historie, Ctrl+O přepne
+úplný výpis nástrojů, Ctrl+L překreslí terminál a Ctrl+D ukončí pouze prázdný
+vstup. Potvrzení editace a Undo ukazuje unified diff se změněnými úseky.
 Při psaní šipka nahoru prochází předchozí pokyny dané konverzace. Po odeslání
 zůstává chat připravený k psaní další zprávy; nový požadavek lze odeslat po
 skončení běhu. Escape nebo Ctrl+C během běhu zastavuje model. Ctrl+C ve vstupu
 nejprve vymaže koncept; s prázdným vstupem ukončí aplikaci.
 
-Logo při startu krátce prosvítá; běh modelu má animovaný indikátor a pohyb
+Logo se zobrazí při startu; běh modelu má animovaný indikátor a pohyb
 na oddělovači vstupu. `NOMO_TUI_MOTION=0 pnpm tui` vypne animace.
 `NOMO_TUI_COLOR=0 pnpm tui` vypne barvy. Rozhraní je standardně anglické
-a barevné, i když prostředí zdědí `NO_COLOR=1`; barvy řídí vlastní nastavení NOMOu. Výpis `--once` je vždy statický bez barev.
-Malé terminály používají kompaktní logo a kratší navigaci. Zůstává vlastní
-ovládání NOMOu pro ledger a explicitní rozhodnutí; nejde o úplný klon Claude Code.
+a barevné, i když prostředí zdědí `NO_COLOR=1`; barvy řídí vlastní nastavení
+NOMOu. Výpis `--once` je vždy statický bez barev. Malé terminály používají
+kompaktní navigaci. Zůstává vlastní ovládání NOMOu pro ledger a explicitní
+rozhodnutí; nejde o úplný klon Claude Code.
 
 ### Čtení chatu a průběh práce
 
-Chat po úvodní animaci používá kompaktní hlavičku, aby zůstalo více místa
-na zprávy. Role vycházejí z událostí Workbenche: uživatel, NOMO, požadavek
-nástroje, výsledek a chyba. Nadpisy odpovědi jsou zvýrazněné; fenced code
-bloky mají vlastní pozadí, jazyk a čísla řádků. Kód se nevykonává a původní
-zprávy se nemění. Jde o terminálové formátování nadpisů a kódových bloků,
-ne o úplný Markdown renderer se syntax highlightingem.
+Uživatelské pokyny se zobrazují jako odsazené, zarovnané bubliny s lokálním
+barevným povrchem a formátováním Markdown. Text zpráv je ve výchozím nastavení
+bílý. Odpověď asistenta se zobrazuje jako souvislý text Markdownu bez opakované
+role a časové hlavičky. Požadavky a výsledky nástrojů, chyby, kontroly a
+události běhu si ponechávají stručné štítky, aby bylo vidět jejich pořadí.
+Pozadí terminálu ani ostatních panelů TUI nepřebarvuje. Markdown renderer
+formátuje text, ale nevykonává kód a nemění uložené zprávy.
 
 Běh ukazuje pulzující indikátor a pohybující se stopu na oddělovači vstupu.
 Stav rozlišuje přemýšlení, streamovanou odpověď, požadavek nástroje a čekání
@@ -140,6 +143,13 @@ pozdrží na 300 sekund. Expirace není automatické schválení.
 
 TUI ukazuje třídu, zbývající čas, nástroj, blast radius, číslo pravidla a
 odůvodnění. `/approvals` vypisuje odpočet, živý feed absolutní čas expirace.
+Enter otevře strukturovaný detail spravovaných i proxy schválení. Pokud server
+neposkytne odůvodnění, TUI ukáže, že není dostupné; důvod si nevymýšlí.
+
+Když fronta čeká, zobrazí se její položky. Prázdná karta vysvětluje, že se zde
+žádost objeví až tehdy, když nástroj skutečně vyžaduje rozhodnutí; přes Tab se
+lze vrátit do chatu. Žádost se nevytváří ani neodesílá pouhým otevřením karty.
+
 Argumenty ani workspace v rozhodovacím UI nejsou: ledgerový záznam uchovává
 jen `argsDigest`, nikdy payload. `a` připraví schválení, `d` odmítnutí, `y`
 potvrdí. Lze uvést důvod:
@@ -291,6 +301,9 @@ v TUI a nic nepřepíše. Escape vědomě zahodí náhled.
   zatím Workbench kontrakt neumí, takže jde o přiznaný fallback.
 - `/context` ukáže čísla kontextu aktuální konverzace, `/cost` reálné záznamy
   usage bez odhadů, `/status` stav providera, běhu, fronty a kontextu.
+  Karta usage bez záznamů sdělí, že čítače tokenů ukáže pouze tehdy, když je
+  poskytovatel skutečně vrátí; přes Tab se lze vrátit do chatu. Žádné hodnoty
+  ani odhady se při prázdné historii nevymýšlejí.
 - `/agents` vypíše konverzace a konektory, `/config` cesty a přepínače bez
   tajemství, `/memory` rozsah uchované historie.
 - `/login [zdroj]` připojí providera stejným kódem jako `/connect`.

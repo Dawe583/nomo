@@ -3,6 +3,32 @@
 All notable user-facing changes since the first repository commit.
 
 ## Unreleased
+- `/todos` projects checked and open checklist items from user and assistant
+  transcript messages, with each item linked to its event sequence.
+  Overview and the active-run chat badge use the same projection.
+- User prompts now render as padded Markdown bubbles; assistant prose omits
+  repeated role and timestamp headers. Chat text defaults to white, with coral
+  and turquoise accents and a borderless composer that keeps the terminal
+  background.
+- Replaced the placeholder TUI mark with the supplied NOMO bitmap. Interactive
+  Ghostty terminals render the logo through Kitty graphics; constrained,
+  monochrome, and other terminals use the plain NOMO wordmark.
+- Workspace, chat, live-ledger, and watch screens keep responsive gutters. The
+  TUI leaves the canvas and other panels transparent; only the local
+  user-message bubble may use a background color.
+- The default palette now uses white text with coral and turquoise accents instead of blue.
+- One-shot workspace output stays plain text without ANSI color.
+- Long Unicode values in live-ledger details now wrap at terminal-cell boundaries.
+- Long grouped lists keep the selected row visible on short terminals.
+- Empty approvals and usage panels name what is missing and give a truthful
+  next step without inventing requests or metrics.
+- Ledger overview now shows managed-chain verification status separately from
+  its view-row count, so an empty proof set is not presented as verified.
+- Enter opens structured details for managed and proxy approval holds. Missing
+  server rationale is shown as unavailable rather than invented.
+- Empty-chat welcome content is vertically centered in the available body when the full message fits; copy and composer controls are unchanged.
+- Wide detail views use the full width when the master list is empty; populated lists retain the split inspector.
+- The chat welcome eyebrow now uses the default NOMO coral accent.
 - The agent now learns from its own signed ledger, and what it learned shows
   up where the operator already looks. A cleanly finished turn is the only
   moment the agent may spend a model call on learning, and a cheap

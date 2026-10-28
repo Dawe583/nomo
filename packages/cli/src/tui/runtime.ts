@@ -3,6 +3,7 @@ import type { RawInput } from "./modal.ts";
 import type { DashboardState, TerminalCapabilities } from "./types.ts";
 import { DiffScreenWriter, renderWatchFrame } from "./watch.ts";
 
+import { kittyLogoCleanup, kittyLogoTransfer } from "./brand.ts";
 export interface WatchRuntimeOptions {
   readonly state: () => DashboardState;
   readonly input?: RawInput;
@@ -21,6 +22,7 @@ export class WatchRuntime {
   private readonly refreshMs: number;
   private readonly writer: DiffScreenWriter;
   private timer: NodeJS.Timeout | undefined;
+  private logoActive = false;
   private running = false;
 
   constructor(options: WatchRuntimeOptions) {
@@ -55,7 +57,10 @@ export class WatchRuntime {
     process.once("SIGTERM", this.handleSigterm);
     process.once("SIGHUP", this.handleSighup);
     process.once("exit", this.stop);
+    this.logoActive =
+      capabilities.graphicsProtocol === "kitty" && capabilities.ansi;
     this.writer.enter();
+    if (this.logoActive) this.output.write(kittyLogoTransfer());
     this.refresh();
     this.timer = setInterval(this.refresh, this.refreshMs);
   }
@@ -79,9 +84,10 @@ export class WatchRuntime {
     process.off("SIGTERM", this.handleSigterm);
     process.off("SIGHUP", this.handleSighup);
     process.off("exit", this.stop);
+    if (this.logoActive) this.output.write(kittyLogoCleanup());
     this.writer.leave();
+    this.logoActive = false;
   };
-
   private readonly handleData = (chunk: Buffer): void => {
     const key = chunk.toString("utf8");
     if (key === "q" || key === "\u0003") {

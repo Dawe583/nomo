@@ -17,6 +17,8 @@ export type RunPhase =
   | "settling"
   | "done"
   | "failed"
+  | "paused"
+  | "cancelled"
   | "unknown";
 
 export interface TimelineStep {
@@ -58,6 +60,8 @@ const PHASE_ICONS: Record<RunPhase, string> = {
   settling: "-",
   done: "o",
   failed: "x",
+  paused: "p",
+  cancelled: "c",
   unknown: "?",
 };
 
@@ -71,6 +75,8 @@ const ALL_PHASES: readonly RunPhase[] = [
   "settling",
   "done",
   "failed",
+  "paused",
+  "cancelled",
   "unknown",
 ];
 
@@ -79,7 +85,8 @@ const ALL_PHASES: readonly RunPhase[] = [
 function phaseTone(phase: RunPhase): string {
   if (phase === "failed") return "r3";
   if (phase === "done") return "r0";
-  if (phase === "unknown") return "muted";
+  if (phase === "paused") return "warning";
+  if (phase === "unknown" || phase === "cancelled") return "muted";
   return "accent";
 }
 
@@ -119,12 +126,29 @@ function firstNumber(
   return undefined;
 }
 
-// Map one event to a phase. Returns null for events with no type so the
-// caller drops them: an event nobody typed is not a phase, it is noise.
+function eventTimestamp(event: Record<string, unknown>): number | undefined {
+  const numeric = firstNumber(event, ["ts", "timestamp", "time", "at"]);
+  if (numeric !== undefined) return numeric;
+  const at = event["at"];
+  if (typeof at !== "string" || at === "") return undefined;
+  const parsed = Date.parse(at);
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+// Map one event to a run phase. Known transcript metadata is omitted because
+// it is not lifecycle progress; unrecognized event types stay visible as
+// unknown rather than being guessed into a phase.
 function eventPhase(event: Record<string, unknown>): RunPhase | null {
   const type: unknown = event["type"];
+  const kind: unknown = event["kind"];
   if (typeof type !== "string" || type === "") return null;
-  if (type === "tool.started") return "tool";
+  if (kind === "usage" || type === "usage.reported") return null;
+  if (type === "harness.review" || type === "harness.review.failed") return null;
+  if (type === "message.completed") {
+    if (kind === "user") return null;
+    return kind === "assistant" ? "writing" : "unknown";
+  }
+  if (type === "tool.started" || type === "tool.result") return "tool";
   if (type === "message.delta") return "writing";
   if (type === "run.queued") return "queued";
   if (type === "run.started" || type === "run.starting") return "starting";
@@ -136,7 +160,8 @@ function eventPhase(event: Record<string, unknown>): RunPhase | null {
     return "done";
   if (type === "run.failed" || type === "run.error") return "failed";
   if (type === "run.status") {
-    const status: unknown = event["status"];
+    const payload: unknown = event["payload"];
+    const status: unknown = isRecord(payload) ? payload["status"] : undefined;
     if (status === "queued") return "queued";
     if (status === "starting" || status === "running") return "starting";
     if (status === "thinking") return "thinking";
@@ -144,8 +169,11 @@ function eventPhase(event: Record<string, unknown>): RunPhase | null {
     if (status === "writing") return "writing";
     if (status === "verifying") return "verifying";
     if (status === "settling") return "settling";
-    if (status === "done" || status === "completed") return "done";
+    if (status === "done" || status === "completed" || status === "idle")
+      return "done";
     if (status === "failed" || status === "error") return "failed";
+    if (status === "paused") return "paused";
+    if (status === "cancelled") return "cancelled";
     return "unknown";
   }
   return "unknown";
@@ -163,6 +191,8 @@ export function buildTimeline(events: readonly unknown[]): TimelineState {
     if (!isRecord(event)) continue;
     const phase: RunPhase | null = eventPhase(event);
     if (phase === null) continue;
+    // Provider deltas are chunks of one writing phase, not separate phases.
+    if (phase === "writing" && steps.at(-1)?.phase === "writing") continue;
     const step: TimelineStep = { phase };
     const detail: string | undefined = firstString(event, [
       "detail",
@@ -176,7 +206,7 @@ export function buildTimeline(events: readonly unknown[]): TimelineState {
     const withCost: TimelineStep =
       tokens !== undefined ? { ...withDetail, tokens } : withDetail;
     steps.push(withCost);
-    stamps.push(firstNumber(event, ["ts", "timestamp", "time", "at"]));
+    stamps.push(eventTimestamp(event));
   }
   // A duration needs both neighbours stamped. A missing end stamp leaves ms
   // undefined: zero would read as instant, and instant is a claim.

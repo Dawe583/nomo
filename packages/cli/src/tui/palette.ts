@@ -4,7 +4,7 @@
 // searchable model workspace.ts will drive (query keystrokes in, Enter runs
 // the selected item). It owns no screen state and never touches raw mode,
 // so it stays safe to unit test and to render inside any surface.
-import { fit, pad } from "./layout.ts";
+import { fit, pad, sanitizeText } from "./layout.ts";
 import { paint } from "./theme.ts";
 import type { TerminalCapabilities } from "./types.ts";
 
@@ -276,17 +276,27 @@ export function renderPalette(
   state: PaletteState,
   items: readonly PaletteItem[],
   width: number,
-  options?: { color?: boolean },
+  options: {
+    color?: boolean;
+    colorDepth?: TerminalCapabilities["colorDepth"];
+  } = {},
 ): PaletteView {
   const filtered = filterPalette(items, state.query);
-  const colour = options?.color === true;
+  const paletteCaps = {
+    ...PALETTE_CAPS,
+    colorDepth: options.colorDepth ?? PALETTE_CAPS.colorDepth,
+  };
+  const colour = options.color === true && paletteCaps.colorDepth > 0;
   if (filtered.length === 0) {
     const line = pad(
-      fit(`No matches for "${state.query}".`, Math.max(1, width)),
+      fit(
+        `No matches for "${sanitizeText(state.query)}".`,
+        Math.max(1, width),
+      ),
       Math.max(1, width),
     );
     return {
-      lines: [colour ? paint(line, "muted", PALETTE_CAPS) : line],
+      lines: [colour ? paint(line, "muted", paletteCaps) : line],
       items: filtered,
       selected: 0,
     };
@@ -295,7 +305,6 @@ export function renderPalette(
     ((state.selected % filtered.length) + filtered.length) % filtered.length;
   // The window follows the selection page by page, so advancing past the
   // visible rows scrolls the list instead of hiding the cursor. visible 0
-  // means the window is the whole list.
   const windowSize = state.visible > 0 ? state.visible : filtered.length;
   const offset =
     windowSize > 0 ? Math.floor(selected / windowSize) * windowSize : 0;
@@ -307,22 +316,21 @@ export function renderPalette(
       fit(`${PALETTE_ICONS[group]} ${group.toUpperCase()}`, Math.max(1, width)),
       Math.max(1, width),
     );
-    lines.push(colour ? paint(header, "accent", PALETTE_CAPS, true) : header);
+    lines.push(colour ? paint(header, "accent", paletteCaps, true) : header);
     for (const item of page) {
       if (item.group !== group) continue;
       const marker = item === filtered[selected] ? ">" : " ";
       const row = pad(
         fit(
-          `${marker} ${item.icon} ${item.id}  ${item.hint}`,
+          `${marker} ${sanitizeText(item.icon)} ${sanitizeText(item.id)}  ` +
+            sanitizeText(item.hint),
           Math.max(1, width),
         ),
         Math.max(1, width),
       );
-      // The selected row is marked twice (">" plus colour) so the choice
-      // stays legible on a monochrome terminal with colour disabled.
       lines.push(
         colour && marker === ">"
-          ? paint(row, "accent", PALETTE_CAPS, true)
+          ? paint(row, "accent", paletteCaps, true)
           : row,
       );
     }

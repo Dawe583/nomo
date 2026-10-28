@@ -190,8 +190,7 @@ export function renderShortcutLegend(
   if (current !== "") lines.push(current);
   if (lines.length === 0) return [pad("", width)];
   // Dropped hints stay listed under ? keys. fit() is the backstop for a
-  // single chip wider than the whole bar; pad() keeps full width rows so a
-  // painted background behind the bar stays solid.
+  // single chip wider than the whole bar; pad() preserves stable row width.
   return lines
     .slice(0, MAX_LEGEND_LINES)
     .map((line) => pad(fit(line, width), width));

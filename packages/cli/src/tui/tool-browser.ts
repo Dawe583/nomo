@@ -279,26 +279,42 @@ function requiredSet(schema: Record<string, unknown>): Set<string> {
   return out;
 }
 
+function schemaNotice(
+  tool: ToolSummary,
+  width: number,
+  message: string,
+): string[] {
+  return renderInspector(
+    {
+      title: `Schema: ${tool.name}`,
+      subtitle: `${tool.klass} -- ${tool.source}`,
+      icon: classIcon(tool.klass),
+      sections: [{ title: "Tool", fields: [], body: [message] }],
+    },
+    { width },
+  );
+}
+
 /**
- * The input schema as a property table via the shared inspector: one aligned
- * field per property (name, type, required or optional, description), never
- * raw JSON. A schema that is not an object, is a string, is null, or is
- * missing yields one line saying the tool declares no schema rather than
- * throwing. Every value passes through the inspector, which sanitises before
- * painting, so a description carrying control characters renders visibly
- * marked, never raw. Nothing from the schema is ever evaluated.
+ * The input schema is a property table through the shared inspector: one
+ * aligned field per property (name, type, required or optional, description),
+ * never raw JSON. Missing or malformed schema data renders a named inspector
+ * stating whether the schema or its properties were declared; it never throws.
+ * Every value is sanitized and schema data is never evaluated.
  */
 export function toolSchemaLines(tool: ToolSummary, width: number): string[] {
   const cells = safeWidth(width);
   const schema: unknown = tool.inputSchema;
-  if (!isRecord(schema)) return [fit("Tool declares no input schema.", cells)];
+  if (!isRecord(schema)) {
+    return schemaNotice(tool, cells, "Tool declares no input schema.");
+  }
   const properties: unknown = schema["properties"];
   if (!isRecord(properties)) {
-    return [fit("Tool declares no input properties.", cells)];
+    return schemaNotice(tool, cells, "Tool declares no input properties.");
   }
   const names = Object.keys(properties);
   if (names.length === 0) {
-    return [fit("Tool declares no input properties.", cells)];
+    return schemaNotice(tool, cells, "Tool declares no input properties.");
   }
   // Code unit order, matching the browser row order rule: the property an
   // operator remembered stays where it was.

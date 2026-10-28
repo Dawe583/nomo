@@ -1,5 +1,5 @@
 import { fit, pad, sanitizeText, visibleLength } from "./layout.ts";
-import { motionContext, pill, type MotionContext } from "./motion.ts";
+import { motionContext, pill, separator, type MotionContext } from "./motion.ts";
 import type { Tone } from "./theme.ts";
 
 // Structured inspector for detail views (session, document, ledger entry,
@@ -63,17 +63,22 @@ function paintField(
   return paint(text, tone, bold);
 }
 
-// Cell based wrapper for one sanitized line. Local because layout.ts exposes
-// no wrapper and workspace.ts is off limits (import cycle); the code point
-// walk mirrors the workspace wrapper so wide glyphs never split mid cell.
+// Cell-based word wrapper for one sanitized line. It prefers spaces but
+// still breaks overlong tokens without splitting a wide glyph.
 function wrapCells(line: string, width: number): string[] {
   const safe = Math.max(1, width);
   const out: string[] = [];
   let part = "";
   for (const point of line) {
     if (part !== "" && visibleLength(part + point) > safe) {
-      out.push(part);
-      part = "";
+      const breakAt = part.lastIndexOf(" ");
+      if (breakAt > 0 && part.slice(0, breakAt).trim()) {
+        out.push(part.slice(0, breakAt).trimEnd());
+        part = part.slice(breakAt + 1);
+      } else {
+        out.push(part);
+        part = "";
+      }
     }
     part += point;
   }
@@ -95,8 +100,14 @@ function splitValue(
   let limit = Math.max(1, firstWidth);
   for (const point of text) {
     if (part !== "" && visibleLength(part + point) > limit) {
-      chunks.push(part);
-      part = "";
+      const breakAt = part.lastIndexOf(" ");
+      if (breakAt > 0 && part.slice(0, breakAt).trim()) {
+        chunks.push(part.slice(0, breakAt).trimEnd());
+        part = part.slice(breakAt + 1);
+      } else {
+        chunks.push(part);
+        part = "";
+      }
       limit = Math.max(1, restWidth);
     }
     part += point;
@@ -296,7 +307,7 @@ export function renderInspector(
       paintField(paint, fit(sanitizeText(spec.subtitle), width), "muted"),
     );
   }
-  rows.push("-".repeat(width));
+  rows.push(separator(width, motion));
   spec.sections.forEach((section, index) => {
     if (index > 0) rows.push("");
     // Uppercase titles are what make a long inspector skimmable.
