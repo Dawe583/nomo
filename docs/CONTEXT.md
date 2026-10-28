@@ -115,9 +115,9 @@ The private Harness packages `@nomo/agent-policy`, `@nomo/connectors`,
 `@nomo/runtime`, `@nomo/sdk`, and `@nomo/workbench` use the NOMO namespace.
 The CLI (`@void/cli`), root (`@void/workspace`), tools (`@void/scripts`),
 public verifier (`@void/verifier`), control-plane and desktop package
-identities remain legacy. `@nomo/*` is the public package target. Keep public
-target. Keep public names, environment variables, CLI aliases, encrypted state
-and signed ledgers compatible through explicit, tested, versioned migrations.
+identities remain legacy. This migration applies only to private Harness
+packages; public names, CLI aliases, environment variables, encrypted state
+and signed ledgers stay compatible through explicit, tested, versioned migrations.
 NOMO environment names win over `VOID_*` compatibility aliases when both are
 present, including an explicitly empty NOMO value. No silent rename or state
 deletion.
