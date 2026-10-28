@@ -78,8 +78,8 @@ function isValidPrimeModelId(id: string): boolean {
   return true;
 }
 
-// Prime routes models with `decisions` output through its Evaluations API.
-function isPrimeEvaluationModel(specs: unknown): boolean {
+// Prime's text adapter cannot represent evaluation or non-text-only outputs.
+function isUnsupportedPrimeChatOutput(specs: unknown): boolean {
   if (
     typeof specs !== "object" ||
     specs === null ||
@@ -90,7 +90,13 @@ function isPrimeEvaluationModel(specs: unknown): boolean {
     !Array.isArray(specs.modalities.output)
   )
     return false;
-  return specs.modalities.output.includes("decisions");
+  const output = specs.modalities.output;
+  return (
+    output.includes("decisions") ||
+    (output.length > 0 &&
+      output.every((modality) => typeof modality === "string") &&
+      !output.includes("text"))
+  );
 }
 
 function primeModelMetadata(
@@ -218,7 +224,7 @@ export class PrimeInferenceProvider implements ProviderClient {
       }
       if (reportsParameters && !supportsTools) continue;
       const specs = "specs" in entry ? entry.specs : undefined;
-      if (isPrimeEvaluationModel(specs)) continue;
+      if (isUnsupportedPrimeChatOutput(specs)) continue;
       availableModels.add(entry.id);
       const name =
         sanitizeCatalogName(

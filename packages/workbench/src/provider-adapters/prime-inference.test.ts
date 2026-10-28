@@ -160,3 +160,51 @@ test("Prime discovery excludes evaluation-only outputs from chat completions", a
   );
   assert.equal(requestCount, 1);
 });
+
+test("Prime chat discovery excludes output-only modalities the client cannot represent", async () => {
+  let requestCount = 0;
+  const fullSpecs = (output: string[]) => ({
+    context_window: 10_000,
+    max_output_tokens: 1_000,
+    supports_reasoning: false,
+    modalities: { input: ["text"], output },
+  });
+  const provider = new PrimeInferenceProvider(
+    { baseUrl: "https://api.pinference.ai/api/v1", apiKey: "fixture-key" },
+    async () => {
+      requestCount++;
+      return Response.json({
+        data: [
+          { id: "text-model", specs: fullSpecs(["text"]) },
+          { id: "mixed-model", specs: fullSpecs(["text", "image"]) },
+          { id: "image-output-model", specs: fullSpecs(["image"]) },
+          { id: "audio-output-model", specs: fullSpecs(["audio"]) },
+        ],
+      });
+    },
+  );
+
+  assert.deepEqual(
+    (await provider.models()).map((model) => model.id),
+    ["text-model", "mixed-model"],
+  );
+  await assert.rejects(
+    provider.complete(
+      "image-output-model",
+      [],
+      [],
+      new AbortController().signal,
+    ),
+    /not present in the Prime Inference model catalog/,
+  );
+  await assert.rejects(
+    provider.complete(
+      "audio-output-model",
+      [],
+      [],
+      new AbortController().signal,
+    ),
+    /not present in the Prime Inference model catalog/,
+  );
+  assert.equal(requestCount, 1);
+});

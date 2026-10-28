@@ -140,9 +140,12 @@ Live models map a complete `specs` object to context window, output-token cap
 support is exposed independently; incomplete specs do not claim context,
 image, or reasoning support.
 
-Models with the output modality `decisions` are excluded from Chat Completions
-discovery. Prime documents evaluation models with this output as requiring its
-Evaluations API instead.
+Models with output modality `decisions`, or a non-empty well-formed output list
+that does not contain `text`, are excluded from Chat Completions discovery:
+Workbench's compatible adapter represents text replies only. Mixed text and
+image output remains discoverable. Missing or malformed modality metadata is
+not used to filter a model. Prime documents evaluation models with `decisions`
+as requiring its Evaluations API instead.
 
 Official contracts: [Prime chat completions](https://docs.primeintellect.ai/api-reference/inference-chat-completions)
 and [Prime models](https://docs.primeintellect.ai/api-reference/inference-models).
