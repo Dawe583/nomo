@@ -1003,6 +1003,61 @@ describe("control plane API", () => {
       await rm(directory, { recursive: true, force: true });
     }
   });
+  test("provider API accepts Mantle host credentials without probing credentials or the endpoint", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "nomo-mantle-chain-provider-"));
+    let credentialCalls = 0;
+    let providerRequests = 0;
+    const env = {
+      NOMO_DATA_DIR: directory,
+      NVIDIA_API_KEY: "",
+      DASHSCOPE_API_KEY: "",
+    };
+    const workbench = new Workbench(env, async () => {
+      providerRequests++;
+      throw new Error("provider request must not run while reading provider state");
+    }, {}, {
+      awsCredentialProvider: async () => {
+        credentialCalls++;
+        return {
+          accessKeyId: "SYNTHETIC_ACCESS_KEY",
+          secretAccessKey: "SYNTHETIC_SECRET_KEY",
+          sessionToken: "SYNTHETIC_SESSION_TOKEN",
+        };
+      },
+    });
+    try {
+      await withServer("unused.jsonl", async origin => {
+        const descriptor = {
+          providerId: "bedrock-mantle",
+          transport: "openai-responses",
+          endpoint: "https://bedrock-mantle.us-east-1.api.aws/openai/v1",
+          model: "openai.gpt-5.4",
+          auth: { kind: "aws-credential-chain" },
+        };
+        const configured = await fetch(origin + "/api/provider", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(descriptor),
+        });
+        assert.equal(configured.status, 200);
+        assert.doesNotMatch(await configured.text(), /SYNTHETIC_(ACCESS_KEY|SECRET_KEY|SESSION_TOKEN)/);
+
+        const state = await (await fetch(origin + "/api/provider")).json() as Record<string, unknown>;
+        assert.equal(state.connected, true);
+        assert.equal(state.providerId, "bedrock-mantle");
+        assert.equal(state.transport, "openai-responses");
+        assert.equal(state.defaultModel, "openai.gpt-5.4");
+        assert.equal(state.authKind, "aws-credential-chain");
+        assert.doesNotMatch(JSON.stringify(state), /SYNTHETIC_(ACCESS_KEY|SECRET_KEY|SESSION_TOKEN)/);
+      }, { workbench });
+      assert.equal(credentialCalls, 0);
+      assert.equal(providerRequests, 0);
+    } finally {
+      workbench.close();
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
   test("provider API configures manifest-backed Cloudflare Gateway routes without probing", async () => {
     const directory = await mkdtemp(join(tmpdir(), "nomo-cloudflare-provider-"));
     const secret = "cloudflare-fixture-secret-never-return";

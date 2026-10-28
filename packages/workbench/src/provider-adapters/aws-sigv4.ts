@@ -49,6 +49,7 @@ export function signBedrockRequest(
   credentials: AwsCredentials,
   region: string,
   now: Date,
+  service = "bedrock",
 ): Record<string, string> {
   const amzDate = now.toISOString().replace(/[:-]|\.\d{3}/g, "");
   const dateStamp = amzDate.slice(0, 8);
@@ -63,9 +64,9 @@ export function signBedrockRequest(
   const signedHeaders = Object.keys(canonicalHeaders).sort().join(";");
   const headerText = Object.keys(canonicalHeaders).sort().map(name => `${name}:${canonicalHeaders[name].trim().replace(/\s+/g, " ")}\n`).join("");
   const canonicalRequest = ["POST", canonicalPath(url.pathname), "", headerText, signedHeaders, payloadHash].join("\n");
-  const scope = `${dateStamp}/${region}/bedrock/aws4_request`;
+  const scope = `${dateStamp}/${region}/${service}/aws4_request`;
   const stringToSign = ["AWS4-HMAC-SHA256", amzDate, scope, sha256(canonicalRequest)].join("\n");
-  const signature = signSigV4String(credentials.secretAccessKey, dateStamp, region, "bedrock", stringToSign);
+  const signature = signSigV4String(credentials.secretAccessKey, dateStamp, region, service, stringToSign);
   return {
     "content-type": "application/json",
     "x-amz-content-sha256": payloadHash,

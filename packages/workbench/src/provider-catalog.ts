@@ -229,9 +229,13 @@ function supportsManifestAuth(
       provider.source === "omp" &&
       methods.includes("native-auth") &&
       methods.includes("host-credential");
+    const bedrockHostCredentialTransport =
+      (provider.providerId === "amazon-bedrock" &&
+        transport === "bedrock-converse-stream") ||
+      (provider.providerId === "bedrock-mantle" &&
+        transport === "openai-responses");
     return (
-      provider.providerId === "amazon-bedrock" &&
-      transport === "bedrock-converse-stream" &&
+      bedrockHostCredentialTransport &&
       (methods.includes("aws-credential-chain") ||
         sourceDeclaresHostCredentialChain)
     );
@@ -584,7 +588,11 @@ export function assertProviderDescriptorInManifest(
     throw new Error(`Provider transport ${config.transport} is not implemented.`);
   const transport = config.transport as ImplementedProviderTransport;
   const authKind = authKindForTransport(config.providerId, transport);
-  if (config.auth.kind !== authKind)
+  const alternateMantleHostCredential =
+    config.providerId === "bedrock-mantle" &&
+    transport === "openai-responses" &&
+    config.auth.kind === "aws-credential-chain";
+  if (config.auth.kind !== authKind && !alternateMantleHostCredential)
     throw new Error(`Provider transport ${transport} requires ${authKind} authentication.`);
   if (transport === "google-vertex") {
     if (
@@ -619,7 +627,7 @@ export function assertProviderDescriptorInManifest(
   if (!matchingProviders.length)
     throw new Error("Provider, transport and model do not match the manifest.");
   const authProviders = matchingProviders.filter((provider) =>
-    supportsManifestAuth(provider, transport, authKind),
+    supportsManifestAuth(provider, transport, config.auth.kind),
   );
   if (!authProviders.length)
     throw new Error("Provider authentication is not supported by this setup.");

@@ -13,6 +13,7 @@ import { OpenAIResponsesAdapter } from "./openai-responses.ts";
 import { AzureOpenAIResponsesAdapter } from "./openai-responses.ts";
 import { GoogleGenerativeAIAdapter } from "./google-generative-ai.ts";
 import { BedrockConverseStreamAdapter } from "./bedrock-converse-stream.ts";
+import { BedrockMantleResponsesAdapter } from "./bedrock-mantle-responses.ts";
 import { MistralConversationsAdapter } from "./mistral-conversations.ts";
 import { OllamaChatAdapter } from "./ollama-chat.ts";
 import { createGatewayProvider, isGatewayProvider } from "./gateways.ts";
@@ -85,6 +86,9 @@ export function createProviderClient(
       settings,
       dependencies.awsCredentialProvider,
     );
+  }
+  if (adapterConfig && config.providerId === "bedrock-mantle" && config.transport === "openai-responses" && config.auth.kind === "aws-credential-chain") {
+    return new BedrockMantleResponsesAdapter(config, request, settings, dependencies.awsCredentialProvider);
   }
   if (adapterConfig && config.transport === "mistral-conversations") {
     if (config.auth.kind !== "api-key") throw new Error("Mistral Conversations requires an API-key authentication profile.");

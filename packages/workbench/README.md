@@ -167,6 +167,37 @@ contracts are documented in the official
 [streaming guide](https://developers.openai.com/api/docs/guides/streaming-responses),
 and [function-call streaming guide](https://developers.openai.com/api/docs/guides/function-calling#streaming).
 
+## Amazon Bedrock Mantle Responses
+
+The typed `providerId: "bedrock-mantle"` and `transport: "openai-responses"`
+descriptor accepts AWS credential-chain auth as well as the existing Bedrock
+API-key profile. Example for the typed `/api/provider` configuration:
+
+```json
+{
+  "providerId": "bedrock-mantle",
+  "transport": "openai-responses",
+  "baseUrl": "https://bedrock-mantle.us-east-1.api.aws/openai/v1",
+  "auth": { "kind": "aws-credential-chain" },
+  "model": "openai.gpt-5.4"
+}
+```
+
+The host-credential path resolves the AWS SDK's default credential chain only
+for an explicit model completion, then signs `POST /openai/v1/responses` with
+the SigV4 service name `bedrock-mantle`. Model listing stays local to the
+configured manifest model; it neither probes `GET /models` nor resolves AWS
+credentials. API-key auth remains a separate Bearer-token path. No Settings UI
+selector or `AWS_BEARER_TOKEN_BEDROCK` token-provider flow is included.
+
+AWS documents both SigV4 and Bedrock API-key auth on
+[Bedrock Mantle endpoints](https://docs.aws.amazon.com/bedrock/latest/userguide/endpoints.html),
+the Mantle signing service name in its
+[CountTokens endpoint guidance](https://docs.aws.amazon.com/bedrock/latest/userguide/count-tokens.html#count-tokens-mantle),
+and AWS credentials for HTTP Responses requests in the
+[Responses API prerequisites](https://docs.aws.amazon.com/bedrock/latest/userguide/inference-responses-api.html#bedrock-mantle-prereq).
+
+
 ## OpenAI Codex Responses: blocked
 
 The pinned OMP 18.6.2 and Prime 0.10.1 implementations identify this API as
