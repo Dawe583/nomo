@@ -173,7 +173,17 @@ export class OllamaChatAdapter implements ProviderClient {
     };
     try {
       while (true) {
-        const { value, done: ended } = await reader.read();
+        let value: Uint8Array | undefined;
+        let ended: boolean;
+        try {
+          const result = await reader.read();
+          value = result.value;
+          ended = result.done;
+        } catch (error) {
+          if (error instanceof DOMException && error.name === "TimeoutError")
+            throw new Error("Provider request timed out.");
+          throw error;
+        }
         buffer += decoder.decode(value, { stream: !ended });
         if (buffer.length > MAX_STREAM_CHARS) throw new Error("Provider stream exceeded the supported size.");
         let newline: number;
