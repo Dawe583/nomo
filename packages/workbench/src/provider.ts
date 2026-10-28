@@ -515,8 +515,17 @@ export class CompatibleProvider implements ProviderClient {
         choices?: Array<{ message?: ModelMessage; finish_reason?: string }>;
         usage?: ModelReply["usage"];
       };
-    } catch {
-      if (signal?.aborted) throw new Error("Session cancelled.");
+    } catch (error) {
+      if (signal?.aborted) {
+        if (
+          signal.reason instanceof DOMException &&
+          signal.reason.name === "TimeoutError"
+        )
+          throw new Error("Provider request timed out.");
+        throw new Error("Session cancelled.");
+      }
+      if (error instanceof DOMException && error.name === "TimeoutError")
+        throw new Error("Provider request timed out.");
       throw new Error("Provider returned invalid JSON.");
     }
   }
