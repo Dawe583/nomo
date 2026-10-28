@@ -12,7 +12,7 @@ async function fixture(t:TestContext) {
   if(String(url).endsWith("/models"))return Response.json({data:[{id:"fixture"}]});
   calls++;return Response.json({choices:[{message:{role:"assistant",content:"Done"}}]});
  };
- const f=await isolatedWorkbench(t,fetcher,{},{prefix:"void-undo-boundary-"});
+ const f=await isolatedWorkbench(t,fetcher,{},{prefix:"nomo-undo-boundary-"});
  const session=await f.app.start("Review","fixture");await f.app.settled();
  return {get app(){return f.app;},directory:f.root,session,calls:()=>calls,restart(options?:{keepOpen?:boolean}){return f.restart(options);}};
 }

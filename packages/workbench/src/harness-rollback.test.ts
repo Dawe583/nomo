@@ -23,7 +23,7 @@ const fetcher = async (url: unknown) =>
 
 async function fixture(t: TestContext) {
   const f = await isolatedWorkbench(t, fetcher, {}, {
-    prefix: "void-harness-rollback-",
+    prefix: "nomo-harness-rollback-",
   });
   const { app } = f;
   const session = await app.start("Review the workspace", "fixture");

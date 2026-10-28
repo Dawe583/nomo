@@ -117,7 +117,7 @@ export async function isolatedWorkbench(
     configure = true,
     baseUrl = "https://fixture.test/v1",
     apiKey = "fixture",
-    prefix = "void-test-",
+    prefix = "nomo-test-",
     beforeShutdown,
     agentRunners = [],
   } = options;

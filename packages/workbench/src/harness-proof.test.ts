@@ -144,7 +144,7 @@ async function fixture(t: TestContext, policy: string): Promise<Fixture> {
     t,
     calling(gate) as typeof fetch,
     {},
-    { prefix: "void-harness-proof-" },
+    { prefix: "nomo-harness-proof-" },
   );
   await app.addConnector({
     url: server.url,

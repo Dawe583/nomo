@@ -176,7 +176,7 @@ test("a retrieved entry cannot widen the policy decision", async (t) => {
     return callingProvider(url, init);
   };
   const { app } = await isolatedWorkbench(t, capturing as typeof fetch, {}, {
-    prefix: "void-harness-override-policy-",
+    prefix: "nomo-harness-override-policy-",
   });
   await app.addConnector({
     url: server.url,
@@ -229,7 +229,7 @@ test("a retrieved entry does not change the mode or the catalogue", async (t) =>
     return answeringProvider(url);
   };
   const { app } = await isolatedWorkbench(t, capturing as typeof fetch, {}, {
-    prefix: "void-harness-override-surface-",
+    prefix: "nomo-harness-override-surface-",
   });
   await app.addConnector({
     url: server.url,
@@ -271,7 +271,7 @@ test("a retrieved entry does not change the mode or the catalogue", async (t) =>
 
 test("an entry approved under normal cannot lift a read-only mode on restart", async (t) => {
   const server = await mcpServer();
-  const root = await mkdtemp(join(tmpdir(), "void-harness-override-restart-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-harness-override-restart-"));
   t.after(async () => {
     await server.close();
     await rm(root, { recursive: true, force: true });

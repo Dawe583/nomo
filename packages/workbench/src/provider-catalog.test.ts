@@ -32,7 +32,7 @@ test("a provider that answers 404 for its catalog accepts the model the operator
   const fetcher: typeof fetch = async () => new Response("no catalog", { status: 404 });
   const { app } = await isolatedWorkbench(t, fetcher, {}, {
     configure: false,
-    prefix: "void-catalog-404-",
+    prefix: "nomo-catalog-404-",
   });
 
   const models = await app.configure({
@@ -51,7 +51,7 @@ test("a 404 catalog with no named model keeps the previous configuration", async
   const fetcher: typeof fetch = async () => new Response("no catalog", { status: 404 });
   const { app } = await isolatedWorkbench(t, fetcher, {}, {
     configure: false,
-    prefix: "void-catalog-404-unnamed-",
+    prefix: "nomo-catalog-404-unnamed-",
   });
 
   await assert.rejects(
@@ -65,7 +65,7 @@ test("a refused credential is rethrown, never read as a missing catalog", async 
   const fetcher: typeof fetch = async () => new Response("denied", { status: 401 });
   const { app } = await isolatedWorkbench(t, fetcher, {}, {
     configure: false,
-    prefix: "void-catalog-401-",
+    prefix: "nomo-catalog-401-",
   });
 
   await assert.rejects(
@@ -83,7 +83,7 @@ test("an empty catalog from a real endpoint uses the named model", async (t) => 
   const fetcher: typeof fetch = async () => Response.json({ data: [] });
   const { app } = await isolatedWorkbench(t, fetcher, {}, {
     configure: false,
-    prefix: "void-catalog-empty-",
+    prefix: "nomo-catalog-empty-",
   });
 
   const models = await app.configure({
@@ -99,7 +99,7 @@ test("the provider's own catalog is the truth when it lists models", async (t) =
     Response.json({ data: [{ id: "listed-model", name: "Listed Model" }] });
   const { app } = await isolatedWorkbench(t, fetcher, {}, {
     configure: false,
-    prefix: "void-catalog-listed-",
+    prefix: "nomo-catalog-listed-",
   });
 
   const models = await app.configure({
@@ -123,7 +123,7 @@ test("a DashScope key configures the Qwen preset through its catalog", async (t)
     t,
     fetcher,
     { DASHSCOPE_API_KEY: "dashscope-fixture-key" },
-    { configure: false, prefix: "void-dashscope-catalog-" },
+    { configure: false, prefix: "nomo-dashscope-catalog-" },
   );
 
   const state = await app.providerState();
@@ -142,7 +142,7 @@ test("a DashScope catalog that answers 404 still configures the named Qwen model
     t,
     fetcher,
     { DASHSCOPE_API_KEY: "dashscope-fixture-key" },
-    { configure: false, prefix: "void-dashscope-404-" },
+    { configure: false, prefix: "nomo-dashscope-404-" },
   );
 
   const state = await app.providerState();
@@ -274,7 +274,7 @@ test("provider state exposes explicit unavailable APIs without probing a provide
   const { app } = await isolatedWorkbench(t, async () => {
     requests++;
     throw new Error("blocked provider APIs must not make requests");
-  }, {}, { configure: false, prefix: "void-provider-api-blockers-" });
+  }, {}, { configure: false, prefix: "nomo-provider-api-blockers-" });
   const state = await app.providerState();
   assert.ok("unavailableProviders" in state);
   const unavailable = Reflect.get(state, "unavailableProviders") as Array<{

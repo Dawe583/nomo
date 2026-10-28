@@ -23,7 +23,7 @@ test("a rejected DashScope key reports the failure instead of setup-required", a
     t,
     fetcher,
     { DASHSCOPE_API_KEY: "dashscope-fixture-key" },
-    { configure: false, prefix: "void-env-dashscope-401-" },
+    { configure: false, prefix: "nomo-env-dashscope-401-" },
   );
 
   const state = await app.providerState();
@@ -58,7 +58,7 @@ test("a rejected NVIDIA key does not veto the DashScope key behind it", async (t
       NVIDIA_API_KEY: "nvidia-fixture-key",
       DASHSCOPE_API_KEY: "dashscope-fixture-key",
     },
-    { configure: false, prefix: "void-env-second-source-" },
+    { configure: false, prefix: "nomo-env-second-source-" },
   );
 
   const state = await app.providerState();
@@ -84,7 +84,7 @@ test("each refused environment source is probed once per attempt", async (t) => 
       NVIDIA_API_KEY: "nvidia-fixture-key",
       DASHSCOPE_API_KEY: "dashscope-fixture-key",
     },
-    { configure: false, prefix: "void-env-both-refused-" },
+    { configure: false, prefix: "nomo-env-both-refused-" },
   );
 
   const first = await app.providerState();

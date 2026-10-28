@@ -47,7 +47,7 @@ async function fixture(t: TestContext) {
     return answer();
   };
   const { app } = await isolatedWorkbench(t, capturing as typeof fetch, {}, {
-    prefix: "void-harness-retrieval-",
+    prefix: "nomo-harness-retrieval-",
   });
   const session = await app.start("Review the migration", "fixture");
   await app.settled();
@@ -204,7 +204,7 @@ test("the harness reviewer's own tokens are recorded, not just the turn's", asyn
     });
   };
   const { app } = await isolatedWorkbench(t, billed as typeof fetch, {}, {
-    prefix: "void-harness-usage-",
+    prefix: "nomo-harness-usage-",
   });
   const session = await app.start("Review the migration", "fixture");
   await app.settled();
@@ -259,7 +259,7 @@ test("an operator can switch refinement off, and the gate obeys", async (t) => {
     });
   };
   const { app } = await isolatedWorkbench(t, billed as typeof fetch, {}, {
-    prefix: "void-harness-off-",
+    prefix: "nomo-harness-off-",
   });
   const session = await app.start("Review the migration", "fixture");
   await app.settled();

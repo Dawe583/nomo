@@ -4557,7 +4557,7 @@ export class Workbench {
       );
     const workspace = session.view.workspace;
     await this.ledger(workspace);
-    const dir = await mkdtemp(join(tmpdir(), "void-attest-"));
+    const dir = await mkdtemp(join(tmpdir(), "nomo-attest-"));
     try {
       await writeFile(
         join(dir, `${workspace}.jsonl`),

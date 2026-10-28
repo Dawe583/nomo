@@ -214,7 +214,7 @@ test("spawn writes a void_subagent_spawn entry to the parent chain", async (t) =
 });
 
 test("spawn queues when capacity is held and fails closed at queue cap", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-spawn-cap-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-spawn-cap-"));
   const fetcher: typeof fetch = async (url: unknown) => {
     if (String(url).endsWith("/models")) return models();
     await new Promise((resolve) => setTimeout(resolve, 300));
@@ -273,7 +273,7 @@ test("queued child cancellation clears its prompt and excludes it from dispatch"
     return answer();
   };
   const { app, root } = await isolatedWorkbench(t, fetcher, {}, {
-    prefix: "void-spawn-cancel-",
+    prefix: "nomo-spawn-cancel-",
     beforeShutdown: release,
   });
   const parent = await app.start("Parent request", "fixture");
@@ -380,7 +380,7 @@ test("running child cancellation keeps capacity until settle and then derives st
     return answer();
   };
   const { app } = await isolatedWorkbench(t, fetcher, {}, {
-    prefix: "void-spawn-running-cancel-",
+    prefix: "nomo-spawn-running-cancel-",
     beforeShutdown: release,
   });
   await app.patchHarnessSettings({ maxConcurrentRuns: 1 });
@@ -406,7 +406,7 @@ test("restored paused spawned child can be cancelled only with its retained prom
     return answer();
   };
   const f = await isolatedWorkbench(t, fetcher, {}, {
-    prefix: "void-spawn-restored-cancel-",
+    prefix: "nomo-spawn-restored-cancel-",
     beforeShutdown: release,
   });
   const parent = await f.app.start("Parent request", "fixture");
@@ -441,7 +441,7 @@ test("unknown outcome remains unknown when a spawned child is cancelled", async 
     return answer();
   };
   const { app } = await isolatedWorkbench(t, fetcher, {}, {
-    prefix: "void-spawn-unknown-",
+    prefix: "nomo-spawn-unknown-",
     beforeShutdown: release,
   });
   await app.patchHarnessSettings({ maxRunTimeoutMs: 1000 });

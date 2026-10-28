@@ -124,7 +124,7 @@ function recording() {
 
 async function seeded(t: TestContext, fetcher: typeof fetch) {
   const { app } = await isolatedWorkbench(t, fetcher, {}, {
-    prefix: "void-harness-conversation-",
+    prefix: "nomo-harness-conversation-",
   });
   const session = await app.start("Review the workspace", "fixture");
   await app.settled();

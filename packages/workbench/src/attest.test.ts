@@ -80,7 +80,7 @@ test("a provider-driven tool call lands in the attested chain", async (t) => {
   const { app } = await isolatedWorkbench(t, dispatchFetcher, {}, {
     baseUrl: "https://api.tokenrouter.com/v1",
     apiKey: "fixture",
-    prefix: "void-attest-dispatch-",
+    prefix: "nomo-attest-dispatch-",
   });
   const session = await app.start("Write", "fixture", undefined, undefined, undefined);
   await app.settled();
@@ -139,7 +139,7 @@ const internalsOf = (app: Workbench) =>
  * pinned key must be present when the second one is built, not assigned later.
  */
 test("attest refuses to mint a key for a workbench that cannot sign", async (t) => {
-  const directory = await mkdtemp(join(tmpdir(), "void-attest-read-"));
+  const directory = await mkdtemp(join(tmpdir(), "nomo-attest-read-"));
 
   // 1. Sign some evidence with the default dev key, so a key directory exists.
   const signer = new Workbench({ NOMO_DATA_DIR: directory }, fetcher);

@@ -114,7 +114,7 @@ test("queued work keeps one run identity and retained prompt without restart dis
     });
   };
   const f = await isolatedWorkbench(t, fetcher, {}, {
-    prefix: "void-queued-history-",
+    prefix: "nomo-queued-history-",
     beforeShutdown: release,
   });
   const root = f.root;

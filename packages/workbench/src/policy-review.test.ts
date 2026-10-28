@@ -88,7 +88,7 @@ test("a tool the provider invented never reaches the connector", async (t) => {
   const server = await mcpServer([DELETE_TOOL]);
   t.after(() => server.close());
   const { app } = await isolatedWorkbench(t, callingProvider(() => "not_in_catalog"), {}, {
-    prefix: "void-invented-",
+    prefix: "nomo-invented-",
   });
   await confirmedConnector(app, server.url, "Fixture", allowAll);
 
@@ -110,7 +110,7 @@ test("a deny rule stops the call and the connector never sees it", async (t) => 
   const server = await mcpServer([DELETE_TOOL]);
   t.after(() => server.close());
   const { app } = await isolatedWorkbench(t, callingProvider(deleteCall), {}, {
-    prefix: "void-denied-",
+    prefix: "nomo-denied-",
   });
   const id = await confirmedConnector(app, server.url, "Refused", denyDeletes);
   assert.equal(app.policyPreview(id).tools[0]?.classification, "always");
@@ -132,7 +132,7 @@ test("the same classified tool runs when the operator policy allows it", async (
   const server = await mcpServer([DELETE_TOOL]);
   t.after(() => server.close());
   const { app } = await isolatedWorkbench(t, callingProvider(deleteCall), {}, {
-    prefix: "void-allowed-",
+    prefix: "nomo-allowed-",
   });
   const id = await confirmedConnector(app, server.url, "Allowed", allowAll);
   assert.equal(app.policyPreview(id).tools[0]?.decision, "allow");
@@ -150,7 +150,7 @@ test("a running conversation keeps the policy it started with", async (t) => {
   const server = await mcpServer([DELETE_TOOL]);
   t.after(() => server.close());
   const { app } = await isolatedWorkbench(t, callingProvider(deleteCall), {}, {
-    prefix: "void-frozen-policy-",
+    prefix: "nomo-frozen-policy-",
   });
   const id = await confirmedConnector(app, server.url, "Fixture", allowAll);
   const session = await app.start("Delete it", "fixture");

@@ -18,7 +18,7 @@ async function fixture(t: TestContext) {
   // own `configure`, and the fixture's placeholder base URL would be a
   // different provider than the one the assertions describe.
   const f = await isolatedWorkbench(t, fetcher, {}, {
-    prefix: "void-doc-runtime-",
+    prefix: "nomo-doc-runtime-",
     configure: false,
   });
   await f.app.configure({

@@ -20,7 +20,7 @@ test("a caller naming NOMO_DATA_DIR in extraEnv cannot redirect the store", asyn
   // written to and passes anyway. The stray path is deliberately one the
   // process can create, so the fixture gets far enough to build a workbench
   // there, that is the state this test exists to rule out.
-  const stray = join(tmpdir(), "void-test-fixture-stray-store");
+  const stray = join(tmpdir(), "nomo-test-fixture-stray-store");
   await rm(stray, { recursive: true, force: true });
   t.after(async () => {
     await rm(stray, { recursive: true, force: true });
@@ -30,7 +30,7 @@ test("a caller naming NOMO_DATA_DIR in extraEnv cannot redirect the store", asyn
     t,
     fetcher,
     { NOMO_DATA_DIR: stray },
-    { prefix: "void-test-fixture-data-dir-" },
+    { prefix: "nomo-test-fixture-data-dir-" },
   );
 
   assert.ok(f.root.startsWith(tmpdir()), "the fixture did not build its own root");
@@ -46,7 +46,7 @@ test("restart keeps the permission mode the fixture was built with", async (t) =
     t,
     fetcher,
     { NOMO_PERMISSION_MODE: "read-only" },
-    { prefix: "void-test-fixture-restart-" },
+    { prefix: "nomo-test-fixture-restart-" },
   );
   assert.equal(f.app.permissionModeState(), "read-only");
 
@@ -56,13 +56,13 @@ test("restart keeps the permission mode the fixture was built with", async (t) =
 });
 
 test("assertIsolated fails when the store was not built under the root", async (t) => {
-  const missing = join(tmpdir(), "void-test-fixture-absent-root");
+  const missing = join(tmpdir(), "nomo-test-fixture-absent-root");
   await assert.throws(() => assertIsolated(missing), /temporary data directory/);
 
   // The second branch: the directory is there, so the path was honoured, but
   // no key landed in it. A workbench that fell back to the operator's store
   // leaves exactly this behind, a root nothing was written to.
-  const root = await mkdtemp(join(tmpdir(), "void-test-fixture-no-key-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-test-fixture-no-key-"));
   t.after(async () => {
     await rm(root, { recursive: true, force: true });
   });

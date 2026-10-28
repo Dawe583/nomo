@@ -48,7 +48,7 @@ function answering(completion: (n: number) => Response) {
 
 async function seeded(t: TestContext, fetcher: typeof fetch) {
   const { app } = await isolatedWorkbench(t, fetcher, {}, {
-    prefix: "void-harness-dispose-",
+    prefix: "nomo-harness-dispose-",
   });
   const session = await app.start("Review the workspace at close", "fixture");
   await app.settled();

@@ -60,7 +60,7 @@ async function governedSession(t: test.TestContext) {
       usage: { total_tokens: 7 },
     });
   };
-  const f = await isolatedWorkbench(t, fetcher, {}, { prefix: "void-reversal-record-" });
+  const f = await isolatedWorkbench(t, fetcher, {}, { prefix: "nomo-reversal-record-" });
   const app = f.app;
   app.upsertAgent({
     id: PROFILE,

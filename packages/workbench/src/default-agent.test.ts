@@ -29,7 +29,7 @@ test('default agent writes a captured document, restarts, verifies evidence and 
     t,
     fetcher,
     {},
-    { prefix: 'void-default-agent-', configure: false },
+    { prefix: 'nomo-default-agent-', configure: false },
   );
   // The fixture does not configure: the fetcher asserts on the Authorization
   // header of every request, so the key has to be this test's own before the

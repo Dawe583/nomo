@@ -64,7 +64,7 @@ function answering(options: { readonly refuseModel?: string } = {}) {
 
 async function fixture(t: TestContext, fetcher: typeof fetch) {
   const f = await isolatedWorkbench(t, fetcher, {}, {
-    prefix: "void-harness-review-model-",
+    prefix: "nomo-harness-review-model-",
   });
   const { app } = f;
   const session = await app.start("Review the workspace", "fixture");

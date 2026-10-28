@@ -93,7 +93,7 @@ test("the summary the provider writes is what the compaction keeps", async (t: T
     "the operator asked for a migration and it was applied",
   );
   const { app } = await isolatedWorkbench(t, fetcher, {}, {
-    prefix: "void-compaction-summary-",
+    prefix: "nomo-compaction-summary-",
   });
   const session = await app.start("Do the migration", "fixture");
   await app.settled();
@@ -126,7 +126,7 @@ test("a summary that fails leaves the compaction as it was", async (t: TestConte
       return new Response("no", { status: 500 });
     }) as typeof fetch,
     {},
-    { prefix: "void-compaction-fail-", configure: false },
+    { prefix: "nomo-compaction-fail-", configure: false },
   );
   await app.configure({ baseUrl: "https://fixture.test/v1", apiKey: "fixture" });
   const session = await app.start("Do the migration", "fixture");

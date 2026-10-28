@@ -28,7 +28,7 @@ test('slash search filters metadata, does not capture prose, and selection only 
 test('session tool catalogue uses its snapshot and rejects unknown sessions', async t => {
   // `configure: false` keeps the deliberate unconfigured window this test
   // asserts against; the operator configure below is what makes it scoped.
-  const { app } = await isolatedWorkbench(t, async url => String(url).endsWith('/models') ? Response.json({ data: [{ id: 'fixture' }] }) : Response.json({ choices: [{ message: { role: 'assistant', content: 'Ready' } }] }), {}, { configure: false, prefix: 'void-tools-' });
+  const { app } = await isolatedWorkbench(t, async url => String(url).endsWith('/models') ? Response.json({ data: [{ id: 'fixture' }] }) : Response.json({ choices: [{ message: { role: 'assistant', content: 'Ready' }, finish_reason: 'stop' }] }), {}, { configure: false, prefix: 'nomo-tools-' });
   assert.equal(app.availableTools().scope, 'configured');
   assert.throws(() => app.availableTools('missing'), /Session not found/);
   await app.configure({ baseUrl: 'https://fixture.test/v1', apiKey: 'private-key' });

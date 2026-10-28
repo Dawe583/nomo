@@ -24,7 +24,7 @@ async function workspace(t: test.TestContext, models: readonly string[] = []) {
             ],
           }),
     {},
-    { configure: false, prefix: "void-no-default-provider-" },
+    { configure: false, prefix: "nomo-no-default-provider-" },
   );
   return app;
 }

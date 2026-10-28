@@ -25,7 +25,7 @@ const platformTestTimeoutMs = (
   process.platform === "win32" ? windowsMilliseconds : milliseconds;
 
 test("local proxy bridge initializes, lists tools and forwards tool calls", { timeout: 5_000 }, async (t) => {
-  const directory = await mkdtemp(join(tmpdir(), "void-proxy-bridge-"));
+  const directory = await mkdtemp(join(tmpdir(), "nomo-proxy-bridge-"));
   const policyPath = join(directory, "policy.yml");
   await writeFile(policyPath, policyText("allow"));
   const ledgerDir = join(directory, "ledger");
@@ -195,7 +195,7 @@ describe("runProxy", () => {
   });
 
   test("a low risk call is not blocked by a separate pending hold", { timeout: 5_000 }, async (t) => {
-    const directory = await mkdtemp(join(tmpdir(), "void-proxy-independent-dispatch-"));
+    const directory = await mkdtemp(join(tmpdir(), "nomo-proxy-independent-dispatch-"));
     t.after(() => rm(directory, { recursive: true, force: true }));
     const policyPath = join(directory, "policy.yml");
     const factsPath = join(directory, "facts.yml");
@@ -348,7 +348,7 @@ describe("runProxy", () => {
   });
 
   test("cancellation is read while a tool call waits for approval", { timeout: 5_000 }, async (t) => {
-    const directory = await mkdtemp(join(tmpdir(), "void-proxy-cancel-"));
+    const directory = await mkdtemp(join(tmpdir(), "nomo-proxy-cancel-"));
     t.after(() => rm(directory, { recursive: true, force: true }));
     const policyPath = join(directory, "policy.yml");
     await writeFile(policyPath, policyText("hold"));

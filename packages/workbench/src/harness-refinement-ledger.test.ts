@@ -19,7 +19,7 @@ async function fixture(
   // ledger or permission override is added rather than swapped in for
   // `NOMO_DATA_DIR`.
   const f = await isolatedWorkbench(t, fetcher, extraEnv, {
-    prefix: "void-refinement-ledger-",
+    prefix: "nomo-refinement-ledger-",
   });
   const { app } = f;
   const session = await app.start("Review the workspace", "fixture");
@@ -521,7 +521,7 @@ test("subagent profile approval refuses tools outside the parent scope", async (
 
 test("subagent profile approval refuses a wider parent turn budget", async (t) => {
   const { app } = await isolatedWorkbench(t, fetcher, {}, {
-    prefix: "void-profile-budget-",
+    prefix: "nomo-profile-budget-",
   });
   app.upsertAgent({
     id: "narrow-parent",
