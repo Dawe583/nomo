@@ -3,9 +3,9 @@
  *
  * The risk this file exists to block: `Workbench` reads its data directory from
  * `env.NOMO_DATA_DIR` and silently falls back to `~/.void/workbench` when that
- * name is absent. A test that misspells it, easy to do while the VOID→NOMO
- * rename is in flight, writes the operator's real keys, sessions and
- * preferences into their home directory, and every assertion still passes,
+ * name is absent. A test that misspells it during the package migration
+ * writes the operator's real keys, sessions and preferences into their
+ * home directory, and every assertion still passes,
  * because the assertions describe behaviour that the real store also exhibits.
  * The failure is silent and lands outside the temporary directory.
  *
