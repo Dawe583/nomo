@@ -224,6 +224,29 @@ test("Bedrock reports its internal request timeout distinctly", async () => {
     /Provider request timed out\./,
   );
 });
+test("Bedrock stream read timeouts are reported distinctly", async () => {
+  const response = new Response(
+    new ReadableStream({
+      start(controller) {
+        controller.error(
+          new DOMException("The operation timed out.", "TimeoutError"),
+        );
+      },
+    }),
+    { headers: { "content-type": "application/vnd.amazon.eventstream" } },
+  );
+  const client = new BedrockConverseStreamAdapter(config, async () => response);
+
+  await assert.rejects(
+    client.complete(
+      config.model!,
+      [{ role: "user", content: "x" }],
+      [],
+      new AbortController().signal,
+    ),
+    /Provider request timed out\./,
+  );
+});
 test("fails closed on unsupported content block delta variants", async () => {
   const client = new BedrockConverseStreamAdapter(config, async () => stream(
     event("contentBlockDelta", { contentBlockDelta: { contentBlockIndex: 0, delta: { reasoningContent: { text: "hidden reasoning" } } } }),

@@ -268,8 +268,18 @@ export class BedrockConverseStreamAdapter implements ProviderClient {
     const tools = new Map<number, ToolBlock>();
     try {
       while (true) {
-        signal.throwIfAborted();
-        const { value, done } = await reader.read();
+        let value: Uint8Array | undefined;
+        let done: boolean;
+        try {
+          signal.throwIfAborted();
+          const result = await reader.read();
+          value = result.value;
+          done = result.done;
+        } catch (error) {
+          if (error instanceof DOMException && error.name === "TimeoutError")
+            throw new Error("Provider request timed out.");
+          throw error;
+        }
         if (value) pending = Buffer.concat([pending, value]);
         while (pending.length >= 12) {
           const totalLength = pending.readUInt32BE(0);
