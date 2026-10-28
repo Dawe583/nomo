@@ -195,7 +195,19 @@ export class GoogleGenerativeAIAdapter implements ProviderClient {
       throw new ProviderRequestError(response.status);
     } catch (error) {
       if (error instanceof ProviderRequestError) throw error;
-      throw new Error(signal.aborted ? "Session cancelled." : "Provider connection failed. Check its endpoint and availability.");
+      if (signal.aborted) {
+        if (
+          signal.reason instanceof DOMException &&
+          signal.reason.name === "TimeoutError"
+        )
+          throw new Error("Provider request timed out.");
+        throw new Error("Session cancelled.");
+      }
+      if (error instanceof DOMException && error.name === "TimeoutError")
+        throw new Error("Provider request timed out.");
+      throw new Error(
+        "Provider connection failed. Check its endpoint and availability.",
+      );
     }
   }
 
