@@ -14,10 +14,11 @@ const PRIME_ENDPOINT = "https://api.pinference.ai/api/v1";
 
 function validateStaticContract(): void {
   const provider = PROVIDER_MODEL_MANIFEST.providers.find(
-    entry => entry.source === "prime" && entry.providerId === "prime-inference",
+    (entry) =>
+      entry.source === "prime" && entry.providerId === "prime-inference",
   );
   const api = PROVIDER_MODEL_MANIFEST.apiTransports.find(
-    entry => entry.source === "prime" && entry.apiId === "openai-completions",
+    (entry) => entry.source === "prime" && entry.apiId === "openai-completions",
   );
   if (
     !provider ||
@@ -26,7 +27,9 @@ function validateStaticContract(): void {
     provider.status !== "in-scope" ||
     provider.models.length === 0 ||
     provider.models.some(
-      model => model.transport !== "openai-completions" || model.endpoint !== PRIME_ENDPOINT,
+      (model) =>
+        model.transport !== "openai-completions" ||
+        model.endpoint !== PRIME_ENDPOINT,
     )
   )
     throw new Error("Prime Inference static catalog contract is invalid.");
@@ -49,9 +52,88 @@ function validateEndpoint(config: ProviderConfig): void {
   )
     throw new Error("Prime Inference requires the official HTTPS endpoint.");
   if (!config.apiKey.trim())
-    throw new Error("Prime Inference requires an explicitly configured API key.");
+    throw new Error(
+      "Prime Inference requires an explicitly configured API key.",
+    );
 }
 
+function sanitizeCatalogName(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined;
+  const name = value.replace(/[\u0000-\u001f\u007f-\u009f]/g, "").trim();
+  return name || undefined;
+}
+
+function isValidPrimeModelId(id: string): boolean {
+  let characterCount = 0;
+  for (let offset = 0; offset < id.length;) {
+    const codePoint = id.codePointAt(offset)!;
+    if (
+      codePoint <= 0x1f ||
+      (codePoint >= 0x7f && codePoint <= 0x9f) ||
+      ++characterCount > 1_024
+    )
+      return false;
+    offset += codePoint > 0xffff ? 2 : 1;
+  }
+  return true;
+}
+
+// Prime routes models with `decisions` output through its Evaluations API.
+function isPrimeEvaluationModel(specs: unknown): boolean {
+  if (
+    typeof specs !== "object" ||
+    specs === null ||
+    !("modalities" in specs) ||
+    typeof specs.modalities !== "object" ||
+    specs.modalities === null ||
+    !("output" in specs.modalities) ||
+    !Array.isArray(specs.modalities.output)
+  )
+    return false;
+  return specs.modalities.output.includes("decisions");
+}
+
+function primeModelMetadata(
+  specs: unknown,
+  supportsTools: boolean,
+): Pick<Model, "contextWindow" | "maxTokens" | "capabilities"> | undefined {
+  const fallback = supportsTools ? { capabilities: ["tools"] } : undefined;
+  if (typeof specs !== "object" || specs === null) return fallback;
+  if (
+    !("context_window" in specs) ||
+    typeof specs.context_window !== "number" ||
+    !Number.isSafeInteger(specs.context_window) ||
+    specs.context_window <= 0 ||
+    !("max_output_tokens" in specs) ||
+    typeof specs.max_output_tokens !== "number" ||
+    !Number.isSafeInteger(specs.max_output_tokens) ||
+    specs.max_output_tokens <= 0 ||
+    !("supports_reasoning" in specs) ||
+    typeof specs.supports_reasoning !== "boolean" ||
+    !("modalities" in specs) ||
+    typeof specs.modalities !== "object" ||
+    specs.modalities === null ||
+    !("input" in specs.modalities) ||
+    !Array.isArray(specs.modalities.input) ||
+    specs.modalities.input.length === 0 ||
+    !specs.modalities.input.every((modality) => typeof modality === "string") ||
+    !("output" in specs.modalities) ||
+    !Array.isArray(specs.modalities.output) ||
+    specs.modalities.output.length === 0 ||
+    !specs.modalities.output.every((modality) => typeof modality === "string")
+  )
+    return fallback;
+
+  const capabilities = ["text"];
+  if (specs.modalities.input.includes("image")) capabilities.push("image");
+  if (specs.supports_reasoning) capabilities.push("reasoning");
+  if (supportsTools) capabilities.push("tools");
+  return {
+    contextWindow: specs.context_window,
+    maxTokens: Math.min(specs.max_output_tokens, specs.context_window),
+    capabilities,
+  };
+}
 /** Prime Inference uses the shared OpenAI Chat Completions wire; this wrapper
  * adds only Prime's pinned endpoint, live entitlement catalog, and auth rules.
  * Contracts: https://docs.primeintellect.ai/api-reference/inference-chat-completions
@@ -107,6 +189,7 @@ export class PrimeInferenceProvider implements ProviderClient {
     )
       throw new Error("Prime Inference returned an invalid model catalog.");
     const availableModels = new Set<string>();
+    const seenModels = new Set<string>();
     const models: Model[] = [];
     for (const entry of catalog.data) {
       if (
@@ -115,19 +198,36 @@ export class PrimeInferenceProvider implements ProviderClient {
         !("id" in entry) ||
         typeof entry.id !== "string" ||
         !entry.id.trim() ||
-        availableModels.has(entry.id)
+        !isValidPrimeModelId(entry.id) ||
+        seenModels.has(entry.id)
       )
         throw new Error("Prime Inference returned an invalid model catalog.");
+      seenModels.add(entry.id);
+      let reportsParameters = false;
+      let supportsTools = false;
+      if (
+        "supported_parameters" in entry &&
+        Array.isArray(entry.supported_parameters)
+      ) {
+        for (const parameter of entry.supported_parameters) {
+          if (typeof parameter === "string" && parameter.length > 0) {
+            reportsParameters = true;
+            if (parameter === "tools") supportsTools = true;
+          }
+        }
+      }
+      if (reportsParameters && !supportsTools) continue;
+      const specs = "specs" in entry ? entry.specs : undefined;
+      if (isPrimeEvaluationModel(specs)) continue;
       availableModels.add(entry.id);
-      models.push({
-        id: entry.id,
-        name:
-          ("display_name" in entry && typeof entry.display_name === "string"
-            ? entry.display_name
-            : "name" in entry && typeof entry.name === "string"
-              ? entry.name
-              : entry.id),
-      });
+      const name =
+        sanitizeCatalogName(
+          "display_name" in entry ? entry.display_name : undefined,
+        ) ??
+        sanitizeCatalogName("name" in entry ? entry.name : undefined) ??
+        entry.id;
+      const metadata = primeModelMetadata(specs, supportsTools);
+      models.push({ id: entry.id, name, ...metadata });
     }
     if (!models.length)
       throw new Error("Prime Inference returned no available models.");
@@ -143,7 +243,9 @@ export class PrimeInferenceProvider implements ProviderClient {
     onDelta?: (text: string) => void | Promise<void>,
   ): Promise<ModelReply> {
     if (!this.availableModels.has(model))
-      throw new Error("Requested model is not present in the Prime Inference model catalog.");
+      throw new Error(
+        "Requested model is not present in the Prime Inference model catalog.",
+      );
     return this.provider.complete(model, messages, tools, signal, onDelta);
   }
 

@@ -135,6 +135,15 @@ added to the shared manifest. The Prime usage extension is
 custom compatible endpoints without that explicit provider identity. Workbench
 does not read a shell/CLI key or send `X-Prime-Team-ID`.
 
+Live models map a complete `specs` object to context window, output-token cap
+(bounded by context), and text/image/reasoning capabilities. Declared tool
+support is exposed independently; incomplete specs do not claim context,
+image, or reasoning support.
+
+Models with the output modality `decisions` are excluded from Chat Completions
+discovery. Prime documents evaluation models with this output as requiring its
+Evaluations API instead.
+
 Official contracts: [Prime chat completions](https://docs.primeintellect.ai/api-reference/inference-chat-completions)
 and [Prime models](https://docs.primeintellect.ai/api-reference/inference-models).
 
