@@ -112,15 +112,15 @@ browser storage or durable user settings.
 
 The private Harness packages `@nomo/agent-policy`, `@nomo/connectors`,
 `@nomo/ledger`, `@nomo/policy`, `@nomo/proxy`, `@nomo/registry`,
-`@nomo/runtime`, `@nomo/sdk`, and `@nomo/workbench` use the NOMO namespace.
-The CLI (`@void/cli`), root (`@void/workspace`), tools (`@void/scripts`),
-public verifier (`@void/verifier`), control-plane and desktop package
-identities remain legacy. This migration applies only to private Harness
-packages; public names, CLI aliases, environment variables, encrypted state
-and signed ledgers stay compatible through explicit, tested, versioned migrations.
-NOMO environment names win over `VOID_*` compatibility aliases when both are
-present, including an explicitly empty NOMO value. No silent rename or state
-deletion.
+`@nomo/runtime`, `@nomo/sdk`, and `@nomo/workbench`, plus the private CLI
+`@nomo/cli`, root workspace `@nomo/workspace`, and tooling `@nomo/scripts`, use
+the NOMO namespace. The standalone ledger verifier is named `@nomo/verifier`;
+it was not found in the npm registry on 2026-10-28 and has not been published.
+Protected control-plane and desktop package identities are outside this
+namespace slice. Older environment aliases, encrypted state and signed ledgers
+remain compatible; no persistent state is silently renamed or deleted. NOMO
+environment settings continue to take precedence over legacy aliases,
+including when the NOMO value is explicitly empty.
 
 The main code boundaries are:
 

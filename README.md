@@ -181,7 +181,7 @@ The development binary is `node packages/cli/bin/nomo.mjs`. Packaged releases wi
 | `@nomo/policy`     | YAML policy loading, decisions, holds, approval broker, and approval channels.                            |
 | `@nomo/proxy`      | MCP session plumbing, stdio and HTTP upstream transports, forwarding, interception, and approval pumping. |
 | `@nomo/connectors` | Connector registry, Postgres logic, S3 logic, probes, snapshots, and manifests.                           |
-| `@void/cli`        | Development command handlers and terminal render models.                                                  |
+| `@nomo/cli`        | Development command handlers and terminal render models.                                                  |
 | `@nomo/workbench`  | Provider discovery, bounded agent sessions and the shared GUI/CLI model loop.                             |
 | `@nomo/sdk`        | In-process client wrapper for app builders: holdHandle and typed errors.                                 |
 
@@ -228,9 +228,10 @@ open to paid.** Approvals, budgets, multi-workspace, SSO and the taint graph are
 on the paid side because they are organisational, not because they are
 interesting.
 
-`@void/verifier` is separately installable and depends on nothing at all, not
-even on NOMO. That is deliberate: an auditor who has to trust the vendor's
-dependency tree is not getting an independent check.
+The source-only `@nomo/verifier` package is not published to npm yet. It has no
+dependencies and remains independent of the NOMO runtime by design. An auditor
+who has to trust the vendor's dependency tree is not getting an independent
+check.
 
 ## No support obligation
 

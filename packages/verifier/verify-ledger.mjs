@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Standalone NOMO ledger verifier, published as @void/verifier. Third
+ * Standalone NOMO ledger verifier (@nomo/verifier). Third
  * parties run this without NOMO.
  *
  * Only Node built-ins are used: node:crypto and node:fs for verification,

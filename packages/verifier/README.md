@@ -2,6 +2,9 @@
 
 Offline verifier for a NOMO ledger export. A third party runs this **without
 NOMO, and without trusting NOMO**.
+The package is not published to npm yet. In this checkout, invoke
+`node packages/verifier/verify-ledger.mjs <bundle>`; the `npx` examples below
+require a later authorized publication.
 
 ## What it checks
 

@@ -4,13 +4,16 @@ All notable user-facing changes since the first repository commit.
 
 ## Unreleased
 
-- Nine private Harness workspaces now use the `@nomo/*` namespace. Internal
-  manifests, CLI registry imports, bundler mapping, lockfile and current package
-  documentation are aligned. Public `@void/verifier`, `@void/cli`, environment
-  aliases and persistent tool/storage identifiers remain compatible. All nine
-  package suites passed (2,003 passed, 16 skipped, 0 failed); all nine
-  typechecks passed. CLI consumer tests passed 25/25; release, version and bundle
-  gates passed 42/42. Offline lockfile generation and frozen install passed.
+- Remaining private workspace identities now use `@nomo`: root, CLI and
+  scripts, alongside the earlier nine Harness packages. The independent ledger
+  verifier source package is `@nomo/verifier`; neither the previous nor target
+  verifier package name was present in npm at the 2026-10-28 check. Nothing was
+  published. Release metadata tests now pin the root/scripts/CLI/verifier
+  identities. Existing package suites, typechecks and release gates remain
+  recorded below.
+- Current Workbench agent presets, model instructions, policy denials/errors
+  and tool-decision copy now use NOMO. The Workbench suite passed 843/845 (2
+  skipped) and typecheck passed; commit `ff228cc` is on the feature branch.
 - Cloudflare Workers AI exposes the single pinned Prime DeepSeek V4 Flash model
   through its official account-scoped OpenAI Chat Completions URL. Workbench
   requires HTTPS `api.cloudflare.com/client/v4/accounts/{accountId}/ai/v1`,

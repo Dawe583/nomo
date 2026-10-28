@@ -1,5 +1,5 @@
 {
-  "name": "@void/verifier",
+  "name": "@nomo/verifier",
   "version": "0.1.0",
   "description": "Offline verifier for a NOMO ledger export. Node built-ins only, no NOMO dependency, no runtime dependencies at all.",
   "license": "Apache-2.0",

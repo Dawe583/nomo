@@ -38,14 +38,14 @@ function fixture() {
   const tree = mkdtempSync(join(tmpdir(), "nomo-set-version-"));
   const manifests = {
     "package.json": `{
-  "name": "@void/workspace",
+  "name": "@nomo/workspace",
   "version": "0.1.0",
   "private": true,
   "scripts": { "test": "node --test" }
 }
 `,
     "packages/cli/package.json": `{
-    "name": "@void/cli",
+    "name": "@nomo/cli",
     "private": true,
     "license": "Apache-2.0",
     "version": "0.1.0",
@@ -55,7 +55,7 @@ function fixture() {
 }
 `,
     "packages/verifier/package.json": `{
-  "name": "@void/verifier",
+  "name": "@nomo/verifier",
   "description": "Offline verifier, node built-ins only.",
   "version": "0.1.0",
   "bin": { "nomo-verify": "verify-ledger.mjs" }
@@ -67,7 +67,7 @@ function fixture() {
 }
 `,
     "scripts/package.json": `{
-  "name": "@void/scripts",
+  "name": "@nomo/scripts",
   "version": "0.1.0",
   "private": true
 }

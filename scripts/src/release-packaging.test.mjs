@@ -14,6 +14,14 @@ const manifest = (path) => JSON.parse(read(path));
 // cannot disagree about which manifests carry one.
 const directories = versionedManifests(fileURLToPath(root));
 const ROOT_VERSION = manifest("package.json").version;
+test("the root workspace package uses the NOMO namespace", () => {
+  assert.equal(manifest("package.json").name, "@nomo/workspace");
+});
+
+test("the scripts package uses the NOMO namespace", () => {
+  assert.equal(manifest("scripts/package.json").name, "@nomo/scripts");
+});
+
 
 /**
  * The invariant is that every manifest moves together, not that the number is
@@ -45,26 +53,14 @@ const PUBLISHABLE = new Map([
     "one executable file of Node built-ins, no build step, so it cannot ship source the runtime cannot load",
   ],
 ]);
-const NOMO_PACKAGE_NAMES = new Set([
-  "agent-policy",
-  "connectors",
-  "ledger",
-  "policy",
-  "proxy",
-  "registry",
-  "runtime",
-  "sdk",
-  "workbench",
-]);
 
 for (const directory of directories) {
   test(`${directory} ${PUBLISHABLE.has(directory) ? "is publishable with" : "stays private with"} coherent development release metadata`, () => {
     const data = manifest(`${directory}/package.json`);
-    assert.match(data.name, /^@(?:void|nomo)\/[a-z0-9]+(?:-[a-z0-9]+)*$/);
+    assert.match(data.name, /^@[a-z0-9]+\/[a-z0-9]+(?:-[a-z0-9]+)*$/);
     if (directory.startsWith("packages/")) {
       const packageName = directory.slice("packages/".length);
-      const scope = NOMO_PACKAGE_NAMES.has(packageName) ? "@nomo" : "@void";
-      assert.equal(data.name, `${scope}/${packageName}`);
+      assert.equal(data.name, `@nomo/${packageName}`);
     }
     assert.equal(
       data.version,
