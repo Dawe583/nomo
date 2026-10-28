@@ -300,8 +300,10 @@ export class AnthropicMessagesAdapter {
           ? { input_tokens: inputTokens, output_tokens: outputTokens }
           : undefined,
       };
-    } catch {
+    } catch (error) {
       if (signal.aborted) throw new Error("Session cancelled.");
+      if (error instanceof DOMException && error.name === "TimeoutError")
+        throw new Error("Provider request timed out.");
       throw new Error("Anthropic stream failed before completion.");
     } finally {
       await reader.cancel().catch(() => {});
