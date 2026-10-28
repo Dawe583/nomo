@@ -210,7 +210,20 @@ test("maps modeled stream exceptions to safe provider statuses", async () => {
       !error.message.includes("raw private exception body"),
   );
 });
-
+test("Bedrock reports its internal request timeout distinctly", async () => {
+  const client = new BedrockConverseStreamAdapter(config, async () => {
+    throw new DOMException("The operation timed out.", "TimeoutError");
+  });
+  await assert.rejects(
+    client.complete(
+      config.model!,
+      [{ role: "user", content: "x" }],
+      [],
+      new AbortController().signal,
+    ),
+    /Provider request timed out\./,
+  );
+});
 test("fails closed on unsupported content block delta variants", async () => {
   const client = new BedrockConverseStreamAdapter(config, async () => stream(
     event("contentBlockDelta", { contentBlockDelta: { contentBlockIndex: 0, delta: { reasoningContent: { text: "hidden reasoning" } } } }),
