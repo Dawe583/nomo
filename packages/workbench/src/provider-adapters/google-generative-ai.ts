@@ -222,8 +222,18 @@ export class GoogleGenerativeAIAdapter implements ProviderClient {
     let finished = false;
     try {
       while (true) {
-        signal.throwIfAborted();
-        const { value, done } = await reader.read();
+        let value: Uint8Array | undefined;
+        let done: boolean;
+        try {
+          signal.throwIfAborted();
+          const result = await reader.read();
+          value = result.value;
+          done = result.done;
+        } catch (error) {
+          if (error instanceof DOMException && error.name === "TimeoutError")
+            throw new Error("Provider request timed out.");
+          throw error;
+        }
         pending += decoder.decode(value, { stream: !done });
         pending = pending.replace(/\r\n/g, "\n");
         if (pending.length > 2_000_000) throw new Error("Provider stream exceeded the supported size.");
