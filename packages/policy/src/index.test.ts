@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 
 import { BROKEN_POLICY_DECISION, MATCH_KEYS, UNMATCHED_DECISION, isMatchKey } from "./index.ts";
 
-describe("@void/policy", () => {
+describe("@nomo/policy", () => {
   test("an unmatched call and a broken file do not resolve the same way", () => {
     assert.equal(UNMATCHED_DECISION, "hold");
     assert.equal(BROKEN_POLICY_DECISION, "deny");

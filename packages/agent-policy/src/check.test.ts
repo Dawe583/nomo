@@ -16,13 +16,13 @@ const agentsYaml = readFileSync(
   new URL("../../../policy/agents.yaml", import.meta.url),
   "utf8",
 );
-const voidDefaultYaml = readFileSync(
+const nomoDefaultYaml = readFileSync(
   new URL("../../../policy/default.yaml", import.meta.url),
   "utf8",
 );
 
 /**
- * A class policy for the demo: VOID semantics, but reads the registry cannot
+ * A class policy for the demo: NOMO semantics, but reads the registry cannot
  * classify are allowed, so the identity layer is what decides them. The real
  * default.yaml holds them, and one test below shows that interaction.
  */
@@ -150,7 +150,7 @@ describe("checkPolicy: allow, deny, hold", () => {
     assert.equal(result.ruleId, "default-deny");
   });
 
-  test("hold: a delete waits for a person even when VOID would allow it", () => {
+  test("hold: a delete waits for a person even when NOMO would allow it", () => {
     const result = checkPolicy(
       request({
         tool: "fs.path.remove_recursive",
@@ -285,14 +285,14 @@ rules:
     assert.equal(result.ruleId, "support-bot-reads-notes");
   });
 
-  test("with VOID's shipped default policy the same read is held by the class layer", () => {
+  test("with NOMO's shipped default policy the same read is held by the class layer", () => {
     const result = checkPolicy(
       request({
         tool: "notes.read",
         scope: "read",
         target: "fs:sandbox/notes/faq.md",
       }),
-      deps({ tool: "notes.read", classPolicy: loadPolicy(voidDefaultYaml) }),
+      deps({ tool: "notes.read", classPolicy: loadPolicy(nomoDefaultYaml) }),
     );
     assert.equal(result.decision, "hold");
     assert.equal(result.layer, "class-policy");

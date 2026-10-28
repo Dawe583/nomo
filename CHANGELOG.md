@@ -3,6 +3,14 @@
 All notable user-facing changes since the first repository commit.
 
 ## Unreleased
+
+- Nine private Harness workspaces now use the `@nomo/*` namespace. Internal
+  manifests, CLI registry imports, bundler mapping, lockfile and current package
+  documentation are aligned. Public `@void/verifier`, `@void/cli`, environment
+  aliases and persistent tool/storage identifiers remain compatible. All nine
+  package suites passed (2,003 passed, 16 skipped, 0 failed); all nine
+  typechecks passed. CLI consumer tests passed 25/25; release, version and bundle
+  gates passed 42/42. Offline lockfile generation and frozen install passed.
 - Cloudflare Workers AI exposes the single pinned Prime DeepSeek V4 Flash model
   through its official account-scoped OpenAI Chat Completions URL. Workbench
   requires HTTPS `api.cloudflare.com/client/v4/accounts/{accountId}/ai/v1`,

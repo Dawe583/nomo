@@ -45,13 +45,26 @@ const PUBLISHABLE = new Map([
     "one executable file of Node built-ins, no build step, so it cannot ship source the runtime cannot load",
   ],
 ]);
+const NOMO_PACKAGE_NAMES = new Set([
+  "agent-policy",
+  "connectors",
+  "ledger",
+  "policy",
+  "proxy",
+  "registry",
+  "runtime",
+  "sdk",
+  "workbench",
+]);
 
 for (const directory of directories) {
   test(`${directory} ${PUBLISHABLE.has(directory) ? "is publishable with" : "stays private with"} coherent development release metadata`, () => {
     const data = manifest(`${directory}/package.json`);
     assert.match(data.name, /^@(?:void|nomo)\/[a-z0-9]+(?:-[a-z0-9]+)*$/);
     if (directory.startsWith("packages/")) {
-      assert.equal(data.name, `@void/${directory.slice("packages/".length)}`);
+      const packageName = directory.slice("packages/".length);
+      const scope = NOMO_PACKAGE_NAMES.has(packageName) ? "@nomo" : "@void";
+      assert.equal(data.name, `${scope}/${packageName}`);
     }
     assert.equal(
       data.version,

@@ -12,13 +12,12 @@ token, proxy, policy and ledger path as other managed agents. Safe learning,
 operator approval and later-session retrieval are product-v1 release gates.
 
 **Status:** This feature branch records the approved product direction and
-implementation plan. The fleet identity runtime is not shipped yet. Current code
-still uses `@void/*` packages and the `void` CLI. The local demo, package and
-state migration, inbound HTTP MCP endpoint, short-lived proxy grants and standard
-MCP OAuth remain planned work. No production, first/only or empty-market claim
-is made.
-
-See the [capability map](docs/superpowers/specs/2026-10-08-nomo-agent-identity-fleet-capability-map.md),
+implementation plan. The fleet identity runtime is not shipped yet. Nine
+private Harness packages use `@nomo/*`; legacy CLI, root/tooling,
+control-plane, desktop and public package identities plus compatibility
+surfaces remain. State migration, inbound HTTP MCP endpoint, short-lived proxy
+grants and standard MCP OAuth remain planned work. No production, first/only or
+empty-market claim is made.
 [MVP spec](docs/superpowers/specs/2026-10-08-nomo-agent-identity-fleet-mvp-spec.md)
 and [implementation plan](docs/superpowers/plans/2026-10-08-nomo-agent-identity-fleet-mvp-and-roadmap.md)
 for boundaries and acceptance gates.
@@ -63,7 +62,7 @@ fleet control or standard MCP OAuth.
 
 ## Current write-path behavior
 
-The existing `void` proxy does not make an agent safe by trusting the model. It protects the write path.
+The existing proxy does not make an agent safe by trusting the model. It protects the write path.
 
 1. Intercept the tool call.
 2. Classify the call as R0, R1, R2, or R3 from registry cases and target facts.
@@ -177,14 +176,14 @@ The development binary is `node packages/cli/bin/nomo.mjs`. Packaged releases wi
 
 | Package            | Owns                                                                                                      |
 | ------------------ | --------------------------------------------------------------------------------------------------------- |
-| `@void/registry`   | Registry data, preconditions, evaluation, and declared facts. It imports nothing.                         |
-| `@void/ledger`     | Canonical JSON, entry hashes, JSONL store, signing, feed, taint, verification, and attestations.          |
-| `@void/policy`     | YAML policy loading, decisions, holds, approval broker, and approval channels.                            |
-| `@void/proxy`      | MCP session plumbing, stdio and HTTP upstream transports, forwarding, interception, and approval pumping. |
-| `@void/connectors` | Connector registry, Postgres logic, S3 logic, probes, snapshots, and manifests.                           |
+| `@nomo/registry`   | Registry data, preconditions, evaluation, and declared facts. It imports nothing.                         |
+| `@nomo/ledger`     | Canonical JSON, entry hashes, JSONL store, signing, feed, taint, verification, and attestations.          |
+| `@nomo/policy`     | YAML policy loading, decisions, holds, approval broker, and approval channels.                            |
+| `@nomo/proxy`      | MCP session plumbing, stdio and HTTP upstream transports, forwarding, interception, and approval pumping. |
+| `@nomo/connectors` | Connector registry, Postgres logic, S3 logic, probes, snapshots, and manifests.                           |
 | `@void/cli`        | Development command handlers and terminal render models.                                                  |
-| `@void/workbench`  | Provider discovery, bounded agent sessions and the shared GUI/CLI model loop.                             |
-| `@void/sdk`        | In-process client wrapper for app builders: VoidClient, holdHandle, typed errors.                         |
+| `@nomo/workbench`  | Provider discovery, bounded agent sessions and the shared GUI/CLI model loop.                             |
+| `@nomo/sdk`        | In-process client wrapper for app builders: holdHandle and typed errors.                                 |
 
 ## Beta scope
 
@@ -204,7 +203,7 @@ are not included in this beta.
 - `docs/superpowers/plans/2026-10-08-nomo-agent-identity-fleet-mvp-and-roadmap.md`: active NOMO MVP plan and product roadmap.
 - `docs/SDK.md`: SDK release candidate surface.
 - `docs/TESTING.md`: package test commands and test rules.
-- `docs/AGENT-BINARIES.md`: the two external agent CLIs, their versions and the contract VOID relies on.
+- `docs/AGENT-BINARIES.md`: the two external agent CLIs, their versions and the contract NOMO relies on.
 - `CONTRIBUTING.md`: how to contribute, and what gets declined.
 - `packages/policy/README.md`: policy pack contents and loading rules.
 - `packages/verifier/README.md`: the independent offline ledger verifier.
@@ -230,12 +229,12 @@ on the paid side because they are organisational, not because they are
 interesting.
 
 `@void/verifier` is separately installable and depends on nothing at all, not
-even on VOID. That is deliberate: an auditor who has to trust the vendor's
+even on NOMO. That is deliberate: an auditor who has to trust the vendor's
 dependency tree is not getting an independent check.
 
 ## No support obligation
 
-There is none on the open packages. VOID is maintained by one person. Issues are
+There is none on the open packages. NOMO is maintained by one person. Issues are
 read, a response time is not promised, and a bug is not guaranteed to be fixed.
 Contributing is the reliable way to get a change made; `CONTRIBUTING.md` says
 which contributions are easy and which need prior agreement.

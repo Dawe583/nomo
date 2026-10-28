@@ -9,7 +9,7 @@ import {
   validatePrecondition,
 } from "./index.ts";
 
-describe("@void/registry", () => {
+describe("@nomo/registry", () => {
   test("the registry has the breadth the record states", () => {
     // These two numbers are a contract, not an accident. Breadth is quoted
     // out loud in the status record, and checking only that the stats match

@@ -1,5 +1,5 @@
 {
-  "name": "@void/sdk",
+  "name": "@nomo/sdk",
   "version": "0.1.0",
   "private": true,
   "license": "Apache-2.0",
@@ -15,11 +15,11 @@
     "@types/node": "catalog:"
   },
   "dependencies": {
-    "@void/connectors": "workspace:*",
-    "@void/ledger": "workspace:*",
-    "@void/policy": "workspace:*",
-    "@void/proxy": "workspace:*",
-    "@void/runtime": "workspace:*"
+    "@nomo/connectors": "workspace:*",
+    "@nomo/ledger": "workspace:*",
+    "@nomo/policy": "workspace:*",
+    "@nomo/proxy": "workspace:*",
+    "@nomo/runtime": "workspace:*"
   },
   "description": "Wrap NOMO interception and held call decisions in an in-process client.",
   "keywords": [

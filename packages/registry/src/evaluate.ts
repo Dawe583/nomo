@@ -4,7 +4,7 @@
  *
  * The registry stopped being a lookup table here. An unclassified call must
  * never fall through to a guess: policy treats it as R3 (that constant lives
- * in @void/policy), so this module's job is to say precisely which case
+ * in @nomo/policy), so this module's job is to say precisely which case
  * matched and which precondition failed when one did not, because a hold
  * message that cannot name the missing fact teaches the operator nothing.
  */

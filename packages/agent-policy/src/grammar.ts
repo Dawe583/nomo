@@ -1,12 +1,12 @@
 /**
  * The agent policy grammar: who may act, on what, with which scope.
  *
- * This sits beside the VOID class policy rather than inside it. VOID's file
+ * This sits beside the NOMO class policy rather than inside it. NOMO's file
  * answers how dangerous a call is (R0 to R3); this file answers which agent is
  * allowed to make it. Both are evaluated and the stricter answer wins, so
  * nothing here can widen what the class policy already holds or denies.
  *
- * Same posture as `@void/policy`: no expressions, no regular expressions,
+ * Same posture as `@nomo/policy`: no expressions, no regular expressions,
  * unknown keys and values are load errors, first match wins. One difference
  * on purpose: the terminal catch-all must deny. An agent gets nothing it was
  * not granted by name.
@@ -31,13 +31,13 @@ export type AgentMatchKey = (typeof AGENT_MATCH_KEYS)[number];
 export const SCOPES = ["read", "write", "delete", "admin"] as const;
 export type Scope = (typeof SCOPES)[number];
 
-/** VOID classes plus the explicit opt-in for calls the registry could not classify. */
+/** NOMO classes plus the explicit opt-in for calls the registry could not classify. */
 export const CLASSES = ["r0", "r1", "r2", "r3", "unknown"] as const;
 export type CallClass = (typeof CLASSES)[number];
 
 export type AgentDecision = "allow" | "deny" | "hold";
 
-/** Same ceiling as VOID holds, so an MCP request cannot outlive client timeouts. */
+/** Same ceiling as NOMO holds, so an MCP request cannot outlive client timeouts. */
 export const HOLD_CEILING_SECONDS = 900;
 
 /** Agent ids land in signed ledger bodies and event streams, so they are bounded and plain. */

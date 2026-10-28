@@ -50,7 +50,7 @@ function fixture() {
     "license": "Apache-2.0",
     "version": "0.1.0",
     "dependencies": {
-        "@void/registry": { "version": "0.1.0", "note": "a nested version is not the product version" }
+        "@nomo/registry": { "version": "0.1.0", "note": "a nested version is not the product version" }
     }
 }
 `,
@@ -131,7 +131,7 @@ test("one argument moves every manifest the gate enumerates, and nothing else", 
     assert.equal(JSON.parse(after).name, JSON.parse(before[path]).name);
   }
   // A package root with no manifest is not a manifest, so it is not reported.
-  assert.equal(JSON.parse(readFileSync(join(tree, "packages/cli/package.json"), "utf8")).dependencies["@void/registry"].version, "0.1.0");
+  assert.equal(JSON.parse(readFileSync(join(tree, "packages/cli/package.json"), "utf8")).dependencies["@nomo/registry"].version, "0.1.0");
   assert.equal(snapshot(tree)["packages/notes/README.md"], before["packages/notes/README.md"]);
   // The write goes through a temporary file, so one left behind is the visible
   // evidence that the rename path did not run.

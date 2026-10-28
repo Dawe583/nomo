@@ -19,7 +19,7 @@ import {
   evaluate,
   REGISTRY_DISCLAIMER,
   type RegistryTone,
-} from "@void/registry";
+} from "@nomo/registry";
 
 export type TranscriptCall = {
   readonly tool: string;

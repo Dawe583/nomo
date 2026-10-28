@@ -1,5 +1,5 @@
 {
-  "name": "@void/agent-policy",
+  "name": "@nomo/agent-policy",
   "version": "0.1.0",
   "private": true,
   "license": "Apache-2.0",
@@ -17,10 +17,9 @@
   "dependencies": {
     "yaml": "^2.8.0"
   },
-  "description": "NOMO: per-agent rules over a verified Workbench agent grant, layered over the VOID class policy.",
+  "description": "NOMO: per-agent rules over a verified Workbench agent grant, layered over the NOMO class policy.",
   "keywords": [
     "nomo",
-    "void",
     "agent-identity",
     "policy"
   ],

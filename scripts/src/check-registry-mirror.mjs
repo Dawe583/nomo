@@ -11,7 +11,7 @@
  * different header comments on purpose: one explains why the package depends on
  * nothing, the other tells an editor to stop and edit this one instead.
  *
- * At WP-15 the product publishes @void/registry to npm, the site imports a bare
+ * At WP-15 the product publishes @nomo/registry to npm, the site imports a bare
  * specifier, and both this script and the mirror it guards are deleted.
  */
 

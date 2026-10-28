@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
 
-import type { RegistryEntry } from "@void/registry";
+import type { RegistryEntry } from "@nomo/registry";
 import { classifyTranscript, parseTranscript } from "./classify.ts";
 
 const fixtureDirectory = new URL("../../../fixtures/registry/", import.meta.url);

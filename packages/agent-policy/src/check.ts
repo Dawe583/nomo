@@ -1,5 +1,5 @@
 /**
- * The NOMO policy check: the verified grant, the agent policy, then the VOID
+ * The NOMO policy check: the verified grant, the agent policy, then the NOMO
  * class policy, and the strictest answer wins. Contract: docs/nomo/CONTRACT.md.
  *
  * Identity is not this module's job. The Workbench local agent grant
@@ -8,7 +8,7 @@
  * stop. This module takes the identity that grant verified, never an agent id
  * from the request body, and decides what that agent may do with it.
  *
- * Gate 2 is VOID's own `decide`, called unchanged. This module adds identity
+ * Gate 2 is NOMO's own `decide`, called unchanged. This module adds identity
  * on top of the reversibility class; it does not re-implement the class rules.
  *
  * Every path returns a result with a rule id and a reason. Nothing throws out
@@ -83,7 +83,7 @@ export type PolicyCheckResult = {
 export type CheckDeps = {
   readonly agentPolicy: LoadedAgentPolicy;
   readonly classPolicy: LoadedPolicy;
-  /** The VOID registry classification for this call, as the proxy computes it. */
+  /** The NOMO registry classification for this call, as the proxy computes it. */
   readonly classify: () => EvaluationResult;
   /** Measured blast radius from a connector probe, when there is one. */
   readonly blastRadius?: number;
@@ -265,7 +265,7 @@ export function checkPolicy(
       ruleId: agentVerdict.ruleId,
     });
 
-    // Gate 2: how dangerous is it, VOID's rules unchanged.
+    // Gate 2: how dangerous it is, NOMO's rules unchanged.
     const policyCall: PolicyCall = {
       tool: request.tool,
       connector: request.connector,

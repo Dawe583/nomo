@@ -110,12 +110,17 @@ browser storage or durable user settings.
 
 ## Repository and naming
 
-The current source tree and workspace package names use `@void/*`. NOMO is the
-approved product direction and `@nomo/*` is the public package target. Preserve
-existing package imports, environment variables, CLI commands, encrypted state
-and ledgers through an explicit, tested, versioned migration. NOMO environment
-names win over VOID compatibility aliases when both are present, including an
-explicitly empty NOMO value. No silent rename or state deletion.
+The private Harness packages `@nomo/agent-policy`, `@nomo/connectors`,
+`@nomo/ledger`, `@nomo/policy`, `@nomo/proxy`, `@nomo/registry`,
+`@nomo/runtime`, `@nomo/sdk`, and `@nomo/workbench` use the NOMO namespace.
+The CLI (`@void/cli`), root (`@void/workspace`), tools (`@void/scripts`),
+public verifier (`@void/verifier`), control-plane and desktop package
+identities remain legacy. `@nomo/*` is the public package target. Keep public
+target. Keep public names, environment variables, CLI aliases, encrypted state
+and signed ledgers compatible through explicit, tested, versioned migrations.
+NOMO environment names win over `VOID_*` compatibility aliases when both are
+present, including an explicitly empty NOMO value. No silent rename or state
+deletion.
 
 The main code boundaries are:
 

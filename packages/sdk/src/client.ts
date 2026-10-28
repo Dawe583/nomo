@@ -41,7 +41,7 @@ export type NomoClientOptions = {
   readonly requestTimeoutMs?: number;
   /**
    * A legacy external tool binding, resolved through `legacyBindingRoot` in
-   * `@void/proxy`. Supplying one is what makes the proxy capture a before image
+   * `@nomo/proxy`. Supplying one is what makes the proxy capture a before image
    * and record a durable outcome for that tool instead of treating it as an
    * unaudited passthrough. Omitting it is honest and allowed: a `fail-closed`
    * posture then refuses such a call outright.

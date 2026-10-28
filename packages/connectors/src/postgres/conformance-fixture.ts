@@ -65,14 +65,14 @@ const TENANT_VALUE = "acme";
 
 /**
  * Dynamic, unlike every other import in this file: @electric-sql/pglite is a
- * devDependency of @void/connectors, so a static import would make the
+ * devDependency of @nomo/connectors, so a static import would make the
  * shipped CLI fail to load for anyone who installs production dependencies.
  * Only these fixtures need the engine, and the refusal names what is missing.
  */
 const startEngine = async (): Promise<PGlite> => {
   const { PGlite: Engine } = await import("@electric-sql/pglite").catch(() => {
     throw new Error(
-      "Managed PostgreSQL conformance needs @electric-sql/pglite, a devDependency of @void/connectors; it is not installed in this checkout.",
+      "Managed PostgreSQL conformance needs @electric-sql/pglite, a devDependency of @nomo/connectors; it is not installed in this checkout.",
     );
   });
   return new Engine();

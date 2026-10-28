@@ -202,15 +202,15 @@ importers:
         specifier: ^2.8.0
         version: 2.9.0
     devDependencies:
+      '@nomo/registry':
+        specifier: workspace:*
+        version: link:../registry
       '@types/node':
         specifier: 'catalog:'
         version: 25.9.5
       '@types/pg':
         specifier: 8.15.5
         version: 8.15.5
-      '@void/registry':
-        specifier: workspace:*
-        version: link:../registry
 
   packages/connectors:
     dependencies:
@@ -252,13 +252,13 @@ importers:
       '@modelcontextprotocol/server':
         specifier: 2.3.1
         version: 2.3.1
-      '@void/ledger':
+      '@nomo/ledger':
         specifier: workspace:*
         version: link:../ledger
-      '@void/policy':
+      '@nomo/policy':
         specifier: workspace:*
         version: link:../policy
-      '@void/registry':
+      '@nomo/registry':
         specifier: workspace:*
         version: link:../registry
     devDependencies:
@@ -280,19 +280,19 @@ importers:
 
   packages/sdk:
     dependencies:
-      '@void/connectors':
+      '@nomo/connectors':
         specifier: workspace:*
         version: link:../connectors
-      '@void/ledger':
+      '@nomo/ledger':
         specifier: workspace:*
         version: link:../ledger
-      '@void/policy':
+      '@nomo/policy':
         specifier: workspace:*
         version: link:../policy
-      '@void/proxy':
+      '@nomo/proxy':
         specifier: workspace:*
         version: link:../proxy
-      '@void/runtime':
+      '@nomo/runtime':
         specifier: workspace:*
         version: link:../runtime
     devDependencies:
@@ -310,10 +310,10 @@ importers:
       '@cursor/sdk':
         specifier: 1.0.40
         version: 1.0.40(zod@4.5.4)
-      '@void/proxy':
+      '@nomo/proxy':
         specifier: workspace:*
         version: link:../proxy
-      '@void/runtime':
+      '@nomo/runtime':
         specifier: workspace:*
         version: link:../runtime
     devDependencies:
