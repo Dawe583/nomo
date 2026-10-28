@@ -163,7 +163,7 @@ test("Prime discovery excludes evaluation-only outputs from chat completions", a
 
 test("Prime chat discovery excludes output-only modalities the client cannot represent", async () => {
   let requestCount = 0;
-  const fullSpecs = (output: string[]) => ({
+  const fullSpecs = (output: unknown[]) => ({
     context_window: 10_000,
     max_output_tokens: 1_000,
     supports_reasoning: false,
@@ -179,15 +179,21 @@ test("Prime chat discovery excludes output-only modalities the client cannot rep
           { id: "mixed-model", specs: fullSpecs(["text", "image"]) },
           { id: "image-output-model", specs: fullSpecs(["image"]) },
           { id: "audio-output-model", specs: fullSpecs(["audio"]) },
+          { id: "malformed-output-model", specs: fullSpecs(["image", 42]) },
         ],
       });
     },
   );
 
+  const models = await provider.models();
   assert.deepEqual(
-    (await provider.models()).map((model) => model.id),
-    ["text-model", "mixed-model"],
+    models.map((model) => model.id),
+    ["text-model", "mixed-model", "malformed-output-model"],
   );
+  assert.deepEqual(models[2], {
+    id: "malformed-output-model",
+    name: "malformed-output-model",
+  });
   await assert.rejects(
     provider.complete(
       "image-output-model",
