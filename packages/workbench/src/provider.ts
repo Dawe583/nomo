@@ -448,11 +448,19 @@ export class CompatibleProvider implements ProviderClient {
           ? AbortSignal.any([signal, AbortSignal.timeout(60000)])
           : AbortSignal.timeout(15000),
       });
-    } catch {
+    } catch (error) {
+      if (signal?.aborted) {
+        if (
+          signal.reason instanceof DOMException &&
+          signal.reason.name === "TimeoutError"
+        )
+          throw new Error("Provider request timed out.");
+        throw new Error("Session cancelled.");
+      }
+      if (error instanceof DOMException && error.name === "TimeoutError")
+        throw new Error("Provider request timed out.");
       throw new Error(
-        signal?.aborted
-          ? "Session cancelled."
-          : "Provider connection failed. Check its endpoint and availability.",
+        "Provider connection failed. Check its endpoint and availability.",
       );
     }
     if (!response.ok) {
