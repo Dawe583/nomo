@@ -24,3 +24,28 @@ test("OpenAI Responses reports internal request timeout distinctly", async () =>
     /Provider request timed out\./,
   );
 });
+
+test("OpenAI Responses reports stream timeouts distinctly", async () => {
+  const response = new Response(
+    new ReadableStream({
+      start(controller) {
+        controller.error(
+          new DOMException("The operation timed out.", "TimeoutError"),
+        );
+      },
+    }),
+    { headers: { "content-type": "text/event-stream" } },
+  );
+  const client = createProviderClient(config, async () => response);
+
+  await assert.rejects(
+    client.complete(
+      "gpt-fixture",
+      [{ role: "user", content: "go" }],
+      [],
+      new AbortController().signal,
+      () => {},
+    ),
+    /Provider request timed out\./,
+  );
+});
