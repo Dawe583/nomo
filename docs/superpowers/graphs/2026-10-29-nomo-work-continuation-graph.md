@@ -61,15 +61,15 @@ tree movement.
 
 ## Queue
 
-| Item                                      | Status                             | Owner                | Evidence                     |
-| ----------------------------------------- | ---------------------------------- | -------------------- | ---------------------------- |
-| W0 pull, inventory, plan, state           | done                               | controller           | this commit, work state file |
-| Wave 1 lanes AGENT, AUDIT, DESIGN, CENSUS | active                             | lanes L1, L2, L3, L4 | READY blocks pending         |
-| Wave 2 wp-regress integration             | blocked on owner decision and gate | controller           | census output                |
-| H7 end to end harness proof               | ready after wave 1                 | controller           | to be produced               |
-| H8 and H9 documentation and integration   | queued                             | controller           | to be produced               |
-| YC demand validation                      | blocked: human work                | operator             | playbook                     |
-| TUI lanes                                 | blocked: foreign                   | owner sessions       | branch inventory             |
+| Item                                      | Status                             | Owner                | Evidence                                                    |
+| ----------------------------------------- | ---------------------------------- | -------------------- | ----------------------------------------------------------- |
+| W0 pull, inventory, plan, state           | done                               | controller           | this commit, work state file                                |
+| Wave 1 lanes AGENT, AUDIT, DESIGN, CENSUS | done                               | lanes L1, L2, L3, L4 | 22 suites, 3327 tests, 0 fail, 4 env UNRUN; census recorded |
+| Wave 2 wp-regress integration             | blocked on owner decision and gate | controller           | census output                                               |
+| H7 end to end harness proof               | ready after wave 1                 | controller           | to be produced                                              |
+| H8 and H9 documentation and integration   | queued                             | controller           | to be produced                                              |
+| YC demand validation                      | blocked: human work                | operator             | playbook                                                    |
+| TUI lanes                                 | blocked: foreign                   | owner sessions       | branch inventory                                            |
 
 ## Stopping rules
 
