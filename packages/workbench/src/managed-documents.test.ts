@@ -11,14 +11,12 @@ async function fixture(t: TestContext) {
   const fetcher: typeof fetch = async (url) =>
     String(url).endsWith("/models")
       ? Response.json({ data: [{ id: "test" }] })
-      : Response.json({
-          choices: [{ message: { role: "assistant", content: "done" } }],
-        });
+      : Response.json({ choices: [{ message: { role: "assistant", content: "done" }, finish_reason: "stop" }] });
   // `configure: false` because the session below is started after this test's
   // own `configure`, and the fixture's placeholder base URL would be a
   // different provider than the one the assertions describe.
   const f = await isolatedWorkbench(t, fetcher, {}, {
-    prefix: "void-doc-runtime-",
+    prefix: "nomo-doc-runtime-",
     configure: false,
   });
   await f.app.configure({

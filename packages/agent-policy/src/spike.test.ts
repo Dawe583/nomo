@@ -1,7 +1,7 @@
 /**
  * The agent policy on top of the Workbench local agent grant, end to end in
  * one process: issue a grant, validate it per call the way the inbound proxy
- * does, decide with agents.yaml and the VOID class policy, run a fake
+ * does, decide with agents.yaml and the NOMO class policy, run a fake
  * connector, then stop the run and let the grant expire.
  *
  * Nothing here is the proxy and nothing in the Workbench is changed. The

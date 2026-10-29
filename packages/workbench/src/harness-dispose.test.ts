@@ -16,7 +16,7 @@ import type { RefinementProposal } from "./refine-pass.ts";
 
 const models = () => Response.json({ data: [{ id: "fixture" }] });
 const answer = (content = "Done") =>
-  Response.json({ choices: [{ message: { role: "assistant", content } }] });
+  Response.json({ choices: [{ message: { role: "assistant", content }, finish_reason: "stop" }] });
 const declined = () =>
   answer(JSON.stringify({ approve: false, reason: "close review, nothing to apply" }));
 
@@ -48,7 +48,7 @@ function answering(completion: (n: number) => Response) {
 
 async function seeded(t: TestContext, fetcher: typeof fetch) {
   const { app } = await isolatedWorkbench(t, fetcher, {}, {
-    prefix: "void-harness-dispose-",
+    prefix: "nomo-harness-dispose-",
   });
   const session = await app.start("Review the workspace at close", "fixture");
   await app.settled();

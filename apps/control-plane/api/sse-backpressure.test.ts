@@ -21,7 +21,7 @@ function bigReplyFetcher(bytes: number): typeof fetch {
     String(url).endsWith("/models")
       ? Response.json({ data: [{ id: "fixture" }] })
       : Response.json({
-          choices: [{ message: { role: "assistant", content } }],
+          choices: [{ message: { role: "assistant", content }, finish_reason: "stop" }],
           usage: { prompt_tokens: 1, completion_tokens: 1, total_tokens: 2 },
         });
 }

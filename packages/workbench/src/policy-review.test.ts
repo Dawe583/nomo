@@ -5,7 +5,7 @@ import { isolatedWorkbench } from "./test-fixture.ts";
 import type { Workbench } from "./index.ts";
 
 /** An MCP server that answers the catalog handshake and records every method
- * it was asked for, so a test can prove a call never left VOID. */
+ * it was asked for, so a test can prove a call never left NOMO. */
 async function mcpServer(tools: { name: string; description: string }[]) {
   const methods: string[] = [];
   const server: Server = createServer(async (req, res) => {
@@ -43,24 +43,15 @@ function callingProvider(pick: (tools: { function: { name: string; description: 
     const body = JSON.parse(String(init?.body ?? "{}"));
     const messages = (body.messages ?? []) as { role: string }[];
     if (messages.some((message) => message.role === "tool"))
-      return Response.json({ choices: [{ message: { role: "assistant", content: "done" } }] });
-    return Response.json({
-      choices: [
-        {
-          message: {
-            role: "assistant",
-            content: null,
-            tool_calls: [
-              {
-                id: "one",
-                type: "function",
-                function: { name: pick(body.tools ?? []), arguments: "{}" },
-              },
-            ],
-          },
-        },
-      ],
-    });
+      return Response.json({ choices: [{ message: { role: "assistant", content: "done" }, finish_reason: "stop" }] });
+    return Response.json({ choices: [{ message: { role: "assistant",
+    content: null, tool_calls: [
+      {
+        id: "one",
+        type: "function",
+        function: { name: pick(body.tools ?? []), arguments: "{}" },
+      },
+    ] }, finish_reason: "tool_calls" }] });
   };
 }
 
@@ -88,7 +79,7 @@ test("a tool the provider invented never reaches the connector", async (t) => {
   const server = await mcpServer([DELETE_TOOL]);
   t.after(() => server.close());
   const { app } = await isolatedWorkbench(t, callingProvider(() => "not_in_catalog"), {}, {
-    prefix: "void-invented-",
+    prefix: "nomo-invented-",
   });
   await confirmedConnector(app, server.url, "Fixture", allowAll);
 
@@ -97,7 +88,7 @@ test("a tool the provider invented never reaches the connector", async (t) => {
   assert.equal(app.get(session.id)?.status, "failed");
   assert.ok(
     !server.methods.includes("tools/call"),
-    "the connector is never asked to run a tool VOID does not know",
+    "the connector is never asked to run a tool NOMO does not know",
   );
   assert.ok(
     app
@@ -110,7 +101,7 @@ test("a deny rule stops the call and the connector never sees it", async (t) => 
   const server = await mcpServer([DELETE_TOOL]);
   t.after(() => server.close());
   const { app } = await isolatedWorkbench(t, callingProvider(deleteCall), {}, {
-    prefix: "void-denied-",
+    prefix: "nomo-denied-",
   });
   const id = await confirmedConnector(app, server.url, "Refused", denyDeletes);
   assert.equal(app.policyPreview(id).tools[0]?.classification, "always");
@@ -132,7 +123,7 @@ test("the same classified tool runs when the operator policy allows it", async (
   const server = await mcpServer([DELETE_TOOL]);
   t.after(() => server.close());
   const { app } = await isolatedWorkbench(t, callingProvider(deleteCall), {}, {
-    prefix: "void-allowed-",
+    prefix: "nomo-allowed-",
   });
   const id = await confirmedConnector(app, server.url, "Allowed", allowAll);
   assert.equal(app.policyPreview(id).tools[0]?.decision, "allow");
@@ -150,7 +141,7 @@ test("a running conversation keeps the policy it started with", async (t) => {
   const server = await mcpServer([DELETE_TOOL]);
   t.after(() => server.close());
   const { app } = await isolatedWorkbench(t, callingProvider(deleteCall), {}, {
-    prefix: "void-frozen-policy-",
+    prefix: "nomo-frozen-policy-",
   });
   const id = await confirmedConnector(app, server.url, "Fixture", allowAll);
   const session = await app.start("Delete it", "fixture");

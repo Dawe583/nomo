@@ -14,10 +14,8 @@ test("Stop does not release capacity until the original provider settles; shutdo
       return Response.json({ data: [{ id: "fixture" }] });
     calls++;
     await blocked; // Transport may ignore cancellation until it finishes.
-    return Response.json({
-      choices: [{ message: { role: "assistant", content: "Late answer" } }],
-    });
-  }, {}, { prefix: "void-stop-", beforeShutdown: release });
+    return Response.json({ choices: [{ message: { role: "assistant", content: "Late answer" }, finish_reason: "stop" }] });
+  }, {}, { prefix: "nomo-stop-", beforeShutdown: release });
   const session = await app.start("First", "fixture");
   app.cancel(session.id);
   assert.throws(() => app.send(session.id, "Second"), /not ready/);
@@ -57,10 +55,8 @@ test("background sessions queue behind the active run and drain after settlement
       return Response.json({ data: [{ id: "fixture" }] });
     calls++;
     await blocked;
-    return Response.json({
-      choices: [{ message: { role: "assistant", content: "Done" } }],
-    });
-  }, {}, { prefix: "void-background-", beforeShutdown: release });
+    return Response.json({ choices: [{ message: { role: "assistant", content: "Done" }, finish_reason: "stop" }] });
+  }, {}, { prefix: "nomo-background-", beforeShutdown: release });
   const first = await app.start("First", "fixture");
   const queued = await app.start(
     "Queued",
@@ -109,12 +105,10 @@ test("queued work keeps one run identity and retained prompt without restart dis
     });
     calls++;
     await blocked;
-    return Response.json({
-      choices: [{ message: { role: "assistant", content: "Done" } }],
-    });
+    return Response.json({ choices: [{ message: { role: "assistant", content: "Done" }, finish_reason: "stop" }] });
   };
   const f = await isolatedWorkbench(t, fetcher, {}, {
-    prefix: "void-queued-history-",
+    prefix: "nomo-queued-history-",
     beforeShutdown: release,
   });
   const root = f.root;
@@ -218,10 +212,8 @@ test("background queue is bounded and Stop removes only the selected queued sess
       return Response.json({ data: [{ id: "fixture" }] });
     calls++;
     await blocked;
-    return Response.json({
-      choices: [{ message: { role: "assistant", content: "Done" } }],
-    });
-  }, {}, { prefix: "void-queue-cap-", beforeShutdown: release });
+    return Response.json({ choices: [{ message: { role: "assistant", content: "Done" }, finish_reason: "stop" }] });
+  }, {}, { prefix: "nomo-queue-cap-", beforeShutdown: release });
   const active = await app.start("First", "fixture");
   const cap = (capabilities("local") as { maxQueuedRuns?: number })
     .maxQueuedRuns;

@@ -199,7 +199,7 @@ test("an unknown action, an unknown option and a missing session are refused by 
 });
 
 test("a machine with no workspace is refused, and none is created", async () => {
-  const directory = join(tmpdir(), "void-harness-no-workspace-" + Date.now());
+  const directory = join(tmpdir(), "nomo-harness-no-workspace-" + Date.now());
   const terminal = io();
   const code = await runHarnessCommand(["list", "--session", "s1"], terminal, {
     env: { NOMO_DATA_DIR: directory },

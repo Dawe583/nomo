@@ -1,7 +1,7 @@
 /**
  * The agent policy file: YAML in, validated agents and rules out.
  *
- * Hand written validation in the same style as `@void/policy/src/rules.ts`,
+ * Hand written validation in the same style as `@nomo/policy/src/rules.ts`,
  * because a validator that names the path in the file is what an operator can
  * act on. A load error is returned, never thrown: the caller denies with the
  * reason instead of crashing.

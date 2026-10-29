@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 
 import { parseInvocation, withDefaultTui } from "./index.ts";
 
-describe("@void/cli", () => {
+describe("@nomo/cli", () => {
   test("bare command and leading TUI flags default to the live workspace", () => {
     assert.deepEqual(withDefaultTui([]), ["tui"]);
     assert.deepEqual(withDefaultTui(["--once", "--view", "runs"]), [

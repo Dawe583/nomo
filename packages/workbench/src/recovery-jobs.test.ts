@@ -6,8 +6,8 @@ import {isolatedWorkbench} from "./test-fixture.ts";
 import {filterRows} from "./gui.ts";
 
 async function fixture(t:TestContext){
- const fetcher:typeof fetch=async url=>String(url).endsWith("/models")?Response.json({data:[{id:"fixture"}]}):Response.json({choices:[{message:{role:"assistant",content:"Done"}}]});
- const f=await isolatedWorkbench(t,fetcher,{},{prefix:"void-workbench-jobs-"});
+ const fetcher:typeof fetch=async url=>String(url).endsWith("/models")?Response.json({data:[{id:"fixture"}]}):Response.json({ choices: [{ message: { role: "assistant", content: "Done" }, finish_reason: "stop" }] });
+ const f=await isolatedWorkbench(t,fetcher,{},{prefix:"nomo-workbench-jobs-"});
  const session=await f.app.start("Test","fixture");await f.app.settled();
  return {directory:f.root,session,get app(){return f.app;},restart(reload=false){return f.restart({keepOpen:reload});}};
 }

@@ -46,7 +46,7 @@ function requestMeta(params: unknown): Record<string, unknown> {
     "io.modelcontextprotocol/protocolVersion": MCP_PROTOCOL_VERSION,
     "io.modelcontextprotocol/clientCapabilities": {},
     "io.modelcontextprotocol/clientInfo": {
-      name: "void-cloud",
+      name: "nomo-cloud",
       version: "0.1.0",
     },
   };

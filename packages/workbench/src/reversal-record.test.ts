@@ -34,33 +34,24 @@ async function governedSession(t: test.TestContext) {
           item.function.description.startsWith("void_workspace_write:"),
       );
       assert.ok(tool, "the profile must offer the document write tool");
-      return Response.json({
-        choices: [
-          {
-            message: {
-              role: "assistant",
-              content: null,
-              tool_calls: [
-                {
-                  id: "write-1",
-                  type: "function",
-                  function: {
-                    name: tool.function.name,
-                    arguments: JSON.stringify({ path: "plan.md", content: "Attributed." }),
-                  },
-                },
-              ],
-            },
+      return Response.json({ choices: [{ message: { role: "assistant",
+      content: null, tool_calls: [
+        {
+          id: "write-1",
+          type: "function",
+          function: {
+            name: tool.function.name,
+            arguments: JSON.stringify({ path: "plan.md", content: "Attributed." }),
           },
-        ],
-      });
+        },
+      ] }, finish_reason: "tool_calls" }] });
     }
     return Response.json({
-      choices: [{ message: { role: "assistant", content: "Written." } }],
+      choices: [{ message: { role: "assistant", content: "Written." }, finish_reason: "stop" }],
       usage: { total_tokens: 7 },
     });
   };
-  const f = await isolatedWorkbench(t, fetcher, {}, { prefix: "void-reversal-record-" });
+  const f = await isolatedWorkbench(t, fetcher, {}, { prefix: "nomo-reversal-record-" });
   const app = f.app;
   app.upsertAgent({
     id: PROFILE,

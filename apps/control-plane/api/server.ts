@@ -6,6 +6,7 @@ import {
   serverPermissionMode,
   DEFAULT_HTTP_PERMISSION_MODE,
 } from "../../../packages/workbench/src/gui.ts";
+import { createHash } from "node:crypto";
 import { createReadStream, existsSync } from "node:fs";
 import { stat } from "node:fs/promises";
 import {
@@ -14,7 +15,7 @@ import {
   type Server,
   type ServerResponse,
 } from "node:http";
-import { basename, extname, join, posix, relative, resolve } from "node:path";
+import { basename, extname, isAbsolute, join, posix, relative, resolve } from "node:path";
 import { homedir } from "node:os";
 import { envValue } from "../../../packages/ledger/src/env-compat.ts";
 import { fileURLToPath } from "node:url";
@@ -45,8 +46,37 @@ import {
   type LedgerFeedRecord,
 } from "../../../packages/ledger/src/feed.ts";
 import type { PublicKeyLookup } from "../../../packages/ledger/src/verify.ts";
+import type { AgentRunner } from "../../../packages/workbench/src/agent-runners/agent-runner.ts";
 import { Workbench } from "../../../packages/workbench/src/index.ts";
-import { normalizeProviderConfig } from "../../../packages/workbench/src/provider.ts";
+import {
+  isAllowedProjectWorkspacePath,
+  ProjectWorkspaceConflictError,
+  ProjectWorkspaceLimitError,
+} from "../../../packages/workbench/src/project-workspace.ts";
+import {
+  normalizeProviderConfig,
+  type ImageMimeType,
+  type Model,
+  type ModelImageInput,
+} from "../../../packages/workbench/src/provider.ts";
+import {
+  assertProviderDescriptorInManifest,
+  modelCapabilityDisclosure,
+} from "../../../packages/workbench/src/provider-catalog.ts";
+import type {
+  ProviderAdapterConfig,
+  ProviderAuthProfile,
+} from "../../../packages/workbench/src/provider-adapters/types.ts";
+import {
+  isStandardVertexOptions,
+  standardVertexBaseUrl,
+} from "../../../packages/workbench/src/provider-adapters/google-vertex-config.ts";
+import {
+  openAICompletion,
+  openAIError,
+  openAIModelList,
+  parseOpenAIChatRequest,
+} from "./openai-compatible.ts";
 import { authorizedRemote } from "./auth.ts";
 import { localApprovals } from "./local-approvals.ts";
 import { desktopSetup, importDesktopProvider } from "./desktop-setup.ts";
@@ -99,6 +129,8 @@ export type ControlPlaneOptions = {
   readonly replay?: ReplayCommandOptions;
   /** Test seam: a pre-configured Workbench replaces the default instance. */
   readonly workbench?: Workbench;
+  /** Trusted adapters for the default Workbench; an injected Workbench owns its own registry. */
+  readonly agentRunners?: readonly AgentRunner[];
   /** Per-server fleet event store; tests create many servers, so no module singleton. */
   readonly fleetEvents?: FleetEventStore;
 };
@@ -138,6 +170,9 @@ type RouteOptions = {
 const here = fileURLToPath(new URL(".", import.meta.url));
 const defaultWebRoot = resolve(here, "../web");
 const maxBodyBytes = 64 * 1024;
+const maxSessionBodyBytes = 2 * 1024 * 1024;
+const maxImageBytes = 1024 * 1024;
+const maxImagesPerMessage = 4;
 
 /**
  * Transport bounds for a session event stream. A subscriber that stops
@@ -321,25 +356,36 @@ export function createControlPlaneServer(
   // expressions in two files.
   const workbench =
     options.workbench ??
-    new Workbench({
-      ...env,
-      VOID_PERMISSION_MODE: serverPermissionMode(
-        envValue(env, "NOMO_PERMISSION_MODE") ?? DEFAULT_HTTP_PERMISSION_MODE,
-      ),
-    });
+    new Workbench(
+      {
+        ...env,
+        VOID_PERMISSION_MODE: serverPermissionMode(
+          envValue(env, "NOMO_PERMISSION_MODE") ?? DEFAULT_HTTP_PERMISSION_MODE,
+        ),
+      },
+      undefined,
+      { agentRunners: options.agentRunners },
+    );
   const fleetEventStore = options.fleetEvents ?? new FleetEventStore();
   const server = createServer((request, response) => {
+    const parsedRequestUrl = parseRequestUrl(request);
+    const localOnlyRequest = parsedRequestUrl !== null && (
+      isProjectWorkspaceRoutePath(parsedRequestUrl.pathname) ||
+      SESSION_IMAGE_ROUTE.test(parsedRequestUrl.pathname)
+    );
     if (
-      envValue(env, "NOMO_CONTROL_TOKEN")
-        ? !authorizedRemote(request, env)
-        : !isLocalRequest(request)
+      localOnlyRequest
+        ? !isLocalRequest(request)
+        : envValue(env, "NOMO_CONTROL_TOKEN")
+          ? !authorizedRemote(request, env)
+          : !isLocalRequest(request)
     ) {
       sendJson(response, 403, { error: "local_origin_required" });
       return;
     }
     void resolveVerifyKey(env)
       .then((verificationKey) =>
-        route(request, response, {
+        route(request, response, parsedRequestUrl, {
           ...options,
           env,
           webRoot,
@@ -401,9 +447,9 @@ export async function listenControlPlane(
 async function route(
   request: IncomingMessage,
   response: ServerResponse,
+  parsed: URL | null,
   options: RouteOptions,
 ): Promise<void> {
-  const parsed = parseRequestUrl(request);
   const desktopWebRoot = envValue(
     options.env,
     "NOMO_DESKTOP_WEB_ROOT",
@@ -417,6 +463,246 @@ async function route(
   const query = parsed.searchParams,
     wb = options.workbench;
   try {
+    if (isProjectWorkspaceRoutePath(parsed.pathname)) {
+      if (!isLocalRequest(request))
+        return sendJson(response, 403, { error: "local_origin_required" });
+      return handleProjectWorkspaceRoute(request, response, parsed, wb);
+    }
+    if (parsed.pathname === "/v1/models") {
+      if (request.method !== "GET") {
+        const error = openAIError(405, "Method not allowed.", "method_not_allowed");
+        return sendJson(response, error.status, error.body);
+      }
+      const state = await wb.providerState({ probeEnvironment: false });
+      return sendJson(
+        response,
+        200,
+        openAIModelList(state.models, state.providerId),
+      );
+    }
+    if (parsed.pathname === "/v1/chat/completions") {
+      if (request.method !== "POST") {
+        const error = openAIError(405, "Method not allowed.", "method_not_allowed");
+        return sendJson(response, error.status, error.body);
+      }
+      let rawBody: unknown;
+      try {
+        rawBody = await readJsonBody(request, maxSessionBodyBytes);
+      } catch (error) {
+        const tooLarge = error instanceof RequestBodyTooLarge;
+        return sendJson(
+          response,
+          tooLarge ? 413 : 400,
+          openAIError(
+            tooLarge ? 413 : 400,
+            tooLarge ? "The request body is too large." : "The request body is not valid JSON.",
+            tooLarge ? "body_too_large" : "invalid_json",
+            "invalid_request_error",
+          ).body,
+        );
+      }
+      const parsedRequest = parseOpenAIChatRequest(rawBody);
+      if (!parsedRequest.ok)
+        return sendJson(response, parsedRequest.status, parsedRequest.body);
+      if (
+        !parsedRequest.value.prompt.trim() ||
+        parsedRequest.value.prompt.length >
+          wb.harnessSettings().maxPromptCharacters
+      )
+        return sendJson(
+          response,
+          400,
+          openAIError(
+            400,
+            "The serialized conversation exceeds the Workbench prompt limit.",
+            "prompt_too_long",
+            "invalid_request_error",
+            "messages",
+          ).body,
+        );
+      const state = await wb.providerState({ probeEnvironment: false });
+      const model = parsedRequest.value.model ?? state.defaultModel ?? undefined;
+      if (!model)
+        return sendJson(
+          response,
+          503,
+          openAIError(
+            503,
+            "No Workbench model is configured.",
+            "model_not_configured",
+          ).body,
+        );
+      if (!state.models.some((candidate) => candidate.id === model))
+        return sendJson(
+          response,
+          404,
+          openAIError(
+            404,
+            "The requested model is not in the configured Workbench catalog.",
+            "model_not_found",
+            "invalid_request_error",
+            "model",
+          ).body,
+        );
+      if (!state.connected)
+        return sendJson(
+          response,
+          503,
+          openAIError(
+            503,
+            "No Workbench provider is connected.",
+            "provider_not_configured",
+          ).body,
+        );
+      let session;
+      let sessionId: string | undefined;
+      let disconnected =
+        request.aborted || response.destroyed || request.socket.destroyed;
+      let cancelRequested = false;
+      const cancelOnDisconnect = () => {
+        if (response.writableEnded) return;
+        disconnected = true;
+        if (cancelRequested || !sessionId) return;
+        cancelRequested = true;
+        try {
+          wb.cancel(sessionId);
+        } catch {
+          // The session may have been removed while the socket was closing.
+        }
+      };
+      const removeDisconnectHandlers = () => {
+        response.off("close", cancelOnDisconnect);
+        request.off("aborted", cancelOnDisconnect);
+        request.socket.off("close", cancelOnDisconnect);
+      };
+      response.once("close", cancelOnDisconnect);
+      request.once("aborted", cancelOnDisconnect);
+      request.socket.once("close", cancelOnDisconnect);
+      if (disconnected) {
+        removeDisconnectHandlers();
+        return;
+      }
+      try {
+        session = await wb.start(parsedRequest.value.prompt, model);
+        sessionId = session.id;
+        if (disconnected || response.destroyed || request.socket.destroyed)
+          cancelOnDisconnect();
+      } catch {
+        removeDisconnectHandlers();
+        return sendJson(
+          response,
+          503,
+          openAIError(503, "The Workbench run could not start.", "run_not_started").body,
+        );
+      }
+      let completed;
+      try {
+        completed = await wb.waitForRun(session.id);
+      } catch {
+        removeDisconnectHandlers();
+        if (!response.headersSent)
+          return sendJson(
+            response,
+            502,
+            openAIError(502, "The Workbench run failed.", "run_failed").body,
+          );
+        response.end();
+        return;
+      }
+      removeDisconnectHandlers();
+      if (response.destroyed) return;
+      if (completed.status !== "idle")
+        return sendJson(
+          response,
+          502,
+          openAIError(
+            502,
+            "The Workbench run did not complete successfully.",
+            "run_failed",
+          ).body,
+        );
+      const finalMessage = [...completed.events]
+        .reverse()
+        .find(
+          (event) =>
+            event.runId === completed.runId &&
+            event.kind === "assistant" &&
+            event.type === "message.completed" &&
+            event.payload?.toolCallsPresent !== true,
+        );
+      const content = finalMessage?.text ?? "";
+      const usageEvent = [...completed.events]
+        .reverse()
+        .find(
+          (event) =>
+            event.runId === completed.runId &&
+            event.kind === "usage" &&
+            event.payload?.source === "provider",
+        );
+      const usagePayload = usageEvent?.payload;
+      const usage = usagePayload &&
+          Number.isSafeInteger(usagePayload.prompt_tokens) &&
+          Number.isSafeInteger(usagePayload.completion_tokens) &&
+          Number.isSafeInteger(usagePayload.total_tokens)
+        ? {
+            prompt_tokens: usagePayload.prompt_tokens as number,
+            completion_tokens: usagePayload.completion_tokens as number,
+            total_tokens: usagePayload.total_tokens as number,
+          }
+        : undefined;
+      const completion = openAICompletion(
+        completed,
+        model,
+        content,
+        usage,
+      );
+      if (parsedRequest.value.stream) {
+        response.writeHead(200, {
+          "content-type": "text/event-stream",
+          "cache-control": "no-store",
+          "x-accel-buffering": "no",
+        });
+        const id = completion.id;
+        const created = completion.created;
+        response.write(`data: ${JSON.stringify({
+          id,
+          object: "chat.completion.chunk",
+          created,
+          model,
+          choices: [{ index: 0, delta: { role: "assistant" }, finish_reason: null }],
+          ...(parsedRequest.value.includeUsage ? { usage: null } : {}),
+        })}\n\n`);
+        if (content)
+          response.write(`data: ${JSON.stringify({
+            id,
+            object: "chat.completion.chunk",
+            created,
+            model,
+            choices: [{ index: 0, delta: { content }, finish_reason: null }],
+            ...(parsedRequest.value.includeUsage ? { usage: null } : {}),
+          })}\n\n`);
+        response.write(`data: ${JSON.stringify({
+          id,
+          object: "chat.completion.chunk",
+          created,
+          model,
+          choices: [{ index: 0, delta: {}, finish_reason: completion.choices[0]!.finish_reason }],
+          ...(parsedRequest.value.includeUsage ? { usage: null } : {}),
+        })}\n\n`);
+        if (parsedRequest.value.includeUsage)
+          response.write(`data: ${JSON.stringify({
+            id,
+            object: "chat.completion.chunk",
+            created,
+            model,
+            choices: [],
+            usage: completion.usage ?? null,
+          })}\n\n`);
+        response.end("data: [DONE]\n\n");
+        return;
+      }
+      return sendJson(response, 200, completion);
+    }
     const desktop =
       !!desktopWebRoot &&
       !controlToken &&
@@ -471,6 +757,81 @@ async function route(
         ack: options.fleetEvents.stopAck(stopRun[1]!),
         scope: "this process only",
       });
+    }
+    if (parsed.pathname === "/api/agent-runners") {
+      if (request.method !== "GET")
+        return sendJson(response, 405, { error: "method_not_allowed" });
+      return sendJson(response, 200, { runners: wb.agentRunnerCatalog() });
+    }
+    if (parsed.pathname === "/api/agent-runs/preview") {
+      if (request.method !== "POST")
+        return sendJson(response, 405, { error: "method_not_allowed" });
+      let body: unknown;
+      try {
+        body = await readJsonBody(request);
+      } catch {
+        return sendJson(response, 400, { error: "invalid_agent_run_preview" });
+      }
+      if (
+        !jsonObject(body) ||
+        Object.keys(body).some((key) =>
+          !["runnerId", "task", "profileId", "runnerProfileId"].includes(key)
+        ) ||
+        !nonEmptyString(body.runnerId) ||
+        body.runnerId.length > 256 ||
+        !nonEmptyString(body.task) ||
+        body.task.length > 32_000 ||
+        !nonEmptyString(body.profileId) ||
+        body.profileId.length > 256 ||
+        (body.runnerProfileId !== undefined &&
+          (!nonEmptyString(body.runnerProfileId) ||
+            body.runnerProfileId.length > 256))
+      )
+        return sendJson(response, 400, { error: "invalid_agent_run_preview" });
+      try {
+        return sendJson(
+          response,
+          201,
+          await wb.prepareAgentRun({
+            runnerId: body.runnerId,
+            task: body.task,
+            profileId: body.profileId,
+            ...(body.runnerProfileId === undefined
+              ? {}
+              : { runnerProfileId: body.runnerProfileId }),
+          }),
+        );
+      } catch {
+        return sendJson(response, 409, { error: "agent_run_preview_unavailable" });
+      }
+    }
+    if (parsed.pathname === "/api/agent-runs") {
+      if (request.method !== "POST")
+        return sendJson(response, 405, { error: "method_not_allowed" });
+      let body: unknown;
+      try {
+        body = await readJsonBody(request);
+      } catch {
+        return sendJson(response, 400, { error: "invalid_agent_run_consent" });
+      }
+      if (
+        !jsonObject(body) ||
+        Object.keys(body).length !== 2 ||
+        !nonEmptyString(body.consentId) ||
+        body.consentId.length > 256 ||
+        typeof body.consentDigest !== "string" ||
+        !/^sha256:[a-f0-9]{64}$/.test(body.consentDigest)
+      )
+        return sendJson(response, 400, { error: "invalid_agent_run_consent" });
+      try {
+        const session = await wb.startAgentRun({
+          consentId: body.consentId,
+          consentDigest: body.consentDigest,
+        });
+        return sendJson(response, 201, { session });
+      } catch {
+        return sendJson(response, 409, { error: "agent_run_consent_stale" });
+      }
     }
     if (request.method === "GET" && parsed.pathname === "/api/agents")
       return sendJson(response, 200, options.workbench.agents());
@@ -862,29 +1223,92 @@ async function route(
       message: error instanceof Error ? error.message : "Request failed.",
     });
   }
+  if (parsed.pathname === "/api/provider/model-capabilities") {
+    if (request.method !== "GET")
+      return sendJson(response, 405, { error: "method_not_allowed" });
+    const parameters = [...parsed.searchParams.entries()];
+    const descriptorId = parsed.searchParams.get("descriptorId");
+    const modelId = parsed.searchParams.get("modelId");
+    if (
+      parameters.length !== 2 ||
+      new Set(parameters.map(([key]) => key)).size !== 2 ||
+      parameters.some(([key]) => key !== "descriptorId" && key !== "modelId") ||
+      !nonEmptyString(descriptorId) ||
+      descriptorId.length > 512 ||
+      !nonEmptyString(modelId) ||
+      modelId.length > 512
+    )
+      return sendJson(response, 400, {
+        error: "invalid_model_capability_query",
+      });
+    const disclosure = modelCapabilityDisclosure(descriptorId, modelId);
+    if (!disclosure)
+      return sendJson(response, 404, {
+        error: "model_capabilities_unavailable",
+      });
+    return sendJson(response, 200, disclosure);
+  }
+  if (parsed.pathname === "/api/provider/probe-environment") {
+    if (request.method !== "POST")
+      return sendJson(response, 405, { error: "method_not_allowed" });
+    try {
+      return sendJson(
+        response,
+        200,
+        await options.workbench.providerState({ reconnectEnvironment: true }),
+      );
+    } catch (error) {
+      return sendRequestError(response, error, 400, {
+        error: "provider_unavailable",
+        message:
+          error instanceof Error ? error.message : "Provider unavailable",
+      });
+    }
+  }
   if (parsed.pathname === "/api/provider") {
     try {
       if (request.method === "GET")
-        return sendJson(response, 200, await options.workbench.providerState());
+        return sendJson(
+          response,
+          200,
+          await options.workbench.providerState({ probeEnvironment: false }),
+        );
       if (request.method === "DELETE") {
         options.workbench.clearProvider();
         return sendJson(response, 200, { ok: true });
       }
       if (request.method === "POST") {
-        const body = (await readJsonBody(request)) as {
-          baseUrl?: string;
-          apiKey?: string;
-          kind?: string;
-        } | null;
-        const { baseUrl, apiKey, kind } = body ?? {};
-        if (typeof baseUrl !== "string" || typeof apiKey !== "string")
+        const body = await readJsonBody(request);
+        if (!jsonObject(body))
           return sendJson(response, 400, {
             error: "invalid_provider",
-            message: "baseUrl and apiKey must be strings",
+            message: "Provider configuration must be an object.",
           });
-        const models = await options.workbench.configure(
-          normalizeProviderConfig({ baseUrl, apiKey, kind }),
-        );
+        const typed =
+          "providerId" in body ||
+          "transport" in body ||
+          "endpoint" in body ||
+          "auth" in body;
+        let models: readonly Model[];
+        if (typed) {
+          models = await options.workbench.configure(
+            parseTypedProviderConfig(body),
+          );
+        } else {
+          const { baseUrl, apiKey, kind } = body;
+          if (
+            typeof baseUrl !== "string" ||
+            typeof apiKey !== "string" ||
+            (kind !== undefined && typeof kind !== "string")
+          )
+            return sendJson(response, 400, {
+              error: "invalid_provider",
+              message: "baseUrl, apiKey, and optional kind must be strings",
+            });
+          models = await options.workbench.configure(
+            normalizeProviderConfig({ baseUrl, apiKey, kind }),
+          );
+        }
         return sendJson(response, 200, {
           connected: true,
           models,
@@ -1088,14 +1512,21 @@ async function route(
     if (request.method === "GET")
       return sendJson(response, 200, options.workbench.sessionPage(query));
     if (request.method === "POST") {
-      const body = (await readJsonBody(request)) as {
+      const body = (await readJsonBody(
+        request,
+        maxSessionBodyBytes,
+      )) as {
         prompt?: string;
         model?: string;
         project?: string;
         agent?: string;
         background?: boolean;
         idempotencyKey?: string;
+        images?: unknown;
       } | null;
+      const images = parseSessionImages(body?.images);
+      if (images === null)
+        return sendJson(response, 400, { error: "invalid_session_images" });
       if (
         typeof body?.prompt !== "string" ||
         (body.model !== undefined && typeof body.model !== "string") ||
@@ -1112,6 +1543,7 @@ async function route(
           body.project,
           body.agent,
           body.background,
+          images,
         );
         options.fleetEvents.record({
           kind: "run_started",
@@ -1128,6 +1560,23 @@ async function route(
         });
       }
     }
+  }
+  const sessionImageMatch = SESSION_IMAGE_ROUTE.exec(parsed.pathname);
+  if (request.method === "GET" && sessionImageMatch) {
+    const image = options.workbench.getImage(
+      sessionImageMatch[1]!,
+      sessionImageMatch[2]!,
+    );
+    if (!image)
+      return sendJson(response, 404, { error: "session_image_not_found" });
+    response.setHeader("cache-control", "no-store");
+    response.setHeader("content-type", image.mimeType);
+    response.setHeader("content-length", image.bytes.length);
+    response.setHeader("x-content-type-options", "nosniff");
+    response.setHeader("cross-origin-resource-policy", "same-origin");
+    response.statusCode = 200;
+    response.end(image.bytes);
+    return;
   }
   const sessionMatch = /^\/api\/sessions\/([a-f0-9-]+)$/.exec(parsed.pathname);
   if (sessionMatch) {
@@ -1161,14 +1610,26 @@ async function route(
       return sendJson(response, 200, { ok: true });
     }
     if (request.method === "POST") {
-      const body = (await readJsonBody(request)) as {
+      const body = (await readJsonBody(
+        request,
+        maxSessionBodyBytes,
+      )) as {
         prompt?: string;
         idempotencyKey?: string;
+        images?: unknown;
       } | null;
+      const images = parseSessionImages(body?.images);
+      if (images === null)
+        return sendJson(response, 400, { error: "invalid_session_images" });
       if (typeof body?.prompt !== "string")
         return sendJson(response, 400, { error: "invalid_message" });
       try {
-        options.workbench.send(id, body.prompt, body.idempotencyKey);
+        options.workbench.send(
+          id,
+          body.prompt,
+          body.idempotencyKey,
+          images,
+        );
         return sendJson(response, 202, { ok: true });
       } catch (error) {
         return sendJson(response, 409, {
@@ -1666,6 +2127,184 @@ function toApiApproval(record: PendingApproval): JsonObject {
   };
 }
 
+const SESSION_IMAGE_ROUTE =
+  /^\/api\/sessions\/([a-f0-9-]+)\/images\/([a-f0-9-]+)$/;
+
+function isProjectWorkspaceRoutePath(pathname: string): boolean {
+  return pathname === "/api/project-workspace" ||
+    pathname.startsWith("/api/project-workspace/");
+}
+
+class InvalidProjectWorkspaceRequest extends Error {}
+class UnsupportedProjectWorkspaceContentType extends Error {}
+
+async function handleProjectWorkspaceRoute(
+  request: IncomingMessage,
+  response: ServerResponse,
+  url: URL,
+  workbench: Workbench,
+): Promise<void> {
+  const pathname = url.pathname;
+  try {
+    if (pathname === "/api/project-workspace") {
+      if (request.method === "GET") {
+        const [summary, entries] = await Promise.all([
+          workbench.projectWorkspaceSummary(),
+          workbench.listProjectWorkspaces(),
+        ]);
+        return sendJson(response, 200, {
+          ...summary,
+          savedWorkspaces: entries.map((entry) => ({
+            ...entry,
+            requiresConfirmation:
+              entry.rootDigest !== summary.project?.rootDigest,
+          })),
+        });
+      }
+      if (request.method === "DELETE") {
+        await workbench.revokeProjectAccess();
+        return sendJson(response, 200, { revoked: true });
+      }
+      return sendJson(response, 405, { error: "method_not_allowed" });
+    }
+    if (pathname === "/api/project-workspace/access") {
+      if (request.method !== "POST")
+        return sendJson(response, 405, { error: "method_not_allowed" });
+      const body = await readProjectWorkspaceBody(request);
+      if (
+        !jsonObject(body) ||
+        Object.keys(body).length !== 1 ||
+        !nonEmptyString(body.path) ||
+        body.path.length > 4096 ||
+        !isAbsolute(body.path)
+      )
+        throw new InvalidProjectWorkspaceRequest();
+      await workbench.confirmProjectAccess(body.path, []);
+      const summary = await workbench.projectWorkspaceSummary();
+      if (!summary.project || !summary.workspace)
+        throw new Error("Confirmed project workspace is unavailable.");
+      return sendJson(response, 201, {
+        project: summary.project,
+        workspace: {
+          fileCount: summary.workspace.fileCount,
+          totalBytes: summary.workspace.totalBytes,
+        },
+      });
+    }
+    if (pathname === "/api/project-workspace/diff") {
+      if (request.method !== "GET")
+        return sendJson(response, 405, { error: "method_not_allowed" });
+      const query = [...url.searchParams.entries()];
+      const keys = query.map(([key]) => key);
+      if (new Set(keys).size !== keys.length)
+        throw new InvalidProjectWorkspaceRequest();
+      if (keys.length === 1 && keys[0] === "path") {
+        const path = url.searchParams.get("path")!;
+        if (!isAllowedProjectWorkspacePath(path))
+          throw new InvalidProjectWorkspaceRequest();
+        return sendJson(response, 200, await workbench.projectWorkspaceDiff(path));
+      }
+      if (keys.some((key) => key !== "cursor" && key !== "limit"))
+        throw new InvalidProjectWorkspaceRequest();
+      const rawLimit = url.searchParams.get("limit") ?? "50";
+      if (!/^[0-9]{1,3}$/.test(rawLimit))
+        throw new InvalidProjectWorkspaceRequest();
+      const limit = Number(rawLimit);
+      if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100)
+        throw new InvalidProjectWorkspaceRequest();
+      const review = await workbench.projectWorkspaceReviewSnapshot();
+      if (!review)
+        return sendJson(response, 409, { error: "project_workspace_not_confirmed" });
+      const status = review.status;
+      const snapshotDigest = createHash("sha256")
+        .update(JSON.stringify({ rootDigest: review.project.rootDigest, changes: status.changes }))
+        .digest("hex");
+      const cursor = url.searchParams.get("cursor");
+      let offset = 0;
+      if (cursor !== null) {
+        if (!/^[A-Za-z0-9_-]+$/.test(cursor))
+          throw new InvalidProjectWorkspaceRequest();
+        const decoded = Buffer.from(cursor, "base64url").toString("utf8");
+        if (Buffer.from(decoded).toString("base64url") !== cursor)
+          throw new InvalidProjectWorkspaceRequest();
+        const match = /^([a-f0-9]{64}):([0-9]+)$/.exec(decoded);
+        if (!match || match[1] !== snapshotDigest)
+          return sendJson(response, 409, { error: "project_workspace_snapshot_changed" });
+        offset = Number(match[2]);
+        if (!Number.isSafeInteger(offset) || offset > status.changes.length)
+          throw new InvalidProjectWorkspaceRequest();
+      }
+      const changes = status.changes.slice(offset, offset + limit);
+      const next = offset + changes.length;
+      return sendJson(response, 200, {
+        snapshotDigest,
+        files: changes.map(({ path, operation, beforeHash, afterHash, digest }) => ({
+          path,
+          operation,
+          beforeHash,
+          afterHash,
+          digest,
+        })),
+        nextCursor: next < status.changes.length
+          ? Buffer.from(`${snapshotDigest}:${next}`).toString("base64url")
+          : null,
+      });
+    }
+    if (pathname === "/api/project-workspace/apply") {
+      if (request.method !== "POST")
+        return sendJson(response, 405, { error: "method_not_allowed" });
+      const body = await readProjectWorkspaceBody(request);
+      if (
+        !jsonObject(body) ||
+        Object.keys(body).length !== 2 ||
+        !nonEmptyString(body.path) ||
+        !isAllowedProjectWorkspacePath(body.path) ||
+        typeof body.digest !== "string" ||
+        !/^[a-f0-9]{64}$/.test(body.digest)
+      )
+        throw new InvalidProjectWorkspaceRequest();
+      await workbench.applyProjectWorkspaceChange(body.path, body.digest);
+      return sendJson(response, 200, { applied: true, path: body.path, digest: body.digest });
+    }
+    if (pathname === "/api/project-workspace/workspace") {
+      if (request.method !== "DELETE")
+        return sendJson(response, 405, { error: "method_not_allowed" });
+      const body = await readProjectWorkspaceBody(request);
+      if (
+        !jsonObject(body) ||
+        Object.keys(body).length !== 1 ||
+        typeof body.rootDigest !== "string" ||
+        !/^sha256:[a-f0-9]{64}$/.test(body.rootDigest)
+      )
+        throw new InvalidProjectWorkspaceRequest();
+      await workbench.deleteProjectWorkspace(body.rootDigest);
+      return sendJson(response, 200, { deleted: true, rootDigest: body.rootDigest });
+    }
+    return sendJson(response, 404, { error: "not_found" });
+  } catch (error) {
+    if (error instanceof RequestBodyTooLarge || error instanceof ProjectWorkspaceLimitError)
+      return sendJson(response, 413, { error: "project_workspace_limit_exceeded" });
+    if (error instanceof ProjectWorkspaceConflictError)
+      return sendJson(response, 409, { error: "project_workspace_conflict" });
+    if (error instanceof UnsupportedProjectWorkspaceContentType)
+      return sendJson(response, 415, { error: "application_json_required" });
+    if (error instanceof InvalidProjectWorkspaceRequest || error instanceof SyntaxError)
+      return sendJson(response, 400, { error: "invalid_project_workspace_request" });
+    if (error instanceof Error)
+      return sendJson(response, 400, { error: "project_workspace_request_failed" });
+    return sendJson(response, 500, { error: "internal_error" });
+  }
+}
+
+async function readProjectWorkspaceBody(request: IncomingMessage): Promise<unknown> {
+  const contentType = request.headers["content-type"];
+  if (contentType === undefined || !applicationJsonContentType(contentType))
+    throw new UnsupportedProjectWorkspaceContentType();
+  const body = await readJsonBody(request);
+  if (body === null) throw new InvalidProjectWorkspaceRequest();
+  return body;
+}
+
 // Host validation blocks DNS rebinding; Origin and Fetch Metadata block hostile
 // browser pages. This is a local boundary, not authentication between local users.
 function isLocalRequest(request: IncomingMessage): boolean {
@@ -1768,7 +2407,7 @@ function parseBranchInput(value: unknown): {
 
 class RequestBodyTooLarge extends Error {
   constructor() {
-    super("request body exceeds 64 KiB");
+    super("request body exceeds the route limit");
     this.name = "RequestBodyTooLarge";
   }
 }
@@ -1786,7 +2425,214 @@ function sendRequestError(
   sendOnce(response, status, body);
 }
 
-async function readJsonBody(request: IncomingMessage): Promise<unknown> {
+function jsonObject(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function exactKeys(
+  value: Record<string, unknown>,
+  keys: readonly string[],
+): boolean {
+  return (
+    Object.keys(value).length === keys.length &&
+    keys.every((key) => Object.hasOwn(value, key))
+  );
+}
+
+function nonEmptyString(value: unknown): value is string {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+function stringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every((item) => typeof item === "string");
+}
+
+function finiteNumberRecord(
+  value: unknown,
+  keys: readonly string[],
+): boolean {
+  return (
+    jsonObject(value) &&
+    Object.keys(value).every((key) => keys.includes(key)) &&
+    Object.values(value).every(
+      (item) => typeof item === "number" && Number.isFinite(item),
+    )
+  );
+}
+
+function openRouterThreshold(value: unknown): boolean {
+  return (
+    (typeof value === "number" && Number.isFinite(value)) ||
+    finiteNumberRecord(value, ["p50", "p75", "p90", "p99"])
+  );
+}
+
+function openRouterProviderPreferences(value: unknown): boolean {
+  if (!jsonObject(value)) return false;
+  const allowed = [
+    "order",
+    "allow_fallbacks",
+    "require_parameters",
+    "data_collection",
+    "zdr",
+    "enforce_distillable_text",
+    "only",
+    "ignore",
+    "quantizations",
+    "sort",
+    "preferred_min_throughput",
+    "preferred_max_latency",
+    "max_price",
+  ];
+  if (Object.keys(value).some((key) => !allowed.includes(key))) return false;
+  for (const key of ["order", "only", "ignore", "quantizations"]) {
+    if (key in value && !stringArray(value[key])) return false;
+  }
+  for (const key of [
+    "allow_fallbacks",
+    "require_parameters",
+    "zdr",
+    "enforce_distillable_text",
+  ]) {
+    if (key in value && typeof value[key] !== "boolean") return false;
+  }
+  if (
+    "data_collection" in value &&
+    value.data_collection !== "allow" &&
+    value.data_collection !== "deny"
+  )
+    return false;
+  if (
+    "sort" in value &&
+    typeof value.sort !== "string" &&
+    (!jsonObject(value.sort) ||
+      Object.keys(value.sort).some(
+        (key) => key !== "by" && key !== "partition",
+      ) ||
+      Object.values(value.sort).some((item) => typeof item !== "string"))
+  )
+    return false;
+  for (const key of ["preferred_min_throughput", "preferred_max_latency"]) {
+    if (key in value && !openRouterThreshold(value[key])) return false;
+  }
+  if ("max_price" in value) {
+    const price = value.max_price;
+    if (
+      !jsonObject(price) ||
+      Object.keys(price).some(
+        (key) =>
+          !["prompt", "completion", "image", "audio", "request"].includes(key),
+      ) ||
+      Object.values(price).some(
+        (item) =>
+          !(typeof item === "string" && item.length > 0) &&
+          !(typeof item === "number" && Number.isFinite(item)),
+      )
+    )
+      return false;
+  }
+  return true;
+}
+
+function parseGatewayOptions(
+  value: unknown,
+  providerId: string,
+): ProviderAdapterConfig["gatewayOptions"] {
+  if (
+    providerId !== "openrouter" ||
+    !jsonObject(value) ||
+    !exactKeys(value, ["openrouter"]) ||
+    !jsonObject(value.openrouter)
+  )
+    throw new Error("Gateway options are only supported for OpenRouter.");
+  const openrouter = value.openrouter;
+  if (
+    Object.keys(openrouter).some(
+      (key) => !["referer", "title", "categories", "provider"].includes(key),
+    ) ||
+    ("referer" in openrouter && !nonEmptyString(openrouter.referer)) ||
+    ("title" in openrouter && !nonEmptyString(openrouter.title)) ||
+    ("categories" in openrouter && !stringArray(openrouter.categories)) ||
+    ("provider" in openrouter &&
+      !openRouterProviderPreferences(openrouter.provider))
+  )
+    throw new Error("OpenRouter gateway options are malformed.");
+  return value as NonNullable<ProviderAdapterConfig["gatewayOptions"]>;
+}
+
+function parseTypedProviderConfig(
+  body: Record<string, unknown>,
+): ProviderAdapterConfig {
+  const isVertex = body.transport === "google-vertex";
+  const expectedKeys = isVertex
+    ? ["providerId", "transport", "vertexOptions", "model", "auth"]
+    : ["providerId", "transport", "endpoint", "model", "auth"];
+  if (Object.hasOwn(body, "gatewayOptions"))
+    expectedKeys.push("gatewayOptions");
+  if (
+    !exactKeys(body, expectedKeys) ||
+    !nonEmptyString(body.providerId) ||
+    !nonEmptyString(body.transport) ||
+    !nonEmptyString(body.model) ||
+    !jsonObject(body.auth) ||
+    typeof body.auth.kind !== "string"
+  )
+    throw new Error("Typed provider descriptor is incomplete or malformed.");
+
+  const gatewayOptions = Object.hasOwn(body, "gatewayOptions")
+    ? parseGatewayOptions(body.gatewayOptions, body.providerId)
+    : undefined;
+  let auth: ProviderAuthProfile;
+  if (body.auth.kind === "api-key") {
+    if (
+      !exactKeys(body.auth, ["kind", "apiKey"]) ||
+      !nonEmptyString(body.auth.apiKey)
+    )
+      throw new Error("API-key authentication is incomplete or malformed.");
+    auth = { kind: "api-key", apiKey: body.auth.apiKey };
+  } else if (body.auth.kind === "aws-credential-chain") {
+    if (!exactKeys(body.auth, ["kind"]))
+      throw new Error("AWS credential-chain authentication is malformed.");
+    auth = { kind: "aws-credential-chain" };
+  } else if (body.auth.kind === "none") {
+    if (!exactKeys(body.auth, ["kind"]))
+      throw new Error("Unauthenticated provider descriptor is malformed.");
+    auth = { kind: "none" };
+  } else {
+    throw new Error("Provider authentication kind is not supported.");
+  }
+
+  let baseUrl: string;
+  let vertexOptions: ProviderAdapterConfig["vertexOptions"];
+  if (isVertex) {
+    if (!isStandardVertexOptions(body.vertexOptions))
+      throw new Error("Google Vertex Standard settings are incomplete or malformed.");
+    vertexOptions = body.vertexOptions;
+    const endpoint = standardVertexBaseUrl(vertexOptions.location);
+    if (!endpoint) throw new Error("Google Vertex location is invalid.");
+    baseUrl = endpoint;
+  } else {
+    if (!nonEmptyString(body.endpoint))
+      throw new Error("Typed provider endpoint is incomplete or malformed.");
+    baseUrl = body.endpoint;
+  }
+  const config: ProviderAdapterConfig = {
+    providerId: body.providerId,
+    transport: body.transport as ProviderAdapterConfig["transport"],
+    baseUrl,
+    model: body.model,
+    auth,
+    ...(vertexOptions ? { vertexOptions } : {}),
+    ...(gatewayOptions ? { gatewayOptions } : {}),
+  };
+  assertProviderDescriptorInManifest(config);
+  return config;
+}
+
+async function readJsonBody(
+  request: IncomingMessage,
+  maxBytes = maxBodyBytes,
+): Promise<unknown> {
   // Browsers block cross-origin application/json form posts behind a preflight,
   // but a text/plain form body can still be crafted to parse as JSON. Requiring
   // the explicit content type keeps the decision endpoint a fetch-only surface,
@@ -1799,7 +2645,7 @@ async function readJsonBody(request: IncomingMessage): Promise<unknown> {
   for await (const chunk of request) {
     const buffer = typeof chunk === "string" ? Buffer.from(chunk) : chunk;
     size += buffer.length;
-    if (size > maxBodyBytes) throw new RequestBodyTooLarge();
+    if (size > maxBytes) throw new RequestBodyTooLarge();
     chunks.push(buffer);
   }
   if (chunks.length === 0) return null;
@@ -1809,6 +2655,53 @@ async function readJsonBody(request: IncomingMessage): Promise<unknown> {
 function applicationJsonContentType(header: string): boolean {
   const [mediaType] = header.split(";", 2);
   return mediaType.trim().toLowerCase() === "application/json";
+}
+function isImageMimeType(value: unknown): value is ImageMimeType {
+  return (
+    value === "image/jpeg" ||
+    value === "image/png" ||
+    value === "image/webp"
+  );
+}
+
+function parseSessionImages(
+  value: unknown,
+): readonly ModelImageInput[] | null {
+  if (value === undefined) return [];
+  if (!Array.isArray(value) || value.length > maxImagesPerMessage) return null;
+  const images: ModelImageInput[] = [];
+  let totalBytes = 0;
+  for (const item of value) {
+    if (
+      !jsonObject(item) ||
+      Object.keys(item).some((key) => key !== "mimeType" && key !== "data") ||
+      !isImageMimeType(item.mimeType) ||
+      typeof item.data !== "string" ||
+      !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(item.data)
+    )
+      return null;
+    const bytes = Buffer.from(item.data, "base64");
+    if (!bytes.length || bytes.toString("base64") !== item.data) return null;
+    totalBytes += bytes.length;
+    if (totalBytes > maxImageBytes) return null;
+    const validSignature =
+      item.mimeType === "image/png"
+        ? bytes.length >= 8 &&
+          bytes.subarray(0, 8).equals(
+            Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+          )
+        : item.mimeType === "image/jpeg"
+          ? bytes.length >= 3 &&
+            bytes[0] === 0xff &&
+            bytes[1] === 0xd8 &&
+            bytes[2] === 0xff
+          : bytes.length >= 12 &&
+            bytes.subarray(0, 4).toString("ascii") === "RIFF" &&
+            bytes.subarray(8, 12).toString("ascii") === "WEBP";
+    if (!validSignature) return null;
+    images.push({ mimeType: item.mimeType, data: item.data });
+  }
+  return images;
 }
 
 function sendJson(
@@ -1840,7 +2733,7 @@ function sendOnce(
 function staticPath(webRoot: string, pathname: string): string | null {
   if (pathname.startsWith("/api/")) return null;
   const spa =
-    /^\/(chat(?:\/[^/]*)?|demo|overview|sessions|runs|documents|approvals|ledger|connections|models|settings|gallery)$/.test(
+    /^\/(chat(?:\/[^/]*)?|demo|overview|sessions|runs|documents|approvals|ledger|connections|models|settings|gallery|project-workspace)$/.test(
       pathname,
     );
   const legacySpa =

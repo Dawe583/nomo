@@ -97,41 +97,30 @@ function calling(fetcher: typeof fetch) {
     );
     if (harness && asked && !called) {
       called = true;
-      return Response.json({
-        choices: [
-          {
-            message: {
-              role: "assistant",
-              content: null,
-              tool_calls: [
-                {
-                  id: "harness1",
-                  type: "function",
-                  function: {
-                    name: harness.function!.name!,
-                    arguments: JSON.stringify({
-                      title: "the operator asked three times",
-                      content: "the operator asked for the same migration three times",
-                      reason: "it repeats, and the pattern is worth keeping",
-                    }),
-                  },
-                },
-              ],
-            },
+      return Response.json({ choices: [{ message: { role: "assistant",
+      content: null, tool_calls: [
+        {
+          id: "harness1",
+          type: "function",
+          function: {
+            name: harness.function!.name!,
+            arguments: JSON.stringify({
+              title: "the operator asked three times",
+              content: "the operator asked for the same migration three times",
+              reason: "it repeats, and the pattern is worth keeping",
+            }),
           },
-        ],
-      });
+        },
+      ] }, finish_reason: "tool_calls" }] });
     }
-    return Response.json({
-      choices: [{ message: { role: "assistant", content: "Done" } }],
-    });
+    return Response.json({ choices: [{ message: { role: "assistant", content: "Done" }, finish_reason: "stop" }] });
   };
 }
 
 test("the agent's proposal is inert until an operator approves it", async (t: TestContext) => {
   const fetcher = calling((undefined as unknown) as typeof fetch);
   const { app } = await isolatedWorkbench(t, fetcher, {}, {
-    prefix: "void-harness-tools-",
+    prefix: "nomo-harness-tools-",
   });
   const session = await app.start("Remember this", "fixture");
   await app.settled();

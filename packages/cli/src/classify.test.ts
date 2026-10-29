@@ -9,7 +9,7 @@ import {
   runClassifyCommand,
   type TranscriptCall,
 } from "./classify.ts";
-import { REGISTRY_DISCLAIMER } from "@void/registry";
+import { REGISTRY_DISCLAIMER } from "@nomo/registry";
 
 const s3Delete = "aws.s3.object.delete";
 const pgUpdate = "postgres.row.update";

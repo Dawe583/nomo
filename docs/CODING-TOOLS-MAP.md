@@ -56,25 +56,13 @@ validated at add/edit time (`packages/workbench/src/index.ts:1680-1681`,
 
 ### What the provider actually sees
 
-Tool names are replaced by positional aliases before the provider is called:
+Provider functions use positional names such as `tool_0` and `tool_1`.
+Workbench resolves those exact names first.
 
-```ts
-// packages/workbench/src/index.ts:2650-2660
-const mapping = new Map(listed.tools.map((tool, index) => [`tool_${index}`, tool]));
-const tools = listed.tools.map((tool, index) => ({
-  type: "function",
-  function: { name: `tool_${index}`, ... },
-}));
-```
-
-A returned call name that is not in `mapping` is refused outright:
-
-```ts
-// packages/workbench/src/index.ts:2739-2744
-const tool = mapping.get(call.function.name);
-const name = tool?.name;
-if (!name) throw new Error("Provider requested a tool outside the approved MCP catalog.");
-```
+Some providers return the exact value from a connector's configured mapping
+instead. Workbench accepts that alternate name only when exactly one tool in
+the confirmed catalog has the explicit mapping. Duplicate mappings remain
+ambiguous and fail closed; invented names never reach MCP dispatch.
 
 This is the load-bearing gate for question 2. See below.
 
@@ -646,6 +634,9 @@ the test picks the literal `"not_in_catalog"`, a name no `tool_${index}` alias
 can produce. The alias mapping it exercises is
 `packages/workbench/src/index.ts:2663-2665`; the refusal is
 `packages/workbench/src/index.ts:2752-2757`.
+
+`packages/workbench/src/connector.test.ts` also proves that one explicit mapping
+dispatches its catalog tool and duplicate mappings never reach the upstream.
 
 Two limits worth stating:
 

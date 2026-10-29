@@ -1,5 +1,10 @@
-import { setTimeout as delay } from "node:timers/promises";
-import { FREE_MODEL_BY_ORIGIN } from "./provider-defaults.ts";
+import { randomUUID } from "node:crypto";
+import type {
+  ProviderAdapterConfig,
+  ProviderClient,
+} from "./provider-adapters/types.ts";
+import { OpenAICompletionsAdapter } from "./provider-adapters/openai-completions.ts";
+import { AnthropicMessagesAdapter } from "./provider-adapters/anthropic-messages.ts";
 import {
   defaultHarnessSettings,
   type HarnessSettings,
@@ -26,6 +31,8 @@ export type ProviderConfig = {
   readonly baseUrl: string;
   readonly apiKey: string;
   readonly kind?: ProviderKind;
+  readonly providerId?: string;
+  readonly api?: string;
   /** A model to use when the provider cannot list one.
    *
    * Some OpenAI-compatible endpoints serve chat completions and answer the
@@ -38,12 +45,16 @@ export function normalizeProviderConfig(config: {
   readonly baseUrl: string;
   readonly apiKey: string;
   readonly kind?: string;
+  readonly providerId?: string;
+  readonly api?: string;
   readonly model?: string;
 }): ProviderConfig {
   return {
     baseUrl: config.baseUrl,
     apiKey: config.apiKey,
     kind: config.kind === "anthropic" ? "anthropic" : "compatible",
+    ...(config.providerId ? { providerId: config.providerId } : {}),
+    ...(config.api ? { api: config.api } : {}),
     ...(config.model ? { model: config.model } : {}),
   };
 }
@@ -72,8 +83,8 @@ export function normalizeProviderConfig(config: {
  * intentions while changing nothing an operator can act on, so it stays.
  */
 export async function catalogFor(
-  provider: CompatibleProvider,
-  config: ProviderConfig,
+  provider: ProviderClient,
+  config: ProviderConfig | ProviderAdapterConfig,
 ): Promise<readonly Model[]> {
   try {
     const models = await provider.models();
@@ -95,10 +106,21 @@ export type Model = {
   readonly inputPrice?: string;
   readonly outputPrice?: string;
   readonly capabilities?: readonly string[];
+  readonly maxTokens?: number;
 };
+export type ImageMimeType = "image/jpeg" | "image/png" | "image/webp";
+export type ModelImageInput = {
+  readonly mimeType: ImageMimeType;
+  /** Canonical standard-base64 image bytes; persisted inside encrypted workspace state. */
+  readonly data: string;
+};
+export type ModelImage = ModelImageInput & { readonly id: string };
+
 export type ModelMessage = {
   readonly role: "system" | "user" | "assistant" | "tool";
   readonly content: string | null;
+  /** Images are accepted on user messages only and are not copied into events. */
+  readonly images?: readonly ModelImage[];
   readonly tool_calls?: readonly ToolCall[];
   readonly tool_call_id?: string;
 };
@@ -109,6 +131,7 @@ export type ToolCall = {
 };
 export type ModelReply = {
   readonly message: ModelMessage;
+  readonly response_id?: string;
   readonly usage?: {
     prompt_tokens?: number;
     completion_tokens?: number;
@@ -116,7 +139,7 @@ export type ModelReply = {
   };
 };
 
-export class CompatibleProvider {
+export class CompatibleProvider implements ProviderClient {
   private readonly base: URL;
   private readonly config: ProviderConfig;
   private readonly request: typeof fetch;
@@ -127,6 +150,8 @@ export class CompatibleProvider {
    * patched. A partial merges over the defaults so a caller with no resolved
    * settings still gets NOMO's conservative ones. */
   private readonly resolveSettings: () => HarnessSettings;
+  private readonly completions: OpenAICompletionsAdapter;
+  private readonly anthropic: AnthropicMessagesAdapter;
   constructor(
     config: ProviderConfig,
     request: typeof fetch = fetch,
@@ -165,12 +190,59 @@ export class CompatibleProvider {
       throw new Error(
         "Provider URL cannot contain credentials or query parameters.",
       );
+    this.completions = new OpenAICompletionsAdapter({
+      origin: this.base.origin,
+      primeInferenceUsage: this.config.providerId === "prime-inference",
+      resolveSettings: this.resolveSettings,
+      response: (path, body, signal) => this.response(path, body, signal),
+      decode: (response, signal) => this.decode(response, signal),
+      streamReply: (response, signal, onDelta) => this.streamReply(response, signal, onDelta),
+    });
+    this.anthropic = new AnthropicMessagesAdapter({
+      send: (body, signal) => this.json("messages", body, signal),
+      stream: (body, signal) => this.response("messages", body, signal, "text/event-stream"),
+      redact: text => this.redact(text),
+      apiKey: this.config.apiKey,
+      resolveSettings: this.resolveSettings,
+    });
   }
   async models(): Promise<readonly Model[]> {
-    const body = await this.json("models");
-    if (!Array.isArray(body.data))
-      throw new Error("Provider returned an invalid model catalog.");
-    return body.data
+    const anthropicModelsEndpoint =
+      this.config.kind === "anthropic" &&
+      this.base.origin === "https://api.anthropic.com" &&
+      this.base.pathname === "/v1/";
+    const catalog: unknown[] = [];
+    const cursors = new Set<string>();
+    let afterId: string | undefined;
+    for (;;) {
+      let path = "models";
+      if (anthropicModelsEndpoint) {
+        const query = new URLSearchParams({ limit: "1000" });
+        if (afterId) query.set("after_id", afterId);
+        path += `?${query}`;
+      }
+      const body = await this.json(path);
+      if (!Array.isArray(body.data))
+        throw new Error("Provider returned an invalid model catalog.");
+      if (!anthropicModelsEndpoint) return this.modelsFrom(body.data);
+      for (const model of body.data) catalog.push(model);
+      if (typeof body.has_more !== "boolean")
+        throw new Error("Provider returned an invalid model catalog.");
+      if (!body.has_more) break;
+      const lastId = body.last_id;
+      if (
+        typeof lastId !== "string" ||
+        !lastId.trim() ||
+        cursors.has(lastId)
+      )
+        throw new Error("Provider returned an invalid model catalog.");
+      cursors.add(lastId);
+      afterId = lastId;
+    }
+    return this.modelsFrom(catalog);
+  }
+  private modelsFrom(data: readonly unknown[]): readonly Model[] {
+    return data
       .filter(
         (
           model: unknown,
@@ -179,6 +251,7 @@ export class CompatibleProvider {
           model !== null &&
           "id" in model &&
           typeof model.id === "string" &&
+          model.id.trim().length > 0 &&
           (!("type" in model) ||
             model.type === "language" ||
             (this.config.kind === "anthropic" && model.type === "model")),
@@ -198,194 +271,8 @@ export class CompatibleProvider {
     onDelta?: (text: string) => void | Promise<void>,
   ): Promise<ModelReply> {
     if (this.config.kind === "anthropic")
-      return this.anthropic(model, messages, tools, signal);
-    signal = AbortSignal.any([signal, AbortSignal.timeout(60000)]);
-    const settings = this.resolveSettings();
-    const body = {
-      model,
-      messages,
-      ...(tools.length ? { tools } : {}),
-      max_tokens: settings.maxOutputTokens,
-      stream: !!onDelta,
-      ...(onDelta ? { stream_options: { include_usage: true } } : {}),
-    };
-    let response: Response;
-    for (let attempt = 0; ; attempt++) {
-      try {
-        response = await this.response("chat/completions", body, signal);
-        break;
-      } catch (error) {
-        // Only retry explicit transient rejection of the free model this origin
-        // serves, before any reply or tool dispatch. Nothing about a model the
-        // operator typed makes it free, so an unknown model is never retried.
-        // Never substitute a paid model or replay a stream.
-        if (
-          FREE_MODEL_BY_ORIGIN[this.base.origin] !== model ||
-          attempt >= settings.retryAttempts - 1 ||
-          signal.aborted ||
-          !(error instanceof ProviderRequestError) ||
-          ![429, 502, 503, 504].includes(error.status) ||
-          (error.retryAfter ?? 0) > 5
-        )
-          throw error;
-        await delay(
-          Math.min(
-            (error.retryAfter ?? attempt + 1) * settings.retryBaseDelayMs,
-            settings.retryMaxDelayMs,
-          ),
-          undefined,
-          { signal },
-        );
-      }
-    }
-    if (response.headers.get("content-type")?.includes("text/event-stream"))
-      return this.streamReply(response, signal, onDelta);
-    const decoded = await this.decode(response);
-    const choice = decoded.choices?.[0];
-    if (
-      choice?.finish_reason === "length" ||
-      choice?.finish_reason === "content_filter"
-    )
-      throw new Error(
-        "Provider response was truncated. No tools were executed.",
-      );
-    const message = choice?.message;
-    if (
-      message?.role !== "assistant" ||
-      (message.content !== null &&
-        typeof message.content !== "string" &&
-        message.content !== undefined)
-    )
-      throw new Error("Provider returned an invalid response.");
-    if (
-      message.tool_calls !== undefined &&
-      (!Array.isArray(message.tool_calls) ||
-        !message.tool_calls.every(
-          (call: ToolCall) =>
-            typeof call.id === "string" &&
-            call.type === "function" &&
-            typeof call.function?.name === "string" &&
-            typeof call.function?.arguments === "string",
-        ))
-    )
-      throw new Error("Provider returned invalid tool calls.");
-    if (!message.content?.trim() && !message.tool_calls?.length)
-      throw new Error("Provider returned no answer. Retry the response.");
-    return {
-      message: {
-        role: "assistant",
-        content: message.content ?? null,
-        ...(message.tool_calls ? { tool_calls: message.tool_calls } : {}),
-      },
-      usage: decoded.usage,
-    };
-  }
-  private async anthropic(
-    model: string,
-    messages: readonly ModelMessage[],
-    tools: readonly unknown[],
-    signal: AbortSignal,
-  ): Promise<ModelReply> {
-    const converted: Array<{ role: string; content: unknown }> = [];
-    for (const m of messages.filter((item) => item.role !== "system")) {
-      if (m.role === "tool") {
-        const block = {
-          type: "tool_result",
-          tool_use_id: m.tool_call_id,
-          content: m.content ?? "",
-        };
-        const previous = converted.at(-1);
-        if (previous?.role === "user" && Array.isArray(previous.content))
-          previous.content.push(block);
-        else converted.push({ role: "user", content: [block] });
-      } else if (m.tool_calls?.length)
-        converted.push({
-          role: "assistant",
-          content: [
-            ...(m.content ? [{ type: "text", text: m.content }] : []),
-            ...m.tool_calls.map((call) => ({
-              type: "tool_use",
-              id: call.id,
-              name: call.function.name,
-              input: JSON.parse(call.function.arguments) as unknown,
-            })),
-          ],
-        });
-      else converted.push({ role: m.role, content: m.content ?? "" });
-    }
-    const body = await this.json(
-      "messages",
-      {
-        model,
-        max_tokens: this.resolveSettings().maxOutputTokens,
-        system: messages
-          .filter((m) => m.role === "system")
-          .map((m) => m.content)
-          .join("\n"),
-        messages: converted,
-        ...(tools.length
-          ? {
-              tools: tools.map((value) => {
-                const tool = value as {
-                  function: {
-                    name: string;
-                    description: string;
-                    parameters: unknown;
-                  };
-                };
-                return {
-                  name: tool.function.name,
-                  description: tool.function.description,
-                  input_schema: tool.function.parameters,
-                };
-              }),
-            }
-          : {}),
-      },
-      signal,
-    );
-    const result = body as unknown as {
-      content?: Array<{
-        type: string;
-        text?: string;
-        id?: string;
-        name?: string;
-        input?: unknown;
-      }>;
-      usage?: { input_tokens?: number; output_tokens?: number };
-    };
-    if (!Array.isArray(result.content))
-      throw new Error("Provider returned an invalid Anthropic response.");
-    const calls: ToolCall[] = result.content
-      .filter((b) => b.type === "tool_use")
-      .map((b) => {
-        if (!b.id || !b.name || !b.input || typeof b.input !== "object")
-          throw new Error("Invalid Anthropic tool call.");
-        return {
-          id: b.id,
-          type: "function",
-          function: { name: b.name, arguments: JSON.stringify(b.input) },
-        };
-      });
-    return {
-      message: {
-        role: "assistant",
-        content: result.content
-          .filter((b) => b.type === "text")
-          .map((b) => b.text ?? "")
-          .join("\n"),
-        ...(calls.length ? { tool_calls: calls } : {}),
-      },
-      usage: result.usage
-        ? {
-            prompt_tokens: result.usage.input_tokens,
-            completion_tokens: result.usage.output_tokens,
-            total_tokens:
-              (result.usage.input_tokens ?? 0) +
-              (result.usage.output_tokens ?? 0),
-          }
-        : undefined,
-    };
+      return this.anthropic.complete(model, messages, tools, signal, onDelta);
+    return this.completions.complete(model, messages, tools, signal, onDelta);
   }
   redact(text: string): string {
     return this.config.apiKey
@@ -415,6 +302,14 @@ export class CompatibleProvider {
       emission = hold ? emission.slice(-hold) : "";
       if (visible) await onDelta?.(visible);
     };
+    const appendContent = async (text: string) => {
+      content += text;
+      if (content.length > 2_000_000)
+        throw new Error("Provider response exceeded the supported size.");
+      await emit(text);
+    };
+    let legacyFunctionCall = false;
+    let finishReason: string | undefined;
     let usage: ModelReply["usage"];
     const calls = new Map<number, ToolCall>();
     const consume = async (frame: string) => {
@@ -424,6 +319,7 @@ export class CompatibleProvider {
         .map((line) => line.slice(5).trimStart())
         .join("\n");
       if (!raw) return;
+      if (terminal) throw new Error("Provider returned data after completion.");
       if (raw === "[DONE]") {
         terminal = true;
         return;
@@ -440,23 +336,48 @@ export class CompatibleProvider {
         (item: { index?: number }) => (item.index ?? 0) === 0,
       );
       if (!choice) return;
-      if (
-        choice.finish_reason === "length" ||
-        choice.finish_reason === "content_filter"
-      )
-        throw new Error(
-          "Provider response was truncated. No tools were executed.",
-        );
-      if (choice.finish_reason) finish = true;
+      if (finish) throw new Error("Provider returned data after completion.");
+      const chunkFinishReason = choice.finish_reason;
+      if (chunkFinishReason === "length" || chunkFinishReason === "content_filter")
+        throw new Error(chunkFinishReason === "content_filter" ? "Provider response was blocked by the content filter; no answer or tools were returned." : "Provider response was truncated. No tools were executed.");
+      if (chunkFinishReason !== undefined && chunkFinishReason !== null) {
+        if (
+          chunkFinishReason !== "stop" &&
+          chunkFinishReason !== "tool_calls" &&
+          chunkFinishReason !== "function_call"
+        ) throw new Error("Provider returned an invalid completion status.");
+        finish = true;
+        finishReason = chunkFinishReason;
+      }
       const delta = choice.delta;
       if (!delta) return;
-      if (typeof delta.content === "string") {
-        content += delta.content;
-        if (content.length > 2_000_000)
-          throw new Error("Provider response exceeded the supported size.");
-        await emit(delta.content);
+      if (typeof delta.content === "string") await appendContent(delta.content);
+      if (typeof delta.refusal === "string") await appendContent(delta.refusal);
+      const functionDelta = delta.function_call;
+      if (functionDelta !== undefined && functionDelta !== null) {
+        if (
+          typeof functionDelta !== "object" ||
+          Array.isArray(functionDelta) ||
+          (functionDelta.name !== undefined && typeof functionDelta.name !== "string") ||
+          (functionDelta.arguments !== undefined && typeof functionDelta.arguments !== "string") ||
+          (calls.size > 0 && !legacyFunctionCall)
+        ) throw new Error("Provider returned invalid tool stream data.");
+        const previous = calls.get(0);
+        const args = (previous?.function.arguments ?? "") + (functionDelta.arguments ?? "");
+        if (args.length > 1_000_000)
+          throw new Error("Provider returned invalid tool stream data.");
+        calls.set(0, {
+          id: previous?.id ?? `call_${randomUUID()}`,
+          type: "function",
+          function: {
+            name: (previous?.function.name ?? "") + (functionDelta.name ?? ""),
+            arguments: args,
+          },
+        });
+        legacyFunctionCall = true;
       }
       for (const part of delta.tool_calls ?? []) {
+        if (legacyFunctionCall) throw new Error("Provider returned invalid tool stream data.");
         if (!Number.isInteger(part.index) || part.index < 0 || part.index > 31)
           throw new Error("Provider returned invalid tool stream index.");
         const previous = calls.get(part.index);
@@ -483,7 +404,17 @@ export class CompatibleProvider {
     try {
       while (true) {
         signal.throwIfAborted();
-        const { value, done } = await reader.read();
+        let value: Uint8Array | undefined;
+        let done: boolean;
+        try {
+          const result = await reader.read();
+          value = result.value;
+          done = result.done;
+        } catch (error) {
+          if (error instanceof DOMException && error.name === "TimeoutError")
+            throw new Error("Provider request timed out.");
+          throw error;
+        }
         pending += decoder.decode(value, { stream: !done });
         pending = pending.replace(/\r\n/g, "\n");
         if (pending.length > 2_000_000)
@@ -501,8 +432,10 @@ export class CompatibleProvider {
         throw new Error(
           "Provider stream ended before completion. Retry the response.",
         );
-      if (calls.size && !finish)
-        throw new Error("Provider tool stream ended without a finish reason.");
+      if (legacyFunctionCall && finishReason !== "function_call")
+        throw new Error("Provider returned an invalid completion status.");
+      if (!finish)
+        throw new Error("Provider stream ended without a finish reason.");
       const toolCalls = [...calls.entries()]
         .sort(([a], [b]) => a - b)
         .map(([, call]) => {
@@ -533,7 +466,7 @@ export class CompatibleProvider {
       reader.releaseLock();
     }
   }
-  private async response(path: string, body?: unknown, signal?: AbortSignal) {
+  private async response(path: string, body?: unknown, signal?: AbortSignal, accept?: string) {
     let response: Response;
     try {
       response = await this.request(new URL(path, this.base), {
@@ -548,6 +481,7 @@ export class CompatibleProvider {
               ? { authorization: `Bearer ${this.config.apiKey}` }
               : {}),
           "content-type": "application/json",
+          ...(accept ? { accept } : {}),
         },
         ...(body === undefined ? {} : { body: JSON.stringify(body) }),
         redirect: "error",
@@ -555,11 +489,19 @@ export class CompatibleProvider {
           ? AbortSignal.any([signal, AbortSignal.timeout(60000)])
           : AbortSignal.timeout(15000),
       });
-    } catch {
+    } catch (error) {
+      if (signal?.aborted) {
+        if (
+          signal.reason instanceof DOMException &&
+          signal.reason.name === "TimeoutError"
+        )
+          throw new Error("Provider request timed out.");
+        throw new Error("Session cancelled.");
+      }
+      if (error instanceof DOMException && error.name === "TimeoutError")
+        throw new Error("Provider request timed out.");
       throw new Error(
-        signal?.aborted
-          ? "Session cancelled."
-          : "Provider connection failed. Check its endpoint and availability.",
+        "Provider connection failed. Check its endpoint and availability.",
       );
     }
     if (!response.ok) {
@@ -593,18 +535,30 @@ export class CompatibleProvider {
     return response;
   }
   private async json(path: string, body?: unknown, signal?: AbortSignal) {
-    return this.decode(await this.response(path, body, signal));
+    return this.decode(await this.response(path, body, signal), signal);
   }
-  private async decode(response: Response) {
+  private async decode(response: Response, signal?: AbortSignal) {
     // Provider JSON is untrusted. Runtime validation below narrows the fields
     // consumed by the workbench without exposing provider error payloads.
     try {
       return (await response.json()) as {
         data?: unknown;
+        has_more?: unknown;
+        last_id?: unknown;
         choices?: Array<{ message?: ModelMessage; finish_reason?: string }>;
         usage?: ModelReply["usage"];
       };
-    } catch {
+    } catch (error) {
+      if (signal?.aborted) {
+        if (
+          signal.reason instanceof DOMException &&
+          signal.reason.name === "TimeoutError"
+        )
+          throw new Error("Provider request timed out.");
+        throw new Error("Session cancelled.");
+      }
+      if (error instanceof DOMException && error.name === "TimeoutError")
+        throw new Error("Provider request timed out.");
       throw new Error("Provider returned invalid JSON.");
     }
   }

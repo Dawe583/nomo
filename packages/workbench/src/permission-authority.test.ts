@@ -9,7 +9,7 @@ import { assertIsolated, isolatedWorkbench } from "./test-fixture.ts";
 import type { FixtureContext } from "./test-fixture.ts";
 
 const models = () => Response.json({ data: [{ id: "fixture" }] });
-const complete = (text = "Done") => Response.json({ choices: [{ message: { role: "assistant", content: text } }] });
+const complete = (text = "Done") => Response.json({ choices: [{ message: { role: "assistant", content: text }, finish_reason: "stop" }] });
 
 async function configured(env: Record<string, string>, fetcher: typeof fetch = async (url) => String(url).endsWith("/models") ? models() : complete()) {
   const app = new Workbench(env, fetcher);
@@ -25,7 +25,7 @@ async function isolated(
   t: FixtureContext,
   extraEnv: Record<string, string>,
   fetcher: typeof fetch = async (url) => String(url).endsWith("/models") ? models() : complete(),
-  prefix = "void-permission-",
+  prefix = "nomo-permission-",
 ) {
   const { app } = await isolatedWorkbench(t, fetcher, extraEnv, {
     baseUrl: "https://fixture.test/v1",
@@ -46,7 +46,7 @@ test("read-only and plan modes block direct document mutation", async (t) => {
 });
 test("read-only tool catalog exposes only read tools for plan and read-only modes", async (t) => {
   for (const mode of ["plan", "read-only"] as const) {
-    const app = await isolated(t, { NOMO_PERMISSION_MODE: mode }, undefined, "void-permission-catalog-");
+    const app = await isolated(t, { NOMO_PERMISSION_MODE: mode }, undefined, "nomo-permission-catalog-");
     const session = await app.start("Inspect only", "fixture");
     await app.settled();
     const names = app.availableTools().tools.map((tool) => tool.name);
@@ -63,10 +63,10 @@ test("a crafted model write call is refused before dispatch in read-only mode", 
     if (turn === 1) {
       const body = JSON.parse(String(options?.body));
       const write = body.tools.find((item: { function: { description: string } }) => item.function.description.startsWith("void_workspace_write:"));
-      return Response.json({ choices: [{ message: { role: "assistant", tool_calls: [{ id: "write-1", type: "function", function: { name: write.function.name, arguments: JSON.stringify({ path: "owned", content: "owned" }) } }] } }] });
+      return Response.json({ choices: [{ message: { role: "assistant", tool_calls: [{ id: "write-1", type: "function", function: { name: write.function.name, arguments: JSON.stringify({ path: "owned", content: "owned" }) } }] }, finish_reason: "tool_calls" }] });
     }
     return complete();
-  }, "void-permission-model-");
+  }, "nomo-permission-model-");
   const session = await app.start("Directly call the write tool", "fixture");
   await app.settled();
   assert.ok(app.get(session.id));
@@ -75,7 +75,7 @@ test("a crafted model write call is refused before dispatch in read-only mode", 
 });
 
 test("read-only mode refuses recovery apply and undo mutations", async (t) => {
-  const directory = await mkdtemp(join(tmpdir(), "void-permission-recovery-"));
+  const directory = await mkdtemp(join(tmpdir(), "nomo-permission-recovery-"));
   const normal = await configured({ NOMO_DATA_DIR: directory, NOMO_PERMISSION_MODE: "normal" });
   const session = await normal.start("Create a document", "fixture");
   await normal.settled();
@@ -90,7 +90,7 @@ test("read-only mode refuses recovery apply and undo mutations", async (t) => {
 });
 
 test("branch document snapshot obeys the server permission mode", async (t) => {
-  const directory = await mkdtemp(join(tmpdir(), "void-permission-branch-"));
+  const directory = await mkdtemp(join(tmpdir(), "nomo-permission-branch-"));
   const normal = await configured({ NOMO_DATA_DIR: directory, NOMO_PERMISSION_MODE: "normal" });
   const session = await normal.start("Create a document", "fixture");
   await normal.settled();
@@ -127,7 +127,7 @@ test("the two permission defaults are explicit and differ by surface", async (t)
   // not through a hard-coded literal that can drift from them.
   assert.equal(serverPermissionMode(undefined), DEFAULT_HTTP_PERMISSION_MODE);
   assert.equal(serverPermissionMode(undefined), "read-only");
-  const directory = await mkdtemp(join(tmpdir(), "void-permission-default-"));
+  const directory = await mkdtemp(join(tmpdir(), "nomo-permission-default-"));
   t.after(async () => { await rm(directory, { recursive: true, force: true }); });
   const app = new Workbench({ NOMO_DATA_DIR: directory });
   assertIsolated(directory, { NOMO_DATA_DIR: directory });

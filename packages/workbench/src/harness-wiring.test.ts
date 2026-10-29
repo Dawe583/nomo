@@ -14,7 +14,7 @@ import { HARNESS_SETTINGS } from "./harness-settings.ts";
 
 const models = () => Response.json({ data: [{ id: "fixture" }] });
 const answer = () =>
-  Response.json({ choices: [{ message: { role: "assistant", content: "Done" } }] });
+  Response.json({ choices: [{ message: { role: "assistant", content: "Done" }, finish_reason: "stop" }] });
 
 /** A provider that always asks for one tool call, so a run cannot finish on its
  * own and the turn bound is what ends it. */
@@ -23,26 +23,17 @@ function toolCallLoop(calls: { count: number }) {
     if (String(url).endsWith("/models")) return models();
     calls.count++;
     const body = JSON.parse(String(init?.body));
-    return Response.json({
-      choices: [
-        {
-          message: {
-            role: "assistant",
-            content: null,
-            tool_calls: [
-              {
-                id: `call-${calls.count}`,
-                type: "function",
-                function: {
-                  name: body.tools[0].function.name,
-                  arguments: "{}",
-                },
-              },
-            ],
-          },
+    return Response.json({ choices: [{ message: { role: "assistant",
+    content: null, tool_calls: [
+      {
+        id: `call-${calls.count}`,
+        type: "function",
+        function: {
+          name: body.tools[0].function.name,
+          arguments: "{}",
         },
-      ],
-    });
+      },
+    ] }, finish_reason: "tool_calls" }] });
   };
 }
 

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { NVIDIA_URL } from "./provider-defaults.ts";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -58,8 +58,8 @@ test("provider rejects direct OpenAI hosts and never echoes upstream error bodie
 });
 
 test("migrates legacy generic provider state to compatible and retires the legacy default model", async () => {
-  const dir = await mkdtemp(join(tmpdir(), "void-provider-migration-"));
-  const bare = await mkdtemp(join(tmpdir(), "void-provider-migration-bare-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-provider-migration-"));
+  const bare = await mkdtemp(join(tmpdir(), "nomo-provider-migration-bare-"));
   const state = (catalog: Array<{ id: string; name: string }>) => ({
     preferences: { defaultModel: "muse-spark-1.3-contributor-free" },
     config: {
@@ -121,8 +121,8 @@ test("migrates legacy generic provider state to compatible and retires the legac
   await rm(bare, { recursive: true, force: true });
 });
 
-test("model tool calls cross a real VOID proxy and produce a ledger", async (t) => {
-  const dir = await mkdtemp(join(tmpdir(), "void-agent-beta-"));
+test("model tool calls cross a real NOMO proxy and produce a ledger", async (t) => {
+  const dir = await mkdtemp(join(tmpdir(), "nomo-agent-beta-"));
   let turn = 0;
   const fetcher: typeof fetch = async (url, options) => {
     assert.equal(
@@ -142,42 +142,33 @@ test("model tool calls cross a real VOID proxy and produce a ledger", async (t) 
         (item: { function: { description: string } }) =>
           item.function.description.startsWith("void_workspace_write:"),
       );
-      return reply({
-        choices: [
-          {
-            message: {
-              role: "assistant",
-              content: null,
-              tool_calls: [
-                {
-                  id: "document1",
-                  type: "function",
-                  function: {
-                    name: document.function.name,
-                    arguments: JSON.stringify({
-                      path: "mixed.md",
-                      content: "Managed and stdio in one session.",
-                    }),
-                  },
-                },
-                {
-                  id: "call1",
-                  type: "function",
-                  function: {
-                    name: tool.function.name,
-                    arguments: JSON.stringify({ text: "fixture echo" }),
-                  },
-                },
-              ],
-            },
+      return reply({ choices: [{ message: { role: "assistant",
+      content: null, tool_calls: [
+        {
+          id: "document1",
+          type: "function",
+          function: {
+            name: document.function.name,
+            arguments: JSON.stringify({
+              path: "mixed.md",
+              content: "Managed and stdio in one session.",
+            }),
           },
-        ],
-      });
+        },
+        {
+          id: "call1",
+          type: "function",
+          function: {
+            name: tool.function.name,
+            arguments: JSON.stringify({ text: "fixture echo" }),
+          },
+        },
+      ] }, finish_reason: "tool_calls" }] });
     }
     assert.equal(request.messages.at(-1).role, "tool");
     return reply({
       choices: [
-        { message: { role: "assistant", content: `Finished ${secret}` } },
+        { message: { role: "assistant", content: `Finished ${secret}` }, finish_reason: "stop" },
       ],
       usage: { total_tokens: 23 },
     });
@@ -241,7 +232,7 @@ test("model tool calls cross a real VOID proxy and produce a ledger", async (t) 
 });
 
 test("a destructive model call waits for an operator in its own workspace", async (t) => {
-  const dir = await mkdtemp(join(tmpdir(), "void-agent-hold-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-agent-hold-"));
   let turn = 0;
   const proxyEnv = {
     NOMO_LEDGER_DIR: dir,
@@ -257,41 +248,23 @@ test("a destructive model call waits for an operator in its own workspace", asyn
       if (String(url).endsWith("/models"))
         return reply({ data: [{ id: "fixture-model" }] });
       if (++turn > 1)
-        return reply({
-          choices: [
-            {
-              message: {
-                role: "assistant",
-                content: "Operator decision received.",
-              },
-            },
-          ],
-        });
+        return reply({ choices: [{ message: { role: "assistant", content: "Operator decision received." }, finish_reason: "stop" }] });
       const request = JSON.parse(String(options?.body));
       const tool = request.tools.find(
         (item: { function: { description: string } }) =>
           item.function.description.startsWith("orders_delete:"),
       );
-      return reply({
-        choices: [
-          {
-            message: {
-              role: "assistant",
-              content: null,
-              tool_calls: [
-                {
-                  id: "held",
-                  type: "function",
-                  function: {
-                    name: tool.function.name,
-                    arguments: '{"where":"id = 1"}',
-                  },
-                },
-              ],
-            },
+      return reply({ choices: [{ message: { role: "assistant",
+      content: null, tool_calls: [
+        {
+          id: "held",
+          type: "function",
+          function: {
+            name: tool.function.name,
+            arguments: '{"where":"id = 1"}',
           },
-        ],
-      });
+        },
+      ] }, finish_reason: "tool_calls" }] });
     },
   );
   assertIsolated(storeDirUnder(dir), proxyEnv);
@@ -311,7 +284,7 @@ test("a destructive model call waits for an operator in its own workspace", asyn
   const hold = workbench.pending()[0]!;
   assert.ok(hold);
   assert.equal(hold.call.workspace, session.workspace);
-  assert.equal(turn, 1, "model must wait on VOID approval");
+  assert.equal(turn, 1, "model must wait on NOMO approval");
   assert.equal(
     workbench.decide(hold.holdId, { kind: "denied", by: "beta-test" }),
     true,
@@ -335,7 +308,7 @@ test("denial text names the rule id, the class and the approval path", async (t)
       ruleIndex: 2,
       rationale: "only fixture tools are allowed",
     }),
-    "VOID denied orders_delete (r3) by policy rule 2. Reason: only fixture tools are allowed. Change the connector policy or ask the operator to approve this class. Do not retry with reworded arguments.",
+    "NOMO denied orders_delete (r3) by policy rule 2. Reason: only fixture tools are allowed. Change the connector policy or ask the operator to approve this class. Do not retry with reworded arguments.",
   );
   assert.match(
     denialText("orders_delete", "r3", {
@@ -352,13 +325,13 @@ test("denial text names the rule id, the class and the approval path", async (t)
 });
 
 test("long sessions keep advancing event cursors and refuse unbounded context", async (t) => {
-  const dir = await mkdtemp(join(tmpdir(), "void-agent-context-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-agent-context-"));
   const fetcher: typeof fetch = async (url) =>
     String(url).endsWith("/models")
       ? reply({ data: [{ id: "fixture-model" }] })
       : reply({
           choices: [
-            { message: { role: "assistant", content: "Fixture response" } },
+            { message: { role: "assistant", content: "Fixture response" }, finish_reason: "stop" },
           ],
           usage: { total_tokens: 1 },
         });
@@ -416,13 +389,13 @@ test("context compaction preserves recent work and records the reduction", async
       lastMessages = request.messages;
       return reply({
         choices: [
-          { message: { role: "assistant", content: "Fixture response" } },
+          { message: { role: "assistant", content: "Fixture response" }, finish_reason: "stop" },
         ],
         usage: { total_tokens: 1 },
       });
     },
     {},
-    { prefix: "void-agent-compact-", configure: false },
+    { prefix: "nomo-agent-compact-", configure: false },
   );
   const workbench = f.app;
   await workbench.configure({
@@ -433,9 +406,9 @@ test("context compaction preserves recent work and records the reduction", async
     "First",
     "fixture-model",
     undefined,
-    "VOID project",
+    "NOMO project",
   );
-  assert.equal(started.project, "VOID project");
+  assert.equal(started.project, "NOMO project");
   for (let turn = 0; turn < 5; turn++) {
     for (
       let poll = 0;
@@ -481,13 +454,13 @@ test("built-in agents change the session instruction without changing provider a
       lastMessages = JSON.parse(String(options?.body)).messages;
       return reply({
         choices: [
-          { message: { role: "assistant", content: "Fixture response" } },
+          { message: { role: "assistant", content: "Fixture response" }, finish_reason: "stop" },
         ],
         usage: { total_tokens: 1 },
       });
     },
     {},
-    { prefix: "void-agent-presets-", configure: false },
+    { prefix: "nomo-agent-presets-", configure: false },
   );
   const workbench = f.app;
   await workbench.configure({
@@ -535,7 +508,7 @@ test("chat catalog excludes embedding, image and video models", async () => {
 });
 
 test("NVIDIA is used when its key is in the environment, and its catalog picks the model", async (t) => {
-  const home = await mkdtemp(join(tmpdir(), "void-nvidia-env-home-"));
+  const home = await mkdtemp(join(tmpdir(), "nomo-nvidia-env-home-"));
   const nvidiaKey = "nvapi-fixture-key";
   let seenUrl = "";
   let seenAuth = "";
@@ -554,7 +527,7 @@ test("NVIDIA is used when its key is in the environment, and its catalog picks t
     t,
     fetcher,
     { HOME: home, NVIDIA_API_KEY: nvidiaKey },
-    { prefix: "void-nvidia-env-data-", configure: false },
+    { prefix: "nomo-nvidia-env-data-", configure: false },
   );
   t.after(() => rm(home, { recursive: true, force: true }));
   const workbench = f.app;
@@ -570,7 +543,7 @@ test("NVIDIA is used when its key is in the environment, and its catalog picks t
 
 test("an unconfigured workspace has no provider and no model, whatever credentials the host holds", async (t) => {
   for (const env of [{ OPENCODE_ZEN_API_KEY: "legacy-key" }, {}] as Record<string, string>[]) {
-    const home = await mkdtemp(join(tmpdir(), "void-unconfigured-home-"));
+    const home = await mkdtemp(join(tmpdir(), "nomo-unconfigured-home-"));
     let calls = 0;
     const fetcher: typeof fetch = async () => {
       calls++;
@@ -580,7 +553,7 @@ test("an unconfigured workspace has no provider and no model, whatever credentia
       t,
       fetcher,
       { HOME: home, ...env },
-      { prefix: "void-unconfigured-data-", configure: false },
+      { prefix: "nomo-unconfigured-data-", configure: false },
     );
     const workbench = f.app;
     const state = await workbench.providerState();
@@ -596,7 +569,7 @@ test("an unconfigured workspace has no provider and no model, whatever credentia
 
 test("providerState returns status detail retryAt per contract", async (t) => {
   const f = await isolatedWorkbench(t, undefined, {}, {
-    prefix: "void-provider-state-",
+    prefix: "nomo-provider-state-",
     configure: false,
   });
   const workbench = f.app;
@@ -614,7 +587,7 @@ test("providerState returns status detail retryAt per contract", async (t) => {
 
 test("projects upsert validation and persistence", async (t) => {
   const f = await isolatedWorkbench(t, undefined, {}, {
-    prefix: "void-projects-",
+    prefix: "nomo-projects-",
     configure: false,
   });
   let wb = f.app;
@@ -644,11 +617,11 @@ test("runs lists run views from activity", async (t) => {
     String(url).endsWith("/models")
       ? Response.json({ data: [{ id: "test" }] })
       : Response.json({
-          choices: [{ message: { role: "assistant", content: "ok" } }],
+          choices: [{ message: { role: "assistant", content: "ok" }, finish_reason: "stop" }],
           usage: { prompt_tokens: 1, completion_tokens: 2, total_tokens: 3 },
         });
   const f = await isolatedWorkbench(t, fetcher, {}, {
-    prefix: "void-runs-",
+    prefix: "nomo-runs-",
     configure: false,
   });
   const wb = f.app;
@@ -685,7 +658,7 @@ test("stopRun cancels running and queued sessions", async (t) => {
       return Response.json({ data: [{ id: "test" }] });
     await streamPromise;
     return Response.json({
-      choices: [{ message: { role: "assistant", content: "ok" } }],
+      choices: [{ message: { role: "assistant", content: "ok" }, finish_reason: "stop" }],
       usage: { prompt_tokens: 1, completion_tokens: 2, total_tokens: 3 },
     });
   };
@@ -694,12 +667,12 @@ test("stopRun cancels running and queued sessions", async (t) => {
   // release is repeated here: a test that fails before reaching it would
   // otherwise hang in cleanup instead of reporting its own failure.
   const f = await isolatedWorkbench(t, fetcher, {}, {
-    prefix: "void-stop-run-",
+    prefix: "nomo-stop-run-",
     configure: false,
     beforeShutdown: () =>
       resolveStream!(
         Response.json({
-          choices: [{ message: { role: "assistant", content: "ok" } }],
+          choices: [{ message: { role: "assistant", content: "ok" }, finish_reason: "stop" }],
           usage: { prompt_tokens: 1, completion_tokens: 2, total_tokens: 3 },
         }),
       ),
@@ -713,7 +686,7 @@ test("stopRun cancels running and queued sessions", async (t) => {
   assert.equal(wb.get(s1.id)?.status, "cancelled");
   resolveStream!(
     Response.json({
-      choices: [{ message: { role: "assistant", content: "ok" } }],
+      choices: [{ message: { role: "assistant", content: "ok" }, finish_reason: "stop" }],
       usage: { prompt_tokens: 1, completion_tokens: 2, total_tokens: 3 },
     }),
   );
@@ -836,11 +809,11 @@ test("compaction returns CompactionResult shape", async (t) => {
     String(url).endsWith("/models")
       ? Response.json({ data: [{ id: "test" }] })
       : Response.json({
-          choices: [{ message: { role: "assistant", content: "response" } }],
+          choices: [{ message: { role: "assistant", content: "response" }, finish_reason: "stop" }],
           usage: { prompt_tokens: 5, completion_tokens: 5, total_tokens: 10 },
         });
   const f = await isolatedWorkbench(t, fetcher, {}, {
-    prefix: "void-compaction-shape-",
+    prefix: "nomo-compaction-shape-",
     configure: false,
   });
   const wb = f.app;
@@ -866,10 +839,10 @@ test("provider logout removes credentials from every profile and historical sess
     if (afterLogout) callsAfterLogout++;
     return String(url).endsWith("/models")
       ? Response.json({ data: [{ id: "test", name: "Test" }] })
-      : Response.json({ choices: [{ message: { role: "assistant", content: "ok" } }] });
+      : Response.json({ choices: [{ message: { role: "assistant", content: "ok" }, finish_reason: "stop" }] });
   };
   const f = await isolatedWorkbench(t, fetcher, {}, {
-    prefix: "void-provider-logout-",
+    prefix: "nomo-provider-logout-",
     configure: false,
   });
   const workbench = f.app;
@@ -925,12 +898,12 @@ test("provider reauthentication matches both endpoint and kind", async (t) => {
   const fetcher: typeof fetch = async (url) => {
     if (!String(url).endsWith("/models")) {
       if (afterLogout) completionsAfterLogout++;
-      return Response.json({ choices: [{ message: { role: "assistant", content: "ok" } }] });
+      return Response.json({ choices: [{ message: { role: "assistant", content: "ok" }, finish_reason: "stop" }] });
     }
     return Response.json({ data: [{ id: "test", name: "Test" }] });
   };
   const f = await isolatedWorkbench(t, fetcher, {}, {
-    prefix: "void-provider-reauth-kind-",
+    prefix: "nomo-provider-reauth-kind-",
     configure: false,
   });
   const workbench = f.app;
@@ -958,13 +931,13 @@ test("provider logout suppresses environment reconnect until explicit login", as
     if (afterLogout) callsAfterLogout++;
     return String(url).endsWith("/models")
       ? Response.json({ data: [{ id: "test", name: "Test" }] })
-      : Response.json({ choices: [{ message: { role: "assistant", content: "ok" } }] });
+      : Response.json({ choices: [{ message: { role: "assistant", content: "ok" }, finish_reason: "stop" }] });
   };
   const f = await isolatedWorkbench(
     t,
     fetcher,
     { NVIDIA_API_KEY: "nvidia-fixture-key" },
-    { prefix: "void-provider-environment-logout-", configure: false },
+    { prefix: "nomo-provider-environment-logout-", configure: false },
   );
   const workbench = f.app;
   assert.equal((await workbench.providerState()).connected, true);
@@ -1001,10 +974,10 @@ test("provider logout waits for a manual provider catalog probe", async (t) => {
       return Response.json({ data: [{ id: "test", name: "Test" }] });
     }
     completions++;
-    return Response.json({ choices: [{ message: { role: "assistant", content: "ok" } }] });
+    return Response.json({ choices: [{ message: { role: "assistant", content: "ok" }, finish_reason: "stop" }] });
   };
   const f = await isolatedWorkbench(t, fetcher, {}, {
-    prefix: "void-provider-pending-logout-",
+    prefix: "nomo-provider-pending-logout-",
     configure: false,
     // The catalog probe is held open on `pendingModels`; releasing it and
     // draining the work it gated is what the old cleanup hook did first, and
@@ -1041,7 +1014,7 @@ test("provider logout waits for a manual provider catalog probe", async (t) => {
 test("a failed provider catalog probe does not keep logout blocked", async (t) => {
   const fetcher: typeof fetch = async () => { throw new Error("fixture connection failure"); };
   const f = await isolatedWorkbench(t, fetcher, {}, {
-    prefix: "void-provider-failed-setup-",
+    prefix: "nomo-provider-failed-setup-",
     configure: false,
   });
   const workbench = f.app;
@@ -1064,14 +1037,14 @@ test("provider logout waits for the automatic environment catalog probe", async 
       markRequested();
       return pendingModels;
     }
-    return Response.json({ choices: [{ message: { role: "assistant", content: "ok" } }] });
+    return Response.json({ choices: [{ message: { role: "assistant", content: "ok" }, finish_reason: "stop" }] });
   };
   const f = await isolatedWorkbench(
     t,
     fetcher,
     { NVIDIA_API_KEY: "nvidia-race-fixture-key" },
     {
-      prefix: "void-provider-environment-race-",
+      prefix: "nomo-provider-environment-race-",
       configure: false,
       beforeShutdown: () =>
         finishModels(Response.json({ data: [{ id: "test", name: "Test" }] })),
@@ -1105,7 +1078,7 @@ test("a superseded environment probe does not mark the replacement unavailable",
     fetcher,
     { NVIDIA_API_KEY: "nvidia-superseded-fixture-key" },
     {
-      prefix: "void-provider-superseded-setup-",
+      prefix: "nomo-provider-superseded-setup-",
       configure: false,
       beforeShutdown: () =>
         finishModels(Response.json({ data: [{ id: "test", name: "Test" }] })),
@@ -1124,10 +1097,10 @@ test("a superseded environment probe does not mark the replacement unavailable",
 });
 
 test("provider logout keeps the connected state when persistence fails", async (t) => {
-  const dir = await mkdtemp(join(tmpdir(), "void-provider-logout-storage-conflict-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-provider-logout-storage-conflict-"));
   const fetcher: typeof fetch = async (url) => String(url).endsWith("/models")
     ? Response.json({ data: [{ id: "test", name: "Test" }] })
-    : Response.json({ choices: [{ message: { role: "assistant", content: "ok" } }] });
+    : Response.json({ choices: [{ message: { role: "assistant", content: "ok" }, finish_reason: "stop" }] });
   const conflictEnv = { NOMO_DATA_DIR: dir };
   const workbench = new Workbench(conflictEnv, fetcher);
   // Left on direct construction: this test deliberately puts the store into a
@@ -1183,11 +1156,11 @@ test("provider logout refuses while a session is connecting its MCP tools", asyn
       if (String(url).endsWith("/models"))
         return Response.json({ data: [{ id: "test", name: "Test" }] });
       completions++;
-      return Response.json({ choices: [{ message: { role: "assistant", content: "ok" } }] });
+      return Response.json({ choices: [{ message: { role: "assistant", content: "ok" }, finish_reason: "stop" }] });
     },
     {},
     {
-      prefix: "void-provider-start-",
+      prefix: "nomo-provider-start-",
       configure: false,
       // The `tools/list` response is held open behind `toolsListGate`, and the
       // test swapped the global fetch for the connector; both have to be put
@@ -1233,11 +1206,11 @@ test("provider logout refuses while a model run is active", async (t) => {
     return pendingResponse;
   };
   const f = await isolatedWorkbench(t, fetcher, {}, {
-    prefix: "void-provider-active-logout-",
+    prefix: "nomo-provider-active-logout-",
     configure: false,
     beforeShutdown: () =>
       finishResponse(
-        Response.json({ choices: [{ message: { role: "assistant", content: "ok" } }] }),
+        Response.json({ choices: [{ message: { role: "assistant", content: "ok" }, finish_reason: "stop" }] }),
       ),
   });
   const workbench = f.app;
@@ -1247,7 +1220,7 @@ test("provider logout refuses while a model run is active", async (t) => {
   await requested;
   assert.throws(() => workbench.clearProvider(), /Stop active sessions/);
   assert.equal((await workbench.providerState()).connected, true);
-  finishResponse(Response.json({ choices: [{ message: { role: "assistant", content: "ok" } }] }));
+  finishResponse(Response.json({ choices: [{ message: { role: "assistant", content: "ok" }, finish_reason: "stop" }] }));
   while (workbench.get(session.id)?.status === "running") await delay(5);
   workbench.clearProvider();
   assert.equal((await workbench.providerState()).connected, false);
@@ -1260,7 +1233,7 @@ test("legacy history without a recognized provider kind cannot resume by guessin
     if (String(url).endsWith("/models"))
       return Response.json({ data: [{ id: "test", name: "Test" }] });
     completions++;
-    return Response.json({ choices: [{ message: { role: "assistant", content: "ok" } }] });
+    return Response.json({ choices: [{ message: { role: "assistant", content: "ok" }, finish_reason: "stop" }] });
   };
   const legacyConfigs: Array<{ label: string; config: { baseUrl: string; kind?: string } }> = [
     { label: "missing", config: { baseUrl } },
@@ -1268,7 +1241,7 @@ test("legacy history without a recognized provider kind cannot resume by guessin
   ];
 
   for (const legacy of legacyConfigs) {
-    const dir = await mkdtemp(join(tmpdir(), `void-provider-${legacy.label}-kind-`));
+    const dir = await mkdtemp(join(tmpdir(), `nomo-provider-${legacy.label}-kind-`));
     const env = { NOMO_DATA_DIR: dir };
     // Direct by design: this test rewrites the stored session config with a
     // hand-built `LocalStorage` between two constructions over one root, and
@@ -1303,13 +1276,13 @@ test("legacy history without a recognized provider kind cannot resume by guessin
 
 
 test("legacy inline provider keys are scrubbed without borrowing another provider", async (t) => {
-  const dir = await mkdtemp(join(tmpdir(), "void-provider-legacy-session-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-provider-legacy-session-"));
   let requestCount = 0;
   const fetcher: typeof fetch = async (url) => {
     requestCount++;
     return String(url).endsWith("/models")
       ? Response.json({ data: [{ id: "test", name: "Test" }] })
-      : Response.json({ choices: [{ message: { role: "assistant", content: "ok" } }] });
+      : Response.json({ choices: [{ message: { role: "assistant", content: "ok" }, finish_reason: "stop" }] });
   };
   const env = { NOMO_DATA_DIR: dir };
   // Direct by design, as above: a hand-built `LocalStorage` rewrites the
@@ -1381,33 +1354,24 @@ function gatedToolProvider(
     const last = [...messages].reverse().find((message) => message.role !== "system");
     if (last?.role === "tool")
       return reply({
-        choices: [{ message: { role: "assistant", content: "done" } }],
+        choices: [{ message: { role: "assistant", content: "done" }, finish_reason: "stop" }],
       });
     if (last?.role === "user" && gate.wantCall) {
       gate.wantCall = false;
       const tool = (request.tools as { function: { name: string; description: string } }[]).find(
         (item) => String(item.function.description ?? "").startsWith(toolPrefix),
       )!;
-      return reply({
-        choices: [
-          {
-            message: {
-              role: "assistant",
-              content: null,
-              tool_calls: [
-                {
-                  id: "call1",
-                  type: "function",
-                  function: { name: tool.function.name, arguments: args },
-                },
-              ],
-            },
-          },
-        ],
-      });
+      return reply({ choices: [{ message: { role: "assistant",
+      content: null, tool_calls: [
+        {
+          id: "call1",
+          type: "function",
+          function: { name: tool.function.name, arguments: args },
+        },
+      ] }, finish_reason: "tool_calls" }] });
     }
     return reply({
-      choices: [{ message: { role: "assistant", content: "waiting" } }],
+      choices: [{ message: { role: "assistant", content: "waiting" }, finish_reason: "stop" }],
     });
   };
 }
@@ -1434,7 +1398,7 @@ async function waitSettled(workbench: Workbench, id: string, rounds = 200) {
 }
 
 test("stdio delegation is recorded, not decided", async (t) => {
-  const dir = await mkdtemp(join(tmpdir(), "void-stdio-recorded-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-stdio-recorded-"));
   const gate = { wantCall: true };
   const workbench = new Workbench(
     stdioEnv(dir),
@@ -1485,12 +1449,12 @@ test("stdio delegation is recorded, not decided", async (t) => {
 });
 
 test("unverifiable proxy ledger is unknown, not failed", async (t) => {
-  const dir = await mkdtemp(join(tmpdir(), "void-stdio-unverified-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-stdio-unverified-"));
   // A key the proxy never signed with. The workbench resolves its syncStdio
   // verification key from NOMO_PROXY_KEYS without creating one, so this decoy
   // makes the imported chain fail verification exactly the way a substituted
   // proxy key would, while the upstream call itself still succeeds.
-  const proxyKeys = await mkdtemp(join(tmpdir(), "void-stdio-decoy-keys-"));
+  const proxyKeys = await mkdtemp(join(tmpdir(), "nomo-stdio-decoy-keys-"));
   t.after(async () => {
     await rm(proxyKeys, { recursive: true, force: true });
   });
@@ -1537,7 +1501,7 @@ test("unverifiable proxy ledger is unknown, not failed", async (t) => {
 });
 
 test("stdio delegation ignores learned rules", async (t) => {
-  const dir = await mkdtemp(join(tmpdir(), "void-stdio-learned-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-stdio-learned-"));
   const gate = { wantCall: true };
   const proxyEnv = stdioEnv(dir);
   const workbench = new Workbench(
@@ -1638,7 +1602,7 @@ test("a verified proxy denial surfaces, a receiptless one cannot", async (t) => 
   // branch stays pinned by reading index.ts, and forging it would mean
   // editing the proxy ledger mid-flight, which breaks chain verification and
   // is the previous test's case instead.
-  const dir = await mkdtemp(join(tmpdir(), "void-stdio-denied-"));
+  const dir = await mkdtemp(join(tmpdir(), "nomo-stdio-denied-"));
   const seen: unknown[] = [];
   const gate = { wantCall: true };
   const workbench = new Workbench(
@@ -1683,4 +1647,85 @@ test("a verified proxy denial surfaces, a receiptless one cannot", async (t) => 
     seen.some((request) => JSON.stringify(request).includes("Do not retry")),
     "the denial reached the model in the proxy's own words",
   );
+});
+test("Google image turns survive encrypted session restart and expose only metadata in events", async (t) => {
+  let providerRequest: Record<string, unknown> | undefined;
+  const fetcher: typeof fetch = async (input, init) => {
+    const url = String(input);
+    if (url === "https://generativelanguage.googleapis.com/v1beta/models")
+      return Response.json({
+        models: [{
+          name: "models/gemini-3.5-flash",
+          supportedGenerationMethods: ["generateContent"],
+        }],
+      });
+    if (url.includes(":streamGenerateContent")) {
+      providerRequest = JSON.parse(String(init?.body));
+      return new Response(
+        'data: {"candidates":[{"content":{"role":"model","parts":[{"text":"Seen"}]},"finishReason":"STOP"}]}\n\n',
+        { headers: { "content-type": "text/event-stream" } },
+      );
+    }
+    throw new Error("unexpected provider fixture request");
+  };
+  const fixture = await isolatedWorkbench(
+    t,
+    fetcher,
+    {},
+    { configure: false, prefix: "nomo-google-images-" },
+  );
+  await fixture.app.configure({
+    providerId: "google",
+    transport: "google-generative-ai",
+    baseUrl: "https://generativelanguage.googleapis.com/v1beta",
+    auth: { kind: "api-key", apiKey: "fixture-key" },
+    model: "gemini-3.5-flash",
+  });
+  const bytes = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1, 2, 3]);
+  const images = [{
+    mimeType: "image/png" as const,
+    data: bytes.toString("base64"),
+  }];
+  const started = await fixture.app.start(
+    "Describe this image",
+    "gemini-3.5-flash",
+    undefined,
+    undefined,
+    undefined,
+    false,
+    images,
+  );
+  await waitSettled(fixture.app, started.id);
+  const session = fixture.app.get(started.id)!;
+  assert.equal(session.status, "idle");
+  const userEvent = session.events.find((event) => event.kind === "user")!;
+  const rawAttachments = userEvent.payload?.attachments;
+  assert.ok(Array.isArray(rawAttachments));
+  const attachment = rawAttachments[0];
+  assert.ok(attachment && typeof attachment === "object");
+  assert.ok("id" in attachment && typeof attachment.id === "string");
+  assert.ok("mimeType" in attachment && attachment.mimeType === "image/png");
+  const attachmentId = attachment.id;
+  assert.equal(rawAttachments.length, 1);
+  assert.equal(JSON.stringify(session.events).includes(images[0]!.data), false);
+  const contents = providerRequest?.contents;
+  assert.ok(Array.isArray(contents));
+  const firstContent = contents[0];
+  assert.ok(firstContent && typeof firstContent === "object" && "parts" in firstContent);
+  assert.deepEqual(firstContent.parts, [
+    { text: "Describe this image" },
+    { inlineData: { mimeType: "image/png", data: images[0]!.data } },
+  ]);
+  const getImage = (app: Workbench) =>
+    app.getImage(started.id, attachmentId);
+  assert.deepEqual(getImage(fixture.app), {
+    mimeType: "image/png",
+    bytes,
+  });
+  fixture.app.close();
+  const reopened = fixture.restart({ keepOpen: true });
+  assert.deepEqual(getImage(reopened), { mimeType: "image/png", bytes });
+  const encrypted = await readFile(join(fixture.root, "workspace.enc"));
+  assert.equal(encrypted.includes(bytes), false);
+  assert.equal(encrypted.includes(Buffer.from(images[0]!.data)), false);
 });

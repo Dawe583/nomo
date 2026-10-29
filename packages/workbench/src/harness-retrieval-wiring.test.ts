@@ -19,9 +19,7 @@ const LESSON =
 const models = () =>
   Response.json({ data: [{ id: "fixture" }] });
 const answer = () =>
-  Response.json({
-    choices: [{ message: { role: "assistant", content: "Done" } }],
-  });
+  Response.json({ choices: [{ message: { role: "assistant", content: "Done" }, finish_reason: "stop" }] });
 
 const lessonProposal = (): RefinementProposal => ({
   summary: "repeated migration hold",
@@ -47,7 +45,7 @@ async function fixture(t: TestContext) {
     return answer();
   };
   const { app } = await isolatedWorkbench(t, capturing as typeof fetch, {}, {
-    prefix: "void-harness-retrieval-",
+    prefix: "nomo-harness-retrieval-",
   });
   const session = await app.start("Review the migration", "fixture");
   await app.settled();
@@ -94,6 +92,25 @@ test("a follow-up turn carries the retrieved lesson, the mining turn does not", 
   await app.settled();
 
   const followup = bodies.map(systemTexts).join("\n");
+  const initialMessages = miningBodies[0]!.messages as Array<{
+    role: string;
+    content?: unknown;
+  }>;
+  const followupMessages = bodies[0]!.messages as Array<{
+    role: string;
+    content?: unknown;
+  }>;
+  assert.deepEqual(
+    followupMessages.slice(0, initialMessages.length),
+    initialMessages,
+    "learning leaves the previous request prefix byte-for-byte unchanged",
+  );
+  assert.equal(followupMessages.at(-1)?.role, "system");
+  assert.match(
+    String(followupMessages.at(-1)?.content ?? ""),
+    /^NOMO learned-entry digest,/,
+    "the learned context is appended after existing conversation messages",
+  );
   assert.ok(
     followup.includes("learned-entry digest"),
     "a later turn in the same workspace must carry the digest",
@@ -101,6 +118,11 @@ test("a follow-up turn carries the retrieved lesson, the mining turn does not", 
   assert.ok(
     followup.includes(LESSON),
     "the digest must carry the approved lesson text",
+  );
+  assert.equal(
+    JSON.stringify(app.get(session.id)!.events).includes("learned-entry digest"),
+    false,
+    "the transient suffix is removed before the conversation is stored",
   );
 });
 
@@ -174,13 +196,13 @@ test("the harness reviewer's own tokens are recorded, not just the turn's", asyn
     calls += 1;
     return Response.json({
       choices: [
-        { message: { role: "assistant", content: JSON.stringify({ verdict: "decline" }) } },
+        { message: { role: "assistant", content: JSON.stringify({ verdict: "decline" }) }, finish_reason: "stop" },
       ],
       usage: { prompt_tokens: 11, completion_tokens: 7, total_tokens: 18 },
     });
   };
   const { app } = await isolatedWorkbench(t, billed as typeof fetch, {}, {
-    prefix: "void-harness-usage-",
+    prefix: "nomo-harness-usage-",
   });
   const session = await app.start("Review the migration", "fixture");
   await app.settled();
@@ -229,13 +251,13 @@ test("an operator can switch refinement off, and the gate obeys", async (t) => {
     calls += 1;
     return Response.json({
       choices: [
-        { message: { role: "assistant", content: JSON.stringify({ verdict: "decline" }) } },
+        { message: { role: "assistant", content: JSON.stringify({ verdict: "decline" }) }, finish_reason: "stop" },
       ],
       usage: { prompt_tokens: 11, completion_tokens: 7, total_tokens: 18 },
     });
   };
   const { app } = await isolatedWorkbench(t, billed as typeof fetch, {}, {
-    prefix: "void-harness-off-",
+    prefix: "nomo-harness-off-",
   });
   const session = await app.start("Review the migration", "fixture");
   await app.settled();

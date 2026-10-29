@@ -20,7 +20,7 @@ const fetcher = (replies: readonly string[]) => {
       return Response.json({ data: [{ id: "fixture" }] });
     const content = replies[index] ?? "Done.";
     index += 1;
-    return Response.json({ choices: [{ message: { role: "assistant", content } }] });
+    return Response.json({ choices: [{ message: { role: "assistant", content }, finish_reason: "stop" }] });
   };
 };
 

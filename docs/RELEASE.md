@@ -1,4 +1,4 @@
-# VOID 0.1.0 release runbook
+# NOMO 0.1.0 release runbook
 
 Apple 1.0.1 release planning and exact evidence now live in
 `docs/superpowers/specs/void-1.0.1-product.md` and
@@ -8,9 +8,10 @@ historical; it does not certify a Mac App Store or native iOS release.
 ## Status and version policy
 
 0.1.0 is a coherent development release, not an npm publication or a production
-readiness claim. Product packages use the `@void/<package>` convention. The
-root is `@void/workspace`. Keep `private: true` throughout this release. Do not
-remove that safeguard to make a publish command pass.
+readiness claim. Workspace packages use the `@nomo/<package>` convention. The
+root is `@nomo/workspace`; private packages remain private. The standalone
+verifier is the sole publishable exception; publication still requires explicit
+approval.
 
 Versions move together while cross-package contracts and the on-disk formats
 are being validated. Before 1.0, record incompatible API, policy, snapshot, or
@@ -116,7 +117,7 @@ Wave 5 source status, pending integrated verification:
    run on a clean machine and every gate result in this document is local. A
    human has to settle the billing; until then "CI is green" is not a claim
    this runbook can make about anything.
-6. **WP-15 delivery evidence.** A published `@void/cli` version, clean-machine
+6. **WP-15 delivery evidence.** A published `@nomo/cli` version, clean-machine
    quickstart under five minutes, Docker image, and MCP registry listing still
    require release evidence. The WP-15 exit is not complete just because the
    source and metadata are present.
@@ -192,8 +193,8 @@ verification run.
 2. Check entrypoint syntax and release metadata:
 
    ```sh
-   node --check packages/cli/bin/void.mjs
-   node --check packages/proxy/bin/void-proxy.mjs
+   node --check packages/cli/bin/nomo.mjs
+   node --check packages/proxy/bin/nomo-proxy.mjs
    node --test --test-reporter=tap scripts/src/release-packaging.test.mjs
    ```
 
@@ -223,7 +224,7 @@ verification run.
    bins, policy pack loading, and the five-minute first-hold quickstart.
 7. Obtain human approval for publishing, confirm npm identity without exposing
    credentials, run protected CI, and publish only the reviewed artifacts.
-   Verify the published version with `npm view @void/cli version`. Record the
+   Verify the published version with `npm view @nomo/cli version`. Record the
    tag, commit, artifact digests, provenance, and remote workflow URL.
 
 ### What the packaging gate now executes

@@ -1,5 +1,5 @@
 /**
- * NOMO agent policy: per-agent rules layered over the VOID class policy, for
+ * NOMO agent policy: per-agent rules layered over the NOMO class policy, for
  * an identity that the Workbench local agent grant has already verified.
  * Contract: docs/nomo/CONTRACT.md.
  */

@@ -10,9 +10,9 @@ async function fixture(t:TestContext) {
  let calls=0;
  const fetcher:typeof fetch=async url=>{
   if(String(url).endsWith("/models"))return Response.json({data:[{id:"fixture"}]});
-  calls++;return Response.json({choices:[{message:{role:"assistant",content:"Done"}}]});
+  calls++;return Response.json({ choices: [{ message: { role: "assistant", content: "Done" }, finish_reason: "stop" }] });
  };
- const f=await isolatedWorkbench(t,fetcher,{},{prefix:"void-undo-boundary-"});
+ const f=await isolatedWorkbench(t,fetcher,{},{prefix:"nomo-undo-boundary-"});
  const session=await f.app.start("Review","fixture");await f.app.settled();
  return {get app(){return f.app;},directory:f.root,session,calls:()=>calls,restart(options?:{keepOpen?:boolean}){return f.restart(options);}};
 }
@@ -65,8 +65,8 @@ test("Stop projects stopping on every live surface until the provider settles",a
  const blocked=new Promise<void>(resolve=>{release=resolve;});
  const {app}=await isolatedWorkbench(t,async url=>{
   if(String(url).endsWith("/models"))return Response.json({data:[{id:"fixture"}]});
-  await blocked;return Response.json({choices:[{message:{role:"assistant",content:"Late"}}]});
- },{},{prefix:"void-stopping-view-",beforeShutdown:release});
+  await blocked;return Response.json({ choices: [{ message: { role: "assistant", content: "Late" }, finish_reason: "stop" }] });
+ },{},{prefix:"nomo-stopping-view-",beforeShutdown:release});
  const session=await app.start("Review","fixture");app.stopRun(session.id);
  assert.equal(app.running(),true);assert.equal(app.runs()[0]?.state,"stopping");
  assert.equal(activity(app.allViews()).runs[0]?.state,"stopping");

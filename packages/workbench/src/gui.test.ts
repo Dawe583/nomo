@@ -54,14 +54,14 @@ test("permission mode is server authoritative and fails closed",()=>{
 });
 
 test("GUI edits use revisions and signed undo, branches do not replay tools, requests survive restart", async (t) => {
-  const directory = await mkdtemp(join(tmpdir(), "void-gui-"));
+  const directory = await mkdtemp(join(tmpdir(), "nomo-gui-"));
   let requests = 0;
   const fetcher: typeof fetch = async (url) =>
     String(url).endsWith("/models")
       ? Response.json({ data: [{ id: "test" }] })
       : (requests++,
         Response.json({
-          choices: [{ message: { role: "assistant", content: "Complete." } }],
+          choices: [{ message: { role: "assistant", content: "Complete." }, finish_reason: "stop" }],
           usage: { prompt_tokens: 2, completion_tokens: 3, total_tokens: 5 },
         }));
   let wb = new Workbench({ NOMO_DATA_DIR: directory, NOMO_PERMISSION_MODE: "normal" }, fetcher);
@@ -162,7 +162,7 @@ test("provider 429 persists Retry-After and never retries the generation", async
             headers: { "retry-after": "7" },
           })),
     {},
-    { baseUrl: "https://provider.test/v1", apiKey: "test-secret", prefix: "void-rate-" },
+    { baseUrl: "https://provider.test/v1", apiKey: "test-secret", prefix: "nomo-rate-" },
   );
   const session = await wb.start("Hello", "test");
   while (wb.get(session.id)?.status === "running") await delay(5);
@@ -213,7 +213,7 @@ test("a connector keeps its secret, exposes its schema, and only an explicit pro
   assert.ok(address && typeof address !== "string");
   const { app: wb } = await isolatedWorkbench(t, undefined, {}, {
     configure: false,
-    prefix: "void-connector-",
+    prefix: "nomo-connector-",
   });
   t.after(async () => {
     server.closeAllConnections();
@@ -402,7 +402,7 @@ test("providerStateFromFailure maps no credential to setup-required", () => {
   assert.equal(result.status, "setup-required");
   assert.equal(
     result.detail,
-    "No credential is configured for the default provider.",
+    "No provider credential is configured.",
   );
   assert.equal(result.retryAt, null);
 });

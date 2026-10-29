@@ -22,7 +22,7 @@ const CLOSED = "version: 1\nrules:\n  - match:\n      class: r0\n    decision: a
 
 const models = () => Response.json({ data: [{ id: "fixture" }] });
 const done = () =>
-  Response.json({ choices: [{ message: { role: "assistant", content: "Done" } }] });
+  Response.json({ choices: [{ message: { role: "assistant", content: "Done" }, finish_reason: "stop" }] });
 
 /** A workbench whose operator policy lives in a real directory, with one
  * managed-document tool call per turn. The policy path is the operator's, so
@@ -40,26 +40,17 @@ async function fixture(t: TestContext, policies: Record<string, string>) {
     if (String(url).endsWith("/models")) return models();
     const body = JSON.parse(String(init?.body));
     if (++turns > 1) return done();
-    return Response.json({
-      choices: [
-        {
-          message: {
-            role: "assistant",
-            content: null,
-            tool_calls: [
-              {
-                id: "write",
-                type: "function",
-                function: {
-                  name: body.tools[0].function.name,
-                  arguments: JSON.stringify({ path: "note", content: "requested" }),
-                },
-              },
-            ],
-          },
+    return Response.json({ choices: [{ message: { role: "assistant",
+    content: null, tool_calls: [
+      {
+        id: "write",
+        type: "function",
+        function: {
+          name: body.tools[0].function.name,
+          arguments: JSON.stringify({ path: "note", content: "requested" }),
         },
-      ],
-    });
+      },
+    ] }, finish_reason: "tool_calls" }] });
   };
   const env = { NOMO_DATA_DIR: join(directory, "data"), NOMO_POLICY_PATH: policyPath };
   const app = new Workbench(env, fetcher);

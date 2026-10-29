@@ -19,11 +19,11 @@ import type { RefinementProposal } from "./refine-pass.ts";
 const fetcher = async (url: unknown) =>
   String(url).endsWith("/models")
     ? Response.json({ data: [{ id: "fixture" }] })
-    : Response.json({ choices: [{ message: { role: "assistant", content: "Ready" } }] });
+    : Response.json({ choices: [{ message: { role: "assistant", content: "Ready" }, finish_reason: "stop" }] });
 
 async function fixture(t: TestContext) {
   const f = await isolatedWorkbench(t, fetcher, {}, {
-    prefix: "void-harness-rollback-",
+    prefix: "nomo-harness-rollback-",
   });
   const { app } = f;
   const session = await app.start("Review the workspace", "fixture");

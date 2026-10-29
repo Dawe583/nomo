@@ -1,12 +1,12 @@
 {
-  "name": "@void/workspace",
+  "name": "@nomo/workspace",
   "version": "0.1.0",
   "license": "Apache-2.0",
   "scripts": {
     "preinstall": "node scripts/src/preinstall.mjs",
     "nomo": "node packages/cli/bin/nomo.mjs",
     "tui": "node packages/cli/bin/nomo.mjs tui",
-    "tui:preview": "pnpm --filter @void/cli run tui:preview --",
+    "tui:preview": "pnpm --filter @nomo/cli run tui:preview --",
     "typecheck": "pnpm -r --workspace-concurrency=1 --filter \"./packages/**\" --filter \"./scripts\" --if-present run typecheck && tsc -p apps/control-plane/tsconfig.json && tsc -p paid/tsconfig.json && pnpm --filter @void/control-plane-ui typecheck",
     "test": "node scripts/src/check-tests.mjs",
     "check": "pnpm run typecheck && pnpm test",

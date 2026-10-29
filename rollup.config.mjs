@@ -25,7 +25,7 @@ import { stripTypeScriptTypes } from "node:module";
 
 /** Packages whose `exports` point at raw TypeScript, which npm cannot resolve. */
 const WORKSPACE_TYPED = {
-  "@void/registry": "packages/registry/src/index.ts",
+  "@nomo/registry": "packages/registry/src/index.ts",
 };
 
 /**

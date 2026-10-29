@@ -1,5 +1,5 @@
 {
-  "name": "@void/cli",
+  "name": "@nomo/cli",
   "version": "0.1.0",
   "private": true,
   "license": "Apache-2.0",
@@ -21,7 +21,7 @@
   "devDependencies": {
     "@types/node": "catalog:",
     "@types/pg": "8.15.5",
-    "@void/registry": "workspace:*"
+    "@nomo/registry": "workspace:*"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "3.1036.0",

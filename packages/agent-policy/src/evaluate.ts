@@ -11,7 +11,7 @@ import {
 } from "./grammar.ts";
 import type { AgentRule, AgentPolicyFile } from "./load.ts";
 
-/** The call as gate 1 sees it. The class comes from the VOID registry, never from the agent. */
+/** The call as gate 1 sees it. The class comes from the NOMO registry, never from the agent. */
 export type AgentCall = {
   readonly agentId: string;
   readonly tool: string;
@@ -34,7 +34,7 @@ const list = (value: unknown): readonly string[] =>
   Array.isArray(value) ? (value as string[]) : [value as string];
 
 /**
- * An unclassified call is matched the way VOID matches it: an allow covers it
+ * An unclassified call is matched the way NOMO matches it: an allow covers it
  * only when the rule names `unknown` explicitly, so a broad allow cannot
  * authorize what the registry could not classify. A deny or hold that names
  * r3 also covers it, because unclassified is treated as the worst class.

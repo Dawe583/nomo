@@ -8,7 +8,7 @@ import { initialTriggerState, type TriggerState } from "./refine-trigger.ts";
 const fetcher = async (url: unknown) =>
   String(url).endsWith("/models")
     ? Response.json({ data: [{ id: "fixture" }] })
-    : Response.json({ choices: [{ message: { role: "assistant", content: "Ready" } }] });
+    : Response.json({ choices: [{ message: { role: "assistant", content: "Ready" }, finish_reason: "stop" }] });
 
 async function fixture(
   t: { after(fn: () => Promise<void>): void },
@@ -19,7 +19,7 @@ async function fixture(
   // ledger or permission override is added rather than swapped in for
   // `NOMO_DATA_DIR`.
   const f = await isolatedWorkbench(t, fetcher, extraEnv, {
-    prefix: "void-refinement-ledger-",
+    prefix: "nomo-refinement-ledger-",
   });
   const { app } = f;
   const session = await app.start("Review the workspace", "fixture");
@@ -401,10 +401,206 @@ test("an unknown digest approves nothing", async (t) => {
   assert.equal((await app.ledger(session.workspace))!.entries.length, length);
 });
 
-test("skill and subagent edits stay proposal-only until their schema is supported", async (t) => {
+test("skill promotion becomes a signed, retrievable lesson after digest approval", async (t) => {
   const { app, session } = await fixture(t);
-  await assert.rejects(app.refineHarness(session.id, proposal("skill")), /proposal-only/);
-  assert.equal((await app.ledger(session.workspace))?.entries.length, 1);
+  const created = await app.refineHarness(session.id, proposal("skill"));
+  assert.deepEqual(await app.harnessEntries(session.workspace), []);
+  await app.approveHarnessProposal(session.id, created.proposalDigest!);
+
+  const entries = await app.harnessEntries(session.workspace);
+  assert.equal(entries.length, 1);
+  assert.equal(entries[0]?.kind, "lesson");
+  assert.equal(entries[0]?.decidedByOperator, true);
+  assert.equal(entries[0]?.content, "The operator repeatedly approved the same action.");
+});
+
+test("subagent profiles are digest-approved, workspace-scoped, replayable, and rollbackable", async (t) => {
+  const { app, session, closeOriginal, reopen } = await fixture(t);
+  const profile = {
+    id: "promoted-helper",
+    name: "Helper",
+    systemPrompt: "Inspect only.",
+    allowedTools: ["void_workspace_list"],
+    policyProfile: "default",
+    maxTurns: 1,
+    maxContextTokens: 4096,
+  };
+  const profileProposal = (
+    action: "create" | "update" | "delete",
+    next: typeof profile = profile,
+  ): RefinementProposal => ({
+    summary: "bounded subagent profile",
+    rationale: "delegated work needs a narrow profile",
+    expectedOutcome: "the child receives only approved capabilities",
+    edits: [{
+      action,
+      kind: "subagent",
+      ...(action === "create" ? {} : { id: profile.id }),
+      ...(action === "delete" ? {} : { profile: next }),
+      derivedFromSeq: [1],
+      reason: "the signed history supports this profile",
+    }] as unknown as RefinementProposal["edits"],
+  });
+
+  const created = await app.refineHarness(session.id, profileProposal("create"));
+  assert.deepEqual(await app.promotedAgentProfiles(session.workspace), []);
+  const other = await app.start("Other workspace", "fixture");
+  await app.settled();
+  assert.deepEqual(await app.promotedAgentProfiles(other.workspace), []);
+
+  await app.approveHarnessProposal(session.id, created.proposalDigest!);
+  assert.deepEqual(await app.promotedAgentProfiles(session.workspace), [profile]);
+  const activation = (await app.ledger(session.workspace))!.entries.at(-1)!
+    .body as Record<string, unknown>;
+  const createdProfileChange = (
+    (activation.harnessRefinement as Record<string, unknown>).profiles as {
+      digest: string;
+      changes: Array<{ id: string; before: unknown; after: unknown }>;
+    }
+  );
+  assert.equal(createdProfileChange.digest, created.proposalDigest);
+  assert.deepEqual(createdProfileChange.changes, [{
+    id: profile.id,
+    before: null,
+    after: profile,
+  }]);
+
+  await closeOriginal();
+  const restarted = reopen();
+  assert.deepEqual(await restarted.promotedAgentProfiles(session.workspace), [profile]);
+
+  const updatedProfile = { ...profile, systemPrompt: "Inspect and summarize." };
+  const updated = await restarted.refineHarness(
+    session.id,
+    profileProposal("update", updatedProfile),
+  );
+  await restarted.approveHarnessProposal(session.id, updated.proposalDigest!);
+  assert.deepEqual(await restarted.promotedAgentProfiles(session.workspace), [updatedProfile]);
+  await restarted.rollbackHarnessProposal(session.id, updated.proposalDigest!);
+  assert.deepEqual(await restarted.promotedAgentProfiles(session.workspace), [profile]);
+
+  const deleted = await restarted.refineHarness(
+    session.id,
+    profileProposal("delete"),
+  );
+  await restarted.approveHarnessProposal(session.id, deleted.proposalDigest!);
+  assert.deepEqual(await restarted.promotedAgentProfiles(session.workspace), []);
+});
+
+test("subagent profile approval refuses tools outside the parent scope", async (t) => {
+  const { app, session } = await fixture(t);
+  const proposal = {
+    summary: "widen the child",
+    rationale: "not supported",
+    expectedOutcome: "not supported",
+    edits: [{
+      action: "create",
+      kind: "subagent",
+      profile: {
+        id: "promoted-helper",
+        name: "Helper",
+        systemPrompt: "Use the extra tool.",
+        allowedTools: ["not-a-parent-tool"],
+        policyProfile: "default",
+        maxTurns: 1,
+        maxContextTokens: 4096,
+      },
+      derivedFromSeq: [1],
+      reason: "must be refused",
+    }],
+  } as unknown as RefinementProposal;
+
+  const created = await app.refineHarness(session.id, proposal);
+  await assert.rejects(
+    app.approveHarnessProposal(session.id, created.proposalDigest!),
+    /parent tool scope/,
+  );
+  assert.deepEqual(await app.promotedAgentProfiles(session.workspace), []);
+  assert.equal((await app.pendingApprovalsFor(session.id)).length, 1);
+});
+
+test("subagent profile approval refuses a wider parent turn budget", async (t) => {
+  const { app } = await isolatedWorkbench(t, fetcher, {}, {
+    prefix: "nomo-profile-budget-",
+  });
+  app.upsertAgent({
+    id: "narrow-parent",
+    name: "Narrow parent",
+    systemPrompt: "Work narrowly.",
+    allowedTools: ["void_workspace_list"],
+    policyProfile: "default",
+    maxTurns: 1,
+    maxContextTokens: 4096,
+  });
+  const session = await app.start(
+    "Review the workspace",
+    "fixture",
+    undefined,
+    undefined,
+    "narrow-parent",
+  );
+  await app.settled();
+  await app.editDocument(session.id, {
+    path: "source.md",
+    content: "signed source record",
+    expectedRevision: null,
+  });
+  const derivedFromSeq = (await app.ledger(session.workspace))!.entries.at(-1)!.seq;
+  const created = await app.refineHarness(session.id, {
+    summary: "wider child budget",
+    rationale: "not supported by the parent scope",
+    expectedOutcome: "must be refused",
+    edits: [{
+      action: "create",
+      kind: "subagent",
+      profile: {
+        id: "wider-helper",
+        name: "Wider helper",
+        systemPrompt: "Inspect only.",
+        allowedTools: ["void_workspace_list"],
+        policyProfile: "default",
+        maxTurns: 2,
+        maxContextTokens: 4096,
+      },
+      derivedFromSeq: [derivedFromSeq],
+      reason: "must be refused",
+    }],
+  } as unknown as RefinementProposal);
+  await assert.rejects(
+    app.approveHarnessProposal(session.id, created.proposalDigest!),
+    /parent run bounds or policy/,
+  );
+  assert.deepEqual(await app.promotedAgentProfiles(session.workspace), []);
+});
+
+test("subagent profile approval refuses another policy profile", async (t) => {
+  const { app, session } = await fixture(t);
+  const derivedFromSeq = (await app.ledger(session.workspace))!.entries.at(-1)!.seq;
+  const created = await app.refineHarness(session.id, {
+    summary: "different child policy",
+    rationale: "not supported by the parent scope",
+    expectedOutcome: "must be refused",
+    edits: [{
+      action: "create",
+      kind: "subagent",
+      profile: {
+        id: "different-policy-helper",
+        name: "Different policy helper",
+        systemPrompt: "Inspect only.",
+        allowedTools: ["void_workspace_list"],
+        policyProfile: "other-policy",
+        maxTurns: 1,
+        maxContextTokens: 4096,
+      },
+      derivedFromSeq: [derivedFromSeq],
+      reason: "must be refused",
+    }],
+  } as unknown as RefinementProposal);
+  await assert.rejects(
+    app.approveHarnessProposal(session.id, created.proposalDigest!),
+    /parent run bounds or policy/,
+  );
+  assert.deepEqual(await app.promotedAgentProfiles(session.workspace), []);
 });
 
 test("policy edits are rejected before they reach the signed ledger", async (t) => {

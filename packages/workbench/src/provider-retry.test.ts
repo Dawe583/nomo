@@ -79,3 +79,113 @@ test('JSON truncation and reasoning-only answers cannot succeed or dispatch tool
     assert.equal(calls, 1);
   }
 });
+
+test('JSON completions without a supported terminal finish reason fail closed', async () => {
+  for (const finishReason of [undefined, 'future_stop']) {
+    const p = new CompatibleProvider(config, async () => Response.json({
+      choices: [{
+        message: { role: 'assistant', content: 'Possibly partial answer' },
+        ...(finishReason === undefined ? {} : { finish_reason: finishReason }),
+      }],
+    }));
+
+    await assert.rejects(
+      p.complete(freeModel, [{ role: 'user', content: 'Answer' }], [], new AbortController().signal),
+      /invalid completion status/i,
+    );
+  }
+});
+test('Chat Completions exposes text and refusal content parts', async () => {
+  for (const { message, expected } of [
+    {
+      message: { role: 'assistant', content: null, refusal: 'I cannot help with that request.' },
+      expected: 'I cannot help with that request.',
+    },
+    {
+      message: { role: 'assistant', content: [{ type: 'refusal', refusal: 'I cannot help with that request.' }] },
+      expected: 'I cannot help with that request.',
+    },
+    {
+      message: { role: 'assistant', content: [{ type: 'text', text: 'The answer.' }] },
+      expected: 'The answer.',
+    },
+  ]) {
+    const p = new CompatibleProvider(config, async () => Response.json({
+      choices: [{ finish_reason: 'stop', message }],
+    }));
+
+    const reply = await p.complete(
+      freeModel,
+      [{ role: 'user', content: 'Do something' }],
+      [],
+      new AbortController().signal,
+    );
+
+    assert.equal(reply.message.content, expected);
+  }
+});
+
+test('Chat Completions rejects unsupported content parts', async () => {
+  const p = new CompatibleProvider(config, async () => Response.json({
+    choices: [{
+      finish_reason: 'stop',
+      message: { role: 'assistant', content: [{ type: 'audio', data: 'not-text' }] },
+    }],
+  }));
+
+  await assert.rejects(
+    p.complete(freeModel, [], [], new AbortController().signal),
+    /invalid response/i,
+  );
+});
+test('Chat Completions normalizes legacy function_call responses', async () => {
+  const p = new CompatibleProvider(config, async () => Response.json({
+    choices: [{
+      finish_reason: 'function_call',
+      message: {
+        role: 'assistant',
+        content: null,
+        function_call: { name: 'lookup', arguments: '{"key":"x"}' },
+      },
+    }],
+  }));
+
+  const reply = await p.complete(
+    freeModel,
+    [{ role: 'user', content: 'Look this up' }],
+    [{ type: 'function', function: { name: 'lookup', parameters: { type: 'object' } } }],
+    new AbortController().signal,
+  );
+  const call = reply.message.tool_calls?.[0];
+  assert.ok(call);
+  assert.ok(call.id);
+  assert.equal(call.function.name, 'lookup');
+  assert.equal(call.function.arguments, '{"key":"x"}');
+});
+test('Chat Completions rejects malformed or mixed legacy and modern calls', async () => {
+  for (const message of [
+    {
+      role: 'assistant',
+      content: null,
+      function_call: { name: 'lookup', arguments: 5 },
+    },
+    {
+      role: 'assistant',
+      content: null,
+      function_call: { name: 'lookup', arguments: '{}' },
+      tool_calls: [{
+        id: 'modern',
+        type: 'function',
+        function: { name: 'lookup', arguments: '{}' },
+      }],
+    },
+  ]) {
+    const p = new CompatibleProvider(config, async () => Response.json({
+      choices: [{ finish_reason: 'function_call', message }],
+    }));
+    await assert.rejects(
+      p.complete(freeModel, [], [], new AbortController().signal),
+      /invalid tool calls/i,
+    );
+  }
+});

@@ -18,18 +18,18 @@ test('default agent writes a captured document, restarts, verifies evidence and 
     if (turns === 1) {
       const tool = request.tools.find((item: { function: { description: string } }) => item.function.description.startsWith('void_workspace_write:'));
       assert.ok(tool, 'default document tools must be available without an MCP server');
-      return Response.json({ choices: [{ message: { role: 'assistant', content: null, tool_calls: [{ id: 'write-document', type: 'function', function: { name: tool.function.name, arguments: JSON.stringify({ path: 'notes/plan.md', content: 'A real managed document.' }) } }] } }] });
+      return Response.json({ choices: [{ message: { role: 'assistant', content: null, tool_calls: [{ id: 'write-document', type: 'function', function: { name: tool.function.name, arguments: JSON.stringify({ path: 'notes/plan.md', content: 'A real managed document.' }) } }] }, finish_reason: 'tool_calls' }] });
     }
     const result = JSON.parse(request.messages.at(-1).content);
     assert.equal(result.isError, undefined);
     assert.equal(JSON.parse(result.content[0].text).completed, true);
-    return Response.json({ choices: [{ message: { role: 'assistant', content: 'The document was created.' } }] });
+    return Response.json({ choices: [{ message: { role: 'assistant', content: 'The document was created.' }, finish_reason: 'stop' }] });
   };
   const f = await isolatedWorkbench(
     t,
     fetcher,
     {},
-    { prefix: 'void-default-agent-', configure: false },
+    { prefix: 'nomo-default-agent-', configure: false },
   );
   // The fixture does not configure: the fetcher asserts on the Authorization
   // header of every request, so the key has to be this test's own before the

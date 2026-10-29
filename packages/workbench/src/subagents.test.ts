@@ -16,7 +16,7 @@ const reply = (body: unknown) =>
   });
 const models = () => reply({ data: [{ id: "fixture" }] });
 const answer = (content: string = "Done") =>
-  reply({ choices: [{ message: { role: "assistant", content } }] });
+  reply({ choices: [{ message: { role: "assistant", content }, finish_reason: "stop" }] });
 const successFetcher: typeof fetch = async (url) =>
   String(url).endsWith("/models") ? models() : answer();
 
@@ -64,6 +64,60 @@ test("spawn creates a child with parentId and fresh history", async (t) => {
       childView.events.some((e) => e.kind === "user"),
   );
   assert.equal((await app.list()).find((s) => s.id === parent.id)!.parentId, undefined);
+});
+
+test("a promoted workspace profile configures a child without widening its tool set", async (t) => {
+  const { app } = await isolatedWorkbench(t, successFetcher, {});
+  const parent = await app.start("Parent request", "fixture");
+  await app.settled();
+  await app.editDocument(parent.id, {
+    path: "source.md",
+    content: "signed source record",
+    expectedRevision: null,
+  });
+  const profile = {
+    id: "promoted-helper",
+    name: "Helper",
+    systemPrompt: "Inspect only.",
+    allowedTools: ["void_workspace_list"],
+    policyProfile: "default",
+    maxTurns: 1,
+    maxContextTokens: 4096,
+  };
+  const evidenceSeq = (await app.ledger(parent.workspace))!.entries.at(-1)!.seq;
+  const proposal = {
+    summary: "bounded subagent profile",
+    rationale: "delegated work needs a narrow profile",
+    expectedOutcome: "the child receives only approved capabilities",
+    edits: [{
+      action: "create",
+      kind: "subagent",
+      profile,
+      derivedFromSeq: [evidenceSeq],
+      reason: "the signed history supports this profile",
+    }],
+  } as Parameters<Workbench["refineHarness"]>[1];
+  const pending = await app.refineHarness(parent.id, proposal);
+  await app.approveHarnessProposal(parent.id, pending.proposalDigest!);
+
+  const child = await app.spawnSubagent(parent.id, "Inspect one record", {
+    agent: profile.id,
+  });
+  await app.settled();
+  const childSession = (app as unknown as {
+    sessions: Map<string, {
+      agentProfile?: typeof profile;
+      messages: Array<{ role: string; content: string }>;
+      tools: Array<{ name: string }>;
+    }>;
+  }).sessions.get(child.id)!;
+  assert.equal(childSession.agentProfile?.id, profile.id);
+  assert.match(
+    childSession.messages[0]!.content,
+    /Active agent profile \(promoted-helper\): Inspect only\./,
+  );
+  assert.deepEqual(childSession.tools.map((tool) => tool.name), ["void_workspace_list"]);
+  assert.equal(child.agent, profile.id);
 });
 
 test("spawn refuses an unknown parent without creating a session", async (t) => {
@@ -160,7 +214,7 @@ test("spawn writes a void_subagent_spawn entry to the parent chain", async (t) =
 });
 
 test("spawn queues when capacity is held and fails closed at queue cap", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "void-spawn-cap-"));
+  const root = await mkdtemp(join(tmpdir(), "nomo-spawn-cap-"));
   const fetcher: typeof fetch = async (url: unknown) => {
     if (String(url).endsWith("/models")) return models();
     await new Promise((resolve) => setTimeout(resolve, 300));
@@ -219,7 +273,7 @@ test("queued child cancellation clears its prompt and excludes it from dispatch"
     return answer();
   };
   const { app, root } = await isolatedWorkbench(t, fetcher, {}, {
-    prefix: "void-spawn-cancel-",
+    prefix: "nomo-spawn-cancel-",
     beforeShutdown: release,
   });
   const parent = await app.start("Parent request", "fixture");
@@ -326,7 +380,7 @@ test("running child cancellation keeps capacity until settle and then derives st
     return answer();
   };
   const { app } = await isolatedWorkbench(t, fetcher, {}, {
-    prefix: "void-spawn-running-cancel-",
+    prefix: "nomo-spawn-running-cancel-",
     beforeShutdown: release,
   });
   await app.patchHarnessSettings({ maxConcurrentRuns: 1 });
@@ -352,7 +406,7 @@ test("restored paused spawned child can be cancelled only with its retained prom
     return answer();
   };
   const f = await isolatedWorkbench(t, fetcher, {}, {
-    prefix: "void-spawn-restored-cancel-",
+    prefix: "nomo-spawn-restored-cancel-",
     beforeShutdown: release,
   });
   const parent = await f.app.start("Parent request", "fixture");
@@ -387,7 +441,7 @@ test("unknown outcome remains unknown when a spawned child is cancelled", async 
     return answer();
   };
   const { app } = await isolatedWorkbench(t, fetcher, {}, {
-    prefix: "void-spawn-unknown-",
+    prefix: "nomo-spawn-unknown-",
     beforeShutdown: release,
   });
   await app.patchHarnessSettings({ maxRunTimeoutMs: 1000 });

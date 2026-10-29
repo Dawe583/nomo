@@ -6,6 +6,7 @@ import { createServer, type Server } from "node:http";
 import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
 import { isolatedWorkbench } from "./test-fixture.ts";
 import type { Workbench } from "./index.ts";
+import { LocalStorage } from "./storage.ts";
 import { loadPolicy } from "../../policy/src/rules.ts";
 import { policyDigest } from "../../policy/src/digest.ts";
 import { mineLearnedRules } from "./learned-rules.ts";
@@ -62,7 +63,7 @@ async function catalogServer(
 const provider = async (url: unknown) =>
   String(url).endsWith("/models")
     ? Response.json({ data: [{ id: "fixture" }] })
-    : Response.json({ choices: [{ message: { role: "assistant", content: "Ready" } }] });
+    : Response.json({ choices: [{ message: { role: "assistant", content: "Ready" }, finish_reason: "stop" }] });
 
 function connectorState(app: Workbench, id: string) {
   const found = app.connectionState().connectors.find((item) => item.id === id);
@@ -74,7 +75,7 @@ test("a connector is inert until the operator probes and confirms it", async (t)
   const server = await catalogServer([{ name: "test-tool" }]);
   t.after(() => server.close());
   // `configure` defaults to the same base URL and API key this test used.
-  const { app } = await isolatedWorkbench(t, provider, {}, { prefix: "void-consent-" });
+  const { app } = await isolatedWorkbench(t, provider, {}, { prefix: "nomo-consent-" });
 
   await app.addConnector({ url: server.url, name: "Test" });
   const id = app.connectionState().connectors.at(-1)!.id;
@@ -94,6 +95,21 @@ test("a connector is inert until the operator probes and confirms it", async (t)
 
   await app.probeConnector(id);
   assert.ok(server.methods.includes("tools/list"), "probing contacts the server");
+  const clientNames = server.bodies.map(
+    (body) =>
+      (body as {
+        params?: {
+          _meta?: {
+            "io.modelcontextprotocol/clientInfo"?: { name?: string };
+          };
+        };
+      }).params?._meta?.["io.modelcontextprotocol/clientInfo"]?.name,
+  );
+  assert.deepEqual(
+    [...new Set(clientNames)],
+    ["nomo-cloud"],
+    "every MCP request identifies NOMO as the client",
+  );
   assert.equal(connectorState(app, id).consentState, "probed");
   assert.deepEqual(connectorState(app, id).tools, ["test-tool"]);
   assert.ok(
@@ -117,7 +133,7 @@ test("a connector is inert until the operator probes and confirms it", async (t)
 test("a failed probe leaves the staged connector exactly as it was", async (t) => {
   const server = await catalogServer([], 503);
   t.after(() => server.close());
-  const f = await isolatedWorkbench(t, undefined, {}, { configure: false, prefix: "void-probe-fail-" });
+  const f = await isolatedWorkbench(t, undefined, {}, { configure: false, prefix: "nomo-probe-fail-" });
   const app = f.app;
   await app.addConnector({ url: server.url, name: "Failing" });
   const id = app.connectionState().connectors.at(-1)!.id;
@@ -135,7 +151,7 @@ test("a failed probe leaves the staged connector exactly as it was", async (t) =
 test("a snapshot written before the consent gate loads as staged with no catalog", async (t) => {
   const server = await catalogServer([{ name: "legacy-tool" }]);
   t.after(() => server.close());
-  const f = await isolatedWorkbench(t, undefined, {}, { configure: false, prefix: "void-legacy-" });
+  const f = await isolatedWorkbench(t, undefined, {}, { configure: false, prefix: "nomo-legacy-" });
   const app = f.app;
   await app.addConnector({ url: server.url, name: "Legacy" });
   const id = app.connectionState().connectors.at(-1)!.id;
@@ -167,7 +183,7 @@ test("a snapshot written before the consent gate loads as staged with no catalog
 });
 
 test("a connector token never appears in the public state", async (t) => {
-  const { app } = await isolatedWorkbench(t, undefined, {}, { configure: false, prefix: "void-redact-" });
+  const { app } = await isolatedWorkbench(t, undefined, {}, { configure: false, prefix: "nomo-redact-" });
   await app.addConnector({
     url: "https://mcp.example.com/mcp",
     token: "super-secret-token-12345",
@@ -176,8 +192,142 @@ test("a connector token never appears in the public state", async (t) => {
   assert.doesNotMatch(JSON.stringify(app.connectionState()), /super-secret-token-12345/);
 });
 
+test("runtime connector grants authenticate each request and expire across restart", async (t) => {
+  const grant = "runtime-only-grant";
+  const methods: string[] = [];
+  const authorizations: string[] = [];
+  const server = createServer(async (request, response) => {
+    let text = "";
+    for await (const chunk of request) text += chunk;
+    const body = JSON.parse(text || "{}");
+    methods.push(body.method);
+    authorizations.push(request.headers.authorization ?? "");
+    if (request.headers.authorization !== `Bearer ${grant}`) {
+      response.writeHead(401);
+      response.end();
+      return;
+    }
+    response.setHeader("content-type", "application/json");
+    response.end(
+      JSON.stringify({
+        jsonrpc: "2.0",
+        id: body.id,
+        result:
+          body.method === "tools/list"
+            ? {
+                tools: [
+                  {
+                    name: "runtime-tool",
+                    description: "runtime-tool: fixture",
+                    inputSchema: { type: "object" },
+                  },
+                ],
+              }
+            : { content: [{ type: "text", text: "fixture result" }] },
+      }),
+    );
+  });
+  server.listen(0, "127.0.0.1");
+  await new Promise<void>((resolve) => server.once("listening", resolve));
+  const address = server.address();
+  assert.ok(address && typeof address !== "string");
+  t.after(
+    () =>
+      new Promise<void>((resolve) =>
+        server.close(() => resolve()),
+      ),
+  );
+
+  let grantsIssued = 0;
+  const gate = { wantCall: true };
+  const fixture = await isolatedWorkbench(
+    t,
+    phasedProvider((tools) => {
+      const selected = tools.find((tool) =>
+        String(tool.function.description ?? "").startsWith("runtime-tool:"),
+      );
+      assert.ok(selected, "the confirmed connector tool reaches the model");
+      return selected.function.name;
+    }, gate) as typeof fetch,
+    {},
+    { prefix: "nomo-runtime-grant-" },
+  );
+  const { app } = fixture;
+  await app.addConnector({
+    url: `http://127.0.0.1:${address.port}/mcp`,
+    name: "Runtime proxy",
+    connectionless: true,
+    tokenProvider: () => {
+      grantsIssued += 1;
+      return grant;
+    },
+    mapping: { "runtime-tool": DELETE },
+    facts: connectorFacts,
+    policy: allowAll,
+  });
+  const connectorId = app.connectionState().connectors.at(-1)!.id;
+  await app.probeConnector(connectorId);
+  await app.confirmConnector(connectorId);
+  const session = await app.start("Call the runtime fixture tool", "fixture");
+  await app.settled();
+
+  assert.ok(methods.includes("tools/call"), "the model call reaches the connector");
+  assert.equal(grantsIssued, methods.length, "a fresh grant is requested per MCP call");
+  assert.ok(
+    authorizations.every((authorization) => authorization === `Bearer ${grant}`),
+    "each MCP request carries the runtime grant",
+  );
+  assert.equal(gate.wantCall, false);
+  assert.doesNotMatch(
+    JSON.stringify(app.connectionState()),
+    /runtime-only-grant/,
+    "public connector state never contains the grant",
+  );
+
+  const internals = app as unknown as { storage: { directory: string } };
+  const saved = new LocalStorage(internals.storage.directory).read<{
+    connectors: Record<string, unknown>[];
+    sessions: {
+      tools: { connectorId?: string }[];
+      connections: Record<string, Record<string, unknown>>;
+    }[];
+  }>();
+  assert.ok(saved);
+  assert.equal(saved.connectors[0]!.tokenProvider, undefined);
+  assert.equal(saved.connectors[0]!.runtimeTokenProviderRequired, true);
+  assert.equal(saved.sessions.at(-1)!.connections[connectorId]!.tokenProvider, undefined);
+  assert.equal(
+    saved.sessions.at(-1)!.connections[connectorId]!.runtimeTokenProviderRequired,
+    true,
+  );
+
+  assert.equal(app.get(session.id)?.status, "idle");
+  const reopened = fixture.restart();
+  assert.equal(
+    connectorState(reopened, connectorId).consentState,
+    "staged",
+    "a connector whose runtime grant provider vanished cannot retain consent",
+  );
+  assert.deepEqual(connectorState(reopened, connectorId).tools, []);
+  const restored = (reopened as unknown as {
+    sessions: Map<string, {
+      tools: { connectorId?: string }[];
+      connections: Record<string, { consentState: string; tools: unknown[] }>;
+    }>;
+  }).sessions.get(session.id)!;
+  assert.equal(restored.connections[connectorId]!.consentState, "staged");
+  assert.deepEqual(restored.connections[connectorId]!.tools, []);
+  assert.equal(
+    restored.tools.some((tool) => tool.connectorId === connectorId),
+    false,
+    "a restored session cannot retain a catalog from a vanished runtime provider",
+  );
+  assert.equal(gate.wantCall, false);
+
+});
+
 test("twelve connectors is the limit", async (t) => {
-  const { app } = await isolatedWorkbench(t, undefined, {}, { configure: false, prefix: "void-limit-" });
+  const { app } = await isolatedWorkbench(t, undefined, {}, { configure: false, prefix: "nomo-limit-" });
   for (let index = 0; index < 12; index += 1)
     await app.addConnector({ url: `https://mcp-${index}.example.com/mcp` });
   await assert.rejects(
@@ -187,7 +337,7 @@ test("twelve connectors is the limit", async (t) => {
 });
 
 test("a non-loopback HTTP endpoint and embedded credentials are refused", async (t) => {
-  const { app } = await isolatedWorkbench(t, undefined, {}, { configure: false, prefix: "void-validation-" });
+  const { app } = await isolatedWorkbench(t, undefined, {}, { configure: false, prefix: "nomo-validation-" });
   for (const url of [
     "http://example.com/mcp",
     "https://example.com/mcp?token=abc",
@@ -203,7 +353,7 @@ test("the policy preview shows the decision each tool would get", async (t) => {
     { name: "delete" },
   ]);
   t.after(() => server.close());
-  const { app } = await isolatedWorkbench(t, undefined, {}, { configure: false, prefix: "void-preview-" });
+  const { app } = await isolatedWorkbench(t, undefined, {}, { configure: false, prefix: "nomo-preview-" });
   await app.addConnector({
     url: server.url,
     name: "Preview",
@@ -264,9 +414,7 @@ function phasedProvider(
     const body = JSON.parse(String(init?.body ?? "{}"));
     const messages = (body.messages ?? []) as { role: string }[];
     if (messages.some((message) => message.role === "tool"))
-      return Response.json({
-        choices: [{ message: { role: "assistant", content: "done" } }],
-      });
+      return Response.json({ choices: [{ message: { role: "assistant", content: "done" }, finish_reason: "stop" }] });
     // The learned-entry digest rides after the user message as a system
     // message, so the last message is not always the one to answer.
     const last = [...messages]
@@ -274,27 +422,16 @@ function phasedProvider(
       .find((message) => message.role !== "system");
     if (last?.role === "user" && gate.wantCall) {
       gate.wantCall = false;
-      return Response.json({
-        choices: [
-          {
-            message: {
-              role: "assistant",
-              content: null,
-              tool_calls: [
-                {
-                  id: "one",
-                  type: "function",
-                  function: { name: pick(body.tools ?? []), arguments: "{}" },
-                },
-              ],
-            },
-          },
-        ],
-      });
+      return Response.json({ choices: [{ message: { role: "assistant",
+      content: null, tool_calls: [
+        {
+          id: "one",
+          type: "function",
+          function: { name: pick(body.tools ?? []), arguments: "{}" },
+        },
+      ] }, finish_reason: "tool_calls" }] });
     }
-    return Response.json({
-      choices: [{ message: { role: "assistant", content: "ready" } }],
-    });
+    return Response.json({ choices: [{ message: { role: "assistant", content: "ready" }, finish_reason: "stop" }] });
   };
 }
 
@@ -370,7 +507,7 @@ test("workspace-mined refusal never holds a connector call", async (t) => {
   t.after(() => server.close());
   const gate = { wantCall: false };
   const { app } = await isolatedWorkbench(t, phasedProvider(deleteName, gate), {}, {
-    prefix: "void-learned-connector-",
+    prefix: "nomo-learned-connector-",
   });
   const id = await confirmedConnector(
     app,
@@ -441,7 +578,7 @@ test("connector attribution names the raw operator policy digest", async (t) => 
     t,
     phasedProvider(deleteName, { wantCall: true }),
     {},
-    { prefix: "void-connector-attribution-" },
+    { prefix: "nomo-connector-attribution-" },
   );
   await confirmedConnector(app, server.url, "Fixture", allowAll, { delete: DELETE }, connectorFacts);
 
@@ -476,6 +613,65 @@ test("connector attribution names the raw operator policy digest", async (t) => 
   );
 });
 
+test("a canonical registry name resolves to one explicitly mapped connector tool", async (t) => {
+  const server = await catalogServer([DELETE_TOOL]);
+  t.after(() => server.close());
+  const gate = { wantCall: true };
+  const { app } = await isolatedWorkbench(
+    t,
+    phasedProvider(() => DELETE, gate),
+    {},
+    { prefix: "nomo-connector-canonical-alias-" },
+  );
+  await confirmedConnector(
+    app,
+    server.url,
+    "Fixture",
+    allowAll,
+    { delete: DELETE },
+    connectorFacts,
+  );
+
+  const session = await app.start("Delete it", "fixture");
+  await app.settled();
+
+  assert.ok(
+    server.methods.includes("tools/call"),
+    "the uniquely mapped canonical name dispatches the advertised tool",
+  );
+});
+
+test("an ambiguous canonical name never dispatches a connector tool", async (t) => {
+  const server = await catalogServer([
+    DELETE_TOOL,
+    { name: "remove", description: "remove: fixture" },
+  ]);
+  t.after(() => server.close());
+  const { app } = await isolatedWorkbench(
+    t,
+    phasedProvider(() => DELETE, { wantCall: true }),
+    {},
+    { prefix: "nomo-connector-ambiguous-alias-" },
+  );
+  await confirmedConnector(
+    app,
+    server.url,
+    "Fixture",
+    allowAll,
+    { delete: DELETE, remove: DELETE },
+    connectorFacts,
+  );
+
+  await app.start("Delete it", "fixture");
+  await app.settled();
+
+  assert.equal(
+    server.methods.includes("tools/call"),
+    false,
+    "ambiguous canonical names fail closed before upstream dispatch",
+  );
+});
+
 test("unclassified tool fails closed on the connector path", async (t) => {
   const server = await catalogServer([
     { name: "unmapped_unknown_thing", description: "unmapped_unknown_thing: fixture" },
@@ -486,7 +682,7 @@ test("unclassified tool fails closed on the connector path", async (t) => {
     t,
     phasedProvider(unmappedName, gate),
     {},
-    { prefix: "void-unclassified-" },
+    { prefix: "nomo-unclassified-" },
   );
   await confirmedConnector(app, server.url, "Fixture", allowAll, {}, connectorFacts);
   const internals = app as unknown as SeededEvidence;

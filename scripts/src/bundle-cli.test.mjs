@@ -105,11 +105,9 @@ describe("the distribution bundle", () => {
   });
 
   test("carries no workspace protocol specifier a consumer cannot resolve", () => {
-    // This is the assertion the whole bundler exists for. `@void/registry` is
-    // declared `workspace:*`, and npm rejects that protocol outright with
-    // EUNSUPPORTEDPROTOCOL, so a single surviving specifier makes the tarball
-    // uninstallable no matter how correct the rest of it is. Every chunk is
-    // scanned, because the graph is only as self-contained as its laziest file.
+    // Workspace package @nomo/registry uses workspace:*, which npm rejects with
+    // EUNSUPPORTEDPROTOCOL. One surviving specifier makes the tarball unusable.
+    // Scan every chunk because one import is enough to break consumer installs.
     for (const chunk of chunks) {
       const code = readFileSync(join(outDir, chunk), "utf8");
       for (const specifier of bareSpecifiers(code)) {
@@ -127,13 +125,13 @@ describe("the distribution bundle", () => {
 
 
   test("imports no sibling workspace package by name", () => {
-    // Every sibling must be inlined. A bare `@void/...` import would resolve in
+    // Every sibling must be inlined. A bare workspace-package import would resolve
     // this checkout through the workspace link and nowhere else, so the artifact
     // would prove nothing about a consumer.
     for (const chunk of chunks) {
       const code = readFileSync(join(outDir, chunk), "utf8");
       const workspaceImports = bareSpecifiers(code).filter((specifier) =>
-        specifier.startsWith("@void/"),
+        specifier.startsWith("@void/") || specifier.startsWith("@nomo/"),
       );
       assert.deepEqual(
         workspaceImports,

@@ -4,6 +4,14 @@
 > [Czech edition](HANDBOOK.cs.md). This document is the capability and boundary
 > record; the handbook is the operating guide.
 
+**Scope update (2026-10-27):** No desktop application is part of the current
+Harness goal. Use the local web interface or CLI from a private source checkout.
+Do not run historical desktop build or install steps below. Existing
+`apps/desktop` files and historical evidence remain unchanged; they are not part
+of the remaining acceptance plan. OpenAI compatibility means outbound provider
+connections, not an inbound OpenAI API server.
+
+
 Current capability summary (14 September 2026):
 
 | Surface | Supported recovery | Boundary |
@@ -21,19 +29,24 @@ documents, with no access to the visitor's computer or connected accounts.
 
 ## Installing and updating on a machine
 
-The installer is `scripts/install-nomo.sh`, run from a checkout. It resolves
-its own repository root, so the working directory you invoke it from does not
-matter. `bash scripts/install-nomo.sh --help` prints the same contract.
+For a fresh install, clone the private repository into the default install tree
+and run its installer:
+
+git clone --depth 1 https://github.com/Dawe583/void.git "$HOME/.local/share/nomo-cli" &&
+bash "$HOME/.local/share/nomo-cli/scripts/install-nomo.sh"
+```
+
+This needs existing Git credentials and repository read access. The installer
+reuses this checkout. `bash scripts/install-nomo.sh --help` prints its contract.
 
 What it does, in order:
 
 1. Checks prerequisites: `node` at major version 24 or newer, `git`, and
    `pnpm` (it falls back to enabling corepack when pnpm is absent).
-2. Puts the tree at `$NOMO_HOME`, default `$HOME/.local/share/nomo-cli`. On
-   the first run it clones the repository shallow. An existing tree is reused
+2. Puts the tree at `$NOMO_HOME`, default `$HOME/.local/share/nomo-cli`. It
+   clones shallowly only when no tree exists. An existing checkout is reused
    untouched, because fetching new commits is `nomo update`'s job, not the
-   installer's. A directory that already exists but is not a NOMO checkout is
-   refused rather than written into.
+   installer's. A directory that exists but is not a NOMO checkout is refused.
 3. Runs `pnpm install --frozen-lockfile` inside the tree, but only when
    `node_modules` is missing or older than the lockfile.
 4. Writes the launcher at `$HOME/.local/bin/nomo`, a small `sh` script that
@@ -42,8 +55,9 @@ What it does, in order:
    you to move it aside; it never overwrites a file it did not write.
 
 The installer does not change your shell profile. Add `$HOME/.local/bin` to
-PATH yourself and open a new terminal, then run `nomo`. `NOMO_HOME` is read by
-both the installer and the launcher, so a tree anywhere else needs no edit.
+`PATH` yourself and open a new terminal. Run `nomo --help` to check the CLI
+launcher without opening the TUI. `NOMO_HOME` is read by both installer and
+launcher, so a custom tree needs no script edit.
 
 The repository is private, so a first-run clone needs credentials the machine
 already holds: a `gh auth login`, a git credential helper, or an SSH remote.
@@ -131,29 +145,77 @@ clone reported `git rev-list --count HEAD` as 1 and could not resolve `HEAD~1`;
 after `git fetch --unshallow` the same tree reported 419 commits and
 `git reset --keep HEAD~1` succeeded.
 
-## Desktop and web workspace
+## Local web workspace
 
-The shared agent application includes provider presets (compatible-provider APIs
-and native Anthropic), model search, reusable encrypted provider connections,
-multiple HTTP MCP connectors, persistent conversation history, export, approval
-links and a built-in managed document workspace. GUI, desktop and CLI use the
-same local agent implementation; Vercel runs durable cloud agent turns.
+The local browser interface and CLI share the Workbench provider setup, model
+search, encrypted provider connections, HTTP MCP connectors, conversation
+history, approvals, and managed document workspace. Vercel runs durable cloud
+agent turns.
 
-Start locally with Node.js 24 or newer, `pnpm install --frozen-lockfile`, then
-`pnpm gui`. No MCP command or policy environment variable is needed for the
-built-in documents. Open Settings, connect a provider and select a model. Local
-Ollama and LM Studio endpoints work from the desktop/local app. The hosted app
-requires a publicly accessible HTTPS provider and cannot reach your localhost.
+For a fresh checkout, use Node.js 24 or newer, run
+`pnpm install --frozen-lockfile`, then `pnpm gui`. After the source installer,
+dependencies are already installed; start the local web interface with
+`cd "${NOMO_HOME:-$HOME/.local/share/nomo-cli}" && pnpm gui`. Open Settings and
+connect a provider only when needed. Environment provider checks remain
+explicit. Local Ollama and LM Studio endpoints work from the local runtime. The
+hosted app requires a public HTTPS provider and cannot reach localhost.
 
-For the native macOS application use `pnpm desktop:setup`, `pnpm desktop`, or
-`pnpm desktop:build`. The package includes Node and the backend. See
-[desktop packaging](../apps/desktop/README.md) for artifacts, native smoke checks,
-Keychain migration and signing requirements. macOS 13.5 or newer is required.
+No desktop build or desktop install is part of the current beta path.
+
+## Private web and CLI beta tester guide
+
+This repository is private. Testers need repository read access from its owner.
+There is no published package or desktop download. The supported test path uses
+a source checkout and the local web interface or CLI.
+
+### Supported install prerequisites
+
+- Git access to the private repository, Node.js 24 or newer, and pnpm.
+- `scripts/install-nomo.sh` installs the source-based CLI launcher and
+  dependencies. It does not install a desktop app.
+- To use the local browser interface, run `pnpm gui` from the checkout or
+  installed source tree. Add `$HOME/.local/bin` to `PATH` for the CLI launcher.
+
+### Safe first-run checklist
+
+1. Use a fresh OS account or disposable test machine. Do not remove an existing
+   NOMO installation or reuse a workspace with real data.
+2. Clone the private repository with the command above after the owner grants
+   read access; run the source installer.
+3. Start the local web interface from the installed source tree with
+   `cd "${NOMO_HOME:-$HOME/.local/share/nomo-cli}" && pnpm gui`. Open the local
+   URL shown by the server. Do not configure a provider key, sign in, or connect
+   an MCP server for the first check.
+4. Confirm the local web interface and Settings open, the provider stays
+   disconnected, and built-in local documents work.
+5. Report only a reproducible, sanitized issue through the private form below.
+
+### Private feedback process
+
+Submit manually through the [private beta feedback issue form](https://github.com/Dawe583/void/issues/new?template=feedback.yml). The repository is private; submitted issues are visible to repository collaborators, and GitHub displays the reporter's account to them. The form does not ask for a name or email. Do not submit if that visibility is unsuitable.
+
+This process adds no analytics, telemetry, automatic upload, diagnostic collection, or feedback server. A tester chooses what to type and submits it to the repository issue tracker. No other feedback address or private channel is documented. If GitHub does not let your role create an issue, do not send feedback or diagnostics elsewhere; request issue access through the same private repository access path that granted your repo access.
+
+The form asks for:
+
+- NOMO version, Node.js version, OS version and architecture, plus whether the
+  tester used the local web interface or CLI;
+- numbered reproduction steps using built-in local content;
+- expected result, actual result, and how often it reproduces;
+- an optional safe error category or short manually redacted excerpt.
+
+Before submitting, remove API keys, passwords, OAuth tokens, provider URLs,
+prompts, responses, conversation transcripts, project contents, raw logs,
+screenshots, filesystem paths, IP addresses, user or device names, email
+addresses, and all other personal information. Do not paste a raw log even if
+the app produced it. Never add an attachment in a follow-up comment. The issue
+template requires confirmation that the content is sanitized and that repository
+collaborators can see the issue and GitHub account.
 
 Local sessions, provider profiles, connector credentials, documents and signed
 history persist in an atomic AES-256-GCM snapshot under `NOMO_DATA_DIR` (default
-`~/.nomo/workbench`). The desktop keeps its encryption key in macOS Keychain;
-standalone CLI/GUI uses a mode-0600 key file. A conflicting writer is rejected.
+`~/.nomo/workbench`). The local CLI and web GUI use a mode-0600 key file. A
+conflicting writer is rejected.
 The local control-plane API caps JSON request bodies at 64 KiB and returns HTTP
 413 (`body_too_large`) for larger bodies.
 
@@ -238,12 +300,16 @@ same transaction. Skipping it leaves the server writing a column the database
 does not have, and every cloud read fails until it is applied. See
 [account ownership](ACCOUNT-OWNERSHIP.md).
 
-NOMO has no default provider and no default model. Add `NVIDIA_API_KEY` through
-Provider settings or the local runtime environment, or connect another provider
-from the preset list, and the first conversation asks which model to use from
-the catalog that provider returns. Existing conversations retain their saved
-provider and model. The NVIDIA hosted API may expose an account-scoped
-trial/free quota; this is not a promise of unlimited free usage.
+NOMO has no default provider and no default model. Configure `NVIDIA_API_KEY`
+or `DASHSCOPE_API_KEY` in the local runtime environment, then use the explicit
+Settings check to validate the provider catalog, or connect another provider
+from the preset list. `GET /api/provider` is passive. Clicking **Check
+environment provider** can contact NVIDIA NIM and, if needed, DashScope through
+the server; environment keys are never returned to the browser. The first
+conversation asks which model to use from the validated catalog. Existing
+conversations retain their saved provider and model. The NVIDIA hosted API may
+expose an account-scoped trial/free quota; this is not a promise of unlimited
+free usage.
 A model catalog can be available before the account is authorized to generate.
 Custom keys and tool-server credentials are encrypted before database storage.
 Prompts and tool results are sent to the selected provider.
@@ -313,21 +379,22 @@ It does not claim a completed paid-model run or validation of customer buckets.
 This is not completion of every work package in the master plan. Native Codex,
 Claude Code and OpenCode process adapters, PTY embedding, direct host-project
 editing, product multi-agent orchestration and production KMS
-remain open. Desktop signing/notarization requires a paid Apple Developer
-identity (Developer ID, hardened runtime, `notarytool`; free accounts cannot
-notarize); the local build is ad-hoc signed only, which is bundle integrity,
-not Apple notarization (see `docs/RELEASE.md` blocker 8). Token streaming is implemented; see
-[GUI delivery evidence](GUI-UPGRADE-DELIVERY.md). Windows beta 4 packaging and
-installed WebView smoke passed on 14 September 2026, as recorded in
-[Windows desktop verification](WINDOWS-DESKTOP.md). Linux native packaging (`deb`, `rpm`, `AppImage`) and the installed-app
-smoke check remain unverified (see `docs/RELEASE.md` blocker 9). Physical
-mobile keyboards, VoiceOver/TalkBack and true 200% browser zoom acceptance
+remain open.
+
+Native desktop signing, Tauri packaging and installed-app smoke tests are
+excluded from the current Harness scope. Do not run Xcode or treat platform
+packaging as a remaining Harness task. Historical results remain in the
+verification section below.
+Token streaming is implemented; see
+[GUI delivery evidence](GUI-UPGRADE-DELIVERY.md).
+
+Physical mobile keyboards, VoiceOver/TalkBack and true 200% browser zoom acceptance
 remain pending; the 640x450 reflow check is explicitly not a zoom test;
 see [the acceptance matrix](MOBILE-ACCESSIBILITY-ACCEPTANCE.md) and
 `docs/RELEASE.md` blocker 10.
 Only one model session runs at a time. Speculative execution is not supported.
 
-## Desktop and managed-workspace verification
+## Historical desktop and managed-workspace verification
 
 `pnpm check` passes all 500 shared-runtime tests (recorded 2026-09-11; current suite is 22 suites / ~3060 tests). The added default-agent integration test
 runs a real built-in tool through a deterministic provider, restarts twice,

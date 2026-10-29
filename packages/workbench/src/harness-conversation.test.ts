@@ -17,7 +17,7 @@ import type { ModelMessage } from "./provider.ts";
 
 const models = () => Response.json({ data: [{ id: "fixture" }] });
 const answer = (content = "Ready") =>
-  Response.json({ choices: [{ message: { role: "assistant", content } }] });
+  Response.json({ choices: [{ message: { role: "assistant", content }, finish_reason: "stop" }] });
 
 const message = (
   role: ModelMessage["role"],
@@ -124,7 +124,7 @@ function recording() {
 
 async function seeded(t: TestContext, fetcher: typeof fetch) {
   const { app } = await isolatedWorkbench(t, fetcher, {}, {
-    prefix: "void-harness-conversation-",
+    prefix: "nomo-harness-conversation-",
   });
   const session = await app.start("Review the workspace", "fixture");
   await app.settled();

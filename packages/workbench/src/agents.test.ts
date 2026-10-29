@@ -18,12 +18,12 @@ async function fixture(t:import("node:test").TestContext,fetcher:typeof fetch,ho
  const f=await isolatedWorkbench(t,fetcher,{
   NOMO_HOOK_COMMANDS:JSON.stringify(hookCommands),
   ...(hookTimeoutMs===undefined?{}:{NOMO_HOOK_TIMEOUT_MS:String(hookTimeoutMs)}),
- },{prefix:"void-agent-profile-",configure:false});
+},{prefix:"nomo-agent-profile-",configure:false});
  await f.app.configure({baseUrl:"https://fixture.test/v1",apiKey:"fixture"});
  return {get app(){return f.app;},restart(){f.restart();}};
 }
 const models=()=>Response.json({data:[{id:"fixture"}]});
-const response=()=>Response.json({choices:[{message:{role:"assistant",content:"Done"}}]});
+const response=()=>Response.json({ choices: [{ message: { role: "assistant", content: "Done" }, finish_reason: "stop" }] });
 
 test("custom profiles retain immutable session snapshots and filter executable tools",async t=>{
  let messages:ModelMessage[]=[], tools:Array<{function:{description:string}}>=[];
@@ -52,7 +52,7 @@ test("custom turn and context bounds stop before extra provider calls",async t=>
  const f=await fixture(t,async(url,init)=>{
   if(String(url).endsWith("/models"))return models();
   calls++;const body=JSON.parse(String(init?.body));
-  return Response.json({choices:[{message:{role:"assistant",content:null,tool_calls:[{id:"read",type:"function",function:{name:body.tools[0].function.name,arguments:"{}"}}]}}]});
+  return Response.json({ choices: [{ message: { role: "assistant", content: null, tool_calls: [{id:"read",type:"function",function:{name:body.tools[0].function.name,arguments:"{}"}}] }, finish_reason: "tool_calls" }] });
  });
  f.app.upsertAgent({...profile,maxTurns:1});
  const session=await f.app.start("Inspect","fixture",undefined,undefined,"custom");await f.app.settled();
@@ -69,7 +69,7 @@ test("custom document mutations still require existing policy approval",async t=
  const f=await fixture(t,async(url,init)=>{
   if(String(url).endsWith("/models"))return models();
   if(++calls>1)return response();
-  const body=JSON.parse(String(init?.body));return Response.json({choices:[{message:{role:"assistant",content:null,tool_calls:[{id:"write",type:"function",function:{name:body.tools[0].function.name,arguments:JSON.stringify({path:"note",content:"requested"})}}]}}]});
+  const body=JSON.parse(String(init?.body));return Response.json({ choices: [{ message: { role: "assistant", content: null, tool_calls: [{id:"write",type:"function",function:{name:body.tools[0].function.name,arguments:JSON.stringify({path:"note",content:"requested"})}}] }, finish_reason: "tool_calls" }] });
  });
  f.app.upsertAgent({...profile,allowedTools:["void_workspace_write"]});
  const session=await f.app.start("Write","fixture",undefined,undefined,"custom");
@@ -86,6 +86,31 @@ test("custom document mutations still require existing policy approval",async t=
  const hold=f.app.pending()[0]!;assert.equal(f.app.decide(hold.holdId,{kind:"denied",by:"test-operator"}),true);
  await f.app.settled();assert.equal(f.app.document(session.id,"note").content,null);
 });
+test("malformed tool batch fails before requesting approval for an earlier mutation",async t=>{
+ let calls=0;
+ const f=await fixture(t,async(url,init)=>{
+  if(String(url).endsWith("/models"))return models();
+  calls++;
+  const body=JSON.parse(String(init?.body));
+  const name=body.tools[0].function.name;
+  return Response.json({choices:[{finish_reason:"tool_calls",message:{role:"assistant",content:null,tool_calls:[
+   {id:"valid-first",type:"function",function:{name,arguments:JSON.stringify({path:"note",content:"requested"})}},
+   {id:"invalid-second",type:"function",function:{name,arguments:"{"}},
+  ]}}]});
+ });
+ f.app.upsertAgent({...profile,allowedTools:["void_workspace_write"]});
+ const session=await f.app.start("Write","fixture",undefined,undefined,"custom");
+ const deadline=Date.now()+10000;
+ while(!f.app.pending().length&&f.app.get(session.id)?.status==="running"&&Date.now()<deadline)await delay(5);
+ const pending=f.app.pending();
+ for(const hold of pending)f.app.decide(hold.holdId,{kind:"denied",by:"test-cleanup"});
+ await f.app.settled();
+ assert.equal(calls,1);
+ assert.equal(f.app.get(session.id)?.status,"failed");
+ assert.equal(pending.length,0);
+ assert.equal(f.app.get(session.id)?.events.filter(event=>event.type==="tool.started").length,0);
+});
+
 
 test("hook validation requires an exact explicit command allowlist",()=>{
  const hook={id:"hook",event:"after-run",command:"echo done",enabled:true};
@@ -121,7 +146,7 @@ const marker=(path:string)=>`import{writeFileSync}from"node:fs";writeFileSync(${
 async function wasRun(path:string){return access(path).then(()=>true,()=>false);}
 
 test("only an allowlisted hook command executes, and its stdout reaches the caller",async t=>{
- const directory=await mkdtemp(join(tmpdir(),"void-hook-allowlist-"));
+ const directory=await mkdtemp(join(tmpdir(),"nomo-hook-allowlist-"));
  const ran=join(directory,"ran.txt"),blocked=join(directory,"blocked.txt");
  // The allowlisted command writes a marker and prints a token; the command
  // that is NOT on the allowlist writes a different marker, so a test can tell
@@ -150,7 +175,7 @@ test("only an allowlisted hook command executes, and its stdout reaches the call
 });
 
 test("a before-run hook that exits non-zero prevents the run",async t=>{
- const directory=await mkdtemp(join(tmpdir(),"void-hook-gate-"));
+ const directory=await mkdtemp(join(tmpdir(),"nomo-hook-gate-"));
  const ran=join(directory,"ran.txt");
  const command=await hookScript(directory,"refuse",`${marker(ran)}process.stderr.write("policy check failed");process.exit(3);`);
  t.after(()=>rm(directory,{recursive:true,force:true}));
@@ -172,7 +197,7 @@ test("a before-run hook that exits non-zero prevents the run",async t=>{
 });
 
 test("a disabled hook does not execute",async t=>{
- const directory=await mkdtemp(join(tmpdir(),"void-hook-disabled-"));
+ const directory=await mkdtemp(join(tmpdir(),"nomo-hook-disabled-"));
  const ran=join(directory,"ran.txt");
  const command=await hookScript(directory,"off",marker(ran));
  t.after(()=>rm(directory,{recursive:true,force:true}));
@@ -187,7 +212,7 @@ test("a disabled hook does not execute",async t=>{
 });
 
 test("a hook that never exits is killed and does not hang the run",async t=>{
- const directory=await mkdtemp(join(tmpdir(),"void-hook-timeout-"));
+ const directory=await mkdtemp(join(tmpdir(),"nomo-hook-timeout-"));
  // The child never ends on its own; there is no event to await and no fake
  // clock that can kill a real process. The bound under test is the runner's
  // own wall-clock kill, so a real deadline is the thing being exercised.
@@ -210,7 +235,7 @@ test("a hook that never exits is killed and does not hang the run",async t=>{
 });
 
 test("an after-tool hook receives the tool name, the decision and the outcome",async t=>{
- const directory=await mkdtemp(join(tmpdir(),"void-hook-aftertool-"));
+ const directory=await mkdtemp(join(tmpdir(),"nomo-hook-aftertool-"));
  const seen=join(directory,"seen.json");
  // The hook reads its context from stdin and writes it back, so the assertion
  // is on what the hook actually received rather than on what we meant to send.
@@ -222,7 +247,7 @@ test("an after-tool hook receives the tool name, the decision and the outcome",a
   if(String(url).endsWith("/models"))return models();
   if(++calls>1)return response();
   const body=JSON.parse(String(init?.body));
-  return Response.json({choices:[{message:{role:"assistant",content:null,tool_calls:[{id:"read",type:"function",function:{name:body.tools[0].function.name,arguments:"{}"}}]}}]});
+  return Response.json({ choices: [{ message: { role: "assistant", content: null, tool_calls: [{id:"read",type:"function",function:{name:body.tools[0].function.name,arguments:"{}"}}] }, finish_reason: "tool_calls" }] });
  },[command]);
  f.app.upsertAgent({...profile,id:"observer",maxTurns:2});
  f.app.upsertHook({id:"watch",event:"after-tool",command,enabled:true});

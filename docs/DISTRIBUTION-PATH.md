@@ -101,7 +101,7 @@ Anthropic's connector review checklist demands.
 3. **The bin crosses package boundaries at runtime.**
    `packages/cli/bin/void.mjs:6-22` imports `../src/recovery.ts`,
    `../src/agent.ts`, `../src/index.ts` and more, and those in turn import
-   `@void/registry`, which is declared as `"workspace:*"`. npm cannot resolve
+   `@nomo/registry`, which is declared as `"workspace:*"`. npm cannot resolve
    `workspace:*`. Either all nine packages get published with `workspace:*`
    rewritten to real versions, or the CLI is bundled. `rollup` is already a root
    dependency, so bundling is the cheaper of the two and produces one artifact

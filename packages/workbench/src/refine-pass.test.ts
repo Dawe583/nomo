@@ -102,6 +102,57 @@ test("a valid edit is accepted", () => {
   assert.equal(accepted(validateProposal(proposal([edit()]))).length, 1);
 });
 
+test("subagent profile edits validate separately and do not become lessons", () => {
+  const profile = {
+    id: "promoted-helper",
+    name: "Helper",
+    systemPrompt: "Inspect only.",
+    allowedTools: ["void_workspace_list"],
+    policyProfile: "default",
+    maxTurns: 1,
+    maxContextTokens: 4096,
+  };
+  const parsed = extractJsonObject(JSON.stringify({
+    summary: "bounded profile",
+    rationale: "supported by records",
+    expectedOutcome: "the child stays within scope",
+    edits: [{
+      action: "create",
+      kind: "subagent",
+      profile,
+      derivedFromSeq: [1],
+      reason: "a child needs bounded capabilities",
+    }],
+  }));
+  assert.equal(parsed.ok, true);
+  assert.deepEqual(parsed.ok ? parsed.proposal.edits[0]?.profile : undefined, profile);
+  const subagentEdit = {
+    action: "create",
+    kind: "subagent",
+    profile,
+    derivedFromSeq: [1],
+    reason: "the delegated work needs a bounded profile",
+  } as unknown as RefinementEdit;
+  const candidate = proposal([subagentEdit]);
+
+  assert.equal(validateProposal(candidate).ok, true);
+  const applied = applyProposal([], candidate, "2026-10-07T00:00:00.000Z");
+  assert.deepEqual(applied.entries, []);
+  assert.deepEqual(applied.applied, []);
+  assert.deepEqual(applied.profileEdits, [subagentEdit]);
+
+  const invalid = proposal([{
+    ...subagentEdit,
+    profile: { ...profile, maxTurns: 21 },
+  } as unknown as RefinementEdit]);
+  const validation = validateProposal(invalid);
+  assert.equal(validation.ok, false);
+  assert.match(
+    !validation.ok ? validation.rejections[0]?.reason ?? "" : "",
+    /maxTurns/i,
+  );
+});
+
 test("every edit must name the records behind it", () => {
   // The one rejection neither reference harness has. Both write into a plain
   // file they trust; this writes into a signed chain, where an edit with

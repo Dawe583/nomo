@@ -38,6 +38,7 @@
  */
 
 import type { HarnessEntry, HarnessKind } from "./learned-harness.ts";
+import { validateAgentProfile, type AgentProfile } from "./agents.ts";
 
 export const REFINEMENT_KINDS = ["memory", "skill", "subagent", "prompt"] as const;
 export type RefinementKind = (typeof REFINEMENT_KINDS)[number];
@@ -51,29 +52,14 @@ export const BASE_SYSTEM_PROMPT_ID = "base_system_prompt";
 export type RefinementEdit = {
   readonly action: RefinementAction;
   readonly kind: RefinementKind;
-  /** Required for update and delete. Optional for create. */
   readonly id?: string;
-  /** Required for create and update. */
   readonly title?: string;
-  /** Required for create and update. */
   readonly content?: string;
-  /** The ledger sequence an edit rests on. Empty is refused. */
+  readonly profile?: AgentProfile;
   readonly derivedFromSeq: readonly number[];
-  /** Why this edit is worth making. Required. */
   readonly reason: string;
-  /** The addendum an operator must approve before a `prompt` edit takes
-   * effect. Absent on every other kind: a memory, skill or subagent edit is
-   * applied or refused by the proposal, but a prompt edit is never applied by
-   * the model and only ever by the operator. */
   readonly promptAddendum?: string;
-  /** Present on delete and optional elsewhere: how to undo it. */
   readonly rollbackId?: string;
-  /**
-   * The tool and class a lesson is about, when the lesson was mined from
-   * them. A rollback restores a mined lesson and needs to write back what
-   * the lesson was about, not only its text: a lesson with an empty tool and
-   * class reads as though it applies to nothing.
-   */
   readonly tool?: string;
   readonly klass?: string;
 };
@@ -138,12 +124,6 @@ function seqs(value: unknown): number[] {
 
 function readEdit(value: unknown): RefinementEdit {
   const raw = isRecord(value) ? value : {};
-  // An absent optional field is left absent, not set to undefined. refineHarness
-  // signs the proposal, canonicalJson refuses undefined because it does not
-  // round trip, and JSON.stringify drops the key, so a parser-produced edit
-  // would carry three keys a hand-built one never has, and could not be
-  // written to the chain at all. Every test builds proposals as literals, so
-  // nothing exercised the parsed shape end to end.
   const optional = (
     key: "id" | "title" | "content" | "rollbackId" | "promptAddendum" | "tool" | "klass",
   ) => (raw[key] === undefined ? {} : { [key]: text(raw[key]) });
@@ -153,15 +133,12 @@ function readEdit(value: unknown): RefinementEdit {
     ...optional("id"),
     ...optional("title"),
     ...optional("content"),
+    ...(raw.profile === undefined ? {} : { profile: raw.profile as AgentProfile }),
     derivedFromSeq: seqs(raw.derivedFromSeq),
     reason: text(raw.reason),
     ...optional("rollbackId"),
     ...optional("tool"),
     ...optional("klass"),
-    // A prompt edit carries the addendum text in its own field, not in
-    // content. Dropping it here meant validateProposal rejected every prompt
-    // edit a model could produce, and the approval path the operator reads
-    // had nothing a review could ever put in it.
     ...optional("promptAddendum"),
   };
 }
@@ -328,7 +305,25 @@ export function validateProposal(proposal: RefinementProposal): Validated {
     // already required. Demanding content as well made the two rules
     // unsatisfiable together: no prompt edit a model could write was ever
     // valid, so the operator approval path had nothing to approve.
-    if (edit.action !== "delete" && (!edit.title || (!edit.content && edit.kind !== "prompt"))) {
+    if (edit.kind === "subagent") {
+      if (edit.action === "delete") {
+        if (edit.profile !== undefined) reject("a subagent delete must not carry a profile");
+      } else if (!edit.profile) {
+        reject("a subagent create or update must carry a profile");
+      } else {
+        try {
+          const profile = validateAgentProfile(edit.profile, "subagent profile");
+          if (edit.id !== undefined && edit.id !== profile.id)
+            reject("the subagent edit id must match its profile id");
+        } catch (error) {
+          reject(error instanceof Error ? error.message : "invalid subagent profile");
+        }
+      }
+    } else if (edit.profile !== undefined) {
+      reject("only subagent edits may carry a profile");
+    }
+    if (edit.kind !== "subagent" && edit.action !== "delete" &&
+      (!edit.title || (!edit.content && edit.kind !== "prompt"))) {
       reject(`${edit.action} requires a title and content`);
       return;
     }
@@ -394,14 +389,18 @@ export function applyProposal(
 ): {
   readonly entries: HarnessEntry[];
   readonly applied: readonly AppliedEdit[];
-  /** Edits held back for an operator. Never present in `entries`. */
   readonly awaitingApproval: readonly RefinementEdit[];
+  readonly profileEdits: readonly RefinementEdit[];
 } {
   const byId = new Map(current.map((entry) => [entry.id, entry]));
   const applied: AppliedEdit[] = [];
   const awaitingApproval: RefinementEdit[] = [];
-
+  const profileEdits: RefinementEdit[] = [];
   for (const edit of proposal.edits) {
+    if (edit.kind === "subagent") {
+      profileEdits.push(edit);
+      continue;
+    }
     if (edit.kind === "prompt" && approval === undefined) {
       awaitingApproval.push(edit);
       continue;
@@ -444,7 +443,7 @@ export function applyProposal(
     applied.push({ edit, kind: entry.kind, outcome: before ? "superseded" : "created", before });
   }
 
-  return { entries: [...byId.values()], applied, awaitingApproval };
+  return { entries: [...byId.values()], applied, awaitingApproval, profileEdits };
 }
 
 /** A stable id for a create, so two identical proposals agree.
@@ -507,6 +506,9 @@ export const REFINEMENT_INSTRUCTIONS = [
   '  "edits": [ { "action": "create|update|delete", "kind": "memory|skill|subagent|prompt",',
   '    "id": "required for update and delete", "title": "", "content": "",',
   '    "reason": "why this is worth keeping", "derivedFromSeq": [1, 2] } ] }',
+  'A "subagent" edit carries a complete "profile" object with id, name, systemPrompt,',
+  'allowedTools, policyProfile, maxTurns, and maxContextTokens; it has no title/content.',
+  'Only propose tools and limits already available to the current parent session.',
   "",
   'A "prompt" edit changes the standing instructions, so it puts the text it',
   'wants added in "promptAddendum" and leaves "content" empty. It still reaches',

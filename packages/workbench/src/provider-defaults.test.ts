@@ -18,13 +18,9 @@ async function workspace(t: test.TestContext, models: readonly string[] = []) {
     async (url) =>
       String(url).endsWith("/models")
         ? Response.json({ data: models.map((id) => ({ id })) })
-        : Response.json({
-            choices: [
-              { message: { role: "assistant", content: "Fixture reply" } },
-            ],
-          }),
+        : Response.json({ choices: [{ message: { role: "assistant", content: "Fixture reply" }, finish_reason: "stop" }] }),
     {},
-    { configure: false, prefix: "void-no-default-provider-" },
+    { configure: false, prefix: "nomo-no-default-provider-" },
   );
   return app;
 }
@@ -118,11 +114,7 @@ test("the retry guard retries the free model and refuses every other model", asy
               status: 503,
               headers: { "retry-after": "0" },
             })
-          : Response.json({
-              choices: [
-                { message: { role: "assistant", content: "Ready" } },
-              ],
-            });
+          : Response.json({ choices: [{ message: { role: "assistant", content: "Ready" }, finish_reason: "stop" }] });
       },
     );
     const reply = await freeProvider.complete(

@@ -60,7 +60,7 @@ export function defaultAgentPolicy(
       ? ""
       : `    owner: ${JSON.stringify(options.owner)}\n`;
   return `# NOMO agent policy: which agent may act, on what, with which scope.
-# Evaluated together with the VOID class policy; the stricter answer wins.
+# Evaluated together with the NOMO class policy; the stricter answer wins.
 # First match wins, and the last rule must be match: {} with decision: deny.
 #
 # This default declares one agent and grants it nothing. Add a rule above

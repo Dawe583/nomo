@@ -1,7 +1,7 @@
 /**
  * The CLI's environment boundary.
  *
- * The owned key list and the lookup itself live in `@void/ledger` so the CLI,
+ * The owned key list and the lookup itself live in `@nomo/ledger` so the CLI,
  * the Workbench, the hosted runtime and the native clients cannot drift into
  * four different answers to "which settings does this product own". This
  * module is only the CLI's use of them.

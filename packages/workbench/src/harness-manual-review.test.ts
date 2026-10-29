@@ -14,7 +14,7 @@ import type { RefinementProposal } from "./refine-pass.ts";
 
 const models = () => Response.json({ data: [{ id: "fixture" }] });
 const answer = (content = "Done") =>
-  Response.json({ choices: [{ message: { role: "assistant", content } }] });
+  Response.json({ choices: [{ message: { role: "assistant", content }, finish_reason: "stop" }] });
 const declined = () =>
   answer(JSON.stringify({ approve: false, reason: "one call is not a pattern" }));
 
@@ -47,7 +47,7 @@ function answering(completion: (n: number) => Response) {
 /** A settled conversation whose chain has a sequence a proposal may cite. */
 async function seeded(t: TestContext, fetcher: typeof fetch) {
   const { app } = await isolatedWorkbench(t, fetcher, {}, {
-    prefix: "void-harness-manual-",
+    prefix: "nomo-harness-manual-",
   });
   const session = await app.start("Review the workspace", "fixture");
   await app.settled();
@@ -68,7 +68,7 @@ async function seedLesson(app: Awaited<ReturnType<typeof seeded>>["app"], sessio
 test("a review request for an unknown session is refused, not invented", async (t) => {
   const { fetcher } = answering(() => answer());
   const { app } = await isolatedWorkbench(t, fetcher, {}, {
-    prefix: "void-harness-manual-unknown-",
+    prefix: "nomo-harness-manual-unknown-",
   });
 
   const result = await app.requestHarnessReview("missing");
@@ -139,7 +139,7 @@ test("a request during a run is recorded and served at the next boundary", async
     return declined();
   };
   const { app } = await isolatedWorkbench(t, fetcher as typeof fetch, {}, {
-    prefix: "void-harness-manual-busy-",
+    prefix: "nomo-harness-manual-busy-",
     beforeShutdown: () => release(),
   });
   const session = await app.start("Review the workspace", "fixture");
@@ -240,7 +240,7 @@ test("a settled turn during a manual review joins it instead of paying twice", a
     return answer();
   };
   const { app } = await isolatedWorkbench(t, fetcher as typeof fetch, {}, {
-    prefix: "void-harness-manual-overlap-",
+    prefix: "nomo-harness-manual-overlap-",
     beforeShutdown: () => release(),
   });
   const session = await app.start("Review the workspace", "fixture");
@@ -291,6 +291,7 @@ test("a two-lens manual round bills twice and names the count on both surfaces",
             role: "assistant",
             content: JSON.stringify({ approve: true, proposal: reviewProposal }),
           },
+          finish_reason: "stop",
         },
       ],
       usage: { prompt_tokens: 11, completion_tokens: 7, total_tokens: 18 },
