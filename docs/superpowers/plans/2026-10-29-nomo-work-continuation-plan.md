@@ -168,3 +168,4 @@ node is marked `blocked` and reported with evidence instead.
   42 ahead; plan, graph and work state written; `pnpm install
 --frozen-lockfile` provisioning started; wave 1 deployment follows this
   commit.
+- 2026-10-29: H5 audit complete. docs/HARNESS-SETTINGS.md table and packages/workbench/src/harness-settings.ts agree on all 20 keys, defaults and ranges. Settings test 18/18 pass; workbench typecheck clean. No stray literal in harness-settings.ts beyond the table. Broader run-path literal audit (literals in index.ts, provider.ts, gui.ts, agents.ts that are not yet settings) is out of H5 scope and is recorded as follow-up node H5b.
