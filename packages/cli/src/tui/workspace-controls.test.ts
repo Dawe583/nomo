@@ -1,4 +1,5 @@
 import test from "node:test";
+import { execFileSync } from "node:child_process";
 import assert from "node:assert/strict";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -16,7 +17,7 @@ async function fixture(t: test.TestContext, answer = "Fixture reply") {
       ? Response.json({ data: [{ id: "fixture" }] })
       : Response.json({
           choices: [
-            { message: { role: "assistant", content: answer } },
+            { message: { role: "assistant", content: answer }, finish_reason: "stop" },
           ],
         }),
   );
@@ -655,9 +656,9 @@ test("running subagent cancellation requires confirmation and preserves capacity
   const app = new Workbench(env, async (url) => {
     if (String(url).endsWith("/models")) return Response.json({ data: [{ id: "fixture" }] });
     if (calls++ === 0)
-      return Response.json({ choices: [{ message: { role: "assistant", content: "Parent done" } }] });
+      return Response.json({ choices: [{ message: { role: "assistant", content: "Parent done" }, finish_reason: "stop" }] });
     await blocked;
-    return Response.json({ choices: [{ message: { role: "assistant", content: "Late child output" } }] });
+    return Response.json({ choices: [{ message: { role: "assistant", content: "Late child output" }, finish_reason: "stop" }] });
   });
   assertIsolated(root, env);
   t.after(async () => {
@@ -692,7 +693,7 @@ test("queued spawned-child cancellation is immediate and safe in the TUI", async
     if (String(url).endsWith("/models")) return Response.json({ data: [{ id: "fixture" }] });
     calls++;
     await blocked;
-    return Response.json({ choices: [{ message: { role: "assistant", content: "Done" } }] });
+    return Response.json({ choices: [{ message: { role: "assistant", content: "Done" }, finish_reason: "stop" }] });
   });
   assertIsolated(root, env);
   t.after(async () => {
@@ -766,6 +767,7 @@ test("project confirmation exposes full-project data risk and requires an explic
   await app.configure({ baseUrl: "https://fixture.invalid/v1", apiKey: "fixture" });
   const root = await mkdtemp(join(tmpdir(), "nomo-project-consent-"));
   t.after(() => rm(root, { recursive: true, force: true }));
+  execFileSync("git", ["init", "--quiet", root]);
   const ui = new WorkspaceTui(app, env);
   ui.prepareProjectAccess(root, [], "unavailable: no local image");
   assert.match(ui.confirmation!.title, /ALLOW THIS PROJECT/);
