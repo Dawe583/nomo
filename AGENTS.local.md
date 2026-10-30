@@ -44,6 +44,12 @@ graph and verification matrix. The short form:
 
 ## NOMO memory source
 
+## TUI continuation authority
+
+For all new TUI work, read `NOMO TUI Control Center.md` in the NOMO Obsidian vault and `docs/superpowers/plans/2026-10-30-nomo-tui-ownership-and-continuation.md` in the clean integration worktree first. These are the current routing and continuation pointers. Older TUI plans, handoffs, OMP notes, imported Obsidian snapshots, and Graphify outputs remain historical evidence only. Do not treat their owner, branch, status, or TODO claims as current without rechecking the live task graph and source.
+
+TUI ownership is explicit: the Prime Agent integrator owns `.worktrees/tui-clean-continuation` and its execution graph. OMP work requires a separate written bounded assignment and separate worktree; it never writes to the integration branch. OpenCode TUI v2 was removed by user direction and must not be revived. Preserve unrelated dirty worktrees. Do not delete historical documents in bulk; use the Control Center and reviewed supersession pointers so future agents have one current entry point.
+
 - Canonical human-readable NOMO project memory lives in the Obsidian vault at `/Users/dawe/Library/Mobile Documents/iCloud~md~obsidian/Documents/NOMO`.
 - Start at `NOMO Project Home.md`. Use `NOMO Memory Rules.md` for storage boundaries and `NOMO Work Log.md` for current status.
 - Use the installed `kepano/obsidian-skills` for Obsidian Markdown and CLI operations. When Obsidian is running, target the vault explicitly with `obsidian vault=NOMO ...`.
