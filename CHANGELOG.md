@@ -3,6 +3,21 @@
 All notable user-facing changes since the first repository commit.
 
 ## Unreleased
+- Session TODOs now use versioned, persistent state instead of parsing chat
+  markdown. Agents can create, update, and complete session items; `/todos`,
+  overview, status, and the chat badge render the same validated projection.
+- Refined the NOMO TUI chat and run activity display: user messages render on a padded muted surface with the NOMO accent; assistant and metadata rows retain distinct hierarchy; model and mode context sits above the filled, borderless composer, with keyboard help below; harness reviews have distinct labels; failed reviews use the error tone; supported run phases show statuses and durations. Detail views remain full width until 140 terminal columns, where split inspectors have enough room.
+- Replaced the placeholder TUI mark with the supplied NOMO bitmap. Interactive
+  Ghostty terminals render the logo through Kitty graphics; constrained,
+  monochrome, and other terminals use the plain NOMO wordmark.
+- One-shot workspace output stays plain text without ANSI color.
+- Long Unicode values in live-ledger details now wrap at terminal-cell boundaries.
+- Empty workspace panels now center the existing "No entries yet." message in the available body.
+- Ledger overview now shows managed-chain verification status separately from
+  its view-row count, so an empty proof set is not presented as verified.
+- Empty-chat welcome content is vertically centered in the available body when the full message fits; copy and composer controls are unchanged.
+- Wide detail views use the full width when the master list is empty; populated lists retain the split inspector.
+- The chat welcome eyebrow now uses the NOMO blue accent.
 - The agent now learns from its own signed ledger, and what it learned shows
   up where the operator already looks. A cleanly finished turn is the only
   moment the agent may spend a model call on learning, and a cheap

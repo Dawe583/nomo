@@ -283,6 +283,91 @@ describe("watch dashboard", () => {
     assert.match(frame, /postgres\.table\.drop/);
   });
 
+  test("selected activity markers use the NOMO accent", () => {
+    const frame = renderWatchFrame(
+      previewState,
+      capabilities(120, 40, true),
+    );
+    const selectedRow = frame
+      .split("\n")
+      .find((line) => stripAnsi(line).includes("postgres.table.drop"));
+    assert.ok(selectedRow);
+    assert.match(selectedRow, /^\u001b\[[0-9;]*m>/);
+    assert.match(stripAnsi(selectedRow), /^>\s/);
+  });
+
+  test("selected dashboard marker preserves NOMO blue in basic ANSI", () => {
+    const frame = renderWatchFrame(
+      previewState,
+      { ...capabilities(120, 40, true), colorDepth: 4 },
+    );
+    const selectedRow = frame
+      .split("\n")
+      .find((line) => stripAnsi(line).includes("postgres.table.drop"));
+    assert.ok(selectedRow);
+    assert.match(selectedRow, /^\u001b\[1;96m>/);
+    assert.doesNotMatch(selectedRow, /\u001b\[[0-9;]*;5;/);
+  });
+
+
+  test("short narrow dashboard preserves the selected decision summary", () => {
+    const frame = renderWatchFrame(previewState, capabilities(80, 24));
+    const text = stripAnsi(frame).replace(/\s+/g, " ");
+    assert.match(text, /DECISION RECORD/);
+    assert.match(text, /postgres\.table\.drop/);
+    assert.match(text, /deny/);
+    assert.match(text, /cancelled/);
+    assert.match(text, /destructive DDL is irreversible after commit/);
+    for (const line of frame.split("\n"))
+      assert.ok(
+        visibleLength(line) <= 80,
+        `${visibleLength(line)} > 80: ${stripAnsi(line)}`,
+      );
+  });
+  test("short narrow pending hold retains the action footer", () => {
+    const hold = { ...previewHold, openedAt: 0, expiresAt: 10_000 };
+    const frame = renderWatchFrame(
+      { ...previewState, holds: [hold] },
+      capabilities(80, 24),
+      1_000,
+    );
+    assert.match(frame, /ACTION REQUIRED/);
+    assert.match(frame, /\[a\] approve/);
+    assert.match(frame, /q quit/);
+    for (const line of frame.split("\n"))
+      assert.ok(
+        visibleLength(line) <= 80,
+        `${visibleLength(line)} > 80: ${stripAnsi(line)}`,
+      );
+  });
+
+  for (const width of [120, 200]) {
+    test(`dashboard decision reason stays complete at ${width} columns`, () => {
+      const frame = renderWatchFrame(
+        previewState,
+        capabilities(width, width === 120 ? 40 : 48),
+      );
+      const frameText = stripAnsi(frame);
+      assert.ok(frameText.includes("destructive DDL is"));
+      assert.ok(frameText.includes("irreversible"));
+      assert.ok(frameText.includes("after"));
+      assert.ok(frameText.includes("commit"));
+      for (const line of frame.split("\n"))
+        assert.ok(
+          visibleLength(line) <= width,
+          `${visibleLength(line)} > ${width}: ${stripAnsi(line)}`,
+        );
+    });
+  }
+  test("wide dashboard preserves complete signal values", () => {
+    const frame = stripAnsi(
+      renderWatchFrame(previewState, capabilities(200, 48)),
+    );
+    assert.match(frame, /\$15\.80/);
+    assert.match(frame, /\$3\.20/);
+    assert.match(frame, /dev-ed25519:a41c9d70/);
+  });
+
   test("hold prompt includes risk, measured radius and explicit actions without colour", () => {
     const modal = renderHoldPrompt(previewHold, capabilities(80));
     assert.match(modal, /\[2\] R2/);

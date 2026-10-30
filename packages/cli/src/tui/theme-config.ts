@@ -179,7 +179,7 @@ export const COLOR_THEMES: Record<ColorTheme, ColorPalette> = {
   default: {
     bg: "#0d0d0f",
     fg: "#e8e8eb",
-    accent: "#bd4206",
+    accent: "#55c3ff",
     muted: "#86868b",
     border: "#2a2a2e",
     success: "#5cc094",
@@ -196,7 +196,7 @@ export const COLOR_THEMES: Record<ColorTheme, ColorPalette> = {
   paper: {
     bg: "#f6f0e3",
     fg: "#12100a",
-    accent: "#bd4206",
+    accent: "#005fcc",
     muted: "#8b7d6b",
     border: "#d4c4a8",
     success: "#3d8b3d",
@@ -213,7 +213,7 @@ export const COLOR_THEMES: Record<ColorTheme, ColorPalette> = {
   dark: {
     bg: "#000000",
     fg: "#ffffff",
-    accent: "#ff6b00",
+    accent: "#55c3ff",
     muted: "#888888",
     border: "#333333",
     success: "#00ff00",
@@ -230,7 +230,7 @@ export const COLOR_THEMES: Record<ColorTheme, ColorPalette> = {
   "high-contrast": {
     bg: "#000000",
     fg: "#ffffff",
-    accent: "#ffff00",
+    accent: "#55c3ff",
     muted: "#aaaaaa",
     border: "#ffffff",
     success: "#00ff00",
@@ -247,7 +247,7 @@ export const COLOR_THEMES: Record<ColorTheme, ColorPalette> = {
   "solarized-light": {
     bg: "#fdf6e3",
     fg: "#657b83",
-    accent: "#cb4b16",
+    accent: "#0066b3",
     muted: "#93a1a1",
     border: "#eee8d5",
     success: "#859900",
@@ -264,7 +264,7 @@ export const COLOR_THEMES: Record<ColorTheme, ColorPalette> = {
   "solarized-dark": {
     bg: "#002b36",
     fg: "#839496",
-    accent: "#cb4b16",
+    accent: "#55c3ff",
     muted: "#586e75",
     border: "#073642",
     success: "#859900",
@@ -332,12 +332,32 @@ export function ansi16(hex: string): number {
   const r = Number.parseInt(hex.slice(1, 3), 16);
   const g = Number.parseInt(hex.slice(3, 5), 16);
   const b = Number.parseInt(hex.slice(5, 7), 16);
-  const gray = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
-  if (gray > 200) return 97;
-  if (gray > 150) return 37;
-  if (gray > 100) return 90;
-  if (gray > 50) return 30;
-  return 30;
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const delta = max - min;
+
+  if (delta < 24) {
+    const gray = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
+    if (gray > 200) return 97;
+    if (gray > 150) return 37;
+    if (gray > 100) return 90;
+    return 30;
+  }
+
+  let hue =
+    max === r
+      ? (g - b) / delta + (g < b ? 6 : 0)
+      : max === g
+        ? (b - r) / delta + 2
+        : (r - g) / delta + 4;
+  hue *= 60;
+  const bright = max >= 160;
+  if (hue < 30 || hue >= 330) return bright ? 91 : 31;
+  if (hue < 90) return bright ? 93 : 33;
+  if (hue < 150) return bright ? 92 : 32;
+  if (hue < 210) return bright ? 96 : 36;
+  if (hue < 270) return bright ? 94 : 34;
+  return bright ? 95 : 35;
 }
 
 export function paintWithPalette(

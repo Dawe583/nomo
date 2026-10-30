@@ -1,7 +1,7 @@
 import { brandHeader } from "./brand.ts";
 import type { FeedPage } from "../../../ledger/src/feed.ts";
 import type { TerminalCapabilities } from "./types.ts";
-import { crop, fit, pad, rule, sanitizeText } from "./layout.ts";
+import { crop, fit, pad, rule, sanitizeText, visibleLength } from "./layout.ts";
 import { paint } from "./theme.ts";
 
 import type { ApprovalRecord } from "../../../policy/src/approvals.ts";
@@ -34,18 +34,43 @@ export function liveRecords(view: LiveView) {
   return (view.page?.records ?? []).filter(row => !view.filter || row.klass === view.filter).slice().reverse();
 }
 
+function selectionWash(text: string, caps: TerminalCapabilities): string {
+  if (!caps.ansi || caps.colorDepth < 8) return text;
+  const background = "48;5;237";
+  return `\u001b[${background}m${text.replaceAll("\u001b[0m", `\u001b[0;${background}m`)}\u001b[0m`;
+}
+
+function wrapCells(value: string, width: number): string[] {
+  const lines: string[] = [];
+  let line = "";
+  let cells = 0;
+  for (const point of value) {
+    const pointCells = visibleLength(point);
+    if (line && cells + pointCells > width) {
+      lines.push(line);
+      line = "";
+      cells = 0;
+    }
+    line += point;
+    cells += pointCells;
+  }
+  if (line || lines.length === 0) lines.push(line);
+  return lines;
+}
+
 export function renderLiveFeed(view: LiveView, caps: TerminalCapabilities): string {
   const width = caps.columns;
   const rows = liveRecords(view);
   const selected = rows[Math.min(view.selected, Math.max(0, rows.length - 1))];
+  const recordLabel = rows.length === 1 ? "record" : "records";
   const lines = [
     ...brandHeader(`NOMO / ${view.workspace}`, caps),
-    `${view.paused ? "Paused view" : "Live ledger"}  |  ${view.filter || "All classes"}  |  ${rows.length} records`,
-    paint(rule(width), "rule", caps),
+    `${view.paused ? "Paused view" : "Live ledger"}  |  ${view.filter || "All classes"}  |  ${rows.length} ${recordLabel}`,
+    paint(rule(width, "─"), "rule", caps),
     view.error
       ? `Read failed: ${sanitizeText(view.error)}. Press v to retry.`
       : view.page?.signed
-        ? `Signatures checked — ${view.verificationStatus ?? "against a key of unstated origin"}`
+        ? `Signatures checked: ${view.verificationStatus ?? "against a key of unstated origin"}`
         : "Integrity only. Signatures have not been checked.",
     // Which key that was, on the same screen as the boolean. "Checked" and
     // "checked against a key this process could also have replaced" are not
@@ -62,7 +87,9 @@ export function renderLiveFeed(view: LiveView, caps: TerminalCapabilities): stri
     lines.push("[!] Pending holds", "");
     if (!holds.length) lines.push("No pending holds. The proxy must use this approval directory.");
     for (const [index, hold] of holds.entries()) {
-      lines.push(`${index === (view.approvalSelected ?? 0) ? ">" : " "} ${sanitizeText(hold.call.klass.toUpperCase())} ${sanitizeText(hold.call.tool)}`);
+      const active = index === (view.approvalSelected ?? 0);
+      const line = pad(`${active ? ">" : " "} ${sanitizeText(hold.call.klass.toUpperCase())} ${sanitizeText(hold.call.tool)}`, width);
+      lines.push(active ? selectionWash(paint(line, "accent", caps, true), caps) : line);
     }
     if (current) {
       lines.push("", `Hold: ${sanitizeText(current.holdId)}`, `Blast radius: ${current.call.blastRadius ?? "unknown"}`, `Expires: ${new Date(current.expiresAt).toISOString()}`, "", view.confirmDecision ? `Confirm ${view.confirmDecision} with y; Escape cancels.` : "a approve / d deny. A second explicit confirmation is required.");
@@ -74,8 +101,8 @@ export function renderLiveFeed(view: LiveView, caps: TerminalCapabilities): stri
     for (const [label, value] of [["Tool", selected.tool], ["Class", selected.klass.toUpperCase()], ["Decision", selected.decision], ["Time", selected.at], ["Digest", selected.digest], ["Previous", selected.prevDigest], ["Arguments", selected.argsDigest]]) {
       const text = sanitizeText(String(value));
       const valueWidth = Math.max(1, width - 12);
-      for (let offset = 0; offset < text.length; offset += valueWidth)
-        lines.push(`${pad(offset === 0 ? `${label}:` : "", 12)}${text.slice(offset, offset + valueWidth)}`);
+      for (const [index, line] of wrapCells(text, valueWidth).entries())
+        lines.push(`${pad(index === 0 ? `${label}:` : "", 12)}${line}`);
     }
   } else if (rows.length === 0) {
     lines.push(view.filter ? "No records in this class. Press f to change the filter." : "No recorded calls yet.", "", "Run an agent through nomo-proxy to record its tool calls.");
@@ -86,11 +113,12 @@ export function renderLiveFeed(view: LiveView, caps: TerminalCapabilities): stri
     for (const [index, row] of rows.slice(start, start + available).entries()) {
       const active = start + index === view.selected;
       const line = `${active ? ">" : " "} ${pad(String(row.seq), 8)}${pad(row.klass.toUpperCase(), 8)}${pad(fit(sanitizeText(row.decision), 17), 18)}${sanitizeText(row.tool)}`;
-      lines.push(paint(fit(line, width), active ? "r1" : "ink", caps, active));
+      const fitted = pad(line, width);
+      lines.push(active ? selectionWash(paint(fitted, "accent", caps, true), caps) : paint(fitted, "ink", caps));
     }
   }
   const body = crop(lines, width, Math.max(1, caps.rows - 2));
   while (body.length < caps.rows - 2) body.push("");
-  body.push(rule(width), fit(view.approvalView ? "j/k select  a approve  d deny  y confirm  h feed  q quit" : "j/k select  enter inspect  h holds  f filter  p pause  ? help  q quit", width));
+  body.push(paint(rule(width, "─"), "rule", caps), fit(view.approvalView ? "j/k select  a approve  d deny  y confirm  h feed  q quit" : "j/k select  enter inspect  h holds  f filter  p pause  ? help  q quit", width));
   return body.join("\n");
 }

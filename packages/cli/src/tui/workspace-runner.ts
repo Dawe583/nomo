@@ -8,6 +8,7 @@ import { LocalStorage } from "../../../workbench/src/storage.ts";
 import {
   WorkspaceTui,
   workspaceTab,
+  shouldNavigateGroupedTree,
   commandSuggestions,
   filterKeyForTab,
   isDoubleEscape,
@@ -28,10 +29,17 @@ import {
 } from "./palette.ts";
 import { moveHunk, setSide, toggleHunk } from "./diff-panel.ts";
 import { DiffScreenWriter } from "./watch.ts";
+import { detectCapabilities } from "./caps.ts";
+import { kittyLogoCleanup, kittyLogoTransfer } from "./brand.ts";
+import { WorkspaceInkRenderer } from "./workspace-ink.ts";
 import { sanitizeText } from "./layout.ts";
 import { dataDir as productDataDir } from "../../../ledger/src/paths.ts";
 import { envValue } from "../../../ledger/src/env-compat.ts";
 import { normalizeOwnedEnv } from "../env-keys.ts";
+import {
+  DEFAULT_WORKSPACE_KEYBINDINGS,
+  type WorkspaceKeybindings,
+} from "./workspace-keybindings.ts";
 
 export type WorkspaceShortcut =
   | "redraw"
@@ -46,14 +54,14 @@ export function workspaceShortcut(
   key: Key,
   editing: boolean,
   input: string,
+  bindings: WorkspaceKeybindings = DEFAULT_WORKSPACE_KEYBINDINGS,
 ): WorkspaceShortcut | undefined {
   if (!key.ctrl) return undefined;
-  if (key.name === "l") return "redraw";
-  if (key.name === "o") return "toggle-tools";
-  if (key.name === "r" && editing) return "search-history";
-  if (key.name === "s") return "stash";
-  if (key.name === "g") return "external-editor";
-  if (key.name === "t") return "show-todos";
+  for (const action of Object.keys(bindings) as (keyof WorkspaceKeybindings)[]) {
+    const binding = bindings[action];
+    if (key.name === binding.name && (action !== "search-history" || editing))
+      return action;
+  }
   if (key.name === "d" && (!editing || !input)) return "quit";
   return undefined;
 }
@@ -88,6 +96,7 @@ export function nextPromptRow(
 /** Bracketed paste never submits a message or an approval. */
 export class WorkspaceInput {
   editing = false;
+  sendBehavior: "enter" | "mod-enter" = "enter";
   value = "";
   cursor = 0;
   pasting = false;
@@ -245,12 +254,8 @@ export class WorkspaceInput {
       return;
     }
     if (key.name === "return" || key.name === "enter") {
-      // Shift+Enter, Alt+Enter and Ctrl+Enter insert a newline. A trailing
-      // backslash plus Enter is the fallback that works in every terminal.
-      if (key.meta || key.shift || key.ctrl) {
-        this.insert("\n");
-        return;
-      }
+      // Shift+Enter and Alt+Enter always insert a newline. Ctrl+Enter follows
+      // the saved send behavior. A trailing backslash also inserts a newline.
       const pointsNow = [...this.value];
       if (
         this.cursor === pointsNow.length &&
@@ -261,6 +266,18 @@ export class WorkspaceInput {
         pointsNow.pop();
         this.value = pointsNow.join("");
         this.cursor = pointsNow.length;
+        this.insert("\n");
+        return;
+      }
+      if (
+        key.meta ||
+        key.shift ||
+        (key.ctrl && this.sendBehavior === "enter") ||
+        (!key.ctrl &&
+          !key.meta &&
+          !key.shift &&
+          this.sendBehavior === "mod-enter")
+      ) {
         this.insert("\n");
         return;
       }
@@ -314,6 +331,109 @@ export class WorkspaceInput {
     const points = [...this.value];
     points.splice(this.cursor, 0, "▌");
     return points.join("");
+  }
+}
+
+export class WorkspaceVimMode {
+  mode: "normal" | "insert" = "normal";
+
+  enterInsert() {
+    this.mode = "insert";
+  }
+
+  leaveInsert(): boolean {
+    if (this.mode !== "insert") return false;
+    this.mode = "normal";
+    return true;
+  }
+
+  reset() {
+    this.mode = "normal";
+  }
+
+  handle(input: WorkspaceInput, value: string | undefined, key: Key): boolean {
+    if (this.mode !== "normal" || key.ctrl || key.meta) return false;
+    if (key.name === "escape") return true;
+    if (key.name === "return" || key.name === "enter") return false;
+
+    switch (value) {
+      case "i":
+        this.enterInsert();
+        return true;
+      case "a":
+        this.move(input, "right");
+        this.enterInsert();
+        return true;
+      case "A":
+        this.moveLineEdge(input, true);
+        this.enterInsert();
+        return true;
+      case "I":
+        this.moveLineEdge(input, false);
+        this.enterInsert();
+        return true;
+      case "h":
+        this.move(input, "left");
+        return true;
+      case "j":
+        this.move(input, "down");
+        return true;
+      case "k":
+        this.move(input, "up");
+        return true;
+      case "l":
+        this.move(input, "right");
+        return true;
+      case "w":
+        this.moveWord(input, 1);
+        return true;
+      case "b":
+        this.moveWord(input, -1);
+        return true;
+      case "0":
+        this.moveLineEdge(input, false);
+        return true;
+      case "$":
+        this.moveLineEdge(input, true);
+        return true;
+      case "x":
+        input.key(undefined, { name: "delete" });
+        return true;
+      default:
+        return !!value && [...value].length === 1;
+    }
+  }
+
+  private move(input: WorkspaceInput, direction: "left" | "right" | "up" | "down") {
+    input.key(undefined, { name: direction });
+  }
+
+  private moveLineEdge(input: WorkspaceInput, end: boolean) {
+    const points = [...input.value];
+    const start = points.lastIndexOf("\n", input.cursor - 1) + 1;
+    const lineEnd = points.indexOf("\n", input.cursor);
+    input.cursor = end
+      ? lineEnd < 0
+        ? points.length
+        : lineEnd
+      : start;
+  }
+
+  private moveWord(input: WorkspaceInput, direction: 1 | -1) {
+    const points = [...input.value];
+    let cursor = input.cursor;
+    const isWord = (point: string | undefined) =>
+      point !== undefined && /[A-Za-z0-9]/.test(point);
+    if (direction > 0) {
+      if (isWord(points[cursor])) {
+        while (cursor < points.length && isWord(points[cursor])) cursor++;
+      }
+      while (cursor < points.length && !isWord(points[cursor])) cursor++;
+    } else {
+      while (cursor > 0 && !isWord(points[cursor - 1])) cursor--;
+      while (cursor > 0 && isWord(points[cursor - 1])) cursor--;
+    }
+    input.cursor = cursor;
   }
 }
 
@@ -378,7 +498,33 @@ export async function runWorkspaceTui(
   }>();
   const drafts = saved?.drafts ?? {};
   const input = new WorkspaceInput();
+  const vimMode =
+    env.NOMO_TUI_VIM === "1" ? new WorkspaceVimMode() : undefined;
+  const setInputEditing = (editing: boolean, insert = false) => {
+    input.editing = editing;
+    if (!vimMode) return;
+    if (!editing) vimMode.reset();
+    else if (insert) vimMode.enterInsert();
+    else vimMode.reset();
+    if (editing) {
+      const status = `VIM ${vimMode.mode.toUpperCase()}: i/a insert, h/j/k/l move, Enter sends`;
+      ui.notice = ui.notice.startsWith("VIM ")
+        ? status
+        : ui.notice.startsWith("Tab: panels")
+          ? status
+          : `${ui.notice} | ${status}`;
+    }
+  };
   await ui.initialize();
+  if (ui.keybindingWarning && ui.notice !== ui.keybindingWarning) {
+    ui.notice = ui.notice.startsWith("Tab: panels")
+      ? ui.keybindingWarning
+      : `${ui.notice} | ${ui.keybindingWarning}`;
+  }
+  input.sendBehavior =
+    ui.workbench.getPreferences().sendBehavior === "mod-enter"
+      ? "mod-enter"
+      : "enter";
   ui.compactTools = saved?.compactTools ?? true;
   if (
     saved?.mode === "normal" ||
@@ -410,12 +556,16 @@ export async function runWorkspaceTui(
         ui,
         process.stdout.columns ?? 100,
         process.stdout.rows ?? 32,
+        "",
+        false,
+        false,
+        { color: false },
       ),
     );
     await app.shutdown();
     return ui.proofErrors.size || ui.proxy.errors.length ? 1 : 0;
   }
-  input.editing = tab === "chat";
+  setInputEditing(tab === "chat");
   let suggestion = 0;
   let historyIndex = -1;
   let historyDraft = "";
@@ -432,7 +582,11 @@ export async function runWorkspaceTui(
   const startedAt = Date.now();
   // NOMO has its own explicit color preference; inherited NO_COLOR must not hide its UI.
   const color = env.NOMO_TUI_COLOR !== "0";
+  const graphicsProtocol = detectCapabilities(env, process.stdout).graphicsProtocol;
+  const logoTransfer =
+    graphicsProtocol === "kitty" ? kittyLogoTransfer() : "";
   const motion = env.NOMO_TUI_MOTION !== "0" && env.TERM !== "dumb";
+  const renderer = new WorkspaceInkRenderer();
   const screen = new DiffScreenWriter(process.stdout);
   let busy = false,
     suspended = false,
@@ -465,27 +619,32 @@ export async function runWorkspaceTui(
     }, 500);
   };
   const draw = () => {
-    if (!stopped && !suspended)
-      screen.write(
-        renderWorkspace(
-          ui,
-          process.stdout.columns ?? 80,
-          process.stdout.rows ?? 24,
-          input.display(),
-          input.editing,
-          busy,
-          {
-            now: Date.now(),
-            color: ui.colorOverride ?? color,
-            motion: ui.motionOverride ?? motion,
-            frame: Math.floor((Date.now() - startedAt) / 140),
-            boot: motion && Date.now() - startedAt < 1800,
-            command: input.value,
-            suggestion,
-            cursor: input.cursor,
-          },
-        ),
-      );
+    if (stopped || suspended) return;
+    const columns = process.stdout.columns ?? 80;
+    const rows = process.stdout.rows ?? 24;
+    renderer.render(
+      renderWorkspace(
+        ui,
+        columns,
+        rows,
+        input.display(),
+        input.editing,
+        busy,
+        {
+          now: Date.now(),
+          color: ui.colorOverride ?? color,
+          motion: ui.motionOverride ?? motion,
+          frame: Math.floor((Date.now() - startedAt) / 140),
+          boot: motion && Date.now() - startedAt < 1800,
+          command: input.value,
+          suggestion,
+          ...(graphicsProtocol ? { graphicsProtocol } : {}),
+          cursor: input.cursor,
+        },
+      ),
+      columns,
+      rows,
+    );
   };
   let activeTask: Promise<void> = Promise.resolve();
   const task = (fn: () => Promise<unknown>) => {
@@ -533,6 +692,7 @@ export async function runWorkspaceTui(
     suspended = true;
     process.stdin.setRawMode(false);
     process.stdin.pause();
+    renderer.unmount();
     screen.leave();
     process.stdout.write("\x1b[?2004l");
     try {
@@ -562,11 +722,13 @@ export async function runWorkspaceTui(
         process.stdin.setRawMode(true);
         process.stdin.resume();
         screen.enter();
+        if (logoTransfer) process.stdout.write(logoTransfer);
         process.stdout.write("\x1b[?2004h");
       }
     }
   };
   return new Promise<number>((resolveDone) => {
+    let signalStopping = false;
     const restoreTerminal = () => {
       if (stopped) return;
       stopped = true;
@@ -576,11 +738,15 @@ export async function runWorkspaceTui(
       process.stdout.off("resize", draw);
       process.stdin.setRawMode(wasRaw);
       process.stdin.pause();
-      process.off("SIGINT", stop);
-      process.off("SIGTERM", stop);
-      process.off("SIGHUP", stop);
+      if (!signalStopping) {
+        process.off("SIGINT", stopOnSigint);
+        process.off("SIGTERM", stopOnSigterm);
+        process.off("SIGHUP", stopOnSighup);
+      }
       process.off("exit", restoreTerminal);
       process.off("uncaughtExceptionMonitor", restoreTerminal);
+      renderer.unmount();
+      if (logoTransfer) process.stdout.write(kittyLogoCleanup());
       screen.leave();
       process.stdout.write("\x1b[?2004l");
     };
@@ -612,17 +778,33 @@ export async function runWorkspaceTui(
         },
       );
     };
+    const stopOnSigint = () => {
+      signalStopping = true;
+      stop();
+    };
+    const stopOnSigterm = () => {
+      signalStopping = true;
+      stop();
+    };
+    const stopOnSighup = () => {
+      signalStopping = true;
+      stop();
+    };
     const submit = async () => {
       const original = input.value,
         oldSession = ui.sessionId ?? "new";
       const result = await ui.command(original);
+      input.sendBehavior =
+        ui.workbench.getPreferences().sendBehavior === "mod-enter"
+          ? "mod-enter"
+          : "enter";
       if (result === "quit") {
         stop();
         return;
       }
       if (!original.trimStart().startsWith("/")) drafts[oldSession] = "";
       input.set(drafts[ui.sessionId ?? "new"] ?? "");
-      input.editing = ui.tab === "chat" && !ui.detail;
+      setInputEditing(ui.tab === "chat" && !ui.detail);
       suggestion = 0;
       historyIndex = -1;
       if (result === "edit") await editor();
@@ -817,13 +999,15 @@ export async function runWorkspaceTui(
               "Run stopped. A dispatched tool may still complete.",
             );
           } else {
-            if (key.name === "escape") input.editing = false;
+            if (key.name === "escape") setInputEditing(false);
             ui.notice =
               "Selected conversation is not running. Open the active conversation to cancel it.";
           }
         } catch (error) {
           ui.announce("cancel-failed", "danger", message(error));
         }
+        if (key.name === "escape" && vimMode?.leaveInsert())
+          ui.notice = "VIM NORMAL: i/a insert, h/j/k/l move, Enter sends";
         draw();
         return;
       }
@@ -842,7 +1026,7 @@ export async function runWorkspaceTui(
       }
       const shortcut = ui.confirmation
         ? undefined
-        : workspaceShortcut(key, input.editing, input.value);
+        : workspaceShortcut(key, input.editing, input.value, ui.keybindings);
       if (shortcut === "quit") {
         // Empty input exits on the second press within 800 ms, like the
         // reference terminal. Text input clears first instead of quitting.
@@ -882,11 +1066,11 @@ export async function runWorkspaceTui(
           lastCtrlL = 0;
           void task(async () => {
             await navigate(() => ui.command("/clear"));
-            input.editing = true;
+            setInputEditing(true, true);
           });
         } else {
           lastCtrlL = nowL;
-          screen.redraw();
+          renderer.redraw();
           draw();
         }
         return;
@@ -1020,7 +1204,7 @@ export async function runWorkspaceTui(
       }
       if (!input.pasting && key.meta && key.name === "p") {
         ui.choose("models");
-        input.editing = false;
+        setInputEditing(false);
         ui.notice = "Models. Enter picks the model for new conversations.";
         draw();
         return;
@@ -1043,9 +1227,21 @@ export async function runWorkspaceTui(
         // must reach the model.
         if (!input.pasting && input.value === "" && value === "?") {
           ui.openCheatSheet();
-          input.editing = false;
+          setInputEditing(false);
           draw();
           return;
+        }
+        if (!input.pasting && vimMode && input.editing) {
+          if (key.name === "escape" && vimMode.leaveInsert()) {
+            setInputEditing(true);
+            draw();
+            return;
+          }
+          if (vimMode.handle(input, value, key)) {
+            setInputEditing(true, vimMode.mode === "insert");
+            draw();
+            return;
+          }
         }
         const token = input.pasting
           ? undefined
@@ -1119,6 +1315,12 @@ export async function runWorkspaceTui(
           draw();
           return;
         }
+        if (!input.pasting && key.name === "tab") {
+          ui.cycle(key.shift ? -1 : 1);
+          setInputEditing(ui.tab === "chat");
+          draw();
+          return;
+        }
         const action = input.key(value, key);
         suggestion = 0;
         historyIndex = -1;
@@ -1172,7 +1374,7 @@ export async function runWorkspaceTui(
       }
       if (key.name === "tab") {
         ui.cycle(key.shift ? -1 : 1);
-        input.editing = ui.tab === "chat";
+        setInputEditing(ui.tab === "chat");
       } else if (
         !input.pasting &&
         (key.name === "right" || key.name === "left")
@@ -1187,13 +1389,13 @@ export async function runWorkspaceTui(
           draw();
         } else {
           ui.cycle(key.name === "right" ? 1 : -1);
-          input.editing = ui.tab === "chat";
+          setInputEditing(ui.tab === "chat");
         }
       } else if (value === "q") {
         stop();
         return;
       } else if (value === "i" || value === "/") {
-        input.editing = true;
+        setInputEditing(true, true);
         if (value === "/") {
           try {
             saveDraft();
@@ -1205,7 +1407,7 @@ export async function runWorkspaceTui(
       } else if (value === "n")
         void task(async () => {
           await navigate(() => ui.command("/new"));
-          input.editing = true;
+          setInputEditing(true, true);
         });
       else if (value === "u") void task(() => ui.prepareUndo());
       else if (value === "a" || value === "d")
@@ -1265,7 +1467,11 @@ export async function runWorkspaceTui(
         (key.ctrl && key.name === "p") ||
         value === "k"
       ) {
-        if (ui.detail) ui.scroll = Math.max(0, ui.scroll - 1);
+        if (shouldNavigateGroupedTree(ui)) {
+          ui.detail = undefined;
+          if (!ui.moveDocumentCursor(-1))
+            ui.selected = Math.max(0, ui.selected - 1);
+        } else if (ui.detail) ui.scroll = Math.max(0, ui.scroll - 1);
         else if (!ui.moveDocumentCursor(-1))
           ui.selected = Math.max(0, ui.selected - 1);
       } else if (
@@ -1273,7 +1479,11 @@ export async function runWorkspaceTui(
         (key.ctrl && key.name === "n") ||
         value === "j"
       ) {
-        if (ui.detail) ui.scroll++;
+        if (shouldNavigateGroupedTree(ui)) {
+          ui.detail = undefined;
+          if (!ui.moveDocumentCursor(1))
+            ui.selected = Math.min(ui.items().length - 1, ui.selected + 1);
+        } else if (ui.detail) ui.scroll++;
         else if (!ui.moveDocumentCursor(1))
           ui.selected = Math.min(ui.items().length - 1, ui.selected + 1);
       }
@@ -1284,12 +1494,13 @@ export async function runWorkspaceTui(
     process.stdin.resume();
     process.stdin.on("keypress", onKey);
     process.stdout.on("resize", draw);
-    process.once("SIGINT", stop);
-    process.once("SIGTERM", stop);
-    process.once("SIGHUP", stop);
+    process.on("SIGINT", stopOnSigint);
+    process.on("SIGTERM", stopOnSigterm);
+    process.on("SIGHUP", stopOnSighup);
     process.once("exit", restoreTerminal);
     process.once("uncaughtExceptionMonitor", restoreTerminal);
     screen.enter();
+    if (logoTransfer) process.stdout.write(logoTransfer);
     process.stdout.write("\x1b[?2004h");
     draw();
     timer = setInterval(() => {

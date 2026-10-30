@@ -35,6 +35,14 @@ async function fixture(t: test.TestContext) {
   };
 }
 
+test("filtering to no sessions explains the empty result", async (t) => {
+  const { ui } = await fixture(t);
+  await ui.initialize();
+  await ui.command("/sessions nomo-filter-miss");
+
+  assert.match(ui.lines()[0]!, /no entries match \"nomo-filter-miss\"/i);
+});
+
 test("runs navigation keeps unknown outcomes and missing progress explicit", async (t) => {
   const { app, ui } = await fixture(t);
   await app.configure({
@@ -64,8 +72,8 @@ test("runs navigation keeps unknown outcomes and missing progress explicit", asy
       status: "unknown",
       state: "unknown",
       progress: null,
-      createdAt: session.createdAt,
-      updatedAt: session.createdAt,
+      createdAt: null,
+      updatedAt: null,
       durationMs: null,
       steps: 0,
       legacy: false,
@@ -74,6 +82,9 @@ test("runs navigation keeps unknown outcomes and missing progress explicit", asy
   ]);
   await ui.command("/runs");
   assert.match(ui.items()[0]!.label, /unknown.*reconciliation required/);
+  await ui.openSelected();
+  assert.match(ui.lines().join("\n"), /started\s*:\s*unknown/);
+  assert.match(ui.lines().join("\n"), /ended\s*:\s*unknown/);
   await ui.command("/status");
   assert.match(ui.lines().join("\n"), /Run: unknown.*reconciliation required/);
   for (const width of [40, 80, 120, 200]) {
@@ -81,6 +92,325 @@ test("runs navigation keeps unknown outcomes and missing progress explicit", asy
     assert.ok(lines.length <= 24);
     assert.ok(lines.every((line) => visibleLength(line) <= width));
   }
+});
+
+test("run inspector shows trusted session identity and latest event metadata", async (t) => {
+  const { app, ui } = await fixture(t);
+  await app.configure({
+    baseUrl: "https://fixture.invalid/v1",
+    apiKey: "fixture",
+  });
+  const agent = app.agents().agents[1]!.id;
+  const session = await app.start(
+    "Inspect this run",
+    "fixture",
+    undefined,
+    undefined,
+    agent,
+  );
+  await app.settled();
+  const view = app.get(session.id)!;
+  const latest = view.events.at(-1)!;
+
+  await ui.initialize();
+  await ui.command("/runs");
+  await ui.openSelected();
+
+  const detail = ui.lines().join("\n");
+  assert.ok(detail.includes(view.workspace));
+  assert.match(detail, /agent\s*:/);
+  assert.ok(detail.includes(agent));
+  assert.ok(detail.includes(`${latest.type ?? latest.kind} at ${latest.at}`));
+  assert.ok(!detail.includes(latest.text));
+
+  const runLabel = ui.items()[0]!.label;
+  for (const width of [80, 119, 120, 139, 140, 159, 160]) {
+    const frame = stripAnsi(renderWorkspace(ui, width, 24));
+    const rows = frame.split("\n");
+    assert.ok(rows.length <= 24);
+    assert.ok(rows.every((line) => visibleLength(line) <= width));
+    assert.ok(!frame.includes(latest.text));
+    if (width < 140) {
+      assert.ok(!frame.includes(runLabel));
+    } else {
+      assert.ok(frame.includes(runLabel));
+      assert.ok(frame.includes(view.workspace.slice(0, 18)));
+    }
+    if (width >= 160) assert.match(frame, /›\s*overview/);
+    if (width >= 160)
+      assert.ok(
+        frame.includes(`${latest.type ?? latest.kind} at ${latest.at}`),
+      );
+  }
+});
+
+test("session inspector counts events from the full Workbench view", async (t) => {
+  const { app, ui } = await fixture(t);
+  await app.configure({
+    baseUrl: "https://fixture.invalid/v1",
+    apiKey: "fixture",
+  });
+  const session = await app.start("Count real history", "fixture");
+  await app.settled();
+  const view = app.get(session.id)!;
+  assert.equal(app.list()[0]!.events.length, 0);
+  assert.ok(view.events.length > 0);
+  const messages = view.events.filter(
+    (event) =>
+      event.type === "message.completed" ||
+      (!event.type && (event.kind === "user" || event.kind === "assistant")),
+  ).length;
+  const tools = view.events.filter(
+    (event) => event.type === "tool.started" || event.type === "tool.result",
+  ).length;
+  const errors = view.events.filter(
+    (event) => event.kind === "error" || event.type === "run.error",
+  ).length;
+
+  await ui.initialize();
+  await ui.command("/sessions");
+  await ui.openSelected();
+
+  const detail = ui.lines().join("\n");
+  assert.ok(messages > 0);
+  assert.match(detail, new RegExp(`messages\\s*:\\s*${messages}`));
+  assert.match(detail, new RegExp(`tool calls\\s*:\\s*${tools}`));
+  assert.match(detail, new RegExp(`errors\\s*:\\s*${errors}`));
+  assert.match(
+    detail,
+    new RegExp(
+      `last event\\s*:\\s*${view.events.at(-1)!.type} at ${view.events.at(-1)!.at}`,
+    ),
+  );
+});
+
+test("wide session inspector keeps the session list visible beside its detail", async (t) => {
+  const { app, ui } = await fixture(t);
+  await app.configure({
+    baseUrl: "https://fixture.invalid/v1",
+    apiKey: "fixture",
+  });
+  const session = await app.start("Wide session inspector", "fixture");
+  await app.settled();
+  await ui.initialize();
+  await ui.command("/sessions");
+  await ui.openSelected();
+
+  const selected = ui.items()[0]!.label;
+  const wide = stripAnsi(renderWorkspace(ui, 160, 32));
+  assert.ok(wide.includes(selected));
+  assert.ok(wide.includes("CONVERSATION"));
+  assert.ok(wide.includes("messages"));
+  assert.ok(wide.includes(session.id));
+
+  const belowBreakpoint = stripAnsi(renderWorkspace(ui, 139, 24));
+  assert.ok(!belowBreakpoint.includes(selected));
+  assert.ok(belowBreakpoint.includes("CONVERSATION"));
+
+  const medium = stripAnsi(renderWorkspace(ui, 140, 24));
+  assert.ok(medium.includes(selected));
+  assert.ok(medium.includes("CONVERSATION"));
+
+  const narrow = stripAnsi(renderWorkspace(ui, 80, 24));
+  assert.ok(narrow.includes("CONVERSATION"));
+  assert.ok(!narrow.includes(selected));
+});
+
+test("wide document inspector keeps its list beside selected document detail", async (t) => {
+  const { app, ui } = await fixture(t);
+  await app.configure({
+    baseUrl: "https://fixture.invalid/v1",
+    apiKey: "fixture",
+  });
+  const session = await app.start("Wide document inspector", "fixture");
+  await app.settled();
+  await app.editDocument(session.id, {
+    path: "notes.md",
+    content: "Inspected document",
+    expectedRevision: null,
+  });
+  await ui.initialize();
+  await ui.command("/documents");
+  await ui.openSelected();
+
+  const selected = ui.items()[0]!.label;
+  const wide = stripAnsi(renderWorkspace(ui, 160, 32));
+  assert.ok(wide.includes(selected));
+  assert.ok(wide.includes("notes.md"));
+  assert.ok(wide.includes(session.id));
+});
+
+test("wide ledger inspector keeps verified entry list beside selected proof detail", async (t) => {
+  const { app, ui } = await fixture(t);
+  await app.configure({
+    baseUrl: "https://fixture.invalid/v1",
+    apiKey: "fixture",
+  });
+  const session = await app.start("Wide ledger inspector", "fixture");
+  await app.settled();
+  await app.editDocument(session.id, {
+    path: "proof.md",
+    content: "Verified evidence",
+    expectedRevision: null,
+  });
+  await ui.initialize();
+  await ui.command("/ledger");
+  const entryIndex = ui
+    .items()
+    .findIndex((item) => item.id.includes(session.id));
+  assert.ok(entryIndex >= 0);
+  ui.selected = entryIndex;
+  await ui.openSelected();
+
+  const wide = stripAnsi(renderWorkspace(ui, 160, 32));
+  assert.ok(wide.includes("MANAGED LEDGER"));
+  assert.ok(wide.includes(session.id.slice(0, 8)));
+  assert.ok(wide.includes("void_workspace_write"));
+  assert.ok(wide.includes("verified"));
+});
+
+test("wide approval inspector keeps the hold list beside its detail", async (t) => {
+  const { app, ui } = await fixture(t);
+  t.mock.method(app, "approvals", () => [
+    {
+      holdId: "hold-fixture",
+      status: "pending",
+      call: { tool: "write_file", klass: "R3", reason: "review required" },
+      expiresAt: Date.now() + 60_000,
+    },
+  ]);
+  await ui.initialize();
+  await ui.command("/approvals");
+  await ui.openSelected();
+
+  const selected = ui.items()[0]!.label;
+  const wide = stripAnsi(renderWorkspace(ui, 160, 32));
+  assert.ok(wide.includes(selected));
+  assert.ok(wide.includes("review required"));
+  assert.ok(wide.includes("write_file"));
+});
+
+test("wide tool inspector keeps the tool list beside its schema without executing it", async (t) => {
+  const { app, ui } = await fixture(t);
+  await ui.initialize();
+  const before = app.list().length;
+  await ui.command("/tools");
+  await ui.openSelected();
+
+  const selected = ui.items()[0]!.label;
+  const selectedName = selected.split(" / ", 1)[0]!.split(" ").at(-1)!;
+  const detail = ui.detail!.join("\n");
+  assert.match(detail, /no input properties|PROPERTIES|INPUT SCHEMA/);
+  assert.equal(app.list().length, before, "inspection does not create a run");
+
+  const wide = stripAnsi(renderWorkspace(ui, 160, 32));
+  assert.ok(wide.includes(selected));
+  assert.ok(wide.includes("Scope: new conversations"));
+
+  const narrow = stripAnsi(renderWorkspace(ui, 80, 24));
+  assert.ok(narrow.includes("Scope: new conversations"));
+  assert.ok(narrow.includes(selectedName));
+});
+
+test("wide usage inspector keeps the usage list beside provider token detail", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-usage-wide-"));
+  const env = { NOMO_DATA_DIR: root };
+  const app = new Workbench(env, async (url) =>
+    String(url).endsWith("/models")
+      ? Response.json({ data: [{ id: "fixture" }] })
+      : Response.json({
+          choices: [
+            { message: { role: "assistant", content: "Fixture reply" } },
+          ],
+          usage: { prompt_tokens: 12, completion_tokens: 7, total_tokens: 19 },
+        }),
+  );
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  await app.configure({
+    baseUrl: "https://fixture.invalid/v1",
+    apiKey: "fixture",
+  });
+  const ui = new WorkspaceTui(app, env);
+  await ui.initialize();
+  await ui.command("start here");
+  await app.settled();
+  await ui.command("/usage");
+  assert.ok(
+    ui.items().length > 0,
+    JSON.stringify(app.get(ui.sessionId!)?.events.map((event) => event.kind)),
+  );
+  const selected = ui.items()[0]!.label;
+  await ui.openSelected();
+  assert.match(ui.detail!.join("\n"), /19/);
+  assert.match(ui.detail!.join("\n"), /provider/);
+
+  const wide = stripAnsi(renderWorkspace(ui, 160, 32));
+  assert.ok(wide.includes(selected));
+  assert.ok(wide.includes("provider"));
+
+  const narrow = stripAnsi(renderWorkspace(ui, 80, 24));
+  assert.ok(narrow.includes("provider"));
+  assert.ok(!narrow.includes(selected));
+});
+
+test("wide model inspector keeps the model list beside read-only selection detail", async (t) => {
+  const { app, ui } = await fixture(t);
+  await app.configure({
+    baseUrl: "https://fixture.invalid/v1",
+    apiKey: "fixture",
+  });
+  await ui.initialize();
+  await ui.command("/models");
+  assert.ok(ui.items().length > 0);
+  const model = ui.items()[0]!.label;
+  const selectedBefore = ui.model;
+  await ui.openSelected();
+  assert.equal(ui.model, selectedBefore);
+  assert.match(ui.detail!.join("\n"), /MODEL/);
+
+  const wide = stripAnsi(renderWorkspace(ui, 160, 32));
+  assert.ok(wide.includes(model));
+  assert.ok(wide.includes("MODEL"));
+
+  const narrow = stripAnsi(renderWorkspace(ui, 80, 24));
+  assert.ok(narrow.includes("MODEL"));
+  assert.ok(!narrow.includes(model));
+});
+
+test("wide inspector scrolls long detail independently from its selected row", async (t) => {
+  const { app, ui } = await fixture(t);
+  await ui.initialize();
+  await ui.command("/tools");
+  await ui.openSelected();
+  ui.detail = Array.from({ length: 60 }, (_, index) => `DETAIL FIELD ${index}`);
+
+  const first = stripAnsi(renderWorkspace(ui, 160, 24));
+  assert.ok(first.includes("DETAIL FIELD 0"));
+  ui.scrollPage(1);
+  const next = stripAnsi(renderWorkspace(ui, 160, 24));
+  assert.ok(!next.includes("DETAIL FIELD 0"));
+  assert.ok(next.includes("DETAIL FIELD 1"));
+  assert.ok(next.includes(ui.items()[ui.selected]!.label));
+});
+
+test("wide policy inspector keeps connector list visible beside its detail", async (t) => {
+  const { ui } = await fixture(t);
+  await ui.initialize();
+  await ui.command("/policy");
+  await ui.openSelected();
+
+  const selected = ui.items()[0]!.label;
+  const wide = stripAnsi(renderWorkspace(ui, 160, 32));
+  assert.ok(wide.includes(selected));
+  assert.ok(wide.includes("CONSENT"));
+  assert.ok(wide.includes("NOMO documents"));
+
+  const narrow = stripAnsi(renderWorkspace(ui, 80, 24));
+  assert.ok(narrow.includes("CONSENT"));
+  assert.ok(!narrow.includes(selected));
 });
 
 test("provider status and setup action never hide unavailable NVIDIA behind another provider", async (t) => {
@@ -500,8 +830,17 @@ test("/hook flips a saved hook without rewriting it", async (t) => {
   });
   const ui = new WorkspaceTui(app, env);
   await ui.initialize();
-  app.upsertHook({ id: "h1", event: "after-tool", command: "echo", enabled: true });
-  assert.equal(app.agents().hooksSupported, true, "an allowlisted command makes hooks supported");
+  app.upsertHook({
+    id: "h1",
+    event: "after-tool",
+    command: "echo",
+    enabled: true,
+  });
+  assert.equal(
+    app.agents().hooksSupported,
+    true,
+    "an allowlisted command makes hooks supported",
+  );
 
   await ui.command("/hook disable h1");
   const off = app.agents().hooks.find((hook) => hook.id === "h1");
@@ -539,7 +878,10 @@ test("/agents prints the system prompt it names as a field", async (t) => {
   // The listing told the operator systemPrompt was a field it could save, and
   // never printed one. A profile's prompt is its actual voice to the model, so
   // an operator checking what a profile would say found nothing to read.
-  assert.match(text, /System prompt \/ \w+ *: Only claim work the tool results prove\./);
+  assert.match(
+    text,
+    /System prompt \/ \w+ *: Only claim work the tool results prove\./,
+  );
 
   app.upsertAgent({
     id: "quiet",

@@ -18,6 +18,116 @@ for (const columns of [80, 120, 200]) test(`live ledger is bounded at ${columns}
     assert.match(frame, /q quit/);
   }
 });
+for (const columns of [80, 120, 200]) {
+  test(`live detail keeps wide Unicode values at ${columns} columns`, () => {
+    const value = "界語".repeat(60);
+    const record = { ...view.page!.records[0]!, tool: value };
+    const fixture = {
+      ...view,
+      detail: true,
+      page: { ...view.page!, records: [record] },
+    };
+
+    for (const caps of [
+      {
+        interactive: false,
+        ansi: false,
+        colorDepth: 0,
+        columns,
+        rows: 24,
+        reason: "no-color",
+      },
+      {
+        interactive: true,
+        ansi: true,
+        colorDepth: 24,
+        columns,
+        rows: 24,
+        reason: "interactive",
+      },
+    ] as const) {
+      const frame = renderLiveFeed(fixture, caps);
+      const lines = frame.split("\n");
+      assert.ok(
+        lines.every((line) => visibleLength(line) <= columns),
+        `rows stay within ${columns} terminal cells`,
+      );
+      const toolStart = lines.findIndex((line) => line.includes("Tool:"));
+      const classStart = lines.findIndex(
+        (line, index) => index > toolStart && line.includes("Class:"),
+      );
+      assert.ok(toolStart >= 0 && classStart > toolStart, frame);
+      const recovered = lines
+        .slice(toolStart, classStart)
+        .map((line) => line.replace(/\u001b\[[0-9;]*m/g, "").slice(12))
+        .join("");
+      assert.equal(recovered, value, `all tool text remains visible at ${columns}`);
+    }
+  });
+}
+
+
+test("selected ledger records use the NOMO selection wash", () => {
+  const caps = {
+    interactive: true,
+    ansi: true,
+    colorDepth: 24,
+    columns: 80,
+    rows: 24,
+    reason: "interactive",
+  } as const;
+  const frame = renderLiveFeed(view, caps);
+  const selectedRow = frame.split("\n").find((line) => line.includes("postgres.row.update"));
+  assert.ok(selectedRow);
+  assert.match(selectedRow, /\u001b\[48;5;237m/);
+  assert.equal(visibleLength(selectedRow), 80);
+});
+
+test("selected ledger records stay compatible with basic ANSI color", () => {
+  const frame = renderLiveFeed(view, {
+    interactive: true,
+    ansi: true,
+    colorDepth: 4,
+    columns: 80,
+    rows: 24,
+    reason: "interactive",
+  });
+  const selectedRow = frame.split("\n").find((line) => line.includes("postgres.row.update"));
+  assert.ok(selectedRow);
+  assert.match(selectedRow, /^\u001b\[1;96m>/);
+  assert.doesNotMatch(selectedRow, /\u001b\[48;5;237m/);
+});
+
+test("selected pending holds use the NOMO selection wash", () => {
+  const hold = {
+    holdId: "h001",
+    call: {
+      tool: "postgres.row.delete",
+      klass: "r3" as const,
+      connector: "postgres",
+      workspace: "local",
+      blastRadius: 12,
+    },
+    expiresAt: Date.now() + 60000,
+    status: "pending" as const,
+    notify: [],
+  };
+  const frame = renderLiveFeed(
+    { ...view, approvalView: true, approvals: [hold], approvalSelected: 0 },
+    {
+      interactive: true,
+      ansi: true,
+      colorDepth: 24,
+      columns: 80,
+      rows: 24,
+      reason: "interactive",
+    },
+  );
+  const selectedRow = frame.split("\n").find((line) => line.includes("postgres.row.delete"));
+  assert.ok(selectedRow);
+  assert.match(selectedRow, /\u001b\[48;5;237m/);
+  assert.match(selectedRow.replace(/\u001b\[[0-9;]*m/g, ""), /^> R3 postgres\.row\.delete/);
+});
 
 test("live view never labels integrity-only data as signature checked", () => {
   const frame = renderLiveFeed({ ...view, page: { ...view.page!, signed: false } }, { interactive: false, ansi: false, colorDepth: 0, columns: 80, rows: 24, reason: "not-tty" });
@@ -75,4 +185,19 @@ test('pending approvals expose real risk and require an explicit confirmation', 
   assert.match(frame, /Blast radius: 12/);
   assert.match(frame, /Confirm denied with y/);
   assert.ok(frame.split('\n').every(line => visibleLength(line) <= 80));
+});
+
+test("live ledger uses the NOMO wordmark and thin dividers", () => {
+  const caps = {
+    interactive: true,
+    ansi: false,
+    colorDepth: 0,
+    columns: 80,
+    rows: 24,
+    reason: "no-color",
+  } as const;
+  const lines = renderLiveFeed(view, caps).split("\n");
+  assert.equal(lines[0], " NOMO / local");
+  assert.equal(lines[2], "─".repeat(80));
+  assert.equal(lines[lines.length - 2], "─".repeat(80));
 });

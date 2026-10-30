@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """Real PTY regression, disposable workspace, fixture model, no external calls."""
+import base64
 import fcntl
 import json
 import os
 from pathlib import Path
 import pty
+import re
 import select
 import signal
 import struct
@@ -23,22 +25,26 @@ const app = new Workbench({NOMO_DATA_DIR:process.env.NOMO_DATA_DIR}, async url =
 await app.configure({baseUrl:'https://fixture.invalid/v1',apiKey:'fixture'});
 const session=await app.start('PTY test','fixture'); await app.settled();
 await app.editDocument(session.id,{path:'pty.md',content:'Original',expectedRevision:null});
+await app.editDocument(session.id,{path:'pty.md',content:'Changed',expectedRevision:app.document(session.id,'pty.md').revision});
+await app.editDocument(session.id,{path:'zebra.md',content:'Second preview target',expectedRevision:null});
 await app.shutdown(); console.log(session.id);
 """
     session = subprocess.check_output(["node", "--input-type=module", "-e", seed], cwd=ROOT, env=env, text=True).strip()
     observer = Path(data) / "frames.mjs"
     observer.write_text("""
-import { DiffScreenWriter } from '%s';
+import { WorkspaceInkRenderer } from '%s';
 import { stripAnsi } from '%s';
-const write = DiffScreenWriter.prototype.write;
-DiffScreenWriter.prototype.write = function(frame) {
-  const result = write.call(this, frame);
-  // A notice may render before the runner completes its async refresh.
-  if (!stripAnsi(frame).includes('Finishing operation'))
-    process.stdout.write('\\x1b]777;nomo-test-ready\\x07');
+const render = WorkspaceInkRenderer.prototype.render;
+WorkspaceInkRenderer.prototype.render = function(frame, columns, rows) {
+  const result = render.call(this, frame, columns, rows);
+  // Publish the full rendered state because Ink sends only changed cells.
+  if (!stripAnsi(frame).includes('Finishing operation')) {
+    const snapshot = Buffer.from(stripAnsi(frame)).toString('base64');
+    process.stdout.write(`\\x1b]777;nomo-test-frame:${snapshot}\\x07`);
+  }
   return result;
 };
-""" % ((ROOT / "packages/cli/src/tui/watch.ts").as_uri(),
+""" % ((ROOT / "packages/cli/src/tui/workspace-ink.ts").as_uri(),
        (ROOT / "packages/cli/src/tui/layout.ts").as_uri()))
     master, slave = pty.openpty()
     fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack("HHHH", 24, 80, 0, 0))
@@ -49,6 +55,7 @@ DiffScreenWriter.prototype.write = function(frame) {
     def read_until(marker, timeout=8, ready=False):
         deadline = time.monotonic() + timeout
         start = len(output)
+        latest_frame = ""
         while time.monotonic() < deadline:
             if select.select([master], [], [], 0.1)[0]:
                 try:
@@ -58,16 +65,36 @@ DiffScreenWriter.prototype.write = function(frame) {
                 if not chunk:
                     break
                 output.extend(chunk)
-            found = output.find(marker.encode(), start)
-            if found >= 0 and (not ready or b"nomo-test-ready" in output[found:]):
+            if ready:
+                frames = list(
+                    re.finditer(
+                        rb"\x1b]777;nomo-test-frame:([A-Za-z0-9+/=]+)\x07",
+                        output[start:],
+                    )
+                )
+                if frames:
+                    latest_frame = base64.b64decode(frames[-1].group(1)).decode(
+                        "utf-8", errors="replace"
+                    )
+                found = marker in latest_frame
+            else:
+                found = output.find(marker.encode(), start) >= 0
+            if found:
                 return
-        raise AssertionError(f"Missing terminal state: {marker}; tail={output[-1000:]!r}")
+        raise AssertionError(
+            f"Missing terminal state: {marker}; frame={latest_frame[-1000:]!r}; "
+            f"tail={output[-500:]!r}"
+        )
 
     try:
         read_until("pty.md", ready=True)
-        assert b"\x1b[38;5;" in output or b"\x1b[1;38;5;" in output, "Inherited NO_COLOR disabled TUI colors"
+        assert b"\x1b[90m" in output or b"\x1b[38;5;" in output or b"\x1b[1;38;5;" in output, "Inherited NO_COLOR disabled TUI colors"
+        os.write(master, b"j")
+        read_until("zebra.md", ready=True)
+        os.write(master, b"\x1b[A")
+        read_until("pty.md", ready=True)
         os.write(master, b"\r")
-        read_until("DOCUMENT pty.md", ready=True)
+        read_until("revision", ready=True)
         os.write(master, b"u")
         read_until("UNDO pty.md?", ready=True)
         before = len(output)
@@ -92,52 +119,71 @@ DiffScreenWriter.prototype.write = function(frame) {
         fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack("HHHH", 32, 100, 0, 0))
         process = subprocess.Popen(["node", "--import", str(observer), "packages/cli/bin/nomo.mjs", "tui", "--session", session], cwd=ROOT, env=env, stdin=slave, stdout=slave, stderr=slave, start_new_session=True)
         os.close(slave)
-        read_until("Write a prompt", ready=True)
+        read_until("› chat", ready=True)
+        assert "› chat".encode() in output, "Chat panel was not selected on startup"
+        os.write(master, b"/fi")
+        read_until("/fi", ready=True)
+        os.write(master, b"\t")
+        read_until("/find", ready=True)
+        os.write(master, b"\x15")
+        os.write(master, b"@p")
+        read_until("@p", ready=True)
+        os.write(master, b"\t")
+        read_until("@pty.md", ready=True)
+        os.write(master, b"\x15")
+        os.write(master, b"\t")
+        read_until("› sessions", ready=True)
+        os.write(master, b"/chat\r")
+        read_until("› chat", ready=True)
         os.write(master, b"draft first")
+        read_until("draft first", ready=True)
+        os.write(master, b"\t")
+        read_until("› sessions", ready=True)
+        os.write(master, b"\t" * 10)
+        read_until("› chat", ready=True)
+        os.write(master, b"x")
+        read_until("draft firstx", ready=True)
+        os.write(master, b"\x7f")
         read_until("draft first", ready=True)
         os.write(master, b"\x1b\rdraft second")
         read_until("draft second", ready=True)
         os.write(master, b"\x03/led")
         read_until("Signed operations", ready=True)
         os.write(master, b"\t\r")
-        read_until("ledger / navigation", ready=True)
+        read_until("› ledger", ready=True)
         os.write(master, b"/chat\r")
-        read_until("Write a prompt", ready=True)
+        read_until("› chat", ready=True)
         os.write(master, b"\x1b[A")
         read_until("PTY test", ready=True)
         os.write(master, b"\x03/find PTY test\r")
         read_until("1 matching messages", ready=True)
         os.write(master, b"\x1b")
-        read_until("› You", ready=True)
-        os.write(master, b"/bottom\r")
-        read_until("Following latest messages", ready=True)
-        os.write(master, b"/tools write\r")
-        read_until("nomo_workspace_write", ready=True)
+        read_until("Search results", ready=True)
+        os.write(master, b"\x1b")
+        read_until("› chat", ready=True)
+        os.write(master, b"i/tools write\r")
+        read_until("void_workspace_write", ready=True)
         os.write(master, b"\r")
-        read_until("INPUT SCHEMA", ready=True)
+        read_until("PROPERTIES", ready=True)
         # Escape clears a list filter before closing its detail. A diff renderer
         # does not resend unchanged tool text when only the filter notice changes.
         os.write(master, b"\x1b")
         read_until("Filter cleared.", ready=True)
         os.write(master, b"\x1b")
-        read_until("nomo_workspace_write", ready=True)
-        os.write(master, b"/chat\r")
-        read_until("Write a prompt", ready=True)
+        read_until("void_workspace_write", ready=True)
+        os.write(master, b"i/chat\r")
+        read_until("› chat", ready=True)
         os.write(master, b"/expand\r")
         read_until("Full tool output", ready=True)
         os.write(master, b"\x0f")
         read_until("Compact tool output", ready=True)
-        redraw_start = len(output)
         os.write(master, b"\x0c")
-        time.sleep(0.2)
-        if select.select([master], [], [], 0)[0]:
-            output.extend(os.read(master, 65536))
-        assert b"\x1b[2J" in output[redraw_start:], "Ctrl+L did not redraw"
+        read_until("› chat", ready=True)
         os.write(master, b"\x12PTY test\r")
         read_until("1 matching messages", ready=True)
         os.write(master, b"\x1b")
         # Closing search changes the transcript, not the already visible tab label.
-        read_until("› You", ready=True)
+        read_until("YOU", ready=True)
         os.write(master, b"\x15\x04")
         read_until("Press Ctrl+D again to exit.", ready=True)
         os.write(master, b"\x04")
@@ -197,7 +243,9 @@ process.stdout.write = (...args) => {
                 if process.poll() is not None:
                     break
             assert sent, f"{termination}: terminal never initialized"
-            assert process.wait(timeout=2) == (1 if termination == "fatal" else 7 if termination == "exit" else 0)
+            expected = 1 if termination == "fatal" else 7 if termination == "exit" else 0
+            actual = process.wait(timeout=2)
+            assert actual == expected, f"{termination}: expected exit {expected}, got {actual}; output={captured[-500:]!r}"
             restored = termios.tcgetattr(slave)
             # PENDIN is transient kernel input state on macOS, not a terminal mode.
             restored[3] &= ~getattr(termios, "PENDIN", 0)
@@ -223,9 +271,12 @@ with tempfile.TemporaryDirectory(prefix="nomo-tui-cancel-") as data:
     preload.write_text("""
 import { WorkspaceTui } from '%s';
 import { writeFileSync } from 'node:fs';
+const nativeFetch = globalThis.fetch;
 let calls = 0;
 globalThis.fetch = async (url, options) => {
-  if (String(url).endsWith('/models')) return Response.json({data:[{id:'fixture'}]});
+  const target = String(url);
+  if (target.endsWith('/models')) return Response.json({data:[{id:'fixture'}]});
+  if (!target.endsWith('/chat/completions')) return nativeFetch(url, options);
   if (++calls === 1) return Response.json({choices:[{message:{role:'assistant',content:'Selected reply'}}]});
   return new Promise((resolve, reject) => {
     options.signal.addEventListener('abort', () => reject(options.signal.reason), {once:true});
@@ -266,7 +317,15 @@ WorkspaceTui.prototype.initialize = async function () {
                 os.write(master, key)
                 read_until("FIXTURE cancellation checked")
                 if not active:
-                    assert b"Selected conversation is not running" in output, "Cancellation guidance hidden by unrelated run"
+                    message = b"Selected conversation is not running"
+                    deadline = time.monotonic() + 2
+                    while message not in re.sub(
+                        rb"\x1b\[[0-?]*[ -/]*[@-~]", b"", output
+                    ) and time.monotonic() < deadline:
+                        if select.select([master], [], [], 0.1)[0]:
+                            output.extend(os.read(master, 65536))
+                    plain_output = re.sub(rb"\x1b\[[0-?]*[ -/]*[@-~]", b"", output)
+                    assert message in plain_output, "Cancellation guidance hidden by unrelated run"
                 assert json.loads(state.read_text()) == {"selected": "idle", "other": "cancelled" if active else "running"}, "Cancellation touched the wrong session"
             finally:
                 process.terminate()

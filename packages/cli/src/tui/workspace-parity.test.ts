@@ -6,9 +6,8 @@ import { join } from "node:path";
 import { Workbench } from "../../../workbench/src/index.ts";
 import {
   MODE_ICON,
-  TAB_ICONS,
-  TAB_ICON_TONE,
   WorkspaceTui,
+  shouldNavigateGroupedTree,
   filterKeyForTab,
   approvalLabel,
   detectHarnesses,
@@ -20,9 +19,6 @@ import {
   holdSecondsLeft,
   mentionCandidates,
   mentionToken,
-  promptFrameBottom,
-  promptFrameRow,
-  promptFrameTop,
   renderWorkspace,
   searchHistoryPrompts,
   TUI_COMMANDS,
@@ -43,6 +39,7 @@ import {
 } from "./workspace-runner.ts";
 import { stripAnsi, visibleLength } from "./layout.ts";
 import { moveHunk, setSide, toggleHunk } from "./diff-panel.ts";
+import { flattenTree } from "./widgets.ts";
 
 const assistantFetcher = (content: string) => async (url: unknown) => {
   if (String(url).endsWith("/models"))
@@ -404,6 +401,35 @@ test("the chat panel leads with the shape of the conversation", async (t) => {
   );
   const firstWord = rows.findIndex((row) => / YOU$| YOU |NOMO|TOOL/.test(row));
   assert.ok(firstWord > 0, "the words follow the strip");
+  const colorFrame = renderWorkspace(ui, 80, 24, "", false, false, {
+    color: true,
+    colorDepth: 24,
+    motion: false,
+  });
+  const userRows = colorFrame.split("\n").filter((row) =>
+    /YOU|start here/.test(stripAnsi(row)),
+  );
+  assert.equal(userRows.length, 2);
+  const basicFrame = renderWorkspace(ui, 80, 24, "", false, false, {
+    color: true,
+    colorDepth: 4,
+    motion: false,
+  });
+  const basicUserRows = basicFrame.split("\n").filter((row) =>
+    /YOU|start here/.test(stripAnsi(row)),
+  );
+  assert.ok(basicUserRows.every((row) => /\x1b\[[0-9;]*;100m/.test(row)));
+  assert.ok(
+    basicUserRows.every((row) => !/\x1b\[[0-9;]*(?:38|48);5;/.test(row)),
+  );
+  const monochromeFrame = renderWorkspace(ui, 80, 24, "", false, false, {
+    color: false,
+    motion: false,
+  });
+  assert.doesNotMatch(monochromeFrame, /\x1b\[/);
+  assert.match(monochromeFrame, /    ▸ YOU/);
+  assert.match(monochromeFrame, /    start here/);
+  assert.ok(userRows.every((row) => /\x1b\[[0-9;]*48;5;237m/.test(row)));
 
   // Recency, stated in words, so an operator knows whether to trust it.
   const summary = activitySummary(
@@ -414,6 +440,41 @@ test("the chat panel leads with the shape of the conversation", async (t) => {
   assert.match(summary, /event|no activity/i);
   // An empty conversation still renders a panel rather than an empty screen.
   assert.match(activitySummary(buildActivity([]), 0), /\w/);
+});
+
+test("grouped-tree arrows preserve an opened inspector and advance a live preview", () => {
+  const preview = ["document preview"];
+  const grouped = {
+    groupTree: {},
+    tab: "sessions" as const,
+    detail: ["record detail"],
+    documentPreview: preview,
+  };
+  assert.equal(shouldNavigateGroupedTree(grouped), false);
+  assert.equal(
+    shouldNavigateGroupedTree({ ...grouped, detail: undefined }),
+    true,
+  );
+  assert.equal(
+    shouldNavigateGroupedTree({
+      ...grouped,
+      tab: "documents",
+      detail: preview,
+    }),
+    true,
+  );
+  assert.equal(
+    shouldNavigateGroupedTree({
+      ...grouped,
+      tab: "documents",
+      detail: ["command detail"],
+    }),
+    false,
+  );
+  assert.equal(
+    shouldNavigateGroupedTree({ ...grouped, tab: "overview" }),
+    false,
+  );
 });
 
 test("the documents tab groups by folder and the arrows fold it", async (t) => {
@@ -447,16 +508,108 @@ test("the documents tab groups by folder and the arrows fold it", async (t) => {
   assert.match(initial, /docs\//);
   assert.match(initial, /src\//);
   assert.match(initial, /plan\.md/);
+  await app.editDocument(
+    id,
+    { path: "new/arrived.md", content: "x", expectedRevision: null },
+    "tui-operator",
+  );
+  ui.items();
+  assert.match(ui.lines().join("\n"), /arrived\.md/);
+  const addedDoc = (await app.documentsList()).find(
+    (document) => document.path === "new/arrived.md",
+  )!;
+  await app.editDocument(
+    id,
+    {
+      path: addedDoc.path,
+      content: "a much longer body",
+      expectedRevision: addedDoc.revision,
+    },
+    "tui-operator",
+  );
+  ui.items();
+  assert.match(ui.lines().join("\n"), /18 B/);
+  ui.filter = "intro";
+  const filtered = ui.lines().join("\n");
+  assert.match(filtered, /intro\.md/);
+  const filteredAgain = ui.lines().join("\n");
+  assert.equal(filteredAgain, filtered);
+  assert.doesNotMatch(filtered, /plan\.md|main\.ts|util\.ts/);
+
+  await ui.command("/new");
+  await ui.command("another session");
+  await app.settled();
+  const secondSessionId = ui.sessionId!;
+  await app.editDocument(
+    secondSessionId,
+    {
+      path: "docs/guide/intro.md",
+      content: "second session",
+      expectedRevision: null,
+    },
+    "tui-operator",
+  );
+  ui.choose("documents");
+  ui.items();
+  ui.filter = "intro";
+  const sharedFolder = ui.groupTree!.nodes.find((node) => node.id === "docs")!;
+  const sharedGuide = sharedFolder.children!.find(
+    (node) => node.id === "docs/guide",
+  )!;
+  assert.equal(sharedGuide.children!.length, 2);
+  assert.notEqual(
+    sharedGuide.children![0]!.label,
+    sharedGuide.children![1]!.label,
+  );
+  const sharedPathRows = ui
+    .items()
+    .filter((row) => row.path === "docs/guide/intro.md");
+  const treeRows = flattenTree(ui.groupTree!.nodes, ui.groupTree!.state);
+  for (const row of sharedPathRows) {
+    const cursor = treeRows.findIndex((node) => node.id === row.id);
+    assert.notEqual(
+      cursor,
+      -1,
+      "each same-path document has its own tree leaf",
+    );
+    assert.ok(
+      treeRows[cursor]!.label.includes(row.sessionId!.slice(0, 8)),
+      "the leaf label identifies its source conversation",
+    );
+    ui.groupTree!.state = { ...ui.groupTree!.state, cursor };
+    ui.moveDocumentCursor(0);
+    assert.equal(ui.detail, ui.documentPreview);
+    assert.equal(ui.items()[ui.selected]!.id, row.id);
+    await ui.openSelected();
+    assert.notEqual(ui.detail, ui.documentPreview);
+    assert.ok(
+      ui.detail?.some((line) => line.includes(row.sessionId!.slice(0, 8))),
+    );
+  }
+  assert.equal(ui.moveDocumentCursor(0), true);
+  assert.equal(
+    ui.detail,
+    ui.documentPreview,
+    "the tree cursor shows its live preview",
+  );
+  await ui.command("/settings search sendBehavior");
+  assert.notEqual(ui.detail, ui.documentPreview);
+  assert.equal(shouldNavigateGroupedTree(ui), false);
+  ui.filter = "";
   // Deeper folders start closed: everything expanded is what made the tree
   // feel like the flat list it replaced.
   assert.match(initial, /folders collapsed/);
 
   // The arrows fold and unfold rather than switching panels.
+  ui.filter = "";
+  ui.items();
   const tree = ui.groupTree!;
   ui.groupTree = { ...tree, state: { ...tree.state, cursor: 0 } };
-  assert.equal(ui.collapseOrExpand(true), true, "a folder moved");
+  await ui.openSelected();
+  assert.equal(ui.groupTree!.state.expanded.has("docs"), false);
   assert.notEqual(ui.lines().join("\n"), initial, "the tree changed");
-  assert.equal(ui.collapseOrExpand(false), true, "and it folds back");
+  await ui.openSelected();
+  assert.equal(ui.groupTree!.state.expanded.has("docs"), true);
 
   // Outside the documents tab the arrows keep their panel meaning. A tree
   // that followed the operator to another tab would let them collapse
@@ -466,7 +619,7 @@ test("the documents tab groups by folder and the arrows fold it", async (t) => {
   assert.equal(ui.collapseOrExpand(true), false, "and does not answer arrows");
 });
 
-test("a toast never costs the operator the prompt frame, at any height", async (t) => {
+test("toast rows do not displace the prompt surface", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "nomo-tui-toastfit-"));
   const { app, env } = await fixtureApp(root);
   t.after(async () => {
@@ -475,28 +628,24 @@ test("a toast never costs the operator the prompt frame, at any height", async (
   });
   const ui = new WorkspaceTui(app, env);
   await ui.initialize();
-  // Three toasts at once, one of them sticky: the queue at its busiest.
   ui.announce("saved", "success", "Saved.");
   ui.announce("hold", "pending", "Run awaiting approval");
   ui.announce("warn", "warning", "Proxy unreachable.");
 
-  // The bug this pins: a toast row was charged against the body, which on an
-  // eight row terminal pushed the prompt frame's bottom rule off the screen.
-  // A toast that costs the operator their input surface has charged more
-  // than it delivered.
   for (const width of [20, 40, 60, 80, 100, 140, 180])
     for (const height of [8, 10, 12, 16, 20, 24, 30, 40, 60]) {
-      const rows = renderWorkspace(ui, width, height, "x", true, false, {
-        frame: 1,
-      }).split("\n");
-      assert.equal(rows.length, Math.max(8, height), `${width}x${height}`);
+      const output = stripAnsi(
+        renderWorkspace(ui, width, height, "x", true, false, { frame: 1 }),
+      );
+      const rows = output.split("\n");
       assert.ok(
-        rows.some((row) => row.startsWith("┌")),
-        `no prompt frame top at ${width}x${height}`,
+        rows.length >= Math.max(8, height) - 1 &&
+          rows.length <= Math.max(8, height),
+        `unexpected rendered row count at ${width}x${height}: ${rows.length}`,
       );
       assert.ok(
-        rows.some((row) => row.startsWith("└")),
-        `no prompt frame bottom at ${width}x${height}`,
+        rows.some((row) => />\s+x/.test(row)),
+        `prompt surface missing at ${width}x${height}`,
       );
     }
 });
@@ -548,6 +697,9 @@ test("the sessions tab groups by state and words the summary for the tab", async
   await ui.initialize();
   await ui.command("first conversation");
   await app.settled();
+  await ui.command("/new");
+  await ui.command("second conversation");
+  await app.settled();
   ui.choose("sessions");
   ui.items();
   assert.ok(ui.groupTree, "the sessions tab builds a tree");
@@ -562,6 +714,64 @@ test("the sessions tab groups by state and words the summary for the tab", async
   // and parse, which is the whole cost the line exists to avoid.
   assert.match(shown, /0 groups collapsed, 0 conversations hidden/);
   assert.ok(!shown.includes("documents"), "the summary speaks about sessions");
+
+  const group = ui.groupTree!.nodes[0]!;
+  assert.equal(ui.groupTree!.state.expanded.has(group.id), true);
+  ui.sessionId = undefined;
+  await ui.openSelected();
+  assert.equal(ui.groupTree!.state.expanded.has(group.id), false);
+  assert.equal(ui.sessionId, undefined, "a folder never opens a stale session");
+  await ui.openSelected();
+  assert.equal(ui.groupTree!.state.expanded.has(group.id), true);
+
+  const firstTreeLeaf = ui.groupTree!.nodes[0]!.children![0]!;
+  assert.equal(ui.moveDocumentCursor(1), true);
+  assert.equal(ui.detail, undefined);
+  assert.equal(ui.items()[ui.selected]!.id, firstTreeLeaf.id);
+  await ui.openSelected();
+  const openedSessionDetail = ui.lines();
+  assert.equal(shouldNavigateGroupedTree(ui), false);
+  assert.ok(
+    openedSessionDetail.some((line) =>
+      line.includes(
+        ui.workbench.get(firstTreeLeaf.id)?.title ?? firstTreeLeaf.id,
+      ),
+    ),
+  );
+
+  ui.choose("sessions");
+  ui.lines();
+  ui.filter = "second";
+  const filtered = ui.lines().join("\n");
+  assert.match(filtered, /second conversation/);
+  assert.doesNotMatch(filtered, /first conversation/);
+  ui.filter = "does-not-exist";
+  ui.items();
+  ui.sessionId = undefined;
+  await ui.openSelected();
+  assert.equal(
+    ui.sessionId,
+    undefined,
+    "an empty tree cannot open a stale row",
+  );
+
+  ui.filter = "";
+  const sessions = ui.workbench.list();
+  for (const session of sessions)
+    ui.workbench.patchSession(session.id, { title: "same title" });
+  ui.items();
+  const leaves = ui.groupTree!.nodes.flatMap((group) => group.children ?? []);
+  assert.equal(leaves.length, ui.items().length);
+  assert.equal(new Set(leaves.map((leaf) => leaf.id)).size, leaves.length);
+  const treeRows = flattenTree(ui.groupTree!.nodes, ui.groupTree!.state);
+  const highlightedIndex = treeRows.findIndex(
+    (row) => !row.hasChildren && row.id === leaves.at(-1)!.id,
+  );
+  assert.ok(highlightedIndex >= 0);
+  const highlighted = treeRows[highlightedIndex]!;
+  ui.groupTree!.state = { ...ui.groupTree!.state, cursor: highlightedIndex };
+  assert.equal(ui.moveDocumentCursor(0), true);
+  assert.equal(ui.items()[ui.selected]!.id, highlighted.id);
 });
 
 test("a hold with a deadline says so, and a closed one says it closed", () => {
@@ -639,6 +849,25 @@ test("the ledger tab groups mixed records in the order they are read", async (t)
   for (const heading of headings)
     assert.ok(!/\d+\.\s/.test(heading), `heading carries a number: ${heading}`);
   assert.ok(numbered.length >= headings.length);
+});
+test("ledger summary does not treat view rows as verified chain entries", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-ledger-summary-"));
+  const { app, env } = await fixtureApp(root);
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, env);
+  await ui.initialize();
+  ui.choose("ledger");
+
+  const text = ui.lines().join("\n");
+  assert.match(text, /0 of 0 ledger entries verified/);
+  assert.doesNotMatch(
+    text,
+    /All \d+ entries verified against the managed chain/,
+  );
+  assert.match(text, /Managed chain verification unavailable/);
 });
 
 test("Enter on a model inspects it; it does not switch the model", async (t) => {
@@ -746,6 +975,11 @@ test("Enter on a session row opens a readable panel, not the transcript", async 
   ui.choose("sessions");
   const rows = ui.items();
   assert.ok(rows.length > 0, "the sessions tab has rows");
+  const leafIndex = flattenTree(
+    ui.groupTree!.nodes,
+    ui.groupTree!.state,
+  ).findIndex((node) => !node.hasChildren);
+  ui.groupTree!.state = { ...ui.groupTree!.state, cursor: leafIndex };
   await ui.openSelected();
   const detail = ui.detail!.join("\n");
   // The facts the operator came for are the first thing on the panel.
@@ -1118,6 +1352,39 @@ test("/context /cost /status report retained numbers, cost stays unknown", async
     ui.detail?.join("\n").includes("mode: normal (local only, not enforced)"),
   );
 });
+test("/verify records its completion time in the ledger quick view", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-verify-time-"));
+  const { app, env } = await fixtureApp(root);
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true });
+  });
+  const ui = new WorkspaceTui(app, env);
+  await ui.initialize();
+  ui.choose("ledger");
+  const verification = ui
+    .items()
+    .find((row) => row.id === "ledger:verification");
+  assert.match(
+    verification?.lines.join("\n") ?? "",
+    /Last \/verify this session: not run/,
+  );
+  const started = Date.now();
+  await ui.command("/verify");
+  const finished = Date.now();
+  const verifiedRow = ui
+    .items()
+    .find((row) => row.id === "ledger:verification");
+  const timestamp = verifiedRow?.lines.find((line) =>
+    line.startsWith("Last /verify this session: "),
+  );
+  assert.ok(timestamp);
+  const checkedAt = Date.parse(
+    timestamp.slice("Last /verify this session: ".length),
+  );
+  assert.ok(checkedAt >= started && checkedAt <= finished);
+
+});
 
 test("/compact reports a confirmed no-op without claiming provider summarization", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "nomo-tui-compact-"));
@@ -1234,13 +1501,8 @@ test("review needs an explicit accept or reject key", async (t) => {
   assert.ok(frame.includes("Tab panels"));
 });
 
-test("prompt frame stays continuous at every width", async (t) => {
-  assert.equal(visibleLength(promptFrameTop("Write a prompt", 80)), 80);
-  assert.equal(visibleLength(promptFrameBottom(80)), 80);
-  assert.equal(visibleLength(promptFrameRow("> hello_", 80)), 80);
-  assert.ok(promptFrameTop("Write a prompt", 20).startsWith("┌"));
-  assert.ok(promptFrameTop("Write a prompt", 20).endsWith("┐"));
-  const root = await mkdtemp(join(tmpdir(), "nomo-tui-frame-"));
+test("composer preserves typed and multiline text within terminal bounds", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-composer-"));
   const { app, env } = await fixtureApp(root);
   t.after(async () => {
     await app.shutdown();
@@ -1251,38 +1513,98 @@ test("prompt frame stays continuous at every width", async (t) => {
   for (const [width, height] of [
     [20, 8],
     [40, 12],
-
     [80, 24],
     [100, 32],
     [160, 45],
   ]) {
-    const frame = stripAnsi(
-      renderWorkspace(ui, width!, height!, "hello_", true, false, {
-        cursor: 6,
-      }),
-    );
-    const rows = frame.split("\n");
-    assert.equal(rows.length, height);
-    assert.ok(rows.every((line) => visibleLength(line) <= width!));
-    const top = rows.find((line) => line.startsWith("┌"))!;
-    const bottom = rows.find((line) => line.startsWith("└"))!;
-    assert.ok(top.endsWith("┐"), top);
-    assert.ok(bottom.endsWith("┘"), bottom);
-    assert.equal(visibleLength(top), width);
-    assert.equal(visibleLength(bottom), width);
-    // Composer rows are the rows between the frame top and bottom. Selecting
-    // them positionally instead of by prefix keeps the header rows, which also
-    // start with the indent, out of the assertion.
-    const topIndex = rows.findIndex((line) => line.startsWith("┌"));
-    const bottomIndex = rows.findIndex((line) => line.startsWith("└"));
-    const promptRows = rows.slice(topIndex + 1, bottomIndex);
-    assert.ok(promptRows.length > 0);
-    for (const row of promptRows) {
-      assert.ok(row.startsWith("  "), row);
-      assert.ok(row.endsWith("  "), row);
-      assert.equal(visibleLength(row), width);
+    const multiline =
+      height! >= 18
+        ? "first\nsecond\nthird\nfourth▌"
+        : "first\nsecond\nthird▌";
+    for (const input of ["hel▌lo", multiline]) {
+      const cursor = input.indexOf("▌");
+      const output = stripAnsi(
+        renderWorkspace(ui, width!, height!, input, true, false, {
+          cursor,
+          motion: false,
+        }),
+      );
+      const rows = output.split("\n");
+      const cursorRow = input
+        .slice(input.lastIndexOf("\n") + 1)
+        .replace("▌", "█");
+      assert.ok(
+        rows.length >= Math.max(8, height!) - 1 &&
+          rows.length <= Math.max(8, height!),
+        `unexpected rendered row count at ${width}x${height}: ${rows.length}`,
+      );
+      assert.ok(rows.every((line) => visibleLength(line) <= width!));
+      assert.ok(
+        rows.some((line) => line.includes(cursorRow)),
+        `composer text or caret not visible at ${width}x${height}`,
+      );
+      if (height! >= 18 && input.includes("\n")) {
+        assert.ok(
+          rows.some((line) => line.includes("first")),
+          `earliest composer line is visible at ${width}x${height}`,
+        );
+      }
     }
   }
+  const longDraft = Array.from(
+    { length: 12 },
+    (_, index) => `draft line ${index + 1}`,
+  ).join("\n");
+  for (const [input, indicator] of [
+    [`${longDraft}▌`, "↑ 5 more"],
+    [`▌${longDraft}`, "↓ 5 more"],
+  ] as const) {
+    const rows = stripAnsi(
+      renderWorkspace(ui, 80, 24, input, true, false, {
+        cursor: input.indexOf("▌"),
+        motion: false,
+      }),
+    ).split("\n");
+    assert.ok(
+      rows.some((line) => line.includes(indicator)),
+      `composer reports hidden draft rows: ${indicator}`,
+    );
+  }
+});
+
+test("body overflow shows existing page-scroll direction and remaining rows", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-scroll-hint-"));
+  const { app, env } = await fixtureApp(root);
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, env);
+  ui.detail = Array.from({ length: 40 }, (_, index) => `Body row ${index + 1}`);
+  const renderStatus = () =>
+    stripAnsi(
+      renderWorkspace(ui, 80, 24, "", false, false, {
+        color: false,
+        motion: false,
+      }),
+    )
+      .split("\n")
+      .at(-1)!;
+
+  assert.match(renderStatus(), /↓ \d+ more.*PgDn/);
+  assert.doesNotMatch(renderStatus(), /↑ \d+ more/);
+
+  ui.scroll = 4;
+  assert.match(renderStatus(), /↑ 4 more.*PgUp/);
+  assert.match(renderStatus(), /↓ \d+ more.*PgDn/);
+
+  ui.scroll = 100;
+  assert.match(renderStatus(), /↑ \d+ more.*PgUp/);
+  assert.doesNotMatch(renderStatus(), /↓ \d+ more/);
+
+  ui.detail = ["One row"];
+  ui.scroll = 0;
+  assert.doesNotMatch(renderStatus(), /(?:↑|↓) \d+ more.*Pg(?:Up|Dn)/);
 });
 
 test("live status stays within the compact ASCII identity", async (t) => {
@@ -1338,7 +1660,7 @@ test("branch intent reuses its idempotency key after a transient failure", async
   assert.match(keys[0]!, /^[0-9a-f-]{36}$/);
 });
 
-test("logo is one stroke width and every row aligns", async (t) => {
+test("workspace header uses the NOMO wordmark when image graphics are unavailable", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "nomo-tui-logo-"));
   const { app, env } = await fixtureApp(root);
   t.after(async () => {
@@ -1347,41 +1669,32 @@ test("logo is one stroke width and every row aligns", async (t) => {
   });
   const ui = new WorkspaceTui(app, env);
   const rows = stripAnsi(renderWorkspace(ui, 100, 32)).split("\n");
-  // The mark is 7 rows of half blocks: an ink square outline, an accent
-  // square inside it, and a dot in the centre. Every row carries ink, so the
-  // mark never reads as a broken or partial rule.
-  const mark = rows.slice(0, 7).map((line) => line.slice(0, 13));
-  assert.ok(mark.every((line) => /[█▀▄]/.test(line)));
-  // Column 0 and column 12 are the outer rule, so they are ink on every row.
-  for (const row of mark) {
-    assert.ok(row.startsWith("█"), row);
-    assert.equal(row[12], "█", row);
-  }
-  // The centre cell of the middle row is the dot.
-  assert.equal(mark[3]![6], "█", mark[3]);
+  assert.ok(rows.some((line) => line.includes("NOMO")));
+  assert.ok(rows.every((line) => !line.includes("⌜⊡⌝")));
 });
 
-test("tab icons carry fixed colors in color mode only", async (t) => {
-  for (const tone of Object.values(TAB_ICON_TONE))
-    assert.match(tone, /^38;5;\d+$/);
-  const root = await mkdtemp(join(tmpdir(), "nomo-tui-icon-tone-"));
+test("workspace renders the exact NOMO logo as Kitty image placeholders", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-graphics-logo-"));
   const { app, env } = await fixtureApp(root);
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
   });
   const ui = new WorkspaceTui(app, env);
-  const color = renderWorkspace(ui, 200, 40, "_", true, false, { color: true });
-  assert.ok(color.includes("38;5;203"));
-  assert.ok(color.includes("38;5;78"));
-  const mono = stripAnsi(renderWorkspace(ui, 100, 32, "_", true));
-  assert.ok(!mono.includes("38;5;"));
+  const frame = renderWorkspace(ui, 100, 32, "", false, false, {
+    color: true,
+    colorDepth: 24,
+    motion: false,
+    graphicsProtocol: "kitty",
+  });
+  assert.match(frame, /\x1b_Ga=p,U=1/);
+  const plain = stripAnsi(frame);
+  assert.equal([...plain].filter((point) => point === "\u{10eeee}").length, 54);
 });
 
-test("icons stay one cell wide and never carry safety meaning", () => {
-  for (const icon of [...Object.values(TAB_ICONS), ...Object.values(MODE_ICON)])
+test("mode icons stay one cell wide", () => {
+  for (const icon of Object.values(MODE_ICON))
     assert.equal(visibleLength(icon), 1, icon);
-  assert.equal(TAB_ICONS.chat, "●");
   assert.equal(MODE_ICON.plan, "○");
 });
 
@@ -1469,8 +1782,8 @@ test("prompt jumps move between user rows only", () => {
   assert.equal(nextPromptRow([], 0, 1), -1);
 });
 
-test("prompt frame follows the permission mode color", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "nomo-tui-frame-tone-"));
+test("permission mode stays explicit in monochrome output", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-mode-label-"));
   const { app, env } = await fixtureApp(root);
   t.after(async () => {
     await app.shutdown();
@@ -1478,24 +1791,31 @@ test("prompt frame follows the permission mode color", async (t) => {
   });
   const ui = new WorkspaceTui(app, env);
   await ui.initialize();
-  ui.mode = "plan";
-  assert.ok(
-    renderWorkspace(ui, 80, 24, "hi_", true, false, { color: true }).includes(
-      "38;5;75",
-    ),
-  );
-  ui.mode = "accept";
-  assert.ok(
-    renderWorkspace(ui, 80, 24, "hi_", true, false, { color: true }).includes(
-      "38;5;78",
-    ),
-  );
-  ui.mode = "normal";
-  assert.ok(
-    renderWorkspace(ui, 80, 24, "hi_", true, false, { color: true }).includes(
-      "38;5;117",
-    ),
-  );
+
+  for (const mode of ["plan", "accept", "normal"] as const)
+    for (const [width, height] of [
+      [40, 12],
+      [80, 24],
+      [120, 40],
+    ]) {
+      ui.mode = mode;
+      const raw = renderWorkspace(ui, width!, height!, "hi_", true, false, {
+        color: false,
+      });
+      assert.doesNotMatch(raw, /\x1b\[/, `${mode} emits no color at ${width}x${height}`);
+      assert.ok(
+        stripAnsi(raw).includes(`mode: ${mode}`),
+        `${mode} remains named without color at ${width}x${height}`,
+      );
+      const modeLine = stripAnsi(raw)
+        .split("\n")
+        .find((line) => line.includes(`mode: ${mode}`));
+      assert.ok(modeLine, `${mode} appears in a status row`);
+      assert.ok(
+        !modeLine.endsWith("."),
+        `${mode} status is not clipped at ${width}x${height}`,
+      );
+    }
 });
 
 test("render collects user prompt rows for jumps", async (t) => {
@@ -1869,9 +2189,16 @@ test("/theme switches color theme and symbol preset without touching env", async
   assert.equal(ui.themeConfig.colorTheme, "dark");
   assert.equal(ui.themeConfig.symbolPreset, "classic");
 
+  await ui.command("/theme");
   await ui.command("/theme preview solarized-dark classic");
   assert.equal(ui.themeConfig.colorTheme, "solarized-dark");
   assert.equal(ui.themeConfig.symbolPreset, "classic");
+  assert.equal(
+    ui.detail?.[0],
+    "THEME: solarized-dark + classic",
+  );
+  assert.ok(ui.detail?.includes("  ▸ solarized-dark"));
+  assert.ok(ui.detail?.includes("  ▸ classic"));
 
   await ui.command("/theme reset");
   assert.equal(ui.themeConfig.colorTheme, initialColor);

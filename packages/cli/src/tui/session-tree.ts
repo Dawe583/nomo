@@ -50,6 +50,7 @@ function kindIcon(kind: string | undefined): string {
 }
 
 interface BuildRow {
+  readonly id: string;
   readonly parts: readonly string[];
   readonly leafIcon: string;
   readonly detail: string | undefined;
@@ -148,9 +149,8 @@ function freezeChildren(folder: MutableFolder): TreeNode[] {
   return out;
 }
 
-// Shared path-grouping core. idPrefix scopes every descendant id under one
-// root ("" for documents, "status/" for sessions) so two entries with the
-// same path in different scopes never share a node id and select together.
+// Shared path-grouping core. idPrefix scopes folder ids under one root, while
+// leaf ids stay tied to their source rows so duplicate paths remain selectable.
 function buildPathNodes(
   rows: readonly BuildRow[],
   parentDepth: number,
@@ -160,8 +160,7 @@ function buildPathNodes(
     idPrefix + parts.join("/");
   // Folder ids are every strict parent prefix, collected before inserting so
   // a path naming both a file and a folder resolves one way: the folder wins
-  // and the lone file row is dropped, because collapsible structure beats a
-  // duplicate id that would select two rows at once.
+  // and the conflicting file row is omitted.
   const folderIds = new Set<string>();
   for (const row of rows) {
     for (let level = 1; level < row.parts.length; level += 1) {
@@ -173,7 +172,10 @@ function buildPathNodes(
   const ordered = [...rows].sort((a, b) => {
     if (a.parts.length !== b.parts.length)
       return a.parts.length - b.parts.length;
-    return compareStrings(fullId(a.parts), fullId(b.parts));
+    return (
+      compareStrings(fullId(a.parts), fullId(b.parts)) ||
+      compareStrings(a.id, b.id)
+    );
   });
   const root: MutableFolder = makeFolder(
     idPrefix,
@@ -182,13 +184,11 @@ function buildPathNodes(
     FOLDER_ICON,
   );
   const byId = new Map<string, MutableFolder>([[idPrefix, root]]);
-  const seen = new Set<string>();
   for (const row of ordered) {
     const id = fullId(row.parts);
-    // Exact duplicate paths collapse to the first row in sort order, so node
-    // ids stay unique and selection stays one to one.
-    if (folderIds.has(id) || seen.has(id)) continue;
-    seen.add(id);
+    // Folders win a file/folder path collision. Leaf nodes keep the source id,
+    // so duplicate titles remain selectable and Enter resolves the right row.
+    if (folderIds.has(id)) continue;
     for (let level = 1; level < row.parts.length; level += 1) {
       const folderId = fullId(row.parts.slice(0, level));
       if (!byId.has(folderId)) {
@@ -206,7 +206,7 @@ function buildPathNodes(
     const parent = byId.get(fullId(row.parts.slice(0, row.parts.length - 1)))!;
     const base = row.parts[row.parts.length - 1]!;
     parent.leaves.push({
-      id,
+      id: row.id,
       label: leafLabel(row.leafIcon, base, row.detail),
     });
   }
@@ -222,6 +222,7 @@ export function buildDocumentTree(
   void options;
   if (entries.length === 0) return [];
   const rows: BuildRow[] = entries.map((entry) => ({
+    id: entry.id,
     parts: splitPath(entry.path, entry.id),
     leafIcon: FILE_ICON,
     detail: entry.detail,
@@ -244,6 +245,7 @@ export function buildSessionTree(
     const raw = (entry.kind ?? "").trim();
     const key = raw === "" ? "other" : raw;
     const row: BuildRow = {
+      id: entry.id,
       parts: splitPath(entry.path, entry.id),
       leafIcon: kindIcon(entry.kind),
       detail: entry.detail,

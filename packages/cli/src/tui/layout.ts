@@ -1,10 +1,9 @@
-// CSI (any final byte), OSC terminated by BEL or ST, and two character ESC
-// sequences. paint() emits only SGR, but stripAnsi also guards the width
-// accounting against sequences that arrived from outside the render model,
-// because sanitizeText removes those at the entry point and this is the second
-// line of defence.
+// CSI (any final byte), OSC terminated by BEL or ST, APC terminated by ST, and
+// two character ESC sequences. paint() emits only SGR, but stripAnsi also
+// guards width accounting against sequences arriving outside the render model
+// because sanitizeText removes them at the entry point.
 const ANSI_PATTERN =
-  /\u001b(?:\[[0-?]*[ -/]*[@-~]|\][^\u0007]*(?:\u0007|\u001b\\)|[@-Z\\-_])/g;
+  /\u001b(?:\[[0-?]*[ -/]*[@-~]|\][^\u0007]*(?:\u0007|\u001b\\)|_[\s\S]*?\u001b\\|[@-Z\\-_])/g;
 
 // Every character that a terminal interprets rather than prints: C0 controls
 // including newline, DEL, C1, zero width and bidi override characters. A hold
@@ -34,6 +33,7 @@ export function stripAnsi(value: string): string {
  */
 function cellWidth(point: string): number {
   const code = point.codePointAt(0) ?? 0;
+  if (code === 0x10eeee) return 1;
   if (
     (code >= 0x0300 && code <= 0x036f) ||
     (code >= 0x1ab0 && code <= 0x1aff) ||

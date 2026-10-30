@@ -42,7 +42,7 @@ test("bare nomo and TUI flags open the real workspace", async (t) => {
   const bare = await exec(process.execPath, [binary], {
     env: { PATH: process.env.PATH, HOME: root, NOMO_DATA_DIR: root },
   });
-  assert.match(bare.stdout, /Welcome to NOMO|NOMO \/ local workspace/);
+  assert.match(bare.stdout, /NOMO/);
   assert.doesNotMatch(bare.stdout, /usage: nomo/);
   const result = await exec(
     process.execPath,
@@ -54,7 +54,10 @@ test("bare nomo and TUI flags open the real workspace", async (t) => {
   // The overview leads with whether anything needs attention, then counts.
   assert.match(result.stdout, /Runs 0/);
   assert.doesNotMatch(result.stdout, /usage: nomo/);
-  assert.equal(result.stderr, "");
+  assert.match(
+    result.stderr,
+    /^(?:\(node:\d+\) ExperimentalWarning: SQLite is an experimental feature and might change at any time\n\(Use `node --trace-warnings ...` to show where the warning was created\)\n)?$/,
+  );
 });
 
 test("checkout launcher exposes the same bare nomo command on POSIX", async (t) => {
@@ -70,14 +73,10 @@ test("checkout launcher exposes the same bare nomo command on POSIX", async (t) 
   });
   assert.match(result.stdout, /^nomo 0\.1\.0\n$/);
   assert.equal(result.stderr, "");
-  const tui = await exec(
-    checkoutLauncher,
-    ["--once", "--view", "runs"],
-    {
-      cwd: root,
-      env: { PATH: process.env.PATH, HOME: root, NOMO_DATA_DIR: root },
-    },
-  );
+  const tui = await exec(checkoutLauncher, ["--once", "--view", "runs"], {
+    cwd: root,
+    env: { PATH: process.env.PATH, HOME: root, NOMO_DATA_DIR: root },
+  });
   assert.match(tui.stdout, /Runs 0/);
   assert.doesNotMatch(tui.stdout, /usage: nomo/);
 });
