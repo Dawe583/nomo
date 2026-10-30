@@ -14,7 +14,7 @@ async function fixture(t: test.TestContext) {
   const app = new Workbench(env, async (url) =>
     String(url).endsWith("/models")
       ? Response.json({ data: [{ id: "fixture" }] })
-      : Response.json({ choices: [{ message: { role: "assistant", content: "Ready" } }] }),
+      : Response.json({ choices: [{ message: { role: "assistant", content: "Ready" }, finish_reason: "stop" }] }),
   );
   assertIsolated(root, env);
   await app.configure({ baseUrl: "https://fixture.test/v1", apiKey: "fixture" });
