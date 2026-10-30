@@ -80,6 +80,8 @@ test("TUI approvals dispatch once only after confirmation; denial, cancellation 
                     },
                   ],
                 },
+          finish_reason:
+            b.messages.at(-1).role === "tool" ? "stop" : "tool_calls",
         },
       ],
     });
