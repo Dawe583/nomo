@@ -277,7 +277,7 @@ test("compact keybindings disclose PageDown and reveal a binding", async (t) => 
       motion: false,
     });
     const text = stripAnsi(frame);
-    assert.ok(text.includes("31 of 31 bindings"));
+    assert.ok(text.includes("32 of 32 bindings"));
     assert.ok(text.includes("Send the prompt"));
     assert.equal(frame.split("\n").length, 24);
     assert.ok(frame.split("\n").every((line) => visibleLength(line) <= 80));

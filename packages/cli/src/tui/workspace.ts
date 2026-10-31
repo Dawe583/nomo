@@ -6471,7 +6471,7 @@ export function renderWorkspace(
             `${conversationCount} conversations / ${holds} pending approvals`,
             "[/] commands   [Esc] navigation",
             "/keybindings lists every shortcut",
-            "Shift+Tab mode | Tab panels",
+            "Tab panels | /keybindings shortcuts",
           ]
       : [
           ui.tab === "chat" ? "NOMO / local workspace" : `NOMO / ${ui.tab}`,
@@ -7411,7 +7411,7 @@ const KEYBINDING_ROWS: readonly {
   },
   {
     group: "input",
-    keys: "Alt+B / Alt+F or Ctrl+Left / Ctrl+Right",
+    keys: "Alt+B/F/Left/Right or Ctrl+Left/Right",
     action: "Jump by word",
   },
   { group: "input", keys: "Alt+D / Alt+Backspace / Ctrl+W", action: "Delete a word" },
@@ -7441,7 +7441,7 @@ const KEYBINDING_ROWS: readonly {
   },
   {
     group: "navigate",
-    keys: "Shift+Tab or Alt+M",
+    keys: "Shift+Tab",
     action: "Cycle mode: normal, accept, plan",
   },
   {
@@ -7464,6 +7464,7 @@ const KEYBINDING_ROWS: readonly {
     action: "Open the editor",
   },
   { group: "session", keys: "Meta+P", action: "Switch model" },
+  { group: "session", keys: "Alt+M / Shift+Alt+M", action: "Cycle provider models" },
   {
     group: "session",
     keys: "Ctrl+L",
@@ -7742,7 +7743,7 @@ function helpLines(): string[] {
             },
             {
               label: "mode",
-              value: "Shift+Tab or Alt+M: normal, accept, plan",
+              value: "Shift+Tab: normal, accept, plan",
             },
             {
               label: "scroll",

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { WorkspaceInput, workspaceShortcut } from "./workspace-runner.ts";
+import { WorkspaceInput, nextModelId, workspaceShortcut } from "./workspace-runner.ts";
 
 test("Alt+Backspace deletes the previous word and leaves an insertable cursor", () => {
   const input = new WorkspaceInput();
@@ -147,4 +147,25 @@ test("Alt+B and Alt+F move by punctuation-aware word boundaries across lines", (
   input.cursor = 12;
   input.key(undefined, { name: "f", meta: true });
   assert.equal(input.cursor, 13, "word-forward at line end jumps to next line start");
+});
+
+
+test("Alt+Left and Alt+Right match the Ctrl word-motion aliases", () => {
+  const input = new WorkspaceInput();
+  input.editing = true;
+  input.set("one two");
+  input.cursor = 7;
+  input.key(undefined, { name: "left", meta: true });
+  assert.equal(input.cursor, 4);
+  input.key(undefined, { name: "right", meta: true });
+  assert.equal(input.cursor, 7);
+});
+
+
+test("model cycle follows the loaded provider catalog without fallback", () => {
+  const models = [{ id: "alpha" }, { id: "beta" }, { id: "charlie" }];
+  assert.equal(nextModelId(models, "alpha", 1), "beta");
+  assert.equal(nextModelId(models, "alpha", -1), "charlie");
+  assert.equal(nextModelId(models, "not-in-catalog", 1), "alpha");
+  assert.equal(nextModelId([], "alpha", 1), undefined);
 });

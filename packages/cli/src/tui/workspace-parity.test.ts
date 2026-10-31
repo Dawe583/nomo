@@ -119,7 +119,7 @@ test("/keybindings is a grouped, searchable table that lays out to the terminal"
   await ui.command("/keybindings");
   assert.ok(ui.showingKeybindings, "the table is the visible detail");
   const full = ui.detail!.join("\n");
-  assert.match(full, /31 of 31 bindings/);
+  assert.match(full, /32 of 32 bindings/);
   // Grouped, not one packed sentence per line. A binding that shared a line
   // with two others could not be found by scanning for its key.
   for (const title of ["SENDING", "EDITING", "NAVIGATION", "REVIEW", "SESSION"])
@@ -132,7 +132,7 @@ test("/keybindings is a grouped, searchable table that lays out to the terminal"
   // Filtering narrows both sides: the keys and what they do.
   ui.keybindingQuery = "word";
   ui.refreshKeybindings(80);
-  assert.match(ui.detail!.join("\n"), /2 of 31 bindings/);
+  assert.match(ui.detail!.join("\n"), /2 of 32 bindings/);
   assert.match(ui.detail!.join("\n"), /Jump by word/);
   assert.ok(
     !ui.detail!.join("\n").includes("Send the prompt"),
@@ -142,7 +142,7 @@ test("/keybindings is a grouped, searchable table that lays out to the terminal"
   // A query that matches nothing says so rather than showing an empty screen.
   ui.keybindingQuery = "zzzz";
   ui.refreshKeybindings(80);
-  assert.match(ui.detail!.join("\n"), /0 of 31 bindings/);
+  assert.match(ui.detail!.join("\n"), /0 of 32 bindings/);
   assert.match(ui.detail!.join("\n"), /No binding matches/);
 
   // Columns lay out to the terminal: a wider one does not truncate the
@@ -1689,7 +1689,8 @@ test("/plan /stats /exit /keybindings match the reference commands", async (t) =
   assert.ok(ui.detail?.join("\n").includes("Cost: unknown"));
   await ui.command("/keybindings");
   assert.ok(ui.detail?.join("\n").includes("Ctrl+J"));
-  assert.ok(ui.detail?.join("\n").includes("Shift+Tab or Alt+M"));
+  assert.ok(ui.detail?.join("\n").includes("Shift+Tab"));
+  assert.ok(ui.detail?.join("\n").includes("Alt+M / Shift+Alt+M"));
   for (const cmd of ["/plan", "/stats", "/diff", "/keybindings", "/exit"])
     assert.ok(
       commandSuggestions(cmd).some(([name]) => name === cmd),
