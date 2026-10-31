@@ -7453,7 +7453,7 @@ const KEYBINDING_ROWS: readonly {
   { group: "session", keys: "Ctrl+R", action: "Search prompts and text" },
   {
     group: "session",
-    keys: "Ctrl+T",
+    keys: "Ctrl+T outside editing",
     action: "Show the checklist from output",
   },
   { group: "session", keys: "Ctrl+O", action: "Toggle tool output" },
