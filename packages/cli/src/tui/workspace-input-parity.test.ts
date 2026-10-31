@@ -146,6 +146,30 @@ test("replacing the composer invalidates the previous yank range", () => {
 });
 
 
+test("prompt length limit preserves Unicode code points at the cursor", () => {
+  const input = new WorkspaceInput();
+  input.editing = true;
+  input.set("x".repeat(31999));
+  input.insert("😀");
+
+  assert.equal([...input.value].length, 32000);
+  assert.equal(input.value.endsWith("😀"), true);
+  assert.equal(input.cursor, 32000);
+});
+
+test("yanking into the prompt respects the Unicode character limit", () => {
+  const input = new WorkspaceInput();
+  input.editing = true;
+  input.set("😀".repeat(32000));
+  input.key(undefined, { name: "u", ctrl: true });
+  input.set("x".repeat(31999));
+  input.key(undefined, { name: "y", ctrl: true });
+
+  assert.equal([...input.value].length, 32000);
+  assert.equal(input.value, "x".repeat(31999) + "😀");
+  assert.equal(input.cursor, 32000);
+});
+
 test("Ctrl+Home and Ctrl+End jump across the whole prompt", () => {
   const input = new WorkspaceInput();
   input.editing = true;

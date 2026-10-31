@@ -158,10 +158,11 @@ export class WorkspaceInput {
     this.remember();
     const points = [...this.value];
     points.splice(this.cursor, 0, ...value);
-    this.value = points.join("").slice(0, 32000);
+    points.length = Math.min(points.length, 32000);
+    this.value = points.join("");
     this.cursor = Math.min(
       this.cursor + [...value].length,
-      [...this.value].length,
+      points.length,
     );
   }
   private static isWordChar(point: string): boolean {
@@ -204,13 +205,11 @@ export class WorkspaceInput {
     const index =
       (yank.ringIndex + this.killRing.length - 1) % this.killRing.length;
     const text = this.killRing[index]!;
-    points.splice(yank.start, 0, ...text);
+    const inserted = [...text].slice(0, 32000 - points.length);
+    points.splice(yank.start, 0, ...inserted);
     this.remember();
-    this.value = points.join("").slice(0, 32000);
-    this.cursor = Math.min(
-      yank.start + [...text].length,
-      [...this.value].length,
-    );
+    this.value = points.join("");
+    this.cursor = yank.start + inserted.length;
     this.lastYank = {
       start: yank.start,
       length: [...text].length,
