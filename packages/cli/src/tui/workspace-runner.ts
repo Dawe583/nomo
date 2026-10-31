@@ -489,7 +489,8 @@ export class WorkspaceInput {
     else if (key.ctrl && key.name === "u") {
       this.remember();
       this.killText(points.slice(0, this.cursor).join(""), "backward");
-      this.set("");
+      this.value = "";
+      this.cursor = 0;
     } else if (
       !key.ctrl &&
       !key.meta &&

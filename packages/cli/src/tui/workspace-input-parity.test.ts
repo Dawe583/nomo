@@ -31,6 +31,17 @@ test("Alt+Y replaces the latest yank with the next killed entry", () => {
   assert.equal(input.value, "nomo ");
 });
 
+test("Ctrl+U kill remains undoable", () => {
+  const input = new WorkspaceInput();
+  input.editing = true;
+  input.set("clear me");
+  input.key(undefined, { name: "u", ctrl: true });
+
+  assert.equal(input.value, "");
+  assert.equal(input.undoEdit(), true);
+  assert.equal(input.value, "clear me");
+});
+
 test("consecutive backward word kills accumulate for the next yank", () => {
   const input = new WorkspaceInput();
   input.editing = true;
