@@ -261,9 +261,10 @@ v TUI a nic nepřepíše. Escape vědomě zahodí náhled.
 
 ## Režimy, fronta a nové příkazy
 
-- Shift+Tab nebo Alt+M přepíná režim `normal` / `accept` / `plan`. Režim je
-  vidět ve stavovém řádku a v nápovědě kláves. Alt+M existuje proto, že
-  některé terminály Shift+Tab vůbec neposílají. Volba přetrvá restart.
+- Shift+Tab přepíná režim `normal` / `accept` / `plan`; volba přetrvá restart.
+  Alt+M a Shift+Alt+M přepínají vpřed a vzad mezi načtenými modely aktuálního
+  poskytovatele pro nové konverzace. Výběr modelu se nepoužívá jako náhrada za
+  chybějící katalog.
 - Režim `plan` předřadí pokynu větu, aby model nejprve navrhl postup a nežádal
   hned nástroje měnící stav. Režim `accept` zkracuje klávesy editace, ale
   schválení externích nástrojů zůstává vždy explicitní. NOMO nikdy nic

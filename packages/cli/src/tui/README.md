@@ -140,7 +140,7 @@ Icon categories:
 - edit (`✎`): Ctrl+R searches history, Ctrl+O toggles tool output, Ctrl+T
   transposes characters while editing; outside the composer it opens TODOs, Ctrl+J inserts a newline
 - action (`⚡`): y accepts, n rejects, u undoes, `/queue` queues
-- mode (`◆`): Shift+Tab or Alt+M cycles modes
+- mode (`◆`): Shift+Tab cycles local modes
 - panel (`◈`): Tab cycles panels
 - approval (`!`): a approves and d denies while approvals are pending
 
