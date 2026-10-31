@@ -38,6 +38,17 @@ import { dataDir as productDataDir } from "../../../ledger/src/paths.ts";
 import { envValue } from "../../../ledger/src/env-compat.ts";
 import { normalizeOwnedEnv } from "../env-keys.ts";
 
+export function nextModelId(
+  models: readonly { readonly id: string }[],
+  current: string | undefined,
+  direction: -1 | 1,
+): string | undefined {
+  if (!models.length) return undefined;
+  const index = models.findIndex((model) => model.id === current);
+  const start = index < 0 ? (direction > 0 ? -1 : 0) : index;
+  return models[(start + direction + models.length) % models.length]?.id;
+}
+
 export type WorkspaceShortcut =
   | "redraw"
   | "toggle-tools"
@@ -262,7 +273,10 @@ export class WorkspaceInput {
     // Word jumps use letter and digit runs, so punctuation separates words.
     // Ctrl+W is the exception and deletes back to whitespace. Ctrl+Left and
     // Ctrl+Right mirror the Alt word jumps for terminals that send them.
-    if ((key.meta && key.name === "b") || (key.ctrl && key.name === "left")) {
+    if (
+      (key.meta && (key.name === "b" || key.name === "left")) ||
+      (key.ctrl && key.name === "left")
+    ) {
       let pos = this.cursor;
       if (pos === 0 || points[pos - 1] === "\n") {
         this.cursor = pos === 0 ? 0 : pos - 1;
@@ -278,7 +292,10 @@ export class WorkspaceInput {
       this.cursor = pos;
       return true;
     }
-    if ((key.meta && key.name === "f") || (key.ctrl && key.name === "right")) {
+    if (
+      (key.meta && (key.name === "f" || key.name === "right")) ||
+      (key.ctrl && key.name === "right")
+    ) {
       let pos = this.cursor;
       if (pos >= points.length || points[pos] === "\n") {
         this.cursor = pos >= points.length ? pos : pos + 1;
@@ -1218,16 +1235,21 @@ export async function runWorkspaceTui(
         });
         return;
       }
-      // Alt+M cycles modes where Shift+Tab never arrives. Meta+P opens the
-      // model picker without clearing the prompt. Both mirror the reference.
+      // Prime cycles the configured provider's models. The operation changes
+      // only the default for future conversations, matching `/model <id>`.
       if (!input.pasting && key.meta && key.name === "m") {
-        ui.cycleMode();
-        try {
-          saveDraft();
-        } catch (error) {
-          ui.notice = message(error);
+        const models = ui.provider?.models ?? [];
+        const selected = nextModelId(
+          models,
+          ui.model,
+          key.shift ? -1 : 1,
+        );
+        if (selected) {
+          void task(() => ui.command(`/model ${selected}`));
+        } else {
+          ui.notice = "No other models are available for the configured provider.";
+          draw();
         }
-        draw();
         return;
       }
       if (!input.pasting && key.meta && key.name === "p") {

@@ -107,7 +107,8 @@ renderers remain available for the richer planned dashboard.
 
 The workspace prompt follows the reference terminal: Enter sends; Shift+Enter,
 Alt+Enter, Ctrl+J or backslash+Enter inserts a newline; Esc stops a run; Esc Esc
-clears input or opens checkpoints when empty; Shift+Tab or Alt+M cycles modes;
+clears input or opens checkpoints when empty; Shift+Tab cycles local modes;
+Alt+M / Shift+Alt+M cycle the current provider models for new conversations;
 Ctrl+R searches history; Ctrl+O toggles tool output; Ctrl+L redraws, twice
 clears; Ctrl+S stashes input; Ctrl+G opens the editor; Meta+P opens models;
 Ctrl+C clears, cancels or exits; Ctrl+D exits from empty input. Ctrl+B
