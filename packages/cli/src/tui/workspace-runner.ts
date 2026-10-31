@@ -155,15 +155,17 @@ export class WorkspaceInput {
     return true;
   }
   insert(value: string) {
+    this.replaceRange(this.cursor, 0, value);
+  }
+  replaceRange(start: number, length: number, value: string) {
     this.remember();
     const points = [...this.value];
-    points.splice(this.cursor, 0, ...value);
+    points.splice(start, length, ...value);
     points.length = Math.min(points.length, 32000);
     this.value = points.join("");
-    this.cursor = Math.min(
-      this.cursor + [...value].length,
-      points.length,
-    );
+    this.cursor = Math.min(start + [...value].length, points.length);
+    this.lastYank = undefined;
+    this.lastKillKind = undefined;
   }
   private static isWordChar(point: string): boolean {
     return /[A-Za-z0-9]/.test(point);
@@ -1304,14 +1306,8 @@ export async function runWorkspaceTui(
             : mentionCandidates(token, ui.documentPaths());
         if (mentions.length && key.name === "tab" && !key.shift) {
           const pick = mentions[mentionIndex % mentions.length]!;
-          const points = [...input.value];
           const start = input.cursor - [...token!].length;
-          points.splice(start, [...token!].length, ...`${pick} `);
-          input.value = points.join("").slice(0, 32000);
-          input.cursor = Math.min(
-            start + [...pick].length + 1,
-            [...input.value].length,
-          );
+          input.replaceRange(start, [...token!].length, `${pick} `);
           mentionIndex = (mentionIndex + 1) % mentions.length;
           ui.notice =
             mentions.length > 1
