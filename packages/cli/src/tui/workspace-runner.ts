@@ -96,9 +96,11 @@ export class WorkspaceInput {
   value = "";
   cursor = 0;
   pasting = false;
-  // Kill ring: Ctrl+K, Ctrl+U, Ctrl+W and Alt+D store deleted text for Ctrl+Y.
-  // Undo keeps one previous state for Ctrl+_. Both stay in memory only.
-  kill = "";
+  // Recent kills and the latest yank are process-local editor state.
+  private killRing: string[] = [];
+  private lastKillKind?: "backward" | "forward";
+  private lastYank?: { start: number; length: number; ringIndex: number };
+  // Undo keeps one previous state for Ctrl+_.
   /** A slash command requested by a bound key (Ctrl+P); the runner consumes it. */
   pendingCommand?: string;
   private undoState?: { value: string; cursor: number };
@@ -131,6 +133,52 @@ export class WorkspaceInput {
   }
   private static isWordChar(point: string): boolean {
     return /[A-Za-z0-9]/.test(point);
+  }
+  private killText(text: string, direction: "backward" | "forward") {
+    if (!text) return;
+    const previous = this.killRing.at(-1);
+    if (this.lastKillKind === direction && previous) {
+      this.killRing[this.killRing.length - 1] =
+        direction === "backward" ? text + previous : previous + text;
+    } else {
+      this.killRing.push(text);
+    }
+    this.lastKillKind = direction;
+    this.lastYank = undefined;
+  }
+  private yank() {
+    const index = this.killRing.length - 1;
+    const text = this.killRing[index];
+    if (!text) return;
+    const start = this.cursor;
+    this.insert(text);
+    this.lastYank = { start, length: [...text].length, ringIndex: index };
+  }
+  private yankPop() {
+    const yank = this.lastYank;
+    if (
+      !yank ||
+      this.killRing.length < 2 ||
+      this.cursor !== yank.start + yank.length
+    )
+      return;
+    const points = [...this.value];
+    points.splice(yank.start, yank.length);
+    const index =
+      (yank.ringIndex + this.killRing.length - 1) % this.killRing.length;
+    const text = this.killRing[index]!;
+    points.splice(yank.start, 0, ...text);
+    this.remember();
+    this.value = points.join("").slice(0, 32000);
+    this.cursor = Math.min(
+      yank.start + [...text].length,
+      [...this.value].length,
+    );
+    this.lastYank = {
+      start: yank.start,
+      length: [...text].length,
+      ringIndex: index,
+    };
   }
   private editKey(key: Key): boolean {
     const points = [...this.value];
@@ -184,7 +232,7 @@ export class WorkspaceInput {
         pos++;
       while (pos < points.length && WorkspaceInput.isWordChar(points[pos]!))
         pos++;
-      this.kill = points.slice(start, pos).join("");
+      this.killText(points.slice(start, pos).join(""), "forward");
       points.splice(start, pos - start);
       this.value = points.join("");
       return true;
@@ -194,7 +242,7 @@ export class WorkspaceInput {
       let start = this.cursor;
       while (start > 0 && /\s/u.test(points[start - 1]!)) start--;
       while (start > 0 && !/\s/u.test(points[start - 1]!)) start--;
-      this.kill = points.slice(start, this.cursor).join("");
+      this.killText(points.slice(start, this.cursor).join(""), "backward");
       points.splice(start, this.cursor - start);
       this.cursor = start;
       this.value = points.join("");
@@ -205,7 +253,10 @@ export class WorkspaceInput {
       const end = points.indexOf("\n", this.cursor);
       const count =
         end < 0 ? points.length - this.cursor : Math.max(1, end - this.cursor);
-      this.kill = points.slice(this.cursor, this.cursor + count).join("");
+      this.killText(
+        points.slice(this.cursor, this.cursor + count).join(""),
+        "forward",
+      );
       points.splice(this.cursor, count);
       this.value = points.join("");
       return true;
@@ -232,6 +283,15 @@ export class WorkspaceInput {
         );
       return;
     }
+    const isKill =
+      (key.ctrl && ["w", "u", "k"].includes(key.name ?? "")) ||
+      (key.meta && key.name === "d");
+    if (!isKill) this.lastKillKind = undefined;
+    if (!(key.meta && key.name === "y")) this.lastYank = undefined;
+    if (key.meta && key.name === "y") {
+      this.yankPop();
+      return;
+    }
     if (key.name === "escape") {
       this.editing = false;
       return "escape";
@@ -242,7 +302,7 @@ export class WorkspaceInput {
       return;
     }
     if (key.ctrl && key.name === "y") {
-      if (this.kill) this.insert(this.kill);
+      this.yank();
       return;
     }
     if (key.ctrl && (key.name === "_" || key.name === "-")) {
@@ -302,7 +362,7 @@ export class WorkspaceInput {
       this.cursor = points.length;
     else if (key.ctrl && key.name === "u") {
       this.remember();
-      this.kill = points.slice(0, this.cursor).join("");
+      this.killText(points.slice(0, this.cursor).join(""), "backward");
       this.set("");
     } else if (
       !key.ctrl &&

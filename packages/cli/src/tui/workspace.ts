@@ -7417,7 +7417,7 @@ const KEYBINDING_ROWS: readonly {
   { group: "input", keys: "Alt+D / Alt+Backspace / Ctrl+W", action: "Delete a word" },
   { group: "input", keys: "Ctrl+K", action: "Delete to end of line" },
   { group: "input", keys: "Ctrl+U", action: "Clear the input" },
-  { group: "input", keys: "Ctrl+Y", action: "Paste the killed text" },
+  { group: "input", keys: "Ctrl+Y / Alt+Y", action: "Paste or cycle killed text" },
   { group: "input", keys: "Ctrl+_", action: "Undo the last edit" },
   { group: "input", keys: "Ctrl+D", action: "Delete forward, twice exit" },
   { group: "navigate", keys: "Tab", action: "Next panel or complete" },
