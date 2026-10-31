@@ -327,16 +327,18 @@ export class WorkspaceInput {
       return true;
     }
     if (key.meta && key.name === "d") {
-      this.remember();
       const start = this.cursor;
       let pos = start;
       while (pos < points.length && !WorkspaceInput.isWordChar(points[pos]!))
         pos++;
       while (pos < points.length && WorkspaceInput.isWordChar(points[pos]!))
         pos++;
-      this.killText(points.slice(start, pos).join(""), "forward");
-      points.splice(start, pos - start);
-      this.value = points.join("");
+      if (pos > start) {
+        this.remember();
+        this.killText(points.slice(start, pos).join(""), "forward");
+        points.splice(start, pos - start);
+        this.value = points.join("");
+      }
       return true;
     }
     if ((key.ctrl && key.name === "w") || (key.meta && key.name === "backspace")) {
