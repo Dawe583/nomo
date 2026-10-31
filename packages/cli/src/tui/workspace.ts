@@ -1192,7 +1192,7 @@ export class WorkspaceTui {
       this.notice = "Queued prompt cancelled.";
       return;
     }
-    this.queuedPrompt = value.slice(0, 32000);
+    this.queuedPrompt = [...value].slice(0, 32000).join("");
     this.notice =
       "Run is active. The prompt is queued and sends when it stops.";
   }

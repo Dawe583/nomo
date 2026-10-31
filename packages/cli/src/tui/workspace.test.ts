@@ -286,6 +286,20 @@ test("compact keybindings disclose PageDown and reveal a binding", async (t) => 
 });
 
 
+test("queued prompt limit preserves Unicode code points", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-queue-unicode-"));
+  const app = new Workbench({ NOMO_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app);
+  ui.queuePrompt("x".repeat(31999) + "😀");
+
+  assert.equal([...(ui.queuedPrompt ?? "")].length, 32000);
+  assert.equal(ui.queuedPrompt?.endsWith("😀"), true);
+});
+
 test("queuePrompt(undefined) cancels a queued prompt", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "nomo-tui-queue-"));
   const app = new Workbench({ NOMO_DATA_DIR: root });
