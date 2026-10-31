@@ -48,7 +48,7 @@ const assistantFetcher = (content: string) => async (url: unknown) => {
   if (String(url).endsWith("/models"))
     return Response.json({ data: [{ id: "fixture" }] });
   return Response.json({
-    choices: [{ message: { role: "assistant", content } }],
+    choices: [{ message: { role: "assistant", content }, finish_reason: "stop" }],
   });
 };
 

@@ -488,6 +488,7 @@ test("TUI real document lifecycle: model tool, edit, conflict, reviewed Undo, si
                     },
                   ],
                 },
+          finish_reason: body.messages.at(-1).role === "tool" ? "stop" : "tool_calls",
         },
       ],
     });
@@ -1455,6 +1456,7 @@ test("search and paging use real conversation data and return to live follow", a
                   "line 界\n".repeat(50) +
                   "```\nNeedle found",
               },
+              finish_reason: "stop",
             },
           ],
         }),
@@ -1566,6 +1568,7 @@ test("rewind selects the latest recoverable operation", async (t) => {
                     },
                   ],
                 },
+          finish_reason: body.messages.at(-1).role === "tool" ? "stop" : "tool_calls",
         },
       ],
     });
