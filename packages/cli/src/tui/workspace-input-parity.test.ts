@@ -245,6 +245,19 @@ test("Ctrl+Shift+Z redoes the last composer edit", () => {
 });
 
 
+test("no-op Ctrl+K preserves the redo snapshot", () => {
+  const input = new WorkspaceInput();
+  input.editing = true;
+  input.set("hello");
+  input.insert("!");
+  input.undoEdit();
+  input.cursor = input.value.length;
+  input.key(undefined, { name: "k", ctrl: true });
+
+  assert.equal(input.redoEdit(), true);
+  assert.equal(input.value, "hello!");
+});
+
 test("no-op forward delete preserves the redo snapshot", () => {
   const input = new WorkspaceInput();
   input.editing = true;

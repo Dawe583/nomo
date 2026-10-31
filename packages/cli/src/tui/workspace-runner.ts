@@ -371,16 +371,18 @@ export class WorkspaceInput {
       return true;
     }
     if (key.ctrl && key.name === "k") {
-      this.remember();
       const end = points.indexOf("\n", this.cursor);
       const count =
         end < 0 ? points.length - this.cursor : Math.max(1, end - this.cursor);
-      this.killText(
-        points.slice(this.cursor, this.cursor + count).join(""),
-        "forward",
-      );
-      points.splice(this.cursor, count);
-      this.value = points.join("");
+      if (count > 0) {
+        this.remember();
+        this.killText(
+          points.slice(this.cursor, this.cursor + count).join(""),
+          "forward",
+        );
+        points.splice(this.cursor, count);
+        this.value = points.join("");
+      }
       return true;
     }
     return false;
