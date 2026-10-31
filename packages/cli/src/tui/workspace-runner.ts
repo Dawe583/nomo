@@ -37,6 +37,11 @@ import { sanitizeText } from "./layout.ts";
 import { dataDir as productDataDir } from "../../../ledger/src/paths.ts";
 import { envValue } from "../../../ledger/src/env-compat.ts";
 import { normalizeOwnedEnv } from "../env-keys.ts";
+import {
+  DEFAULT_WORKSPACE_KEYBINDINGS,
+  parseWorkspaceKeybindings,
+  type WorkspaceKeybindings,
+} from "./workspace-keybindings.ts";
 
 export function nextModelId(
   models: readonly { readonly id: string }[],
@@ -62,14 +67,18 @@ export function workspaceShortcut(
   key: Key,
   editing: boolean,
   input: string,
+  bindings: WorkspaceKeybindings = DEFAULT_WORKSPACE_KEYBINDINGS,
 ): WorkspaceShortcut | undefined {
   if (!key.ctrl) return undefined;
-  if (key.name === "l") return "redraw";
-  if (key.name === "o") return "toggle-tools";
-  if (key.name === "r" && editing) return "search-history";
-  if (key.name === "s") return "stash";
-  if (key.name === "g") return "external-editor";
-  if (key.name === "t" && !editing) return "show-todos";
+  const action = (
+    Object.keys(bindings) as Array<keyof WorkspaceKeybindings>
+  ).find((candidate) => bindings[candidate].name === key.name);
+  if (action === "redraw") return "redraw";
+  if (action === "toggle-tools") return "toggle-tools";
+  if (action === "search-history" && editing) return "search-history";
+  if (action === "stash") return "stash";
+  if (action === "external-editor") return "external-editor";
+  if (action === "show-todos" && !editing) return "show-todos";
   if (key.name === "d" && (!editing || !input)) return "quit";
   return undefined;
 }
@@ -543,6 +552,8 @@ export async function runWorkspaceTui(
   // TUI entry point directly sees the same settings an operator configured
   // under the old names.
   Object.assign(env, normalizeOwnedEnv(env));
+  const parsedKeybindings = parseWorkspaceKeybindings(env.NOMO_TUI_KEYBINDINGS);
+  const keybindings = parsedKeybindings.bindings;
   const interactive =
     process.stdin.isTTY &&
     process.stdout.isTTY &&
@@ -584,6 +595,7 @@ export async function runWorkspaceTui(
   const drafts = saved?.drafts ?? {};
   const input = new WorkspaceInput();
   await ui.initialize();
+  if (parsedKeybindings.error) ui.notice = parsedKeybindings.error;
   if (projectRoot) {
     let sandboxConfigured: string;
     try {
@@ -1071,7 +1083,7 @@ export async function runWorkspaceTui(
       }
       const shortcut = ui.confirmation
         ? undefined
-        : workspaceShortcut(key, input.editing, input.value);
+        : workspaceShortcut(key, input.editing, input.value, keybindings);
       if (shortcut === "quit") {
         // Empty input exits on the second press within 800 ms, like the
         // reference terminal. Text input clears first instead of quitting.
