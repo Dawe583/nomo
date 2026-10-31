@@ -103,7 +103,7 @@ test("editing context lists the composer control shortcuts", () => {
   const keys = hintKeys(makeContext({ editing: true }));
   assert.ok(keys.includes("Ctrl+R"), "editing offers history search");
   assert.ok(keys.includes("Ctrl+O"), "editing offers tools toggle");
-  assert.ok(keys.includes("Ctrl+T"), "editing offers model switch");
+  assert.ok(keys.includes("Ctrl+T"), "editing offers TODOs");
 });
 
 test("confirmation context lists the decision keys and cancel", () => {
