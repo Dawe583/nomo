@@ -189,7 +189,7 @@ export class WorkspaceInput {
       this.value = points.join("");
       return true;
     }
-    if (key.ctrl && key.name === "w") {
+    if ((key.ctrl && key.name === "w") || (key.meta && key.name === "backspace")) {
       this.remember();
       let start = this.cursor;
       while (start > 0 && /\s/u.test(points[start - 1]!)) start--;

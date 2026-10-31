@@ -7414,7 +7414,7 @@ const KEYBINDING_ROWS: readonly {
     keys: "Alt+B / Alt+F or Ctrl+Left / Ctrl+Right",
     action: "Jump by word",
   },
-  { group: "input", keys: "Alt+D or Ctrl+W", action: "Delete a word" },
+  { group: "input", keys: "Alt+D / Alt+Backspace / Ctrl+W", action: "Delete a word" },
   { group: "input", keys: "Ctrl+K", action: "Delete to end of line" },
   { group: "input", keys: "Ctrl+U", action: "Clear the input" },
   { group: "input", keys: "Ctrl+Y", action: "Paste the killed text" },
