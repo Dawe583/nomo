@@ -170,6 +170,17 @@ test("yanking into the prompt respects the Unicode character limit", () => {
   assert.equal(input.cursor, 32000);
 });
 
+test("prompt replacement ranges truncate without splitting Unicode", () => {
+  const input = new WorkspaceInput();
+  input.editing = true;
+  input.set("x".repeat(31998) + "@x");
+  input.replaceRange(31998, 2, "@😀 ");
+
+  assert.equal([...input.value].length, 32000);
+  assert.equal(input.value.endsWith("😀"), true);
+  assert.equal(input.cursor, 32000);
+});
+
 test("Ctrl+Home and Ctrl+End jump across the whole prompt", () => {
   const input = new WorkspaceInput();
   input.editing = true;
