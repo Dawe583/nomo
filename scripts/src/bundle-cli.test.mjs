@@ -2,7 +2,7 @@ import test, { before, describe } from "node:test";
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
 import { isBuiltin } from "node:module";
-import { mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -141,6 +141,38 @@ describe("the distribution bundle", () => {
     }
   });
 
+  test("includes the Workbench provider catalog required at runtime", () => {
+    const bundled = join(outDir, "provider-manifest.json");
+    assert.ok(existsSync(bundled), "the runtime chunk needs provider-manifest.json");
+    assert.deepEqual(
+      readFileSync(bundled),
+      readFileSync(join(root, "packages/workbench/src/provider-manifest.json")),
+    );
+  });
+
+  test("every external package used by the bundle is a CLI runtime dependency", () => {
+    const manifest = JSON.parse(read("packages/cli/package.json"));
+    const runtimeDependencies = new Set(Object.keys(manifest.dependencies ?? {}));
+    const packageRoot = (specifier) => {
+      if (specifier.startsWith("@")) return specifier.split("/").slice(0, 2).join("/");
+      return specifier.split("/")[0];
+    };
+    const imports = new Set();
+    for (const chunk of chunks) {
+      const code = readFileSync(join(outDir, chunk), "utf8");
+      for (const specifier of bareSpecifiers(code)) {
+        if (specifier.startsWith(".") || specifier.startsWith("node:")) continue;
+        imports.add(packageRoot(specifier));
+      }
+    }
+    for (const name of imports) {
+      assert.ok(
+        runtimeDependencies.has(name),
+        `${name} is imported by the packaged CLI but is not declared in packages/cli dependencies`,
+      );
+    }
+  });
+
   test("every bare import is a Node builtin or a real published package", () => {
     // Each remaining specifier has to be something a consumer's npm can fetch.
     // The test cannot reach a registry, so it asserts the weaker but still
@@ -178,7 +210,10 @@ describe("the distribution bundle", () => {
       }),
     );
     const files = packed[0].files.map(({ path }) => path).sort();
-    assert.deepEqual(files, [...chunks.map((chunk) => `dist/${chunk}`), "package.json"].sort());
+    assert.deepEqual(
+      files,
+      [...chunks.map((chunk) => `dist/${chunk}`), "dist/provider-manifest.json", "package.json"].sort(),
+    );
   });
 
   test("the staged executable answers help and version from a clean consumer cwd", () => {
