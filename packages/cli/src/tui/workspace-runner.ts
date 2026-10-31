@@ -176,6 +176,7 @@ export class WorkspaceInput {
         direction === "backward" ? text + previous : previous + text;
     } else {
       this.killRing.push(text);
+      if (this.killRing.length > 16) this.killRing.shift();
     }
     this.lastKillKind = direction;
     this.lastYank = undefined;
