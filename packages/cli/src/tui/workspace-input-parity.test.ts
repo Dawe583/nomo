@@ -79,6 +79,21 @@ test("replacing the prompt invalidates the previous yank range", () => {
   assert.equal(input.value, "fresh", "stale yank-pop must not replace a new prompt");
 });
 
+test("kills from separate prompts do not accumulate into one ring entry", () => {
+  const input = new WorkspaceInput();
+  input.editing = true;
+  input.set("first prompt");
+  input.key(undefined, { name: "u", ctrl: true });
+  input.set("second prompt");
+  input.key(undefined, { name: "u", ctrl: true });
+
+  input.set("");
+  input.key(undefined, { name: "y", ctrl: true });
+  assert.equal(input.value, "second prompt");
+  input.key(undefined, { name: "y", meta: true });
+  assert.equal(input.value, "first prompt");
+});
+
 test("Alt+Y is a no-op before a yank and after cursor motion", () => {
   const input = new WorkspaceInput();
   input.editing = true;
