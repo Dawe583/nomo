@@ -1429,15 +1429,15 @@ test("kill ring and input undo cover the editing keys", () => {
   assert.equal(input.value, "src/utils/foo.ts".replace("utils", ""));
 });
 
-test("Ctrl+T maps to the checklist in every editing state", () => {
-  assert.equal(
-    workspaceShortcut({ name: "t", ctrl: true }, true, "draft"),
-    "show-todos",
-  );
-  assert.equal(
-    workspaceShortcut({ name: "t", ctrl: true }, false, ""),
-    "show-todos",
-  );
+test("Ctrl+T transposes in the composer and opens TODOs outside editing", () => {
+  const input = new WorkspaceInput();
+  input.editing = true;
+  input.set("nomo");
+  input.cursor = 3;
+  assert.equal(workspaceShortcut({ name: "t", ctrl: true }, true, "nomo"), undefined);
+  input.key(undefined, { name: "t", ctrl: true });
+  assert.equal(input.value, "noom");
+  assert.equal(workspaceShortcut({ name: "t", ctrl: true }, false, ""), "show-todos");
   assert.equal(workspaceShortcut({ name: "t" }, true, "draft"), undefined);
 });
 

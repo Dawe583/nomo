@@ -136,7 +136,7 @@ Icon categories:
 
 - nav (`⇥`): Tab switches panels, Enter opens, Esc goes back, arrows navigate
 - edit (`✎`): Ctrl+R searches history, Ctrl+O toggles tool output, Ctrl+T
-  toggles todos, Ctrl+J inserts a newline
+  transposes characters while editing; outside the composer it opens TODOs, Ctrl+J inserts a newline
 - action (`⚡`): y accepts, n rejects, u undoes, `/queue` queues
 - mode (`◆`): Shift+Tab or Alt+M cycles modes
 - panel (`◈`): Tab cycles panels

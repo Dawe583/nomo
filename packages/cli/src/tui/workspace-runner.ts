@@ -58,7 +58,7 @@ export function workspaceShortcut(
   if (key.name === "r" && editing) return "search-history";
   if (key.name === "s") return "stash";
   if (key.name === "g") return "external-editor";
-  if (key.name === "t") return "show-todos";
+  if (key.name === "t" && !editing) return "show-todos";
   if (key.name === "d" && (!editing || !input)) return "quit";
   return undefined;
 }
@@ -246,6 +246,26 @@ export class WorkspaceInput {
       points.splice(start, this.cursor - start);
       this.cursor = start;
       this.value = points.join("");
+      return true;
+    }
+    if (key.ctrl && key.name === "t") {
+      const start = this.cursor
+        ? points.lastIndexOf("\n", this.cursor - 1) + 1
+        : 0;
+      const end = points.indexOf("\n", this.cursor);
+      const lineEnd = end < 0 ? points.length : end;
+      if (lineEnd - start < 2) return true;
+      const position = Math.max(
+        start + 1,
+        this.cursor >= lineEnd ? lineEnd - 1 : this.cursor,
+      );
+      this.remember();
+      [points[position - 1], points[position]] = [
+        points[position]!,
+        points[position - 1]!,
+      ];
+      this.value = points.join("");
+      this.cursor = position + 1;
       return true;
     }
     if (key.ctrl && key.name === "k") {
