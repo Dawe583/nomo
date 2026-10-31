@@ -268,6 +268,7 @@ test("model cycle follows the loaded provider catalog without fallback", () => {
   assert.equal(nextModelId(models, "alpha", -1), "charlie");
   assert.equal(nextModelId(models, "not-in-catalog", 1), "alpha");
   assert.equal(nextModelId([], "alpha", 1), undefined);
+  assert.equal(nextModelId([{ id: "alpha" }], "alpha", 1), undefined);
 });
 
 

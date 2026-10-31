@@ -48,7 +48,7 @@ export function nextModelId(
   current: string | undefined,
   direction: -1 | 1,
 ): string | undefined {
-  if (!models.length) return undefined;
+  if (models.length < 2) return undefined;
   const index = models.findIndex((model) => model.id === current);
   const start = index < 0 ? (direction > 0 ? -1 : 0) : index;
   return models[(start + direction + models.length) % models.length]?.id;
