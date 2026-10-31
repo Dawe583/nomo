@@ -340,14 +340,16 @@ export class WorkspaceInput {
       return true;
     }
     if ((key.ctrl && key.name === "w") || (key.meta && key.name === "backspace")) {
-      this.remember();
       let start = this.cursor;
       while (start > 0 && /\s/u.test(points[start - 1]!)) start--;
       while (start > 0 && !/\s/u.test(points[start - 1]!)) start--;
-      this.killText(points.slice(start, this.cursor).join(""), "backward");
-      points.splice(start, this.cursor - start);
-      this.cursor = start;
-      this.value = points.join("");
+      if (start < this.cursor) {
+        this.remember();
+        this.killText(points.slice(start, this.cursor).join(""), "backward");
+        points.splice(start, this.cursor - start);
+        this.cursor = start;
+        this.value = points.join("");
+      }
       return true;
     }
     if (key.ctrl && key.name === "t") {
