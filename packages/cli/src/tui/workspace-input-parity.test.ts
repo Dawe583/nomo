@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { WorkspaceInput, nextModelId, workspaceShortcut } from "./workspace-runner.ts";
+import { parseWorkspaceKeybindings } from "./workspace-keybindings.ts";
 
 test("Alt+Backspace deletes the previous word and leaves an insertable cursor", () => {
   const input = new WorkspaceInput();
@@ -168,4 +169,26 @@ test("model cycle follows the loaded provider catalog without fallback", () => {
   assert.equal(nextModelId(models, "alpha", -1), "charlie");
   assert.equal(nextModelId(models, "not-in-catalog", 1), "alpha");
   assert.equal(nextModelId([], "alpha", 1), undefined);
+});
+
+
+test("workspace keybinding configuration accepts safe unique Ctrl-letter overrides", () => {
+  const { bindings } = parseWorkspaceKeybindings('{"redraw":"Ctrl+V"}');
+  assert.equal(bindings.redraw.label, "Ctrl+V");
+  assert.equal(bindings["toggle-tools"].label, "Ctrl+O");
+  assert.equal(workspaceShortcut({ name: "v", ctrl: true }, false, "", bindings), "redraw");
+  assert.equal(workspaceShortcut({ name: "l", ctrl: true }, false, "", bindings), undefined);
+});
+
+test("workspace keybinding configuration rejects reserved or duplicate keys atomically", () => {
+  for (const raw of [
+    '{"redraw":"Ctrl+C"}',
+    '{"redraw":"Ctrl+V","toggle-tools":"Ctrl+V"}',
+    '{"unknown":"Ctrl+V"}',
+  ]) {
+    const result = parseWorkspaceKeybindings(raw);
+    assert.ok(result.error);
+    assert.equal(result.bindings.redraw.label, "Ctrl+L");
+    assert.equal(result.bindings["toggle-tools"].label, "Ctrl+O");
+  }
 });

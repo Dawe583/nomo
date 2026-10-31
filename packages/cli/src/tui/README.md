@@ -115,6 +115,7 @@ Ctrl+C clears, cancels or exits; Ctrl+D exits from empty input. Ctrl+B
 background tasks, image paste, suspend and Vim editing have no NOMO equivalent.
 `/conformance [adapter]` runs the disposable adapter checks behind the TUI.
 `/providers` lists model providers including local open models.
+`NOMO_TUI_KEYBINDINGS` may override the six workspace Ctrl-letter actions as a JSON object, for example `{"redraw":"Ctrl+V"}`. Unknown actions, reserved control letters, and duplicate bindings are rejected as a whole; the built-in bindings stay in effect.
 `/harness cloud|prime-agent` switches the agent harness; detection reads
 PATH only and never executes anything.
 `/settings` lists every harness limit with the value in force and the range it
