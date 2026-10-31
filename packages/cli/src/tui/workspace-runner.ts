@@ -48,10 +48,13 @@ export function nextModelId(
   current: string | undefined,
   direction: -1 | 1,
 ): string | undefined {
-  if (models.length < 2) return undefined;
-  const index = models.findIndex((model) => model.id === current);
+  const unique = models.filter(
+    (model, index) => models.findIndex((candidate) => candidate.id === model.id) === index,
+  );
+  if (unique.length < 2) return undefined;
+  const index = unique.findIndex((model) => model.id === current);
   const start = index < 0 ? (direction > 0 ? -1 : 0) : index;
-  return models[(start + direction + models.length) % models.length]?.id;
+  return unique[(start + direction + unique.length) % unique.length]?.id;
 }
 
 export type WorkspaceShortcut =
