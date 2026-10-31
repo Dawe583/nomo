@@ -79,6 +79,18 @@ test("replacing the prompt invalidates the previous yank range", () => {
   assert.equal(input.value, "fresh", "stale yank-pop must not replace a new prompt");
 });
 
+test("replacing a prompt clears its undo and redo snapshots", () => {
+  const input = new WorkspaceInput();
+  input.editing = true;
+  input.set("old draft");
+  input.insert("!");
+  input.set("history result");
+
+  assert.equal(input.undoEdit(), false);
+  assert.equal(input.redoEdit(), false);
+  assert.equal(input.value, "history result");
+});
+
 test("kills from separate prompts do not accumulate into one ring entry", () => {
   const input = new WorkspaceInput();
   input.editing = true;
