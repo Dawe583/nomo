@@ -128,6 +128,7 @@ export class WorkspaceInput {
   set(value: string) {
     this.value = value;
     this.cursor = [...value].length;
+    this.lastYank = undefined;
   }
   private remember() {
     this.undoState = { value: this.value, cursor: this.cursor };
