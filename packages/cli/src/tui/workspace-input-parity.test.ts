@@ -132,3 +132,19 @@ test("Ctrl+Shift+Z redoes the last composer edit", () => {
   input.key(undefined, { name: "z", ctrl: true, shift: true });
   assert.equal(input.value, "hello!?", "a new edit clears the redo snapshot");
 });
+
+
+test("Alt+B and Alt+F move by punctuation-aware word boundaries across lines", () => {
+  const input = new WorkspaceInput();
+  input.editing = true;
+  input.set("hello, world\nnext");
+  input.cursor = 8;
+  input.key(undefined, { name: "b", meta: true });
+  assert.equal(input.cursor, 7, "word-back stops at the word start");
+  input.cursor = 13;
+  input.key(undefined, { name: "b", meta: true });
+  assert.equal(input.cursor, 12, "word-back at line start jumps to previous line end");
+  input.cursor = 12;
+  input.key(undefined, { name: "f", meta: true });
+  assert.equal(input.cursor, 13, "word-forward at line end jumps to next line start");
+});

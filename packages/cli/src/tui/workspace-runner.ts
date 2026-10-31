@@ -145,6 +145,9 @@ export class WorkspaceInput {
   private static isWordChar(point: string): boolean {
     return /[A-Za-z0-9]/.test(point);
   }
+  private static isPunctuationChar(point: string): boolean {
+    return /[!-/:-@[-`{-~]/.test(point);
+  }
   private killText(text: string, direction: "backward" | "forward") {
     if (!text) return;
     const previous = this.killRing.at(-1);
@@ -261,17 +264,33 @@ export class WorkspaceInput {
     // Ctrl+Right mirror the Alt word jumps for terminals that send them.
     if ((key.meta && key.name === "b") || (key.ctrl && key.name === "left")) {
       let pos = this.cursor;
-      while (pos > 0 && !WorkspaceInput.isWordChar(points[pos - 1]!)) pos--;
-      while (pos > 0 && WorkspaceInput.isWordChar(points[pos - 1]!)) pos--;
+      if (pos === 0 || points[pos - 1] === "\n") {
+        this.cursor = pos === 0 ? 0 : pos - 1;
+        return true;
+      }
+      while (pos > 0 && /\s/u.test(points[pos - 1]!)) pos--;
+      const previous = points[pos - 1];
+      if (previous && WorkspaceInput.isPunctuationChar(previous)) {
+        while (pos > 0 && WorkspaceInput.isPunctuationChar(points[pos - 1]!)) pos--;
+      } else {
+        while (pos > 0 && WorkspaceInput.isWordChar(points[pos - 1]!)) pos--;
+      }
       this.cursor = pos;
       return true;
     }
     if ((key.meta && key.name === "f") || (key.ctrl && key.name === "right")) {
       let pos = this.cursor;
-      while (pos < points.length && !WorkspaceInput.isWordChar(points[pos]!))
-        pos++;
-      while (pos < points.length && WorkspaceInput.isWordChar(points[pos]!))
-        pos++;
+      if (pos >= points.length || points[pos] === "\n") {
+        this.cursor = pos >= points.length ? pos : pos + 1;
+        return true;
+      }
+      while (pos < points.length && /\s/u.test(points[pos]!)) pos++;
+      const current = points[pos];
+      if (current && WorkspaceInput.isPunctuationChar(current)) {
+        while (pos < points.length && WorkspaceInput.isPunctuationChar(points[pos]!)) pos++;
+      } else {
+        while (pos < points.length && WorkspaceInput.isWordChar(points[pos]!)) pos++;
+      }
       this.cursor = pos;
       return true;
     }
