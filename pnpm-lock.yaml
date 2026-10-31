@@ -189,6 +189,12 @@ importers:
       '@aws-sdk/client-s3':
         specifier: 3.1036.0
         version: 3.1036.0
+      '@aws-sdk/credential-provider-node':
+        specifier: 3.972.83
+        version: 3.972.83
+      '@electric-sql/pglite':
+        specifier: 0.3.7
+        version: 0.3.7
       '@modelcontextprotocol/sdk':
         specifier: 1.30.0
         version: 1.30.0

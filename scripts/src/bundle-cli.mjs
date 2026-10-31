@@ -13,7 +13,7 @@
  * Exits 0 on success, 1 on a build or write failure, 2 on bad usage.
  */
 
-import { existsSync, mkdirSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { rollup } from "rollup";
 
@@ -75,6 +75,10 @@ export async function buildBundle({ root, outDir = DEFAULT_OUT_DIR, quiet = fals
     for (const chunk of chunks) {
       writeFileSync(join(out, chunk.fileName), chunk.code, { mode: 0o755 });
     }
+    copyFileSync(
+      join(base, "packages/workbench/src/provider-manifest.json"),
+      join(out, "provider-manifest.json"),
+    );
 
     const file = join(out, entryChunk.fileName);
     if (!quiet) {
