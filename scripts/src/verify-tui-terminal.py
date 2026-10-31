@@ -30,7 +30,7 @@ with tempfile.TemporaryDirectory(prefix="nomo-tui-pty-") as data:
            "TERM": "xterm-256color", "NO_COLOR": "1"}
     seed = """
 import { Workbench } from './packages/workbench/src/index.ts';
-const app = new Workbench({NOMO_DATA_DIR:process.env.NOMO_DATA_DIR}, async url => String(url).endsWith('/models') ? Response.json({data:[{id:'fixture'}]}) : Response.json({choices:[{message:{role:'assistant',content:'fixture'}}]}));
+const app = new Workbench({NOMO_DATA_DIR:process.env.NOMO_DATA_DIR}, async url => String(url).endsWith('/models') ? Response.json({data:[{id:'fixture'}]}) : Response.json({choices:[{message:{role:'assistant',content:'fixture'},finish_reason:'stop'}]}));
 await app.configure({baseUrl:'https://fixture.invalid/v1',apiKey:'fixture'});
 const session=await app.start('PTY test','fixture'); await app.settled();
 await app.editDocument(session.id,{path:'pty.md',content:'Original',expectedRevision:null});
@@ -118,7 +118,7 @@ DiffScreenWriter.prototype.write = function(frame) {
         fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack("HHHH", 32, 100, 0, 0))
         process = subprocess.Popen(["node", "--import", str(observer), "packages/cli/bin/nomo.mjs", "tui", "--session", session], cwd=ROOT, env=env, stdin=slave, stdout=slave, stderr=slave, start_new_session=True)
         os.close(slave)
-        read_until("Write a prompt", ready=True)
+        read_until("  > ", ready=True)
         os.write(master, b"draft first")
         read_until("draft first", ready=True)
         os.write(master, b"\x1b\rdraft second")
@@ -126,9 +126,9 @@ DiffScreenWriter.prototype.write = function(frame) {
         os.write(master, b"\x03/led")
         read_until("Signed operations", ready=True)
         os.write(master, b"\t\r")
-        read_until("ledger / navigation", ready=True)
+        read_until("SIGNED ENTRIES", ready=True)
         os.write(master, b"/chat\r")
-        read_until("Write a prompt", ready=True)
+        read_until("  > ", ready=True)
         os.write(master, b"\x1b[A")
         read_until("PTY test", ready=True)
         os.write(master, b"\x03/find PTY test\r")
@@ -148,7 +148,7 @@ DiffScreenWriter.prototype.write = function(frame) {
         os.write(master, b"\x1b")
         read_until("void_workspace_write", ready=True)
         os.write(master, b"/chat\r")
-        read_until("Write a prompt", ready=True)
+        read_until("  > ", ready=True)
         os.write(master, b"/expand\r")
         read_until("Full tool output", ready=True)
         os.write(master, b"\x0f")
@@ -252,7 +252,7 @@ import { writeFileSync } from 'node:fs';
 let calls = 0;
 globalThis.fetch = async (url, options) => {
   if (String(url).endsWith('/models')) return Response.json({data:[{id:'fixture'}]});
-  if (++calls === 1) return Response.json({choices:[{message:{role:'assistant',content:'Selected reply'}}]});
+  if (++calls === 1) return Response.json({choices:[{message:{role:'assistant',content:'Selected reply'},finish_reason:'stop'}]});
   return new Promise((resolve, reject) => {
     options.signal.addEventListener('abort', () => reject(options.signal.reason), {once:true});
   });
