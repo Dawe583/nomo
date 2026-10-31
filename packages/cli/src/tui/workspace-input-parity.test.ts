@@ -61,6 +61,24 @@ test("kill ring retains only its 16 newest entries", () => {
   assert.equal(input.value, "entry-16", "the oldest retained entry wraps to the newest");
 });
 
+test("replacing the prompt invalidates the previous yank range", () => {
+  const input = new WorkspaceInput();
+  input.editing = true;
+  input.set("alpha");
+  input.key(undefined, { name: "a", ctrl: true });
+  input.key(undefined, { name: "k", ctrl: true });
+  input.set("bravo");
+  input.key(undefined, { name: "a", ctrl: true });
+  input.key(undefined, { name: "k", ctrl: true });
+  input.set("");
+  input.key(undefined, { name: "y", ctrl: true });
+  assert.equal(input.value, "bravo");
+
+  input.set("fresh");
+  input.key(undefined, { name: "y", meta: true });
+  assert.equal(input.value, "fresh", "stale yank-pop must not replace a new prompt");
+});
+
 test("Alt+Y is a no-op before a yank and after cursor motion", () => {
   const input = new WorkspaceInput();
   input.editing = true;
