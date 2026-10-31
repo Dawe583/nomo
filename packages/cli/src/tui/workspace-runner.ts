@@ -471,14 +471,12 @@ export class WorkspaceInput {
         points.splice(--this.cursor, 1);
       }
       this.value = points.join("");
-    } else if (key.name === "delete") {
-      this.remember();
-      points.splice(this.cursor, 1);
-      this.value = points.join("");
-    } else if (key.ctrl && key.name === "d") {
-      this.remember();
-      points.splice(this.cursor, 1);
-      this.value = points.join("");
+    } else if (key.name === "delete" || (key.ctrl && key.name === "d")) {
+      if (this.cursor < points.length) {
+        this.remember();
+        points.splice(this.cursor, 1);
+        this.value = points.join("");
+      }
     } else if (key.name === "left") this.cursor = Math.max(0, this.cursor - 1);
     else if (key.name === "right")
       this.cursor = Math.min(points.length, this.cursor + 1);
