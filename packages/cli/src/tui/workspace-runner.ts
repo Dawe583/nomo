@@ -104,21 +104,32 @@ export class WorkspaceInput {
   /** A slash command requested by a bound key (Ctrl+P); the runner consumes it. */
   pendingCommand?: string;
   private undoState?: { value: string; cursor: number };
+  private redoState?: { value: string; cursor: number };
   set(value: string) {
     this.value = value;
     this.cursor = [...value].length;
   }
   private remember() {
     this.undoState = { value: this.value, cursor: this.cursor };
+    this.redoState = undefined;
   }
   undoEdit(): boolean {
     if (!this.undoState) return false;
+    this.redoState = { value: this.value, cursor: this.cursor };
     this.value = this.undoState.value;
     this.cursor = Math.min(
       this.undoState.cursor,
       [...this.undoState.value].length,
     );
     this.undoState = undefined;
+    return true;
+  }
+  redoEdit(): boolean {
+    if (!this.redoState) return false;
+    this.undoState = { value: this.value, cursor: this.cursor };
+    this.value = this.redoState.value;
+    this.cursor = Math.min(this.redoState.cursor, [...this.redoState.value].length);
+    this.redoState = undefined;
     return true;
   }
   insert(value: string) {
@@ -182,6 +193,46 @@ export class WorkspaceInput {
   }
   private editKey(key: Key): boolean {
     const points = [...this.value];
+    if (key.ctrl && key.name === "home") {
+      this.cursor = 0;
+      return true;
+    }
+    if (key.ctrl && key.name === "end") {
+      this.cursor = points.length;
+      return true;
+    }
+    if (key.ctrl && (key.name === "up" || key.name === "down")) {
+      const lines = this.value.split("\n");
+      const lineStarts: number[] = [];
+      let offset = 0;
+      for (const line of lines) {
+        lineStarts.push(offset);
+        offset += [...line].length + 1;
+      }
+      let lineIndex = Math.max(0, lineStarts.findIndex((start, i) =>
+        this.cursor >= start && this.cursor <= start + [...lines[i]!].length,
+      ));
+      const paragraphStart = (line: number): number => {
+        while (line > 0 && !lines[line - 1]!.trim()) line--;
+        while (line > 0 && lines[line - 1]!.trim()) line--;
+        return line;
+      };
+      const paragraphEnd = (line: number): number => {
+        while (line < lines.length - 1 && !lines[line + 1]!.trim()) line++;
+        while (line < lines.length - 1 && lines[line + 1]!.trim()) line++;
+        return line;
+      };
+      if (key.name === "up") {
+        const start = paragraphStart(lineIndex);
+        lineIndex = lineIndex === start && start > 0 ? paragraphStart(start - 1) : start;
+        this.cursor = lineStarts[lineIndex]!;
+      } else {
+        const end = paragraphEnd(lineIndex);
+        lineIndex = lineIndex === end && end < lines.length - 1 ? paragraphEnd(end + 1) : end;
+        this.cursor = lineStarts[lineIndex]! + [...lines[lineIndex]!].length;
+      }
+      return true;
+    }
     const up = key.name === "up" || (key.ctrl && key.name === "p");
     const down = key.name === "down" || (key.ctrl && key.name === "n");
     if (up || down) {
@@ -323,6 +374,10 @@ export class WorkspaceInput {
     }
     if (key.ctrl && key.name === "y") {
       this.yank();
+      return;
+    }
+    if (key.ctrl && key.shift && key.name === "z") {
+      this.redoEdit();
       return;
     }
     if (key.ctrl && (key.name === "_" || key.name === "-")) {

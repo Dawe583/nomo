@@ -91,3 +91,44 @@ test("replacing the composer invalidates the previous yank range", () => {
   input.key(undefined, { name: "y", meta: true });
   assert.equal(input.value, "fresh text");
 });
+
+
+test("Ctrl+Home and Ctrl+End jump across the whole prompt", () => {
+  const input = new WorkspaceInput();
+  input.editing = true;
+  input.set("first\nsecond\nthird");
+  input.cursor = 10;
+  input.key(undefined, { name: "home", ctrl: true });
+  assert.equal(input.cursor, 0);
+  input.key(undefined, { name: "end", ctrl: true });
+  assert.equal(input.cursor, [...input.value].length);
+});
+
+test("Ctrl+Up and Ctrl+Down move between blank-line-separated paragraphs", () => {
+  const input = new WorkspaceInput();
+  input.editing = true;
+  input.set("one\nline\n\ntwo\nend");
+  input.cursor = 1;
+  input.key(undefined, { name: "up", ctrl: true });
+  assert.equal(input.cursor, 0);
+  input.key(undefined, { name: "down", ctrl: true });
+  assert.equal(input.cursor, 8);
+  input.key(undefined, { name: "down", ctrl: true });
+  assert.equal(input.cursor, 17);
+});
+
+
+test("Ctrl+Shift+Z redoes the last composer edit", () => {
+  const input = new WorkspaceInput();
+  input.editing = true;
+  input.set("hello");
+  input.key("!", { name: "!" });
+  assert.equal(input.value, "hello!");
+  input.key(undefined, { name: "_", ctrl: true });
+  assert.equal(input.value, "hello");
+  input.key(undefined, { name: "z", ctrl: true, shift: true });
+  assert.equal(input.value, "hello!");
+  input.key("?", { name: "?" });
+  input.key(undefined, { name: "z", ctrl: true, shift: true });
+  assert.equal(input.value, "hello!?", "a new edit clears the redo snapshot");
+});
