@@ -245,6 +245,18 @@ test("Ctrl+Shift+Z redoes the last composer edit", () => {
 });
 
 
+test("no-op forward delete preserves the redo snapshot", () => {
+  const input = new WorkspaceInput();
+  input.editing = true;
+  input.set("hello");
+  input.insert("!");
+  input.undoEdit();
+  input.key(undefined, { name: "delete" });
+
+  assert.equal(input.redoEdit(), true);
+  assert.equal(input.value, "hello!");
+});
+
 test("Alt+B and Alt+F move by punctuation-aware word boundaries across lines", () => {
   const input = new WorkspaceInput();
   input.editing = true;
