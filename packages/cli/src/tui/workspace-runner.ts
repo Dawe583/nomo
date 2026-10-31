@@ -128,6 +128,7 @@ export class WorkspaceInput {
   set(value: string) {
     this.value = value;
     this.cursor = [...value].length;
+    this.lastKillKind = undefined;
     this.lastYank = undefined;
   }
   private remember() {
