@@ -463,6 +463,7 @@ export async function runWorkspaceTui(
   let historyPos = -1;
   let mentionIndex = 0;
   let lastEsc = 0;
+  let lastCtrlC = 0;
   // Ctrl+S stash slot and Ctrl+L double press stay local, never persisted.
   let stash = "";
   let stashCursor = 0;
@@ -836,11 +837,20 @@ export async function runWorkspaceTui(
       // a guess that swallowed a typed question mark would corrupt a prompt
       // the operator never meant to change.
       //
+      // Exit confirmation requires consecutive Ctrl+C presses; any other key
+      // cancels the pending quit so a normal edit cannot inherit confirmation.
+      const ctrlC = key.ctrl && key.name === "c";
+      if (!ctrlC) lastCtrlC = 0;
       // Double Escape must be consecutive, not span commands typed in between.
       if (key.name !== "escape") lastEsc = 0;
+      if (ctrlC && !input.pasting && !input.value && isDoubleEscape(Date.now(), lastCtrlC)) {
+        lastCtrlC = 0;
+        stop();
+        return;
+      }
       if (
         !input.pasting &&
-        ((key.ctrl && key.name === "c") || key.name === "escape") &&
+        (ctrlC || key.name === "escape") &&
         app.running()
       ) {
         try {
@@ -867,17 +877,25 @@ export async function runWorkspaceTui(
         draw();
         return;
       }
-      if (key.ctrl && key.name === "c") {
+      if (ctrlC) {
         if (input.editing && input.value) {
           input.set("");
           suggestion = 0;
+          lastCtrlC = 0;
           try {
             saveDraft();
           } catch (error) {
             ui.notice = message(error);
           }
           draw();
-        } else stop();
+        } else if (isDoubleEscape(Date.now(), lastCtrlC)) {
+          lastCtrlC = 0;
+          stop();
+        } else {
+          lastCtrlC = Date.now();
+          ui.notice = "Press Ctrl+C again to exit.";
+          draw();
+        }
         return;
       }
       const shortcut = ui.confirmation
