@@ -100,6 +100,21 @@ Do not restart a completed broad visual pass without a new concrete defect. For 
 
 On a clean candidate branch, run `pnpm run test:tui`, `pnpm run typecheck`, and `python3 scripts/src/verify-tui-terminal.py` serially after focused tests. Run full CLI tests if the diff spans more than the TUI renderer. Review exact branch diff against `origin/main`; reject secrets, unrelated docs, generated archives, and foreign hunks. Commit each reviewed slice separately. Push feature branch. Require green CI before merge. Main merge and deployment are distinct release gates.
 
+## Active continuation graph
+
+The sole execution graph is `.nomo/work-state.json`. Its current active task is the backend parity inventory. The verified backend fix retains only the newest 16 kill-ring entries; the test first reproduced unbounded growth, then the focused suite verified cyclic wrap.
+
+```mermaid
+graph TD
+  A[Backend parity inventory] --> B[Verified backend-only gap slices]
+  A --> C[Selection: written OMP renderer handoff]
+  B --> D[Full candidate verification]
+  C --> D
+  D --> E[11-view and viewport matrix, CI, release]
+```
+
+Selection remains blocked until written OMP handoff. System clipboard remains unsupported without separate explicit user approval and privacy design. Full verification waits for visual-branch integration; release waits for exact-candidate tests and green CI.
+
 ## Ownership split
 
 - Prime Agent integrator: source of truth, task graph, isolated integration worktree, review, acceptance, cherry-pick, final commits, feature push, and release report.

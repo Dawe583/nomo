@@ -42,6 +42,25 @@ test("consecutive backward word kills accumulate for the next yank", () => {
   assert.equal(input.value, "alpha beta gamma");
 });
 
+test("kill ring retains only its 16 newest entries", () => {
+  const input = new WorkspaceInput();
+  input.editing = true;
+  for (let index = 0; index < 17; index++) {
+    input.set(`entry-${index}`);
+    input.key(undefined, { name: "a", ctrl: true });
+    input.key(undefined, { name: "k", ctrl: true });
+  }
+
+  input.set("");
+  input.key(undefined, { name: "y", ctrl: true });
+  for (let index = 0; index < 15; index++)
+    input.key(undefined, { name: "y", meta: true });
+  assert.equal(input.value, "entry-1");
+
+  input.key(undefined, { name: "y", meta: true });
+  assert.equal(input.value, "entry-16", "the oldest retained entry wraps to the newest");
+});
+
 test("Alt+Y is a no-op before a yank and after cursor motion", () => {
   const input = new WorkspaceInput();
   input.editing = true;
