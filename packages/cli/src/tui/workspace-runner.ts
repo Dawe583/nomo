@@ -60,11 +60,77 @@ export function nextModelId(
   return unique[(start + direction + unique.length) % unique.length]?.id;
 }
 
+export function normalizePastedPrompt(text: string): string {
+  return text
+    .replace(/\r/g, "\n")
+    .replace(/[\x00-\x08\x0b-\x1f\x7f-\x9f]/g, "");
+}
+
 export function signalQuitAction(
   now: number,
   lastCtrlC: number,
 ): "confirm" | "stop" {
   return isDoubleEscape(now, lastCtrlC) ? "stop" : "confirm";
+}
+
+export function escapeOwnedByOverlay(
+  state: Readonly<{
+    confirmation: boolean;
+    palette: boolean;
+    keybindings: boolean;
+    cheatSheet: boolean;
+    filter: string;
+  }>,
+): boolean {
+  return (
+    state.confirmation ||
+    state.palette ||
+    state.keybindings ||
+    state.cheatSheet ||
+    state.filter.length > 0
+  );
+}
+
+export function shouldCancelActiveRun(
+  key: Pick<Key, "ctrl" | "name">,
+  hasEscapeOwner: boolean,
+  pasting: boolean,
+): boolean {
+  return (
+    !pasting &&
+    ((key.ctrl && key.name === "c") ||
+      (!hasEscapeOwner && key.name === "escape"))
+  );
+}
+
+export function takeReadyQueuedPrompt(
+  ui: Pick<WorkspaceTui, "queuedPrompt" | "takeQueued">,
+  state: Readonly<{
+    workbenchRunning: boolean;
+    hasConfirmation: boolean;
+    runnerBusy?: boolean;
+  }>,
+): string | null {
+  if (state.workbenchRunning || state.hasConfirmation || state.runnerBusy)
+    return null;
+  return ui.takeQueued();
+}
+
+export async function dispatchQueuedPrompt(
+  ui: Pick<WorkspaceTui, "command" | "queuePrompt">,
+  prompt: string,
+  refresh: () => Promise<unknown>,
+  onDispatchError: (error: unknown) => void,
+): Promise<boolean> {
+  try {
+    await ui.command(prompt);
+  } catch (error) {
+    ui.queuePrompt(prompt);
+    onDispatchError(error);
+    return false;
+  }
+  await refresh();
+  return true;
 }
 
 export type WorkspaceShortcut =
@@ -174,6 +240,10 @@ export class WorkspaceInput {
   }
   insert(value: string) {
     this.replaceRange(this.cursor, 0, value);
+  }
+  paste(value: string) {
+    this.editing = true;
+    this.insert(normalizePastedPrompt(value));
   }
   replaceRange(start: number, length: number, value: string) {
     this.remember();
@@ -830,7 +900,7 @@ export async function runWorkspaceTui(
           onKey: keyHandler,
           onPaste: (text: string) => {
             input.pasting = true;
-            input.insert(text);
+            input.paste(text);
             input.pasting = false;
             try {
               saveDraft();
@@ -862,14 +932,19 @@ export async function runWorkspaceTui(
       try {
         await fn();
         await ui.refresh();
-        const queued = ui.takeQueued();
+        const queued = takeReadyQueuedPrompt(ui, {
+          workbenchRunning: app.running(),
+          hasConfirmation: !!ui.confirmation,
+        });
         if (queued) {
-          try {
-            await ui.command(queued);
-            await ui.refresh();
-          } catch (error) {
-            ui.notice = message(error);
-          }
+          await dispatchQueuedPrompt(
+            ui,
+            queued,
+            () => ui.refresh(),
+            (error) => {
+              ui.notice = message(error);
+            },
+          );
         }
       } catch (error) {
         ui.notice = message(error);
@@ -1188,7 +1263,20 @@ export async function runWorkspaceTui(
         stop();
         return;
       }
-      if (!input.pasting && (ctrlC || key.name === "escape") && app.running()) {
+      if (
+        shouldCancelActiveRun(
+          key,
+          escapeOwnedByOverlay({
+            confirmation: !!ui.confirmation,
+            palette: !!ui.palette,
+            keybindings: ui.showingKeybindings,
+            cheatSheet: ui.showingCheatSheet,
+            filter: ui.filter,
+          }),
+          input.pasting,
+        ) &&
+        app.running()
+      ) {
         try {
           const session = ui.session();
           if (session?.status === "running") {
@@ -1692,6 +1780,28 @@ export async function runWorkspaceTui(
       ui.watchHoldsForExpiry();
       void ui
         .refresh()
+        .then(async () => {
+          const queued = takeReadyQueuedPrompt(ui, {
+            workbenchRunning: app.running(),
+            hasConfirmation: !!ui.confirmation,
+            runnerBusy: busy,
+          });
+          if (!queued) return;
+          busy = true;
+          draw();
+          try {
+            await dispatchQueuedPrompt(
+              ui,
+              queued,
+              () => ui.refresh(),
+              (error) => {
+                ui.notice = message(error);
+              },
+            );
+          } finally {
+            busy = false;
+          }
+        })
         .catch((e) => {
           // A failed refresh usually means the connector or the provider went
           // away mid run. That is not transient the way a keystroke notice is,

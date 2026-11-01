@@ -6,6 +6,7 @@ import type { KeyEvent } from "@opentui/core";
 
 import type { WorkspaceTui, WorkspaceTab } from "./workspace.ts";
 import {
+  transcriptWindow,
   workspaceSurface,
   type WorkspaceSurfaceRow,
 } from "./workspace-app-model.ts";
@@ -266,7 +267,22 @@ export function WorkspaceApp({
   const transcript = (session?.events ?? []).filter(
     (event) => event.kind !== "usage" && event.type !== "run.status",
   );
-  const chatRows = transcript.slice(-Math.max(1, height - 13));
+  const chatWindowHeight = Math.max(1, Math.floor((height - 13) / 3));
+  const chatOffset = Math.max(
+    0,
+    Math.min(
+      !Number.isFinite(ui.scroll) || ui.scroll < 0
+        ? transcript.length - chatWindowHeight
+        : ui.scroll,
+      Math.max(0, transcript.length - chatWindowHeight),
+    ),
+  );
+  const chatRows = transcriptWindow(transcript, ui.scroll, chatWindowHeight);
+  ui.viewport = {
+    offset: chatOffset,
+    height: chatWindowHeight,
+    total: transcript.length,
+  };
   const nav = (
     <box flexDirection="row" gap={1}>
       {TABS.map((tab) => {
@@ -287,7 +303,10 @@ export function WorkspaceApp({
               <image source={icon.png} width={2} height={1} protocol="kitty" />
             ) : null}
             <text
-              fg={ui.tab === tab ? palette.fg : palette.muted}
+              fg={foreground(
+                color,
+                ui.tab === tab ? palette.fg : palette.muted,
+              )}
               content={
                 width < 64
                   ? COMPACT_TABS[tab]
@@ -511,7 +530,12 @@ export function WorkspaceApp({
           fg={foreground(color, palette.muted)}
           content={ui.notice ?? "Ready"}
         />
-        <text fg={foreground(color, palette.muted)} content="TAB" />
+        <text
+          fg={foreground(color, palette.muted)}
+          content={
+            ui.tab === "chat" ? "TAB" : "Click selects · Enter opens · TAB"
+          }
+        />
       </box>
     </box>
   );

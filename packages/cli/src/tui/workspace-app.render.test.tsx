@@ -10,6 +10,7 @@ import { createRoot, flushSync } from "@opentui/react";
 import { handleModelPickerKey } from "./workspace-app-model.ts";
 import { WorkspaceApp } from "./workspace-app.tsx";
 import type { WorkspaceTui, WorkspaceTab } from "./workspace.ts";
+import { visibleLength } from "./layout.ts";
 
 function fakeUi(tab: WorkspaceTab): WorkspaceTui {
   const models = [
@@ -112,6 +113,62 @@ for (const tab of [
     }
   });
 }
+
+test("chat view pages through older transcript rows and returns to live follow", async () => {
+  const setup = await createTestRenderer({ width: 120, height: 32 });
+  const ui = fakeUi("chat");
+  ui.session = () => ({
+    id: "long-chat",
+    workspace: "fixture",
+    status: "idle",
+    continuationCount: 0,
+    runTokenCount: 0,
+    title: "Long chat",
+    model: "alpha-id",
+    events: Array.from({ length: 24 }, (_, index) => ({
+      seq: index + 1,
+      kind: index % 2 ? "assistant" : "user",
+      type: "message",
+      at: "2026-01-01T00:00:00.000Z",
+      text: `transcript-row-${index + 1}`,
+    })),
+  });
+  const root = createRoot(setup.renderer);
+  const render = () =>
+    flushSync(() =>
+      root.render(
+        createElement(WorkspaceApp, {
+          ui,
+          input: "",
+          editing: false,
+          busy: false,
+          onKey: () => {},
+          onPaste: () => {},
+          onTab: () => {},
+          onSelect: () => {},
+        }),
+      ),
+    );
+  try {
+    render();
+    await setup.renderOnce();
+    assert.match(setup.captureCharFrame(), /transcript-row-24/);
+    assert.deepEqual(ui.viewport, { offset: 18, height: 6, total: 24 });
+    ui.scroll = Math.max(0, ui.viewport.offset - (ui.viewport.height - 2));
+    render();
+    await setup.renderOnce();
+    assert.match(setup.captureCharFrame(), /transcript-row-15/);
+    assert.doesNotMatch(setup.captureCharFrame(), /transcript-row-24/);
+    ui.scroll = -1;
+    render();
+    await setup.renderOnce();
+    assert.match(setup.captureCharFrame(), /transcript-row-24/);
+  } finally {
+    root.unmount();
+    await setup.dispose();
+  }
+});
+
 test("OpenTUI composes a compact narrow-terminal usage screen", async () => {
   const setup = await createTestRenderer({ width: 60, height: 16 });
   const ui = fakeUi("usage");
@@ -457,6 +514,74 @@ test("rendered keyboard, mouse navigation and paste dispatch to workspace handle
   } finally {
     root.unmount();
     await setup.dispose();
+  }
+});
+
+test("all workspace views stay bounded in the full viewport and color matrix", async () => {
+  const viewports = [
+    [40, 12],
+    [80, 24],
+    [120, 40],
+    [200, 48],
+  ] as const;
+  const tabs = [
+    "overview",
+    "chat",
+    "sessions",
+    "documents",
+    "ledger",
+    "approvals",
+    "policy",
+    "tools",
+    "models",
+    "usage",
+    "help",
+  ] as const;
+  for (const [width, height] of viewports) {
+    for (const color of [false, true]) {
+      for (const tab of tabs) {
+        const setup = await createTestRenderer({ width, height });
+        const root = createRoot(setup.renderer);
+        try {
+          flushSync(() =>
+            root.render(
+              createElement(WorkspaceApp, {
+                ui: fakeUi(tab),
+                input: "",
+                editing: tab === "chat",
+                busy: false,
+                color,
+                onKey: () => {},
+                onPaste: () => {},
+                onTab: () => {},
+                onSelect: () => {},
+              }),
+            ),
+          );
+          await setup.renderOnce();
+          const frame = setup.captureCharFrame();
+          const lines = frame.split("\n");
+          if (lines.at(-1) === "") lines.pop();
+          assert.ok(
+            lines.length <= height,
+            `${tab} ${width}x${height} row bound`,
+          );
+          assert.ok(
+            lines.every((line) => visibleLength(line) <= width),
+            `${tab} ${width}x${height} terminal-cell column bound`,
+          );
+          assert.match(
+            lines.join("\n"),
+            new RegExp(
+              tab === "overview" ? "OVERVIEW|overview" : tab.toUpperCase(),
+            ),
+          );
+        } finally {
+          root.unmount();
+          await setup.dispose();
+        }
+      }
+    }
   }
 });
 

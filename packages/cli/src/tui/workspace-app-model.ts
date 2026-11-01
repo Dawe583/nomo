@@ -18,6 +18,22 @@ export interface WorkspaceSurfaceRow {
   readonly details: readonly string[];
   readonly usage?: WorkspaceUsageRecord;
 }
+export function transcriptWindow<T>(
+  events: readonly T[],
+  scroll: number,
+  height: number,
+): readonly T[] {
+  const size = Math.max(1, height);
+  const start = Math.max(
+    0,
+    Math.min(
+      !Number.isFinite(scroll) || scroll < 0 ? events.length - size : scroll,
+      events.length - size,
+    ),
+  );
+  return events.slice(start, start + size);
+}
+
 export interface WorkspaceSurface {
   readonly tab: WorkspaceTab;
   readonly heading: string;

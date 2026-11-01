@@ -7865,7 +7865,20 @@ function helpLines(): string[] {
         {
           title: "working",
           fields: [
-            { label: "chat", value: "Start typing. i types, Enter sends." },
+            {
+              label: "chat",
+              value:
+                "Start typing. i types, Enter sends. PgUp/PgDn scroll history.",
+            },
+            {
+              label: "mouse",
+              value: "Click a panel to select it; Enter opens its details.",
+            },
+            {
+              label: "paste",
+              value:
+                "Paste focuses the composer. Control characters are removed.",
+            },
             {
               label: "commands",
               value: "/ opens them, arrows select, Tab completes",

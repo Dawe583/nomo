@@ -4,7 +4,7 @@ All notable user-facing changes since the first repository commit.
 
 ## Unreleased
 
-- Replaced the interactive workspace presentation with a responsive OpenTUI surface backed by the existing Workbench data and actions. Added eleven real views, mouse/keyboard/paste navigation, provider-catalog model picker, NOMO theme/monochrome support, local Kitty artwork, and Bun-backed rendering for Node 24 interactive launches. One-shot and piped text snapshots remain on the Node renderer. Added OpenTUI component and PTY tests; existing approvals, ledger, Workbench and active-session model snapshot semantics remain unchanged.
+- Updated the interactive NOMO workspace with eleven views, mouse and keyboard navigation, model selection, and color themes. Existing approvals, ledger, Workbench actions, and active-session model behavior remain unchanged.
 - The Control Plane exposes an inbound OpenAI-compatible subset at `GET /v1/models`
   and `POST /v1/chat/completions`, using existing bearer auth and Workbench
   policy. It returns JSON or SSE-framed final output, not token-by-token
