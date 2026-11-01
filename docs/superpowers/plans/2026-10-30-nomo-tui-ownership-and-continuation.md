@@ -36,22 +36,22 @@ The Prime Agent TUI is the primary visual reference. OMP is a source of reusable
 
 Reference matrix to complete before implementing parity changes:
 
-| Surface | Current NOMO owner and state source | Prime/OMP pattern to assess | Current tests |
-|---|---|---|---|
-| Overview / runs | `WorkspaceTui.items()` reads `Workbench.runs()`; stop/reconcile route through `Workbench` | Compact live run rows, detail inspector, honest unknown/reconciliation states | `workspace-controls.test.ts`, `workspace-parity.test.ts` |
-| Chat | `WorkspaceTui.session()` plus `chatRows()` over Workbench events | Transcript hierarchy, streaming, Markdown/code, context-first editor dock | `workspace.test.ts`, `workspace-parity.test.ts` |
-| Prompt / queue | `WorkspaceInput` and runner keys; send/queue/stop in Workbench | Unicode editing, history, multiline, contextual shortcut hints | `workspace.test.ts`, `workspace-controls.test.ts`, PTY verifier |
-| Sessions | `Workbench.list()` and `Workbench.get()` for full detail | Grouped selection, list+inspector at wide sizes | `workspace-controls.test.ts`, `workspace-parity.test.ts` |
-| Documents | `Workbench.documentsList()`, `document()`; edit and undo through Workbench | Folder tree, read-only preview, version/revision status | `workspace.test.ts`, `workspace-controls.test.ts` |
-| Ledger | signed managed proofs plus proxy records, verified by existing ledger/proxy owner | Compact evidence rows and readable record detail, no raw secret arguments | `workspace-controls.test.ts`, `workspace-proxy.test.ts`, ledger tests |
-| Approvals | `Workbench.approvals()` and proxy holds; y/n delegates to approval API | Decision detail next to list where space permits, explicit risk and expiry | `workspace-approval.test.ts`, `workspace-controls.test.ts` |
-| Policy / connectors | `Workbench.connectionState().connectors`; mutations via explicit connector methods | Consent lifecycle and connector inspector, no inferred permissions | `workspace-mcp.test.ts`, `workspace-controls.test.ts` |
-| Tools | `Workbench.availableTools()` with registry disclaimers and schema | Searchable tool catalog and schema detail; inspection never executes | `workspace.test.ts`, `workspace-controls.test.ts` |
-| Models | `Workbench.providerState()` catalog; selecting model is explicit existing command | Search/select capability metadata without claiming unsupported inputs | `workspace.test.ts`, `workspace-settings.test.ts` |
-| Usage | `activity(Workbench.allViews())`; missing cost remains unknown | Compact token usage details, no invented metrics | `workspace-parity.test.ts`, `workspace.test.ts` |
-| Settings / themes | Workbench preferences/limits and local theme config | Searchable metadata and supported persisted preferences only | `workspace-settings.test.ts`, `theme-config.test.ts` |
-| Help / command palette | static command catalog plus actual keybinding dispatch | Discoverable commands and true active key hints | `workspace.test.ts`, `workspace-shortcuts.test.ts` |
-| Watch / hold / inline | `WatchRuntime`, `renderHoldPrompt`, and caller-supplied verified state | OMP/Prime terminal component hierarchy only where fits shared-terminal contract | `tui.test.ts`, `live.test.ts`, `workspace-terminal.test.ts` |
+| Surface                | Current NOMO owner and state source                                                       | Prime/OMP pattern to assess                                                     | Current tests                                                         |
+| ---------------------- | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| Overview / runs        | `WorkspaceTui.items()` reads `Workbench.runs()`; stop/reconcile route through `Workbench` | Compact live run rows, detail inspector, honest unknown/reconciliation states   | `workspace-controls.test.ts`, `workspace-parity.test.ts`              |
+| Chat                   | `WorkspaceTui.session()` plus `chatRows()` over Workbench events                          | Transcript hierarchy, streaming, Markdown/code, context-first editor dock       | `workspace.test.ts`, `workspace-parity.test.ts`                       |
+| Prompt / queue         | `WorkspaceInput` and runner keys; send/queue/stop in Workbench                            | Unicode editing, history, multiline, contextual shortcut hints                  | `workspace.test.ts`, `workspace-controls.test.ts`, PTY verifier       |
+| Sessions               | `Workbench.list()` and `Workbench.get()` for full detail                                  | Grouped selection, list+inspector at wide sizes                                 | `workspace-controls.test.ts`, `workspace-parity.test.ts`              |
+| Documents              | `Workbench.documentsList()`, `document()`; edit and undo through Workbench                | Folder tree, read-only preview, version/revision status                         | `workspace.test.ts`, `workspace-controls.test.ts`                     |
+| Ledger                 | signed managed proofs plus proxy records, verified by existing ledger/proxy owner         | Compact evidence rows and readable record detail, no raw secret arguments       | `workspace-controls.test.ts`, `workspace-proxy.test.ts`, ledger tests |
+| Approvals              | `Workbench.approvals()` and proxy holds; y/n delegates to approval API                    | Decision detail next to list where space permits, explicit risk and expiry      | `workspace-approval.test.ts`, `workspace-controls.test.ts`            |
+| Policy / connectors    | `Workbench.connectionState().connectors`; mutations via explicit connector methods        | Consent lifecycle and connector inspector, no inferred permissions              | `workspace-mcp.test.ts`, `workspace-controls.test.ts`                 |
+| Tools                  | `Workbench.availableTools()` with registry disclaimers and schema                         | Searchable tool catalog and schema detail; inspection never executes            | `workspace.test.ts`, `workspace-controls.test.ts`                     |
+| Models                 | `Workbench.providerState()` catalog; selecting model is explicit existing command         | Search/select capability metadata without claiming unsupported inputs           | `workspace.test.ts`, `workspace-settings.test.ts`                     |
+| Usage                  | `activity(Workbench.allViews())`; missing cost remains unknown                            | Compact token usage details, no invented metrics                                | `workspace-parity.test.ts`, `workspace.test.ts`                       |
+| Settings / themes      | Workbench preferences/limits and local theme config                                       | Searchable metadata and supported persisted preferences only                    | `workspace-settings.test.ts`, `theme-config.test.ts`                  |
+| Help / command palette | static command catalog plus actual keybinding dispatch                                    | Discoverable commands and true active key hints                                 | `workspace.test.ts`, `workspace-shortcuts.test.ts`                    |
+| Watch / hold / inline  | `WatchRuntime`, `renderHoldPrompt`, and caller-supplied verified state                    | OMP/Prime terminal component hierarchy only where fits shared-terminal contract | `tui.test.ts`, `live.test.ts`, `workspace-terminal.test.ts`           |
 
 For every matrix row record source commit, disposition (`supported`, `safely adapted`, `unsupported`), concrete NOMO contract, before/after renderer evidence, and verifier. A reference screenshot without a tested NOMO behavior is not acceptance evidence.
 
@@ -114,6 +114,27 @@ graph TD
 ```
 
 Selection remains blocked until written OMP handoff. System clipboard remains unsupported without separate explicit user approval and privacy design. Full verification waits for visual-branch integration; release waits for exact-candidate tests and green CI.
+
+## 2026-10-31 OpenTUI integration checkpoint
+
+The user approved the current OpenTUI design from the OMP candidate. The integrated implementation is in the clean `tui/opentui-integration-2026-10-31` worktree, created at current `origin/main` `521b1c8`. The mixed OMP worktree was read-only and remains untouched. Only reviewed TUI source, its required package dependencies/assets, tests, test/build wiring and TUI documentation were ported. Thirty already verified backend commits from the clean continuation branch are present on this branch.
+
+The interactive application imports `WorkspaceApp` only on an interactive terminal. Node 24 one-shot and redirected output continue using the existing Node text renderer. Interactive Node 24 re-execs through Bun; Node 26.4+ uses the documented FFI flag. Workbench owns all view data, action dispatch, policy and ledger. Model picker uses the current validated provider catalog and persists the future default; active conversations retain their model. Local Kitty icon packs are never bundled; only the NOMO logo is included in CLI distribution.
+
+Current evidence: repository typecheck passes; `pnpm run test:tui` passes 305 Node tests, 21 Bun renderer tests and the OpenTUI PTY smoke; bundle tests pass 14/14; bundle build passes; Prettier and doc-truth pass. Offline `pnpm deploy --prod --legacy` produced an isolated consumer. Its `--help`, `--version`, Node 24 `tui --once`, and PTY interactive launch/exit all passed.
+
+Remaining gates: exact final diff review, TUI-only commit/push, GitHub Actions and required branch protection checks green before merge. Current CI workflow provisions Bun and runs OpenTUI TSX tests. The account-level billing failure may still prevent GitHub runners; do not bypass or merge on Vercel success alone.
+
+```mermaid
+graph TD
+  A[Current-main TUI branch] --> B[Model and all 11 view tests]
+  B --> C[Node typecheck, TUI, Bun render and PTY]
+  C --> D[Bundle and deployed consumer smoke]
+  D --> E[Final scope/security review]
+  E --> F[Commit and feature push]
+  F --> G[Green GitHub CI]
+  G --> H[Merge to main]
+```
 
 ## Ownership split
 

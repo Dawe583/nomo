@@ -36,6 +36,9 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: pnpm
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
       - run: pnpm install --frozen-lockfile
         timeout-minutes: 10
       - run: pnpm run typecheck
@@ -47,6 +50,8 @@ jobs:
       # build is what broke, the unit signal is still on the record.
       - run: pnpm test
         timeout-minutes: 25
+      - run: bun test packages/cli/src/tui/*.test.tsx
+        timeout-minutes: 5
       - run: node --test apps/control-plane/api/server.test.ts apps/control-plane/web/control-plane-pages.test.mjs apps/control-plane/web/app.test.mjs
         timeout-minutes: 5
       - run: node --test scripts/src/*.test.mjs

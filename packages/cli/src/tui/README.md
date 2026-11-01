@@ -103,6 +103,14 @@ q exits. Exiting leaves the proxy running. The live watch does not offer approva
 or replay shortcuts until those actions are actually connected. Existing preview
 renderers remain available for the richer planned dashboard.
 
+## OpenTUI workspace runtime
+
+The interactive workspace is rendered by `WorkspaceApp` through OpenTUI. Its `workspaceSurface` adapter reads current `WorkspaceTui` and Workbench view rows; keyboard, paste, mouse, commands, approvals, and mutations remain routed through the existing `WorkspaceTui` and Workbench owners. The model picker shows only the validated connected-provider catalog. Selecting a model persists the default for future conversations; active conversations keep their model.
+
+The CLI bundle includes OpenTUI React/renderer chunks and the NOMO Kitty logo. Private per-tab Kitty icons load only from `NOMO_TUI_ICONS_DIR` or the active NOMO data directory; icon artwork is not distributed. Without Kitty capability or a complete local icon pack, text labels remain visible.
+
+CI runs TSX renderer tests with Bun 1.4.2. Node 24 interactive launches re-execute under Bun when available; Node 26.4+ uses `--experimental-ffi`. Noninteractive `--once` and redirected snapshots do not initialize OpenTUI.
+
 ## Workspace keys
 
 The workspace prompt follows the reference terminal: Enter sends; Shift+Enter,

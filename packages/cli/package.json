@@ -21,6 +21,7 @@
   "devDependencies": {
     "@types/node": "catalog:",
     "@types/pg": "8.15.5",
+    "@types/react": "catalog:",
     "@nomo/registry": "workspace:*"
   },
   "dependencies": {
@@ -28,8 +29,12 @@
     "@aws-sdk/credential-provider-node": "3.972.83",
     "@electric-sql/pglite": "0.3.7",
     "@modelcontextprotocol/sdk": "1.30.0",
+    "@opentui/core": "0.6.8",
+    "@opentui/react": "0.6.8",
     "node-sql-parser": "^5.4.0",
     "pg": "8.16.3",
+    "react": "19.3.1",
+    "web-tree-sitter": "0.25.10",
     "yaml": "^2.8.0"
   },
   "description": "Inspect classifications, verify ledgers, and plan replay from the NOMO command line.",

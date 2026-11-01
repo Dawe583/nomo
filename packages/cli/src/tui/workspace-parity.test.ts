@@ -48,7 +48,9 @@ const assistantFetcher = (content: string) => async (url: unknown) => {
   if (String(url).endsWith("/models"))
     return Response.json({ data: [{ id: "fixture" }] });
   return Response.json({
-    choices: [{ message: { role: "assistant", content }, finish_reason: "stop" }],
+    choices: [
+      { message: { role: "assistant", content }, finish_reason: "stop" },
+    ],
   });
 };
 
@@ -491,13 +493,19 @@ test("a toast never costs the operator the prompt frame, at any height", async (
       }).split("\n");
       assert.equal(rows.length, Math.max(8, height), `${width}x${height}`);
       assert.ok(
-        rows.some((row) => row.startsWith("┌")),
-        `no prompt frame top at ${width}x${height}`,
+        rows.some((row) => row.includes("> x")),
+        `no editable prompt marker at ${width}x${height}`,
       );
-      assert.ok(
-        rows.some((row) => row.startsWith("└")),
-        `no prompt frame bottom at ${width}x${height}`,
-      );
+      if (width < 78 || height < 22) {
+        assert.ok(
+          rows.some((row) => row.startsWith("┌")),
+          `no compact prompt frame at ${width}x${height}`,
+        );
+        assert.ok(
+          rows.some((row) => row.startsWith("└")),
+          `no compact prompt frame bottom at ${width}x${height}`,
+        );
+      }
     }
 });
 
@@ -1234,7 +1242,7 @@ test("review needs an explicit accept or reject key", async (t) => {
   assert.ok(frame.includes("Tab panels"));
 });
 
-test("prompt frame stays continuous at every width", async (t) => {
+test("compact prompt frame stays continuous at narrow widths", async (t) => {
   assert.equal(visibleLength(promptFrameTop("Write a prompt", 80)), 80);
   assert.equal(visibleLength(promptFrameBottom(80)), 80);
   assert.equal(visibleLength(promptFrameRow("> hello_", 80)), 80);
@@ -1251,37 +1259,18 @@ test("prompt frame stays continuous at every width", async (t) => {
   for (const [width, height] of [
     [20, 8],
     [40, 12],
-
-    [80, 24],
-    [100, 32],
-    [160, 45],
   ]) {
-    const frame = stripAnsi(
-      renderWorkspace(ui, width!, height!, "hello_", true, false, {
-        cursor: 6,
-      }),
-    );
-    const rows = frame.split("\n");
+    const rows = stripAnsi(
+      renderWorkspace(ui, width, height, "hello_", true, false, { cursor: 6 }),
+    ).split("\n");
     assert.equal(rows.length, height);
-    assert.ok(rows.every((line) => visibleLength(line) <= width!));
-    const top = rows.find((line) => line.startsWith("┌"))!;
-    const bottom = rows.find((line) => line.startsWith("└"))!;
-    assert.ok(top.endsWith("┐"), top);
-    assert.ok(bottom.endsWith("┘"), bottom);
-    assert.equal(visibleLength(top), width);
-    assert.equal(visibleLength(bottom), width);
-    // Composer rows are the rows between the frame top and bottom. Selecting
-    // them positionally instead of by prefix keeps the header rows, which also
-    // start with the indent, out of the assertion.
-    const topIndex = rows.findIndex((line) => line.startsWith("┌"));
-    const bottomIndex = rows.findIndex((line) => line.startsWith("└"));
-    const promptRows = rows.slice(topIndex + 1, bottomIndex);
-    assert.ok(promptRows.length > 0);
-    for (const row of promptRows) {
-      assert.ok(row.startsWith("  "), row);
-      assert.ok(row.endsWith("  "), row);
-      assert.equal(visibleLength(row), width);
-    }
+    assert.ok(rows.every((line) => visibleLength(line) <= width));
+    const top = rows.find((line) => line.startsWith("┌"));
+    const bottom = rows.find((line) => line.startsWith("└"));
+    assert.ok(top?.endsWith("┐"));
+    assert.ok(bottom?.endsWith("┘"));
+    assert.equal(visibleLength(top!), width);
+    assert.equal(visibleLength(bottom!), width);
   }
 });
 
@@ -1338,32 +1327,7 @@ test("branch intent reuses its idempotency key after a transient failure", async
   assert.match(keys[0]!, /^[0-9a-f-]{36}$/);
 });
 
-test("logo is one stroke width and every row aligns", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "nomo-tui-logo-"));
-  const { app, env } = await fixtureApp(root);
-  t.after(async () => {
-    await app.shutdown();
-    await rm(root, { recursive: true, force: true });
-  });
-  const ui = new WorkspaceTui(app, env);
-  const rows = stripAnsi(renderWorkspace(ui, 100, 32)).split("\n");
-  // The mark is 7 rows of half blocks: an ink square outline, an accent
-  // square inside it, and a dot in the centre. Every row carries ink, so the
-  // mark never reads as a broken or partial rule.
-  const mark = rows.slice(0, 7).map((line) => line.slice(0, 13));
-  assert.ok(mark.every((line) => /[█▀▄]/.test(line)));
-  // Column 0 and column 12 are the outer rule, so they are ink on every row.
-  for (const row of mark) {
-    assert.ok(row.startsWith("█"), row);
-    assert.equal(row[12], "█", row);
-  }
-  // The centre cell of the middle row is the dot.
-  assert.equal(mark[3]![6], "█", mark[3]);
-});
-
-test("tab icons carry fixed colors in color mode only", async (t) => {
-  for (const tone of Object.values(TAB_ICON_TONE))
-    assert.match(tone, /^38;5;\d+$/);
+test("legacy monochrome snapshot has no color escapes", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "nomo-tui-icon-tone-"));
   const { app, env } = await fixtureApp(root);
   t.after(async () => {
@@ -1371,11 +1335,9 @@ test("tab icons carry fixed colors in color mode only", async (t) => {
     await rm(root, { recursive: true, force: true });
   });
   const ui = new WorkspaceTui(app, env);
-  const color = renderWorkspace(ui, 200, 40, "_", true, false, { color: true });
-  assert.ok(color.includes("38;5;203"));
-  assert.ok(color.includes("38;5;78"));
-  const mono = stripAnsi(renderWorkspace(ui, 100, 32, "_", true));
-  assert.ok(!mono.includes("38;5;"));
+  const mono = renderWorkspace(ui, 100, 32, "", false, false, { color: false });
+  assert.doesNotMatch(mono, /\x1b\[[0-9;]*m/);
+  assert.match(stripAnsi(mono), /NOMO \/ overview/);
 });
 
 test("icons stay one cell wide and never carry safety meaning", () => {
@@ -1434,10 +1396,16 @@ test("Ctrl+T transposes in the composer and opens TODOs outside editing", () => 
   input.editing = true;
   input.set("nomo");
   input.cursor = 3;
-  assert.equal(workspaceShortcut({ name: "t", ctrl: true }, true, "nomo"), undefined);
+  assert.equal(
+    workspaceShortcut({ name: "t", ctrl: true }, true, "nomo"),
+    undefined,
+  );
   input.key(undefined, { name: "t", ctrl: true });
   assert.equal(input.value, "noom");
-  assert.equal(workspaceShortcut({ name: "t", ctrl: true }, false, ""), "show-todos");
+  assert.equal(
+    workspaceShortcut({ name: "t", ctrl: true }, false, ""),
+    "show-todos",
+  );
   assert.equal(workspaceShortcut({ name: "t" }, true, "draft"), undefined);
 });
 

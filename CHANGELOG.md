@@ -3,6 +3,8 @@
 All notable user-facing changes since the first repository commit.
 
 ## Unreleased
+
+- Replaced the interactive workspace presentation with a responsive OpenTUI surface backed by the existing Workbench data and actions. Added eleven real views, mouse/keyboard/paste navigation, provider-catalog model picker, NOMO theme/monochrome support, local Kitty artwork, and Bun-backed rendering for Node 24 interactive launches. One-shot and piped text snapshots remain on the Node renderer. Added OpenTUI component and PTY tests; existing approvals, ledger, Workbench and active-session model snapshot semantics remain unchanged.
 - The Control Plane exposes an inbound OpenAI-compatible subset at `GET /v1/models`
   and `POST /v1/chat/completions`, using existing bearer auth and Workbench
   policy. It returns JSON or SSE-framed final output, not token-by-token
@@ -132,7 +134,7 @@ All notable user-facing changes since the first repository commit.
 - Google GenAI now rejects candidate content in later SSE frames after
   `finishReason: STOP`, while retaining independent usage-only metadata frames.
   RED reproduced late text and functionCall acceptance (`Missing expected
-  rejection`); GREEN Google fixtures: 10/10. Full Workbench: 787 total, 785
+rejection`); GREEN Google fixtures: 10/10. Full Workbench: 787 total, 785
   passed, 2 skipped, 0 failed; workspace `pnpm run typecheck` passed. No live
   provider request or credentials. Google defines `finishReason` as the reason
   generation stopped, says it is empty while generation continues, and defines
@@ -175,7 +177,7 @@ All notable user-facing changes since the first repository commit.
   Missing/unknown reasons fail closed; `max_tokens`, context-window overflow,
   and `pause_turn` retain explicit errors; other documented reasons are
   accepted. RED provider-native: 5 passed/1 failed (`Missing expected
-  rejection` for missing status); after adding the guard, gateway fixtures
+rejection` for missing status); after adding the guard, gateway fixtures
   needed documented `end_turn`. GREEN native + gateway: 12/12. Full Workbench:
   781 total, 779 passed, 2 skipped, 0 failed; `npm run typecheck` exit 0.
   Independent review found no issues. No provider requests or credentials.
@@ -371,6 +373,7 @@ All notable user-facing changes since the first repository commit.
   the operator allowed and then had to roll back is not a pass. Below two
   cases there is no interval, and the tab says so instead of showing a
   number nobody checked. No score changes a gate, a policy or a permission.
+
 - Settings an operator configured before the rename kept working after it.
   Names like `NOMO_LEDGER_DIR` and `NOMO_DATA_DIR` are the current spelling,
   but a machine whose shell profile, launch agent or `.env` still says
@@ -406,6 +409,7 @@ All notable user-facing changes since the first repository commit.
   their newest state replaced by whatever the old name still held, and there is
   no flag that overrides this. The source is never deleted, moved or written,
   so the migration has a rollback: the tree it came from.
+
 - How an agent learns and how it is scored is now written down, read out of
   the two harnesses NOMO drives rather than assumed, together with what a NOMO
   harness of its own would add. It is a specification and nothing in it has
@@ -434,6 +438,7 @@ All notable user-facing changes since the first repository commit.
   model passes and the statistics must never reach the decision itself. A
   learned rule stays a pause for a human and stays behind the operator's own
   rules, which is what the existing rule mining already says.
+
 - Every limit that governed a run was a literal in the code: 20 turns, 4096
   output tokens, a 32000 character prompt, a 20-deep queue, a 65536 byte
   request, a 32-call tool batch, a 5s hook timeout, and a retry loop tied to
@@ -480,6 +485,7 @@ All notable user-facing changes since the first repository commit.
   profile, starting a turn, and deciding a tool call, so a policy file that
   disappears after the profile was saved fails the turn instead of quietly
   running under a policy the operator never chose.
+
 - The licensing decision behind the taint graph is now written down, and no
   code moved to match it. The graph builder has been Apache 2.0 since the day
   the graph landed, so it cannot be un-licensed by taking it away: anyone
@@ -502,6 +508,7 @@ All notable user-facing changes since the first repository commit.
   Retention beyond seven days has no seven-day bound anywhere in the code at
   all. The rest of the list is absent rather than leaked, and the amendment
   says which is which so the next reader does not re-derive it.
+
 - A missing ledger is now named as the thing the operator passed. `void verify`,
   `void export`, `void attest` and `nomo metrics` resolve the ledger through one
   helper, which returns a result rather than letting `fs.stat` raise: a readable
@@ -608,6 +615,7 @@ All notable user-facing changes since the first repository commit.
   the literal text the registry compares against, because every declared value
   in the registry is a string and a boolean read would match no case while
   appearing to have been measured.
+
 - `void update` updates a local install in place, and an installer script puts
   `void` on your PATH as a checkout you own, with no global package manager
   and no account. The installer checks for Node.js 24 or newer, git and pnpm,
@@ -691,7 +699,7 @@ All notable user-facing changes since the first repository commit.
   record the takeover. The `paused` payload it wrote named only the progress
   and the reason, and carried a `lease-expired` code the payload validator did
   not accept, so the write was refused with `Invalid recovery job progress
-  payload` and the takeover failed instead of being recorded. The payload now
+payload` and the takeover failed instead of being recorded. The payload now
   carries the job ID, the status and the operation ID the validator reads back,
   and `lease-expired` joins `step-unavailable` as the second closed pause code.
   The journal is verified and replayed as a whole, so a code the validator
@@ -705,7 +713,7 @@ All notable user-facing changes since the first repository commit.
   requires the captured values and both recorded digests to equal the
   re-derivation, so a document edited after dispatch can no longer corroborate
   itself on the recovery path. Object connectivity is one `git fsck
-  --connectivity-only` over the parent and the receipt commit instead of one
+--connectivity-only` over the parent and the receipt commit instead of one
   `cat-file` per file, which also covers the parent after its branch is gone.
 - `void_project_info` now answers with where it is being served from and a
   pasteable client configuration, because a caller connecting for the first time
@@ -830,7 +838,6 @@ All notable user-facing changes since the first repository commit.
   answers them. The documentation gate gained the three assertions that stop
   all of this from returning.
 
-
 - An MCP server is now something you agree to rather than something that
   happens to you. Adding one used to contact it immediately: `addConnector`
   fetched the tool catalogue as a side effect of a local write, so a server
@@ -942,7 +949,7 @@ All notable user-facing changes since the first repository commit.
   choosing a configuration, not the product having a default.
 - Companion pairing now requires a host-minted invitation, and this is a
   behaviour change for anyone pairing a device. `POST
-  /api/companion/invitations` mints one; the invitation expires after 120
+/api/companion/invitations` mints one; the invitation expires after 120
   seconds, is accepted exactly once, and can only be minted by the loopback
   host operator, never by a device that already holds a credential. Pairing
   without one is refused. The spend is a single exclusive create rather than a
@@ -971,7 +978,7 @@ All notable user-facing changes since the first repository commit.
 - Evidence: the managed PostgreSQL adapter and the Git commit lifecycle are
   now published capability profiles, so the release gate can no longer ship
   either of them unnamed. `nomo recovery conformance --adapter
-  postgres-managed-conformance` runs five scenarios over an in-process
+postgres-managed-conformance` runs five scenarios over an in-process
   database, including a real cascade subtree and a row-level tenant scope
   executed as an unprivileged role; `--adapter git.managed` runs seven,
   including the commit lifecycle and its durable receipts. The profiles state
@@ -1153,7 +1160,7 @@ All notable user-facing changes since the first repository commit.
   the unguessable token minted with the hold, as the local approval broker
   already required.
 - Give the web composer textarea a visible keyboard focus ring. `.composer
-  textarea { outline: none }` outranked `:focus-visible`, and the halo painted
+textarea { outline: none }` outranked `:focus-visible`, and the halo painted
   the canvas colour on the canvas colour, so a keyboard user had no visible
   focus indicator at all.
 - Return focus to the composer after a run is stopped. Pressing Stop unmounted

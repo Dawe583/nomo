@@ -1,4 +1,4 @@
-import { emitKeypressEvents, type Key } from "node:readline";
+import type { Key } from "node:readline";
 import { spawn } from "node:child_process";
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir, homedir } from "node:os";
@@ -32,7 +32,9 @@ import {
   typeInPalette,
 } from "./palette.ts";
 import { moveHunk, setSide, toggleHunk } from "./diff-panel.ts";
-import { DiffScreenWriter } from "./watch.ts";
+import { handleModelPickerKey } from "./workspace-app-model.ts";
+import { detectCapabilities } from "./caps.ts";
+import type { CliRenderer, KeyEvent as OpenTuiKeyEvent } from "@opentui/core";
 import { sanitizeText } from "./layout.ts";
 import { dataDir as productDataDir } from "../../../ledger/src/paths.ts";
 import { envValue } from "../../../ledger/src/env-compat.ts";
@@ -49,12 +51,20 @@ export function nextModelId(
   direction: -1 | 1,
 ): string | undefined {
   const unique = models.filter(
-    (model, index) => models.findIndex((candidate) => candidate.id === model.id) === index,
+    (model, index) =>
+      models.findIndex((candidate) => candidate.id === model.id) === index,
   );
   if (unique.length < 2) return undefined;
   const index = unique.findIndex((model) => model.id === current);
   const start = index < 0 ? (direction > 0 ? -1 : 0) : index;
   return unique[(start + direction + unique.length) % unique.length]?.id;
+}
+
+export function signalQuitAction(
+  now: number,
+  lastCtrlC: number,
+): "confirm" | "stop" {
+  return isDoubleEscape(now, lastCtrlC) ? "stop" : "confirm";
 }
 
 export type WorkspaceShortcut =
@@ -155,7 +165,10 @@ export class WorkspaceInput {
     if (!this.redoState) return false;
     this.undoState = { value: this.value, cursor: this.cursor };
     this.value = this.redoState.value;
-    this.cursor = Math.min(this.redoState.cursor, [...this.redoState.value].length);
+    this.cursor = Math.min(
+      this.redoState.cursor,
+      [...this.redoState.value].length,
+    );
     this.redoState = undefined;
     return true;
   }
@@ -241,9 +254,14 @@ export class WorkspaceInput {
         lineStarts.push(offset);
         offset += [...line].length + 1;
       }
-      let lineIndex = Math.max(0, lineStarts.findIndex((start, i) =>
-        this.cursor >= start && this.cursor <= start + [...lines[i]!].length,
-      ));
+      let lineIndex = Math.max(
+        0,
+        lineStarts.findIndex(
+          (start, i) =>
+            this.cursor >= start &&
+            this.cursor <= start + [...lines[i]!].length,
+        ),
+      );
       const paragraphStart = (line: number): number => {
         while (line > 0 && !lines[line - 1]!.trim()) line--;
         while (line > 0 && lines[line - 1]!.trim()) line--;
@@ -256,11 +274,15 @@ export class WorkspaceInput {
       };
       if (key.name === "up") {
         const start = paragraphStart(lineIndex);
-        lineIndex = lineIndex === start && start > 0 ? paragraphStart(start - 1) : start;
+        lineIndex =
+          lineIndex === start && start > 0 ? paragraphStart(start - 1) : start;
         this.cursor = lineStarts[lineIndex]!;
       } else {
         const end = paragraphEnd(lineIndex);
-        lineIndex = lineIndex === end && end < lines.length - 1 ? paragraphEnd(end + 1) : end;
+        lineIndex =
+          lineIndex === end && end < lines.length - 1
+            ? paragraphEnd(end + 1)
+            : end;
         this.cursor = lineStarts[lineIndex]! + [...lines[lineIndex]!].length;
       }
       return true;
@@ -303,7 +325,8 @@ export class WorkspaceInput {
       while (pos > 0 && /\s/u.test(points[pos - 1]!)) pos--;
       const previous = points[pos - 1];
       if (previous && WorkspaceInput.isPunctuationChar(previous)) {
-        while (pos > 0 && WorkspaceInput.isPunctuationChar(points[pos - 1]!)) pos--;
+        while (pos > 0 && WorkspaceInput.isPunctuationChar(points[pos - 1]!))
+          pos--;
       } else {
         while (pos > 0 && WorkspaceInput.isWordChar(points[pos - 1]!)) pos--;
       }
@@ -322,9 +345,14 @@ export class WorkspaceInput {
       while (pos < points.length && /\s/u.test(points[pos]!)) pos++;
       const current = points[pos];
       if (current && WorkspaceInput.isPunctuationChar(current)) {
-        while (pos < points.length && WorkspaceInput.isPunctuationChar(points[pos]!)) pos++;
+        while (
+          pos < points.length &&
+          WorkspaceInput.isPunctuationChar(points[pos]!)
+        )
+          pos++;
       } else {
-        while (pos < points.length && WorkspaceInput.isWordChar(points[pos]!)) pos++;
+        while (pos < points.length && WorkspaceInput.isWordChar(points[pos]!))
+          pos++;
       }
       this.cursor = pos;
       return true;
@@ -344,7 +372,10 @@ export class WorkspaceInput {
       }
       return true;
     }
-    if ((key.ctrl && key.name === "w") || (key.meta && key.name === "backspace")) {
+    if (
+      (key.ctrl && key.name === "w") ||
+      (key.meta && key.name === "backspace")
+    ) {
       let start = this.cursor;
       while (start > 0 && /\s/u.test(points[start - 1]!)) start--;
       while (start > 0 && !/\s/u.test(points[start - 1]!)) start--;
@@ -558,6 +589,59 @@ export async function runWorkspaceTui(
       if (arg === "--import-provider") source = value;
     } else throw Error(`Unknown TUI option: ${arg}`);
   }
+  const interactive =
+    !once &&
+    process.stdin.isTTY &&
+    process.stdout.isTTY &&
+    process.env.TERM !== "dumb" &&
+    !process.env.CI;
+  const [nodeMajor, nodeMinor] = process.versions.node.split(".").map(Number);
+  const nodeSupportsOpenTui =
+    nodeMajor! > 26 || (nodeMajor === 26 && nodeMinor! >= 4);
+  if (interactive && !process.versions.bun && !nodeSupportsOpenTui) {
+    try {
+      return await new Promise<number>((resolveExit, reject) => {
+        const child = spawn("bun", [process.argv[1]!, "tui", ...argv], {
+          stdio: "inherit",
+          shell: false,
+          env: process.env,
+        });
+        child.once("error", reject);
+        child.once("exit", (code) => resolveExit(code ?? 1));
+      });
+    } catch {
+      console.error(
+        "Interactive NOMO TUI requires Bun >=1.3.14 or Node >=26.4 with --experimental-ffi. Install Bun or upgrade Node.",
+      );
+      return 1;
+    }
+  }
+  if (
+    interactive &&
+    !process.versions.bun &&
+    nodeSupportsOpenTui &&
+    !process.execArgv.includes("--experimental-ffi")
+  ) {
+    return await new Promise<number>((resolveExit, reject) => {
+      const child = spawn(
+        process.execPath,
+        [
+          ...process.execArgv,
+          "--experimental-ffi",
+          process.argv[1]!,
+          "tui",
+          ...argv,
+        ],
+        {
+          stdio: "inherit",
+          shell: false,
+          env: process.env,
+        },
+      );
+      child.once("error", reject);
+      child.once("exit", (code) => resolveExit(code ?? 1));
+    });
+  }
   const env: NodeJS.ProcessEnv = {
     ...process.env,
     ...(directory ? { NOMO_DATA_DIR: directory } : {}),
@@ -568,11 +652,6 @@ export async function runWorkspaceTui(
   Object.assign(env, normalizeOwnedEnv(env));
   const parsedKeybindings = parseWorkspaceKeybindings(env.NOMO_TUI_KEYBINDINGS);
   const keybindings = parsedKeybindings.bindings;
-  const interactive =
-    process.stdin.isTTY &&
-    process.stdout.isTTY &&
-    process.env.TERM !== "dumb" &&
-    !process.env.CI;
   if (skillIds.length && !projectPath)
     throw Error("--skill requires --project");
   if (projectPath && (once || !interactive)) {
@@ -617,7 +696,9 @@ export async function runWorkspaceTui(
       sandboxConfigured = `${config.runtime} ${config.imageId}`;
     } catch (error) {
       sandboxConfigured =
-        error instanceof Error ? `unavailable: ${error.message}` : "unavailable";
+        error instanceof Error
+          ? `unavailable: ${error.message}`
+          : "unavailable";
     }
     ui.prepareProjectAccess(projectRoot, projectSkills, sandboxConfigured);
   }
@@ -670,14 +751,45 @@ export async function runWorkspaceTui(
   const startedAt = Date.now();
   // NOMO has its own explicit color preference; inherited NO_COLOR must not hide its UI.
   const color = env.NOMO_TUI_COLOR !== "0";
+  const graphicsProtocol = detectCapabilities(
+    env,
+    process.stdout,
+  ).graphicsProtocol;
   const motion = env.NOMO_TUI_MOTION !== "0" && env.TERM !== "dumb";
-  const screen = new DiffScreenWriter(process.stdout);
+  const [
+    { createCliRenderer },
+    { createRoot, flushSync },
+    { createElement },
+    { WorkspaceApp },
+  ] = await Promise.all([
+    import("@opentui/core"),
+    import("@opentui/react"),
+    import("react"),
+    import("./workspace-app.tsx"),
+  ]);
+  const renderer: CliRenderer = await createCliRenderer({
+    exitOnCtrlC: false,
+    exitSignals: [],
+    screenMode: "alternate-screen",
+    useMouse: true,
+    environment: {
+      ...(process.env.NO_COLOR ? { NO_COLOR: process.env.NO_COLOR } : {}),
+    },
+  });
+  const root = createRoot(renderer);
+  let keyHandler: (event: OpenTuiKeyEvent) => void = () => {};
   let busy = false,
     suspended = false,
     stopped = false,
     refreshing = false;
-  const wasRaw = process.stdin.isRaw;
   let timer: NodeJS.Timeout | undefined, draftTimer: NodeJS.Timeout | undefined;
+  const setInputEditing = (editing: boolean, reset = false) => {
+    input.editing = editing;
+    if (reset) {
+      input.cursor = [...input.value].length;
+      suggestion = 0;
+    }
+  };
   const saveDraft = () => {
     if (!input.value.startsWith("/"))
       drafts[ui.sessionId ?? "new"] = input.value;
@@ -703,27 +815,44 @@ export async function runWorkspaceTui(
     }, 500);
   };
   const draw = () => {
-    if (!stopped && !suspended)
-      screen.write(
-        renderWorkspace(
+    if (stopped || suspended) return;
+    flushSync(() =>
+      root.render(
+        createElement(WorkspaceApp, {
           ui,
-          process.stdout.columns ?? 80,
-          process.stdout.rows ?? 24,
-          input.display(),
-          input.editing,
+          input: input.display(),
+          editing: input.editing,
           busy,
-          {
-            now: Date.now(),
-            color: ui.colorOverride ?? color,
-            motion: ui.motionOverride ?? motion,
-            frame: Math.floor((Date.now() - startedAt) / 140),
-            boot: motion && Date.now() - startedAt < 1800,
-            command: input.value,
-            suggestion,
-            cursor: input.cursor,
+          color: ui.colorOverride ?? color,
+          ...(graphicsProtocol === "kitty"
+            ? { graphicsProtocol: "kitty" as const }
+            : {}),
+          onKey: keyHandler,
+          onPaste: (text: string) => {
+            input.pasting = true;
+            input.insert(text);
+            input.pasting = false;
+            try {
+              saveDraft();
+            } catch (error) {
+              ui.notice = message(error);
+            }
+            draw();
           },
-        ),
-      );
+          onTab: (tab: WorkspaceTab) => {
+            void task(async () => {
+              saveDraft();
+              await ui.choose(tab);
+              setInputEditing(tab === "chat");
+            });
+          },
+          onSelect: (index: number) => {
+            ui.selected = index;
+            draw();
+          },
+        }),
+      ),
+    );
   };
   let activeTask: Promise<void> = Promise.resolve();
   const task = (fn: () => Promise<unknown>) => {
@@ -769,10 +898,7 @@ export async function runWorkspaceTui(
     let captured = false;
     await writeFile(file, target.content, { mode: 0o600 });
     suspended = true;
-    process.stdin.setRawMode(false);
-    process.stdin.pause();
-    screen.leave();
-    process.stdout.write("\x1b[?2004l");
+    await renderer.suspend();
     try {
       const code = await new Promise<number | null>((done, reject) => {
         const child = spawn(config[0], [...config.slice(1), file], {
@@ -796,12 +922,7 @@ export async function runWorkspaceTui(
     } finally {
       if (captured) await rm(temp, { recursive: true, force: true });
       suspended = false;
-      if (!stopped) {
-        process.stdin.setRawMode(true);
-        process.stdin.resume();
-        screen.enter();
-        process.stdout.write("\x1b[?2004h");
-      }
+      if (!stopped) await renderer.resume();
     }
   };
   return new Promise<number>((resolveDone) => {
@@ -810,17 +931,13 @@ export async function runWorkspaceTui(
       stopped = true;
       clearInterval(timer);
       clearTimeout(draftTimer);
-      process.stdin.off("keypress", onKey);
-      process.stdout.off("resize", draw);
-      process.stdin.setRawMode(wasRaw);
-      process.stdin.pause();
-      process.off("SIGINT", stop);
-      process.off("SIGTERM", stop);
-      process.off("SIGHUP", stop);
+      process.off("SIGINT", stopOnSigint);
+      process.off("SIGTERM", stopOnSigterm);
+      process.off("SIGHUP", stopOnSighup);
       process.off("exit", restoreTerminal);
       process.off("uncaughtExceptionMonitor", restoreTerminal);
-      screen.leave();
-      process.stdout.write("\x1b[?2004l");
+      root.unmount();
+      renderer.destroy();
     };
     const stop = () => {
       if (stopped) return;
@@ -840,6 +957,7 @@ export async function runWorkspaceTui(
         app.close();
         await activeTask;
         await app.settled();
+        await renderer.closed;
       })().then(
         () => resolveDone(draftError ? 1 : 0),
         () => {
@@ -850,6 +968,19 @@ export async function runWorkspaceTui(
         },
       );
     };
+    const stopOnSigint = () => {
+      const now = Date.now();
+      if (signalQuitAction(now, lastCtrlC) === "stop") {
+        lastCtrlC = 0;
+        stop();
+        return;
+      }
+      lastCtrlC = now;
+      ui.notice = "Press Ctrl+C again to exit.";
+      draw();
+    };
+    const stopOnSigterm = () => stop();
+    const stopOnSighup = () => stop();
     const submit = async () => {
       const original = input.value,
         oldSession = ui.sessionId ?? "new";
@@ -875,6 +1006,13 @@ export async function runWorkspaceTui(
     };
     const onKey = async (value: string | undefined, key: Key) => {
       if (stopped || suspended) return;
+      const pickerResult = handleModelPickerKey(ui, value, key);
+      if (pickerResult !== false) {
+        if (typeof pickerResult === "string")
+          await task(async () => ui.selectModel(pickerResult));
+        else draw();
+        return;
+      }
       // An open palette consumes every key except the ones it binds itself.
       // Letting the key fall through would move tabs or run a shortcut behind
       // a filter surface, which is how a search box starts deleting work.
@@ -1040,16 +1178,17 @@ export async function runWorkspaceTui(
       if (!ctrlC) lastCtrlC = 0;
       // Double Escape must be consecutive, not span commands typed in between.
       if (key.name !== "escape") lastEsc = 0;
-      if (ctrlC && !input.pasting && !input.value && isDoubleEscape(Date.now(), lastCtrlC)) {
+      if (
+        ctrlC &&
+        !input.pasting &&
+        !input.value &&
+        isDoubleEscape(Date.now(), lastCtrlC)
+      ) {
         lastCtrlC = 0;
         stop();
         return;
       }
-      if (
-        !input.pasting &&
-        (ctrlC || key.name === "escape") &&
-        app.running()
-      ) {
+      if (!input.pasting && (ctrlC || key.name === "escape") && app.running()) {
         try {
           const session = ui.session();
           if (session?.status === "running") {
@@ -1141,7 +1280,6 @@ export async function runWorkspaceTui(
           });
         } else {
           lastCtrlL = nowL;
-          screen.redraw();
           draw();
         }
         return;
@@ -1265,23 +1403,19 @@ export async function runWorkspaceTui(
       // only the default for future conversations, matching `/model <id>`.
       if (!input.pasting && key.meta && key.name === "m") {
         const models = ui.provider?.models ?? [];
-        const selected = nextModelId(
-          models,
-          ui.model,
-          key.shift ? -1 : 1,
-        );
+        const selected = nextModelId(models, ui.model, key.shift ? -1 : 1);
         if (selected) {
           void task(() => ui.command(`/model ${selected}`));
         } else {
-          ui.notice = "No other models are available for the configured provider.";
+          ui.notice =
+            "No other models are available for the configured provider.";
           draw();
         }
         return;
       }
       if (!input.pasting && key.meta && key.name === "p") {
-        ui.choose("models");
+        ui.openModelPicker();
         input.editing = false;
-        ui.notice = "Models. Enter picks the model for new conversations.";
         draw();
         return;
       }
@@ -1533,18 +1667,16 @@ export async function runWorkspaceTui(
       }
       draw();
     };
-    emitKeypressEvents(process.stdin);
-    process.stdin.setRawMode(true);
-    process.stdin.resume();
-    process.stdin.on("keypress", onKey);
-    process.stdout.on("resize", draw);
-    process.once("SIGINT", stop);
-    process.once("SIGTERM", stop);
-    process.once("SIGHUP", stop);
+    process.on("SIGINT", stopOnSigint);
+    process.on("SIGTERM", stopOnSigterm);
+    process.on("SIGHUP", stopOnSighup);
     process.once("exit", restoreTerminal);
     process.once("uncaughtExceptionMonitor", restoreTerminal);
-    screen.enter();
-    process.stdout.write("\x1b[?2004h");
+    keyHandler = (event: OpenTuiKeyEvent) => {
+      if (event.eventType !== "press" && event.eventType !== "repeat") return;
+      const value = event.name.length === 1 ? event.name : undefined;
+      void onKey(value, event as unknown as Key);
+    };
     draw();
     timer = setInterval(() => {
       if (refreshing || stopped || suspended) return;

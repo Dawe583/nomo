@@ -16,7 +16,10 @@ import { PROVIDER_PRESETS } from "../../../workbench/src/provider-defaults.ts";
 import { canonicalJson } from "../../../ledger/src/canonical.ts";
 import type { JsonlEntry } from "../../../ledger/src/store.ts";
 import { mineLearnedRules } from "../../../workbench/src/learned-rules.ts";
-import { measureBoard, unmeasuredMetrics } from "../../../workbench/src/harness-scores.ts";
+import {
+  measureBoard,
+  unmeasuredMetrics,
+} from "../../../workbench/src/harness-scores.ts";
 
 import { harnessSettingsView } from "../../../workbench/src/harness-settings.ts";
 import {
@@ -41,7 +44,7 @@ import {
   type SymbolPreset,
   paintWithPalette,
 } from "./theme.ts";
-import { brandHeader } from "./brand.ts";
+import { brandHeader, loadLocalTabIcons, type LocalTabIcons } from "./brand.ts";
 import { runDoctorCommand } from "../doctor.ts";
 import { runInitCommand } from "../init.ts";
 import { runConformanceCommand } from "../conformance.ts";
@@ -181,6 +184,12 @@ export function workspaceTab(value: string): WorkspaceTab | undefined {
     ? (value as WorkspaceTab)
     : undefined;
 }
+export type ModelPickerState = {
+  readonly open: true;
+  readonly query: string;
+  readonly selected: number;
+  readonly models: readonly { readonly id: string; readonly name: string }[];
+};
 type Item = {
   id: string;
   label: string;
@@ -284,7 +293,8 @@ const text = (value: unknown) => String(value ?? "unknown");
 const escapeTerminalText = (value: string) =>
   value.replace(
     /[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u202a-\u202e\u2060-\u2069\ufeff]/gu,
-    (character) => `\\u${character.codePointAt(0)!.toString(16).padStart(4, "0")}`,
+    (character) =>
+      `\\u${character.codePointAt(0)!.toString(16).padStart(4, "0")}`,
   );
 /** A workspace chain is one score case, even when several sessions display it. */
 const verifiedScoreCases = (
@@ -687,7 +697,6 @@ const APPROVAL_EVIDENCE_LABELS = {
 } as const;
 const UNDO_OPERATION_LABEL = "Operation: ";
 
-
 /** Approval evidence for the decision screen. Tool, class, radius and the
  * matched registry case prose come from the hold when the server supplies
  * them. Rule id, precondition details and postcondition render as unknown
@@ -1048,6 +1057,7 @@ export class WorkspaceTui {
   colorOverride?: boolean;
   motionOverride?: boolean;
   themeConfig: ThemeConfig;
+  readonly localTabIcons: LocalTabIcons | undefined;
   queuedPrompt: string | null = null;
   queuedPromptPaused = false;
   /** Live command palette. Present means the overlay owns the keyboard. */
@@ -1079,6 +1089,8 @@ export class WorkspaceTui {
     key: string;
   };
   provider?: Awaited<ReturnType<Workbench["providerState"]>>;
+  modelPicker?: ModelPickerState;
+  modelCatalogStatus: "idle" | "ready" | "unavailable" = "idle";
   proofs = new Map<string, JsonlEntry[]>();
   proofErrors = new Map<string, string>();
   /**
@@ -1098,12 +1110,23 @@ export class WorkspaceTui {
     this.env = env;
     this.proxy = new ProxyWorkspace(env);
     this.themeConfig = getThemeConfig(env);
+    this.localTabIcons =
+      env.NOMO_TUI_COLOR !== "0" &&
+      env.TERM_PROGRAM === "ghostty" &&
+      env.TERM === "xterm-ghostty"
+        ? loadLocalTabIcons(env)
+        : undefined;
   }
   async initialize() {
     try {
       this.provider = await this.workbench.providerState();
       this.model = this.provider.defaultModel ?? "";
+      this.modelCatalogStatus =
+        this.provider.connected && this.provider.models.length > 0
+          ? "ready"
+          : "unavailable";
     } catch (error) {
+      this.modelCatalogStatus = "unavailable";
       this.notice = message(error);
     }
     await this.refresh(true);
@@ -1117,6 +1140,10 @@ export class WorkspaceTui {
     if (!force && stamp === this.proofStamp) return;
     this.proofStamp = stamp;
     this.provider = await this.workbench.providerState();
+    this.modelCatalogStatus =
+      this.provider.connected && this.provider.models.length > 0
+        ? "ready"
+        : "unavailable";
     this.proofs.clear();
     this.proofErrors.clear();
     // Every managed workspace verifies with the same resolved key, so the
@@ -1150,6 +1177,11 @@ export class WorkspaceTui {
   }
   choose(tab: WorkspaceTab) {
     this.tab = tab;
+    if (tab === "models")
+      this.modelCatalogStatus =
+        this.provider?.connected && this.provider.models.length > 0
+          ? "ready"
+          : "unavailable";
     this.selected = 0;
     this.scroll = tab === "chat" ? -1 : 0;
     this.detail = undefined;
@@ -1173,6 +1205,45 @@ export class WorkspaceTui {
           WORKSPACE_TABS.length
       ]!,
     );
+  }
+  openModelPicker() {
+    const models =
+      this.modelCatalogStatus === "ready"
+        ? [...(this.provider?.models ?? [])]
+        : [];
+    this.modelPicker = {
+      open: true,
+      query: "",
+      selected: Math.max(
+        0,
+        models.findIndex((model) => model.id === this.model),
+      ),
+      models,
+    };
+    if (this.modelCatalogStatus !== "ready")
+      this.notice = "Connect a provider before choosing a model.";
+  }
+  closeModelPicker() {
+    this.modelPicker = undefined;
+  }
+  selectModel(modelId: string) {
+    const picker = this.modelPicker;
+    if (!picker?.open)
+      throw new Error("Open /models before selecting a model.");
+    if (
+      this.modelCatalogStatus !== "ready" ||
+      !picker.models.some((entry) => entry.id === modelId)
+    )
+      throw new Error(
+        "Model is not in the current connected-provider catalog.",
+      );
+    this.workbench.patchPreferences({ defaultModel: modelId });
+    this.model = modelId;
+    if (this.provider)
+      this.provider = { ...this.provider, defaultModel: modelId };
+    this.closeModelPicker();
+    this.notice =
+      "Future conversations use this model; active conversations keep their model.";
   }
   cycleMode() {
     const next =
@@ -2000,10 +2071,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
             "The signed chain records the approval and activation.",
           ];
         } else {
-          await this.workbench.rejectHarnessProposal(
-            sessionId,
-            match.digest,
-          );
+          await this.workbench.rejectHarnessProposal(sessionId, match.digest);
           this.notice = `Harness proposal rejected: ${match.digest.slice(0, 8)}.`;
           this.detail = [
             "HARNESS PROPOSAL REJECTED",
@@ -2803,7 +2871,9 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         lines: json(c),
       }));
     if (this.tab === "models")
-      rows = (this.provider?.models ?? []).map((m) => ({
+      rows = (
+        this.modelCatalogStatus === "ready" ? (this.provider?.models ?? []) : []
+      ).map((m) => ({
         id: m.id,
         // The [*] marker is what says which model new conversations get. The
         // glyph in front is only a shape to scan by; the marker stays.
@@ -3780,7 +3850,8 @@ ${(doc.content ?? "").slice(0, 2000)}`;
           ? [
               `Lock drift: ${drifted.map((skill) => skill.id).join(", ")}`,
               ...drifted.map(
-                (skill) => `  ${skill.id}: locked ${skill.lockedHash}; current ${skill.actualHash}`,
+                (skill) =>
+                  `  ${skill.id}: locked ${skill.lockedHash}; current ${skill.actualHash}`,
               ),
             ]
           : ["Lock drift: none"]),
@@ -4143,6 +4214,10 @@ ${(doc.content ?? "").slice(0, 2000)}`;
     const updated = recordPaletteCommand(baseState, fullCmd);
     this.paletteState = { recent: new Map(updated.recent) };
     const tab = workspaceTab(cmd);
+    if (cmd === "models") {
+      this.openModelPicker();
+      return;
+    }
     if (tab) {
       this.choose(tab);
       this.filter = arg;
@@ -4880,7 +4955,9 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         await this.workbench.verifySubagent(parentId, childId);
         const current = this.workbench.get(childId);
         if (!current || current.parentId !== parentId)
-          throw Error("Selected child relationship changed. Refresh the sessions inspector.");
+          throw Error(
+            "Selected child relationship changed. Refresh the sessions inspector.",
+          );
         if (!["running", "queued", "paused"].includes(current.status))
           throw Error("This child is not in a cancellable state.");
         const apply = async () =>
@@ -4900,7 +4977,10 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         return;
       }
       if (arg === "review") {
-        const result = await this.workbench.subagentResult(selected.parentId, selected.id);
+        const result = await this.workbench.subagentResult(
+          selected.parentId,
+          selected.id,
+        );
         if (!result) throw Error("No settled successful result is available.");
         const current = this.workbench.get(selected.id);
         if (
@@ -4921,16 +5001,24 @@ ${(doc.content ?? "").slice(0, 2000)}`;
           preview,
         ];
         if (result.truncated) {
-          this.detail = [...lines, "", "Delivery unavailable: result may be incomplete."];
-          this.notice = "Result may be truncated; preview only, delivery blocked.";
+          this.detail = [
+            ...lines,
+            "",
+            "Delivery unavailable: result may be incomplete.",
+          ];
+          this.notice =
+            "Result may be truncated; preview only, delivery blocked.";
           return;
         }
         this.confirmation = {
           title: "DELIVER SUBAGENT RESULT?",
           lines,
-          apply: async () => this.workbench.deliverSubagentResult(
-            current.parentId!, current.id, result.runId,
-          ),
+          apply: async () =>
+            this.workbench.deliverSubagentResult(
+              current.parentId!,
+              current.id,
+              result.runId,
+            ),
         };
         return;
       }
@@ -4993,10 +5081,18 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       return;
     }
     if (cmd === "model") {
-      if (!this.provider?.models.some((m) => m.id === arg))
-        throw Error("Select an ID from /models.");
+      if (
+        this.modelCatalogStatus !== "ready" ||
+        !this.provider?.models.some((m) => m.id === arg)
+      )
+        throw Error(
+          "Select a current connected-provider model ID from /models.",
+        );
+      this.workbench.patchPreferences({ defaultModel: arg });
       this.model = arg;
-      this.notice = `Model for new conversations: ${arg}`;
+      if (this.provider)
+        this.provider = { ...this.provider, defaultModel: arg };
+      this.notice = `Model for new conversations: ${arg}; active conversation keeps its model.`;
       return;
     }
     if (cmd === "connect" || cmd === "login") {
@@ -5004,6 +5100,10 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         this.provider = await this.workbench.providerState({
           reconnectEnvironment: true,
         });
+        this.modelCatalogStatus =
+          this.provider.connected && this.provider.models.length > 0
+            ? "ready"
+            : "unavailable";
         this.detail = this.providerLines();
         this.notice =
           !this.provider.providerId || this.provider.providerId === "nvidia"
@@ -5077,109 +5177,114 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       );
       return;
     }
-     // Prompt proposals are inert until one of these names their exact digest.
-     // Listing shows diffs; only approve activates, only reject settles, and
-     // both refuse an unknown digest rather than guessing. Approval runs through
-     // a confirmation that prints the complete proposal first: it is the one
-     // path that changes the prompt every later conversation runs under.
-     if (cmd === "harness") {
-       const [verb = "", ...rest] = arg.split(/\s+/).filter(Boolean);
-       if (verb === "scores") {
-         const board = measureBoard(
-           verifiedScoreCases(this.proofs),
-           new Date().toISOString(),
-         );
-         const firstPass = board.metrics.first_pass_rate;
-         this.detail = [
-           `HARNESS SCORES, verdict: ${board.verdict}`,
-           `First-pass rate: ${firstPass.mean === null ? "unmeasured" : `${(firstPass.mean * 100).toFixed(1)}%`}`,
-           `95% CI: ${firstPass.half === null ? "unavailable" : `±${(firstPass.half * 100).toFixed(1)}%`}`,
-           `Sample count: ${firstPass.n} first-pass samples`,
-           `Case count: ${board.caseCount} verified tool-call cases`,
-           `Reason: ${board.reasons.join("; ")}.`,
-           ...unmeasuredMetrics(board).map(
-             (key) => `${key}: no sample, so no rate can be computed.`,
-           ),
-           "Descriptive only; never changes a decision or permission.",
-         ];
-         this.scroll = 0;
-         return;
-       }
-       if (verb === "review") {
-         if (!this.sessionId) throw Error("Select a conversation.");
-         const sessionId = this.sessionId;
-         this.confirmation = {
-           title: "REQUEST A HARNESS REVIEW?",
-           lines: [
-             "This may spend one model call: the reviewer looks for a durable lesson in the signed chain.",
-             "The settled-turn interval is skipped because you asked; the harness switch, the cooldown and the nothing-new check still apply, and a refusal costs nothing.",
-             "If the conversation is running, the request is recorded and served at the next settled boundary.",
-             "The reviewer can only propose. Nothing is activated without your approval.",
-           ],
-           apply: async () => {
-             this.confirmation = undefined;
-             const result = await this.workbench.requestHarnessReview(sessionId);
-             const note = escapeTerminalText(result.note);
-             this.notice = `Harness review ${result.kind}. ${note}`;
-             this.detail = [
-               `HARNESS REVIEW ${result.kind.toUpperCase()}`,
-               "",
-               note,
-               ...(result.kind === "ran"
-                 ? [
-                     "",
-                     "The signed chain records the outcome. /harness lists any proposal awaiting a decision.",
-                   ]
-                 : []),
-               "",
-               "The reviewer can only propose. Nothing is activated without your approval.",
-             ];
-             this.scroll = 0;
-             await this.refresh(true);
-           },
-         };
-         this.scroll = 0;
-         return;
-       }
-       if (verb === "approve" || verb === "reject") {
-         await this.prepareHarnessDecision(rest.join(" "), verb);
-         return;
-       }
-       if (verb && verb !== "cloud" && verb !== "prime-agent")
-         throw Error("/harness cloud | prime-agent | scores | review | approve DIGEST | reject DIGEST");
-       if (verb) {
-         this.workbench.patchPreferences({ defaultAgent: verb });
-         this.notice =
-           verb === "prime-agent"
-             ? "Harness: prime-agent. New conversations route there when the bridge runs."
-             : "Harness: cloud. New conversations run in the managed session.";
-       }
-       const prefs = this.workbench.getPreferences();
-       const found = await detectHarnesses(this.env);
-       const pending = this.sessionId ? await this.workbench.pendingApprovalsFor(this.sessionId) : [];
-       this.detail = [
-         `HARNESS, current default: ${prefs.defaultAgent ?? "cloud"}`,
-         "",
-         "cloud: managed session in this workspace, approvals in the TUI.",
-         "prime-agent: local harness CLI for team agents, needs the bridge.",
-         "",
-         ...found.map(
-           (item) => `${item.id}: ${item.path ?? "not detected on PATH"}`,
-         ),
-         "",
-         ...pending.map((approval) =>
-           `${approval.digest.slice(0, 8)}… ${escapeTerminalText(approval.summary)} (${approval.proposal.edits.length} edits)`,
-         ),
-         pending.length
-           ? "/harness approve DIGEST or /harness reject DIGEST opens the exact proposal for confirmation."
-           : "No Harness proposals are awaiting an operator decision.",
-         "",
-         "/harness cloud | /harness prime-agent switches the default; /harness scores reports verified chains.",
-         "/harness review asks the reviewer by hand; /harness approve DIGEST or /harness reject DIGEST shows the complete proposal before confirmation.",
-       ];
-       this.scroll = 0;
-       return;
-     }
+    // Prompt proposals are inert until one of these names their exact digest.
+    // Listing shows diffs; only approve activates, only reject settles, and
+    // both refuse an unknown digest rather than guessing. Approval runs through
+    // a confirmation that prints the complete proposal first: it is the one
+    // path that changes the prompt every later conversation runs under.
+    if (cmd === "harness") {
+      const [verb = "", ...rest] = arg.split(/\s+/).filter(Boolean);
+      if (verb === "scores") {
+        const board = measureBoard(
+          verifiedScoreCases(this.proofs),
+          new Date().toISOString(),
+        );
+        const firstPass = board.metrics.first_pass_rate;
+        this.detail = [
+          `HARNESS SCORES, verdict: ${board.verdict}`,
+          `First-pass rate: ${firstPass.mean === null ? "unmeasured" : `${(firstPass.mean * 100).toFixed(1)}%`}`,
+          `95% CI: ${firstPass.half === null ? "unavailable" : `±${(firstPass.half * 100).toFixed(1)}%`}`,
+          `Sample count: ${firstPass.n} first-pass samples`,
+          `Case count: ${board.caseCount} verified tool-call cases`,
+          `Reason: ${board.reasons.join("; ")}.`,
+          ...unmeasuredMetrics(board).map(
+            (key) => `${key}: no sample, so no rate can be computed.`,
+          ),
+          "Descriptive only; never changes a decision or permission.",
+        ];
+        this.scroll = 0;
+        return;
+      }
+      if (verb === "review") {
+        if (!this.sessionId) throw Error("Select a conversation.");
+        const sessionId = this.sessionId;
+        this.confirmation = {
+          title: "REQUEST A HARNESS REVIEW?",
+          lines: [
+            "This may spend one model call: the reviewer looks for a durable lesson in the signed chain.",
+            "The settled-turn interval is skipped because you asked; the harness switch, the cooldown and the nothing-new check still apply, and a refusal costs nothing.",
+            "If the conversation is running, the request is recorded and served at the next settled boundary.",
+            "The reviewer can only propose. Nothing is activated without your approval.",
+          ],
+          apply: async () => {
+            this.confirmation = undefined;
+            const result = await this.workbench.requestHarnessReview(sessionId);
+            const note = escapeTerminalText(result.note);
+            this.notice = `Harness review ${result.kind}. ${note}`;
+            this.detail = [
+              `HARNESS REVIEW ${result.kind.toUpperCase()}`,
+              "",
+              note,
+              ...(result.kind === "ran"
+                ? [
+                    "",
+                    "The signed chain records the outcome. /harness lists any proposal awaiting a decision.",
+                  ]
+                : []),
+              "",
+              "The reviewer can only propose. Nothing is activated without your approval.",
+            ];
+            this.scroll = 0;
+            await this.refresh(true);
+          },
+        };
+        this.scroll = 0;
+        return;
+      }
+      if (verb === "approve" || verb === "reject") {
+        await this.prepareHarnessDecision(rest.join(" "), verb);
+        return;
+      }
+      if (verb && verb !== "cloud" && verb !== "prime-agent")
+        throw Error(
+          "/harness cloud | prime-agent | scores | review | approve DIGEST | reject DIGEST",
+        );
+      if (verb) {
+        this.workbench.patchPreferences({ defaultAgent: verb });
+        this.notice =
+          verb === "prime-agent"
+            ? "Harness: prime-agent. New conversations route there when the bridge runs."
+            : "Harness: cloud. New conversations run in the managed session.";
+      }
+      const prefs = this.workbench.getPreferences();
+      const found = await detectHarnesses(this.env);
+      const pending = this.sessionId
+        ? await this.workbench.pendingApprovalsFor(this.sessionId)
+        : [];
+      this.detail = [
+        `HARNESS, current default: ${prefs.defaultAgent ?? "cloud"}`,
+        "",
+        "cloud: managed session in this workspace, approvals in the TUI.",
+        "prime-agent: local harness CLI for team agents, needs the bridge.",
+        "",
+        ...found.map(
+          (item) => `${item.id}: ${item.path ?? "not detected on PATH"}`,
+        ),
+        "",
+        ...pending.map(
+          (approval) =>
+            `${approval.digest.slice(0, 8)}… ${escapeTerminalText(approval.summary)} (${approval.proposal.edits.length} edits)`,
+        ),
+        pending.length
+          ? "/harness approve DIGEST or /harness reject DIGEST opens the exact proposal for confirmation."
+          : "No Harness proposals are awaiting an operator decision.",
+        "",
+        "/harness cloud | /harness prime-agent switches the default; /harness scores reports verified chains.",
+        "/harness review asks the reviewer by hand; /harness approve DIGEST or /harness reject DIGEST shows the complete proposal before confirmation.",
+      ];
+      this.scroll = 0;
+      return;
+    }
     if (cmd === "rename") {
       if (!this.sessionId) throw Error("Select a conversation.");
       this.workbench.patchSession(this.sessionId, { title: arg });
@@ -5348,6 +5453,14 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         ...this.confirmation.lines.flatMap((l) => l.split("\n")),
       ];
     if (this.detail) return this.detail;
+    if (this.tab === "models" && this.modelCatalogStatus !== "ready")
+      return [
+        "MODELS",
+        "",
+        this.modelCatalogStatus === "unavailable"
+          ? "Connect a provider to load its model catalog."
+          : "The connected provider model catalog is unavailable.",
+      ];
     if (
       this.tab === "ledger" &&
       (this.proofErrors.size || this.proxy.errors.length)
@@ -5865,6 +5978,7 @@ export function transcript(events: readonly SessionEvent[]): string[] {
 type ChatRow = {
   text: string;
   style: "user" | "assistant" | "heading" | "code" | "tool" | "error" | "text";
+  promptStart?: boolean;
 };
 /** Terminal-only presentation. Never evaluate Markdown, HTML or terminal escapes. */
 export function chatRows(
@@ -5874,8 +5988,15 @@ export function chatRows(
 ): ChatRow[] {
   const rows: ChatRow[] = [];
   let partial = "";
-  const add = (value: string, style: ChatRow["style"]) => {
-    rows.push(...wrap([value], width).map((text) => ({ text, style })));
+  const add = (value: string, style: ChatRow["style"], promptStart = false) => {
+    const wrapped = wrap([value], width);
+    rows.push(
+      ...wrapped.map((text, index) => ({
+        text,
+        style,
+        ...(promptStart && index === 0 ? { promptStart: true } : {}),
+      })),
+    );
   };
   const messageRows = (
     value: string,
@@ -5883,7 +6004,7 @@ export function chatRows(
     label: string,
     spacerAfter = true,
   ) => {
-    add(label, kind === "usage" ? "text" : kind);
+    add(label, kind === "usage" ? "text" : kind, kind === "user");
     let fence = "",
       lineNumber = 0;
     for (const raw of value.split("\n")) {
@@ -6077,7 +6198,10 @@ export const TUI_COMMANDS = [
   ["/export", "Save ledger, chat or document"],
   ["/attest", "Signed slice for a third party"],
   ["/providers", "Model providers and local open models"],
-  ["/harness", "Agent harness: cloud, prime-agent, scores, review, approve, reject"],
+  [
+    "/harness",
+    "Agent harness: cloud, prime-agent, scores, review, approve, reject",
+  ],
   ["/login", "Connect a provider"],
   ["/logout", "Disconnect the provider"],
   ["/verify", "Verify signatures"],
@@ -6141,7 +6265,8 @@ const COMMAND_ARGUMENTS: Record<string, string> = {
   "/export": "ledger, chat or document",
   "/filter": "text",
   "/settings": "key value",
-  "/harness": "cloud, prime-agent, scores, review, approve DIGEST, reject DIGEST",
+  "/harness":
+    "cloud, prime-agent, scores, review, approve DIGEST, reject DIGEST",
   "/theme": "color, mono, motion, still or reset",
   "/approve": "hold-ID [reason]",
   "/deny": "hold-ID [reason]",
@@ -6502,7 +6627,8 @@ export function renderWorkspace(
       );
     });
   } else {
-    const model = ui.session()?.model || ui.model || "Connect a model with /connect";
+    const model =
+      ui.session()?.model || ui.model || "Connect a model with /connect";
     header.push(
       fit(
         ink("▣ NOMO", `1;${ice}`) +
@@ -6538,33 +6664,33 @@ export function renderWorkspace(
         width,
       ),
     );
-  // An underline under the tab row gives the selected panel a second signal
-  // that survives a monochrome terminal, and the active bar animates its
-  // weight so the eye lands on it without any colour change.
-  //
-  // It costs a row, and every extra row has to come out of the body. It is
-  // therefore added before the body height is computed, never after, so
-  // header.length already accounts for it. Adding it later and patching the
-  // arithmetic is how the frame stops being exactly height rows tall.
-  //
-  // The reserve below is the smallest frame worth decorating: header, one row
-  // of underline, two body rows, the summary and status rows and the three
-  // composer rows. Anything narrower keeps the body instead.
-  if (height - header.length >= 12)
-    header.push(
-      fit(
-        tabs
-          .map((t) => {
-            const label = `${TAB_ICONS[t]} ${t} `;
-            return ink(
-              tabUnderline(t === ui.tab, visibleLength(label), motion),
-              t === ui.tab ? ice : mutedAnsi,
-            );
-          })
-          .join(""),
-        width,
-      ),
-    );
+    // An underline under the tab row gives the selected panel a second signal
+    // that survives a monochrome terminal, and the active bar animates its
+    // weight so the eye lands on it without any colour change.
+    //
+    // It costs a row, and every extra row has to come out of the body. It is
+    // therefore added before the body height is computed, never after, so
+    // header.length already accounts for it. Adding it later and patching the
+    // arithmetic is how the frame stops being exactly height rows tall.
+    //
+    // The reserve below is the smallest frame worth decorating: header, one row
+    // of underline, two body rows, the summary and status rows and the three
+    // composer rows. Anything narrower keeps the body instead.
+    if (height - header.length >= 12)
+      header.push(
+        fit(
+          tabs
+            .map((t) => {
+              const label = `${TAB_ICONS[t]} ${t} `;
+              return ink(
+                tabUnderline(t === ui.tab, visibleLength(label), motion),
+                t === ui.tab ? ice : mutedAnsi,
+              );
+            })
+            .join(""),
+          width,
+        ),
+      );
   }
   // A travelling wave under the header while a run is in flight. It is
   // attention, never the only signal: the status row below still names the
@@ -6648,34 +6774,35 @@ export function renderWorkspace(
   const legendRows = spaciousShell
     ? SPACIOUS_NAVIGATION_HINT
     : paletteView
-    ? renderShortcutLegend(
-        { editing: false, confirming: false, running: false, pending: 0 },
-        { width, caps },
-      )
-    : renderShortcutLegend(
-        {
-          editing,
-          confirming: !!ui.confirmation,
-          running,
-          pending: holds,
-        },
-        {
-          width,
-          caps,
-          symbolPreset: ui.themeConfig.symbolPreset,
-          colorTheme: ui.themeConfig.colorTheme,
-          paint: visuals.color && !spaciousShell
-            ? (text, tone, bold) =>
-                paintWithPalette(
-                  text,
-                  tone,
-                  getPalette(ui.themeConfig.colorTheme),
-                  caps,
-                  bold,
-                )
-            : undefined,
-        },
-      );
+      ? renderShortcutLegend(
+          { editing: false, confirming: false, running: false, pending: 0 },
+          { width, caps },
+        )
+      : renderShortcutLegend(
+          {
+            editing,
+            confirming: !!ui.confirmation,
+            running,
+            pending: holds,
+          },
+          {
+            width,
+            caps,
+            symbolPreset: ui.themeConfig.symbolPreset,
+            colorTheme: ui.themeConfig.colorTheme,
+            paint:
+              visuals.color && !spaciousShell
+                ? (text, tone, bold) =>
+                    paintWithPalette(
+                      text,
+                      tone,
+                      getPalette(ui.themeConfig.colorTheme),
+                      caps,
+                      bold,
+                    )
+                : undefined,
+          },
+        );
   // A run in flight may get a timeline above the status bar. What it would
   // cost is measured here; whether it is affordable is decided below, from
   // the shared budget rather than from a second guess at the same numbers.
@@ -6716,7 +6843,8 @@ export function renderWorkspace(
     banner.length +
     composerHeight +
     composerFrameRows +
-    summaryRowsCount + 1 /* the summary rows plus the final status row */ +
+    summaryRowsCount +
+    1 /* the summary rows plus the final status row */ +
     menu.length +
     1; /* one row of body, always */
   let spare = Math.max(0, height - reserved);
@@ -6740,16 +6868,14 @@ export function renderWorkspace(
   // row ahead of the legend below it.
   const shownRuleRows =
     !spaciousShell &&
-    (spare > legendRows.length ||
-      (summaryRowsCount === 1 && spare >= 1))
+    (spare > legendRows.length || (summaryRowsCount === 1 && spare >= 1))
       ? [separator(width, motion, running)]
       : [];
   spare -= shownRuleRows.length;
 
   // The legend is advice, and /keybindings carries the same list, so it takes
   // whatever is left and no more.
-  const shownLegendRows =
-    spare >= legendRows.length ? legendRows : [];
+  const shownLegendRows = spare >= legendRows.length ? legendRows : [];
   spare -= shownLegendRows.length;
 
   const ruleRows = shownRuleRows;
@@ -6801,7 +6927,12 @@ export function renderWorkspace(
   // The palette windows its own list internally and the window follows the
   // selection, so the body always starts at the top here.
   if (paletteView) offset = 0;
-  else if (!ui.detail && !ui.confirmation && ui.tab === "chat" && ui.scroll < 0) {
+  else if (
+    !ui.detail &&
+    !ui.confirmation &&
+    ui.tab === "chat" &&
+    ui.scroll < 0
+  ) {
     // A one-row live chat viewport must follow content, not the blank code row
     // after a streamed newline.
     let followEnd = lines.length;
@@ -6840,7 +6971,7 @@ export function renderWorkspace(
   // label by style; plain transcript rows end with the YOU marker instead.
   ui.promptRows = lines
     .map((line, index) =>
-      styled?.[index]?.style === "user" ||
+      styled?.[index]?.promptStart ||
       line.startsWith(`${roleIcon("user")} YOU`) ||
       / YOU$/.test(line)
         ? index
@@ -6904,10 +7035,8 @@ export function renderWorkspace(
           paint: (value) => (visuals.color ? ink(value, `1;${amber}`) : value),
         })
       : pad(line, width - 4);
-    const approvalTitle =
-      approvalReviewOpen && line === ui.confirmation?.title;
-    const undoTitle =
-      undoConfirmationOpen && line === ui.confirmation?.title;
+    const approvalTitle = approvalReviewOpen && line === ui.confirmation?.title;
+    const undoTitle = undoConfirmationOpen && line === ui.confirmation?.title;
     const approvalField =
       approvalReviewOpen &&
       (line.startsWith(APPROVAL_EVIDENCE_LABELS.tool) ||
@@ -7222,7 +7351,7 @@ export function renderWorkspace(
         : "[!] REVIEW / y accept / n reject / Esc cancel / PgDn preview"
       : running && (busy || ui.session()?.status === "running")
         ? `${spinner} ${ui.session()?.status === "running" ? (waiting ? "[wait] Waiting for approval" : `● ${phase}${dots}`) : `[run] Finishing operation${dots}`}${elapsed} / Esc stop${historyStatus ? " / [history] reading history" : ""}${todoBadge}${chatContextBadge ? ` / ${chatContextBadge}` : ""}`
-      : `${historyStatus ?? (spaciousShell && ui.notice === "Tab: panels | i: type | /help: commands" ? "Ready" : ui.notice)}${chatContextBadge ? `${historyStatus ? " / " : ""}${chatContextBadge}` : ""}`;
+        : `${historyStatus ?? (spaciousShell && ui.notice === "Tab: panels | i: type | /help: commands" ? "Ready" : ui.notice)}${chatContextBadge ? `${historyStatus ? " / " : ""}${chatContextBadge}` : ""}`;
   const menuRows = menu.map(([name, description], i) =>
     ink(
       text(
@@ -7414,11 +7543,23 @@ const KEYBINDING_ROWS: readonly {
     keys: "Alt+B/F/Left/Right or Ctrl+Left/Right",
     action: "Jump by word",
   },
-  { group: "input", keys: "Alt+D / Alt+Backspace / Ctrl+W", action: "Delete a word" },
+  {
+    group: "input",
+    keys: "Alt+D / Alt+Backspace / Ctrl+W",
+    action: "Delete a word",
+  },
   { group: "input", keys: "Ctrl+K", action: "Delete to end of line" },
   { group: "input", keys: "Ctrl+U", action: "Clear the input" },
-  { group: "input", keys: "Ctrl+Y / Alt+Y", action: "Paste or cycle killed text" },
-  { group: "input", keys: "Ctrl+_ / Ctrl+Shift+Z", action: "Undo / redo the last edit" },
+  {
+    group: "input",
+    keys: "Ctrl+Y / Alt+Y",
+    action: "Paste or cycle killed text",
+  },
+  {
+    group: "input",
+    keys: "Ctrl+_ / Ctrl+Shift+Z",
+    action: "Undo / redo the last edit",
+  },
   { group: "input", keys: "Ctrl+D", action: "Delete forward, twice exit" },
   { group: "navigate", keys: "Tab", action: "Next panel or complete" },
   {
@@ -7464,7 +7605,11 @@ const KEYBINDING_ROWS: readonly {
     action: "Open the editor",
   },
   { group: "session", keys: "Meta+P", action: "Switch model" },
-  { group: "session", keys: "Alt+M / Shift+Alt+M", action: "Cycle provider models" },
+  {
+    group: "session",
+    keys: "Alt+M / Shift+Alt+M",
+    action: "Cycle provider models",
+  },
   {
     group: "session",
     keys: "Ctrl+L",

@@ -12,6 +12,9 @@
     // rather than letting node --test fail at load.
     "erasableSyntaxOnly": true,
     "verbatimModuleSyntax": true,
+    "jsx": "react-jsx",
+    "jsxImportSource": "@opentui/react",
+    "lib": ["es2022", "DOM"],
     "types": ["node"]
   },
   "include": ["src"]

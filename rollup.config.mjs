@@ -22,6 +22,7 @@
  */
 
 import { stripTypeScriptTypes } from "node:module";
+import ts from "typescript";
 
 /** Packages whose `exports` point at raw TypeScript, which npm cannot resolve. */
 const WORKSPACE_TYPED = {
@@ -65,8 +66,22 @@ const workspaceSource = {
 const stripTypes = {
   name: "nomo-strip-types",
   transform(code, id) {
+    if (/\.tsx$/.test(id)) {
+      const result = ts.transpileModule(code, {
+        fileName: id,
+        compilerOptions: {
+          jsx: ts.JsxEmit.ReactJSX,
+          jsxImportSource: "@opentui/react",
+          target: ts.ScriptTarget.ES2022,
+        },
+      });
+      return { code: result.outputText, map: null };
+    }
     if (!/\.(ts|mts|cts)$/.test(id)) return null;
-    return { code: stripTypeScriptTypes(code, { mode: "strip", sourceUrl: id }), map: null };
+    return {
+      code: stripTypeScriptTypes(code, { mode: "strip", sourceUrl: id }),
+      map: null,
+    };
   },
 };
 

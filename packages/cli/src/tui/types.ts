@@ -125,6 +125,7 @@ export interface TerminalCapabilities {
   readonly colorDepth: 0 | 4 | 8 | 24;
   readonly columns: number;
   readonly rows: number;
+  readonly graphicsProtocol?: "kitty";
   readonly reason: "interactive" | "not-tty" | "dumb" | "no-color" | "ci";
 }
 
