@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, rmSync, writeFileSync, readFileSync, existsSync, readdirSync, unlinkSync, statSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
+import { createCipheriv } from 'node:crypto';
 import { join } from 'node:path';
 import { LocalStorage } from './storage.ts';
 import fs from 'node:fs';
@@ -20,15 +21,126 @@ function deadPid(): number {
   return child.pid;
 }
 
-test('storage recovers a lock whose owning process has exited and commits encrypted state', t => {
-  const dir = directory(t), store = new LocalStorage(dir), lock = join(dir, 'workspace.enc.lock');
-  writeFileSync(lock, String(deadPid()));
-  store.save({ document: 'captured content', evidence: ['signed row'] });
-  assert.equal(existsSync(lock), false);
-  assert.deepEqual(new LocalStorage(dir).read(), { document: 'captured content', evidence: ['signed row'] });
-  assert.equal(readFileSync(join(dir, 'workspace.enc')).includes(Buffer.from('captured content')), false);
+test('existing encrypted workspace remains readable and writable', t => {
+  const dir = directory(t);
+  const key = Buffer.alloc(32, 0x3a), iv = Buffer.alloc(12, 0x72);
+  const cipher = createCipheriv('aes-256-gcm', key, iv);
+  const ciphertext = Buffer.concat([cipher.update(JSON.stringify({ revision: 1 })), cipher.final()]);
+  writeFileSync(join(dir, 'workspace.key'), key, { mode: 0o600 });
+  writeFileSync(join(dir, 'workspace.enc'), Buffer.concat([iv, cipher.getAuthTag(), ciphertext]), { mode: 0o600 });
+  const store = new LocalStorage(dir);
+  assert.deepEqual(store.read(), { revision: 1 });
+  store.save({ revision: 2 });
+  assert.deepEqual(new LocalStorage(dir).read(), { revision: 2 });
 });
 
+test('concurrent key publication uses the winning key for encryption', t => {
+  const dir = directory(t), keyPath = join(dir, 'workspace.key');
+  const competingKey = Buffer.alloc(32, 0x41);
+  const realLink = fs.linkSync;
+  const race = t.mock.method(fs, 'linkSync', (source: fs.PathLike, target: fs.PathLike) => {
+    if (target === keyPath) {
+      writeFileSync(keyPath, competingKey, { mode: 0o600, flag: 'wx' });
+      throw Object.assign(new Error('competing key published'), { code: 'EEXIST' });
+    }
+    return realLink(source, target);
+  });
+  syncBuiltinESMExports();
+  let store: LocalStorage;
+  try {
+    store = new LocalStorage(dir);
+  } finally {
+    race.mock.restore();
+    syncBuiltinESMExports();
+  }
+  store.save({ revision: 1 });
+  assert.deepEqual(new LocalStorage(dir).read(), { revision: 1 });
+  assert.deepEqual(readFileSync(keyPath), competingKey);
+});
+
+test('unsupported hard links fail without publishing or retaining a key', t => {
+  const dir = directory(t);
+  const failure = t.mock.method(fs, 'linkSync', () => {
+    throw Object.assign(new Error('hard links unsupported'), { code: 'ENOTSUP' });
+  });
+  syncBuiltinESMExports();
+  try {
+    assert.throws(() => new LocalStorage(dir), /hard links unsupported/);
+    assert.deepEqual(readdirSync(dir), []);
+  } finally {
+    failure.mock.restore();
+    syncBuiltinESMExports();
+  }
+});
+
+test('interrupted key creation never publishes a partial encryption key', t => {
+  const dir = directory(t), key = join(dir, 'workspace.key');
+  const realWrite = fs.writeFileSync;
+  const failure = t.mock.method(fs, 'writeFileSync', (...args: Parameters<typeof realWrite>) => {
+    const [path, data, options] = args;
+    if (typeof path === 'string' && (path === key || path.startsWith(`${key}.`))) {
+      realWrite(path, Buffer.from('partial'), options);
+      throw new Error('injected key write failure');
+    }
+    return realWrite(path, data, options);
+  });
+  syncBuiltinESMExports();
+  try {
+    assert.throws(() => new LocalStorage(dir), /injected key write failure/);
+    assert.equal(existsSync(key), false);
+  } finally {
+    failure.mock.restore();
+    syncBuiltinESMExports();
+  }
+  const store = new LocalStorage(dir);
+  store.save({ revision: 1 });
+  assert.deepEqual(new LocalStorage(dir).read(), { revision: 1 });
+});
+
+test('key flush failure does not publish an encryption key', t => {
+  const dir = directory(t);
+  const failure = t.mock.method(fs, 'fsyncSync', () => { throw new Error('injected key flush failure'); });
+  syncBuiltinESMExports();
+  try {
+    assert.throws(() => new LocalStorage(dir), /injected key flush failure/);
+    assert.equal(existsSync(join(dir, 'workspace.key')), false);
+  } finally {
+    failure.mock.restore();
+    syncBuiltinESMExports();
+  }
+});
+
+test('key directory flush failure is reported without corrupting the published key', { skip: process.platform === 'win32' }, t => {
+  const dir = directory(t);
+  const realFsync = fs.fsyncSync;
+  let calls = 0;
+  const failure = t.mock.method(fs, 'fsyncSync', (fd: number) => {
+    if (++calls === 2) throw new Error('injected directory flush failure');
+    realFsync(fd);
+  });
+  syncBuiltinESMExports();
+  try {
+    assert.throws(() => new LocalStorage(dir), /injected directory flush failure/);
+  } finally {
+    failure.mock.restore();
+    syncBuiltinESMExports();
+  }
+  const store = new LocalStorage(dir);
+  store.save({ revision: 1 });
+  assert.deepEqual(new LocalStorage(dir).read(), { revision: 1 });
+});
+
+test('storage refuses a stale lock without changing encrypted state', t => {
+  const dir = directory(t), store = new LocalStorage(dir), lock = join(dir, 'workspace.enc.lock');
+  store.save({ document: 'captured content', evidence: ['signed row'] });
+  const ciphertext = readFileSync(join(dir, 'workspace.enc'));
+  const owner = deadPid();
+  writeFileSync(lock, String(owner));
+  assert.throws(() => store.save({ document: 'new content', evidence: ['new row'] }), /stale owner.*stop all NOMO processes.*remove the lock/i);
+  assert.equal(readFileSync(lock, 'utf8'), String(owner));
+  assert.deepEqual(readFileSync(join(dir, 'workspace.enc')), ciphertext);
+  assert.deepEqual(new LocalStorage(dir).read(), { document: 'captured content', evidence: ['signed row'] });
+});
 test('storage refuses a live or unknown lock owner without changing existing ciphertext', t => {
   const dir = directory(t), store = new LocalStorage(dir), lock = join(dir, 'workspace.enc.lock');
   store.save({ revision: 1 });
@@ -56,6 +168,16 @@ test('storage does not remove a lock replaced while its former owner is checked'
   assert.equal(existsSync(join(dir, 'workspace.enc')), false);
 });
 
+test('storage refuses a stale lock without unlinking it', t => {
+  const dir = directory(t), store = new LocalStorage(dir), lock = join(dir, 'workspace.enc.lock');
+  store.save({ revision: 1 });
+  const ciphertext = readFileSync(join(dir, 'workspace.enc'));
+  const owner = deadPid();
+  writeFileSync(lock, String(owner));
+  assert.throws(() => store.save({ revision: 2 }), /stale owner.*stop all NOMO processes.*remove the lock/i);
+  assert.equal(readFileSync(lock, 'utf8'), String(owner));
+  assert.deepEqual(readFileSync(join(dir, 'workspace.enc')), ciphertext);
+});
 test('storage rejects stale writers and preserves the latest complete snapshot', t => {
   const dir = directory(t), first = new LocalStorage(dir);
   first.save({ document: 'first', evidence: ['one'] });

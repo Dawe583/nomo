@@ -952,6 +952,44 @@ const SHELL_REFUSALS = [
   /\.env\b|\.nomo|keychain/i,
 ];
 const runShellFile = promisify(execFile);
+type BrowserLauncher = (
+  command: string,
+  args: readonly string[],
+  options: { readonly timeout: number; readonly windowsHide: boolean },
+) => Promise<unknown>;
+
+/** Open only the official SIWC authorize URL, using argv rather than a shell. */
+export async function launchSystemBrowserAuthorization(
+  rawUrl: string,
+  platform = process.platform,
+  launch: BrowserLauncher = runShellFile,
+): Promise<void> {
+  let authorization: URL;
+  try { authorization = new URL(rawUrl); }
+  catch { throw new Error("OpenAI authorization request is invalid."); }
+  if (
+    authorization.origin !== "https://auth.openai.com" ||
+    authorization.hostname !== "auth.openai.com" ||
+    authorization.pathname !== "/api/accounts/authorize" ||
+    authorization.username || authorization.password ||
+    authorization.hash ||
+    authorization.searchParams.has("id_token_hint") ||
+    authorization.searchParams.has("login_hint")
+  ) throw new Error("OpenAI authorization request is invalid.");
+  const [command, args] = platform === "darwin"
+    ? ["open", [authorization.toString()]]
+    : platform === "win32"
+      ? ["rundll32.exe", ["url.dll,FileProtocolHandler", authorization.toString()]]
+      : platform === "linux"
+        ? ["xdg-open", [authorization.toString()]]
+        : ["", []];
+  if (!command) throw new Error("System browser launch is unsupported on this platform.");
+  try {
+    await launch(command, args, { timeout: 10_000, windowsHide: true });
+  } catch {
+    throw new Error("Could not open the system browser for OpenAI sign-in.");
+  }
+}
 
 const STARTER_DOC = `# Plan
 
@@ -989,6 +1027,7 @@ export class WorkspaceTui {
   agentId?: string;
   lastRecoveryJob?: { sessionId: string; jobId: string };
   model = "";
+  pendingOpenAIChatGPTAccountId?: string;
   filter = "";
   /**
    * The filter typed into the /keybindings table. Separate from filter above
@@ -1079,6 +1118,7 @@ export class WorkspaceTui {
     key: string;
   };
   provider?: Awaited<ReturnType<Workbench["providerState"]>>;
+  private readonly browserLauncher: (url: string) => Promise<void>;
   proofs = new Map<string, JsonlEntry[]>();
   proofErrors = new Map<string, string>();
   /**
@@ -1093,9 +1133,11 @@ export class WorkspaceTui {
   constructor(
     workbench: Workbench,
     env: Readonly<NodeJS.ProcessEnv> = process.env,
+    browserLauncher: (url: string) => Promise<void> = url => launchSystemBrowserAuthorization(url),
   ) {
     this.workbench = workbench;
     this.env = env;
+    this.browserLauncher = browserLauncher;
     this.proxy = new ProxyWorkspace(env);
     this.themeConfig = getThemeConfig(env);
   }
@@ -4087,6 +4129,136 @@ ${(doc.content ?? "").slice(0, 2000)}`;
     };
     this.scroll = 0;
   }
+  private async startOpenAIChatGPTSignIn(input: { accountId?: string; enablePlanUsage?: boolean } = {}): Promise<void> {
+    const attempt = await this.workbench.beginOpenAIChatGPTSignIn(input);
+    try {
+      await this.browserLauncher(attempt.authorizationUrl);
+    } catch {
+      this.workbench.cancelOpenAIChatGPTAuthAttempt(attempt.id);
+      throw new Error("Could not open the system browser for OpenAI sign-in.");
+    }
+    const result = await this.workbench.waitForOpenAIChatGPTAuthAttempt(attempt.id);
+    if (result.status === "declined") {
+      this.notice = "Sign-in was declined. No new credentials were saved.";
+      this.detail = this.openAIChatGPTAccountLines();
+      return;
+    }
+    if (result.status === "usage-disabled") {
+      this.notice = "Account verified, but ChatGPT plan usage is disabled until you explicitly enable it.";
+      this.detail = this.openAIChatGPTAccountLines();
+      return;
+    }
+    if (result.status !== "connected" || !result.accountId) {
+      const diagnostics = [
+        result.httpStatus ? `HTTP ${result.httpStatus}` : undefined,
+        result.providerErrorCode && /^[A-Za-z0-9._-]{1,128}$/.test(result.providerErrorCode)
+          ? `provider ${result.providerErrorCode}`
+          : undefined,
+        result.requestId && /^[A-Za-z0-9._-]{1,128}$/.test(result.requestId)
+          ? `request ${result.requestId}`
+          : undefined,
+      ].filter(Boolean).join(", ");
+      this.notice = `OpenAI sign-in did not complete (${result.errorCode ?? "unknown"})${diagnostics ? `: ${diagnostics}` : ""}.`;
+      this.detail = this.openAIChatGPTAccountLines();
+      return;
+    }
+    this.pendingOpenAIChatGPTAccountId = result.accountId;
+    this.choose("models");
+    try {
+      const models = await this.workbench.openAIChatGPTModels(result.accountId);
+      this.detail = [
+        "OPENAI CHATGPT ACCOUNT VERIFIED",
+        "",
+        `Account: ${sanitizeText(result.email ?? result.accountId)}`,
+        "Plan usage: enabled",
+        "",
+        ...models.map(model => `${sanitizeText(model.id)}  ${sanitizeText(model.name)}`),
+        "",
+        "Choose a model with /model MODEL_ID, or /chatgpt use ACCOUNT_ID MODEL_ID.",
+      ];
+      this.notice = "Account verified. Choose a listed model to make it the active provider.";
+    } catch (error) {
+      this.detail = this.openAIChatGPTAccountLines();
+      this.notice = `Account verified, but model discovery failed: ${message(error)}`;
+    }
+  }
+
+  private openAIChatGPTAccountLines(): string[] {
+    const accounts = this.workbench.openAIChatGPTAccounts();
+    return [
+      "OPENAI SIGN IN WITH CHATGPT",
+      `Active model: ${this.provider?.authKind === "openai-chatgpt-account" ? this.provider.defaultModel ?? "none selected" : "no ChatGPT account selected"}`,
+      "",
+      ...(accounts.length ? accounts.flatMap(account => [
+        `${account.active ? "[*]" : "[ ]"} ${account.id}  ${sanitizeText(account.email ?? "Private account")}  ${account.status}`,
+        `    usage: ${account.usageEnabled ? "enabled" : "disabled"}; scopes: ${account.scopes.map(sanitizeText).join(" ") || "none"}`,
+      ]) : ["No ChatGPT account registered."]),
+      "",
+      "/connect chatgpt starts a new sign-in; /connect chatgpt ACCOUNT_ID reauthorizes.",
+      "/chatgpt enable ID | models ID | use ID MODEL | disconnect ID",
+      "Usage limits: https://chatgpt.com/settings/usage",
+    ];
+  }
+
+  private async chatGPTCommand(raw: string): Promise<void> {
+    const [action = "accounts", accountId, model] = raw.trim() ? raw.trim().split(/\s+/) : ["accounts"];
+    if (action === "accounts" || action === "status") {
+      this.detail = this.openAIChatGPTAccountLines();
+      return;
+    }
+    if (action === "connect") {
+      await this.startOpenAIChatGPTSignIn();
+      return;
+    }
+    if (action === "reauth" || action === "enable") {
+      if (!accountId) throw new Error(`/chatgpt ${action} ACCOUNT_ID`);
+      await this.startOpenAIChatGPTSignIn({
+        accountId,
+        ...(action === "enable" ? { enablePlanUsage: true } : {}),
+      });
+      return;
+    }
+    if (action === "models") {
+      if (!accountId) throw new Error("/chatgpt models ACCOUNT_ID");
+      const models = await this.workbench.openAIChatGPTModels(accountId);
+      this.choose("models");
+      this.detail = ["CHATGPT MODELS", "", ...models.map(item => `${sanitizeText(item.id)}  ${sanitizeText(item.name)}`)];
+      return;
+    }
+    if (action === "use") {
+      if (!accountId || !model) throw new Error("/chatgpt use ACCOUNT_ID MODEL_ID");
+      await this.workbench.connectOpenAIChatGPTAccount(accountId, model);
+      this.pendingOpenAIChatGPTAccountId = undefined;
+      this.provider = await this.workbench.providerState({ probeEnvironment: false });
+      this.model = model;
+      this.notice = "OpenAI ChatGPT account selected. Credentials remain in host storage.";
+      this.choose("models");
+      this.detail = this.openAIChatGPTAccountLines();
+      return;
+    }
+    if (action === "disconnect") {
+      if (!accountId) throw new Error("/chatgpt disconnect ACCOUNT_ID");
+      this.confirmation = {
+        title: "DISCONNECT OPENAI CHATGPT ACCOUNT?",
+        lines: [
+          "NOMO will stop using this account and clear its local tokens.",
+          "Remote revocation will be attempted first; an unconfirmed revocation is reported.",
+          "The account registration and host identity are retained for later sign-in.",
+        ],
+        apply: async () => {
+          const result = await this.workbench.disconnectOpenAIChatGPTAccount(accountId);
+          this.provider = await this.workbench.providerState({ probeEnvironment: false });
+          this.detail = this.openAIChatGPTAccountLines();
+          this.notice = result.remoteRevocationConfirmed
+            ? "Account disconnected; remote revocation was confirmed."
+            : "Account disconnected locally; remote revocation was not confirmed. Review ChatGPT settings.";
+        },
+      };
+      return;
+    }
+    throw new Error("Use /chatgpt for account status, models, reauth, enable or disconnect.");
+  }
+
   async command(raw: string): Promise<"edit" | "quit" | void> {
     const value = raw.trim();
     if (!value) return;
@@ -4142,6 +4314,10 @@ ${(doc.content ?? "").slice(0, 2000)}`;
     };
     const updated = recordPaletteCommand(baseState, fullCmd);
     this.paletteState = { recent: new Map(updated.recent) };
+    if (cmd === "chatgpt") {
+      await this.chatGPTCommand(arg);
+      return;
+    }
     const tab = workspaceTab(cmd);
     if (tab) {
       this.choose(tab);
@@ -4993,6 +5169,14 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       return;
     }
     if (cmd === "model") {
+      if (this.pendingOpenAIChatGPTAccountId) {
+        await this.workbench.connectOpenAIChatGPTAccount(this.pendingOpenAIChatGPTAccountId, arg);
+        this.provider = await this.workbench.providerState({ probeEnvironment: false });
+        this.model = arg;
+        this.pendingOpenAIChatGPTAccountId = undefined;
+        this.notice = "OpenAI ChatGPT account selected. Credentials remain in host storage.";
+        return;
+      }
       if (!this.provider?.models.some((m) => m.id === arg))
         throw Error("Select an ID from /models.");
       this.model = arg;
@@ -5000,6 +5184,11 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       return;
     }
     if (cmd === "connect" || cmd === "login") {
+      const [providerId, accountId] = arg.split(/\s+/);
+      if (providerId === "chatgpt") {
+        await this.startOpenAIChatGPTSignIn(accountId ? { accountId } : {});
+        return;
+      }
       if (!arg || arg === "nvidia") {
         this.provider = await this.workbench.providerState({
           reconnectEnvironment: true,
@@ -6077,6 +6266,7 @@ export const TUI_COMMANDS = [
   ["/export", "Save ledger, chat or document"],
   ["/attest", "Signed slice for a third party"],
   ["/providers", "Model providers and local open models"],
+  ["/chatgpt", "OpenAI account status, models, reauth and disconnect"],
   ["/harness", "Agent harness: cloud, prime-agent, scores, review, approve, reject"],
   ["/login", "Connect a provider"],
   ["/logout", "Disconnect the provider"],

@@ -10,6 +10,7 @@ import { entryHash } from "../../../packages/ledger/src/canonical.ts";
 import { jsonlStore } from "../../../packages/ledger/src/store.ts";
 import { listenControlPlane, type ApprovalBroker, type PendingApproval } from "./server.ts";
 import { Workbench } from "../../../packages/workbench/src/index.ts";
+import { OpenAIChatGPTAuthStore } from "../../../packages/workbench/src/openai-chatgpt-auth.ts";
 import type { AgentRunner } from "../../../packages/workbench/src/agent-runners/agent-runner.ts";
 import { PROJECT_WORKSPACE_LIMITS } from "../../../packages/workbench/src/project-workspace.ts";
 import {
@@ -424,6 +425,44 @@ describe("control plane API", () => {
       );
     });
   });
+  test("OpenAI ChatGPT auth API returns a one-shot URL without account hints and tracks consent decline", async () => {
+    const data = await mkdtemp(join(tmpdir(), "nomo-siwc-api-data-"));
+    const auth = await mkdtemp(join(tmpdir(), "nomo-siwc-api-auth-"));
+    const workbench = new Workbench(
+      { NOMO_DATA_DIR: data },
+      fetch,
+      { openAIChatGPTAuthStore: new OpenAIChatGPTAuthStore(auth) },
+    );
+    try {
+      await withServer("unused.jsonl", async origin => {
+        const accountsResponse = await fetch(`${origin}/api/provider/openai-chatgpt`);
+        assert.equal(accountsResponse.status, 200);
+        assert.deepEqual(await accountsResponse.json(), { accounts: [] });
+
+        const started = await fetch(`${origin}/api/provider/openai-chatgpt/auth`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({}),
+        });
+        assert.equal(started.status, 201);
+        const attempt = await started.json() as { id: string; authorizationUrl: string };
+        const authorization = new URL(attempt.authorizationUrl);
+        assert.equal(authorization.searchParams.has("id_token_hint"), false);
+        assert.equal(authorization.searchParams.has("login_hint"), false);
+        const callback = new URL(authorization.searchParams.get("redirect_uri")!);
+        callback.searchParams.set("state", authorization.searchParams.get("state")!);
+        callback.searchParams.set("error", "access_denied");
+        assert.equal((await fetch(callback)).status, 200);
+        const status = await fetch(`${origin}/api/provider/openai-chatgpt/auth/${attempt.id}`);
+        assert.equal(status.status, 200);
+        assert.equal((await status.json() as { status: string }).status, "declined");
+      }, { workbench });
+    } finally {
+      await rm(data, { recursive: true, force: true });
+      await rm(auth, { recursive: true, force: true });
+    }
+  });
+
   test("provider API exposes per-API availability reasons through the existing read endpoint", async () => {
     await withServer("unused.jsonl", async (origin) => {
       const response = await fetch(origin + "/api/provider");

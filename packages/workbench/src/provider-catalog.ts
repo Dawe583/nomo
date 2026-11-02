@@ -587,6 +587,17 @@ export function assertProviderDescriptorInManifest(
   if (!IMPLEMENTED_TRANSPORTS.has(config.transport))
     throw new Error(`Provider transport ${config.transport} is not implemented.`);
   const transport = config.transport as ImplementedProviderTransport;
+  if (config.auth.kind === "openai-chatgpt-account") {
+    if (
+      config.providerId !== "openai" || transport !== "openai-responses" ||
+      config.baseUrl !== "https://api.openai.com/v1" ||
+      !config.auth.accountId.trim() || typeof config.model !== "string" ||
+      !config.model.trim() || config.model !== config.model.trim() ||
+      config.azureOptions !== undefined || config.vertexOptions !== undefined ||
+      config.gatewayOptions !== undefined
+    ) throw new Error("ChatGPT account profiles require an account-bound OpenAI Responses model.");
+    return;
+  }
   const authKind = authKindForTransport(config.providerId, transport);
   const alternateMantleHostCredential =
     config.providerId === "bedrock-mantle" &&

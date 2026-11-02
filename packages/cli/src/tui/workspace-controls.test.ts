@@ -1,12 +1,179 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { execFileSync } from "node:child_process";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Workbench } from "../../../workbench/src/index.ts";
+import { OpenAIChatGPTAuthStore } from "../../../workbench/src/openai-chatgpt-auth.ts";
 import { assertIsolated } from "../../../workbench/src/test-fixture.ts";
-import { WorkspaceTui, renderWorkspace, commandSuggestions } from "./workspace.ts";
+import { WorkspaceTui, renderWorkspace, commandSuggestions, launchSystemBrowserAuthorization } from "./workspace.ts";
 import { stripAnsi, visibleLength } from "./layout.ts";
+
+test("SIWC browser launch uses an argument-safe system command and refuses account hints", async () => {
+  const authorizationUrl = "https://auth.openai.com/api/accounts/authorize?client_id=dynamic_agent_client&state=fixture&nonce=fixture";
+  const calls: Array<{ command: string; args: readonly string[]; options: unknown }> = [];
+  const launch = async (command: string, args: readonly string[], options: unknown) => {
+    calls.push({ command, args, options });
+  };
+  await launchSystemBrowserAuthorization(authorizationUrl, "darwin", launch);
+  assert.deepEqual(calls[0], {
+    command: "open",
+    args: [authorizationUrl],
+    options: { timeout: 10_000, windowsHide: true },
+  });
+  await assert.rejects(
+    launchSystemBrowserAuthorization(`${authorizationUrl}&login_hint=private@example.invalid`, "darwin", launch),
+    /authorization request is invalid/,
+  );
+  await assert.rejects(
+    launchSystemBrowserAuthorization(authorizationUrl.replace("auth.openai.com", "auth.openai.com:8443"), "darwin", launch),
+    /authorization request is invalid/,
+  );
+  assert.equal(calls.length, 1);
+});
+
+test("TUI selects only a model listed for the chosen ChatGPT account", async t => {
+  const data = await mkdtemp(join(tmpdir(), "nomo-siwc-model-data-"));
+  const auth = await mkdtemp(join(tmpdir(), "nomo-siwc-model-auth-"));
+  t.after(async () => {
+    await rm(data, { recursive: true, force: true });
+    await rm(auth, { recursive: true, force: true });
+  });
+  const store = new OpenAIChatGPTAuthStore(auth);
+  await store.update(state => ({
+    state: { ...state, accounts: [{
+      id: "account-fixture", clientId: "oaiapp-fixture", subject: "subject-fixture",
+      scopes: ["resource.invoke", "chatgpt.tokens.use.direct"], usageEnabled: true,
+      accessToken: "access-fixture-secret", refreshToken: "refresh-fixture-secret",
+      expiresAt: Date.now() + 60_000,
+    }] }, result: undefined,
+  }));
+  const requests: string[] = [];
+  const workbench = new Workbench(
+    { NOMO_DATA_DIR: data },
+    async input => {
+      requests.push(String(input));
+      return Response.json({ models: [{ slug: "gpt-visible", display_name: "Visible", visibility: "list" }] });
+    },
+    { openAIChatGPTAuthStore: store },
+    { openAIChatGPTTokenProvider: async () => "access-fixture-secret" },
+  );
+  const ui = new WorkspaceTui(workbench, { NOMO_DATA_DIR: data }, async () => {});
+  await ui.command("/chatgpt models account-fixture");
+  assert.ok((ui.detail ?? []).join("\\n").includes("gpt-visible"));
+  await ui.command("/chatgpt use account-fixture gpt-visible");
+  assert.equal(ui.provider?.authKind, "openai-chatgpt-account");
+  assert.equal(ui.provider?.defaultModel, "gpt-visible");
+  assert.ok(requests.every(url => url === "https://api.openai.com/v1/models"));
+});
+
+test("TUI ChatGPT account status is safe and disconnect requires confirmation", async t => {
+  const data = await mkdtemp(join(tmpdir(), "nomo-siwc-status-data-"));
+  const auth = await mkdtemp(join(tmpdir(), "nomo-siwc-status-auth-"));
+  t.after(async () => {
+    await rm(data, { recursive: true, force: true });
+    await rm(auth, { recursive: true, force: true });
+  });
+  const store = new OpenAIChatGPTAuthStore(auth);
+  await store.update(state => ({
+    state: { ...state, accounts: [{
+      id: "account-fixture",
+      clientId: "oaiapp-fixture",
+      subject: "subject-fixture",
+      email: "person@example.invalid",
+      scopes: ["resource.invoke", "chatgpt.tokens.use.direct"],
+      usageEnabled: true,
+      accessToken: "access-fixture-secret",
+      refreshToken: "refresh-fixture-secret",
+      expiresAt: Date.now() + 60_000,
+    }, {
+      id: "account-reauth", clientId: "oaiapp-reauth", subject: "subject-reauth",
+      scopes: ["resource.invoke", "chatgpt.tokens.use.direct"], usageEnabled: false,
+      reauthRequired: true,
+    }] },
+    result: undefined,
+  }));
+  const workbench = new Workbench({ NOMO_DATA_DIR: data }, fetch, { openAIChatGPTAuthStore: store });
+  const ui = new WorkspaceTui(workbench, { NOMO_DATA_DIR: data }, async () => {});
+  await ui.command("/chatgpt");
+  const status = (ui.detail ?? []).join("\\n");
+  assert.ok(status.includes("person@example.invalid"));
+  assert.ok(status.includes("chatgpt.tokens.use.direct"));
+  assert.equal(status.includes("access-fixture-secret"), false);
+  assert.equal(status.includes("refresh-fixture-secret"), false);
+  assert.ok(status.includes("reauth-required"));
+  await ui.command("/chatgpt disconnect account-reauth");
+  assert.match(ui.confirmation?.title ?? "", /DISCONNECT/);
+  assert.match(ui.confirmation?.lines.join(" ") ?? "", /Remote revocation/);
+  await ui.confirm();
+  assert.match(ui.notice, /remote revocation was not confirmed/i);
+});
+
+test("TUI sign-in failure shows safe provider diagnostics", async t => {
+  const data = await mkdtemp(join(tmpdir(), "nomo-siwc-tui-diagnostics-data-"));
+  const auth = await mkdtemp(join(tmpdir(), "nomo-siwc-tui-diagnostics-auth-"));
+  t.after(async () => {
+    await rm(data, { recursive: true, force: true });
+    await rm(auth, { recursive: true, force: true });
+  });
+  const workbench = new Workbench(
+    { NOMO_DATA_DIR: data },
+    async input => {
+      const url = String(input);
+      if (url === "https://auth.openai.com/api/accounts/oauth/token")
+        return Response.json({ error: "temporarily_unavailable", error_description: "secret-fixture-token" }, {
+          status: 503,
+          headers: { "x-request-id": "req_safe-fixture" },
+        });
+      assert.fail(`Unexpected fixture URL: ${url}`);
+    },
+    { openAIChatGPTAuthStore: new OpenAIChatGPTAuthStore(auth) },
+  );
+  const ui = new WorkspaceTui(workbench, { NOMO_DATA_DIR: data }, async url => {
+    const authorization = new URL(url);
+    const callback = new URL(authorization.searchParams.get("redirect_uri")!);
+    callback.searchParams.set("state", authorization.searchParams.get("state")!);
+    callback.searchParams.set("client_id", "oaiapp-issued-fixture");
+    callback.searchParams.set("code", "safe-code-fixture");
+    assert.equal((await fetch(callback)).status, 200);
+  });
+  await ui.command("/connect chatgpt");
+  assert.match(ui.notice, /temporarily_unavailable/);
+  assert.match(ui.notice, /503/);
+  assert.match(ui.notice, /req_safe-fixture/);
+  assert.equal(ui.notice.includes("secret-fixture-token"), false);
+});
+
+test("TUI ChatGPT connect opens the system browser without displaying the authorization URL", async t => {
+  const data = await mkdtemp(join(tmpdir(), "nomo-siwc-tui-data-"));
+  const auth = await mkdtemp(join(tmpdir(), "nomo-siwc-tui-auth-"));
+  t.after(async () => {
+    await rm(data, { recursive: true, force: true });
+    await rm(auth, { recursive: true, force: true });
+  });
+  const workbench = new Workbench(
+    { NOMO_DATA_DIR: data },
+    fetch,
+    { openAIChatGPTAuthStore: new OpenAIChatGPTAuthStore(auth) },
+  );
+  let launchedUrl = "";
+  const ui = new WorkspaceTui(workbench, { NOMO_DATA_DIR: data }, async url => {
+    launchedUrl = url;
+    const authorization = new URL(url);
+    const callback = new URL(authorization.searchParams.get("redirect_uri")!);
+    callback.searchParams.set("state", authorization.searchParams.get("state")!);
+    callback.searchParams.set("error", "access_denied");
+    assert.equal((await fetch(callback)).status, 200);
+  });
+  await ui.command("/chatgpt");
+  assert.ok((ui.detail ?? []).join("\\n").includes("No ChatGPT account registered."));
+  await ui.command("/connect chatgpt");
+  assert.ok(launchedUrl.startsWith("https://auth.openai.com/api/accounts/authorize?"));
+  assert.equal(ui.notice.includes(launchedUrl), false);
+  assert.equal((ui.detail ?? []).join("\\n").includes(launchedUrl), false);
+  assert.match(ui.notice, /declined/i);
+});
 
 async function fixture(t: test.TestContext, answer = "Fixture reply") {
   const root = await mkdtemp(join(tmpdir(), "nomo-parity-controls-"));
@@ -16,7 +183,7 @@ async function fixture(t: test.TestContext, answer = "Fixture reply") {
       ? Response.json({ data: [{ id: "fixture" }] })
       : Response.json({
           choices: [
-            { message: { role: "assistant", content: answer } },
+            { message: { role: "assistant", content: answer }, finish_reason: "stop" },
           ],
         }),
   );
@@ -766,6 +933,7 @@ test("project confirmation exposes full-project data risk and requires an explic
   await app.configure({ baseUrl: "https://fixture.invalid/v1", apiKey: "fixture" });
   const root = await mkdtemp(join(tmpdir(), "nomo-project-consent-"));
   t.after(() => rm(root, { recursive: true, force: true }));
+  execFileSync("git", ["init", "--quiet", root]);
   const ui = new WorkspaceTui(app, env);
   ui.prepareProjectAccess(root, [], "unavailable: no local image");
   assert.match(ui.confirmation!.title, /ALLOW THIS PROJECT/);

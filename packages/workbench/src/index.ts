@@ -17,6 +17,13 @@ import {
   type Json,
 } from "../../runtime/src/index.ts";
 import { NVIDIA_URL, QWEN_URL, PROVIDER_PRESETS } from "./provider-defaults.ts";
+import { OpenAIChatGPTAuthStore } from "./openai-chatgpt-auth.ts";
+import {
+  OpenAIChatGPTAuthService,
+  type OpenAIChatGPTAuthAttempt,
+  type OpenAIChatGPTAuthAttemptView,
+  type OpenAIChatGPTAccountSummary,
+} from "./openai-chatgpt-login.ts";
 import {
   assertProviderDescriptorInManifest,
   CONFIGURABLE_PROVIDER_DESCRIPTORS,
@@ -562,7 +569,9 @@ type ProviderSessionIdentity = {
 
 function providerConfigKey(config: WorkbenchProviderConfig): string {
   return "auth" in config
-    ? config.transport === "google-vertex"
+    ? config.auth.kind === "openai-chatgpt-account"
+      ? JSON.stringify([config.providerId, config.transport, config.baseUrl, config.auth.accountId])
+      : config.transport === "google-vertex"
       ? JSON.stringify([
           config.providerId,
           config.transport,
@@ -625,12 +634,13 @@ function providerSecretValues(
     case "aws-credential-chain":
       return [];
     case "none":
+    case "openai-chatgpt-account":
       return [];
   }
 }
 
 function providerHasCredential(config: WorkbenchProviderConfig): boolean {
-  if ("auth" in config && config.auth.kind === "aws-credential-chain")
+  if ("auth" in config && (config.auth.kind === "aws-credential-chain" || config.auth.kind === "openai-chatgpt-account"))
     return true;
   return providerSecretValues(config).some(
     (secret) => secret.trim().length > 0,
@@ -670,6 +680,8 @@ type Session = {
 };
 type AgentRunnerOptions = {
   readonly agentRunners?: readonly AgentRunner[];
+  /** Test/runtime injection; production uses the stable host-level data directory. */
+  readonly openAIChatGPTAuthStore?: OpenAIChatGPTAuthStore;
 };
 type PreparedAgentRun = {
   readonly id: string;
@@ -931,13 +943,15 @@ export class Workbench {
   }> = [];
   private readonly fetcher: typeof fetch;
   private readonly providerDependencies: ProviderAdapterDependencies;
+  private readonly openAIChatGPTAuthStoreOverride?: OpenAIChatGPTAuthStore;
+  private openAIChatGPTAuth?: OpenAIChatGPTAuthService;
   constructor(
     env: Readonly<NodeJS.ProcessEnv> = process.env,
     fetcher: typeof fetch = fetch,
     options: AgentRunnerOptions = {},
     providerDependencies: ProviderAdapterDependencies = {},
   ) {
-    this.providerDependencies = providerDependencies;
+    this.openAIChatGPTAuthStoreOverride = options.openAIChatGPTAuthStore;
     for (const runner of options.agentRunners ?? []) {
       const id = runner.describe().id;
       if (!id || this.agentRunners.has(id))
@@ -983,6 +997,11 @@ export class Workbench {
           )
         : undefined;
     this.fetcher = fetcher;
+    this.providerDependencies = {
+      ...providerDependencies,
+      openAIChatGPTTokenProvider: providerDependencies.openAIChatGPTTokenProvider ??
+        (accountId => this.getOpenAIChatGPTAuthService().accessToken(accountId)),
+    };
     this.storage = new LocalStorage(
       envValue(this.env, "NOMO_DATA_DIR") ??
         join(
@@ -1373,6 +1392,98 @@ export class Workbench {
       );
     return [...new Set(parsed.map((item) => (item as string).trim()))];
   }
+  private getOpenAIChatGPTAuthService(): OpenAIChatGPTAuthService {
+    if (!this.openAIChatGPTAuth) {
+      const store = this.openAIChatGPTAuthStoreOverride ??
+        new OpenAIChatGPTAuthStore(join(dataDir(homedir()), "openai-chatgpt"));
+      this.openAIChatGPTAuth = new OpenAIChatGPTAuthService({
+        store,
+        fetcher: this.fetcher,
+        agentNameHint: "NOMO",
+      });
+    }
+    return this.openAIChatGPTAuth;
+  }
+
+  openAIChatGPTAccounts(): readonly OpenAIChatGPTAccountSummary[] {
+    const activeId = this.config && "auth" in this.config &&
+      this.config.auth.kind === "openai-chatgpt-account"
+      ? this.config.auth.accountId
+      : undefined;
+    return this.getOpenAIChatGPTAuthService().accounts(activeId);
+  }
+
+  beginOpenAIChatGPTSignIn(input: { accountId?: string; enablePlanUsage?: boolean } = {}): Promise<OpenAIChatGPTAuthAttempt> {
+    return this.getOpenAIChatGPTAuthService().beginSignIn(input);
+  }
+
+  cancelOpenAIChatGPTAuthAttempt(id: string): OpenAIChatGPTAuthAttemptView | undefined {
+    return this.getOpenAIChatGPTAuthService().cancelAttempt(id);
+  }
+
+  async openAIChatGPTAuthAttempt(id: string): Promise<OpenAIChatGPTAuthAttemptView | undefined> {
+    const result = this.getOpenAIChatGPTAuthService().attempt(id);
+    if (result?.status === "usage-disabled" && result.accountId)
+      await this.deactivateOpenAIChatGPTAccount(result.accountId);
+    return result;
+  }
+
+  async waitForOpenAIChatGPTAuthAttempt(id: string): Promise<OpenAIChatGPTAuthAttemptView> {
+    const result = await this.getOpenAIChatGPTAuthService().waitForAttempt(id);
+    if (result.status === "usage-disabled" && result.accountId)
+      await this.deactivateOpenAIChatGPTAccount(result.accountId);
+    return result;
+  }
+
+  async openAIChatGPTModels(accountId: string): Promise<readonly Model[]> {
+    const account = this.openAIChatGPTAccounts().find(item => item.id === accountId);
+    if (!account?.usageEnabled) throw new Error("Choose an enabled OpenAI ChatGPT account first.");
+    const config: ProviderAdapterConfig = {
+      providerId: "openai",
+      transport: "openai-responses",
+      baseUrl: "https://api.openai.com/v1",
+      auth: { kind: "openai-chatgpt-account", accountId },
+    };
+    return createProviderClient(config, this.fetcher, () => this.harness, this.providerDependencies).models();
+  }
+
+  async connectOpenAIChatGPTAccount(accountId: string, model: string): Promise<readonly Model[]> {
+    return this.configure({
+      providerId: "openai",
+      transport: "openai-responses",
+      baseUrl: "https://api.openai.com/v1",
+      auth: { kind: "openai-chatgpt-account", accountId },
+      model,
+    });
+  }
+
+  async disconnectOpenAIChatGPTAccount(accountId: string): Promise<{
+    readonly accountId: string;
+    readonly remoteRevocationConfirmed: boolean;
+  }> {
+    if (this.jobs.size || this.queued.size || this.providerSetupCount || this.sessionSetupCount)
+      throw new Error("Stop active sessions and wait for provider setup before disconnecting this account.");
+    const result = await this.getOpenAIChatGPTAuthService().disconnect(accountId);
+    await this.deactivateOpenAIChatGPTAccount(accountId);
+    return result;
+  }
+
+  private async deactivateOpenAIChatGPTAccount(accountId: string): Promise<void> {
+    if (!this.config || !("auth" in this.config) ||
+      this.config.auth.kind !== "openai-chatgpt-account" ||
+      this.config.auth.accountId !== accountId) return;
+    const profileKey = providerConfigKey(this.config);
+    this.providerGeneration++;
+    this.provider = undefined;
+    this.config = undefined;
+    this.catalog = [];
+    this.preferences = { ...this.preferences, defaultProvider: undefined, defaultModel: undefined };
+    for (const session of this.sessions.values()) {
+      if (session.config?.profileKey === profileKey) session.provider = undefined;
+    }
+    this.persist();
+  }
+
   async configure(input: WorkbenchProviderConfig): Promise<readonly Model[]> {
     const generation = ++this.providerGeneration;
     this.providerSetupCount++;

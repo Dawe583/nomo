@@ -1,5 +1,5 @@
 import { createCipheriv, createDecipheriv, randomBytes, createHash } from 'node:crypto';
-import { mkdirSync, readFileSync, writeFileSync, renameSync, openSync, closeSync, fsyncSync, unlinkSync, lstatSync, type Stats } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync, renameSync, linkSync, openSync, closeSync, fsyncSync, unlinkSync, lstatSync, type Stats } from 'node:fs';
 import { join } from 'node:path';
 import { reservedRecoveryVault } from '../../runtime/src/index.ts';
 
@@ -19,9 +19,25 @@ export class LocalStorage {
     else try { this.key = readFileSync(keyPath); }
     catch (error) {
       if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
-      this.key = randomBytes(32);
-      try { writeFileSync(keyPath, this.key, { mode: 0o600, flag: 'wx' }); }
-      catch (error) { if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error; this.key = readFileSync(keyPath); }
+      const candidate = randomBytes(32);
+      const temporary = `${keyPath}.${randomBytes(16).toString('hex')}`;
+      try {
+        writeFileSync(temporary, candidate, { mode: 0o600, flag: 'wx' });
+        const keyFd = openSync(temporary, 'r');
+        try { fsyncSync(keyFd); } finally { closeSync(keyFd); }
+        try { linkSync(temporary, keyPath); this.key = candidate; }
+        catch (linkError) {
+          if ((linkError as NodeJS.ErrnoException).code !== 'EEXIST') throw linkError;
+          this.key = readFileSync(keyPath);
+        }
+        if (process.platform !== 'win32') {
+          const dirFd = openSync(directory, 'r');
+          try { fsyncSync(dirFd); } finally { closeSync(dirFd); }
+        }
+      } finally {
+        try { unlinkSync(temporary); }
+        catch (cleanupError) { if ((cleanupError as NodeJS.ErrnoException).code !== 'ENOENT') throw cleanupError; }
+      }
     }
     if (this.key.length !== 32) throw new Error('Invalid workspace encryption key.');
     this.path = join(directory, 'workspace.enc');
@@ -85,11 +101,10 @@ function acquireLock(path: string): Stats {
     try { process.kill(pid, 0); }
     catch (ownerError) { gone = (ownerError as NodeJS.ErrnoException).code === 'ESRCH'; }
     if (!gone) throw new Error('Workspace is locked by another live or inaccessible process.');
-    // A process exit proves staleness, but a concurrent recovery may have
-    // already installed a new lock. Match its identity and contents again.
+    // Node cannot atomically unlink only the stale inode, so preserve it for
+    // explicit recovery after every writer has stopped.
     if (!sameFile(original, lstatSync(path)) || readFileSync(path, 'utf8') !== text) throw new Error('Workspace lock changed during recovery. Retry after the other runtime finishes.');
-    unlinkSync(path);
-    writeFileSync(path, String(process.pid), { flag: 'wx', mode: 0o600 });
+    throw new Error('Workspace lock has a stale owner. Stop all NOMO processes and remove the lock to recover.');
   }
   return lstatSync(path);
 }

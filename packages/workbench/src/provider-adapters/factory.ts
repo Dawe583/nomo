@@ -78,6 +78,11 @@ export function createProviderClient(
   if (adapterConfig && isGatewayProvider(config.providerId)) {
     return createGatewayProvider(config, request, settings);
   }
+  if (adapterConfig && config.auth.kind === "openai-chatgpt-account") {
+    if (config.transport !== "openai-responses" || config.providerId !== "openai")
+      throw new Error("ChatGPT account auth is supported only by OpenAI Responses.");
+    return new OpenAIResponsesAdapter(config, request, settings, dependencies);
+  }
   if (adapterConfig && config.transport === "bedrock-converse-stream") {
     return new BedrockConverseStreamAdapter(
       config,
@@ -130,7 +135,7 @@ export function createProviderClient(
       return new CompatibleProvider(normalized, request, settings);
     case "openai-responses":
       if (!adapterConfig) throw new Error("OpenAI Responses requires a typed provider descriptor.");
-      return new OpenAIResponsesAdapter(config as ProviderAdapterConfig, request, settings);
+      return new OpenAIResponsesAdapter(config as ProviderAdapterConfig, request, settings, dependencies);
     case "azure-openai-responses":
       if (!adapterConfig) throw new Error("Azure OpenAI Responses requires a typed provider descriptor.");
       return new AzureOpenAIResponsesAdapter(config as ProviderAdapterConfig, request, settings);
