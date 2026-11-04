@@ -402,7 +402,7 @@ test('workspace sentinel refuses a non-regular inner SQLite pathname without rep
   const databasePath = join(lock, 'lifecycle.sqlite');
   mkdirSync(lock);
   mkdirSync(databasePath);
-  assert.throws(() => new LocalStorage(dir).save({ revision: 1 }), /legacy or invalid/i);
+  assert.throws(() => new LocalStorage(dir).save({ revision: 1 }), /not a private regular file|legacy or invalid/i);
   assert.equal(lstatSync(lock).isDirectory(), true);
   assert.equal(lstatSync(databasePath).isDirectory(), true);
   assert.equal(existsSync(join(dir, 'workspace.enc')), false);
