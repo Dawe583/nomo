@@ -115,6 +115,19 @@ test('interrupted key creation never publishes a partial encryption key', t => {
   assert.deepEqual(new LocalStorage(dir).read(), { revision: 1 });
 });
 
+test('new encryption key is flushed through a writable file handle', t => {
+  const dir = directory(t), realOpen = fs.openSync, flags: string[] = [];
+  const capture = t.mock.method(fs, 'openSync', (path: fs.PathLike, flag: string | number, ...args: unknown[]) => {
+    if (typeof path === 'string' && path.startsWith(join(dir, 'workspace.key.'))) flags.push(flag as string);
+    return (realOpen as (...values: unknown[]) => number)(path, flag, ...args);
+  });
+  syncBuiltinESMExports();
+  try { new LocalStorage(dir); }
+  finally { capture.mock.restore(); syncBuiltinESMExports(); }
+  assert.ok(flags.includes('r+'));
+  assert.ok(!flags.includes('r'));
+});
+
 test('key flush failure does not publish an encryption key', t => {
   const dir = directory(t);
   const failure = t.mock.method(fs, 'fsyncSync', () => { throw new Error('injected key flush failure'); });

@@ -24,7 +24,7 @@ export class LocalStorage {
       const temporary = `${keyPath}.${randomBytes(16).toString('hex')}`;
       try {
         writeFileSync(temporary, candidate, { mode: 0o600, flag: 'wx' });
-        const keyFd = openSync(temporary, 'r');
+        const keyFd = openSync(temporary, 'r+');
         try { fsyncSync(keyFd); } finally { closeSync(keyFd); }
         try { linkSync(temporary, keyPath); this.key = candidate; }
         catch (linkError) {
