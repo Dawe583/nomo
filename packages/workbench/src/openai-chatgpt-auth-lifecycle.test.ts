@@ -189,8 +189,13 @@ test("refresh retains rotated credentials when plan scope is no longer granted",
   );
   const account = store.read()?.accounts[0];
   assert.equal(account?.usageEnabled, false);
-  assert.equal(account?.accessToken, "rotated-access-fixture");
-  assert.equal(account?.refreshToken, "rotated-refresh-fixture");
+  assert.equal(account?.id, "account-fixture");
+  assert.equal(account?.clientId, "oaiapp-fixture");
+  assert.equal(account?.subject, "subject-fixture");
+  assert.deepEqual(account?.scopes, ["openid", "profile", "resource.invoke"]);
+  assert.equal("accessToken" in (account ?? {}), false);
+  assert.equal("refreshToken" in (account ?? {}), false);
+  assert.equal("expiresAt" in (account ?? {}), false);
   await assert.rejects(
     service.accessToken("account-fixture"),
     error => error instanceof OpenAIChatGPTAuthError && error.code === "usage_disabled",

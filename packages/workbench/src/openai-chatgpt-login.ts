@@ -282,7 +282,7 @@ export class OpenAIChatGPTAuthService {
       };
       if (!usageEnabled) {
         outcome = { errorCode: "usage_disabled" };
-        return { state: replaceAccount(state, updated), result: undefined };
+        return { state: replaceAccount(state, withoutTokens(updated, false)), result: undefined };
       }
       outcome = { token: updated.accessToken };
       return { state: replaceAccount(state, updated), result: undefined };
@@ -518,9 +518,11 @@ export class OpenAIChatGPTAuthService {
       scopes,
       usageEnabled,
       credentialGeneration: (record.credentialGeneration ?? 0) + 1,
-      accessToken: token.access_token,
-      ...(typeof token.refresh_token === "string" ? { refreshToken: token.refresh_token } : {}),
-      expiresAt: Date.now() + token.expires_in * 1000,
+      ...(usageEnabled ? {
+        accessToken: token.access_token,
+        ...(typeof token.refresh_token === "string" ? { refreshToken: token.refresh_token } : {}),
+        expiresAt: Date.now() + token.expires_in * 1000,
+      } : {}),
     };
     let savedId = existingId;
     await this.options.store.update(state => {

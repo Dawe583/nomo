@@ -216,8 +216,13 @@ test("first SIWC attempt validates callback and ID token before storing account 
   assert.equal(disabled.usageEnabled, false);
   const disabledAccount = store.read()?.accounts[0];
   assert.equal(disabledAccount?.usageEnabled, false);
-  assert.equal(disabledAccount?.accessToken, "access-fixture-secret");
-  assert.equal(disabledAccount?.refreshToken, "refresh-fixture-secret");
+  assert.equal(disabledAccount?.id, completed.accountId);
+  assert.equal(disabledAccount?.clientId, issuedClientId);
+  assert.equal(disabledAccount?.subject, "account-subject-fixture");
+  assert.equal(disabledAccount?.email, "fixture@example.invalid");
+  assert.equal("accessToken" in (disabledAccount ?? {}), false);
+  assert.equal("refreshToken" in (disabledAccount ?? {}), false);
+  assert.equal("expiresAt" in (disabledAccount ?? {}), false);
 
   grantedScope = scope;
   const multiAudience = await service.beginSignIn({ accountId: completed.accountId });
@@ -236,7 +241,7 @@ test("first SIWC attempt validates callback and ID token before storing account 
   assert.equal((await fetch(multiAudienceCallback)).status, 200);
   assert.equal((await service.waitForAttempt(multiAudience.id)).status, "failed");
   assert.equal(store.read()?.accounts[0]?.usageEnabled, false);
-  assert.equal(store.read()?.accounts[0]?.accessToken, "access-fixture-secret");
+  assert.equal("accessToken" in (store.read()?.accounts[0] ?? {}), false);
 });
 
 test("disconnect cancels a pending reauthorization before its credentials can be saved", async t => {

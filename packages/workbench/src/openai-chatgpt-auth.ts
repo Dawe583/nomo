@@ -1,17 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { join } from "node:path";
-import {
-  lstatSync,
-  readFileSync,
-  unlinkSync,
-  writeFileSync,
-  type Stats,
-} from "node:fs";
-import { LocalStorage } from "./storage.ts";
+import { LocalStorage, withLifecycleLock } from "./storage.ts";
 
 const AUTHORIZATION_ENDPOINT = "https://auth.openai.com/api/accounts/authorize";
-const LOCK_RETRY_MS = 25;
-const LOCK_WAIT_MS = 120_000;
 const RESOURCE = "https://api.openai.com/v1";
 const SCOPES = [
   "openid",
@@ -22,67 +13,12 @@ const SCOPES = [
   "chatgpt.tokens.use.direct",
 ] as const;
 
-/** Serialize host-wide credential mutations across Workbench processes. */
-export async function withOpenAIChatGPTAuthLock<T>(
+/** Share the encrypted snapshot writer lock across all lifecycle mutations. */
+export function withOpenAIChatGPTAuthLock<T>(
   path: string,
   action: () => Promise<T>,
 ): Promise<T> {
-  const owner = await acquireAuthLock(path);
-  try {
-    return await action();
-  } finally {
-    try {
-      if (
-        sameFile(owner, lstatSync(path)) &&
-        readFileSync(path, "utf8") === String(process.pid)
-      ) unlinkSync(path);
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
-    }
-  }
-}
-
-async function acquireAuthLock(path: string): Promise<Stats> {
-  const deadline = Date.now() + LOCK_WAIT_MS;
-  for (;;) {
-    try {
-      writeFileSync(path, String(process.pid), { flag: "wx", mode: 0o600 });
-      return lstatSync(path);
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;
-      let original: Stats;
-      let text: string;
-      try {
-        original = lstatSync(path);
-        if (!original.isFile())
-          throw new Error("OpenAI account lock has an unknown owner.");
-        text = readFileSync(path, "utf8");
-      } catch (lockError) {
-        if ((lockError as NodeJS.ErrnoException).code === "ENOENT") continue;
-        throw lockError;
-      }
-      const pid = /^[1-9][0-9]{0,9}$/.test(text) ? Number(text) : 0;
-      if (!Number.isSafeInteger(pid) || pid < 1 || pid > 2_147_483_647)
-        throw new Error("OpenAI account lock has an unknown owner.");
-      let stale = false;
-      try {
-        process.kill(pid, 0);
-      } catch (ownerError) {
-        stale = (ownerError as NodeJS.ErrnoException).code === "ESRCH";
-      }
-      if (stale) {
-        throw new Error("OpenAI account lifecycle lock has a stale owner; stop all NOMO processes and remove the lock to recover.");
-      }
-      if (Date.now() >= deadline)
-        throw new Error("OpenAI account lifecycle is busy in another process.");
-      await new Promise(resolve => setTimeout(resolve, LOCK_RETRY_MS));
-    }
-  }
-}
-
-function sameFile(a: Stats, b: Stats): boolean {
-  return a.dev === b.dev && a.ino === b.ino && a.size === b.size &&
-    a.mtimeMs === b.mtimeMs && a.ctimeMs === b.ctimeMs;
+  return withLifecycleLock(path, action, true);
 }
 
 export type OpenAIChatGPTAccount = {
@@ -132,19 +68,19 @@ export class OpenAIChatGPTAuthStore {
       readonly result: T;
     },
   ): Promise<T> {
-    return withOpenAIChatGPTAuthLock(this.lockPath, async () => {
-      const current = this.read() ?? {
+    return withLifecycleLock(this.lockPath, () => this.storage.update(async value => {
+      const current = value === undefined ? {
         schemaVersion: 1,
         hostId: randomUUID(),
         accounts: [],
-      } satisfies OpenAIChatGPTAuthState;
+      } satisfies OpenAIChatGPTAuthState : value as OpenAIChatGPTAuthState;
+      assertAuthState(current);
       const updated = await mutate(current);
       if (updated.state.hostId !== current.hostId)
         throw new Error("OpenAI host identity cannot be changed.");
       assertAuthState(updated.state);
-      this.storage.save(updated.state);
-      return updated.result;
-    });
+      return { value: updated.state, result: updated.result };
+    }, join(this.storage.directory, "workspace.enc.lock")));
   }
 }
 

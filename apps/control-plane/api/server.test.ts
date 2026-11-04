@@ -425,6 +425,50 @@ describe("control plane API", () => {
       );
     });
   });
+  test("OpenAI ChatGPT account routes reject nonlocal Host requests even with the control token", async () => {
+    const data = await mkdtemp(join(tmpdir(), "nomo-siwc-api-boundary-data-"));
+    const auth = await mkdtemp(join(tmpdir(), "nomo-siwc-api-boundary-auth-"));
+    const workbench = new Workbench(
+      { NOMO_DATA_DIR: data },
+      fetch,
+      { openAIChatGPTAuthStore: new OpenAIChatGPTAuthStore(auth) },
+    );
+    try {
+      await withServer("unused.jsonl", async origin => {
+        const endpoint = new URL(origin);
+        const response = await new Promise<{ status: number; body: string }>((resolve, reject) => {
+          const request = httpRequest({
+            hostname: endpoint.hostname,
+            port: Number(endpoint.port),
+            method: "POST",
+            path: "/api/provider/openai-chatgpt/auth",
+            headers: {
+              host: "remote.example",
+              authorization: "Bearer fixture-control-token",
+              "content-type": "application/json",
+            },
+          }, result => {
+            let body = "";
+            result.setEncoding("utf8");
+            result.on("data", chunk => { body += chunk; });
+            result.on("end", () => resolve({ status: result.statusCode ?? 0, body }));
+          });
+          request.on("error", reject);
+          request.end("{}");
+        });
+        assert.equal(response.status, 403, response.body);
+        assert.deepEqual(JSON.parse(response.body), { error: "local_origin_required" });
+        assert.deepEqual(workbench.openAIChatGPTAccounts(), []);
+      }, {
+        workbench,
+        env: { NOMO_CONTROL_TOKEN: "fixture-control-token" },
+      });
+    } finally {
+      await rm(data, { recursive: true, force: true });
+      await rm(auth, { recursive: true, force: true });
+    }
+  });
+
   test("OpenAI ChatGPT auth API returns a one-shot URL without account hints and tracks consent decline", async () => {
     const data = await mkdtemp(join(tmpdir(), "nomo-siwc-api-data-"));
     const auth = await mkdtemp(join(tmpdir(), "nomo-siwc-api-auth-"));

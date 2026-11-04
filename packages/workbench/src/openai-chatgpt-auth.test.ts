@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import fs from "node:fs";
 import { spawn, spawnSync } from "node:child_process";
+import { existsSync } from "node:fs";
 import { syncBuiltinESMExports } from "node:module";
 import {
   buildOpenAIChatGPTAuthorizeUrl,
@@ -165,6 +166,17 @@ test("corrupt account stores fail closed without overwriting ciphertext", async 
   }
 });
 
+test("auth lifecycle does not retry a mutation error that mentions a locked database", async t => {
+  const directory = await mkdtemp(join(tmpdir(), "nomo-siwc-lock-action-error-"));
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  let calls = 0;
+  await assert.rejects(withOpenAIChatGPTAuthLock(join(directory, "accounts.lock"), async () => {
+    calls++;
+    throw new Error("mutation rejected because account is locked by policy");
+  }), /locked by policy/);
+  assert.equal(calls, 1);
+});
+
 test("account lifecycle lock serializes separate runtime processes", { timeout: 10_000 }, async t => {
   const directory = await mkdtemp(join(tmpdir(), "nomo-siwc-process-lock-"));
   t.after(() => rm(directory, { recursive: true, force: true }));
@@ -225,11 +237,37 @@ test("account lifecycle lock serializes separate runtime processes", { timeout: 
     await writeFile(releaseFirst, "release");
     await waitForFile(secondReady, second);
     assert.deepEqual(await Promise.all([firstExit, secondExit]), [0, 0]);
-    assert.equal(fs.existsSync(lockPath), false);
+    assert.equal(fs.lstatSync(lockPath).isDirectory(), true);
   } finally {
     if (first.exitCode === null) first.kill();
     if (second?.exitCode === null) second.kill();
   }
+});
+
+test("account lifecycle lock is released when its owning process crashes", { timeout: 10_000 }, async t => {
+  const directory = await mkdtemp(join(tmpdir(), "nomo-siwc-lock-crash-"));
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  const lockPath = join(directory, "accounts.lock");
+  const moduleUrl = new URL("./openai-chatgpt-auth.ts", import.meta.url).href;
+  const owner = spawn(process.execPath, ["--input-type=module", "-e", `
+    import { withOpenAIChatGPTAuthLock } from ${JSON.stringify(moduleUrl)};
+    import { writeFile } from "node:fs/promises";
+    await withOpenAIChatGPTAuthLock(process.argv[1], async () => {
+      await writeFile(process.argv[2], "locked");
+      setInterval(() => {}, 1_000);
+      await new Promise(() => {});
+    });
+  `, lockPath, join(directory, "entered")], { stdio: "ignore" });
+  t.after(() => { if (owner.exitCode === null) owner.kill("SIGKILL"); });
+  for (let attempt = 0; attempt < 200 && !existsSync(join(directory, "entered")); attempt++)
+    await new Promise(resolve => setTimeout(resolve, 10));
+  assert.equal(existsSync(join(directory, "entered")), true);
+  const ownerClosed = new Promise<void>(resolve => owner.once("close", () => resolve()));
+  owner.kill("SIGKILL");
+  await ownerClosed;
+  let enteredAfterCrash = false;
+  await withOpenAIChatGPTAuthLock(lockPath, async () => { enteredAfterCrash = true; });
+  assert.equal(enteredAfterCrash, true);
 });
 
 test("account lifecycle mutations wait for the host lock before entering", async t => {
@@ -258,21 +296,69 @@ test("account lifecycle mutations wait for the host lock before entering", async
   assert.deepEqual(events, ["first-start", "first-end", "second-start"]);
 });
 
-test("lifecycle lock refuses stale owner without changing the lock", async t => {
-  const directory = await mkdtemp(join(tmpdir(), "nomo-siwc-lock-stale-"));
+test("account lifecycle updates occupy the legacy lock path before mutation", async t => {
+  const directory = await mkdtemp(join(tmpdir(), "nomo-siwc-cross-version-"));
   t.after(() => rm(directory, { recursive: true, force: true }));
-  const child = spawnSync(process.execPath, ["-e", ""], { stdio: "ignore" });
-  assert.equal(child.status, 0);
-  const path = join(directory, "accounts.lock");
-  fs.writeFileSync(path, String(child.pid));
-  await assert.rejects(
-    withOpenAIChatGPTAuthLock(path, async () => {}),
-    /stale owner; stop all NOMO processes and remove the lock to recover/,
-  );
-  assert.equal(fs.readFileSync(path, "utf8"), String(child.pid));
-  await rm(path);
+  const store = new OpenAIChatGPTAuthStore(directory);
+  const lockPath = join(directory, "accounts.lifecycle.lock");
+  const actionMarker = join(directory, "legacy-action-ran");
+  let release!: () => void;
+  let entered!: () => void;
+  const gate = new Promise<void>(resolve => { release = resolve; });
+  const started = new Promise<void>(resolve => { entered = resolve; });
+  const mutation = store.update(async state => {
+    entered();
+    await gate;
+    return { state, result: undefined };
+  });
+  await started;
+  try {
+    assert.equal(existsSync(lockPath), true);
+    const legacyWriter = `
+      import { writeFileSync, readFileSync, lstatSync, unlinkSync } from "node:fs";
+      const [path, marker] = process.argv.slice(1);
+      try { writeFileSync(path, String(process.pid), { flag: "wx", mode: 0o600 }); }
+      catch (error) {
+        if (error.code !== "EEXIST") throw error;
+        const stat = lstatSync(path);
+        const text = readFileSync(path, "utf8");
+        const pid = /^[1-9][0-9]{0,9}$/.test(text) ? Number(text) : 0;
+        if (!Number.isSafeInteger(pid) || pid < 1 || pid > 2147483647) process.exit(0);
+        try { process.kill(pid, 0); process.exit(0); }
+        catch (ownerError) { if (ownerError.code !== "ESRCH") process.exit(0); }
+        if (stat.ino === lstatSync(path).ino && readFileSync(path, "utf8") === text) unlinkSync(path);
+      }
+      writeFileSync(marker, "entered");
+      process.exit(3);
+    `;
+    const legacy = spawnSync(process.execPath, ["--input-type=module", "-e", legacyWriter, lockPath, actionMarker], { encoding: "utf8" });
+    assert.equal(legacy.status, 0, legacy.stderr);
+    assert.equal(existsSync(actionMarker), false);
+    assert.equal(existsSync(lockPath), true);
+  } finally {
+    release();
+    await mutation;
+  }
+});
+
+test("account lifecycle directory sentinel preserves a legacy PID file", async t => {
+  const directory = await mkdtemp(join(tmpdir(), "nomo-siwc-lock-legacy-"));
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  const path = join(directory, "accounts.lifecycle.lock");
+  await writeFile(path, String(process.pid), { mode: 0o600 });
+  await assert.rejects(withOpenAIChatGPTAuthLock(path, async () => {}), /legacy or invalid.*stop all NOMO writers/i);
+  assert.equal(await fs.promises.readFile(path, "utf8"), String(process.pid));
+});
+
+test("account lifecycle lock safely reuses its database after an owner exits", async t => {
+  const directory = await mkdtemp(join(tmpdir(), "nomo-siwc-lock-reuse-"));
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  const path = join(directory, "accounts.enc.lock");
   let entered = false;
   await withOpenAIChatGPTAuthLock(path, async () => { entered = true; });
   assert.equal(entered, true);
-  assert.equal(fs.existsSync(path), false);
+  assert.equal(fs.lstatSync(path).isDirectory(), true);
+  assert.equal(fs.statSync(join(path, "lifecycle.sqlite")).isFile(), true);
+  await withOpenAIChatGPTAuthLock(path, async () => { entered = true; });
+  assert.equal(entered, true);
 });

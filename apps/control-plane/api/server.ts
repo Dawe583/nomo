@@ -371,7 +371,9 @@ export function createControlPlaneServer(
     const parsedRequestUrl = parseRequestUrl(request);
     const localOnlyRequest = parsedRequestUrl !== null && (
       isProjectWorkspaceRoutePath(parsedRequestUrl.pathname) ||
-      SESSION_IMAGE_ROUTE.test(parsedRequestUrl.pathname)
+      SESSION_IMAGE_ROUTE.test(parsedRequestUrl.pathname) ||
+      parsedRequestUrl.pathname === "/api/provider/openai-chatgpt" ||
+      parsedRequestUrl.pathname.startsWith("/api/provider/openai-chatgpt/")
     );
     if (
       localOnlyRequest

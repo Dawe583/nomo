@@ -1,6 +1,7 @@
 import { createCipheriv, createDecipheriv, randomBytes, createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync, renameSync, linkSync, openSync, closeSync, fsyncSync, unlinkSync, lstatSync, type Stats } from 'node:fs';
-import { join } from 'node:path';
+import { DatabaseSync } from 'node:sqlite';
+import { dirname, join } from 'node:path';
 import { reservedRecoveryVault } from '../../runtime/src/index.ts';
 
 // One atomic encrypted snapshot commits managed files and their signed history
@@ -52,19 +53,26 @@ export class LocalStorage {
     return JSON.parse(Buffer.concat([cipher.update(data.subarray(28)), cipher.final()]).toString()) as T;
   }
   save(value: unknown): void {
-    const lock = `${this.path}.lock`;
-    const owner = acquireLock(lock);
-    try {
-      let current: string | undefined;
-      try { current = createHash('sha256').update(readFileSync(this.path)).digest('hex'); }
-      catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error; }
-      if (current !== this.revision) throw new Error('Workspace changed in another runtime. Restart this app before writing.');
-      this.commit(value);
-    } finally {
-      // Never release a replacement lock belonging to another process.
-      try { if (sameFile(owner, lstatSync(lock)) && readFileSync(lock, 'utf8') === String(process.pid)) unlinkSync(lock); }
-      catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error; }
-    }
+    withLifecycleLockSync(`${this.path}.lock`, () => this.saveUnlocked(value), true);
+  }
+  async update<T>(
+    mutate: (current: unknown) => Promise<{ value: unknown; result: T }> | { value: unknown; result: T },
+    lockPath = `${this.path}.lock`,
+    directorySentinel = true,
+  ): Promise<T> {
+    return withLifecycleLock(lockPath, async () => {
+      const current = this.read();
+      const updated = await mutate(current);
+      this.saveUnlocked(updated.value);
+      return updated.result;
+    }, directorySentinel);
+  }
+  private saveUnlocked(value: unknown): void {
+    let current: string | undefined;
+    try { current = createHash('sha256').update(readFileSync(this.path)).digest('hex'); }
+    catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error; }
+    if (current !== this.revision) throw new Error('Workspace changed in another runtime. Restart this app before writing.');
+    this.commit(value);
   }
   private commit(value: unknown): void {
     const iv = randomBytes(12), cipher = createCipheriv('aes-256-gcm', this.key, iv);
@@ -88,26 +96,82 @@ export class LocalStorage {
   }
 }
 
-function acquireLock(path: string): Stats {
-  try { writeFileSync(path, String(process.pid), { flag: 'wx', mode: 0o600 }); }
-  catch (error) {
-    if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error;
-    const original = lstatSync(path);
-    if (!original.isFile()) throw new Error('Workspace lock has an unknown owner. Refusing to replace it.');
-    const text = readFileSync(path, 'utf8');
-    const pid = /^[1-9][0-9]{0,9}$/.test(text) ? Number(text) : 0;
-    if (!Number.isSafeInteger(pid) || pid < 1 || pid > 2147483647) throw new Error('Workspace lock has an unknown owner. Refusing to replace it.');
-    let gone = false;
-    try { process.kill(pid, 0); }
-    catch (ownerError) { gone = (ownerError as NodeJS.ErrnoException).code === 'ESRCH'; }
-    if (!gone) throw new Error('Workspace is locked by another live or inaccessible process.');
-    // Node cannot atomically unlink only the stale inode, so preserve it for
-    // explicit recovery after every writer has stopped.
-    if (!sameFile(original, lstatSync(path)) || readFileSync(path, 'utf8') !== text) throw new Error('Workspace lock changed during recovery. Retry after the other runtime finishes.');
-    throw new Error('Workspace lock has a stale owner. Stop all NOMO processes and remove the lock to recover.');
-  }
-  return lstatSync(path);
+export class LifecycleLockBusyError extends Error {
+  constructor() { super('Workspace lifecycle is busy in another process.'); }
 }
-function sameFile(a: Stats, b: Stats): boolean {
-  return a.dev === b.dev && a.ino === b.ino && a.size === b.size && a.mtimeMs === b.mtimeMs && a.ctimeMs === b.ctimeMs;
+
+/** Serialize writers with SQLite and optionally keep a directory sentinel for legacy PID locks. */
+function openLifecycleDatabase(path: string, directorySentinel: boolean): DatabaseSync {
+  let databasePath = path;
+  if (directorySentinel) {
+    let createdDirectory = false;
+    try { mkdirSync(path, { mode: 0o700 }); createdDirectory = true; }
+    catch (error) { if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error; }
+    const directory = lstatSync(path);
+    if (!directory.isDirectory() || (process.platform !== 'win32' && (directory.mode & 0o077) !== 0))
+      throw new Error('Workspace lifecycle lock is legacy or invalid; preserve it and stop all NOMO writers before recovery.');
+    if (createdDirectory && process.platform !== 'win32') {
+      const parent = openSync(dirname(path), 'r');
+      try { fsyncSync(parent); } finally { closeSync(parent); }
+    }
+    databasePath = join(path, 'lifecycle.sqlite');
+    try {
+      const fd = openSync(databasePath, 'wx', 0o600);
+      closeSync(fd);
+      if (process.platform !== 'win32') {
+        const directoryFd = openSync(path, 'r');
+        try { fsyncSync(directoryFd); } finally { closeSync(directoryFd); }
+      }
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error;
+      const file = lstatSync(databasePath);
+      if (!file.isFile() || (process.platform !== 'win32' && (file.mode & 0o077) !== 0))
+        throw new Error('Workspace lifecycle database is not a private regular file.');
+    }
+  } else try {
+    const fd = openSync(path, 'wx', 0o600);
+    closeSync(fd);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error;
+    const file = lstatSync(path);
+    if (!file.isFile() || (process.platform !== 'win32' && (file.mode & 0o077) !== 0))
+      throw new Error('Workspace lifecycle lock is not a private regular file.');
+  }
+  const database = new DatabaseSync(databasePath);
+  try {
+    try {
+      database.exec('PRAGMA busy_timeout=0; PRAGMA synchronous=FULL;');
+      database.exec('CREATE TABLE IF NOT EXISTS lifecycle (id INTEGER PRIMARY KEY CHECK (id = 1));');
+      database.exec('BEGIN IMMEDIATE');
+    } catch (error) {
+      if (error instanceof Error && error.message.toLowerCase().includes('locked'))
+        throw new LifecycleLockBusyError();
+      if (error instanceof Error && /not a database|encrypted/i.test(error.message))
+        throw new Error('Workspace lifecycle lock is legacy or invalid; preserve it and stop all NOMO writers before recovery.');
+      throw error;
+    }
+    return database;
+  } catch (error) { database.close(); throw error; }
+}
+
+export function withLifecycleLockSync<T>(path: string, action: () => T, directorySentinel = false): T {
+  const database = openLifecycleDatabase(path, directorySentinel);
+  try { return action(); }
+  finally { try { database.exec('ROLLBACK'); } finally { database.close(); } }
+}
+
+export async function withLifecycleLock<T>(path: string, action: () => T | Promise<T>, directorySentinel = false): Promise<T> {
+  const deadline = Date.now() + 120_000;
+  for (;;) {
+    let database: DatabaseSync;
+    try { database = openLifecycleDatabase(path, directorySentinel); }
+    catch (error) {
+      if (!(error instanceof LifecycleLockBusyError)) throw error;
+      if (Date.now() >= deadline) throw error;
+      await new Promise(resolve => setTimeout(resolve, 25));
+      continue;
+    }
+    try { return await action(); }
+    finally { try { database.exec('ROLLBACK'); } finally { database.close(); } }
+  }
 }

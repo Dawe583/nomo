@@ -9,6 +9,7 @@ import { setTimeout as delay } from "node:timers/promises";
 import { Workbench } from "./index.ts";
 import { CompatibleProvider } from "./provider.ts";
 import { LocalStorage } from "./storage.ts";
+import { OpenAIChatGPTAuthStore } from "./openai-chatgpt-auth.ts";
 import { readLedgerFeed } from "../../ledger/src/feed.ts";
 import { canonicalJson, entryHash, GENESIS_PREV } from "../../ledger/src/canonical.ts";
 import { signingPreimage } from "../../ledger/src/index.ts";
@@ -1009,6 +1010,67 @@ test("provider logout waits for a manual provider catalog probe", async (t) => {
   assert.equal(persisted.config, undefined);
   assert.deepEqual(persisted.profiles, {});
   assert.doesNotMatch(JSON.stringify(persisted), /pending-fixture-key/);
+});
+
+test("failed ChatGPT account setup preserves the active provider and saved profile", async (t) => {
+  const requests: string[] = [];
+  const fetcher: typeof fetch = async (url) => {
+    const target = String(url);
+    requests.push(target);
+    if (target === "https://existing.test/v1/models")
+      return Response.json({ data: [{ id: "existing-model" }] });
+    if (target === "https://api.openai.com/v1/models")
+      return Response.json({ error: { code: "account_unavailable" } }, { status: 503 });
+    throw new Error(`Unexpected fixture URL: ${target}`);
+  };
+  const temporary = await mkdtemp(join(tmpdir(), "nomo-chatgpt-preserve-"));
+  const env = { NOMO_DATA_DIR: temporary };
+  const authStore = new OpenAIChatGPTAuthStore(join(temporary, "host-auth"));
+  const workbench = new Workbench(env, fetcher, { openAIChatGPTAuthStore: authStore });
+  t.after(async () => {
+    await workbench.shutdown();
+    await rm(temporary, { recursive: true, force: true });
+  });
+  assertIsolated(temporary, env);
+  const original = { baseUrl: "https://existing.test/v1", apiKey: "existing-fixture-key", kind: "compatible" as const };
+  await workbench.configure(original);
+  const before = await workbench.providerState();
+
+  await authStore.update((state) => ({
+    state: {
+      ...state,
+      accounts: [{
+        id: "account-fixture",
+        clientId: "client-fixture",
+        subject: "subject-fixture",
+        scopes: ["resource.invoke", "chatgpt.tokens.use.direct"],
+        usageEnabled: true,
+        accessToken: "synthetic-access-token",
+        refreshToken: "synthetic-refresh-token",
+        expiresAt: Date.now() + 3_600_000,
+      }],
+    },
+    result: undefined,
+  }));
+  await assert.rejects(
+    workbench.connectOpenAIChatGPTAccount("account-fixture", "missing-model"),
+    /Provider request failed \(HTTP 503\)/i,
+  );
+
+  assert.deepEqual(await workbench.providerState(), before);
+  const persisted = new LocalStorage(temporary).read<{
+    config: typeof original;
+    profiles: Record<string, typeof original>;
+    preferences: { defaultModel?: string; defaultProvider?: string };
+  }>()!;
+  assert.deepEqual(persisted.config, original);
+  assert.deepEqual(persisted.profiles, { [original.baseUrl]: original });
+  assert.equal(persisted.preferences.defaultModel, "existing-model");
+  assert.equal(persisted.preferences.defaultProvider, "custom");
+  assert.deepEqual(requests, [
+    "https://existing.test/v1/models",
+    "https://api.openai.com/v1/models",
+  ]);
 });
 
 test("a failed provider catalog probe does not keep logout blocked", async (t) => {
