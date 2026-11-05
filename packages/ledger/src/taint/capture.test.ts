@@ -71,6 +71,33 @@ describe("taintFromLedger", () => {
 });
 
 describe("taint export", () => {
+  test("rejects an unknown R07 binding class", async () => {
+    const { file } = await seedLedger();
+    const text = await readFile(file, "utf8");
+    const graph = buildGraph(
+      text.trim().split("\n").map((line) => JSON.parse(line) as never),
+    );
+    const exported = JSON.parse(exportTaint(graph)) as {
+      edges: Array<Record<string, unknown>>;
+    };
+    exported.edges[0]!.bindingType = "forged";
+    assert.throws(
+      () =>
+        verifyTaint(
+          JSON.stringify({
+            version: "void.taint.v1",
+            honesty: {
+              dataEdges:
+                "Data edges require outputDigest on the producing ledger entry. Entries without outputDigest produce resource edges only.",
+            },
+            nodes: [...graph.nodes.values()],
+            edges: exported.edges,
+          }),
+        ),
+      /bindingType|binding class/i,
+    );
+  });
+
   test("round trips the pinned JSON shape", async () => {
     const { dir, file } = await seedLedger();
     const text = await readFile(file, "utf8");

@@ -87,7 +87,11 @@ function parseEdge(value: unknown, nodes: ReadonlyMap<string, TaintNode>): Taint
   if (!nodes.has(to)) throw new Error(`taint export edge references unknown to node ${to}`);
   const kind = edge.kind;
   if (kind !== "resource" && kind !== "data") throw new Error(`taint export edge has invalid kind ${JSON.stringify(kind)}.`);
-  return { from, to, kind, via: requiredString(edge.via, "edge via"), bindingType: edge.bindingType };
+  const bindingType = edge.bindingType;
+  if (bindingType !== undefined && bindingType !== "confirmed-data" && bindingType !== "observed-resource" && bindingType !== "conservative-potential") {
+    throw new Error(`taint export edge has invalid bindingType ${JSON.stringify(bindingType)}.`);
+  }
+  return { from, to, kind, via: requiredString(edge.via, "edge via"), bindingType };
 }
 
 function requiredString(value: unknown, name: string): string {
