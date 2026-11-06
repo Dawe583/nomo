@@ -39,7 +39,7 @@ EXPECTED = {
     "operations": 268,
     "cases": 491,
     "local_tools": 8,
-    "cli_commands": 20,
+    "cli_commands": 23,
 }
 
 PROBE = """
