@@ -78,6 +78,7 @@ async function installedTree(t: { after: (fn: () => unknown) => void }) {
   const remote = join(root, "remote.git");
   const tree = join(root, "tree");
   git(root, ["init", "--bare", "--quiet", remote]);
+  git(root, ["--git-dir", remote, "symbolic-ref", "HEAD", "refs/heads/main"]);
   git(root, ["clone", "--quiet", remote, tree]);
   await commit(tree, "one.txt", "one");
   git(tree, ["push", "--quiet", "origin", "HEAD:refs/heads/main"]);

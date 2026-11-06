@@ -6,9 +6,9 @@ import { join } from "node:path";
 /**
  * STANDARDS section 11 as a gate.
  *
- * The design system is three token files, and nothing else may hold a colour.
+ * The design system has four token files, and nothing else may hold a colour.
  * That is not a style preference: it is the only reason the theme toggle works
- * and the only thing keeping three separately maintained surfaces from drifting
+ * and the only thing keeping separately maintained surfaces from drifting
  * apart. The concrete failure this gate prevents has already happened twice in
  * this repository. `ui.tsx` hardcoded the browser chrome colour as a hex pair
  * that had to be kept in step with `styles.css` by hand, and the static
@@ -34,6 +34,11 @@ const TOKENS = [
     surface: "apps/control-plane/web",
   },
   { file: "site/styles.css", canvas: "--paper", surface: "site" },
+  {
+    file: "site/whitepaper/colors.css",
+    canvas: "--wp-white",
+    surface: "site/whitepaper",
+  },
 ];
 
 /**
@@ -53,6 +58,7 @@ const STYLESHEETS = [
   "apps/control-plane/ui/src/chat.css",
   "apps/control-plane/web/workbench.css",
   "site/styles.css",
+  "site/whitepaper/colors.css",
 ];
 
 const read = (file) => readFileSync(file, "utf8").replace(/\r\n/g, "\n");
@@ -79,11 +85,11 @@ const normalise = (value) =>
     .replace(/\s+/g, "")
     .replace(/^#(\w{3})$/, "#$1");
 
-test("the three token files are the ones the standard names", () => {
+test("the four token files are the ones the standard names", () => {
   assert.equal(
     TOKENS.length,
-    3,
-    "a fourth token file must be added here, with a reason",
+    4,
+    "a fifth token file must be added here, with a reason",
   );
   for (const spec of TOKENS) {
     assert.ok(existsSync(spec.file), `${spec.file} is missing`);
@@ -93,7 +99,7 @@ test("the three token files are the ones the standard names", () => {
       `${spec.file} no longer declares ${spec.canvas}`,
     );
   }
-  // A stylesheet that declares tokens but is not in the list would be a fourth
+  // A stylesheet that declares tokens but is not in the list would be a fifth
   // place to change a colour, so the count is pinned rather than trusted.
   const declaring = STYLESHEETS.filter((file) =>
     /^\s*--[a-z][a-z0-9-]*\s*:\s*#[0-9a-fA-F]{3,8}/m.test(read(file)),

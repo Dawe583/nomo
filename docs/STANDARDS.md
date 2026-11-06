@@ -423,12 +423,13 @@ command exits 0 in this environment and the output has been read.
 > server-rendered function tree; the paths are history.
 >
 > Everything in this section still applies; only the paths moved, and one of the
-> paths had moved twice. The design system is **three** token files:
+> paths had moved twice. The design system is **four** token files:
 > `apps/control-plane/ui/src/styles.css` for the Vite control plane,
 > `apps/control-plane/web/workbench.css` for the server rendered workbench pages,
-> and `site/styles.css` for the separate site.
+> `site/styles.css` for the separate site, and
+> `site/whitepaper/colors.css` for the whitepaper's independent print palette.
 
-Every token, both themes and every keyframe is declared in one of those three and
+Every token, both themes and every keyframe is declared in one of those four and
 nowhere else. Change colours there and nowhere else.
 `scripts/src/design-token.test.mjs` fails the build when a component grows a
 colour literal or an unprefixed keyframe, and when a static
