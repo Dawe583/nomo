@@ -32,8 +32,16 @@ type FeedBody = {
 
 const workspace = "default";
 
-async function seedLedger(count = 2): Promise<string> {
-  const dir = await mkdtemp(join(tmpdir(), "void-control-plane-api-"));
+async function seedLedger(
+  t: { after: (fn: () => void | Promise<void>) => void },
+  count = 2,
+): Promise<string> {
+  const parent = process.platform === "win32"
+    ? join(dataDir(homedir()), "test-ledgers")
+    : tmpdir();
+  await mkdir(parent, { recursive: true });
+  const dir = await mkdtemp(join(parent, "void-control-plane-api-"));
+  t.after(() => rm(dir, { recursive: true, force: true }));
   const signer = await devKeyProvider({ dir: join(dir, "keys"), env: {} });
   const store = jsonlStore(signer, { dir });
   for (let index = 1; index <= count; index += 1) {
@@ -1257,8 +1265,8 @@ describe("control plane API", () => {
     });
   });
 
-  test("returns a limited ledger feed with verified chain fields", async () => {
-    const ledgerPath = await seedLedger(2);
+  test("returns a limited ledger feed with verified chain fields", async (t) => {
+    const ledgerPath = await seedLedger(t, 2);
     await withServer(ledgerPath, async (origin) => {
       const response = await fetch(`${origin}/api/feed?workspace=default&limit=1`);
       assert.equal(response.status, 200);
@@ -1306,8 +1314,8 @@ describe("control plane API", () => {
     }
   });
 
-  test("reports chain verification status", async () => {
-    const ledgerPath = await seedLedger(3);
+  test("reports chain verification status", async (t) => {
+    const ledgerPath = await seedLedger(t, 3);
     await withServer(ledgerPath, async (origin) => {
       const response = await fetch(`${origin}/api/ledger/verify`);
       assert.equal(response.status, 200);
@@ -1323,8 +1331,8 @@ describe("control plane API", () => {
     });
   });
 
-  test("verifies signatures when the signing key is in the environment", async () => {
-    const ledgerPath = await seedLedger(2);
+  test("verifies signatures when the signing key is in the environment", async (t) => {
+    const ledgerPath = await seedLedger(t, 2);
     const keyMaterial = await readFile(join(dirname(ledgerPath), "keys", "dev-ed25519.pkcs8"));
     await withServer(ledgerPath, async (origin) => {
       const feedResponse = await fetch(`${origin}/api/feed?workspace=default`);
@@ -1341,12 +1349,12 @@ describe("control plane API", () => {
     }, { env: { VOID_SIGNING_KEY: keyMaterial.toString("base64") } });
   });
 
-  test("a rewritten and rehashed ledger fails verification when a key is configured", async () => {
+  test("a rewritten and rehashed ledger fails verification when a key is configured", async (t) => {
     // The S08 attack: rewrite an entry, recompute the whole hash chain so
     // chain integrity alone sees nothing wrong, and keep the original
     // signature bytes on the forged entry. Only signature checking can see
     // this, which is why verified means signed, not just chained.
-    const ledgerPath = await seedLedger(2);
+    const ledgerPath = await seedLedger(t, 2);
     const lines = (await readFile(ledgerPath, "utf8")).trim().split("\n")
       .map((line) => JSON.parse(line) as Record<string, unknown>);
     const forged = JSON.parse(JSON.stringify(lines[1]!)) as Record<string, unknown>;
@@ -1375,8 +1383,8 @@ describe("control plane API", () => {
     });
   });
 
-  test("serves the control plane pages with html content type", async () => {
-    const ledgerPath = await seedLedger(1);
+  test("serves the control plane pages with html content type", async (t) => {
+    const ledgerPath = await seedLedger(t, 1);
     await withServer(ledgerPath, async (origin) => {
       const response = await fetch(`${origin}/feed.html`);
       assert.equal(response.status, 200);
@@ -1385,8 +1393,8 @@ describe("control plane API", () => {
     });
   });
 
-  test("exports complete signed envelopes for offline verification", async () => {
-    const ledgerPath = await seedLedger(2);
+  test("exports complete signed envelopes for offline verification", async (t) => {
+    const ledgerPath = await seedLedger(t, 2);
     await withServer(ledgerPath, async origin => {
       const response = await fetch(`${origin}/api/ledger/export`);
       assert.equal(response.status, 200);
@@ -1397,8 +1405,8 @@ describe("control plane API", () => {
     });
   });
 
-  test("returns a clear 503 when no ApprovalBroker is wired", async () => {
-    const ledgerPath = await seedLedger(1);
+  test("returns a clear 503 when no ApprovalBroker is wired", async (t) => {
+    const ledgerPath = await seedLedger(t, 1);
     await withServer(ledgerPath, async (origin) => {
       const response = await fetch(`${origin}/api/approvals/hold-1/decision`, {
         method: "POST",
@@ -1411,10 +1419,10 @@ describe("control plane API", () => {
     });
   });
 
-  test("rejects decision posts without an application/json content type", async () => {
+  test("rejects decision posts without an application/json content type", async (t) => {
     // A hostile page cannot send application/json from a form, so the content
     // type check is what keeps cross-site posts off the decision endpoint.
-    const ledgerPath = await seedLedger(1);
+    const ledgerPath = await seedLedger(t, 1);
     const decideCalls: unknown[] = [];
     const approvals = {
       pending: () => [],
@@ -1436,8 +1444,8 @@ describe("control plane API", () => {
     }, { approvals: approvals as ApprovalBroker });
   });
 
-  test("uses an injected ApprovalBroker for pending holds and decisions", async () => {
-    const ledgerPath = await seedLedger(1);
+  test("uses an injected ApprovalBroker for pending holds and decisions", async (t) => {
+    const ledgerPath = await seedLedger(t, 1);
     const pending: PendingApproval[] = [{
       holdId: "hold-1",
       call: { tool: "postgres.row.delete" },
