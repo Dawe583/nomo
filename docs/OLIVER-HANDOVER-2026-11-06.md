@@ -79,9 +79,11 @@ before making changes; active work may have moved on.
   required jobs and inspect their results; the run is not test evidence.
 - [#10 Windows permissions](https://github.com/Dawe583/nomo/issues/10): focused
   Node 24 Windows ledger checks passed, including refusal of a deliberately
-  broadened development-key ACL. Some POSIX-only cases returned early and a
-  POSIX-only case was skipped. The required full Windows Node 24/26 matrix and
-  backup and restore remain unverified; see the [test evidence](https://github.com/Dawe583/nomo/issues/10#issuecomment-6697935179).
+  broadened development-key ACL. Crash recovery passed 5/5, path containment
+  passed 1/1, and a selected backup and restore test including SQLite WAL passed
+  1/1. Some POSIX-only cases returned early and a POSIX-only case was skipped.
+  The full Windows Node 24/26 matrix and full backup and restore suite remain
+  unverified; see the [test evidence](https://github.com/Dawe583/nomo/issues/10#issuecomment-6697935179).
 - [#4 Vercel preview](https://github.com/Dawe583/nomo/issues/4): the Vercel app
   identifies `LiveFuller` on PR #140 but reports that account is not a member of
   the deployment team. This needs an account-side resolution and a successful
