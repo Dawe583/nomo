@@ -183,7 +183,7 @@ The development binary is `node packages/cli/bin/nomo.mjs`. Packaged releases wi
 | `@nomo/connectors` | Connector registry, Postgres logic, S3 logic, probes, snapshots, and manifests.                           |
 | `@nomo/cli`        | Development command handlers and terminal render models.                                                  |
 | `@nomo/workbench`  | Provider discovery, bounded agent sessions and the shared GUI/CLI model loop.                             |
-| `@nomo/sdk`        | In-process client wrapper for app builders: holdHandle and typed errors.                                 |
+| `@nomo/sdk`        | In-process client wrapper for app builders: holdHandle and typed errors.                                  |
 
 ## Beta scope
 
@@ -217,16 +217,18 @@ policy engine, the CLI, the connectors, and the standalone verifier. Full text i
 in `LICENSE`; the registry's own caveat travels in `NOTICE` and with the data
 wherever the data goes.
 
-`apps/control-plane` and `cloud` are the closed, paid parts and are **not**
-covered by the root licence; each carries its own `LICENSE`. `cloud` is the
+`apps/control-plane`, `cloud`, and `paid` are closed and are **not** covered by
+the root licence; each carries its own `LICENSE`. `cloud` is the
 hosted server: the account broker, the encrypted store behind customer
 documents, the entitlement gate and the merchant of record. It reads the
 open spine rather than replacing it, so the part that decides whether an agent's
 write is allowed stays readable. The line is in `docs/DECISIONS.md`
 section 5, along with the rule it exists to hold: **a feature never moves from
-open to paid.** Approvals, budgets, multi-workspace, SSO and the taint graph are
-on the paid side because they are organisational, not because they are
-interesting.
+open to paid.** The core approval flow, budget implementation, local taint graph
+and operator-selected retention remain open. The hosted cross-record taint route
+and hosted recovery execution are gated capabilities; planning, proof and local
+recovery remain open. SSO and multiple workspaces are not implemented. See the
+dated amendments to section 5 for the exact boundaries and remaining decisions.
 
 The source-only `@nomo/verifier` package is not published to npm yet. It has no
 dependencies and remains independent of the NOMO runtime by design. An auditor
