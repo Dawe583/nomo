@@ -15,7 +15,7 @@ fails the build when a document names a file that is not there.
 
 ---
 
-## 1. No em dash, no en dash. Anywhere.
+## 1. No new em dash or en dash.
 
 Not in code, comments, documentation, commit messages, site copy, YAML, SQL
 comments, error strings or test names. Use a comma, a colon, a semicolon, a full
@@ -49,15 +49,12 @@ git diff --cached | LC_ALL=C.UTF-8 grep -nP '[\x{2013}\x{2014}]'
 An empty result is the pass. If your editor has smart punctuation or an em dash
 substitution, turn it off.
 
-The four wrong examples above are the only permitted occurrences of those two
-characters in the repository, because a rule that cannot show the character it
-forbids is not stated unambiguously. A whole-tree check therefore excludes this
-one file:
+The examples in this document and the eight byte-pinned historical NOMO/YC
+records listed in section 15 are exceptions. The automated gate verifies the
+historical hashes and refuses new or modified violations:
 
-```
-LC_ALL=C.UTF-8 grep -rnP '[\x{2013}\x{2014}]' . \
-  --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=dist \
-  --exclude=STANDARDS.md --exclude=pnpm-lock.yaml
+```sh
+node --test scripts/src/no-dash.test.mjs
 ```
 
 ---
@@ -494,3 +491,13 @@ exists.
 - Introducing raw SQL DDL for the ledger gives this repository **two** migration
   mechanisms. Write the second one into `packages/ledger/README.md` in the same
   commit, or the next agent will not know it exists.
+
+
+## 15. Historical NOMO/YC records
+
+The user chose to preserve the existing NOMO/YC strategy records because their
+bytes are bound to a separate encrypted manifest. The no-dash gate permits only
+the exact SHA-256-pinned versions of the eight records that already contain
+dashes. New or modified files remain subject to the rule. These are historical
+records, not normal agent instructions; consult them only when the task directly
+requires them. Private `.nomo` runtime state is not source material.
