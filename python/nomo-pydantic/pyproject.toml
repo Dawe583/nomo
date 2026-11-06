@@ -1,0 +1,10 @@
+[project]
+name = "nomo-pydantic"
+version = "0.1.0"
+description = "Pydantic AI integration for NOMO's governed agent workflows."
+requires-python = ">=3.14"
+dependencies = [
+    "pydantic-ai-slim>=2.66.0",
+    "pydantic-evals>=2.66.0",
+    "pydantic-graph>=2.66.0",
+]
