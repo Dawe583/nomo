@@ -226,9 +226,10 @@ write is allowed stays readable. The line is in `docs/DECISIONS.md`
 section 5, along with the rule it exists to hold: **a feature never moves from
 open to paid.** The core approval flow, budget implementation, local taint graph
 and operator-selected retention remain open. The hosted cross-record taint route
-and hosted recovery execution are gated capabilities; planning, proof and local
-recovery remain open. SSO and multiple workspaces are not implemented. See the
-dated amendments to section 5 for the exact boundaries and remaining decisions.
+and hosted recovery execution are gated capabilities. Hosted planning and proof
+remain available without a subscription, while local recovery remains open source.
+SSO and multiple workspaces are not implemented. See the dated amendments to
+section 5 for the exact boundaries and remaining decisions.
 
 The source-only `@nomo/verifier` package is not published to npm yet. It has no
 dependencies and remains independent of the NOMO runtime by design. An auditor
