@@ -44,7 +44,13 @@ before making changes; active work may have moved on.
   issue owner's comment.
 - [#131 provider contracts](https://github.com/Dawe583/nomo/issues/131): keep
   unsupported transports fail-closed until authoritative public protocol and
-  third-party authentication contracts are available.
+  third-party authentication contracts are available. A possible next research
+  slice is Vertex with Anthropic Messages: Google documents [Claude on Vertex](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/partner-models/claude/use-claude)
+  and [Application Default Credentials](https://docs.cloud.google.com/docs/authentication/application-default-credentials),
+  while Anthropic documents [message streaming](https://platform.claude.com/docs/en/build-with-claude/streaming).
+  These sources do not establish that the complete issue acceptance is met:
+  project and location configuration, host credential boundaries, pinned model
+  eligibility and offline tests still need an explicit design and verification.
 - [#55 paid and open boundaries](https://github.com/Dawe583/nomo/issues/55):
   the original report is partly stale. `docs/DECISIONS.md` records `cloud/` as
   closed and classifies the remaining tree; `scripts/src/licence-line.test.mjs`
@@ -53,6 +59,10 @@ before making changes; active work may have moved on.
   simply be capped. Irreversibility budgets and other unbuilt paid capabilities
   remain separate product and licensing questions. This test alone does not
   establish that the whole issue is resolved.
+  A separate uncommitted local comment fix corrects the false claim in
+  `cloud/capability-gate.mjs` that `apps/control-plane` does not exist. Its
+  licence test passed 13/13, but the required workspace typecheck could not run
+  in that worktree because `tsc` was unavailable; the fix is not in this PR.
 - GitHub Actions: in [run 42301115291](https://github.com/Dawe583/nomo/actions/runs/42301115291),
   manifest jobs had no assigned runner and no steps. The job annotation cites
   failed payments or a spending limit. Resolve account billing, rerun the
