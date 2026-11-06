@@ -798,6 +798,7 @@ try {
       host: "127.0.0.1",
       port: proxy.address().port,
       user: "void_test",
+      password: decodeURIComponent(url.password),
       database: "void_gui_upgrade_preview",
       max: 1,
       query_timeout: 3000,

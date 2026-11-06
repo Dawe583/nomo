@@ -49,7 +49,7 @@ const fixture = createServer(async (req, res) => {
       ? { role: 'assistant', content: `No document was created. ${secret}` }
       : { role: 'assistant', content: null, tool_calls: [{ id: 'managed-write', type: 'function', function: { name: tool.function.name, arguments: JSON.stringify({ path: 'notes/plan.md', content: 'Managed cloud document.' }) } }] };
     res.setHeader('content-type', 'application/json');
-    res.end(JSON.stringify({ choices: [{ message }] }));
+    res.end(JSON.stringify({ choices: [{ message, finish_reason: message.tool_calls ? 'tool_calls' : 'stop' }] }));
   } catch {
     res.writeHead(500); res.end('Provider fixture assertion failed.');
   }
