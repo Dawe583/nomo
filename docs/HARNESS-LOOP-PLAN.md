@@ -110,7 +110,7 @@ foreign commit. When a node is blocked twice, stop and report.
 | --- | --- | --- |
 | Task graph | `.nomo/work-state.json` | Single execution state; schema in section 3.1 |
 | Loop contract | `AGENTS.local.md` (this repository) | Standing loop and skill entrypoints |
-| Loop skills | `.agents/skills/nomo-loops/SKILL.md`, `nomo-graphs/SKILL.md`, `nomo-pipeline/SKILL.md`, `.opencode/skill/nomo-work-package.md` | Procedures for loops, graphs and delivery |
+| Loop skills | `.agents/skills/nomo-loops/SKILL.md`, `nomo-graphs/SKILL.md`, `nomo-pipeline/SKILL.md` | Procedures for loops, graphs and delivery |
 | Gate recipe | Section 3.3 above | One launchctl job, clean tree, evidence files |
 | Test commands | Section 7 below | Focused and wide verification |
 | Branch policy | Section 3.3 above | Push per commit, main ff only on green |

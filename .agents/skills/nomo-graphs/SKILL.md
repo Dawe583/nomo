@@ -13,13 +13,13 @@ The active request graph is the execution plan and single source of task state. 
 
 ## Source graphs
 
-- Graphify lives in the NOMO Obsidian vault at `Graphify-Index/graphify-out/`. Check `.graphify_root`, timestamp and whether it indexes the active checkout. Use query, path and explain to find likely source and cross-file impact. Rebuild only when needed and authorized.
+- Graphify's index is preserved under `Graphify-Index/graphify-out/` in the NOMO Obsidian vault. Check `.graphify_root`, timestamp and whether it indexes the active checkout. Use query, path and explain to find likely source and cross-file impact. Rebuild only when needed and authorized; do not modify the archive.
 - Understand Anything lives in repository `.ua/`. Its graph is an additional code navigation index. The intermediate semantic segments are not the canonical graph and must not be treated as validated until merged, normalized, schema-checked, coverage-checked and audited for duplicate or dangling node references.
 - Source files, tests and approved specifications override both generated graphs. Graph edges are navigation claims, not proof of runtime behavior.
 
 ## Memory graph boundary
 
-Obsidian holds readable decisions, roadmap, verified status, risks and handoffs. Graphify holds machine-readable code relationships. Understand Anything holds code-level structure and navigation. Do not store secrets, credentials, personal data, raw chat transcripts or unverified inferences. Record provenance and uncertainty. Update Obsidian at milestones, not on every tool call.
+The Obsidian NOMO vault holds readable decisions, roadmap, verified status, risks, research and handoffs. Graphify holds machine-readable code relationships. Understand Anything holds code-level structure and navigation. Generated Graphify/CodeAtlas files in the vault remain derived and separate from authored notes. Do not store secrets, credentials, personal data, raw chat transcripts or unverified inferences. Record provenance and uncertainty. Append evidence to `08 Work Log/NOMO Work Log.md` at milestones, not on every tool call.
 
 ## Validation before trusting a graph
 
