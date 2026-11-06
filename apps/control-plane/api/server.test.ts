@@ -3,8 +3,9 @@ import assert from "node:assert/strict";
 import { request as httpRequest } from "node:http";
 import { execFileSync } from "node:child_process";
 import { mkdtemp, readFile, writeFile, rm, mkdir, truncate } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { homedir, tmpdir } from "node:os";
 import { dirname, join } from "node:path";
+import { dataDir } from "../../../packages/ledger/src/paths.ts";
 import { devKeyProvider, sha256Hex } from "../../../packages/ledger/src/sign.ts";
 import { entryHash } from "../../../packages/ledger/src/canonical.ts";
 import { jsonlStore } from "../../../packages/ledger/src/store.ts";
@@ -57,38 +58,51 @@ type WithServerOptions = {
   readonly agentRunners?: readonly AgentRunner[];
 };
 
+async function isolatedWorkbenchDataDirectory(
+  t: { after: (fn: () => void | Promise<void>) => void },
+  prefix: string,
+): Promise<string> {
+  if (process.platform !== "win32") return mkdtemp(join(tmpdir(), prefix));
+  const dataRoot = join(dataDir(homedir()), "test-workspaces");
+  await mkdir(dataRoot, { recursive: true });
+  return mkdtemp(join(dataRoot, prefix));
+}
+
 async function withServer<T>(
   ledgerPath: string,
   run: (origin: string) => Promise<T>,
   options: WithServerOptions = {},
 ): Promise<T> {
-  const dataDir = await mkdtemp(join(tmpdir(), "void-api-workbench-"));
-  const home = await mkdtemp(join(tmpdir(), "void-fleet-home-"));
+  const serverDataDirectory = await mkdtemp(join(tmpdir(), "void-api-workbench-"));
+  const home = process.platform === "win32"
+    ? join(dataDir(homedir()), "test-control-plane-home")
+    : await mkdtemp(join(tmpdir(), "void-fleet-home-"));
   const handle = await listenControlPlane({
     ledgerPath,
     webRoot: join(import.meta.dirname, '../web'),
     approvals: options.approvals,
     workbench: options.workbench,
     agentRunners: options.agentRunners,
-    env: { VOID_DATA_DIR: dataDir, ...options.env },
+    env: { VOID_DATA_DIR: serverDataDirectory, ...options.env },
   });
   try {
     return await run(`http://127.0.0.1:${handle.port}`);
   } finally {
     await handle.close();
-    await rm(dataDir, { recursive: true, force: true });
-    await rm(home, { recursive: true, force: true });
+    await rm(serverDataDirectory, { recursive: true, force: true });
+    if (process.platform !== "win32") await rm(home, { recursive: true, force: true });
   }
 }
 
 test("project workspace API reviews and applies one exact local file change", async (t) => {
-  const dataDirectory = await mkdtemp(join(tmpdir(), "nomo-project-api-data-"));
+  const dataDirectory = await isolatedWorkbenchDataDirectory(t, "nomo-project-api-data-");
   const projectRoot = await mkdtemp(join(tmpdir(), "nomo-project-api-root-"));
   await mkdir(join(projectRoot, "src"));
   await writeFile(join(projectRoot, "src/main.ts"), "before\n");
   await writeFile(join(projectRoot, "src/other.ts"), "untouched\n");
   execFileSync("git", ["init", "--quiet"], { cwd: projectRoot, stdio: "ignore" });
   t.after(async () => {
+    await workbench.shutdown();
     await rm(dataDirectory, { recursive: true, force: true });
     await rm(projectRoot, { recursive: true, force: true });
   });
@@ -241,7 +255,7 @@ test("project workspace API reviews and applies one exact local file change", as
 });
 
 test("project workspace API rejects invalid roots and file limits without activation", async (t) => {
-  const dataDirectory = await mkdtemp(join(tmpdir(), "nomo-project-api-limit-data-"));
+  const dataDirectory = await isolatedWorkbenchDataDirectory(t, "nomo-project-api-limit-data-");
   const nonGitRoot = await mkdtemp(join(tmpdir(), "nomo-project-api-nongit-"));
   const largeRoot = await mkdtemp(join(tmpdir(), "nomo-project-api-large-"));
   const largeFile = join(largeRoot, "large.bin");
@@ -249,6 +263,7 @@ test("project workspace API rejects invalid roots and file limits without activa
   await truncate(largeFile, PROJECT_WORKSPACE_LIMITS.fileBytes + 1);
   execFileSync("git", ["init", "--quiet"], { cwd: largeRoot, stdio: "ignore" });
   t.after(async () => {
+    await workbench.shutdown();
     await rm(dataDirectory, { recursive: true, force: true });
     await rm(nonGitRoot, { recursive: true, force: true });
     await rm(largeRoot, { recursive: true, force: true });
@@ -1762,7 +1777,7 @@ test("provider model capability lookup is manifest-bound and fails closed on sou
 });
 
 test("AgentRunner API exposes safe metadata and enforces one exact consent before start", async (t) => {
-  const dataDirectory = await mkdtemp(join(tmpdir(), "nomo-agent-runner-api-"));
+  const dataDirectory = await isolatedWorkbenchDataDirectory(t, "nomo-agent-runner-api-");
   const projectRoot = await mkdtemp(join(tmpdir(), "nomo-agent-runner-api-project-"));
   await mkdir(join(projectRoot, "src"));
   await writeFile(join(projectRoot, "src/main.ts"), "export const value = 1;\n");
