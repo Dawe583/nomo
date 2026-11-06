@@ -57,8 +57,7 @@ PYDANTIC_AI_NO_BANNER=1 uv run --locked python -m unittest discover -s tests
 ```
 
 To import both source packages from another directory, add this directory and
-`../nomo-transport/src` to `PYTHONPATH`. No Pi, OMP, Prime, CLI or production
-runtime is wired to this module yet. The integration does not persist graph
+`../nomo-transport/src` to `PYTHONPATH`. No Pi, OMP or Prime runtime automatically invokes this module yet. The integration does not persist graph
 state, resume interrupted runs, enforce operating-system permissions, or grant
 agents new tools. Configure those independently and verify each runtime before
 relying on them.
