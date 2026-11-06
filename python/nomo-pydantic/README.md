@@ -62,3 +62,25 @@ runtime is wired to this module yet. The integration does not persist graph
 state, resume interrupted runs, enforce operating-system permissions, or grant
 agents new tools. Configure those independently and verify each runtime before
 relying on them.
+
+## Harness command
+
+Pi, OMP and Prime can invoke `scripts/nomo-pydantic.sh` as an ordinary local
+command. The operator must configure a running loopback NOMO proxy, explicitly
+choose a model and list permitted tools. Provider-specific Pydantic model
+packages must already be available in the environment. Send the request on
+stdin, rather than in command-line arguments:
+
+```sh
+printf '%s' '{"tool":"read_status","arguments":{"id":"example"},"idempotency_key":"run-123-step-1"}' |
+  scripts/nomo-pydantic.sh --port 8787 --model '<provider:model>' --allow read_status --token-env NOMO_PROXY_TOKEN
+```
+
+The command prints one JSON result and exits 0 for success, 3 for a tool error,
+4 if summarization failed after the tool completed, 2 for invalid input or
+model configuration, and 1 when the outcome is unknown. Reconcile an unknown
+outcome before another attempt. `--include-raw` explicitly includes the proxy
+response in the output; omit it when the receiving context must not see that
+data. The command does not set up provider credentials, start the proxy, or
+change any harness permissions. The caller must prevent sensitive input and
+output from entering logs or an unapproved model provider.
