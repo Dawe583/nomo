@@ -45,6 +45,14 @@ before making changes; active work may have moved on.
 - [#131 provider contracts](https://github.com/Dawe583/nomo/issues/131): keep
   unsupported transports fail-closed until authoritative public protocol and
   third-party authentication contracts are available.
+- [#55 paid and open boundaries](https://github.com/Dawe583/nomo/issues/55):
+  the original report is partly stale. `docs/DECISIONS.md` records `cloud/` as
+  closed and classifies the remaining tree; `scripts/src/licence-line.test.mjs`
+  passed 13/13 on the main snapshot on Windows. The same decisions distinguish
+  hosted taint access from the open builder and record that open retention cannot
+  simply be capped. Irreversibility budgets and other unbuilt paid capabilities
+  remain separate product and licensing questions. This test alone does not
+  establish that the whole issue is resolved.
 - GitHub Actions: in [run 42301115291](https://github.com/Dawe583/nomo/actions/runs/42301115291),
   manifest jobs had no assigned runner and no steps. The job annotation cites
   failed payments or a spending limit. Resolve account billing, rerun the
