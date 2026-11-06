@@ -38,6 +38,7 @@ for (const [launcher, binary] of [
       assert.ok(args.includes(".agents/skills/nomo-graphs/SKILL.md"));
       assert.ok(args.includes(".agents/skills/nomo-worktrunk/SKILL.md"));
     }
+    if (binary === "pi") assert.ok(args.includes("--approve"));
   });
 }
 

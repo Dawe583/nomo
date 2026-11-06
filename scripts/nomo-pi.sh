@@ -2,7 +2,7 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
-exec pi --append-system-prompt "$(cat "$ROOT/docs/agent-contract.md")" \
+exec pi --approve --append-system-prompt "$(cat "$ROOT/docs/agent-contract.md")" \
   --skill "$ROOT/.agents/skills/nomo-loops/SKILL.md" \
   --skill "$ROOT/.agents/skills/nomo-graphs/SKILL.md" \
   --skill "$ROOT/.agents/skills/nomo-worktrunk/SKILL.md" "$@"
