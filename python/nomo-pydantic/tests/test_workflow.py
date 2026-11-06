@@ -149,9 +149,12 @@ class LoopbackTests(unittest.IsolatedAsyncioTestCase):
         from pathlib import Path
 
         transport_root = Path(__file__).resolve().parents[2] / "nomo-transport"
-        sys.path[:0] = [str(transport_root / "src"), str(transport_root)]
+        sys.path[:0] = [
+            str(transport_root / "src"),
+            str(transport_root / "tests"),
+        ]
         from nomo_transport import NomoTransportClient
-        from tests.support_http import ScriptedServer, json_reply
+        from support_http import ScriptedServer, json_reply
 
         def handler(request):
             payload = json.loads(request.body)
@@ -191,9 +194,12 @@ class RealProxyPolicyTests(unittest.IsolatedAsyncioTestCase):
         from pathlib import Path
 
         transport_root = Path(__file__).resolve().parents[2] / "nomo-transport"
-        sys.path[:0] = [str(transport_root / "src"), str(transport_root)]
+        sys.path[:0] = [
+            str(transport_root / "src"),
+            str(transport_root / "tests"),
+        ]
         from nomo_transport import NomoTransportClient
-        from tests.support_proxy import _DENY_ALL_POLICY, ProxyEndpoint
+        from support_proxy import _DENY_ALL_POLICY, ProxyEndpoint
 
         with ProxyEndpoint(_DENY_ALL_POLICY) as endpoint:
             client = NomoTransportClient("127.0.0.1", endpoint.port, timeout=60)
@@ -218,9 +224,12 @@ class RealProxyPolicyTests(unittest.IsolatedAsyncioTestCase):
         from pathlib import Path
 
         transport_root = Path(__file__).resolve().parents[2] / "nomo-transport"
-        sys.path[:0] = [str(transport_root / "src"), str(transport_root)]
+        sys.path[:0] = [
+            str(transport_root / "src"),
+            str(transport_root / "tests"),
+        ]
         from nomo_transport import NomoTransportClient
-        from tests.support_proxy import _ALLOW_ALL_POLICY, ProxyEndpoint
+        from support_proxy import _ALLOW_ALL_POLICY, ProxyEndpoint
 
         with ProxyEndpoint(_ALLOW_ALL_POLICY) as endpoint:
             client = NomoTransportClient("127.0.0.1", endpoint.port, timeout=60)

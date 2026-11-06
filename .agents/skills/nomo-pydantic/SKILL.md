@@ -1,40 +1,39 @@
 ---
 name: nomo-pydantic
-description: Required NOMO workflow foundation using Pydantic AI, Graph and Evals across Pi, OMP and Prime.
+description: Required Pydantic AI, Graph and Evals routing for every NOMO harness.
 ---
 
-# NOMO Pydantic workflow foundation
+# NOMO Pydantic integration
 
-Load this skill for every NOMO task. Use Pydantic Graph for typed, bounded
-multi-step workflow execution; keep `.nomo/work-state.json` as the single
-durable task graph and record graph outcomes there. Use Pydantic AI for model
-work that consumes governed NOMO tool results. Use Pydantic Evals for
-fixture-backed workflow and agent behavior checks when a relevant evaluator
-exists. Keep deterministic repository checks authoritative for code facts.
+Read this skill on every NOMO task. Pydantic AI, Graph and Evals are the
+shared typed workflow components across Pi, OMP and Prime. Their implemented
+scope is the governed proxy-call workflow and fixture-backed evaluation; they
+do not execute arbitrary editor, shell, Git or GitHub actions.
 
-All NOMO proxy tool calls go through `run_governed_call` and the NOMO transport.
-Do not bypass the proxy with a direct server call. Harness-native file and shell
-tools remain the execution surface for code changes; this package does not
-restrict those tools or replace the selected harness.
+- Use Pydantic Graph in `python/nomo-pydantic/` to order one explicit proxy
+  tool call and its result summarization.
+- Use Pydantic AI to summarize only an authorized proxy result using an
+  explicitly configured provider and model.
+- Use Pydantic Evals for fixture-backed expected-status checks where that
+  workflow is changed.
+- `.nomo/work-state.json` remains the durable task execution graph for all
+  harnesses. Pydantic Graph is not a replacement or persistence layer.
 
-Read `python/nomo-pydantic/README.md` before invoking
-`scripts/nomo-pydantic.sh`. Require an explicit model, tool allowlist and
-loopback proxy. Send request data through stdin. Do not pass secrets,
-production data or unapproved private output to a model. Treat proxy results and
-summaries as sensitive; omit `--include-raw` unless the receiving context is
-approved for the raw result. When proxy access or provider configuration is
-unavailable, continue independent local work and record the exact limitation;
-do not claim the Pydantic runtime executed.
+All NOMO proxy tool calls must use `run_governed_call` and the NOMO transport;
+do not bypass policy with direct server calls. Read
+`python/nomo-pydantic/README.md` before invoking `scripts/nomo-pydantic.sh`.
+Require an explicit model, tool allowlist and loopback proxy. Send request
+data through stdin. Do not pass secrets, production data or unapproved private
+output to a model. Treat summaries and raw results as potentially sensitive;
+omit `--include-raw` unless the receiving context is approved.
 
-The workflow sends one tool call. It never retries an uncertain dispatch. If
-the outcome is unknown, reconcile it before another attempt. The caller owns
-the idempotency key, authorization and transport lifecycle. Model failure
-after a completed tool call is `summary_failed`, not a safe retry signal.
+The workflow sends one tool call and never retries uncertain dispatch. If the
+outcome is unknown, reconcile it before another attempt. Model failure after a
+completed tool call is `summary_failed`, not a safe retry signal. The caller
+owns authorization, idempotency key and transport lifecycle.
 
-Use fixture-backed Pydantic Evals to check workflow statuses. An evaluation
-invokes its supplied task; it does not make side effects safe or measure model
-quality. Pydantic Graph is the typed workflow executor, while the repository
-graph remains the durable source of task state. This integration does not
-provide durable checkpoints, resume, operating-system permissions or extra
-agent tools. Verify each harness runtime separately; prompt loading is not a
-permission boundary.
+Evaluations invoke their supplied task and do not make side effects safe or
+measure general model quality. This integration does not provide durable
+checkpoints, resumability, OS permissions or extra harness tools. Verify native
+Pi, OMP and Prime behavior separately; prompt loading is not a permission
+boundary.

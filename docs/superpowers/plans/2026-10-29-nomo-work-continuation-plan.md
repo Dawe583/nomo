@@ -1,14 +1,13 @@
 # Plan: NOMO work continuation wave 1 (2026-10-29)
 
-Status: active. Owner: the main session, running as the crew controller under
-the gstack captain protocol combined with the NOMO loop contract.
-`AGENTS.local.md` (2026-10-21) authorizes the standing loop: continue safe,
-in-scope nodes without re-prompting, commit and push after each verified
-slice, fast-forward `main` only after a green gate.
+Status: historical snapshot from 2026-10-29. Do not use this plan as current
+task state, ownership or permission authority. Reconcile any remaining product
+work against the current roadmap, source and `.nomo/work-state.json` before
+starting it.
 
-This plan extends `docs/HARNESS-LOOP-PLAN.md` (still the standing loop
-contract for the Harness program) and records the current repository state
-after the pull of 2026-10-29.
+This plan records the repository state after the pull of 2026-10-29. The live
+workflow and permissions are in `docs/agent-contract.md` and
+`.agents/skills/nomo-workflow/SKILL.md`.
 
 ## 1. Measured state at 2026-10-29
 
@@ -24,9 +23,10 @@ after the pull of 2026-10-29.
 - Harness loop plan nodes H0, H1, H2 and H3 are done on `main` with evidence
   in `bf60301`, `3c47146` and `31fb951`. H5 remains ready; H4 is blocked on
   design; H7 and H8 wait on them; H6 stays blocked on the foreign TUI lane.
-- The harness beta acceptance handoff (`docs/HARNESS-ACCEPTANCE-HANDOFF.md`,
-  2026-10-26) records 60 graph nodes: 54 done, 6 blocked (H6, H12, H13, H21,
-  H34, H58), H21 active on provider compatibility.
+- At that time, the now-retired harness beta acceptance handoff recorded 60
+  graph nodes: 54 done and 6 blocked (H6, H12, H13, H21, H34, H58), with H21
+  active on provider compatibility. Reacquire any current state from source,
+  tests and the task graph; do not restore or follow that handoff.
 - A new specification exists and is unimplemented:
   `docs/superpowers/specs/2026-11-07-nomo-inbound-openai-chat-completions.md`
   (inbound OpenAI-compatible Chat Completions facade over the Control Plane).

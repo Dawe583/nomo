@@ -1,11 +1,10 @@
 # External agent binaries
 
-NOMO orchestrates two agent CLIs that live outside this repository and are
-never vendored into it. This page names what they are, where they come from,
-how to update them safely, and the exact contract NOMO relies on. The
-decision behind this arrangement, with the rejected alternatives and their
-measured costs, is in `docs/DECISIONS.md` (entry dated 2026-10-05) and
-`docs/VENDORING-DECISION.md`.
+NOMO's application consumes Prime Agent as an external binary; the local coding
+workflow also supports Pi and OMP through project launchers. None is vendored
+into this repository. This page describes the application integration and
+historical provenance; current local harness behavior is documented in
+`docs/agent-tooling.md`.
 
 ## oh-my-pi (`omp`)
 
@@ -16,11 +15,9 @@ measured costs, is in `docs/DECISIONS.md` (entry dated 2026-10-05) and
 | Source            | `~/.local/bin/omp`, resolved from PATH |
 | How to update     | see Provenance and verification        |
 
-NOMO consumes nothing from `omp` in code: no import, no spawn, no lockfile
-entry. `.omp/config.yml` and `.omp/WATCHDOG.md` are operator tooling
-configuration in this tree, classified open by the licence-line gate. If the
-upstream binary changes behaviour, NOMO is unaffected; if it is absent, NOMO
-runs unchanged.
+NOMO's application consumes nothing from `omp` in code: no import, no spawn,
+no lockfile entry. The local project config is `.omp/config.yml`; use
+`scripts/nomo-omp.sh` for the supported coding-agent entry point.
 
 ## prime-agent (`prime`)
 
@@ -68,8 +65,8 @@ where the record stops being evidence.
 
 ### `omp` (oh-my-pi)
 
-Upstream is `https://github.com/can1357/oh-my-pi`, named in
-`docs/COLLABORATOR-AGENT-BRIEF.md`. The install is a regular file at
+Upstream is `https://github.com/can1357/oh-my-pi`. The install is a regular
+file at
 `~/.local/bin/omp`.
 
 The `omp/18.6.1` recorded above was read on 2026-10-05. **It is not verified,

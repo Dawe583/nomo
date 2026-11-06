@@ -1,19 +1,39 @@
-# NOMO agent tooling
+# NOMO harness tooling
 
-Use project wrappers for project work. Do not change global harness settings,
-MCP connections, shell startup files or approval modes from repository setup.
+Use the project launcher for each supported harness. It explicitly sends the
+same local entry instructions, shared contract and core skills on each start.
+Native user instructions and permissions still apply; launchers do not grant
+OS access or make the three runtimes identical.
 
-| Capability | Entry point | Scope |
+| Harness | Entry point | Verified project behavior |
 | --- | --- | --- |
-| Loop, Graph and pipeline | `.agents/skills/nomo-loops/SKILL.md`, `.agents/skills/nomo-graphs/SKILL.md`, `.agents/skills/nomo-pipeline/SKILL.md` | Required task method; source guide pinned at commit `ccf9e0f7bd8102b0bf4566ec640f2991a7a64236`. |
-| Pydantic AI workflow foundation | `.agents/skills/nomo-pydantic/SKILL.md`, `python/nomo-pydantic/` | Required shared Pydantic AI, Graph and Evals routing for Pi, OMP and Prime. |
-| Git worktrees | `scripts/nomo-wt.sh` | Worktrunk wrapper; creates task worktrees under `.worktrees/` and does not merge or clean them automatically. |
-| Public web research | `.agents/skills/nomo-scrapling/SKILL.md` | Scrapling basic GET only; no authenticated sessions, state changes, browser setup or access-control bypass. |
-| Read-only audits | `scripts/nomo-pi-audit.sh` | Pi with extensions and MCP disabled and only `read`, `grep`, `find` and `ls` tools enabled. |
-| Governed Pydantic call | `scripts/nomo-pydantic.sh` | One explicitly allowed tool call through the loopback NOMO transport; fixture-backed status evaluations. |
-| MCP | Harness-native configured connections | Inspect the selected server and tool schema before use; use only the task-required connection and stay within its granted scope. |
+| Pi | `scripts/nomo-pi.sh` | Loads the project contract and `nomo-workflow`/`nomo-pydantic` skills; enables normal coding tools. `--approve` trusts project-local files, not a universal approval or sandbox mode. |
+| OMP | `scripts/nomo-omp.sh` | Loads the same contract and skills. `.omp/config.yml` is the single project setting for `approvalMode: yolo`; the runtime reports all default tools enabled. |
+| Prime Agent | `scripts/nomo-prime-agent.sh` | Loads the same contract and skills; enables autonomous turns with limits and `pnpm run typecheck` gate. The installed CLI exposes no per-run tool allowlist or OS sandbox option. |
+| Read-only audit | `scripts/nomo-pi-audit.sh "request"` | Forces Pi `read,grep,find,ls`, disables extensions and MCP, rejects option injection. This is a harness tool restriction, not an OS sandbox. |
 
-Keep project tool caches under ignored `.nomo/tool-cache/`. Do not commit
-generated caches, credentials, or personal configuration. If a required binary
-is unavailable, report the missing tool; do not install it globally as an
-implicit task side effect.
+The Pi/OMP/Prime versions observed locally on 2026-11-06 were Pi 1.5.0,
+OMP 18.15.0 and Prime Agent 0.10.2. Verify the installed runtime before
+relying on these observations; use each CLI's `--help` and effective project
+configuration. The launcher tests verify the exact instructions and skill
+paths passed on every run, not model comprehension or hidden user-level
+overrides.
+
+## Skills and tools
+
+- `.agents/skills/nomo-workflow/SKILL.md` is the only general workflow skill:
+  Loop and Graph Engineering, Worktrunk, task routing, bounded autonomy and
+  evaluation-based recursive improvement.
+- `.agents/skills/nomo-pydantic/SKILL.md` and `python/nomo-pydantic/` define
+  NOMO's implemented Pydantic AI, Graph and Evals integration. It governs
+  explicit proxy tool calls and fixture evaluations; it does not orchestrate
+  arbitrary coding tools or enforce harness/file permissions.
+- `.agents/skills/nomo-scrapling/SKILL.md` is loaded for public web research
+  and supplied public URLs. Its supported method is basic read-only GET.
+- `scripts/nomo-wt.sh` lists and operates task worktrees through Worktrunk.
+- MCP availability and credentials depend on the active harness. Inspect the
+  selected server and tool schema before use; do not change global MCP
+  connections from NOMO.
+
+Run `node --test scripts/src/agent-launchers.test.mjs` to check launcher
+arguments, the OMP project approval mode and the audit tool restriction.

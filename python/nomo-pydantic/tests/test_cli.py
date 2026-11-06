@@ -7,8 +7,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
 TRANSPORT = ROOT / "python" / "nomo-transport"
-sys.path[:0] = [str(TRANSPORT / "src"), str(TRANSPORT)]
-from tests.support_proxy import _DENY_ALL_POLICY, ProxyEndpoint
+sys.path[:0] = [str(TRANSPORT / "src"), str(TRANSPORT / "tests")]
+from support_proxy import _DENY_ALL_POLICY, ProxyEndpoint
 
 
 class CliTests(unittest.TestCase):
