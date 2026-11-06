@@ -1,9 +1,11 @@
-# NOMO Pydantic integration
+# NOMO Pydantic workflow foundation
 
-This optional Python module connects Pydantic AI, Pydantic Graph and Pydantic
-Evals to the existing `nomo-transport` client. It does not replace the NOMO
-proxy, policy, ledger, existing TypeScript harness or the dependency-free
-transport package.
+Pydantic AI, Pydantic Graph and Pydantic Evals are required workflow components
+for Pi, OMP and Prime. Their launchers load `.agents/skills/nomo-pydantic/SKILL.md`.
+This Python module connects those components to the existing `nomo-transport`
+client for one explicitly allowed proxy call and fixture-backed evaluations.
+It does not replace the NOMO proxy, policy, ledger, native harness editing tools
+or dependency-free transport package.
 
 `run_governed_call` checks an explicit tool allowlist, submits **one** call
 through the supplied transport, and waits for its result. A Pydantic agent with
@@ -57,10 +59,12 @@ PYDANTIC_AI_NO_BANNER=1 uv run --locked python -m unittest discover -s tests
 ```
 
 To import both source packages from another directory, add this directory and
-`../nomo-transport/src` to `PYTHONPATH`. No Pi, OMP or Prime runtime automatically invokes this module yet. The integration does not persist graph
-state, resume interrupted runs, enforce operating-system permissions, or grant
-agents new tools. Configure those independently and verify each runtime before
-relying on them.
+`../nomo-transport/src` to `PYTHONPATH`. The harness launchers always load the
+shared Pydantic workflow instructions, but they do not automatically invoke
+this proxy-call CLI: each call still needs an explicit model, tool allowlist
+and running loopback proxy. The integration does not persist graph state,
+resume interrupted runs, enforce operating-system permissions, or grant agents
+new tools. Verify actual harness behavior and keep those boundaries explicit.
 
 ## Harness command
 

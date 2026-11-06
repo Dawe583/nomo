@@ -18,6 +18,11 @@ the graph and its bounded loops. A technique such as test-first is a loop step,
 not a parallel process or competing plan. Do not create duplicate plans or task
 status sources.
 
+At the start of every repository task, load the `nomo-loops`, `nomo-graphs`,
+`nomo-pipeline`, `nomo-pydantic` and `nomo-worktrunk` skills. Load the domain
+skill only when the task route requires it. Public web research also loads
+`nomo-scrapling`.
+
 ## Graph Engineering
 
 Use `.nomo/work-state.json` as the single execution graph. Inspect it before
@@ -118,7 +123,7 @@ or customer-visible actions unless project policy and user authorization allow
 them. Task-owned commits, merges and pushes follow the standing authorization
 in `AGENTS.local.md` only after required gates pass. Never force-push.
 
-Read `nomo-loops`, `nomo-graphs` and `nomo-worktrunk` for every task. Read
+Read `nomo-loops`, `nomo-graphs`, `nomo-pipeline`, `nomo-pydantic` and `nomo-worktrunk` for every task. Read
 `nomo-scrapling` for tasks with public web research or a user-supplied public
 URL. Before every graph node, run `scripts/nomo-wt.sh list`; before edits, use
 its task-owned worktree or create/switch to an isolated one when safe. Use
@@ -128,6 +133,11 @@ use. Never claim an unavailable tool or integration was used. Keep tests on
 `node:test`; run `pnpm run typecheck` before code completion claims. Follow all
 product security, identity, privacy, fail-closed and append-only contracts. Do
 not invoke Mojo.
+
+Pydantic AI, Graph and Evals are the shared workflow foundation across the
+supported harnesses. See `.agents/skills/nomo-pydantic/SKILL.md` for routing
+and limits. Pydantic Graph does not replace the durable task graph, and its
+prompt or Python types do not enforce harness permissions.
 
 ## Finish
 

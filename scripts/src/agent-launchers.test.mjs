@@ -29,13 +29,15 @@ for (const [launcher, binary] of [
     assert.ok(args.includes("test request"));
     if (binary === "omp") {
       assert.match(args, /--approval-mode\nyolo/);
-      for (const name of ["nomo-loops", "nomo-graphs", "nomo-worktrunk"]) {
+      for (const name of ["nomo-loops", "nomo-graphs", "nomo-pipeline", "nomo-pydantic", "nomo-worktrunk"]) {
         assert.ok(args.includes(readFileSync(`.agents/skills/${name}/SKILL.md`, "utf8").trim()));
       }
     }
     if (binary === "prime-agent" || binary === "pi") {
       assert.ok(args.includes(".agents/skills/nomo-loops/SKILL.md"));
       assert.ok(args.includes(".agents/skills/nomo-graphs/SKILL.md"));
+      assert.ok(args.includes(".agents/skills/nomo-pipeline/SKILL.md"));
+      assert.ok(args.includes(".agents/skills/nomo-pydantic/SKILL.md"));
       assert.ok(args.includes(".agents/skills/nomo-worktrunk/SKILL.md"));
     }
     if (binary === "pi") assert.ok(args.includes("--approve"));
