@@ -38,10 +38,19 @@ before making changes; active work may have moved on.
   files. Inspect its full diff and coordinate TUI ownership. A separate Windows
   `pnpm run test:tui` attempt here failed during module loading because
   `@aws-sdk/credential-provider-node` was unavailable; it was interrupted and
-  does not establish a full test result.
+  does not establish a full test result. A later focused Windows investigation
+  on PR #128 head `c24d90fbe07fb533530605e08f9513109f5091c0` identified an
+  unsafe default temporary parent ACL and a four-second wait that was too short
+  on this machine. With a restricted disposable temporary root and a separate
+  diagnostic copy using a 30-second wait, the approval test passed 1/1 without
+  weakening its approval and no-early-dispatch assertions. The checkout reused
+  existing dependency links, so this is not clean-install or full-suite evidence.
+  See the [issue reproduction](https://github.com/Dawe583/nomo/issues/127#issuecomment-6697646907).
 - [#126 Kitty logo](https://github.com/Dawe583/nomo/issues/126): verify the
-  raster asset's origin and licence before packaging it, as required by the
-  issue owner's comment.
+  raster asset's origin and licence before packaging it. Main has no PNG;
+  [PR #129](https://github.com/Dawe583/nomo/pull/129) already copies and tests
+  an asset whose blob differs from the earlier visual-refresh asset. Provenance
+  and exact-head terminal transport, fallback and cleanup evidence remain open.
 - [#131 provider contracts](https://github.com/Dawe583/nomo/issues/131): keep
   unsupported transports fail-closed until authoritative public protocol and
   third-party authentication contracts are available. A possible next research
@@ -54,7 +63,8 @@ before making changes; active work may have moved on.
 - [#55 paid and open boundaries](https://github.com/Dawe583/nomo/issues/55):
   the original report is partly stale. `docs/DECISIONS.md` records `cloud/` as
   closed and classifies the remaining tree; `scripts/src/licence-line.test.mjs`
-  passed 13/13 on the main snapshot on Windows. The same decisions distinguish
+  passed 13/13 on the main snapshot on Windows; the unchanged base also passed
+  `node --test cloud/capability-gate.test.mjs` 22/22. The decisions distinguish
   hosted taint access from the open builder and record that open retention cannot
   simply be capped. Irreversibility budgets and other unbuilt paid capabilities
   remain separate product and licensing questions. This test alone does not
