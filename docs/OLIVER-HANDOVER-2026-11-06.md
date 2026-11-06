@@ -77,6 +77,15 @@ before making changes; active work may have moved on.
   manifest jobs had no assigned runner and no steps. The job annotation cites
   failed payments or a spending limit. Resolve account billing, rerun the
   required jobs and inspect their results; the run is not test evidence.
+- [#10 Windows permissions](https://github.com/Dawe583/nomo/issues/10): focused
+  Node 24 Windows ledger checks passed, including refusal of a deliberately
+  broadened development-key ACL. Some POSIX-only cases returned early and a
+  POSIX-only case was skipped. The required full Windows Node 24/26 matrix and
+  backup and restore remain unverified; see the [test evidence](https://github.com/Dawe583/nomo/issues/10#issuecomment-6697935179).
+- [#4 Vercel preview](https://github.com/Dawe583/nomo/issues/4): the Vercel app
+  identifies `LiveFuller` on PR #140 but reports that account is not a member of
+  the deployment team. This needs an account-side resolution and a successful
+  preview; see the [current evidence](https://github.com/Dawe583/nomo/issues/4#issuecomment-6697895900).
 - [PR #138](https://github.com/Dawe583/nomo/pull/138) combines several CI
   readiness fixes and requires green GitHub CI before merge. Check it before
   duplicating that work.
