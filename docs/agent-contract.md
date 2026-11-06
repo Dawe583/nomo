@@ -36,9 +36,13 @@ Every node records:
 - captured evidence before status becomes `done`
 
 Keep one active writer per shared path. Delegate only when it materially helps;
-use no more than one active child for this task. Audit children must run with runtime-enforced read-only access; a prompt alone is not a sandbox. Give a child a narrow node,
-allowed paths, inputs, verifier and stop condition. The primary agent stays
-responsible for integration and evidence.
+use no more than one active child for this task. Give each child a narrow node,
+allowed paths, inputs, verifier and stop condition. Run every read-only audit
+child through `scripts/nomo-pi-audit.sh` from any parent harness. It disables
+extensions and MCP and allows only `read`, `grep`, `find` and `ls`. Do not use
+prompt-only read-only claims. If the Pi audit runner is unavailable, the primary
+agent performs the audit or records the concrete runtime limitation. The
+primary agent stays responsible for integration and evidence.
 
 Keep three graph roles separate:
 

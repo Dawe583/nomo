@@ -19,7 +19,7 @@ Generated graphs never replace code, tests or approved specs. Record what was ex
 
 ## Delegation
 
-Use one primary owner and at most one active subagent for a NOMO task. Check the roster before spawning. Give the child one graph node, explicit allowed paths, output and verifier. Use read-only review by default. Wait for completion before any further delegation. The primary session remains the sole integrator.
+Use one primary owner and at most one active subagent for a NOMO task. Check the roster before spawning. Give the child one graph node, explicit allowed paths, output and verifier. Run read-only audits through `scripts/nomo-pi-audit.sh`, which disables extensions and MCP and permits only read tools. Wait for completion before any further delegation. The primary session remains the sole integrator.
 
 ## Autonomous operation
 
