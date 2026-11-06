@@ -1,6 +1,6 @@
 ---
 name: nomo-contracts
-description: "NOMO repository contracts every agent must follow: context pack authority, package boundaries, no dashes rule, node:test, secrets policy, commit format, worktree isolation."
+description: "NOMO repository contracts every agent must follow: context pack authority, package boundaries, punctuation rule, node:test, secrets policy, commit format, worktree isolation."
 ---
 
 # NOMO contracts
@@ -11,7 +11,8 @@ The canonical contract controls autonomy, ownership and verification.
 Additional repository rules:
 
 1. docs/CONTEXT.md, docs/DECISIONS.md, docs/STANDARDS.md are authoritative.
-2. No em dash and no en dash anywhere, not in code, comments, docs, commits.
+2. Do not add em dashes or en dashes. Preserve hash-pinned historical records as
+   documented in `docs/STANDARDS.md`.
 3. Use node:test for JavaScript; use the relevant project test runner for other languages. Required test flags and task dependencies are allowed.
 4. Comments explain why, never what.
 5. registry imports nothing and stays pure data plus functions.
