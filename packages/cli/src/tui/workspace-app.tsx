@@ -1,5 +1,5 @@
 import { decodePasteBytes } from "@opentui/core";
-import { getPalette } from "./theme.ts";
+import { getPalette, getSymbols } from "./theme.ts";
 import type { ColorPalette } from "./theme-config.ts";
 import { useKeyboard, usePaste, useTerminalDimensions } from "@opentui/react";
 import type { KeyEvent } from "@opentui/core";
@@ -111,6 +111,7 @@ function ModelPicker({
   palette: ColorPalette;
 }) {
   const picker = ui.modelPicker!;
+  const arrowRight = getSymbols(ui.themeConfig.symbolPreset).arrow.right;
   const query = picker.query.toLocaleLowerCase();
   const models = picker.models.filter((model) =>
     `${model.name} ${model.id}`.toLocaleLowerCase().includes(query),
@@ -154,7 +155,7 @@ function ModelPicker({
                 color,
                 index === picker.selected ? palette.fg : palette.fg,
               )}
-              content={`${index === picker.selected ? "›" : " "} ${model.name} · ${model.id}${current}`}
+              content={`${index === picker.selected ? arrowRight : " "} ${model.name} · ${model.id}${current}`}
             />
           );
         })
@@ -177,11 +178,13 @@ function UsageChart({
   selected,
   color = true,
   palette,
+  arrowRight,
 }: {
   rows: readonly WorkspaceSurfaceRow[];
   selected: number;
   color?: boolean;
   palette: ColorPalette;
+  arrowRight: string;
 }) {
   const records = rows.flatMap((item, index) =>
     item.usage ? [{ item, index, usage: item.usage }] : [],
@@ -216,7 +219,7 @@ function UsageChart({
                   color,
                   index === selected ? palette.fg : palette.fg,
                 )}
-                content={`${index === selected ? "› " : "  "}${at}  ${total === undefined ? "total unknown" : `${total} tokens`}`}
+                content={`${index === selected ? `${arrowRight} ` : "  "}${at}  ${total === undefined ? "total unknown" : `${total} tokens`}`}
               />
               <text
                 fg={foreground(color, palette.accent)}
@@ -255,6 +258,7 @@ export function WorkspaceApp({
 }: WorkspaceAppProps) {
   const { width, height } = useTerminalDimensions();
   const palette = getPalette(ui.themeConfig.colorTheme);
+  const arrowRight = getSymbols(ui.themeConfig.symbolPreset).arrow.right;
   useKeyboard(onKey);
   usePaste((event) => onPaste(decodePasteBytes(event.bytes)));
   const surface = workspaceSurface(ui, width, height);
@@ -264,9 +268,25 @@ export function WorkspaceApp({
   const details = surface.details;
   const columns = surface.layout === "columns";
   const session = ui.session();
-  const transcript = (session?.events ?? []).filter(
-    (event) => event.kind !== "usage" && event.type !== "run.status",
-  );
+  const events = session?.events ?? [];
+  const transcript: (typeof events)[number][] = [];
+  let partial = "";
+  let partialEvent: (typeof events)[number] | undefined;
+  for (const event of events) {
+    if (event.type === "message.delta") {
+      partial += event.text;
+      partialEvent = event;
+      continue;
+    }
+    if (event.kind === "assistant") {
+      partial = "";
+      partialEvent = undefined;
+    }
+    if (event.kind === "usage" || event.type === "run.status") continue;
+    transcript.push(event);
+  }
+  if (partial && partialEvent)
+    transcript.push({ ...partialEvent, kind: "assistant", text: partial });
   const chatWindowHeight = Math.max(1, Math.floor((height - 13) / 3));
   const chatOffset = Math.max(
     0,
@@ -307,13 +327,13 @@ export function WorkspaceApp({
                 color,
                 ui.tab === tab ? palette.fg : palette.muted,
               )}
-              content={
+              content={`${ui.tab === tab ? `${arrowRight} ` : ""}${
                 width < 64
                   ? COMPACT_TABS[tab]
                   : width < 100
                     ? SHORT_TABS[tab]
                     : tab.toUpperCase()
-              }
+              }`}
             />
           </box>
         );
@@ -331,12 +351,16 @@ export function WorkspaceApp({
         rows.map((row, index) => (
           <box
             key={row.id}
-            border={ui.selected === index}
-            borderStyle="rounded"
-            borderColor={foreground(
-              color,
-              ui.selected === index ? palette.accent : palette.border,
-            )}
+            border={ui.tab === "models" ? ui.selected === index : undefined}
+            borderStyle={ui.tab === "models" ? "rounded" : undefined}
+            borderColor={
+              ui.tab === "models"
+                ? foreground(
+                    color,
+                    ui.selected === index ? palette.accent : palette.border,
+                  )
+                : undefined
+            }
             paddingLeft={1}
             paddingRight={1}
             onMouseDown={() => onSelect(index)}
@@ -344,9 +368,15 @@ export function WorkspaceApp({
             <text
               fg={foreground(
                 color,
-                ui.selected === index ? palette.fg : palette.fg,
+                ui.tab !== "models" && ui.selected === index
+                  ? palette.accent
+                  : palette.fg,
               )}
-              content={row.label}
+              content={
+                ui.tab !== "models" && ui.selected === index
+                  ? `${arrowRight} ${row.label}`
+                  : row.label
+              }
             />
           </box>
         ))
@@ -360,9 +390,11 @@ export function WorkspaceApp({
           <text
             fg={foreground(color, palette.muted)}
             content={
-              ui.tab === "models" && ui.modelCatalogStatus !== "ready"
-                ? "Provider model catalog unavailable."
-                : `No ${ui.tab} records are available.`
+              ui.tab === "models"
+                ? ui.modelCatalogStatus !== "ready"
+                  ? "Provider model catalog unavailable."
+                  : `No ${ui.tab} records are available.`
+                : surface.emptyTitle
             }
           />
         </box>
@@ -374,7 +406,9 @@ export function WorkspaceApp({
       title={
         ui.tab === "models" && ui.provider?.providerId
           ? `Provider · ${ui.provider.providerId}`
-          : "Selected record"
+          : ui.tab === "models"
+            ? "Selected record"
+            : "DETAILS"
       }
       color={color}
       palette={palette}
@@ -398,7 +432,7 @@ export function WorkspaceApp({
   const chat = (
     <box flexDirection="column" flexGrow={1} gap={1}>
       <Panel
-        title={session?.title ?? "New conversation"}
+        title={`CONVERSATION · ${session?.title ?? "New conversation"}`}
         color={color}
         palette={palette}
       >
@@ -418,7 +452,17 @@ export function WorkspaceApp({
                       ? palette.info
                       : palette.warning,
                 )}
-                content={`${event.kind === "assistant" ? "NOMO" : event.kind === "user" ? "YOU" : event.kind.toUpperCase()}  ${event.type === "tool.result" ? "TOOL RESULT" : ""}`}
+                content={
+                  event.type === "message.delta"
+                    ? "NOMO [stream]"
+                    : event.type === "tool.result"
+                      ? "TOOL RESULT"
+                      : event.kind === "assistant"
+                        ? "NOMO"
+                        : event.kind === "user"
+                          ? "YOU"
+                          : event.kind.toUpperCase()
+                }
               />
               <text
                 fg={foreground(color, palette.fg)}
@@ -451,7 +495,7 @@ export function WorkspaceApp({
       >
         <text
           fg={foreground(color, editing ? palette.fg : palette.muted)}
-          content={`›  ${input || "Message NOMO…"}`}
+          content={`PROMPT  ${arrowRight}  ${input || "Message NOMO…"}`}
         />
       </box>
       <text
@@ -511,6 +555,7 @@ export function WorkspaceApp({
             selected={ui.selected}
             color={color}
             palette={palette}
+            arrowRight={arrowRight}
           />
           {details.length ? detail : null}
         </box>

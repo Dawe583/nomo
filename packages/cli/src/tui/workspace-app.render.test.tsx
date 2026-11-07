@@ -11,6 +11,8 @@ import { handleModelPickerKey } from "./workspace-app-model.ts";
 import { WorkspaceApp } from "./workspace-app.tsx";
 import type { WorkspaceTui, WorkspaceTab } from "./workspace.ts";
 import { visibleLength } from "./layout.ts";
+import { getSymbols } from "./theme.ts";
+import type { SessionEvent } from "../../../workbench/src/index.ts";
 
 function fakeUi(tab: WorkspaceTab): WorkspaceTui {
   const models = [
@@ -103,9 +105,22 @@ for (const tab of [
       if (tab === "chat") {
         assert.match(frame, /Hello from operator/);
         assert.match(frame, /Message NOMO/);
+        assert.match(frame, /CONVERSATION/);
+        assert.match(frame, /PROMPT/);
+      } else if (tab === "models") {
+        assert.match(frame, /Alpha/);
+        assert.match(frame, /Provider|Model ID: alpha-id/);
+        assert.doesNotMatch(frame, /› Alpha/);
       } else {
-        assert.match(frame, new RegExp(`${tab} record|Alpha`));
-        assert.match(frame, /Status: active|Model ID: alpha-id/);
+        assert.ok(
+          frame.includes(
+            `${getSymbols(ui.themeConfig.symbolPreset).arrow.right} ${tab}`,
+          ),
+          `${tab} marks the selected item without relying on color`,
+        );
+        assert.doesNotMatch(frame, /│ ╭/, `${tab} list rows stay unboxed`);
+        assert.match(frame, /Status: active/);
+        assert.match(frame, /DETAILS/);
       }
     } finally {
       root.unmount();
@@ -113,6 +128,438 @@ for (const tab of [
     }
   });
 }
+test("every active navigation tab has a visible monochrome marker", async () => {
+  const tabs = [
+    "overview",
+    "chat",
+    "sessions",
+    "documents",
+    "ledger",
+    "approvals",
+    "policy",
+    "tools",
+    "models",
+    "usage",
+    "help",
+  ] as const;
+  for (const tab of tabs) {
+    const setup = await createTestRenderer({ width: 120, height: 40 });
+    const ui = fakeUi(tab);
+    const root = createRoot(setup.renderer);
+    try {
+      flushSync(() =>
+        root.render(
+          createElement(WorkspaceApp, {
+            ui,
+            input: "",
+            editing: false,
+            busy: false,
+            color: false,
+            onKey: () => {},
+            onPaste: () => {},
+            onTab: () => {},
+            onSelect: () => {},
+          }),
+        ),
+      );
+      await setup.renderOnce();
+      assert.ok(
+        setup
+          .captureCharFrame()
+          .includes(
+            `${getSymbols(ui.themeConfig.symbolPreset).arrow.right} ${tab.toUpperCase()}`,
+          ),
+        `${tab} active navigation is visible without color`,
+      );
+    } finally {
+      root.unmount();
+      await setup.dispose();
+    }
+  }
+});
+test("non-model empty views use real empty titles and applicable detail context", async () => {
+  const emptyViews = [
+    ["overview", "No recent activity"],
+    ["sessions", "No conversations yet"],
+    ["documents", "No workspace documents"],
+    ["ledger", "No activity to review"],
+    ["approvals", "No pending approvals"],
+    ["policy", "No connected policies"],
+    ["tools", "No tools available"],
+    ["usage", "No usage recorded"],
+    ["help", "Help is ready"],
+  ] as const;
+  for (const [tab, emptyTitle] of emptyViews) {
+    const setup = await createTestRenderer({ width: 120, height: 32 });
+    const ui = fakeUi(tab);
+    ui.items = () => [];
+    const root = createRoot(setup.renderer);
+    try {
+      flushSync(() =>
+        root.render(
+          createElement(WorkspaceApp, {
+            ui,
+            input: "",
+            editing: false,
+            busy: false,
+            color: false,
+            onKey: () => {},
+            onPaste: () => {},
+            onTab: () => {},
+            onSelect: () => {},
+          }),
+        ),
+      );
+      await setup.renderOnce();
+      const frame = setup.captureCharFrame();
+      assert.ok(frame.includes(emptyTitle), `${tab} uses its real empty title`);
+      if (tab !== "usage") {
+        assert.ok(
+          frame.includes("DETAILS"),
+          `${tab} identifies the detail section in monochrome`,
+        );
+        assert.match(frame, /Select a record to inspect its details/);
+      }
+    } finally {
+      root.unmount();
+      await setup.dispose();
+    }
+  }
+});
+
+test("chat empty state keeps its real prompt available", async () => {
+  const setup = await createTestRenderer({ width: 80, height: 24 });
+  const ui = fakeUi("chat");
+  ui.session = () => ({
+    id: "empty-conversation",
+    workspace: "fixture",
+    title: "Empty conversation",
+    model: "alpha-id",
+    status: "idle",
+    events: [],
+    continuationCount: 0,
+    runTokenCount: 0,
+  });
+  const root = createRoot(setup.renderer);
+  try {
+    flushSync(() =>
+      root.render(
+        createElement(WorkspaceApp, {
+          ui,
+          input: "",
+          editing: true,
+          busy: false,
+          onKey: () => {},
+          onPaste: () => {},
+          onTab: () => {},
+          onSelect: () => {},
+        }),
+      ),
+    );
+    await setup.renderOnce();
+    const frame = setup.captureCharFrame();
+    assert.match(frame, /CONVERSATION · Empty conversation/);
+    assert.match(frame, /No messages yet/);
+    assert.match(frame, /PROMPT/);
+  } finally {
+    root.unmount();
+    await setup.dispose();
+  }
+});
+
+test("chat with no selected session shows its new-conversation prompt in monochrome", async () => {
+  const setup = await createTestRenderer({ width: 80, height: 24 });
+  const ui = fakeUi("chat");
+  ui.session = () => undefined;
+  const root = createRoot(setup.renderer);
+  try {
+    flushSync(() =>
+      root.render(
+        createElement(WorkspaceApp, {
+          ui,
+          input: "",
+          editing: true,
+          busy: false,
+          color: false,
+          onKey: () => {},
+          onPaste: () => {},
+          onTab: () => {},
+          onSelect: () => {},
+        }),
+      ),
+    );
+    await setup.renderOnce();
+    const frame = setup.captureCharFrame();
+    assert.match(frame, /CONVERSATION · New conversation/);
+    assert.match(frame, /No messages yet\. Write a prompt to start a conversation\./);
+    assert.ok(
+      frame.includes(
+        `PROMPT  ${getSymbols(ui.themeConfig.symbolPreset).arrow.right}  Message NOMO…`,
+      ),
+    );
+  } finally {
+    root.unmount();
+    await setup.dispose();
+  }
+});
+test("chat tool-result rows use one clear role label", async () => {
+  const setup = await createTestRenderer({ width: 80, height: 24 });
+  const ui = fakeUi("chat");
+  ui.session = () => ({
+    id: "tool-run",
+    workspace: "fixture",
+    title: "Tool run",
+    model: "alpha-id",
+    status: "idle",
+    events: [
+      {
+        seq: 3,
+        at: "2026-01-01T00:00:03.000Z",
+        kind: "tool",
+        type: "tool.result",
+        text: "Found 2 records",
+      },
+    ],
+    continuationCount: 0,
+    runTokenCount: 0,
+  });
+  const root = createRoot(setup.renderer);
+  try {
+    flushSync(() =>
+      root.render(
+        createElement(WorkspaceApp, {
+          ui,
+          input: "",
+          editing: false,
+          busy: false,
+          color: false,
+          onKey: () => {},
+          onPaste: () => {},
+          onTab: () => {},
+          onSelect: () => {},
+        }),
+      ),
+    );
+    await setup.renderOnce();
+    const frame = setup.captureCharFrame();
+    assert.match(frame, /TOOL RESULT/);
+    assert.doesNotMatch(frame, /TOOL\s+TOOL RESULT/);
+    assert.match(frame, /Found 2 records/);
+  } finally {
+    root.unmount();
+    await setup.dispose();
+  }
+});
+test("chat identifies mixed transcript roles and busy or idle status in both color modes", async () => {
+  const ui = fakeUi("chat");
+  ui.session = () => ({
+    id: "mixed-transcript",
+    workspace: "fixture",
+    title: "Mixed transcript",
+    model: "alpha-id",
+    status: "idle",
+    events: [
+      {
+        seq: 1,
+        at: "2026-01-01T00:00:01.000Z",
+        kind: "user",
+        type: "message",
+        text: "User message",
+      },
+      {
+        seq: 2,
+        at: "2026-01-01T00:00:02.000Z",
+        kind: "assistant",
+        type: "message",
+        text: "Assistant response",
+      },
+      {
+        seq: 3,
+        at: "2026-01-01T00:00:03.000Z",
+        kind: "tool",
+        type: "tool.call",
+        text: "Search records",
+      },
+      {
+        seq: 4,
+        at: "2026-01-01T00:00:04.000Z",
+        kind: "tool",
+        type: "tool.result",
+        text: "Found 2 records",
+      },
+    ],
+    continuationCount: 0,
+    runTokenCount: 0,
+  });
+  for (const color of [false, true]) {
+    for (const busy of [false, true]) {
+      const setup = await createTestRenderer({ width: 80, height: 60 });
+      const root = createRoot(setup.renderer);
+      try {
+        flushSync(() =>
+          root.render(
+            createElement(WorkspaceApp, {
+              ui,
+              input: "",
+              editing: false,
+              busy,
+              color,
+              onKey: () => {},
+              onPaste: () => {},
+              onTab: () => {},
+              onSelect: () => {},
+            }),
+          ),
+        );
+        await setup.renderOnce();
+        const frame = setup.captureCharFrame();
+        assert.match(frame, /YOU/);
+        assert.match(frame, /User message/);
+        assert.match(frame, /NOMO/);
+        assert.match(frame, /Assistant response/);
+        assert.match(frame, /TOOL/);
+        assert.match(frame, /Search records/);
+        assert.match(frame, /TOOL RESULT/);
+        assert.match(frame, /Found 2 records/);
+        assert.doesNotMatch(frame, /TOOL\s+TOOL RESULT/);
+        assert.match(
+          frame,
+          busy
+            ? /NOMO is working\. Esc stops the active run\./
+            : /alpha-id · Enter sends · Alt\+Enter adds a line/,
+        );
+      } finally {
+        root.unmount();
+        await setup.dispose();
+      }
+    }
+  }
+});
+
+
+
+
+test("chat keeps an in-progress stream visible and replaces it with completed text", async () => {
+  const setup = await createTestRenderer({ width: 120, height: 32 });
+  const ui = fakeUi("chat");
+  const deltaEvents: readonly SessionEvent[] = [
+    Object.freeze({
+      seq: 1,
+      at: "2026-01-01T00:00:00.000Z",
+      kind: "assistant",
+      type: "message.delta",
+      text: "Hel",
+    }),
+    Object.freeze({
+      seq: 2,
+      at: "2026-01-01T00:00:00.250Z",
+      kind: "assistant",
+      type: "message.delta",
+      text: "lo",
+    }),
+  ];
+  const completedEvent: SessionEvent = Object.freeze({
+    seq: 3,
+    at: "2026-01-01T00:00:01.000Z",
+    kind: "assistant",
+    type: "message.completed",
+    text: "Hello world",
+  });
+  let events: readonly SessionEvent[] = deltaEvents;
+  ui.session = () => ({
+    id: "streaming-chat",
+    workspace: "fixture",
+    title: "Streaming transcript",
+    model: "alpha-id",
+    status: "running",
+    events,
+    continuationCount: 0,
+    runTokenCount: 0,
+  });
+  const root = createRoot(setup.renderer);
+  const render = () =>
+    createElement(WorkspaceApp, {
+      ui,
+      input: "",
+      editing: false,
+      busy: true,
+      color: false,
+      onKey: () => {},
+      onPaste: () => {},
+      onTab: () => {},
+      onSelect: () => {},
+    });
+  try {
+    flushSync(() => root.render(render()));
+    await setup.renderOnce();
+    const streamingFrame = setup.captureCharFrame();
+    assert.match(streamingFrame, /NOMO \[stream\]/);
+    assert.match(streamingFrame, /Hello/);
+    assert.equal(streamingFrame.match(/Hello/g)?.length, 1);
+
+    events = [...deltaEvents, completedEvent];
+    flushSync(() => root.render(render()));
+    await setup.renderOnce();
+    const frame = setup.captureCharFrame();
+    assert.match(frame, /Hello world/);
+    assert.equal(frame.match(/Hello/g)?.length, 1);
+    assert.doesNotMatch(frame, /NOMO \[stream\]/);
+    assert.deepEqual(
+      deltaEvents.map((event) => event.text),
+      ["Hel", "lo"],
+    );
+  } finally {
+    root.unmount();
+    await setup.dispose();
+  }
+});
+
+test("chat shows a failed session error event in monochrome", async () => {
+  const setup = await createTestRenderer({ width: 120, height: 32 });
+  const ui = fakeUi("chat");
+  const failure: SessionEvent = {
+    seq: 1,
+    at: "2026-01-01T00:00:00.000Z",
+    kind: "error",
+    type: "run.error",
+    text: "Provider request failed",
+  };
+  ui.session = () => ({
+    id: "failed-chat",
+    workspace: "fixture",
+    title: "Failed conversation",
+    model: "alpha-id",
+    status: "failed",
+    events: [failure],
+    continuationCount: 0,
+    runTokenCount: 0,
+  });
+  const root = createRoot(setup.renderer);
+  try {
+    flushSync(() =>
+      root.render(
+        createElement(WorkspaceApp, {
+          ui,
+          input: "",
+          editing: false,
+          busy: false,
+          color: false,
+          onKey: () => {},
+          onPaste: () => {},
+          onTab: () => {},
+          onSelect: () => {},
+        }),
+      ),
+    );
+    await setup.renderOnce();
+    const frame = setup.captureCharFrame();
+    assert.equal(frame.match(/ERROR/g)?.length, 1);
+    assert.match(frame, /Provider request failed/);
+  } finally {
+    root.unmount();
+    await setup.dispose();
+  }
+});
 
 test("chat view pages through older transcript rows and returns to live follow", async () => {
   const setup = await createTestRenderer({ width: 120, height: 32 });
@@ -236,6 +683,45 @@ test("OpenTUI does not offer a model menu without a ready provider catalog", asy
     await setup.dispose();
   }
 });
+
+test("OpenTUI model picker keeps the connected provider visible for an empty search in monochrome", async () => {
+  const setup = await createTestRenderer({ width: 80, height: 24 });
+  const ui = fakeUi("chat");
+  ui.modelPicker = {
+    open: true,
+    query: "no-match",
+    selected: 0,
+    models: ui.provider?.models ?? [],
+  };
+  const root = createRoot(setup.renderer);
+  try {
+    flushSync(() =>
+      root.render(
+        createElement(WorkspaceApp, {
+          ui,
+          input: "",
+          editing: false,
+          busy: false,
+          color: false,
+          onKey: () => {},
+          onPaste: () => {},
+          onTab: () => {},
+          onSelect: () => {},
+        }),
+      ),
+    );
+    await setup.renderOnce();
+    const frame = setup.captureCharFrame();
+    assert.match(frame, /SELECT MODEL · connected-provider/);
+    assert.match(frame, /Search: no-match/);
+    assert.match(frame, /No models match this search\./);
+    assert.match(frame, /↑↓ move · Enter choose · Esc cancel/);
+    assert.doesNotMatch(frame, /Alpha|Beta|foreign-provider/);
+  } finally {
+    root.unmount();
+    await setup.dispose();
+  }
+});
 test("OpenTUI model picker shows only the refreshed connected-provider catalog", async () => {
   const setup = await createTestRenderer({ width: 80, height: 24 });
   const ui = fakeUi("chat");
@@ -303,7 +789,7 @@ test("Kitty app renders private icon buffers and the transparent NOMO logo", asy
       tabs.map((tab, index) => [tab, { id: base + index, png: iconBuffer }]),
     );
   Object.assign(ui, {
-    themeConfig: { symbolPreset: "icons", colorTheme: "default" },
+    themeConfig: { symbolPreset: "unicode", colorTheme: "default" },
     localTabIcons: { dark: iconSet(100), light: iconSet(200) },
   });
   const root = createRoot(setup.renderer);
@@ -444,7 +930,11 @@ test("rendered model picker filters, moves, selects and cancels through useKeybo
     setup.mockInput.pressArrow("down");
     await setup.renderOnce();
     frame = setup.captureCharFrame();
-    assert.match(frame, /› Beta Pro/);
+    assert.ok(
+      frame.includes(
+        `${getSymbols(ui.themeConfig.symbolPreset).arrow.right} Beta Pro`,
+      ),
+    );
     setup.resize(60, 16);
     await setup.renderOnce();
     frame = setup.captureCharFrame();
@@ -496,12 +986,17 @@ test("rendered keyboard, mouse navigation and paste dispatch to workspace handle
     assert.notEqual(navRow, -1);
     await setup.mockMouse.click(lines[navRow]!.indexOf("CHAT"), navRow);
     await setup.renderOnce();
-    const recordRow = lines.findIndex(
-      (line) => line.includes("overview record") && !line.includes("detail"),
+    const updatedLines = setup.captureCharFrame().split("\n");
+    const recordRow = updatedLines.findIndex((line) =>
+      line.includes(
+        `${getSymbols(ui.themeConfig.symbolPreset).arrow.right} overview record`,
+      ),
     );
     assert.notEqual(recordRow, -1);
     await setup.mockMouse.click(
-      lines[recordRow]!.indexOf("overview record"),
+      updatedLines[recordRow]!.indexOf(
+        `${getSymbols(ui.themeConfig.symbolPreset).arrow.right} overview record`,
+      ),
       recordRow,
     );
     await setup.renderOnce();
@@ -740,7 +1235,7 @@ test("rendered list and inspector switch from side-by-side to stacked at 120 col
       line.includes("SESSIONS · 1"),
     );
     const wideInspector = wideLines.findIndex((line) =>
-      line.includes("Selected record"),
+      line.includes("DETAILS"),
     );
     assert.equal(wideList, wideInspector);
     setup.resize(119, 24);
@@ -750,11 +1245,158 @@ test("rendered list and inspector switch from side-by-side to stacked at 120 col
       line.includes("SESSIONS · 1"),
     );
     const narrowInspector = narrowLines.findIndex((line) =>
-      line.includes("Selected record"),
+      line.includes("DETAILS"),
     );
     assert.notEqual(narrowList, narrowInspector);
   } finally {
     root.unmount();
     await setup.dispose();
+  }
+});
+
+test("ASCII preset uses its arrow for navigation, list selection, and chat prompt", async () => {
+  const setup = await createTestRenderer({
+    width: 120,
+    height: 32,
+    useMouse: true,
+  });
+  const ui = fakeUi("overview");
+  ui.themeConfig = { ...ui.themeConfig, symbolPreset: "ascii" };
+  const tabs: WorkspaceTab[] = [];
+  const selected: number[] = [];
+  const root = createRoot(setup.renderer);
+  const render = () =>
+    flushSync(() =>
+      root.render(
+        createElement(WorkspaceApp, {
+          ui,
+          input: "",
+          editing: true,
+          busy: false,
+          color: false,
+          onKey: () => {},
+          onPaste: () => {},
+          onTab: (tab) => {
+            tabs.push(tab);
+            ui.tab = tab;
+          },
+          onSelect: (index) => {
+            selected.push(index);
+            ui.selected = index;
+          },
+        }),
+      ),
+    );
+  try {
+    const arrow = getSymbols(ui.themeConfig.symbolPreset).arrow.right;
+    assert.equal(arrow, ">");
+    render();
+    await setup.renderOnce();
+    let frame = setup.captureCharFrame();
+    assert.ok(frame.includes(`${arrow} OVERVIEW`));
+    assert.ok(frame.includes(`${arrow} overview record`));
+
+    let lines = frame.split("\n");
+    const recordRow = lines.findIndex((line) =>
+      line.includes(`${arrow} overview record`),
+    );
+    assert.notEqual(recordRow, -1);
+    await setup.mockMouse.click(
+      lines[recordRow]!.indexOf(`${arrow} overview record`),
+      recordRow,
+    );
+    await setup.renderOnce();
+    assert.deepEqual(selected, [0]);
+
+    lines = setup.captureCharFrame().split("\n");
+    const navRow = lines.findIndex(
+      (line) => line.includes("OVERVIEW") && line.includes("CHAT"),
+    );
+    assert.notEqual(navRow, -1);
+    await setup.mockMouse.click(lines[navRow]!.indexOf("CHAT"), navRow);
+    await setup.renderOnce();
+    assert.deepEqual(tabs, ["chat"]);
+    render();
+    await setup.renderOnce();
+    frame = setup.captureCharFrame();
+    assert.ok(frame.includes(`${arrow} CHAT`));
+    assert.ok(frame.includes(`PROMPT  ${arrow}  Message NOMO`));
+  } finally {
+    root.unmount();
+    await setup.dispose();
+  }
+});
+
+test("ASCII preset uses its arrow for model-picker and usage selection", async () => {
+  const arrow = getSymbols("ascii").arrow.right;
+  assert.equal(arrow, ">");
+
+  const pickerSetup = await createTestRenderer({ width: 120, height: 32 });
+  const pickerUi = fakeUi("chat");
+  pickerUi.themeConfig = { ...pickerUi.themeConfig, symbolPreset: "ascii" };
+  pickerUi.modelPicker = {
+    open: true,
+    query: "",
+    selected: 1,
+    models: [
+      { id: "alpha-id", name: "Alpha" },
+      { id: "beta-id", name: "Beta" },
+    ],
+  };
+  const pickerRoot = createRoot(pickerSetup.renderer);
+  try {
+    flushSync(() =>
+      pickerRoot.render(
+        createElement(WorkspaceApp, {
+          ui: pickerUi,
+          input: "",
+          editing: false,
+          busy: false,
+          color: false,
+          onKey: () => {},
+          onPaste: () => {},
+          onTab: () => {},
+          onSelect: () => {},
+        }),
+      ),
+    );
+    await pickerSetup.renderOnce();
+    assert.ok(
+      pickerSetup.captureCharFrame().includes(`${arrow} Beta · beta-id`),
+    );
+  } finally {
+    pickerRoot.unmount();
+    await pickerSetup.dispose();
+  }
+
+  const usageSetup = await createTestRenderer({ width: 120, height: 32 });
+  const usageUi = fakeUi("usage");
+  usageUi.themeConfig = { ...usageUi.themeConfig, symbolPreset: "ascii" };
+  const usageRoot = createRoot(usageSetup.renderer);
+  try {
+    flushSync(() =>
+      usageRoot.render(
+        createElement(WorkspaceApp, {
+          ui: usageUi,
+          input: "",
+          editing: false,
+          busy: false,
+          color: false,
+          onKey: () => {},
+          onPaste: () => {},
+          onTab: () => {},
+          onSelect: () => {},
+        }),
+      ),
+    );
+    await usageSetup.renderOnce();
+    assert.ok(
+      usageSetup
+        .captureCharFrame()
+        .includes(`${arrow} 2026-01-01T00:00:00.000Z`),
+    );
+  } finally {
+    usageRoot.unmount();
+    await usageSetup.dispose();
   }
 });
