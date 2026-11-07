@@ -99,3 +99,37 @@ vyjasneni teto zavislosti. Vylouceni #125 neni souhlas tvrdit PTY zelene.
 
 Nezavirat issues automaticky, neslucovat historicke vetve naslepo. Blokovane
 issue musi mit duvod, vlastnika a konkretni verifier pro odblokovani.
+
+## Zaznam provedeni, 2026-11-07
+
+- #127: oprava commitnuta (`2b3c19e` na `fix/issue-127-baseline`, pushnuto).
+  `workspace*.test.ts` 206/206 (byl 191/206). CLI typecheck cisty. Prettier a
+  diff-check cisty. `pnpm run test:tui` zustava cerveny pouze na samostatnem
+  PTY kroku, coz je vyloucene #125 (stejna "Write a prompt" chyba). Issue
+  zustava otevrene, oznaceno jako castecne opraveno presne podle planu vyse.
+- #126: blokovano. Na main neexistuje PNG ani Kitty kod z issue, zije jen v
+  PR #129 (OpenTUI rewrite, OPEN/UNSTABLE), coz je cizi a nestabilni TUI lane.
+  Bez souhlasu vlastnika na dotknuti teto vetve a bez dolozene provenience
+  PNG nelze pokracovat.
+- #55: overeno, zadny kod defekt. Obe mezery z issue jsou uz na main uzavrene
+  (`capability-gate.mjs` PAID_CAPABILITIES, 22/22 testu; `licence-line.test.mjs`
+  13/13 vcetne `cloud`/`paid`). PR #140 (hlava `a3a972c`) je pouze dokumentacni
+  diff, overeno na Linuxu: licence-line 13/13, doc-truth 9/9, capability-gate
+  22/22. CI PR #140 je cervene jen kvuli #110 a #4 (0 kroku / Vercel blok).
+- #131: overeno, zadna radka neprekrocila laku dukazu. Cursor/Devin/Factory
+  Droid maji nove verejne REST API, ale jde o asynchronni session-management
+  (vytvor/poll/vysledek), ne o realtime streaming chat/tool-call transport,
+  ktery Workbench apiTransports proxyuje. GitLab Duo external agents vyzaduje
+  Premium/Ultimate + feature flag a pod kapotou spousti Claude Code/Codex.
+  Gemini CLI a Codex Responses: puvodni dukazy z issue platí beze zmeny. Vertex
+  Anthropic/OpenAI-completions: ADC dokumentace existuje, ale Workbench nema
+  ADC auth-profil vubec, to je vetsi architektonicke rozhodnuti mimo tento
+  issue. Kimi Code/Muse Code: jen neoficialni reverse-engineered repo, zadny
+  prvostranovy dukaz pro neinteraktivni pouziti. Vsech 11 radku zustava
+  blocked, nyni s cerstvym datovanym dukazem.
+- #110/#98/#34/#13/#10: znovu overeno 2026-11-07, stejny podpis (0 kroku,
+  runner neprideleny). Zustava blokovano na vlastnikovi uctu; zadny kod zde
+  nelze overit bez bezicho runneru.
+- #4: znovu overeno na PR #140, Vercel stale FAILURE. Stejny blocker.
+- #32, #1: bez noveho overeni, zustavaji blokovane na lidskem rozhodnuti
+  presne podle puvodniho zaznamu vyse.
