@@ -63,6 +63,8 @@ test("TUI approvals dispatch once only after confirmation; denial, cancellation 
     return Response.json({
       choices: [
         {
+          finish_reason:
+            b.messages.at(-1).role === "tool" ? "stop" : "tool_calls",
           message:
             b.messages.at(-1).role === "tool"
               ? { role: "assistant", content: "Tool outcome received." }
@@ -100,9 +102,11 @@ test("TUI approvals dispatch once only after confirmation; denial, cancellation 
     facts: { "hold.released": true },
   });
   // The builtin document workspace shares this list and has no url.
-  const conn = app.connectionState().connectors.find(
-    (c) => "url" in c && !!c.url?.includes(String(address.port)),
-  )!;
+  const conn = app
+    .connectionState()
+    .connectors.find(
+      (c) => "url" in c && !!c.url?.includes(String(address.port)),
+    )!;
   await app.probeConnector(conn.id);
   await app.confirmConnector(conn.id);
   const ui = new WorkspaceTui(app, env);

@@ -16,7 +16,9 @@ const assistantFetcher = (content: string) => async (url: unknown) => {
   if (String(url).endsWith("/models"))
     return Response.json({ data: [{ id: "fixture" }] });
   return Response.json({
-    choices: [{ message: { role: "assistant", content } }],
+    choices: [
+      { finish_reason: "stop", message: { role: "assistant", content } },
+    ],
   });
 };
 
@@ -290,16 +292,18 @@ test("score sampling deduplicates sessions that share one verified workspace cha
   assert.ok(proof);
   // A second session viewing the same chain is not an independent case.
   ui.proofs.set("same-workspace-second-session", [...proof.entries]);
-  ui.proofs.set("refinement-only", [{
-    workspace: "refinement-only",
-    seq: 1,
-    body: { tool: "harness.refinement", decision: "refinement:applied" },
-    prev_hash: "",
-    hash: "",
-    key_id: "",
-    alg: "",
-    signature: "",
-  }]);
+  ui.proofs.set("refinement-only", [
+    {
+      workspace: "refinement-only",
+      seq: 1,
+      body: { tool: "harness.refinement", decision: "refinement:applied" },
+      prev_hash: "",
+      hash: "",
+      key_id: "",
+      alg: "",
+      signature: "",
+    },
+  ]);
   const row = rowsOf(ui).find((r) => r.id === "harness:scores");
   assert.ok(row);
   assert.match(row.lines.join("\n"), /1 case/);

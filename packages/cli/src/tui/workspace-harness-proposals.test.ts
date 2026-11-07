@@ -14,10 +14,20 @@ async function fixture(t: test.TestContext) {
   const app = new Workbench(env, async (url) =>
     String(url).endsWith("/models")
       ? Response.json({ data: [{ id: "fixture" }] })
-      : Response.json({ choices: [{ message: { role: "assistant", content: "Ready" } }] }),
+      : Response.json({
+          choices: [
+            {
+              finish_reason: "stop",
+              message: { role: "assistant", content: "Ready" },
+            },
+          ],
+        }),
   );
   assertIsolated(root, env);
-  await app.configure({ baseUrl: "https://fixture.test/v1", apiKey: "fixture" });
+  await app.configure({
+    baseUrl: "https://fixture.test/v1",
+    apiKey: "fixture",
+  });
   const ui = new WorkspaceTui(app, env);
   await ui.initialize();
   await ui.command("/new Review the workspace");
@@ -39,14 +49,16 @@ const proposal = (): RefinementProposal => ({
   summary: "remember the verified approval pattern",
   rationale: "the operator approved this exact call shape repeatedly",
   expectedOutcome: "later sessions can consider the bounded note",
-  edits: [{
-    action: "create",
-    kind: "memory",
-    title: "approval pattern",
-    content: "The operator repeatedly approved the same action.",
-    derivedFromSeq: [1],
-    reason: "the verified records agree",
-  }],
+  edits: [
+    {
+      action: "create",
+      kind: "memory",
+      title: "approval pattern",
+      content: "The operator repeatedly approved the same action.",
+      derivedFromSeq: [1],
+      reason: "the verified records agree",
+    },
+  ],
 });
 
 test("TUI shows the exact proposal before approving it", async (t) => {
@@ -57,11 +69,20 @@ test("TUI shows the exact proposal before approving it", async (t) => {
 
   await ui.command(`/harness approve ${created.proposalDigest!.slice(0, 8)}`);
   assert.match(ui.confirmation!.title, /APPROVE HARNESS PROPOSAL/);
-  assert.match(ui.confirmation!.lines.join("\n"), /The operator repeatedly approved/);
-  assert.equal((await app.harnessEntries(app.get(sessionId)!.workspace)).length, 0);
+  assert.match(
+    ui.confirmation!.lines.join("\n"),
+    /The operator repeatedly approved/,
+  );
+  assert.equal(
+    (await app.harnessEntries(app.get(sessionId)!.workspace)).length,
+    0,
+  );
 
   await ui.confirm();
-  assert.equal((await app.harnessEntries(app.get(sessionId)!.workspace)).length, 1);
+  assert.equal(
+    (await app.harnessEntries(app.get(sessionId)!.workspace)).length,
+    1,
+  );
 });
 
 test("TUI asks before a manual review and reports the gate's decision", async (t) => {
@@ -74,7 +95,9 @@ test("TUI asks before a manual review and reports the gate's decision", async (t
   assert.match(ui.confirmation!.title, /REQUEST A HARNESS REVIEW/);
   // Nothing is spent before the operator confirms.
   assert.equal(
-    (app.get(sessionId)?.events ?? []).filter((event) => event.type === "harness.review").length,
+    (app.get(sessionId)?.events ?? []).filter(
+      (event) => event.type === "harness.review",
+    ).length,
     reviewsBefore,
   );
 
@@ -119,8 +142,14 @@ test("TUI requires an explicit digest before showing an approval", async (t) => 
   const { app, ui, sessionId } = await fixture(t);
   await app.refineHarness(sessionId, proposal());
 
-  await assert.rejects(ui.command("/harness approve"), /at least 8 hexadecimal/);
-  await assert.rejects(ui.command("/harness approve abc"), /at least 8 hexadecimal/);
+  await assert.rejects(
+    ui.command("/harness approve"),
+    /at least 8 hexadecimal/,
+  );
+  await assert.rejects(
+    ui.command("/harness approve abc"),
+    /at least 8 hexadecimal/,
+  );
   assert.equal(ui.confirmation, undefined);
   assert.equal((await app.pendingApprovalsFor(sessionId)).length, 1);
 });
@@ -145,7 +174,8 @@ test("TUI confirmation includes every field from each exact edit", async (t) => 
         kind: "prompt",
         title: "approved addendum",
         content: "content field remains visible too",
-        promptAddendum: "only this is the approved prompt text \u202e \u0085 \u200b",
+        promptAddendum:
+          "only this is the approved prompt text \u202e \u0085 \u200b",
         derivedFromSeq: [1],
         reason: "the operator chose this exact wording",
         rollbackId: "undo-approved-addendum",
@@ -157,7 +187,10 @@ test("TUI confirmation includes every field from each exact edit", async (t) => 
   const shown = ui.confirmation!.lines.join("\n");
   assert.match(shown, /"rollbackId": "restore-old-entry"/);
   assert.match(shown, /"content": "content field remains visible too"/);
-  assert.match(shown, /"promptAddendum": "only this is the approved prompt text/);
+  assert.match(
+    shown,
+    /"promptAddendum": "only this is the approved prompt text/,
+  );
   assert.ok(shown.includes("\\u202e"));
   assert.ok(shown.includes("\\u0085"));
   assert.ok(shown.includes("\\u200b"));
@@ -185,15 +218,29 @@ test("proposal free text is escaped in the pending list and confirmation", async
 
   await ui.command(`/harness approve ${created.proposalDigest!.slice(0, 8)}`);
   const confirmation = ui.confirmation!.lines.join("\n");
-  assert.ok(confirmation.includes("Summary: summary \\u202e reversed \\u001b[31mred\\u001b[0m"));
-  assert.ok(confirmation.includes("Rationale: rationale \\u202e reversed \\u001b[2J"));
-  assert.ok(confirmation.includes("Expected outcome: outcome \\u202e reversed \\u001b[?25l"));
+  assert.ok(
+    confirmation.includes(
+      "Summary: summary \\u202e reversed \\u001b[31mred\\u001b[0m",
+    ),
+  );
+  assert.ok(
+    confirmation.includes("Rationale: rationale \\u202e reversed \\u001b[2J"),
+  );
+  assert.ok(
+    confirmation.includes(
+      "Expected outcome: outcome \\u202e reversed \\u001b[?25l",
+    ),
+  );
   assert.ok(!confirmation.includes("\u202e"));
   assert.ok(!confirmation.includes("\u001b"));
 
   await ui.confirm();
   const completed = ui.detail!.join("\n");
-  assert.ok(completed.includes("Summary: summary \\u202e reversed \\u001b[31mred\\u001b[0m"));
+  assert.ok(
+    completed.includes(
+      "Summary: summary \\u202e reversed \\u001b[31mred\\u001b[0m",
+    ),
+  );
   assert.ok(!completed.includes("\u202e"));
   assert.ok(!completed.includes("\u001b"));
 });

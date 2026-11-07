@@ -22,7 +22,12 @@ const assistantFetcher = async (url: unknown) =>
   String(url).endsWith("/models")
     ? Response.json({ data: [{ id: "fixture" }] })
     : Response.json({
-        choices: [{ message: { role: "assistant", content: "ok" } }],
+        choices: [
+          {
+            finish_reason: "stop",
+            message: { role: "assistant", content: "ok" },
+          },
+        ],
       });
 
 async function settings(t: {
@@ -70,7 +75,11 @@ test("/settings with no argument lists every limit and the value in force", asyn
   app.patchHarnessSettings({ maxTurns: 7, maxRequestBytes: 2048 });
   await ui.command("/settings");
   const configured = ui.lines().join("\n");
-  assert.match(configured, /maxTurns\s+7/, "the row did not follow the setting");
+  assert.match(
+    configured,
+    /maxTurns\s+7/,
+    "the row did not follow the setting",
+  );
   assert.match(
     configured,
     /maxRequestBytes\s+2048/,
@@ -134,12 +143,17 @@ test("a non-numeric value is refused and never becomes NaN", async (t) => {
   // minimum, which an operator would read as a limit they had chosen.
   assert.deepEqual({ ...app.harnessSettings() }, before);
   assert.ok(
-    Object.values(app.harnessSettings()).every((value) => Number.isFinite(value)),
+    Object.values(app.harnessSettings()).every((value) =>
+      Number.isFinite(value),
+    ),
     "a non-finite limit was stored",
   );
 
   // A key with no value is a usage error, not an implicit clear.
-  await assert.rejects(ui.command("/settings maxTurns"), /\/settings key value/);
+  await assert.rejects(
+    ui.command("/settings maxTurns"),
+    /\/settings key value/,
+  );
   assert.deepEqual({ ...app.harnessSettings() }, before);
 });
 
@@ -151,5 +165,8 @@ test("a value outside the range is clamped and the notice names what took effect
   // Clamping upward would let a harness turn count exceed what an agent
   // profile may carry, so the ceiling wins and the notice names the ceiling.
   assert.equal(app.harnessSettings().maxTurns, HARNESS_SETTINGS.maxTurns.max);
-  assert.match(ui.notice, new RegExp(`is now ${HARNESS_SETTINGS.maxTurns.max}\\b`));
+  assert.match(
+    ui.notice,
+    new RegExp(`is now ${HARNESS_SETTINGS.maxTurns.max}\\b`),
+  );
 });

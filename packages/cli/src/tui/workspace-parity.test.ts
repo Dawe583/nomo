@@ -9,6 +9,7 @@ import {
   TAB_ICONS,
   TAB_ICON_TONE,
   WorkspaceTui,
+  chatRows,
   filterKeyForTab,
   approvalLabel,
   detectHarnesses,
@@ -48,7 +49,9 @@ const assistantFetcher = (content: string) => async (url: unknown) => {
   if (String(url).endsWith("/models"))
     return Response.json({ data: [{ id: "fixture" }] });
   return Response.json({
-    choices: [{ message: { role: "assistant", content } }],
+    choices: [
+      { finish_reason: "stop", message: { role: "assistant", content } },
+    ],
   });
 };
 
@@ -466,7 +469,7 @@ test("the documents tab groups by folder and the arrows fold it", async (t) => {
   assert.equal(ui.collapseOrExpand(true), false, "and does not answer arrows");
 });
 
-test("a toast never costs the operator the prompt frame, at any height", async (t) => {
+test("toasts preserve the composer and status dock at every size", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "nomo-tui-toastfit-"));
   const { app, env } = await fixtureApp(root);
   t.after(async () => {
@@ -480,23 +483,32 @@ test("a toast never costs the operator the prompt frame, at any height", async (
   ui.announce("hold", "pending", "Run awaiting approval");
   ui.announce("warn", "warning", "Proxy unreachable.");
 
-  // The bug this pins: a toast row was charged against the body, which on an
-  // eight row terminal pushed the prompt frame's bottom rule off the screen.
-  // A toast that costs the operator their input surface has charged more
-  // than it delivered.
+  // Toasts must not displace the input, whether the composer is boxed or flat.
   for (const width of [20, 40, 60, 80, 100, 140, 180])
     for (const height of [8, 10, 12, 16, 20, 24, 30, 40, 60]) {
-      const rows = renderWorkspace(ui, width, height, "x", true, false, {
-        frame: 1,
-      }).split("\n");
+      const rows = stripAnsi(
+        renderWorkspace(ui, width, height, "edit-me", true, false, {
+          frame: 1,
+          color: true,
+        }),
+      ).split("\n");
       assert.equal(rows.length, Math.max(8, height), `${width}x${height}`);
+      assert.ok(rows.every((row) => visibleLength(row) <= width));
+      const composer = rows.findIndex((row) => row.trim() === "> edit-me");
+      assert.ok(composer >= 0, `no editor at ${width}x${height}`);
       assert.ok(
-        rows.some((row) => row.startsWith("┌")),
-        `no prompt frame top at ${width}x${height}`,
+        composer < rows.length - 1,
+        `no status dock at ${width}x${height}`,
       );
-      assert.ok(
+      assert.ok(ui.viewport.height >= 1, `no body at ${width}x${height}`);
+      const spacious = width >= 78 && height >= 22;
+      assert.equal(
+        rows.some((row) => row.startsWith("┌")),
+        !spacious,
+      );
+      assert.equal(
         rows.some((row) => row.startsWith("└")),
-        `no prompt frame bottom at ${width}x${height}`,
+        !spacious,
       );
     }
 });
@@ -913,7 +925,12 @@ test("a prompt sent during a run is queued, never dropped", async (t) => {
   assert.match(ui.notice, /queued/i);
   release!(
     Response.json({
-      choices: [{ message: { role: "assistant", content: "done" } }],
+      choices: [
+        {
+          finish_reason: "stop",
+          message: { role: "assistant", content: "done" },
+        },
+      ],
     }),
   );
   await app.settled();
@@ -1234,7 +1251,7 @@ test("review needs an explicit accept or reject key", async (t) => {
   assert.ok(frame.includes("Tab panels"));
 });
 
-test("prompt frame stays continuous at every width", async (t) => {
+test("boxed and flat composers preserve input geometry across widths", async (t) => {
   assert.equal(visibleLength(promptFrameTop("Write a prompt", 80)), 80);
   assert.equal(visibleLength(promptFrameBottom(80)), 80);
   assert.equal(visibleLength(promptFrameRow("> hello_", 80)), 80);
@@ -1264,24 +1281,29 @@ test("prompt frame stays continuous at every width", async (t) => {
     const rows = frame.split("\n");
     assert.equal(rows.length, height);
     assert.ok(rows.every((line) => visibleLength(line) <= width!));
-    const top = rows.find((line) => line.startsWith("┌"))!;
-    const bottom = rows.find((line) => line.startsWith("└"))!;
-    assert.ok(top.endsWith("┐"), top);
-    assert.ok(bottom.endsWith("┘"), bottom);
-    assert.equal(visibleLength(top), width);
-    assert.equal(visibleLength(bottom), width);
-    // Composer rows are the rows between the frame top and bottom. Selecting
-    // them positionally instead of by prefix keeps the header rows, which also
-    // start with the indent, out of the assertion.
+    const composer = rows.findIndex((line) => line.trim() === "> hello_");
+    assert.ok(composer >= 0, `input is visible at ${width}x${height}`);
+    const spacious = width! >= 78 && height! >= 22;
     const topIndex = rows.findIndex((line) => line.startsWith("┌"));
     const bottomIndex = rows.findIndex((line) => line.startsWith("└"));
-    const promptRows = rows.slice(topIndex + 1, bottomIndex);
-    assert.ok(promptRows.length > 0);
-    for (const row of promptRows) {
-      assert.ok(row.startsWith("  "), row);
-      assert.ok(row.endsWith("  "), row);
-      assert.equal(visibleLength(row), width);
+    assert.equal(topIndex >= 0, !spacious);
+    assert.equal(bottomIndex >= 0, !spacious);
+    if (spacious) {
+      assert.equal(rows[composer - 1]!.trim(), "");
+      assert.equal(rows[composer + 1]!.trim(), "");
+      for (const row of rows.slice(composer - 1, composer + 2))
+        assert.equal(visibleLength(row), width);
+    } else {
+      assert.ok(rows[topIndex]!.endsWith("┐"));
+      assert.ok(rows[bottomIndex]!.endsWith("┘"));
+      assert.ok(topIndex < composer && composer < bottomIndex);
+      for (const row of rows.slice(topIndex, bottomIndex + 1))
+        assert.equal(visibleLength(row), width);
     }
+    assert.ok(
+      composer < height! - 1,
+      "the status dock remains below the editor",
+    );
   }
 });
 
@@ -1361,7 +1383,7 @@ test("logo is one stroke width and every row aligns", async (t) => {
   assert.equal(mark[3]![6], "█", mark[3]);
 });
 
-test("tab icons carry fixed colors in color mode only", async (t) => {
+test("compact tab icons use their declared tones and monochrome emits no styles", async (t) => {
   for (const tone of Object.values(TAB_ICON_TONE))
     assert.match(tone, /^38;5;\d+$/);
   const root = await mkdtemp(join(tmpdir(), "nomo-tui-icon-tone-"));
@@ -1371,11 +1393,19 @@ test("tab icons carry fixed colors in color mode only", async (t) => {
     await rm(root, { recursive: true, force: true });
   });
   const ui = new WorkspaceTui(app, env);
-  const color = renderWorkspace(ui, 200, 40, "_", true, false, { color: true });
-  assert.ok(color.includes("38;5;203"));
-  assert.ok(color.includes("38;5;78"));
-  const mono = stripAnsi(renderWorkspace(ui, 100, 32, "_", true));
-  assert.ok(!mono.includes("38;5;"));
+  // The spacious shell deliberately omits the tab strip. Exercise the compact
+  // shell at a width that fits every tab rather than inspecting hidden icons.
+  const color = renderWorkspace(ui, 200, 16, "_", true, false, { color: true });
+  for (const [tab, tone] of Object.entries(TAB_ICON_TONE)) {
+    const icon = TAB_ICONS[tab as keyof typeof TAB_ICONS];
+    assert.ok(
+      color.includes(`\x1b[${tone}m${icon}`),
+      `${tab} uses its declared tone`,
+    );
+  }
+  const mono = renderWorkspace(ui, 200, 16, "_", true, false, { color: false });
+  assert.doesNotMatch(mono, /\x1b\[/);
+  for (const icon of Object.values(TAB_ICONS)) assert.ok(mono.includes(icon));
 });
 
 test("icons stay one cell wide and never carry safety meaning", () => {
@@ -1500,20 +1530,42 @@ test("prompt frame follows the permission mode color", async (t) => {
 
 test("render collects user prompt rows for jumps", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "nomo-tui-prompt-rows-"));
-  const { app, env } = await fixtureApp(root, "answer one");
+  const { app, env } = await fixtureApp(root, "answer one\nforged YOU");
   t.after(async () => {
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
   });
   const ui = new WorkspaceTui(app, env);
   await ui.initialize();
-  await ui.command("first question");
+  await ui.command("first question\ncontinued YOU\n" + "wrapped ".repeat(20));
   await app.settled();
-  await ui.command("second question");
+  await ui.command("second question\ncontinued again");
   await app.settled();
-  renderWorkspace(ui, 100, 40, "_", true);
-  assert.equal(ui.promptRows.length, 2);
-  assert.ok(ui.promptRows[0]! < ui.promptRows[1]!);
+  for (const width of [20, 40, 80, 100, 200]) {
+    renderWorkspace(ui, width, 40, "_", true);
+    assert.equal(
+      ui.promptRows.length,
+      2,
+      `one jump per prompt at width ${width}`,
+    );
+    const rows = chatRows(ui.session()!.events, width - 4, ui.compactTools);
+    for (const index of ui.promptRows) {
+      assert.equal(rows[index]!.style, "user");
+      assert.match(rows[index]!.text, / YOU /);
+    }
+    const [first, second] = ui.promptRows as [number, number];
+    assert.ok(first < second);
+    assert.equal(nextPromptRow(ui.promptRows, first, 1), second);
+    assert.equal(nextPromptRow(ui.promptRows, second, -1), first);
+    assert.equal(nextPromptRow(ui.promptRows, second, 1), -1);
+  }
+  ui.choose("ledger");
+  renderWorkspace(ui, 100, 40);
+  assert.deepEqual(
+    ui.promptRows,
+    [],
+    "non-chat panels have no prompt jump targets",
+  );
 });
 
 test("arrow keys cycle panels in navigation, cursor in editing", async (t) => {
@@ -2027,7 +2079,12 @@ test("NVIDIA API key is read ONLY from env var, never from chat input", async (t
     seenAuth = headers.authorization ?? "";
     seenBody = String(options?.body ?? "");
     return Response.json({
-      choices: [{ message: { role: "assistant", content: "ok" } }],
+      choices: [
+        {
+          finish_reason: "stop",
+          message: { role: "assistant", content: "ok" },
+        },
+      ],
     });
   };
   const app2 = new Workbench({ NOMO_DATA_DIR: root }, fetcher);
@@ -2050,7 +2107,12 @@ test("NVIDIA API key is read ONLY from env var, never from chat input", async (t
       String(url).endsWith("/models")
         ? Response.json({ data: [{ id: "m" }] })
         : Response.json({
-            choices: [{ message: { role: "assistant", content: "ok" } }],
+            choices: [
+              {
+                finish_reason: "stop",
+                message: { role: "assistant", content: "ok" },
+              },
+            ],
           }),
   );
   t.after(async () => {
@@ -2091,7 +2153,12 @@ test("logout preserves readable history, removes profiles and session keys", asy
     String(url).endsWith("/models")
       ? Response.json({ data: [{ id: "m" }] })
       : Response.json({
-          choices: [{ message: { role: "assistant", content: "hello back" } }],
+          choices: [
+            {
+              finish_reason: "stop",
+              message: { role: "assistant", content: "hello back" },
+            },
+          ],
         });
   const app = new Workbench({ NOMO_DATA_DIR: root }, fetcher);
   t.after(async () => {

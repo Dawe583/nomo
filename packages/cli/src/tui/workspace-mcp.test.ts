@@ -14,7 +14,9 @@ const assistant = async (url: unknown) => {
   if (String(url).endsWith("/models"))
     return Response.json({ data: [{ id: "fixture" }] });
   return Response.json({
-    choices: [{ message: { role: "assistant", content: "ok" } }],
+    choices: [
+      { finish_reason: "stop", message: { role: "assistant", content: "ok" } },
+    ],
   });
 };
 

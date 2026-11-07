@@ -1,11 +1,16 @@
 import test from "node:test";
+import { execFileSync } from "node:child_process";
 import assert from "node:assert/strict";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Workbench } from "../../../workbench/src/index.ts";
 import { assertIsolated } from "../../../workbench/src/test-fixture.ts";
-import { WorkspaceTui, renderWorkspace, commandSuggestions } from "./workspace.ts";
+import {
+  WorkspaceTui,
+  renderWorkspace,
+  commandSuggestions,
+} from "./workspace.ts";
 import { stripAnsi, visibleLength } from "./layout.ts";
 
 async function fixture(t: test.TestContext, answer = "Fixture reply") {
@@ -16,7 +21,10 @@ async function fixture(t: test.TestContext, answer = "Fixture reply") {
       ? Response.json({ data: [{ id: "fixture" }] })
       : Response.json({
           choices: [
-            { message: { role: "assistant", content: answer } },
+            {
+              finish_reason: "stop",
+              message: { role: "assistant", content: answer },
+            },
           ],
         }),
   );
@@ -520,7 +528,10 @@ test("/hook flips a saved hook without rewriting it", async (t) => {
       ? Response.json({ data: [{ id: "fixture" }] })
       : Response.json({
           choices: [
-            { message: { role: "assistant", content: "Fixture reply" } },
+            {
+              finish_reason: "stop",
+              message: { role: "assistant", content: "Fixture reply" },
+            },
           ],
         }),
   );
@@ -531,8 +542,17 @@ test("/hook flips a saved hook without rewriting it", async (t) => {
   });
   const ui = new WorkspaceTui(app, env);
   await ui.initialize();
-  app.upsertHook({ id: "h1", event: "after-tool", command: "echo", enabled: true });
-  assert.equal(app.agents().hooksSupported, true, "an allowlisted command makes hooks supported");
+  app.upsertHook({
+    id: "h1",
+    event: "after-tool",
+    command: "echo",
+    enabled: true,
+  });
+  assert.equal(
+    app.agents().hooksSupported,
+    true,
+    "an allowlisted command makes hooks supported",
+  );
 
   await ui.command("/hook disable h1");
   const off = app.agents().hooks.find((hook) => hook.id === "h1");
@@ -570,7 +590,10 @@ test("/agents prints the system prompt it names as a field", async (t) => {
   // The listing told the operator systemPrompt was a field it could save, and
   // never printed one. A profile's prompt is its actual voice to the model, so
   // an operator checking what a profile would say found nothing to read.
-  assert.match(text, /System prompt \/ \w+ *: Only claim work the tool results prove\./);
+  assert.match(
+    text,
+    /System prompt \/ \w+ *: Only claim work the tool results prove\./,
+  );
 
   app.upsertAgent({
     id: "quiet",
@@ -587,7 +610,10 @@ test("/agents prints the system prompt it names as a field", async (t) => {
 test("subagent command is discoverable and delivery requires operator confirmation", async (t) => {
   assert.ok(commandSuggestions("/sub").some(([name]) => name === "/subagent"));
   const { app, ui } = await fixture(t);
-  await app.configure({ baseUrl: "https://fixture.invalid/v1", apiKey: "fixture" });
+  await app.configure({
+    baseUrl: "https://fixture.invalid/v1",
+    apiKey: "fixture",
+  });
   await ui.command("/help");
   assert.match(ui.lines().join("\n"), /\/subagent/);
   const parent = await app.start("Parent", "fixture");
@@ -597,27 +623,44 @@ test("subagent command is discoverable and delivery requires operator confirmati
   await ui.command(`/open ${child.id}`);
   await ui.command("/subagent review");
   assert.match(ui.confirmation!.title, /DELIVER SUBAGENT RESULT/);
-  assert.match(ui.confirmation!.lines.join("\n"), new RegExp(`Child: ${child.id}`));
-  assert.match(ui.confirmation!.lines.join("\n"), /Source: latest assistant completion/);
+  assert.match(
+    ui.confirmation!.lines.join("\n"),
+    new RegExp(`Child: ${child.id}`),
+  );
+  assert.match(
+    ui.confirmation!.lines.join("\n"),
+    /Source: latest assistant completion/,
+  );
   assert.match(ui.confirmation!.lines.join("\n"), /Parent:/);
   assert.match(ui.confirmation!.lines.join("\n"), /Run:/);
   assert.match(ui.confirmation!.lines.join("\n"), /Status: idle/);
-  assert.equal(app.get(parent.id)?.events.some((event) => event.text.includes(child.id)), false);
+  assert.equal(
+    app.get(parent.id)?.events.some((event) => event.text.includes(child.id)),
+    false,
+  );
   await ui.confirm();
   assert.equal(
-    app.get(parent.id)?.events.some((event) =>
-      event.kind === "user" && event.text.includes(`Child: ${child.id}`),
-    ),
+    app
+      .get(parent.id)
+      ?.events.some(
+        (event) =>
+          event.kind === "user" && event.text.includes(`Child: ${child.id}`),
+      ),
     true,
   );
 });
 
 test("branch clones cannot use spawned-child TUI actions", async (t) => {
   const { app, ui } = await fixture(t);
-  await app.configure({ baseUrl: "https://fixture.invalid/v1", apiKey: "fixture" });
+  await app.configure({
+    baseUrl: "https://fixture.invalid/v1",
+    apiKey: "fixture",
+  });
   const parent = await app.start("Parent", "fixture");
   await app.settled();
-  const userEvent = app.get(parent.id)!.events.find((event) => event.kind === "user")!;
+  const userEvent = app
+    .get(parent.id)!
+    .events.find((event) => event.kind === "user")!;
   const branch = await app.branch(parent.id, {
     seq: userEvent.seq,
     idempotencyKey: "branch-clone",
@@ -629,7 +672,10 @@ test("branch clones cannot use spawned-child TUI actions", async (t) => {
 
 test("subagent preview escapes terminal controls and truncation has no accept action", async (t) => {
   const { app, ui } = await fixture(t, "\u001b[31m" + "x".repeat(256));
-  await app.configure({ baseUrl: "https://fixture.invalid/v1", apiKey: "fixture" });
+  await app.configure({
+    baseUrl: "https://fixture.invalid/v1",
+    apiKey: "fixture",
+  });
   await app.patchHarnessSettings({ maxPromptCharacters: 256 });
   const parent = await app.start("Parent", "fixture");
   await app.settled();
@@ -650,14 +696,31 @@ test("running subagent cancellation requires confirmation and preserves capacity
   const root = await mkdtemp(join(tmpdir(), "nomo-tui-subagent-stop-"));
   const env = { NOMO_DATA_DIR: root };
   let release!: () => void;
-  const blocked = new Promise<void>((resolve) => { release = resolve; });
+  const blocked = new Promise<void>((resolve) => {
+    release = resolve;
+  });
   let calls = 0;
   const app = new Workbench(env, async (url) => {
-    if (String(url).endsWith("/models")) return Response.json({ data: [{ id: "fixture" }] });
+    if (String(url).endsWith("/models"))
+      return Response.json({ data: [{ id: "fixture" }] });
     if (calls++ === 0)
-      return Response.json({ choices: [{ message: { role: "assistant", content: "Parent done" } }] });
+      return Response.json({
+        choices: [
+          {
+            finish_reason: "stop",
+            message: { role: "assistant", content: "Parent done" },
+          },
+        ],
+      });
     await blocked;
-    return Response.json({ choices: [{ message: { role: "assistant", content: "Late child output" } }] });
+    return Response.json({
+      choices: [
+        {
+          finish_reason: "stop",
+          message: { role: "assistant", content: "Late child output" },
+        },
+      ],
+    });
   });
   assertIsolated(root, env);
   t.after(async () => {
@@ -665,7 +728,10 @@ test("running subagent cancellation requires confirmation and preserves capacity
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
   });
-  await app.configure({ baseUrl: "https://fixture.invalid/v1", apiKey: "fixture" });
+  await app.configure({
+    baseUrl: "https://fixture.invalid/v1",
+    apiKey: "fixture",
+  });
   await app.patchHarnessSettings({ maxConcurrentRuns: 1 });
   const parent = await app.start("Parent", "fixture");
   await app.settled();
@@ -680,19 +746,34 @@ test("running subagent cancellation requires confirmation and preserves capacity
   release();
   await app.settled();
   assert.equal(app.get(child.id)?.state, "stopped");
-  assert.equal(app.get(child.id)?.events.some((event) => event.text === "Late child output"), false);
+  assert.equal(
+    app
+      .get(child.id)
+      ?.events.some((event) => event.text === "Late child output"),
+    false,
+  );
 });
 test("queued spawned-child cancellation is immediate and safe in the TUI", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "nomo-tui-subagent-queue-cancel-"));
   const env = { NOMO_DATA_DIR: root };
   let release!: () => void;
-  const blocked = new Promise<void>((resolve) => { release = resolve; });
+  const blocked = new Promise<void>((resolve) => {
+    release = resolve;
+  });
   let calls = 0;
   const app = new Workbench(env, async (url) => {
-    if (String(url).endsWith("/models")) return Response.json({ data: [{ id: "fixture" }] });
+    if (String(url).endsWith("/models"))
+      return Response.json({ data: [{ id: "fixture" }] });
     calls++;
     await blocked;
-    return Response.json({ choices: [{ message: { role: "assistant", content: "Done" } }] });
+    return Response.json({
+      choices: [
+        {
+          finish_reason: "stop",
+          message: { role: "assistant", content: "Done" },
+        },
+      ],
+    });
   });
   assertIsolated(root, env);
   t.after(async () => {
@@ -700,7 +781,10 @@ test("queued spawned-child cancellation is immediate and safe in the TUI", async
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
   });
-  await app.configure({ baseUrl: "https://fixture.invalid/v1", apiKey: "fixture" });
+  await app.configure({
+    baseUrl: "https://fixture.invalid/v1",
+    apiKey: "fixture",
+  });
   const parent = await app.start("Parent", "fixture");
   const child = await app.spawnSubagent(parent.id, "Queued child");
   const ui = new WorkspaceTui(app, env);
@@ -718,18 +802,32 @@ test("queued cancel rechecks the child after verification before choosing confir
   let releaseParent!: () => void;
   let releaseChild!: () => void;
   let childStarted!: () => void;
-  const parentBlocked = new Promise<void>((resolve) => { releaseParent = resolve; });
-  const childBlocked = new Promise<void>((resolve) => { releaseChild = resolve; });
-  const childRequestStarted = new Promise<void>((resolve) => { childStarted = resolve; });
+  const parentBlocked = new Promise<void>((resolve) => {
+    releaseParent = resolve;
+  });
+  const childBlocked = new Promise<void>((resolve) => {
+    releaseChild = resolve;
+  });
+  const childRequestStarted = new Promise<void>((resolve) => {
+    childStarted = resolve;
+  });
   let requests = 0;
   const app = new Workbench(env, async (url) => {
-    if (String(url).endsWith("/models")) return Response.json({ data: [{ id: "fixture" }] });
+    if (String(url).endsWith("/models"))
+      return Response.json({ data: [{ id: "fixture" }] });
     if (requests++ === 0) await parentBlocked;
     else {
       childStarted();
       await childBlocked;
     }
-    return Response.json({ choices: [{ message: { role: "assistant", content: "Done" } }] });
+    return Response.json({
+      choices: [
+        {
+          finish_reason: "stop",
+          message: { role: "assistant", content: "Done" },
+        },
+      ],
+    });
   });
   assertIsolated(root, env);
   t.after(async () => {
@@ -738,7 +836,10 @@ test("queued cancel rechecks the child after verification before choosing confir
     await app.shutdown();
     await rm(root, { recursive: true, force: true });
   });
-  await app.configure({ baseUrl: "https://fixture.invalid/v1", apiKey: "fixture" });
+  await app.configure({
+    baseUrl: "https://fixture.invalid/v1",
+    apiKey: "fixture",
+  });
   await app.patchHarnessSettings({ maxConcurrentRuns: 1 });
   const parent = await app.start("Parent", "fixture");
   const child = await app.spawnSubagent(parent.id, "Queued child");
@@ -763,14 +864,24 @@ test("queued cancel rechecks the child after verification before choosing confir
 
 test("project confirmation exposes full-project data risk and requires an explicit confirm", async (t) => {
   const { app, env } = await fixture(t);
-  await app.configure({ baseUrl: "https://fixture.invalid/v1", apiKey: "fixture" });
+  await app.configure({
+    baseUrl: "https://fixture.invalid/v1",
+    apiKey: "fixture",
+  });
   const root = await mkdtemp(join(tmpdir(), "nomo-project-consent-"));
   t.after(() => rm(root, { recursive: true, force: true }));
+  execFileSync("git", ["init", "--quiet", "--initial-branch=main", root]);
   const ui = new WorkspaceTui(app, env);
   ui.prepareProjectAccess(root, [], "unavailable: no local image");
   assert.match(ui.confirmation!.title, /ALLOW THIS PROJECT/);
-  assert.match(ui.confirmation!.lines.join("\n"), /Secrets inside this project are not protected/);
-  assert.match(ui.confirmation!.lines.join("\n"), /command arguments, and command output/);
+  assert.match(
+    ui.confirmation!.lines.join("\n"),
+    /Secrets inside this project are not protected/,
+  );
+  assert.match(
+    ui.confirmation!.lines.join("\n"),
+    /command arguments, and command output/,
+  );
   await ui.confirm();
   assert.match(ui.notice, /Project access confirmed/);
   assert.equal(ui.confirmation, undefined);
