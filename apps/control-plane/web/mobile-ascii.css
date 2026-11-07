@@ -1,0 +1,113 @@
+/* NOMO mobile ASCII polish: additive layer after workbench.css.
+   Why: small phones need compact headers, large touch targets, plain ASCII
+   chrome that survives missing fonts, and small text that keeps 4.5:1.
+   Load order: workbench.css first, then this file. Page markup owns the
+   link element; this file never changes document structure. */
+
+/* Tweak 1: compact data table headers.
+   Why: full 12px/16px headers waste one row of the 320px viewport and push
+   the first record below the fold. Before: th 12px with 12px 16px padding.
+   After: 11px uppercase headers with 8px 10px padding, sticky inside the
+   scroll region so the label stays visible while rows move. */
+.table-wrap {
+  scrollbar-width: thin;
+}
+table thead th {
+  font-size: 11px;
+  line-height: 1.5;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  padding: 8px 10px;
+}
+.table-wrap thead th {
+  position: sticky;
+  top: 0;
+  background: var(--panel);
+  z-index: 1;
+}
+
+/* Tweak 2: touch targets 44px minimum, 48px preferred.
+   Why: table row links and chips were text sized, hard to hit on phones.
+   Before: .record-link and .chip had no minimum size. After: every direct
+   control inside a table cell or action row offers at least 44px, and the
+   .touch-48 class opts into the 48px preferred size. */
+td .record-link,
+td button,
+td .chip[tabindex],
+.actions button,
+.tab {
+  min-height: 44px;
+  min-width: 44px;
+}
+td .record-link,
+td button {
+  display: inline-flex;
+  align-items: center;
+  padding-block: 10px;
+}
+/* Preferred 48px size. Placed after the 44px rule with higher specificity
+   so it wins over .actions button for opted in controls. */
+button.touch-48,
+.touch-48.touch-48 {
+  min-height: 48px;
+  min-width: 48px;
+}
+
+/* Tweak 3: ASCII dividers and status glyphs with graceful fallback.
+   Why: divider art and status marks must read as plain text when custom
+   fonts fail, in monochrome, and under forced colors. Before: no shared
+   divider and tone colors carried the whole status meaning. After: one
+   rule component plus ASCII tags that repeat the tone in text form. */
+.ascii-rule {
+  border: 0;
+  border-top: 1px solid var(--line-strong);
+  margin: 16px 0;
+  padding: 0;
+}
+/* Text fallback line shown only when CSS borders are unavailable. */
+.ascii-rule[data-fallback] {
+  border-top-style: dashed;
+}
+.status-tag {
+  font-family: var(--font-code);
+  font-size: 11px;
+  line-height: 1.5;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.status-tag::before {
+  content: "[" attr(data-label) "] ";
+}
+@media (forced-colors: active) {
+  .ascii-rule {
+    border-top: 1px solid CanvasText;
+  }
+  .status-tag::before {
+    content: "[" attr(data-label) "] ";
+  }
+}
+
+/* Tweak 4: small text contrast 4.5:1 in the light theme.
+   Why: measured light ok 4.37:1 and light warn 4.33:1 on paper, both below
+   the small text floor. Before: var(--ok) #1a7f5a, var(--warn) #8a6d0a.
+   After: darker text values that hold 4.9:1 or better on paper and panel.
+   Dark theme already passes and is left untouched. */
+:root:not([data-theme="dark"]) [data-tone="ok"] {
+  color: #16704f;
+}
+:root:not([data-theme="dark"]) [data-tone="warn"] {
+  color: #7a6006;
+}
+
+/* Narrow phones keep the card rows from workbench.css; this layer only
+   tightens the card padding so 320px shows the first record fully. */
+@media (max-width: 734px) {
+  tbody tr {
+    padding: 12px;
+    gap: 6px 10px;
+  }
+  tbody td:nth-child(3) {
+    font-size: 13px;
+  }
+}

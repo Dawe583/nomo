@@ -199,3 +199,46 @@ test("record inspector escapes content and distinguishes unsigned evidence", asy
   assert.match(html, /Signatures have not been checked/);
   assert.match(html, /b{64}/);
 });
+
+test("every rendered [data-tone] node gets its ASCII fallback tag, when the host DOM supports it", async () => {
+  // A minimal real-enough node: innerHTML parses into a tracked list of
+  // [data-tone] stand-ins so querySelectorAll has something honest to find,
+  // the same shape asciiStatusTag already expects (getAttribute, prepend,
+  // ownerDocument.createElement). The existing harness()'s plain
+  // {innerHTML, textContent} nodes deliberately keep no DOM methods at all,
+  // which is also the case this test covers: a host without querySelectorAll
+  // must not throw.
+  function tonedNode() {
+    let tagged = [];
+    const node = {
+      ownerDocument: {
+        createElement: (tag) => ({ tagName: tag, className: "", attrs: {}, setAttribute(n, v) { this.attrs[n] = String(v); } }),
+      },
+      set innerHTML(html) {
+        tagged = [...html.matchAll(/data-tone="(\w+)"/g)].map(([, tone]) => ({
+          attrs: { "data-tone": tone },
+          getAttribute(name) { return this.attrs[name] ?? null; },
+          querySelector() { return this.attrs["status-tag"] ? {} : null; },
+          prepend(tag) { this.attrs["status-tag"] = tag; },
+        }));
+      },
+      get innerHTML() { return ""; },
+      querySelectorAll(selector) {
+        assert.equal(selector, "[data-tone]");
+        return tagged;
+      },
+    };
+    return { node, tagged: () => tagged };
+  }
+  const feedNode = tonedNode();
+  const h = harness(async url => response(url.startsWith("/api/feed") ? { entries: [entry], verified: true } : url.startsWith("/api/approvals") ? { approvals: [] } : { ok: true, verified: true, checked: 1 }));
+  h.nodes.set("feed-list", feedNode.node);
+  await h.app.pollFeed("default", 50);
+  const [tagged] = feedNode.tagged();
+  assert.ok(tagged, "the chip rendered by classTag must have been scanned");
+  assert.equal(tagged.attrs["status-tag"].getAttribute("data-label"), "i");
+
+  // A node with no querySelectorAll (every id in the existing harness) must
+  // not throw: setHtml has to feature detect rather than assume a real DOM.
+  await assert.doesNotReject(() => h.app.pollApprovals());
+});
