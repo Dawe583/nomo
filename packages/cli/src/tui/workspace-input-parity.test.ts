@@ -204,6 +204,25 @@ test("prompt replacement ranges truncate without splitting Unicode", () => {
   assert.equal(input.cursor, 32000);
 });
 
+test("truncated yank-pop keeps the suffix outside the replaced range", () => {
+  const input = new WorkspaceInput();
+  input.editing = true;
+  input.set("LONGER");
+  input.key(undefined, { name: "u", ctrl: true });
+  input.set("S");
+  input.key(undefined, { name: "u", ctrl: true });
+  input.set("");
+  input.key(undefined, { name: "y", ctrl: true });
+
+  input.value = "Syz" + "x".repeat(31996);
+  input.cursor = 1;
+  input.key(undefined, { name: "y", meta: true });
+  assert.equal(input.value.startsWith("LOyz"), true);
+
+  input.key(undefined, { name: "y", meta: true });
+  assert.equal(input.value.startsWith("Syz"), true);
+});
+
 test("Ctrl+Home and Ctrl+End jump across the whole prompt", () => {
   const input = new WorkspaceInput();
   input.editing = true;

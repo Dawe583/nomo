@@ -219,7 +219,7 @@ export class WorkspaceInput {
     this.cursor = yank.start + inserted.length;
     this.lastYank = {
       start: yank.start,
-      length: [...text].length,
+      length: inserted.length,
       ringIndex: index,
     };
   }
