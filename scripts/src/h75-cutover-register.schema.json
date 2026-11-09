@@ -1,0 +1,664 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://nomo.invalid/schemas/h75-cutover-register.schema.json",
+  "title": "H75 cutover evidence register",
+  "description": "Documents evidence register shape only. Schema validity does not verify referenced evidence, establish evidence truth, or authorize a cutover.",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "inventory",
+    "fence",
+    "drain",
+    "preservation",
+    "restart",
+    "rollback"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "inventory": {
+      "$ref": "#/$defs/inventory"
+    },
+    "fence": {
+      "$ref": "#/$defs/fence"
+    },
+    "drain": {
+      "$ref": "#/$defs/drain"
+    },
+    "preservation": {
+      "$ref": "#/$defs/preservation"
+    },
+    "restart": {
+      "$ref": "#/$defs/restart"
+    },
+    "rollback": {
+      "$ref": "#/$defs/rollback"
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "text": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "evidenceRef": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?![fF][iI][lL][eE]:)[A-Za-z][A-Za-z0-9+.-]*://[^/\\s][^\\s]*$"
+    },
+    "utcTimestamp": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]{1,3})?Z$"
+    },
+    "gate": {
+      "type": "object",
+      "required": [
+        "owner",
+        "independentVerifier",
+        "decision",
+        "recordRef",
+        "decisionAt"
+      ],
+      "properties": {
+        "owner": {
+          "$ref": "#/$defs/text"
+        },
+        "independentVerifier": {
+          "$ref": "#/$defs/text"
+        },
+        "decision": {
+          "const": "accepted"
+        },
+        "recordRef": {
+          "$ref": "#/$defs/evidenceRef"
+        },
+        "decisionAt": {
+          "$ref": "#/$defs/utcTimestamp"
+        }
+      }
+    },
+    "inventory": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/gate"
+        },
+        {
+          "type": "object",
+          "required": ["coverageMethod", "entrypoints", "roots"],
+          "properties": {
+            "coverageMethod": {
+              "$ref": "#/$defs/text"
+            },
+            "entrypoints": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "$ref": "#/$defs/entrypoint"
+              }
+            },
+            "roots": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "$ref": "#/$defs/root"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "root": {
+      "type": "object",
+      "required": [
+        "id",
+        "canonicalPath",
+        "filesystemIdentity",
+        "owner",
+        "checkedAt"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/text"
+        },
+        "canonicalPath": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^/"
+        },
+        "filesystemIdentity": {
+          "$ref": "#/$defs/text"
+        },
+        "owner": {
+          "$ref": "#/$defs/text"
+        },
+        "checkedAt": {
+          "$ref": "#/$defs/utcTimestamp"
+        }
+      },
+      "additionalProperties": false
+    },
+    "entrypoint": {
+      "type": "object",
+      "required": [
+        "id",
+        "executable",
+        "releaseHash",
+        "runtime",
+        "launchMechanism",
+        "configSource",
+        "lockProtocol",
+        "owner",
+        "rootIds",
+        "checkedAt"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/text"
+        },
+        "executable": {
+          "$ref": "#/$defs/text"
+        },
+        "releaseHash": {
+          "$ref": "#/$defs/text"
+        },
+        "runtime": {
+          "$ref": "#/$defs/text"
+        },
+        "launchMechanism": {
+          "$ref": "#/$defs/text"
+        },
+        "configSource": {
+          "$ref": "#/$defs/text"
+        },
+        "lockProtocol": {
+          "$ref": "#/$defs/text"
+        },
+        "owner": {
+          "$ref": "#/$defs/text"
+        },
+        "rootIds": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/text"
+          }
+        },
+        "checkedAt": {
+          "$ref": "#/$defs/utcTimestamp"
+        }
+      },
+      "additionalProperties": false
+    },
+    "fence": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/gate"
+        },
+        {
+          "type": "object",
+          "required": [
+            "mechanism",
+            "scope",
+            "activationRef",
+            "activatedAt",
+            "entrypointResults",
+            "rootResults"
+          ],
+          "properties": {
+            "mechanism": {
+              "$ref": "#/$defs/text"
+            },
+            "scope": {
+              "$ref": "#/$defs/text"
+            },
+            "activationRef": {
+              "$ref": "#/$defs/evidenceRef"
+            },
+            "activatedAt": {
+              "$ref": "#/$defs/utcTimestamp"
+            },
+            "entrypointResults": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/fenceResult"
+              }
+            },
+            "rootResults": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/fenceRootResult"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "fenceResult": {
+      "type": "object",
+      "required": ["entrypointId", "checkedAt", "denied", "evidenceRef"],
+      "properties": {
+        "entrypointId": {
+          "$ref": "#/$defs/text"
+        },
+        "denied": {
+          "const": true
+        },
+        "evidenceRef": {
+          "$ref": "#/$defs/evidenceRef"
+        },
+        "checkedAt": {
+          "$ref": "#/$defs/utcTimestamp"
+        }
+      },
+      "additionalProperties": false
+    },
+    "drain": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/gate"
+        },
+        {
+          "type": "object",
+          "required": [
+            "graceIntervalMs",
+            "firstObservationAt",
+            "secondObservationAt",
+            "firstObservationRef",
+            "secondObservationRef",
+            "rootResults"
+          ],
+          "properties": {
+            "graceIntervalMs": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "firstObservationAt": {
+              "$ref": "#/$defs/utcTimestamp"
+            },
+            "secondObservationAt": {
+              "$ref": "#/$defs/utcTimestamp"
+            },
+            "firstObservationRef": {
+              "$ref": "#/$defs/evidenceRef"
+            },
+            "secondObservationRef": {
+              "$ref": "#/$defs/evidenceRef"
+            },
+            "rootResults": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/drainResult"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drainResult": {
+      "type": "object",
+      "required": [
+        "rootId",
+        "checkedAt",
+        "staleReaperBarrierAt",
+        "admittedWritersDrained",
+        "processCensusBeforeRef",
+        "processCensusAfterRef",
+        "staleReaperBarrierRef",
+        "evidenceRef"
+      ],
+      "properties": {
+        "rootId": {
+          "$ref": "#/$defs/text"
+        },
+        "admittedWritersDrained": {
+          "const": true
+        },
+        "processCensusBeforeRef": {
+          "$ref": "#/$defs/evidenceRef"
+        },
+        "processCensusAfterRef": {
+          "$ref": "#/$defs/evidenceRef"
+        },
+        "staleReaperBarrierRef": {
+          "$ref": "#/$defs/evidenceRef"
+        },
+        "evidenceRef": {
+          "$ref": "#/$defs/evidenceRef"
+        },
+        "checkedAt": {
+          "$ref": "#/$defs/utcTimestamp"
+        },
+        "staleReaperBarrierAt": {
+          "$ref": "#/$defs/utcTimestamp"
+        }
+      },
+      "additionalProperties": false
+    },
+    "preservation": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/gate"
+        },
+        {
+          "type": "object",
+          "required": ["rootResults"],
+          "properties": {
+            "rootResults": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/preservationResult"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "preservationResult": {
+      "type": "object",
+      "required": [
+        "rootId",
+        "checkedAt",
+        "backupId",
+        "destinationRootId",
+        "fileManifestRef",
+        "offlineIntegrityCheckRef",
+        "sourceUnchanged"
+      ],
+      "properties": {
+        "rootId": {
+          "$ref": "#/$defs/text"
+        },
+        "backupId": {
+          "$ref": "#/$defs/text"
+        },
+        "destinationRootId": {
+          "$ref": "#/$defs/text"
+        },
+        "fileManifestRef": {
+          "$ref": "#/$defs/evidenceRef"
+        },
+        "offlineIntegrityCheckRef": {
+          "$ref": "#/$defs/evidenceRef"
+        },
+        "sourceUnchanged": {
+          "const": true
+        },
+        "checkedAt": {
+          "$ref": "#/$defs/utcTimestamp"
+        }
+      },
+      "additionalProperties": false
+    },
+    "restart": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/gate"
+        },
+        {
+          "type": "object",
+          "required": [
+            "candidateReleaseHash",
+            "runtimeVersion",
+            "conversionPlanRef",
+            "rootResults"
+          ],
+          "properties": {
+            "candidateReleaseHash": {
+              "$ref": "#/$defs/text"
+            },
+            "runtimeVersion": {
+              "$ref": "#/$defs/text"
+            },
+            "conversionPlanRef": {
+              "$ref": "#/$defs/evidenceRef"
+            },
+            "rootResults": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/restartResult"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "restartResult": {
+      "type": "object",
+      "required": [
+        "rootId",
+        "checkedAt",
+        "lockLayout",
+        "firstWriterReadRef",
+        "reversibleWriteRef",
+        "freshProcessRereadRef",
+        "backupUnchanged",
+        "runtimeVersion",
+        "candidateReleaseHash"
+      ],
+      "properties": {
+        "rootId": {
+          "$ref": "#/$defs/text"
+        },
+        "lockLayout": {
+          "$ref": "#/$defs/text"
+        },
+        "firstWriterReadRef": {
+          "$ref": "#/$defs/evidenceRef"
+        },
+        "reversibleWriteRef": {
+          "$ref": "#/$defs/evidenceRef"
+        },
+        "freshProcessRereadRef": {
+          "$ref": "#/$defs/evidenceRef"
+        },
+        "backupUnchanged": {
+          "const": true
+        },
+        "checkedAt": {
+          "$ref": "#/$defs/utcTimestamp"
+        },
+        "runtimeVersion": {
+          "$ref": "#/$defs/text"
+        },
+        "candidateReleaseHash": {
+          "$ref": "#/$defs/text"
+        }
+      },
+      "additionalProperties": false
+    },
+    "rollback": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/gate"
+        },
+        {
+          "type": "object",
+          "required": [
+            "separateApprovalRef",
+            "trigger",
+            "priorRelease",
+            "priorRuntime",
+            "fenceRef",
+            "drainRef",
+            "restoreProcedureRef",
+            "rehearsalRef",
+            "restartRef",
+            "integrityRef",
+            "rehearsalAt",
+            "rootResults",
+            "approvalAt",
+            "cutoverAt",
+            "fenceRetainedDuringRehearsal",
+            "fenceRetentionRef",
+            "failedStatePreserved",
+            "failedStatePreservedAt",
+            "failedStateRef",
+            "rollbackFenceAt",
+            "rollbackDrainAt",
+            "lockRepresentation",
+            "encryptedStateRestorePointRef",
+            "candidateReleaseHash"
+          ],
+          "properties": {
+            "separateApprovalRef": {
+              "$ref": "#/$defs/evidenceRef"
+            },
+            "trigger": {
+              "$ref": "#/$defs/text"
+            },
+            "priorRelease": {
+              "$ref": "#/$defs/text"
+            },
+            "fenceRef": {
+              "$ref": "#/$defs/evidenceRef"
+            },
+            "drainRef": {
+              "$ref": "#/$defs/evidenceRef"
+            },
+            "restoreProcedureRef": {
+              "$ref": "#/$defs/evidenceRef"
+            },
+            "rehearsalRef": {
+              "$ref": "#/$defs/evidenceRef"
+            },
+            "restartRef": {
+              "$ref": "#/$defs/evidenceRef"
+            },
+            "integrityRef": {
+              "$ref": "#/$defs/evidenceRef"
+            },
+            "rehearsalAt": {
+              "$ref": "#/$defs/utcTimestamp"
+            },
+            "priorRuntime": {
+              "$ref": "#/$defs/text"
+            },
+            "rootResults": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/rollbackResult"
+              }
+            },
+            "approvalAt": {
+              "$ref": "#/$defs/utcTimestamp"
+            },
+            "cutoverAt": {
+              "$ref": "#/$defs/utcTimestamp"
+            },
+            "fenceRetainedDuringRehearsal": {
+              "type": "boolean"
+            },
+            "fenceRetentionRef": {
+              "$ref": "#/$defs/evidenceRef"
+            },
+            "failedStatePreserved": {
+              "type": "boolean"
+            },
+            "failedStatePreservedAt": {
+              "$ref": "#/$defs/utcTimestamp"
+            },
+            "failedStateRef": {
+              "$ref": "#/$defs/evidenceRef"
+            },
+            "rollbackFenceAt": {
+              "$ref": "#/$defs/utcTimestamp"
+            },
+            "rollbackDrainAt": {
+              "$ref": "#/$defs/utcTimestamp"
+            },
+            "lockRepresentation": {
+              "$ref": "#/$defs/text"
+            },
+            "encryptedStateRestorePointRef": {
+              "$ref": "#/$defs/evidenceRef"
+            },
+            "candidateReleaseHash": {
+              "$ref": "#/$defs/text"
+            }
+          }
+        }
+      ]
+    },
+    "fenceRootResult": {
+      "type": "object",
+      "required": ["rootId", "checkedAt", "denied", "evidenceRef"],
+      "properties": {
+        "rootId": {
+          "$ref": "#/$defs/text"
+        },
+        "checkedAt": {
+          "$ref": "#/$defs/utcTimestamp"
+        },
+        "denied": {
+          "const": true
+        },
+        "evidenceRef": {
+          "$ref": "#/$defs/evidenceRef"
+        }
+      },
+      "additionalProperties": false
+    },
+    "rollbackResult": {
+      "type": "object",
+      "required": [
+        "rootId",
+        "checkedAt",
+        "restoredReleaseHash",
+        "runtimeVersion",
+        "integrityRef",
+        "staleReaperBarrierAt",
+        "legacyWritersAbsent",
+        "lockCompatibleWithPriorRuntime",
+        "lockCompatibilityRef",
+        "admittedWritersDrained",
+        "writersDrainedAt",
+        "lockCompatibilityCheckedAt",
+        "encryptedStateRestorePointRef"
+      ],
+      "properties": {
+        "rootId": {
+          "$ref": "#/$defs/text"
+        },
+        "checkedAt": {
+          "$ref": "#/$defs/utcTimestamp"
+        },
+        "restoredReleaseHash": {
+          "$ref": "#/$defs/text"
+        },
+        "runtimeVersion": {
+          "$ref": "#/$defs/text"
+        },
+        "integrityRef": {
+          "$ref": "#/$defs/evidenceRef"
+        },
+        "staleReaperBarrierAt": {
+          "$ref": "#/$defs/utcTimestamp"
+        },
+        "legacyWritersAbsent": {
+          "type": "boolean"
+        },
+        "lockCompatibleWithPriorRuntime": {
+          "type": "boolean"
+        },
+        "lockCompatibilityRef": {
+          "$ref": "#/$defs/evidenceRef"
+        },
+        "admittedWritersDrained": {
+          "type": "boolean"
+        },
+        "writersDrainedAt": {
+          "$ref": "#/$defs/utcTimestamp"
+        },
+        "lockCompatibilityCheckedAt": {
+          "$ref": "#/$defs/utcTimestamp"
+        },
+        "encryptedStateRestorePointRef": {
+          "$ref": "#/$defs/evidenceRef"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
