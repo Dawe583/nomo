@@ -951,6 +951,105 @@ test("provider reauthentication matches both endpoint and kind", async (t) => {
   assert.equal(completionsAfterLogout, 1);
 });
 
+test("compatible and Anthropic provider profiles survive restart without credential crossover", async (t) => {
+  const compatibleUrl = "https://compatible.fixture/v1";
+  const anthropicUrl = "https://anthropic.fixture/v1";
+  const compatibleKey = "compatible-restart-fixture-key";
+  const anthropicKey = "anthropic-restart-fixture-key";
+  const calls: Array<{ host: string; path: string; authorization: string | null; apiKey: string | null }> = [];
+  const fetcher: typeof fetch = async (input, options) => {
+    const url = new URL(String(input));
+    const headers = new Headers(options?.headers);
+    const host = url.host;
+    const authorization = headers.get("authorization");
+    const apiKey = headers.get("x-api-key");
+    calls.push({ host, path: url.pathname, authorization, apiKey });
+
+    if (host === "compatible.fixture") {
+      assert.equal(authorization, `Bearer ${compatibleKey}`);
+      assert.equal(apiKey, null);
+      if (url.pathname.endsWith("/models"))
+        return reply({ data: [{ id: "compatible-model" }] });
+      assert.ok(url.pathname.endsWith("/chat/completions"));
+      return reply({ choices: [{ message: { role: "assistant", content: "compatible reply" }, finish_reason: "stop" }] });
+    }
+
+    assert.equal(host, "anthropic.fixture");
+    assert.equal(authorization, null);
+    assert.equal(apiKey, anthropicKey);
+    assert.equal(headers.get("anthropic-version"), "2023-06-01");
+    if (url.pathname.endsWith("/models"))
+      return reply({ data: [{ id: "anthropic-model", type: "model", display_name: "Anthropic Fixture" }] });
+    assert.ok(url.pathname.endsWith("/messages"));
+    const events = [
+      { type: "message_start", message: { content: [], usage: { input_tokens: 1 } } },
+      { type: "content_block_start", index: 0, content_block: { type: "text", text: "" } },
+      { type: "content_block_delta", index: 0, delta: { type: "text_delta", text: "Anthropic reply" } },
+      { type: "content_block_stop", index: 0 },
+      { type: "message_delta", delta: { stop_reason: "end_turn" }, usage: { output_tokens: 1 } },
+      { type: "message_stop" },
+    ];
+    const body = events.map((event) => `event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`).join("");
+    return new Response(body, { headers: { "content-type": "text/event-stream" } });
+  };
+  const f = await isolatedWorkbench(t, fetcher, {}, {
+    prefix: "nomo-provider-profile-restart-",
+    configure: false,
+  });
+  const workbench = f.app;
+
+  await workbench.configure({ baseUrl: compatibleUrl, kind: "compatible", apiKey: compatibleKey });
+  const compatibleSession = await workbench.start("Compatible before restart", "compatible-model");
+  for (let poll = 0; poll < 200 && workbench.get(compatibleSession.id)?.status === "running"; poll++)
+    await delay(5);
+  assert.equal(workbench.get(compatibleSession.id)?.status, "idle");
+
+  await workbench.configure({ baseUrl: anthropicUrl, kind: "anthropic", apiKey: anthropicKey });
+  const anthropicSession = await workbench.start("Anthropic before restart", "anthropic-model");
+  for (let poll = 0; poll < 200 && workbench.get(anthropicSession.id)?.status === "running"; poll++)
+    await delay(5);
+  assert.equal(workbench.get(anthropicSession.id)?.status, "idle");
+
+  const callsBeforeRestart = calls.length;
+  workbench.close();
+  const reopened = f.restart({ keepOpen: true });
+  const state = await reopened.providerState();
+  assert.equal(state.connected, true);
+  assert.equal(state.kind, "anthropic");
+  assert.equal(state.baseUrl, anthropicUrl);
+  assert.equal(state.defaultModel, "anthropic-model");
+  assert.ok(state.profiles.includes(compatibleUrl));
+  assert.ok(state.profiles.includes(anthropicUrl));
+  assert.doesNotMatch(JSON.stringify(state), new RegExp(`${compatibleKey}|${anthropicKey}`));
+
+  reopened.send(compatibleSession.id, "Compatible after restart");
+  for (let poll = 0; poll < 200 && reopened.get(compatibleSession.id)?.status === "running"; poll++)
+    await delay(5);
+  assert.equal(reopened.get(compatibleSession.id)?.status, "idle");
+  reopened.send(anthropicSession.id, "Anthropic after restart");
+  for (let poll = 0; poll < 200 && reopened.get(anthropicSession.id)?.status === "running"; poll++)
+    await delay(5);
+  assert.equal(reopened.get(anthropicSession.id)?.status, "idle");
+
+  assert.deepEqual(
+    calls.slice(callsBeforeRestart).map(({ host, path, authorization, apiKey }) => ({ host, path, authorization, apiKey })),
+    [
+      {
+        host: "compatible.fixture",
+        path: "/v1/chat/completions",
+        authorization: `Bearer ${compatibleKey}`,
+        apiKey: null,
+      },
+      {
+        host: "anthropic.fixture",
+        path: "/v1/messages",
+        authorization: null,
+        apiKey: anthropicKey,
+      },
+    ],
+  );
+});
+
 test("provider logout suppresses environment reconnect until explicit login", async (t) => {
   let afterLogout = false;
   let callsAfterLogout = 0;
