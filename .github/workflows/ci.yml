@@ -20,12 +20,14 @@ jobs:
   # `e2e-arc.mjs` 5 s. `pnpm test` carries the `git.managed` conformance run
   # (94 s to 138 s over three runs) inside `packages/cli`, which is why it needs
   # a budget of its own rather than a share of a short job deadline.
+  # The five-minute fresh-cache CLI install runs only on Node 24 and is included
+  # in the job's 100-minute budget below.
   gates:
     strategy:
       matrix:
         node-version: [24, 26]
     runs-on: ubuntu-latest
-    timeout-minutes: 95
+    timeout-minutes: 100
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -52,6 +54,12 @@ jobs:
       - run: node --test scripts/src/*.test.mjs
         working-directory: .
         timeout-minutes: 10
+      - name: Verify packed CLI install from a fresh npm cache
+        if: matrix.node-version == 24
+        run: node --test --test-name-pattern="packages/cli packs" scripts/src/release-packaging.test.mjs
+        env:
+          NOMO_NETWORK_PACKAGING_TEST: "1"
+        timeout-minutes: 5
       - run: node scripts/src/e2e.mjs
         timeout-minutes: 5
       - run: node scripts/src/e2e-connectors.mjs

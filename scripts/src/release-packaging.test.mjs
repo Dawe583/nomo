@@ -1,10 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { existsSync, lstatSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { buildBundle } from "./bundle-cli.mjs";
+import { npmInvocation } from "./npm-cli.mjs";
 import { versionedManifests } from "./set-version.mjs";
 
 const root = new URL("../../", import.meta.url);
@@ -168,6 +170,7 @@ const CLEAN_INSTALL_RUN = new Map([
     {
       args: ["--selftest"],
       expect: /^SELFTEST PASS all six checks$/m,
+      network: false,
     },
   ],
   [
@@ -175,6 +178,7 @@ const CLEAN_INSTALL_RUN = new Map([
     {
       args: ["--version"],
       expect: /^nomo 0\.1\.0$/m,
+      network: true,
     },
   ],
 ]);
@@ -190,18 +194,21 @@ const CLEAN_INSTALL_RUN = new Map([
  * into a temporary directory outside this repository, and its installed bin
  * is run for real.
  *
- * Three properties of the install are deliberate. It is offline, with the
- * registry pointed at a discard port, so a missing dependency fails here
- * rather than passing on a machine with a warm cache or quietly reaching the
- * network. The sandbox is under the system temp directory, so no tarball,
- * node_modules or scratch tree is ever written inside the repository. And
- * the installed package is required to be a real directory rather than a
- * symlink, because a workspace link would resolve the bin back to the
- * source tree and make the assertion prove nothing.
+ * Every install gets a fresh npm cache inside the sandbox, so its outcome
+ * does not depend on the operator's cache. The verifier needs no dependencies
+ * and stays offline. The CLI integration is opt-in because it resolves public
+ * runtime dependencies from npm; CI runs it in a separate network-enabled
+ * step. The sandbox keeps tarballs, node_modules and cache data out of the
+ * repository. The installed package must also be a real directory rather
+ * than a workspace symlink.
  */
 for (const directory of PUBLISHABLE.keys()) {
-  test(`${directory} packs, installs outside the workspace, and its installed bin runs`, () => {
-    const run = CLEAN_INSTALL_RUN.get(directory);
+  const run = CLEAN_INSTALL_RUN.get(directory);
+  const networkTestEnabled = process.env.NOMO_NETWORK_PACKAGING_TEST === "1";
+  const testOptions = run?.network && !networkTestEnabled
+    ? { skip: "set NOMO_NETWORK_PACKAGING_TEST=1 to run the npm registry integration" }
+    : {};
+  test(`${directory} packs, installs outside the workspace, and its installed bin runs`, testOptions, async () => {
     assert.ok(
       run,
       `${directory} is publishable, so it needs a CLEAN_INSTALL_RUN entry saying how to start it`,
@@ -214,16 +221,28 @@ for (const directory of PUBLISHABLE.keys()) {
     );
 
     const packageDir = fileURLToPath(new URL(`${directory}/`, root));
-    const sandbox = mkdtempSync(join(tmpdir(), "nomo-release-clean-install-"));
+    const sandbox = mkdtempSync(join(tmpdir(), "nomo release clean install-"));
     try {
+      let packDir = packageDir;
+      if (directory === "packages/cli") {
+        packDir = join(sandbox, "package source");
+        mkdirSync(packDir, { recursive: true });
+        writeFileSync(join(packDir, "package.json"), read(`${directory}/package.json`));
+        await buildBundle({
+          root: fileURLToPath(root),
+          outDir: join(packDir, "dist"),
+          quiet: true,
+        });
+      }
+
       // Pack from the package directory into the sandbox, never into the
       // repository: the tarball is the artefact under test and a stray one
       // left in the tree is a release hazard, not a test artefact.
-      const npmBin = process.platform === "win32" ? "npm.cmd" : "npm";
+      const packNpm = npmInvocation(["pack", "--pack-destination", sandbox, "--json"]);
       const packed = spawnSync(
-        npmBin,
-        ["pack", "--pack-destination", sandbox, "--json"],
-        { cwd: packageDir, encoding: "utf8", timeout: 120_000, shell: true },
+        packNpm.command,
+        packNpm.args,
+        { cwd: packDir, encoding: "utf8", timeout: 120_000 },
       );
       assert.ifError(packed.error);
       assert.equal(packed.status, 0, `npm pack failed: ${packed.stderr}`);
@@ -238,31 +257,31 @@ for (const directory of PUBLISHABLE.keys()) {
 
       // A consumer's own manifest, so npm resolves this install as a
       // standalone project rather than walking up into the workspace.
-      const consumer = join(sandbox, "consumer");
-      rmSync(consumer, { recursive: true, force: true });
       writeFileSync(
         join(sandbox, "package.json"),
         `${JSON.stringify({ name: "nomo-clean-install-probe", version: "0.0.0", private: true }, null, 2)}\n`,
       );
-      const installed = spawnSync(
-        npmBin,
-        ["install", "--no-save", "--no-audit", "--no-fund", "--offline", tarball],
-        {
-          cwd: sandbox,
-          encoding: "utf8",
-          timeout: 120_000,
-          env: {
-            ...process.env,
-            npm_config_offline: "true",
-          },
-          shell: true,
-        },
-      );
+      const installArgs = [
+        "install",
+        "--no-save",
+        "--no-audit",
+        "--no-fund",
+        "--cache",
+        join(sandbox, "npm-cache"),
+        ...(run.network ? [] : ["--offline"]),
+        tarball,
+      ];
+      const installNpm = npmInvocation(installArgs);
+      const installed = spawnSync(installNpm.command, installNpm.args, {
+        cwd: sandbox,
+        encoding: "utf8",
+        timeout: 120_000,
+      });
       assert.ifError(installed.error);
       assert.equal(
         installed.status,
         0,
-        `clean install of ${filename} failed with no network available: ${installed.stderr}`,
+        `clean install of ${filename} failed: ${installed.stderr}`,
       );
 
       const installedDir = join(sandbox, "node_modules", data.name);
@@ -291,11 +310,14 @@ for (const directory of PUBLISHABLE.keys()) {
           existsSync(installedBin),
           `installing ${filename} produced no ${binName} executable`,
         );
-        const ran = spawnSync(installedBin, run.args, {
+        const installedTarget = join(installedDir, data.bin[binName]);
+        assert.ok(existsSync(installedTarget), `installing ${filename} produced no ${data.bin[binName]} target`);
+        const executable = process.platform === "win32" ? process.execPath : installedBin;
+        const executableArgs = process.platform === "win32" ? [installedTarget, ...run.args] : run.args;
+        const ran = spawnSync(executable, executableArgs, {
           cwd: sandbox,
           encoding: "utf8",
           timeout: 120_000,
-          shell: true,
         });
         assert.ifError(ran.error);
         assert.equal(

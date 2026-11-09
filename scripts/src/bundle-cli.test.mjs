@@ -8,6 +8,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { buildBundle, DEFAULT_OUT_DIR, ENTRY_FILE } from "./bundle-cli.mjs";
+import { npmInvocation } from "./npm-cli.mjs";
 
 const repoRoot = new URL("../../", import.meta.url);
 const read = (path) => readFileSync(new URL(path, repoRoot), "utf8");
@@ -27,7 +28,7 @@ let outDir;
 let artifact;
 let chunks;
 before(async () => {
-  packageDir = mkdtempSync(join(tmpdir(), "nomo-bundle-test-"));
+  packageDir = mkdtempSync(join(tmpdir(), "nomo bundle test-"));
   outDir = join(packageDir, "dist");
   writeFileSync(join(packageDir, "package.json"), read("packages/cli/package.json"));
   const built = await buildBundle({ root, outDir, quiet: true });
@@ -175,12 +176,9 @@ describe("the distribution bundle", () => {
     const manifest = JSON.parse(read("packages/cli/package.json"));
     assert.deepEqual(manifest.files, ["dist/"]);
     assert.deepEqual(manifest.bin, { nomo: `./dist/${ENTRY_FILE}` });
+    const npm = npmInvocation(["pack", "--dry-run", "--json"]);
     const packed = JSON.parse(
-      execFileSync(process.platform === "win32" ? "npm.cmd" : "npm", ["pack", "--dry-run", "--json"], {
-        cwd: packageDir,
-        encoding: "utf8",
-        shell: true,
-      }),
+      execFileSync(npm.command, npm.args, { cwd: packageDir, encoding: "utf8" }),
     );
     const packedEntry = Array.isArray(packed) ? packed[0] : Object.values(packed)[0];
     const files = packedEntry.files.map(({ path }) => path).sort();
