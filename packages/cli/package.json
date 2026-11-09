@@ -1,7 +1,6 @@
 {
   "name": "@void/cli",
   "version": "0.1.0",
-  "private": true,
   "license": "Apache-2.0",
   "type": "module",
   "exports": {
@@ -31,6 +30,9 @@
     "yaml": "^2.8.0"
   },
   "description": "Inspect classifications, verify ledgers, and plan replay from the NOMO command line.",
+  "publishConfig": {
+    "access": "public"
+  },
   "keywords": [
     "nomo",
     "ai-safety",

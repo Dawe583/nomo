@@ -15,6 +15,7 @@
 
 import { existsSync, mkdirSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { rollup } from "rollup";
 
 import { bundleOptions, bundleOutput } from "../../rollup.config.mjs";
@@ -56,7 +57,7 @@ const parseArgs = (argv) => {
  * @returns {Promise<{ file: string, bytes: number, chunks: string[] }>}
  */
 export async function buildBundle({ root, outDir = DEFAULT_OUT_DIR, quiet = false } = {}) {
-  const base = resolve(root ?? new URL("../..", import.meta.url).pathname);
+  const base = resolve(root ?? fileURLToPath(new URL("../..", import.meta.url)));
   const out = resolve(base, outDir);
 
   const bundle = await rollup(bundleOptions({ root: base }));

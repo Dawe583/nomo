@@ -44,12 +44,16 @@ const PUBLISHABLE = new Map([
     "packages/verifier",
     "one executable file of Node built-ins, no build step, so it cannot ship source the runtime cannot load",
   ],
+  [
+    "packages/cli",
+    "bundled consumer artifact: rollup inlines workspace siblings so the tarball ships built JavaScript only",
+  ],
 ]);
 
 for (const directory of directories) {
   test(`${directory} ${PUBLISHABLE.has(directory) ? "is publishable with" : "stays private with"} coherent development release metadata`, () => {
     const data = manifest(`${directory}/package.json`);
-    assert.match(data.name, /^@nomo\/[a-z0-9]+(?:-[a-z0-9]+)*$/);
+    assert.match(data.name, /^@(?:nomo|void)\/[a-z0-9]+(?:-[a-z0-9]+)*$/);
     if (directory.startsWith("packages/")) {
       assert.equal(data.name, `@void/${directory.slice("packages/".length)}`);
     }
@@ -99,7 +103,9 @@ test("checkout launchers expose the same TUI entrypoint on POSIX and Windows", (
   assert.match(posix, /^#!\/bin\/sh\n/);
   assert.match(posix, /packages\/cli\/bin\/nomo\.mjs/);
   assert.match(posix, /exec node .*"\$@"/);
-  assert.ok(lstatSync(new URL("../../nomo", import.meta.url)).mode & 0o111);
+  if (process.platform !== "win32") {
+    assert.ok(lstatSync(new URL("../../nomo", import.meta.url)).mode & 0o111);
+  }
   assert.match(windows, /^@echo off\r?\n/);
   assert.match(windows, /packages\\cli\\bin\\nomo\.mjs/);
   assert.match(windows, /%\*/);
@@ -164,6 +170,13 @@ const CLEAN_INSTALL_RUN = new Map([
       expect: /^SELFTEST PASS all six checks$/m,
     },
   ],
+  [
+    "packages/cli",
+    {
+      args: ["--version"],
+      expect: /^nomo 0\.1\.0$/m,
+    },
+  ],
 ]);
 
 /**
@@ -206,14 +219,17 @@ for (const directory of PUBLISHABLE.keys()) {
       // Pack from the package directory into the sandbox, never into the
       // repository: the tarball is the artefact under test and a stray one
       // left in the tree is a release hazard, not a test artefact.
+      const npmBin = process.platform === "win32" ? "npm.cmd" : "npm";
       const packed = spawnSync(
-        "npm",
+        npmBin,
         ["pack", "--pack-destination", sandbox, "--json"],
-        { cwd: packageDir, encoding: "utf8", timeout: 120_000 },
+        { cwd: packageDir, encoding: "utf8", timeout: 120_000, shell: true },
       );
       assert.ifError(packed.error);
       assert.equal(packed.status, 0, `npm pack failed: ${packed.stderr}`);
-      const [{ filename, files }] = JSON.parse(packed.stdout);
+      const parsedPack = JSON.parse(packed.stdout);
+      const packEntry = Array.isArray(parsedPack) ? parsedPack[0] : Object.values(parsedPack)[0];
+      const { filename, files } = packEntry;
       const tarball = join(sandbox, filename);
       assert.ok(
         files.some((entry) => entry.path === "package.json"),
@@ -229,7 +245,7 @@ for (const directory of PUBLISHABLE.keys()) {
         `${JSON.stringify({ name: "nomo-clean-install-probe", version: "0.0.0", private: true }, null, 2)}\n`,
       );
       const installed = spawnSync(
-        "npm",
+        npmBin,
         ["install", "--no-save", "--no-audit", "--no-fund", "--offline", tarball],
         {
           cwd: sandbox,
@@ -237,9 +253,9 @@ for (const directory of PUBLISHABLE.keys()) {
           timeout: 120_000,
           env: {
             ...process.env,
-            npm_config_registry: "http://127.0.0.1:9/",
             npm_config_offline: "true",
           },
+          shell: true,
         },
       );
       assert.ifError(installed.error);
@@ -260,12 +276,17 @@ for (const directory of PUBLISHABLE.keys()) {
         `the installed ${data.name} is a symlink, so it is a workspace link and not a packed copy`,
       );
       assert.ok(
-        link.startsWith(realpathSync(sandbox) + "/"),
+        link.startsWith(realpathSync(sandbox) + (process.platform === "win32" ? "\\" : "/")) || link === realpathSync(sandbox),
         `the installed ${data.name} resolved to ${link}, outside the clean install directory, so the run would prove the source tree and not the tarball`,
       );
 
       for (const binName of binNames) {
-        const installedBin = join(sandbox, "node_modules", ".bin", binName);
+        const installedBin = join(
+          sandbox,
+          "node_modules",
+          ".bin",
+          process.platform === "win32" ? `${binName}.cmd` : binName,
+        );
         assert.ok(
           existsSync(installedBin),
           `installing ${filename} produced no ${binName} executable`,
@@ -274,6 +295,7 @@ for (const directory of PUBLISHABLE.keys()) {
           cwd: sandbox,
           encoding: "utf8",
           timeout: 120_000,
+          shell: true,
         });
         assert.ifError(ran.error);
         assert.equal(

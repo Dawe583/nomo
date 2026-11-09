@@ -22,10 +22,13 @@
  */
 
 import { stripTypeScriptTypes } from "node:module";
+import { fileURLToPath } from "node:url";
 
 /** Packages whose `exports` point at raw TypeScript, which npm cannot resolve. */
 const WORKSPACE_TYPED = {
   "@void/registry": "packages/registry/src/index.ts",
+  "@void/ledger": "packages/ledger/src/index.ts",
+  "@void/proxy": "packages/proxy/src/index.ts",
 };
 
 /**
@@ -36,7 +39,7 @@ const WORKSPACE_TYPED = {
  */
 export function isExternal(id) {
   if (Object.hasOwn(WORKSPACE_TYPED, id)) return false;
-  if (id.startsWith(".") || id.startsWith("/")) return false;
+  if (id.startsWith(".") || id.startsWith("/") || /^[A-Za-z]:[\\/]/.test(id)) return false;
   if (id.startsWith("node:")) return true;
   // Virtual and rollup-internal ids have no package meaning; treat them as
   // in-graph so they are bundled rather than looked up in node_modules.
@@ -49,7 +52,7 @@ const workspaceSource = {
   name: "nomo-workspace-source",
   resolveId(source) {
     const entry = WORKSPACE_TYPED[source];
-    return entry ? new URL(entry, import.meta.url).pathname : null;
+    return entry ? fileURLToPath(new URL(entry, import.meta.url)) : null;
   },
 };
 
@@ -75,9 +78,9 @@ const stripTypes = {
  * @returns {import("rollup").RollupOptions}
  */
 export function bundleOptions({ root, outDir } = {}) {
-  const base = root ?? new URL("./", import.meta.url).pathname;
+  const base = root ?? fileURLToPath(new URL("./", import.meta.url));
   return {
-    input: new URL("packages/cli/bin/nomo.mjs", import.meta.url).pathname,
+    input: fileURLToPath(new URL("packages/cli/bin/nomo.mjs", import.meta.url)),
     external: isExternal,
     plugins: [workspaceSource, stripTypes],
     // A cycle between workspace siblings is a property of the source graph, not

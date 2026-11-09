@@ -67,7 +67,9 @@ describe("the distribution bundle", () => {
     assert.equal(artifact.split("\n")[0], "#!/usr/bin/env node");
     // A shebang without the exec bit is a bin target npm cannot run directly,
     // and npm only chmods the shim, not the file it points at on every platform.
-    assert.ok(statSync(file).mode & 0o111, "the entry chunk is not executable");
+    if (process.platform !== "win32") {
+      assert.ok(statSync(file).mode & 0o111, "the entry chunk is not executable");
+    }
   });
 
   test("emits more than one chunk, because one chunk breaks nomo run", () => {
@@ -174,12 +176,14 @@ describe("the distribution bundle", () => {
     assert.deepEqual(manifest.files, ["dist/"]);
     assert.deepEqual(manifest.bin, { nomo: `./dist/${ENTRY_FILE}` });
     const packed = JSON.parse(
-      execFileSync("npm", ["pack", "--dry-run", "--json"], {
+      execFileSync(process.platform === "win32" ? "npm.cmd" : "npm", ["pack", "--dry-run", "--json"], {
         cwd: packageDir,
         encoding: "utf8",
+        shell: true,
       }),
     );
-    const files = packed[0].files.map(({ path }) => path).sort();
+    const packedEntry = Array.isArray(packed) ? packed[0] : Object.values(packed)[0];
+    const files = packedEntry.files.map(({ path }) => path).sort();
     assert.deepEqual(files, [...chunks.map((chunk) => `dist/${chunk}`), "package.json"].sort());
   });
 
@@ -187,13 +191,13 @@ describe("the distribution bundle", () => {
     const consumer = mkdtempSync(join(tmpdir(), "nomo-consumer-test-"));
     try {
       const bin = join(outDir, ENTRY_FILE);
-      const help = spawnSync(bin, ["--help"], { cwd: consumer, encoding: "utf8" });
+      const help = spawnSync(process.execPath, [bin, "--help"], { cwd: consumer, encoding: "utf8" });
       assert.ifError(help.error);
       assert.equal(help.status, 0, help.stderr);
       assert.match(help.stdout, /^usage: nomo /);
       assert.equal(help.stderr, "");
 
-      const version = spawnSync(bin, ["--version"], { cwd: consumer, encoding: "utf8" });
+      const version = spawnSync(process.execPath, [bin, "--version"], { cwd: consumer, encoding: "utf8" });
       assert.ifError(version.error);
       assert.equal(version.status, 0, version.stderr);
       const manifest = JSON.parse(read("packages/cli/package.json"));

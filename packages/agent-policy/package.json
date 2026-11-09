@@ -26,5 +26,11 @@
   ],
   "engines": {
     "node": ">=24"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Dawe583/void.git",
+    "directory": "packages/agent-policy"
+  },
+  "homepage": "https://github.com/Dawe583/void/tree/main/packages/agent-policy"
 }
