@@ -57,20 +57,25 @@ record, so the script passes `--ledger-dir` here too):
 
 Integrated local identity rehearsal:
 
-13. `Workbench hold pauses bucket delete before proxy approval`: the Workbench
-    policy pauses the call before it reaches the proxy. This first approval is
-    not identity-bound.
-14. `proxy hold binds operation to the active Workbench run`: after the first
-    hold is approved through the local API, the proxy creates a second hold.
-    Its binding includes the run, workspace, upstream, principal, agent, policy,
-    operation, schema and the local broker process OS account ID.
+13. `Workbench hold binds bucket delete to the active local agent run`: the
+    authenticated `tools/list` response carries a run-scoped snapshot derived
+    from the validated grant and registered tool schema. Workbench binds that
+    principal, agent, run, workspace, upstream and schema digest to the held
+    operation, then revalidates the binding before dispatch. The snapshot stays
+    out of model input.
+14. `proxy hold independently binds the operation`: after the first hold is
+    approved through the local API, the proxy revalidates the grant and binds
+    the registered schema digest into a second hold. Its binding includes the
+    run, workspace, upstream, principal, agent, policy, operation, schema and
+    the local broker process OS account ID. Workbench approval does not complete
+    proxy approval.
 15. `control-plane approval dispatches the identity-bound write`: the local API
     approves the proxy hold. The disposable target records the bucket deletion.
 16. `proxy ledger correlates allowed, approved and denied calls`: the signed
     proxy ledger links each call to its argument digest and distinct operation
     id. It records the fast-path write, approved hold and denied write.
-17. `local grant is scoped and absent from model, approval and proxy ledger`:
-    the grant covers only fixture tools and does not appear in the checked data.
+17. `local grant stays scoped and its bearer stays private`: the grant covers
+    only fixture tools; its bearer does not appear in the checked data.
 18. `identity Workbench approval rehearsal completes`: all integrated identity
     assertions passed.
 
@@ -109,19 +114,24 @@ policy and the signed proxy ledger. It uses a temporary data directory, a
 process-local grant, and a generated signing key. It does not contact a live
 upstream.
 
-The bucket deletion passes through two separate approval layers. First, the
-Workbench policy pauses the call before the connector forwards it. That hold is
-not identity-bound. The script approves it through the local control plane API.
-The call then reaches the proxy, which creates a second hold bound to the exact
+The bucket deletion passes through two separate approval layers. First,
+Workbench receives the run-scoped snapshot on the authenticated local
+`tools/list` response. The snapshot binds the grant-validated principal, agent,
+run, workspace and upstream to the exact registered schema digest. Workbench
+stores that snapshot outside model input, binds it to the held operation, and
+revalidates it before dispatch. Its signed approval outcome records the same
+binding. The script approves this first hold through the local control plane
+API. The call then reaches the proxy, which independently revalidates the grant
+and binds its registered schema digest into a second hold for the exact
 operation, policy, schema, principal, agent, run, workspace, upstream and local
-broker process OS account ID. The script approves this proxy hold through the
-same API and checks that the fixture receives the write. The submitted `by`
-label is not caller identity evidence. The broker derives the recorded identity
-from its own OS account, not the HTTP caller's OS identity. In this demo, loopback
-and Origin checks do not authenticate the caller. Without a shared control token,
-any local process that can reach the port can submit a decision. This does not
-prove browser or human identity; only the second approval exercises the
-process-account-bound proxy path.
+broker process OS account ID. Workbench approval does not complete proxy
+approval. The script approves the proxy hold through the same API and checks
+that the fixture receives the write. The submitted `by` label is not caller
+identity evidence. The broker
+derives the recorded identity from its own OS account, not the HTTP caller's OS
+identity. In this demo, loopback and Origin checks do not authenticate the
+caller. Without a shared control token, any local process that can reach the
+port can submit a decision. This does not prove browser or human identity.
 
 The denied object delete reaches the proxy but never the fixture. The signed
 proxy JSONL ledger records the fast-path object put, the approved bucket delete
@@ -147,6 +157,9 @@ signed ledger records their distinct phases. The focused tests passed 4/4 proxy
 HTTP tests and 18/18 Workbench wiring tests. They cover grant scope, expiry and
 revocation checks before dispatch, token absence from upstream and the ledger,
 and the Workbench run identity binding.
+
+Those 4/4 and 18/18 results predate the run-scoped metadata-handoff changes in
+this patch. They do not verify this patch; its behavior remains untested.
 
 ## Stop acknowledgement and in-flight calls
 

@@ -101,7 +101,13 @@ export function bearerFor(config: McpConfig): string | undefined {
   return typeof issued === "string" && issued.length > 0 ? issued : undefined;
 }
 
-export type McpTool = { name: string; description?: string; inputSchema?: unknown; connectorId?: string };
+export type McpTool = {
+  name: string;
+  description?: string;
+  inputSchema?: unknown;
+  connectorId?: string;
+  _meta?: Record<string, unknown>;
+};
 export async function rpc(config: McpConfig, method: string, params: unknown, sessionId?: string): Promise<{ result?: { tools?: McpTool[]; isError?: boolean; [key: string]: unknown }; sessionId?: string }> {
   const id = randomUUID();
   const bearer = bearerFor(config);

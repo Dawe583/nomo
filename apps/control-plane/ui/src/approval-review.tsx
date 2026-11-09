@@ -35,6 +35,18 @@ export function ApprovalReview({
   const expired = new Date(record.expiresAt).getTime() <= now;
   const settled = record.status !== "pending";
   const binding = record.binding as Row | undefined;
+  const fullIdentityBinding =
+    binding !== undefined &&
+    [
+      "principalId",
+      "agentId",
+      "runId",
+      "workspaceId",
+      "upstreamId",
+      "schemaDigest",
+    ].every(
+      (key) => typeof binding[key] === "string" && binding[key] !== "",
+    );
   // B2: R3 and unknown holds arm first and confirm second. The server stays
   // authoritative; this only slows the hand on destructive approvals.
   const gate = requiresConfirm(record);
@@ -168,6 +180,14 @@ export function ApprovalReview({
               </div>
             ))}
           </dl>
+          {!fullIdentityBinding && (
+            <p className="notice" role="status">
+              {t(
+                "Toto schválení Workbenche váže operaci, politiku, běh, pracovní prostor a účet OS procesu. Neobsahuje ověřený principal, agenta, upstream ani schéma. Tyto chybějící údaje se nepovažují za ověřené.",
+                "This Workbench approval binds the operation, policy, run, workspace, and process OS account. It does not bind a verified principal, agent, upstream, or schema. Missing context is not treated as verified.",
+              )}
+            </p>
+          )}
           <p className="notice" role="status">
             {t(
               "Toto ID je účet OS místního procesu NOMO. Kontrola loopbacku a Origin neověřuje volajícího. Bez sdíleného control tokenu může rozhodnutí odeslat každý místní proces, který dosáhne portu.",

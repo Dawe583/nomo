@@ -10,6 +10,11 @@ import { Workbench } from "./index.ts";
 import { CompatibleProvider } from "./provider.ts";
 import { LocalStorage } from "./storage.ts";
 import { readLedgerFeed } from "../../ledger/src/feed.ts";
+import { readLedgerEntries } from "../../ledger/src/verify.ts";
+import { canonicalDigest } from "../../ledger/src/sign.ts";
+import { policyDigest } from "../../policy/src/digest.ts";
+import { verifiedLocalOperatorId } from "../../policy/src/hold.ts";
+import { loadPolicy } from "../../policy/src/rules.ts";
 import { validateAgentProfile, validateHook } from "./agents.ts";
 import { catalog as mcpCatalog } from "./mcp.ts";
 
@@ -252,6 +257,7 @@ test("a destructive model call waits for an operator in its own workspace", asyn
   const workbench = new Workbench(
     {
       VOID_LEDGER_DIR: dir,
+      VOID_DATA_DIR: join(dir, "workbench-data"),
       VOID_UPSTREAM_COMMAND: JSON.stringify([
         process.execPath,
         join(root, "fixtures/e2e-server.mjs"),
@@ -316,6 +322,33 @@ test("a destructive model call waits for an operator in its own workspace", asyn
   assert.ok(hold);
   assert.equal(hold.call.workspace, session.workspace);
   assert.equal(turn, 1, "model must wait on VOID approval");
+  const binding = hold.binding as Record<string, unknown>;
+  assert.equal(binding.operationId, hold.holdId);
+  assert.match(String(binding.operationDigest), /^[0-9a-f]{64}$/);
+  assert.equal(binding.policyVersion, 1);
+  const policy = loadPolicy(join(root, "fixtures/e2e-policy.yaml"));
+  assert.equal(policy.ok, true);
+  if (!policy.ok) throw new Error("fixture policy must load");
+  assert.equal(binding.policyDigest, policyDigest(policy.policy));
+  assert.equal(binding.operatorId, verifiedLocalOperatorId());
+  const expectedOperationDigest = canonicalDigest({
+    domain: "nomo-workbench-operation-v1",
+    operationId: hold.holdId,
+    sessionId: session.id,
+    runId: session.runId ?? session.id,
+    workspaceId: session.workspace,
+    tool: hold.call.tool,
+    connector: hold.call.connector,
+    klass: hold.call.klass,
+    blastRadius: hold.call.blastRadius ?? null,
+    reason: hold.call.reason,
+    arguments: hold.call.arguments,
+  });
+  assert.equal(binding.operationDigest, expectedOperationDigest);
+  const expectedArgsDigest = `sha256:${canonicalDigest(hold.call.arguments)}`;
+  (hold.call.arguments as Record<string, unknown>).where =
+    "tampered-after-review";
+  (binding as Record<string, unknown>).operatorId = "spoofed-local-user";
   assert.equal(
     workbench.decide(hold.holdId, { kind: "denied", by: "beta-test" }),
     true,
@@ -329,6 +362,27 @@ test("a destructive model call waits for an operator in its own workspace", asyn
   assert.equal(workbench.get(session.id)?.status, "idle");
   const feed = await readLedgerFeed(join(dir, `${session.workspace}.jsonl`));
   assert.ok(feed.records.some((record) => record.decision === "hold:denied"));
+  const entries = await readLedgerEntries(
+    join(dir, `${session.workspace}.jsonl`),
+  );
+  const outcome = entries.find(
+    (entry) => (entry.body as { decision?: string }).decision === "hold:denied",
+  );
+  assert.ok(outcome?.signature);
+  const body = outcome!.body as Record<string, unknown>;
+  assert.equal(body.argsDigest, expectedArgsDigest);
+  assert.equal(body.operationId, hold.holdId);
+  assert.equal(body.operationDigest, expectedOperationDigest);
+  assert.equal(body.policyVersion, 1);
+  assert.equal(body.policyDigest, policyDigest(policy.policy));
+  assert.equal(body.operatorId, verifiedLocalOperatorId());
+  assert.equal(body.approvedBy, verifiedLocalOperatorId());
+  const history = workbench
+    .approvals()
+    .find((item) => (item as { holdId?: string }).holdId === hold.holdId) as
+    { by?: string; binding?: Record<string, unknown> } | undefined;
+  assert.equal(history?.by, verifiedLocalOperatorId());
+  assert.equal(history?.binding?.operationDigest, expectedOperationDigest);
 });
 
 test("denial text names the rule id, the class and the approval path", async (t) => {

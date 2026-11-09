@@ -73,7 +73,9 @@ import {
 } from "./mcp.ts";
 import {
   startLocalMcpHttpServer,
+  LOCAL_AGENT_TOOL_BINDING_META,
   type LocalGrantIdentity,
+  type LocalAgentToolBindingSnapshot,
 } from "@void/proxy";
 import type { LocalProxyRpcBridgeOptions } from "../../proxy/src/bin.ts";
 import {
@@ -88,6 +90,7 @@ import {
 } from "./workspace.ts";
 import { configuredEnvValue } from "../../ledger/src/env-compat.ts";
 import {
+  canonicalDigest,
   devKeyProvider,
   retainedKeyProvider,
   sha256Hex,
@@ -115,6 +118,10 @@ import { mineLearnedRules } from "./learned-rules.ts";
 import { loadPolicy, type ValidPolicy } from "../../policy/src/rules.ts";
 import { decide, type PolicyDecision } from "../../policy/src/decide.ts";
 import { policyDigest } from "../../policy/src/digest.ts";
+import {
+  verifiedLocalOperatorId,
+  type HoldBinding,
+} from "../../policy/src/hold.ts";
 import {
   buildAttribution,
   type LedgerAttribution,
@@ -391,6 +398,12 @@ type LocalHarnessRunBinding = {
   sessionId: string;
   workspaceId: string;
   runId: string;
+  principalId: string;
+  agentId: string;
+  upstreamId: string;
+  expiresAt: number;
+  toolScope: readonly string[];
+  connectorId: string;
 };
 type Session = {
   view: SessionView;
@@ -411,10 +424,201 @@ type Session = {
   client?: VoidClient;
   tools?: McpTool[];
   connections?: Record<string, McpConfig & { sessionId?: string }>;
+  localAgentBinding?: LocalHarnessRunBinding;
+  trustedToolBindings?: ReadonlyMap<string, LocalAgentToolBindingSnapshot>;
   config?: Pick<ProviderConfig, "baseUrl" | "kind">;
   controller: AbortController;
   provider?: CompatibleProvider;
 };
+
+export type WorkbenchHoldBinding = Readonly<
+  Pick<
+    HoldBinding,
+    | "operationId"
+    | "operationDigest"
+    | "policyVersion"
+    | "policyDigest"
+    | "operatorId"
+    | "runId"
+    | "workspaceId"
+  >
+> & Partial<
+  Pick<HoldBinding, "principalId" | "agentId" | "upstreamId" | "schemaDigest">
+>;
+
+type WorkbenchHeldCall = {
+  tool: string;
+  workspace: string;
+  connector: string;
+  klass: string;
+  blastRadius: number | undefined;
+  reason: string;
+  arguments: JsonObject;
+};
+
+type WorkbenchHold = {
+  holdId: string;
+  call: WorkbenchHeldCall;
+  binding: WorkbenchHoldBinding;
+  expiresAt: number;
+  status: "pending" | "approved" | "denied";
+  by?: string;
+  reason?: string;
+  notify: string[];
+};
+
+function localAgentToolBindingKey(connectorId: string, toolName: string): string {
+  return JSON.stringify([connectorId, toolName]);
+}
+
+function localAgentToolBindingFromTool(
+  tool: McpTool,
+): LocalAgentToolBindingSnapshot | undefined {
+  const value = tool._meta?.[LOCAL_AGENT_TOOL_BINDING_META];
+  if (typeof value !== "object" || value === null || Array.isArray(value))
+    return undefined;
+  const binding = value as Record<string, unknown>;
+  if (
+    binding.version !== 1 ||
+    binding.toolName !== tool.name ||
+    !["principalId", "agentId", "runId", "workspaceId", "upstreamId"].every(
+      (key) =>
+        typeof binding[key] === "string" &&
+        /^[A-Za-z0-9._-]{1,128}$/.test(binding[key] as string),
+    ) ||
+    typeof binding.schemaDigest !== "string" ||
+    !/^[0-9a-f]{64}$/.test(binding.schemaDigest) ||
+    !Number.isSafeInteger(binding.expiresAt)
+  )
+    return undefined;
+  return Object.freeze({
+    version: 1,
+    toolName: tool.name,
+    principalId: binding.principalId as string,
+    agentId: binding.agentId as string,
+    runId: binding.runId as string,
+    workspaceId: binding.workspaceId as string,
+    upstreamId: binding.upstreamId as string,
+    schemaDigest: binding.schemaDigest,
+    expiresAt: binding.expiresAt as number,
+  });
+}
+
+function workbenchTrustedToolBinding(
+  session: Session,
+  call: WorkbenchHeldCall,
+): LocalAgentToolBindingSnapshot | undefined {
+  const run = session.localAgentBinding;
+  if (
+    !run ||
+    call.connector !== run.connectorId ||
+    call.workspace !== run.workspaceId ||
+    run.runId !== (session.view.runId ?? session.view.id) ||
+    run.workspaceId !== session.view.workspace ||
+    !run.toolScope.includes(call.tool)
+  )
+    return undefined;
+  const binding = session.trustedToolBindings?.get(
+    localAgentToolBindingKey(run.connectorId, call.tool),
+  );
+  if (
+    !binding ||
+    binding.version !== 1 ||
+    binding.toolName !== call.tool ||
+    binding.principalId !== run.principalId ||
+    binding.agentId !== run.agentId ||
+    binding.runId !== run.runId ||
+    binding.workspaceId !== run.workspaceId ||
+    binding.upstreamId !== run.upstreamId ||
+    binding.expiresAt !== run.expiresAt ||
+    !/^[0-9a-f]{64}$/.test(binding.schemaDigest) ||
+    !Number.isSafeInteger(binding.expiresAt) ||
+    binding.expiresAt <= Date.now()
+  )
+    return undefined;
+  return binding;
+}
+
+function workbenchHoldIdentityMatches(
+  session: Session,
+  hold: WorkbenchHold,
+): boolean {
+  const expected = workbenchTrustedToolBinding(session, hold.call);
+  const hasIdentity = [
+    hold.binding.principalId,
+    hold.binding.agentId,
+    hold.binding.upstreamId,
+    hold.binding.schemaDigest,
+  ].some((value) => value !== undefined);
+  if (!expected) return session.localAgentBinding === undefined && !hasIdentity;
+  return (
+    hold.binding.principalId === expected.principalId &&
+    hold.binding.agentId === expected.agentId &&
+    hold.binding.runId === expected.runId &&
+    hold.binding.workspaceId === expected.workspaceId &&
+    hold.binding.upstreamId === expected.upstreamId &&
+    hold.binding.schemaDigest === expected.schemaDigest
+  );
+}
+
+function workbenchHoldOperationDigest(
+  session: Session,
+  operationId: string,
+  call: WorkbenchHeldCall,
+): string {
+  const identity = workbenchTrustedToolBinding(session, call);
+  return canonicalDigest({
+    domain: identity
+      ? "nomo-workbench-operation-v2"
+      : "nomo-workbench-operation-v1",
+    operationId,
+    sessionId: session.view.id,
+    runId: identity?.runId ?? session.view.runId ?? session.view.id,
+    workspaceId: identity?.workspaceId ?? session.view.workspace,
+    tool: call.tool,
+    connector: call.connector,
+    klass: call.klass,
+    blastRadius: call.blastRadius ?? null,
+    reason: call.reason,
+    arguments: call.arguments,
+    ...(identity === undefined
+      ? {}
+      : {
+          principalId: identity.principalId,
+          agentId: identity.agentId,
+          upstreamId: identity.upstreamId,
+          schemaDigest: identity.schemaDigest,
+        }),
+  });
+}
+
+function copyWorkbenchHold(hold: WorkbenchHold): WorkbenchHold {
+  return {
+    ...hold,
+    call: {
+      ...hold.call,
+      arguments: structuredClone(hold.call.arguments),
+    },
+    binding: { ...hold.binding },
+    notify: [...hold.notify],
+  };
+}
+
+function isWorkbenchHold(value: unknown): value is WorkbenchHold {
+  if (typeof value !== "object" || value === null) return false;
+  const hold = value as Partial<WorkbenchHold>;
+  const call = hold.call as Partial<WorkbenchHeldCall> | undefined;
+  return (
+    typeof hold.holdId === "string" &&
+    typeof call === "object" &&
+    call !== null &&
+    typeof call.arguments === "object" &&
+    call.arguments !== null &&
+    typeof hold.binding === "object" &&
+    hold.binding !== null &&
+    Array.isArray(hold.notify)
+  );
+}
 
 function hasIncompleteToolBatch(messages: readonly ModelMessage[]): boolean {
   const lastAssistant = [...messages].reverse().find((message) => message.role === "assistant");
@@ -516,27 +720,11 @@ export class Workbench {
    * this process, and an operator who set it before the workbench loaded must
    * not silently lose it to a value stored in the workspace. */
   private readonly hookTimeoutFromEnv: number | undefined;
-  private readonly holds = new Map<
-    string,
-    {
-      holdId: string;
-      call: {
-        tool: string;
-        workspace: string;
-        klass: string;
-        blastRadius: number | undefined;
-        reason: string;
-      };
-      expiresAt: number;
-      status: "pending" | "approved" | "denied";
-      by?: string;
-      reason?: string;
-      notify: string[];
-    }
-  >();
+  private readonly holds = new Map<string, WorkbenchHold>();
   private ignoreEnvironment = false;
   private catalog: readonly Model[] = [];
   private readonly sessions = new Map<string, Session>();
+  private readonly localAgentConnectorIds = new Set<string>();
   private readonly localIdentityIssuer = new LocalAgentIdentityIssuer();
   private readonly queued = new Set<string>();
   private readonly jobs = new Map<string, Promise<void>>();
@@ -792,7 +980,9 @@ export class Workbench {
       ignoreEnvironment: this.ignoreEnvironment,
       profiles: this.profiles,
       catalog: this.catalog,
-      connectors: this.connectors.map(persistedMcpConfig),
+      connectors: this.connectors
+        .filter((connector) => !this.localAgentConnectorIds.has(connector.id))
+        .map(persistedMcpConfig),
       documents: this.documents,
       evidence: this.evidence,
       recoveryRequests: this.recoveryRequests,
@@ -820,7 +1010,11 @@ export class Workbench {
           config: config
             ? { baseUrl: config.baseUrl, kind: config.kind }
             : undefined,
-          tools,
+          tools: tools?.map((tool) => {
+            const persisted = { ...tool };
+            delete persisted._meta;
+            return persisted;
+          }),
           connections: mapConnections(connections),
         }),
       ),
@@ -1432,11 +1626,13 @@ export class Workbench {
       throw new Error(
         "Wait for the active session or cancel it before starting another.",
       );
-    let command: unknown;
-    try {
-      command = JSON.parse(configuredEnvValue(this.env, "NOMO_UPSTREAM_COMMAND") ?? "null");
-    } catch {
-      throw new Error("NOMO_UPSTREAM_COMMAND must be a JSON array.");
+    let command: unknown = null;
+    if (!preparedRun) {
+      try {
+        command = JSON.parse(configuredEnvValue(this.env, "NOMO_UPSTREAM_COMMAND") ?? "null");
+      } catch {
+        throw new Error("NOMO_UPSTREAM_COMMAND must be a JSON array.");
+      }
     }
     if (
       command !== null &&
@@ -1447,7 +1643,11 @@ export class Workbench {
       throw new Error(
         "Configure NOMO_UPSTREAM_COMMAND on the runtime with the MCP server command as a JSON array.",
       );
-    if (command && !configuredEnvValue(this.env, "NOMO_POLICY_PATH"))
+    if (
+      !preparedRun &&
+      command &&
+      !configuredEnvValue(this.env, "NOMO_POLICY_PATH")
+    )
       throw new Error("Configure NOMO_POLICY_PATH before starting an agent.");
     if (!prompt.trim() || prompt.length > this.harness.maxPromptCharacters)
       throw new Error(
@@ -1455,7 +1655,7 @@ export class Workbench {
       );
     const id = preparedRun?.sessionId ?? randomUUID();
     const workspace = preparedRun?.workspaceId ?? `agent-${id}`;
-    const client = Array.isArray(command)
+    const client = !preparedRun && Array.isArray(command)
       ? createVoidClient({
           workspace,
           ledgerDir:
@@ -1467,12 +1667,23 @@ export class Workbench {
           requestTimeoutMs: 180000,
         })
       : undefined;
-    const tools: McpTool[] = [...workspaceTools];
+    const tools: McpTool[] = preparedRun ? [] : [...workspaceTools];
     const connections: NonNullable<Session["connections"]> = {};
+    const connectors = preparedRun
+      ? this.connectors.filter(({ id }) => id === preparedRun.connectorId)
+      : this.connectors.filter(
+          ({ consentState, id }) =>
+            consentState === "confirmed" &&
+            !this.localAgentConnectorIds.has(id),
+        );
+    if (
+      preparedRun &&
+      (connectors.length !== 1 || connectors[0]?.consentState !== "confirmed")
+    )
+      throw new Error("The identity-bound local proxy connector is unavailable.");
     this.sessionSetupCount++;
     try {
-      for (const connector of this.connectors) {
-        if (connector.consentState !== "confirmed") continue;
+      for (const connector of connectors) {
         const listed = await mcpCatalog(connector);
         connections[connector.id] = {
           ...connector,
@@ -1516,7 +1727,56 @@ export class Workbench {
         `Concurrent run limit reached (${this.harness.maxConcurrentRuns}). Wait for a running session to finish or increase the limit.`,
       );
     }
-    const systemInstruction = `You are operating through VOID. Tool calls are classified, governed by policy, and recorded. Respect denied calls; do not retry them with reworded arguments. Wait for operator approval of held calls. Only claim completed actions when they are proven by tool results. You have a managed document workspace with list, read, write and delete tools. Changes in that workspace are captured and can be undone by the operator. These tools do not access the host filesystem. Use them when asked to create or edit documents.${selectedAgent?.instruction ? `\n\nActive agent preset (${selectedAgent.id}): ${selectedAgent.instruction}` : ""}${selectedProfile ? `\n\nActive agent profile (${selectedProfile.id}): ${selectedProfile.systemPrompt}` : ""}`;
+    const sessionTools = (selectedProfile
+      ? tools.filter((tool) => selectedProfile.allowedTools.includes(tool.name))
+      : tools
+    ).filter((tool) => this.toolAllowedInMode(tool));
+    let trustedToolBindings:
+      | Map<string, LocalAgentToolBindingSnapshot>
+      | undefined;
+    if (preparedRun) {
+      trustedToolBindings = new Map();
+      for (const tool of sessionTools) {
+        if (
+          tool.connectorId !== preparedRun.connectorId ||
+          !preparedRun.toolScope.includes(tool.name)
+        )
+          throw new Error(
+            "The local Harness catalog contains a tool outside its grant scope.",
+          );
+        const binding = localAgentToolBindingFromTool(tool);
+        if (
+          !binding ||
+          binding.principalId !== preparedRun.principalId ||
+          binding.agentId !== preparedRun.agentId ||
+          binding.runId !== preparedRun.runId ||
+          binding.workspaceId !== preparedRun.workspaceId ||
+          binding.upstreamId !== preparedRun.upstreamId ||
+          binding.expiresAt !== preparedRun.expiresAt ||
+          binding.expiresAt <= Date.now()
+        )
+          throw new Error(
+            `The local Harness tool ${tool.name} has no matching grant-validated schema snapshot.`,
+          );
+        const key = localAgentToolBindingKey(preparedRun.connectorId, tool.name);
+        if (trustedToolBindings.has(key))
+          throw new Error("The local Harness catalog contains a duplicate tool.");
+        trustedToolBindings.set(key, binding);
+      }
+      if (
+        trustedToolBindings.size !== preparedRun.toolScope.length ||
+        preparedRun.toolScope.some(
+          (name) =>
+            !trustedToolBindings!.has(
+              localAgentToolBindingKey(preparedRun.connectorId, name),
+            ),
+        )
+      )
+        throw new Error(
+          "The local Harness catalog does not cover the complete grant scope.",
+        );
+    }
+    const systemInstruction = `You are operating through VOID. Tool calls are classified, governed by policy, and recorded. Respect denied calls; do not retry them with reworded arguments. Wait for operator approval of held calls. Only claim completed actions when they are proven by tool results.${preparedRun ? "" : " You have a managed document workspace with list, read, write and delete tools. Changes in that workspace are captured and can be undone by the operator. These tools do not access the host filesystem. Use them when asked to create or edit documents."}${selectedAgent?.instruction ? `\n\nActive agent preset (${selectedAgent.id}): ${selectedAgent.instruction}` : ""}${selectedProfile ? `\n\nActive agent profile (${selectedProfile.id}): ${selectedProfile.systemPrompt}` : ""}`;
     const queued =
       background &&
       (this.jobs.size > 0 ||
@@ -1532,7 +1792,11 @@ export class Workbench {
         createdAt: new Date().toISOString(),
         title: prompt.trim().slice(0, 80),
         status: queued ? "queued" : "idle",
-        ...(queued ? { runId: randomUUID() } : {}),
+        ...(preparedRun
+          ? { runId: preparedRun.runId }
+          : queued
+            ? { runId: randomUUID() }
+            : {}),
         events: [],
         continuationCount: 0,
         runTokenCount: 0,
@@ -1543,13 +1807,17 @@ export class Workbench {
         : undefined,
       queuedPrompt: queued ? prompt : undefined,
       client,
-      tools: (selectedProfile
-        ? tools.filter((tool) =>
-            selectedProfile.allowedTools.includes(tool.name),
-          )
-        : tools
-      ).filter((tool) => this.toolAllowedInMode(tool)),
+      tools: sessionTools,
       connections,
+      ...(preparedRun
+        ? {
+            localAgentBinding: Object.freeze({
+              ...preparedRun,
+              toolScope: Object.freeze([...preparedRun.toolScope]),
+            }),
+            trustedToolBindings,
+          }
+        : {}),
       config: selectedConfig
         ? { baseUrl: selectedConfig.baseUrl, kind: selectedConfig.kind }
         : undefined,
@@ -1771,6 +2039,7 @@ export class Workbench {
           h.expiresAt > Date.now() &&
           this.sessions.get(h.holdId.split(":")[0]!)?.view.status === "running",
       )
+      .map(copyWorkbenchHold)
       .concat(
         [...this.sessions.values()].flatMap((session) =>
           session.view.status === "running"
@@ -1787,14 +2056,31 @@ export class Workbench {
     decision: { kind: "approved" | "denied"; by: string; reason?: string },
   ): boolean {
     const local = this.holds.get(id);
-    if (
-      local &&
-      local.status === "pending" &&
-      local.expiresAt > Date.now() &&
-      this.sessions.get(id.split(":")[0]!)?.view.status === "running"
-    ) {
+    const separator = id.indexOf(":");
+    const localSession = this.sessions.get(
+      separator > 0 ? id.slice(0, separator) : "",
+    );
+    if (local) {
+      if (
+        local.status !== "pending" ||
+        local.expiresAt <= Date.now() ||
+        localSession?.view.status !== "running" ||
+        local.binding.operationId !== id ||
+        local.binding.operationDigest !==
+          workbenchHoldOperationDigest(localSession, id, local.call) ||
+        local.binding.policyVersion < 1 ||
+        !/^[0-9a-f]{64}$/.test(local.binding.policyDigest) ||
+        local.binding.workspaceId !== localSession.view.workspace ||
+        local.binding.runId !==
+          (localSession.view.runId ?? localSession.view.id)
+      )
+        return false;
+      if (!localSession || !workbenchHoldIdentityMatches(localSession, local))
+        return false;
+      const operatorId = verifiedLocalOperatorId();
+      if (local.binding.operatorId !== operatorId) return false;
       local.status = decision.kind;
-      local.by = decision.by;
+      local.by = operatorId;
       local.reason = decision.reason;
       try {
         this.persist();
@@ -1946,8 +2232,10 @@ export class Workbench {
   }
   approvals() {
     return [
-      ...this.approvalHistory,
-      ...this.holds.values(),
+      ...this.approvalHistory.map((hold) =>
+        isWorkbenchHold(hold) ? copyWorkbenchHold(hold) : hold,
+      ),
+      ...[...this.holds.values()].map(copyWorkbenchHold),
       ...this.pending().filter((h) => !this.holds.has(h.holdId)),
     ].map((h) => {
       const hold = h as { status: string; expiresAt: number };
@@ -2237,6 +2525,7 @@ export class Workbench {
         connectionless: true,
       };
       this.connectors.push(connector);
+      this.localAgentConnectorIds.add(connector.id);
       this.persist();
       return this.connectionState();
     });
@@ -2264,6 +2553,8 @@ export class Workbench {
     ledger: { entries: unknown[] };
   }> {
     const task = validateLocalHarnessTask(input);
+    if (input.proxy.posture !== "fail-closed")
+      throw new Error("Identity-bound Harness runs require fail-closed proxy posture.");
     // The task may not name a model, and there is no default to fall back on:
     // the operator picks, exactly as for any other run on this Workbench.
     const model = this.preferences.defaultModel ?? this.catalog[0]?.id;
@@ -2273,20 +2564,23 @@ export class Workbench {
     // These IDs are created inside Workbench so the grant and task share one
     // run without accepting caller-supplied identity metadata.
     const sessionId = randomUUID();
-    const preparedRun: LocalHarnessRunBinding = {
-      sessionId,
-      workspaceId: `agent-${sessionId}`,
-      runId: randomUUID(),
-    };
+    const workspaceId = `agent-${sessionId}`;
+    const runId = randomUUID();
     const issuer = new LocalAgentIdentityIssuer();
     const issued = issuer.issue({
       principalId: LOCAL_AGENT_PRINCIPAL_ID,
-      workspaceId: preparedRun.workspaceId,
+      workspaceId,
       agentId: `${LOCAL_AGENT_PRINCIPAL_ID}-agent`,
-      runId: preparedRun.runId,
+      runId,
       upstreamId: task.upstreamId,
       toolScope: task.toolScope,
     });
+    const validatedGrant = issuer.authenticate(issued.token, {
+      audience: LOCAL_AGENT_GRANT_AUDIENCE,
+      upstreamId: task.upstreamId,
+    });
+    if (!validatedGrant)
+      throw new Error("The issued local agent grant did not verify.");
     const asGrantIdentity = (
       identity: LocalAgentIdentity | null,
     ): LocalGrantIdentity | null =>
@@ -2303,7 +2597,7 @@ export class Workbench {
 
     const server = await startLocalMcpHttpServer({
       upstreamId: task.upstreamId,
-      proxyOptions: { ...input.proxy, workspace: preparedRun.workspaceId },
+      proxyOptions: { ...input.proxy, workspace: workspaceId },
       resolveGrant: (token, upstreamId) =>
         asGrantIdentity(
           issuer.authenticate(token, {
@@ -2337,12 +2631,29 @@ export class Workbench {
         // own policy object. Collapsing them would make one look like the
         // other to whoever reads this later.
       });
-      const connector = this.connectors.at(-1)!.id;
+      const connector = this.connectors.find(
+        (candidate) =>
+          candidate.url === server.url.href && candidate.connectionless === true,
+      );
+      if (!connector)
+        throw new Error("The local identity proxy connector was not registered.");
+      const preparedRun: LocalHarnessRunBinding = Object.freeze({
+        sessionId,
+        workspaceId: validatedGrant.workspaceId,
+        runId: validatedGrant.runId,
+        principalId: validatedGrant.principalId,
+        agentId: validatedGrant.agentId,
+        upstreamId: task.upstreamId,
+        expiresAt: validatedGrant.expiresAt,
+        toolScope: Object.freeze([...validatedGrant.toolScope]),
+        connectorId: connector.id,
+      });
       // Probed and confirmed like any operator connector, so the consent
       // gate is exercised rather than bypassed.
-      await this.probeConnector(connector);
-      await this.confirmConnector(connector);
+      await this.probeConnector(connector.id);
+      await this.confirmConnector(connector.id);
 
+      this.harnessRunIds.add(sessionId);
       const run = await this.startWithRunBinding(
         task.prompt,
         model,
@@ -2359,7 +2670,6 @@ export class Workbench {
         run.runId !== preparedRun.runId
       )
         throw new Error("The task run does not match its local agent grant.");
-      this.harnessRunIds.add(run.id);
       const ledger = await this.ledger(run.workspace);
       const identity = issuer.authenticate(issued.token, {
         audience: LOCAL_AGENT_GRANT_AUDIENCE,
@@ -2373,9 +2683,18 @@ export class Workbench {
         ledger: { entries: [...(ledger?.entries ?? [])] },
       };
     } finally {
-      this.harnessRunIds.delete(preparedRun.sessionId);
-      issuer.revoke(preparedRun.runId);
-      await server.close();
+      this.harnessRunIds.delete(sessionId);
+      issuer.revoke(runId);
+      try {
+        await server.close();
+      } finally {
+        const connector = this.connectors.find(
+          (candidate) =>
+            candidate.url === server.url.href &&
+            this.localAgentConnectorIds.has(candidate.id),
+        );
+        if (connector) this.removeConnector(connector.id);
+      }
     }
   }
   /** Stage an edit. No network request: the URL and policy are validated, the
@@ -2544,6 +2863,7 @@ export class Workbench {
   }
   removeConnector(id: string) {
     this.connectors = this.connectors.filter((c) => c.id !== id);
+    this.localAgentConnectorIds.delete(id);
     this.persist();
   }
   workspace(id: string) {
@@ -2981,7 +3301,7 @@ export class Workbench {
     args: unknown,
     decision: string,
     operation?: WorkspaceOperation,
-    approval?: { by?: string; reason?: string },
+    approval?: { by?: string; reason?: string; binding?: WorkbenchHoldBinding },
     metadata?: Record<string, unknown>,
     attribution?: LedgerAttribution,
   ) {
@@ -2994,6 +3314,29 @@ export class Workbench {
     const body = {
       ...(approval?.by ? { approvedBy: approval.by } : {}),
       ...(approval?.reason ? { approvalReason: approval.reason } : {}),
+      ...(approval?.binding
+        ? {
+            operationId: approval.binding.operationId,
+            operationDigest: approval.binding.operationDigest,
+            policyVersion: approval.binding.policyVersion,
+            policyDigest: approval.binding.policyDigest,
+            operatorId: approval.binding.operatorId,
+            runId: approval.binding.runId,
+            workspaceId: approval.binding.workspaceId,
+            ...(approval.binding.principalId === undefined
+              ? {}
+              : { principalId: approval.binding.principalId }),
+            ...(approval.binding.agentId === undefined
+              ? {}
+              : { agentId: approval.binding.agentId }),
+            ...(approval.binding.upstreamId === undefined
+              ? {}
+              : { upstreamId: approval.binding.upstreamId }),
+            ...(approval.binding.schemaDigest === undefined
+              ? {}
+              : { schemaDigest: approval.binding.schemaDigest }),
+          }
+        : {}),
       workspace,
       at: new Date().toISOString(),
       tool,
@@ -3441,6 +3784,13 @@ export class Workbench {
     decision: PolicyDecision | { kind: "deny" },
     policy: ValidPolicy,
   ) {
+    if (
+      session.localAgentBinding !== undefined &&
+      workbenchTrustedToolBinding(session, call) === undefined
+    )
+      throw new Error(
+        "The identity-bound Harness call has no current grant-validated tool snapshot.",
+      );
     const name = call.tool,
       args = call.arguments;
     await this.locked(() =>
@@ -3467,19 +3817,43 @@ export class Workbench {
     );
     let allowed = decision.kind === "allow";
     if (decision.kind === "hold") {
-      const hold: {
-        holdId: string;
-        call: typeof call;
-        expiresAt: number;
-        status: "pending" | "approved" | "denied";
-        notify: string[];
-        by?: string;
-        reason?: string;
-      } = {
-        holdId: `${session.view.id}:${randomUUID()}`,
-        call,
+      const holdId = `${session.view.id}:${randomUUID()}`;
+      const heldCall: WorkbenchHeldCall = {
+        ...call,
+        arguments: structuredClone(call.arguments),
+      };
+      const identity = workbenchTrustedToolBinding(session, heldCall);
+      if (session.localAgentBinding !== undefined && identity === undefined)
+        throw new Error(
+          "The identity-bound Harness hold lost its verified tool snapshot.",
+        );
+      const binding: WorkbenchHoldBinding = Object.freeze({
+        operationId: holdId,
+        operationDigest: workbenchHoldOperationDigest(
+          session,
+          holdId,
+          heldCall,
+        ),
+        policyVersion: policy.policy.version,
+        policyDigest: policyDigest(policy.policy),
+        operatorId: verifiedLocalOperatorId(),
+        runId: session.view.runId ?? session.view.id,
+        workspaceId: session.view.workspace,
+        ...(identity === undefined
+          ? {}
+          : {
+              principalId: identity.principalId,
+              agentId: identity.agentId,
+              upstreamId: identity.upstreamId,
+              schemaDigest: identity.schemaDigest,
+            }),
+      });
+      const hold: WorkbenchHold = {
+        holdId,
+        call: heldCall,
+        binding,
         expiresAt: Date.now() + decision.seconds * 1000,
-        status: "pending" as "pending" | "approved" | "denied",
+        status: "pending",
         notify: [],
       };
       this.holds.set(hold.holdId, hold);
@@ -3491,8 +3865,29 @@ export class Workbench {
         !session.controller.signal.aborted
       )
         await delay(100);
+      let bindingValid =
+        workbenchHoldIdentityMatches(session, hold) &&
+        hold.binding.operationDigest ===
+          workbenchHoldOperationDigest(session, hold.holdId, call) &&
+        hold.binding.policyVersion === policy.policy.version &&
+        hold.binding.policyDigest === policyDigest(policy.policy) &&
+        hold.binding.workspaceId === session.view.workspace &&
+        hold.binding.runId === (session.view.runId ?? session.view.id);
+      try {
+        bindingValid &&=
+          hold.binding.operatorId === verifiedLocalOperatorId();
+      } catch {
+        bindingValid = false;
+      }
       allowed =
-        hold.status === "approved" && !session.controller.signal.aborted;
+        hold.status === "approved" &&
+        bindingValid &&
+        !session.controller.signal.aborted;
+      if (hold.status === "approved" && !bindingValid) {
+        hold.status = "denied";
+        hold.by = "runtime";
+        hold.reason = "Approval binding changed before dispatch.";
+      }
       if (allowed) {
         // Track continuations: each hold approval is one continuation.
         // The run loop will stop if the limit is reached.

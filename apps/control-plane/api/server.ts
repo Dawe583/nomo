@@ -16,7 +16,7 @@ import { readLedgerEntries, verifyChain } from "../../../packages/ledger/src/ver
 import { GENESIS_PREV } from "../../../packages/ledger/src/canonical.ts";
 import { readLedgerFeed, type LedgerFeedRecord } from "../../../packages/ledger/src/feed.ts";
 import type { PublicKeyLookup } from "../../../packages/ledger/src/verify.ts";
-import { Workbench } from "../../../packages/workbench/src/index.ts";
+import { Workbench, type WorkbenchHoldBinding } from "../../../packages/workbench/src/index.ts";
 import { normalizeProviderConfig } from "../../../packages/workbench/src/provider.ts";
 import { authorizedRemote } from "./auth.ts";
 import { localApprovals } from "./local-approvals.ts";
@@ -41,7 +41,7 @@ export type ApprovalStatus = "pending" | "approved" | "denied" | "expired";
 export type PendingApproval = {
   readonly holdId: string;
   readonly call: unknown;
-  readonly binding?: HoldBinding;
+  readonly binding?: HoldBinding | WorkbenchHoldBinding;
   readonly operationSummary?: string;
   readonly expiresAt: string | number;
   readonly status: ApprovalStatus;

@@ -24,6 +24,20 @@ export type LocalGrantIdentity = Readonly<{
   expiresAt: number;
 }>;
 
+export const LOCAL_AGENT_TOOL_BINDING_META = "com.nomo/agentBinding";
+
+export type LocalAgentToolBindingSnapshot = Readonly<{
+  version: 1;
+  toolName: string;
+  principalId: string;
+  agentId: string;
+  runId: string;
+  workspaceId: string;
+  upstreamId: string;
+  schemaDigest: string;
+  expiresAt: number;
+}>;
+
 export type LocalMcpHttpServerOptions = Readonly<{
   upstreamId: string;
   proxyOptions: LocalProxyRpcBridgeOptions;
@@ -72,7 +86,7 @@ export async function startLocalMcpHttpServer(
       const server = new McpServer({ name: "nomo-local-proxy", version: "1" });
       for (const tool of tools) {
         if (!identity.toolScope.includes(tool.name)) continue;
-        registerProxyTool(server, bridge, options, token, tool);
+        await registerProxyTool(server, bridge, options, token, identity, tool);
       }
       return server;
     },
@@ -159,19 +173,32 @@ export async function startLocalMcpHttpServer(
   }
 }
 
-function registerProxyTool(
+async function registerProxyTool(
   server: McpServer,
   bridge: LocalProxyRpcBridge,
   options: LocalMcpHttpServerOptions,
   token: string,
+  listedIdentity: LocalGrantIdentity,
   tool: LocalProxyTool,
-): void {
-  const schemaDigestPromise = legacyArgsDigest(tool.inputSchema);
+): Promise<void> {
+  const schemaDigest = await legacyArgsDigest(tool.inputSchema);
+  const bindingSnapshot: LocalAgentToolBindingSnapshot = Object.freeze({
+    version: 1,
+    toolName: tool.name,
+    principalId: listedIdentity.principalId,
+    agentId: listedIdentity.agentId,
+    runId: listedIdentity.runId,
+    workspaceId: listedIdentity.workspaceId,
+    upstreamId: options.upstreamId,
+    schemaDigest,
+    expiresAt: listedIdentity.expiresAt,
+  });
   server.registerTool(
     tool.name,
     {
       ...(tool.description !== undefined && { description: tool.description }),
       inputSchema: fromJsonSchema(tool.inputSchema as JsonSchemaType),
+      _meta: { [LOCAL_AGENT_TOOL_BINDING_META]: bindingSnapshot },
     },
     async (args, context) => {
       let capturedIdentity: LocalGrantIdentity | undefined;
@@ -191,7 +218,6 @@ function registerProxyTool(
       const identity = snapshotGrantIdentity(assertCurrentGrant());
       capturedIdentity = identity;
       const callArgs = asJsonObject(args);
-      const schemaDigest = await schemaDigestPromise;
       const profile = options.proxyOptions.operationProfiles?.find((candidate) =>
         validIdentifier(candidate.profileId) &&
         candidate.upstreamId === options.upstreamId &&

@@ -547,7 +547,11 @@ export function publicConnector(config: {
     facts: config.facts ?? {},
     mapping: config.mapping ?? {},
     tools: config.tools.map((t) => t.name),
-    toolDetails: config.tools,
+    toolDetails: config.tools.map((tool) => {
+      const detail = { ...tool };
+      delete detail._meta;
+      return detail;
+    }),
     undo: false,
     consentState: config.consentState,
   };
