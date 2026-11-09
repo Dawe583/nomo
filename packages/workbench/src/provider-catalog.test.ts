@@ -17,7 +17,75 @@ import { isolatedWorkbench } from "./test-fixture.ts";
 import { PUTER_URL } from "./provider-defaults.ts";
 import { BLOCKED_PROVIDER_APIS_BY_PROVIDER, IMPLEMENTED_PROVIDER_TRANSPORTS, PROVIDER_API_BLOCKERS } from "./provider-adapters/types.ts";
 import type { ProviderAdapterConfig } from "./provider-adapters/types.ts";
-import { assertProviderDescriptorInManifest, CONFIGURABLE_PROVIDER_DESCRIPTORS, PROVIDER_API_ROSTER, PROVIDER_MODEL_MANIFEST, PROVIDER_MODEL_PROVIDER_ROSTER, PROVIDER_SOURCE_BASELINE, PROVIDER_SOURCE_ROSTER } from "./provider-catalog.ts";
+import { assertProviderDescriptorInManifest, CONFIGURABLE_PROVIDER_DESCRIPTORS, UNAVAILABLE_PROVIDER_MODELS, PROVIDER_API_ROSTER, PROVIDER_MODEL_MANIFEST, PROVIDER_MODEL_PROVIDER_ROSTER, PROVIDER_SOURCE_BASELINE, PROVIDER_SOURCE_ROSTER } from "./provider-catalog.ts";
+
+test("exposes Prime Kimi Coding through its documented Anthropic-compatible API-key endpoint", () => {
+  const provider = PROVIDER_MODEL_MANIFEST.providers.find(
+    (item) => item.source === "prime" && item.providerId === "kimi-coding",
+  );
+  assert.ok(provider);
+  assert.deepEqual(provider.authentication.methods, ["api-key"]);
+  assert.deepEqual(provider.authentication.envVars, ["KIMI_API_KEY"]);
+  const model = provider.models.find((item) => item.id === "k3");
+  assert.ok(model);
+  assert.equal(model.transport, "anthropic-messages");
+  assert.equal(model.endpoint, "https://api.kimi.com/coding");
+  const descriptor = CONFIGURABLE_PROVIDER_DESCRIPTORS.find(
+    (item) => item.providerId === "kimi-coding" && item.transport === "anthropic-messages",
+  );
+  assert.ok(descriptor);
+  assert.equal(descriptor.authKind, "api-key");
+  assert.equal(descriptor.endpoint, "https://api.kimi.com/coding");
+  assert.deepEqual(descriptor.models, ["k3"]);
+  assertProviderDescriptorInManifest({
+    providerId: "kimi-coding",
+    transport: "anthropic-messages",
+    baseUrl: descriptor.endpoint!,
+    model: "k3",
+    auth: { kind: "api-key", apiKey: "fixture-kimi-coding-key" },
+  });
+});
+
+test("exposes Kimi Code through its documented OpenAI API-key endpoint", () => {
+  const provider = PROVIDER_MODEL_MANIFEST.providers.find(
+    (item) => item.source === "omp" && item.providerId === "kimi-code",
+  );
+  assert.ok(provider);
+  const models = provider.models.filter(
+    (item) => item.kind === "chat" && item.transport === "openai-completions",
+  );
+  assert.equal(models.length, 7);
+  assert.ok(models.every((item) => item.endpoint === "https://api.kimi.com/coding/v1"));
+  assert.ok(provider.authentication.methods.includes("device-code"));
+  assert.ok(provider.authentication.methods.includes("api-key"));
+  assert.deepEqual(provider.authentication.envVars, ["KIMI_API_KEY"]);
+  assert.match(provider.authentication.source, /kimi\.com\/code\/docs/);
+  const descriptor = CONFIGURABLE_PROVIDER_DESCRIPTORS.find(
+    (item) => item.providerId === "kimi-code" && item.transport === "openai-completions",
+  );
+  assert.ok(descriptor);
+  assert.equal(descriptor.authKind, "api-key");
+  assert.equal(descriptor.endpoint, "https://api.kimi.com/coding/v1");
+  assert.deepEqual(
+    [...descriptor.models].sort(),
+    ["k3", "k3-256k", "kimi-for-coding", "kimi-for-coding-highspeed"],
+  );
+  const unavailable = UNAVAILABLE_PROVIDER_MODELS.find(
+    (item) => item.source === "omp" && item.providerId === "kimi-code",
+  );
+  assert.ok(unavailable);
+  assert.deepEqual(
+    [...unavailable.modelIds].sort(),
+    ["kimi-k2", "kimi-k2-turbo-preview", "kimi-k2.5"],
+  );
+  assertProviderDescriptorInManifest({
+    providerId: "kimi-code",
+    transport: "openai-completions",
+    baseUrl: descriptor.endpoint!,
+    model: "kimi-for-coding",
+    auth: { kind: "api-key", apiKey: "fixture-kimi-code-key" },
+  });
+});
 
 test("exposes Bedrock only through the manifest-declared AWS credential chain", () => {
   const descriptor = CONFIGURABLE_PROVIDER_DESCRIPTORS.find(
@@ -401,7 +469,7 @@ test("every implemented chat model is either described or explicitly blocked", a
     ),
   );
   assert.equal(unavailable.length, 4);
-  assert.equal(blockedRows.length, 32);
+  assert.equal(blockedRows.length, 28);
   assert.equal(new Set(blockedRows).size, blockedRows.length);
   assert.ok(blockedRows.every((row) => modelRows.has(row)));
   assert.ok(

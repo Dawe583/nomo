@@ -164,7 +164,23 @@ export const UNAVAILABLE_PROVIDER_MODEL_TRANSPORTS = Object.entries(
 });
 
 /** Provider/model combinations whose pinned contracts are not configurable in Workbench. */
-const PROVIDER_MODEL_BLOCKERS = [
+const DOCUMENTED_KIMI_CODE_MODEL_IDS = new Set([
+  "k3",
+  "k3-256k",
+  "kimi-for-coding",
+  "kimi-for-coding-highspeed",
+]);
+
+type ProviderModelBlocker = {
+  readonly source: string;
+  readonly providerId: string;
+  readonly transportId: string;
+  readonly modelIds?: readonly string[];
+  readonly reason: string;
+  readonly evidence: string;
+};
+
+const PROVIDER_MODEL_BLOCKERS: readonly ProviderModelBlocker[] = [
   {
     source: "omp",
     providerId: "google-vertex",
@@ -183,8 +199,9 @@ const PROVIDER_MODEL_BLOCKERS = [
     source: "omp",
     providerId: "kimi-code",
     transportId: "openai-completions",
-    reason: "Kimi Code declares device-code authentication, which Workbench does not implement.",
-    evidence: "OMP 18.6.2 packages/catalog/src/compat/rules.json:auth.providers; Workbench has no device-code authentication profile.",
+    modelIds: ["kimi-k2", "kimi-k2-turbo-preview", "kimi-k2.5"],
+    reason: "These Kimi Code model IDs are absent from its current official third-party model list; Workbench does not infer that old catalog rows remain routable.",
+    evidence: "https://www.kimi.com/code/docs/en/models.html (model overview); OMP 18.6.2 catalog/models.json",
   },
   {
     source: "omp",
@@ -283,6 +300,11 @@ for (const provider of PROVIDER_MODEL_MANIFEST.providers) {
   for (const model of provider.models) {
     if (model.kind !== "chat" || !IMPLEMENTED_TRANSPORTS.has(model.transport))
       continue;
+    if (
+      provider.source === "omp" &&
+      provider.providerId === "kimi-code" &&
+      !DOCUMENTED_KIMI_CODE_MODEL_IDS.has(model.id)
+    ) continue;
     const transport = model.transport as ImplementedProviderTransport;
     const vertexDynamic =
       transport === "google-vertex" &&
@@ -390,6 +412,7 @@ export const UNAVAILABLE_PROVIDER_MODELS = Object.freeze(
       blocker.source,
       blocker.providerId,
       blocker.transportId,
+      blocker.modelIds ?? null,
     ]);
     if (providerModelBlockerKeys.has(key))
       throw new Error(`Duplicate provider model blocker: ${key}`);
@@ -404,7 +427,9 @@ export const UNAVAILABLE_PROVIDER_MODELS = Object.freeze(
       throw new Error(`Provider model blocker does not match one in-scope provider: ${key}`);
     const models = providers[0].models.filter(
       (model) =>
-        model.kind === "chat" && model.transport === blocker.transportId,
+        model.kind === "chat" &&
+        model.transport === blocker.transportId &&
+        (!blocker.modelIds || new Set<string>(blocker.modelIds).has(model.id)),
     );
     if (
       !models.length ||

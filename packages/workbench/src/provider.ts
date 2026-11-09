@@ -493,7 +493,13 @@ export class CompatibleProvider implements ProviderClient {
   private async response(path: string, body?: unknown, signal?: AbortSignal, accept?: string) {
     let response: Response;
     try {
-      response = await this.request(new URL(path, this.base), {
+      const requestUrl =
+        this.config.kind === "anthropic" &&
+        this.config.providerId === "kimi-coding" &&
+        !this.base.pathname.replace(/\/$/, "").endsWith("/v1")
+          ? new URL(`v1/${path}`, this.base)
+          : new URL(path, this.base);
+      response = await this.request(requestUrl, {
         method: body === undefined ? "GET" : "POST",
         headers: {
           ...(this.config.kind === "anthropic"
