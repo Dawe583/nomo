@@ -1,5 +1,7 @@
 # NOMO 0.1.0 release runbook
 
+> Historical runbook. Hosted jobs described below have been removed and are not release prerequisites. Account billing or missing hosted results must never block local verification or release planning.
+
 Apple 1.0.1 release planning and exact evidence now live in
 `docs/superpowers/specs/void-1.0.1-product.md` and
 `docs/RELEASE-1.0.1-MATRIX.md`. This 0.1.0 development/npm runbook remains
@@ -23,8 +25,8 @@ compatibility policy for every persisted format.
 
 The supported floor is Node.js 24 (`engines.node: >=24`). Node 26 remains the
 local development and verification target. Use the same Node major for
-development and release CI where possible. This is a support baseline, not
-a claim that Ed25519 or `node:test` first appeared in Node 24.
+development and local release checks where possible. This is a support baseline,
+not a claim that Ed25519 or `node:test` first appeared in Node 24.
 
 Source review: `tsconfig.base.json` targets ES2022. Product tsconfigs use
 `noEmit`, `allowImportingTsExtensions`, `erasableSyntaxOnly`, and
@@ -92,10 +94,11 @@ Wave 5 source status, pending integrated verification:
    and choose a scoped publish token or trusted publishing identity. No npm
    credential has been verified here. Never put tokens in a manifest, shell
    transcript, log, test, or release document.
-2. **Publish CI.** Add a reviewed, gated publishing workflow with an explicit
-   package allowlist, protected release approval, provenance, and a clean
-   install test. Keep all packages private until that workflow is ready. A
-   green local suite is not evidence that a release workflow ran.
+2. **Hosted publish workflow retired.** Do not create or rely on a publishing
+   workflow. Keep packages private until the owner approves a local publication
+   procedure with an explicit package allowlist, protected human approval,
+   provenance and a clean install test. Local verification does not itself
+   authorize publication.
 3. **Installable artifacts.** Current exports point to TypeScript source and
    several modules use relative imports across package directories. Node does
    not strip TypeScript inside `node_modules`, and a separately packed package
@@ -109,14 +112,12 @@ Wave 5 source status, pending integrated verification:
    and refusal after target drift. No production accounts or autonomous writes
    to customer data. Replay apply still needs a real executor supplied by the
    host; a configured URL alone is not a database driver.
-5. **Remote CI does not run.** GitHub Actions refuses to start any job on this
-   account, with the annotation that recent account payments have failed or the
-   spending limit needs raising: issues #13 and #34. Pushing itself is **not**
-   blocked. Branches pushed cleanly on 2026-10-03 and five pull requests are
-   open. What is missing is remote evidence, so no check in this repository has
-   run on a clean machine and every gate result in this document is local. A
-   human has to settle the billing; until then "CI is green" is not a claim
-   this runbook can make about anything.
+5. **Historical note, not a release gate.** This runbook recorded that hosted
+   jobs were unavailable in October 2026. The repository no longer configures
+   hosted CI, and account billing is not an engineering prerequisite. Release
+   evidence must be gathered through the local checks and release-specific
+   evidence described in this runbook. A local pass does not prove behavior on
+   a clean machine or another operating system.
 6. **WP-15 delivery evidence.** A published `@nomo/cli` version, clean-machine
    quickstart under five minutes, Docker image, and MCP registry listing still
    require release evidence. The WP-15 exit is not complete just because the
@@ -223,9 +224,10 @@ verification run.
    in a clean external directory, without workspace symlinks, and run both
    bins, policy pack loading, and the five-minute first-hold quickstart.
 7. Obtain human approval for publishing, confirm npm identity without exposing
-   credentials, run protected CI, and publish only the reviewed artifacts.
-   Verify the published version with `npm view @nomo/cli version`. Record the
-   tag, commit, artifact digests, provenance, and remote workflow URL.
+   credentials, run the approved local checks, and publish only reviewed
+   artifacts. Verify the published version with `npm view @nomo/cli version`.
+   Record the tag, commit, artifact digests and provenance. This runbook does not
+   authorize publication or create a hosted workflow.
 
 ### What the packaging gate now executes
 
@@ -273,17 +275,13 @@ cannot be read as covering a suite that never executed.
 
 `python/void-transport` runs under the system interpreter and executes on an
 ordinary checkout. `apps/appwrite-mcp` needs the `mcp` SDK and is `UNRUN`
-until that virtual environment exists. Both are run in CI by the `hosted-mcp`
-job, which provisions Python 3.14 and installs the SDK from `requirements.txt`.
-That job has never executed on a pushed commit, so no result is claimed for it.
-A release report that quotes this gate must say which of the two ran.
+until that virtual environment exists. These suites are local-only; the former
+hosted-mcp job is retired. A release report must say which local suites ran.
 
-The same workflow gained an `apple` job that runs both Swift packages and the
-`VOID` scheme on the iOS simulator, on a `macos-latest` runner, with derived
-data outside the checkout. That job was written on a darwin host and has
-never been executed by GitHub Actions, so no result is claimed for it here.
-Until a push runs it, the Apple evidence remains the local machine results
-recorded in `docs/RELEASE-1.0.1-MATRIX.md` and nothing newer.
+Historical note: the former workflow also defined an `apple` job for both
+Swift packages and the `VOID` scheme on an iOS simulator. No result was claimed
+for that retired hosted job. Current Apple evidence remains the local machine
+results recorded in `docs/RELEASE-1.0.1-MATRIX.md`; hosted status is not a gate.
 
 If a released artifact fails verification, stop rollout. Deprecate the bad npm
 version and ship a corrected version rather than replacing it. Restore the last

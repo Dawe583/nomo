@@ -25,6 +25,15 @@ launcher. Its only writable filesystem scope is
 allowlist. Do not regenerate its retained recovery key or expand its scope.
 This managed path does not intercept ordinary shell or editor writes.
 
+## Hosted CI policy
+
+Do not add, configure, trigger, inspect, or rely on GitHub Actions, GitLab CI,
+or another hosted CI job. Hosted CI status, billing, spending limits, and
+missing job results are never blockers for local engineering or release work.
+Use the documented local verification commands and report what they do and do
+not establish. This is a durable repository policy; do not change it unless the
+user explicitly revises it.
+
 ## Autonomous loop contract (2026-10-21)
 
 All future NOMO work in this repository runs through one graph and bounded

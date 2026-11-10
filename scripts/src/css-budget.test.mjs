@@ -17,9 +17,8 @@ import { BEGIN, END } from "./build-web.mjs";
  * Migrating those to the token source is several sessions of work and cannot be
  * done in one change without making the diff unreviewable. A budget is the
  * honest instrument in the meantime: the count may fall, and it may never rise.
- * This is the same shape as the per-step CI time budgets, which exist for the
- * same reason, that is, because a number nobody watches is a number that
- * regresses quietly.
+ * The local test budget serves the same purpose: a number nobody watches is
+ * a number that regresses quietly.
  *
  * The number is read from the file, so lowering a budget is a change somebody
  * made on purpose and the diff shows it.

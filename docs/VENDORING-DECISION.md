@@ -1,5 +1,7 @@
 # Vendoring decision: evidence pack
 
+> Historical toolchain inventory only. Hosted workflows and CI matrices cited below were retired and are not current requirements or blockers.
+
 Prepared 2026-10-05 for the choice between four options for handling two upstream
 trees (`can1357/oh-my-pi`, `PrimeIntellect-ai/prime-agent`).
 
@@ -133,7 +135,7 @@ find-and-replace volume.
 | Files landing              | Up to **10,104** (`omp-src` 8,651 + `prime-src` 1,453), measured.                                                                                                                                                                                                                   |
 | Lines landing              | ~2.86 M source lines, measured (see Baseline).                                                                                                                                                                                                                                      |
 | Disk in repo               | Up to ~322 MB of working tree, measured (283 + 39), before `node_modules`/build output.                                                                                                                                                                                             |
-| New build systems in CI    | **bun, Rust nightly, Bazel 9.2.0, Nix**, see §2 for the file paths.                                                                                                                                                                                                                |
+| New build systems in historical CI | **bun, Rust nightly, Bazel 9.2.0, Nix**, see §2 for the file paths; this is historical context, not a NOMO hosted-CI requirement.                                                                                                                                                                                                                |
 | Collision with `packages/` | `packages/cli/src` exists and is one of the ten workspace packages; `check-tests.mjs` reacts to _any_ directory under `packages/`, see §3.                                                                                                                                         |
 | Left undone                | Everything about upstream's release cadence. A vendored tree has to be re-vendored on every upstream bump; measured evidence that this is frequent: `omp-src` is at `18.6.2` and `prime-src/Cargo.toml` declares `version = "0.9.8"` while the installed `prime` binary is `0.9.1`. |
 
@@ -227,16 +229,16 @@ NOMO already has for its Apple job. The Rust halves of both trees are therefore
 the cheaper half to vendor; the TypeScript half of `oh-my-pi` is what drags in
 bun and Bazel.**
 
-What NOMO's CI runs today (measured, `.github/workflows/ci.yml`):
+Historical NOMO hosted-job inventory (measured before retirement; no active hosted configuration remains):
 
-| Job          | Toolchain                                                                                                                                                                                           |
-| ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `gates`      | `ubuntu-latest`, matrix Node **24, 26**; `pnpm/action-setup@v4` pin `10.33.0`; `pnpm install --frozen-lockfile`; `pnpm run typecheck`; `pnpm test`; `node --test`; 4 × `e2e*.mjs`; `pnpm run build` |
-| `hosted-mcp` | same pnpm/Node, plus `actions/setup-python@v5` **Python 3.14**, a venv from `apps/appwrite-mcp/requirements.txt`, and `python -m unittest` over `python/nomo-transport/tests`                       |
-| `apple`      | `macos-latest`; `xcodebuild`, `swift test` over `apps/apple/CompanionProtocolKit` and `apps/apple/NomoDesignSystem`, `NOMO.xcodeproj` on the `iPad Pro 11-inch (M5)` simulator                      |
+| Former job | Historical toolchain |
+| --- | --- |
+| `gates` | `ubuntu-latest`, matrix Node **24, 26**; pnpm 10.33.0; typecheck, test, `node --test`, four e2e scripts, build |
+| `hosted-mcp` | pnpm/Node, Python 3.14, Appwrite MCP venv and Python transport tests |
+| `apple` | `macos-latest`; Xcode, Swift package tests, iOS simulator |
 
-So NOMO's existing matrix is **pnpm + Node 24/26 + Python 3.14 + Xcode/Swift**.
-No Rust toolchain step, no bun, no Bazel, no Nix.
+This is historical infrastructure context only. It is not an active test matrix,
+acceptance criterion or blocker; local checks govern current verification.
 
 What each upstream needs (measured):
 

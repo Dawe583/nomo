@@ -55,9 +55,7 @@ Sunday demo.
   checkout, `feat/agent-harness`, or the compatibility worktree.
 - Keep at most two active subagents, reuse the two existing read-only reviewers,
   and do not spawn more.
-- Commit reviewed increments and push them to the existing GitLab feature branch.
-  Push the finished branch to GitHub only after verification. Do not push to
-  `main`, open a PR, or trigger GitHub Actions without explicit approval.
+- Commit reviewed increments to the task-owned feature branch after local verification. Do not use GitHub Actions or hosted jobs as a verification or approval gate.
 - Before code changes, record the current failing or passing baseline. Required
   project checks are `pnpm run typecheck`, `pnpm test`, and `pnpm run build`.
 

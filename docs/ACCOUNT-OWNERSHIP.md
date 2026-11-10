@@ -252,7 +252,7 @@ conditions:
    The repository does not commit a captured run of that gate, so no claim is
    made here about a particular run having passed; what is verifiable from the
    tree is that the suite exists, is wired into the gate, and is run by
-   `.github/workflows/cloud-integration.yml` against a job scoped PostgreSQL 17.
+   The former hosted cloud-integration workflow was retired; do not use it as a verification or approval gate.
 3. **Done, as a decision.** The operator is a distinct scoped role with no
    implicit access to anybody's rows, as described above.
 4. **Done, as a decision.** The demo namespace is owned.

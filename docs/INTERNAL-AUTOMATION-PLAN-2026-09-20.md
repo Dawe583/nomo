@@ -11,6 +11,11 @@ Status: implementation plan. Items marked “verified now” already exist; all 
 
 ## 1. Goal
 
+This dated plan is historical. Hosted CI and the GitHub/GitLab workflow files it
+references have been retired. No hosted CI status, account billing or job
+result is an active prerequisite, release gate or reason to block local work.
+All acceptance verification in a continuation uses documented local checks.
+
 Move routine internal work into four Slack agents without letting an agent approve its own consequential action.
 
 The target system should:
@@ -29,8 +34,8 @@ The target system should:
 - `Dawe583/void` was mirrored into `VOID-harness/void` with complete commit history.
 - Five branches were copied with matching SHAs: `main`, `GUI-WEB`, `claude/poradna-design-animations-wwbc1l`, `codex/gui-upgrade`, `codex/void-beta`.
 - Four desktop beta tags were copied with matching SHAs.
-- Existing CI covers Node 24 and 26, typecheck, build, package tests, control-plane tests and four end-to-end programs.
-- Separate workflows cover disposable PostgreSQL integration, manifest persistence, Windows desktop build/install smoke and Pages.
+- Hosted pipelines, including the Node 24/26 test matrix, were historical verification infrastructure and are retired. Their results are not current acceptance or release gates.
+- Historical workflows also covered disposable PostgreSQL integration, manifest persistence, Windows desktop build/install smoke and Pages. These workflows are retired and are not active release gates.
 - Packages remain private at version `0.1.0`. `docs/RELEASE.md` intentionally blocks public npm release until installable artifacts, protected publishing, real-service checks and release evidence exist.
 
 ### Slack agents
@@ -69,7 +74,7 @@ Reuse current components:
 - n8n: orchestration and webhooks.
 - Slack agents: interaction and approval surface.
 - GitHub App: repository identity and scoped API access.
-- GitHub Actions: repository-local verification and release evidence.
+- Historical hosted jobs once provided repository-local verification and release evidence; hosted CI is retired.
 - Graphify: architecture and decision context, updated after accepted changes.
 
 Do not add a general event bus, a second workflow engine, a second project tracker or a custom social-media queue.
@@ -198,7 +203,7 @@ Read installation:
 - Repository metadata: read
 - Contents: read
 - Issues and pull requests: read
-- Actions/workflow runs: read
+- Hosted action/workflow runs: removed from scope; no status or billing dependency.
 - Deployments and commit statuses: read
 - Security alerts: read only if organization policy allows it
 
@@ -260,7 +265,7 @@ Until 1.0:
 Release gate:
 
 1. clean reviewed commit;
-2. required CI and integration workflows green;
+2. local verification and disposable integration evidence recorded; hosted jobs are not used;
 3. migration and compatibility notes complete;
 4. secret scan clean;
 5. artifact list and digests complete;
@@ -554,7 +559,7 @@ Repository evidence:
 - `docs/RELEASE.md`
 - `docs/GO-TO-MARKET.md`
 - `docs/UPGRADE-PLAN-NEXT-2026-09-18.md`
-- `.github/workflows/*.yml`
+- Historical hosted workflow inventory. No active workflow configuration remains.
 - Slack Agents `runtime/tools.js`, `runtime/github.js`, `runtime/scheduler.js`, personal and coordinator prompts
 
 External primary guidance:

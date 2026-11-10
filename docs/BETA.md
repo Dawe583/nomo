@@ -188,13 +188,11 @@ a source checkout and the local web interface or CLI.
    an MCP server for the first check.
 4. Confirm the local web interface and Settings open, the provider stays
    disconnected, and built-in local documents work.
-5. Report only a reproducible, sanitized issue through the private form below.
+5. Report only a reproducible, sanitized issue through an owner-designated local feedback path. There is no hosted issue form or automatic feedback channel in the current beta.
 
-### Private feedback process
+### Historical private feedback process
 
-Submit manually through the [private beta feedback issue form](https://github.com/Dawe583/void/issues/new?template=feedback.yml). The repository is private; submitted issues are visible to repository collaborators, and GitHub displays the reporter's account to them. The form does not ask for a name or email. Do not submit if that visibility is unsuitable.
-
-This process adds no analytics, telemetry, automatic upload, diagnostic collection, or feedback server. A tester chooses what to type and submits it to the repository issue tracker. No other feedback address or private channel is documented. If GitHub does not let your role create an issue, do not send feedback or diagnostics elsewhere; request issue access through the same private repository access path that granted your repo access.
+The former repository issue form was retired. Do not direct testers to it or to an alternate hosted channel. This section is retained only as historical process context.
 
 The form asks for:
 

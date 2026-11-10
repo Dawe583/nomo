@@ -570,11 +570,10 @@ Ordered, because each is a prerequisite for the next:
    exists and is reusable.
 3. **A name that is free**, from the free set in this section. The unscoped
    `nomo` is not available.
-4. **A publishing identity and a reviewed publish workflow**, with an explicit
-   package allowlist and protected approval. `docs/RELEASE.md:88-98` lists this
-   as release blocker 1 and 2, and the instruction there not to un-private a
-   manifest to make a publish command pass is the whole reason section 2 does
-   not touch the private flags.
+4. **A publishing identity and a reviewed publication procedure**, with an
+   explicit package allowlist and protected human approval. Do not configure a
+   hosted workflow or use its status as a release gate. The instruction not to
+   un-private a manifest to make a publish command pass remains in force.
 5. **Real-service end-to-end evidence**, which `docs/RELEASE.md:104-110`
    records as release blocker 4 and which no packaging change substitutes for.
 
@@ -707,9 +706,8 @@ copy rather than an instruction to be careful.
 ## 9. What this document does not establish
 
 - **That a push or a tag reaches the remote.** `docs/RELEASE.md:111-114`
-  records pushing as credential-blocked. No push, and no remote CI result, is
-  claimed here; section 4 step 5 is written as the procedure to run once a
-  human has restored access.
+  records a historical access restriction. No remote CI result is an active
+  prerequisite; hosted jobs and billing are not used as release blockers.
 - **That `nomo update` behaves as section 5 specifies.** It is the
   specification. The implementation lands against it and this section is
   corrected if the implementation and the document ever disagree.

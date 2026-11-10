@@ -1,14 +1,15 @@
 # Windows desktop
 
+> Historical workflow references below describe retired hosted jobs. They are not active verification or release gates.
+
 ## Release scope
 
-Windows is out of scope for the NOMO 1.0.1 delivery. The current-source
-Windows evidence is green for packaging and the installed-application
-smoke on a Windows 11 local host (see the dated section below); the Windows
-gate still needs a current-source Windows CI run, installer/checksum upload
-and a recovery/attestation pass before it can be claimed for release.
-Historical beta evidence is retained below; it cannot certify the current
-candidate.
+Windows is out of scope for the NOMO 1.0.1 delivery. The dated section below
+records current-source Windows packaging and installed-application smoke
+results from a Windows 11 local host. Separate recovery/attestation evidence
+is still required before claiming that release scope. Hosted Windows jobs and
+artifact uploads are retired and are not gates. Historical beta evidence below
+cannot certify the current candidate.
 
 The historical Windows build target used the shared NOMO browser GUI and local
 guarded runtime. Its intended platform was Windows 10/11 x64 with WebView2.
@@ -24,9 +25,12 @@ The shared `apps/desktop/src-tauri/tauri.conf.json` targets only `app` and
 `installMode: currentUser`. It is generated under
 `apps/desktop/src-tauri/target/release/bundle/nsis/`.
 
-The manually dispatched **Windows desktop** GitHub Actions workflow builds the
-installer, tests credential storage, installs the package, and checks that its
-WebView can load the local runtime, open the slash menu, select a real tool and
+Historical note: the manually dispatched Windows desktop workflow described
+below has been retired. Its status is not a release gate or blocker.
+
+The former workflow built the installer, tested credential storage, installed
+the package, and checked that its WebView could load the local runtime, open
+the slash menu, select a real tool and
 download an export. Only a successful run
 uploads an installer and its SHA-256 file. Builds are unsigned previews; Windows
 may display a SmartScreen warning. No Windows download is advertised until the
@@ -120,15 +124,14 @@ themselves, `CredFree`, the `get_generic_password` error mapping, and the
 
 ## Historical beta-4 evidence (not current-candidate evidence)
 
-The Windows x64 package passed native build, credential tests, silent installation
-and the command-menu/runtime/export smoke check in Actions run
-https://github.com/Dawe583/void/actions/runs/34896103807 .
+Historical beta-4 evidence reported that the Windows x64 package passed native
+build, credential tests, silent installation and command-menu/runtime/export
+smoke in former Actions run `34896103807`. This is retained as historical
+context only; no hosted result is a current acceptance gate.
 
-The run above is historical beta-4 evidence for the published installer. It
-does not certify the current source revision. The current-source gate remains
-open until a Windows x64/MSVC runner compiles the `cfg(windows)` Rust paths,
-runs the Credential Manager tests, installs the freshly built NSIS package and
-passes the installed WebView/export smoke.
+The run does not certify the current source revision. The Windows-native
+Credential Manager tests and fresh NSIS installed WebView/export smoke require
+a Windows machine; hosted runner use is not part of the project gate.
 Published installers and checksums:
 https://github.com/Dawe583/void/releases/tag/desktop-v0.1.0-beta.4 .
 
@@ -181,7 +184,6 @@ Next for the Windows gate:
   install to `%LOCALAPPDATA%\NOMO`, and BOTH installed smokes green , 
   `%LOCALAPPDATA%\VOID\nomo-desktop.exe --smoke-test` and `--smoke-mobile`:
   bundled Node runtime, real WebView render, byte-exact Blob export, mobile
-  toolbar. Packaging/smoke packaging is ready for a human to run the manual
-  GitHub Actions `windows-desktop` workflow and, if it passes on a real
-  runner, move the gate. The remaining gate item is that manual CI run and
-  signing/publishing policy, not the desktop code.
+  toolbar. Packaging/smoke packaging is ready for local verification. The
+  former hosted Windows gate is retired, not a release blocker. Signing and
+  publishing policy remain separate release decisions.

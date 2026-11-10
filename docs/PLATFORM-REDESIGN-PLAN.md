@@ -41,7 +41,7 @@ as its starting line.
 | Localisation is an `if language == "cs"` branch, not a resource catalog, although the build is told to emit string catalogs | `apps/apple/NOMOApp/AppCopy.swift`, `apps/apple/project.yml` |
 | The project is iOS only, with Mac Catalyst explicitly disabled | `apps/apple/project.yml` |
 | The generated Xcode project is committed and checked by a script | `apps/apple/NOMO.xcodeproj`, `pnpm apple:project:check` |
-| No workflow in the repository builds or tests any Apple target | `.github/workflows/ci.yml` |
+| Historical workflow inventory found no Apple target build | The hosted workflow files have since been retired |
 
 The protocol library beside it is in a different state: `CompanionProtocolKit`
 is complete, tested with 58 host cases, and declares iOS as its only platform,
@@ -166,7 +166,7 @@ expressed as measurements on the rendered element.
 | Task | Acceptance |
 | --- | --- |
 | Run the full accessibility gate from the design system on all three surfaces and record the result | a table of the ten gates, each with a command or a recorded run whose output was read |
-| Add Apple builds to CI, including the host-side package tests and a simulator run for iOS | the workflow file exists, is green on a pushed commit, and the matrix row stops saying the Apple results rest on console-log scraping |
+| Run the Apple package tests and iOS simulator checks locally on a supported Mac | local command output is captured and reviewed; this evidence remains local and is not a hosted-workflow or release gate |
 | Add visual regression at three widths and both appearances | a diff that changes the design system in a way nobody intended fails the build |
 | Re-measure the web's contrast in both appearances, the way the iOS suite already measures its own | the measured ratios are in the test output, not in a comment |
 | Update the mobile and accessibility documents to say what was actually tested on hardware | `docs/MOBILE-LAYOUT-QA.md` and `docs/MOBILE-ACCESSIBILITY-ACCEPTANCE.md` no longer describe a browser viewport as a device |
