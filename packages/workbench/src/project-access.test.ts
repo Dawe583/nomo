@@ -1,6 +1,14 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import {
+  mkdir,
+  mkdtemp,
+  readFile,
+  readdir,
+  rm,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -207,6 +215,308 @@ test("Workbench summarizes, revokes, and deletes only the owned project copy", a
   assert.deepEqual(await fixture.app.listProjectWorkspaces(), []);
 });
 
+test("fixture project command creates a nested file only in the confirmed copy and exposes truthful diff", async (t) => {
+  const directory = await mkdtemp(join(tmpdir(), "nomo-project-copy-fixture-"));
+  const projectRoot = join(directory, "original");
+  const bin = join(directory, "bin");
+  const fakeRunner = join(directory, "fake-runtime.mjs");
+  const fakeRuntime = join(bin, "docker");
+  const runtimeLog = join(directory, "runtime.log");
+  const expectedSourceFile = join(directory, "expected-source.txt");
+  await mkdir(projectRoot);
+  await mkdir(bin);
+  await writeFile(join(projectRoot, "README.md"), "original\n");
+  execFileSync("git", ["init", "--quiet"], {
+    cwd: projectRoot,
+    stdio: "ignore",
+  });
+  execFileSync("git", ["add", "-A"], { cwd: projectRoot, stdio: "ignore" });
+  await writeFile(runtimeLog, "");
+  t.after(() => rm(directory, { recursive: true, force: true }));
+
+  const originalDigest = async () =>
+    createHash("sha256")
+      .update(await readFile(join(projectRoot, "README.md")))
+      .digest("hex");
+  const beforeDigest = await originalDigest();
+  const command = "printf fixture-ok > nested/answer.txt";
+  const containerId = "a".repeat(64);
+  const imageId = `sha256:${"b".repeat(64)}`;
+  const runtimeSource =
+    String.raw`import { appendFileSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+const args = process.argv.slice(2);
+appendFileSync(__RUNTIME_LOG__, args[0] + "\n");
+const containerId = __CONTAINER_ID__;
+if (args[0] === "create") {
+  const expectedSource = readFileSync(__EXPECTED_SOURCE_FILE__, "utf8");
+  const expectedName = args[3];
+  const expected = ["create", "--pull=never", "--name", expectedName, "--network=none", "--read-only", "--user", process.getuid() + ":" + process.getgid(), "--cap-drop=ALL", "--security-opt=no-new-privileges", "--pids-limit=64", "--cpus=1", "--memory=2g", "--memory-swap=2g", "--log-driver=none", "--tmpfs", "/tmp:rw,nosuid,nodev,size=134217728,mode=1777", "--mount", "type=bind,source=" + expectedSource + ",target=/workspace,bind-propagation=rprivate", "--workdir", "/workspace", "--entrypoint", "/bin/sh", __IMAGE_ID__, "-c", __COMMAND__];
+  if (!/^nomo-[a-f0-9]{32}$/.test(expectedName) || JSON.stringify(args) !== JSON.stringify(expected)) {
+    appendFileSync(__RUNTIME_LOG__, JSON.stringify({ args, expected }) + "\n");
+    process.exit(91);
+  }
+  const target = join(expectedSource, "nested", "answer.txt");
+  mkdirSync(dirname(target), { recursive: true });
+  writeFileSync(target, "fixture-ok");
+  process.stdout.write(containerId + "\n");
+} else if (args[0] === "start" && args[1] === "--attach" && args[2] === containerId) {
+  if (args.length !== 3) process.exit(92);
+  process.stdout.write("fixture-created\n");
+} else if (args[0] === "wait" && args[1] === containerId) {
+  if (args.length !== 2) process.exit(93);
+  process.stdout.write("0\n");
+} else if (args[0] === "rm" && args[1] === "--force" && /^nomo-[a-f0-9]{32}$/.test(args[2] ?? "")) {
+  if (args.length !== 3) process.exit(94);
+} else {
+  process.exit(95);
+}
+`
+      .replaceAll("__RUNTIME_LOG__", JSON.stringify(runtimeLog))
+      .replaceAll("__CONTAINER_ID__", JSON.stringify(containerId))
+      .replaceAll(
+        "__EXPECTED_SOURCE_FILE__",
+        JSON.stringify(expectedSourceFile),
+      )
+      .replaceAll("__IMAGE_ID__", JSON.stringify(imageId))
+      .replaceAll("__COMMAND__", JSON.stringify(command));
+  await writeFile(fakeRunner, runtimeSource);
+  const quotedNode = process.execPath.replaceAll("'", "'\\''");
+  await writeFile(
+    fakeRuntime,
+    `#!/bin/sh\nexec '${quotedNode}' '${fakeRunner}' "$@"\n`,
+    { mode: 0o755 },
+  );
+  const requests: Array<{
+    tools: Array<{ function: { name: string; description: string } }>;
+  }> = [];
+  let issuedCall = false;
+  const fetcher: typeof fetch = async (url, init) => {
+    if (String(url).endsWith("/models"))
+      return Response.json({ data: [{ id: "fixture" }] });
+    const body = JSON.parse(String(init?.body));
+    requests.push(body);
+    const tool = body.tools.find(
+      (candidate: { function: { description: string } }) =>
+        candidate.function.description.startsWith(`${PROJECT_EXEC_TOOL.name}:`),
+    );
+    if (!tool || issuedCall)
+      return Response.json({
+        choices: [
+          {
+            message: { role: "assistant", content: "No further action." },
+            finish_reason: "stop",
+          },
+        ],
+      });
+    issuedCall = true;
+    return Response.json({
+      choices: [
+        {
+          message: {
+            role: "assistant",
+            content: null,
+            tool_calls: [
+              {
+                id: "fixture-project-write",
+                type: "function",
+                function: {
+                  name: tool.function.name,
+                  arguments: JSON.stringify({ command }),
+                },
+              },
+            ],
+          },
+          finish_reason: "tool_calls",
+        },
+      ],
+    });
+  };
+  const policyDir = join(directory, "policies");
+  await mkdir(policyDir);
+  const policyPath = join(policyDir, "operator.yaml");
+  await writeFile(
+    policyPath,
+    "version: 1\nrules:\n  - match:\n      tool: nomo_project_exec\n    decision: allow\n    rationale: fixture permits one project command\n  - match: {}\n    decision: deny\n    rationale: fixture denies every other call\n",
+  );
+  const fixture = await isolatedWorkbench(
+    t,
+    fetcher,
+    {
+      NOMO_PERMISSION_MODE: "normal",
+      NOMO_POLICY_PATH: policyPath,
+      NOMO_PROJECT_SANDBOX_RUNTIME: "docker",
+      NOMO_PROJECT_SANDBOX_IMAGE: imageId,
+    },
+    { configure: false },
+  );
+  const originalPath = process.env.PATH;
+  try {
+    await fixture.app.configure({
+      baseUrl: "https://fixture.test/v1",
+      apiKey: "fixture",
+    });
+    fixture.app.upsertAgent({ ...profile, policyProfile: "operator" });
+    const { rootDigest } = await fixture.app.confirmProjectAccess(
+      projectRoot,
+      [],
+    );
+    const expectedCopy = await (
+      await import("node:fs/promises")
+    ).realpath(
+      join(
+        fixture.root,
+        "project-workspaces",
+        rootDigest.slice("sha256:".length),
+        "source",
+      ),
+    );
+    await writeFile(expectedSourceFile, expectedCopy);
+    process.env.PATH = `${bin}:${originalPath ?? ""}`;
+    const session = await fixture.app.start(
+      "Create the nested fixture file",
+      "fixture",
+      undefined,
+      undefined,
+      profile.id,
+    );
+    await fixture.app.settled();
+
+    assert.equal(
+      requests[0]!.tools.some((item) =>
+        item.function.description.startsWith(`${PROJECT_EXEC_TOOL.name}:`),
+      ),
+      true,
+    );
+    const toolResult = fixture.app
+      .get(session.id)!
+      .events.find((event) => event.type === "tool.result");
+    assert.ok(toolResult);
+    assert.match(
+      (toolResult.payload as { result: { content: Array<{ text: string }> } })
+        .result.content[0]!.text,
+      /^stdout:\n.*-created\n\nexit_code: 0$/,
+    );
+    assert.deepEqual((await readdir(projectRoot)).sort(), [
+      ".git",
+      "README.md",
+    ]);
+    assert.equal(await originalDigest(), beforeDigest);
+    assert.equal(
+      await readFile(join(expectedCopy, "nested/answer.txt"), "utf8"),
+      "fixture-ok",
+    );
+    const status = await fixture.app.projectWorkspaceStatus();
+    assert.deepEqual(
+      status.changes.map((change) => [change.path, change.operation]),
+      [["nested/answer.txt", "add"]],
+    );
+    assert.equal(status.added, 1);
+    const diff = await fixture.app.projectWorkspaceDiff("nested/answer.txt");
+    assert.match(diff.file.diff, /\+fixture-ok/);
+    const resultEvent = fixture.app
+      .get(session.id)!
+      .events.find(
+        (event) =>
+          event.type === "tool.result" &&
+          (event.payload as { tool?: string }).tool === PROJECT_EXEC_TOOL.name,
+      );
+    assert.ok(resultEvent);
+    assert.match(JSON.stringify(resultEvent.payload), /exit_code: 0/);
+    assert.deepEqual((await readFile(runtimeLog, "utf8")).trim().split("\n"), [
+      "create",
+      "start",
+      "wait",
+      "rm",
+    ]);
+
+    const noCallRequests: Array<{
+      tools: Array<{ function: { name: string; description: string } }>;
+    }> = [];
+    const noCallFixture = await isolatedWorkbench(
+      t,
+      async (url, init) => {
+        if (String(url).endsWith("/models"))
+          return Response.json({ data: [{ id: "fixture" }] });
+        noCallRequests.push(JSON.parse(String(init?.body)));
+        return Response.json({
+          choices: [
+            {
+              message: {
+                role: "assistant",
+                content: "No project change was requested.",
+              },
+              finish_reason: "stop",
+            },
+          ],
+        });
+      },
+      {
+        NOMO_PERMISSION_MODE: "normal",
+        NOMO_POLICY_PATH: policyPath,
+        NOMO_PROJECT_SANDBOX_RUNTIME: "docker",
+        NOMO_PROJECT_SANDBOX_IMAGE: imageId,
+      },
+      { configure: false },
+    );
+    await noCallFixture.app.configure({
+      baseUrl: "https://fixture.test/v1",
+      apiKey: "fixture",
+    });
+    noCallFixture.app.upsertAgent({ ...profile, policyProfile: "operator" });
+    const noCallAccess = await noCallFixture.app.confirmProjectAccess(
+      projectRoot,
+      [],
+    );
+    const noCallSession = await noCallFixture.app.start(
+      "Describe only",
+      "fixture",
+      undefined,
+      undefined,
+      profile.id,
+    );
+    await noCallFixture.app.settled();
+    const noCallSource = join(
+      noCallFixture.root,
+      "project-workspaces",
+      noCallAccess.rootDigest.slice("sha256:".length),
+      "source",
+    );
+    await assert.rejects(
+      readFile(join(noCallSource, "nested/answer.txt"), "utf8"),
+      { code: "ENOENT" },
+    );
+    assert.equal(
+      (await noCallFixture.app.projectWorkspaceStatus()).changes.length,
+      0,
+    );
+    assert.equal(
+      noCallFixture.app
+        .get(noCallSession.id)!
+        .events.some(
+          (event) =>
+            event.type === "tool.started" &&
+            (event.payload as { tool?: string }).tool ===
+              PROJECT_EXEC_TOOL.name,
+        ),
+      false,
+    );
+    assert.equal(
+      (await readFile(runtimeLog, "utf8")).trim().split("\n").length,
+      4,
+    );
+    assert.equal(noCallRequests.length, 1);
+    assert.equal(
+      noCallRequests[0]!.tools.some((item) =>
+        item.function.description.startsWith(`${PROJECT_EXEC_TOOL.name}:`),
+      ),
+      true,
+    );
+  } finally {
+    if (originalPath === undefined) delete process.env.PATH;
+    else process.env.PATH = originalPath;
+  }
+});
 test("an allowlisted R3 project command runs in the pinned sandbox and records dispatch evidence", {
   skip:
     !process.env.NOMO_PROJECT_SANDBOX_RUNTIME ||
