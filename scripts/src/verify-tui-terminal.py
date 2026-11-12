@@ -134,7 +134,7 @@ DiffScreenWriter.prototype.write = function(frame) {
         os.write(master, b"\x03/find PTY test\r")
         read_until("1 matching messages", ready=True)
         os.write(master, b"\x1b")
-        read_until("Undid", ready=True)
+        read_until("Returned to Chat.", ready=True)
         os.write(master, b"/bottom\r")
         read_until("Following latest messages", ready=True)
         os.write(master, b"/tools write\r")
@@ -152,6 +152,9 @@ DiffScreenWriter.prototype.write = function(frame) {
         os.write(master, b"/expand\r")
         read_until("Full tool output", ready=True)
         os.write(master, b"\x0f")
+        read_until("Ctrl+O changes activity detail while an agent is running.", ready=True)
+        # Ctrl+O is run-only; /expand must still toggle the unchanged output mode.
+        os.write(master, b"/expand\r")
         read_until("Compact tool output", ready=True)
         redraw_start = len(output)
         os.write(master, b"\x0c")
@@ -163,7 +166,7 @@ DiffScreenWriter.prototype.write = function(frame) {
         read_until("1 matching messages", ready=True)
         os.write(master, b"\x1b")
         # Closing search changes the transcript, not the already visible tab label.
-        read_until("Undid", ready=True)
+        read_until("Returned to Chat.", ready=True)
         os.write(master, b"\x15\x04")
         read_until("Press Ctrl+D again to exit.", ready=True)
         os.write(master, b"\x04")

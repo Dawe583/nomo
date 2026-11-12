@@ -1553,8 +1553,11 @@ export async function runWorkspaceTui(
           } else void task(() => ui.command("/rewind"));
         } else {
           lastEsc = now;
+          const closingChatDetail =
+            ui.tab === "chat" && ui.detail !== undefined;
           ui.detail = undefined;
           ui.scroll = 0;
+          if (closingChatDetail) ui.notice = "Returned to Chat.";
         }
       } else if (key.name === "return")
         void task(() => navigate(() => ui.openSelected()));
