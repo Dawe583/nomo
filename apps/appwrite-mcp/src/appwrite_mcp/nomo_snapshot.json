@@ -10,6 +10,7 @@
     "feed",
     "replay",
     "taint",
+    "harness",
     "verify",
     "doctor",
     "config",
