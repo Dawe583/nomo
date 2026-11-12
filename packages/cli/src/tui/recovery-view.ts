@@ -137,7 +137,7 @@ function buildValue(row: RecoveryRow, motion: MotionContext): string {
       : "";
   const reason: string =
     row.reason !== undefined && sanitizeText(row.reason).trim() !== ""
-      ? ` -- ${sanitizeText(row.reason).trim()}`
+      ? ` · ${sanitizeText(row.reason).trim()}`
       : "";
   return `${icon} ${statePill} ${kind}${undoes}${path}${reason}${formatWhen(row.at)}`;
 }

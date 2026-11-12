@@ -24,7 +24,21 @@ const state = process.argv.includes("--hold")
   : previewState;
 
 if (process.argv.includes("--interactive-hold")) {
-  const result = await promptForHold(previewHold, capabilities);
+  const previewOutput: Pick<NodeJS.WriteStream, "write"> = {
+    write(chunk: string | Uint8Array): boolean {
+      const text =
+        typeof chunk === "string" ? chunk : Buffer.from(chunk).toString("utf8");
+      return process.stderr.write(
+        text.replace("NOMO / HUMAN DECISION", "NOMO / ILLUSTRATIVE PREVIEW"),
+      );
+    },
+  };
+  const result = await promptForHold(
+    previewHold,
+    capabilities,
+    process.stdin,
+    previewOutput,
+  );
   process.stdout.write(
     `hold=${result} raw=${process.stdin.isRaw === true ? "on" : "off"}\n`,
   );

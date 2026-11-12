@@ -129,8 +129,8 @@ export function renderMinimap(
     const event = events[eventIndex];
     const inViewport = eventIndex >= viewportStart && eventIndex < viewportEnd;
 
-    let glyph = MINIMAP_GLYPHS[event.kind] ?? "?";
-    let tone = MINIMAP_TONES[event.kind] ?? "muted";
+    let glyph = event ? (MINIMAP_GLYPHS[event.kind] ?? "?") : "?";
+    let tone = event ? (MINIMAP_TONES[event.kind] ?? "muted") : "muted";
 
     // Highlight viewport position with a brighter variant
     if (inViewport) {
@@ -139,7 +139,7 @@ export function renderMinimap(
     }
 
     // For gap events, show as dots
-    if (event.kind === "gap" && !inViewport) {
+    if (event?.kind === "gap" && !inViewport) {
       glyph = "·";
     }
 
