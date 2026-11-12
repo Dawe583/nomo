@@ -7026,11 +7026,10 @@ export function renderWorkspace(
     Math.max(0, lines.length - bodyHeight),
   );
   ui.viewport = { offset, height: bodyHeight, total: lines.length };
-  // User prompt rows drive the { and } jumps. Rich chat marks the prompt
-  // label by style; plain transcript rows end with the YOU marker instead.
+  // User prompt rows drive the { and } jumps. The role header is the anchor;
+  // wrapped user content must not create additional jump stops.
   ui.promptRows = lines
     .map((line, index) =>
-      styled?.[index]?.style === "user" ||
       line.startsWith(`${roleIcon("user")} YOU`) ||
       / YOU$/.test(line)
         ? index
