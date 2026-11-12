@@ -128,7 +128,6 @@ export function shortcutHintsFor(
   if (context.editing) {
     push("Shift+Enter", "newline", "edit");
     push("Ctrl+R", "search", "edit");
-    push("Ctrl+O", "output", "edit");
     push("Ctrl+T", "todos", "edit");
     push("Ctrl+J", "newline", "edit");
     push("/", "commands", "edit");
@@ -139,7 +138,10 @@ export function shortcutHintsFor(
     push("PgUp/PgDn", "scroll", "panel");
     push("1-9", "toggle hunks", "panel");
   }
-  if (context.running) push("/queue", "prompt", "action");
+  if (context.running) {
+    push("Ctrl+O", "activity detail", "panel");
+    push("/queue", "prompt", "action");
+  }
   // The count itself never enters a label: the status bar owns the number,
   // and a stale count baked into a hint reads as authority after it changes.
   if (context.pending > 0) {

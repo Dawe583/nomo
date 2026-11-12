@@ -109,7 +109,8 @@ The workspace prompt follows the reference terminal: Enter sends; Shift+Enter,
 Alt+Enter, Ctrl+J or backslash+Enter inserts a newline; Esc stops a run; Esc Esc
 clears input or opens checkpoints when empty; Shift+Tab cycles local modes;
 Alt+M / Shift+Alt+M cycle the current provider models for new conversations;
-Ctrl+R searches history; Ctrl+O toggles tool output; Ctrl+L redraws, twice
+Ctrl+R searches history; Ctrl+O cycles run activity detail while an agent runs;
+double Left on an empty Chat composer opens Sessions; Ctrl+L redraws, twice
 clears; Ctrl+S stashes input; Ctrl+G opens the editor; Meta+P opens models;
 Ctrl+C clears, cancels or exits; Ctrl+D exits from empty input. Ctrl+B
 background tasks, image paste, suspend and Vim editing have no NOMO equivalent.
@@ -122,6 +123,11 @@ PATH only and never executes anything.
 may be set within; `/settings key value` sets one. The table is generated from
 `packages/workbench/src/harness-settings.ts`, so a limit without a declared
 consumer cannot appear here.
+The Chat composer target is stored in physical pixels with
+`/settings composer-height-px N` (72–320 px; default 123 px) and translated to
+whole terminal rows. Set `NOMO_TUI_CELL_HEIGHT_PX` when the terminal's cell
+height is known; otherwise the renderer uses a documented 24 px per-row
+fallback.
 
 ### Shortcut legend
 
@@ -137,7 +143,7 @@ pending. The legend respects `NOMO_TUI_COLOR=0` (monochrome) and
 Icon categories:
 
 - nav (`⇥`): Tab switches panels, Enter opens, Esc goes back, arrows navigate
-- edit (`✎`): Ctrl+R searches history, Ctrl+O toggles tool output, Ctrl+T
+- edit (`✎`): Ctrl+R searches history, Ctrl+T
   transposes characters while editing; outside the composer it opens TODOs, Ctrl+J inserts a newline
 - action (`⚡`): y accepts, n rejects, u undoes, `/queue` queues
 - mode (`◆`): Shift+Tab cycles local modes
@@ -147,6 +153,8 @@ Icon categories:
 The catalog and renderer live in `packages/cli/src/tui/shortcuts.ts`, covered
 by `packages/cli/src/tui/workspace-shortcuts.test.ts`.
 
-### Aperture identity
+### NOMO identity and icons
 
-The GUI header uses the exact SVG paths and viewBox from `Dawe583/void-empty`, `artifacts/void/src/components/site/shell.tsx` (Brand). The PWA icon copies `artifacts/void/public/void-aperture-mark.svg`. `brand.ts` rasterizes those same brackets, square, and center dot into terminal half blocks, with an orange inner square when color is available. The mark remains monochrome with NO_COLOR and in redirected output.
+The terminal header uses the six-by-six NOMO grid mark. Its two signal tiles use coral and cyan when the terminal supports color; the rest of the mark uses the terminal's foreground, so the user keeps their configured background and theme. The renderer does not print a second `NOMO` wordmark beneath the grid.
+
+The bundled tab and semantic graphics are Iconoir artwork. The icon files, license, source mapping and pinned upstream revision are in `packages/cli/src/tui/icons/`. The renderer loads a complete user icon override when available and falls back to the bundled pack when the override is incomplete.

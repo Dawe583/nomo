@@ -55,12 +55,12 @@ const EDITING_BINDINGS: readonly Binding[] = [
     also: ["Ctrl+J"],
   },
   { keys: "Ctrl+R", action: "search composer", when: "editing" },
-  { keys: "Ctrl+O", action: "toggle output", when: "editing" },
   { keys: "Ctrl+T", action: "toggle todos", when: "editing" },
   { keys: "/", action: "command menu", when: "editing" },
 ];
 
 const RUNNING_BINDINGS: readonly Binding[] = [
+  { keys: "Ctrl+O", action: "cycle agent activity detail", when: "running" },
   { keys: "/queue", action: "queue next prompt", when: "running" },
 ];
 

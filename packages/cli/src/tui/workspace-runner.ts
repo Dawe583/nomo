@@ -22,6 +22,7 @@ import {
   searchHistoryPrompts,
   message,
   TUI_COMMANDS,
+  type TuiLocalSettings,
   type WorkspaceTab,
 } from "./workspace.ts";
 import {
@@ -34,6 +35,7 @@ import {
 import { moveHunk, setSide, toggleHunk } from "./diff-panel.ts";
 import { DiffScreenWriter } from "./watch.ts";
 import { sanitizeText } from "./layout.ts";
+import { nextRunActivityMode } from "./run-activity.ts";
 import { dataDir as productDataDir } from "../../../ledger/src/paths.ts";
 import { envValue } from "../../../ledger/src/env-compat.ts";
 import { normalizeOwnedEnv } from "../env-keys.ts";
@@ -59,7 +61,7 @@ export function nextModelId(
 
 export type WorkspaceShortcut =
   | "redraw"
-  | "toggle-tools"
+  | "cycle-activity"
   | "search-history"
   | "stash"
   | "external-editor"
@@ -77,7 +79,7 @@ export function workspaceShortcut(
     Object.keys(bindings) as Array<keyof WorkspaceKeybindings>
   ).find((candidate) => bindings[candidate].name === key.name);
   if (action === "redraw") return "redraw";
-  if (action === "toggle-tools") return "toggle-tools";
+  if (action === "cycle-activity") return "cycle-activity";
   if (action === "search-history" && editing) return "search-history";
   if (action === "stash") return "stash";
   if (action === "external-editor") return "external-editor";
@@ -99,6 +101,36 @@ export class ChordTracker {
     this.pendingAt = 0;
     if (open && key.ctrl && key.name === "e") return "external-editor";
     return;
+  }
+}
+
+/** The terminal reports keypresses without key-up events; require a deliberate
+ * second Left press, not a rapid key-repeat, before opening Sessions. */
+export class DoubleLeftSessionShortcut {
+  private lastPressAt: number | undefined;
+
+  press(
+    key: Pick<Key, "name" | "ctrl" | "meta" | "shift">,
+    eligible: boolean,
+    now = Date.now(),
+  ): boolean {
+    if (!eligible || key.name !== "left" || key.ctrl || key.meta || key.shift) {
+      this.lastPressAt = undefined;
+      return false;
+    }
+    const previous = this.lastPressAt;
+    this.lastPressAt = now;
+    if (previous === undefined) return false;
+    const elapsed = now - previous;
+    if (elapsed < 60) {
+      this.lastPressAt = undefined;
+      return false;
+    }
+    if (elapsed <= 450) {
+      this.lastPressAt = undefined;
+      return true;
+    }
+    return false;
   }
 }
 
@@ -603,9 +635,11 @@ export async function runWorkspaceTui(
     lastRecoveryJob?: { sessionId: string; jobId: string };
     model?: string;
     compactTools?: boolean;
+    settings?: Partial<TuiLocalSettings>;
     mode?: string;
     drafts: Record<string, string>;
   }>();
+  ui.applySavedSettings(saved?.settings);
   const drafts = saved?.drafts ?? {};
   const input = new WorkspaceInput();
   await ui.initialize();
@@ -647,6 +681,10 @@ export async function runWorkspaceTui(
         ui,
         process.stdout.columns ?? 100,
         process.stdout.rows ?? 32,
+        "",
+        false,
+        false,
+        { cellHeightPixels: Number(env.NOMO_TUI_CELL_HEIGHT_PX) },
       ),
     );
     await app.shutdown();
@@ -654,6 +692,7 @@ export async function runWorkspaceTui(
   }
   input.editing = tab === "chat";
   let suggestion = 0;
+  const doubleLeftSessions = new DoubleLeftSessionShortcut();
   let historyIndex = -1;
   let historyDraft = "";
   let historyQuery = "";
@@ -688,6 +727,7 @@ export async function runWorkspaceTui(
       lastRecoveryJob: ui.lastRecoveryJob,
       model: ui.model,
       compactTools: ui.compactTools,
+      settings: ui.localSettings(),
       mode: ui.mode,
       drafts,
     });
@@ -721,6 +761,7 @@ export async function runWorkspaceTui(
             command: input.value,
             suggestion,
             cursor: input.cursor,
+            cellHeightPixels: Number(env.NOMO_TUI_CELL_HEIGHT_PX),
           },
         ),
       );
@@ -1175,15 +1216,12 @@ export async function runWorkspaceTui(
         });
         return;
       }
-      if (shortcut === "toggle-tools") {
-        ui.compactTools = !ui.compactTools;
-        ui.notice = ui.compactTools
-          ? "Compact tool output. Ctrl+O shows full results."
-          : "Full tool output. Ctrl+O collapses results.";
-        try {
-          saveDraft();
-        } catch (error) {
-          ui.notice = message(error);
+      if (shortcut === "cycle-activity") {
+        if (app.running()) {
+          ui.toolActivityMode = nextRunActivityMode(ui.toolActivityMode);
+          ui.notice = `Agent activity: ${ui.toolActivityMode}.`;
+        } else {
+          ui.notice = "Ctrl+O changes activity detail while an agent is running.";
         }
         draw();
         return;
@@ -1297,6 +1335,22 @@ export async function runWorkspaceTui(
         return;
       }
       if (input.editing || key.name === "paste-start") {
+        if (
+          doubleLeftSessions.press(
+            key,
+            ui.tab === "chat" &&
+              !ui.detail &&
+              input.editing &&
+              input.value === "" &&
+              !input.pasting,
+          )
+        ) {
+          ui.choose("sessions");
+          input.editing = false;
+          ui.notice = "Sessions. Esc returns to Chat.";
+          draw();
+          return;
+        }
         // A lone ? on empty input opens the cheat sheet, like the
         // reference. Any other text keeps the keystroke as typed input, because
         // a question mark in the middle of a sentence is ordinary text and

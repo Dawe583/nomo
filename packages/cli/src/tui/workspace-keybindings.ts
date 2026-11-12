@@ -1,6 +1,6 @@
 export const DEFAULT_WORKSPACE_KEYBINDINGS = {
   redraw: { ctrl: true, name: "l", label: "Ctrl+L" },
-  "toggle-tools": { ctrl: true, name: "o", label: "Ctrl+O" },
+  "cycle-activity": { ctrl: true, name: "o", label: "Ctrl+O" },
   "search-history": { ctrl: true, name: "r", label: "Ctrl+R" },
   stash: { ctrl: true, name: "s", label: "Ctrl+S" },
   "external-editor": { ctrl: true, name: "g", label: "Ctrl+G" },
@@ -28,7 +28,8 @@ export function parseWorkspaceKeybindings(
     const entries = Object.entries(parsed);
     const bindings = { ...defaults };
     for (const [action, value] of entries) {
-      if (!actions.includes(action as WorkspaceKeybindingAction))
+      const normalizedAction = action === "toggle-tools" ? "cycle-activity" : action;
+      if (!actions.includes(normalizedAction as WorkspaceKeybindingAction))
         throw new Error(`unknown action ${action}`);
       if (typeof value !== "string" || !/^Ctrl\+[a-z]$/i.test(value))
         throw new Error(`${action} must use Ctrl+<letter>`);
@@ -37,7 +38,7 @@ export function parseWorkspaceKeybindings(
         throw new Error(`${value} is reserved`);
       if (name === "s" && action !== "stash")
         throw new Error("Ctrl+S is reserved for terminal flow control");
-      bindings[action as WorkspaceKeybindingAction] = {
+      bindings[normalizedAction as WorkspaceKeybindingAction] = {
         ctrl: true,
         name,
         label: `Ctrl+${name.toUpperCase()}`,

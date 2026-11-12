@@ -99,11 +99,13 @@ test("every category tone is a valid palette key", () => {
   }
 });
 
-test("editing context lists the composer control shortcuts", () => {
+test("editing and running contexts list their distinct control shortcuts", () => {
   const keys = hintKeys(makeContext({ editing: true }));
   assert.ok(keys.includes("Ctrl+R"), "editing offers history search");
-  assert.ok(keys.includes("Ctrl+O"), "editing offers tools toggle");
+  assert.ok(!keys.includes("Ctrl+O"), "editing does not resize or toggle the composer");
   assert.ok(keys.includes("Ctrl+T"), "editing offers TODOs");
+  const running = hintKeys(makeContext({ running: true }));
+  assert.ok(running.includes("Ctrl+O"), "running offers activity detail cycling");
 });
 
 test("confirmation context lists the decision keys and cancel", () => {

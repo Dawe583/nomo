@@ -357,7 +357,7 @@ test("model cycle follows the loaded provider catalog without fallback", () => {
 test("workspace keybinding configuration accepts safe unique Ctrl-letter overrides", () => {
   const { bindings } = parseWorkspaceKeybindings('{"redraw":"Ctrl+V"}');
   assert.equal(bindings.redraw.label, "Ctrl+V");
-  assert.equal(bindings["toggle-tools"].label, "Ctrl+O");
+  assert.equal(bindings["cycle-activity"].label, "Ctrl+O");
   assert.equal(workspaceShortcut({ name: "v", ctrl: true }, false, "", bindings), "redraw");
   assert.equal(workspaceShortcut({ name: "l", ctrl: true }, false, "", bindings), undefined);
 });
@@ -365,12 +365,12 @@ test("workspace keybinding configuration accepts safe unique Ctrl-letter overrid
 test("workspace keybinding configuration rejects reserved or duplicate keys atomically", () => {
   for (const raw of [
     '{"redraw":"Ctrl+C"}',
-    '{"redraw":"Ctrl+V","toggle-tools":"Ctrl+V"}',
+    '{"redraw":"Ctrl+V","cycle-activity":"Ctrl+V"}',
     '{"unknown":"Ctrl+V"}',
   ]) {
     const result = parseWorkspaceKeybindings(raw);
     assert.ok(result.error);
     assert.equal(result.bindings.redraw.label, "Ctrl+L");
-    assert.equal(result.bindings["toggle-tools"].label, "Ctrl+O");
+    assert.equal(result.bindings["cycle-activity"].label, "Ctrl+O");
   }
 });

@@ -16,7 +16,10 @@ import { PROVIDER_PRESETS } from "../../../workbench/src/provider-defaults.ts";
 import { canonicalJson } from "../../../ledger/src/canonical.ts";
 import type { JsonlEntry } from "../../../ledger/src/store.ts";
 import { mineLearnedRules } from "../../../workbench/src/learned-rules.ts";
-import { measureBoard, unmeasuredMetrics } from "../../../workbench/src/harness-scores.ts";
+import {
+  measureBoard,
+  unmeasuredMetrics,
+} from "../../../workbench/src/harness-scores.ts";
 
 import { harnessSettingsView } from "../../../workbench/src/harness-settings.ts";
 import {
@@ -57,6 +60,7 @@ import {
 import { detectCapabilities } from "./caps.ts";
 import type { TerminalCapabilities } from "./types.ts";
 import { renderShortcutLegend } from "./shortcuts.ts";
+import { formatRunActivity, type RunActivityMode } from "./run-activity.ts";
 import {
   advanceSelection as advancePaletteSelection,
   backspaceInPalette,
@@ -284,7 +288,8 @@ const text = (value: unknown) => String(value ?? "unknown");
 const escapeTerminalText = (value: string) =>
   value.replace(
     /[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u202a-\u202e\u2060-\u2069\ufeff]/gu,
-    (character) => `\\u${character.codePointAt(0)!.toString(16).padStart(4, "0")}`,
+    (character) =>
+      `\\u${character.codePointAt(0)!.toString(16).padStart(4, "0")}`,
   );
 /** A workspace chain is one score case, even when several sessions display it. */
 const verifiedScoreCases = (
@@ -687,7 +692,6 @@ const APPROVAL_EVIDENCE_LABELS = {
 } as const;
 const UNDO_OPERATION_LABEL = "Operation: ";
 
-
 /** Approval evidence for the decision screen. Tool, class, radius and the
  * matched registry case prose come from the hold when the server supplies
  * them. Rule id, precondition details and postcondition render as unknown
@@ -965,30 +969,78 @@ export async function launchSystemBrowserAuthorization(
   launch: BrowserLauncher = runShellFile,
 ): Promise<void> {
   let authorization: URL;
-  try { authorization = new URL(rawUrl); }
-  catch { throw new Error("OpenAI authorization request is invalid."); }
+  try {
+    authorization = new URL(rawUrl);
+  } catch {
+    throw new Error("OpenAI authorization request is invalid.");
+  }
   if (
     authorization.origin !== "https://auth.openai.com" ||
     authorization.hostname !== "auth.openai.com" ||
     authorization.pathname !== "/api/accounts/authorize" ||
-    authorization.username || authorization.password ||
+    authorization.username ||
+    authorization.password ||
     authorization.hash ||
     authorization.searchParams.has("id_token_hint") ||
     authorization.searchParams.has("login_hint")
-  ) throw new Error("OpenAI authorization request is invalid.");
-  const [command, args] = platform === "darwin"
-    ? ["open", [authorization.toString()]]
-    : platform === "win32"
-      ? ["rundll32.exe", ["url.dll,FileProtocolHandler", authorization.toString()]]
-      : platform === "linux"
-        ? ["xdg-open", [authorization.toString()]]
-        : ["", []];
-  if (!command) throw new Error("System browser launch is unsupported on this platform.");
+  )
+    throw new Error("OpenAI authorization request is invalid.");
+  const [command, args] =
+    platform === "darwin"
+      ? ["open", [authorization.toString()]]
+      : platform === "win32"
+        ? [
+            "rundll32.exe",
+            ["url.dll,FileProtocolHandler", authorization.toString()],
+          ]
+        : platform === "linux"
+          ? ["xdg-open", [authorization.toString()]]
+          : ["", []];
+  if (!command)
+    throw new Error("System browser launch is unsupported on this platform.");
   try {
     await launch(command, args, { timeout: 10_000, windowsHide: true });
   } catch {
     throw new Error("Could not open the system browser for OpenAI sign-in.");
   }
+}
+
+const DEFAULT_CHAT_COMPOSER_HEIGHT_PX = 123;
+const MIN_CHAT_COMPOSER_HEIGHT_PX = 72;
+const MAX_CHAT_COMPOSER_HEIGHT_PX = 320;
+export type TuiLocalSettings = { chatComposerHeightPx: number };
+type ChatPanelVisuals = { composerHeightPx: number };
+
+function chatPanelVisualsFrom(
+  env: Readonly<NodeJS.ProcessEnv>,
+): ChatPanelVisuals {
+  const height = Number(env.NOMO_TUI_CHAT_COMPOSER_HEIGHT_PX);
+  return {
+    composerHeightPx:
+      Number.isSafeInteger(height) &&
+      height >= MIN_CHAT_COMPOSER_HEIGHT_PX &&
+      height <= MAX_CHAT_COMPOSER_HEIGHT_PX
+        ? height
+        : DEFAULT_CHAT_COMPOSER_HEIGHT_PX,
+  };
+}
+
+/** Convert the saved physical-pixel target to the nearest odd inner row count. */
+export function composerContentRows(
+  composerHeightPx: number,
+  cellHeightPixels = 24,
+  framed = true,
+): number {
+  const cellHeight =
+    Number.isFinite(cellHeightPixels) && cellHeightPixels > 0
+      ? cellHeightPixels
+      : 24;
+  const outerRows = Math.max(
+    framed ? 3 : 1,
+    2 * Math.round((composerHeightPx / cellHeight - 1) / 2) + 1,
+  );
+  const innerRows = Math.max(1, outerRows - (framed ? 2 : 0));
+  return innerRows > 1 && innerRows % 2 === 0 ? innerRows - 1 : innerRows;
 }
 
 const STARTER_DOC = `# Plan
@@ -1082,11 +1134,13 @@ export class WorkspaceTui {
    */
   editingInput = false;
   compactTools = true;
+  toolActivityMode: RunActivityMode = "compact";
   mode: TuiMode = "normal";
   /** Runtime theme overrides. Undefined keeps the NOMO_TUI_* environment. */
   colorOverride?: boolean;
   motionOverride?: boolean;
   themeConfig: ThemeConfig;
+  chatPanelVisuals: ChatPanelVisuals;
   queuedPrompt: string | null = null;
   queuedPromptPaused = false;
   /** Live command palette. Present means the overlay owns the keyboard. */
@@ -1133,13 +1187,29 @@ export class WorkspaceTui {
   constructor(
     workbench: Workbench,
     env: Readonly<NodeJS.ProcessEnv> = process.env,
-    browserLauncher: (url: string) => Promise<void> = url => launchSystemBrowserAuthorization(url),
+    browserLauncher: (url: string) => Promise<void> = (url) =>
+      launchSystemBrowserAuthorization(url),
   ) {
     this.workbench = workbench;
     this.env = env;
     this.browserLauncher = browserLauncher;
     this.proxy = new ProxyWorkspace(env);
     this.themeConfig = getThemeConfig(env);
+    this.chatPanelVisuals = chatPanelVisualsFrom(env);
+  }
+  applySavedSettings(value: unknown) {
+    if (!value || typeof value !== "object" || Array.isArray(value)) return;
+    const height = (value as Partial<TuiLocalSettings>).chatComposerHeightPx;
+    if (
+      this.env.NOMO_TUI_CHAT_COMPOSER_HEIGHT_PX === undefined &&
+      Number.isSafeInteger(height) &&
+      height! >= MIN_CHAT_COMPOSER_HEIGHT_PX &&
+      height! <= MAX_CHAT_COMPOSER_HEIGHT_PX
+    )
+      this.chatPanelVisuals = { composerHeightPx: height! };
+  }
+  localSettings(): TuiLocalSettings {
+    return { chatComposerHeightPx: this.chatPanelVisuals.composerHeightPx };
   }
   async initialize() {
     try {
@@ -1720,7 +1790,8 @@ export class WorkspaceTui {
       }
     }
     const contextMessages = session?.contextMessages ?? null;
-    const selectedModel = session?.model || this.model || this.provider?.defaultModel;
+    const selectedModel =
+      session?.model || this.model || this.provider?.defaultModel;
     const declaredLimit = selectedModel
       ? this.provider?.models.find((model) => model.id === selectedModel)
           ?.contextWindow
@@ -1751,8 +1822,12 @@ export class WorkspaceTui {
       tokens: known ? tokens : null,
       docs,
       contextUsed: session
-        ? (typeof measuredContext === "number" ? measuredContext : null)
-        : (typeof limit === "number" && limit > 0 ? 0 : null),
+        ? typeof measuredContext === "number"
+          ? measuredContext
+          : null
+        : typeof limit === "number" && limit > 0
+          ? 0
+          : null,
       contextTokens: limit,
     };
   }
@@ -2062,10 +2137,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
             "The signed chain records the approval and activation.",
           ];
         } else {
-          await this.workbench.rejectHarnessProposal(
-            sessionId,
-            match.digest,
-          );
+          await this.workbench.rejectHarnessProposal(sessionId, match.digest);
           this.notice = `Harness proposal rejected: ${match.digest.slice(0, 8)}.`;
           this.detail = [
             "HARNESS PROPOSAL REJECTED",
@@ -2409,6 +2481,10 @@ ${(doc.content ?? "").slice(0, 2000)}`;
     return [
       "HARNESS SETTINGS",
       "Limits this workspace runs under",
+      "",
+      `Chat composer height: ${this.chatPanelVisuals.composerHeightPx} px (range ${MIN_CHAT_COMPOSER_HEIGHT_PX}–${MAX_CHAT_COMPOSER_HEIGHT_PX})`,
+      "Set with /settings composer-height-px N; saved locally unless NOMO_TUI_CHAT_COMPOSER_HEIGHT_PX is set.",
+      "Cell conversion uses NOMO_TUI_CELL_HEIGHT_PX or a 24 px per-row fallback.",
       "",
       "/settings KEY VALUE sets one limit; the range is what the run path can honour.",
       "",
@@ -3842,7 +3918,8 @@ ${(doc.content ?? "").slice(0, 2000)}`;
           ? [
               `Lock drift: ${drifted.map((skill) => skill.id).join(", ")}`,
               ...drifted.map(
-                (skill) => `  ${skill.id}: locked ${skill.lockedHash}; current ${skill.actualHash}`,
+                (skill) =>
+                  `  ${skill.id}: locked ${skill.lockedHash}; current ${skill.actualHash}`,
               ),
             ]
           : ["Lock drift: none"]),
@@ -4149,7 +4226,9 @@ ${(doc.content ?? "").slice(0, 2000)}`;
     };
     this.scroll = 0;
   }
-  private async startOpenAIChatGPTSignIn(input: { accountId?: string; enablePlanUsage?: boolean } = {}): Promise<void> {
+  private async startOpenAIChatGPTSignIn(
+    input: { accountId?: string; enablePlanUsage?: boolean } = {},
+  ): Promise<void> {
     const attempt = await this.workbench.beginOpenAIChatGPTSignIn(input);
     try {
       await this.browserLauncher(attempt.authorizationUrl);
@@ -4157,27 +4236,33 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       this.workbench.cancelOpenAIChatGPTAuthAttempt(attempt.id);
       throw new Error("Could not open the system browser for OpenAI sign-in.");
     }
-    const result = await this.workbench.waitForOpenAIChatGPTAuthAttempt(attempt.id);
+    const result = await this.workbench.waitForOpenAIChatGPTAuthAttempt(
+      attempt.id,
+    );
     if (result.status === "declined") {
       this.notice = "Sign-in was declined. No new credentials were saved.";
       this.detail = this.openAIChatGPTAccountLines();
       return;
     }
     if (result.status === "usage-disabled") {
-      this.notice = "Account verified, but ChatGPT plan usage is disabled until you explicitly enable it.";
+      this.notice =
+        "Account verified, but ChatGPT plan usage is disabled until you explicitly enable it.";
       this.detail = this.openAIChatGPTAccountLines();
       return;
     }
     if (result.status !== "connected" || !result.accountId) {
       const diagnostics = [
         result.httpStatus ? `HTTP ${result.httpStatus}` : undefined,
-        result.providerErrorCode && /^[A-Za-z0-9._-]{1,128}$/.test(result.providerErrorCode)
+        result.providerErrorCode &&
+        /^[A-Za-z0-9._-]{1,128}$/.test(result.providerErrorCode)
           ? `provider ${result.providerErrorCode}`
           : undefined,
         result.requestId && /^[A-Za-z0-9._-]{1,128}$/.test(result.requestId)
           ? `request ${result.requestId}`
           : undefined,
-      ].filter(Boolean).join(", ");
+      ]
+        .filter(Boolean)
+        .join(", ");
       this.notice = `OpenAI sign-in did not complete (${result.errorCode ?? "unknown"})${diagnostics ? `: ${diagnostics}` : ""}.`;
       this.detail = this.openAIChatGPTAccountLines();
       return;
@@ -4192,11 +4277,14 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         `Account: ${sanitizeText(result.email ?? result.accountId)}`,
         "Plan usage: enabled",
         "",
-        ...models.map(model => `${sanitizeText(model.id)}  ${sanitizeText(model.name)}`),
+        ...models.map(
+          (model) => `${sanitizeText(model.id)}  ${sanitizeText(model.name)}`,
+        ),
         "",
         "Choose a model with /model MODEL_ID, or /chatgpt use ACCOUNT_ID MODEL_ID.",
       ];
-      this.notice = "Account verified. Choose a listed model to make it the active provider.";
+      this.notice =
+        "Account verified. Choose a listed model to make it the active provider.";
     } catch (error) {
       this.detail = this.openAIChatGPTAccountLines();
       this.notice = `Account verified, but model discovery failed: ${message(error)}`;
@@ -4207,12 +4295,14 @@ ${(doc.content ?? "").slice(0, 2000)}`;
     const accounts = this.workbench.openAIChatGPTAccounts();
     return [
       "OPENAI SIGN IN WITH CHATGPT",
-      `Active model: ${this.provider?.authKind === "openai-chatgpt-account" ? this.provider.defaultModel ?? "none selected" : "no ChatGPT account selected"}`,
+      `Active model: ${this.provider?.authKind === "openai-chatgpt-account" ? (this.provider.defaultModel ?? "none selected") : "no ChatGPT account selected"}`,
       "",
-      ...(accounts.length ? accounts.flatMap(account => [
-        `${account.active ? "[*]" : "[ ]"} ${account.id}  ${sanitizeText(account.email ?? "Private account")}  ${account.status}`,
-        `    usage: ${account.usageEnabled ? "enabled" : "disabled"}; scopes: ${account.scopes.map(sanitizeText).join(" ") || "none"}`,
-      ]) : ["No ChatGPT account registered."]),
+      ...(accounts.length
+        ? accounts.flatMap((account) => [
+            `${account.active ? "[*]" : "[ ]"} ${account.id}  ${sanitizeText(account.email ?? "Private account")}  ${account.status}`,
+            `    usage: ${account.usageEnabled ? "enabled" : "disabled"}; scopes: ${account.scopes.map(sanitizeText).join(" ") || "none"}`,
+          ])
+        : ["No ChatGPT account registered."]),
       "",
       "/connect chatgpt starts a new sign-in; /connect chatgpt ACCOUNT_ID reauthorizes.",
       "/chatgpt enable ID | models ID | use ID MODEL | disconnect ID",
@@ -4221,7 +4311,9 @@ ${(doc.content ?? "").slice(0, 2000)}`;
   }
 
   private async chatGPTCommand(raw: string): Promise<void> {
-    const [action = "accounts", accountId, model] = raw.trim() ? raw.trim().split(/\s+/) : ["accounts"];
+    const [action = "accounts", accountId, model] = raw.trim()
+      ? raw.trim().split(/\s+/)
+      : ["accounts"];
     if (action === "accounts" || action === "status") {
       this.detail = this.openAIChatGPTAccountLines();
       return;
@@ -4242,16 +4334,26 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       if (!accountId) throw new Error("/chatgpt models ACCOUNT_ID");
       const models = await this.workbench.openAIChatGPTModels(accountId);
       this.choose("models");
-      this.detail = ["CHATGPT MODELS", "", ...models.map(item => `${sanitizeText(item.id)}  ${sanitizeText(item.name)}`)];
+      this.detail = [
+        "CHATGPT MODELS",
+        "",
+        ...models.map(
+          (item) => `${sanitizeText(item.id)}  ${sanitizeText(item.name)}`,
+        ),
+      ];
       return;
     }
     if (action === "use") {
-      if (!accountId || !model) throw new Error("/chatgpt use ACCOUNT_ID MODEL_ID");
+      if (!accountId || !model)
+        throw new Error("/chatgpt use ACCOUNT_ID MODEL_ID");
       await this.workbench.connectOpenAIChatGPTAccount(accountId, model);
       this.pendingOpenAIChatGPTAccountId = undefined;
-      this.provider = await this.workbench.providerState({ probeEnvironment: false });
+      this.provider = await this.workbench.providerState({
+        probeEnvironment: false,
+      });
       this.model = model;
-      this.notice = "OpenAI ChatGPT account selected. Credentials remain in host storage.";
+      this.notice =
+        "OpenAI ChatGPT account selected. Credentials remain in host storage.";
       this.choose("models");
       this.detail = this.openAIChatGPTAccountLines();
       return;
@@ -4266,8 +4368,11 @@ ${(doc.content ?? "").slice(0, 2000)}`;
           "The account registration and host identity are retained for later sign-in.",
         ],
         apply: async () => {
-          const result = await this.workbench.disconnectOpenAIChatGPTAccount(accountId);
-          this.provider = await this.workbench.providerState({ probeEnvironment: false });
+          const result =
+            await this.workbench.disconnectOpenAIChatGPTAccount(accountId);
+          this.provider = await this.workbench.providerState({
+            probeEnvironment: false,
+          });
           this.detail = this.openAIChatGPTAccountLines();
           this.notice = result.remoteRevocationConfirmed
             ? "Account disconnected; remote revocation was confirmed."
@@ -4276,7 +4381,9 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       };
       return;
     }
-    throw new Error("Use /chatgpt for account status, models, reauth, enable or disconnect.");
+    throw new Error(
+      "Use /chatgpt for account status, models, reauth, enable or disconnect.",
+    );
   }
 
   async command(raw: string): Promise<"edit" | "quit" | void> {
@@ -4824,6 +4931,22 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       }
       if (raw === undefined)
         throw Error("/settings key value, or /settings alone to list them.");
+      if (key === "composer-height-px") {
+        const height = Number(raw);
+        if (
+          !Number.isSafeInteger(height) ||
+          height < MIN_CHAT_COMPOSER_HEIGHT_PX ||
+          height > MAX_CHAT_COMPOSER_HEIGHT_PX
+        )
+          throw Error(
+            `Composer height must be a whole number from ${MIN_CHAT_COMPOSER_HEIGHT_PX} to ${MAX_CHAT_COMPOSER_HEIGHT_PX} pixels.`,
+          );
+        this.chatPanelVisuals = { composerHeightPx: height };
+        this.notice = `Composer height set to ${height} px. Use /settings to view it.`;
+        this.detail = this.settingsLines();
+        this.scroll = 0;
+        return;
+      }
       // Number() turns a typo into NaN and an empty field into 0, and the
       // server clamp would then store the minimum as though the operator had
       // chosen it, so the value is proved numeric here before the patch sees it.
@@ -5076,7 +5199,9 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         await this.workbench.verifySubagent(parentId, childId);
         const current = this.workbench.get(childId);
         if (!current || current.parentId !== parentId)
-          throw Error("Selected child relationship changed. Refresh the sessions inspector.");
+          throw Error(
+            "Selected child relationship changed. Refresh the sessions inspector.",
+          );
         if (!["running", "queued", "paused"].includes(current.status))
           throw Error("This child is not in a cancellable state.");
         const apply = async () =>
@@ -5096,7 +5221,10 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         return;
       }
       if (arg === "review") {
-        const result = await this.workbench.subagentResult(selected.parentId, selected.id);
+        const result = await this.workbench.subagentResult(
+          selected.parentId,
+          selected.id,
+        );
         if (!result) throw Error("No settled successful result is available.");
         const current = this.workbench.get(selected.id);
         if (
@@ -5117,16 +5245,24 @@ ${(doc.content ?? "").slice(0, 2000)}`;
           preview,
         ];
         if (result.truncated) {
-          this.detail = [...lines, "", "Delivery unavailable: result may be incomplete."];
-          this.notice = "Result may be truncated; preview only, delivery blocked.";
+          this.detail = [
+            ...lines,
+            "",
+            "Delivery unavailable: result may be incomplete.",
+          ];
+          this.notice =
+            "Result may be truncated; preview only, delivery blocked.";
           return;
         }
         this.confirmation = {
           title: "DELIVER SUBAGENT RESULT?",
           lines,
-          apply: async () => this.workbench.deliverSubagentResult(
-            current.parentId!, current.id, result.runId,
-          ),
+          apply: async () =>
+            this.workbench.deliverSubagentResult(
+              current.parentId!,
+              current.id,
+              result.runId,
+            ),
         };
         return;
       }
@@ -5190,11 +5326,17 @@ ${(doc.content ?? "").slice(0, 2000)}`;
     }
     if (cmd === "model") {
       if (this.pendingOpenAIChatGPTAccountId) {
-        await this.workbench.connectOpenAIChatGPTAccount(this.pendingOpenAIChatGPTAccountId, arg);
-        this.provider = await this.workbench.providerState({ probeEnvironment: false });
+        await this.workbench.connectOpenAIChatGPTAccount(
+          this.pendingOpenAIChatGPTAccountId,
+          arg,
+        );
+        this.provider = await this.workbench.providerState({
+          probeEnvironment: false,
+        });
         this.model = arg;
         this.pendingOpenAIChatGPTAccountId = undefined;
-        this.notice = "OpenAI ChatGPT account selected. Credentials remain in host storage.";
+        this.notice =
+          "OpenAI ChatGPT account selected. Credentials remain in host storage.";
         return;
       }
       if (!this.provider?.models.some((m) => m.id === arg))
@@ -5286,109 +5428,114 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       );
       return;
     }
-     // Prompt proposals are inert until one of these names their exact digest.
-     // Listing shows diffs; only approve activates, only reject settles, and
-     // both refuse an unknown digest rather than guessing. Approval runs through
-     // a confirmation that prints the complete proposal first: it is the one
-     // path that changes the prompt every later conversation runs under.
-     if (cmd === "harness") {
-       const [verb = "", ...rest] = arg.split(/\s+/).filter(Boolean);
-       if (verb === "scores") {
-         const board = measureBoard(
-           verifiedScoreCases(this.proofs),
-           new Date().toISOString(),
-         );
-         const firstPass = board.metrics.first_pass_rate;
-         this.detail = [
-           `HARNESS SCORES, verdict: ${board.verdict}`,
-           `First-pass rate: ${firstPass.mean === null ? "unmeasured" : `${(firstPass.mean * 100).toFixed(1)}%`}`,
-           `95% CI: ${firstPass.half === null ? "unavailable" : `±${(firstPass.half * 100).toFixed(1)}%`}`,
-           `Sample count: ${firstPass.n} first-pass samples`,
-           `Case count: ${board.caseCount} verified tool-call cases`,
-           `Reason: ${board.reasons.join("; ")}.`,
-           ...unmeasuredMetrics(board).map(
-             (key) => `${key}: no sample, so no rate can be computed.`,
-           ),
-           "Descriptive only; never changes a decision or permission.",
-         ];
-         this.scroll = 0;
-         return;
-       }
-       if (verb === "review") {
-         if (!this.sessionId) throw Error("Select a conversation.");
-         const sessionId = this.sessionId;
-         this.confirmation = {
-           title: "REQUEST A HARNESS REVIEW?",
-           lines: [
-             "This may spend one model call: the reviewer looks for a durable lesson in the signed chain.",
-             "The settled-turn interval is skipped because you asked; the harness switch, the cooldown and the nothing-new check still apply, and a refusal costs nothing.",
-             "If the conversation is running, the request is recorded and served at the next settled boundary.",
-             "The reviewer can only propose. Nothing is activated without your approval.",
-           ],
-           apply: async () => {
-             this.confirmation = undefined;
-             const result = await this.workbench.requestHarnessReview(sessionId);
-             const note = escapeTerminalText(result.note);
-             this.notice = `Harness review ${result.kind}. ${note}`;
-             this.detail = [
-               `HARNESS REVIEW ${result.kind.toUpperCase()}`,
-               "",
-               note,
-               ...(result.kind === "ran"
-                 ? [
-                     "",
-                     "The signed chain records the outcome. /harness lists any proposal awaiting a decision.",
-                   ]
-                 : []),
-               "",
-               "The reviewer can only propose. Nothing is activated without your approval.",
-             ];
-             this.scroll = 0;
-             await this.refresh(true);
-           },
-         };
-         this.scroll = 0;
-         return;
-       }
-       if (verb === "approve" || verb === "reject") {
-         await this.prepareHarnessDecision(rest.join(" "), verb);
-         return;
-       }
-       if (verb && verb !== "cloud" && verb !== "prime-agent")
-         throw Error("/harness cloud | prime-agent | scores | review | approve DIGEST | reject DIGEST");
-       if (verb) {
-         this.workbench.patchPreferences({ defaultAgent: verb });
-         this.notice =
-           verb === "prime-agent"
-             ? "Harness: prime-agent. New conversations route there when the bridge runs."
-             : "Harness: cloud. New conversations run in the managed session.";
-       }
-       const prefs = this.workbench.getPreferences();
-       const found = await detectHarnesses(this.env);
-       const pending = this.sessionId ? await this.workbench.pendingApprovalsFor(this.sessionId) : [];
-       this.detail = [
-         `HARNESS, current default: ${prefs.defaultAgent ?? "cloud"}`,
-         "",
-         "cloud: managed session in this workspace, approvals in the TUI.",
-         "prime-agent: local harness CLI for team agents, needs the bridge.",
-         "",
-         ...found.map(
-           (item) => `${item.id}: ${item.path ?? "not detected on PATH"}`,
-         ),
-         "",
-         ...pending.map((approval) =>
-           `${approval.digest.slice(0, 8)}… ${escapeTerminalText(approval.summary)} (${approval.proposal.edits.length} edits)`,
-         ),
-         pending.length
-           ? "/harness approve DIGEST or /harness reject DIGEST opens the exact proposal for confirmation."
-           : "No Harness proposals are awaiting an operator decision.",
-         "",
-         "/harness cloud | /harness prime-agent switches the default; /harness scores reports verified chains.",
-         "/harness review asks the reviewer by hand; /harness approve DIGEST or /harness reject DIGEST shows the complete proposal before confirmation.",
-       ];
-       this.scroll = 0;
-       return;
-     }
+    // Prompt proposals are inert until one of these names their exact digest.
+    // Listing shows diffs; only approve activates, only reject settles, and
+    // both refuse an unknown digest rather than guessing. Approval runs through
+    // a confirmation that prints the complete proposal first: it is the one
+    // path that changes the prompt every later conversation runs under.
+    if (cmd === "harness") {
+      const [verb = "", ...rest] = arg.split(/\s+/).filter(Boolean);
+      if (verb === "scores") {
+        const board = measureBoard(
+          verifiedScoreCases(this.proofs),
+          new Date().toISOString(),
+        );
+        const firstPass = board.metrics.first_pass_rate;
+        this.detail = [
+          `HARNESS SCORES, verdict: ${board.verdict}`,
+          `First-pass rate: ${firstPass.mean === null ? "unmeasured" : `${(firstPass.mean * 100).toFixed(1)}%`}`,
+          `95% CI: ${firstPass.half === null ? "unavailable" : `±${(firstPass.half * 100).toFixed(1)}%`}`,
+          `Sample count: ${firstPass.n} first-pass samples`,
+          `Case count: ${board.caseCount} verified tool-call cases`,
+          `Reason: ${board.reasons.join("; ")}.`,
+          ...unmeasuredMetrics(board).map(
+            (key) => `${key}: no sample, so no rate can be computed.`,
+          ),
+          "Descriptive only; never changes a decision or permission.",
+        ];
+        this.scroll = 0;
+        return;
+      }
+      if (verb === "review") {
+        if (!this.sessionId) throw Error("Select a conversation.");
+        const sessionId = this.sessionId;
+        this.confirmation = {
+          title: "REQUEST A HARNESS REVIEW?",
+          lines: [
+            "This may spend one model call: the reviewer looks for a durable lesson in the signed chain.",
+            "The settled-turn interval is skipped because you asked; the harness switch, the cooldown and the nothing-new check still apply, and a refusal costs nothing.",
+            "If the conversation is running, the request is recorded and served at the next settled boundary.",
+            "The reviewer can only propose. Nothing is activated without your approval.",
+          ],
+          apply: async () => {
+            this.confirmation = undefined;
+            const result = await this.workbench.requestHarnessReview(sessionId);
+            const note = escapeTerminalText(result.note);
+            this.notice = `Harness review ${result.kind}. ${note}`;
+            this.detail = [
+              `HARNESS REVIEW ${result.kind.toUpperCase()}`,
+              "",
+              note,
+              ...(result.kind === "ran"
+                ? [
+                    "",
+                    "The signed chain records the outcome. /harness lists any proposal awaiting a decision.",
+                  ]
+                : []),
+              "",
+              "The reviewer can only propose. Nothing is activated without your approval.",
+            ];
+            this.scroll = 0;
+            await this.refresh(true);
+          },
+        };
+        this.scroll = 0;
+        return;
+      }
+      if (verb === "approve" || verb === "reject") {
+        await this.prepareHarnessDecision(rest.join(" "), verb);
+        return;
+      }
+      if (verb && verb !== "cloud" && verb !== "prime-agent")
+        throw Error(
+          "/harness cloud | prime-agent | scores | review | approve DIGEST | reject DIGEST",
+        );
+      if (verb) {
+        this.workbench.patchPreferences({ defaultAgent: verb });
+        this.notice =
+          verb === "prime-agent"
+            ? "Harness: prime-agent. New conversations route there when the bridge runs."
+            : "Harness: cloud. New conversations run in the managed session.";
+      }
+      const prefs = this.workbench.getPreferences();
+      const found = await detectHarnesses(this.env);
+      const pending = this.sessionId
+        ? await this.workbench.pendingApprovalsFor(this.sessionId)
+        : [];
+      this.detail = [
+        `HARNESS, current default: ${prefs.defaultAgent ?? "cloud"}`,
+        "",
+        "cloud: managed session in this workspace, approvals in the TUI.",
+        "prime-agent: local harness CLI for team agents, needs the bridge.",
+        "",
+        ...found.map(
+          (item) => `${item.id}: ${item.path ?? "not detected on PATH"}`,
+        ),
+        "",
+        ...pending.map(
+          (approval) =>
+            `${approval.digest.slice(0, 8)}… ${escapeTerminalText(approval.summary)} (${approval.proposal.edits.length} edits)`,
+        ),
+        pending.length
+          ? "/harness approve DIGEST or /harness reject DIGEST opens the exact proposal for confirmation."
+          : "No Harness proposals are awaiting an operator decision.",
+        "",
+        "/harness cloud | /harness prime-agent switches the default; /harness scores reports verified chains.",
+        "/harness review asks the reviewer by hand; /harness approve DIGEST or /harness reject DIGEST shows the complete proposal before confirmation.",
+      ];
+      this.scroll = 0;
+      return;
+    }
     if (cmd === "rename") {
       if (!this.sessionId) throw Error("Select a conversation.");
       this.workbench.patchSession(this.sessionId, { title: arg });
@@ -6080,6 +6227,7 @@ export function chatRows(
   events: readonly SessionEvent[],
   width: number,
   compactTools = false,
+  activityMode: RunActivityMode = "compact",
 ): ChatRow[] {
   const rows: ChatRow[] = [];
   let partial = "";
@@ -6170,6 +6318,15 @@ export function chatRows(
             : event.type === "tool.started"
               ? `${roleIcon("tool")} TOOL REQUEST`
               : `${roleIcon("tool")} TOOL RESULT`;
+    if (event.kind === "tool") {
+      const activity = formatRunActivity(event, activityMode);
+      if (activity.length) {
+        add(`${roleIcon("tool")} TOOL  ${event.at.slice(11, 19)}`, "tool");
+        for (const line of activity) add(`  ${line}`, "tool");
+        add("", "text");
+        continue;
+      }
+    }
     if (compactTools && event.kind === "tool") {
       const output = wrap(event.text.split("\n"), width);
       if (output.length > 4) {
@@ -6287,7 +6444,10 @@ export const TUI_COMMANDS = [
   ["/attest", "Signed slice for a third party"],
   ["/providers", "Model providers and local open models"],
   ["/chatgpt", "OpenAI account status, models, reauth and disconnect"],
-  ["/harness", "Agent harness: cloud, prime-agent, scores, review, approve, reject"],
+  [
+    "/harness",
+    "Agent harness: cloud, prime-agent, scores, review, approve, reject",
+  ],
   ["/login", "Connect a provider"],
   ["/logout", "Disconnect the provider"],
   ["/verify", "Verify signatures"],
@@ -6351,7 +6511,8 @@ const COMMAND_ARGUMENTS: Record<string, string> = {
   "/export": "ledger, chat or document",
   "/filter": "text",
   "/settings": "key value",
-  "/harness": "cloud, prime-agent, scores, review, approve DIGEST, reject DIGEST",
+  "/harness":
+    "cloud, prime-agent, scores, review, approve DIGEST, reject DIGEST",
   "/theme": "color, mono, motion, still or reset",
   "/approve": "hold-ID [reason]",
   "/deny": "hold-ID [reason]",
@@ -6399,10 +6560,10 @@ export type WorkspaceVisuals = {
   command?: string;
   suggestion?: number;
   cursor?: number;
+  cellHeightPixels?: number;
 };
-// The NOMO mark is rasterized from gui-web/icon.svg by brandHeader().
-// The old block-capital wordmark was removed: it duplicated the brand
-// mark and read as jagged at narrow widths.
+// The six-by-six NOMO grid mark is rendered by brandHeader().
+// The wordmark stays out of the logo so the terminal identity remains compact.
 // Decorative tab identity colors. Safety state never rides on these;
 // classes and decisions keep their text markers in every surface.
 export const TAB_ICON_TONE: Record<WorkspaceTab, string> = {
@@ -6557,12 +6718,9 @@ function hasVisibleTextFrom(value: string, start = 0): boolean {
 
 function formatContextWindow(tokens: number | null): string {
   if (tokens === null || !Number.isFinite(tokens) || tokens <= 0) return "?";
-  if (tokens >= 1_000_000)
-    return `${Number((tokens / 1_000_000).toFixed(1))}m`;
-  if (tokens >= 1024 && tokens % 1024 === 0)
-    return `${tokens / 1024}k`;
-  if (tokens >= 1000 && tokens % 1000 === 0)
-    return `${tokens / 1000}k`;
+  if (tokens >= 1_000_000) return `${Number((tokens / 1_000_000).toFixed(1))}m`;
+  if (tokens >= 1024 && tokens % 1024 === 0) return `${tokens / 1024}k`;
+  if (tokens >= 1000 && tokens % 1000 === 0) return `${tokens / 1000}k`;
   return String(tokens);
 }
 
@@ -6723,7 +6881,8 @@ export function renderWorkspace(
       );
     });
   } else {
-    const model = ui.session()?.model || ui.model || "Connect a model with /connect";
+    const model =
+      ui.session()?.model || ui.model || "Connect a model with /connect";
     header.push(
       fit(
         ink("▣ NOMO", `1;${ice}`) +
@@ -6759,33 +6918,33 @@ export function renderWorkspace(
         width,
       ),
     );
-  // An underline under the tab row gives the selected panel a second signal
-  // that survives a monochrome terminal, and the active bar animates its
-  // weight so the eye lands on it without any colour change.
-  //
-  // It costs a row, and every extra row has to come out of the body. It is
-  // therefore added before the body height is computed, never after, so
-  // header.length already accounts for it. Adding it later and patching the
-  // arithmetic is how the frame stops being exactly height rows tall.
-  //
-  // The reserve below is the smallest frame worth decorating: header, one row
-  // of underline, two body rows, the summary and status rows and the three
-  // composer rows. Anything narrower keeps the body instead.
-  if (height - header.length >= 12)
-    header.push(
-      fit(
-        tabs
-          .map((t) => {
-            const label = `${TAB_ICONS[t]} ${t} `;
-            return ink(
-              tabUnderline(t === ui.tab, visibleLength(label), motion),
-              t === ui.tab ? ice : mutedAnsi,
-            );
-          })
-          .join(""),
-        width,
-      ),
-    );
+    // An underline under the tab row gives the selected panel a second signal
+    // that survives a monochrome terminal, and the active bar animates its
+    // weight so the eye lands on it without any colour change.
+    //
+    // It costs a row, and every extra row has to come out of the body. It is
+    // therefore added before the body height is computed, never after, so
+    // header.length already accounts for it. Adding it later and patching the
+    // arithmetic is how the frame stops being exactly height rows tall.
+    //
+    // The reserve below is the smallest frame worth decorating: header, one row
+    // of underline, two body rows, the summary and status rows and the three
+    // composer rows. Anything narrower keeps the body instead.
+    if (height - header.length >= 12)
+      header.push(
+        fit(
+          tabs
+            .map((t) => {
+              const label = `${TAB_ICONS[t]} ${t} `;
+              return ink(
+                tabUnderline(t === ui.tab, visibleLength(label), motion),
+                t === ui.tab ? ice : mutedAnsi,
+              );
+            })
+            .join(""),
+          width,
+        ),
+      );
   }
   // A travelling wave under the header while a run is in flight. It is
   // attention, never the only signal: the status row below still names the
@@ -6835,7 +6994,45 @@ export function renderWorkspace(
           : "i type / Enter details")
       ).split("\n");
   const composer = wrap(composerText, composerInner);
-  const composerHeight = Math.min(composer.length, height >= 18 ? 3 : 1);
+  const chatComposerVisible =
+    ui.tab === "chat" && !ui.detail && !ui.confirmation && !ui.palette;
+  const cellHeightPixels =
+    visuals.cellHeightPixels &&
+    Number.isFinite(visuals.cellHeightPixels) &&
+    visuals.cellHeightPixels > 0
+      ? visuals.cellHeightPixels
+      : 24;
+  const summaryRowsCount = width < 100 ? 2 : 1;
+  const chatStatusRowCount = width >= 72 ? 1 : 3;
+  const chatComposerChromeRows = 3 + chatStatusRowCount + 2;
+  const availableChatComposerRows = Math.max(
+    1,
+    height -
+      header.length -
+      banner.length -
+      menu.length -
+      (argumentHint ? 1 : 0) -
+      chatComposerChromeRows -
+      1 /* retain one body row */,
+  );
+  const maxChatComposerRows =
+    availableChatComposerRows > 1 && availableChatComposerRows % 2 === 0
+      ? availableChatComposerRows - 1
+      : availableChatComposerRows;
+  const configuredRows = chatComposerVisible
+    ? composerContentRows(
+        ui.chatPanelVisuals.composerHeightPx,
+        cellHeightPixels,
+        true,
+      )
+    : Math.min(composer.length, height >= 18 ? 3 : 1);
+  const requestedComposerRows = chatComposerVisible
+    ? Math.min(
+        Math.max(configuredRows, Math.max(1, composer.length)),
+        maxChatComposerRows,
+      )
+    : configuredRows;
+  const composerHeight = requestedComposerRows;
   const cursorLine =
     visuals.cursor === undefined
       ? Math.max(
@@ -6846,7 +7043,13 @@ export function renderWorkspace(
           ([...input].slice(0, visuals.cursor).join("") + "_").split("\n"),
           composerInner,
         ).length - 1;
-  const composerStart = Math.max(0, cursorLine - composerHeight + 1);
+  const composerStart = Math.max(
+    0,
+    Math.min(
+      Math.max(0, composer.length - composerHeight),
+      cursorLine - Math.floor(composerHeight / 2),
+    ),
+  );
   // An open palette owns the body. It is a filter surface, so whatever the
   // underlying tab would have shown is exactly the noise the operator is
   // trying to see past.
@@ -6869,34 +7072,35 @@ export function renderWorkspace(
   const legendRows = spaciousShell
     ? SPACIOUS_NAVIGATION_HINT
     : paletteView
-    ? renderShortcutLegend(
-        { editing: false, confirming: false, running: false, pending: 0 },
-        { width, caps },
-      )
-    : renderShortcutLegend(
-        {
-          editing,
-          confirming: !!ui.confirmation,
-          running,
-          pending: holds,
-        },
-        {
-          width,
-          caps,
-          symbolPreset: ui.themeConfig.symbolPreset,
-          colorTheme: ui.themeConfig.colorTheme,
-          paint: visuals.color && !spaciousShell
-            ? (text, tone, bold) =>
-                paintWithPalette(
-                  text,
-                  tone,
-                  getPalette(ui.themeConfig.colorTheme),
-                  caps,
-                  bold,
-                )
-            : undefined,
-        },
-      );
+      ? renderShortcutLegend(
+          { editing: false, confirming: false, running: false, pending: 0 },
+          { width, caps },
+        )
+      : renderShortcutLegend(
+          {
+            editing,
+            confirming: !!ui.confirmation,
+            running,
+            pending: holds,
+          },
+          {
+            width,
+            caps,
+            symbolPreset: ui.themeConfig.symbolPreset,
+            colorTheme: ui.themeConfig.colorTheme,
+            paint:
+              visuals.color && !spaciousShell
+                ? (text, tone, bold) =>
+                    paintWithPalette(
+                      text,
+                      tone,
+                      getPalette(ui.themeConfig.colorTheme),
+                      caps,
+                      bold,
+                    )
+                : undefined,
+          },
+        );
   // A run in flight may get a timeline above the status bar. What it would
   // cost is measured here; whether it is affordable is decided below, from
   // the shared budget rather than from a second guess at the same numbers.
@@ -6930,14 +7134,14 @@ export function renderWorkspace(
   //
   // Header, approval banner, composer rows/frame, summary/status, suggestions,
   // and one body row are reserved first. Optional bands share only what remains.
-  const summaryRowsCount = width < 100 ? 2 : 1;
   const composerFrameRows = 2;
   const reserved =
     header.length +
     banner.length +
     composerHeight +
     composerFrameRows +
-    summaryRowsCount + 1 /* the summary rows plus the final status row */ +
+    summaryRowsCount +
+    1 /* the summary rows plus the final status row */ +
     menu.length +
     1; /* one row of body, always */
   let spare = Math.max(0, height - reserved);
@@ -6961,16 +7165,21 @@ export function renderWorkspace(
   // row ahead of the legend below it.
   const shownRuleRows =
     !spaciousShell &&
-    (spare > legendRows.length ||
-      (summaryRowsCount === 1 && spare >= 1))
+    (spare > legendRows.length || (summaryRowsCount === 1 && spare >= 1))
       ? [separator(width, motion, running)]
       : [];
   spare -= shownRuleRows.length;
 
   // The legend is advice, and /keybindings carries the same list, so it takes
   // whatever is left and no more.
+  const readingChatHistory =
+    ui.tab === "chat" &&
+    ui.scroll >= 0 &&
+    !ui.detail &&
+    !ui.confirmation &&
+    !ui.palette;
   const shownLegendRows =
-    spare >= legendRows.length ? legendRows : [];
+    !readingChatHistory && spare >= legendRows.length ? legendRows : [];
   spare -= shownLegendRows.length;
 
   const ruleRows = shownRuleRows;
@@ -7013,7 +7222,12 @@ export function renderWorkspace(
     content.splice(1, 1);
   }
   const styled = richChat
-    ? chatRows(ui.session()!.events, width - 4, ui.compactTools)
+    ? chatRows(
+        ui.session()!.events,
+        width - 4,
+        ui.compactTools,
+        ui.toolActivityMode,
+      )
     : undefined;
   const lines =
     styled?.map((row) => row.text) ??
@@ -7022,7 +7236,12 @@ export function renderWorkspace(
   // The palette windows its own list internally and the window follows the
   // selection, so the body always starts at the top here.
   if (paletteView) offset = 0;
-  else if (!ui.detail && !ui.confirmation && ui.tab === "chat" && ui.scroll < 0) {
+  else if (
+    !ui.detail &&
+    !ui.confirmation &&
+    ui.tab === "chat" &&
+    ui.scroll < 0
+  ) {
     // A one-row live chat viewport must follow content, not the blank code row
     // after a streamed newline.
     let followEnd = lines.length;
@@ -7061,8 +7280,7 @@ export function renderWorkspace(
   // wrapped user content must not create additional jump stops.
   ui.promptRows = lines
     .map((line, index) =>
-      line.startsWith(`${roleIcon("user")} YOU`) ||
-      / YOU$/.test(line)
+      line.startsWith(`${roleIcon("user")} YOU`) || / YOU$/.test(line)
         ? index
         : -1,
     )
@@ -7124,10 +7342,8 @@ export function renderWorkspace(
           paint: (value) => (visuals.color ? ink(value, `1;${amber}`) : value),
         })
       : pad(line, width - 4);
-    const approvalTitle =
-      approvalReviewOpen && line === ui.confirmation?.title;
-    const undoTitle =
-      undoConfirmationOpen && line === ui.confirmation?.title;
+    const approvalTitle = approvalReviewOpen && line === ui.confirmation?.title;
+    const undoTitle = undoConfirmationOpen && line === ui.confirmation?.title;
     const approvalField =
       approvalReviewOpen &&
       (line.startsWith(APPROVAL_EVIDENCE_LABELS.tool) ||
@@ -7196,7 +7412,7 @@ export function renderWorkspace(
   const chatContextBadge =
     typeof chatContext.contextTokens === "number" &&
     chatContext.contextTokens > 0
-    ? `ctx ${formatContextWindow(chatContext.contextTokens)} · ${typeof chatContext.contextUsed === "number" ? `${Math.round((chatContext.contextUsed / chatContext.contextTokens) * 100)}%` : "?%"}${ui.session() ? " / /compact" : ""}`
+      ? `ctx ${formatContextWindow(chatContext.contextTokens)} · ${typeof chatContext.contextUsed === "number" ? `${Math.round((chatContext.contextUsed / chatContext.contextTokens) * 100)}%` : "?%"}${ui.session() ? " / /compact" : ""}`
       : undefined;
   const usage = [...(ui.session()?.events ?? [])]
     .reverse()
@@ -7418,7 +7634,7 @@ export function renderWorkspace(
         : "[!] REVIEW / y accept / n reject / Esc cancel / PgDn preview"
       : running && (busy || ui.session()?.status === "running")
         ? `${spinner} ${ui.session()?.status === "running" ? (waiting ? "[wait] Waiting for approval" : `● ${phase}${dots}`) : `[run] Finishing operation${dots}`}${elapsed} / Esc stop${historyStatus ? " / [history] reading history" : ""}${todoBadge}${chatContextBadge ? ` / ${chatContextBadge}` : ""}`
-      : `${historyStatus ?? (spaciousShell && ui.notice === "Tab: panels | i: type | /help: commands" ? "Ready" : ui.notice)}${chatContextBadge ? `${historyStatus ? " / " : ""}${chatContextBadge}` : ""}`;
+        : `${historyStatus ?? (spaciousShell && ui.notice === "Tab: panels | i: type | /help: commands" ? "Ready" : ui.notice)}${chatContextBadge ? `${historyStatus ? " / " : ""}${chatContextBadge}` : ""}`;
   const menuRows = menu.map(([name, description], i) =>
     ink(
       text(
@@ -7442,14 +7658,19 @@ export function renderWorkspace(
   // The caret marker is a one-cell placeholder so animation cannot alter
   // wrapping. Inactive spacious composers deliberately keep the hint static.
   const caret = typeCursor(ui.palette ? true : editing, motion);
-  const composerRows = composer
-    .slice(composerStart, composerStart + composerHeight)
-    .map((value, i) =>
-      promptFrameRow(
-        `${i === 0 ? "> " : "  "}${value.replace("▌", caret)}`,
-        width,
-      ),
+  const composerRows = Array.from({ length: composerHeight }, (_, i) => {
+    const promptRow = i === Math.floor(composerHeight / 2);
+    const placeholder =
+      !input && !editing && !ui.palette ? "i type / Enter details" : undefined;
+    const value =
+      promptRow && placeholder
+        ? placeholder
+        : (composer[composerStart + i] ?? "");
+    return promptFrameRow(
+      `${promptRow ? "> " : "  "}${value.replace("▌", caret)}`,
+      width,
     );
+  });
   const promptBox = spaciousShell
     ? [promptFrameRow("", width), ...composerRows, promptFrameRow("", width)]
     : [
@@ -7610,11 +7831,23 @@ const KEYBINDING_ROWS: readonly {
     keys: "Alt+B/F/Left/Right or Ctrl+Left/Right",
     action: "Jump by word",
   },
-  { group: "input", keys: "Alt+D / Alt+Backspace / Ctrl+W", action: "Delete a word" },
+  {
+    group: "input",
+    keys: "Alt+D / Alt+Backspace / Ctrl+W",
+    action: "Delete a word",
+  },
   { group: "input", keys: "Ctrl+K", action: "Delete to end of line" },
   { group: "input", keys: "Ctrl+U", action: "Clear the input" },
-  { group: "input", keys: "Ctrl+Y / Alt+Y", action: "Paste or cycle killed text" },
-  { group: "input", keys: "Ctrl+_ / Ctrl+Shift+Z", action: "Undo / redo the last edit" },
+  {
+    group: "input",
+    keys: "Ctrl+Y / Alt+Y",
+    action: "Paste or cycle killed text",
+  },
+  {
+    group: "input",
+    keys: "Ctrl+_ / Ctrl+Shift+Z",
+    action: "Undo / redo the last edit",
+  },
   { group: "input", keys: "Ctrl+D", action: "Delete forward, twice exit" },
   { group: "navigate", keys: "Tab", action: "Next panel or complete" },
   {
@@ -7652,7 +7885,11 @@ const KEYBINDING_ROWS: readonly {
     keys: "Ctrl+T outside editing",
     action: "Show the checklist from output",
   },
-  { group: "session", keys: "Ctrl+O", action: "Toggle tool output" },
+  {
+    group: "run",
+    keys: "Ctrl+O",
+    action: "Cycle agent activity detail during a run",
+  },
   { group: "session", keys: "Ctrl+S", action: "Stash, press again to restore" },
   {
     group: "session",
@@ -7660,7 +7897,11 @@ const KEYBINDING_ROWS: readonly {
     action: "Open the editor",
   },
   { group: "session", keys: "Meta+P", action: "Switch model" },
-  { group: "session", keys: "Alt+M / Shift+Alt+M", action: "Cycle provider models" },
+  {
+    group: "session",
+    keys: "Alt+M / Shift+Alt+M",
+    action: "Cycle provider models",
+  },
   {
     group: "session",
     keys: "Ctrl+L",

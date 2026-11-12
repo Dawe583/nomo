@@ -28,6 +28,7 @@ import {
   TUI_COMMANDS,
 } from "./workspace.ts";
 import { healthSummary, healthWord, renderHealth } from "./health.ts";
+import { brandHeader } from "./brand.ts";
 import {
   absentCapabilities,
   discoveryRows,
@@ -1240,7 +1241,7 @@ test("review needs an explicit accept or reject key", async (t) => {
   assert.match(ui.notice, /Rejected/);
   assert.equal(app.workspace(id).files["doc.md"], "before");
   const frame = stripAnsi(renderWorkspace(ui, 100, 32));
-  assert.ok(frame.includes("Tab panels"));
+  assert.ok(frame.includes("Rejected"));
 });
 
 test("prompt surface stays aligned at every width", async (t) => {
@@ -1361,27 +1362,21 @@ test("branch intent reuses its idempotency key after a transient failure", async
   assert.match(keys[0]!, /^[0-9a-f-]{36}$/);
 });
 
-test("logo is one stroke width and every row aligns", async (t) => {
-  const root = await mkdtemp(join(tmpdir(), "nomo-tui-logo-"));
-  const { app, env } = await fixtureApp(root);
-  t.after(async () => {
-    await app.shutdown();
-    await rm(root, { recursive: true, force: true });
+test("NOMO grid logo preserves its six-row mark and signal tiles", () => {
+  const mark = brandHeader("", {
+    columns: 100,
+    rows: 32,
+    colorDepth: 0,
+    ansi: false,
+    reason: "no-color",
+    interactive: false,
   });
-  const ui = new WorkspaceTui(app, env);
-  const rows = stripAnsi(renderWorkspace(ui, 100, 32)).split("\n");
-  // The mark is 7 rows of half blocks: an ink square outline, an accent
-  // square inside it, and a dot in the centre. Every row carries ink, so the
-  // mark never reads as a broken or partial rule.
-  const mark = rows.slice(0, 7).map((line) => line.slice(0, 13));
-  assert.ok(mark.every((line) => /[█▀▄]/.test(line)));
-  // Column 0 and column 12 are the outer rule, so they are ink on every row.
-  for (const row of mark) {
-    assert.ok(row.startsWith("█"), row);
-    assert.equal(row[12], "█", row);
-  }
-  // The centre cell of the middle row is the dot.
-  assert.equal(mark[3]![6], "█", mark[3]);
+  assert.equal(mark.length, 6);
+  assert.equal(mark[0], "██ ██ ██ ██ ██ ██");
+  assert.ok(mark[1]!.startsWith("█████"));
+  assert.ok(mark[4]!.includes("██"));
+  assert.ok(mark.every((row) => /█/.test(row)));
+  assert.ok(!mark.some((row) => row.includes("NOMO")));
 });
 
 test("tab icons carry fixed colors in color mode only", async (t) => {
