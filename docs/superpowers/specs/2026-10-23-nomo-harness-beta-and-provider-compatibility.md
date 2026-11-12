@@ -93,10 +93,10 @@ Provider roster je připnutý k uvedeným verzím; novější upstream provider 
 3. Testy prokazují model discovery, úspěšný textový completion, stream, tool-call round trip, usage, cancellation a chybové/redakční chování pro každý transport, který daný provider deklaruje. Nepodporovaná capability je explicitně odmítnuta nebo skryta; nesmí být tiše degradována.
 4. Přímý OpenAI provider funguje přes oficiální adapter a všechny existující compatible/Anthropic profily se po restartu zachovají přes ověřenou konfiguraci/migraci.
 5. API key i OAuth token se nikdy nevrací klientovi, nevypíše, nevloží do eventu/ledgeru/feedbacku a zůstane dostupný jen v šifrovaném lokálním úložišti. Redirect, cizí host nebo neplatný token končí bezpečnou chybou.
-6. Nastavení ve Workbench GUI umí vybrat každý provider z manifestu, přihlásit se jeho podporovanou metodou, ověřit endpoint a vybrat dostupný model. Žádná změna `packages/cli/src/tui/**` ani TUI grafu.
+6. Workbench a místní Control Plane API zpřístupní pouze doložené provider setup flows. TUI pro OpenAI účet zobrazí pouze bezpečné stavy, účet/model, reauth a disconnect. Web GUI a browser smoke zůstávají mimo aktuální rozsah.
 7. Tester s uděleným přístupem dokáže ze zdrojového checkoutu podle dokumentace spustit CLI i lokální webové rozhraní s Git, Node.js 24+ a pnpm. Žádný desktopový balíček ani instalovaný smoke test.
 8. Soukromý feedback formulář umožňuje ručně nahlásit reprodukovatelný problém bez telemetrie, diagnostického uploadu, tajemství nebo citlivého obsahu.
-9. Žádný veřejný release, změna repo visibility, skutečný provider request, produkční credential, TUI změna, commit nebo merge bez odděleného schválení.
+9. Žádný veřejný release, změna repo visibility, produkční credential ani skutečný provider request před samostatnou kontrolou bezpečného consentu. TUI implementace je v rozsahu, web GUI není.
 
 ## Implementační pořadí
 
@@ -104,7 +104,7 @@ Provider roster je připnutý k uvedeným verzím; novější upstream provider 
 2. Dodat typed registry/transport contract a migraci současných `compatible`/`anthropic` configů bez ztráty klíčů, modelu nebo nastavení.
 3. Implementovat adaptery po transportních rodinách v pořadí určeném počtem pokrytých providerů a rizikem; každý řez test-first s lokálními fixtures.
 4. Implementovat provider-specific API key/OAuth/login a bezpečné uložení až po uzavření auth matrix; ověřit refresh, cancel, expiry a redakci.
-5. Zapojit registry a auth přes `/api/provider` a Workbench GUI Settings; ověřit kompatibilitu starších configů.
+5. Zapojit registry a auth přes `/api/provider` a Workbench. Implementovat pouze schválený TUI účetní tok; web GUI zůstává mimo rozsah. Ověřit kompatibilitu starších configů.
 6. Doplnit soukromý tester issue form a quickstart pro zdrojový checkout, CLI a lokální web bez telemetrie a automatického session/diagnostic exportu.
 7. Spustit relevantní provider/Workbench/API/UI fixture suites, typecheck a docs-truth testy; po dokončení všech kódových řezů provést kompletní suite. Zaznamenat manifest coverage a přesné výsledky do jediného Harness grafu a Obsidian work logu.
 
@@ -114,3 +114,11 @@ Provider roster je připnutý k uvedeným verzím; novější upstream provider 
 - Testerům uděluje přístup vlastník; desktopové podpisy, balíčky a instalační smoke testy jsou mimo aktuální rozsah.
 - Pokud provider v připnutém katalogu vyžaduje nepodporovaný nebo nepovolený auth flow, nesmí se jeho API obcházet. Překážka se doloží a znovu předloží uživateli; úplná kompatibilita se do té doby nehlásí.
 - H19 (filtered working copy + omezené Git API) zůstává odděleně blokované až do schválení detailní bezpečnostní hranice; jeho implementace není součástí provider/install worku.
+
+## Historický záznam: OpenAI Sign in with ChatGPT a TUI scope, 2026-11-03
+
+Tento dodatek zachovává původní návrh a schválení jako historii. Dne 2026-11-03 uživatel stáhl z aktuálního rozsahu místní ChatGPT-plan účet a na něm závislý TUI tok. Tyto úkoly nejsou dokončeny ani autorizovány k pokračování. Stažení není bezpečnostním schválením.
+
+Oficiální SIWC audit zůstává dokončeným výzkumem. Samostatná inbound OpenAI Chat Completions podpora se tímto rozhodnutím nemění. Zachovat současné OpenAI API-key a generic-compatible chování. Nezavádět SIWC účet ani jeho TUI příkazy. Live provider smoke není součástí staženého rozsahu.
+
+Dřívější podrobný návrh účtu, ukládání přihlašovacích údajů, obnovení přístupu a TUI ovládání již není součástí této specifikace. Případný nový návrh vyžaduje novou žádost.

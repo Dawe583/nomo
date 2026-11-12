@@ -331,3 +331,11 @@ Tato aktualizace nahrazuje dřívější webové a desktopové cíle tohoto plá
 - Aktuální blokery, které kód sám neodstraní: chybějící autoritativní Prime serving metadata; nepodporované/proprietární transporty a jejich auth kontrakty; bezpečné předání přihlašovacích údajů pro H12/H13; bezpečné uzavření H58; vlastníkovo udělení přístupu testerům do soukromého repozitáře.
 - Pokud některý blokovaný provider zůstane součástí schváleného in-scope rosteru, celý požadavek na plnou OMP/Prime kompatibilitu zůstává nehotový. Výsledek se musí popsat jako částečně ověřený Harness, ne jako ekvivalent Prime Agentu nebo OMP.
 - Zastavit konkrétní loop při neznámém kontraktu, odhalení tajemství, nepovoleném souboru, cizí změně, síťovém požadavku nebo regresi testu; zachovat rozpracovaná data a přesně zaznamenat blocker.
+
+## Aktuální rozsah, 2026-11-03
+
+Uživatel stáhl z aktuálního plánu místní OpenAI ChatGPT-plan účet a navazující TUI práce. Tyto úkoly nejsou dokončeny; jde o stažení rozsahu, nikoli o přijetí či bezpečnostní schválení. SIWC účet, jeho TUI příkazy ani navázaný live provider smoke nejsou aktivními požadavky.
+
+Oficiální SIWC audit zůstává dokončeným historickým výzkumem. H69/H73 inbound Chat Completions jsou samostatná práce a zůstávají beze změny. Zachovat současné OpenAI API-key a generic-compatible cesty. H21 a jeho nevyřešené provider-contract překážky se tím nemění.
+
+Původní podrobné požadavky na účetní tok a TUI byly z aktivní části plánu odstraněny. Kandidátní implementace, worktree a draft PR #130 zůstávají beze změny; jejich vrácení zpět ani uzavření PR nejsou součástí tohoto plánu. Nebyly změněny sdílené zámky, procesy, instalace ani přihlašovací údaje a nebyl proveden provider request. Pokračovat podle jediného aktivního uzlu `.nomo/work-state.json`, který tuto větev práce neobsahuje.

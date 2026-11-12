@@ -196,6 +196,12 @@ SSE function-call argument chunks are finalized in output order from the
 completed response; its `response_id` and usage are returned to the caller.
 The text-only `onDelta` callback redacts API-key matches across SSE delta
 boundaries; tool arguments and usage remain unchanged.
+The in-progress ChatGPT account profile accepts only the official
+`https://api.openai.com/v1` base and retains only safe error metadata
+(`code`, `param` and request ID), not provider error messages or raw bodies.
+Direct-admission `detail` errors retain their shape with the text redacted.
+The profile requires a streamed inference response and rejects a JSON reply.
+Its authentication lifecycle remains incomplete and is not ready for use.
 Incomplete, truncated, malformed, and failed streams are rejected; the reader stops and is
 cancelled after the terminal completion event. OpenAI API keys and Responses
 contracts are documented in the official
@@ -396,6 +402,12 @@ API keys. By default, `workspace.enc` is encrypted with `workspace.key` in the
 same owner-only directory. The host can provide `NOMO_WORKSPACE_KEY`; the
 desktop shell can source it from OS credential storage. This protects stored
 state from other accounts, not from the same user or copies of the directory.
+
+Workbench refuses to remove a lock whose PID no longer has a live process. To
+recover, stop every NOMO process that can write to this storage directory, then
+remove the corresponding `.lock` file. Do not delete the lock while any NOMO
+process may still be using the store. Older NOMO processes may still attempt
+automatic stale-lock recovery, so do not run them alongside this recovery.
 
 `/logout` removes saved provider profiles and any legacy API key copies from
 session configuration while keeping conversation history readable. Continuing a

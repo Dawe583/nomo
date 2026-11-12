@@ -161,6 +161,10 @@ export type ProviderAuthProfile =
     }
   | {
       readonly kind: "none";
+    }
+  | {
+      readonly kind: "openai-chatgpt-account";
+      readonly accountId: string;
     };
 export type AwsCredentialProvider = () => Promise<{
   readonly accessKeyId: string;
@@ -169,6 +173,7 @@ export type AwsCredentialProvider = () => Promise<{
 }>;
 export type ProviderAdapterDependencies = {
   readonly awsCredentialProvider?: AwsCredentialProvider;
+  readonly openAIChatGPTTokenProvider?: (accountId: string) => Promise<string>;
 };
 
 export type ProviderAdapterConfig = {

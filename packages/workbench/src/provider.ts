@@ -9,21 +9,45 @@ import {
   defaultHarnessSettings,
   type HarnessSettings,
 } from "./harness-settings.ts";
+function providerRequestMessage(status: number, code: string | undefined, requestId: string | undefined): string {
+  const messages: Record<string, string> = {
+    subscription_sharing_usage_limit_exceeded:
+      "ChatGPT plan usage for this app reached its limit. Pause requests and review https://chatgpt.com/settings/usage; no reset time is implied.",
+    subscription_sharing_usage_unavailable:
+      "ChatGPT plan usage could not be checked. Preserve the account credentials and retry later.",
+    subscription_sharing_user_not_eligible:
+      "ChatGPT plan usage is unavailable for the selected account, workspace or policy. No API-key billing fallback was attempted.",
+    subscription_sharing_unsupported_capability:
+      "The selected ChatGPT account does not support this request capability. No API-key billing fallback was attempted.",
+    subscription_sharing_route_not_supported:
+      "The selected ChatGPT account does not support this API route. No API-key billing fallback was attempted.",
+    subscription_sharing_invalid_user:
+      "OpenAI rejected the selected ChatGPT account. Check its account and granted scopes; credentials were not automatically cleared.",
+    chatpass_v2_scope_not_authorized:
+      "The selected ChatGPT account has not granted the required usage permission. Reauthorize it explicitly to enable plan usage.",
+  };
+  const detail = code === "email_verification_required"
+    ? "Token Harbor requires email verification. Open your confirmation email or request a new one at https://tokenharbor.ai/dashboard, then reconnect."
+    : code === "customer_verification_required"
+      ? "Vercel AI Gateway requires account verification. Add a card in Vercel AI Gateway settings or connect your own provider key."
+      : (code && messages[code]) || `Provider request failed (HTTP ${status}). Check credentials, model access or rate limits.`;
+  const safeRequestId = requestId && /^[A-Za-z0-9._-]{1,128}$/.test(requestId) ? requestId : undefined;
+  return `${detail}${safeRequestId ? ` Request ID: ${safeRequestId}.` : ""}`;
+}
+
 export class ProviderRequestError extends Error {
   readonly status: number;
   readonly code: string | undefined;
   readonly retryAfter: number | undefined;
-  constructor(status: number, code?: string, retryAfter?: number) {
-    super(
-      code === "email_verification_required"
-        ? "Token Harbor requires email verification. Open your confirmation email or request a new one at https://tokenharbor.ai/dashboard, then reconnect."
-        : code === "customer_verification_required"
-          ? "Vercel AI Gateway requires account verification. Add a card in Vercel AI Gateway settings or connect your own provider key."
-          : `Provider request failed (HTTP ${status}). Check credentials, model access or rate limits.`,
-    );
+  readonly requestId?: string;
+  readonly body?: unknown;
+  constructor(status: number, code?: string, retryAfter?: number, requestId?: string, body?: unknown) {
+    super(providerRequestMessage(status, code, requestId));
     this.status = status;
     this.code = code;
     this.retryAfter = retryAfter;
+    if (requestId) this.requestId = requestId;
+    if (body !== undefined) Object.defineProperty(this, "body", { value: body, enumerable: false });
   }
 }
 export type ProviderKind = "compatible" | "anthropic";
@@ -469,7 +493,13 @@ export class CompatibleProvider implements ProviderClient {
   private async response(path: string, body?: unknown, signal?: AbortSignal, accept?: string) {
     let response: Response;
     try {
-      response = await this.request(new URL(path, this.base), {
+      const requestUrl =
+        this.config.kind === "anthropic" &&
+        this.config.providerId === "kimi-coding" &&
+        !this.base.pathname.replace(/\/$/, "").endsWith("/v1")
+          ? new URL(`v1/${path}`, this.base)
+          : new URL(path, this.base);
+      response = await this.request(requestUrl, {
         method: body === undefined ? "GET" : "POST",
         headers: {
           ...(this.config.kind === "anthropic"
