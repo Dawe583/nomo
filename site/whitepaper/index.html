@@ -1,0 +1,405 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>NOMO: Agent Identity and Fleet Control Plane (White Paper v1.0)</title>
+<meta name="description" content="NOMO White Paper v1.0: technical specification and operating model for an Agent Identity and Fleet Control Plane." />
+<style>
+  :root { --bg:#FFFFFF; --ink:#111111; --muted:#555555; --line:#E5E5E5; --soft:#F7F7F7; --accent:#333333;
+          --sans: Inter, "Segoe UI", system-ui, -apple-system, Helvetica, Arial, sans-serif;
+          --mono: "JetBrains Mono", "SFMono-Regular", Menlo, Consolas, monospace; }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 24px; }
+  body { margin:0; background:var(--bg); color:var(--ink); font-family:var(--sans); font-size:16px; line-height:1.7; -webkit-font-smoothing:antialiased; }
+  .layout { display:grid; grid-template-columns: 280px minmax(0, 1fr); max-width: 1280px; margin: 0 auto; }
+  nav.toc { position: sticky; top:0; align-self:start; height:100vh; overflow-y:auto; padding:32px 20px 32px 24px; border-right:1px solid var(--line); background:var(--bg); }
+  nav.toc .toc-title { font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin:0 0 12px; font-weight:600; }
+  nav.toc ol { list-style:none; padding:0; margin:0; }
+  nav.toc li { margin:0; }
+  nav.toc a { display:block; padding:5px 8px; margin-left:-8px; color:var(--muted); text-decoration:none; font-size:13.5px; border-radius:4px; line-height:1.4; }
+  nav.toc a:hover, nav.toc a:focus-visible { color:var(--ink); background:var(--soft); outline:none; }
+  nav.toc a.active { color:var(--ink); font-weight:600; background:var(--soft); }
+  main { padding: 56px 64px 96px; min-width:0; }
+  .doc-head { border-bottom:2px solid var(--ink); padding-bottom:28px; margin-bottom:36px; }
+  .doc-head .kicker { font-family:var(--mono); font-size:12px; color:var(--muted); letter-spacing:.04em; margin:0 0 14px; }
+  .doc-title { font-size: 40px; line-height:1.15; letter-spacing:-.02em; margin:0 0 16px; font-weight:700; }
+  .doc-meta { color:var(--muted); font-size:14px; margin:0; }
+  .abstract { background:var(--soft); border-left:3px solid var(--ink); padding:20px 24px; margin:0 0 40px; font-size:15px; }
+  .abstract h2 { font-size:13px; text-transform:uppercase; letter-spacing:.08em; margin:0 0 8px; color:var(--muted); }
+  .abstract p { margin:0; }
+  .actions { display:flex; gap:12px; margin: 0 0 40px; flex-wrap:wrap; }
+  button.print-btn, a.btn { font: inherit; font-size:14px; font-weight:600; padding:10px 18px; border-radius:6px; border:1px solid var(--ink); background:var(--ink); color:#FFFFFF; cursor:pointer; text-decoration:none; }
+  button.print-btn:hover { background:#333333; }
+  a.btn { background:#FFFFFF; color:var(--ink); }
+  a.btn:hover { background:var(--soft); }
+  section.sec { margin-bottom: 56px; }
+  h2 { font-size:26px; line-height:1.25; letter-spacing:-.01em; margin: 0 0 18px; padding-top: 12px; border-top:1px solid var(--line); scroll-margin-top:24px; }
+  h3 { font-size:19px; margin: 32px 0 12px; scroll-margin-top:24px; font-weight:600; }
+  p { margin: 0 0 16px; }
+  ul, ol { margin: 0 0 18px; padding-left: 24px; }
+  li { margin-bottom: 6px; }
+  a { color:var(--ink); text-underline-offset:3px; }
+  code { font-family:var(--mono); font-size:.88em; background:var(--soft); padding:1px 5px; border-radius:4px; border:1px solid var(--line); overflow-wrap:anywhere; }
+  pre { font-family:var(--mono); font-size:13px; line-height:1.55; background:var(--soft); border:1px solid var(--line); border-radius:6px; padding:16px 18px; overflow-x:auto; margin: 0 0 20px; }
+  pre code { background:none; border:0; padding:0; }
+  .table-wrap { overflow-x:auto; margin: 0 0 24px; border:1px solid var(--line); border-radius:6px; }
+  table { border-collapse: collapse; width:100%; font-size:14px; }
+  th, td { text-align:left; vertical-align:top; padding:10px 12px; border-bottom:1px solid var(--line); }
+  th { background:var(--soft); font-weight:600; border-bottom:1px solid var(--ink); }
+  tr:last-child td { border-bottom:0; }
+  figure.diagram { margin: 24px 0 32px; border:1px solid var(--line); border-radius:6px; padding:16px; }
+  figure.diagram svg { width:100%; height:auto; display:block; }
+  figcaption { font-size:13px; color:var(--muted); margin-top:8px; }
+  footer { margin-top:64px; padding-top:20px; border-top:1px solid var(--line); color:var(--muted); font-size:13px; }
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+    nav.toc { position: relative; height:auto; max-height:none; border-right:0; border-bottom:1px solid var(--line); padding:20px 24px; }
+    main { padding: 32px 24px 64px; }
+    .doc-title { font-size: 30px; }
+  }
+  @media print {
+    @page { size: A4; margin: 18mm 16mm; }
+    body { font-size: 11pt; line-height:1.5; color:#000; background:#FFFFFF; }
+    .layout { display:block; max-width:none; }
+    nav.toc, .actions, footer .noprint { display:none !important; }
+    main { padding:0; }
+    .doc-title { font-size: 24pt; }
+    h2 { font-size: 16pt; break-before: auto; break-after: avoid; page-break-after: avoid; padding-top: 0; }
+    h3 { font-size: 12pt; break-after: avoid; page-break-after: avoid; }
+    section.sec { break-before: auto; margin-bottom: 24px; }
+    h2 { break-before: page; page-break-before: always; }
+    h2:first-of-type { break-before: auto; page-break-before: auto; }
+    .abstract { break-inside: avoid; }
+    pre, figure.diagram, .table-wrap, table, tr { break-inside: avoid; page-break-inside: avoid; }
+    a { color:#000; text-decoration: none; }
+    a[href^="http"]::after { content: " (" attr(href) ")"; font-size: 8.5pt; color:#444; word-break: break-all; }
+    pre { white-space: pre-wrap; border:1px solid #999; background:#FFFFFF; }
+    code { background:none; border:0; }
+    .table-wrap { overflow: visible; border:0; }
+    th { background:#FFFFFF; }
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+  <nav class="toc" aria-label="Table of contents">
+    <p class="toc-title">Contents</p>
+    <ol><li><a href="#0-scope-evidence-rules-and-reading-limits">0. Scope, evidence rules and reading limits</a></li><li><a href="#1-executive-summary">1. Executive summary</a></li><li><a href="#2-problem-statement">2. Problem statement</a></li><li><a href="#3-product-direction-and-scope">3. Product direction and scope</a></li><li><a href="#4-architecture">4. Architecture</a></li><li><a href="#5-trust-and-enforcement-model">5. Trust and enforcement model</a></li><li><a href="#6-ledger">6. Ledger</a></li><li><a href="#7-policy">7. Policy</a></li><li><a href="#8-connectors-and-recovery-contract">8. Connectors and recovery contract</a></li><li><a href="#9-harness">9. Harness</a></li><li><a href="#10-threat-model">10. Threat model</a></li><li><a href="#11-deployment-modes">11. Deployment modes</a></li><li><a href="#12-verification-and-release-gates">12. Verification and release gates</a></li><li><a href="#13-open-questions">13. Open questions</a></li><li><a href="#14-roadmap">14. Roadmap</a></li><li><a href="#15-glossary">15. Glossary</a></li><li><a href="#16-sources-and-provenance">16. Sources and provenance</a></li></ol>
+  </nav>
+  <main id="top">
+    <header class="doc-head">
+      <p class="kicker">NOMO / WHITE PAPER v1.0 / Repository Dawe583/nomo</p>
+      <p class="doc-meta">Technical specification and operating model. Status: planning and architecture document. Not a release, not a deployment approval, and not a market claim.</p>
+    </header>
+    <div class="actions noprint">
+      <button class="print-btn" type="button" onclick="window.print()">Export to PDF / Print</button>
+      <a class="btn" href="#top">Back to top</a>
+    </div>
+    <h1 class="doc-title">NOMO: Agent Identity and Fleet Control Plane</h1>
+<p>White Paper v1.0. Technical specification and operating model.</p>
+<p>Repository: Dawe583/nomo. Source baseline: commit 521b1c825c95ce3fdda71370aa3dfd8bef5e5dd2 (main). Branch for this document: docs/whitepaper-v1.0.</p>
+<p>Status: planning and architecture document. It is not a release, not a deployment approval, and not a market claim.</p>
+<section class="sec" id="0-scope-evidence-rules-and-reading-limits"><h2>0. Scope, evidence rules and reading limits</h2>
+<p>This paper describes what NOMO is designed to do, what the repository implements today, and what remains planned. Every substantive claim carries one of four tags:</p>
+<ul><li>Implemented: present in reviewed source or contracts, with a named file.</li><li>Documented-verified: the repository records a local run, drill or test for it, with the record named.</li><li>Planned: specified in the MVP spec or the context pack, not yet proven.</li><li>Unproven: cannot be checked without a deployment, an external account or a customer.</li></ul>
+<p>Reading limits. The following were read in full: <code>docs/OPERATIONS.md</code> (in part of the final section only; see 16), <code>docs/superpowers/specs/2026-10-08-nomo-agent-identity-fleet-mvp-spec.md</code>, <code>docs/CONTEXT.md</code>, and <code>packages/connectors/src/recovery.ts</code>. The following were read only through truncated output and are cited only for the sections that were visible: <code>docs/DECISIONS.md</code>, <code>docs/RECOVERY-CONTRACT.md</code>, <code>docs/THREAT-MODEL.md</code>. Not read at all in this revision: the capability map, the implementation plan, <code>docs/RECOVERY-COVERAGE.md</code>, <code>docs/STANDARDS.md</code>, <code>docs/EVIDENCE-FIXES-VERIFICATION.md</code>, the Harness source, the individual connector implementations (filesystem, postgres, s3, git), the proxy source, and the ledger source. Where this paper describes code behavior, it cites the earlier reads of the threat model and the operations runbook, which quote file and line references. It does not re-verify them.</p>
+<p>Search results. A repository code search for "four tiers", "air-gap", "air gap" and "sovereign" returned zero matches on the reviewed revision. The paper does not describe a four-tier ledger or an air-gapped or sovereign deployment mode.</p>
+</section>
+<section class="sec" id="1-executive-summary"><h2>1. Executive summary</h2>
+<p>Agents that use MCP tools can write to databases, repositories, cloud services and third-party APIs. After an incident, an operator needs to answer five questions: which registered agent and run made the call, what scope and policy applied, who approved a held write, whether the target received it, and whether a revoke prevented the next call.</p>
+<p>NOMO is an Agent Identity and Fleet Control Plane for MCP-capable agents. It places a trusted proxy in the agent's tool path. The proxy binds each call to a principal, workspace, agent and run; checks scope; classifies the call; evaluates an ordered policy; writes decision evidence before forwarding a high-risk write; and records the result or an explicit unknown outcome after the upstream responds.</p>
+<p>The design is deliberately fail-closed. Unknown tool, unclassified call, invalid policy, ledger append failure, invalid facts or internal proxy error all deny. An observe-only mode exists but must be selected explicitly.</p>
+<p>Three things the paper is careful about:</p>
+<ol><li>The ledger signature proves that bytes came from a process holding a key. Under the current local deployment, the recorder, signer and verifier share one operating-system user, and the verification key default lives beside the signing key. A plain local signature therefore does not protect against the agent itself. Pinning a verification key out of band is the defense, and it is not the default.</li><li>Recovery and undo are real technical capabilities for specific connectors and effect classes. They are not the primary product direction. The context pack states that recovery is not the current primary wedge.</li><li>The market for identity, credential brokerage, MCP gateways and runtime control is active. NOMO does not claim an empty market or a first position. Current products named in the MVP spec include Microsoft Entra Agent ID, AWS Bedrock AgentCore Identity and Cloudflare MCP server portals.</li></ol>
+<p>Current status, by tag:</p>
+<ul><li>Implemented: a STDIO proxy with policy, hash-chained signed JSONL ledger, operation journal, recovery adapter contract, CLI, control-plane API surface and a desktop shell.</li><li>Planned for the 2026-10-11 demo: an inbound loopback Streamable HTTP MCP endpoint, a local test issuer, a 60-second opaque run token, one disposable target and one constrained Harness run.</li><li>Planned for product v1: MCP HTTP authorization conformance, principal registry, revocation with acknowledgement, the Harness on the same path, and an independent evidence verification path.</li></ul>
+</section>
+<section class="sec" id="2-problem-statement"><h2>2. Problem statement</h2>
+<h3 id="2-1-the-operator-s-questions">2.1 The operator's questions</h3>
+<p>The MVP spec defines the primary operator as a team owner responsible for coding or workflow agents that can write to databases, repositories, cloud services or other MCP tools. The operator needs to answer:</p>
+<ul><li>Which registered agent and run made this call?</li><li>What scope and policy applied?</li><li>Who approved it, if it was held?</li><li>Did the target receive it?</li><li>Does a revoke prevent the next call?</li></ul>
+<h3 id="2-2-why-existing-answers-are-partial">2.2 Why existing answers are partial</h3>
+<p>Identity providers can issue credentials to an agent. Credential brokers can scope a token to a resource. MCP gateways can route and log tool calls. Audit logs can record what a service says happened. Each addresses part of the problem. The gap NOMO targets is narrower: a single enforcement path in which every tool call through the proxy has a decision record before dispatch, a bounded fast path for reads and low-risk calls, a full policy and evidence path for high-risk writes, and an operator view of dispatched work whose outcome is still unknown.</p>
+<p>NOMO does not claim this gap is unoccupied. The MVP spec names its wedge as a hypothesis: one governed write with four named owners (agent principal, scope and policy, control approval, incident response).</p>
+<h3 id="2-3-what-nomo-is-not">2.3 What NOMO is not</h3>
+<ul><li>It is not an identity provider and does not replace one.</li><li>It is not a backup product. Recovery is a technical capability, not a backup.</li><li>It is not a production key management service.</li><li>It is not a proof that declared facts are true, that a human approval was authenticated, or that the target system is healthy (see section 10.4).</li></ul>
+</section>
+<section class="sec" id="3-product-direction-and-scope"><h2>3. Product direction and scope</h2>
+<h3 id="3-1-direction">3.1 Direction</h3>
+<p>The context pack (<code>docs/CONTEXT.md</code>) defines the product as an Agent Identity and Fleet Control Plane. Its key properties:</p>
+<ul><li>The runtime binds each tool call to a trusted principal, workspace, registered agent and run.</li><li>All calls receive identity and scope checks and emit a minimal metadata event.</li><li>Reads and low-risk calls use a bounded fast path. The fast path still passes through the trusted proxy and does not bypass identity checks.</li><li>High-risk writes receive the complete policy and durable-evidence path.</li><li>Operators can inspect decisions, approve or deny a held operation, revoke a run or agent, and see unresolved dispatched work.</li></ul>
+<p>The coding-agent Harness is a required host integration and a product-v1 release gate. It is not a separate product. Its runs use the same identity, token, proxy, policy and ledger path as other managed agents.</p>
+<p>The context pack supersedes recovery-first positioning in earlier strategy documents. Existing recovery, connector, policy, ledger, verification, privacy and operational contracts remain technical capabilities unless a dated decision changes them.</p>
+<h3 id="3-2-scope-tiers">3.2 Scope tiers</h3>
+<p>Source: MVP spec, Scope section.</p>
+<p>Sunday demo (target 2026-10-11): one trusted Workbench run mapped to one registered principal, agent and workspace; one local test issuer; one workspace; one loopback inbound Streamable HTTP MCP endpoint; one disposable MCP target (candidate: <code>fixtures/e2e-server.mjs</code> with <code>fixtures/e2e-policy.yaml</code>, to be confirmed by a smoke test). Proves a read on the fast path, and high-risk Allow, Deny and Hold, with Hold bound to the exact canonical operation digest and a verified local operator. Includes a local kill switch that stops the next call after acknowledgement. Learning is disabled.</p>
+<p>Product v1: principal registry; standard MCP HTTP authorization; run grants that are short-lived, scoped and revocable; durable pre-dispatch decision record with a linked result or unknown outcome; standalone ledger verification; separate run stop, agent revoke and fleet revoke, where fleet success is returned only after enforcement nodes acknowledge; Harness on the same path with approved-proposal activation; control-plane views of inventory, events, approvals, acknowledgements and unresolved outcomes.</p>
+<p>Full product: multi-tenant isolation, role-based access, SSO, hosted key management, audited integrations, broad host and connector support, resilient fleet revocation, operational support, independent evidence export, enterprise availability. Each host must declare which authentication, policy, ledger and kill-switch guarantees it supports.</p>
+<h3 id="3-3-non-goals">3.3 Non-goals</h3>
+<p>From the MVP spec. No production deployment or broad market claim by 2026-10-11. No full MCP OAuth, third-party HTTP login, SSO or tenant billing in the demo. No OAuth identity over STDIO in the demo. No distributed fleet acknowledgement or kill SLA in the demo. No claim that a kill cancels an in-flight call or reverses its effect. No automatic policy learning, autonomous approval or cross-workspace retrieval. No Git history rewrite, no push to main, no PR and no GitHub Actions trigger in this work stream.</p>
+</section>
+<section class="sec" id="4-architecture"><h2>4. Architecture</h2>
+<figure class="diagram" aria-label="Interception Spine architecture diagram">
+<svg viewBox="0 0 900 300" role="img" xmlns="http://www.w3.org/2000/svg">
+  <defs><marker id="ar" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#111111"/></marker></defs>
+  <g font-family="Inter, system-ui, sans-serif" font-size="14" fill="#111111">
+    <rect x="10" y="110" width="150" height="70" rx="6" fill="#FFFFFF" stroke="#111111" stroke-width="1.5"/>
+    <text x="85" y="140" text-anchor="middle" font-weight="600">Agent</text>
+    <text x="85" y="160" text-anchor="middle" font-size="12" fill="#555555">MCP client</text>
+    <rect x="230" y="60" width="440" height="180" rx="8" fill="#F7F7F7" stroke="#111111" stroke-width="1.5" stroke-dasharray="6 4"/>
+    <text x="450" y="84" text-anchor="middle" font-weight="600">Interception Spine (trusted proxy)</text>
+    <rect x="255" y="100" width="180" height="60" rx="6" fill="#FFFFFF" stroke="#555555"/>
+    <text x="345" y="125" text-anchor="middle">1. Identity and scope</text>
+    <text x="345" y="143" text-anchor="middle" font-size="12" fill="#555555">run grant check</text>
+    <rect x="465" y="100" width="180" height="60" rx="6" fill="#FFFFFF" stroke="#555555"/>
+    <text x="555" y="125" text-anchor="middle">2. Classify and policy</text>
+    <text x="555" y="143" text-anchor="middle" font-size="12" fill="#555555">allow / deny / hold</text>
+    <rect x="255" y="185" width="390" height="40" rx="6" fill="#FFFFFF" stroke="#555555"/>
+    <text x="450" y="210" text-anchor="middle">3. Pre-dispatch evidence to ledger, then forward or refuse</text>
+    <rect x="730" y="110" width="160" height="70" rx="6" fill="#FFFFFF" stroke="#111111" stroke-width="1.5"/>
+    <text x="810" y="140" text-anchor="middle" font-weight="600">Upstream MCP</text>
+    <text x="810" y="160" text-anchor="middle" font-size="12" fill="#555555">target system</text>
+    <rect x="230" y="255" width="440" height="34" rx="6" fill="#FFFFFF" stroke="#999999"/>
+    <text x="450" y="277" text-anchor="middle" font-size="12" fill="#555555">Signed hash-chained ledger (digests only, no payloads). Result or unknown outcome appended after upstream reply.</text>
+  </g>
+  <g stroke="#111111" stroke-width="1.5" fill="none" marker-end="url(#ar)">
+    <line x1="160" y1="145" x2="230" y2="145"/>
+    <line x1="670" y1="145" x2="730" y2="145"/>
+    <line x1="450" y1="225" x2="450" y2="255"/>
+  </g>
+</svg>
+<figcaption>Figure 1. Interception Spine. Every call passes the proxy. Decision evidence precedes dispatch of high-risk writes. Source: sections 4.1 and 4.2.</figcaption>
+</figure>
+
+<h3 id="4-1-components">4.1 Components</h3>
+<p>Source: context pack, Repository and naming; MVP spec, Architecture boundaries.</p>
+<div class="table-wrap"><table><thead><tr><th>Component</th><th>Responsibility</th><th>Status</th></tr></thead><tbody><tr><td>packages/registry</td><td>Pure classification data and functions. Does not import ledger, Node built-ins, network clients or connectors.</td><td>Implemented (boundary stated in context pack)</td></tr><tr><td>packages/policy</td><td>Ordered rules, decisions, holds and approvals.</td><td>Implemented</td></tr><tr><td>packages/proxy</td><td>MCP request termination, classification, policy evaluation, forwarding or refusal, pre-dispatch evidence, result evidence.</td><td>Implemented over STDIO. Inbound HTTP planned.</td></tr><tr><td>packages/ledger</td><td>Canonical records, per-entry ed25519 signatures, stores, verification. Exposes append and read, never update.</td><td>Implemented</td></tr><tr><td>packages/connectors</td><td>Target facts, snapshots, mutation and the recovery adapter contract. A connector never imports another connector.</td><td>Implemented for listed connectors (see 8.4)</td></tr><tr><td>packages/runtime</td><td>Managed execution, operation journal, recovery jobs.</td><td>Implemented</td></tr><tr><td>packages/workbench</td><td>Coding-agent host and Harness.</td><td>Implemented. Demo wiring planned.</td></tr><tr><td>packages/cli</td><td>Operator commands and TUI.</td><td>Implemented</td></tr><tr><td>packages/verifier</td><td>Standalone evidence verification. Name reserved; not published to npm as of 2026-10-28 per context pack.</td><td>Planned</td></tr><tr><td>apps/control-plane</td><td>Local and hosted API and UI surfaces. UI consumes verified contracts and does not reimplement policy or ledger logic.</td><td>Implemented in part</td></tr></tbody></table></div>
+<p>Dependency rules, from the context pack: the proxy resolves connectors by id; connectors do not import each other; the ledger has no update path; the UI does not reimplement classification, policy, recovery or ledger logic.</p>
+<p>Package names. The private Harness packages use the NOMO namespace (for example <code>@nomo/proxy</code>, <code>@nomo/ledger</code>, <code>@nomo/policy</code>, <code>@nomo/registry</code>, <code>@nomo/connectors</code>, <code>@nomo/runtime</code>, <code>@nomo/workbench</code>, <code>@nomo/cli</code>, <code>@nomo/sdk</code>, <code>@nomo/agent-policy</code>, root <code>@nomo/workspace</code>, tooling <code>@nomo/scripts</code>). The MVP spec says the code baseline was at a <code>@void/*</code> namespace and that renames are an explicit compatibility workstream. Older environment aliases, encrypted state and signed ledgers remain compatible. Protected control-plane and desktop identities are outside this slice.</p>
+<h3 id="4-2-request-path">4.2 Request path</h3>
+<p>The sequence below is the design in the context pack and the MVP spec. The STDIO implementation covers steps 1 to 6 today. Inbound HTTP (step 1 for HTTP) is planned.</p>
+<ol><li>The agent sends an MCP request to the proxy. Over STDIO today; over loopback Streamable HTTP for the demo.</li><li>The proxy validates the caller's run grant (planned for HTTP; the STDIO path is governed by process trust, see 7.4).</li><li>The proxy resolves the tool to a registry entry. An unknown tool or unclassified call is denied.</li><li>The proxy canonicalizes arguments and computes an argument digest. Payloads are not stored; digests are (OPERATIONS.md, Ledger directory layout).</li><li>Policy is evaluated. Rules are ordered; first match wins. A missing or invalid policy is a startup failure in fail-closed posture.</li><li>The outcome is applied:</li></ol>
+<ul><li>Allow: decision evidence is appended, then the call is forwarded.</li><li>Deny: decision evidence is appended, the call is not forwarded, and an MCP error with the rationale is returned.</li><li>Hold: decision evidence is appended, the proxy waits for an operator decision bound to the exact digest, grant state is rechecked, and only then is the call forwarded.</li><li>Observe-only: recorded and forwarded without enforcing deny or hold. Only when selected explicitly.</li></ul>
+<ol><li>After the upstream response, the result or an explicit unknown outcome is appended.</li></ol>
+<p>If the ledger append of decision evidence fails before dispatch, the call is denied (MVP spec, Security requirement 5).</p>
+<h3 id="4-3-read-path-and-fast-path">4.3 Read path and fast path</h3>
+<p>Every call receives identity and scope checks and a metadata event. Reads and low-risk calls skip the durable policy and operator path and go to the bounded fast path. The fast path is not a bypass: it still traverses the proxy. The MVP spec makes no latency claim. p50 and p95 for the fast path and high-risk path are to be measured separately before any product target is set.</p>
+<h3 id="4-4-transports">4.4 Transports</h3>
+<p>STDIO (implemented). The proxy spawns the upstream as a child process. The proxy removes its own signing key variable from the child environment (<code>packages/proxy/src/transport/stdio.ts:113</code>, per THREAT-MODEL.md). The child still runs as the same operating-system user and can read the signing key file (section 6.4).</p>
+<p>Streamable HTTP inbound (planned). Loopback only for the demo. Must implement the MCP SDK's server API. The existing HTTP code in the proxy is an upstream client, not an inbound server (MVP spec, Scope). Open question 1 in section 13 covers whether the pinned SDK can share the interception pipeline.</p>
+<p>Upstream HTTP (implemented). The proxy calls an upstream MCP server over HTTP as a client. The upstream receives its own least-privilege credential, never the proxy token (context pack, Trust and enforcement model).</p>
+</section>
+<section class="sec" id="5-trust-and-enforcement-model"><h2>5. Trust and enforcement model</h2>
+<h3 id="5-1-identities">5.1 Identities</h3>
+<p>Three identities are distinct (context pack):</p>
+<ul><li>Operator account: a human administrator, authenticated in the browser session.</li><li>Registered agent principal: the identity an agent acts as.</li><li>Run: one execution of an agent.</li></ul>
+<p>A web session never substitutes for an agent grant. Caller-supplied agentId and runId are metadata, not authority. The trusted Workbench or broker binds principal, workspace, agent and run.</p>
+<h3 id="5-2-outcomes">5.2 Outcomes</h3>
+<p>Allow, Deny, Hold and observe-only are explicit outcomes. Unknown identity, scope, policy, broker, revocation or ledger state fails closed. Observe-only is opt-in, visible and never an error fallback (context pack; MVP spec, Security requirement 6).</p>
+<h3 id="5-3-hold-semantics">5.3 Hold semantics</h3>
+<p>A held operation is approved against the exact canonical operation digest, the policy version and a verified operator. Scope, expiry and revocation are checked again before dispatch (context pack). The MVP spec adds: if the grant expired after approval, issue a new scoped grant or reject the operation (Security requirement 4).</p>
+<p>Per-hold nonce. Every hold carries a nonce, so a stale decision file cannot replay onto a later hold after a restart (OPERATIONS.md, Approvals). The approval surface is a development surface and is not authenticated (OPERATIONS.md, Approvals). Human identity behind an approval is therefore unproven in the current repository.</p>
+<h3 id="5-4-dispatch-and-stop">5.4 Dispatch and stop</h3>
+<p>Evidence before dispatch: decision evidence is appended before any high-risk write is forwarded. If the append fails, the write is not dispatched (context pack, Trust and enforcement model).</p>
+<p>Stop: a stop blocks later calls after acknowledgement. It does not cancel a call already dispatched and does not reverse side effects. A timeout is an unresolved outcome until reconciled against the target. It is never reported as cancelled or reverted (context pack; MVP spec, Security requirement 7).</p>
+<h3 id="5-5-secret-handling">5.5 Secret handling</h3>
+<p>Token, prompt and secret values never enter logs, events, ledger payloads, screenshots or durable workspace state (context pack). Tokens appear only in the HTTP Authorization header, never in URL query strings, prompts, logs, events, ledger payloads, screenshots, browser storage or upstream MCP calls (MVP spec, Security requirement 2).</p>
+<p>Browser separation. The browser operator session and agent credentials are separate. Agent tokens must not be stored in browser storage or durable user settings (context pack).</p>
+</section>
+<section class="sec" id="6-ledger"><h2>6. Ledger</h2>
+<h3 id="6-1-properties">6.1 Properties</h3>
+<p>The ledger is append-only, hash-chained and signed per entry. Each stored entry is one JSON line containing: workspace, sequence number, body (time, tool, class, decision, argument digest, and attribution where present), previous hash, entry hash, key id, algorithm and signature (OPERATIONS.md, Ledger directory layout). Ledger stores digests, not payloads.</p>
+<p>Entry hash: sha256 over the domain label "void.ledger.entry.v1|", the previous hash, "|", and the canonical JSON of the body (packages/ledger/src/canonical.ts:94-105, per THREAT-MODEL.md section 3).</p>
+<p>Signature pre-image: "void.ledger.&lt;version&gt;|" + algorithm + "|" + key id + "|" + entry hash (packages/ledger/src/index.ts:69-77, per THREAT-MODEL.md section 3).</p>
+<p>Canonicalization is recursive, so nested arguments are covered by the signature (THREAT-MODEL.md section 3).</p>
+<p>The domain labels (<code>void.ledger.*</code>) are kept for compatibility with signed existing ledgers. The context pack says persisted identifiers are not silently renamed.</p>
+<h3 id="6-2-storage-the-two-documented-stores">6.2 Storage: the two documented stores</h3>
+<p>The context pack and DECISIONS.md section 2, as quoted in THREAT-MODEL.md and OPERATIONS.md, describe two stores behind one interface. This paper does not describe more.</p>
+<div class="table-wrap"><table><thead><tr><th>Store</th><th>Use</th><th>Durability</th><th>Append-only enforcement</th></tr></thead><tbody><tr><td>Dev JSONL (default)</td><td>Local development and tests</td><td>One file per workspace, O_APPEND, fsync before acknowledgement, mode 0600 in a 0700 directory</td><td>Interface has no update or delete. One writer per file.</td></tr><tr><td>Hosted Postgres</td><td>Hosted tier and multiple proxy processes</td><td>Dedicated ledger schema, never public</td><td>Four layers: type system, grants (application role has SELECT and INSERT only), triggers, and the chain plus signature</td></tr></tbody></table></div>
+<p>Resolution order when no DATABASE_URL is set: NOMO_LEDGER_URL, then DATABASE_URL, then the local JSONL store if its directory is writable (THREAT-MODEL.md section 2). Multiple proxies on one JSONL file are unsafe (OPERATIONS.md, Fail-closed section).</p>
+<p>Verified (documented-verified, per DECISIONS.md section 2 as quoted in THREAT-MODEL.md section 2.3): in public schema, a repository migration command dropped a populated ledger table and its triggers with a success message. In a dedicated schema the same test left everything intact. As the application role, UPDATE, DELETE, DROP TRIGGER and DISABLE TRIGGER ALL were refused.</p>
+<p>Limit: a database superuser bypasses grants and triggers. The chain and signature are what hold against that actor, and only if the verification key is outside the actor's reach (section 6.4).</p>
+<h3 id="6-3-tiers">6.3 Tiers</h3>
+<p>The repository does not describe a four-tier ledger. The paper refers to the two stores in 6.2 and the verification sources in 6.4 as the only documented distinctions.</p>
+<h3 id="6-4-signature-scheme">6.4 Signature scheme</h3>
+<p>Algorithm. ed25519, via node:crypto. No extra dependency for the signature itself (DECISIONS.md, quoted in THREAT-MODEL.md). Every entry is signed, not only a head. A periodic signed checkpoint over the head supports attestation (OPERATIONS.md, Attestation flow).</p>
+<p>Interface. KeyProvider exposes currentKeyId, sign(input, keyId?) and publicKey(keyId) returning SPKI DER. It is asynchronous and never returns private key material (THREAT-MODEL.md, Key custody; DECISIONS.md section 3 as quoted).</p>
+<p>Key id. Derived from the public key: "ed25519:" followed by the first 16 hex characters of the SHA-256 of the SPKI (THREAT-MODEL.md section 3, as quoted).</p>
+<p>Algorithm agility. The verifier rejects any algorithm other than ed25519 (packages/ledger/src/verify.ts:123). Post-quantum (ML-DSA-65) and ECDSA P-256 are not implemented.</p>
+<p>Key generation and file custody. Keys are generated with generateKeyPairSync("ed25519") and written with O_CREAT | O_EXCL at mode 0600 (packages/ledger/src/sign.ts:147-151). readExistingKey rejects symlinks, non-regular files and wrong modes (sign.ts:135-138; hardening.ts:75-96). A Windows ACL check permits only the current SID, SYSTEM and Administrators (hardening.ts:8-64, :30).</p>
+<p>Locations (THREAT-MODEL.md section 2.1):</p>
+<div class="table-wrap"><table><thead><tr><th>Deployment</th><th>Location</th><th>Readable by</th></tr></thead><tbody><tr><td>CLI and local workbench</td><td>&lt;workbench dir&gt;/keys/dev-ed25519.pkcs8, 0600 in 0700</td><td>Any process as the login user</td></tr><tr><td>Default CLI path</td><td>~/.nomo/keys/dev-ed25519.pkcs8</td><td>Same</td></tr><tr><td>Desktop</td><td>$NOMO_DATA_DIR/keys/dev-ed25519.pkcs8, 0600</td><td>Same. Not gated by the OS keychain.</td></tr><tr><td>Cloud tier</td><td>NOMO_SIGNING_KEY environment variable</td><td>Anything that reads the server environment or a core dump</td></tr></tbody></table></div>
+<p>These defenses protect against a different user. They do not protect against the same user, who is the recorder (THREAT-MODEL.md section 2.1).</p>
+<p>Keychain. The desktop keychain holds the workspace encryption key, not the ledger signing key (THREAT-MODEL.md section 2.2, citing apps/desktop/src-tauri/src/keychain.rs). Moving the signing key into a keychain would not, by itself, separate it from the agent running in the same process.</p>
+<p>Verification key sources (OPERATIONS.md, The verification key is not the signing key):</p>
+<div class="table-wrap"><table><thead><tr><th>Source</th><th>Worth</th></tr></thead><tbody><tr><td>NOMO_VERIFY_KEY (base64 SPKI, supplied as a value)</td><td>Pinned, out of band. The only source described as pinned.</td></tr><tr><td>NOMO_VERIFY_KEY_FILE</td><td>Trusted because the operator named the path. Cannot prove who wrote the file.</td></tr><tr><td>NOMO_TRUST_DIR</td><td>Same as above.</td></tr><tr><td>~/.nomo/trust/verify-ed25519.spki, written by nomo init --pin-verify-key</td><td>Not pinned. Created 0400 but the owner can unlink and replace it. Shares ~/.nomo with the signing key.</td></tr><tr><td>NOMO_SIGNING_KEY</td><td>Degraded. The signing key also verifies.</td></tr><tr><td>NOMO_VERIFY_ALLOW_SIGNING_KEY=1</td><td>Degraded. Explicit opt-in.</td></tr></tbody></table></div>
+<p>Documented-verified attack (OPERATIONS.md, referring to docs/EVIDENCE-FIXES-VERIFICATION.md F1). After unlink and recreate of the 0400 trust file alongside a replaced key file, the resolved key reported source trust-file, operatorSupplied false, degraded false, and the forged chain verified ok=true. The paper's earlier drafts cited this drill to OPERATIONS.md; the record is in EVIDENCE-FIXES-VERIFICATION.md.</p>
+<p>The trust file stays at its default path. OPERATIONS.md argues that no location on a single-user host is out of reach of a same-uid attacker, and that moving it would strand keys already provisioned.</p>
+<p>Provisioning. nomo init --pin-verify-key anchors the key at ~/.nomo/keys/dev-ed25519.pkcs8 at the moment it runs. It detects only a later change. nomo init --from-spki &lt;base64&gt; anchors a key the operator holds elsewhere (OPERATIONS.md).</p>
+<p>Two key files exist under ~/.nomo, and only one is the anchor. ~/.nomo/keys/dev-ed25519.pkcs8 signs the ledgers in ~/.nomo/ledger and is the trust anchor. &lt;data dir&gt;/keys/dev-ed25519.pkcs8 signs the workbench document ledger and is a second recorder identity, not a second location for the first. Earlier behavior anchored the wrong key on the default path. The command now prints both key ids and names the one anchored (OPERATIONS.md).</p>
+<h3 id="6-5-verification">6.5 Verification</h3>
+<p>nomo verify --ledger &lt;dir-or-file&gt; checks sequence order, previous-hash links, body hashes and signatures when a key is available. A failure exits non-zero and names the first bad entry. With no key, the output reports "verification key: none, signature NOT VERIFIED" and checks hash links only (OPERATIONS.md, What every surface reports).</p>
+<p>Verification against an attestation or a published anchor file is available through verify --attestation and verify --anchors. An anchor is checked only when a verification key is available; without one, the command refuses (OPERATIONS.md, Verify a ledger or export).</p>
+<p>Truncation. A valid prefix verifies. Truncation is not detectable from the local chain alone (OPERATIONS.md, The anchor is what makes truncation detectable).</p>
+<p>Anchors. nomo attest --ledger &lt;file&gt; --anchor &lt;anchors.jsonl&gt; verifies the chain, signs the head, writes a retained copy under &lt;ledger dir&gt;/attestations/&lt;head-seq&gt;.json and appends the signed head to the named anchor file. The anchor file is appended to, never rewritten, and a head that goes backwards or conflicts is refused (OPERATIONS.md, Attestation flow).</p>
+<p>An anchor detects tampering by a third party, not by the agent itself. It is only as strong as the location of the anchor file: a path the agent process cannot write, a read-only mount, a copy held by a third party, or a file forwarded out of band. The command warns on every write when the anchor sits inside the directory the agent writes (OPERATIONS.md). The anchor is not non-repudiation and is not a claim of trust level L2 (OPERATIONS.md).</p>
+<h3 id="6-6-export-bundles">6.6 Export bundles</h3>
+<p>nomo export --ledger &lt;file&gt; --state &lt;state-dir&gt; --bundle &lt;bundle-dir&gt; writes a bundle of four sections and a manifest. The manifest is written last. Sections:</p>
+<ul><li>ledger.jsonl: the verified workspace ledger.</li><li>journal.jsonl: the operation journal, replayed through the transition tables on export and load.</li><li>vault-manifest.json: the vault inventory by digest and byte length. Artifact bytes stay encrypted at rest and are not copied.</li><li>capability.json: what this build can export, the ledger read limits, and the operation and recovery-job stage universe from the journal transition tables.</li></ul>
+<p>Each section carries a record count, byte length and SHA-256, and each signed section carries the sequence range it claims. The printed manifest SHA-256 must be recorded out of band. That is the completeness proof: a history whose tail was cut is still internally consistent, so a reviewer without an anchor cannot distinguish an honest bundle from a rewritten one (OPERATIONS.md, Export bundles).</p>
+<p>Verification is fail-closed. Export verify with --anchor and --state checks digests, counts, ranges, chains and transitions, and checks journal signatures only when --state supplies the retained key. Without --state it reports "journal signatures not checked" (OPERATIONS.md).</p>
+<p>This proves what the bundle contains. It does not prove the vault bytes are recoverable and is not an operational certification (OPERATIONS.md).</p>
+<h3 id="6-7-metrics">6.7 Metrics</h3>
+<p>nomo metrics recomputes counters from existing ledger, journal and vault data. Nothing new is persisted. Label sets are closed; no PII, secrets or workspace labels appear in sample names. A named ledger must verify before it is counted. Stages that never happened report zero, so failed, unknown and conflict work is not hidden by omission (OPERATIONS.md, Metrics).</p>
+<p>Not covered: capture latency, reconciliation time, recovery success rate and connector coverage, because the surface does not read the required timestamps and receipts.</p>
+<h3 id="6-8-key-rotation">6.8 Key rotation</h3>
+<p>Rotation is not supported as a user flow (OPERATIONS.md, Key rotation).</p>
+<p>What happens: entries signed by a retired key carry its key id. With only the new verification key, the chain is refused with "entry 1 has no public key for dev-ed25519:&lt;old id&gt;". nomo attest exits 1 with that error. nomo export --ledger does not verify, so it can still succeed, and a workflow that exports after a rotation and then attests discovers the problem at the second step.</p>
+<p>A drill on 2026-10-03 added devKeyRing(dir), a KeyProvider that answers publicKey(id) for the current key and for each retired public key under &lt;dir&gt;/retired/&lt;keyId&gt;.spki, and rotateDevKey(dir), which retires the outgoing public SPKI and installs a new private key through the same O_EXCL 0600 path. sign(input, keyId) honours the key id it declares and throws a named error otherwise. The test in packages/ledger/src/rotation-drill.test.ts verifies a two-key chain (checked === 4, key ids [A, A, B, B]) through the ring and through jsonlStore.verify. The shipped single-key trust decision still refuses the same chain, and the test asserts that refusal (OPERATIONS.md, Drill evidence, 2026-10-03).</p>
+<p>Open, per OPERATIONS.md: the trust set in the pin, the re-signing decision, the rotation entry record, revocation, and a nomo command. A retired key stays answerable while its .spki exists, so a retired key is retired, not revoked.</p>
+<p>Until these exist, OPERATIONS.md's guidance is to pin out of band with nomo init --from-spki, keep the old public key, and treat rotation as a deliberate re-anchoring that accepts the pre-rotation entries will not verify against the new key.</p>
+</section>
+<section class="sec" id="7-policy"><h2>7. Policy</h2>
+<h3 id="7-1-grammar">7.1 Grammar</h3>
+<p>Source: OPERATIONS.md, Policy grammar quick table.</p>
+<ul><li>Format: YAML. Version 1 uses ordered rules, first match wins. Unknown versions fail closed.</li><li>match.class: r0, r1, r2, r3 or a list. Reversibility class after registry evaluation.</li><li>match.tool: tool id or list, for example postgres.row.delete.</li><li>match.connector: connector id or list, for example postgres or s3.</li><li>match.workspace: workspace name or list.</li><li>match.blast_radius: exactly one of lt, lte, gt, gte with an integer. An unmeasured blast radius never matches.</li><li>decision: allow, deny or hold. Required.</li><li>seconds: required for hold; whole number from 1 to 900.</li><li>notify: cli, slack or a list (approval channels).</li><li>rationale: recommended string shown in denials and holds.</li></ul>
+<p>Unknown keys and unknown values are load errors. A missing or invalid policy denies startup in fail-closed posture.</p>
+<h3 id="7-2-starter-policy">7.2 Starter policy</h3>
+<pre><code>version: 1
+rules:
+  - match:
+      class: r0
+    decision: allow
+    rationale: fully reversible calls can proceed after ledger append
+  - match:
+      class: r1
+      blast_radius: { lt: 100 }
+    decision: allow
+    rationale: small reversible writes are below the hold line
+  - match:
+      class: [r2, r3]
+    decision: hold
+    seconds: 120
+    notify: [cli]
+    rationale: visible or permanent damage needs a human decision
+  - match: {}
+    decision: deny
+    rationale: deny anything the policy did not name</code></pre>
+<p>Note the rule ordering: a narrow rule must come before a broad one, since first match wins.</p>
+<h3 id="7-3-attribution-in-the-ledger">7.3 Attribution in the ledger</h3>
+<p>Each decision record binds attribution.policyDigest (the digest of the canonical policy content in force) and attribution.rule (index and rationale of the rule that fired) into the signed body (THREAT-MODEL.md section 3.2, citing packages/policy/src/digest.ts, packages/proxy/src/forward/tools.ts:376, packages/ledger/src/canonical.ts:101). Records written before attribution existed still verify because the hash is over the body as written. There is no migration (THREAT-MODEL.md section 3.2).</p>
+<p>Observe-only records allow with no rule. The record names the policy but not the rule it would have refused (THREAT-MODEL.md, citing packages/proxy/src/bin.ts:659-663).</p>
+<h3 id="7-4-approvals">7.4 Approvals</h3>
+<p>The proxy surfaces held calls through a per-run state directory with pending.json, proxy.lock and decisions/&lt;nonce&gt;.json. A single proxy owns a directory at a time; a second live proxy refuses with ApprovalStateInUseError. A stale lock may be removed by hand after a crash (OPERATIONS.md, Approvals).</p>
+<p>Approve or deny with the CLI writes a decision file and reports it as queued. The running proxy polls and resolves the hold. The CLI does not claim the release, because it cannot know whether the proxy was still running when the decision landed (OPERATIONS.md).</p>
+<p>The policy is reloaded per request. An agent may not supply its own workspace, adapter identity or approval grant to the managed MCP server (RECOVERY-CONTRACT.md, Trust boundary, as quoted in the earlier read).</p>
+</section>
+<section class="sec" id="8-connectors-and-recovery-contract"><h2>8. Connectors and recovery contract</h2>
+<h3 id="8-1-classification-axes">8.1 Classification axes</h3>
+<p>Source: packages/connectors/src/recovery.ts (read in full, SHA 85cebb837b357b59cbdd8e8bd79caa3fed821508).</p>
+<p>Effect: read, write, external-disclosure, mixed or unknown.</p>
+<p>Reversibility: r0, r1, r2, r3 or unknown.</p>
+<p>Readiness: verified, conditional, expired, unsupported, unknown-outcome or conflict.</p>
+<p>Reversibility belongs to a call under declared preconditions, not to a tool permanently (CONTEXT.md). R0 does not mean read-only: a read can disclose information irreversibly, which is why the effect axis is separate. R1 restores declared state but does not erase logs or transaction history (THREAT-MODEL and context pack, as quoted; the exact definitions are in RECOVERY-CONTRACT.md, which was read only in truncated form, so the R2 and R3 definitions below are from the context pack and the policy grammar, not from the full contract).</p>
+<h3 id="8-2-observation-shape">8.2 Observation shape</h3>
+<p>Each observation returns effect, reversibility, readiness, scope, resources, revision (a JSON value), an optional read set, and blast radius. The read set is optional, and its absence means the adapter reports no read set, not that it read nothing. A planner that cannot prove a dependency must not order around it (recovery.ts, Observation type).</p>
+<p>Blast radius has a count (number or null) and a precision of exact, bounded or unknown. Unknown blast radius is not zero (CONTEXT.md).</p>
+<h3 id="8-3-adapter-interface">8.3 Adapter interface</h3>
+<p>RecoveryAdapter (recovery.ts) has these members:</p>
+<ul><li>id and version.</li><li>preflight(args): returns an Observation.</li><li>prepare(args, observation, operationId): returns Prepared (before state and plan). It must revalidate the observation and own atomicity and compare-and-swap at the write boundary.</li><li>execute(args, prepared, operationId): returns Outcome (result and evidence).</li><li>release(operationId): releases preparation resources before dispatch or after an execution error. It never retries.</li><li>reconcile(operationId, prepared): returns unknown, failed or succeeded with an outcome.</li><li>recover(prepared, outcome, recoveryId): returns RecoveryOutcome, status restored, compensated or conflict, with evidence. It must guard against drift and verify the declared scope before reporting restored.</li><li>recoverWithContinuation (optional): narrowly scoped continuation for a verified recovery job.</li><li>reconcileRecovery (optional): reads durable recovery evidence only. An absent receipt never authorizes another inverse.</li><li>reconcileRecoveryWithContinuation (optional): lineage-bound counterpart.</li></ul>
+<p>A RecoveryContinuation is runtime-derived proof that the immediately newer operation in a job was restored. Callers cannot supply it to standalone recovery (recovery.ts).</p>
+<p>Classification metadata alone is not an adapter (recovery.ts, file header).</p>
+<h3 id="8-4-connectors-in-the-repository">8.4 Connectors in the repository</h3>
+<p>The repository names filesystem, postgres and s3 connectors, and a git connector that shells out to git (packages/connectors/src/git/managed.ts:22, managed-commit.ts:1020, per THREAT-MODEL.md section 1.1). Connectors are in-process modules, not child processes, except git. Their individual recovery coverage is in docs/RECOVERY-COVERAGE.md, which was not read in this revision. The paper makes no coverage claim for any connector.</p>
+<h3 id="8-5-recovery-jobs">8.5 Recovery jobs</h3>
+<p>A recovery plan for one run or an explicit operation list is signed and digest-bound. Recovery requires the exact plan digest and separate operator authorization. A changed plan is refused. Human drift is a conflict (RECOVERY-CONTRACT.md, as quoted in THREAT-MODEL.md section 8). Recovery writes a new signed event linked by reverses, and never deletes original evidence.</p>
+<p>Job states: planned, approved, applying, checkpoint, restored, partial, conflict, unknown, paused. A restart after an inverse and before its checkpoint reads the receipt and does not repeat the inverse. Compensation makes a job partial, never restored.</p>
+<p>Interrupted dispatch is unknown and is never retried automatically. An absent receipt is not proof that nothing happened.</p>
+<p>Limits, from RECOVERY-CONTRACT.md as quoted: a blast radius of unknown cannot pass an exact count limit; filesystem undo is bound to the original path and inode revision, and a moved managed root returns conflict rather than rebinding; a point-in-time restore is not an inverse; recovery is not generalized to unsupported hosts or tools.</p>
+<h3 id="8-6-idempotency-and-dispatch">8.6 Idempotency and dispatch</h3>
+<p>Durable capture precedes dispatch. Workspace and operation id identify one immutable request. Reuse with another request or adapter version is refused (RECOVERY-CONTRACT.md, as quoted).</p>
+</section>
+<section class="sec" id="9-harness"><h2>9. Harness</h2>
+<p>The Harness is the coding-agent host integration. Its requirements, in the MVP spec and context pack:</p>
+<ul><li>Its runs use the same identity, token, proxy, policy and ledger path as other managed agents.</li><li>The Sunday demo runs one constrained task through the Workbench path. Learning is disabled for the demo.</li><li>Learning proposals stay inert until the operator approves the exact proposal digest. Retrieval is later, bounded, same-workspace and limited to approved, verified records. Learning never changes policy, permissions or credentials.</li><li>Harness proposals cannot change policy, permissions, host commands or credentials (MVP spec, Security requirement 8).</li></ul>
+<p>The demo makes no claim that persistent learning or a product-v1 Harness is complete.</p>
+<p>The Workbench owns the trusted local demo principal and obtains the run token outside the model prompt. It must not store the run token in a public config response or tool result (MVP spec, Architecture boundaries).</p>
+<p>Harness source was not read in this revision. Claims about its internal behavior are limited to the requirements above.</p>
+</section>
+<section class="sec" id="10-threat-model"><h2>10. Threat model</h2>
+<h3 id="10-1-assets-and-adversaries">10.1 Assets and adversaries</h3>
+<p>Assets: the integrity of the ledger chain and its signatures; the run token and upstream credentials; the policy file; the target systems the proxy protects.</p>
+<p>Adversaries from the threat model (THREAT-MODEL.md section 1 and 9 as read), in summary:</p>
+<ul><li>An agent that submits an unknown or unclassified tool.</li><li>An agent that submits a high-risk write without approval.</li><li>An agent that edits the ledger after the fact.</li><li>An agent that truncates the ledger.</li><li>A third party with read access to the signing key file.</li><li>An attacker who replaces the signing key file on the same host.</li><li>A malicious upstream with access to its own environment.</li><li>A database superuser.</li></ul>
+<h3 id="10-2-coverage">10.2 Coverage</h3>
+<div class="table-wrap"><table><thead><tr><th>Adversary</th><th>Covered by</th><th>Strength</th></tr></thead><tbody><tr><td>Unknown or unclassified tool</td><td>Fail-closed proxy</td><td>Strong when the proxy is the only write path</td></tr><tr><td>High-risk write without approval</td><td>Hold with exact digest</td><td>Strong for calls routed through the STDIO proxy. Approval is not authenticated in the dev surface.</td></tr><tr><td>Ledger edit by the agent</td><td>Hash chain and signature</td><td>Detects edits when the verification key is out of the agent's reach. Does not detect when the agent holds the key.</td></tr><tr><td>Ledger truncation</td><td>Anchor file</td><td>Only if the anchor file is outside the agent's writes. Not wired into the default runtime (THREAT-MODEL.md section 2.4).</td></tr><tr><td>Third party with read access to the key file</td><td>Signature</td><td>Not protected. The file is 0600 for the same user.</td></tr><tr><td>Replaced key file on the same host</td><td>Pinned verification key</td><td>Only with NOMO_VERIFY_KEY or an out-of-band trust path. Default fails open to the documented F1 attack.</td></tr><tr><td>Malicious upstream reading its environment</td><td>Scrubbed signing-key variable</td><td>Partial. The key file is still readable as the same user.</td></tr><tr><td>Database superuser</td><td>Chain and signature</td><td>Chain and signature only. Grants and triggers bypassed.</td></tr></tbody></table></div>
+<h3 id="10-3-out-of-scope-in-the-current-repository">10.3 Out of scope in the current repository</h3>
+<ul><li>Shell, network, browser and third-party actions outside the managed executor. Local mode is cooperative (RECOVERY-CONTRACT.md, Trust boundary, as quoted).</li><li>A distinct operating-system principal for the recorder. None exists in the source tree (THREAT-MODEL.md section 4.2).</li><li>Non-repudiation, and a verified human identity behind approvals.</li><li>Multi-tenant isolation, SSO and hosted key management.</li></ul>
+<h3 id="10-4-limits-of-the-signature">10.4 Limits of the signature</h3>
+<p>Against a third party who can edit the JSONL but cannot read the key file, the signature is real and does work. Against an agent with code execution as the same user, a plain local signature adds little on its own. The repository's own documents say so in several places (THREAT-MODEL.md section 3.3; OPERATIONS.md, The verification key is not the signing key).</p>
+<p>What fail-closed does not guarantee (OPERATIONS.md, What fail-closed does not guarantee): that declared facts are true; that a human approval was authenticated; that a local JSONL store is safe for multiple writers; that R2 or R3 calls can be undone; that a replay is safe after target drift; that connector credentials exist; that production Postgres or S3 is wired by default.</p>
+<h3 id="10-5-dispatch-time-risks">10.5 Dispatch-time risks</h3>
+<ul><li>Timeout after dispatch. Unknown outcome, reconciled against the target. Never reported as cancelled.</li><li>Stop after dispatch. The call is not cancelled and its effect is not reversed.</li><li>Grant expiry between approval and dispatch. Rechecked; reject or reissue.</li><li>Revocation with an unreachable node. Not reported as revoked (MVP spec, product v1).</li></ul>
+</section>
+<section class="sec" id="11-deployment-modes"><h2>11. Deployment modes</h2>
+<p>The repository documents:</p>
+<ul><li>Local CLI and workbench: dev JSONL ledger, local keys, STDIO proxy. Implemented.</li><li>Desktop: Tauri shell starts the Node runtime as a child; both run as the login user. Implemented.</li><li>Hosted control plane: Postgres ledger in a dedicated schema; cloud signing key from the environment. Partly implemented. Hosted features are a separate service and licence boundary (THREAT-MODEL.md section 2.1).</li><li>Sunday demo: loopback inbound HTTP MCP endpoint, local issuer, disposable target. Planned.</li></ul>
+<p>Air-gapped and sovereign deployments are not described in the reviewed source and are not claimed here. The local JSONL mode is the nearest existing shape because it requires no network service, but it is not an air-gapped deployment design and has its own limits (section 6.4).</p>
+<p>Licensing. The public proxy spine is Apache-2.0 open core. Hosted control-plane features are a separate closed service boundary. The context pack requires a verified package and licence map before any claim about which features are open or hosted. That map was not read in this revision.</p>
+</section>
+<section class="sec" id="12-verification-and-release-gates"><h2>12. Verification and release gates</h2>
+<h3 id="12-1-sunday-demo-exit-planned">12.1 Sunday demo exit (planned)</h3>
+<p>Source: MVP spec, Sunday demo exit.</p>
+<ul><li>A single local Workbench run calls the proxy and the disposable target.</li><li>A read or low-risk call uses the fast path. Only the high-risk write uses the policy and approval path.</li><li>A valid 60-second run token is accepted. Wrong audience, wrong scope, expired and revoked tokens are refused before upstream dispatch.</li><li>Allow forwards only after a pre-dispatch append. Deny does not forward. Hold does not forward until exact-digest operator approval and a fresh grant check. Observe-only forwards only when explicitly selected.</li><li>Token and upstream secret redaction tests pass.</li><li>Local kill blocks the next call. An in-flight call is shown as unresolved if its completion is unknown.</li><li>The constrained Harness run reaches the proxy through the Workbench path.</li><li>pnpm run typecheck and pnpm test pass. No production account or non-disposable target is touched.</li></ul>
+<h3 id="12-2-product-v1-release-gate-planned">12.2 Product-v1 release gate (planned)</h3>
+<p>Source: MVP spec, Product-v1 release gate.</p>
+<ul><li>MCP HTTP authorization has positive and negative conformance tests: resource metadata, resource parameter, issuer, audience, scope, expiry, revocation, 401 challenge, and no upstream token passthrough.</li><li>Every active revocation target returns correct acknowledgement state. Offline nodes and dispatched work remain visible as unresolved.</li><li>The Harness uses the same identity, token, proxy, policy and ledger path.</li><li>Threat model, migration, backup, key rotation, incident response, event retention and tenant isolation have reviewed acceptance evidence.</li><li>Customer discovery establishes a specific pilot with a named owner, approver, incident owner, disposable environment and dated next step. This is separate from engineering completion.</li></ul>
+<h3 id="12-3-commands">12.3 Commands</h3>
+<p>From the MVP spec: pnpm run check (full check), pnpm test, pnpm run typecheck, pnpm run build. Node.js 24 or newer; pnpm workspace; React 19 and Vite 7 for the web UI. Tailwind CSS v4 is a requested target, not a current dependency. Focused proxy and Workbench tests use the Node test runner, with paths chosen in the implementation plan.</p>
+</section>
+<section class="sec" id="13-open-questions"><h2>13. Open questions</h2>
+<p>From the MVP spec, Open design questions for implementation:</p>
+<ol><li>Which exact Streamable HTTP server API does the pinned MCP SDK support, and can it share the proxy's interception pipeline without copying policy or ledger logic?</li><li>What local test-issuer state binds a trusted Workbench run to one registered principal while keeping the opaque token only in memory?</li><li>What canonicalization and replay or idempotency scheme applies to the upstream resource URI and tool arguments?</li><li>What is the maximum acceptable clock skew for 60-second grants?</li><li>What is the product-v1 acknowledgement timeout for each connected proxy, and how is a disconnected proxy represented?</li><li>Which separate process identity and environment boundary can safely support STDIO agents without exposing credentials to the model or shell tool?</li></ol>
+<p>From OPERATIONS.md, rotation: the trust set in the pin; the re-signing decision; the rotation entry record; revocation; the nomo command.</p>
+</section>
+<section class="sec" id="14-roadmap"><h2>14. Roadmap</h2>
+<p>Sequence follows the MVP spec and context pack. Dates are targets, not commitments, and none of them is an approval to deploy.</p>
+<ol><li>Sunday demo, target 2026-10-11: loopback inbound HTTP proxy, local issuer, one disposable target, one constrained Harness run.</li><li>Key and verifier work: a pinned verification key workflow, a trust-set design for rotation, and anchoring wired into the runtime.</li><li>Product v1 authorization: MCP HTTP conformance, principal registry, revocation acknowledgement across nodes.</li><li>Harness completion: approved-proposal activation and bounded retrieval.</li><li>Hosted control plane: Postgres ledger, tenant isolation, backup and key management.</li><li>Pilot: one named environment, named owner and dated next step. This paper makes no pricing or revenue claim. Pricing and tiers are unvalidated hypotheses (MVP spec).</li></ol>
+</section>
+<section class="sec" id="15-glossary"><h2>15. Glossary</h2>
+<ul><li>Allow, Deny, Hold, observe-only: explicit policy outcomes. Observe-only is opt-in and visible.</li><li>Anchor: a signed head (headSeq, headHash, treeDigest) held outside the agent's writes, used to detect truncation or rewriting by a third party.</li><li>Attestation: a signed summary of a ledger slice.</li><li>Digest: a SHA-256 over canonical content. Payloads are not stored; digests are.</li><li>Fail closed: deny when identity, scope, policy, ledger or broker state cannot be confirmed.</li><li>Hold: a pending decision awaiting an exact-digest operator approval.</li><li>Observation: an adapter's report of effect, reversibility, readiness, scope, resources, revision, read set and blast radius.</li><li>Readiness: whether recovery is currently verified, conditional, expired, unsupported, unknown-outcome or in conflict.</li><li>Unknown outcome: a dispatch whose result cannot be confirmed. Never reported as cancelled or reverted.</li></ul>
+</section>
+<section class="sec" id="16-sources-and-provenance"><h2>16. Sources and provenance</h2>
+<p>Read in full at commit 521b1c825c95ce3fdda71370aa3dfd8bef5e5dd2 (main):</p>
+<ul><li>docs/superpowers/specs/2026-10-08-nomo-agent-identity-fleet-mvp-spec.md (blob SHA 440b358123382df4fe560b609bd8a4cac9a4a8ee)</li><li>docs/CONTEXT.md (blob SHA d99ce2cabb630f1e85bb4e0d44fb100896c9b2aa)</li><li>packages/connectors/src/recovery.ts (blob SHA 85cebb837b357b59cbdd8e8bd79caa3fed821508)</li></ul>
+<p>Read in part, truncated tool output. Sections cited are those visible in the read:</p>
+<ul><li>docs/OPERATIONS.md (blob SHA 2cc3b3b2528869d60f9441ef68bd7189c95eecc6). Visible: policy grammar, ledger layout, the verification key table, rotation, drill evidence 2026-10-03, fail-closed guarantees, verify, export bundles, metrics, attestation, approvals. The final section was truncated mid-sentence.</li><li>docs/DECISIONS.md (blob SHA 2b69dc9c6c0e6f270d631fc1effae581607b683b). Cited only as quoted in THREAT-MODEL.md.</li><li>docs/RECOVERY-CONTRACT.md (blob SHA 370b6a8e62e0d0c8082a56ca5a14b55881f5b5d8). Cited only as quoted in THREAT-MODEL.md and the context pack.</li><li>docs/THREAT-MODEL.md (blob SHA 229cd83b03e185aefef73907562957593af54d7b). Visible through section 4.2 and the start of section 4.2's table. The rest was truncated.</li></ul>
+<p>Not read: docs/CAPABILITY-MAP (2026-10-08-nomo-agent-identity-fleet-capability-map.md), the implementation plan (2026-10-08-nomo-agent-identity-fleet-mvp-and-roadmap.md), docs/RECOVERY-COVERAGE.md, docs/STANDARDS.md, docs/EVIDENCE-FIXES-VERIFICATION.md, the proxy, ledger, workbench and connector source, the Harness source, and the licence and package map.</p>
+<p>External references cited by the repository (not fetched in this revision):</p>
+<ul><li>MCP Authorization, 2026-07-28: https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization</li><li>RFC 9728, OAuth 2.0 Protected Resource Metadata: https://www.rfc-editor.org/rfc/rfc9728</li><li>RFC 8414, OAuth 2.0 Authorization Server Metadata: https://www.rfc-editor.org/rfc/rfc8414</li><li>Microsoft Entra Agent ID: https://learn.microsoft.com/en-us/entra/agent-id/what-is-microsoft-entra-agent-id</li><li>AWS Bedrock AgentCore Identity: https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/identity.html</li><li>Cloudflare MCP server portals: https://developers.cloudflare.com/cloudflare-one/access-controls/ai-controls/mcp-portals/</li></ul>
+<p>Corrections made in this version relative to v1.0 draft: the key-substitution drill F1 is cited to docs/EVIDENCE-FIXES-VERIFICATION.md, as recorded in OPERATIONS.md, not to OPERATIONS.md alone; the Sunday demo target is quoted from the MVP spec rather than restated; the four-tier ledger and air-gap claims were removed, since the repository does not describe them.</p>
+</section>
+    <footer>
+      <p>NOMO White Paper v1.0. Source: docs/whitepaper/NOMO-White-Paper-v1.0.md at the repository. Every claim is tagged Implemented, Documented-verified, Planned or Unproven in section 0.</p>
+    </footer>
+  </main>
+</div>
+<script>
+  (function () {
+    var links = document.querySelectorAll('nav.toc a');
+    var map = {};
+    links.forEach(function (a) { map[a.getAttribute('href').slice(1)] = a; });
+    var obs = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting && map[e.target.id]) {
+          links.forEach(function (l) { l.classList.remove('active'); });
+          map[e.target.id].classList.add('active');
+        }
+      });
+    }, { rootMargin: '0px 0px -70% 0px' });
+    document.querySelectorAll('section.sec[id]').forEach(function (s) { obs.observe(s); });
+  })();
+</script>
+</body>
+</html>
