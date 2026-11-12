@@ -90,10 +90,9 @@ export async function resolveLedgerTarget(
 ): Promise<LedgerResolution> {
   const env = request.env;
   const workspace = request.workspace ?? env.NOMO_WORKSPACE ?? "default";
-  const defaultFile = join(
-    env.NOMO_LEDGER_DIR ?? join(dataDir(homedir()), "ledger"),
-    `${workspace}.jsonl`,
-  );
+  const ledgerDir =
+    env.NOMO_LEDGER_DIR ?? join(dataDir(env.HOME ?? homedir()), "ledger");
+  const defaultFile = join(ledgerDir, `${workspace}.jsonl`);
   const requested = request.file ?? request.ledger ?? defaultFile;
   const requestedByCaller =
     request.file !== undefined ||

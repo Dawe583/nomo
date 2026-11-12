@@ -129,6 +129,23 @@ export function parseTranscript(text: string): TranscriptCall[] {
     const record = parsed as Record<string, unknown>;
     if (typeof record.tool !== "string" || record.tool === "")
       throw new Error(`transcript line ${index + 1} has no tool name`);
+    const args = record.arguments;
+    if (
+      args !== undefined &&
+      (typeof args !== "object" || args === null || Array.isArray(args))
+    )
+      throw new Error(`transcript line ${index + 1} has invalid arguments`);
+    const facts = record.facts;
+    if (
+      facts !== undefined &&
+      (typeof facts !== "object" ||
+        facts === null ||
+        Array.isArray(facts) ||
+        Object.values(facts).some(
+          (value) => typeof value !== "string" && typeof value !== "boolean",
+        ))
+    )
+      throw new Error(`transcript line ${index + 1} has invalid facts`);
     calls.push(record as unknown as TranscriptCall);
   }
   return calls;

@@ -63,6 +63,8 @@ for (const deny of [false, true]) {
 
 test("approvals rows carry class and radius and never the call arguments", async (t) => {
   const f = fixture(t);
+  const decisionToken = loadPending(f.dir)[0]!.decisionToken;
+  assert.ok(decisionToken);
   const output: string[] = [];
   const io = { stdout: (line: string) => output.push(line), stderr: () => {} };
   assert.equal(await runApprovalsCommand(["--dir", f.dir], io), 0);
@@ -71,6 +73,7 @@ test("approvals rows carry class and radius and never the call arguments", async
   assert.ok(!output[0]!.includes("secret"), "the row must not replay persisted or in-memory arguments");
   assert.equal(await runApprovalsCommand(["--dir", f.dir, "--json"], io), 0);
   assert.ok(!output[1]!.includes("secret"), "the JSON record must not carry the arguments either");
+  assert.ok(!output[1]!.includes(decisionToken), "the JSON record must not expose the decision token");
 });
 
 test("approve rejects missing id, actor, invalid options and unknown holds", async (t) => {

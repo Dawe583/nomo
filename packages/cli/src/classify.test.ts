@@ -27,6 +27,12 @@ describe("parseTranscript", () => {
     assert.throws(() => parseTranscript(`{"arguments": {}}\n`), /line 1.*tool/);
     assert.throws(() => parseTranscript(`[1,2]\n`), /line 1/);
   });
+
+  test("arguments and facts must be JSON objects with supported fact values", () => {
+    assert.throws(() => parseTranscript(`{"tool":"t","arguments":[]}\n`), /line 1.*invalid arguments/);
+    assert.throws(() => parseTranscript(`{"tool":"t","facts":[]}\n`), /line 1.*invalid facts/);
+    assert.throws(() => parseTranscript(`{"tool":"t","facts":{"enabled":1}}\n`), /line 1.*invalid facts/);
+  });
 });
 
 describe("classifyCall", () => {

@@ -33,6 +33,9 @@ function parse(argv: readonly string[], allowed: readonly string[]): Invocation 
       positional.push(arg);
       continue;
     }
+    if (flags.has(arg)) {
+      throw new Error(`duplicate option ${arg}`);
+    }
     const value = argv[++index];
     if (!value || value.startsWith('--')) throw new Error(`${arg} needs a value`);
     flags.set(arg, value);

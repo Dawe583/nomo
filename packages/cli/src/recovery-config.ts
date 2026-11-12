@@ -278,15 +278,16 @@ export function describeRecoveryConfig(
       );
   }
 
-  for (const key of Object.keys(config))
-    if (!KNOWN_KEYS.includes(key))
+  for (const key of Object.keys(config)) {
+    if (!KNOWN_KEYS.includes(key)) {
       fields.push({
         key,
-        value: show(config[key]),
+        value: "(not shown)",
         source: "ignored",
-        note: "not read by nomo recovery",
+        note: "not read by nomo recovery; value omitted",
       });
-
+    }
+  }
   return { valid: problems.length === 0, fields, problems };
 }
 

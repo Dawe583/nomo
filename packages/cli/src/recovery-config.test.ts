@@ -92,8 +92,9 @@ test("doctor lists what was read, what was required and missing, and what is ign
   assert.equal(code, 1);
   assert.match(text, /field workspace: dogfood \(config\)/);
   assert.match(text, /field stateDir: \(absent\) \(required, not found\)/);
-  assert.match(text, /field adapters: 1 entry \(ignored, not read by nomo recovery\)/);
-  assert.match(text, /field vault: block with 1 field\(s\) \(ignored/);
+  assert.match(text, /field adapters: \(not shown\) \(ignored, not read by nomo recovery; value omitted\)/);
+  assert.match(text, /field vault: \(not shown\) \(ignored/);
+  assert.doesNotMatch(text, /\/tmp\/vd2/);
   assert.match(text, /problem: /);
   assert.match(text, /configuration: not usable/);
 });
