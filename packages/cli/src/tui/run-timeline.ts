@@ -119,6 +119,22 @@ function firstNumber(
   return undefined;
 }
 
+function eventTimestamp(record: Record<string, unknown>): number | undefined {
+  const numeric: number | undefined = firstNumber(record, [
+    "ts",
+    "timestamp",
+    "time",
+    "at",
+  ]);
+  if (numeric !== undefined) return numeric;
+
+  const value: unknown = record["at"];
+  if (typeof value !== "string") return undefined;
+  const timestamp: number = Date.parse(value);
+  if (!Number.isFinite(timestamp)) return undefined;
+  return new Date(timestamp).toISOString() === value ? timestamp : undefined;
+}
+
 // Map one event to a phase. Returns null for events with no type so the
 // caller drops them: an event nobody typed is not a phase, it is noise.
 function eventPhase(event: Record<string, unknown>): RunPhase | null {
@@ -176,7 +192,7 @@ export function buildTimeline(events: readonly unknown[]): TimelineState {
     const withCost: TimelineStep =
       tokens !== undefined ? { ...withDetail, tokens } : withDetail;
     steps.push(withCost);
-    stamps.push(firstNumber(event, ["ts", "timestamp", "time", "at"]));
+    stamps.push(eventTimestamp(event));
   }
   // A duration needs both neighbours stamped. A missing end stamp leaves ms
   // undefined: zero would read as instant, and instant is a claim.
@@ -184,8 +200,10 @@ export function buildTimeline(events: readonly unknown[]): TimelineState {
     (step: TimelineStep, index: number) => {
       const start: number | undefined = stamps[index];
       const end: number | undefined = stamps[index + 1];
-      if (start === undefined || end === undefined) return step;
-      return { ...step, ms: Math.max(0, end - start) };
+      if (start === undefined || end === undefined || end < start) return step;
+      const duration: number = end - start;
+      if (!Number.isFinite(duration)) return step;
+      return { ...step, ms: duration };
     },
   );
   return { steps: timed, current: timed.length === 0 ? 0 : timed.length - 1 };
