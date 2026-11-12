@@ -186,16 +186,17 @@ export function tabUnderline(
 }
 
 /**
- * A selection marker for list rows. The cursor breathes between two markers
- * rather than appearing and disappearing, because a blinking cursor is hard
- * to track in a fast redraw.
+ * A stable selection marker for list rows. Selection is structural state, not
+ * activity: changing its glyph on every motion frame repaints a stationary
+ * row twice a second and makes an otherwise static panel feel like it is
+ * flickering. Reserve motion for live work indicators.
  */
-export function cursorMarker(selected: boolean, motion: MotionContext): string {
+export function cursorMarker(
+  selected: boolean,
+  _motion: MotionContext,
+): string {
   if (!selected) return "  ";
-  const markers = ["▸", "›"];
-  const index =
-    motion.enabled && !motion.reduced ? motion.frame % markers.length : 0;
-  return `${markers[index] ?? "▸"} `;
+  return "▸ ";
 }
 
 /**
@@ -239,10 +240,7 @@ export function sweepRow(
   );
 }
 
-/**
- * A framed status pill. Used for mode, state and counters. The pill carries a
- * label, so it is legible when the fill colour is not.
- */
+/** A padded status label. Its text stays meaningful without colour. */
 export function pill(
   label: string,
   tone: Tone,
@@ -254,8 +252,7 @@ export function pill(
 ): string {
   const paint = options.paint ?? ((text: string) => text);
   const text = ` ${label} `;
-  if (options.filled) return paint(text, tone, true);
-  return `${paint("▕", tone)}${paint(label, tone)}${paint("▏", tone)}`;
+  return paint(text, tone, options.filled === true);
 }
 
 /**
@@ -265,17 +262,17 @@ export function pill(
 export function completionRing(
   value: number,
   max: number,
-  motion: MotionContext,
+  _motion: MotionContext,
 ): string {
   const safeMax = Math.max(1, max);
   const filled = Math.max(0, Math.min(8, Math.round((value / safeMax) * 8)));
   const frames = ["◯", "◔", "◑", "◕", "●"] as const;
-  if (!motion.enabled || motion.reduced) return frames[0]!;
-  const exact = ["◯", "◔", "◑", "◕", "●"] as const;
   const index = Math.min(
-    exact.length - 1,
-    Math.ceil((filled / 8) * (exact.length - 1)),
+    frames.length - 1,
+    Math.ceil((filled / 8) * (frames.length - 1)),
   );
+  // A frozen frame still reports the measured completion; motion never
+  // substitutes a generic empty ring for a completed or failed result.
   return frames[index] ?? frames[0]!;
 }
 

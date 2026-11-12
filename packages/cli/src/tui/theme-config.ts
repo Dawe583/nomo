@@ -1,6 +1,6 @@
 import type { TerminalCapabilities } from "./types.ts";
 
-export type SymbolPreset = "ascii" | "unicode" | "classic";
+export type SymbolPreset = "ascii" | "unicode" | "classic" | "nerd";
 
 export type ColorTheme =
   | "default"
@@ -14,6 +14,15 @@ export interface SymbolSet {
   readonly tab: Record<string, string>;
   readonly mode: Record<string, string>;
   readonly status: Record<string, string>;
+  readonly role: {
+    readonly user: string;
+    readonly assistant: string;
+    readonly tool: string;
+    readonly error: string;
+    readonly system: string;
+    readonly usage: string;
+    readonly thinking: string;
+  };
   readonly spinner: readonly string[];
   readonly progress: { filled: string; empty: string };
   readonly frame: {
@@ -38,11 +47,45 @@ export interface SymbolSet {
   readonly check: { on: string; off: string };
   readonly arrow: { up: string; down: string; left: string; right: string };
   readonly separator: { vertical: string; horizontal: string; dot: string };
+  readonly icons: SemanticIcons;
+}
+
+/** Meaningful icon labels shared by screen chrome and settings. */
+export interface SemanticIcons {
+  readonly settings: string;
+  readonly appearance: string;
+  readonly composer: string;
+  readonly context: string;
+  readonly tokens: string;
+  readonly provider: string;
+  readonly model: string;
+  readonly search: string;
+  readonly filter: string;
+  readonly session: string;
+  readonly document: string;
+  readonly ledger: string;
+  readonly approval: string;
+  readonly policy: string;
+  readonly tool: string;
+  readonly usage: string;
+  readonly help: string;
+  readonly agent: string;
+  readonly heartbeat: string;
+  readonly shell: string;
+  readonly queue: string;
+  readonly network: string;
+  readonly key: string;
+  readonly time: string;
+  readonly retry: string;
+  readonly run: string;
+  readonly hook: string;
+  readonly refinement: string;
 }
 
 export interface ColorPalette {
   readonly bg: string;
   readonly fg: string;
+  readonly user: string;
   readonly accent: string;
   readonly muted: string;
   readonly border: string;
@@ -57,6 +100,102 @@ export interface ColorPalette {
   readonly ink: string;
   readonly rule: string;
 }
+
+const ASCII_ICONS: SemanticIcons = {
+  settings: "[S]",
+  appearance: "[A]",
+  composer: ">",
+  context: "[C]",
+  tokens: "[#]",
+  provider: "[P]",
+  model: "[M]",
+  search: "[/]",
+  filter: "[F]",
+  session: "[H]",
+  document: "[D]",
+  ledger: "[L]",
+  approval: "[!]",
+  policy: "[P]",
+  tool: "[T]",
+  usage: "[%]",
+  help: "[?]",
+  agent: "[A]",
+  heartbeat: "[~]",
+  shell: "[$]",
+  queue: "[Q]",
+  network: "[N]",
+  key: "[K]",
+  time: "[T]",
+  retry: "[R]",
+  run: ">",
+  hook: "[H]",
+  refinement: "[*]",
+};
+
+const UNICODE_ICONS: SemanticIcons = {
+  settings: "⚙",
+  appearance: "◐",
+  composer: "›",
+  context: "▤",
+  tokens: "#",
+  provider: "◈",
+  model: "◐",
+  search: "⌕",
+  filter: "▽",
+  session: "◷",
+  document: "▤",
+  ledger: "▥",
+  approval: "◉",
+  policy: "§",
+  tool: "⚒",
+  usage: "◔",
+  help: "?",
+  agent: "◆",
+  heartbeat: "♥",
+  shell: ">_",
+  queue: "≡",
+  network: "↔",
+  key: "⌘",
+  time: "◷",
+  retry: "↻",
+  run: "▶",
+  hook: "⟲",
+  refinement: "✧",
+};
+
+// Codicons code points are taken from Nerd Fonts 3.5.1 glyphnames.json.
+// Nerd Font glyphs require a compatible patched terminal font. Keep the
+// ordinary Unicode and ASCII sets available for terminals without one.
+const NERD_ICONS: SemanticIcons = {
+  settings: "\u{eb52}",
+  appearance: "\u{eac6}",
+  composer: "\u{ea73}",
+  context: "\u{ebaf}",
+  tokens: "\u{ea90}",
+  provider: "\u{ebaa}",
+  model: "\u{ec19}",
+  search: "\u{ea6d}",
+  filter: "\u{eaf1}",
+  session: "\u{ec75}",
+  document: "\u{ec5e}",
+  ledger: "\u{eaa4}",
+  approval: "\u{eb53}",
+  policy: "\u{ea75}",
+  tool: "\u{eb6d}",
+  usage: "\u{ebe4}",
+  help: "\u{eb32}",
+  agent: "\u{ec67}",
+  heartbeat: "\u{eb31}",
+  shell: "\u{ea85}",
+  queue: "\u{eb16}",
+  network: "\u{ea68}",
+  key: "\u{eb11}",
+  time: "\u{ec75}",
+  retry: "\u{ea77}",
+  run: "\u{eb2c}",
+  hook: "\u{ea79}",
+  refinement: "\u{ec1f}",
+};
 
 export const SYMBOL_SETS: Record<SymbolPreset, SymbolSet> = {
   ascii: {
@@ -83,6 +222,15 @@ export const SYMBOL_SETS: Record<SymbolPreset, SymbolSet> = {
     },
     spinner: ["|", "/", "-", "\\"],
     progress: { filled: "#", empty: "-" },
+    role: {
+      user: ">",
+      assistant: "=",
+      tool: "*",
+      error: "x",
+      system: "!",
+      usage: "+",
+      thinking: "~",
+    },
     frame: {
       tl: "+",
       tr: "+",
@@ -100,6 +248,7 @@ export const SYMBOL_SETS: Record<SymbolPreset, SymbolSet> = {
     check: { on: "[x]", off: "[ ]" },
     arrow: { up: "^", down: "v", left: "<", right: ">" },
     separator: { vertical: "|", horizontal: "-", dot: "." },
+    icons: ASCII_ICONS,
   },
   unicode: {
     tab: {
@@ -119,6 +268,15 @@ export const SYMBOL_SETS: Record<SymbolPreset, SymbolSet> = {
     status: { running: "●", idle: "○", queued: "◐", paused: "▐", unknown: "?" },
     spinner: ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"],
     progress: { filled: "█", empty: "░" },
+    role: {
+      user: "▸",
+      assistant: "●",
+      tool: "◆",
+      error: "×",
+      system: "≡",
+      usage: "▰",
+      thinking: "○",
+    },
     frame: {
       tl: "╭",
       tr: "╮",
@@ -136,6 +294,7 @@ export const SYMBOL_SETS: Record<SymbolPreset, SymbolSet> = {
     check: { on: "✓", off: "□" },
     arrow: { up: "▲", down: "▼", left: "◀", right: "▶" },
     separator: { vertical: "│", horizontal: "─", dot: "·" },
+    icons: UNICODE_ICONS,
   },
   classic: {
     tab: {
@@ -155,6 +314,15 @@ export const SYMBOL_SETS: Record<SymbolPreset, SymbolSet> = {
     status: { running: "▪", idle: "▫", queued: "▪", paused: "▐", unknown: "?" },
     spinner: ["⠁", "⠂", "⠄", "⡀", "⢀", "⠠", "⠐", "⠈"],
     progress: { filled: "■", empty: "□" },
+    role: {
+      user: "›",
+      assistant: "●",
+      tool: "◆",
+      error: "×",
+      system: "≡",
+      usage: "▰",
+      thinking: "○",
+    },
     frame: {
       tl: "┌",
       tr: "┐",
@@ -172,6 +340,64 @@ export const SYMBOL_SETS: Record<SymbolPreset, SymbolSet> = {
     check: { on: "+", off: "-" },
     arrow: { up: "^", down: "v", left: "<", right: ">" },
     separator: { vertical: "|", horizontal: "-", dot: ":" },
+    icons: UNICODE_ICONS,
+  },
+  nerd: {
+    tab: {
+      overview: "\u{eb06}",
+      chat: "\u{ea6b}",
+      sessions: "\u{ec75}",
+      documents: "\u{ec5e}",
+      ledger: "\u{eaa4}",
+      approvals: "\u{eb53}",
+      policy: "\u{ea75}",
+      tools: "\u{eb6d}",
+      models: "\u{ec19}",
+      usage: "\u{ebe4}",
+      help: "\u{eb32}",
+    },
+    mode: { normal: "\u{ea85}", accept: "\u{eab2}", plan: "\u{ebaf}" },
+    status: {
+      running: "\u{eb31}",
+      idle: "\u{ec07}",
+      queued: "\u{eb16}",
+      paused: "\u{ead1}",
+      unknown: "\u{eb32}",
+    },
+    spinner: ["\u{eb19}", "\u{ea77}", "\u{eb31}", "\u{eb19}"],
+    progress: { filled: "█", empty: "░" },
+    role: {
+      user: "\u{eb99}",
+      assistant: "\u{ec1e}",
+      tool: "\u{eb6d}",
+      error: "\u{ea87}",
+      system: "\u{eb52}",
+      usage: "\u{ebe4}",
+      thinking: "\u{ec1f}",
+    },
+    frame: {
+      tl: "╭",
+      tr: "╮",
+      bl: "╰",
+      br: "╯",
+      h: "─",
+      v: "│",
+      teeL: "├",
+      teeR: "┤",
+      teeT: "┬",
+      teeB: "┴",
+      cross: "┼",
+    },
+    brand: { halfTop: "▀", halfBottom: "▄", full: "█", empty: " " },
+    check: { on: "\u{eab2}", off: "\u{ec07}" },
+    arrow: {
+      up: "\u{eaa1}",
+      down: "\u{ea9a}",
+      left: "\u{ea9b}",
+      right: "\u{ea9c}",
+    },
+    separator: { vertical: "│", horizontal: "─", dot: "·" },
+    icons: NERD_ICONS,
   },
 };
 
@@ -179,9 +405,11 @@ export const COLOR_THEMES: Record<ColorTheme, ColorPalette> = {
   default: {
     bg: "#0d0d0f",
     fg: "#e8e8eb",
-    accent: "#bd4206",
-    muted: "#86868b",
-    border: "#2a2a2e",
+    user: "#f5f5f7",
+    accent: "#cf6b3e",
+    muted: "#a0a0a5",
+    border: "#3a3a3f",
+    rule: "#48484e",
     success: "#5cc094",
     warning: "#dcbc63",
     error: "#f47a88",
@@ -191,11 +419,11 @@ export const COLOR_THEMES: Record<ColorTheme, ColorPalette> = {
     r2: "#dcbc63",
     r3: "#f47a88",
     ink: "#f5f5f7",
-    rule: "#38383a",
   },
   paper: {
     bg: "#f6f0e3",
     fg: "#12100a",
+    user: "#12100a",
     accent: "#bd4206",
     muted: "#8b7d6b",
     border: "#d4c4a8",
@@ -213,6 +441,7 @@ export const COLOR_THEMES: Record<ColorTheme, ColorPalette> = {
   dark: {
     bg: "#000000",
     fg: "#ffffff",
+    user: "#ffffff",
     accent: "#ff6b00",
     muted: "#888888",
     border: "#333333",
@@ -230,6 +459,7 @@ export const COLOR_THEMES: Record<ColorTheme, ColorPalette> = {
   "high-contrast": {
     bg: "#000000",
     fg: "#ffffff",
+    user: "#ffffff",
     accent: "#ffff00",
     muted: "#aaaaaa",
     border: "#ffffff",
@@ -247,6 +477,7 @@ export const COLOR_THEMES: Record<ColorTheme, ColorPalette> = {
   "solarized-light": {
     bg: "#fdf6e3",
     fg: "#657b83",
+    user: "#4d6269",
     accent: "#cb4b16",
     muted: "#93a1a1",
     border: "#eee8d5",
@@ -264,6 +495,7 @@ export const COLOR_THEMES: Record<ColorTheme, ColorPalette> = {
   "solarized-dark": {
     bg: "#002b36",
     fg: "#839496",
+    user: "#eee8d5",
     accent: "#cb4b16",
     muted: "#586e75",
     border: "#073642",
@@ -356,6 +588,24 @@ export function paintWithPalette(
         ? `38;5;${ansi256(hex)}`
         : String(ansi16(hex));
   return `\u001b[${bold ? "1;" : ""}${color}m${text}\u001b[0m`;
+}
+
+/** Keep role tint inside message rows so the user's terminal canvas stays untouched. */
+export function paintUserMessageWithPalette(
+  text: string,
+  palette: ColorPalette,
+  capabilities: TerminalCapabilities,
+): string {
+  if (!capabilities.ansi || capabilities.colorDepth === 0) return text;
+  const foreground =
+    capabilities.colorDepth === 24
+      ? trueColor(palette.user)
+      : capabilities.colorDepth === 8
+        ? `38;5;${ansi256(palette.user)}`
+        : String(ansi16(palette.user));
+  // The role marker and foreground tint highlight user turns without painting
+  // a background over the terminal canvas.
+  return `\u001b[${foreground}m${text}\u001b[39m`;
 }
 
 export function getStatusLineSegments(

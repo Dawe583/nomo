@@ -1,4 +1,10 @@
-import { fit, sanitizeText, visibleLength } from "./layout.ts";
+import { fit, sanitizeText, stripAnsi, visibleLength } from "./layout.ts";
+
+const DAMAGED_ANSI_SGR = /\?\[[0-?]*[ -/]*m/g;
+
+function blockText(value: string): string {
+  return sanitizeText(stripAnsi(value).replace(DAMAGED_ANSI_SGR, ""));
+}
 import {
   animatedBar,
   completionRing,
@@ -6,10 +12,9 @@ import {
   idleBreath,
   levelMeter,
   motionContext,
-  pill,
   type MotionContext,
 } from "./motion.ts";
-import type { Tone } from "./theme.ts";
+import { getSymbols, type SymbolPreset } from "./theme.ts";
 
 // Titled transcript blocks: NOMO prints raw wrapped text while OMP renders
 // each event as a block with a role marker, a timestamp, a collapsible body
@@ -30,6 +35,10 @@ export interface BlockInput {
   readonly at?: string;
   /** Optional heading such as a tool name or a run id. */
   readonly heading?: string;
+  /** Tool lifecycle state, surfaced in its heading. */
+  readonly status?: "running" | "done" | "failed";
+  /** Tool lifecycle duration, when the matching start event is available. */
+  readonly durationMs?: number;
   /** Collapse the body when it exceeds the block's row budget. */
   readonly collapsible?: boolean;
   /** Optional tone override for the heading. */
@@ -40,21 +49,12 @@ export interface BlockOptions {
   readonly width: number;
   readonly motion?: MotionContext;
   readonly paint?: (text: string, tone: string, bold?: boolean) => string;
+  readonly symbolPreset?: SymbolPreset;
 }
 
-// Every icon is one cell: layout.ts counts U+2600 to U+27BF as two cells, so
-// each glyph below is picked outside that range. Every block still prints its
-// role word beside the icon, because a glyph alone is unreadable to anyone
-// who cannot see it.
-const ROLE_ICONS: Record<BlockRole, string> = {
-  user: "▸",
-  assistant: "●",
-  tool: "◆",
-  error: "×",
-  system: "≡",
-  usage: "▰",
-  thinking: "○",
-};
+// Iconoir and HugeIcons ship vector artwork; role markers below are one-cell
+// terminal analogues, never embedded SVGs. The adjacent role label is the
+// readable source of meaning in every color and motion mode.
 
 const ROLE_LABELS: Record<BlockRole, string> = {
   user: "USER",
@@ -78,20 +78,11 @@ const ROLE_TONES: Record<BlockRole, BlockTone> = {
   thinking: "warning",
 };
 
-// The block speaks the inspector tone vocabulary, so blocks never depend on
-// palette names; the mapping happens only at the paint boundary, exactly the
-// way inspector.ts does it.
-const TONE_MAP: Record<BlockTone, Tone> = {
-  default: "fg",
-  muted: "muted",
-  accent: "accent",
-  success: "success",
-  warning: "warning",
-  error: "error",
-};
-
-export function roleIcon(role: BlockRole): string {
-  return ROLE_ICONS[role];
+export function roleIcon(
+  role: BlockRole,
+  preset: SymbolPreset = "unicode",
+): string {
+  return getSymbols(preset).role[role];
 }
 
 export function roleLabel(role: BlockRole): string {
@@ -101,7 +92,7 @@ export function roleLabel(role: BlockRole): string {
 // A heading is caller data, so blank or padded headings collapse to absent:
 // invisible padding would break the heading scan without adding information.
 function displayName(input: BlockInput): string {
-  return sanitizeText(input.heading ?? "").trim();
+  return blockText(input.heading ?? "").trim();
 }
 
 function shortTime(at: string | undefined): string {
@@ -119,18 +110,35 @@ function shortTime(at: string | undefined): string {
   return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
 }
 
-/** Heading row for one block: icon, role, heading, timestamp. */
-export function blockHeading(input: BlockInput, width: number): string {
+function lifecycleLabel(status: BlockInput["status"]): string | undefined {
+  if (status === "running") return "requested";
+  if (status === "done") return "completed";
+  if (status === "failed") return "failed";
+  return undefined;
+}
+
+/** Heading row for one block: icon, role, action, state and timestamp. */
+export function blockHeading(
+  input: BlockInput,
+  width: number,
+  preset: SymbolPreset = "unicode",
+): string {
   const safe = Number.isFinite(width) ? Math.max(1, Math.floor(width)) : 1;
   const name = displayName(input);
-  // The role plus heading is the identity of the block, so it is built
-  // first and the timestamp is only appended when it still fits.
-  const base =
-    name === ""
-      ? `${roleIcon(input.role)} ${roleLabel(input.role)}`
-      : `${roleIcon(input.role)} ${roleLabel(input.role)} -- ${name}`;
+  const role = roleLabel(input.role);
+  const hasDistinctName =
+    name !== "" && name.toLowerCase() !== role.toLowerCase();
+  const state =
+    input.role === "tool" ? lifecycleLabel(input.status) : undefined;
+  // The tool icon already carries the role. Lead with its actual name to
+  // avoid repeating the generic "TOOL" label beside "Tool" or "Bash".
+  const identity =
+    input.role === "tool" && hasDistinctName
+      ? [name, ...(state ? [state] : [])].join(" · ")
+      : [role, ...(state ? [state] : [])].join(" · ");
+  const base = `${roleIcon(input.role, preset)} ${identity}`;
   const time = shortTime(
-    input.at === undefined ? undefined : sanitizeText(input.at),
+    input.at === undefined ? undefined : blockText(input.at),
   );
   if (time !== "" && visibleLength(`${base} ${time}`) <= safe)
     return `${base} ${time}`;
@@ -167,9 +175,9 @@ function wrapBody(input: BlockInput, width: number): string[] {
     // CRLF is a line ending, not body content, so the carriage return goes
     // before sanitising turns it into a visible question mark.
     const line = raw.endsWith("\r") ? raw.slice(0, -1) : raw;
-    // Lines keep their shape verbatim: system and error bodies can come from
-    // an agent or a server, and reflowing them would rewrite the evidence.
-    for (const chunk of wrapCells(sanitizeText(line), width)) rows.push(chunk);
+    // Keep line shape intact, but remove terminal styling before sanitizing
+    // control characters so damaged ANSI fragments cannot leak into the UI.
+    for (const chunk of wrapCells(blockText(line), width)) rows.push(chunk);
   }
   return rows;
 }
@@ -229,23 +237,33 @@ export function blockBody(
 
 // Motion glyphs are built plain and fitted before painting, the inspector
 // badge pattern: fitting after painting would strip the escapes paint just
-// inserted. Status words ride every footer because motion and colour fail the
-// same way, so a shape alone never reports done, failed or working.
+// inserted. Tool state is written in the heading; the footer carries measured
+// duration or collapsed-row information only.
 function footerPlain(
   input: BlockInput,
-  name: string,
   body: CollapsedBody,
   width: number,
   motion: MotionContext,
 ): string | undefined {
-  const counts =
-    body.hidden > 0 ? ` -- ${body.shown} of ${body.total} lines` : "";
   if (input.role === "tool") {
-    const scope = name === "" ? "tool" : name;
-    return `${completionRing(1, 1, motion)} ${pill("done", TONE_MAP.success, motion)} ${scope}${counts}`;
+    const details: string[] = [];
+    if (
+      typeof input.durationMs === "number" &&
+      Number.isFinite(input.durationMs)
+    ) {
+      const duration =
+        input.durationMs < 1_000
+          ? `${Math.round(input.durationMs)}ms`
+          : `${(input.durationMs / 1_000).toFixed(1)}s`;
+      details.push(`${duration} elapsed`);
+    }
+    if (body.hidden > 0) details.push(`${body.shown} of ${body.total} lines`);
+    return details.length ? details.join(" · ") : undefined;
   }
+  const counts =
+    body.hidden > 0 ? ` · ${body.shown} of ${body.total} lines` : "";
   if (input.role === "error") {
-    return `${completionRing(0, 1, motion)} ${pill("failed", TONE_MAP.error, motion)} see above${counts}`;
+    return `${completionRing(0, 1, motion)} failed · see above${counts}`;
   }
   if (input.role === "thinking") {
     return `${cursorMarker(true, motion)}thinking ${idleBreath(motion)}${counts}`;
@@ -281,15 +299,26 @@ export function renderBlock(
   // Static detail frame by default, like the inspector: two renders of the
   // same block stay byte identical and tests can assert on footer output.
   const motion: MotionContext = options.motion ?? motionContext(0, false, true);
+  const symbolPreset = options.symbolPreset ?? "unicode";
   const paint = options.paint;
   // Sanitising happens inside the builders while the text is still plain;
   // paint runs last here, never the other way round.
   const paintLine = (text: string, tone: BlockTone, bold?: boolean): string =>
     paint === undefined ? text : paint(text, tone, bold);
   const rows: string[] = [];
-  const headingTone: BlockTone = input.tone ?? ROLE_TONES[input.role];
+  const headingTone: BlockTone =
+    input.tone ??
+    (input.role === "tool" && input.status === "failed"
+      ? "error"
+      : input.role === "tool" && input.status === "running"
+        ? "warning"
+        : ROLE_TONES[input.role]);
   rows.push(
-    paintLine(fit(blockHeading(input, width), width), headingTone, true),
+    paintLine(
+      fit(blockHeading(input, width, symbolPreset), width),
+      headingTone,
+      true,
+    ),
   );
   const all = wrapBody(input, width);
   const budget = maxRows === undefined ? all.length : maxRows;
@@ -298,9 +327,16 @@ export function renderBlock(
     const marker = body.hidden > 0 && index === body.rows.length - 1;
     rows.push(paintLine(fit(row, width), marker ? "muted" : "default"));
   });
-  const footer = footerPlain(input, displayName(input), body, width, motion);
+  const footer = footerPlain(input, body, width, motion);
   if (footer !== undefined)
-    rows.push(paintLine(fit(footer, width), ROLE_TONES[input.role]));
+    rows.push(
+      paintLine(
+        fit(footer, width),
+        input.role === "tool" && input.status === "failed"
+          ? "error"
+          : ROLE_TONES[input.role],
+      ),
+    );
   // A block always says something, even at width 1 with an empty body.
   if (rows.length === 0)
     rows.push(paintLine(fit("(empty block)", width), "muted"));

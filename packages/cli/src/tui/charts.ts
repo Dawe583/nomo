@@ -178,7 +178,7 @@ export function barChart(
   const valueTexts: string[] = values.map((value) =>
     isFiniteNumber(value) ? formatNumber(value) : "?",
   );
-  const labelWidth: number = Math.max(
+  const fullLabelWidth: number = Math.max(
     1,
     ...cleanLabels.map((label) => visibleLength(label)),
   );
@@ -186,9 +186,16 @@ export function barChart(
     1,
     ...valueTexts.map((text) => visibleLength(text)),
   );
-  // The number sits before the bar so a narrow terminal truncates fill, not
-  // the measurement, when fit trims the row from the right.
-  const barCells: number = Math.max(1, cells - labelWidth - valueWidth - 2);
+  // Preserve the historical layout when it fits. At narrow widths, shorten
+  // labels before measurements; the bar is optional and never displaces them.
+  const labelWidth: number = Math.min(
+    fullLabelWidth,
+    Math.max(0, cells - valueWidth - 1),
+  );
+  const barCells: number = Math.max(
+    0,
+    cells - labelWidth - valueWidth - (labelWidth > 0 ? 2 : 1),
+  );
   const motion: MotionContext = resolveMotion(options?.motion);
   const rows: string[] = [];
   for (let order = values.length - 1; order >= 0; order -= 1) {
@@ -208,9 +215,11 @@ export function barChart(
     ) {
       bar = `${"█".repeat(filled - 1)}▓${"░".repeat(barCells - filled)}`;
     }
-    const label: string = pad(cleanLabels[order]!, labelWidth);
+    const label: string =
+      labelWidth > 0 ? `${pad(cleanLabels[order]!, labelWidth)} ` : "";
     const text: string = valueTexts[order]!.padStart(valueWidth, " ");
-    rows.push(fit(`${label} ${text} ${bar}`, cells));
+    const suffix: string = barCells > 0 ? ` ${bar}` : "";
+    rows.push(`${label}${text}${suffix}`);
   }
   return rows;
 }
