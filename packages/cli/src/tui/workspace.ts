@@ -7634,7 +7634,7 @@ export function renderWorkspace(
         : "[!] REVIEW / y accept / n reject / Esc cancel / PgDn preview"
       : running && (busy || ui.session()?.status === "running")
         ? `${spinner} ${ui.session()?.status === "running" ? (waiting ? "[wait] Waiting for approval" : `● ${phase}${dots}`) : `[run] Finishing operation${dots}`}${elapsed} / Esc stop${historyStatus ? " / [history] reading history" : ""}${todoBadge}${chatContextBadge ? ` / ${chatContextBadge}` : ""}`
-        : `${historyStatus ?? (spaciousShell && ui.notice === "Tab: panels | i: type | /help: commands" ? "Ready" : ui.notice)}${chatContextBadge ? `${historyStatus ? " / " : ""}${chatContextBadge}` : ""}`;
+        : `${ui.notice && ui.notice !== "Tab: panels | i: type | /help: commands" ? ui.notice : (historyStatus ?? (spaciousShell ? "Ready" : ui.notice))}${chatContextBadge ? `${historyStatus ? " / " : ""}${chatContextBadge}` : ""}`;
   const menuRows = menu.map(([name, description], i) =>
     ink(
       text(
