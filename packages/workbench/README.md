@@ -39,12 +39,14 @@ as client-callable tools.
 
 ## Filtered project workspace
 
-Open `/project-workspace` in the local Control Plane and enter the absolute
-root of a Git working tree. Workbench stores a private filtered copy under
-`project-workspaces/<rootDigest>` in its data directory. Only `source/` is
-available to the project sandbox; the original repository is never mounted.
-The private `control/baseline/` retains the confirmed snapshot for stable
-diffs and can use up to 1 GiB in addition to the filtered copy.
+The local API supports project access through `POST /api/project-workspace/access`
+with `{"path":"/absolute/path/to/git-root"}`; it accepts local requests only.
+The current Control Plane GUI does not expose the `/project-workspace` page.
+Workbench stores a private filtered copy under `project-workspaces/<rootDigest>`
+in its data directory. Only `source/` is available to the project sandbox; the
+original repository is never mounted. The private `control/baseline/` retains
+the confirmed snapshot for stable diffs and can use up to 1 GiB in addition to
+the filtered copy.
 
 The copy excludes VCS metadata, `.env*`, `.ssh`, `secrets` and `credentials`
 directories, known key/certificate/token file patterns, Git-ignored files,
