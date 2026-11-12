@@ -13,8 +13,15 @@
  * Exits 0 on success, 1 on a build or write failure, 2 on bad usage.
  */
 
-import { existsSync, mkdirSync, rmSync, statSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
 import { join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { rollup } from "rollup";
 
 import { bundleOptions, bundleOutput } from "../../rollup.config.mjs";
@@ -35,7 +42,8 @@ const parseArgs = (argv) => {
     if (arg === "--quiet") quiet = true;
     else if (arg === "--out") {
       const value = argv[index + 1];
-      if (!value || value.startsWith("--")) throw new Error(`--out needs a directory\n${USAGE}`);
+      if (!value || value.startsWith("--"))
+        throw new Error(`--out needs a directory\n${USAGE}`);
       outDir = value;
       index += 1;
     } else if (arg === "--help" || arg === "-h") throw new Error(USAGE);
@@ -55,8 +63,14 @@ const parseArgs = (argv) => {
  * @param {{ root?: string, outDir?: string, quiet?: boolean }} [options]
  * @returns {Promise<{ file: string, bytes: number, chunks: string[] }>}
  */
-export async function buildBundle({ root, outDir = DEFAULT_OUT_DIR, quiet = false } = {}) {
-  const base = resolve(root ?? new URL("../..", import.meta.url).pathname);
+export async function buildBundle({
+  root,
+  outDir = DEFAULT_OUT_DIR,
+  quiet = false,
+} = {}) {
+  const base = resolve(
+    root ?? fileURLToPath(new URL("../..", import.meta.url)),
+  );
   const out = resolve(base, outDir);
 
   const bundle = await rollup(bundleOptions({ root: base }));
@@ -80,28 +94,38 @@ export async function buildBundle({ root, outDir = DEFAULT_OUT_DIR, quiet = fals
     if (!quiet) {
       const total = chunks.reduce((sum, chunk) => sum + chunk.code.length, 0);
       const kb = (total / 1024).toFixed(0);
-      console.log(
-        `built ${file} (${chunks.length} chunks, ${kb} kB total)`,
-      );
+      console.log(`built ${file} (${chunks.length} chunks, ${kb} kB total)`);
       for (const chunk of chunks) {
-        console.log(`  ${chunk.fileName} ${(chunk.code.length / 1024).toFixed(0)} kB`);
+        console.log(
+          `  ${chunk.fileName} ${(chunk.code.length / 1024).toFixed(0)} kB`,
+        );
       }
     }
-    return { file, bytes: entryChunk.code.length, chunks: chunks.map((c) => c.fileName) };
+    return {
+      file,
+      bytes: entryChunk.code.length,
+      chunks: chunks.map((c) => c.fileName),
+    };
   } finally {
     await bundle.close();
   }
 }
 
 // Only run when invoked as a program; importing this module must not build.
-if (process.argv[1] && import.meta.url === `file://${resolve(process.argv[1])}`) {
+if (
+  process.argv[1] &&
+  import.meta.url === `file://${resolve(process.argv[1])}`
+) {
   try {
     const options = parseArgs(process.argv.slice(2));
     const result = await buildBundle(options);
-    if (!result.file || !existsSync(result.file)) throw new Error("build produced no file");
-    if (statSync(result.file).size === 0) throw new Error("build produced an empty file");
+    if (!result.file || !existsSync(result.file))
+      throw new Error("build produced no file");
+    if (statSync(result.file).size === 0)
+      throw new Error("build produced an empty file");
   } catch (error) {
     console.error(error instanceof Error ? error.message : String(error));
-    process.exitCode = error instanceof Error && error.message.includes("usage:") ? 2 : 1;
+    process.exitCode =
+      error instanceof Error && error.message.includes("usage:") ? 2 : 1;
   }
 }

@@ -2,12 +2,19 @@ import test, { before, describe } from "node:test";
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
 import { isBuiltin } from "node:module";
-import { mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
+import {
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { buildBundle, DEFAULT_OUT_DIR, ENTRY_FILE } from "./bundle-cli.mjs";
+import { npmInvocation } from "./npm-cli.mjs";
 
 const repoRoot = new URL("../../", import.meta.url);
 const read = (path) => readFileSync(new URL(path, repoRoot), "utf8");
@@ -27,9 +34,12 @@ let outDir;
 let artifact;
 let chunks;
 before(async () => {
-  packageDir = mkdtempSync(join(tmpdir(), "nomo-bundle-test-"));
+  packageDir = mkdtempSync(join(tmpdir(), "nomo & bundle test-"));
   outDir = join(packageDir, "dist");
-  writeFileSync(join(packageDir, "package.json"), read("packages/cli/package.json"));
+  writeFileSync(
+    join(packageDir, "package.json"),
+    read("packages/cli/package.json"),
+  );
   const built = await buildBundle({ root, outDir, quiet: true });
   chunks = built.chunks;
   artifact = readFileSync(join(outDir, ENTRY_FILE), "utf8");
@@ -67,7 +77,12 @@ describe("the distribution bundle", () => {
     assert.equal(artifact.split("\n")[0], "#!/usr/bin/env node");
     // A shebang without the exec bit is a bin target npm cannot run directly,
     // and npm only chmods the shim, not the file it points at on every platform.
-    assert.ok(statSync(file).mode & 0o111, "the entry chunk is not executable");
+    if (process.platform !== "win32") {
+      assert.ok(
+        statSync(file).mode & 0o111,
+        "the entry chunk is not executable",
+      );
+    }
   });
 
   test("emits more than one chunk, because one chunk breaks nomo run", () => {
@@ -77,7 +92,10 @@ describe("the distribution bundle", () => {
     // zone error and `nomo doctor` prints the proxy usage and exits 1. The split
     // is what keeps the entry deferring its graph, so this asserts the shape
     // rather than a size: collapsing the graph is a behavioural regression.
-    assert.ok(chunks.length > 1, `expected a chunk graph, got ${chunks.length} chunk`);
+    assert.ok(
+      chunks.length > 1,
+      `expected a chunk graph, got ${chunks.length} chunk`,
+    );
     assert.ok(chunks.includes(ENTRY_FILE), "the entry chunk is missing");
   });
 
@@ -86,10 +104,16 @@ describe("the distribution bundle", () => {
     // loading the command surface, so the entry imports nothing but Node
     // builtins. A third-party import here means node:sqlite or the MCP SDK is
     // loaded on a help request, which is the regression this split prevents.
-    const imports = [...artifact.matchAll(/^import\s.*$/gm)].map((line) => line[0]);
+    const imports = [...artifact.matchAll(/^import\s.*$/gm)].map(
+      (line) => line[0],
+    );
     assert.ok(imports.length > 0, "the entry chunk imports nothing at all");
     for (const line of imports) {
-      assert.match(line, /from\s*['"]node:/, `the entry eagerly imports ${line}`);
+      assert.match(
+        line,
+        /from\s*['"]node:/,
+        `the entry eagerly imports ${line}`,
+      );
     }
   });
 
@@ -119,10 +143,13 @@ describe("the distribution bundle", () => {
       // A `workspace:*` range can also survive as data rather than as an import,
       // for example a manifest-shaped object inlined from source. The one shape
       // that matters is a specifier npm would try to fetch.
-      assert.doesNotMatch(code, /["']workspace:\*/, `${chunk} embeds a workspace range`);
+      assert.doesNotMatch(
+        code,
+        /["']workspace:\*/,
+        `${chunk} embeds a workspace range`,
+      );
     }
   });
-
 
   test("imports no sibling workspace package by name", () => {
     // Every sibling must be inlined. A bare workspace-package import would resolve
@@ -130,8 +157,9 @@ describe("the distribution bundle", () => {
     // would prove nothing about a consumer.
     for (const chunk of chunks) {
       const code = readFileSync(join(outDir, chunk), "utf8");
-      const workspaceImports = bareSpecifiers(code).filter((specifier) =>
-        specifier.startsWith("@void/") || specifier.startsWith("@nomo/"),
+      const workspaceImports = bareSpecifiers(code).filter(
+        (specifier) =>
+          specifier.startsWith("@void/") || specifier.startsWith("@nomo/"),
       );
       assert.deepEqual(
         workspaceImports,
@@ -171,27 +199,40 @@ describe("the distribution bundle", () => {
     const manifest = JSON.parse(read("packages/cli/package.json"));
     assert.deepEqual(manifest.files, ["dist/"]);
     assert.deepEqual(manifest.bin, { nomo: `./dist/${ENTRY_FILE}` });
+    const npm = npmInvocation(["pack", "--dry-run", "--json"]);
     const packed = JSON.parse(
-      execFileSync("npm", ["pack", "--dry-run", "--json"], {
+      execFileSync(npm.command, npm.args, {
         cwd: packageDir,
         encoding: "utf8",
       }),
     );
-    const files = packed[0].files.map(({ path }) => path).sort();
-    assert.deepEqual(files, [...chunks.map((chunk) => `dist/${chunk}`), "package.json"].sort());
+    const packEntry = Array.isArray(packed)
+      ? packed[0]
+      : Object.values(packed)[0];
+    const files = packEntry.files.map(({ path }) => path).sort();
+    assert.deepEqual(
+      files,
+      [...chunks.map((chunk) => `dist/${chunk}`), "package.json"].sort(),
+    );
   });
 
   test("the staged executable answers help and version from a clean consumer cwd", () => {
-    const consumer = mkdtempSync(join(tmpdir(), "nomo-consumer-test-"));
+    const consumer = mkdtempSync(join(tmpdir(), "nomo & consumer test-"));
     try {
       const bin = join(outDir, ENTRY_FILE);
-      const help = spawnSync(bin, ["--help"], { cwd: consumer, encoding: "utf8" });
+      const help = spawnSync(process.execPath, [bin, "--help"], {
+        cwd: consumer,
+        encoding: "utf8",
+      });
       assert.ifError(help.error);
       assert.equal(help.status, 0, help.stderr);
       assert.match(help.stdout, /^usage: nomo /);
       assert.equal(help.stderr, "");
 
-      const version = spawnSync(bin, ["--version"], { cwd: consumer, encoding: "utf8" });
+      const version = spawnSync(process.execPath, [bin, "--version"], {
+        cwd: consumer,
+        encoding: "utf8",
+      });
       assert.ifError(version.error);
       assert.equal(version.status, 0, version.stderr);
       const manifest = JSON.parse(read("packages/cli/package.json"));

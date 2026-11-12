@@ -1,10 +1,21 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { existsSync, lstatSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  lstatSync,
+  mkdtempSync,
+  readFileSync,
+  realpathSync,
+  rmSync,
+  writeFileSync,
+  mkdirSync,
+} from "node:fs";
 import { spawnSync } from "node:child_process";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { isAbsolute, join, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
+import { buildBundle } from "./bundle-cli.mjs";
+import { npmInvocation } from "./npm-cli.mjs";
 import { versionedManifests } from "./set-version.mjs";
 
 const root = new URL("../../", import.meta.url);
@@ -21,7 +32,6 @@ test("the root workspace package uses the NOMO namespace", () => {
 test("the scripts package uses the NOMO namespace", () => {
   assert.equal(manifest("scripts/package.json").name, "@nomo/scripts");
 });
-
 
 /**
  * The invariant is that every manifest moves together, not that the number is
@@ -70,7 +80,11 @@ for (const directory of directories) {
     if (PUBLISHABLE.has(directory)) {
       // Only the private flag is relaxed. Everything below still applies, and the
       // reason has to exist, or this is a silent exemption.
-      assert.notEqual(data.private, true, `${directory} is listed publishable, so it must not also be private`);
+      assert.notEqual(
+        data.private,
+        true,
+        `${directory} is listed publishable, so it must not also be private`,
+      );
       assert.ok(
         (PUBLISHABLE.get(directory) ?? "").length > 20,
         `${directory} needs a reason a reviewer can weigh`,
@@ -88,7 +102,10 @@ for (const directory of directories) {
         url: "git+https://github.com/Dawe583/void.git",
         directory,
       });
-      assert.equal(data.homepage, `https://github.com/Dawe583/void/tree/main/${directory}`);
+      assert.equal(
+        data.homepage,
+        `https://github.com/Dawe583/void/tree/main/${directory}`,
+      );
     }
   });
 }
@@ -108,20 +125,29 @@ test("checkout launchers expose the same TUI entrypoint on POSIX and Windows", (
   assert.match(posix, /^#!\/bin\/sh\n/);
   assert.match(posix, /packages\/cli\/bin\/nomo\.mjs/);
   assert.match(posix, /exec node .*"\$@"/);
-  assert.ok(lstatSync(new URL("../../nomo", import.meta.url)).mode & 0o111);
+  if (process.platform !== "win32") {
+    assert.ok(lstatSync(new URL("../../nomo", import.meta.url)).mode & 0o111);
+  }
   assert.match(windows, /^@echo off\r?\n/);
   assert.match(windows, /packages\\cli\\bin\\nomo\.mjs/);
   assert.match(windows, /%\*/);
-  assert.match(manifest("package.json").scripts.nomo, /packages\/cli\/bin\/nomo\.mjs/);
+  assert.match(
+    manifest("package.json").scripts.nomo,
+    /packages\/cli\/bin\/nomo\.mjs/,
+  );
 });
 
 for (const [name, path] of Object.entries(bins)) {
   test(`${name} has an executable Node shebang and valid syntax`, () => {
     assert.equal(read(path).split("\n")[0], "#!/usr/bin/env node");
-    const checked = spawnSync(process.execPath, ["--check", fileURLToPath(new URL(path, root))], {
-      encoding: "utf8",
-      timeout: 10_000,
-    });
+    const checked = spawnSync(
+      process.execPath,
+      ["--check", fileURLToPath(new URL(path, root))],
+      {
+        encoding: "utf8",
+        timeout: 10_000,
+      },
+    );
     assert.ifError(checked.error);
     assert.equal(checked.status, 0, checked.stderr);
   });
@@ -144,7 +170,10 @@ for (const directory of PUBLISHABLE.keys()) {
   test(`${directory} bin targets start with an interpreter line`, () => {
     const data = manifest(`${directory}/package.json`);
     const targets = Object.values(data.bin ?? {});
-    assert.ok(targets.length > 0, `${directory} is publishable, so it must declare a bin`);
+    assert.ok(
+      targets.length > 0,
+      `${directory} is publishable, so it must declare a bin`,
+    );
     for (const target of targets) {
       const path = `${directory}/${target.replace(/^\.\//, "")}`;
       assert.match(
@@ -210,19 +239,31 @@ for (const directory of PUBLISHABLE.keys()) {
     );
 
     const packageDir = fileURLToPath(new URL(`${directory}/`, root));
-    const sandbox = mkdtempSync(join(tmpdir(), "nomo-release-clean-install-"));
+    const sandbox = mkdtempSync(
+      join(tmpdir(), "nomo & release clean install-"),
+    );
     try {
       // Pack from the package directory into the sandbox, never into the
       // repository: the tarball is the artefact under test and a stray one
       // left in the tree is a release hazard, not a test artefact.
-      const packed = spawnSync(
-        "npm",
-        ["pack", "--pack-destination", sandbox, "--json"],
-        { cwd: packageDir, encoding: "utf8", timeout: 120_000 },
-      );
+      const packNpm = npmInvocation([
+        "pack",
+        "--pack-destination",
+        sandbox,
+        "--json",
+      ]);
+      const packed = spawnSync(packNpm.command, packNpm.args, {
+        cwd: packageDir,
+        encoding: "utf8",
+        timeout: 120_000,
+      });
       assert.ifError(packed.error);
       assert.equal(packed.status, 0, `npm pack failed: ${packed.stderr}`);
-      const [{ filename, files }] = JSON.parse(packed.stdout);
+      const parsedPack = JSON.parse(packed.stdout);
+      const packEntry = Array.isArray(parsedPack)
+        ? parsedPack[0]
+        : Object.values(parsedPack)[0];
+      const { filename, files } = packEntry;
       const tarball = join(sandbox, filename);
       assert.ok(
         files.some((entry) => entry.path === "package.json"),
@@ -237,20 +278,26 @@ for (const directory of PUBLISHABLE.keys()) {
         join(sandbox, "package.json"),
         `${JSON.stringify({ name: "nomo-clean-install-probe", version: "0.0.0", private: true }, null, 2)}\n`,
       );
-      const installed = spawnSync(
-        "npm",
-        ["install", "--no-save", "--no-audit", "--no-fund", "--offline", tarball],
-        {
-          cwd: sandbox,
-          encoding: "utf8",
-          timeout: 120_000,
-          env: {
-            ...process.env,
-            npm_config_registry: "http://127.0.0.1:9/",
-            npm_config_offline: "true",
-          },
+      const installNpm = npmInvocation([
+        "install",
+        "--no-save",
+        "--no-audit",
+        "--no-fund",
+        "--offline",
+        "--cache",
+        join(sandbox, "npm-cache"),
+        tarball,
+      ]);
+      const installed = spawnSync(installNpm.command, installNpm.args, {
+        cwd: sandbox,
+        encoding: "utf8",
+        timeout: 120_000,
+        env: {
+          ...process.env,
+          npm_config_registry: "http://127.0.0.1:9/",
+          npm_config_offline: "true",
         },
-      );
+      });
       assert.ifError(installed.error);
       assert.equal(
         installed.status,
@@ -264,22 +311,41 @@ for (const directory of PUBLISHABLE.keys()) {
       // resolved path has to stay inside the sandbox for the evidence to
       // mean what the test says it means.
       const link = realpathSync(installedDir);
+      const relativeInstall = relative(realpathSync(sandbox), link);
       assert.ok(
         !lstatSync(installedDir).isSymbolicLink(),
         `the installed ${data.name} is a symlink, so it is a workspace link and not a packed copy`,
       );
       assert.ok(
-        link.startsWith(realpathSync(sandbox) + "/"),
+        !isAbsolute(relativeInstall) &&
+          relativeInstall !== ".." &&
+          !relativeInstall.startsWith(".." + sep),
         `the installed ${data.name} resolved to ${link}, outside the clean install directory, so the run would prove the source tree and not the tarball`,
       );
 
       for (const binName of binNames) {
-        const installedBin = join(sandbox, "node_modules", ".bin", binName);
+        const installedBin = join(
+          sandbox,
+          "node_modules",
+          ".bin",
+          process.platform === "win32" ? binName + ".cmd" : binName,
+        );
         assert.ok(
           existsSync(installedBin),
           `installing ${filename} produced no ${binName} executable`,
         );
-        const ran = spawnSync(installedBin, run.args, {
+        const installedTarget = join(installedDir, data.bin[binName]);
+        assert.ok(
+          existsSync(installedTarget),
+          "installed JavaScript bin target is missing",
+        );
+        const executable =
+          process.platform === "win32" ? process.execPath : installedBin;
+        const executableArgs =
+          process.platform === "win32"
+            ? [installedTarget, ...run.args]
+            : run.args;
+        const ran = spawnSync(executable, executableArgs, {
           cwd: sandbox,
           encoding: "utf8",
           timeout: 120_000,
@@ -300,6 +366,131 @@ for (const directory of PUBLISHABLE.keys()) {
     }
   });
 }
+
+const networkPackagingEnabled = process.env.NOMO_NETWORK_PACKAGING_TEST === "1";
+test(
+  "packages/cli fresh-cache install integration runs",
+  {
+    skip: networkPackagingEnabled
+      ? false
+      : "Set NOMO_NETWORK_PACKAGING_TEST=1 for the npm registry integration",
+  },
+  async () => {
+    const directory = "packages/cli";
+    const data = manifest(directory + "/package.json");
+    const sandbox = mkdtempSync(join(tmpdir(), "nomo & cli clean install-"));
+    try {
+      const packageDir = join(sandbox, "package source");
+      mkdirSync(packageDir, { recursive: true });
+      writeFileSync(
+        join(packageDir, "package.json"),
+        read(directory + "/package.json"),
+      );
+      await buildBundle({
+        root: fileURLToPath(root),
+        outDir: join(packageDir, "dist"),
+        quiet: true,
+      });
+
+      const packNpm = npmInvocation([
+        "pack",
+        "--pack-destination",
+        sandbox,
+        "--json",
+      ]);
+      const packed = spawnSync(packNpm.command, packNpm.args, {
+        cwd: packageDir,
+        encoding: "utf8",
+        timeout: 120_000,
+      });
+      assert.ifError(packed.error);
+      assert.equal(packed.status, 0, "CLI npm pack failed: " + packed.stderr);
+      assert.doesNotMatch(packed.stderr, /DEP0190/);
+      const parsedPack = JSON.parse(packed.stdout);
+      const packEntry = Array.isArray(parsedPack)
+        ? parsedPack[0]
+        : Object.values(parsedPack)[0];
+      const tarball = join(sandbox, packEntry.filename);
+
+      writeFileSync(
+        join(sandbox, "package.json"),
+        JSON.stringify(
+          { name: "nomo-clean-install-probe", version: "0.0.0", private: true },
+          null,
+          2,
+        ) + "\n",
+      );
+      const installNpm = npmInvocation([
+        "install",
+        "--no-save",
+        "--no-audit",
+        "--no-fund",
+        "--cache",
+        join(sandbox, "npm-cache"),
+        tarball,
+      ]);
+      const installed = spawnSync(installNpm.command, installNpm.args, {
+        cwd: sandbox,
+        encoding: "utf8",
+        timeout: 300_000,
+        env: {
+          ...process.env,
+          npm_config_registry: "https://registry.npmjs.org/",
+          npm_config_offline: "false",
+        },
+      });
+      assert.ifError(installed.error);
+      assert.equal(
+        installed.status,
+        0,
+        "clean CLI install failed: " + installed.stderr,
+      );
+      assert.doesNotMatch(installed.stderr, /DEP0190/);
+
+      const installedDir = join(sandbox, "node_modules", data.name);
+      assert.ok(
+        !lstatSync(installedDir).isSymbolicLink(),
+        "the CLI install is a workspace symlink",
+      );
+      const installedTarget = join(installedDir, data.bin.nomo);
+      const installedBin = join(
+        sandbox,
+        "node_modules",
+        ".bin",
+        process.platform === "win32" ? "nomo.cmd" : "nomo",
+      );
+      assert.ok(
+        existsSync(installedBin),
+        "the CLI install produced no nomo executable",
+      );
+      assert.ok(
+        existsSync(installedTarget),
+        "the CLI install produced no JavaScript target",
+      );
+      const relativeInstall = relative(
+        realpathSync(sandbox),
+        realpathSync(installedDir),
+      );
+      assert.ok(
+        !isAbsolute(relativeInstall) &&
+          relativeInstall !== ".." &&
+          !relativeInstall.startsWith(".." + sep),
+        "the CLI install resolved outside its sandbox",
+      );
+      const ran = spawnSync(process.execPath, [installedTarget, "--version"], {
+        cwd: sandbox,
+        encoding: "utf8",
+        timeout: 120_000,
+      });
+      assert.ifError(ran.error);
+      assert.equal(ran.status, 0, "installed CLI failed: " + ran.stderr);
+      assert.equal(ran.stdout, "nomo " + data.version + "\n");
+      assert.equal(ran.stderr, "");
+    } finally {
+      rmSync(sandbox, { recursive: true, force: true });
+    }
+  },
+);
 
 test("every package that is not publishable is private, and nothing ships without a written reason", () => {
   // The clean install above covers PUBLISHABLE and only PUBLISHABLE, so this
@@ -376,7 +567,10 @@ const MCP_MANIFEST = "server.json";
 const mcpManifest = manifest(MCP_MANIFEST);
 
 const readPath = (source, path) =>
-  path.reduce((node, key) => (node === undefined ? undefined : node[key]), source);
+  path.reduce(
+    (node, key) => (node === undefined ? undefined : node[key]),
+    source,
+  );
 
 test("the MCP registry manifest declares every field its schema requires", () => {
   const required = [
@@ -410,7 +604,9 @@ test("the MCP registry manifest is publishable as written", () => {
   // namespace this publisher cannot prove.
   const owner = new URL(mcpManifest.repository.url).pathname.split("/")[1];
   assert.ok(
-    mcpManifest.name.toLowerCase().startsWith(`io.github.${owner.toLowerCase()}/`),
+    mcpManifest.name
+      .toLowerCase()
+      .startsWith(`io.github.${owner.toLowerCase()}/`),
     `server.json: name ${mcpManifest.name} does not claim the ${owner} GitHub namespace it publishes under`,
   );
   // The schema bounds the description and rejects a version range: a registry
@@ -438,7 +634,10 @@ test("every MCP package entry names how it is downloaded and launched", () => {
   // that eventually appears cannot arrive half filled.
   for (const entry of mcpManifest.packages ?? []) {
     for (const field of ["registryType", "identifier", "transport"]) {
-      assert.ok(entry[field], `server.json: a packages entry is missing ${field}`);
+      assert.ok(
+        entry[field],
+        `server.json: a packages entry is missing ${field}`,
+      );
     }
     assert.ok(
       entry.transport?.type === "stdio" || entry.transport?.url,
