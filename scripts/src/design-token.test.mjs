@@ -46,6 +46,10 @@ const LITERAL_EXEMPT = new Map([
     "apps/control-plane/web/icon.svg",
     "the same brand mark, shipped beside the pages it serves",
   ],
+  [
+    "site/whitepaper/index.html",
+    "self-contained publication with inline styles so the archived whitepaper works offline",
+  ],
 ]);
 
 const STYLESHEETS = [

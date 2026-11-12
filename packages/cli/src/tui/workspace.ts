@@ -2482,7 +2482,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       "HARNESS SETTINGS",
       "Limits this workspace runs under",
       "",
-      `Chat composer height: ${this.chatPanelVisuals.composerHeightPx} px (range ${MIN_CHAT_COMPOSER_HEIGHT_PX}–${MAX_CHAT_COMPOSER_HEIGHT_PX})`,
+      `Chat composer height: ${this.chatPanelVisuals.composerHeightPx} px (range ${MIN_CHAT_COMPOSER_HEIGHT_PX}-${MAX_CHAT_COMPOSER_HEIGHT_PX})`,
       "Set with /settings composer-height-px N; saved locally unless NOMO_TUI_CHAT_COMPOSER_HEIGHT_PX is set.",
       "Cell conversion uses NOMO_TUI_CELL_HEIGHT_PX or a 24 px per-row fallback.",
       "",

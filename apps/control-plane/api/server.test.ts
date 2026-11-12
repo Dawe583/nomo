@@ -576,19 +576,25 @@ describe("control plane API", () => {
       );
       const blockedModelGroups = state.unavailableProviderModels;
       assert.deepEqual(
-        blockedModelGroups?.map(({ source, providerId, transportId, status, modelIds, disabled }) =>
-          `${source}:${providerId}/${transportId}:${status}:${modelIds.length}:${disabled}`,
-        ).sort(),
+        blockedModelGroups
+          ?.map(
+            ({ source, providerId, transportId, status, modelIds, disabled }) =>
+              `${source}:${providerId}/${transportId}:${status}:${modelIds.length}:${disabled}`,
+          )
+          .sort(),
         [
           "omp:google-vertex/anthropic-messages:blocked:13:true",
           "omp:google-vertex/openai-completions:blocked:7:true",
-          "omp:kimi-code/openai-completions:blocked:7:true",
+          "omp:kimi-code/openai-completions:blocked:3:true",
           "omp:muse-code/openai-responses:blocked:5:true",
         ].sort(),
       );
       assert.equal(
-        blockedModelGroups?.reduce((sum, group) => sum + group.modelIds.length, 0),
-        32,
+        blockedModelGroups?.reduce(
+          (sum, group) => sum + group.modelIds.length,
+          0,
+        ),
+        28,
       );
       assert.ok(
         blockedModelGroups?.every(group => group.reason.length > 0 && group.evidence.length > 0),
@@ -742,9 +748,20 @@ describe("control plane API", () => {
               descriptor.endpoint === "https://ollama.com",
           ),
         );
-        for (const providerId of ["kimi-code", "muse-code"]) {
+        assert.ok(
+          descriptors.some(
+            (descriptor) =>
+              descriptor.providerId === "kimi-code" &&
+              descriptor.transport === "openai-completions" &&
+              descriptor.authKind === "api-key" &&
+              descriptor.endpoint === "https://api.kimi.com/coding/v1",
+          ),
+        );
+        for (const providerId of ["muse-code"]) {
           assert.ok(
-            !descriptors.some((descriptor) => descriptor.providerId === providerId),
+            !descriptors.some(
+              (descriptor) => descriptor.providerId === providerId,
+            ),
             `${providerId} does not satisfy this setup's manifest auth contract`,
           );
         }
@@ -776,7 +793,6 @@ describe("control plane API", () => {
           { providerId: "openai", transport: "openai-responses", endpoint: "https://api.openai.com/v1", model: "gpt-5.4", auth: { kind: "api-key", apiKey: secret, unexpected: true } },
           { providerId: "azure", transport: "azure-openai-responses", endpoint: "https://attacker.example", model: "gpt-4o", auth: { kind: "api-key", apiKey: secret } },
           { providerId: "amazon-bedrock", transport: "bedrock-converse-stream", endpoint: "https://bedrock-runtime.us-west-2.amazonaws.com/", model: "amazon.nova-2-lite-v1:0", auth: { kind: "aws-credentials", accessKeyId: secret, secretAccessKey: secret } },
-          { providerId: "kimi-code", transport: "openai-completions", endpoint: "https://api.kimi.com/coding/v1", model: "kimi-for-coding", auth: { kind: "api-key", apiKey: secret } },
           { providerId: "ollama-cloud", transport: "ollama-chat", endpoint: "https://ollama.com", model: "nemotron-3-ultra", auth: { kind: "none" } },
         ];
         for (const invalidBody of invalidBodies) {

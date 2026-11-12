@@ -569,9 +569,7 @@ describe("A6 cost panel", () => {
   test("missing price renders unknown not 0", () => {
     const stateMissingPrice = {
       ...previewState,
-      cost: [
-        { model: "gpt-4", tokens: 1_500, records: 42, usd: null },
-      ],
+      cost: [{ model: "gpt-4", tokens: 1_500, records: 42, usd: null }],
     };
     const caps = capabilities(80);
     const frame = renderWatchFrame(stateMissingPrice, caps);
@@ -579,13 +577,14 @@ describe("A6 cost panel", () => {
     assert.doesNotMatch(frame, /\$0/);
   });
 
-  test("rate-limit reset displayed", () => {
+  test("missing reset metadata is reported as unavailable", () => {
     const stateWithBilling = {
       ...previewState,
       context: { total: 100_000, used: 62_000, billing: 12_500 },
     };
     const caps = capabilities(80);
     const frame = renderWatchFrame(stateWithBilling, caps);
-    assert.match(frame, /5h 42% \(resets 2h 10m\)/);
+    assert.match(frame, /ctx reset unavailable; field absent/);
+    assert.doesNotMatch(frame, /resets?\s+\d/);
   });
 });

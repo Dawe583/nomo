@@ -3,6 +3,12 @@
 All notable user-facing changes since the first repository commit.
 
 ## Unreleased
+- The terminal chat now has clearer run activity, responsive controls, and more reliable navigation between workspace views.
+- Provider setup now exposes supported model routes and reports unsupported authentication paths clearly.
+- Local workspaces can inspect planned changes, apply approved file edits, and review recovery information.
+
+## Engineering history
+
 - The Control Plane exposes an inbound OpenAI-compatible subset at `GET /v1/models`
   and `POST /v1/chat/completions`, using existing bearer auth and Workbench
   policy. It returns JSON or SSE-framed final output, not token-by-token

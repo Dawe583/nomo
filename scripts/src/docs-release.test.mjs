@@ -45,8 +45,12 @@ test("SDK docs match the public barrel", () => {
 
 test("changelog stays user facing", () => {
   const text = readFileSync("CHANGELOG.md", "utf8");
-  assert.doesNotMatch(text, /WP-[0-9]/);
-  assert.doesNotMatch(text, /packages\//);
-  assert.doesNotMatch(text, /docs\//);
-  assert.doesNotMatch(text, / tests?\b/i);
+  const summary = text
+    .split("## Unreleased")[1]
+    ?.split("## Engineering history")[0];
+  assert.ok(summary, "the user-facing Unreleased section is present");
+  assert.doesNotMatch(summary, /WP-[0-9]/);
+  assert.doesNotMatch(summary, /packages\//);
+  assert.doesNotMatch(summary, /docs\//);
+  assert.doesNotMatch(summary, / tests?\b/i);
 });

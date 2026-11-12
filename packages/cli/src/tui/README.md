@@ -124,7 +124,7 @@ may be set within; `/settings key value` sets one. The table is generated from
 `packages/workbench/src/harness-settings.ts`, so a limit without a declared
 consumer cannot appear here.
 The Chat composer target is stored in physical pixels with
-`/settings composer-height-px N` (72–320 px; default 123 px) and translated to
+`/settings composer-height-px N` (72-320 px; default 123 px) and translated to
 whole terminal rows. Set `NOMO_TUI_CELL_HEIGHT_PX` when the terminal's cell
 height is known; otherwise the renderer uses a documented 24 px per-row
 fallback.
