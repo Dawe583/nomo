@@ -1,8 +1,10 @@
 # NOMO Harness Loop Plan
 
-Status: active, 2026-10-21. Scope: the coding-agent Harness as a NOMO product-v1
-release gate. Owner: the main session. The task graph in `.nomo/work-state.json`
-remains the execution state. The context pack (`docs/CONTEXT.md`,
+Status: historical plan, written 2026-10-21. Do not use this file as live task
+state or as an instruction to reopen its old nodes. Reconcile any remaining
+product criteria with source, tests and the current roadmap before starting new
+work. The task graph in `.nomo/work-state.json` remains the only execution
+state. The context pack (`docs/CONTEXT.md`,
 `docs/DECISIONS.md`, `docs/STANDARDS.md`), the harness specs
 (`docs/NOMO-AGENT-HARNESS-SPEC.md`, `docs/NOMO-AGENT-HARNESS-IMPLEMENTATION-SPEC.md`)
 and `docs/HARNESS-SETTINGS.md` remain authoritative for product and security
@@ -109,8 +111,8 @@ foreign commit. When a node is blocked twice, stop and report.
 | Setting | Where it lives | Purpose |
 | --- | --- | --- |
 | Task graph | `.nomo/work-state.json` | Single execution state; schema in section 3.1 |
-| Loop contract | `AGENTS.local.md` (this repository) | Standing loop and skill entrypoints |
-| Loop skills | `.agents/skills/nomo-loops/SKILL.md`, `nomo-graphs/SKILL.md`, `nomo-pipeline/SKILL.md`, `.opencode/skill/nomo-work-package.md` | Procedures for loops, graphs and delivery |
+| Operating policy | `docs/agent-contract.md` | Shared permissions, authority and release rules |
+| Core workflow skill | `.agents/skills/nomo-workflow/SKILL.md` | Consolidated Loop and Graph Engineering, bounded delivery, Worktrunk and evaluation-based improvement |
 | Gate recipe | Section 3.3 above | One launchctl job, clean tree, evidence files |
 | Test commands | Section 7 below | Focused and wide verification |
 | Branch policy | Section 3.3 above | Push per commit, main ff only on green |
@@ -154,8 +156,8 @@ Each node follows the loop in section 3.2. Statuses are tracked in
 
 - H0. Graph and settings bootstrap. Status: active. Paths:
   `docs/HARNESS-LOOP-PLAN.md`, `AGENTS.local.md`,
-  `.agents/skills/nomo-loops/SKILL.md`, `.agents/skills/nomo-graphs/SKILL.md`,
-  `.agents/skills/nomo-pipeline/SKILL.md`. Verifier: `pnpm run typecheck` is
+  `.agents/skills/nomo-workflow/SKILL.md` and
+  `.agents/skills/nomo-pydantic/SKILL.md`. Verifier: `pnpm run typecheck` is
   not applicable to docs; run `node scripts/src/doc-truth.test.mjs` via the
   gate. Stop: the plan, the contract and the skills are tracked and pushed.
 

@@ -1,52 +1,50 @@
-# NOMO project guidance
+# NOMO local conventions
 
-For the GUI upgrade, read `docs/GUI-UPGRADE-PLAN.md` and `docs/GUI-UPGRADE-AUDIT.md` first. These documents describe the requested target and the verified baseline, not completed implementation.
+These rules apply only to this repository. Keep global harness settings and
+other projects unchanged. Write concise, clear Czech and complete the requested
+work with the simplest adequate verification. Codex should also apply its
+installed `caveman` and `ponytail` skills.
 
-The user requested active use of these installed skills throughout this work:
+## Authority and memory
 
-- `/Users/dawe/.codex/skills/caveman/SKILL.md`: concise Czech communication; preserve complete technical detail in explicitly requested plans and reports.
-- `/Users/dawe/.codex/skills/ponytail/SKILL.md`: reuse existing capabilities, avoid unnecessary infrastructure, and never omit requested features, accessibility, validation, or verification.
+- `docs/agent-contract.md` is the canonical operating contract. The core skills
+  are `.agents/skills/nomo-workflow/SKILL.md` and
+  `.agents/skills/nomo-pydantic/SKILL.md`.
+- `docs/CONTEXT.md`, `docs/DECISIONS.md` and `docs/STANDARDS.md` govern product
+  behavior. Source, tests and approved specifications outrank generated code
+  graphs.
+- The Obsidian vault at
+  `/Users/dawe/Library/Mobile Documents/iCloud~md~obsidian/Documents/NOMO` is
+  the human-readable project memory. Begin with `00 Start Here/NOMO Start Here.md`
+  and `01 Governance and Memory/NOMO Memory Rules.md`; append verified
+  milestones to `08 Work Log/NOMO Work Log.md`.
+- `.nomo/work-state.json` is the single task graph. Keep secrets, raw
+  transcripts and personal or production data out of graphs and memory.
+- Preserve legacy NOMO/YC source files used by the encrypted-content website
+  byte-for-byte and outside routine agent context. Do not delete them as part
+  of documentation cleanup.
 
-The intended default for new conversations is the model of the current main session: `opencode/muse-spark-1.3-contributor-free` through OpenCode Zen. No glm model is used anywhere: neither this session nor any subagent spawned from it may route to `z-ai/glm-5.3-flash`, `z-ai/glm-5.3-free` or any other glm spelling. Never put credentials into source, documentation, browser storage, or logs. Existing conversations retain their provider/model snapshot. Never silently fall back to another provider.
+## Ownership and permissions
 
-The user reaffirmed on 2026-09-13: work directly on `main`, commit and push completed verified changes to GitHub `main` for automatic Vercel deployment. Preserve unrelated files and never commit secrets. Use caveman and ponytail by default for all work. Mobile usability and a stronger ASCII identity are current design priorities.
+- Read applicable instructions and inspect Worktrunk ownership before edits.
+  Preserve unrelated dirty worktrees and use one writer per shared path.
+- Primary task agents may use all tools and repository capabilities already
+  granted by their running harness. These instructions do not elevate the host
+  user's permissions or create an OS sandbox.
+- Run read-only audits only with `scripts/nomo-pi-audit.sh`; its Pi runtime
+  disables extensions and MCP and allows only `read`, `grep`, `find` and `ls`.
+  Never rely on a prompt alone to make an audit read-only.
+- Continue the user's authorized, reversible work through verification. The
+  user authorizes task-owned commits, merges to GitHub `main` and pushes after
+  required gates pass. Never force-push, publish unrelated changes, include
+  secrets, deploy manually or access production.
+- Ask only when a material product decision, missing authority or an external
+  approval boundary blocks the next safe action.
 
-The user requested on 2026-09-14: all built-in TUI interface text must default to English. The interactive TUI must use its full color theme by default, even when the host inherits NO_COLOR=1. Use NOMO_TUI_COLOR=0 as its explicit monochrome option; keep noninteractive output plain. Preserve user-authored messages and documents in their original language.
+## Repository conventions
 
-Historical note: on 2026-09-18
-the user removed Token Harbor and selected OpenCode Zen, which the default
-above keeps. Explicit legacy
-snapshots still use their saved provider. Credentials never belong in this repo
-or command history.
-
-The local Prime Agent recovery MCP is active through a macOS Keychain-backed
-launcher. Its only writable filesystem scope is
-`~/.local/share/void-prime-dogfood/project`. Use only the configured five-tool
-allowlist. Do not regenerate its retained recovery key or expand its scope.
-This managed path does not intercept ordinary shell or editor writes.
-
-## Autonomous loop contract (2026-10-21)
-
-All future NOMO work in this repository runs through one graph and bounded
-loops. Read `docs/HARNESS-LOOP-PLAN.md` for the full contract, settings, work
-graph and verification matrix. The short form:
-
-- Use `.nomo/work-state.json` as the single execution state; one active node;
-  discover, specify, change, verify, review, record.
-- Load the skills `nomo-loops`, `nomo-graphs`, `nomo-pipeline` and
-  `nomo-work-package` before work.
-- Continue safe, in-scope nodes without re-prompting. Commit and push after
-  each verified slice. Fast-forward `main` only after a green gate.
-- Never edit or stage `packages/cli/src/tui/*` or other foreign worktree files.
-- Never read, copy or expose secrets. No production actions, no dependency
-  installs, no global setting changes.
-- Evidence first: a claim without a command and its output is not a claim.
-
-## NOMO memory source
-
-- Canonical human-readable NOMO project memory lives in the Obsidian vault at `/Users/dawe/Library/Mobile Documents/iCloud~md~obsidian/Documents/NOMO`.
-- Start at `NOMO Project Home.md`. Use `NOMO Memory Rules.md` for storage boundaries and `NOMO Work Log.md` for current status.
-- Use the installed `kepano/obsidian-skills` for Obsidian Markdown and CLI operations. When Obsidian is running, target the vault explicitly with `obsidian vault=NOMO ...`.
-- Use Graphify for source navigation. Its index lives in `Graphify-Index/graphify-out/` inside the vault. Check `.graphify_root`, the active worktree and current source before trusting the graph.
-- Store durable NOMO decisions, status, risks and project knowledge in the vault. Do not duplicate project facts in ChatGPT, Codex or agent memory. Do not store full transcripts, secrets or credentials.
-- Keep new project status and decision history out of this file. Repository contracts in `docs/CONTEXT.md`, `docs/DECISIONS.md` and `docs/STANDARDS.md` remain authoritative for code.
+- Use `node:test` for JavaScript. Run `pnpm run typecheck` before claiming code
+  completion. Do not run Windows CI or invoke Mojo for this work.
+- Keep JavaScript punctuation consistent with the pinned historical records;
+  follow `docs/STANDARDS.md` for the no-new-em/en-dash rule.
+- Do not add OpenCode configuration or instructions to NOMO.

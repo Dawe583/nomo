@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readdirSync, readFileSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 
-const EXCLUDE_DIRS = new Set(["node_modules", ".git", "dist", ".agents", "skills", ".opencode", ".vercel", "target", "omp-src", "prime-src", ".build", ".cache"]);
+const EXCLUDE_DIRS = new Set(["node_modules", ".git", "dist", ".agents", "skills", ".vercel", "target", "omp-src", "prime-src", ".build", ".cache"]);
 // Generated desktop artifacts are not authored text: prepare.mjs bundles the
 // API server into src-tauri/resources/runtime/backend.mjs with esbuild, and a
 // bundled npm dependency's comment carries an em dash verbatim while no

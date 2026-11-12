@@ -80,6 +80,9 @@ packages/*/src/**/*.js.map
 
 # Local operator exports may contain private conversation and ledger data
 /nomo-exports/
+# Local harness MCP configuration can contain credentials and machine paths.
+/.omp/mcp.json
+/.pi/mcp.json
 # OpenCOOP project history (snapshots, members)
 .opencoop/
 # Local browser/terminal diagnostics
