@@ -1720,19 +1720,39 @@ export class WorkspaceTui {
       }
     }
     const contextMessages = session?.contextMessages ?? null;
-    // The ceiling is the agent profile's own limit, not a guess. A meter drawn
-    // against an invented maximum would report the context as half full when
-    // the only honest answer is that no limit has been declared.
-    const limit = session
-      ? (this.workbench.agents().profiles.find((p) => p.maxContextTokens > 0)
-          ?.maxContextTokens ?? null)
-      : null;
+    const selectedModel = session?.model || this.model || this.provider?.defaultModel;
+    const declaredLimit = selectedModel
+      ? this.provider?.models.find((model) => model.id === selectedModel)
+          ?.contextWindow
+      : undefined;
+    const limit =
+      typeof declaredLimit === "number" &&
+      Number.isFinite(declaredLimit) &&
+      declaredLimit > 0
+        ? declaredLimit
+        : null;
+    const latestProviderUsage = [...events].reverse().find((event) => {
+      if (event.kind !== "usage" || event.payload?.source !== "provider")
+        return false;
+      return !event.payload.model || event.payload.model === selectedModel;
+    });
+    const usagePayload = latestProviderUsage?.payload;
+    const measuredContext = [
+      usagePayload?.prompt_tokens,
+      usagePayload?.input_tokens,
+      usagePayload?.total_tokens,
+    ].find(
+      (value) =>
+        typeof value === "number" && Number.isFinite(value) && value >= 0,
+    );
     return {
       messages,
       contextMessages,
       tokens: known ? tokens : null,
       docs,
-      contextUsed: known ? tokens : null,
+      contextUsed: session
+        ? (typeof measuredContext === "number" ? measuredContext : null)
+        : (typeof limit === "number" && limit > 0 ? 0 : null),
       contextTokens: limit,
     };
   }
@@ -6535,6 +6555,17 @@ function hasVisibleTextFrom(value: string, start = 0): boolean {
   return false;
 }
 
+function formatContextWindow(tokens: number | null): string {
+  if (tokens === null || !Number.isFinite(tokens) || tokens <= 0) return "?";
+  if (tokens >= 1_000_000)
+    return `${Number((tokens / 1_000_000).toFixed(1))}m`;
+  if (tokens >= 1024 && tokens % 1024 === 0)
+    return `${tokens / 1024}k`;
+  if (tokens >= 1000 && tokens % 1000 === 0)
+    return `${tokens / 1000}k`;
+  return String(tokens);
+}
+
 export function renderWorkspace(
   ui: WorkspaceTui,
   columns: number,
@@ -7161,13 +7192,11 @@ export function renderWorkspace(
   //
   // Only where a ceiling was declared. A meter against an invented maximum
   // would report pressure where the honest answer is that no limit is known.
-  const chatContext = ui.session() ? ui.contextNumbers() : null;
+  const chatContext = ui.contextNumbers();
   const chatContextBadge =
-    chatContext &&
     typeof chatContext.contextTokens === "number" &&
-    chatContext.contextTokens > 0 &&
-    typeof chatContext.contextUsed === "number"
-      ? `ctx ${levelMeter(chatContext.contextUsed, chatContext.contextTokens, 6, motion)} ${Math.round((chatContext.contextUsed / chatContext.contextTokens) * 100)}% / /compact`
+    chatContext.contextTokens > 0
+    ? `ctx ${formatContextWindow(chatContext.contextTokens)} · ${typeof chatContext.contextUsed === "number" ? `${Math.round((chatContext.contextUsed / chatContext.contextTokens) * 100)}%` : "?%"}${ui.session() ? " / /compact" : ""}`
       : undefined;
   const usage = [...(ui.session()?.events ?? [])]
     .reverse()
@@ -7178,10 +7207,7 @@ export function renderWorkspace(
   const model = sanitizeText(
     ui.session()?.model || ui.model || "not connected",
   );
-  const ctx = ui.session() ? ui.contextNumbers() : null;
-  const ctxText = ctx
-    ? `${ctx.contextMessages ?? "unknown"} msgs`
-    : "no session";
+  const ctx = ui.contextNumbers();
 
   // Status segments with theme colors (omp-style segment catalog)
   const symbols = getSymbols(ui.themeConfig.symbolPreset);
@@ -7231,35 +7257,16 @@ export function renderWorkspace(
     ),
   );
   // Context
-  const ctxVal = ctx ? `${ctx.contextMessages ?? "?"} msgs` : "no session";
+  const ctxVal =
+    typeof ctx.contextTokens === "number" && ctx.contextTokens > 0
+      ? `${formatContextWindow(ctx.contextTokens)} · ${typeof ctx.contextUsed === "number" ? `${Math.round((ctx.contextUsed / ctx.contextTokens) * 100)}%` : "?%"}`
+      : "?";
   segments.push(seg("ctx", ctxVal, "warning"));
   // Tokens & cost
   const costStr =
     typeof usage?.cost === "number" ? `$${usage.cost.toFixed(4)}` : "?";
   segments.push(seg("tok", String(usageTokens), "success"));
   segments.push(seg("cost", costStr, "warning"));
-  // A context meter, but only where there is a real maximum to measure
-  // against. A bar drawn against an invented ceiling would say the context is
-  // half full when the only honest answer is that no ceiling is known yet.
-  const contextLimit = ctx?.contextTokens ?? null;
-  if (
-    typeof contextLimit === "number" &&
-    contextLimit > 0 &&
-    ctx?.contextUsed
-  ) {
-    const ratio = ctx.contextUsed / contextLimit;
-    segments.push(
-      `${paintWithPalette("ctx", "muted", palette, caps)} ${paintWithPalette(
-        levelMeter(ctx.contextUsed, contextLimit, 6, motion, {
-          paint: (value, tone, bold) =>
-            paintWithPalette(value, tone, palette, caps, bold),
-        }),
-        "muted",
-        palette,
-        caps,
-      )} ${paintWithPalette(`${Math.round(ratio * 100)}%`, ratio > 0.9 ? "error" : "success", palette, caps)}`,
-    );
-  }
   // Approvals & queue
   const holdCount = ui.workbench.pending().length + ui.proxy.holds.length;
   if (holdCount > 0) segments.push(seg("holds", `◉ ${holdCount}`, "error"));

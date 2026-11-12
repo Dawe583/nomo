@@ -802,7 +802,7 @@ test("compact confirmation preview and decisions stay visible at 40x12", async (
     assert.ok(text.includes("Esc cancel"));
     assert.ok(text.includes("fixture-model"));
     assert.ok(text.includes("mode: normal (local only, not enforced)"));
-    assert.ok(text.includes("ctx no session"));
+    assert.ok(text.includes("ctx ?"));
     assert.ok(text.includes("Enter details"));
     assert.equal(frame.split("\n").length, 12);
     assert.ok(frame.split("\n").every((line) => visibleLength(line) <= 40));
@@ -846,7 +846,7 @@ test("compact confirmation exposes PageDown scrolling in the existing preview", 
     assert.ok(text.includes("Esc cancel"));
     assert.ok(text.includes("fixture-model"));
     assert.ok(text.includes("mode: normal (local only, not enforced)"));
-    assert.ok(text.includes("ctx no session"));
+    assert.ok(text.includes("ctx ?"));
     assert.ok(text.includes("⇥ Tab panels"));
     assert.ok(text.includes("Enter details"));
     assert.equal(rows.length, 12);
@@ -898,7 +898,7 @@ test("status dock keeps full authority and context at narrow sizes", async (t) =
   const missing: string[] = [];
   for (const [width, height, required] of [
     [40, 12, "mode: normal (local only, not enforced)"],
-    [80, 24, "ctx no session"],
+    [80, 24, "ctx ?"],
   ] as const) {
     for (const color of [true, false]) {
       const frame = renderWorkspace(ui, width, height, "", false, false, {
@@ -956,6 +956,40 @@ test("status dock keeps the model name when its own row has room", async (t) => 
       assert.ok(rows.every((row) => visibleLength(row) <= width));
     }
   }
+});
+
+test("context dock reports the model window and latest provider input usage", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-context-window-"));
+  const fetcher: typeof fetch = async (url) =>
+    String(url).endsWith("/models")
+      ? Response.json({ data: [{ id: "model-one" }] })
+      : Response.json({
+          choices: [{ message: { role: "assistant", content: "Done" }, finish_reason: "stop" }],
+          usage: { prompt_tokens: 4096, completion_tokens: 104, total_tokens: 4200 },
+        });
+  const app = new Workbench({ NOMO_DATA_DIR: root }, fetcher);
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  await app.configure({ baseUrl: "https://fixture.test/v1", apiKey: "test-secret-token" });
+  const session = await app.start("hello", "model-one");
+  await app.settled();
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
+  ui.sessionId = session.id;
+  ui.model = "model-one";
+  ui.provider = {
+    ...(await app.providerState()),
+    models: [{ id: "model-one", name: "Model One", contextWindow: 131072 }],
+  };
+
+  const context = ui.contextNumbers();
+  assert.equal(context.contextTokens, 131072);
+  assert.equal(context.contextUsed, 4096);
+  assert.equal(context.tokens, 4200);
+  const text = stripAnsi(renderWorkspace(ui, 120, 40, "", false, false, { color: false, motion: false }));
+  assert.ok(text.includes("ctx 128k · 3%"));
+  assert.ok(!text.includes("msgs"));
 });
 
 test("status and activity dock render beneath the composer across sizes", async (t) => {
