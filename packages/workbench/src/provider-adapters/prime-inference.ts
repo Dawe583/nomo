@@ -11,6 +11,43 @@ import type { HarnessSettings } from "../harness-settings.ts";
 import type { ProviderClient } from "./types.ts";
 
 const PRIME_ENDPOINT = "https://api.pinference.ai/api/v1";
+const MAX_CATALOG_BYTES = 2 * 1024 * 1024;
+
+async function readCatalogResponse(response: Response): Promise<unknown> {
+  const reader = response.body?.getReader();
+  if (!reader)
+    throw new Error("Prime Inference returned an invalid model catalog.");
+  const decoder = new TextDecoder("utf-8", { fatal: true });
+  let body = "";
+  let byteLength = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) {
+        body += decoder.decode();
+        break;
+      }
+      byteLength += value.byteLength;
+      if (byteLength > MAX_CATALOG_BYTES) {
+        await reader.cancel().catch(() => {});
+        throw new Error("Prime Inference model catalog response is too large.");
+      }
+      body += decoder.decode(value, { stream: true });
+    }
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      error.message === "Prime Inference model catalog response is too large."
+    )
+      throw error;
+    throw new Error("Prime Inference returned an invalid model catalog.");
+  }
+  try {
+    return JSON.parse(body);
+  } catch {
+    throw new Error("Prime Inference returned an invalid model catalog.");
+  }
+}
 
 function validateStaticContract(): void {
   const provider = PROVIDER_MODEL_MANIFEST.providers.find(
@@ -181,12 +218,7 @@ export class PrimeInferenceProvider implements ProviderClient {
         throw new Error("Prime Inference model catalog is unavailable.");
       throw new ProviderRequestError(response.status);
     }
-    let catalog: unknown;
-    try {
-      catalog = await response.json();
-    } catch {
-      throw new Error("Prime Inference returned an invalid model catalog.");
-    }
+    const catalog = await readCatalogResponse(response);
     if (
       typeof catalog !== "object" ||
       catalog === null ||

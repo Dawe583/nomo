@@ -620,6 +620,36 @@ test("Prime Inference rejects missing credentials and a different transport", ()
   );
 });
 
+test("Prime Inference catalog enforces the pinned 2 MiB response limit", async () => {
+  const model = { id: "bounded-model" };
+  const prefix = JSON.stringify({ object: "list", data: [model] });
+  const makeBody = (byteLength: number) => {
+    const padding = byteLength - Buffer.byteLength(prefix) - 1;
+    assert.ok(padding >= 0);
+    return `${prefix}${" ".repeat(padding)}\n`;
+  };
+  const makeClient = (byteLength: number) =>
+    createProviderClient(
+      {
+        providerId: "prime-inference",
+        baseUrl: "https://api.pinference.ai/api/v1",
+        apiKey: "fixture-prime-key",
+      },
+      async () =>
+        new Response(makeBody(byteLength), {
+          headers: { "content-type": "application/json" },
+        }),
+    );
+
+  assert.deepEqual(await makeClient(2 * 1024 * 1024).models(), [
+    { id: "bounded-model", name: "bounded-model" },
+  ]);
+  await assert.rejects(
+    makeClient(2 * 1024 * 1024 + 1).models(),
+    /Prime Inference model catalog response is too large/,
+  );
+});
+
 test("Prime Inference rejects malformed live catalog rows instead of silently filtering them", async () => {
   let requests = 0;
   const client = createProviderClient(

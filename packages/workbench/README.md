@@ -66,7 +66,10 @@ that one file. The API rejects stale digests or changed original files with
 `409`; it makes a backup before an atomic single-file write. Apply does not
 create commits, push, merge, or switch branches. Revoke removes agent access
 without deleting the copy; deleting a saved copy is a separate confirmed
-action and permanently loses its unapplied changes.
+action and permanently loses its unapplied changes. An assistant text reply
+alone is not proof that a requested file was created. Verify successful tool
+execution and inspect project status or the file diff before treating a write
+as complete.
 
 ## AgentRunner broker
 

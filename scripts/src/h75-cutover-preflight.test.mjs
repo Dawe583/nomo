@@ -127,6 +127,8 @@ function manifest() {
     },
     rollback: {
       ...common,
+      approver: "Deployment Approver",
+      stopConditions: ["integrity mismatch", "legacy writer detected"],
       owner: "Rollback Owner",
       decisionAt: "2026-11-09T12:16:00Z",
       separateApprovalRef: "approval://rollback-7",
@@ -676,6 +678,17 @@ test("preflight requires rollback owner distinct from release operator after tri
   );
 });
 
+test("preflight requires rollback verifier distinct from rollback author after trimming", (t) => {
+  const value = manifest();
+  value.rollback.independentVerifier = ` ${value.rollback.owner} `;
+  const result = run(t, value);
+  assert.equal(result.status, 1);
+  assert.match(
+    result.stdout,
+    /rollback\.independentVerifier: must differ from rollback owner/,
+  );
+});
+
 test("preflight requires rollback verifier distinct from release operator", (t) => {
   const value = manifest();
   value.rollback.independentVerifier = ` ${value.restart.owner} `;
@@ -685,6 +698,159 @@ test("preflight requires rollback verifier distinct from release operator", (t) 
     result.stdout,
     /rollback\.independentVerifier: must differ from release operator/,
   );
+});
+
+test("preflight rejects case-only duplicates across rollback roles", (t) => {
+  for (const [owner, verifier, releaseOwner, expected] of [
+    [
+      "Rollback Owner",
+      "Independent Reviewer",
+      "rollback owner",
+      /rollback\.owner: must differ from release operator/,
+    ],
+    [
+      "Rollback Owner",
+      "rollback owner",
+      "Gate Owner",
+      /rollback\.independentVerifier: must differ from rollback owner/,
+    ],
+    [
+      "Rollback Owner",
+      "gate owner",
+      "Gate Owner",
+      /rollback\.independentVerifier: must differ from release operator/,
+    ],
+  ]) {
+    const value = manifest();
+    value.rollback.owner = owner;
+    value.rollback.independentVerifier = verifier;
+    value.restart.owner = releaseOwner;
+    const result = run(t, value);
+    assert.equal(result.status, 1);
+    assert.match(result.stdout, expected);
+  }
+});
+
+test("preflight rejects case-only duplicate gate identities", (t) => {
+  const value = manifest();
+  value.fence.owner = "Fence Owner";
+  value.fence.independentVerifier = "fence owner";
+  const result = run(t, value);
+  assert.equal(result.status, 1);
+  assert.match(
+    result.stdout,
+    /fence\.independentVerifier: must differ from evidence owner/,
+  );
+});
+
+test("preflight requires rollback approver distinct from rollback roles after trimming", (t) => {
+  for (const identity of [
+    "Rollback Owner",
+    "Independent Reviewer",
+    "Gate Owner",
+  ]) {
+    const value = manifest();
+    value.rollback.approver = ` ${identity} `;
+    const result = run(t, value);
+    assert.equal(result.status, 1);
+    assert.match(
+      result.stdout,
+      /rollback\.approver: must differ from rollback owner, verifier, and release operator/,
+    );
+  }
+});
+
+test("preflight rejects case-only rollback approver role collisions", (t) => {
+  for (const identity of [
+    "rollback owner",
+    "independent reviewer",
+    "gate owner",
+  ]) {
+    const value = manifest();
+    value.rollback.approver = ` ${identity.toUpperCase()} `;
+    const result = run(t, value);
+    assert.equal(result.status, 1);
+    assert.match(
+      result.stdout,
+      /rollback\.approver: must differ from rollback owner, verifier, and release operator/,
+    );
+  }
+});
+
+test("preflight rejects non-string rollback role names without throwing", (t) => {
+  for (const [path, setInvalid] of [
+    ["fence.owner", (value) => (value.fence.owner = 42)],
+    ["rollback.owner", (value) => (value.rollback.owner = {})],
+    [
+      "rollback.independentVerifier",
+      (value) => (value.rollback.independentVerifier = false),
+    ],
+    ["rollback.approver", (value) => (value.rollback.approver = 42)],
+    ["restart.owner", (value) => (value.restart.owner = null)],
+  ]) {
+    const value = manifest();
+    setInvalid(value);
+    const result = run(t, value);
+    assert.equal(result.status, 1);
+    assert.match(
+      result.stdout,
+      /NO GO: evidence register is incomplete or inconsistent\./,
+    );
+    assert.match(
+      result.stdout,
+      new RegExp(`${path.replaceAll(".", "\\.")}: required`),
+    );
+    assert.doesNotMatch(
+      `${result.stdout}\n${result.stderr}`,
+      /TypeError|\bat\s+file:\/\//,
+    );
+  }
+});
+test("preflight rejects malformed compared text fields without throwing", (t) => {
+  for (const [path, setInvalid] of [
+    ["inventory.recordRef", (value) => (value.inventory.recordRef = 42)],
+    ["restart.runtimeVersion", (value) => (value.restart.runtimeVersion = 42)],
+    [
+      "restart.rootResults[0].runtimeVersion",
+      (value) => (value.restart.rootResults[0].runtimeVersion = {}),
+    ],
+    [
+      "restart.rootResults[0].candidateReleaseHash",
+      (value) => (value.restart.rootResults[0].candidateReleaseHash = false),
+    ],
+    ["rollback.priorRuntime", (value) => (value.rollback.priorRuntime = 42)],
+    [
+      "rollback.candidateReleaseHash",
+      (value) => (value.rollback.candidateReleaseHash = {}),
+    ],
+    [
+      "rollback.separateApprovalRef",
+      (value) => (value.rollback.separateApprovalRef = 42),
+    ],
+    [
+      "rollback.rootResults[0].restoredReleaseHash",
+      (value) => (value.rollback.rootResults[0].restoredReleaseHash = {}),
+    ],
+    [
+      "rollback.rootResults[0].runtimeVersion",
+      (value) => (value.rollback.rootResults[0].runtimeVersion = false),
+    ],
+  ]) {
+    const value = manifest();
+    setInvalid(value);
+    const result = run(t, value);
+    assert.equal(result.status, 1, `${path} must fail closed`);
+    assert.match(
+      result.stdout,
+      new RegExp(
+        `${path.replaceAll("[", "\\[").replaceAll("]", "\\]").replaceAll(".", "\\.")}: required`,
+      ),
+    );
+    assert.doesNotMatch(
+      `${result.stdout}\n${result.stderr}`,
+      /TypeError|\bat\s+file:\/\//,
+    );
+  }
 });
 
 test("preflight requires rollback approval after rehearsal and before planned cutover", (t) => {
@@ -723,6 +889,43 @@ test("preflight requires rollback approval after rehearsal and before planned cu
   const missing = run(t, value);
   assert.equal(missing.status, 1);
   assert.match(missing.stdout, /rollback\.approvalAt: required/);
+});
+
+test("preflight requires a named rollback approver", (t) => {
+  const value = manifest();
+  delete value.rollback.approver;
+  const missing = run(t, value);
+  assert.equal(missing.status, 1);
+  assert.match(missing.stdout, /rollback\.approver: required/);
+
+  value.rollback.approver = "  ";
+  const blank = run(t, value);
+  assert.equal(blank.status, 1);
+  assert.match(blank.stdout, /rollback\.approver: required/);
+});
+
+test("preflight requires rollback stop conditions", (t) => {
+  const value = manifest();
+  delete value.rollback.stopConditions;
+  const missing = run(t, value);
+  assert.equal(missing.status, 1);
+  assert.match(
+    missing.stdout,
+    /rollback\.stopConditions: must be a non-empty array/,
+  );
+
+  value.rollback.stopConditions = [];
+  const empty = run(t, value);
+  assert.equal(empty.status, 1);
+  assert.match(
+    empty.stdout,
+    /rollback\.stopConditions: must be a non-empty array/,
+  );
+
+  value.rollback.stopConditions = [" "];
+  const blank = run(t, value);
+  assert.equal(blank.status, 1);
+  assert.match(blank.stdout, /rollback\.stopConditions\[0\]: required/);
 });
 
 test("preflight requires exact prior runtime for rollback", (t) => {

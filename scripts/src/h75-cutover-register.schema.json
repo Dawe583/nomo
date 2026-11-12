@@ -476,6 +476,8 @@
         {
           "type": "object",
           "required": [
+            "approver",
+            "stopConditions",
             "separateApprovalRef",
             "trigger",
             "priorRelease",
@@ -502,6 +504,16 @@
             "candidateReleaseHash"
           ],
           "properties": {
+            "approver": {
+              "$ref": "#/$defs/text"
+            },
+            "stopConditions": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "$ref": "#/$defs/text"
+              }
+            },
             "separateApprovalRef": {
               "$ref": "#/$defs/evidenceRef"
             },

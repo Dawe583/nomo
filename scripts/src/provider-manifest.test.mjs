@@ -245,4 +245,34 @@ test("manifest generator preserves Kimi Code and Prime Kimi Coding auth contract
     "FIRST_KEY",
     "SECOND_KEY",
   ]);
+
+  write(
+    omp,
+    "packages/coding-agent/package.json",
+    JSON.stringify({ version: "18.6.3" }),
+  );
+  const wrongOmpVersion = spawnSync(
+    process.execPath,
+    [generator, omp, prime, output],
+    { cwd: root, encoding: "utf8", timeout: 10_000 },
+  );
+  assert.notEqual(wrongOmpVersion.status, 0);
+  assert.match(wrongOmpVersion.stderr, /Expected OMP 18\.6\.2, found 18\.6\.3/);
+
+  write(
+    omp,
+    "packages/coding-agent/package.json",
+    JSON.stringify({ version: "18.6.2" }),
+  );
+  write(prime, "Cargo.toml", '[workspace.package]\nversion = "0.10.2"\n');
+  const wrongPrimeVersion = spawnSync(
+    process.execPath,
+    [generator, omp, prime, output],
+    { cwd: root, encoding: "utf8", timeout: 10_000 },
+  );
+  assert.notEqual(wrongPrimeVersion.status, 0);
+  assert.match(
+    wrongPrimeVersion.stderr,
+    /Expected Prime 0\.10\.1, found 0\.10\.2/,
+  );
 });

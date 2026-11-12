@@ -22,6 +22,23 @@ function text(value, path, errors) {
   return value.trim();
 }
 
+function sameName(left, right) {
+  if (typeof left !== "string" || typeof right !== "string") return false;
+  return Boolean(
+    left.trim() &&
+    right.trim() &&
+    left.trim().toLowerCase() === right.trim().toLowerCase(),
+  );
+}
+
+function sameText(left, right) {
+  return (
+    typeof left === "string" &&
+    typeof right === "string" &&
+    left.trim() === right.trim()
+  );
+}
+
 function items(value, path, errors) {
   if (!Array.isArray(value) || value.length === 0) {
     errors.push(`${path}: must be a non-empty array`);
@@ -130,6 +147,8 @@ const GATE_FIELDS = {
     "rootResults",
   ],
   rollback: [
+    "approver",
+    "stopConditions",
     "owner",
     "independentVerifier",
     "decision",
@@ -173,12 +192,10 @@ function gate(register, name, record, errors) {
   evidenceRef(value.recordRef, `${name}.recordRef`, errors);
   if (text(value.decision, `${name}.decision`, errors) !== "accepted")
     errors.push(`${name}.decision: must be accepted`);
-  if (
-    value.owner?.trim() &&
-    value.owner.trim() === value.independentVerifier?.trim()
-  )
+  if (sameName(value.owner, value.independentVerifier))
     errors.push(`${name}.independentVerifier: must differ from evidence owner`);
-  const reference = value.recordRef?.trim();
+  const reference =
+    typeof value.recordRef === "string" ? value.recordRef.trim() : "";
   if (reference) {
     if (record.value && record.value !== reference)
       errors.push(
@@ -714,7 +731,7 @@ function validate(register) {
       if (
         row.runtimeVersion &&
         restart.runtimeVersion &&
-        row.runtimeVersion.trim() !== restart.runtimeVersion.trim()
+        !sameText(row.runtimeVersion, restart.runtimeVersion)
       )
         errors.push(
           `${path}.runtimeVersion: must match restart.runtimeVersion`,
@@ -722,7 +739,7 @@ function validate(register) {
       if (
         row.candidateReleaseHash &&
         restart.candidateReleaseHash &&
-        row.candidateReleaseHash.trim() !== restart.candidateReleaseHash.trim()
+        !sameText(row.candidateReleaseHash, restart.candidateReleaseHash)
       )
         errors.push(
           `${path}.candidateReleaseHash: must match restart.candidateReleaseHash`,
@@ -762,6 +779,11 @@ function validate(register) {
     },
   );
 
+  text(rollback.approver, "rollback.approver", errors);
+  items(rollback.stopConditions, "rollback.stopConditions", errors).forEach(
+    (condition, index) =>
+      text(condition, `rollback.stopConditions[${index}]`, errors),
+  );
   const rollbackRehearsalAt = timestamp(
     rollback.rehearsalAt,
     "rollback.rehearsalAt",
@@ -880,6 +902,7 @@ function validate(register) {
       "rollback.failedStatePreservedAt: must be at or before rollback rehearsal",
     );
   for (const field of [
+    "approver",
     "separateApprovalRef",
     "trigger",
     "lockRepresentation",
@@ -893,7 +916,8 @@ function validate(register) {
     "restartRef",
     "integrityRef",
   ])
-    (field === "trigger" ||
+    (field === "approver" ||
+      field === "trigger" ||
       field === "lockRepresentation" ||
       field === "priorRelease" ||
       field === "priorRuntime"
@@ -902,14 +926,14 @@ function validate(register) {
   if (
     rollback.priorRuntime &&
     restart.runtimeVersion &&
-    rollback.priorRuntime.trim() === restart.runtimeVersion.trim()
+    sameText(rollback.priorRuntime, restart.runtimeVersion)
   )
     errors.push("rollback.priorRuntime: must differ from candidate runtime");
   text(rollback.candidateReleaseHash, "rollback.candidateReleaseHash", errors);
   if (
     rollback.candidateReleaseHash &&
     restart.candidateReleaseHash &&
-    rollback.candidateReleaseHash.trim() !== restart.candidateReleaseHash.trim()
+    !sameText(rollback.candidateReleaseHash, restart.candidateReleaseHash)
   )
     errors.push(
       "rollback.candidateReleaseHash: must match restart.candidateReleaseHash",
@@ -917,29 +941,33 @@ function validate(register) {
   if (
     rollback.priorRelease &&
     restart.candidateReleaseHash &&
-    rollback.priorRelease.trim() === restart.candidateReleaseHash.trim()
+    sameText(rollback.priorRelease, restart.candidateReleaseHash)
   )
     errors.push(
       "rollback.priorRelease: must differ from candidate release hash",
     );
-  if (
-    rollback.owner?.trim() &&
-    restart.owner?.trim() &&
-    rollback.owner.trim() === restart.owner.trim()
-  )
+  if (sameName(rollback.owner, restart.owner))
     errors.push("rollback.owner: must differ from release operator");
-  if (
-    rollback.independentVerifier?.trim() &&
-    restart.owner?.trim() &&
-    rollback.independentVerifier.trim() === restart.owner.trim()
-  )
+  if (sameName(rollback.independentVerifier, rollback.owner))
+    errors.push(
+      "rollback.independentVerifier: must differ from rollback owner",
+    );
+  if (sameName(rollback.independentVerifier, restart.owner))
     errors.push(
       "rollback.independentVerifier: must differ from release operator",
     );
   if (
+    [rollback.owner, rollback.independentVerifier, restart.owner].some(
+      (identity) => sameName(rollback.approver, identity),
+    )
+  )
+    errors.push(
+      "rollback.approver: must differ from rollback owner, verifier, and release operator",
+    );
+  if (
     rollback.separateApprovalRef &&
     rollback.recordRef &&
-    rollback.separateApprovalRef.trim() === rollback.recordRef.trim()
+    sameText(rollback.separateApprovalRef, rollback.recordRef)
   )
     errors.push(
       "rollback.separateApprovalRef: must be distinct from the maintenance change record",
@@ -1103,7 +1131,7 @@ function validate(register) {
       if (
         rollback.priorRelease &&
         row.restoredReleaseHash &&
-        row.restoredReleaseHash.trim() !== rollback.priorRelease.trim()
+        !sameText(row.restoredReleaseHash, rollback.priorRelease)
       )
         errors.push(
           `${path}.restoredReleaseHash: must match rollback.priorRelease`,
@@ -1111,7 +1139,7 @@ function validate(register) {
       if (
         rollback.priorRuntime &&
         row.runtimeVersion &&
-        row.runtimeVersion.trim() !== rollback.priorRuntime.trim()
+        !sameText(row.runtimeVersion, rollback.priorRuntime)
       )
         errors.push(`${path}.runtimeVersion: must match rollback.priorRuntime`);
     },
