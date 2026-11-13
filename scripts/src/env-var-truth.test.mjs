@@ -129,6 +129,10 @@ const TEST_ONLY_ENV_VARS = [
     why: "packages/ledger/src/env-compat.test.ts uses it to prove the legacy fallback does not alias a name that merely starts with NOMO_. Synthetic boundary fixture, never read by product code.",
   },
   {
+    name: "NOMO_NETWORK_PACKAGING_TEST",
+    why: "scripts/src/release-packaging.test.mjs uses it as an explicit opt-in for its npm-registry integration test. It controls the test runner, not product behavior.",
+  },
+  {
     name: "NOMO_A_B",
     why: "packages/ledger/src/env-compat.test.ts checks that legacyEnvKey maps only the prefix. Synthetic fixture for the prefix boundary; never read by product code.",
   },
@@ -173,13 +177,17 @@ const legacyAliasedNames = (sourceText) => {
     ).exec(code);
     return declaration?.[1];
   };
-  for (const match of code.matchAll(/envValue\(\s*[^,()]+,\s*([^,()]+)\s*,?\s*\)/g)) {
+  for (const match of code.matchAll(
+    /envValue\(\s*[^,()]+,\s*([^,()]+)\s*,?\s*\)/g,
+  )) {
     const name = resolve(match[1].trim());
     if (name) names.add(name);
   }
   // Cloud's own env.mjs wrapper is called key-first: envValue("NOMO_X", env).
   // Both spellings are the same rule, so a name read that way is also owned.
-  for (const match of code.matchAll(/envValue\(\s*["'](NOMO_[A-Z0-9_]+)["']\s*,/g)) {
+  for (const match of code.matchAll(
+    /envValue\(\s*["'](NOMO_[A-Z0-9_]+)["']\s*,/g,
+  )) {
     names.add(match[1]);
   }
   const owned = /OWNED_ENV_KEYS[^=]*=\s*\[([\s\S]*?)\]/.exec(code);
@@ -191,7 +199,9 @@ const legacyAliasedNames = (sourceText) => {
 
 /** Every VOID_/NOMO_ name the given product source reads. */
 const knownEnvVars = (sourceText) => {
-  const found = new Set(Array.from(sourceText.matchAll(ENV_VAR), (match) => match[0]));
+  const found = new Set(
+    Array.from(sourceText.matchAll(ENV_VAR), (match) => match[0]),
+  );
   // A test that exercises the legacy spelling is not naming a dead variable:
   // the runtime really reads that `VOID_*` name when the current one is
   // absent. The alias covers exactly the names the fallback reaches.

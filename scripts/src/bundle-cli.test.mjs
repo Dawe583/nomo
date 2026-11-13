@@ -16,6 +16,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { buildBundle, DEFAULT_OUT_DIR, ENTRY_FILE } from "./bundle-cli.mjs";
+import { npmInvocation } from "./npm-cli.mjs";
 
 const repoRoot = new URL("../../", import.meta.url);
 const read = (path) => readFileSync(new URL(path, repoRoot), "utf8");
@@ -35,7 +36,7 @@ let outDir;
 let artifact;
 let chunks;
 before(async () => {
-  packageDir = mkdtempSync(join(tmpdir(), "nomo-bundle-test-"));
+  packageDir = mkdtempSync(join(tmpdir(), "nomo & bundle test-"));
   outDir = join(packageDir, "dist");
   writeFileSync(
     join(packageDir, "package.json"),
@@ -78,7 +79,12 @@ describe("the distribution bundle", () => {
     assert.equal(artifact.split("\n")[0], "#!/usr/bin/env node");
     // A shebang without the exec bit is a bin target npm cannot run directly,
     // and npm only chmods the shim, not the file it points at on every platform.
-    assert.ok(statSync(file).mode & 0o111, "the entry chunk is not executable");
+    if (process.platform !== "win32") {
+      assert.ok(
+        statSync(file).mode & 0o111,
+        "the entry chunk is not executable",
+      );
+    }
   });
 
   test("emits more than one chunk, because one chunk breaks nomo run", () => {
@@ -256,13 +262,17 @@ describe("the distribution bundle", () => {
     const manifest = JSON.parse(read("packages/cli/package.json"));
     assert.deepEqual(manifest.files, ["dist/"]);
     assert.deepEqual(manifest.bin, { nomo: `./dist/${ENTRY_FILE}` });
+    const npm = npmInvocation(["pack", "--dry-run", "--json"]);
     const packed = JSON.parse(
-      execFileSync("npm", ["pack", "--dry-run", "--json"], {
+      execFileSync(npm.command, npm.args, {
         cwd: packageDir,
         encoding: "utf8",
       }),
     );
-    const files = packed[0].files.map(({ path }) => path).sort();
+    const packEntry = Array.isArray(packed)
+      ? packed[0]
+      : Object.values(packed)[0];
+    const files = packEntry.files.map(({ path }) => path).sort();
     const iconFiles = readdirSync(join(root, "packages/cli/src/tui/icons"))
       .filter(
         (file) =>
@@ -283,10 +293,10 @@ describe("the distribution bundle", () => {
   });
 
   test("the staged executable answers help and version from a clean consumer cwd", () => {
-    const consumer = mkdtempSync(join(tmpdir(), "nomo-consumer-test-"));
+    const consumer = mkdtempSync(join(tmpdir(), "nomo & consumer test-"));
     try {
       const bin = join(outDir, ENTRY_FILE);
-      const help = spawnSync(bin, ["--help"], {
+      const help = spawnSync(process.execPath, [bin, "--help"], {
         cwd: consumer,
         encoding: "utf8",
       });
@@ -295,7 +305,7 @@ describe("the distribution bundle", () => {
       assert.match(help.stdout, /^usage: nomo /);
       assert.equal(help.stderr, "");
 
-      const version = spawnSync(bin, ["--version"], {
+      const version = spawnSync(process.execPath, [bin, "--version"], {
         cwd: consumer,
         encoding: "utf8",
       });

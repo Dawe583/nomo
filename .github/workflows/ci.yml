@@ -51,6 +51,8 @@ jobs:
         timeout-minutes: 5
       - run: node --test scripts/src/*.test.mjs
         working-directory: .
+        env:
+          NOMO_NETWORK_PACKAGING_TEST: ${{ matrix.node-version == 24 && '1' || '0' }}
         timeout-minutes: 10
       - run: node scripts/src/e2e.mjs
         timeout-minutes: 5
