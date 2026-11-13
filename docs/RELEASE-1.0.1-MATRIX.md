@@ -1,6 +1,6 @@
 # NOMO 1.0.1 release evidence matrix
 
-Status: open for release on 2026-09-25. `source-inspected` means a code path was read; `fixture-tested` means a disposable conformance run passed in that session. Neither closes signed sandbox, physical-device or external beta gates. This matrix maps every checked work item and all 30 D03 families from the implementation plan. Planned gates are not reported as passing.
+Status: historical release evidence matrix, last updated 2026-09-25. `source-inspected` means a code path was read; `fixture-tested` means a disposable conformance run passed in that session. Neither closes signed sandbox, physical-device or external beta gates. This matrix maps every checked work item and all 30 D03 families from the implementation plan. Planned gates are not reported as passing. Hosted CI workflows have since been retired. References below to jobs, pipeline coverage and hosted checks are historical evidence only, not acceptance criteria, release gates or blockers. Use the repository's documented local checks for current verification.
 
 Evidence boundary of the 2026-09-25 update: source was re-read and the local toolchain re-observed. A Release `iphonesimulator` build and a simulator install/launch were run on this machine and are graded as simulator evidence below; a `generic/platform=iOS` build was attempted and failed for want of a provisioning profile. A disposable-fixture local acceptance harness over the real control-plane API, plus the repository suites named below, were run. No signing credential was read, printed or created, and no archive, export, TestFlight, App Store Connect, upload, physical-device install or provider run was performed. The unit and UI test results quoted below are the last recorded ones and stay labelled as historical. Every P01, P04-P09 and P11 row, plus P10.09, stays open: the local acceptance evidence narrows which sub-cases were exercised, and no row is promoted on a source, simulator, fixture or metadata result.
 
@@ -16,10 +16,10 @@ Evidence boundary of the 2026-09-25 update: source was re-read and the local too
 | Mac direct beta | Historical packaged test, source-inspected | Ad-hoc signed Tauri app/DMG with bundled Node, not Developer ID notarization or App Sandbox. |
 | Mac App Store | No signed sandbox/device test | No store entitlements/provisioning/pkg or signed sandbox capture/Undo evidence. |
 | Native iPhone/iPad | Source-inspected; Release simulator build and simulator launch observed 2026-09-25, current simulator test run observed 2026-09-26; no physical-device build, signed-device or store evidence | `apps/apple/` contains a native iOS 17 Xcode project, Swift package, app, 12 `NOMOTests` source cases, 18 `NOMOUITests` source cases and protocol fixtures. On 2026-09-25 a Release `iphonesimulator` build of the `NOMO` scheme succeeded and the product installed and launched on an iPad Pro 11-inch (M5) simulator rendering the onboarding/entry screen. A 2026-09-26 simulator test run against the source of that day passed `NOMOUITests` 18/18, ending `** TEST SUCCEEDED **`; a later run the same day, against the source that added paired-device security and the cache policy, executed 12 unit tests with 0 failures in 59.6 s and ended `** TEST SUCCEEDED **`, and the 18-case UI run has not been repeated against that newer source; the 2026-09-25 run of that same destination covered only 6 `NOMOUITests` cases and is superseded. That product is ad-hoc signed with no team identifier, no entitlements and no bundle icon, so it is simulator evidence only. The separate `CompanionProtocolKit` host SwiftPM run passed 34/34 but is a macOS host run, not an iOS simulator or device result. A `generic/platform=iOS` device build failed on 2026-09-25 because no provisioning profile for `com.void.companion` is installed, the attached iPhone has Developer Mode off, and the project sets no `DEVELOPMENT_TEAM`. Physical iPhone/iPad install, App Store and TestFlight gates remain open. |
-| Windows desktop | Out of scope for 1.0.1; current-source gate open | Historical beta-4 Actions evidence does not certify the current candidate. No current-source Windows packaging, installed smoke or full Windows recovery evidence is claimed. P10.09 remains open. |
+| Windows desktop | Out of scope for 1.0.1; current-source gate open | Historical beta-4 hosted evidence does not certify the current candidate. No current-source Windows packaging, installed smoke or full Windows recovery evidence is claimed. P10.09 remains open. Hosted jobs are retired. |
 | Tooling | Current machine observation, 2026-09-25; Xcode metadata and Release simulator build succeeded | Node v26.8.1, pnpm 10.33.0; Xcode 27.0 build 27A266a selected at `/Applications/Xcode.app`. `xcodebuild -list` reports targets `NOMO`, `NOMOTests`, `NOMOUITests`, configurations Debug/Release and schemes `CompanionProtocolKit`, `NOMO`. The keychain holds one Apple Development identity that the project does not reference, and the provisioning profile directory is empty. Apple account, Developer ID, provisioning, archive, physical-device install and store access remain unverified. |
 
-Sources: `packages/cli/src/conformance.ts`, `packages/connectors/src/capability.ts`, `docs/RECOVERY-COVERAGE.md`, `docs/RECOVERY-CONTRACT.md`, `apps/desktop/src-tauri/tauri.conf.json`, `docs/GUI-COMPACT-VERIFICATION.md`. Conformance was re-measured on 2026-09-26 with real exit codes rather than a pipeline's last-command status, which had made an earlier `git.managed` result look green when it had in fact been killed: `filesystem.managed` exit 0 with 4 scenarios, 32 checks, 0 failed, `managed-documents` exit 0 with 2 scenarios, 16 checks, 0 failed, `git.managed` exit 0 with 7 scenarios, 56 checks, 0 failed in 86 s, and `postgres-managed-conformance` exit 0 with 5 scenarios, 40 checks, 0 failed in 23 s. The runtime difference matters and was not recorded before: `git.managed` took roughly nine minutes against seconds for the other two, so it needs its own budget in any CI job rather than a shared short timeout.
+Sources: `packages/cli/src/conformance.ts`, `packages/connectors/src/capability.ts`, `docs/RECOVERY-COVERAGE.md`, `docs/RECOVERY-CONTRACT.md`, `apps/desktop/src-tauri/tauri.conf.json`, `docs/GUI-COMPACT-VERIFICATION.md`. Conformance was re-measured on 2026-09-26 with real exit codes rather than a pipeline's last-command status, which had made an earlier `git.managed` result look green when it had in fact been killed: `filesystem.managed` exit 0 with 4 scenarios, 32 checks, 0 failed, `managed-documents` exit 0 with 2 scenarios, 16 checks, 0 failed, `git.managed` exit 0 with 7 scenarios, 56 checks, 0 failed in 86 s, and `postgres-managed-conformance` exit 0 with 5 scenarios, 40 checks, 0 failed in 23 s. The runtime difference matters and was not recorded before: `git.managed` took roughly nine minutes against seconds for the other two. This former CI budget requirement is historical and is not a current hosted-job gate.
 
 ## 2026-09-26 web surface, credentialed end to end
 
@@ -334,20 +334,16 @@ One boundary: `project.xcworkspace/xcshareddata/` holds SwiftPM package
 resolution state that XcodeGen never writes, so it is excluded from the
 comparison rather than reported as drift. The pbxproj itself is compared in full.
 
-## 2026-09-26 explicit CI time budgets, from measured runtimes
+## Historical note: hosted CI time budgets (2026-09-26)
 
-Two gates ran for minutes while the CI jobs that contain them had a single
-shared deadline, and the release matrix above already noted that `git.managed`
-"needs its own budget in any CI job rather than a shared short timeout". It had
-no budget anywhere. `ci.yml` allowed its `gates` job 20 minutes for install,
-typecheck, build, `pnpm test`, two extra `node --test` runs and four e2e
-scripts, and `manifest.yml` allowed 10 minutes for install, three `node --test`
-runs and a conformance run. Under a shared deadline the slow step is the one
-that gets killed, and a kill is then reported as a failure that never happened,
-which is the same failure mode the `git.managed` result above was previously
-graded against.
+At the time, two gates ran for minutes under shared deadlines in hosted jobs.
+The release matrix noted that `git.managed` needed a separate budget; the former
+`ci.yml` and `manifest.yml` had only job-level budgets. A killed slow step could
+be reported as a failure. This describes retired infrastructure and is not a
+current test requirement or blocker.
 
-Every command step in `ci.yml` and `manifest.yml` now carries its own
+The historical workflows were later given per-command budgets; all hosted
+workflows have since been retired.
 `timeout-minutes`, and each job's budget is the sum of its steps. Measured on
 this machine on 2026-09-26, as wall-clock seconds around the real command:
 
@@ -380,13 +376,9 @@ invented one. The three `pnpm install`, `pnpm run typecheck` and
 working tree with another agent editing concurrently; the `pnpm test` and
 `check-reverse-engine.mjs` figures come from a full uncontended run.
 
-`scripts/src/ci-time-budgets.test.mjs` keeps this from decaying: every job in
-every workflow needs a deadline, and in `ci.yml` and `manifest.yml` every
-command step needs its own budget with the job budget covering the sum. The
-Windows installer job and the cloud-integration job are deliberately excluded
-from the per-step rule, because their runtimes need a Windows runner and a
-disposable Postgres and were not measured here; a budget invented rather than
-measured is exactly what this check exists to catch.
+The former hosted workflow time-budget test was removed when the repository
+retired hosted CI. These measurements remain historical context only and do
+not define current acceptance criteria or release blockers.
 
 Not claimed: this is a budget, not a performance result. No gate was made
 faster, no timing threshold was introduced, and the conformance runtimes above
@@ -412,13 +404,13 @@ belonging to yesterday, and the snapshot read 0. The same thing happens to
 anyone running this suite between 23:00 and 00:00 UTC, which in CEST is
 01:00-02:00 local. Outside that hour the test passes.
 
-That is a real defect even though nothing shipped is broken. A nightly CI run
+That is a real defect even though nothing shipped is broken. A nightly run
 would fail for an hour every day, and the obvious "fix" under that pressure is
-to weaken the assertion rather than to pin the clock. The worker and the
-inspecting ledger now share one fixed instant, midday UTC, which keeps the
-whole test inside a single day. Nothing else changed: the ledger still
-excludes a previous day's charges from today's limit, and a crashed
-reservation still survives in the store as expired rather than being refunded.
+to weaken the assertion rather than to pin the clock. This historical CI
+observation is not an active hosted gate. The worker and inspecting ledger now
+share one fixed instant, midday UTC, which keeps the whole test inside a single
+day. Nothing else changed: the ledger still excludes a previous day's charges
+from today's limit, and a crashed reservation still survives as expired.
 
 ## 2026-09-25 Apple build and signing observation
 

@@ -44,4 +44,4 @@ No entire F0-F5 phase is complete. Remaining work includes dependency closure an
 
 External provider sandboxes, physical network faults, Windows/Linux native recovery and packaging, physical mobile devices, screen readers, Developer ID/notarization, npm publication and production-like KMS require separate evidence. Browser emulation and ad-hoc signed macOS packaging do not close those gates.
 
-Push, both Node 24/26 CI jobs and deployment must be inspected against the exact final commit. A canceled or skipped job is not a pass; this local record alone does not assert production deployment.
+Run the documented local checks against the exact final commit. Local checks do not certify deployment or behavior on a clean machine.

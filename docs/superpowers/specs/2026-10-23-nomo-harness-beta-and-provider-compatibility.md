@@ -23,7 +23,7 @@ Umožnit pozvaným testerům spustit coding-agent Harness z checkoutu, připojit
 - `apps/control-plane/api/server.ts` dosud vystavuje pouze `/api/*`. Inbound `/v1/models` a `/v1/chat/completions` jsou nově schváleným cílem popsaným v samostatném spec; implementace musí znovu použít stávající Control Plane auth a Workbench runtime.
 - `apps/control-plane/ui/src/settings.tsx` poskytuje konfiguraci endpointu, typu a API key. Desktop nyní importuje pouze vybrané API-key profily z OpenCode/Prime; OAuth tokeny, příkazové výrazy a vlastní endpointy se neimportují (`apps/desktop/README.md`, § First-run provider import).
 - `apps/desktop/README.md` potvrzuje Tauri balíčky pro macOS arm64/x64 a Windows x64 s přibaleným Node/runtime backendem. Uživatel nepotřebuje Node, pnpm ani terminál.
-- `.github/workflows/desktop-windows.yml` sestaví, nainstaluje a lokálně smoke-testuje unsigned NSIS balíček. Automatizovaný macOS release workflow v aktuálním seznamu workflow nebyl nalezen.
+- Historický snapshot popisoval Windows workflow. Hosted workflows jsou odstraněné a nejsou součástí aktuálního ověřování ani vydání.
 - Veřejná macOS distribuce vyžaduje Developer ID podpis a notarizaci. Windows balíček je unsigned a může zobrazit SmartScreen varování. Tyto release credentials v implementačním prostředí nejsou potvrzené.
 - `CONTRIBUTING.md` vítá bug reporty, ale nebyl doložen samostatný tester feedback flow.
 - Read-only zdrojové baseline pro inventář: OMP `@oh-my-pi/pi-coding-agent` 18.6.2 (`upstream/omp-src/packages/coding-agent/package.json`) a Prime Agent 0.10.1 (`upstream/prime-src/Cargo.toml`). OMP definuje chat-provider roster v `upstream/omp-src/packages/catalog/src/compat/provider-ids.ts`, transportní API v `upstream/omp-src/packages/catalog/src/types.ts` a provider/auth detaily v katalogu. Prime definuje transporty v `upstream/prime-src/crates/pa-types/src/ai/mod.rs`, modely v `upstream/prime-src/crates/pa-ai/src/models_generated.rs` a `upstream/prime-src/crates/pa-models/src/`; Prime Inference je samostatný credentialed gateway.
@@ -43,7 +43,7 @@ Toto jsou zdrojové seznamy, nikoli tvrzení, že každá položka poskytuje in-
 
 Model-provider roster OMP navíc obsahuje `minimax-cn`: tento provider není v `KnownProvider`, ale pinned OMP 18.6.2 model catalog obsahuje osm chat modelů a Anthropic Messages descriptor. Proto zůstává oddělený seznam `KnownProvider` (84 ID) a model-providerů (85 ID); manifest jej nesmí ztratit. Pro tento descriptor OMP nemá provider-specific env-key deklaraci, takže záznam vyžaduje explicitní uživatelský API key bez tvrzení o env aliasu. Generátor `scripts/generate-provider-manifest.mjs` odvozuje checked-in `packages/workbench/src/provider-manifest.json` z read-only checkoutů těchto baseline a selže při neznámém přidaném model provideru.
 
-První implementační deliverable je verzovaný coverage manifest odvozený z uvedených baseline. Každý in-scope řádek nese provider ID, zdroj a verzi, model ID/kind, transportní rodinu, endpoint nebo pravidlo jeho sestavení, discovery, podporované autentizace a schopnosti. Manifest dále obsahuje explicitní vylučovací seznam s důvodem; nové/změněné upstream ID selže na coverage testu, dokud není klasifikováno. Výchozí baseline má 73 OMP in-scope providerů/5 480 chat-tiny řádků, 32 Prime providerů/152 řádků a 200 explicitně vyloučených OMP ne-chat řádků.
+První implementační deliverable je verzovaný coverage manifest odvozený z uvedených baseline. Každý in-scope řádek nese provider ID, zdroj a verzi, model ID/kind, transportní rodinu, endpoint nebo pravidlo jeho sestavení, discovery, podporované autentizace a schopnosti. Manifest dále obsahuje explicitní vylučovací seznam s důvodem; lokální coverage test odmítne nové/změněné upstream ID, dokud není klasifikováno. Výchozí baseline má 73 OMP in-scope providerů/5 480 chat-tiny řádků, 32 Prime providerů/152 řádků a 200 explicitně vyloučených OMP ne-chat řádků.
 
 Agent-specifické transporty zůstávají v rozsahu pouze tehdy, pokud připnutý katalog deklaruje jejich model jako chat/tiny model pro Workbench; nesmějí se tiše zaměnit za běžný chat completions.
 
@@ -81,14 +81,14 @@ Provider roster je připnutý k uvedeným verzím; novější upstream provider 
 
 ## Zpětná vazba a soukromí
 
-- Přidat soukromý GitHub issue form/šablonu pro bug report a tester feedback; release notes a quickstart na něj odkazují. Pozvaní testeři potřebují repozitářový přístup.
+- Historický návrh GitHub issue formu je vyřazen. Feedback se sbírá ručně bez hosted formuláře.
 - Žádná automatická telemetrie, cloudový upload, session export ani automatické odeslání diagnostiky.
 - Formulář žádá verzi aplikace, OS/architekturu, kategorii, reprodukční kroky a očekávaný/skutečný výsledek. Provider ID/model lze uvést dobrovolně; API URL, prompty, odpovědi, obsah projektu a secrets se nepřipojují automaticky.
 - Pokud se později přidá diagnostický export, musí být ruční, s náhledem před exportem a allowlistem polí. Není podmínkou prvního tester řezu.
 
 ## Akceptační kritéria
 
-1. Coverage manifest obsahuje 100 % in-scope chat/tiny provider entries a všechny transportní rodiny z obou připnutých baseline. CI test selže na neznámém, duplicitním nebo nepokrytém provider/API ID.
+1. Coverage manifest obsahuje 100 % in-scope chat/tiny provider entries a všechny transportní rodiny z obou připnutých baseline. Lokální test selže na neznámém, duplicitním nebo nepokrytém provider/API ID.
 2. Každý provider má explicitní endpoint, discovery, auth a capability záznam. Všechny dostupné protokolové/auth větve mají lokální fixture testy; žádný test nevolá externí službu.
 3. Testy prokazují model discovery, úspěšný textový completion, stream, tool-call round trip, usage, cancellation a chybové/redakční chování pro každý transport, který daný provider deklaruje. Nepodporovaná capability je explicitně odmítnuta nebo skryta; nesmí být tiše degradována.
 4. Přímý OpenAI provider funguje přes oficiální adapter a všechny existující compatible/Anthropic profily se po restartu zachovají přes ověřenou konfiguraci/migraci.
@@ -110,7 +110,7 @@ Provider roster je připnutý k uvedeným verzím; novější upstream provider 
 
 ## Blokery a oddělené práce
 
-- Přístup testerů do soukromého GitHub repo musí vlastník udělit samostatně.
+- Hosted tester feedback a repository access nejsou aktivní součástí specifikace.
 - Testerům uděluje přístup vlastník; desktopové podpisy, balíčky a instalační smoke testy jsou mimo aktuální rozsah.
 - Pokud provider v připnutém katalogu vyžaduje nepodporovaný nebo nepovolený auth flow, nesmí se jeho API obcházet. Překážka se doloží a znovu předloží uživateli; úplná kompatibilita se do té doby nehlásí.
 - H19 (filtered working copy + omezené Git API) zůstává odděleně blokované až do schválení detailní bezpečnostní hranice; jeho implementace není součástí provider/install worku.

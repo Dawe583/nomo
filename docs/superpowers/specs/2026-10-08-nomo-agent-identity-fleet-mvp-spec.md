@@ -268,7 +268,7 @@ must be visible rather than inferred.
 - No automatic policy learning, autonomous approval, or cross-workspace
   retrieval.
 - No deletion of technical, safety, operations or Harness contracts.
-- No Git history rewrite, push to `main`, PR, or GitHub Actions trigger.
+- No Git history rewrite or push to `main`. Hosted GitHub Actions are not used.
 
 ## Open design questions for implementation
 

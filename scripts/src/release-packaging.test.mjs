@@ -533,12 +533,11 @@ test("release notes keep the source distribution and runtime limits visible", ()
   assert.match(release, /private: true/);
   assert.match(release, /node_modules/);
   assert.match(release, /22\.18/);
-  // The blocker used to read "Credential-blocked git push", which was false:
-  // pushing works. What does not work is remote CI, so the assertion names
-  // that instead of a claim the tree contradicts.
-  assert.match(release, /Remote CI does not run/);
+  assert.match(release, /Historical note, not a release gate/);
+  assert.doesNotMatch(release, /Remote CI does not run/);
   assert.match(release, /Real-service e2e/);
-  assert.match(release, /Publish CI/);
+  assert.match(release, /publishing identity/);
+  assert.match(release, /Hosted publish workflow retired/);
   for (const path of ["docs/RELEASE.md", "packages/proxy/docs/interface.md"]) {
     assert.doesNotMatch(read(path), /[\u2013\u2014]/);
   }

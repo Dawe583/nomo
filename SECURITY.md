@@ -23,8 +23,8 @@ are published with the advisory when the release goes out.
 ## What lives outside this repository
 
 No credential, key or connection string is committed here. `.env*` is ignored,
-and the Secret Detection job in CI is the second line of that; the first is
-that nothing in this tree has ever needed to hold one.
+and repository checks supplement the rule that nothing in this tree should
+hold one. The repository does not use hosted CI as a security or release gate.
 
 What is held elsewhere, and where:
 
@@ -56,25 +56,11 @@ If a secret is committed by accident, say so in the report rather than opening a
 public issue about the commit. Removing it from history is not the fix; rotation
 is.
 
-## What the CI gate covers
+## Local verification
 
-GitHub Actions is the primary CI. `.github/workflows/ci.yml` and
-`manifest.yml` run on Linux and Windows, `desktop-windows.yml` builds and
-installs the signed Windows installer, and `cloud-integration.yml` drives a
-pinned Neon wire-protocol proxy against a disposable Postgres. The GitLab mirror
-in `.gitlab-ci.yml` covers the Linux subset: the typecheck, unit and end-to-end
-gates on Node 24 and 26, the manifest persistence suite, and three security
-analyzer templates (SAST, dependency scanning, secret detection).
-
-So the gate that runs on every push and every merge request covers static
-analysis, known-vulnerable dependency detection, and committed-secret
-detection. It does not cover the Windows or macOS surfaces, the packaged
-desktop application, the cloud integration path, or any deployed environment.
-
-A passing pipeline is evidence that those gates ran. It is not evidence that
-the product is free of vulnerabilities, and `docs/THREAT-MODEL.md` is explicit
-about which of its guarantees a green pipeline says nothing about.
-
-The Windows, macOS and cloud-integration jobs run on GitHub only: GitLab bills
-Windows and macOS shared runner minutes at a multiple of the Linux rate, and
-this namespace has a 400 minute monthly shared allowance.
+This repository does not use GitHub Actions or another hosted CI pipeline as
+a verification or release gate. Verify changes locally with the commands
+listed in the applicable project instructions. Local test results do not
+prove behavior on a clean machine, on another operating system, or in a
+deployed environment. Security still depends on the controls described in
+`docs/THREAT-MODEL.md`; a local test pass is not a security certification.

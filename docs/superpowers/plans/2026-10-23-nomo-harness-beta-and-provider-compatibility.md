@@ -21,15 +21,15 @@
 - Provider tests používají lokální fixture HTTP server a syntetické klíče; nikdy skutečné tokeny.
 - Žádné nové runtime závislosti ani import OMP/Prime implementací.
 - Staré `compatible` a `anthropic` profily musí zůstat čitelné; chybná migrace nesmí přepsat platnou konfiguraci.
-- Klíče a OAuth tokeny se nikdy nevrací UI rendereru, logu, error textu, issue formu, session eventu ani ledgeru.
+- Klíče a OAuth tokeny se nikdy nevrací UI rendereru, logu, error textu, session eventu ani ledgeru.
 - Žádná release pipeline ani desktop distribuce není součástí aktuální práce; nic se nevydává a nevyžadují se podpisové certifikáty.
 
 ## Výchozí stav a hranice
 
 - Provider runtime: `packages/workbench/src/provider.ts`; configure/persistence: `packages/workbench/src/index.ts`; API route: `apps/control-plane/api/server.ts`; GUI: `apps/control-plane/ui/src/settings.tsx`.
 - Provider tests: `packages/workbench/src/provider-stream.test.ts`, `packages/workbench/src/workbench.test.ts` a API tests v `apps/control-plane/api/`.
-- Existující `apps/desktop/**` a desktopové workflow zůstávají beze změn; nejsou cílem sestavení, distribuce ani smoke testů.
-- Beta docs: `docs/BETA.md`; tester feedback: `.github/ISSUE_TEMPLATE/feedback.yml`.
+- Existující `apps/desktop/**` zůstává beze změn; desktop není cílem sestavení, distribuce ani smoke testů. Hosted workflow konfigurace je odstraněná.
+- `docs/BETA.md`: historický onboarding. Feedback se sbírá ručně, bez hosted formuláře.
 - Provider baseline: OMP 18.6.2 (`KnownProvider`, `KnownApi` a provider/auth catalog v read-only `upstream/omp-src`) a Prime 0.10.1 (`KnownApi`, compiled provider transports, Prime Inference v read-only `upstream/prime-src`). Toto jsou zdrojové baseline; neznamenají, že stejné verze jsou aktuálně nainstalované u uživatele.
 - OMP deklaruje více odlišných transportů včetně OpenAI Completions/Responses, Anthropic, Bedrock, Google, Ollama a agent-specific API. Prime má navíc Mistral Conversations a vlastního `prime-inference` gateway. Nejde o jednu univerzální URL variantu.
 
@@ -43,8 +43,8 @@
 - `packages/workbench/src/index.ts`: konfigurace, kryptografická persist/reload migrace a lifecycle profilů providerů.
 - `apps/control-plane/api/server.ts` a případný nový `apps/control-plane/api/provider-auth.ts`: lokální setup/login API a tok tokenů; renderer token nikdy neuvidí.
 - `apps/control-plane/ui/src/settings.tsx`: výběr providera, auth flow, model selection a zobrazení schopností; bez změn TUI.
-- Existující `apps/desktop/**` a desktop workflow jsou pouze zachované historické zdroje, ne soubory tohoto plánu.
-- `.github/ISSUE_TEMPLATE/feedback.yml` a `docs/BETA.md`: tester onboarding a ruční feedback bez automatické diagnostiky.
+- Existující `apps/desktop/**` jsou pouze zachované historické zdroje, ne soubory tohoto plánu. Hosted workflow konfigurace byla odstraněna.
+- `docs/BETA.md`: historický onboarding. Feedback se sbírá ručně, bez hosted formuláře.
 
 ## Fáze 1: provider coverage manifest
 
@@ -185,32 +185,28 @@ Nastavení zobrazuje schopnosti vybraného manifestového modelu pouze z ověře
 
 ### Úkol 14: Soukromý issue form a quickstart
 
-- **Soubory:** vytvořit `.github/ISSUE_TEMPLATE/feedback.yml`; aktualizovat pouze `docs/BETA.md`.
+- **Historický návrh, neaktivní:** tester onboarding a feedback form. Hosted formuláře nejsou součástí cíle.
 
-**Akceptace:** tester s repo read access najde feedback link, může nahlásit reprodukovatelný problém, form nepožaduje API URL, prompt, response, session transcript, project files ani secrets. Soukromé issue zůstává v private repo. Žádné automatické uploady či telemetrie.
+**Historická akceptace, neaktivní:** hosted feedback form ani repo issue nejsou součástí současného cíle. Žádné automatické uploady či telemetrie.
 
-**Test:** YAML/schema validation zavedená v projektu nebo statická fixture test; ruční kontrola formu v GitHub preview se provede až s ownerem, bez odeslání issue.
+**Historický testovací návrh:** YAML/schema validace a ruční preview. Tato hosted cesta není aktivní.
 
 ## Historická fáze 6: soukromé desktop balíčky (mimo aktuální cíl)
 Desktop buildy, Xcode, instalované smoke testy a release jsou vyřazené z další práce. Následující úkoly a jejich historické záznamy nejsou aktuální plán; existující zdrojové soubory zachovat.
 
-### Úkol 15: macOS build workflow a install smoke
+### Úkol 15: macOS build workflow a install smoke, retired
 
-**Soubory:** vytvořit `.github/workflows/desktop-macos.yml`; upravit desktop build/release docs podle zjištěné CI konfigurace.
+Historický úkol je vyřazen a neprovádí se. Nevytvářet hosted CI, artifact nebo release workflow.
 
-**Akceptace:** sestavit arm64 a x64 artefakty, spustit desktop tests a clean runner install/runtime smoke, vypočítat SHA-256. Signing/notarization pouze přes owner-provided GitHub secrets; bez nich workflow vytvoří pouze zřetelně interní unsigned artifact, nikoli bezvarovný release.
+### Úkol 16: Windows build/release hardening, retired
 
-### Úkol 16: Windows build/release hardening
-
-**Soubory:** upravit `.github/workflows/desktop-windows.yml`, pokud je to nutné; jinak jej ponechat.
-
-**Akceptace:** existing NSIS install smoke zůstane, artifact obsahuje SHA-256, balíček spustí fixture provider setup, odinstalace nemění cizí soubory. Code signing je pouze volitelně owner secrets; žádný secret do logu.
+Historický úkol je vyřazen a neprovádí se. Nevytvářet hosted CI, artifact nebo release workflow.
 
 ### Úkol 17: Private release approval gate
 
-**Soubory:** vytvořit nebo upravit `.github/workflows/desktop-release.yml` a `apps/desktop/README.md`.
+**Historický návrh, neaktivní:** dřívější plán zvažoval `.github/workflows/desktop-release.yml` a úpravu `apps/desktop/README.md`.
 
-**Akceptace:** workflow je ručně spuštěný a release job je chráněn GitHub environment approval; žádná push/tag událost sama nic nevydá. Release je jen pro soukromé repo a obsahuje verze, platformy, podpisový stav, checksumy, známé OS varování a private feedback link. Do schválení se workflow pouze testuje jako artifact build; release se nepublikuje.
+**Historická akceptace, neaktivní:** hosted release approval workflow se nevytváří ani nepoužívá. Desktop release je mimo aktuální cíl.
 
 ## Fáze 6: Harness ověření a předání
 
@@ -255,7 +251,7 @@ Dříve zaznamenané dokončené kroky níže jsou historická evidence, nikoli 
 - [x] Prohlédnout celý staged kandidát včetně nových souborů; ověřit secret redaction, endpoint policy, workflow approval, checksum a TUI absenci.
 - [x] Stageovat jen ověřené Harness cesty; před commitem zkontrolovat celý staged diff a seznam staged paths.
 - [x] Vytvořit dva kohezi zachovávající commity: (1) Workbench runtime, provider transporty a API/UI dohromady, protože sdílejí provider dispatch a `index.ts`; (2) desktop beta distribuci, onboarding, specifikaci, plán a předání. Pushnout pouze ověřený `HEAD` na `origin/feat/wp-regress`. Commity: `92d66fd`, `7c341d2`.
-- [x] Ověřit remote SHA vůči lokálnímu `HEAD`; zaznamenat přesné příkazy, výsledky a neověřené GA podmínky. `git ls-remote origin refs/heads/feat/wp-regress` i `git rev-parse HEAD` vrátily `7c341d25709ae4992daf8c6ea691e9e0989fe6ae`; remote CI a instalovaný smoke zůstávají neověřené.
+- [x] Historický záznam: remote SHA odpovídalo lokálnímu `HEAD` (`7c341d25709ae4992daf8c6ea691e9e0989fe6ae`). Hosted CI a instalovaný smoke nebyly ověřeny; nejsou aktivními blokátory.
 
 **Zastavit:** při souběžné změně Harness souboru, test/typecheck selhání, secret nálezu, nejasném vlastnictví cesty, změně remote větve nebo pokusu zahrnout TUI/cizí změnu. Neprovádět merge, release ani reálné provider volání.
 

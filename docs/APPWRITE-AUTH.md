@@ -122,12 +122,7 @@ executes on an ordinary checkout. `apps/appwrite-mcp` needs the `mcp` SDK and
 is `UNRUN` until the virtual environment above exists; on a machine without
 it, that suite is a named warning and does not fail the gate, because the SDK
 is a build requirement of the hosted function rather than a test dependency.
-What is still not true: neither suite runs in CI, because
-`.github/workflows/ci.yml` provisions no Python interpreter with the SDK, and
-no job installs `apps/appwrite-mcp/requirements.txt`. The `apple` job added
-alongside covers the Apple surface and no Python. Until a CI job builds the
-virtual environment and runs both, the local gate is the only thing executing
-these 22 checks and the `python/nomo-transport` suite.
+Both suites are verified locally only. The former hosted workflow was removed; no hosted job is required for acceptance. Local results do not certify a clean-machine or deployment run.
 
 `cloud/auth.mjs` provides server-only signup, email-password login, logout,
 account lookup, and password recovery helpers. Its `__Host-void-auth` cookie

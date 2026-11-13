@@ -1,5 +1,7 @@
 # Prime continuation, 30 September 2026
 
+> Historical record only. Hosted CI workflows mentioned below have been retired; their setup, availability, and results are not current work or blockers.
+
 The handoff this session started from was `docs/PRIME-HANDOFF.md`, dated
 11 September. It was stale: the working tree carried a large uncommitted slice
 that the document did not mention, and the last commit on `main` was
@@ -13,7 +15,7 @@ Nothing was committed, pushed or published by this session.
 An uncommitted slice across 36 files: signed **reversal records** in the
 ledger, S3 **post-write receipts**, ledger **attribution** widening, a real
 **clean-install packaging gate**, a `check-tests.mjs` that runs the two Python
-suites, and an `apple` CI job. All of it was undocumented work in progress.
+suites, and a former `apple` CI job. All of it was undocumented work in progress; hosted jobs are now retired.
 
 Two typecheck errors made `pnpm run check` red on arrival, both in the
 uncommitted test files, and were fixed here:
@@ -122,7 +124,7 @@ reader to blame the auth gate. It now asserts the surface contains
 
 ### CI
 
-`.github/workflows/ci.yml` gained a `hosted-mcp` job on `ubuntu-latest`:
+The former `.github/workflows/ci.yml` gained a `hosted-mcp` job on `ubuntu-latest`:
 installs the SDK, runs `generate-snapshot.py --check`, runs the 35-test contract
 and the 84-test transport suite. Without it nothing on a remote commit had ever
 executed the hosted function's tests. Like the `apple` job, **no result is
@@ -204,9 +206,9 @@ now carry `muted permission-authority`.
 `scripts/src/doc-truth.test.mjs` INVENTORY with the reason, which is what that
 list is for.
 
-**The CI time budget.** The new `hosted-mcp` job declared `timeout-minutes:
-15` for steps totalling 20, which `scripts/src/ci-time-budgets.test.mjs`
-correctly refused. Raised to 25.
+**Historical hosted job time budget.** The former `hosted-mcp` job declared a
+15-minute timeout for steps totalling 20. It was raised to 25 before all hosted
+workflows were later retired. This is historical evidence only.
 
 **Three browser findings, which were not this session's work.** The
 `ui-layout` gate reported a 36px-wide command trigger, a transcript squeezed

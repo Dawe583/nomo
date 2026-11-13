@@ -182,10 +182,10 @@ function costPanel(
   const rows: string[] = [];
   // Table model × tokens × records
   for (const record of state.cost ?? []) {
-    const label = costRecordLabel(record, capabilities);
+    const label = sanitizeText(costRecordLabel(record, capabilities));
     rows.push(
       `${pad(paint(label.split(" ")[0] ?? "unknown", "muted", capabilities), labelWidth)}${fit(
-        sanitizeText(label),
+        label,
         width - labelWidth,
       )}`,
     );

@@ -3,7 +3,8 @@
 > Historical analysis written 2026-09-26. Its product recommendations and
 > source direction were superseded on 2026-10-08. Keep its checked distribution
 > facts as history, not as the NOMO launch plan. Current product authority is in
-> the NOMO capability map and MVP spec.
+> the NOMO capability map and MVP spec. Hosted CI and its billing are not active
+> release requirements; references below to CI are historical only.
 
 Written 2026-09-26 against commit `63dbd2c` on `main`, read from source, and
 checked against the vendors' own live documentation rather than against the
@@ -47,15 +48,10 @@ recorded in the project's own release notes. `docs/RELEASE.md:111`, under
 
 Two corroborating facts fall out of it:
 
-- **`README.md` already advertises a download page that cannot exist.**
-  `https://dawe583.github.io/void/` returns `404`. GitHub Pages is served from
-  the repository, so a private repository cannot have a Pages site. The
-  `.github/workflows/pages.yml` "Publish download page" workflow has therefore
-  never run, and the README's only outbound link points at nothing.
-- **Every CI gate in `.github/workflows/` has never executed against a remote
-  commit.** `ci.yml` runs on `push: branches: [main]` and
-  `pull_request`. With no push, the "everything is green" state established for
-  this research was produced by local runs, not by CI.
+- **Historical download-page and hosted CI findings.** At the time of this
+  2026-09-26 research, the README download URL returned 404 and hosted checks
+  had not run. The corresponding workflows are now retired. This history does
+  not establish a current release gate or blocker.
 
 This matters more than any signing, provisioning, or store question, because
 almost every channel below has a hard dependency on a publicly reachable
@@ -159,10 +155,7 @@ spend. "Free" means no spend beyond an account that can be created at $0.
   99 USD per membership year… If you're a nonprofit organization, accredited
   educational institution, or government entity and meet certain requirements,
   you can request a fee waiver."
-- **GitHub Actions is free for public repositories.**
-  `github/docs`, `content/billing/concepts/product-billing/github-actions.md`:
-  "GitHub Actions usage is **free** for **self-hosted runners** and for
-  **public repositories** that use standard GitHub-hosted runners."
+- Hosted workflow billing research below is retained as historical source material only. It does not inform current release gates.
 - **GitHub Packages is free for public packages.**
   `content/billing/concepts/product-billing/github-packages.md`: "GitHub
   Packages usage is **free** for **public packages**. In addition, data
@@ -564,12 +557,12 @@ and with a stated refusal to spend the $99.
 | Item | Where it is called a blocker | What is actually true |
 |---|---|---|
 | **A public repository** | Implicit everywhere; `docs/RELEASE.md:111` records "Credential-blocked git push" | The single hardest prerequisite for six of the channels, and it is a credentials restore plus a visibility decision. Not on any feature list. It gates npm provenance, GitHub Releases, both package registries, the Anthropic directory plugin route, and the README's own download link. |
-| **A downloadable artefact at all** | `README.md` links `https://dawe583.github.io/void/` | A static landing page plus a GitHub Release needs no signing, no Apple, and no review. The Pages workflow already exists. |
+| **A downloadable artefact at all** | `README.md` links `https://dawe583.github.io/void/` | The former Pages workflow was retired; the link and distribution route require separate product review. Hosted jobs are not a blocker. |
 | **A publishable CLI** | `release-packaging.test.mjs:23` asserts `private: true` | Deliberate and enforced, but `rollup` is already a root dependency, so a bundled single-package CLI is roughly two sessions, not a project. |
 | **MCP tool review-readiness** | Not on any list | All eight tools already carry `readOnlyHint`/`destructiveHint` and are already split read/write. Only the `title` field that Anthropic's checklist requires is missing. Under an hour. |
 | **A stranger-facing quickstart** | `docs/MANAGED-RECOVERY.md` is complete but assumes a cloned repo | The guide is genuinely good. What it assumes is `node packages/cli/bin/void.mjs`, which requires a clone and a `pnpm install`. One bootstrap command removes that. |
 | **Hosted web deployment** | "bounded-cost provider sandbox" and "local-network scope" listed as blocking inputs | The Vercel project exists and is linked, and the config is complete. What is unknown is whether the hosted build has a write path, one session to determine, and that is a finding, not a blocker. |
-| **CI as a distribution mechanism** | "No push or remote CI result is claimed by this runbook" | Correct today, and free the moment the repo is public: GitHub Actions is free for public repositories, and GitHub Packages is free for public packages. |
+| **Hosted CI** | Historical distribution analysis | Not used. Hosted workflow and billing availability are not release prerequisites or blockers. |
 | **A `server.json` and an MCP listing** | `docs/RELEASE.md:115-118` lists "MCP registry listing" as missing WP-15 evidence | The registry is live, in preview, costs nothing, and has no human on the critical path. It is one `mcp-publisher publish` away and depends only on the npm step above it. |
 
 ---

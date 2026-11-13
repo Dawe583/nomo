@@ -23,11 +23,9 @@ const packagesDir = join(root, "packages");
  *
  * The default is generous on purpose. `packages/cli` runs the git.managed
  * conformance matrix against real repositories on disk and costs minutes
- * rather than seconds, which `.github/workflows/ci.yml` already budgets for
- * per step, so a bound tight enough to trip on that suite would report a
- * failure that never was. The job budget for the whole `pnpm test` step is 25
- * minutes across every suite, so no single suite can legitimately approach
- * this, and anything that does is wedged rather than slow.
+ * rather than seconds, so a bound tight enough to trip on that suite would
+ * report a failure that never was. The default is local test policy, not a
+ * hosted job budget; no remote CI is configured for this repository.
  *
  * `NOMO_SUITE_TIMEOUT_MS` overrides it, and accepts `0` to disable the bound
  * for a deliberate long run.
@@ -146,7 +144,7 @@ if (existsSync(paidDir)) {
 }
 
 /**
- * The two Python suites, which until now no local gate and no CI job ran.
+ * The two Python suites, which until now no local gate ran.
  *
  * They are separate from every suite above because they are a different kind
  * of evidence. The Node suites read the repository with the interpreter that
