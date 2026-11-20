@@ -153,46 +153,55 @@ function unifiedBody(state: DiffViewState, compact = false): string[] {
   return out;
 }
 
-function splitBody(state: DiffViewState, width: number): string[] {
+function splitBody(
+  state: DiffViewState,
+  width: number,
+  paint: (line: string, tone: "success" | "error") => string,
+): string[] {
   const separator = width >= 20 ? " | " : "|";
-  const leftWidth = Math.max(1, Math.floor((width - separator.length) / 2));
-  const rightWidth = Math.max(1, width - separator.length - leftWidth);
+  const leftWidth = Math.floor((width - separator.length) / 2);
+  const rightWidth = width - separator.length - leftWidth;
   const out: string[] = [];
   const total = state.hunks.length;
   state.hunks.forEach((hunk, hunkIndex) => {
-    const isCursor = hunkIndex === state.cursor;
-    out.push(hunkHeaderLine(hunk, hunkIndex, total, isCursor));
-    const start = parseHunkHeader(hunk.rows[0] ?? "");
-    let aLine = start.aStart;
-    let bLine = start.bStart;
-    const left: string[] = [];
-    const right: string[] = [];
+    out.push(
+      hunkHeaderLine(hunk, hunkIndex, total, hunkIndex === state.cursor),
+    );
+    const { aStart, bStart } = parseHunkHeader(hunk.rows[0] ?? "");
+    let aLine = aStart;
+    let bLine = bStart;
+    const removals: string[] = [];
+    const additions: string[] = [];
+    const flushChanges = () => {
+      const pairs = Math.max(removals.length, additions.length);
+      for (let index = 0; index < pairs; index += 1) {
+        const left = pad(removals[index] ?? "", leftWidth);
+        const right = fit(additions[index] ?? "", rightWidth);
+        out.push(paint(left, "error") + separator + paint(right, "success"));
+      }
+      removals.length = 0;
+      additions.length = 0;
+    };
     for (const row of hunk.rows.slice(1)) {
-      // Context lines exist in both files, so they appear in both columns
-      // with their own line number; removed lines sit left, added right.
-      // Unknown row kinds render as context to stay visible, never dropped.
       if (row.startsWith("-")) {
-        left.push(`${aLine}:${sanitizeText(row.slice(1))}`);
-        right.push("");
+        removals.push(`${aLine}:${sanitizeText(row)}`);
         aLine += 1;
       } else if (row.startsWith("+")) {
-        left.push("");
-        right.push(`${bLine}:${sanitizeText(row.slice(1))}`);
+        additions.push(`${bLine}:${sanitizeText(row)}`);
         bLine += 1;
       } else {
+        flushChanges();
         const text = sanitizeText(row.startsWith(" ") ? row.slice(1) : row);
-        left.push(`${aLine}:${text}`);
-        right.push(`${bLine}:${text}`);
+        out.push(
+          pad(`${aLine}:${text}`, leftWidth) +
+            separator +
+            fit(`${bLine}:${text}`, rightWidth),
+        );
         aLine += 1;
         bLine += 1;
       }
     }
-    const pairs = Math.max(left.length, right.length);
-    for (let index = 0; index < pairs; index += 1) {
-      out.push(
-        `${pad(left[index] ?? "", leftWidth)}${separator}${fit(right[index] ?? "", rightWidth)}`,
-      );
-    }
+    flushChanges();
   });
   return out;
 }
@@ -246,7 +255,11 @@ export function renderDiffPanel(
     total === 0
       ? ["No differences: before and after are identical."]
       : state.side === "split" && !compact
-        ? splitBody(state, safeWidth)
+        ? splitBody(state, safeWidth, (line, tone) =>
+            useColor && line.trim()
+              ? paintWithPalette(line, tone, NOMO_PALETTE, caps)
+              : line,
+          )
         : unifiedBody(state, compact);
   const bodyCount = safeHeight - 2;
   const scroll = Number.isFinite(state.scroll)
