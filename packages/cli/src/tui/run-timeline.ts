@@ -45,19 +45,17 @@ export interface BudgetOptions {
   readonly paint?: (text: string, tone: string, bold?: boolean) => string;
 }
 
-// ASCII only, so every icon is exactly one cell under layout.ts. Anything in
-// U+2600 to U+27BF counts as two cells and would misalign the bar column, and
-// a wider icon set would need a font the operator may not have.
+// Single-cell phase icons keep the measurement columns aligned.
 const PHASE_ICONS: Record<RunPhase, string> = {
-  queued: "+",
-  starting: ">",
-  thinking: "~",
-  tool: "*",
-  writing: "=",
-  verifying: "v",
-  settling: "-",
-  done: "o",
-  failed: "x",
+  queued: "◷",
+  starting: "▸",
+  thinking: "◇",
+  tool: "◆",
+  writing: "▤",
+  verifying: "◎",
+  settling: "◐",
+  done: "●",
+  failed: "×",
   unknown: "?",
 };
 
@@ -253,9 +251,27 @@ export function renderTimeline(
   const labels: readonly string[] = state.steps.map((step: TimelineStep) =>
     sanitizeText(phaseLabel(step.phase)),
   );
-  const phaseRow: string = fit(
-    sanitizeText(stepper(labels, current, motion).join(" ")),
-    cells,
+  const phases = stepper(labels, current, motion);
+  // Remove distant phases first so the active one survives compact layouts.
+  let start = current;
+  let end = current + 1;
+  let phaseWidth = visibleLength(phases[current]!);
+  while (start > 0) {
+    const previous = visibleLength(phases[start - 1]!) + 1;
+    if (phaseWidth + previous > cells) break;
+    phaseWidth += previous;
+    start -= 1;
+  }
+  while (end < phases.length) {
+    const next = visibleLength(phases[end]!) + 1;
+    if (phaseWidth + next > cells) break;
+    phaseWidth += next;
+    end += 1;
+  }
+  const phaseRow = paint(
+    fit(phases.slice(start, end).join(" "), cells),
+    phaseTone(state.steps[current]!.phase),
+    true,
   );
   let slowest = -1;
   let top = -1;
@@ -268,7 +284,12 @@ export function renderTimeline(
   }
   const maxMs: number = top > 0 ? top : 1;
   const out: string[] = [phaseRow];
-  for (let index = 0; index < state.steps.length; index += 1) {
+  const firstStep = Math.max(0, current - rows + 2);
+  for (
+    let index = firstStep;
+    index < Math.min(state.steps.length, firstStep + rows - 1);
+    index += 1
+  ) {
     const step: TimelineStep = state.steps[index]!;
     // Sanitize before painting: sanitizeText replaces ESC, so running it
     // after paint would corrupt the caller's ANSI sequences.

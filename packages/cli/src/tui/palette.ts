@@ -4,8 +4,8 @@
 // searchable model workspace.ts will drive (query keystrokes in, Enter runs
 // the selected item). It owns no screen state and never touches raw mode,
 // so it stays safe to unit test and to render inside any surface.
-import { fit, pad } from "./layout.ts";
-import { paint } from "./theme.ts";
+import { fit, pad, sanitizeText, visibleLength } from "./layout.ts";
+import { getSymbols, paint } from "./theme.ts";
 import type { TerminalCapabilities } from "./types.ts";
 
 export type PaletteGroup =
@@ -86,6 +86,13 @@ function commandKey(id: string): string {
 // everything else falls back to the group icon so new commands still render.
 export function commandIcon(id: string, group: PaletteGroup): string {
   const key = commandKey(id);
+  const destination = key.slice(1);
+  const icons = getSymbols("unicode").tab;
+  if (Object.hasOwn(icons, destination)) return icons[destination]!;
+  if (key === "/find" || key === "/discover") return "⌕";
+  if (key === "/retry" || key === "/resume") return "↻";
+  if (key === "/diff" || key === "/diff-next") return "±";
+  if (key === "/new") return "+";
   if (key === "/undo") return "↩";
   if (key === "/help" || key === "/keybindings") return "?";
   if (key === "/theme") return "◐";
@@ -282,7 +289,7 @@ export function renderPalette(
   const colour = options?.color === true;
   if (filtered.length === 0) {
     const line = pad(
-      fit(`No matches for "${state.query}".`, Math.max(1, width)),
+      fit(`No matches for "${sanitizeText(state.query)}".`, Math.max(1, width)),
       Math.max(1, width),
     );
     return {
@@ -296,39 +303,49 @@ export function renderPalette(
   // At compact widths the renderer only has room for one grouped result;
   // keep the active command on screen instead of clipping it below the body.
   const windowSize =
-    width < 40
-      ? 1
-      : state.visible > 0
-        ? state.visible
-        : filtered.length;
+    width < 40 ? 1 : state.visible > 0 ? state.visible : filtered.length;
   const offset =
     windowSize > 0 ? Math.floor(selected / windowSize) * windowSize : 0;
   const page = filtered.slice(offset, offset + windowSize);
   const groups = paletteGroupsInOrder(page);
   const lines: string[] = [];
+  const cells = Math.max(1, width);
+  const labelWidth = Math.min(
+    Math.floor(cells / 2),
+    Math.max(...page.map((item) => visibleLength(sanitizeText(item.id)))),
+  );
   for (const group of groups) {
-    const header = pad(
-      fit(`${PALETTE_ICONS[group]} ${group.toUpperCase()}`, Math.max(1, width)),
-      Math.max(1, width),
-    );
-    lines.push(colour ? paint(header, "accent", PALETTE_CAPS, true) : header);
+    const title = fit(`${PALETTE_ICONS[group]} ${group.toUpperCase()}`, cells);
+    const ruleWidth = cells - visibleLength(title) - 1;
+    const rule = ruleWidth > 2 ? " " + "─".repeat(ruleWidth) : "";
+    const header = colour
+      ? paint(title, "accent", PALETTE_CAPS, true) +
+        paint(rule, "muted", PALETTE_CAPS)
+      : title + rule;
+    lines.push(pad(header, cells));
     for (const item of page) {
       if (item.group !== group) continue;
-      const marker = item === filtered[selected] ? ">" : " ";
-      const row = pad(
-        fit(
-          `${marker} ${item.icon} ${item.id}  ${item.hint}`,
-          Math.max(1, width),
-        ),
-        Math.max(1, width),
-      );
-      // The selected row is marked twice (">" plus colour) so the choice
-      // stays legible on a monochrome terminal with colour disabled.
-      lines.push(
-        colour && marker === ">"
-          ? paint(row, "accent", PALETTE_CAPS, true)
-          : row,
-      );
+      const active = item === filtered[selected];
+      const id = sanitizeText(item.id);
+      const label =
+        cells >= 40 && visibleLength(id) < labelWidth
+          ? pad(id, labelWidth)
+          : id;
+      const mark = active ? ">" : " ";
+      const icon = sanitizeText(item.icon);
+      const prefix =
+        visibleLength(id) + visibleLength(icon) + 3 > cells
+          ? mark + " "
+          : `${mark} ${icon} `;
+      const action = fit(prefix + label, cells);
+      const available = cells - visibleLength(action) - 2;
+      const hint =
+        available > 0 ? "  " + fit(sanitizeText(item.hint), available) : "";
+      const row = colour
+        ? paint(action, active ? "accent" : "fg", PALETTE_CAPS, active) +
+          paint(hint, "muted", PALETTE_CAPS)
+        : action + hint;
+      lines.push(pad(row, cells));
     }
   }
   return { lines, items: filtered, selected };

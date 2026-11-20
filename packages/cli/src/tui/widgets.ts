@@ -163,14 +163,32 @@ export function renderTree(
       : Math.min(cursor - safeHeight + 1, flat.length - 1);
   const rows: string[] = [];
   const end = Math.min(flat.length, start + safeHeight);
-  for (let index = start; index < end; index += 1) {
+  const lastSiblings = new Set<TreeNode>();
+  const rootEnd = nodes.at(-1);
+  if (rootEnd) lastSiblings.add(rootEnd);
+  // Keep at least eight cells for the name before spending width on guides.
+  const maxDepth = Math.max(0, Math.floor((safeWidth - 14) / 2));
+  const rails: string[] = [];
+  for (let index = 0; index < end; index += 1) {
     const node = flat[index]!;
+    const childEnd = node.children?.at(-1);
+    if (childEnd) lastSiblings.add(childEnd);
+    const depth = Number.isFinite(node.depth)
+      ? Math.min(maxDepth, Math.max(0, Math.floor(node.depth)))
+      : 0;
+    const last = lastSiblings.has(node);
+    rails.length = depth;
+    const guide =
+      depth === 0
+        ? ""
+        : rails.slice(1).join("") +
+          (last ? symbols.frame.bl : symbols.frame.teeL) +
+          symbols.frame.h;
+    rails[depth] = last ? "  " : `${symbols.frame.v} `;
+    if (index < start) continue;
     const selected = index === cursor;
     const marker = cursorMarker(selected, motion);
     const expand = treeExpandMarker(node, state.expanded.has(node.id));
-    // One guide segment per depth level, drawn as text so nesting survives
-    // without colour. Depth is clamped at zero against malformed input.
-    const guide = `${symbols.frame.v} `.repeat(Math.max(0, node.depth));
     const label = sanitizeText(node.label);
     const row = pad(`${marker}${expand} ${guide}${label}`, safeWidth);
     rows.push(selected ? paint(row, "accent", true) : row);

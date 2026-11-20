@@ -63,63 +63,50 @@ function paintField(
   return paint(text, tone, bold);
 }
 
-// Cell based wrapper for one sanitized line. Local because layout.ts exposes
-// no wrapper and workspace.ts is off limits (import cycle); the code point
-// walk mirrors the workspace wrapper so wide glyphs never split mid cell.
-function wrapCells(line: string, width: number): string[] {
-  const safe = Math.max(1, width);
-  const out: string[] = [];
-  let part = "";
-  for (const point of line) {
-    if (part !== "" && visibleLength(part + point) > safe) {
-      out.push(part);
-      part = "";
-    }
-    part += point;
-  }
-  out.push(part);
-  return out;
-}
-
-// Splits a sanitized value so the first line fits beside the badge reserve
-// and the rest use the full value column. Continuation chunks are measured
-// against the value column start, never the label, so a wrapped second line
-// cannot be misread as a new field.
-function splitValue(
+// The first line can have less space when a badge shares the row.
+function wrapCells(
   text: string,
   firstWidth: number,
-  restWidth: number,
+  restWidth = firstWidth,
 ): string[] {
   const chunks: string[] = [];
   let part = "";
-  let limit = Math.max(1, firstWidth);
+  let used = 0;
+  let limit = firstWidth;
   for (const point of text) {
-    if (part !== "" && visibleLength(part + point) > limit) {
+    const cells = visibleLength(point);
+    if (used > 0 && used + cells > limit) {
       chunks.push(part);
       part = "";
-      limit = Math.max(1, restWidth);
+      used = 0;
+      limit = restWidth;
     }
-    part += point;
+    // A glyph wider than the entire column has no half-cell representation.
+    const glyph = cells > limit ? "." : point;
+    part += glyph;
+    used += cells > limit ? 1 : cells;
   }
   chunks.push(part);
   return chunks;
 }
 
-// A badge is a framed pill (legible without colour) hung off a fixed two
-// cell rail of spaces after the value. The rail is constant and the badge
-// trails the value, so adding or removing a badge never moves any value
-// column. The badge is fitted and painted from its plain form: fitting
-// after painting would strip the ANSI escapes that paint just added.
-function badgeText(
-  badge: string,
-  tone: FieldTone,
-  width: number,
-  paint: InspectorOptions["paint"],
-  motion: MotionContext,
-): string {
-  const plain = pill(badge, FIELD_TONES[tone], motion);
-  const fitted = fit(plain, Math.max(1, width));
-  return paintField(paint, fitted, tone);
+// Keep ordinary label words intact. Only an identifier longer than the
+// panel needs to break across multiple rows.
+function wrapLabel(label: string, width: number): string[] {
+  const rows: string[] = [];
+  let current = "";
+  for (const word of label.split(/\s+/u)) {
+    if (current && visibleLength(current + " " + word) <= width) {
+      current += " " + word;
+      continue;
+    }
+    if (current) rows.push(current);
+    const pieces = wrapCells(word, width);
+    current = pieces.pop() ?? "";
+    rows.push(...pieces);
+  }
+  rows.push(current);
+  return rows;
 }
 
 function renderField(
@@ -131,53 +118,40 @@ function renderField(
   motion: MotionContext,
 ): string[] {
   const tone: FieldTone = field.tone ?? "default";
-  // Padding is applied after painting the label so alignment spaces stay
-  // unpainted: a paint callback that returns empty (used to prove tones are
-  // the only difference) leaves the column skeleton intact.
-  const labelCell = pad(
-    paintField(paint, fit(cleanLabel, labelCol), "muted"),
-    labelCol,
+  const stacked = labelCol === 0 || visibleLength(cleanLabel) > labelCol;
+  const offset = stacked ? (width >= 8 ? 2 : 0) : labelCol + 2;
+  const indent = " ".repeat(offset);
+  const valueWidth = width - offset;
+  const value = sanitizeText(field.value);
+  const badge = sanitizeText(field.badge ?? "");
+  const badgePill = badge ? pill(badge, FIELD_TONES[tone], motion) : "";
+  const badgeWidth = visibleLength(badgePill);
+  // Give a wide glyph a full cell pair even when a badge shares its row.
+  const inlineBadge = badgeWidth > 0 && valueWidth - badgeWidth - 2 >= 2;
+  const chunks = wrapCells(
+    value,
+    inlineBadge ? valueWidth - badgeWidth - 2 : valueWidth,
+    valueWidth,
   );
-  const valueWidth = width - labelCol - 2;
-  const indent = " ".repeat(labelCol + 2);
-  const rawBadge = field.badge === undefined ? "" : sanitizeText(field.badge);
-  const valuePlain = sanitizeText(field.value);
-  const paintChunk = (chunk: string): string => paintField(paint, chunk, tone);
-  const out: string[] = [];
-  if (rawBadge !== "") {
-    const reserved =
-      visibleLength(pill(rawBadge, FIELD_TONES[tone], motion)) + 2;
-    if (valueWidth - reserved >= 1) {
-      // Badge fits beside the first value line; later lines use full width.
-      const chunks = splitValue(valuePlain, valueWidth - reserved, valueWidth);
-      const first = chunks[0] ?? "";
-      out.push(
-        `${labelCell}: ${paintChunk(first)}  ${badgeText(rawBadge, tone, reserved - 2, paint, motion)}`,
-      );
-      for (const chunk of chunks.slice(1))
-        out.push(`${indent}${paintChunk(chunk)}`);
-    } else {
-      // No room beside the value, so the badge drops to its own indented
-      // line rather than truncating the value it annotates.
-      const chunks = splitValue(valuePlain, valueWidth, valueWidth);
-      const first = chunks[0] ?? "";
-      out.push(`${labelCell}: ${paintChunk(first)}`);
-      for (const chunk of chunks.slice(1))
-        out.push(`${indent}${paintChunk(chunk)}`);
-      out.push(
-        `${indent}${badgeText(rawBadge, tone, valueWidth, paint, motion)}`,
-      );
-    }
-  } else {
-    const chunks = splitValue(valuePlain, valueWidth, valueWidth);
-    const first = chunks[0] ?? "";
-    out.push(`${labelCell}: ${paintChunk(first)}`);
-    for (const chunk of chunks.slice(1))
-      out.push(`${indent}${paintChunk(chunk)}`);
+  const rows = stacked
+    ? wrapLabel(cleanLabel, width).map((chunk) =>
+        paintField(paint, chunk, "muted"),
+      )
+    : [];
+  const prefix = stacked
+    ? indent
+    : `${pad(paintField(paint, cleanLabel, "muted"), labelCol)}: `;
+  const tail = inlineBadge ? `  ${paintField(paint, badgePill, tone)}` : "";
+  rows.push(`${prefix}${paintField(paint, chunks[0]!, tone)}${tail}`);
+  for (const chunk of chunks.slice(1)) {
+    rows.push(indent + paintField(paint, chunk, tone));
   }
-  // Trailing alignment spaces carry no meaning; strip them so narrow
-  // terminals and pipe consumers never see invisible padding.
-  return out.map((row) => row.replace(/\s+$/, ""));
+  if (badge && !inlineBadge) {
+    for (const chunk of wrapCells(badgePill.trim(), valueWidth)) {
+      rows.push(indent + paintField(paint, chunk, tone));
+    }
+  }
+  return rows.map((row) => row.trimEnd());
 }
 
 function pushBody(
@@ -192,58 +166,6 @@ function pushBody(
       rows.push(paintField(paint, chunk, "default"));
     }
   }
-}
-
-// Widths below four cells cannot fit even "L: v", so the inspector falls
-// back to one fitted line per entry instead of aligned columns. The column
-// path below assumes labelCol + ": " + one value cell fits.
-function renderNarrow(
-  spec: InspectorSpec,
-  width: number,
-  paint: InspectorOptions["paint"],
-  motion: MotionContext,
-): string[] {
-  const rows: string[] = [];
-  const title = sanitizeText(spec.title);
-  rows.push(paintField(paint, fit(title, width), "accent", true));
-  if (spec.subtitle !== undefined) {
-    rows.push(
-      paintField(paint, fit(sanitizeText(spec.subtitle), width), "muted"),
-    );
-  }
-  rows.push("-".repeat(width));
-  spec.sections.forEach((section, index) => {
-    if (index > 0) rows.push("");
-    rows.push(
-      paintField(
-        paint,
-        fit(sanitizeText(section.title).toUpperCase(), width),
-        "muted",
-        true,
-      ),
-    );
-    // "No entries." only when the section is genuinely empty. A section that
-    // carries prose instead of fields has entries, and printing the marker
-    // above its own content reads as a failure rather than as a heading.
-    if (section.fields.length === 0 && (section.body?.length ?? 0) === 0) {
-      rows.push(paintField(paint, "No entries.", "muted"));
-    }
-    for (const field of section.fields) {
-      const badge =
-        field.badge === undefined || sanitizeText(field.badge) === ""
-          ? ""
-          : ` [${sanitizeText(field.badge)}]`;
-      const line = fit(
-        `${sanitizeText(field.label)}: ${sanitizeText(field.value)}${badge}`,
-        width,
-      );
-      rows.push(paintField(paint, line, field.tone ?? "default"));
-    }
-    pushBody(rows, section.body, width, paint);
-  });
-  pushHint(rows, spec.hint, width, paint);
-  void motion;
-  return rows;
 }
 
 function pushHint(
@@ -271,8 +193,6 @@ export function renderInspector(
   // Static detail view: hold the first motion frame so two renders of the
   // same spec are byte identical and tests can assert on badge output.
   const motion: MotionContext = options.motion ?? motionContext(0, false, true);
-  if (width < 4)
-    return clipHeight(renderNarrow(spec, width, paint, motion), options.height);
   const rows: string[] = [];
   const iconClean = sanitizeText(spec.icon ?? "");
   // Only single cell icons are shown: layout.ts counts U+2600 to U+27BF as
@@ -313,19 +233,18 @@ export function renderInspector(
       // section still names itself and says so explicitly. Not when it
       // carries prose instead, which is entries of a different shape.
       if ((section.body?.length ?? 0) === 0)
-        rows.push(paintField(paint, "No entries.", "muted"));
+        rows.push(paintField(paint, fit("No entries.", width), "muted"));
     } else {
-      // One label column per section, sized to its widest label, so every
-      // value in the section starts at the same cell. Capped so at least
-      // one value cell always survives, even at narrow widths.
-      let widest = 1;
+      // Long labels stack above their values. A single outlier must not
+      // reduce every value in the section to a column one character wide.
+      const labelBudget = width >= 12 ? Math.floor((width - 2) / 3) : 0;
       const cleanLabels = section.fields.map((field) =>
         sanitizeText(field.label),
       );
-      for (const label of cleanLabels) {
-        widest = Math.max(widest, visibleLength(label));
-      }
-      const labelCol = Math.min(widest, width - 3);
+      const labelCol = cleanLabels.reduce((widest, label) => {
+        const cells = visibleLength(label);
+        return cells <= labelBudget ? Math.max(widest, cells) : widest;
+      }, 0);
       section.fields.forEach((field, fieldIndex) => {
         for (const row of renderField(
           field,

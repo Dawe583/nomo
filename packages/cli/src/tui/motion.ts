@@ -65,7 +65,8 @@ export const HEAVY_SPINNER = ["◐", "◓", "◑", "◒"] as const;
 const WAVE = [0, 0.25, 0.5, 0.75, 1, 0.75, 0.5, 0.25] as const;
 
 function waveAt(column: number, frame: number, phase: number): number {
-  const position = (column + phase) % WAVE.length;
+  const position =
+    (column + phase - (frame % WAVE.length) + WAVE.length) % WAVE.length;
   return WAVE[position] ?? 0;
 }
 
@@ -179,10 +180,10 @@ export function tabUnderline(
   motion: MotionContext,
 ): string {
   if (!active) return "╌".repeat(Math.max(0, width));
-  const pattern =
-    motion.enabled && !motion.reduced ? ["━", "━", "━", "━"] : ["━"];
-  const bar = pattern[motion.frame % pattern.length] ?? "━";
-  return bar.repeat(Math.max(0, width));
+  const cells = Math.max(0, width);
+  if (!motion.enabled || motion.reduced || cells < 3) return "━".repeat(cells);
+  const glint = Math.floor(motion.frame / 2) % cells;
+  return "━".repeat(glint) + "╸" + "━".repeat(cells - glint - 1);
 }
 
 /**
@@ -285,12 +286,18 @@ export function separator(
   motion: MotionContext,
   active = false,
 ): string {
-  if (!active) return "─".repeat(Math.max(0, width));
-  const glyphs = ["╌", "─", "━", "─"] as const;
-  const index =
-    motion.enabled && !motion.reduced ? motion.frame % glyphs.length : 1;
-  const glyph = glyphs[index] ?? "─";
-  return glyph.repeat(Math.max(0, width));
+  const cells = Math.max(0, width);
+  if (!active || !motion.enabled || motion.reduced) return "─".repeat(cells);
+  // Move a short crest across the rule without flashing the entire pane.
+  const crest = "╺━━╸";
+  const head = motion.frame % (cells + crest.length);
+  const start = Math.max(0, head - crest.length);
+  const end = Math.min(cells, head);
+  return (
+    "─".repeat(start) +
+    crest.slice(crest.length + start - head, crest.length + end - head) +
+    "─".repeat(cells - end)
+  );
 }
 
 /**

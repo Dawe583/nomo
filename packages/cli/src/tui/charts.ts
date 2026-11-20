@@ -122,21 +122,17 @@ export function sparkline(
     lo = hi;
     hi = swap;
   }
-  const motion: MotionContext = resolveMotion(options?.motion);
-  // A constant series is a fact worth showing. The middle level reads as a
-  // level line; the bottom level would read as zero and the top as full.
-  if (hi === lo) return SPARK_MID.repeat(cells);
-  const count: number = values.length;
+  // Map both ends of the time axis to measured samples. A single cell shows
+  // the newest sample. Animation must never alter a measured height.
+  const last = values.length - 1;
   let row = "";
   for (let column = 0; column < cells; column += 1) {
-    const sample: number = values[Math.floor((column * count) / cells)]!;
-    const base: number = levelFor(isFiniteNumber(sample) ? sample : lo, lo, hi);
-    // The newest sample is the live edge of the feed, so it alone pulses by
-    // one level on alternate frames. The shape of history never moves.
-    const live: boolean =
-      isLive(motion) && column === cells - 1 && motion.frame % 2 === 1;
-    const level: number = live ? (base < 7 ? base + 1 : base - 1) : base;
-    row += SPARK_LEVELS[level]!;
+    const index =
+      cells === 1 ? last : Math.round((column * last) / (cells - 1));
+    const sample = values[index]!;
+    if (!isFiniteNumber(sample)) row += "·";
+    else if (hi === lo) row += SPARK_MID;
+    else row += SPARK_LEVELS[levelFor(sample, lo, hi)]!;
   }
   return row;
 }
@@ -219,7 +215,7 @@ export function barChart(
       labelWidth > 0 ? `${pad(cleanLabels[order]!, labelWidth)} ` : "";
     const text: string = valueTexts[order]!.padStart(valueWidth, " ");
     const suffix: string = barCells > 0 ? ` ${bar}` : "";
-    rows.push(`${label}${text}${suffix}`);
+    rows.push(fit(`${label}${text}${suffix}`, cells));
   }
   return rows;
 }
@@ -353,7 +349,7 @@ export function gauge(
   ) {
     bar = `${"█".repeat(filled - 1)}▓${"░".repeat(cells - filled)}`;
   }
-  const percent = `${Math.round(ratio * 100)}%`;
+  const percent = `${Math.round((value / max) * 100)}%`;
   return `${head}${bar} ${formatNumber(value)}/${formatNumber(max)} ${percent}`;
 }
 

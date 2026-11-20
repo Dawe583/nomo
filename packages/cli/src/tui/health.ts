@@ -199,8 +199,10 @@ export function renderHealth(
       tone: healthTone(check.state),
     });
   });
+  const worst = ordered[0]!.state;
   const spec: InspectorSpec = {
-    title: "Health",
+    icon: healthIcon(worst),
+    title: `Health · ${healthWord(worst)}`,
     subtitle: healthSummary(checks),
     sections: areas.map((area) => ({ title: area.title, fields: area.fields })),
   };
