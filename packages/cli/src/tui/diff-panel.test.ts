@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { buildDiffView, renderDiffPanel } from "./diff-panel.ts";
+import { buildDiffView, diffStats, renderDiffPanel } from "./diff-panel.ts";
 import { stripAnsi, visibleLength } from "./layout.ts";
 
 test("split view aligns replacement runs without shifting subsequent context", () => {
@@ -22,4 +22,13 @@ test("split view aligns replacement runs without shifting subsequent context", (
     const compact = renderDiffPanel(view, width, 12);
     assert.ok(compact.every((row) => visibleLength(row) <= width));
   }
+});
+
+test("change counts include content that resembles a diff file header", () => {
+  assert.deepEqual(
+    diffStats(["--- before", "+++ after", "@@ -1 +1 @@", "---old", "+++new"]),
+    { added: 1, removed: 1 },
+  );
+  const view = buildDiffView("--old", "++new");
+  assert.match(renderDiffPanel(view, 60, 3)[0]!, /\+1 -1/);
 });

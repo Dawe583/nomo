@@ -41,11 +41,15 @@ export function diffStats(rows: readonly string[]): {
 } {
   let added = 0;
   let removed = 0;
+  let inHunk = false;
   for (const row of rows) {
-    // File headers and hunk headers are metadata, not changed lines: a
-    // "---"/"+++" pair would otherwise inflate both counters by one each.
-    if (row.startsWith("+++") || row.startsWith("---")) continue;
-    if (row.startsWith("@@")) continue;
+    if (row.startsWith("@@")) {
+      inHunk = true;
+      continue;
+    }
+    // Before the first hunk, --- and +++ are file headers. Inside a hunk
+    // they can be changed content beginning with two minus or plus signs.
+    if (!inHunk && (row.startsWith("+++") || row.startsWith("---"))) continue;
     if (row.startsWith("+")) added += 1;
     else if (row.startsWith("-")) removed += 1;
   }
