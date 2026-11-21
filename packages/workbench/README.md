@@ -451,6 +451,14 @@ model delegation is depth one. `nomo_subagent_result` (R0) verifies the child
 against the parent chain and returns either `pending` or the settled text with
 an explicit untrusted-result label (`delegate-tools.test.ts`,
 `delegate-tool.test.ts`).
+
+`nomo_session_search` is an opt-in R0 literal search over the same operator
+store. `sessionSearchEnabled` defaults to zero; enabling it offers bounded
+searches over titles and non-system messages, excluding the caller. Results are
+limited to eight 240-character excerpts from at most 100 conversations, with
+provider and connector redaction plus secret-shaped hit withholding. Disabling
+the setting filters later provider requests and refuses execution
+(`session-search.test.ts`, `session-search-tool.test.ts`).
 Assistant text streams to the UI. There is no claim of Codex, Claude Code or
 OpenCode process adapters, PTY, or desktop packaging. Those are separate AW
 work packages.

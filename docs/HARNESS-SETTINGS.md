@@ -65,6 +65,7 @@ operator as applied while changing nothing.
 | `toolRequestTimeoutMs` | 180000 | 1000 to 600000   | per-request timeout for MCP tool calls over the stdio proxy  |
 | `maxToolResultCharacters` | 64000 | 256 to 200000  | characters of a tool result retained in the model conversation |
 | `autoCompactMessages` | 150 | 0 to 199 | messages at which a run compacts the conversation with a model summary (0 = off) |
+| `sessionSearchEnabled` | 0 | 0 to 1 | whether the model may search bounded, redacted excerpts from other conversations (0 = isolated) |
 
 An agent profile's own `maxTurns` still wins over the harness setting, because
 a profile is a deliberate per-agent choice and `AGENT_LIMITS` already caps it.
@@ -81,6 +82,15 @@ compaction arms the harness trigger like `/compact`, records
 under the usage source `compaction`. The maximum is 199 because the hard cap
 of 200 messages would otherwise end the conversation first; zero switches it
 off, and then `send` refuses a conversation at the cap as before.
+
+`sessionSearchEnabled` (HP6) is zero by default because a search moves text
+between conversations. `startSession`, `spawnSubagent`, `availableTools` and
+`run` only offer `nomo_session_search` while it is one, and `executeTool`
+refuses a persisted or forged call after it is switched off. Search covers
+titles and non-system messages in the same operator store, never the calling
+session. It returns at most eight excerpts of 240 characters from at most 100
+conversations; provider and connector redaction runs before the result returns,
+and a secret-shaped excerpt is withheld.
 
 ## A selection, not a limit
 

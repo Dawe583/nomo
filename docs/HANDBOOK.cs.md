@@ -522,6 +522,14 @@ nástroje. `nomo_subagent_result` je R0 čtení ověřeného settled dítěte; n
 práce vrátí `pending` a settled text je výslovně označený jako nedůvěryhodný
 výsledek subagenta.
 
+Vyhledávání napříč konverzacemi je výchozí vypnuté. Nastavení
+`sessionSearchEnabled` na `1` nabídne `nomo_session_search`, R0 doslovné
+hledání v titulcích a nesystémových zprávách stejného úložiště operátora. Nikdy
+nevrátí volající session, prohledá nejvýše 100 konverzací a vrátí nejvýše osm
+výňatků po 240 znacích. Provider klíče a connector tokeny se před zobrazením
+modelu redigují a výňatek vypadající jako tajemství se zadrží. Vypnutí nastavení
+nástroj odstraní z dalších požadavků a odmítne i dříve uložené volání.
+
 ## 9. Webová a desktopová aplikace
 
 `pnpm gui` sestaví klienta a spustí lokální API server. Pro práci na frontendu

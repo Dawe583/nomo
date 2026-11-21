@@ -620,6 +620,14 @@ children do not inherit the delegation tools. `nomo_subagent_result` is an R0
 read of a verified settled child; pending work returns `pending`, and settled
 text is explicitly labelled as an untrusted subagent result.
 
+Cross-conversation search is off by default. Setting `sessionSearchEnabled` to
+`1` offers `nomo_session_search`, an R0 literal search over titles and
+non-system messages in the same operator store. It never returns the calling
+session, searches at most 100 conversations and returns at most eight excerpts
+of 240 characters. Provider keys and connector tokens are redacted before the
+model sees a hit, and a secret-shaped excerpt is withheld. Switching the
+setting off removes the tool from later requests and refuses a persisted call.
+
 ## 9. The web and desktop app
 
 `pnpm gui` builds the client and starts the local API server. For frontend work,

@@ -334,6 +334,19 @@ against Hermes Agent and Prime Agent and orders the slices that close the gap:
   suite. Stop: a child widens its tools, a spawn precedes its signed record, or
   a profile-less session delegates without the default hold.
 
+- HP6. Session search. Status: implemented 2026-11-21. Paths:
+  `packages/workbench/src/session-search.ts`,
+  `packages/workbench/src/harness-settings.ts`,
+  `packages/workbench/src/workspace.ts`, `packages/workbench/src/index.ts`.
+  Goal: `nomo_session_search` (R0) is disabled by default, searches titles and
+  non-system messages in the same operator store except the caller, and returns
+  bounded redacted excerpts. Verifier:
+  `packages/workbench/src/session-search.test.ts`,
+  `packages/workbench/src/session-search-tool.test.ts`, workbench typecheck and
+  full suite, `apps/control-plane/api/harness-settings.test.ts`, documentation
+  tests. Stop: the tool is offered while disabled, the current session leaks,
+  system instructions are searched, or raw known secrets reach the result.
+
 ## 7. Verification commands
 
 - Typecheck: `npx tsc -p packages/workbench/tsconfig.json --noEmit`

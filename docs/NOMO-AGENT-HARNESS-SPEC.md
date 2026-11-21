@@ -717,6 +717,11 @@ nejsou, se v tomhle stromu objevují jako falešné tvrzení později.
   `nomo_subagent_result` (R0). Spawn záznam předchází registraci dítěte, výsledek
   je označený jako nedůvěryhodný a modelová delegace má hloubku jedna, protože
   dítě delegační nástroje nedědí.
+- **Hledání napříč session (HP6)**: `nomo_session_search` je R0 a výchozí
+  `sessionSearchEnabled` je 0. Po opt-in hledá doslovně titulky a nesystémové
+  zprávy ve stejném úložišti operátora, nikdy aktuální session. Vrací nejvýše
+  osm redigovaných výňatků po 240 znacích ze stovky konverzací; citlivý výňatek
+  se zadrží a vypnutí odmítne i dříve uložené volání.
 - **Skill drift**: původní otázku workspace vs. globální úložiště nahrazuje
   rozhodnutí vlastníka z 2026-10-18 níže. Globální úložiště nepřibývá.
 

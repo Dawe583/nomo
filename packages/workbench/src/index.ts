@@ -8,6 +8,11 @@ import {
   untrustedSubagentResultText,
 } from "./delegate-tools.ts";
 import {
+  SESSION_SEARCH_TOOL,
+  SESSION_SEARCH_LIMITS,
+  searchSessions,
+} from "./session-search.ts";
+import {
   recoveryRequest,
   runtimeSelection,
   recoveryOperationMap,
@@ -2244,6 +2249,7 @@ export class Workbench {
     ).filter(
       (tool) =>
         this.toolAllowedInMode(tool) &&
+        (tool.name !== SESSION_SEARCH_TOOL.name || this.harness.sessionSearchEnabled === 1) &&
         ((tool.name !== PROJECT_EXEC_TOOL.name &&
           tool.name !== PROJECT_CHANGES_TOOL.name) ||
           (!!session &&
@@ -2292,7 +2298,8 @@ export class Workbench {
       ...workspaceTools.filter(
         (tool) =>
           tool.name !== PROJECT_EXEC_TOOL.name &&
-          tool.name !== PROJECT_CHANGES_TOOL.name,
+          tool.name !== PROJECT_CHANGES_TOOL.name &&
+          (tool.name !== SESSION_SEARCH_TOOL.name || this.harness.sessionSearchEnabled === 1),
       ),
       ...HARNESS_TOOLS,
       PROJECT_EXEC_TOOL,
@@ -3032,7 +3039,8 @@ export class Workbench {
       ...workspaceTools.filter(
         (tool) =>
           tool.name !== PROJECT_EXEC_TOOL.name &&
-          tool.name !== PROJECT_CHANGES_TOOL.name,
+          tool.name !== PROJECT_CHANGES_TOOL.name &&
+          (tool.name !== SESSION_SEARCH_TOOL.name || this.harness.sessionSearchEnabled === 1),
       ),
       // The agent may propose what it learned. The proposal is inert until an
       // operator approves its exact digest, so the tool cannot write the
@@ -4089,7 +4097,8 @@ export class Workbench {
         ...workspaceTools.filter(
           (tool) =>
             tool.name !== PROJECT_EXEC_TOOL.name &&
-            tool.name !== PROJECT_CHANGES_TOOL.name,
+            tool.name !== PROJECT_CHANGES_TOOL.name &&
+            (tool.name !== SESSION_SEARCH_TOOL.name || this.harness.sessionSearchEnabled === 1),
         ),
         // The agent may propose what it learned. The proposal is inert until
         // an operator approves its exact digest, so the tool cannot write
@@ -4423,13 +4432,15 @@ export class Workbench {
             .filter(
               (t) =>
                 t.name !== PROJECT_EXEC_TOOL.name &&
-                t.name !== PROJECT_CHANGES_TOOL.name,
+                t.name !== PROJECT_CHANGES_TOOL.name &&
+                (t.name !== SESSION_SEARCH_TOOL.name || this.harness.sessionSearchEnabled === 1),
             )
             .map((t) => t.name),
           toolDetails: workspaceTools.filter(
             (t) =>
               t.name !== PROJECT_EXEC_TOOL.name &&
-              t.name !== PROJECT_CHANGES_TOOL.name,
+              t.name !== PROJECT_CHANGES_TOOL.name &&
+              (t.name !== SESSION_SEARCH_TOOL.name || this.harness.sessionSearchEnabled === 1),
           ),
           undo: true,
           consentState: "confirmed" as const,
@@ -7105,6 +7116,95 @@ export class Workbench {
       return false;
     }
   }
+  private async executeSessionSearchTool(
+    session: Session,
+    args: JsonObject,
+  ) {
+    return this.locked(async () => {
+      await this.ledger(session.view.workspace);
+      try {
+        const targets = [...this.sessions.values()].filter(
+          (candidate) => candidate.view.id !== session.view.id,
+        );
+        const byId = new Map(targets.map((candidate) => [candidate.view.id, candidate]));
+        const found = searchSessions(
+          targets.map((candidate) => ({
+            id: candidate.view.id,
+            title: candidate.view.title,
+            messages: candidate.messages,
+          })),
+          args,
+        );
+        const knownSecrets = this.knownSecretValues();
+        const results: Array<{
+          sessionId: string;
+          title?: string;
+          role: "title" | "user" | "assistant" | "tool";
+          excerpt: string;
+        }> = [];
+        let withheld = 0;
+        for (const hit of found.results) {
+          const target = byId.get(hit.sessionId);
+          const redact = (text: string): string => {
+            let safe = session.provider?.redact(text) ?? text;
+            safe = target?.provider?.redact(safe) ?? safe;
+            for (const config of [
+              ...Object.values(session.connections ?? {}),
+              ...Object.values(target?.connections ?? {}),
+              ...this.connectors,
+            ])
+              if (config.token) safe = safe.split(config.token).join("[redacted]");
+            return safe.slice(0, SESSION_SEARCH_LIMITS.excerptCharacters);
+          };
+          const title = hit.title === undefined ? undefined : redact(hit.title);
+          const excerpt = redact(hit.excerpt);
+          if (secretLikeText(`${title ?? ""}\n${excerpt}`, knownSecrets)) {
+            withheld++;
+            continue;
+          }
+          results.push({
+            sessionId: hit.sessionId,
+            role: hit.role,
+            excerpt,
+            ...(title === undefined ? {} : { title }),
+          });
+        }
+        const result = {
+          content: [{
+            type: "text" as const,
+            text: JSON.stringify({
+              results,
+              truncated: found.truncated || withheld > 0,
+            }),
+          }],
+        };
+        await this.commitWorkspace(
+          session,
+          this.workspace(session.view.id),
+          SESSION_SEARCH_TOOL.name,
+          args,
+          "execute:completed",
+        );
+        return result;
+      } catch (error) {
+        const result = {
+          isError: true as const,
+          content: [{
+            type: "text" as const,
+            text: error instanceof Error ? error.message : "Session search refused.",
+          }],
+        };
+        await this.commitWorkspace(
+          session,
+          this.workspace(session.view.id),
+          SESSION_SEARCH_TOOL.name,
+          args,
+          "execute:failed",
+        );
+        return result;
+      }
+    });
+  }
   private async executeTool(
     session: Session,
     tool: McpTool,
@@ -7155,6 +7255,20 @@ export class Workbench {
         content: [{
           type: "text",
           text: "Project review refused: reconfirm project access and use a custom profile that explicitly allowlists nomo_project_changes.",
+        }],
+      };
+    }
+    if (
+      !tool.connectorId &&
+      tool.name === SESSION_SEARCH_TOOL.name &&
+      this.harness.sessionSearchEnabled === 0
+    ) {
+      observed.decision = "session-search:disabled";
+      return {
+        isError: true,
+        content: [{
+          type: "text",
+          text: "Cross-session search is disabled. Enable sessionSearchEnabled before using it.",
         }],
       };
     }
@@ -7350,6 +7464,10 @@ export class Workbench {
     if (!tool.connectorId && tool.name === PROJECT_CHANGES_TOOL.name) {
       observed.decision = "project-review";
       return this.executeProjectChangesTool(session, args, id);
+    }
+    if (!tool.connectorId && tool.name === SESSION_SEARCH_TOOL.name) {
+      observed.decision = "session-search";
+      return this.executeSessionSearchTool(session, args);
     }
     if (!tool.connectorId && tool.name === DELEGATE_TOOL.name) {
       // A profile already authorized this call above. A profile-less session
@@ -7709,7 +7827,11 @@ export class Workbench {
           `Hook ${refused.hookId} refused this run: ${refused.outcome}${refused.code === null ? "" : ` (exit ${refused.code})`}.${refused.stderr ? ` ${refused.stderr}` : ""}`,
         );
       session.proxyGrantReadyRunId = session.view.runId;
-      const listed = { tools: session.tools ?? [...workspaceTools] };
+      const listed = {
+        tools: (session.tools ?? [...workspaceTools]).filter(
+          (tool) => tool.name !== SESSION_SEARCH_TOOL.name || this.harness.sessionSearchEnabled === 1,
+        ),
+      };
       const mapping = new Map<string, (typeof listed.tools)[number]>();
       // Providers can return the configured registry ID from the tool description.
       // Only unique catalog matches are accepted.

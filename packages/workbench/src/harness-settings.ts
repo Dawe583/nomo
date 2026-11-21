@@ -53,7 +53,8 @@ export type HarnessSettingKey =
   | "providerRequestTimeoutMs"
   | "toolRequestTimeoutMs"
   | "maxToolResultCharacters"
-  | "autoCompactMessages";
+  | "autoCompactMessages"
+  | "sessionSearchEnabled";
 
 export type HarnessSettingSpec = {
   /** Operator-facing name, shown by /settings and the web settings panel. */
@@ -355,6 +356,17 @@ export const HARNESS_SETTINGS: {
     min: 0,
     max: 199,
     icon: "◌",
+  },
+  sessionSearchEnabled: {
+    label: "Cross-session search",
+    description:
+      "Allow the model to search bounded, redacted excerpts from the operator's other conversations. Zero keeps session text isolated.",
+    consumerFile: "index.ts",
+    consumers: ["startSession", "executeTool", "spawnSubagent", "availableTools", "run"],
+    default: 0,
+    min: 0,
+    max: 1,
+    icon: "◔",
   },
 };
 
