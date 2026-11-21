@@ -16,14 +16,15 @@ import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { homedir, tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { createServer, type Server } from "node:http";
 import { setTimeout as delay } from "node:timers/promises";
-import { isolatedWorkbench } from "./test-fixture.ts";
-import type { Workbench, SessionView } from "./index.ts";
+import { assertIsolated, isolatedWorkbench } from "./test-fixture.ts";
+import { Workbench, type SessionView } from "./index.ts";
 import { mineLearnedRules } from "./learned-rules.ts";
 import { measureBoard } from "./harness-scores.ts";
+import { dataDir } from "../../ledger/src/paths.ts";
 import { retainedKeyProvider } from "../../ledger/src/sign.ts";
 import type { JsonlEntry } from "../../ledger/src/store.ts";
 import type { RefinementProposal } from "./refine-pass.ts";
@@ -351,4 +352,283 @@ test("H7: a refused call, a mined rule, an approved activation, a rollback and a
     { cwd: repoRoot },
   );
   assert.match(verified.stdout, /verified/i);
+});
+
+test("H7: real stdio proxy closed loop with H10 outcome feedback, H11 refinement effect and offline verify", async (t) => {
+  const dir = await mkdtemp(join(tmpdir(), "nomo-h7-proxy-proof-"));
+  let app: Workbench | undefined;
+  t.after(async () => {
+    await app?.shutdown();
+    await rm(dir, { recursive: true, force: true });
+  });
+  const policyPath = join(dir, "policy.yaml");
+  await writeFile(
+    policyPath,
+    [
+      "version: 1",
+      "rules:",
+      "  - match:",
+      "      tool: echo",
+      "      class: unknown",
+      "    decision: allow",
+      "  - match:",
+      "      tool: orders_delete",
+      "    decision: deny",
+      "    rationale: destructive proxy fixture tool denied by policy",
+      "  - match: {}",
+      "    decision: deny",
+      "",
+    ].join("\n"),
+  );
+
+  let nextCall: { toolHint: string; args: Record<string, unknown> } | null = null;
+  let seqId = 0;
+  const systemPrompts: string[] = [];
+  const fetcher: typeof fetch = async (url, init) => {
+    if (String(url).endsWith("/models")) {
+      return Response.json({ data: [{ id: "fixture" }] });
+    }
+    const body = JSON.parse(String(init?.body)) as {
+      tools?: { function?: { name?: string; description?: string } }[];
+      messages?: { role?: string; content?: unknown }[];
+    };
+    systemPrompts.push(
+      ...(body.messages ?? [])
+        .filter((m) => m.role === "system")
+        .map((m) => String(m.content ?? "")),
+    );
+    if (nextCall) {
+      const wanted = nextCall;
+      nextCall = null;
+      const tool = (body.tools ?? []).find((item) =>
+        item.function?.description?.includes(wanted.toolHint),
+      );
+      assert.ok(tool?.function?.name, `expected proxied tool matching ${wanted.toolHint}`);
+      return Response.json({
+        choices: [
+          {
+            message: {
+              role: "assistant",
+              content: null,
+              tool_calls: [
+                {
+                  id: `proxy-call-${++seqId}`,
+                  type: "function",
+                  function: {
+                    name: tool.function.name,
+                    arguments: JSON.stringify(wanted.args),
+                  },
+                },
+              ],
+            },
+            finish_reason: "tool_calls",
+          },
+        ],
+      });
+    }
+    return Response.json({
+      choices: [
+        { message: { role: "assistant", content: "Done" }, finish_reason: "stop" },
+      ],
+    });
+  };
+
+  const proxyEnv = {
+    NOMO_LEDGER_DIR: dir,
+    NOMO_UPSTREAM_COMMAND: JSON.stringify([
+      process.execPath,
+      join(repoRoot, "fixtures/e2e-server.mjs"),
+    ]),
+    NOMO_POLICY_PATH: policyPath,
+  };
+  app = new Workbench(proxyEnv, fetcher);
+  assertIsolated(join(dir, "workbench"), proxyEnv);
+  await app.configure({
+    baseUrl: "https://provider.test/v1",
+    apiKey: "fixture-secret-not-logged",
+  });
+
+  // 1. Proxied echo succeeds and syncs its signed proxy entry into the workspace chain.
+  nextCall = { toolHint: "Returns the text argument unchanged.", args: { text: "before" } };
+  const session = await app.start("Run proxied echo before refinement", "fixture");
+  await app.settled();
+  assert.equal(app.get(session.id)?.status, "idle");
+
+  // 2. Three proxied orders_delete calls are denied by policy through packages/proxy.
+  for (let i = 1; i <= 3; i += 1) {
+    nextCall = {
+      toolHint: "Destructive test tool that deletes matching orders.",
+      args: { where: `id=${i}` },
+    };
+    app.send(session.id, `Attempt orders_delete ${i}`);
+    await app.settled();
+    assert.equal(app.get(session.id)?.status, "idle");
+  }
+
+  const preLedger = (await app.ledger(session.workspace))!.entries;
+  const proxyEntries = preLedger.filter(
+    (entry) => (entry.body as Record<string, unknown>).source === "stdio-proxy",
+  );
+  assert.ok(proxyEntries.length >= 4, `expected >=4 synced stdio-proxy entries, got ${proxyEntries.length}`);
+
+  // 3. Mined rule emerges from the three proxied refusals with chain provenance.
+  const mined = mineLearnedRules(preLedger);
+  assert.equal(mined.length, 1);
+  assert.equal(mined[0]!.match.tool, "orders_delete");
+  const harnessBefore = await app.harnessEntries(session.workspace);
+  const rule = harnessBefore.find((entry) => entry.kind === "rule");
+  assert.ok(rule && rule.repeats >= 3 && rule.derivedFromSeq.length >= 3);
+
+  // 4. Create proposal citing the signed refusals and approve its exact digest.
+  const proposal: RefinementProposal = {
+    summary: "orders_delete requires explicit review",
+    rationale: "three proxied policy denials on the signed ledger",
+    expectedOutcome: "later turns avoid unapproved orders_delete calls",
+    edits: [
+      {
+        action: "create",
+        kind: "memory",
+        title: "avoid unapproved orders_delete",
+        content: "Do not call orders_delete without explicit operator approval.",
+        derivedFromSeq: rule!.derivedFromSeq,
+        reason: "repeated proxy denial",
+      },
+      {
+        action: "create",
+        kind: "memory",
+        title: "prefer echo check first",
+        content: "Check workspace status with safe read/echo tools before mutation.",
+        derivedFromSeq: rule!.derivedFromSeq,
+        reason: "safe diagnostic pattern",
+      },
+    ],
+  };
+  const created = await app.refineHarness(session.id, proposal);
+  assert.ok(created.proposalDigest);
+  await app.approveHarnessProposal(session.id, created.proposalDigest!);
+
+  // 5. Bounded retrieval injects only 1 lesson when contextEntryLimit is 1.
+  app.patchHarnessSettings({ contextEntryLimit: 1 });
+  systemPrompts.length = 0;
+  nextCall = { toolHint: "Returns the text argument unchanged.", args: { text: "after" } };
+  app.send(session.id, "Check orders_delete guidance and run echo after activation");
+  await app.settled();
+  const digestPrompt = systemPrompts.find((text) =>
+    text.startsWith("NOMO learned-entry digest,"),
+  );
+  assert.ok(digestPrompt, "later turn must carry approved learned-entry digest");
+  const retrievedLessons = digestPrompt
+    .split("\n")
+    .filter((line) => line.startsWith("- [lesson] "));
+  assert.equal(retrievedLessons.length, 1);
+
+  // 6. H11: measure descriptive before-vs-after effect across the activation boundary.
+  const ledgerLenBeforeEffect = (await app.ledger(session.workspace))!.entries.length;
+  const effectsStanding = await app.harnessEffects(session.workspace, "2026-11-21T00:00:00Z");
+  assert.equal(effectsStanding.length, 1);
+  assert.equal(effectsStanding[0]!.digest, created.proposalDigest);
+  assert.equal(effectsStanding[0]!.status, "activated");
+  assert.ok(effectsStanding[0]!.effect.before.caseCount >= 2);
+  assert.ok(effectsStanding[0]!.effect.after.caseCount >= 1);
+  assert.equal(
+    (await app.ledger(session.workspace))!.entries.length,
+    ledgerLenBeforeEffect,
+    "measuring effects must never mutate the signed ledger (decision D1)",
+  );
+
+  // 7. Roll back the activation; H10 records the settled fate and refuses an
+  //    identical re-proposal citing nothing newer; H11 caps the effect window.
+  await app.rollbackHarnessProposal(session.id, created.proposalDigest!);
+  const outcomes = await app.harnessOutcomes(session.workspace);
+  assert.equal(outcomes.length, 1);
+  assert.equal(outcomes[0]!.status, "rolled-back");
+  assert.equal(outcomes[0]!.activatedSeq, effectsStanding[0]!.activationSeq);
+  let repeatError = "";
+  await assert.rejects(
+    app.refineHarness(session.id, proposal),
+    (error: unknown) => {
+      repeatError = error instanceof Error ? error.message : String(error);
+      return /already rolled back this refinement/i.test(repeatError);
+    },
+  );
+  const effectsRolledBack = await app.harnessEffects(session.workspace, "2026-11-21T00:00:00Z");
+  assert.equal(effectsRolledBack[0]!.status, "rolled-back");
+  assert.ok(effectsRolledBack[0]!.rolledBackSeq !== null);
+
+  // 8. Standalone offline verifier verifies BOTH the exported workbench chain
+  //    and the raw stdio proxy ledger chain.
+  const exportDir = await mkdtemp(join(tmpdir(), "nomo-h7-proxy-export-"));
+  t.after(() => rm(exportDir, { recursive: true, force: true }));
+  const exportedWorkspace = join(exportDir, `${session.workspace}.jsonl`);
+  const finalEntries = (await app.ledger(session.workspace))!.entries;
+  await writeFile(
+    exportedWorkspace,
+    `${finalEntries.map((entry) => JSON.stringify(entry)).join("\n")}\n`,
+  );
+  const wbKey = await retainedKeyProvider({
+    dir: join(dir, "workbench", "keys"),
+    env: {},
+  });
+  const wbPub = await wbKey.publicKey(await wbKey.currentKeyId());
+  assert.ok(wbPub);
+  const verifiedWb = await execFileAsync(
+    process.execPath,
+    [
+      join(repoRoot, "packages", "verifier", "verify-ledger.mjs"),
+      exportedWorkspace,
+      "--public-key",
+      Buffer.from(wbPub).toString("base64"),
+    ],
+    { cwd: repoRoot },
+  );
+  assert.match(verifiedWb.stdout, /verified/i);
+
+  const proxyKey = await retainedKeyProvider({
+    dir: join(dataDir(homedir()), "keys"),
+    env: {},
+  });
+  const proxyPub = await proxyKey.publicKey(await proxyKey.currentKeyId());
+  assert.ok(proxyPub);
+  const verifiedProxy = await execFileAsync(
+    process.execPath,
+    [
+      join(repoRoot, "packages", "verifier", "verify-ledger.mjs"),
+      join(dir, `${session.workspace}.jsonl`),
+      "--public-key",
+      Buffer.from(proxyPub).toString("base64"),
+    ],
+    { cwd: repoRoot },
+  );
+  assert.match(verifiedProxy.stdout, /verified/i);
+
+  if (process.env.NOMO_H7_TRANSCRIPT === "1") {
+    console.log(
+      "H7_TRANSCRIPT_JSON=" +
+        JSON.stringify({
+          workspaceEntries: finalEntries.length,
+          syncedProxyEntries: proxyEntries.length,
+          minedRule: {
+            tool: mined[0]!.match.tool,
+            class: mined[0]!.match.class,
+            repeats: rule!.repeats,
+            derivedFromSeq: rule!.derivedFromSeq,
+          },
+          proposalDigestPrefix: created.proposalDigest!.slice(0, 12),
+          activationSeq: effectsStanding[0]!.activationSeq,
+          retrievedLessonRows: retrievedLessons.length,
+          effectStanding: {
+            beforeCases: effectsStanding[0]!.effect.before.caseCount,
+            afterCases: effectsStanding[0]!.effect.after.caseCount,
+            verdict: effectsStanding[0]!.effect.verdict,
+            unmeasuredGuardrails: effectsStanding[0]!.effect.unmeasuredGuardrails,
+            denyBefore: effectsStanding[0]!.effect.before.guardrails.deny_rate,
+            denyAfter: effectsStanding[0]!.effect.after.guardrails.deny_rate,
+          },
+          rolledBackSeq: effectsRolledBack[0]!.rolledBackSeq,
+          repeatRefusalNote: repeatError,
+          verifiedWorkbenchStdout: verifiedWb.stdout.trim(),
+          verifiedProxyStdout: verifiedProxy.stdout.trim(),
+        }),
+    );
+  }
 });

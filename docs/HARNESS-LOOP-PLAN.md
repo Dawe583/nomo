@@ -216,13 +216,17 @@ Each node follows the loop in section 3.2. Statuses are tracked in
   `pnpm run test:tui` once the lane is available. Stop: the summary shows
   without blocking the render loop.
 
-- H7. End-to-end harness proof. Status: ready, depends on H1, H2, H3. Paths:
-  `packages/workbench/src`, `packages/proxy`, `docs`. Goal: one real agent
-  session through the proxy produces a refusal, a mined proposal, an approved
-  activation, bounded retrieval and a measured ratchet, with the evidence
-  exported and verified. Verifier: the gate plus a recorded transcript.
-  Stop: the transcript is attached to the work log and the chain verifies
-  offline.
+- H7. End-to-end harness proof. Status: implemented 2026-11-21, pending the
+  gate. Paths: `packages/workbench/src/harness-proof.test.ts`,
+  `packages/workbench/src/index.ts`,
+  `docs/superpowers/evidence/2026-11-21-h7-harness-proof.md`. Goal: one real
+  agent session through the proxy produces a refusal, a mined proposal, an
+  approved activation, bounded retrieval, H10 outcome feedback and a measured
+  H11 ratchet effect, with both chains verified offline. Verifier:
+  `NOMO_H7_TRANSCRIPT=1 NO_COLOR=1 node --test packages/workbench/src/harness-proof.test.ts`
+  plus the gate. Stop: the transcript is attached in
+  `docs/superpowers/evidence/2026-11-21-h7-harness-proof.md` and both chains
+  verify offline.
 
 - H8. Documentation closure. Status: ready, depends on H7. Paths:
   `docs/HANDBOOK.md`, `docs/HANDBOOK.cs.md`, `packages/workbench/README.md`,

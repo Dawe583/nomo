@@ -7033,6 +7033,19 @@ export class Workbench {
           content: [{ type: "text", text: outcome.error.message }],
         };
       }
+      if (receipt?.decision === "deny" || receipt?.decision === "deny:resolved") {
+        // Direct policy denial by the stdio proxy writes verified signed `deny`
+        // and `deny:resolved` receipts with matching tool and canonical
+        // argsDigest before answering, without forwarding upstream.
+        const message =
+          outcome.error instanceof Error
+            ? outcome.error.message
+            : "Tool call denied by policy.";
+        return {
+          isError: true,
+          content: [{ type: "text", text: message }],
+        };
+      }
       throw new UnknownToolOutcome();
     }
     if (
