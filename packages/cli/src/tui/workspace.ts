@@ -6836,13 +6836,13 @@ export function renderWorkspace(
     Math.max(0, lines.length - bodyHeight),
   );
   ui.viewport = { offset, height: bodyHeight, total: lines.length };
-  // User prompt rows drive the { and } jumps. Rich chat marks the prompt
-  // label by style; plain transcript rows end with the YOU marker instead.
+  // User prompt anchors drive the { and } jumps. Rich chat styles both a
+  // message header and body as user text, so use only the distinct header;
+  // plain transcript rows carry a timestamped YOU header.
   ui.promptRows = lines
     .map((line, index) =>
-      styled?.[index]?.style === "user" ||
       line.startsWith(`${roleIcon("user")} YOU`) ||
-      / YOU$/.test(line)
+      (!styled && /^\[\d{2}:\d{2}:\d{2}\] YOU$/.test(line))
         ? index
         : -1,
     )

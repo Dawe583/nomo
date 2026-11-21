@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { execFileSync } from "node:child_process";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -16,7 +17,10 @@ async function fixture(t: test.TestContext, answer = "Fixture reply") {
       ? Response.json({ data: [{ id: "fixture" }] })
       : Response.json({
           choices: [
-            { message: { role: "assistant", content: answer } },
+            {
+              message: { role: "assistant", content: answer },
+              finish_reason: "stop",
+            },
           ],
         }),
   );
@@ -119,10 +123,13 @@ test("projects and preset agents apply only to new conversations and projects su
   await ui.command("original");
   await app.settled();
   const original = ui.sessionId!;
+  const projectRoot = await mkdtemp(join(tmpdir(), "nomo-project-root-"));
+  execFileSync("git", ["init"], { cwd: projectRoot, stdio: "ignore" });
+  t.after(async () => rm(projectRoot, { recursive: true, force: true }));
   const file = join(env.NOMO_DATA_DIR, "project.json");
   await writeFile(
     file,
-    JSON.stringify({ name: "Writing", root: "/descriptive/project/root" }),
+    JSON.stringify({ name: "Writing", root: projectRoot }),
   );
   await ui.command(`/project-file ${file}`);
   assert.equal(app.listProjects().length, 0, "creation waits for confirmation");
@@ -520,7 +527,10 @@ test("/hook flips a saved hook without rewriting it", async (t) => {
       ? Response.json({ data: [{ id: "fixture" }] })
       : Response.json({
           choices: [
-            { message: { role: "assistant", content: "Fixture reply" } },
+            {
+              message: { role: "assistant", content: "Fixture reply" },
+              finish_reason: "stop",
+            },
           ],
         }),
   );
@@ -655,9 +665,9 @@ test("running subagent cancellation requires confirmation and preserves capacity
   const app = new Workbench(env, async (url) => {
     if (String(url).endsWith("/models")) return Response.json({ data: [{ id: "fixture" }] });
     if (calls++ === 0)
-      return Response.json({ choices: [{ message: { role: "assistant", content: "Parent done" } }] });
+      return Response.json({ choices: [{ message: { role: "assistant", content: "Parent done" }, finish_reason: "stop" }] });
     await blocked;
-    return Response.json({ choices: [{ message: { role: "assistant", content: "Late child output" } }] });
+    return Response.json({ choices: [{ message: { role: "assistant", content: "Late child output" }, finish_reason: "stop" }] });
   });
   assertIsolated(root, env);
   t.after(async () => {
@@ -692,7 +702,7 @@ test("queued spawned-child cancellation is immediate and safe in the TUI", async
     if (String(url).endsWith("/models")) return Response.json({ data: [{ id: "fixture" }] });
     calls++;
     await blocked;
-    return Response.json({ choices: [{ message: { role: "assistant", content: "Done" } }] });
+    return Response.json({ choices: [{ message: { role: "assistant", content: "Done" }, finish_reason: "stop" }] });
   });
   assertIsolated(root, env);
   t.after(async () => {
@@ -729,7 +739,7 @@ test("queued cancel rechecks the child after verification before choosing confir
       childStarted();
       await childBlocked;
     }
-    return Response.json({ choices: [{ message: { role: "assistant", content: "Done" } }] });
+    return Response.json({ choices: [{ message: { role: "assistant", content: "Done" }, finish_reason: "stop" }] });
   });
   assertIsolated(root, env);
   t.after(async () => {

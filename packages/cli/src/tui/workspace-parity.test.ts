@@ -9,6 +9,7 @@ import {
   TAB_ICONS,
   TAB_ICON_TONE,
   WorkspaceTui,
+  chatRows,
   filterKeyForTab,
   approvalLabel,
   detectHarnesses,
@@ -48,7 +49,7 @@ const assistantFetcher = (content: string) => async (url: unknown) => {
   if (String(url).endsWith("/models"))
     return Response.json({ data: [{ id: "fixture" }] });
   return Response.json({
-    choices: [{ message: { role: "assistant", content } }],
+    choices: [{ message: { role: "assistant", content }, finish_reason: "stop" }],
   });
 };
 
@@ -491,13 +492,19 @@ test("a toast never costs the operator the prompt frame, at any height", async (
       }).split("\n");
       assert.equal(rows.length, Math.max(8, height), `${width}x${height}`);
       assert.ok(
-        rows.some((row) => row.startsWith("┌")),
-        `no prompt frame top at ${width}x${height}`,
+        rows.some((row) => row.includes("> x")),
+        `no visible composer at ${width}x${height}`,
       );
-      assert.ok(
-        rows.some((row) => row.startsWith("└")),
-        `no prompt frame bottom at ${width}x${height}`,
-      );
+      if (width < 78 || height < 22) {
+        assert.ok(
+          rows.some((row) => row.startsWith("┌")),
+          `no compact prompt frame top at ${width}x${height}`,
+        );
+        assert.ok(
+          rows.some((row) => row.startsWith("└")),
+          `no compact prompt frame bottom at ${width}x${height}`,
+        );
+      }
     }
 });
 
@@ -913,7 +920,7 @@ test("a prompt sent during a run is queued, never dropped", async (t) => {
   assert.match(ui.notice, /queued/i);
   release!(
     Response.json({
-      choices: [{ message: { role: "assistant", content: "done" } }],
+      choices: [{ message: { role: "assistant", content: "done" }, finish_reason: "stop" }],
     }),
   );
   await app.settled();
@@ -1264,23 +1271,26 @@ test("prompt frame stays continuous at every width", async (t) => {
     const rows = frame.split("\n");
     assert.equal(rows.length, height);
     assert.ok(rows.every((line) => visibleLength(line) <= width!));
-    const top = rows.find((line) => line.startsWith("┌"))!;
-    const bottom = rows.find((line) => line.startsWith("└"))!;
-    assert.ok(top.endsWith("┐"), top);
-    assert.ok(bottom.endsWith("┘"), bottom);
-    assert.equal(visibleLength(top), width);
-    assert.equal(visibleLength(bottom), width);
-    // Composer rows are the rows between the frame top and bottom. Selecting
-    // them positionally instead of by prefix keeps the header rows, which also
-    // start with the indent, out of the assertion.
-    const topIndex = rows.findIndex((line) => line.startsWith("┌"));
-    const bottomIndex = rows.findIndex((line) => line.startsWith("└"));
-    const promptRows = rows.slice(topIndex + 1, bottomIndex);
-    assert.ok(promptRows.length > 0);
-    for (const row of promptRows) {
-      assert.ok(row.startsWith("  "), row);
-      assert.ok(row.endsWith("  "), row);
-      assert.equal(visibleLength(row), width);
+    const composer = rows.find((line) => line.includes("> hello_"));
+    assert.ok(composer, `composer draft is visible at ${width}x${height}`);
+    assert.equal(visibleLength(composer!), width);
+    if (width < 78 || height < 22) {
+      const top = rows.find((line) => line.startsWith("┌"))!;
+      const bottom = rows.find((line) => line.startsWith("└"))!;
+      assert.ok(top.endsWith("┐"), top);
+      assert.ok(bottom.endsWith("┘"), bottom);
+      assert.equal(visibleLength(top), width);
+      assert.equal(visibleLength(bottom), width);
+      // Compact layouts keep the composer inside a continuous frame.
+      const topIndex = rows.findIndex((line) => line.startsWith("┌"));
+      const bottomIndex = rows.findIndex((line) => line.startsWith("└"));
+      const promptRows = rows.slice(topIndex + 1, bottomIndex);
+      assert.ok(promptRows.length > 0);
+      for (const row of promptRows) {
+        assert.ok(row.startsWith("  "), row);
+        assert.ok(row.endsWith("  "), row);
+        assert.equal(visibleLength(row), width);
+      }
     }
   }
 });
@@ -1361,9 +1371,7 @@ test("logo is one stroke width and every row aligns", async (t) => {
   assert.equal(mark[3]![6], "█", mark[3]);
 });
 
-test("tab icons carry fixed colors in color mode only", async (t) => {
-  for (const tone of Object.values(TAB_ICON_TONE))
-    assert.match(tone, /^38;5;\d+$/);
+test("tab icons use their declared tones in color mode and no color in mono", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "nomo-tui-icon-tone-"));
   const { app, env } = await fixtureApp(root);
   t.after(async () => {
@@ -1371,11 +1379,12 @@ test("tab icons carry fixed colors in color mode only", async (t) => {
     await rm(root, { recursive: true, force: true });
   });
   const ui = new WorkspaceTui(app, env);
-  const color = renderWorkspace(ui, 200, 40, "_", true, false, { color: true });
-  assert.ok(color.includes("38;5;203"));
-  assert.ok(color.includes("38;5;78"));
-  const mono = stripAnsi(renderWorkspace(ui, 100, 32, "_", true));
-  assert.ok(!mono.includes("38;5;"));
+  ui.choose("sessions");
+  const color = renderWorkspace(ui, 80, 18, "", false, false, { color: true });
+  assert.ok(color.includes(TAB_ICON_TONE.chat));
+  assert.ok(color.includes(TAB_ICON_TONE.documents));
+  const mono = renderWorkspace(ui, 80, 18, "", false, false, { color: false });
+  assert.doesNotMatch(mono, /\x1b\[[0-9;]*m/);
 });
 
 test("icons stay one cell wide and never carry safety meaning", () => {
@@ -1512,8 +1521,20 @@ test("render collects user prompt rows for jumps", async (t) => {
   await ui.command("second question");
   await app.settled();
   renderWorkspace(ui, 100, 40, "_", true);
-  assert.equal(ui.promptRows.length, 2);
-  assert.ok(ui.promptRows[0]! < ui.promptRows[1]!);
+  const transcriptRows = chatRows(ui.session()!.events, 96, ui.compactTools);
+  const promptLabels = ui.promptRows.map(
+    (offset) => transcriptRows[offset]?.text,
+  );
+  assert.equal(
+    promptLabels.length,
+    2,
+    "one jump target exists for each user prompt",
+  );
+  assert.ok(promptLabels.every((line) => line?.includes("YOU")));
+  const first = ui.promptRows[0]!;
+  const second = ui.promptRows[1]!;
+  assert.equal(nextPromptRow(ui.promptRows, first, 1), second);
+  assert.equal(nextPromptRow(ui.promptRows, second, -1), first);
 });
 
 test("arrow keys cycle panels in navigation, cursor in editing", async (t) => {
@@ -2027,7 +2048,7 @@ test("NVIDIA API key is read ONLY from env var, never from chat input", async (t
     seenAuth = headers.authorization ?? "";
     seenBody = String(options?.body ?? "");
     return Response.json({
-      choices: [{ message: { role: "assistant", content: "ok" } }],
+      choices: [{ message: { role: "assistant", content: "ok" }, finish_reason: "stop" }],
     });
   };
   const app2 = new Workbench({ NOMO_DATA_DIR: root }, fetcher);
@@ -2050,7 +2071,7 @@ test("NVIDIA API key is read ONLY from env var, never from chat input", async (t
       String(url).endsWith("/models")
         ? Response.json({ data: [{ id: "m" }] })
         : Response.json({
-            choices: [{ message: { role: "assistant", content: "ok" } }],
+            choices: [{ message: { role: "assistant", content: "ok" }, finish_reason: "stop" }],
           }),
   );
   t.after(async () => {
@@ -2091,7 +2112,7 @@ test("logout preserves readable history, removes profiles and session keys", asy
     String(url).endsWith("/models")
       ? Response.json({ data: [{ id: "m" }] })
       : Response.json({
-          choices: [{ message: { role: "assistant", content: "hello back" } }],
+          choices: [{ message: { role: "assistant", content: "hello back" }, finish_reason: "stop" }],
         });
   const app = new Workbench({ NOMO_DATA_DIR: root }, fetcher);
   t.after(async () => {

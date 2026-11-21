@@ -30,10 +30,11 @@ with tempfile.TemporaryDirectory(prefix="nomo-tui-pty-") as data:
            "TERM": "xterm-256color", "NO_COLOR": "1"}
     seed = """
 import { Workbench } from './packages/workbench/src/index.ts';
-const app = new Workbench({NOMO_DATA_DIR:process.env.NOMO_DATA_DIR}, async url => String(url).endsWith('/models') ? Response.json({data:[{id:'fixture'}]}) : Response.json({choices:[{message:{role:'assistant',content:'fixture'}}]}));
+const app = new Workbench({NOMO_DATA_DIR:process.env.NOMO_DATA_DIR}, async url => String(url).endsWith('/models') ? Response.json({data:[{id:'fixture'}]}) : Response.json({choices:[{message:{role:'assistant',content:'fixture'},finish_reason:'stop'}]}));
 await app.configure({baseUrl:'https://fixture.invalid/v1',apiKey:'fixture'});
 const session=await app.start('PTY test','fixture'); await app.settled();
 await app.editDocument(session.id,{path:'pty.md',content:'Original',expectedRevision:null});
+await app.editDocument(session.id,{path:'zebra.md',content:'Second completion target',expectedRevision:null});
 await app.shutdown(); console.log(session.id);
 """
     session = subprocess.check_output(["node", "--input-type=module", "-e", seed], cwd=ROOT, env=env, text=True).strip()
@@ -63,7 +64,7 @@ DiffScreenWriter.prototype.write = function(frame) {
     os.close(slave)
     output = bytearray()
 
-    def read_until(marker, timeout=8, ready=False):
+    def read_until(marker, timeout=8, ready=False, composer=False):
         deadline = time.monotonic() + timeout
         start = len(output)
         while time.monotonic() < deadline:
@@ -75,8 +76,14 @@ DiffScreenWriter.prototype.write = function(frame) {
                 if not chunk:
                     break
                 output.extend(chunk)
-            found = output.find(marker.encode(), start)
-            if found >= 0 and (not ready or b"nomo-test-ready" in output[found:]):
+            if ready:
+                screen = _visible_screen(screenPath)
+                if composer:
+                    screen = "\n".join(screen.splitlines()[-6:])
+                found = marker in screen and b"nomo-test-ready" in output[start:]
+            else:
+                found = output.find(marker.encode(), start) >= 0
+            if found:
                 return
         raise AssertionError(
             "{} tail={} screen={}".format(
@@ -115,20 +122,29 @@ DiffScreenWriter.prototype.write = function(frame) {
         assert b"\x1b[?1049l" in output and b"\x1b[?2004l" in output, "Terminal mode not restored"
         os.close(master)
         master, slave = pty.openpty()
+        output = bytearray()
         fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack("HHHH", 32, 100, 0, 0))
-        process = subprocess.Popen(["node", "--import", str(observer), "packages/cli/bin/nomo.mjs", "tui", "--session", session], cwd=ROOT, env=env, stdin=slave, stdout=slave, stderr=slave, start_new_session=True)
+        mono_env = {**env, "NOMO_TUI_COLOR": "0"}
+        process = subprocess.Popen(["node", "--import", str(observer), "packages/cli/bin/nomo.mjs", "tui", "--session", session], cwd=ROOT, env=mono_env, stdin=slave, stdout=slave, stderr=slave, start_new_session=True)
         os.close(slave)
-        read_until("Write a prompt", ready=True)
+        read_until("Ask anything or type / for commands", ready=True, composer=True)
+        assert not re.search(rb"\x1b\[[0-9;]*m", output), "NOMO_TUI_COLOR=0 left ANSI colors enabled"
+        os.write(master, b"@z")
+        read_until("@z", ready=True, composer=True)
+        os.write(master, b"\t")
+        read_until("@zebra.md", ready=True, composer=True)
+        os.write(master, b"\x15")
+        read_until("Ask anything or type / for commands", ready=True, composer=True)
         os.write(master, b"draft first")
-        read_until("draft first", ready=True)
+        read_until("draft first", ready=True, composer=True)
         os.write(master, b"\x1b\rdraft second")
-        read_until("draft second", ready=True)
+        read_until("draft second", ready=True, composer=True)
         os.write(master, b"\x03/led")
         read_until("Signed operations", ready=True)
         os.write(master, b"\t\r")
-        read_until("ledger / navigation", ready=True)
+        read_until("SIGNED ENTRIES", ready=True)
         os.write(master, b"/chat\r")
-        read_until("Write a prompt", ready=True)
+        read_until("Ask anything or type / for commands", ready=True)
         os.write(master, b"\x1b[A")
         read_until("PTY test", ready=True)
         os.write(master, b"\x03/find PTY test\r")
@@ -148,7 +164,7 @@ DiffScreenWriter.prototype.write = function(frame) {
         os.write(master, b"\x1b")
         read_until("void_workspace_write", ready=True)
         os.write(master, b"/chat\r")
-        read_until("Write a prompt", ready=True)
+        read_until("Ask anything or type / for commands", ready=True)
         os.write(master, b"/expand\r")
         read_until("Full tool output", ready=True)
         os.write(master, b"\x0f")
@@ -252,7 +268,7 @@ import { writeFileSync } from 'node:fs';
 let calls = 0;
 globalThis.fetch = async (url, options) => {
   if (String(url).endsWith('/models')) return Response.json({data:[{id:'fixture'}]});
-  if (++calls === 1) return Response.json({choices:[{message:{role:'assistant',content:'Selected reply'}}]});
+  if (++calls === 1) return Response.json({choices:[{message:{role:'assistant',content:'Selected reply'},finish_reason:'stop'}]});
   return new Promise((resolve, reject) => {
     options.signal.addEventListener('abort', () => reject(options.signal.reason), {once:true});
   });
