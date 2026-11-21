@@ -671,7 +671,7 @@ seznamu zmizí, protože harness čte stav, který vrácení obnovilo.
 
 ## 10. Příkazová řáda
 
-Dvacet tři příkazů. `nomo --help` vypíše seznam; `nomo <příkaz>` bez argumentů
+Dvacet čtyři příkazů. `nomo --help` vypíše seznam; `nomo <příkaz>` bez argumentů
 vypíše usage daného příkazu.
 
 | Příkaz               | Co dělá                                                         |
@@ -699,6 +699,7 @@ vypíše usage daného příkazu.
 | `nomo update`     | Posunout instalovaný strom na sledovanou větev, jen dopředu.         |
 | `nomo state`      | Shrnutí nebo migrace trvalého stavu pracovního prostoru.             |
 | `nomo harness`    | Seznam a rozhodnutí nad návrhy harnesse relace a model, na kterém jeho recenze běží. |
+| `nomo goal`       | Spustit, zobrazit nebo zrušit cíl: jeden objektiv, tokenový rozpočet a volitelné dokončovací gate. |
 
 Tě s argumenty, přesně:
 
@@ -722,6 +723,9 @@ nomo harness global
 nomo harness ratchet --session <id> [<digest-or-prefix>]
 nomo harness entries --session <id>
 nomo harness model [<model-id>|--clear]
+nomo goal start --session <id> --token-budget <n> [--gate <exact-command>]... <objective>
+nomo goal status --session <id>
+nomo goal cancel --session <id>
 nomo tui [--once] [--project <cesta>] [--skill <id> ...] [--view <karta>] [--session <id>] [--data-dir <cesta>]
 nomo recovery conformance [--adapter filesystem.managed|git.managed|managed-documents|postgres-managed-conformance]
 nomo recovery <install|migrate|health|inspect|execute|plan|plan-job|apply-job|status-job|doctor|apply|reconcile|reconcile-recovery|serve|collect> --config <soubor> [--input <soubor>] [--approve <digest>] [--surface file|reserved|both]
@@ -771,6 +775,18 @@ Poznámky, které ušetří čas:
   `POST /api/sessions/:id/harness/proposals/:digest/promote`,
   `GET /api/harness/promotions` a
   `POST /api/harness/promotions/:digest/demote`.
+- `nomo goal start` zapíše jeden objektiv, tokenový rozpočet a až čtyři
+  dokončovací gate pro relaci, která je idle, a pokračování předá workbenchi.
+  Gate je jeden přesný příkaz z allowlistu runtime `NOMO_HOOK_COMMANDS`, takže
+  model nikdy nemůže pojmenovat příkaz, který operátor nepovolil; příkaz mimo
+  tento seznam, duplicitní gate a pátý gate jsou odmítnuty dřív, než se cokoli
+  spustí. Tento příkaz gate nikdy nespouští: spouští ho workbench a text
+  příkazu se nikdy nedostane do promptu modelu, jen označený nedůvěryhodný
+  výsledek. Prošlý gate cíl dokončí, tokenový rozpočet ho ukončí jako
+  `budget_limited`, neprošlý gate nad nezměněným workspace ho zastaví jako
+  `stalled` a `nomo goal cancel` ho označí `cancelled` a zahodí zařazené
+  pokračování. `nomo goal status` vypíše objektiv, stav, rozpočet, gate a počet
+  pokračování; relaci bez cíle ohlásí jako takovou, místo aby selhala.
 - `nomo config` vypíše rozřešené adresáře dat, ledgeru a schválení a zda je
   nastaven ověřovací klíč. Klíč nikdy nevypíše.
 - `nomo verify` na ledgeru s prázdným adresářem selže prostým `ENOENT` se

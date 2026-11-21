@@ -1,6 +1,14 @@
 import { compactMessages, dropsHistory, omittedByCompaction } from "./context.ts";
 import { parsePlanUpdate, PLAN_TOOL, type PlanItem } from "./plan.ts";
 import {
+  evaluateGoal,
+  goalContinuationPrompt,
+  goalStartPrompt,
+  parseGoalInput,
+  type Goal,
+  type GoalGateFailure,
+} from "./goals.ts";
+import {
   DELEGATE_TOOL,
   SUBAGENT_RESULT_TOOL,
   parseDelegateCall,
@@ -327,6 +335,7 @@ export type SessionView = {
   readonly compaction?: CompactionResult;
   readonly contextMessages?: number;
   readonly plan?: readonly PlanItem[];
+  readonly goal?: Goal;
   readonly lastRecoveryJob?: { readonly jobId: string };
   readonly state?: RunState;
   readonly status:
@@ -3750,6 +3759,69 @@ export class Workbench {
     };
     this.persist();
     return this.view(session);
+  }
+  async startGoal(sessionId: string, input: unknown): Promise<Goal> {
+    const session = this.sessions.get(sessionId);
+    if (!session) throw new Error("Session not found.");
+    if (session.view.status !== "idle")
+      throw new Error("Start a goal only while the session is idle.");
+    if (session.view.goal?.status === "active")
+      throw new Error("This session already has an active goal.");
+    const parsed = parseGoalInput(
+      input,
+      this.hookAllowlist,
+      this.harness.maxPromptCharacters,
+    );
+    const goal: Goal = {
+      id: randomUUID(),
+      ...parsed,
+      status: "active",
+      runTokenBase: session.view.runTokenCount,
+      lastWorkspaceDigest: await this.goalWorkspaceDigest(session),
+      continuationCount: 0,
+    };
+    const previous = session.view.goal;
+    session.view = { ...session.view, goal };
+    this.persist();
+    try {
+      this.send(sessionId, goalStartPrompt(goal), `goal:${goal.id}:0`);
+    } catch (error) {
+      session.view = { ...session.view, goal: previous };
+      this.persist();
+      throw error;
+    }
+    return structuredClone(goal);
+  }
+  getGoal(sessionId: string): Goal | null {
+    const session = this.sessions.get(sessionId);
+    if (!session) throw new Error("Session not found.");
+    return session.view.goal ? structuredClone(session.view.goal) : null;
+  }
+  cancelGoal(sessionId: string): Goal {
+    const session = this.sessions.get(sessionId);
+    if (!session) throw new Error("Session not found.");
+    const current = session.view.goal;
+    if (!current) throw new Error("This session has no goal.");
+    if (current.status !== "active") return structuredClone(current);
+    const goal: Goal = { ...current, status: "cancelled" };
+    if (
+      session.queuedPrompt?.includes(`Goal: ${current.objective}`) &&
+      this.queued.delete(sessionId)
+    ) {
+      delete session.queuedPrompt;
+      delete session.queuedImages;
+      session.view = { ...session.view, status: "idle" };
+    }
+    session.view = { ...session.view, goal };
+    this.event(
+      session,
+      "tool",
+      "Goal cancelled by the operator.",
+      { goalId: goal.id, status: goal.status },
+      "goal.status",
+    );
+    this.persist();
+    return structuredClone(goal);
   }
   sessionPage(query: URLSearchParams) {
     const all = filterRows(this.allViews(), query)
@@ -7197,6 +7269,114 @@ export class Workbench {
       return false;
     }
   }
+  private async goalWorkspaceDigest(session: Session): Promise<string> {
+    const project = session.projectBinding && session.projectBinding === this.projectAccess
+      ? await projectWorkspaceStatus(session.projectBinding.workspace)
+      : undefined;
+    return sha256Hex(canonicalJson({
+      documents: this.workspace(session.view.id).files,
+      project: project?.changes.map((change) => change.digest) ?? [],
+    }));
+  }
+  private async serviceGoal(session: Session): Promise<void> {
+    const current = session.view.goal;
+    if (!current || current.status !== "active" || session.view.status !== "idle") return;
+    let gatesPassed = true;
+    let failure: GoalGateFailure | undefined;
+    for (const [index, command] of current.gates.entries()) {
+      const result = await runHook(
+        {
+          id: `goal-${current.id}-${index}`,
+          event: "after-run",
+          command,
+          enabled: true,
+        },
+        {
+          sessionId: session.view.id,
+          workspace: session.view.workspace,
+          runId: session.view.runId,
+          goalId: current.id,
+        },
+        {
+          timeoutMs: this.hookTimeoutFromEnv ?? this.harness.hookTimeoutMs,
+          env: this.env,
+        },
+      );
+      this.event(
+        session,
+        "tool",
+        `Goal gate ${index + 1}: ${result.outcome}, exit ${result.code ?? "none"}.`,
+        {
+          goalId: current.id,
+          gate: index + 1,
+          outcome: result.outcome,
+          code: result.code,
+          durationMs: result.durationMs,
+        },
+        "goal.gate",
+      );
+      if (!hookSucceeded(result)) {
+        gatesPassed = false;
+        failure = { index: index + 1, outcome: result.outcome, code: result.code };
+        break;
+      }
+    }
+    const decision = evaluateGoal(current, {
+      gatesPassed,
+      tokensUsed: Math.max(0, session.view.runTokenCount - current.runTokenBase),
+      workspaceDigest: await this.goalWorkspaceDigest(session),
+    });
+    session.view = { ...session.view, goal: decision.goal };
+    if (!decision.continue) {
+      this.event(
+        session,
+        "tool",
+        `Goal ${decision.goal.status.replaceAll("_", " ")}.`,
+        { goalId: decision.goal.id, status: decision.goal.status },
+        "goal.status",
+      );
+      this.persist();
+      return;
+    }
+    this.persist();
+    try {
+      if (this.queued.size >= this.harness.maxQueuedRuns)
+        throw new Error(`Background queue is full (${this.harness.maxQueuedRuns} queued runs).`);
+      const prompt = goalContinuationPrompt(decision.goal, failure!);
+      session.queuedPrompt = prompt;
+      delete session.queuedImages;
+      this.queued.add(session.view.id);
+      session.view = {
+        ...session.view,
+        status: "queued",
+        runId: randomUUID(),
+      };
+      this.event(session, "user", prompt, { goalId: decision.goal.id });
+      this.event(
+        session,
+        "tool",
+        "Queued goal continuation.",
+        { status: "queued", goalId: decision.goal.id },
+        "run.status",
+      );
+      this.persist();
+    } catch (error) {
+      const goal: Goal = { ...decision.goal, status: "stalled" };
+      session.view = { ...session.view, goal };
+      this.event(
+        session,
+        "tool",
+        "Goal continuation could not be queued; goal stalled.",
+        {
+          goalId: goal.id,
+          status: goal.status,
+          reason: error instanceof Error ? error.message : "Queue refused.",
+        },
+        "goal.status",
+      );
+      this.persist();
+    }
+  }
   private async executeSessionSearchTool(
     session: Session,
     args: JsonObject,
@@ -8284,6 +8464,7 @@ export class Workbench {
       // that failed is not settled: there is nothing to learn from an outcome
       // nobody knows.
       if (session.view.status === "idle") {
+        await this.serviceGoal(session);
         const pass = this.serviceHarnessTurn(session, "checkpoint").catch(() => {});
         this.harnessJobs.add(pass);
         void pass.finally(() => this.harnessJobs.delete(pass));

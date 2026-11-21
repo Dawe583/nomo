@@ -773,7 +773,7 @@ harness reads the state the rollback restored.
 
 ## 10. The command line
 
-Twenty-three commands. `nomo --help` prints the list; `nomo <command>` with no
+Twenty-four commands. `nomo --help` prints the list; `nomo <command>` with no
 arguments prints that command's usage.
 
 | Command          | What it does                                                              |
@@ -801,6 +801,7 @@ arguments prints that command's usage.
 | `nomo update`    | Move the installed tree to the tracked branch, fast-forward only.         |
 | `nomo state`     | Summarise or migrate persisted workspace state.                           |
 | `nomo harness`   | List and decide the harness proposals of a session, and name the model its reviews run on. |
+| `nomo goal`      | Start, inspect or cancel a goal: one objective, a token budget and optional completion gates. |
 
 The ones that take arguments, exactly:
 
@@ -824,6 +825,9 @@ nomo harness global
 nomo harness ratchet --session <id> [<digest-or-prefix>]
 nomo harness entries --session <id>
 nomo harness model [<model-id>|--clear]
+nomo goal start --session <id> --token-budget <n> [--gate <exact-command>]... <objective>
+nomo goal status --session <id>
+nomo goal cancel --session <id>
 nomo tui [--once] [--project <path>] [--skill <id> ...] [--view <tab>] [--session <id>] [--data-dir <path>]
 nomo recovery conformance [--adapter filesystem.managed|git.managed|managed-documents|postgres-managed-conformance]
 nomo recovery <install|migrate|health|inspect|execute|plan|plan-job|apply-job|status-job|doctor|apply|reconcile|reconcile-recovery|serve|collect> --config <file> [--input <file>] [--approve <digest>] [--surface file|reserved|both]
@@ -874,6 +878,19 @@ Notes that save time:
   decisions are `POST /api/sessions/:id/harness/proposals/:digest/promote`,
   `GET /api/harness/promotions` and
   `POST /api/harness/promotions/:digest/demote`.
+- `nomo goal start` records one objective, a token budget and up to four
+  completion gates for a session that is idle, then hands the continuation to
+  the workbench. A gate is one exact command from the runtime's
+  `NOMO_HOOK_COMMANDS` allowlist, so a model can never name a command the
+  operator did not allow; a command outside that list, a duplicate gate and a
+  fifth gate are refused before anything runs. This command never runs a gate:
+  the workbench does, and the gate's command text never reaches the model
+  prompt, only a labelled untrusted outcome. A passing gate completes the goal,
+  the token budget ends it as `budget_limited`, a failing gate over an
+  unchanged workspace stops it as `stalled`, and `nomo goal cancel` marks it
+  `cancelled` and drops a queued continuation. `nomo goal status` prints the
+  objective, status, budget, gates and continuation count, and reports a
+  session with no goal as such instead of failing.
 - `nomo config` prints the resolved data, ledger and approvals directories and
   whether a verification key is set. It never prints the key.
 - `nomo verify` on a ledger with no entries in the current directory fails with a

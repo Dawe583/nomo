@@ -1694,6 +1694,27 @@ async function route(
     response.end(image.bytes);
     return;
   }
+  const goalMatch = /^\/api\/sessions\/([a-f0-9-]+)\/goal$/.exec(parsed.pathname);
+  if (goalMatch) {
+    const id = goalMatch[1]!;
+    if (!wb.get(id))
+      return sendJson(response, 404, { message: "Session not found." });
+    try {
+      if (request.method === "GET")
+        return sendJson(response, 200, { goal: wb.getGoal(id) });
+      if (request.method === "POST")
+        return sendJson(response, 201, {
+          goal: await wb.startGoal(id, await readJsonBody(request)),
+        });
+      if (request.method === "DELETE")
+        return sendJson(response, 200, { goal: wb.cancelGoal(id) });
+    } catch (error) {
+      return sendRequestError(response, error, 400, {
+        error: "goal_request_refused",
+        message: error instanceof Error ? error.message : "Goal request refused.",
+      });
+    }
+  }
   const sessionMatch = /^\/api\/sessions\/([a-f0-9-]+)$/.exec(parsed.pathname);
   if (sessionMatch) {
     const id = sessionMatch[1]!;

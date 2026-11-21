@@ -467,6 +467,15 @@ limited to eight 240-character excerpts from at most 100 conversations, with
 provider and connector redaction plus secret-shaped hit withholding. Disabling
 the setting filters later provider requests and refuses execution
 (`session-search.test.ts`, `session-search-tool.test.ts`).
+
+Operator goals (`startGoal`, `getGoal`, `cancelGoal`, `/api/sessions/:id/goal`,
+`nomo goal`) record one objective, a positive token budget up to 1,000,000
+tokens and up to four exact completion gates from `NOMO_HOOK_COMMANDS`. The
+model never receives gate command strings or raw gate stdout/stderr. After each
+settled run, passing gates complete the goal, budget or continuation exhaustion
+ends it as `budget_limited`, a failing gate over an unchanged workspace digest
+stops it as `stalled`, and only a changed workspace queues a bounded untrusted
+continuation (`goals.test.ts`, `goal-runtime.test.ts`).
 Assistant text streams to the UI. There is no claim of Codex, Claude Code or
 OpenCode process adapters, PTY, or desktop packaging. Those are separate AW
 work packages.

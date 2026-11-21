@@ -347,6 +347,21 @@ against Hermes Agent and Prime Agent and orders the slices that close the gap:
   tests. Stop: the tool is offered while disabled, the current session leaks,
   system instructions are searched, or raw known secrets reach the result.
 
+- HP7. Goals with completion gates. Status: implemented 2026-11-21. Paths:
+  `packages/workbench/src/goals.ts`, `packages/workbench/src/index.ts`,
+  `apps/control-plane/api/server.ts`, `packages/cli/src/goal.ts`,
+  `packages/cli/src/argv.ts`, `packages/cli/src/dispatch.ts`. Goal: operator
+  goals bind one objective, a token budget and up to four exact
+  `NOMO_HOOK_COMMANDS` gates; passing gates complete, budget or continuation
+  exhaustion ends as `budget_limited`, unchanged workspace stops as `stalled`,
+  and neither gate commands nor raw gate output reach the model. Verifier:
+  `packages/workbench/src/goals.test.ts`,
+  `packages/workbench/src/goal-runtime.test.ts`,
+  `apps/control-plane/api/goal.test.ts`, `packages/cli/src/goal.test.ts`,
+  workbench and full typecheck, documentation tests. Stop: any command outside
+  `NOMO_HOOK_COMMANDS` executes, a terminal goal resumes, or gate command/output
+  text leaks into model prompts.
+
 - HP8. Project read and search. Status: implemented 2026-11-21. Paths:
   `packages/workbench/src/project-read.ts`,
   `packages/workbench/src/project-workspace.ts`,

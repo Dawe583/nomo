@@ -786,6 +786,12 @@ Vlastník schválil work package pro projektové schopnosti v
 - `nomo_plan_update` je R0 nástroj pro nejvýše 50 validovaných položek plánu.
   Nahrazuje celý plán, vrací jej modelu, ukládá na `SessionView.plan` a nikdy
   nemění policy, katalog nástrojů ani oprávnění (HP4).
+- Operátorský cíl (`Workbench.startGoal`, `/api/sessions/:id/goal`, `nomo goal`)
+  váže jeden objektiv, kladný tokenový rozpočet a nejvýše čtyři přesné gate
+  příkazy z runtime allowlistu `NOMO_HOOK_COMMANDS`. Model nedostává text gate
+  příkazů ani stdout/stderr procesu. Prošlé gate dokončí cíl jako `completed`,
+  vyčerpání rozpočtu nebo stropu pokračování skončí jako `budget_limited` a
+  neprošlý gate nad nezměněným digestem workspace skončí jako `stalled` (HP7).
 - Projekt i výstupy příkazů mohou obsahovat inline secrets; mohou odejít
   zvolenému provideru a zůstat v lokální historii session. TUI i Control Plane
   musí toto riziko říct před souhlasem. Filtrování názvů cest neskryje tajemství

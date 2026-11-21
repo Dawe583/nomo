@@ -142,12 +142,12 @@ test("every command the binary accepts is documented", () => {
   }
   assert.match(
     en,
-    /Twenty-three commands\./,
+    /Twenty-four commands\./,
     "the English edition must state how many commands there are, so a new one is noticed",
   );
   assert.match(
     cs,
-    /Dvacet tři příkazů\./,
+    /Dvacet čtyři příkazů\./,
     "the Czech edition must state how many commands there are",
   );
 });
@@ -381,8 +381,8 @@ test("the gate is not vacuous", () => {
   // If a future edit emptied the extraction patterns, every assertion above would
   // pass on nothing. Assert the extractors found real material.
   assert.ok(
-    COMMANDS.length === 23,
-    `expected 23 commands, found ${COMMANDS.length}`,
+    COMMANDS.length === 24,
+    `expected 24 commands, found ${COMMANDS.length}`,
   );
   assert.equal(parseInvocation(["approve"]).ok, true);
   assert.equal(parseInvocation(["definitely-not-a-command"]).ok, false);
