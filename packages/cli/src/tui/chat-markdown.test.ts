@@ -69,7 +69,7 @@ test("chat block parser presents Markdown structure as safe text rows", () => {
   assert.deepEqual(
     markdownBlockRows(
       "## Plan\n- first\n1. second\n- [x] done\n> note\n```ts\nconst x = 1;\n```\n[docs](https://example.test)",
-    ),
+    ).map(({ text, style }) => ({ text, style })),
     [
       { text: "Plan", style: "heading" },
       { text: "• first", style: "list" },
@@ -82,8 +82,20 @@ test("chat block parser presents Markdown structure as safe text rows", () => {
   );
 });
 
-test("chat block parser sanitizes controls and keeps HTML literal", () => {
-  assert.deepEqual(markdownBlockRows("<b>safe</b>\u001b]0;title\u0007"), [
-    { text: "<b>safe</b>?]0;title?", style: "paragraph" },
+test("chat block parser exposes emphasis spans and keeps HTML literal", () => {
+  const [row] = markdownBlockRows("<b>safe</b> **bold**");
+  assert.equal(row?.text, "<b>safe</b> bold");
+  assert.deepEqual(row?.parts, [
+    { text: "<b>safe</b> " },
+    { text: "bold", style: "strong" },
   ]);
+  assert.deepEqual(
+    markdownBlockRows("safe\u001b]0;title\u0007")[0]?.text,
+    "safe?]0;title?",
+  );
+  assert.equal(
+    markdownBlockRows("`[literal](https://example.test)`")[0]?.text,
+    "[literal](https://example.test)",
+    "link syntax inside code stays literal",
+  );
 });

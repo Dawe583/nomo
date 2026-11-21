@@ -8,12 +8,31 @@ export type InlineMarkdownPart = {
 export type ChatMarkdownBlockRow = {
   text: string;
   style: "paragraph" | "heading" | "list" | "quote" | "code";
+  parts: InlineMarkdownPart[];
 };
 
 /** Convert common chat Markdown blocks into sanitized, terminal-safe rows. */
 export function markdownBlockRows(value: string): ChatMarkdownBlockRow[] {
   const rows: ChatMarkdownBlockRow[] = [];
   let fence: { marker: string; length: number } | undefined;
+  const add = (text: string, style: ChatMarkdownBlockRow["style"]) => {
+    const safe = sanitizeText(text);
+    const parts =
+      style === "code"
+        ? [{ text: safe, style: "code" as const }]
+        : inlineMarkdownParts(safe).map((part) =>
+            part.style === "code"
+              ? part
+              : {
+                  ...part,
+                  text: part.text.replace(
+                    /\[([^\]]+)\]\(([^\s)]+)\)/g,
+                    "$1 <$2>",
+                  ),
+                },
+          );
+    rows.push({ text: parts.map((part) => part.text).join(""), style, parts });
+  };
 
   for (const sourceLine of value.split("\n")) {
     const safeLine = sanitizeText(sourceLine);
@@ -24,20 +43,17 @@ export function markdownBlockRows(value: string): ChatMarkdownBlockRow[] {
       if (!fence) fence = { marker, length: fenceMatch[1].length };
       else if (marker === fence.marker && fenceMatch[1].length >= fence.length)
         fence = undefined;
-      else rows.push({ text: line, style: "code" });
+      else add(line, "code");
       continue;
     }
     if (fence) {
-      rows.push({ text: line, style: "code" });
+      add(line, "code");
       continue;
     }
 
     const heading = line.match(/^ {0,3}(#{1,6})\s+(.*)$/);
     if (heading) {
-      rows.push({
-        text: heading[2].replace(/\s+#+\s*$/, ""),
-        style: "heading",
-      });
+      add(heading[2].replace(/\s+#+\s*$/, ""), "heading");
       continue;
     }
 
@@ -49,23 +65,17 @@ export function markdownBlockRows(value: string): ChatMarkdownBlockRow[] {
           ? "✓ "
           : "□ "
         : `${list[2].match(/^\d/) ? `${list[2]} ` : "• "}`;
-      rows.push({
-        text: `${list[1]}${marker}${task?.[2] ?? list[3]}`,
-        style: "list",
-      });
+      add(`${list[1]}${marker}${task?.[2] ?? list[3]}`, "list");
       continue;
     }
 
     const quote = line.match(/^ {0,3}>\s?(.*)$/);
     if (quote) {
-      rows.push({ text: `│ ${quote[1]}`, style: "quote" });
+      add(`│ ${quote[1]}`, "quote");
       continue;
     }
 
-    rows.push({
-      text: line.replace(/\[([^\]]+)\]\(([^\s)]+)\)/g, "$1 <$2>"),
-      style: "paragraph",
-    });
+    add(line, "paragraph");
   }
 
   return rows;
@@ -105,11 +115,20 @@ export function paintInlineMarkdown(
   paint: (text: string, tone: string, bold?: boolean) => string,
 ): string {
   const clean = sanitizeText(value);
-  const parts = inlineMarkdownParts(clean);
+  return paintMarkdownParts(inlineMarkdownParts(clean), width, tone, paint);
+}
+
+/** Paint already-parsed safe spans and pad to the requested terminal width. */
+export function paintMarkdownParts(
+  parts: readonly InlineMarkdownPart[],
+  width: number,
+  tone: string,
+  paint: (text: string, tone: string, bold?: boolean) => string,
+): string {
   const body = parts
     .map((part) =>
       paint(
-        part.text,
+        sanitizeText(part.text),
         part.style === "code" ? "info" : tone,
         part.style === "strong",
       ),
@@ -117,7 +136,7 @@ export function paintInlineMarkdown(
     .join("");
   const cells = Number.isFinite(width) ? Math.max(0, Math.floor(width)) : 0;
   const contentWidth = parts.reduce(
-    (total, part) => total + visibleLength(part.text),
+    (total, part) => total + visibleLength(sanitizeText(part.text)),
     0,
   );
   return body + " ".repeat(Math.max(0, cells - contentWidth));

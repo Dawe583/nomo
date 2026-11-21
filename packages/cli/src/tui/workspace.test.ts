@@ -1505,6 +1505,55 @@ test("chat presentation preserves code, sanitizes escapes, and distinguishes eve
   assert.ok(
     rows.every((r) => !r.text.includes("\x1b") && visibleLength(r.text) <= 40),
   );
+  const markdown = {
+    ...base,
+    text: "## Highlights\nRead **bold** and `code`.\n- alpha\n1. beta\n- [x] done\n> note\n[docs](https://example.test)",
+  };
+  const markdownRows = chatRows([markdown], 40);
+  assert.ok(
+    markdownRows.some((r) => r.style === "heading" && r.text === "Highlights"),
+  );
+  assert.ok(
+    markdownRows.some((r) => r.style === "list" && r.text === "• alpha"),
+  );
+  assert.ok(
+    markdownRows.some((r) => r.style === "list" && r.text === "1. beta"),
+  );
+  assert.ok(
+    markdownRows.some((r) => r.style === "list" && r.text === "✓ done"),
+  );
+  assert.ok(
+    markdownRows.some((r) => r.style === "quote" && r.text === "│ note"),
+  );
+  assert.ok(markdownRows.some((r) => r.text === "docs <https://example.test>"));
+  assert.ok(
+    markdownRows.every((r) => !/\*\*|`|\]\(/.test(r.text)),
+    "assistant Markdown markers do not leak into display rows",
+  );
+  const formattedInline = markdownRows.find(
+    (r) => r.text === "Read bold and code.",
+  );
+  assert.ok(formattedInline);
+  assert.deepEqual(formattedInline.parts, [
+    { text: "Read " },
+    { text: "bold", style: "strong" },
+    { text: " and " },
+    { text: "code", style: "code" },
+    { text: "." },
+  ]);
+  const narrowMarkdown = chatRows(
+    [{ ...markdown, text: `**${"very long emphasized words ".repeat(3)}**` }],
+    12,
+  );
+  assert.ok(narrowMarkdown.every((r) => !r.text.includes("**")));
+  assert.ok(
+    narrowMarkdown.some((r) => r.parts?.some((p) => p.style === "strong")),
+  );
+  assert.equal(
+    markdown.text.includes("**bold**"),
+    true,
+    "events stay unchanged",
+  );
   const hostile = chatRows(
     [{ ...base, kind: "user", text: "```ts\n# I am not a heading\nVOID" }],
     40,
@@ -1521,6 +1570,12 @@ test("chat presentation preserves code, sanitizes escapes, and distinguishes eve
     ),
     "a plain user-authored # Plan remains literal outside a code fence",
   );
+  assert.ok(
+    chatRows([{ ...base, kind: "user", text: "**literal**" }], 40).some(
+      (r) => r.text === "**literal**",
+    ),
+    "user-authored Markdown remains literal",
+  );
   const streamed = chatRows(
     [
       { ...base, type: "message.delta", text: "partial" },
@@ -1532,6 +1587,88 @@ test("chat presentation preserves code, sanitizes escapes, and distinguishes eve
   assert.equal(streamed.filter((r) => r.text === "complete").length, 1);
   const fences = chatRows([{ ...base, text: "````ts\n```\nkept\n````" }], 40);
   assert.ok(fences.some((r) => r.style === "code" && r.text.includes("```")));
+});
+test("rich chat renderer styles safe Markdown without changing event text", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-chat-markdown-render-"));
+  const answer =
+    "## Highlights\nRead **bold** and `code`.\n- alpha\n> quote\n[docs](https://example.test)";
+  const encoder = new TextEncoder();
+  const app = new Workbench({ NOMO_DATA_DIR: root }, async (url) => {
+    const target = String(url);
+    if (target.endsWith("/models"))
+      return Response.json({ data: [{ id: "fixture-model" }] });
+    if (target.endsWith("/chat/completions")) {
+      const frame =
+        `data: ${JSON.stringify({ choices: [{ delta: { content: answer } }] })}\n\n` +
+        `data: ${JSON.stringify({ choices: [{ delta: {}, finish_reason: "stop" }] })}\n\n` +
+        "data: [DONE]\n\n";
+      return new Response(encoder.encode(frame), {
+        headers: { "content-type": "text/event-stream" },
+      });
+    }
+    return new Response("{}", { status: 404 });
+  });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  await app.configure({
+    baseUrl: "https://fixture.invalid/v1",
+    apiKey: "local-fixture-only",
+  });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
+  ui.model = "fixture-model";
+  await ui.command("Show formatted response");
+  await app.settled();
+  ui.choose("chat");
+  assert.ok(ui.session());
+  const source =
+    ui
+      .session()
+      ?.events.map((event) => event.text)
+      .join("") ?? "";
+  assert.ok(source.includes("**bold**"), `source response changed: ${source}`);
+
+  for (const [width, height] of [
+    [40, 12],
+    [100, 24],
+    [200, 48],
+  ] as const) {
+    for (const color of [true, false]) {
+      const frame = renderWorkspace(ui, width, height, "", false, false, {
+        color,
+        motion: false,
+      });
+      const plain = stripAnsi(frame);
+      assert.equal(frame.split("\n").length, height);
+      assert.ok(
+        frame.split("\n").every((line) => visibleLength(line) <= width),
+      );
+      assert.ok(!/\*\*|`|\]\(/.test(plain));
+      if (color) {
+        if (width >= 100) assert.match(frame, /\x1b\[1;38;5;252m/);
+      } else {
+        assert.ok(
+          !frame.includes("\x1b["),
+          `${width}x${height} monochrome frame has ANSI`,
+        );
+      }
+      if (width >= 100) {
+        for (const visible of [
+          "Highlights",
+          "bold",
+          "code",
+          "• alpha",
+          "│ quote",
+          "https://example.test",
+        ])
+          assert.ok(
+            plain.includes(visible),
+            `${width} columns hide ${visible}`,
+          );
+      }
+    }
+  }
 });
 test("user message and existing error form a flat charcoal sequence", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "nomo-tui-user-error-strip-"));

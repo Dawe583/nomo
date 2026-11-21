@@ -110,6 +110,12 @@ import {
 import { renderInspector } from "./inspector.ts";
 import { roleIcon } from "./blocks.ts";
 import {
+  markdownBlockRows,
+  paintMarkdownParts,
+  type ChatMarkdownBlockRow,
+  type InlineMarkdownPart,
+} from "./chat-markdown.ts";
+import {
   filterTools,
   toolRows,
   toolSchemaLines,
@@ -6220,9 +6226,19 @@ export function transcript(events: readonly SessionEvent[]): string[] {
 }
 type ChatRow = {
   text: string;
-  style: "user" | "assistant" | "heading" | "code" | "tool" | "error" | "text";
+  style:
+    | "user"
+    | "assistant"
+    | "heading"
+    | "list"
+    | "quote"
+    | "code"
+    | "tool"
+    | "error"
+    | "text";
+  parts?: InlineMarkdownPart[];
 };
-/** Terminal-only presentation. Never evaluate Markdown, HTML or terminal escapes. */
+/** Render safe assistant Markdown while keeping all user and tool text literal. */
 export function chatRows(
   events: readonly SessionEvent[],
   width: number,
@@ -6233,6 +6249,32 @@ export function chatRows(
   let partial = "";
   const add = (value: string, style: ChatRow["style"]) => {
     rows.push(...wrap([value], width).map((text) => ({ text, style })));
+  };
+  const addMarkdown = (block: ChatMarkdownBlockRow) => {
+    let cursor = 0;
+    for (const text of wrap([block.text], width)) {
+      const start = text ? block.text.indexOf(text, cursor) : cursor;
+      const end = start + text.length;
+      const parts: InlineMarkdownPart[] = [];
+      let offset = 0;
+      for (const part of block.parts) {
+        const partEnd = offset + part.text.length;
+        const from = Math.max(start, offset);
+        const to = Math.min(end, partEnd);
+        if (to > from) {
+          const text = part.text.slice(from - offset, to - offset);
+          parts.push(part.style ? { text, style: part.style } : { text });
+        }
+        offset = partEnd;
+      }
+      if (!parts.length) parts.push({ text: "" });
+      rows.push({
+        text,
+        style: block.style === "paragraph" ? "text" : block.style,
+        parts,
+      });
+      cursor = end;
+    }
   };
   const messageRows = (
     value: string,
@@ -6272,19 +6314,14 @@ export function chatRows(
             "code",
           );
       } else {
-        const heading = kind === "assistant" && /^#{1,6}\s/.test(raw);
-        add(
-          heading ? raw.replace(/^#{1,6}\s+/, "") : raw,
-          kind === "user"
-            ? "user"
-            : kind === "error"
-              ? "error"
-              : kind === "tool"
-                ? "tool"
-                : heading
-                  ? "heading"
-                  : "text",
-        );
+        if (kind === "assistant") {
+          for (const block of markdownBlockRows(raw)) addMarkdown(block);
+        } else {
+          add(
+            raw,
+            kind === "user" ? "user" : kind === "error" ? "error" : "tool",
+          );
+        }
       }
     }
     if (spacerAfter) add("", "text");
@@ -7305,7 +7342,8 @@ export function renderWorkspace(
   const undoConfirmationOpen =
     ui.confirmation?.title.startsWith("UNDO ") ?? false;
   const bodyRows = body.map((line, index) => {
-    const style = styled?.[offset + index]?.style;
+    const chatRow = styled?.[offset + index];
+    const style = chatRow?.style;
     const tone =
       style === "user"
         ? `1;${violet};48;5;236`
@@ -7313,21 +7351,25 @@ export function renderWorkspace(
           ? `1;${amber}`
           : style === "code"
             ? `${ice};48;5;235`
-            : style === "tool"
-              ? mutedAnsi
-              : style === "error"
-                ? "38;5;203"
-                : style === "text"
-                  ? "38;5;252"
-                  : /^>/.test(line)
-                    ? `1;${ice}`
-                    : / YOU$/.test(line)
-                      ? `1;${violet}`
-                      : / NOMO(?: streaming)?$/.test(line)
-                        ? `1;${amber}`
-                        : /^(Error|Invalid|Failed)/.test(line)
-                          ? "38;5;203"
-                          : "38;5;252";
+            : style === "list"
+              ? `1;${ice}`
+              : style === "quote"
+                ? mutedAnsi
+                : style === "tool"
+                  ? mutedAnsi
+                  : style === "error"
+                    ? "38;5;203"
+                    : style === "text"
+                      ? "38;5;252"
+                      : /^>/.test(line)
+                        ? `1;${ice}`
+                        : / YOU$/.test(line)
+                          ? `1;${violet}`
+                          : / NOMO(?: streaming)?$/.test(line)
+                            ? `1;${amber}`
+                            : /^(Error|Invalid|Failed)/.test(line)
+                              ? "38;5;203"
+                              : "38;5;252";
     // A sweep crosses the newest run's last row while it is live, so the eye
     // is drawn to the line that just changed. It rides on a row that is
     // already coloured and already scrolled to, so it adds attention without
@@ -7342,6 +7384,23 @@ export function renderWorkspace(
           paint: (value) => (visuals.color ? ink(value, `1;${amber}`) : value),
         })
       : pad(line, width - 4);
+    const markdownPainted =
+      chatRow?.parts && !isLiveTail
+        ? paintMarkdownParts(
+            chatRow.parts,
+            width - 4,
+            tone,
+            (text, spanTone, bold) => {
+              const color =
+                spanTone === "info"
+                  ? `${ice};48;5;235`
+                  : bold
+                    ? `1;${tone.replace(/^(?:1;)+/, "")}`
+                    : tone;
+              return ink(text, color);
+            },
+          )
+        : undefined;
     const approvalTitle = approvalReviewOpen && line === ui.confirmation?.title;
     const undoTitle = undoConfirmationOpen && line === ui.confirmation?.title;
     const approvalField =
@@ -7362,7 +7421,8 @@ export function renderWorkspace(
     const contentRow = contentLabelLength
       ? ink(painted.slice(0, contentLabelLength), `1;${ice}`) +
         ink(painted.slice(contentLabelLength), tone)
-      : ink(painted, approvalTitle || undoTitle ? `1;${amber}` : tone);
+      : (markdownPainted ??
+        ink(painted, approvalTitle || undoTitle ? `1;${amber}` : tone));
     const sideTone = style === "user" ? tone : frameColor;
     return (
       ink(ui.confirmation ? "! " : "  ", sideTone) +
