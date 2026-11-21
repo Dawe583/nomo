@@ -76,7 +76,10 @@ async function installedTree(t: { after: (fn: () => unknown) => void }) {
   t.after(() => rm(root, { recursive: true, force: true }));
   const remote = join(root, "remote.git");
   const tree = join(root, "tree");
-  git(root, ["init", "--bare", "--quiet", remote]);
+  // Named, not inherited: with no init.defaultBranch the bare HEAD is master,
+  // a later clone checks out nothing, and its push to main is not a
+  // fast-forward.
+  git(root, ["init", "--bare", "--quiet", "--initial-branch=main", remote]);
   git(root, ["clone", "--quiet", remote, tree]);
   await commit(tree, "one.txt", "one");
   git(tree, ["push", "--quiet", "origin", "HEAD:refs/heads/main"]);
