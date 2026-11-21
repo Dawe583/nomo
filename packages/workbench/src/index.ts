@@ -1,4 +1,4 @@
-import { compactMessages, omittedByCompaction } from "./context.ts";
+import { compactMessages, dropsHistory, omittedByCompaction } from "./context.ts";
 import {
   recoveryRequest,
   runtimeSelection,
@@ -3146,7 +3146,9 @@ export class Workbench {
       throw new Error(
         "Previous tool batch is incomplete. Create a branch before continuing; historical tools will not be replayed.",
       );
-    if (session.messages.length >= 199)
+    // With automatic compaction on, the run compacts before the cap could end
+    // the conversation, so only a conversation without it is refused here.
+    if (session.messages.length >= 199 && this.harness.autoCompactMessages === 0)
       throw new Error("Session context limit reached. Start a new session.");
     if (!session.provider) {
       const config = this.config;
@@ -3221,6 +3223,17 @@ export class Workbench {
       session.view.status === "queued"
     )
       throw new Error("Wait for the active run to settle before compacting.");
+    return this.applyCompaction(session, options);
+  }
+
+  /** The compaction itself, shared by the operator's `compact` and the run
+   * loop's automatic one, so both arm the harness and record the same event. */
+  private applyCompaction(
+    session: Session,
+    options: { readonly summary?: string },
+    automatic = false,
+  ): CompactionResult {
+    const id = session.view.id;
     const before = session.messages.length;
     const compacted = compactMessages(
       id,
@@ -3239,11 +3252,14 @@ export class Workbench {
       this.event(
         session,
         "tool",
-        "Context compacted.",
+        automatic ? "Context compacted automatically." : "Context compacted.",
         {
           beforeMessages: before,
           afterMessages: session.messages.length,
           omittedMessages: compacted.result.omittedMessageCount,
+          ...(automatic
+            ? { automatic: true, summarized: options.summary !== undefined }
+            : {}),
         },
         "context.compacted",
       );
@@ -3256,6 +3272,39 @@ export class Workbench {
     );
     this.persist();
     return compacted.result;
+  }
+
+  /**
+   * Compact inside a run, before the message cap or the agent context budget
+   * would end the conversation.
+   *
+   * Checked at the top of every turn, where every tool group is closed. It
+   * compacts only when there is history to drop beyond a previous summary,
+   * so a run that crossed the threshold once does not pay for a summary of
+   * its own summary on every later turn. A summary that fails falls back to
+   * the raw extract, as the manual compaction does, and a context the
+   * compaction refuses is left for the cap to refuse as before.
+   */
+  private async autoCompact(
+    session: Session,
+    tools: readonly unknown[],
+  ): Promise<boolean> {
+    const threshold = this.harness.autoCompactMessages;
+    const overCount = threshold > 0 && session.messages.length >= threshold;
+    const overBudget =
+      session.agentProfile !== undefined &&
+      this.contextBound(session, tools, this.harness.maxOutputTokens) >
+        session.agentProfile.maxContextTokens;
+    if ((!overCount && !overBudget) || !dropsHistory(session.messages))
+      return false;
+    try {
+      compactMessages(session.view.id, session.messages, session.messageIds);
+    } catch {
+      return false;
+    }
+    const summary = await this.summarizeForCompaction(session.view.id);
+    this.applyCompaction(session, summary ? { summary } : {}, true);
+    return true;
   }
   /**
    * A summary of the turns a compaction is about to drop.
@@ -3295,6 +3344,21 @@ export class Workbench {
         [],
         session.controller.signal,
       );
+      // The summary is a second model call the operator pays for, so its
+      // tokens are recorded like the harness reviewer's, under their own
+      // source.
+      if (reply.usage)
+        this.event(
+          session,
+          "usage",
+          `${reply.usage.total_tokens ?? "Unknown"} tokens reported for the compaction summary`,
+          {
+            ...reply.usage,
+            model: session.view.model,
+            source: "compaction",
+            cost: null,
+          },
+        );
       const text = (reply.message.content ?? "").trim();
       return text ? text.slice(0, COMPACTION_SUMMARY_CHARACTERS) : undefined;
     } catch {
@@ -7339,20 +7403,29 @@ export class Workbench {
           : null,
     };
   }
+  /** UTF-8 bytes plus protocol overhead are a conservative token bound, not
+   * a fabricated tokenizer measurement. The configured output ceiling is
+   * reserved too. */
+  private contextBound(
+    session: Session,
+    tools: readonly unknown[],
+    outputTokens: number,
+  ): number {
+    return (
+      Buffer.byteLength(JSON.stringify(session.messages)) +
+      Buffer.byteLength(JSON.stringify(tools)) +
+      1024 +
+      outputTokens
+    );
+  }
   private checkContextBudget(
     session: Session,
     tools: readonly unknown[],
     outputTokens = this.harness.maxOutputTokens,
   ) {
     if (!session.agentProfile) return;
-    // UTF-8 bytes plus protocol overhead are a conservative token bound, not
-    // a fabricated tokenizer measurement. Reserve the configured output
-    // ceiling too; an oversized combined context never dispatches.
-    const bound =
-      Buffer.byteLength(JSON.stringify(session.messages)) +
-      Buffer.byteLength(JSON.stringify(tools)) +
-      1024 +
-      outputTokens;
+    // An oversized combined context never dispatches.
+    const bound = this.contextBound(session, tools, outputTokens);
     if (bound > session.agentProfile.maxContextTokens)
       throw new Error(
         "Agent context budget reached. Increase the budget or compact before continuing.",
@@ -7520,6 +7593,10 @@ export class Workbench {
           this.persist();
           return;
         }
+        // A compaction rewrites the conversation the digest chain folds in,
+        // so the next digest covers the whole compacted context, not only
+        // the messages added after it.
+        if (await this.autoCompact(session, tools)) hashed = 0;
         this.checkContextBudget(session, tools);
         // The record a tool call produces has to name what asked for it, and
         // the conversation is the only part of that which is not derivable
@@ -7718,7 +7795,13 @@ export class Workbench {
       // over these messages carries a copy of it.
       if (digestMarker !== undefined) {
         const at = session.messages.indexOf(digestMarker);
-        if (at >= 0) session.messages.splice(at, 1);
+        if (at >= 0) {
+          session.messages.splice(at, 1);
+          // A compaction during the run gave the block an id like every
+          // message it kept; leaving that id would shift every later one.
+          if (session.messageIds && at < session.messageIds.length)
+            session.messageIds.splice(at, 1);
+        }
       }
       // after-run observes, so it never changes the status it reports: the
       // view is already final here and a failing observer only reports.

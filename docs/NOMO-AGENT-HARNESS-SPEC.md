@@ -599,10 +599,13 @@ Tři věci z referencí, které se do NOMO **neportují**, a důvod:
    aparátura** (`SplitSummary`, guardraily, split, leakage check) pro
    `harness-scores.ts`; vlastní hillclimb zůstává jako nástroj pro práci na
    harnessu, ne jako produkt.
-3. **Auto-compaction z prime.** NOMO má `packages/workbench/src/context.ts` a
-   ten dělá triviální 3 000-znakové zkrácení JSON. To je slabé oproti
-   prime, ale je to **samostatný kus práce**, který s učením nesouvisí.
-   Zaznamenáno, neuděláno, a nesmí se zamíchat do refaktoru učení.
+3. **Auto-compaction z prime.** Hotovo jako samostatný řez HP2
+   (2026-11-21), mimo refaktor učení: `Workbench.autoCompact` komprimuje na
+   začátku každého tahu, když konverzace drží `autoCompactMessages` zpráv
+   nebo by rozpočet kontextu profilu agenta odmítl další požadavek. Shrnutí
+   píše vlastní model konverzace, je označené jako nedůvěryhodná historie a
+   při selhání se použije původní 3 000-znakový výtah z
+   `packages/workbench/src/context.ts`.
 
 ---
 
@@ -766,7 +769,9 @@ Vlastník schválil work package pro projektové schopnosti v
   zvolenému provideru a zůstat v lokální historii session. TUI i Control Plane
   musí toto riziko říct před souhlasem. Filtrování názvů cest neskryje tajemství
   uložená uvnitř běžných zdrojových souborů.
-- `/compact` zůstává ruční deterministickou operací bez sumarizačního modelu.
+- `/compact` v TUI zůstává ruční deterministickou operací bez sumarizačního
+  modelu. Automatická komprese běhu (HP2) shrnutí od modelu konverzace použije
+  a při jeho selhání spadne na stejný deterministický výtah.
 
 ## 8. Benchmark coding agentů
 

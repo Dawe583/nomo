@@ -285,6 +285,19 @@ against Hermes Agent and Prime Agent and orders the slices that close the gap:
   path that promotes a mined observation, an unapproved or rolled back
   refinement, or lets a promoted entry reach `decide` stops the node.
 
+- HP2. Automatic compaction. Status: implemented 2026-11-21. Paths:
+  `packages/workbench/src/context.ts`, `packages/workbench/src/index.ts`,
+  `packages/workbench/src/harness-settings.ts`, `docs/HARNESS-SETTINGS.md`.
+  Goal: the run compacts with the conversation's own model summary before the
+  200-message cap or an agent context budget ends the conversation, armed
+  like a manual compaction, consumer of `autoCompactMessages`. Verifier:
+  workbench typecheck, `packages/workbench/src/*.test.ts`,
+  `apps/control-plane/api/harness-settings.test.ts`,
+  `scripts/src/doc-truth.test.mjs`, `scripts/src/no-dash.test.mjs`. Stop: a
+  summary that reaches the conversation as system authority, a split tool
+  group, or a learned-entry digest that survives in the stored conversation
+  stops the node.
+
 ## 7. Verification commands
 
 - Typecheck: `npx tsc -p packages/workbench/tsconfig.json --noEmit`

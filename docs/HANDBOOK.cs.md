@@ -495,6 +495,12 @@ rozhraní to řekne, místo aby to naznačovalo. Když je stavový řádek pří
 
 `/compact` řekne `Token savings are unknown. No provider summarization is
 promised.` a pak potvrdí, že přepis a ledger zůstaly zachovány.
+Běh také komprimuje sám: jakmile konverzace drží `autoCompactMessages` zpráv
+(výchozí 150, 0 to vypne), nebo by kontextový rozpočet profilu agenta odmítl
+další požadavek, běh požádá vlastní model konverzace o shrnutí vypuštěných
+tahů a pokračuje, místo aby skončil na stropu 200 zpráv. Shrnutí je označené
+jako nedůvěryhodná historie, nikdy jako instrukce, a log událostí ukáže
+`Context compacted automatically.`
 
 ## 9. Webová a desktopová aplikace
 

@@ -427,7 +427,10 @@ path. Logout does not revoke a key at the provider.
 The beta supports one active model run, 20 model turns per user message, 4096
 output tokens per turn and up to 100 retained sessions. Conversation messages and
 events persist in encrypted local workspace storage. Session context is limited
-to 200 messages. Signed tool ledgers remain on disk after runtime restart.
+to 200 messages; a run compacts the conversation with a model summary once it
+holds `autoCompactMessages` messages (150 by default), so a long conversation
+continues instead of ending at the cap (`auto-compaction.test.ts`). Signed tool
+ledgers remain on disk after runtime restart.
 Assistant text streams to the UI. There is no claim of Codex, Claude Code or
 OpenCode process adapters, PTY, or desktop packaging. Those are separate AW
 work packages.

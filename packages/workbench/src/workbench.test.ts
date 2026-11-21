@@ -354,6 +354,10 @@ test("long sessions keep advancing event cursors and refuse unbounded context", 
     baseUrl: "https://provider.test/v1",
     apiKey: secret,
   });
+  // The cap is what this test pins, so automatic compaction, which exists to
+  // keep a conversation from reaching it, is off. auto-compaction.test.ts
+  // pins the conversation that continues.
+  workbench.patchHarnessSettings({ autoCompactMessages: 0 });
   const started = await workbench.start("First", "fixture-model");
   for (let turn = 0; turn < 99; turn++) {
     for (

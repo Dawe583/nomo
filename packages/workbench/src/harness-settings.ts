@@ -52,7 +52,8 @@ export type HarnessSettingKey =
   | "refinementLensCount"
   | "providerRequestTimeoutMs"
   | "toolRequestTimeoutMs"
-  | "maxToolResultCharacters";
+  | "maxToolResultCharacters"
+  | "autoCompactMessages";
 
 export type HarnessSettingSpec = {
   /** Operator-facing name, shown by /settings and the web settings panel. */
@@ -341,6 +342,19 @@ export const HARNESS_SETTINGS: {
     min: 256,
     max: 200000,
     icon: "◳",
+  },
+  autoCompactMessages: {
+    label: "Automatic compaction",
+    description:
+      "Compact a conversation with a model-written summary once it holds this many messages, before the 200-message cap ends it. Zero switches it off.",
+    consumerFile: "index.ts",
+    consumers: ["run", "autoCompact"],
+    // Below the hard cap of 200 by design: a value at the cap would compact a
+    // conversation only after the cap had already ended it.
+    default: 150,
+    min: 0,
+    max: 199,
+    icon: "◌",
   },
 };
 

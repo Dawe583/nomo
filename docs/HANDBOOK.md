@@ -592,6 +592,13 @@ figures are under `/cost`.
 
 `/compact` states `Token savings are unknown. No provider summarization is
 promised.` and then confirms that the transcript and the ledger are preserved.
+A run also compacts on its own: once a conversation holds
+`autoCompactMessages` messages (150 by default, 0 switches it off), or an agent
+profile's context budget would refuse the next request, the run asks the
+conversation's own model for a summary of the dropped turns and continues
+instead of ending at the 200-message cap. The summary is labelled as untrusted
+history, never as instructions, and the event log shows
+`Context compacted automatically.`
 
 ## 9. The web and desktop app
 

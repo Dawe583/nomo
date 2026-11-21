@@ -64,9 +64,23 @@ operator as applied while changing nothing.
 | `providerRequestTimeoutMs` | 60000 | 1000 to 600000 | per-request HTTP timeout for provider completions during a run |
 | `toolRequestTimeoutMs` | 180000 | 1000 to 600000   | per-request timeout for MCP tool calls over the stdio proxy  |
 | `maxToolResultCharacters` | 64000 | 256 to 200000  | characters of a tool result retained in the model conversation |
+| `autoCompactMessages` | 150 | 0 to 199 | messages at which a run compacts the conversation with a model summary (0 = off) |
 
 An agent profile's own `maxTurns` still wins over the harness setting, because
 a profile is a deliberate per-agent choice and `AGENT_LIMITS` already caps it.
+
+`autoCompactMessages` (HP2) is read by `autoCompact` at the top of every turn
+in `run`. When the conversation holds that many messages, or an agent profile's
+`maxContextTokens` would refuse the next request, the run compacts first: the
+same provider and model write a summary of the dropped turns, labelled as
+untrusted history in a user message, and a summary that fails falls back to
+the raw extract. It compacts only when there is history to drop beyond a
+previous summary, so a long run never summarizes its own summary. The
+compaction arms the harness trigger like `/compact`, records
+`context.compacted` with `automatic: true`, and records the summary's tokens
+under the usage source `compaction`. The maximum is 199 because the hard cap
+of 200 messages would otherwise end the conversation first; zero switches it
+off, and then `send` refuses a conversation at the cap as before.
 
 ## A selection, not a limit
 
