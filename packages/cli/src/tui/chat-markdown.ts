@@ -1,3 +1,5 @@
+import { sanitizeText, visibleLength } from "./layout.ts";
+
 export type InlineMarkdownPart = {
   text: string;
   style?: "strong" | "code";
@@ -27,4 +29,30 @@ export function inlineMarkdownParts(value: string): InlineMarkdownPart[] {
 
   if (cursor < value.length) parts.push({ text: value.slice(cursor) });
   return parts.length ? parts : [{ text: value }];
+}
+
+/** Paint sanitized spans and pad to the requested terminal-cell width. */
+export function paintInlineMarkdown(
+  value: string,
+  width: number,
+  tone: string,
+  paint: (text: string, tone: string, bold?: boolean) => string,
+): string {
+  const clean = sanitizeText(value);
+  const parts = inlineMarkdownParts(clean);
+  const body = parts
+    .map((part) =>
+      paint(
+        part.text,
+        part.style === "code" ? "info" : tone,
+        part.style === "strong",
+      ),
+    )
+    .join("");
+  const cells = Number.isFinite(width) ? Math.max(0, Math.floor(width)) : 0;
+  const contentWidth = parts.reduce(
+    (total, part) => total + visibleLength(part.text),
+    0,
+  );
+  return body + " ".repeat(Math.max(0, cells - contentWidth));
 }
