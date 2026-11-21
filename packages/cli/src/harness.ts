@@ -332,56 +332,113 @@ export async function runHarnessCommand(
         io.stdout("No signed entry in this workspace, so there is nothing to measure.");
         return 0;
       }
-      const previous = [...entries]
-        .reverse()
-        .find(
-          (entry) =>
-            (entry.body as Record<string, unknown> | null)?.decision ===
-            "proposal:activated",
-        );
-      if (!previous) {
+      const orderedEntries = entries
+        .slice()
+        .sort((a, b) => a.seq - b.seq);
+      const { mineRefinementEffects } = await import(
+        "../../workbench/src/refinement-outcomes.ts"
+      );
+      const effects = mineRefinementEffects(orderedEntries, now);
+      if (!effects.length) {
         const { measureBoard, scoreCases } = await import(
           "../../workbench/src/harness-scores.ts"
         );
-        const current = measureBoard(scoreCases(entries), now);
+        const current = measureBoard(scoreCases(orderedEntries), now);
         io.stdout("No previous refinement: nothing to compare against.");
         io.stdout(
           `Current board: verdict ${current.verdict}, ${current.caseCount} cases, deny_rate ${current.metrics.deny_rate.n} measured.`,
         );
         return 0;
       }
-      const baselineIndex = entries.indexOf(previous);
       const { compareBoards, measureBoard, scoreCases, SCORE_GUARDRAILS, SCORE_METRICS } = await import(
         "../../workbench/src/harness-scores.ts"
       );
-      const before = measureBoard(scoreCases(entries.slice(0, baselineIndex)), now);
-      const after = measureBoard(scoreCases(entries), now);
-      const compared = compareBoards(before, after);
-      io.stdout(`Baseline: the board before the refinement activated at sequence ${previous.seq}.`);
-      io.stdout(`Verdict: ${compared.verdict}`);
-      io.stdout("");
-      for (const key of SCORE_GUARDRAILS) {
-        const metric = SCORE_METRICS[key];
-        const b = before.guardrails[key];
-        const a = after.guardrails[key];
-        const fmt = (summary: { readonly mean: number | null; readonly n: number } | undefined) =>
-          summary && summary.mean !== null
-            ? `${summary.mean.toFixed(3)} (n=${summary.n})`
-            : "unmeasured";
-        // A breach is stored as a sentence naming the metric, so the marker
-        // matches the metric it starts with rather than the whole sentence.
-        // Comparing against the bare key never matched, and the marker that
-        // told an operator which line moved was dead code.
-        const moved = compared.guardrailBreaches.some((line) =>
-          line.startsWith(`${key} `),
-        )
-          ? "  REGRESSED"
-          : "";
-        io.stdout(
-          `${key}  ${metric ? metric.label : key}: ${fmt(b)} -> ${fmt(a)}${moved}`,
+      const fmt = (summary: { readonly mean: number | null; readonly n: number } | undefined) =>
+        summary && summary.mean !== null
+          ? `${summary.mean.toFixed(3)} (n=${summary.n})`
+          : "unmeasured";
+      let selectedEffects = effects.slice().reverse();
+      if (flags.digest) {
+        const matched = selectedEffects.filter(
+          (item) => item.digest !== null && item.digest.startsWith(flags.digest),
         );
+        if (matched.length === 0) {
+          io.stderr(`No activated refinement matches the digest prefix ${flags.digest}.`);
+          return 1;
+        }
+        if (matched.length > 1) {
+          io.stderr(
+            `The digest prefix ${flags.digest} names ${matched.length} activated refinements. Use more of it.`,
+          );
+          return 1;
+        }
+        selectedEffects = matched;
       }
-      if (compared.guardrailBreaches.length) {
+      let anyRegression = false;
+      if (!flags.digest) {
+        const previous = [...orderedEntries].reverse().find((entry) => {
+          const decision = (entry.body as Record<string, unknown> | null)?.decision;
+          return decision === "proposal:activated" || decision === "refinement:approved";
+        })!;
+        const baselineIndex = orderedEntries.indexOf(previous);
+        const before = measureBoard(scoreCases(orderedEntries.slice(0, baselineIndex)), now);
+        const after = measureBoard(scoreCases(orderedEntries), now);
+        const compared = compareBoards(before, after);
+        io.stdout(`Baseline: the board before the refinement activated at sequence ${previous.seq}.`);
+        io.stdout(`Verdict: ${compared.verdict}`);
+        io.stdout("");
+        for (const key of SCORE_GUARDRAILS) {
+          const metric = SCORE_METRICS[key];
+          const b = before.guardrails[key];
+          const a = after.guardrails[key];
+          // A breach is stored as a sentence naming the metric, so the marker
+          // matches the metric it starts with rather than the whole sentence.
+          // Comparing against the bare key never matched, and the marker that
+          // told an operator which line moved was dead code.
+          const moved = compared.guardrailBreaches.some((line) =>
+            line.startsWith(`${key} `),
+          )
+            ? "  REGRESSED"
+            : "";
+          io.stdout(
+            `${key}  ${metric ? metric.label : key}: ${fmt(b)} -> ${fmt(a)}${moved}`,
+          );
+        }
+        if (compared.guardrailBreaches.length) anyRegression = true;
+        io.stdout("");
+      }
+      io.stdout("Refinement effect (strictly before vs after activation):");
+      for (const item of selectedEffects) {
+        const tag = [
+          item.digest ? item.digest.slice(0, 8) : "",
+          item.status === "rolled-back"
+            ? `rolled back at sequence ${item.rolledBackSeq}`
+            : "standing",
+        ]
+          .filter(Boolean)
+          .join(", ");
+        const summarySuffix = item.summary ? `: ${JSON.stringify(item.summary)}` : "";
+        io.stdout(`Activation at sequence ${item.activationSeq} (${tag})${summarySuffix}`);
+        io.stdout(
+          `  verdict ${item.effect.verdict}, cases ${item.effect.before.caseCount} -> ${item.effect.after.caseCount}`,
+        );
+        io.stdout(
+          `  hold_rate  ${SCORE_METRICS.hold_rate.label}: ${fmt(item.effect.before.metrics.hold_rate)} -> ${fmt(item.effect.after.metrics.hold_rate)}`,
+        );
+        for (const guardrail of item.effect.guardrails) {
+          const moved = guardrail.regressed ? "  REGRESSED" : "";
+          io.stdout(
+            `  ${guardrail.key}  ${guardrail.label}: ${fmt(guardrail.before)} -> ${fmt(guardrail.after)}${moved}`,
+          );
+        }
+        if (item.effect.unmeasuredGuardrails.length) {
+          io.stdout(`  Unmeasured guardrails: ${item.effect.unmeasuredGuardrails.join(", ")}`);
+        } else {
+          io.stdout("  All guardrails measured.");
+        }
+        if (item.effect.guardrailBreaches.length) anyRegression = true;
+      }
+      if (anyRegression) {
         io.stdout("");
         io.stdout(
           "A guardrail regressed outside noise. This is a report, not a refusal: the workbench decides, and it decides on evidence the harness chain carries.",

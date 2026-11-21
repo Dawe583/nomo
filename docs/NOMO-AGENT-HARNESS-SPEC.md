@@ -576,6 +576,16 @@ pro větší vzorek normální hodnota).
 **popisné, ne autoritativní**. Nikdy nevstupuje do `decide`. Stejně jako
 `learned-rules.ts` a stejně explicitně.
 
+Stav 2026-11-21, uzel H11: `packages/workbench/src/harness-scores.ts` přidává
+čistou funkci `measureRefinementEffect`, která dělí podepsaný řetězec striktně
+před (`seq < activationSeq`) a po (`seq > activationSeq`, při vrácení nejvýše
+`<= untilSeq`) sekvenci aktivace, porovnává obě desky přes `measureBoard` a
+`compareBoards`, a explicitně vypisuje neměřené guardraily v
+`unmeasuredGuardrails`. Bez úniku záznamů před aktivací do výsledku po
+aktivaci; při nulovém provozu po aktivaci zůstávají všechny guardraily označené
+jako neměřené. Návrh:
+`docs/superpowers/designs/2026-11-21-h11-refinement-effect.md`.
+
 ### 4.8 Co zůstane nedělané, a proč
 
 Tři věci z referencí, které se do NOMO **neportují**, a důvod:
@@ -715,9 +725,21 @@ nejsou, se v tomhle stromu objevují jako falešné tvrzení později.
   `maxPromptCharacters` a `refineHarness` odmítne návrh, který nese přesně
   stejné edity jako zamítnutý nebo vrácený návrh a necituje žádný záznam
   novější než rozhodnutí operátora. Výsledky nevstupují do `decide`, policy,
-  katalogu nástrojů ani do promptu agenta. Neměří se tím, zda aktivovaná
-  změna pomohla; to zůstává otevřené. Návrh a zamítnuté varianty:
+  katalogu nástrojů ani do promptu agenta. Návrh a zamítnuté varianty:
   `docs/superpowers/designs/2026-11-21-h10-refinement-outcome-feedback.md`.
+
+  Stav 2026-11-21, uzel H11: druhý řez zpětné vazby měří popisný účinek
+  aktivovaných změn z podepsaného řetězce přes `measureRefinementEffect` v
+  `packages/workbench/src/harness-scores.ts` a `mineRefinementEffects` /
+  `formatEffectsForReview` v `packages/workbench/src/refinement-outcomes.ts`.
+  `Workbench.harnessEffects` předává výsledky reviewerovi v
+  `packages/workbench/src/harness-runtime.ts` v rámci stejného stropu
+  `maxPromptCharacters` a `packages/cli/src/harness.ts` (`nomo harness ratchet`)
+  ukazuje operátorovi striktně oddělené srovnání před a po aktivaci (včetně
+  volitelného filtru prefixem digestu) a označuje neměřené guardraily. Skóre
+  zůstává striktně popisné podle rozhodnutí D1: nikdy nemění stav, nespouští
+  rollback a nevstupuje do `decide`, policy ani promptu agenta. Návrh:
+  `docs/superpowers/designs/2026-11-21-h11-refinement-effect.md`.
 
 ### 7.1 Rozsah schválený vlastníkem, 2026-10-18
 

@@ -27,6 +27,11 @@
  */
 
 import type { RefinementProposal } from "./refine-pass.ts";
+import {
+  measureRefinementEffect,
+  type RefinementEffect,
+  type SplitSummary,
+} from "./harness-scores.ts";
 
 /**
  * An entry as this module reads it. A record with no sequence cannot be placed
@@ -54,6 +59,9 @@ export type RefinementOutcome = {
   /** The latest record that proposed this digest. Null when a chain carries an
    * activation whose proposal record it no longer holds. */
   readonly createdSeq: number | null;
+  /** The record that activated this digest, preserved even if a later record
+   * rolled it back. Null when never activated. */
+  readonly activatedSeq?: number | null;
   /** The record that settled it. Null while it is pending. */
   readonly settledSeq: number | null;
   readonly timesProposed: number;
@@ -126,6 +134,7 @@ type Tracked = {
   edits: OutcomeEdit[];
   firstSeq: number;
   createdSeq: number | null;
+  activatedSeq: number | null;
   settledSeq: number | null;
   timesProposed: number;
   timesRejected: number;
@@ -172,6 +181,7 @@ export function mineRefinementOutcomes(entries: readonly Entry[]): RefinementOut
         edits: outcomeEdits(described),
         firstSeq: existing?.firstSeq ?? seq,
         createdSeq: seq,
+        activatedSeq: existing?.activatedSeq ?? null,
         settledSeq: null,
         timesProposed: (existing?.timesProposed ?? 0) + 1,
         timesRejected: existing?.timesRejected ?? 0,
@@ -192,6 +202,7 @@ export function mineRefinementOutcomes(entries: readonly Entry[]): RefinementOut
     if (decision === "proposal:activated" || decision === "refinement:approved") {
       if (existing !== undefined) {
         existing.status = "activated";
+        existing.activatedSeq = seq;
         existing.settledSeq = seq;
       } else if (described !== null) {
         tracked.set(digest, {
@@ -201,6 +212,7 @@ export function mineRefinementOutcomes(entries: readonly Entry[]): RefinementOut
           edits: outcomeEdits(described),
           firstSeq: seq,
           createdSeq: null,
+          activatedSeq: seq,
           settledSeq: seq,
           timesProposed: 0,
           timesRejected: 0,
@@ -344,6 +356,162 @@ export function formatOutcomesForReview(
         ? ""
         : ` Showing the newest ${shown} of ${lines.length}; older ones were dropped to fit the request ceiling.`;
     const block = [HEADER + notice, ...lines.slice(0, shown), FOOTER].join("\n");
+    if (block.length <= maxCharacters) return block;
+  }
+  return "";
+}
+
+export type MeasuredRefinementEffect = {
+  /** 64-hex proposal digest when the signed activation carries one; null on
+   * minimal or legacy activation records that record only the decision. */
+  readonly digest: string | null;
+  readonly summary: string;
+  readonly status: "activated" | "rolled-back";
+  readonly activationSeq: number;
+  readonly rolledBackSeq: number | null;
+  readonly effect: RefinementEffect;
+};
+
+function recordDigest(body: Record<string, unknown>): string | null {
+  const stored = object(body.harnessProposal);
+  const lifecycle = object(body.harnessLifecycle);
+  const refinement = object(body.harnessRefinement);
+  const digest =
+    text(stored?.digest) ||
+    text(lifecycle?.digest) ||
+    text(refinement?.digest) ||
+    text(refinement?.rolledBackDigest);
+  return DIGEST.test(digest) ? digest : null;
+}
+
+/**
+ * Measure the before-and-after ratchet effect of every signed refinement
+ * activation in a chain.
+ *
+ * Pure, deterministic and order-independent. Only signed `proposal:activated`
+ * and legacy `refinement:approved` records produce effects; arbitrary text or
+ * rejected proposals never do. When a later `refinement:rolled-back` record
+ * carries the same digest, the post-activation window ends at that rollback
+ * sequence so post-rollback traffic does not distort what happened while the
+ * refinement was active. Bounded by one effect per signed activation record.
+ */
+export function mineRefinementEffects(
+  entries: readonly Entry[],
+  generatedAt = "",
+): MeasuredRefinementEffect[] {
+  const ordered = entries
+    .filter((entry) => typeof entry.seq === "number" && Number.isInteger(entry.seq))
+    .slice()
+    .sort((a, b) => a.seq! - b.seq!);
+  const summaries = new Map<string, string>();
+  const rollbacks = new Map<string, number[]>();
+  const activations: { seq: number; digest: string | null; summary: string }[] = [];
+
+  for (const entry of ordered) {
+    const body = object(entry.body);
+    if (body === null) continue;
+    const decision = text(body.decision);
+    const digest = recordDigest(body);
+    const stored = object(body.harnessProposal);
+    const described = object(stored?.proposal);
+    const summary = described ? text(described.summary) : "";
+    if (digest && summary) summaries.set(digest, summary);
+
+    if (decision === "refinement:rolled-back" && digest) {
+      const seqs = rollbacks.get(digest) ?? [];
+      seqs.push(entry.seq!);
+      rollbacks.set(digest, seqs);
+      continue;
+    }
+
+    if (decision === "proposal:activated" || decision === "refinement:approved") {
+      activations.push({
+        seq: entry.seq!,
+        digest,
+        summary: summary || (digest ? summaries.get(digest) ?? "" : ""),
+      });
+    }
+  }
+
+  return activations.map((activation) => {
+    const rollbackSeqs = activation.digest ? rollbacks.get(activation.digest) ?? [] : [];
+    const rolledBackSeq = rollbackSeqs.find((seq) => seq > activation.seq) ?? null;
+    const effect = measureRefinementEffect(ordered, activation.seq, {
+      untilSeq: rolledBackSeq,
+      generatedAt,
+    });
+    return {
+      digest: activation.digest,
+      summary: activation.summary,
+      status: rolledBackSeq !== null ? "rolled-back" : "activated",
+      activationSeq: activation.seq,
+      rolledBackSeq,
+      effect,
+    };
+  });
+}
+
+function splitNumber(summary: SplitSummary): string {
+  return summary.mean === null ? "unmeasured" : summary.mean.toFixed(3);
+}
+
+function effectLine(item: MeasuredRefinementEffect): string {
+  const state =
+    item.status === "rolled-back"
+      ? `rolled back at seq ${item.rolledBackSeq}`
+      : "standing";
+  const label = item.summary ? `: ${JSON.stringify(clip(item.summary))}` : "";
+  const hold = `${splitNumber(item.effect.before.metrics.hold_rate)}->${splitNumber(item.effect.after.metrics.hold_rate)}`;
+  const guardrails = item.effect.guardrails
+    .map((guardrail) => {
+      if (guardrail.before.mean === null && guardrail.after.mean === null) {
+        return `${guardrail.key} unmeasured`;
+      }
+      return `${guardrail.key} ${splitNumber(guardrail.before)}->${splitNumber(guardrail.after)}${guardrail.regressed ? " REGRESSED" : ""}`;
+    })
+    .join(", ");
+  const unmeasured =
+    item.effect.unmeasuredGuardrails.length > 0
+      ? `unmeasured guardrails: ${item.effect.unmeasuredGuardrails.join(", ")}`
+      : "all guardrails measured";
+  return (
+    `- activated at seq ${item.activationSeq} (${state})${label} | ` +
+    `verdict ${item.effect.verdict} | ` +
+    `cases ${item.effect.before.caseCount}->${item.effect.after.caseCount} | ` +
+    `hold_rate ${hold} | ${guardrails} | ${unmeasured}`
+  );
+}
+
+const EFFECT_HEADER =
+  "Measured effect of activated refinements from the signed ledger (strictly " +
+  "before vs after activation). Descriptive only; never triggers a rollback " +
+  "or changes a decision, policy or permission.";
+const EFFECT_FOOTER =
+  "Use as descriptive evidence only. Unmeasured guardrails are gaps, not " +
+  "passes; scores never authorize or roll back a change.";
+
+/**
+ * The descriptive effect block a review request carries, or "" when no
+ * activated refinement exists.
+ *
+ * Newest activation first; obeys `maxCharacters` by dropping whole older lines
+ * and never emitting a header with zero records under it.
+ */
+export function formatEffectsForReview(
+  effects: readonly MeasuredRefinementEffect[],
+  maxCharacters: number = Infinity,
+): string {
+  if (effects.length === 0) return "";
+  const lines = effects
+    .slice()
+    .sort((a, b) => b.activationSeq - a.activationSeq)
+    .map(effectLine);
+  for (let shown = lines.length; shown > 0; shown -= 1) {
+    const notice =
+      shown === lines.length
+        ? ""
+        : ` Showing the newest ${shown} of ${lines.length}; older ones were dropped to fit the request ceiling.`;
+    const block = [EFFECT_HEADER + notice, ...lines.slice(0, shown), EFFECT_FOOTER].join("\n");
     if (block.length <= maxCharacters) return block;
   }
   return "";

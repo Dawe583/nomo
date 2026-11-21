@@ -11,7 +11,9 @@ import assert from "node:assert/strict";
 
 import type { RefinementEdit, RefinementProposal } from "./refine-pass.ts";
 import {
+  formatEffectsForReview,
   formatOutcomesForReview,
+  mineRefinementEffects,
   mineRefinementOutcomes,
   repeatsSettledProposal,
 } from "./refinement-outcomes.ts";
@@ -250,5 +252,128 @@ describe("formatOutcomesForReview", () => {
 
   test("a ceiling too small for any line yields nothing rather than a fragment", () => {
     assert.equal(formatOutcomesForReview(outcomes, 40), "");
+  });
+});
+
+describe("mineRefinementEffects", () => {
+  const okCall = (seq: number, tool: string, extra: Record<string, unknown> = {}) => ({
+    seq,
+    body: { tool, klass: "r3", decision: "execute:completed", ...extra },
+  });
+  const denyCall = (seq: number, tool: string, extra: Record<string, unknown> = {}) => ({
+    seq,
+    body: { tool, klass: "r3", decision: "deny:policy", ...extra },
+  });
+
+  test("preserves activatedSeq on rolled-back outcomes and mines effects only from signed activations", () => {
+    const chain = [
+      okCall(1, "aws.s3.read"),
+      okCall(2, "aws.s3.list"),
+      created(3, digest("a"), proposal([edit()], "tighten bucket note")),
+      // A rejected proposal and arbitrary prose mentioning activation produce no effect.
+      rejected(4, digest("a")),
+      { seq: 5, body: { tool: "notes.write", klass: "r1", decision: "execute:completed", text: "proposal:activated" } },
+      created(6, digest("b"), proposal([edit({ title: "standing rule" })], "confirm destructive writes")),
+      activated(7, digest("b"), proposal([edit({ title: "standing rule" })], "confirm destructive writes")),
+      denyCall(8, "aws.s3.read"),
+      denyCall(9, "aws.s3.list"),
+      rolledBack(10, digest("b")),
+      // Post-rollback calls stay outside digest b's active window.
+      okCall(11, "aws.s3.read"),
+      okCall(12, "aws.s3.list"),
+    ];
+
+    const outcomes = mineRefinementOutcomes(chain);
+    const rolled = outcomes.find((item) => item.digest === digest("b"))!;
+    assert.equal(rolled.status, "rolled-back");
+    assert.equal(rolled.activatedSeq, 7);
+    assert.equal(rolled.settledSeq, 10);
+
+    const effects = mineRefinementEffects(chain, "t0");
+    assert.equal(effects.length, 1);
+    assert.equal(effects[0]!.digest, digest("b"));
+    assert.equal(effects[0]!.summary, "confirm destructive writes");
+    assert.equal(effects[0]!.status, "rolled-back");
+    assert.equal(effects[0]!.activationSeq, 7);
+    assert.equal(effects[0]!.rolledBackSeq, 10);
+    const deny = effects[0]!.effect.guardrails.find((g) => g.key === "deny_rate")!;
+    assert.equal(deny.before.mean, 0);
+    assert.equal(deny.after.mean, 1);
+    assert.equal(deny.regressed, true);
+    assert.deepEqual(effects[0]!.effect.unmeasuredGuardrails, ["unknown_tool_rate"]);
+
+    assert.deepEqual(mineRefinementEffects([...chain].reverse(), "t0"), effects);
+  });
+
+  test("handles legacy refinement:approved and minimal activation records without a digest", () => {
+    const chain = [
+      okCall(1, "aws.s3.read"),
+      okCall(2, "aws.s3.list"),
+      { seq: 3, body: { decision: "proposal:activated" } },
+      okCall(4, "aws.s3.read"),
+      okCall(5, "aws.s3.list"),
+      { seq: 6, body: { decision: "refinement:approved" } },
+    ];
+    const effects = mineRefinementEffects(chain, "t0");
+    assert.deepEqual(
+      effects.map((item) => [item.activationSeq, item.digest, item.status]),
+      [[3, null, "activated"], [6, null, "activated"]],
+    );
+    assert.equal(effects[1]!.effect.after.caseCount, 0);
+    assert.deepEqual(effects[1]!.effect.unmeasuredGuardrails, [
+      "deny_rate",
+      "rollback_count",
+      "unknown_tool_rate",
+    ]);
+  });
+});
+
+describe("formatEffectsForReview", () => {
+  const okCall = (seq: number, tool: string) => ({
+    seq,
+    body: { tool, klass: "r3", decision: "execute:completed" },
+  });
+  const denyCall = (seq: number, tool: string) => ({
+    seq,
+    body: { tool, klass: "r3", decision: "deny:policy" },
+  });
+
+  const effects = mineRefinementEffects([
+    okCall(1, "aws.s3.read"),
+    okCall(2, "aws.s3.list"),
+    created(3, digest("a"), proposal([edit()], "first activation")),
+    activated(4, digest("a"), proposal([edit()], "first activation")),
+    denyCall(5, "aws.s3.read"),
+    denyCall(6, "aws.s3.list"),
+    created(7, digest("b"), proposal([edit({ title: "second" })], "second activation")),
+    activated(8, digest("b"), proposal([edit({ title: "second" })], "second activation")),
+  ], "t0");
+
+  test("empty effects yields empty string", () => {
+    assert.equal(formatEffectsForReview([]), "");
+  });
+
+  test("formats newest first, descriptive only, with regression and unmeasured guardrails labeled", () => {
+    const block = formatEffectsForReview(effects);
+    const lines = block.split("\n");
+    const newer = lines.findIndex((line) => line.includes("second activation"));
+    const older = lines.findIndex((line) => line.includes("first activation"));
+    assert.ok(newer > 0 && older > newer, block);
+    assert.match(block, /descriptive only/i);
+    assert.match(block, /never triggers a rollback/i);
+    assert.match(lines[older]!, /deny_rate 0\.000->1\.000 REGRESSED/);
+    assert.match(lines[older]!, /unmeasured guardrails: unknown_tool_rate/);
+    assert.match(lines[newer]!, /unmeasured guardrails: deny_rate, rollback_count, unknown_tool_rate/);
+  });
+
+  test("obeys maxCharacters by dropping whole older lines and never emits a fragment", () => {
+    const full = formatEffectsForReview(effects);
+    const budget = full.length - 10;
+    const cut = formatEffectsForReview(effects, budget);
+    assert.ok(cut.length <= budget, `${cut.length} > ${budget}`);
+    assert.match(cut, /second activation/);
+    assert.doesNotMatch(cut, /first activation/);
+    assert.match(cut, /1 of 2/);
+    assert.equal(formatEffectsForReview(effects, 40), "");
   });
 });

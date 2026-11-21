@@ -476,3 +476,122 @@ test("the ratchet names the baseline and marks a guardrail that regressed", asyn
   assert.match(text, /deny_rate.*0\.000.*0\.667.*REGRESSED/);
   assert.match(text, /report, not a refusal/);
 });
+
+test("the ratchet reports strictly before vs after refinement effect and labels unmeasured guardrails", async () => {
+  const terminal = io();
+  const digestA = "a".repeat(64);
+  const entries = [
+    allowed(1, "postgres.row.read"),
+    allowed(2, "postgres.row.update"),
+    allowed(3, "postgres.row.delete"),
+    {
+      seq: 4,
+      body: {
+        workspace: "ws-1",
+        decision: "proposal:activated",
+        harnessProposal: { digest: digestA, proposal: { summary: "confirm deletes", edits: [] } },
+      },
+    },
+    refused(5, "postgres.row.read"),
+    refused(6, "postgres.row.update"),
+    refused(7, "postgres.row.delete"),
+  ];
+  const code = await runHarnessCommand(
+    ["ratchet", "--session", "s1"],
+    terminal,
+    { workbench: async () => chain(entries) },
+  );
+  assert.equal(code, 0);
+  const text = terminal.out.join("\n");
+  assert.match(text, /Refinement effect \(strictly before vs after activation\):/);
+  assert.match(text, /Activation at sequence 4 \(aaaaaaaa, standing\): "confirm deletes"/);
+  assert.match(text, /deny_rate.*0\.000 \(n=3\) -> 1\.000 \(n=3\).*REGRESSED/);
+  assert.match(text, /Unmeasured guardrails: unknown_tool_rate/);
+});
+
+test("the ratchet reports post-activation silence as unmeasured without leaking pre-activation calls", async () => {
+  const terminal = io();
+  const entries = [
+    allowed(1, "postgres.row.read"),
+    allowed(2, "postgres.row.update"),
+    allowed(3, "postgres.row.delete"),
+    activated(4),
+  ];
+  const code = await runHarnessCommand(
+    ["ratchet", "--session", "s1"],
+    terminal,
+    { workbench: async () => chain(entries) },
+  );
+  assert.equal(code, 0);
+  const text = terminal.out.join("\n");
+  assert.match(text, /cases 3 -> 0/);
+  assert.match(text, /Unmeasured guardrails: deny_rate, rollback_count, unknown_tool_rate/);
+});
+
+test("the ratchet filters refinement effect by digest prefix and rejects unknown or ambiguous prefixes", async () => {
+  const digestA = "aa11" + "0".repeat(60);
+  const digestB = "aa22" + "0".repeat(60);
+  const entries = [
+    allowed(1, "postgres.row.read"),
+    allowed(2, "postgres.row.update"),
+    {
+      seq: 3,
+      body: {
+        workspace: "ws-1",
+        decision: "proposal:activated",
+        harnessProposal: { digest: digestA, proposal: { summary: "first lesson", edits: [] } },
+      },
+    },
+    allowed(4, "postgres.row.read"),
+    allowed(5, "postgres.row.update"),
+    {
+      seq: 6,
+      body: {
+        workspace: "ws-1",
+        decision: "refinement:rolled-back",
+        event: "rollback",
+        harnessLifecycle: { digest: digestA, events: ["refinement:rolled-back"] },
+      },
+    },
+    {
+      seq: 7,
+      body: {
+        workspace: "ws-1",
+        decision: "proposal:activated",
+        harnessProposal: { digest: digestB, proposal: { summary: "second lesson", edits: [] } },
+      },
+    },
+    refused(8, "postgres.row.read"),
+    refused(9, "postgres.row.update"),
+  ];
+
+  const one = io();
+  const codeOne = await runHarnessCommand(
+    ["ratchet", "--session", "s1", "aa11"],
+    one,
+    { workbench: async () => chain(entries) },
+  );
+  assert.equal(codeOne, 0);
+  const textOne = one.out.join("\n");
+  assert.match(textOne, /first lesson/);
+  assert.match(textOne, /rolled back at sequence 6/);
+  assert.doesNotMatch(textOne, /second lesson/);
+
+  const ambiguous = io();
+  const codeAmb = await runHarnessCommand(
+    ["ratchet", "--session", "s1", "aa"],
+    ambiguous,
+    { workbench: async () => chain(entries) },
+  );
+  assert.equal(codeAmb, 1);
+  assert.match(ambiguous.err.join("\n"), /names 2 activated refinements/);
+
+  const missing = io();
+  const codeMissing = await runHarnessCommand(
+    ["ratchet", "--session", "s1", "ffff"],
+    missing,
+    { workbench: async () => chain(entries) },
+  );
+  assert.equal(codeMissing, 1);
+  assert.match(missing.err.join("\n"), /No activated refinement matches/);
+});

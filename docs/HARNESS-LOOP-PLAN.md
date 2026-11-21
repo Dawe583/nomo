@@ -233,6 +233,21 @@ Each node follows the loop in section 3.2. Statuses are tracked in
   policy or the agent prompt. Design record:
   `docs/superpowers/designs/2026-11-21-h10-refinement-outcome-feedback.md`.
 
+- H11. Refinement effect measurement. Status: implemented 2026-11-21, pending
+  the gate. Paths: `packages/workbench/src/harness-scores.ts`,
+  `packages/workbench/src/refinement-outcomes.ts`,
+  `packages/workbench/src/harness-runtime.ts`,
+  `packages/workbench/src/index.ts`, `packages/cli/src/harness.ts`. Goal:
+  measure the descriptive before-and-after effect of each signed refinement
+  activation from the verified chain, show it to the reviewer inside
+  `maxPromptCharacters` and to the CLI operator in `nomo harness ratchet`,
+  and explicitly label unmeasured guardrails. Verifier: workbench typecheck,
+  `packages/workbench/src/*.test.ts`, `packages/cli/src/harness.test.ts`,
+  `scripts/src/doc-truth.test.mjs`, `scripts/src/no-dash.test.mjs`. Stop:
+  any path where a score changes state, triggers rollback or enters `decide`
+  or the agent prompt stops the node (decision D1). Design record:
+  `docs/superpowers/designs/2026-11-21-h11-refinement-effect.md`.
+
 ## 7. Verification commands
 
 - Typecheck: `npx tsc -p packages/workbench/tsconfig.json --noEmit`

@@ -168,9 +168,11 @@ import {
 import { mineLearnedRules } from "./learned-rules.ts";
 import { mineHarnessEntries, type HarnessEntry } from "./learned-harness.ts";
 import {
+  mineRefinementEffects,
   mineRefinementOutcomes,
   repeatRefusal,
   repeatsSettledProposal,
+  type MeasuredRefinementEffect,
   type RefinementOutcome,
 } from "./refinement-outcomes.ts";
 import type { SpawnSubagentOptions } from "./subagents.ts";
@@ -4926,6 +4928,22 @@ export class Workbench {
     return mineRefinementOutcomes((await this.ledger(workspace))?.entries ?? []);
   }
 
+  /**
+   * Measured before-and-after ratchet effects of this workspace's activated
+   * refinements, from the verified chain. Descriptive only (decision D1): kept
+   * apart from `harnessEntries` so scores never reach the agent's prompt,
+   * policy or `decide`, and never trigger a rollback.
+   */
+  async harnessEffects(
+    workspace: string,
+    generatedAt?: string,
+  ): Promise<MeasuredRefinementEffect[]> {
+    return mineRefinementEffects(
+      (await this.ledger(workspace))?.entries ?? [],
+      generatedAt,
+    );
+  }
+
   async promotedAgentProfiles(workspace: string): Promise<AgentProfile[]> {
     const entries = (await this.ledger(workspace))?.entries ?? [];
     const profiles = new Map<string, AgentProfile>();
@@ -6059,6 +6077,9 @@ export class Workbench {
       // from the same verified chain. Without it the reviewer proposes what
       // was already rejected.
       outcomes: async () => await this.harnessOutcomes(session.view.workspace),
+      // Descriptive before-and-after effect of activated refinements from the
+      // same verified chain. Never gates, rolls back or enters the agent prompt.
+      effects: async () => await this.harnessEffects(session.view.workspace),
       ask: async (request) => {
         // The review may name another model than the conversation runs on:
         // a review is a bounded, structured request, and an operator may want

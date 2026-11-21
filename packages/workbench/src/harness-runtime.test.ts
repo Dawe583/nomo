@@ -704,3 +704,150 @@ test("the outcome block is charged to the operator's prompt ceiling", async () =
   assert.match(requests[0]!, /rejected by an operator at seq 61/);
   assert.match(requests[0]!, /Showing the newest \d+ of 60/);
 });
+
+const measuredEffect = (activationSeq: number, summary: string, regressed = false) => ({
+  digest: String(activationSeq % 10).repeat(64),
+  summary,
+  status: "activated" as const,
+  activationSeq,
+  rolledBackSeq: null,
+  effect: {
+    activationSeq,
+    untilSeq: null,
+    before: {
+      caseCount: 3,
+      metrics: {
+        hold_rate: { n: 3, mean: 0.5, half: 0, unmeasured: 0 },
+        deny_rate: { n: 3, mean: 0, half: 0, unmeasured: 0 },
+        unknown_tool_rate: { n: 0, mean: null, half: null, unmeasured: 3 },
+        first_pass_rate: { n: 0, mean: null, half: null, unmeasured: 3 },
+        median_approval_ms: { n: 0, mean: null, half: null, unmeasured: 0 },
+        recovery_success_rate: { n: 0, mean: null, half: null, unmeasured: 0 },
+        rollback_count: { n: 3, mean: 0, half: 0, unmeasured: 0 },
+        cost_usd: { n: 0, mean: null, half: null, unmeasured: 0 },
+      },
+      guardrails: {
+        deny_rate: { n: 3, mean: 0, half: 0, unmeasured: 0 },
+        rollback_count: { n: 3, mean: 0, half: 0, unmeasured: 0 },
+        unknown_tool_rate: { n: 0, mean: null, half: null, unmeasured: 3 },
+      },
+      verdict: "flat" as const,
+      reasons: ["no baseline was supplied, so there is nothing to compare against"],
+      generatedAt: "t0",
+    },
+    after: {
+      caseCount: 3,
+      metrics: {
+        hold_rate: { n: 3, mean: 0, half: 0, unmeasured: 0 },
+        deny_rate: { n: 3, mean: regressed ? 1 : 0, half: 0, unmeasured: 0 },
+        unknown_tool_rate: { n: 0, mean: null, half: null, unmeasured: 3 },
+        first_pass_rate: { n: 0, mean: null, half: null, unmeasured: 3 },
+        median_approval_ms: { n: 0, mean: null, half: null, unmeasured: 0 },
+        recovery_success_rate: { n: 0, mean: null, half: null, unmeasured: 0 },
+        rollback_count: { n: 3, mean: 0, half: 0, unmeasured: 0 },
+        cost_usd: { n: 0, mean: null, half: null, unmeasured: 0 },
+      },
+      guardrails: {
+        deny_rate: { n: 3, mean: regressed ? 1 : 0, half: 0, unmeasured: 0 },
+        rollback_count: { n: 3, mean: 0, half: 0, unmeasured: 0 },
+        unknown_tool_rate: { n: 0, mean: null, half: null, unmeasured: 3 },
+      },
+      verdict: "insufficient-data" as const,
+      reasons: regressed ? ["withheld: deny_rate regressed outside noise"] : [],
+      generatedAt: "t0",
+      guardrailBreaches: regressed ? ["deny_rate regressed outside noise"] : [],
+    },
+    verdict: "insufficient-data" as const,
+    guardrailBreaches: regressed ? ["deny_rate regressed outside noise"] : [],
+    guardrails: [
+      {
+        key: "deny_rate",
+        label: "Calls refused",
+        before: { n: 3, mean: 0, half: 0, unmeasured: 0 },
+        after: { n: 3, mean: regressed ? 1 : 0, half: 0, unmeasured: 0 },
+        verdict: regressed ? ("declining" as const) : ("flat" as const),
+        regressed,
+        measured: true,
+      },
+      {
+        key: "rollback_count",
+        label: "Rollbacks needed",
+        before: { n: 3, mean: 0, half: 0, unmeasured: 0 },
+        after: { n: 3, mean: 0, half: 0, unmeasured: 0 },
+        verdict: "flat" as const,
+        regressed: false,
+        measured: true,
+      },
+      {
+        key: "unknown_tool_rate",
+        label: "Calls we could not classify",
+        before: { n: 0, mean: null, half: null, unmeasured: 3 },
+        after: { n: 0, mean: null, half: null, unmeasured: 3 },
+        verdict: "insufficient-data" as const,
+        regressed: false,
+        measured: false,
+      },
+    ],
+    unmeasuredGuardrails: ["unknown_tool_rate"],
+  },
+});
+
+test("the review request carries descriptive refinement effects when present", async () => {
+  const requests: string[] = [];
+  const { deps: wired } = deps({
+    ask: async (request) => {
+      requests.push(request);
+      return JSON.stringify({ approve: false, reason: "nothing durable" });
+    },
+  });
+  await serviceHarnessBoundary(ready(), {
+    ...wired,
+    effects: async () => [measuredEffect(9, "bucket delete lesson", true)],
+  });
+
+  assert.equal(requests.length, 1);
+  assert.match(requests[0]!, /activated at seq 9/);
+  assert.match(requests[0]!, /bucket delete lesson/);
+  assert.match(requests[0]!, /deny_rate 0\.000->1\.000 REGRESSED/);
+  assert.match(requests[0]!, /unmeasured guardrails: unknown_tool_rate/);
+  assert.match(requests[0]!, /descriptive only/i);
+});
+
+test("no effects leaves the review request byte-identical", async () => {
+  const capture = async (extra: object) => {
+    const requests: string[] = [];
+    const { deps: wired } = deps({
+      ask: async (request) => {
+        requests.push(request);
+        return JSON.stringify({ approve: false, reason: "nothing durable" });
+      },
+    });
+    await serviceHarnessBoundary(ready(), { ...wired, ...extra });
+    return requests[0]!;
+  };
+  assert.equal(await capture({ effects: async () => [] }), await capture({}));
+});
+
+test("the effect block shares the operator's prompt ceiling with outcomes and evidence", async () => {
+  const requests: string[] = [];
+  const { deps: wired } = deps({
+    maxPromptCharacters: 6500,
+    entries: Array.from({ length: 40 }, (_, index) => entry(`lesson-${index}`, index + 1)),
+    ask: async (request) => {
+      requests.push(request);
+      return JSON.stringify({ approve: false, reason: "nothing durable" });
+    },
+  });
+  await serviceHarnessBoundary(ready(), {
+    ...wired,
+    outcomes: async () =>
+      Array.from({ length: 30 }, (_, index) => settledOutcome(index + 2, `earlier proposal ${index}`)),
+    effects: async () =>
+      Array.from({ length: 30 }, (_, index) => measuredEffect(index + 10, `activated lesson ${index}`)),
+  });
+
+  assert.equal(requests.length, 1);
+  assert.ok(requests[0]!.length <= 6500, `request is ${requests[0]!.length} characters`);
+  assert.match(requests[0]!, /activated at seq 39/);
+  assert.match(requests[0]!, /Showing the newest \d+ of 30/);
+});

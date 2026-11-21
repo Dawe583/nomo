@@ -124,3 +124,41 @@ test("outcomes are read from the chain and stay out of the agent's entries", asy
     "a rejection is not an entry the agent's prompt may carry",
   );
 });
+
+test("harnessEffects measures activated refinements descriptively without mutating state or entering harnessEntries", async (t) => {
+  const { app, session } = await fixture(t);
+  await app.editDocument(session.id, {
+    path: "second.md",
+    content: "second signed record before activation",
+    expectedRevision: null,
+  });
+  const created = await app.refineHarness(session.id, lesson([1]));
+  await app.approveHarnessProposal(session.id, created.proposalDigest!);
+  await app.editDocument(session.id, {
+    path: "after.md",
+    content: "record written after activation",
+    expectedRevision: null,
+  });
+
+  const beforeReadLength = (await chain(app, session.workspace)).length;
+  const effects = await app.harnessEffects(session.workspace, "t0");
+
+  assert.equal(effects.length, 1);
+  assert.equal(effects[0]!.digest, created.proposalDigest);
+  assert.equal(effects[0]!.summary, "named lesson");
+  assert.equal(effects[0]!.status, "activated");
+  assert.equal(effects[0]!.effect.before.caseCount, 1);
+  assert.equal(effects[0]!.effect.after.caseCount, 1);
+  assert.ok(effects[0]!.effect.unmeasuredGuardrails.includes("unknown_tool_rate"));
+
+  // Decision D1: measuring effects writes nothing and triggers no rollback.
+  assert.equal((await chain(app, session.workspace)).length, beforeReadLength);
+  const outcomes = await app.harnessOutcomes(session.workspace);
+  assert.equal(outcomes[0]!.status, "activated");
+  const entries = await app.harnessEntries(session.workspace);
+  assert.deepEqual(entries.map((entry) => entry.title), ["approval pattern"]);
+  assert.ok(
+    entries.every((entry) => !/ratchet|unmeasured|guardrail/i.test(`${entry.title} ${entry.content}`)),
+    "descriptive scores must never enter harnessEntries or the agent prompt",
+  );
+});
