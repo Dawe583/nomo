@@ -344,6 +344,14 @@ lokální API ukážou, co bylo načteno a co odmítnuto. Změněný digest kont
 restartu vyžaduje nové potvrzení, místo aby tiše nahradil text, který obnovená
 session schválila.
 
+Explicitně povolený profil může použít také `nomo_project_read` a
+`nomo_project_search`, oba R0. Čtou aktuální filtrovaný `source/`, takže souhlasí
+se změnami project exec a s diffem; nikdy nečtou původní root ani chráněný
+baseline. Traversal, chráněné cesty, symlinky, binární soubory a neplatné UTF-8
+jsou odmítnuty. Okna čtení a výsledky doslovného hledání jsou omezené na 32 KiB
+a označí, že existuje další obsah. Zapisovat lze nadále jen přes R3 nástroj v
+kontejneru.
+
 ### 8.1 Jedenáct karet
 
 `overview`, `chat`, `sessions`, `documents`, `ledger`, `approvals`, `policy`,

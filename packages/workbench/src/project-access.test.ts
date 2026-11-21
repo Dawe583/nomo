@@ -15,6 +15,7 @@ import { join } from "node:path";
 import test from "node:test";
 import { PROJECT_EXEC_TOOL } from "./project-sandbox.ts";
 import { PROJECT_CHANGES_TOOL } from "./project-workspace.ts";
+import { PROJECT_READ_TOOL, PROJECT_SEARCH_TOOL } from "./project-read.ts";
 import { isolatedWorkbench } from "./test-fixture.ts";
 
 const profile = {
@@ -58,6 +59,8 @@ test("project context is opt-in, custom-profile-only, and must be reconfirmed af
     requests[0]!.tools.some((tool) => tool.function.description.startsWith(`${PROJECT_CHANGES_TOOL.name}:`)),
     false,
   );
+  for (const name of [PROJECT_READ_TOOL.name, PROJECT_SEARCH_TOOL.name])
+    assert.equal(requests[0]!.tools.some((tool) => tool.function.description.startsWith(`${name}:`)), false);
 
   const projectSession = await fixture.app.start(
     "Inspect this project",
@@ -75,6 +78,8 @@ test("project context is opt-in, custom-profile-only, and must be reconfirmed af
     requests[1]!.tools.some((tool) => tool.function.description.startsWith(`${PROJECT_CHANGES_TOOL.name}:`)),
     false,
   );
+  for (const name of [PROJECT_READ_TOOL.name, PROJECT_SEARCH_TOOL.name])
+    assert.equal(requests[1]!.tools.some((tool) => tool.function.description.startsWith(`${name}:`)), false);
   assert.match(requests[1]!.messages[0]!.content!, /isolated, network-disabled container/);
   assert.equal(fixture.app.get(defaultSession.id)?.status, "idle");
 
@@ -687,4 +692,99 @@ test("a changed project context digest cannot silently rebind a restored session
   const confirmed = await fixture.app.confirmProjectAccess(root, []);
   assert.equal(confirmed.restoredSessions, 0);
   assert.throws(() => fixture.app.send(session.id, "Continue"), /reconfirm/i);
+});
+
+test("model project read and search are r0, allowlisted and bounded to the confirmed copy", async (t) => {
+  const requests: Array<{ messages: any[]; tools: Array<{ function: { name: string; description: string } }> }> = [];
+  const fixture = await isolatedWorkbench(
+    t,
+    async (url, init) => {
+      if (String(url).endsWith("/models"))
+        return Response.json({ data: [{ id: "fixture" }] });
+      const body = JSON.parse(String(init?.body));
+      requests.push(body);
+      const tool = (name: string) => {
+        const found = body.tools.find((entry: any) => entry.function.description.startsWith(`${name}:`));
+        assert.ok(found, `${name} must be offered to the allowlisted project profile`);
+        return found.function.name;
+      };
+      if (requests.length === 1)
+        return Response.json({
+          choices: [{
+            message: {
+              role: "assistant",
+              content: null,
+              tool_calls: [{
+                id: "project-read-1",
+                type: "function",
+                function: { name: tool(PROJECT_READ_TOOL.name), arguments: JSON.stringify({ path: "src/main.ts" }) },
+              }],
+            },
+            finish_reason: "tool_calls",
+          }],
+        });
+      if (requests.length === 2)
+        return Response.json({
+          choices: [{
+            message: {
+              role: "assistant",
+              content: null,
+              tool_calls: [{
+                id: "project-search-1",
+                type: "function",
+                function: { name: tool(PROJECT_SEARCH_TOOL.name), arguments: JSON.stringify({ query: "needle", path: "src" }) },
+              }],
+            },
+            finish_reason: "tool_calls",
+          }],
+        });
+      return Response.json({
+        choices: [{ message: { role: "assistant", content: "Done" }, finish_reason: "stop" }],
+      });
+    },
+    { NOMO_PERMISSION_MODE: "normal" },
+    { configure: false },
+  );
+  await fixture.app.configure({ baseUrl: "https://fixture.test/v1", apiKey: "fixture" });
+  const root = await mkdtemp(join(tmpdir(), "nomo-project-read-tools-"));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  await mkdir(join(root, "src"));
+  await writeFile(join(root, "src/main.ts"), "alpha needle\nsecond line\n");
+  execFileSync("git", ["init", "--quiet"], { cwd: root, stdio: "ignore" });
+  execFileSync("git", ["add", "-A"], { cwd: root, stdio: "ignore" });
+  const reader = {
+    ...profile,
+    id: "project-reader",
+    name: "Project reader",
+    allowedTools: [PROJECT_READ_TOOL.name, PROJECT_SEARCH_TOOL.name],
+    maxTurns: 4,
+    maxContextTokens: 32768,
+  };
+  fixture.app.upsertAgent(reader);
+  await fixture.app.confirmProjectAccess(root, []);
+
+  const session = await fixture.app.start(
+    "Read the approved project",
+    "fixture",
+    undefined,
+    undefined,
+    reader.id,
+  );
+  await fixture.app.settled();
+  assert.equal(fixture.app.get(session.id)!.status, "idle");
+  assert.equal(fixture.app.pending().length, 0, "r0 read and search must not hold");
+  assert.equal(requests.length, 3);
+  assert.equal(requests[0]!.tools.some((tool) => tool.function.description.startsWith(`${PROJECT_EXEC_TOOL.name}:`)), false);
+
+  const readOuter = JSON.parse(String(requests[1]!.messages.find((message) => message.role === "tool").content));
+  const read = JSON.parse(readOuter.content[0].text);
+  assert.equal(read.path, "src/main.ts");
+  assert.match(read.content, /alpha needle/);
+  assert.equal(read.hasMore, false);
+
+  const searchOuter = JSON.parse(String(requests[2]!.messages.filter((message) => message.role === "tool").at(-1)!.content));
+  const search = JSON.parse(searchOuter.content[0].text);
+  assert.ok(Array.isArray(search.matches), JSON.stringify(search));
+  assert.deepEqual(search.matches, [{ path: "src/main.ts", line: 1, text: "alpha needle" }]);
+  assert.equal(search.hasMore, false);
 });

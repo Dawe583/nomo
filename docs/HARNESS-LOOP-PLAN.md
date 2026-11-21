@@ -347,6 +347,19 @@ against Hermes Agent and Prime Agent and orders the slices that close the gap:
   tests. Stop: the tool is offered while disabled, the current session leaks,
   system instructions are searched, or raw known secrets reach the result.
 
+- HP8. Project read and search. Status: implemented 2026-11-21. Paths:
+  `packages/workbench/src/project-read.ts`,
+  `packages/workbench/src/project-workspace.ts`,
+  `packages/workbench/src/workspace.ts`, `packages/workbench/src/index.ts`.
+  Goal: explicitly allowlisted `nomo_project_read` and `nomo_project_search`
+  (R0) read only the current filtered source with the copy's exact path and
+  regular-file validation; output is bounded and writing stays in the R3
+  container. Verifier: `packages/workbench/src/project-read.test.ts`,
+  `packages/workbench/src/project-access.test.ts`, workbench typecheck and full
+  suite, documentation tests. Stop: a read reaches the original root or control
+  baseline, follows a symlink, accepts a protected path, or lacks its binding or
+  profile allowlist.
+
 ## 7. Verification commands
 
 - Typecheck: `npx tsc -p packages/workbench/tsconfig.json --noEmit`

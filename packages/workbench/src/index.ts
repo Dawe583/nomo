@@ -13,6 +13,12 @@ import {
   searchSessions,
 } from "./session-search.ts";
 import {
+  PROJECT_READ_TOOL,
+  PROJECT_SEARCH_TOOL,
+  projectWorkspaceRead,
+  projectWorkspaceSearch,
+} from "./project-read.ts";
+import {
   recoveryRequest,
   runtimeSelection,
   recoveryOperationMap,
@@ -581,7 +587,7 @@ type ProjectAccess = {
 function projectSystemContext(access: ProjectAccess | undefined): string {
   if (!access) return "";
   const context = [
-    "The operator explicitly approved access to one filtered project copy. The only project interfaces are read-only nomo_project_changes and nomo_project_exec, which runs in an isolated, network-disabled container and mounts only the copy at /workspace. The original project is never mounted or directly writable by the agent.",
+    "The operator explicitly approved access to one filtered project copy. The only project interfaces are read-only nomo_project_changes, nomo_project_read, nomo_project_search and nomo_project_exec, which runs in an isolated, network-disabled container and mounts only the copy at /workspace. The original project is never mounted or directly writable by the agent.",
     JSON.stringify(
       access.skills.map(({ id, path, lockedHash, actualHash, drifted, content }) => ({
         id,
@@ -1830,6 +1836,8 @@ export class Workbench {
         ...workspaceTools,
         ...this.connectors.flatMap((connector) => connector.tools),
         PROJECT_CHANGES_TOOL,
+        PROJECT_READ_TOOL,
+        PROJECT_SEARCH_TOOL,
       ].map((tool) => tool.name),
     );
     const unavailable = profile.allowedTools.filter((name) => !available.has(name));
@@ -2251,7 +2259,9 @@ export class Workbench {
         this.toolAllowedInMode(tool) &&
         (tool.name !== SESSION_SEARCH_TOOL.name || this.harness.sessionSearchEnabled === 1) &&
         ((tool.name !== PROJECT_EXEC_TOOL.name &&
-          tool.name !== PROJECT_CHANGES_TOOL.name) ||
+          tool.name !== PROJECT_CHANGES_TOOL.name &&
+          tool.name !== PROJECT_READ_TOOL.name &&
+          tool.name !== PROJECT_SEARCH_TOOL.name) ||
           (!!session &&
             !!this.projectAccess &&
             session.projectBinding === this.projectAccess &&
@@ -2304,6 +2314,8 @@ export class Workbench {
       ...HARNESS_TOOLS,
       PROJECT_EXEC_TOOL,
       PROJECT_CHANGES_TOOL,
+      PROJECT_READ_TOOL,
+      PROJECT_SEARCH_TOOL,
     ];
     const tools = candidates.filter(
       (tool, index) =>
@@ -3035,6 +3047,12 @@ export class Workbench {
     const projectChangesToolEnabled =
       !!projectBinding &&
       !!selectedProfile?.allowedTools.includes(PROJECT_CHANGES_TOOL.name);
+    const projectReadToolEnabled =
+      !!projectBinding &&
+      !!selectedProfile?.allowedTools.includes(PROJECT_READ_TOOL.name);
+    const projectSearchToolEnabled =
+      !!projectBinding &&
+      !!selectedProfile?.allowedTools.includes(PROJECT_SEARCH_TOOL.name);
     const tools: McpTool[] = [
       ...workspaceTools.filter(
         (tool) =>
@@ -3048,6 +3066,8 @@ export class Workbench {
       ...HARNESS_TOOLS,
       ...(projectToolEnabled ? [PROJECT_EXEC_TOOL] : []),
       ...(projectChangesToolEnabled ? [PROJECT_CHANGES_TOOL] : []),
+      ...(projectReadToolEnabled ? [PROJECT_READ_TOOL] : []),
+      ...(projectSearchToolEnabled ? [PROJECT_SEARCH_TOOL] : []),
     ];
     const connections: NonNullable<Session["connections"]> = {};
     this.sessionSetupCount++;
@@ -4093,6 +4113,12 @@ export class Workbench {
       const projectChangesToolEnabled =
         !!projectBinding &&
         !!selectedProfile?.allowedTools.includes(PROJECT_CHANGES_TOOL.name);
+      const projectReadToolEnabled =
+        !!projectBinding &&
+        !!selectedProfile?.allowedTools.includes(PROJECT_READ_TOOL.name);
+      const projectSearchToolEnabled =
+        !!projectBinding &&
+        !!selectedProfile?.allowedTools.includes(PROJECT_SEARCH_TOOL.name);
       const tools: McpTool[] = [
         ...workspaceTools.filter(
           (tool) =>
@@ -4106,6 +4132,8 @@ export class Workbench {
         ...HARNESS_TOOLS,
         ...(projectToolEnabled ? [PROJECT_EXEC_TOOL] : []),
         ...(projectChangesToolEnabled ? [PROJECT_CHANGES_TOOL] : []),
+        ...(projectReadToolEnabled ? [PROJECT_READ_TOOL] : []),
+        ...(projectSearchToolEnabled ? [PROJECT_SEARCH_TOOL] : []),
       ];
       const connections: NonNullable<Session["connections"]> = {};
       this.sessionSetupCount++;
@@ -6881,19 +6909,72 @@ export class Workbench {
     args: JsonObject,
     decision: string,
     metadata: Record<string, unknown>,
+    toolName: string = PROJECT_CHANGES_TOOL.name,
   ) {
     await this.locked(async () => {
       await this.ledger(session.view.workspace);
       await this.commitWorkspace(
         session,
         this.workspace(session.view.id),
-        PROJECT_CHANGES_TOOL.name,
+        toolName,
         args,
         decision,
         undefined,
         undefined,
         { callId: id, ...metadata },
       );
+    });
+  }
+  private async executeProjectReadTool(
+    session: Session,
+    toolName: string,
+    args: JsonObject,
+    id: string,
+  ) {
+    const refused = (text: string) => ({
+      isError: true as const,
+      content: [{ type: "text" as const, text }],
+    });
+    const binding = this.projectAccess;
+    if (
+      !session.agentProfile?.allowedTools.includes(toolName) ||
+      !binding ||
+      session.projectBinding !== binding
+    )
+      return refused("Project read refused: this session has no confirmed project access or explicit profile allowlist.");
+    return this.runProjectOperationSerial(async () => {
+      if (this.projectAccess !== binding || session.projectBinding !== binding)
+        return refused("Project access was revoked before the read completed.");
+      return withProjectWorkspaceLock(binding.workspace, async (workspace) => {
+        if (this.projectAccess !== binding || session.projectBinding !== binding)
+          return refused("Project access was revoked before the read completed.");
+        try {
+          const payload = toolName === PROJECT_READ_TOOL.name
+            ? await projectWorkspaceRead(workspace, args)
+            : await projectWorkspaceSearch(workspace, args);
+          await this.recordProjectChanges(
+            session,
+            id,
+            args,
+            "execute:completed",
+            { resultDigest: await sha256Hex(JSON.stringify(payload)) },
+            toolName,
+          );
+          return {
+            content: [{ type: "text" as const, text: JSON.stringify(payload) }],
+          };
+        } catch (error) {
+          await this.recordProjectChanges(
+            session,
+            id,
+            args,
+            "execute:failed",
+            { errorCode: toolName === PROJECT_READ_TOOL.name ? "PROJECT_READ_FAILED" : "PROJECT_SEARCH_FAILED" },
+            toolName,
+          );
+          return refused(error instanceof Error ? error.message : "Project read failed.");
+        }
+      });
     });
   }
   private async executeProjectChangesTool(
@@ -7260,6 +7341,22 @@ export class Workbench {
     }
     if (
       !tool.connectorId &&
+      (tool.name === PROJECT_READ_TOOL.name || tool.name === PROJECT_SEARCH_TOOL.name) &&
+      (!session.agentProfile?.allowedTools.includes(tool.name) ||
+        !this.projectAccess ||
+        session.projectBinding !== this.projectAccess)
+    ) {
+      observed.decision = "project-access:denied";
+      return {
+        isError: true,
+        content: [{
+          type: "text",
+          text: `Project read refused: reconfirm project access and use a custom profile that explicitly allowlists ${tool.name}.`,
+        }],
+      };
+    }
+    if (
+      !tool.connectorId &&
       tool.name === SESSION_SEARCH_TOOL.name &&
       this.harness.sessionSearchEnabled === 0
     ) {
@@ -7301,7 +7398,9 @@ export class Workbench {
               ? "Project command through the isolated sandbox."
               : tool.name === PROJECT_CHANGES_TOOL.name
                 ? "Read-only review of the approved filtered project copy."
-                : "Managed document policy.",
+                : tool.name === PROJECT_READ_TOOL.name || tool.name === PROJECT_SEARCH_TOOL.name
+                  ? "Read-only content from the approved filtered project copy."
+                  : "Managed document policy.",
           arguments: args,
         };
         // The operator's own policy, never a merge with mined rules. A merged
@@ -7464,6 +7563,13 @@ export class Workbench {
     if (!tool.connectorId && tool.name === PROJECT_CHANGES_TOOL.name) {
       observed.decision = "project-review";
       return this.executeProjectChangesTool(session, args, id);
+    }
+    if (
+      !tool.connectorId &&
+      (tool.name === PROJECT_READ_TOOL.name || tool.name === PROJECT_SEARCH_TOOL.name)
+    ) {
+      observed.decision = tool.name === PROJECT_READ_TOOL.name ? "project-read" : "project-search";
+      return this.executeProjectReadTool(session, tool.name, args, id);
     }
     if (!tool.connectorId && tool.name === SESSION_SEARCH_TOOL.name) {
       observed.decision = "session-search";

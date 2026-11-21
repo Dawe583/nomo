@@ -437,6 +437,14 @@ are refused by name; the project confirmation and local API report what loaded
 and what was refused. A changed context digest requires reconfirmation after a
 restart instead of silently replacing text a restored session approved.
 
+An explicitly allowlisted profile may also use `nomo_project_read` and
+`nomo_project_search`, both R0. They read the current filtered `source/`, so
+they agree with what project exec changed and what the diff reports; they never
+read the original root or protected baseline. Traversal, protected paths,
+symlinks, binary files and invalid UTF-8 are refused. Read windows and literal
+search results are bounded to 32 KiB and say when more content exists. Writing
+still goes only through the R3 container tool.
+
 ### 8.1 The eleven tabs
 
 `overview`, `chat`, `sessions`, `documents`, `ledger`, `approvals`, `policy`,

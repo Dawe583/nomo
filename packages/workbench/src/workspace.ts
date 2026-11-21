@@ -3,6 +3,7 @@ import { PROJECT_CHANGES_TOOL } from "./project-workspace.ts";
 import { PLAN_TOOL } from "./plan.ts";
 import { DELEGATE_TOOL, SUBAGENT_RESULT_TOOL } from "./delegate-tools.ts";
 import { SESSION_SEARCH_TOOL } from "./session-search.ts";
+import { PROJECT_READ_TOOL, PROJECT_SEARCH_TOOL } from "./project-read.ts";
 import { createHash } from 'node:crypto';
 
 /** Managed text documents, never paths on the host filesystem. Persistence and
@@ -42,7 +43,7 @@ export const workspaceTools = [
 export function createWorkspace(): WorkspaceState { return { version: 1, files: {}, operations: [] }; }
 
 export function workspaceToolClass(name: string): 'r0' | 'r1' | 'r3' | undefined {
-  if (name === 'void_workspace_list' || name === 'void_workspace_read' || name === PROJECT_CHANGES_TOOL.name || name === PLAN_TOOL.name || name === SUBAGENT_RESULT_TOOL.name || name === SESSION_SEARCH_TOOL.name) return 'r0';
+  if (name === 'void_workspace_list' || name === 'void_workspace_read' || name === PROJECT_CHANGES_TOOL.name || name === PLAN_TOOL.name || name === SUBAGENT_RESULT_TOOL.name || name === SESSION_SEARCH_TOOL.name || name === PROJECT_READ_TOOL.name || name === PROJECT_SEARCH_TOOL.name) return 'r0';
   if (name === 'void_workspace_write' || name === 'void_workspace_delete' || name === DELEGATE_TOOL.name) return 'r1';
   if (name === PROJECT_EXEC_TOOL.name) return 'r3';
   return undefined;

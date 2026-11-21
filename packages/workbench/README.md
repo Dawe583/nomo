@@ -67,6 +67,14 @@ skills apply; refusals name the file. Accepted digests form part of the saved
 session binding, so changed project context cannot silently rebind after a
 restart (`project-context-files.test.ts`, `project-access.test.ts`).
 
+Explicitly allowlisted `nomo_project_read` and `nomo_project_search` are R0
+reads over the current `source/`, never the original root or `control/baseline`.
+They reuse the copy's path and regular-file validation, refuse binary or invalid
+UTF-8 input, bound serialized output to 32 KiB and mark truncated results. Search
+is a literal substring scan without a shell. The Workbench serializes access
+under the project lock and records the result digest (`project-read.test.ts`,
+`project-access.test.ts`).
+
 Review changes in the local Control Plane. The UI pages paths by 50, shows one
 file diff and its exact digest, and requires a separate confirmation to apply
 that one file. The API rejects stale digests or changed original files with

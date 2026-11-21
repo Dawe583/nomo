@@ -766,6 +766,10 @@ Vlastník schválil work package pro projektové schopnosti v
 - `nomo_project_changes` je read-only; `nomo_project_exec` spouští příkazy
   pouze ve filtrované kopii. Oba nástroje vyžadují explicitní allowlist
   vlastního profilu; exec navíc podléhá existující R3 policy a approval cestě.
+  HP8 přidává `nomo_project_read` a `nomo_project_search` jako R0 čtení aktuální
+  filtrované `source/` kopie se stejnou validací cesty, odmítnutím symlinků,
+  binárních souborů a neplatného UTF-8 a s výstupem omezeným na 32 KiB. Původní
+  root ani `control/baseline` tyto nástroje nečtou.
 - Příkazy běží výhradně v jednorázovém Docker/Podman kontejneru s lokálním
   připnutým image ID, bez sítě a bez host environmentu či credentialů. Do
   `/workspace` se připojí pouze `source/` filtrované kopie. Chybějící runtime
