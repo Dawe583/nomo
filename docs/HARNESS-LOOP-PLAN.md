@@ -321,6 +321,19 @@ against Hermes Agent and Prime Agent and orders the slices that close the gap:
   replacement changes the stored plan, or a plan changes policy, tools or
   permissions.
 
+- HP5. Delegation tool. Status: implemented 2026-11-21. Paths:
+  `packages/workbench/src/delegate-tools.ts`,
+  `packages/workbench/src/workspace.ts`, `packages/workbench/src/index.ts`.
+  Goal: `nomo_delegate` (R1, held by default including profile-less sessions)
+  uses `spawnSubagent`, signs the spawn before child registration and narrows
+  child tools to the parent; `nomo_subagent_result` (R0) returns only a verified
+  settled result labelled untrusted. Model delegation is depth one. Verifier:
+  `packages/workbench/src/delegate-tools.test.ts`,
+  `packages/workbench/src/delegate-tool.test.ts`,
+  `packages/workbench/src/subagents.test.ts`, workbench typecheck and full
+  suite. Stop: a child widens its tools, a spawn precedes its signed record, or
+  a profile-less session delegates without the default hold.
+
 ## 7. Verification commands
 
 - Typecheck: `npx tsc -p packages/workbench/tsconfig.json --noEmit`

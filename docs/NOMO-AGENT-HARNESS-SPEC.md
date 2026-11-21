@@ -712,7 +712,11 @@ nejsou, se v tomhle stromu objevují jako falešné tvrzení později.
   `docs/CODING-TOOLS-MAP.md` Appendix 2.
 - **Subagenti**: původní tvrzení, že NOMO subagenty nemá, je zastaralé.
   Workbench poskytuje omezené podřízené session přes `Workbench.spawnSubagent`
-  a `/subagent`; nástroje dítěte jsou omezené na nástroje rodiče.
+  a `/subagent`; nástroje dítěte jsou omezené na nástroje rodiče. HP5 přidává
+  modelové nástroje `nomo_delegate` (R1, default hold i bez profilu) a
+  `nomo_subagent_result` (R0). Spawn záznam předchází registraci dítěte, výsledek
+  je označený jako nedůvěryhodný a modelová delegace má hloubku jedna, protože
+  dítě delegační nástroje nedědí.
 - **Skill drift**: původní otázku workspace vs. globální úložiště nahrazuje
   rozhodnutí vlastníka z 2026-10-18 níže. Globální úložiště nepřibývá.
 

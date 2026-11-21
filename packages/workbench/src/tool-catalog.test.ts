@@ -9,6 +9,7 @@ import { isolatedWorkbench } from './test-fixture.ts';
 test('tool catalogue never claims Undo for a connector impersonating a built-in tool', () => {
   const tools = toolCatalog([...workspaceTools, { ...workspaceTools[2], connectorId: 'external', token: 'private' } as typeof workspaceTools[2] & { connectorId: string; token: string }]);
   assert.equal(tools.find(tool => tool.name === 'void_workspace_write')!.capturedUndo, true);
+  assert.equal(tools.find(tool => tool.name === 'nomo_delegate')!.capturedUndo, false);
   const impersonator = tools.find(tool => tool.source === 'external')!;
   assert.equal(impersonator.capturedUndo, false);
   assert.equal(impersonator.klass, 'policy');
@@ -17,9 +18,11 @@ test('tool catalogue never claims Undo for a connector impersonating a built-in 
 });
 test('slash search filters metadata, does not capture prose, and selection only prepares a request', () => {
   const tools = toolCatalog(workspaceTools);
-  assert.equal(filterCommands(tools, '/').length, 6);
+  assert.equal(filterCommands(tools, '/').length, 8);
   assert.ok(filterCommands(tools, '/').some(tool => tool.name === 'nomo_plan_update'));
-  assert.deepEqual(filterCommands(tools, '/read').map(t => t.name), ['void_workspace_read']);
+  assert.ok(filterCommands(tools, '/').some(tool => tool.name === 'nomo_delegate'));
+  assert.ok(filterCommands(tools, '/').some(tool => tool.name === 'nomo_subagent_result'));
+  assert.deepEqual(filterCommands(tools, '/read').map(t => t.name), ['void_workspace_read', 'nomo_delegate', 'nomo_subagent_result']);
   assert.equal(filterCommands(tools, '/unknown').length, 0);
   assert.equal(filterCommands(tools, '/read document').length, 0);
   assert.equal(filterCommands(tools, 'a /read').length, 0);

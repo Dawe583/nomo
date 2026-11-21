@@ -1,6 +1,13 @@
 import { compactMessages, dropsHistory, omittedByCompaction } from "./context.ts";
 import { parsePlanUpdate, PLAN_TOOL, type PlanItem } from "./plan.ts";
 import {
+  DELEGATE_TOOL,
+  SUBAGENT_RESULT_TOOL,
+  parseDelegateCall,
+  parseSubagentResultCall,
+  untrustedSubagentResultText,
+} from "./delegate-tools.ts";
+import {
   recoveryRequest,
   runtimeSelection,
   recoveryOperationMap,
@@ -4139,7 +4146,14 @@ export class Workbench {
           )
         : tools
       ).filter((tool) => this.toolAllowedInMode(tool));
-      const finalTools = subsetTools(baseTools, parent.tools ?? []);
+      // Model delegation is depth one. A child still cannot recover a tool its
+      // parent lacked, and it never inherits the tools that spawn or read a
+      // further child, so a model cannot grow an unbounded delegation chain.
+      const finalTools = subsetTools(baseTools, parent.tools ?? []).filter(
+        (tool) =>
+          tool.name !== DELEGATE_TOOL.name &&
+          tool.name !== SUBAGENT_RESULT_TOOL.name,
+      );
 
       const queued =
         this.jobs.size > 0 ||
@@ -7336,6 +7350,111 @@ export class Workbench {
     if (!tool.connectorId && tool.name === PROJECT_CHANGES_TOOL.name) {
       observed.decision = "project-review";
       return this.executeProjectChangesTool(session, args, id);
+    }
+    if (!tool.connectorId && tool.name === DELEGATE_TOOL.name) {
+      // A profile already authorized this call above. A profile-less session
+      // must not bypass the same default hold just because it has no profile.
+      if (!session.agentProfile) {
+        const profile = resolvePolicyProfile(
+          DEFAULT_POLICY_PROFILE,
+          this.env.NOMO_POLICY_PATH,
+        );
+        if (!profile.ok) throw new Error(`Default policy is unusable: ${profile.reason}.`);
+        const call = {
+          tool: tool.name,
+          workspace: session.view.workspace,
+          connector: "workspace",
+          klass: "r1" as const,
+          blastRadius: 1,
+          reason: "Spawn a child through the governed, tool-narrowed delegation path.",
+          arguments: args,
+        };
+        const decision = decide(profile.policy, call);
+        const allowed = await this.authorizeTool(
+          session,
+          call,
+          decision,
+          profile.policy,
+        );
+        observed.decision = decision.kind === "hold"
+          ? allowed
+            ? "hold:approved"
+            : "hold:denied"
+          : decision.kind;
+        if (!allowed)
+          return {
+            isError: true,
+            content: [{ type: "text", text: denialText(tool.name, call.klass, decision) }],
+          };
+      }
+      try {
+        const parsed = parseDelegateCall(args, this.harness.maxPromptCharacters);
+        const child = await this.spawnSubagent(session.view.id, parsed.prompt, {
+          agent: parsed.agent,
+          model: parsed.model,
+          idempotencyKey: id,
+        });
+        return {
+          content: [{
+            type: "text",
+            text: JSON.stringify({ childId: child.id, status: child.status }),
+          }],
+        };
+      } catch (error) {
+        return {
+          isError: true,
+          content: [{
+            type: "text",
+            text: error instanceof Error ? error.message : "Delegation refused.",
+          }],
+        };
+      }
+    }
+    if (!tool.connectorId && tool.name === SUBAGENT_RESULT_TOOL.name) {
+      observed.decision = "subagent-result";
+      return this.locked(async () => {
+        await this.ledger(session.view.workspace);
+        try {
+          const { childId } = parseSubagentResultCall(args);
+          const settled = await this.subagentResult(session.view.id, childId);
+          const payload = settled
+            ? {
+                childId,
+                runId: settled.runId,
+                status: "settled",
+                truncated: settled.truncated,
+                text: untrustedSubagentResultText(settled.text),
+              }
+            : { childId, status: "pending" };
+          const result = {
+            content: [{ type: "text" as const, text: JSON.stringify(payload) }],
+          };
+          await this.commitWorkspace(
+            session,
+            this.workspace(session.view.id),
+            tool.name,
+            args,
+            "execute:completed",
+          );
+          return result;
+        } catch (error) {
+          const result = {
+            isError: true as const,
+            content: [{
+              type: "text" as const,
+              text: error instanceof Error ? error.message : "Subagent result refused.",
+            }],
+          };
+          await this.commitWorkspace(
+            session,
+            this.workspace(session.view.id),
+            tool.name,
+            args,
+            "execute:failed",
+          );
+          return result;
+        }
+      });
     }
     if (!tool.connectorId && tool.name === PLAN_TOOL.name) {
       observed.decision = "plan-update";

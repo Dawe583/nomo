@@ -442,6 +442,15 @@ ledgers remain on disk after runtime restart.
 `SessionView.plan`. The complete plan is returned to the model and exposed by
 the existing session API; invalid replacements leave the previous plan intact
 (`plan.test.ts`, `plan-tool.test.ts`).
+
+`nomo_delegate` (R1, held by default even without an agent profile) calls the
+existing `spawnSubagent` path with the provider call id as its idempotency key.
+The signed spawn record still precedes child registration and every child tool
+list is narrowed to the parent; delegation tools themselves are removed so
+model delegation is depth one. `nomo_subagent_result` (R0) verifies the child
+against the parent chain and returns either `pending` or the settled text with
+an explicit untrusted-result label (`delegate-tools.test.ts`,
+`delegate-tool.test.ts`).
 Assistant text streams to the UI. There is no claim of Codex, Claude Code or
 OpenCode process adapters, PTY, or desktop packaging. Those are separate AW
 work packages.

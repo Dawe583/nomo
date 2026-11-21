@@ -514,6 +514,14 @@ vrátí jako výsledek nástroje, uloží se ve view session a zpřístupní př
 `GET /api/sessions/:id`. Neplatná náhrada ponechá předchozí plán beze změny;
 plán je popisný a nikdy nerozšiřuje nástroje ani oprávnění.
 
+`nomo_delegate` vytvoří jedno dítě přes stejnou řízenou cestu jako `/subagent`.
+Jde o R1 volání a výchozí policy je zdrží i v session bez profilu agenta.
+Podepsaný spawn záznam předchází vytvoření dítěte a dítě dostane jen podmnožinu
+nástrojů rodiče. Delegace modelem má hloubku jedna: děti nedědí delegační
+nástroje. `nomo_subagent_result` je R0 čtení ověřeného settled dítěte; nedokončená
+práce vrátí `pending` a settled text je výslovně označený jako nedůvěryhodný
+výsledek subagenta.
+
 ## 9. Webová a desktopová aplikace
 
 `pnpm gui` sestaví klienta a spustí lokální API server. Pro práci na frontendu

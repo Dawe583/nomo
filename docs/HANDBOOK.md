@@ -612,6 +612,14 @@ complete plan is returned as the tool result, persisted on the session view and
 exposed by `GET /api/sessions/:id`. Invalid replacements leave the prior plan
 unchanged; a plan is descriptive and never widens tools or permissions.
 
+`nomo_delegate` spawns one child through the same governed path as `/subagent`.
+It is an R1 call and the default policy holds it even in a session without an
+agent profile. The signed spawn record precedes child creation, and the child
+receives only a subset of its parent's tools. Model delegation is depth one:
+children do not inherit the delegation tools. `nomo_subagent_result` is an R0
+read of a verified settled child; pending work returns `pending`, and settled
+text is explicitly labelled as an untrusted subagent result.
+
 ## 9. The web and desktop app
 
 `pnpm gui` builds the client and starts the local API server. For frontend work,
