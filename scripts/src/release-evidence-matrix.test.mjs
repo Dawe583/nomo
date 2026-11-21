@@ -16,7 +16,6 @@ import { readFileSync, readdirSync } from "node:fs";
 import test from "node:test";
 
 const matrix = readFileSync("docs/RELEASE-1.0.1-MATRIX.md", "utf8");
-const applePlan = readFileSync("docs/APPLE-APPS-PLAN.md", "utf8");
 const windows = readFileSync("docs/WINDOWS-DESKTOP.md", "utf8");
 
 /** ID -> [requirement, owner, acceptance gate] */
@@ -112,16 +111,11 @@ test("the evidence documents print the native test-case counts the tree actually
   const unitCases = countSwiftTestCases("apps/apple/NOMOTests");
   const uiCases = countSwiftTestCases("apps/apple/NOMOUITests");
 
-  for (const [name, text] of [
-    ["docs/RELEASE-1.0.1-MATRIX.md", matrix],
-    ["docs/APPLE-APPS-PLAN.md", applePlan],
-  ]) {
-    // Each document wraps the sentence differently, so compare against the
-    // prose with its line wrapping collapsed.
-    const prose = text.replace(/\s+/gu, " ");
-    assert.match(prose, new RegExp(`\\b${unitCases} \`NOMOTests\` cases`), name);
-    assert.match(prose, new RegExp(`\\b${uiCases} \`NOMOUITests\` cases`), name);
-  }
+  // The matrix wraps the sentence, so compare against the prose with its line
+  // wrapping collapsed.
+  const prose = matrix.replace(/\s+/gu, " ");
+  assert.match(prose, new RegExp(`\\b${unitCases} \`NOMOTests\` cases`), "docs/RELEASE-1.0.1-MATRIX.md");
+  assert.match(prose, new RegExp(`\\b${uiCases} \`NOMOUITests\` cases`), "docs/RELEASE-1.0.1-MATRIX.md");
 });
 
 test("a recorded simulator run is never separated from the current source counts", () => {
@@ -169,18 +163,13 @@ test("the evidence documents keep the physical-device and store boundary explici
   const boundary =
     /(physical (?:iPhone|iPad|device)|signed-device|store|TestFlight|provisioning)[^.]{0,90}?(remain|remains|open|unverified|not claimed|is not)/i;
 
-  for (const [name, text] of [
-    ["docs/RELEASE-1.0.1-MATRIX.md", matrix],
-    ["docs/APPLE-APPS-PLAN.md", applePlan],
-  ]) {
-    // The boundary sentence is line wrapped in these documents, so compare
-    // against the prose with its wrapping collapsed.
-    assert.match(
-      text.replace(/\s+/gu, " "),
-      boundary,
-      `${name} no longer states that device/store evidence is open`,
-    );
-  }
+  // The boundary sentence is line wrapped in the matrix, so compare against the
+  // prose with its wrapping collapsed.
+  assert.match(
+    matrix.replace(/\s+/gu, " "),
+    boundary,
+    "docs/RELEASE-1.0.1-MATRIX.md no longer states that device/store evidence is open",
+  );
 
   assert.match(
     windows,

@@ -276,11 +276,26 @@ const INVENTORY = {
     "planned UI implementation from the historical Project Workspace spec; web UI was excluded from current Harness scope",
   "apps/control-plane/ui/src/project-workspace.test.ts":
     "planned UI test from the historical Project Workspace spec; web UI was excluded from current Harness scope",
+
+  // Removed on 2026-11-21 by owner decision. The decision log and the plans
+  // still name them, because a record that described only the present tree
+  // would be falsifying its own history.
+  "apps/appwrite-mcp":
+    "removed 2026-11-21 by owner decision; the hosted Appwrite MCP function directory, named in DECISIONS as a then-open directory",
+  "cloud/auth.mjs":
+    "removed 2026-11-21 by owner decision; the Appwrite auth provider that no route mounted, recorded in DECISIONS",
+  "cloud/appwrite.mjs":
+    "removed 2026-11-21 by owner decision; the Appwrite provisioner nothing imported, recorded in DECISIONS",
+  "docs/APPLE-APPS-PLAN.md":
+    "deleted 2026-11-21: Apple app work removed from plans by owner decision",
+  "docs/superpowers/plans/2026-09-23-nomo-1.0.1-apple-release.md":
+    "deleted 2026-11-21: Apple app work removed from plans by owner decision",
 };
 
 /** Plans nobody maintains any more. Each must announce that at its head. */
 const SUPERSEDED = {
   "docs/UI-UX-UPGRADE-PLAN.md": "Superseded, 2026-09-26",
+  "docs/PLATFORM-REDESIGN-PLAN.md": "Superseded, 2026-11-21",
 };
 
 const read = (file) => readFileSync(file, "utf8").replace(/\r\n/g, "\n");
@@ -585,7 +600,7 @@ const INTERFACE_WORDS = [
 
 /** The newest decision in the pack. Renaming that heading renames this. */
 const NEWEST_DECISION =
-  "## NOMO Agent Identity and Fleet Control Plane: active direction, 2026-10-08";
+  "## Appwrite removed; Apple app work out of plans, 2026-11-21";
 
 const MONO_FOR_INTERFACE = /\bmono\w*/i;
 const NAMES_INTERFACE_WORD = new RegExp(

@@ -1,19 +1,8 @@
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
 import { envValue, legacyEnvKey, normalizeEnv } from './env.mjs';
-import { readAuthConfig } from './auth.mjs';
 import { billingFromEnv } from './billing.mjs';
 import { signupAllowed } from './account.mjs';
-
-const SEAL = 'a'.repeat(64);
-
-// `APPWRITE_*` are Appwrite's own names and are not aliased, so every auth
-// fixture carries them explicitly.
-const APPWRITE = {
-  APPWRITE_PROJECT_ID: 'project',
-  APPWRITE_RUNTIME_KEY: 'runtime-key',
-  APPWRITE_ENDPOINT: 'https://appwrite.example.test/v1',
-};
 
 const POLAR_LEGACY = {
   NOMO_POLAR_ENVIRONMENT: 'sandbox',
@@ -87,46 +76,6 @@ test('normalizeEnv: returns same object when nothing changes', () => {
 test('normalizeEnv: an empty current value is not replaced by the legacy one', () => {
   const normalized = normalizeEnv({ NOMO_DATA_DIR: '', VOID_DATA_DIR: 'old' }, ['NOMO_DATA_DIR']);
   assert.strictEqual(normalized.NOMO_DATA_DIR, '');
-});
-
-test('readAuthConfig: legacy seal key and public origin still configure auth', () => {
-  const config = readAuthConfig({
-    ...APPWRITE,
-    NOMO_AUTH_SEAL_KEY: SEAL,
-    NOMO_PUBLIC_ORIGIN: 'https://chat.example.test',
-  });
-  assert.strictEqual(config.sealKey, SEAL);
-  assert.strictEqual(config.publicOrigin, 'https://chat.example.test');
-});
-
-test('readAuthConfig: a NOMO value wins over the legacy one', () => {
-  const config = readAuthConfig({
-    ...APPWRITE,
-    NOMO_AUTH_SEAL_KEY: SEAL,
-    VOID_AUTH_SEAL_KEY: 'b'.repeat(64),
-    NOMO_PUBLIC_ORIGIN: 'https://new.example.test',
-    VOID_PUBLIC_ORIGIN: 'https://old.example.test',
-  });
-  assert.strictEqual(config.sealKey, SEAL);
-  assert.strictEqual(config.publicOrigin, 'https://new.example.test');
-});
-
-test('readAuthConfig: a legacy Appwrite name is not aliased', () => {
-  assert.throws(
-    () => readAuthConfig({ ...APPWRITE, NOMO_APPWRITE_PROJECT_ID: 'project', NOMO_PUBLIC_ORIGIN: 'https://chat.example.test' }),
-    /NOMO_AUTH_SEAL_KEY/,
-  );
-});
-
-test('readAuthConfig: the failure names the variables and never a value', () => {
-  assert.throws(
-    () => readAuthConfig({ ...APPWRITE, NOMO_PUBLIC_ORIGIN: 'https://chat.example.test' }),
-    (error) => {
-      assert.match(error.message, /NOMO_AUTH_SEAL_KEY/);
-      assert.doesNotMatch(error.message, /runtime-key/);
-      return true;
-    },
-  );
 });
 
 test('billingFromEnv: legacy Polar names alone still produce a service', () => {

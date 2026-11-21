@@ -90,20 +90,7 @@ policy holds everything that is not R0; unknown tools stay denied.
 - Conformance report per adapter ships in the build it describes.
 - Denials name the rule id, the class and the approval path.
 
-## 5. iOS and macOS path
-
-macOS: Tauri desktop today. Road to users: Developer ID identity,
-notarize, staple, published DMG with SHA-256 (A1, blocked on the
-identity, human task).
-
-iOS: no Xcode SDK on the build machine and no native client. Two
-options, decision is human: (a) Tauri mobile sharing the web UI,
-smaller diff, one codebase; (b) SwiftUI per APPLE-APPS-PLAN A2 to A5,
-native feel, XL cost. This plan phases Tauri mobile first and keeps
-SwiftUI as the later native option. Physical devices, VoiceOver and
-TalkBack stay required gates before any store claim (F6).
-
-## 6. Phases with exit criteria
+## 5. Phases with exit criteria
 
 Every phase ends with commands that run, green on main, pushed.
 No phase starts until the previous gate is green.
@@ -157,13 +144,13 @@ No phase starts until the previous gate is green.
 
 ### F6: release gates (devices, access, signatures)
 
-- Physical iOS and Android keyboards, screen readers, 200 percent
+- Physical Android keyboards, screen readers, 200 percent
   zoom, measured LCP, INP and CLS, documented rollback.
-- Signed macOS DMG, Windows installer smoke, Linux packaging smoke.
+- Windows installer smoke, Linux packaging smoke.
 - Exit: acceptance matrix fully ticked with device names and build
   numbers; nothing illustrative ships as proven.
 
-## 7. Explicitly not in this plan
+## 6. Explicitly not in this plan
 
 - Background subagent fleets and speculative execution: conflicts
   with the single active run guarantee; needs R06 plus R11.
@@ -172,10 +159,9 @@ No phase starts until the previous gate is green.
 - Python transport and provider sandboxes: R12, needs EXT resources.
 - Site claim audit and pricing: human decisions, G-00 and G-08 scope.
 
-## 8. External resources that block phases
+## 7. External resources that block phases
 
-Apple Developer ID identity and notarization service; full Xcode with
-iOS SDK; physical iOS and Android devices; Windows and Linux machines;
+Physical Android devices; Windows and Linux machines;
 disposable AWS, Supabase, GitHub and Vercel targets; npm scope
 ownership and release authorization; production KMS. Nothing
 autonomous touches a production account, a customer-visible surface

@@ -45,9 +45,9 @@ import { envValue } from './env.mjs';
  * defence that leaned on it answering both alike would not be a defence.
  *
  * Sign up is off. `signupAllowed()` reads `NOMO_ACCOUNT_SIGNUP`, which is not
- * set, and no code path here creates an account unless it is. The gate is in
- * `docs/APPWRITE-AUTH.md` and the conditions that have to hold before it is
- * turned on are listed in `docs/ACCOUNT-OWNERSHIP.md`.
+ * set, and no code path here creates an account unless it is. The conditions
+ * that have to hold before it is turned on are listed in
+ * `docs/ACCOUNT-OWNERSHIP.md`.
  */
 
 import {
@@ -190,9 +190,9 @@ export function readSessionCookie(req) {
 }
 
 /**
- * Public signup is off until `docs/APPWRITE-AUTH.md` says it may be on. It is a
- * named switch rather than a deleted branch so the condition to satisfy is a
- * line of configuration and not an archaeology exercise.
+ * Public signup is off until `docs/ACCOUNT-OWNERSHIP.md` says its conditions
+ * hold. It is a named switch rather than a deleted branch so the condition to
+ * satisfy is a line of configuration and not an archaeology exercise.
  */
 export const signupAllowed = (env = process.env) =>
   envValue(env, 'NOMO_ACCOUNT_SIGNUP') === "1";

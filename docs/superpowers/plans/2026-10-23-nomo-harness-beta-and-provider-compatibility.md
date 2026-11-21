@@ -1,7 +1,7 @@
 # Plán implementace: beta instalace a kompatibilita providerů NOMO
 
 > **Stav:** Implementace specifikace uživatelem výslovně schválena 2026-10-23. Provádět pouze přes jediný harness task graph, po jednom aktivním uzlu a s důkazem pro každý bounded loop. Žádný další subagent před dokončením aktuálního.
-> **Aktualizace rozsahu 2026-10-27:** Uživatel nechce desktopovou aplikaci. Úkoly 15-17, desktopová část Úkolu 18 a H34 jsou mimo cíl. Nespouštět Xcode, Tauri build ani desktopový instalační smoke test. Existující `apps/desktop/**` ponechat bez změn, jejich odstranění nebylo požadováno. OpenAI kompatibilita zůstává odchozí podle schválené specifikace.
+> **Aktualizace rozsahu 2026-10-27:** Uživatel nechce desktopovou aplikaci. Úkoly 15-16, desktopová část Úkolu 17 a H34 jsou mimo cíl. Nespouštět Tauri build ani desktopový instalační smoke test. Existující `apps/desktop/**` ponechat bez změn, jejich odstranění nebylo požadováno. OpenAI kompatibilita zůstává odchozí podle schválené specifikace.
 
 
 **Cíl:** Dodat testerům jednoduchou cestu k místnímu webovému Harnessu a CLI ze soukromého repozitáře, soukromou feedback cestu bez telemetrie a odchozí kompatibilitu všech chat/tiny modelových providerů v připnutých zdrojích OMP/Prime. Nativní desktopová aplikace není cílem.
@@ -192,17 +192,13 @@ Nastavení zobrazuje schopnosti vybraného manifestového modelu pouze z ověře
 **Historický testovací návrh:** YAML/schema validace a ruční preview. Tato hosted cesta není aktivní.
 
 ## Historická fáze 6: soukromé desktop balíčky (mimo aktuální cíl)
-Desktop buildy, Xcode, instalované smoke testy a release jsou vyřazené z další práce. Následující úkoly a jejich historické záznamy nejsou aktuální plán; existující zdrojové soubory zachovat.
+Desktop buildy, instalované smoke testy a release jsou vyřazené z další práce. Následující úkoly a jejich historické záznamy nejsou aktuální plán; existující zdrojové soubory zachovat.
 
-### Úkol 15: macOS build workflow a install smoke, retired
-
-Historický úkol je vyřazen a neprovádí se. Nevytvářet hosted CI, artifact nebo release workflow.
-
-### Úkol 16: Windows build/release hardening, retired
+### Úkol 15: Windows build/release hardening, retired
 
 Historický úkol je vyřazen a neprovádí se. Nevytvářet hosted CI, artifact nebo release workflow.
 
-### Úkol 17: Private release approval gate
+### Úkol 16: Private release approval gate
 
 **Historický návrh, neaktivní:** dřívější plán zvažoval `.github/workflows/desktop-release.yml` a úpravu `apps/desktop/README.md`.
 
@@ -210,7 +206,7 @@ Historický úkol je vyřazen a neprovádí se. Nevytvářet hosted CI, artifact
 
 ## Fáze 6: Harness ověření a předání
 
-### Úkol 18: Provider coverage a Harness acceptance
+### Úkol 17: Provider coverage a Harness acceptance
 
 - **Soubory:** dotčené provider tests, `packages/workbench/src/workbench.test.ts`, `apps/control-plane/api/server.test.ts` a testy nastavení.
 
@@ -234,7 +230,7 @@ Platformní desktop smokes jsou mimo aktuální cíl a nesmí se spouštět. Kon
 5. H19 project secret boundary zůstává nezávisle blokovaná; implementace coding workspace capability se nezačne, dokud její vlastní návrh není schválen.
 6. Žádné automatické commit/push/merge/release. Commit nebo push vyžaduje samostatné výslovné schválení; merge, release, změna přístupů a skutečné provider požadavky nejsou povolené.
 
-### Historický úkol 19: Ověřit a publikovat Harness-only větev (záznam, neopakovat)
+### Historický úkol 18: Ověřit a publikovat Harness-only větev (záznam, neopakovat)
 
 **Soubory:** pouze Harness soubory už změněné v pracovním stromu; nikdy `packages/cli/src/tui/**` ani `.nomo/work-state.json`.
 
@@ -263,7 +259,7 @@ Tato aktualizace nahrazuje dřívější webové a desktopové cíle tohoto plá
 
 - Pracovat pouze v existujícím `.worktrees/agent-harness` na větvi `feat/wp-regress`. Nový worktree by zde buď vynechal existující změny, nebo je duplikoval. V tomto worktree zachovat všechny rozpracované změny; v hlavním checkoutu a TUI worktree nic neupravovat.
 - Povolený rozsah: Workbench runtime, provider adaptéry a manifest, control-plane API jen pokud je nutné pro backend kontrakt, CLI instalátor a jeho testy, související Harness dokumentace, canonical task graph a Obsidian Work Log.
-- Zakázaný rozsah: `apps/control-plane/ui/**`, web GUI, browser smoke/build, TUI změny, desktop/Xcode, SWE-bench, Docker a nesouvisející worktree. Neprovádět živé provider požadavky, nepřebírat tajemství a nezavádět neautorizovaný OAuth.
+- Zakázaný rozsah: `apps/control-plane/ui/**`, web GUI, browser smoke/build, TUI změny, desktop, SWE-bench, Docker a nesouvisející worktree. Neprovádět živé provider požadavky, nepřebírat tajemství a nezavádět neautorizovaný OAuth.
 - „OpenAI compatible“ zahrnuje outbound provider adaptéry i inbound endpointy. Schválený inbound rozsah je pouze `GET /v1/models` a textový `POST /v1/chat/completions` podle `docs/superpowers/specs/2026-11-07-nomo-inbound-openai-chat-completions.md`; neimplikuje OpenAI OAuth ani další OpenAI resources.
 - Aktivní Harness worktree obsahuje uživatelské rozpracované změny. Každý krok musí omezit editaci na ověřené Harness cesty; žádné hromadné uklízení, reset, commit, push ani merge.
 - Canonical task graph zůstává jediným zdrojem stavu úkolů. Graphify/Understand Anything indexy jsou zastaralé nebo ukazují jiný worktree; nepoužívat je jako důkaz aktuálního stavu. Obsidian zůstává projekční paměť, nikoli druhý task graph.

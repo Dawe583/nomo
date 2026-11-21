@@ -230,7 +230,7 @@
 - [ ] All tests pass (unit, integration, e2e)
 - [ ] OpenCode Zen works as default provider
 - [ ] Mobile PWA installable
-- [ ] Desktop app builds for macOS/Windows/Linux
+- [ ] Desktop app builds for Windows/Linux
 
 ## 9. Technical Stack
 

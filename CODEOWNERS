@@ -25,12 +25,6 @@ pnpm-lock.yaml          @Dawe583
 /Dockerfile             @Dawe583
 /nitro.config.ts        @Dawe583
 
-# The hosted function's deployment input. Appwrite receives a tarball, not a
-# checkout, so this snapshot is what a deployed function serves in place of the
-# source tree it was generated from. The GitHub gate fails rather than
-# regenerating it, which is the point of naming it here as well.
-/apps/appwrite-mcp/src/appwrite_mcp/nomo_snapshot.json   @Dawe583
-
 # Database schema. Applied in order and never edited in place, because the
 # ledger and the account tables underneath it are the production record of
 # accountable tool calls.

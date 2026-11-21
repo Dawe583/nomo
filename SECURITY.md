@@ -39,10 +39,6 @@ What is held elsewhere, and where:
 - **The cloud database.** `DATABASE_URL` and `NOMO_PG_URL` are deployment
   variables on Vercel. The hosted ledger is the production record of accountable
   tool calls, so a credential here is a credential over that record.
-- **The hosted function.** The Appwrite project id and endpoint, and the project
-  API key the console actions need, are Appwrite-side configuration and local
-  environment values. Nothing in `apps/appwrite-mcp` carries a key; the
-  directory holds source, the deployed snapshot and the requirements.
 - **Control plane tokens.** `NOMO_CONTROL_TOKEN` and `NOMO_SECRET_KEY` are
   issued per workspace at run time and are present in no file, no fixture and no
   test.

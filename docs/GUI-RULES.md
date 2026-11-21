@@ -2,7 +2,8 @@
 
 Status: pointer, 2026-09-29. The appearance contract is
 `APPLE-DESIGN-SYSTEM.md`, its values are generated from `design-tokens.json`,
-and the work is sequenced in `PLATFORM-REDESIGN-PLAN.md`. This file names no
+and the web GUI work is sequenced in `GUI-UPGRADE-PLAN.md`;
+`PLATFORM-REDESIGN-PLAN.md` is superseded since 2026-11-21. This file names no
 colour, no font and no provider on purpose: it stacked three directions that
 restated values with a home already. They were a neutral direction dated
 2026-09-23, a paper palette direction dated 2026-09-11 with an external

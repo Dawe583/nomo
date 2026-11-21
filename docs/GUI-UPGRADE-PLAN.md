@@ -364,7 +364,7 @@ Každý checkpoint obsahuje demo URL nebo lokální příkaz, reálný dataset, 
 | Vercel cold start / reload deep linku | API i app route fungují; žádné 404 statických assetů |
 | Lokální a zabalený desktop | Stejné GUI, správné lokální capabilities a download |
 
-Viewporty: 320×568, 390×844, 430×932, 768×1024, 1024×768, 1280×720, 1440×900, 1920×1080. Chrome/Safari/Firefox/Edge podle podporované platformy; alespoň fyzický iOS Safari a Android Chrome pro klávesnici, safe area a návrat z backgroundu. Light/dark, 200% zoom, reduced motion. Nejde o nutnost všech kombinací v kartézském součinu; každá kritická vlastnost má zvolený reprezentativní test.
+Viewporty: 320×568, 390×844, 430×932, 768×1024, 1024×768, 1280×720, 1440×900, 1920×1080. Chrome/Safari/Firefox/Edge podle podporované platformy; alespoň fyzický Android Chrome pro klávesnici, safe area a návrat z backgroundu. Light/dark, 200% zoom, reduced motion. Nejde o nutnost všech kombinací v kartézském součinu; každá kritická vlastnost má zvolený reprezentativní test.
 
 Základní příkazy zachovat: `pnpm run typecheck`, `pnpm test`, relevantní `pnpm desktop:test`. Přidat frontend build a browser E2E script teprve s konkrétní testovací sadou. Preview musí ověřit skutečný cloudový provider a storage; QA fixture ověřuje UI a nástrojový tok, nikoli dostupnost TokenRouteru.
 

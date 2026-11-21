@@ -58,13 +58,6 @@ const LICENCE_LINE = new Map([
     },
   ],
   [
-    "apps/appwrite-mcp",
-    {
-      status: "open",
-      why: "a hosted function that serves the open registry and holds no credential",
-    },
-  ],
-  [
     "apps/control-plane",
     { status: "closed", why: "the hosted control plane, paid and closed" },
   ],

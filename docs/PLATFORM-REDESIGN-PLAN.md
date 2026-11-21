@@ -1,5 +1,12 @@
 # Platform redesign plan: iOS, macOS and web
 
+> **Superseded, 2026-11-21. Not the plan of record.** The owner took Apple app
+> work out of every plan on 2026-11-21 (see `DECISIONS.md`), and this plan
+> exists mostly for its iOS and macOS phases, so it is retired whole rather than
+> rewritten. Web GUI work is planned in `GUI-UPGRADE-PLAN.md`; the former
+> index of plans of record, `PLAN-STATUS.md`, was retired on 2026-10-09. The
+> text below is kept as history only.
+
 Status: plan, 2026-09-28. The appearance it implements is defined in
 `APPLE-DESIGN-SYSTEM.md`. The sequence it sits in is `ROADMAP-2026-Q4.md`.
 

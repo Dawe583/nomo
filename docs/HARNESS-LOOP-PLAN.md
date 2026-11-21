@@ -281,7 +281,6 @@ Each node follows the loop in section 3.2. Statuses are tracked in
 
 ## 8. Risks and stop rules
 
-- Swift macro flake: retry once, then stop on a double red.
 - CSS budgets: a new block inherits the card size and carries no radius.
 - Unmeasured guardrails: report them, never treat them as passing or failing.
 - Foreign TUI files: never edited, never staged.

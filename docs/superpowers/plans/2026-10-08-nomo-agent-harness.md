@@ -123,11 +123,11 @@ test("NOMO wins over VOID without mutating the input", () => {
 - [x] Resolve aliases at environment reads using the shared helper. Keep auth errors generic and never include secret values.
 - [x] Run the focused Node tests and the control-plane and desktop checks.
 
-### Task 6: Restore aliases in the hosted account and auth runtime
+### Task 6: Restore aliases in the hosted account runtime
 
 **Acceptance criteria:** Existing seal keys, public origin, and bridge token settings remain valid with VOID aliases. NOMO values win.
 
-**Files:** Create `cloud/env.mjs` and `cloud/env.test.mjs`; modify `cloud/account.mjs`, `cloud/auth.mjs`, and `cloud/store.mjs`.
+**Files:** Create `cloud/env.mjs` and `cloud/env.test.mjs`; modify `cloud/account.mjs` and `cloud/store.mjs`.
 
 - [x] Add failing helper tests for legacy-only lookup, NOMO precedence, empty NOMO values, and source immutability.
 - [x] Run `node --test cloud/env.test.mjs` and confirm the expected failures.
@@ -144,16 +144,16 @@ test("NOMO wins over VOID without mutating the input", () => {
 - [x] Use the Task 6 helper for environment reads. Do not call billing, Prime, or external auth services during tests.
 - [x] Run `node --test cloud/env.test.mjs` and the existing cloud boundary suite.
 
-### Task 8: Restore aliases in Python, Rust, and the installer
+### Task 8: Restore aliases in Rust and the installer
 
 **Acceptance criteria:** Existing snapshot, desktop workspace/key, and installer home settings remain usable under their old names. NOMO values win.
 
-**Files:** Modify `apps/appwrite-mcp/src/app.py`, `apps/desktop/src-tauri/src/main.rs`, `scripts/install-nomo.sh`, and `scripts/src/install-nomo.test.mjs`; create `apps/appwrite-mcp/tests/test_env_compat.py`.
+**Files:** Modify `apps/desktop/src-tauri/src/main.rs`, `scripts/install-nomo.sh`, and `scripts/src/install-nomo.test.mjs`.
 
 - [x] Add failing tests for legacy-only and conflicting names in each supported runtime.
-- [x] Run the focused Python and installer tests and verify the alias cases fail before implementation. Add a focused Rust test for the environment resolver.
-- [x] Add minimal per-language alias resolution. Keep Python and Rust storage/key behavior unchanged.
-- [x] Run the focused tests and the native Python and installer checks available in the repository. Rust `cargo test` is blocked by a pre-existing Tauri build failure in this checkout (missing resources dir, unrelated to the resolver); `resolve_env` was verified by reading and its unit test is in the tree.
+- [x] Run the focused installer tests and verify the alias cases fail before implementation. Add a focused Rust test for the environment resolver.
+- [x] Add minimal alias resolution. Keep Rust storage/key behavior unchanged.
+- [x] Run the focused tests and the installer checks available in the repository. Rust `cargo test` is blocked by a pre-existing Tauri build failure in this checkout (missing resources dir, unrelated to the resolver); `resolve_env` was verified by reading and its unit test is in the tree.
 - [x] Re-run the Rust resolver test once the Tauri build environment is whole. Done 2026-10-10: `cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml` reports 22 passed, 0 failed, and `tests::resolve_env_precedence` is among them, so the NOMO-over-VOID precedence is now pinned by a run rather than by reading. The build environment needed no repair. `bundle.resources` names `resources/`, which `apps/desktop/.gitignore` ignores as a local artifact, and the Tauri build script refuses to compile while that declared path is absent; the target cache was warm, so creating the directory locally was the whole fix and the crate compiled and linked in 3.3s. `resolve_env` at `main.rs:61` resolves a NOMO key first and falls back to its VOID key, which is the behaviour the rename requires.
 
 ### Task 9: Add an explicit, non-destructive state migration

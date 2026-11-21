@@ -265,18 +265,16 @@ rather than quietly reaching the network.
 
 ### Suites outside the Node gate
 
-`scripts/src/check-tests.mjs` now also runs the two Python suites,
-`apps/appwrite-mcp/tests` and `python/void-transport/tests`. A suite that
-cannot run prints as `UNRUN`, naming the interpreters it tried and the
-commands to run it, and is excluded from the total rather than counted as a
-pass. When anything was skipped the summary reads
-`N suites, M tests, K could not run`, so a test count quoted from this gate
-cannot be read as covering a suite that never executed.
+`scripts/src/check-tests.mjs` now also runs the Python suite,
+`python/void-transport/tests`. A suite that cannot run prints as `UNRUN`,
+naming the interpreters it tried and the commands to run it, and is excluded
+from the total rather than counted as a pass. When anything was skipped the
+summary reads `N suites, M tests, K could not run`, so a test count quoted from
+this gate cannot be read as covering a suite that never executed.
 
 `python/void-transport` runs under the system interpreter and executes on an
-ordinary checkout. `apps/appwrite-mcp` needs the `mcp` SDK and is `UNRUN`
-until that virtual environment exists. These suites are local-only; the former
-hosted-mcp job is retired. A release report must say which local suites ran.
+ordinary checkout. This suite is local-only. A release report must say which
+local suites ran.
 
 Historical note: the former workflow also defined an `apple` job for both
 Swift packages and the `VOID` scheme on an iOS simulator. No result was claimed

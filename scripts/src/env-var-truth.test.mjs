@@ -121,10 +121,6 @@ const TEST_ONLY_ENV_VARS = [
     why: "A value of the `encryptionKeyEnv` config field in packages/cli/src/recovery-config.test.ts, asserted through the rendered config text. Same reason as NOMO_HEALTH_KEY.",
   },
   {
-    name: "NOMO_APPWRITE_PROJECT_ID",
-    why: "cloud/env.test.mjs uses it to prove the auth config does not alias an Appwrite project ID onto the gateway seal key. A synthetic identifier proving the boundary, not a setting an operator types.",
-  },
-  {
     name: "NOMO_NOT_HOME",
     why: "packages/ledger/src/env-compat.test.ts uses it to prove the legacy fallback does not alias a name that merely starts with NOMO_. Synthetic boundary fixture, never read by product code.",
   },

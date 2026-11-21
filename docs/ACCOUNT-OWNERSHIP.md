@@ -4,9 +4,9 @@
 still off, and it is off by a variable that is not set.**
 
 This is how `chat.voidagent.tech` becomes multi-tenant, so that an account
-created on the marketing site sees only its own data. It exists because
-`docs/APPWRITE-AUTH.md` forbids enabling public signup until every cloud read
-and write is scoped by a verified owner.
+created on the marketing site sees only its own data. It exists because public
+signup may not be enabled until every cloud read and write is scoped by a
+verified owner.
 
 ## Supabase migration checkpoint
 
@@ -236,9 +236,8 @@ moment, with the deploy paused.
 ## What must be true before signup is enabled
 
 Signup is off because `NOMO_ACCOUNT_SIGNUP` is not set, and that variable is
-the only thing standing between the beta and public registration. The gate in
-`docs/APPWRITE-AUTH.md` is what it may not be turned on against. Of its four
-conditions:
+the only thing standing between the beta and public registration. The four
+conditions below are what it may not be turned on against:
 
 1. **Done, and enforced by a test rather than by review.** Every statement
    carries an owner, `cloud/owner.test.mjs` parses them, and a statement that
@@ -286,9 +285,9 @@ append-only triggers. A ledger update remained blocked. A second scratch
 database with a malformed event caused the migration to fail; after rollback,
 the owner columns were absent and both triggers remained enabled. This verifies
 the migration mechanics only against a disposable synthetic database. It does
-not show that the live beta is migrated or validate an Appwrite migration or
-rollback. No raw test log is committed. The CI integration runner starts from
-`cloud/schema.sql`, so it does not exercise this legacy migration path.
+not show that the live beta is migrated. No raw test log is committed. The CI
+integration runner starts from `cloud/schema.sql`, so it does not exercise this
+legacy migration path.
 
 The owner is threaded through the workflow as a durable argument rather than
 re-derived inside a step: `cloud/workflow.mjs` takes the owner the launching

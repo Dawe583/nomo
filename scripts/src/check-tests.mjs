@@ -144,14 +144,12 @@ if (existsSync(paidDir)) {
 }
 
 /**
- * The two Python suites, which until now no local gate ran.
+ * The Python suite, which until now no local gate ran.
  *
- * They are separate from every suite above because they are a different kind
- * of evidence. The Node suites read the repository with the interpreter that
- * is already installed; these two need a decision about which Python runs
- * them, and one of them needs the `mcp` SDK, which is a build requirement of
- * the hosted function rather than a test-only dependency. So the runner
- * probes for a usable interpreter and records what it tried.
+ * It is separate from every suite above because it is a different kind of
+ * evidence. The Node suites read the repository with the interpreter that is
+ * already installed; this one needs a decision about which Python runs it. So
+ * the runner probes for a usable interpreter and records what it tried.
  *
  * A suite that cannot run is reported as `UNRUN`, never as a pass, and is
  * excluded from the passing total. That distinction is the whole point: a
@@ -160,27 +158,13 @@ if (existsSync(paidDir)) {
  * quotes it.
  *
  * `UNRUN` is a named warning and does not fail the gate. The alternative,
- * failing, produces a gate that cannot pass on any machine lacking a build
- * dependency of the hosted function, and a gate that is always red is a gate
- * nobody runs. What is refused is the dishonest version: a suite that never
- * executed must never be counted as a pass, which is why it prints in its own
- * column and is subtracted from the total.
+ * failing, produces a gate that cannot pass on any machine lacking a usable
+ * interpreter, and a gate that is always red is a gate nobody runs. What is
+ * refused is the dishonest version: a suite that never executed must never be
+ * counted as a pass, which is why it prints in its own column and is
+ * subtracted from the total.
  */
 const pythonSuites = [
-  {
-    name: "appwrite-mcp",
-    dir: join(root, "apps", "appwrite-mcp"),
-    startDir: "apps/appwrite-mcp/tests",
-    topDir: "apps/appwrite-mcp",
-    // The SDK is a build requirement of the deployed function, so an ordinary
-    // checkout cannot import it and a failing gate on every such machine
-    // would be a gate nobody runs.
-    probe: "import mcp",
-    setup: [
-      "python3 -m venv /tmp/nomo-mcp-venv",
-      "/tmp/nomo-mcp-venv/bin/python -m pip install -r apps/appwrite-mcp/requirements.txt",
-    ],
-  },
   {
     name: "nomo-transport",
     dir: join(root, "python", "nomo-transport"),
@@ -194,19 +178,15 @@ const pythonSuites = [
 /**
  * The interpreters tried, in order.
  *
- * An explicit override comes first so a machine with the SDK somewhere else
- * than /tmp is not told it cannot run, and so CI can name the interpreter it
- * built. The documented virtual environment is next, then the system `python3`
- * for the suite that needs nothing. Each is reported with the reason it was
+ * An explicit override comes first so a machine whose interpreter lives
+ * elsewhere is not told it cannot run, and so CI can name the interpreter it
+ * built. The system `python3` is next. Each is reported with the reason it was
  * rejected, so a reader is never left guessing which interpreter the gate
- * meant. `NOMO_MCP_PYTHON` relocates the SDK environment and `NOMO_PYTHON`
- * overrides the interpreter outright; both exist so a machine that has the
- * SDK somewhere else, and a run that needs to reach the `UNRUN` branch, are
- * both expressible without editing this file.
+ * meant. `NOMO_PYTHON` overrides the interpreter outright, so a run that needs
+ * to reach the `UNRUN` branch is expressible without editing this file.
  */
 const pythonCandidates = [
   ...(process.env.NOMO_PYTHON ? [process.env.NOMO_PYTHON] : []),
-  process.env.NOMO_MCP_PYTHON ?? "/tmp/nomo-mcp-venv/bin/python",
   "python3",
 ];
 
@@ -590,14 +570,14 @@ for (const r of results) {
   if (r.unrun) {
     const suite = pythonSuites.find((s) => s.name === r.name);
     console.log(
-      `  ${`${r.runner}/${r.name}`.padEnd(width)}  --- pass    0 fail  UNRUN: ${r.reason ?? "no interpreter could import the SDK it needs"}`,
+      `  ${`${r.runner}/${r.name}`.padEnd(width)}  --- pass    0 fail  UNRUN: ${r.reason ?? "no usable interpreter was found"}`,
     );
     console.log(`      tried: ${(r.tried ?? []).join(", ")}`);
     if (!suite) continue;
     for (const step of suite.setup ?? [])
       console.log(`      then run: ${step}`);
     console.log(
-      `      ${process.env.NOMO_MCP_PYTHON ?? "/tmp/nomo-mcp-venv/bin/python"} -m unittest discover -s ${suite.startDir} -t ${suite.topDir}`,
+      `      ${process.env.NOMO_PYTHON ?? "python3"} -m unittest discover -s ${suite.startDir} -t ${suite.topDir}`,
     );
     continue;
   }

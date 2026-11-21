@@ -301,9 +301,8 @@ export function createBillingService(config, overrides = {}) {
      *
      * The two documents answer different durability questions, and the split is
      * deliberate. A Polar customer id is not a durable identity here: it is not
-     * a Supabase user id, and `docs/APPWRITE-AUTH.md` describes a second
-     * provider that is written but not imported, so a provider migration
-     * changes the owner and orphans the index entry that named the old one. The
+     * a Supabase user id, and a provider migration changes the owner and
+     * orphans the index entry that named the old one. The
      * owner's own document is the half that travels with the account, and the
      * index is derived from it, so recovery is one authenticated call from the
      * new owner rather than anything Polar has to confirm. The refusal above is

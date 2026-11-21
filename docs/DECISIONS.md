@@ -1583,3 +1583,35 @@ plan are the active product-design references. Conflicting older product
 strategy and sales documents will be removed from the active feature branch
 after valid evidence is migrated. Keep `DECISIONS.md` history, current technical
 contracts and valid operations documentation. Do not rewrite Git history.
+
+## Appwrite removed; Apple app work out of plans, 2026-11-21
+
+The owner decided on 2026-11-21 to stop maintaining Appwrite, which the product
+does not use, and to take Apple app work out of every plan, because the owner
+works on Linux and cannot build or test an iOS or macOS app.
+
+**Appwrite removed completely.** The hosted MCP function directory
+`apps/appwrite-mcp`, the Appwrite auth provider `cloud/auth.mjs`, the
+provisioner `cloud/appwrite.mjs` and the seeder that only its test imported are
+deleted, together with their tests, their documentation and the `appwrite-mcp`
+entry in the gate suite list. `cloud/server.mjs` never imported the auth
+provider or the provisioner, and its account routes are the Supabase broker in
+`cloud/account.mjs`, so no hosted route and no deployment path reached
+Appwrite, and hosted behaviour is unchanged. The licence line, the
+environment-variable gate and the documentation inventory were updated with
+the deletions.
+
+**Apple app work is out of the plans.** The Apple apps plan
+`docs/APPLE-APPS-PLAN.md` and the 1.0.1 Apple release plan
+`docs/superpowers/plans/2026-09-23-nomo-1.0.1-apple-release.md` are deleted, and
+the Apple, iOS, iPadOS, Swift, SwiftUI, Xcode, TestFlight and App Store work
+items, phases, acceptance rows and stop rules are removed from the plans that
+remain. `docs/PLATFORM-REDESIGN-PLAN.md` is predominantly Apple work, so it is
+retired whole with the superseded marker at its head instead of being
+rewritten; web GUI work is planned in `docs/GUI-UPGRADE-PLAN.md`. The
+`apps/apple` sources, the Swift packages, the `apple:*`
+package scripts and the Swift and Apple gate suites are untouched: they stay in
+the tree and report UNRUN on a machine without the Apple toolchain, which is
+what a suite nobody could run has to report. A mention of macOS or Linux as an
+operating system the CLI or the Tauri desktop app runs on is a platform fact
+and stays in the plans.
