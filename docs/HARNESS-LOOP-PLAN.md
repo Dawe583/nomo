@@ -452,16 +452,19 @@ against Hermes Agent and Prime Agent and orders the slices that close the gap:
   record. Design record:
   `docs/superpowers/designs/2026-11-21-hp11-agent-messaging.md`.
 
-- HP12. Stop releases run capacity before the transport settles. Status:
-  discovered 2026-11-21, open. Paths: `packages/workbench/src/index.ts`
-  (`cancel`, the run job's `finally`). Evidence: `lifecycle.test.ts` fails
-  deterministically on every run at commit `065e65e` and earlier, with and
-  without the HP10 worktree: after `cancel` and a refused concurrent `start`,
-  `jobs.size` is already zero, so a document edit is accepted while the
-  cancelled provider request is still in flight. Goal: capacity and the
-  document gate stay closed until the original transport settles. Verifier:
-  `packages/workbench/src/lifecycle.test.ts`. Stop: a cancelled run releases its
-  slot before the provider promise settles.
+- HP12. Stop capacity test raced the dispatch. Status: fixed 2026-11-21. Paths:
+  `packages/workbench/src/lifecycle.test.ts`. Finding: the test cancelled
+  immediately after `start`, before the run had dispatched its provider
+  request, so `calls` was still zero and there was nothing in flight to wait
+  for; the failure was in the test's premise, not in `cancel` or the job
+  `finally`. Measured with a probe: `calls=0` from `start` through `cancel` and
+  five 20 ms samples, and the provider was never reached at all. Fix: wait for
+  the first dispatched request before cancelling, which keeps every original
+  assertion and makes them mean what they say. Verified: a dispatched request
+  that ignores its abort keeps `jobs.size` non-zero, `editDocument` is refused
+  until the transport settles, and the run reports `cancelled` afterwards.
+  Verifier: `packages/workbench/src/lifecycle.test.ts` (4 pass, 0 fail).
+  Stop: capacity is released while a dispatched request is still in flight.
 
 ## 7. Verification commands
 
