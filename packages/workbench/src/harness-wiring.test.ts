@@ -4,6 +4,7 @@ import { isolatedWorkbench } from "./test-fixture.ts";
 import { setTimeout as delay } from "node:timers/promises";
 import type { Workbench } from "./index.ts";
 import { HARNESS_SETTINGS } from "./harness-settings.ts";
+import { CompatibleProvider } from "./provider.ts";
 
 /**
  * The settings table is only a claim about the run path until something proves
@@ -313,4 +314,187 @@ test("maxPromptCharacters also bounds a branch prompt rewrite", async (t) => {
     idempotencyKey: "branch-long-enough",
   } as Parameters<Workbench["branch"]>[1]);
   assert.equal(child.status, "idle");
+});
+
+test("checkContextBudget reserves configured maxOutputTokens instead of hardcoded 4096", async (t) => {
+  const f = await fixture(t, async (url) =>
+    String(url).endsWith("/models") ? models() : answer(),
+  );
+  f.app.upsertAgent({
+    id: "tight-context",
+    name: "Tight Context",
+    systemPrompt: "Inspect concisely.",
+    allowedTools: ["void_workspace_list"],
+    policyProfile: "default",
+    maxTurns: 4,
+    maxContextTokens: 12000,
+  });
+
+  f.app.patchHarnessSettings({ maxOutputTokens: 16384 });
+  const over = await f.app.start("Inspect", "fixture", undefined, undefined, "tight-context");
+  await f.app.settled();
+  const overView = f.app.get(over.id);
+  assert.equal(overView?.status, "failed");
+  assert.ok(
+    overView?.events.some((event) => /Agent context budget reached/.test(event.text)),
+    "context budget failure must be recorded in session events",
+  );
+
+  f.app.patchHarnessSettings({ maxOutputTokens: 4096 });
+  const fits = await f.app.start("Inspect", "fixture", undefined, undefined, "tight-context");
+  await f.app.settled();
+  assert.equal(f.app.get(fits.id)?.status, "idle");
+});
+
+test("streamReply accepts streamed tool indices up to the maxToolCallsPerTurn ceiling", async () => {
+  const sse = (index: number) =>
+    new Response(
+      [
+        `data: ${JSON.stringify({
+          choices: [
+            {
+              index: 0,
+              delta: {
+                tool_calls: [
+                  {
+                    index,
+                    id: `call-${index}`,
+                    type: "function",
+                    function: { name: "void_workspace_list", arguments: "{}" },
+                  },
+                ],
+              },
+            },
+          ],
+        })}\n\n`,
+        `data: ${JSON.stringify({
+          choices: [{ index: 0, delta: {}, finish_reason: "tool_calls" }],
+        })}\n\n`,
+        "data: [DONE]\n\n",
+      ].join(""),
+      { status: 200, headers: { "content-type": "text/event-stream" } },
+    );
+
+  const okProvider = new CompatibleProvider(
+    { baseUrl: "https://fixture.test/v1", apiKey: "k" },
+    async () => sse(35),
+    { maxToolCallsPerTurn: 40 },
+  );
+  const reply = await okProvider.complete(
+    "fixture",
+    [{ role: "user", content: "go" }],
+    [],
+    new AbortController().signal,
+    () => {},
+  );
+  assert.equal(reply.message.tool_calls?.length, 1);
+  assert.equal(reply.message.tool_calls?.[0]!.id, "call-35");
+
+  const overflowProvider = new CompatibleProvider(
+    { baseUrl: "https://fixture.test/v1", apiKey: "k" },
+    async () => sse(HARNESS_SETTINGS.maxToolCallsPerTurn.max),
+    { maxToolCallsPerTurn: HARNESS_SETTINGS.maxToolCallsPerTurn.max },
+  );
+  await assert.rejects(
+    overflowProvider.complete(
+      "fixture",
+      [{ role: "user", content: "go" }],
+      [],
+      new AbortController().signal,
+      () => {},
+    ),
+    /invalid tool stream index/i,
+  );
+});
+
+test("providerRequestTimeoutMs bounds a hanging provider request", async () => {
+  const hanging: typeof fetch = (_url, init) =>
+    new Promise((_resolve, reject) => {
+      init?.signal?.addEventListener("abort", () => reject(init.signal?.reason), {
+        once: true,
+      });
+    });
+  const provider = new CompatibleProvider(
+    { baseUrl: "https://fixture.test/v1", apiKey: "k" },
+    hanging,
+    { providerRequestTimeoutMs: 1000 },
+  );
+  const started = Date.now();
+  await assert.rejects(
+    provider.complete(
+      "fixture",
+      [{ role: "user", content: "wait" }],
+      [],
+      AbortSignal.timeout(2500),
+    ),
+    /Provider request timed out\./,
+  );
+  assert.ok(Date.now() - started < 2000, "timeout must fire near 1000ms, not 60000ms");
+});
+
+test("maxToolResultCharacters bounds the tool message sent back to the model", async (t) => {
+  let turn = 0;
+  let seenToolContent = "";
+  const f = await fixture(t, async (url, init) => {
+    if (String(url).endsWith("/models")) return models();
+    const body = JSON.parse(String(init?.body)) as {
+      messages: Array<{ role: string; content?: string }>;
+      tools?: Array<{ function: { name: string; description?: string } }>;
+    };
+    turn += 1;
+    if (turn === 1) return answer();
+    if (turn === 2) {
+      const readTool = body.tools?.find((tool) =>
+        tool.function.description?.includes("Read a managed NOMO document"),
+      );
+      assert.ok(readTool, "read document tool must be in the catalog");
+      return Response.json({
+        choices: [
+          {
+            message: {
+              role: "assistant",
+              content: null,
+              tool_calls: [
+                {
+                  id: "read-big",
+                  type: "function",
+                  function: {
+                    name: readTool.function.name,
+                    arguments: JSON.stringify({ path: "big.md" }),
+                  },
+                },
+              ],
+            },
+            finish_reason: "tool_calls",
+          },
+        ],
+      });
+    }
+    const toolMessage = body.messages.find((m) => m.role === "tool");
+    seenToolContent = String(toolMessage?.content ?? "");
+    return answer();
+  });
+
+  const session = await f.app.start("Seed", "fixture");
+  await f.app.settled();
+  await f.app.editDocument(session.id, {
+    path: "big.md",
+    content: "A".repeat(2000),
+    expectedRevision: null,
+  });
+  f.app.patchHarnessSettings({ maxToolResultCharacters: 256 });
+  f.app.send(session.id, "Read big.md");
+  await f.app.settled();
+  assert.equal(seenToolContent.length, 256);
+});
+
+test("toolRequestTimeoutMs is clamped and persists across restarts", async (t) => {
+  const f = await fixture(t, async (url) =>
+    String(url).endsWith("/models") ? models() : answer(),
+  );
+  assert.equal(HARNESS_SETTINGS.toolRequestTimeoutMs.default, 180000);
+  assert.equal(f.app.patchHarnessSettings({ toolRequestTimeoutMs: 5 }).toolRequestTimeoutMs, 1000);
+  assert.equal(f.app.patchHarnessSettings({ toolRequestTimeoutMs: 1e9 }).toolRequestTimeoutMs, 600000);
+  f.app.patchHarnessSettings({ toolRequestTimeoutMs: 45000 });
+  assert.equal(f.restart().harnessSettings().toolRequestTimeoutMs, 45000);
 });

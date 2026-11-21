@@ -61,6 +61,9 @@ operator as applied while changing nothing.
 | `retryMaxDelayMs`     | 60000   | 1000 to 600000   | ceiling on the exponential backoff between provider retries  |
 | `contextEntryLimit`   | 3       | 0 to 20          | learned entries per kind that reach a prompt (0 = none)     |
 | `contextCharsPerEntry`| 240     | 40 to 4000       | characters of each retrieved entry a prompt shows            |
+| `providerRequestTimeoutMs` | 60000 | 1000 to 600000 | per-request HTTP timeout for provider completions during a run |
+| `toolRequestTimeoutMs` | 180000 | 1000 to 600000   | per-request timeout for MCP tool calls over the stdio proxy  |
+| `maxToolResultCharacters` | 64000 | 256 to 200000  | characters of a tool result retained in the model conversation |
 
 An agent profile's own `maxTurns` still wins over the harness setting, because
 a profile is a deliberate per-agent choice and `AGENT_LIMITS` already caps it.
@@ -162,6 +165,34 @@ would be a claim about behaviour that does not exist here. The table is
 deliberately the settings NOMO can honour, not a mirror of another project's
 configuration file. See `docs/AGENT-BINARIES.md` for what NOMO actually
 consumes from each binary.
+
+### Audited run-path literals that remain deliberately fixed (H5b)
+
+The broader H5b audit over `packages/workbench/src/index.ts`, `provider.ts`,
+`gui.ts` and `agents.ts` promoted `providerRequestTimeoutMs`,
+`toolRequestTimeoutMs` and `maxToolResultCharacters` into the table above,
+wired `checkContextBudget` to reserve the configured `maxOutputTokens` instead
+of a literal `4096`, and raised the SSE tool-call stream slot ceiling to
+`HARNESS_SETTINGS.maxToolCallsPerTurn.max` so raising `maxToolCallsPerTurn`
+past 32 reaches workbench governance instead of failing in stream decoding.
+Every other numeric literal on those four files remains deliberately fixed for
+the reason below:
+
+| file | literal | what it bounds | why it stays fixed |
+| --- | --- | --- | --- |
+| `index.ts` | `COMPACTION_SUMMARY_CHARACTERS = 2000`, `COMPACTION_SUMMARY_REQUEST_CHARACTERS = 24000` | manual `/compact` summary and dropped-history input ceiling | compaction stays manual and separate from runtime harness settings (`docs/NOMO-AGENT-HARNESS-SPEC.md` section 4.8) |
+| `index.ts` | `WORKBENCH_VIEW_MAX_EVENT_BYTES = 1024 * 1024` | retained session event ring buffer in memory | protects process memory on the view/SSE stream rather than governing agent authority or run work |
+| `index.ts` | `preparedAgentRuns.size >= 32`, `10 * 60_000` (10 min consent TTL) | pending agent-run consent previews and approval expiry | consent-freshness and memory safety invariant; widening expiry weakens operator approval guarantees |
+| `index.ts` | `Buffer.byteLength(resultJson, "utf8") > 64 * 1024` | external agent-runner result ceiling before forcing `execute:unknown` | matches `AGENT_RUNNER_OUTPUT_LIMITS.maxRunBytes` fail-closed safety ceiling on external runner output |
+| `index.ts` | `session.messages.length >= 199` (`send`) and `>= 200` (`run`) | conversation message count ceiling per session | pinned session history ceiling (`send` checks 199 before appending the user turn so `run` caps at 200) |
+| `index.ts` | `delay(100)`, `flushed > 250 \|\| delta.length > 512` | hold poll cadence (100ms) and stream delta flush cadence (250ms / 512 chars) | internal transport/UI responsiveness cadence, not a governance limit |
+| `index.ts` | `projectExecutionQueued >= 4`, `PROJECT_SANDBOX_LIMITS.outputBytes - 512`, `changes.slice(0, 100)` | queued sandbox operations, JSON framing reserve and preview row cap | protects local container runtime resources and keeps preview payloads bounded under sandbox limits |
+| `index.ts` | `secret.length >= 4`, regex lengths `{10,}`..`{20,}` | minimum lengths for secret screening | safety invariant: lowering or disabling would either miss credentials or redact normal text |
+| `index.ts` | `1024` framing overhead in `checkContextBudget`, `connectors.length >= 12`, title/name slices (`80`, `160`), status `503` | conservative protocol reserve, saved connector cap, display labels, fallback HTTP status | structural protocol constants, saved configuration limits or UI display slices |
+| `provider.ts` | `AbortSignal.timeout(15000)` (no-signal probe), `limit: "1000"` | catalog/probe request timeout and Anthropic model page size | non-run discovery timeout and vendor pagination constant |
+| `provider.ts` | `content.length > 2_000_000`, `args.length > 1_000_000`, `pending.length > 2_000_000` | maximum buffered streamed content, tool-call arguments and undelimited SSE frame | memory-exhaustion safety invariants on untrusted provider streams |
+| `gui.ts` | `maxActiveRuns: 1`, `Math.min(100, Math.max(1, ... \|\| 50))`, cursor `.slice(0, 16)`, statuses `401/403/404/429` | pinned capability advertisement, API page size, cursor signature prefix and error table | API wire contract and capability shape pinned by `gui-harness-settings.test.ts` |
+| `agents.ts` | `HOOK_OUTPUT_LIMIT = 64 * 1024`, `AGENT_LIMITS` (`maxTurns: 20`, `maxContextTokens: 131072`), `systemPrompt.length > 16000` | captured hook stdout/stderr ceiling and saved agent profile validation bounds | safety ceiling preventing hook output floods and save-time profile validation limits |
 
 ## Tests that must keep this honest
 

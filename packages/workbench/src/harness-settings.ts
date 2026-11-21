@@ -49,7 +49,10 @@ export type HarnessSettingKey =
   | "refinementEnabled"
   | "refinementTurnInterval"
   | "refinementCooldownMs"
-  | "refinementLensCount";
+  | "refinementLensCount"
+  | "providerRequestTimeoutMs"
+  | "toolRequestTimeoutMs"
+  | "maxToolResultCharacters";
 
 export type HarnessSettingSpec = {
   /** Operator-facing name, shown by /settings and the web settings panel. */
@@ -305,6 +308,39 @@ export const HARNESS_SETTINGS: {
     // full K cost; past three the spend has no named buyer.
     max: 3,
     icon: "◑",
+  },
+  providerRequestTimeoutMs: {
+    label: "Provider request timeout (ms)",
+    description:
+      "Per-request HTTP timeout for provider completions during a run, separate from the whole-run ceiling.",
+    consumerFile: "provider.ts",
+    consumers: ["response"],
+    default: 60000,
+    min: 1000,
+    max: 600000,
+    icon: "◴",
+  },
+  toolRequestTimeoutMs: {
+    label: "MCP tool request timeout (ms)",
+    description:
+      "Per-request timeout for MCP tool calls routed through the stdio proxy client.",
+    consumerFile: "index.ts",
+    consumers: ["start", "spawnSubagent"],
+    default: 180000,
+    min: 1000,
+    max: 600000,
+    icon: "◶",
+  },
+  maxToolResultCharacters: {
+    label: "Tool result characters in context",
+    description:
+      "Most characters of a tool result retained in the conversation message returned to the model.",
+    consumerFile: "index.ts",
+    consumers: ["run"],
+    default: 64000,
+    min: 256,
+    max: 200000,
+    icon: "◳",
   },
 };
 

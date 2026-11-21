@@ -190,11 +190,24 @@ Each node follows the loop in section 3.2. Statuses are tracked in
   and rollback. Verifier: refinement and rollback tests. Stop: a rollback
   restores a profile the way it restores an entry.
 
-- H5. Harness settings audit. Status: ready. Paths:
+- H5. Harness settings audit. Status: done. Paths:
   `docs/HARNESS-SETTINGS.md`, `packages/workbench/src/harness-settings.ts`.
   Goal: document the limits that govern runs and remove any remaining literal.
   Verifier: typecheck and the settings tests. Stop: every limit is named in one
   table.
+
+- H5b. Broader run-path literal audit. Status: implemented 2026-11-21, pending
+  the gate. Paths: `packages/workbench/src/harness-settings.ts`,
+  `packages/workbench/src/index.ts`, `packages/workbench/src/provider.ts`,
+  `packages/workbench/src/gui.ts`, `packages/workbench/src/agents.ts`,
+  `docs/HARNESS-SETTINGS.md`. Goal: audit every remaining numeric literal on
+  the run path across the four consumer files; promote `providerRequestTimeoutMs`,
+  `toolRequestTimeoutMs` and `maxToolResultCharacters` into the settings table,
+  wire `checkContextBudget` and `streamReply` to respect `maxOutputTokens` and
+  `maxToolCallsPerTurn`, and document every remaining literal as deliberately
+  fixed. Verifier: `pnpm run typecheck`, settings/wiring/TUI/API settings tests,
+  `doc-truth` and `no-dash`. Stop: every run-path literal is either backed by a
+  setting with a named consumer or explicitly recorded as fixed.
 
 - H6. Terminal compaction summary. Status: blocked on the foreign TUI lane.
   Paths: `packages/workbench/src/context.ts`, `packages/workbench/src/index.ts`,

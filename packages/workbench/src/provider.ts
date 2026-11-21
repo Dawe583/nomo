@@ -6,6 +6,7 @@ import type {
 import { OpenAICompletionsAdapter } from "./provider-adapters/openai-completions.ts";
 import { AnthropicMessagesAdapter } from "./provider-adapters/anthropic-messages.ts";
 import {
+  HARNESS_SETTINGS,
   defaultHarnessSettings,
   type HarnessSettings,
 } from "./harness-settings.ts";
@@ -402,7 +403,14 @@ export class CompatibleProvider implements ProviderClient {
       }
       for (const part of delta.tool_calls ?? []) {
         if (legacyFunctionCall) throw new Error("Provider returned invalid tool stream data.");
-        if (!Number.isInteger(part.index) || part.index < 0 || part.index > 31)
+        // Match the maximum tool-call batch the settings table permits so a
+        // raised `maxToolCallsPerTurn` reaches the workbench governance check
+        // instead of failing here as a malformed stream at slot 32.
+        if (
+          !Number.isInteger(part.index) ||
+          part.index < 0 ||
+          part.index >= HARNESS_SETTINGS.maxToolCallsPerTurn.max
+        )
           throw new Error("Provider returned invalid tool stream index.");
         const previous = calls.get(part.index);
         const id = part.id ?? previous?.id ?? "";
@@ -516,7 +524,10 @@ export class CompatibleProvider implements ProviderClient {
         ...(body === undefined ? {} : { body: JSON.stringify(body) }),
         redirect: "error",
         signal: signal
-          ? AbortSignal.any([signal, AbortSignal.timeout(60000)])
+          ? AbortSignal.any([
+              signal,
+              AbortSignal.timeout(this.resolveSettings().providerRequestTimeoutMs),
+            ])
           : AbortSignal.timeout(15000),
       });
     } catch (error) {

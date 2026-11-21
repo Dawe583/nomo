@@ -2938,7 +2938,7 @@ export class Workbench {
           policyPath: this.env.NOMO_POLICY_PATH!,
           factsPath: this.env.NOMO_FACTS_PATH,
           posture: "fail-closed",
-          requestTimeoutMs: 180000,
+          requestTimeoutMs: this.harness.toolRequestTimeoutMs,
         })
       : undefined;
     const projectBinding = this.projectAccess;
@@ -3930,7 +3930,7 @@ export class Workbench {
               policyPath: this.env.NOMO_POLICY_PATH!,
               factsPath: this.env.NOMO_FACTS_PATH,
               posture: "fail-closed",
-              requestTimeoutMs: 180000,
+              requestTimeoutMs: this.harness.toolRequestTimeoutMs,
             })
           : undefined;
       const projectBinding = parent.projectBinding;
@@ -7205,11 +7205,11 @@ export class Workbench {
   private checkContextBudget(
     session: Session,
     tools: readonly unknown[],
-    outputTokens = 4096,
+    outputTokens = this.harness.maxOutputTokens,
   ) {
     if (!session.agentProfile) return;
     // UTF-8 bytes plus protocol overhead are a conservative token bound, not
-    // a fabricated tokenizer measurement. Reserve the provider's fixed output
+    // a fabricated tokenizer measurement. Reserve the configured output
     // ceiling too; an oversized combined context never dispatches.
     const bound =
       Buffer.byteLength(JSON.stringify(session.messages)) +
@@ -7512,7 +7512,9 @@ export class Workbench {
           session.messages.push({
             role: "tool",
             tool_call_id: call.id,
-            content: provider.redact(JSON.stringify(result)).slice(0, 64000),
+            content: provider
+              .redact(JSON.stringify(result))
+              .slice(0, this.harness.maxToolResultCharacters),
           });
         }
       }
