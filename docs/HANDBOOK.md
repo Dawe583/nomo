@@ -775,7 +775,7 @@ nomo harness list --session <id>
 nomo harness approve --session <id> <digest-or-prefix>
 nomo harness reject --session <id> <digest-or-prefix> --reason <text>
 nomo harness rollback --session <id> <digest-or-prefix>
-nomo harness ratchet --session <id>
+nomo harness ratchet --session <id> [<digest-or-prefix>]
 nomo harness entries --session <id>
 nomo harness model [<model-id>|--clear]
 nomo tui [--once] [--project <path>] [--skill <id> ...] [--view <tab>] [--session <id>] [--data-dir <path>]
@@ -799,13 +799,20 @@ Notes that save time:
   harness shelf shows the same text, from the same builder, so an operator who
   never opens a terminal can copy it too.
 - `nomo harness ratchet` reports the guardrails before and after the last
-  activated refinement, and marks a line `REGRESSED` when one moved outside the
-  spread of its own samples. It is a report and never a refusal: nothing in it
-  changes a decision, a permission or a record. A row reading `unmeasured` means
-  the chain does not carry that metric yet, which is not the same as a zero, and
-  with no activated refinement it prints the board as it stands. The web panel's
-  harness shelf shows the same three guardrails, so an operator who never opens
-  a terminal sees them too.
+  activated refinement and adds a strictly disjoint before-vs-after
+  `Refinement effect` section for each signed activation (bounded at the
+  rollback sequence if rolled back, optionally filtered by a digest prefix),
+  marking a line `REGRESSED` when a guardrail moved outside the spread of its
+  own samples. It is a report and never a refusal: nothing in it changes a
+  decision, a permission, a rollback state or the agent prompt. A row reading
+  `unmeasured` or listed under `Unmeasured guardrails` means the chain does not
+  carry that metric on both sides of the split yet, which is not a pass or a
+  zero, and with no activated refinement it prints the board as it stands. The
+  reviewer sees both earlier proposal fates and these descriptive effects inside
+  `maxPromptCharacters`, and repeating an identical rejected or rolled-back
+  proposal without citing newer signed records is refused before reaching the
+  ledger. The web panel's harness shelf shows the same three guardrails, so an
+  operator who never opens a terminal sees them too.
 - `nomo config` prints the resolved data, ledger and approvals directories and
   whether a verification key is set. It never prints the key.
 - `nomo verify` on a ledger with no entries in the current directory fails with a
@@ -1205,4 +1212,6 @@ A checklist, in the order that catches the most.
 | Current NOMO MVP plan and roadmap                      | [active NOMO implementation plan](superpowers/plans/2026-10-08-nomo-agent-identity-fleet-mvp-and-roadmap.md)                           |
 | Windows desktop specifics                               | [Windows desktop specifics](WINDOWS-DESKTOP.md)                                                                                     |
 | Beta boundaries                                         | [beta boundaries](BETA.md)                                                                                                          |
+| Harness settings and audited run limits                 | [harness settings and audited run limits](HARNESS-SETTINGS.md)                                                                      |
+| End-to-end harness proof transcript                     | [end-to-end harness proof transcript](superpowers/evidence/2026-11-21-h7-harness-proof.md)                                          |
 | How this handbook is kept true                          | [how this handbook is kept true](../scripts/src/handbook.test.mjs)                                                                  |

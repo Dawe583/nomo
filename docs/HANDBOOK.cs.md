@@ -674,7 +674,7 @@ nomo harness list --session <id>
 nomo harness approve --session <id> <digest-or-prefix>
 nomo harness reject --session <id> <digest-or-prefix> --reason <text>
 nomo harness rollback --session <id> <digest-or-prefix>
-nomo harness ratchet --session <id>
+nomo harness ratchet --session <id> [<digest-or-prefix>]
 nomo harness entries --session <id>
 nomo harness model [<model-id>|--clear]
 nomo tui [--once] [--project <cesta>] [--skill <id> ...] [--view <karta>] [--session <id>] [--data-dir <cesta>]
@@ -698,12 +698,19 @@ Poznámky, které ušetří čas:
   Webový panel zobrazuje stejný text, protože ho skládá stejná funkce, takže si
   ho operátor v prohlížeči může zkopírovat.
 - `nomo harness ratchet` hlásí guardraily před poslední aktivovanou rafinací a
-  po ní a označí řádek `REGRESSED`, když se některý posunul mimo rozptyl
-  vlastních vzorků. Je to zpráva, nikdy odmítnutí: nic v ní nemění rozhodnutí,
-  oprávnění ani záznam. Řádek `unmeasured` znamená, že řetěz ten údaj zatím
-  nenese, což není totéž jako nula, a bez aktivované rafinace vypíše přehled
-  tak, jak je. Webový panel zobrazuje stejné tři guardraily, takže je operátor
-  uvidí i bez terminálu.
+  po ní a přidává striktně oddělenou sekci `Refinement effect` (před vs. po
+  sekvenci aktivace, při vrácení ohraničenou sekvencí rollbacku, volitelně
+  filtrovanou prefixem digestu) a označí řádek `REGRESSED`, když se některý
+  guardrail posunul mimo rozptyl vlastních vzorků. Je to zpráva, nikdy
+  odmítnutí: nic v ní nemění rozhodnutí, oprávnění, stav vrácení ani prompt
+  agenta. Řádek `unmeasured` nebo seznam `Unmeasured guardrails` znamená, že
+  řetěz ten údaj zatím na obou stranách rozdělení nenese, což není totéž jako
+  průchod ani nula, a bez aktivované rafinace vypíše přehled tak, jak je.
+  Reviewer dostává historii osudu dřívějších návrhů i tyto popisné efekty v
+  rámci stropu `maxPromptCharacters`, a opakování totožného zamítnutého nebo
+  vráceného návrhu bez citace novějších podepsaných záznamů je odmítnuto ještě
+  před zápisem do ledgeru. Webový panel zobrazuje stejné tři guardraily, takže
+  je operátor uvidí i bez terminálu.
 - `nomo config` vypíše rozřešené adresáře dat, ledgeru a schválení a zda je
   nastaven ověřovací klíč. Klíč nikdy nevypíše.
 - `nomo verify` na ledgeru s prázdným adresářem selže prostým `ENOENT` se
@@ -1107,4 +1114,6 @@ Kontrolní seznam v pořadí, které chytí nejvíc.
 | Aktivní plán NOMO MVP a roadmapa                  | [plán implementace NOMO](superpowers/plans/2026-10-08-nomo-agent-identity-fleet-mvp-and-roadmap.md) |
 | Specifika Windows desktopu                          | [specifika Windows desktopu](WINDOWS-DESKTOP.md)                                |
 | Hranice beta                                        | [hranice beta](BETA.md)                                           |
+| Nastavení harnesse a audit limitů běhu              | [nastavení harnesse a audit limitů běhu](HARNESS-SETTINGS.md)     |
+| End-to-end důkaz a transkript harnesse              | [end-to-end důkaz a transkript harnesse](superpowers/evidence/2026-11-21-h7-harness-proof.md) |
 | Jak se tento návod udržuje pravdivý                 | [jak se tento návod udržuje pravdivý](../scripts/src/handbook.test.mjs)                          |

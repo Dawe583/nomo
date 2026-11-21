@@ -228,11 +228,14 @@ Each node follows the loop in section 3.2. Statuses are tracked in
   `docs/superpowers/evidence/2026-11-21-h7-harness-proof.md` and both chains
   verify offline.
 
-- H8. Documentation closure. Status: ready, depends on H7. Paths:
-  `docs/HANDBOOK.md`, `docs/HANDBOOK.cs.md`, `packages/workbench/README.md`,
-  `docs/HARNESS-SETTINGS.md`. Goal: both handbook editions and the README state
-  what the code does. Verifier: handbook count pins and the gate. Stop: no
-  claim without a measurement.
+- H8. Documentation closure. Status: implemented 2026-11-21, pending the gate.
+  Paths: `docs/HANDBOOK.md`, `docs/HANDBOOK.cs.md`,
+  `packages/workbench/README.md`, `docs/HARNESS-SETTINGS.md`. Goal: both
+  handbook editions and the README state what the code does with links to
+  audited settings and the H7 proof transcript. Verifier:
+  `scripts/src/handbook.test.mjs`, `scripts/src/doc-truth.test.mjs`,
+  `scripts/src/no-dash.test.mjs` and the gate. Stop: no claim without a
+  measurement.
 
 - H9. Integration. Status: ready, depends on H0 through H8. Paths: repository
   root. Goal: one green gate at the lane head, main fast-forwarded, verified.

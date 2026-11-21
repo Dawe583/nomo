@@ -492,6 +492,40 @@ operator was shown, a rejection carries its reason, an unknown session reads
 404, and a digest nobody proposed is refused with the workbench's own sentence
 rather than as a silent no-op.
 
+Operator-tunable run limits live in one table (`packages/workbench/src/harness-settings.ts`,
+23 numeric limits plus the `refinementModel` selection, documented with every
+audited fixed literal in `docs/HARNESS-SETTINGS.md`). Every setting names its
+consumer symbols and is pinned by `packages/workbench/src/harness-settings.test.ts`
+and `packages/workbench/src/harness-wiring.test.ts`.
+
+The recursive learning return path is verified in two slices without ever
+reaching `decide`, policy or the agent's prompt:
+
+- Proposal outcome feedback (`packages/workbench/src/refinement-outcomes.ts`,
+  `Workbench.harnessOutcomes`, pinned by `refinement-outcomes.test.ts` and
+  `harness-outcome-feedback.test.ts`) feeds settled proposal fates back to the
+  reviewer within `maxPromptCharacters` and refuses an identical repeat of a
+  rejected or rolled-back edit set unless it cites newer signed records.
+- Descriptive refinement effect measurement (`measureRefinementEffect` in
+  `packages/workbench/src/harness-scores.ts`, `mineRefinementEffects` and
+  `formatEffectsForReview` in `packages/workbench/src/refinement-outcomes.ts`,
+  `Workbench.harnessEffects`) compares strictly disjoint pre-activation and
+  post-activation windows (`seq < activationSeq` vs `seq > activationSeq`,
+  bounded by rollback if rolled back), labels every unmeasured guardrail, and
+  reaches the reviewer and `nomo harness ratchet` as descriptive evidence only
+  (decision D1).
+
+End-to-end proof: `packages/workbench/src/harness-proof.test.ts` drives both a
+loopback HTTP MCP connector (hold + operator denial) and the real stdio
+`packages/proxy` transport (`fixtures/e2e-server.mjs`, direct policy denial)
+through refusal, deterministic rule mining, digest-approved activation, bounded
+retrieval (`contextEntryLimit`), H11 effect measurement, rollback, H10 repeat
+refusal and standalone offline verification (`packages/verifier/verify-ledger.mjs`).
+The observed transcript is recorded in
+`docs/superpowers/evidence/2026-11-21-h7-harness-proof.md`. The proof uses a
+local model test double and makes no claim about live third-party provider
+quality or coding-benchmark parity.
+
 The test `packages/workbench/src/compaction-summary.test.ts` proves the
 compaction summary. The compaction dropped the middle of the conversation and
 pasted the first three thousand characters of it back, so the turns nearest
