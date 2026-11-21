@@ -600,35 +600,4 @@ test("H7: real stdio proxy closed loop with H10 outcome feedback, H11 refinement
     { cwd: repoRoot },
   );
   assert.match(verifiedProxy.stdout, /verified/i);
-
-  if (process.env.NOMO_H7_TRANSCRIPT === "1") {
-    console.log(
-      "H7_TRANSCRIPT_JSON=" +
-        JSON.stringify({
-          workspaceEntries: finalEntries.length,
-          syncedProxyEntries: proxyEntries.length,
-          minedRule: {
-            tool: mined[0]!.match.tool,
-            class: mined[0]!.match.class,
-            repeats: rule!.repeats,
-            derivedFromSeq: rule!.derivedFromSeq,
-          },
-          proposalDigestPrefix: created.proposalDigest!.slice(0, 12),
-          activationSeq: effectsStanding[0]!.activationSeq,
-          retrievedLessonRows: retrievedLessons.length,
-          effectStanding: {
-            beforeCases: effectsStanding[0]!.effect.before.caseCount,
-            afterCases: effectsStanding[0]!.effect.after.caseCount,
-            verdict: effectsStanding[0]!.effect.verdict,
-            unmeasuredGuardrails: effectsStanding[0]!.effect.unmeasuredGuardrails,
-            denyBefore: effectsStanding[0]!.effect.before.guardrails.deny_rate,
-            denyAfter: effectsStanding[0]!.effect.after.guardrails.deny_rate,
-          },
-          rolledBackSeq: effectsRolledBack[0]!.rolledBackSeq,
-          repeatRefusalNote: repeatError,
-          verifiedWorkbenchStdout: verifiedWb.stdout.trim(),
-          verifiedProxyStdout: verifiedProxy.stdout.trim(),
-        }),
-    );
-  }
 });

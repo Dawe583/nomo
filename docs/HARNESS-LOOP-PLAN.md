@@ -223,8 +223,8 @@ Each node follows the loop in section 3.2. Statuses are tracked in
   agent session through the proxy produces a refusal, a mined proposal, an
   approved activation, bounded retrieval, H10 outcome feedback and a measured
   H11 ratchet effect, with both chains verified offline. Verifier:
-  `NOMO_H7_TRANSCRIPT=1 NO_COLOR=1 node --test packages/workbench/src/harness-proof.test.ts`
-  plus the gate. Stop: the transcript is attached in
+  `NO_COLOR=1 node --test packages/workbench/src/harness-proof.test.ts` plus
+  the gate. Stop: the transcript is attached in
   `docs/superpowers/evidence/2026-11-21-h7-harness-proof.md` and both chains
   verify offline.
 

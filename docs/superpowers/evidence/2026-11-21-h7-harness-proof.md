@@ -10,7 +10,7 @@ rollback and standalone offline ledger verification.
 ## Reproduction command
 
 ```bash
-NOMO_H7_TRANSCRIPT=1 NO_COLOR=1 node --test packages/workbench/src/harness-proof.test.ts
+NO_COLOR=1 node --test packages/workbench/src/harness-proof.test.ts
 ```
 
 Observed result on Linux, Node v24.21.0, branch
