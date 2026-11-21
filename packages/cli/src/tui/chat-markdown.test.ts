@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { inlineMarkdownParts, paintInlineMarkdown } from "./chat-markdown.ts";
+import {
+  inlineMarkdownParts,
+  markdownBlockRows,
+  paintInlineMarkdown,
+} from "./chat-markdown.ts";
 
 test("inline emphasis and code become paintable spans", () => {
   assert.deepEqual(
@@ -59,4 +63,27 @@ test("painter sanitizes terminal control characters before styling", () => {
     return text;
   });
   assert.deepEqual(seen, ["safe?[31m ", "bold"]);
+});
+
+test("chat block parser presents Markdown structure as safe text rows", () => {
+  assert.deepEqual(
+    markdownBlockRows(
+      "## Plan\n- first\n1. second\n- [x] done\n> note\n```ts\nconst x = 1;\n```\n[docs](https://example.test)",
+    ),
+    [
+      { text: "Plan", style: "heading" },
+      { text: "• first", style: "list" },
+      { text: "1. second", style: "list" },
+      { text: "✓ done", style: "list" },
+      { text: "│ note", style: "quote" },
+      { text: "const x = 1;", style: "code" },
+      { text: "docs <https://example.test>", style: "paragraph" },
+    ],
+  );
+});
+
+test("chat block parser sanitizes controls and keeps HTML literal", () => {
+  assert.deepEqual(markdownBlockRows("<b>safe</b>\u001b]0;title\u0007"), [
+    { text: "<b>safe</b>?]0;title?", style: "paragraph" },
+  ]);
 });
