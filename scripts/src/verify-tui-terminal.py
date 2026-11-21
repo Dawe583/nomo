@@ -342,7 +342,12 @@ with tempfile.TemporaryDirectory(prefix="nomo-tui-double-ctrl-c-") as data:
         os.write(master, b"")
         deadline = time.monotonic() + 5
         while process.poll() is None and time.monotonic() < deadline:
-            if select.select([master], [], [], 0.1)[0]: output.extend(os.read(master, 65536))
+            if select.select([master], [], [], 0.1)[0]:
+                # Linux answers EIO once the exiting TUI closed the last slave fd.
+                try:
+                    output.extend(os.read(master, 65536))
+                except OSError:
+                    break
         assert process.wait(timeout=1) == 0, "double Ctrl+C did not exit cleanly"
         assert b"[?1049l" in output and b"[?2004l" in output, "double Ctrl+C failed to restore terminal"
         current = termios.tcgetattr(master)
