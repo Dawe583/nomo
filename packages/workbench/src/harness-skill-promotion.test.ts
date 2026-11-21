@@ -446,7 +446,7 @@ test("a skill body carrying a secret is refused before it reaches the chain", as
   // A value the environment configured, not one the model invented: the
   // refusal has to cover a credential the workspace already knows.
   const configured = "hunter2-skill-token-9d1f";
-  const f = await fixture(t, { NOMO_HARNESS_TOKEN: configured });
+  const f = await fixture(t, { NOMO_WEB_SEARCH_API_KEY: configured });
   const { app, session } = f;
   const surface = surfaceOf(app);
   const seq = await lastSeq(app, session.workspace);

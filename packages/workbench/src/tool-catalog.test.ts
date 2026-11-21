@@ -18,12 +18,16 @@ test('tool catalogue never claims Undo for a connector impersonating a built-in 
 });
 test('slash search filters metadata, does not capture prose, and selection only prepares a request', () => {
   const tools = toolCatalog(workspaceTools);
-  assert.equal(filterCommands(tools, '/').length, 9);
+  assert.equal(filterCommands(tools, '/').length, 11);
   assert.ok(filterCommands(tools, '/').some(tool => tool.name === 'nomo_plan_update'));
   assert.ok(filterCommands(tools, '/').some(tool => tool.name === 'nomo_delegate'));
   assert.ok(filterCommands(tools, '/').some(tool => tool.name === 'nomo_subagent_result'));
   assert.ok(filterCommands(tools, '/').some(tool => tool.name === 'nomo_session_search'));
-  assert.deepEqual(filterCommands(tools, '/read').map(t => t.name), ['void_workspace_read', 'nomo_delegate', 'nomo_subagent_result']);
+  assert.ok(filterCommands(tools, '/').some(tool => tool.name === 'nomo_web_fetch'));
+  assert.ok(filterCommands(tools, '/').some(tool => tool.name === 'nomo_web_search'));
+  // `/read` matches metadata, so it names every tool whose description
+  // mentions reading, including the web fetch that returns readable text.
+  assert.deepEqual(filterCommands(tools, '/read').map(t => t.name), ['void_workspace_read', 'nomo_delegate', 'nomo_subagent_result', 'nomo_web_fetch']);
   assert.equal(filterCommands(tools, '/unknown').length, 0);
   assert.equal(filterCommands(tools, '/read document').length, 0);
   assert.equal(filterCommands(tools, 'a /read').length, 0);
@@ -47,7 +51,15 @@ test('session tool catalogue uses its snapshot and rejects unknown sessions', as
   assert.deepEqual(
     snapshot.tools.map(t => t.name),
     [
-      ...workspaceTools.filter(t => t.name !== 'nomo_project_exec' && t.name !== 'nomo_session_search').map(t => t.name),
+      ...workspaceTools
+        .filter(
+          (t) =>
+            t.name !== 'nomo_project_exec' &&
+            t.name !== 'nomo_session_search' &&
+            t.name !== 'nomo_web_fetch' &&
+            t.name !== 'nomo_web_search',
+        )
+        .map((t) => t.name),
       ...HARNESS_TOOLS.map(tool => tool.name),
     ],
   );

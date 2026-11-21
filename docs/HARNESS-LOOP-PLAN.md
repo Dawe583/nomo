@@ -415,6 +415,35 @@ against Hermes Agent and Prime Agent and orders the slices that close the gap:
   cannot prove its last outcome fires again. Design record:
   `docs/superpowers/designs/2026-11-21-hp9-scheduled-prompts.md`.
 
+- HP10. Governed web fetch and search. Status: implemented 2026-11-21. Paths:
+  `packages/workbench/src/web-tools.ts`, `packages/workbench/src/workspace.ts`,
+  `packages/workbench/src/harness-settings.ts`, `packages/workbench/src/index.ts`.
+  Goal: opt-in `nomo_web_fetch` and `nomo_web_search`, both classed `r1` and
+  held for a profile-less session, fetch only absolute HTTPS URLs on port 443
+  and refuse every loopback, RFC1918, link-local, CGNAT, multicast, reserved and
+  cloud-metadata address, revalidating each redirect hop; page text is framed as
+  untrusted, script and style bodies are stripped, and the run's own secrets and
+  credential shapes are redacted before the prompt. Verifier:
+  `packages/workbench/src/web-tools.test.ts`,
+  `packages/workbench/src/web-tools-runtime.test.ts`,
+  `packages/workbench/src/harness-settings.test.ts`,
+  `packages/workbench/src/tool-catalog.test.ts`, workbench and full typecheck,
+  documentation tests. Stop: a request reaches a blocked address, a redirect
+  escapes the check, a secret survives into the prompt, or either tool is
+  offered while `webToolsEnabled` is zero. Design record:
+  `docs/superpowers/designs/2026-11-21-hp10-web-tools.md`.
+
+- HP12. Stop releases run capacity before the transport settles. Status:
+  discovered 2026-11-21, open. Paths: `packages/workbench/src/index.ts`
+  (`cancel`, the run job's `finally`). Evidence: `lifecycle.test.ts` fails
+  deterministically on every run at commit `065e65e` and earlier, with and
+  without the HP10 worktree: after `cancel` and a refused concurrent `start`,
+  `jobs.size` is already zero, so a document edit is accepted while the
+  cancelled provider request is still in flight. Goal: capacity and the
+  document gate stay closed until the original transport settles. Verifier:
+  `packages/workbench/src/lifecycle.test.ts`. Stop: a cancelled run releases its
+  slot before the provider promise settles.
+
 ## 7. Verification commands
 
 - Typecheck: `npx tsc -p packages/workbench/tsconfig.json --noEmit`

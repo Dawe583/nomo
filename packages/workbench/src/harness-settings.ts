@@ -54,7 +54,8 @@ export type HarnessSettingKey =
   | "toolRequestTimeoutMs"
   | "maxToolResultCharacters"
   | "autoCompactMessages"
-  | "sessionSearchEnabled";
+  | "sessionSearchEnabled"
+  | "webToolsEnabled";
 
 export type HarnessSettingSpec = {
   /** Operator-facing name, shown by /settings and the web settings panel. */
@@ -367,6 +368,17 @@ export const HARNESS_SETTINGS: {
     min: 0,
     max: 1,
     icon: "◔",
+  },
+  webToolsEnabled: {
+    label: "Web fetch and search",
+    description:
+      "Offer nomo_web_fetch and nomo_web_search, both held at r1. Private, loopback, link-local and cloud metadata addresses are always refused. Zero leaves both tools out of the catalog.",
+    consumerFile: "index.ts",
+    consumers: ["startSession", "executeTool", "spawnSubagent", "availableTools", "run"],
+    default: 0,
+    min: 0,
+    max: 1,
+    icon: "◑",
   },
 };
 

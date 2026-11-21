@@ -50,6 +50,12 @@ import {
   type ParsedSkillChange,
 } from "./skill-promotion.ts";
 import {
+  WEB_FETCH_TOOL,
+  WEB_SEARCH_TOOL,
+  executeWebFetch,
+  executeWebSearch,
+} from "./web-tools.ts";
+import {
   SCHEDULE_LIMITS,
   dueSchedules,
   parseScheduleInput,
@@ -849,6 +855,24 @@ function refinementTextIsSensitive(
  * written is exactly the case a re-scan catches and an inherited guarantee
  * does not.
  */
+/**
+ * Which workspace tools a run may offer.
+ *
+ * Cross-session search and the two web tools are opt-in, so a catalog built
+ * from the module list alone would offer a capability the operator switched
+ * off. One predicate keeps the six catalog sites and the execution path
+ * agreeing about what "offered" means.
+ */
+function gatedWorkspaceToolEnabled(
+  name: string,
+  harness: { readonly sessionSearchEnabled: number; readonly webToolsEnabled: number },
+): boolean {
+  if (name === SESSION_SEARCH_TOOL.name) return harness.sessionSearchEnabled === 1;
+  if (name === WEB_FETCH_TOOL.name || name === WEB_SEARCH_TOOL.name)
+    return harness.webToolsEnabled === 1;
+  return true;
+}
+
 /** One settled firing, as `runDueSchedules` reports it. */
 export type ScheduleFiring = {
   readonly scheduleId: string;
@@ -2401,7 +2425,7 @@ export class Workbench {
     ).filter(
       (tool) =>
         this.toolAllowedInMode(tool) &&
-        (tool.name !== SESSION_SEARCH_TOOL.name || this.harness.sessionSearchEnabled === 1) &&
+        gatedWorkspaceToolEnabled(tool.name, this.harness) &&
         ((tool.name !== PROJECT_EXEC_TOOL.name &&
           tool.name !== PROJECT_CHANGES_TOOL.name &&
           tool.name !== PROJECT_READ_TOOL.name &&
@@ -2453,7 +2477,7 @@ export class Workbench {
         (tool) =>
           tool.name !== PROJECT_EXEC_TOOL.name &&
           tool.name !== PROJECT_CHANGES_TOOL.name &&
-          (tool.name !== SESSION_SEARCH_TOOL.name || this.harness.sessionSearchEnabled === 1),
+          gatedWorkspaceToolEnabled(tool.name, this.harness),
       ),
       ...HARNESS_TOOLS,
       PROJECT_EXEC_TOOL,
@@ -3202,7 +3226,7 @@ export class Workbench {
         (tool) =>
           tool.name !== PROJECT_EXEC_TOOL.name &&
           tool.name !== PROJECT_CHANGES_TOOL.name &&
-          (tool.name !== SESSION_SEARCH_TOOL.name || this.harness.sessionSearchEnabled === 1),
+          gatedWorkspaceToolEnabled(tool.name, this.harness),
       ),
       // The agent may propose what it learned. The proposal is inert until an
       // operator approves its exact digest, so the tool cannot write the
@@ -4505,7 +4529,7 @@ export class Workbench {
           (tool) =>
             tool.name !== PROJECT_EXEC_TOOL.name &&
             tool.name !== PROJECT_CHANGES_TOOL.name &&
-            (tool.name !== SESSION_SEARCH_TOOL.name || this.harness.sessionSearchEnabled === 1),
+            gatedWorkspaceToolEnabled(tool.name, this.harness),
         ),
         // The agent may propose what it learned. The proposal is inert until
         // an operator approves its exact digest, so the tool cannot write
@@ -4842,14 +4866,14 @@ export class Workbench {
               (t) =>
                 t.name !== PROJECT_EXEC_TOOL.name &&
                 t.name !== PROJECT_CHANGES_TOOL.name &&
-                (t.name !== SESSION_SEARCH_TOOL.name || this.harness.sessionSearchEnabled === 1),
+                gatedWorkspaceToolEnabled(t.name, this.harness),
             )
             .map((t) => t.name),
           toolDetails: workspaceTools.filter(
             (t) =>
               t.name !== PROJECT_EXEC_TOOL.name &&
               t.name !== PROJECT_CHANGES_TOOL.name &&
-              (t.name !== SESSION_SEARCH_TOOL.name || this.harness.sessionSearchEnabled === 1),
+              gatedWorkspaceToolEnabled(t.name, this.harness),
           ),
           undo: true,
           consentState: "confirmed" as const,
@@ -7858,6 +7882,63 @@ export class Workbench {
       this.persist();
     }
   }
+  /**
+   * Run one governed web tool and return its untrusted result.
+   *
+   * The module owns every rule (SSRF ranges, redirects, bounds, framing). This
+   * adds the run's own secrets to the redaction, because a fetched page can
+   * echo a credential the run already holds and the prompt is the one place it
+   * must not land, and turns a refusal into an error result rather than a
+   * failed turn.
+   */
+  private async executeWebTool(
+    session: Session,
+    name: string,
+    args: JsonObject,
+  ) {
+    const redact = (text: string): string => {
+      let safe = session.provider?.redact(text) ?? text;
+      for (const config of [
+        ...Object.values(session.connections ?? {}),
+        ...this.connectors,
+      ]) {
+        const token = (config as { readonly token?: string }).token;
+        if (typeof token === "string" && token.length >= 4)
+          safe = safe.split(token).join("[redacted]");
+      }
+      for (const secret of this.knownSecretValues())
+        if (secret.length >= 4) safe = safe.split(secret).join("[redacted]");
+      return safe;
+    };
+    try {
+      const outcome =
+        name === WEB_FETCH_TOOL.name
+          ? await executeWebFetch(args, {
+              fetcher: this.fetcher,
+              redact,
+              timeoutMs: this.harness.providerRequestTimeoutMs,
+            })
+          : await executeWebSearch(args, {
+              fetcher: this.fetcher,
+              redact,
+              searchUrl: this.env.NOMO_WEB_SEARCH_URL,
+              apiKey: this.env.NOMO_WEB_SEARCH_API_KEY,
+              timeoutMs: this.harness.providerRequestTimeoutMs,
+            });
+      return { content: outcome.content };
+    } catch (error) {
+      return {
+        isError: true,
+        content: [
+          {
+            type: "text",
+            text: `Web tool refused: ${(error as Error).message}`,
+          },
+        ],
+      };
+    }
+  }
+
   private async executeSessionSearchTool(
     session: Session,
     args: JsonObject,
@@ -8236,6 +8317,69 @@ export class Workbench {
       observed.decision = "session-search";
       return this.executeSessionSearchTool(session, args);
     }
+    if (
+      !tool.connectorId &&
+      (tool.name === WEB_FETCH_TOOL.name || tool.name === WEB_SEARCH_TOOL.name) &&
+      this.harness.webToolsEnabled === 0
+    ) {
+      observed.decision = "web-tools:disabled";
+      return {
+        isError: true,
+        content: [{
+          type: "text",
+          text: "Web tools are disabled. Enable webToolsEnabled before using them.",
+        }],
+      };
+    }
+    if (
+      !tool.connectorId &&
+      (tool.name === WEB_FETCH_TOOL.name || tool.name === WEB_SEARCH_TOOL.name)
+    ) {
+      // A profile already authorized this call above. A profile-less session
+      // must not bypass the same default hold just because it has no profile:
+      // an outbound request leaves the machine and carries text the model
+      // chose, so the operator sees it before it happens.
+      if (!session.agentProfile) {
+        const profile = resolvePolicyProfile(
+          DEFAULT_POLICY_PROFILE,
+          this.env.NOMO_POLICY_PATH,
+        );
+        if (!profile.ok) throw new Error(`Default policy is unusable: ${profile.reason}.`);
+        const call = {
+          tool: tool.name,
+          workspace: session.view.workspace,
+          connector: "workspace",
+          klass: "r1" as const,
+          blastRadius: 1,
+          reason: "Outbound web request from a URL or query the model chose.",
+          arguments: args,
+        };
+        const decision = decide(profile.policy, call);
+        const allowed = await this.authorizeTool(
+          session,
+          call,
+          decision,
+          profile.policy,
+        );
+        observed.decision =
+          decision.kind === "hold"
+            ? allowed
+              ? "hold:approved"
+              : "hold:denied"
+            : decision.kind;
+        if (!allowed)
+          return {
+            isError: true,
+            content: [{
+              type: "text",
+              text: denialText(tool.name, call.klass, decision),
+            }],
+          };
+      }
+      observed.decision =
+        tool.name === WEB_FETCH_TOOL.name ? "web-fetch" : "web-search";
+      return this.executeWebTool(session, tool.name, args);
+    }
     if (!tool.connectorId && tool.name === DELEGATE_TOOL.name) {
       // A profile already authorized this call above. A profile-less session
       // must not bypass the same default hold just because it has no profile.
@@ -8596,7 +8740,7 @@ export class Workbench {
       session.proxyGrantReadyRunId = session.view.runId;
       const listed = {
         tools: (session.tools ?? [...workspaceTools]).filter(
-          (tool) => tool.name !== SESSION_SEARCH_TOOL.name || this.harness.sessionSearchEnabled === 1,
+          (tool) => gatedWorkspaceToolEnabled(tool.name, this.harness),
         ),
       };
       const mapping = new Map<string, (typeof listed.tools)[number]>();

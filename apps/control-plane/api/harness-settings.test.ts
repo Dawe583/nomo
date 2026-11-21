@@ -24,8 +24,8 @@ test("PATCH /api/harness-settings applies a limit and GET reports it with its co
   assert.equal(before.settings.maxQueuedRuns,20);
   // Every row names what the value governs, so a reader does not have to take
   // the operator-facing label's word for it.
-  assert.equal(before.rows.length,25);
-  assert.deepEqual(before.rows.filter(row=>!row.changed).length,25);
+  assert.equal(before.rows.length,26);
+  assert.deepEqual(before.rows.filter(row=>!row.changed).length,26);
 
   const applied=await patch({maxQueuedRuns:4});
   assert.equal(applied.status,200);
@@ -37,7 +37,7 @@ test("PATCH /api/harness-settings applies a limit and GET reports it with its co
 
   const after=await(await fetch(origin+"/api/harness-settings")).json() as {settings:{maxQueuedRuns:number};rows:unknown[]};
   assert.equal(after.settings.maxQueuedRuns,4);
-  assert.equal(after.rows.length,25);
+  assert.equal(after.rows.length,26);
 
   // The advertised capability is the configured one. A client that sized
   // itself against the shipped constant here would be wrong about the only

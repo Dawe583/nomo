@@ -66,6 +66,7 @@ operator as applied while changing nothing.
 | `maxToolResultCharacters` | 64000 | 256 to 200000  | characters of a tool result retained in the model conversation |
 | `autoCompactMessages` | 150 | 0 to 199 | messages at which a run compacts the conversation with a model summary (0 = off) |
 | `sessionSearchEnabled` | 0 | 0 to 1 | whether the model may search bounded, redacted excerpts from other conversations (0 = isolated) |
+| `webToolsEnabled` | 0 | 0 to 1 | whether the run offers `nomo_web_fetch` and `nomo_web_search`, both held at r1 (0 = no web tools) |
 
 An agent profile's own `maxTurns` still wins over the harness setting, because
 a profile is a deliberate per-agent choice and `AGENT_LIMITS` already caps it.
@@ -91,6 +92,20 @@ titles and non-system messages in the same operator store, never the calling
 session. It returns at most eight excerpts of 240 characters from at most 100
 conversations; provider and connector redaction runs before the result returns,
 and a secret-shaped excerpt is withheld.
+`webToolsEnabled` (HP10) is zero by default because both tools leave the
+machine. While it is one, the run offers `nomo_web_fetch` and `nomo_web_search`
+and the catalog drops them the moment it is switched back to zero, including
+from a session's later turns. Both are classed `r1` in `workspaceToolClass`, and
+a profile-less session is held before either runs, so the operator sees an
+outbound request before it happens. `nomo_web_fetch` accepts only absolute
+HTTPS URLs on port 443 and refuses every loopback, RFC1918, link-local, CGNAT,
+multicast, reserved and cloud-metadata address, revalidating each redirect hop
+against the same rules. `nomo_web_search` needs `NOMO_WEB_SEARCH_URL` and
+optionally `NOMO_WEB_SEARCH_API_KEY`; with no endpoint it refuses and names the
+variable instead of reaching anything. Page text is framed as untrusted, script
+and style bodies are stripped, and both the run's own secrets and credential
+shapes are redacted before the text reaches the prompt.
+
 
 ## A selection, not a limit
 
