@@ -6,6 +6,7 @@ import {
   motionContext,
   phaseWave,
   separator,
+  sweepRow,
   tabUnderline,
 } from "./motion.ts";
 
@@ -38,4 +39,12 @@ test("completion ring preserves the measured value with motion disabled", () => 
     assert.equal(completionRing(4, 4, context), "●");
     assert.equal(completionRing(0, 4, context), "◯");
   }
+});
+
+test("live sweep preserves already styled palette text", () => {
+  const styled = "\x1b[31mInspect command\x1b[0m";
+  const output = sweepRow(styled, 30, motionContext(0), {
+    paint: (text) => `\x1b[33m${text}\x1b[0m`,
+  });
+  assert.equal(output, styled);
 });

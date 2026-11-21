@@ -1,5 +1,5 @@
 import type { Tone } from "./theme.ts";
-import { fit, pad, visibleLength } from "./layout.ts";
+import { fit, pad, stripAnsi, visibleLength } from "./layout.ts";
 
 // Motion and effects for the workspace frame.
 //
@@ -224,7 +224,9 @@ export function sweepRow(
     readonly paint?: (text: string, tone: Tone, bold?: boolean) => string;
   } = {},
 ): string {
-  if (!motion.enabled || motion.reduced) return fit(row, width);
+  // Keep existing SGR sequences intact when a colored palette is open.
+  if (!motion.enabled || motion.reduced || stripAnsi(row) !== row)
+    return fit(row, width);
   const paint = options.paint ?? ((text: string) => text);
   const span = Math.max(0, visibleLength(row));
   const cursor = motion.frame % (span + 4);
