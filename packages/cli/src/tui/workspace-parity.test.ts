@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { access, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { setTimeout as delay } from "node:timers/promises";
 import { Workbench } from "../../../workbench/src/index.ts";
 import {
   MODE_ICON,
@@ -921,7 +922,15 @@ test("a prompt sent during a run is queued, never dropped", async (t) => {
   await ui.command("second prompt");
   assert.equal(ui.queuedPrompt, "second prompt");
   assert.match(ui.notice, /queued/i);
-  release!(
+  // The run reaches the provider a few milliseconds after `command` returns,
+  // so the release is waited for: calling it before the fetch exists is a
+  // TypeError, and the pending fetch would then hold shutdown open.
+  const dispatchedBy = Date.now() + 15_000;
+  while (!release) {
+    assert.ok(Date.now() < dispatchedBy, "the run never reached the provider");
+    await delay(5);
+  }
+  release(
     Response.json({
       choices: [{ message: { role: "assistant", content: "done" } }],
     }),
@@ -1999,7 +2008,13 @@ test("/harness shows and switches the agent harness", async (t) => {
   await ui.command("/harness cloud");
   assert.equal(app.getPreferences().defaultAgent, "cloud");
   await assert.rejects(ui.command("/harness skynet"), /\/harness cloud/);
-  const found = await detectHarnesses({ PATH: "/usr/bin:/bin" });
+  // An empty directory rather than a system one: a host that happens to ship
+  // `opencode` or `prime-agent` in /usr/bin would otherwise make this pass or
+  // fail on what the machine has installed rather than on what the detector
+  // does. The claim is about a PATH with no harness binary on it.
+  const emptyPath = await mkdtemp(join(tmpdir(), "nomo-empty-path-"));
+  t.after(() => rm(emptyPath, { recursive: true, force: true }));
+  const found = await detectHarnesses({ PATH: emptyPath });
   assert.deepEqual(
     found.map((item) => item.id),
     ["prime-agent", "opencode"],

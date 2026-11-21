@@ -116,7 +116,7 @@ test("/mcp lists every connector with its consent state and next step", async (t
   assert.match(text, new RegExp(`next: /mcp probe ${id}`));
   // The document workspace shares this list and has no endpoint of its own.
   assert.match(text, /CONFIRMED \//);
-  assert.match(text, /NOMO documents +4 tools/);
+  assert.match(text, /NOMO documents +10 tools/);
   assert.match(text, /in use: the NOMO document workspace/);
 
   await app.probeConnector(id);
