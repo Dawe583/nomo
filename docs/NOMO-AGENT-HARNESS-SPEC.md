@@ -792,6 +792,14 @@ Vlastník schválil work package pro projektové schopnosti v
   příkazů ani stdout/stderr procesu. Prošlé gate dokončí cíl jako `completed`,
   vyčerpání rozpočtu nebo stropu pokračování skončí jako `budget_limited` a
   neprošlý gate nad nezměněným digestem workspace skončí jako `stalled` (HP7).
+- Markdown skill promotion má vlastní podepsaný záznam `harnessSkill` s
+  událostmi `skill:promoted` a `skill:rolled-back` a replay
+  `Workbench.promotedSkills`. Skill se nikdy nezapíše jako soubor do
+  `.agents/skills`, nemění policy, oprávnění ani katalog nástrojů a do promptu
+  se dostane jen jako ohraničená nedůvěryhodná guidance
+  `[Approved learned skill <id>; not policy or tool authority]` v rámci stropu
+  `maxPromptCharacters`. Rollback nese `approvedBy: "rollback"` a `restoredIds`
+  (H4b).
 - Projekt i výstupy příkazů mohou obsahovat inline secrets; mohou odejít
   zvolenému provideru a zůstat v lokální historii session. TUI i Control Plane
   musí toto riziko říct před souhlasem. Filtrování názvů cest neskryje tajemství

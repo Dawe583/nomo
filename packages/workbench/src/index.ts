@@ -39,6 +39,17 @@ import {
   type ProfilePromotionReview,
 } from "./profile-promotion.ts";
 import {
+  SKILL_PROMOTED_EVENT,
+  SKILL_ROLLED_BACK_EVENT,
+  formatPromotedSkillsForPrompt,
+  prepareSkillPromotion,
+  prepareSkillRollback,
+  replayPromotedSkills,
+  type PromotedSkill,
+  type SkillChange,
+  type ParsedSkillChange,
+} from "./skill-promotion.ts";
+import {
   recoveryRequest,
   runtimeSelection,
   recoveryOperationMap,
@@ -872,6 +883,15 @@ export type PendingHarnessProposal = {
   readonly addendum: string;
   readonly profileReview?: ProfilePromotionReview;
   readonly profileReviewText?: string;
+  readonly skillReview?: SkillPromotionReview;
+  readonly skillReviewText?: string;
+};
+
+/** What the operator reads before approving a markdown skill promotion. */
+export type SkillPromotionReview = {
+  readonly digest: string;
+  readonly atSeq: number;
+  readonly changes: readonly SkillChange[];
 };
 /** What `/harness review` gets back.
  *
@@ -5501,6 +5521,20 @@ export class Workbench {
     return [...pending.values()].sort((a, b) => a.atSeq - b.atSeq || a.digest.localeCompare(b.digest));
   }
 
+  /**
+   * The learned markdown skills this workspace reads, replayed from the
+   * verified chain. A promoted skill is guidance only (H4b): it never reaches
+   * `decide`, policy, permissions or the tool catalog, and the one rendering it
+   * gets is `formatPromotedSkillsForPrompt` inside the operator's prompt
+   * ceiling.
+   */
+  async promotedSkills(workspace: string): Promise<PromotedSkill[]> {
+    const entries = (await this.ledger(workspace))?.entries ?? [];
+    return replayPromotedSkills(
+      entries.map((entry) => ({ body: entry.body, seq: entry.seq })),
+    ).skills as PromotedSkill[];
+  }
+
   private sessionParentBound(session: {
     readonly tools?: readonly { readonly name: string }[];
     readonly agentProfile?: AgentProfile;
@@ -5525,6 +5559,7 @@ export class Workbench {
       ]),
     );
     const parentBound = this.sessionParentBound(session);
+    const activeSkills = await this.promotedSkills(session.view.workspace);
     return (await this.pendingForWorkspace(proof.entries)).map((pending) => {
       const subagentEdits = pending.proposal.edits.filter((edit) => edit.kind === "subagent");
       let profileReview: ProfilePromotionReview | undefined;
@@ -5570,6 +5605,43 @@ export class Workbench {
           };
         }
       }
+      const skillEdits = pending.proposal.edits.filter((edit) => edit.kind === "skill");
+      let skillReview: SkillPromotionReview | undefined;
+      let skillReviewText: string | undefined;
+      if (skillEdits.length > 0) {
+        const active = new Map(activeSkills.map((skill) => [skill.id, skill]));
+        const changes: SkillChange[] = skillEdits.map((edit) => {
+          const id = edit.id ?? "";
+          const before = active.get(id) ?? null;
+          const after =
+            edit.action === "delete"
+              ? null
+              : {
+                  id,
+                  title: edit.title ?? "",
+                  description: "",
+                  body: edit.content ?? "",
+                };
+          return { id, before, after };
+        });
+        skillReview = { digest: pending.digest, atSeq: pending.atSeq, changes };
+        skillReviewText = changes
+          .map((change) => {
+            const action =
+              change.before === null
+                ? "create"
+                : change.after === null
+                  ? "delete"
+                  : "update";
+            const text = change.after ?? change.before;
+            const body = (text?.body ?? "").split("\n").join(" ");
+            return [
+              `skill ${action} "${change.id}": ${text?.title ?? ""}`,
+              `  body: ${body.length > 240 ? `${body.slice(0, 240)}...` : body}`,
+            ].join("\n");
+          })
+          .join("\n");
+      }
       return {
         digest: pending.digest,
         at: pending.at,
@@ -5582,7 +5654,59 @@ export class Workbench {
           .join("\n"),
         ...(profileReview ? { profileReview } : {}),
         ...(profileReviewText ? { profileReviewText } : {}),
+        ...(skillReview ? { skillReview } : {}),
+        ...(skillReviewText ? { skillReviewText } : {}),
       };
+    });
+  }
+
+  /**
+   * Build the signed skill promotion for the skill edits of one approved
+   * proposal, or undefined when it carries none.
+   *
+   * The module owns every refusal (digest, chain position, change cap, project
+   * id collision, secrets, active cap); this only hands it the two snapshots a
+   * proposal cannot carry on its own, which are the skills the workspace reads
+   * now.
+   */
+  private signedSkillPromotion(
+    pending: PendingApproval,
+    chainLength: number,
+    digest: string,
+    active: readonly PromotedSkill[],
+  ) {
+    const parsed: ParsedSkillChange[] = [];
+    for (const edit of pending.proposal.edits) {
+      if (edit.kind !== "skill") continue;
+      const id = edit.id ?? "";
+      // A skill edit with no id is addressed by its content and keeps its
+      // existing lesson-only behaviour. A promotion is named by the operator
+      // and replayed by id, so an id the proposal never stated is not a
+      // promotion: minting one here would sign an identifier nobody reviewed.
+      if (id === "") continue;
+      if (edit.action === "delete") {
+        parsed.push({ action: "delete", id });
+        continue;
+      }
+      parsed.push({
+        action: edit.action === "update" ? "update" : "create",
+        skill: {
+          id,
+          title: edit.title ?? "",
+          description: "",
+          body: edit.content ?? "",
+        },
+      });
+    }
+    if (parsed.length === 0) return undefined;
+    return prepareSkillPromotion({
+      digest,
+      approvedDigest: pending.digest,
+      atSeq: pending.atSeq,
+      chainLength,
+      changes: parsed,
+      active: [...active],
+      knownSecrets: this.knownSecretValues(),
     });
   }
 
@@ -5635,6 +5759,12 @@ export class Workbench {
             knownSecrets: this.knownSecretValues(),
           })
         : undefined;
+      const signedSkills = this.signedSkillPromotion(
+        pending,
+        proof.entries.length,
+        digest,
+        await this.promotedSkills(workspace),
+      );
       const { overrides, suppressedIds } = this.refinementDelta(
         workspace,
         result.entries,
@@ -5661,10 +5791,12 @@ export class Workbench {
         {
           harnessProposal: { digest, status: "approved", proposal: pending.proposal },
           ...(signedProfiles ? { harnessProfile: signedProfiles } : {}),
+          ...(signedSkills ? { harnessSkill: signedSkills } : {}),
           harnessLifecycle: {
             digest,
             events: [
               ...(signedProfiles ? [PROFILE_PROMOTED_EVENT, "profile:activated"] : []),
+              ...(signedSkills ? [SKILL_PROMOTED_EVENT] : []),
               "proposal:approved",
               "proposal:activated",
               ...(tombstones.length ? ["entry:tombstone"] : []),
@@ -5849,9 +5981,26 @@ export class Workbench {
       const activatedProfileChanges = Array.isArray(profileEvent?.changes)
         ? profileEvent.changes as Array<Record<string, unknown>>
         : [];
-      if (!applied.length && !activatedProfileChanges.length)
+      const skillRecord = activationBody.harnessSkill;
+      const skillEvent = skillRecord && typeof skillRecord === "object"
+        ? skillRecord as Record<string, unknown>
+        : undefined;
+      const activatedSkillChanges = Array.isArray(skillEvent?.changes)
+        ? skillEvent.changes as unknown as SkillChange[]
+        : [];
+      if (!applied.length && !activatedProfileChanges.length && !activatedSkillChanges.length)
         throw new Error("The activated refinement carries no applied edit to roll back.");
       const secrets = this.knownSecretValues();
+      const skillRollback = activatedSkillChanges.length
+        ? prepareSkillRollback({
+            digest,
+            atSeq:
+              typeof skillEvent?.atSeq === "number" ? skillEvent.atSeq : activation.seq,
+            changes: activatedSkillChanges,
+            active: await this.promotedSkills(workspace),
+          })
+        : undefined;
+      const rollbackSkills = skillRollback?.changes ?? [];
       const profileRollback = activatedProfileChanges.length
         ? prepareProfileRollback({
             digest,
@@ -5990,7 +6139,7 @@ export class Workbench {
               },
         );
       }
-      if (!edits.length && !rollbackProfiles.length)
+      if (!edits.length && !rollbackProfiles.length && !rollbackSkills.length)
         throw new Error("The activated refinement carries no edit a rollback can restore.");
       const inverse: RefinementProposal = {
         summary: `Rollback of refinement ${digest}`,
@@ -6012,7 +6161,8 @@ export class Workbench {
       // be re-established here rather than assumed.
       if (
         refinementTextIsSensitive(inverse, secrets) ||
-        secretLikeText(JSON.stringify(rollbackProfiles), secrets)
+        secretLikeText(JSON.stringify(rollbackProfiles), secrets) ||
+        secretLikeText(JSON.stringify(rollbackSkills), secrets)
       )
         throw new Error("Refinement contains secret-like content and was not recorded.");
       const generatedAt = new Date().toISOString();
@@ -6022,7 +6172,7 @@ export class Workbench {
         digest,
         atSeq: activation.seq,
       });
-      if (!result.applied.length && !rollbackProfiles.length)
+      if (!result.applied.length && !rollbackProfiles.length && !rollbackSkills.length)
         throw new Error("The rollback applied no edit, so it would record a change of nothing.");
       // The applied count is not the evidence: a delete that hit no entry is
       // still counted as applied, and the view would read exactly as before.
@@ -6030,6 +6180,7 @@ export class Workbench {
       const afterIds = new Set(result.entries.map((entry) => entry.id));
       const changed =
         rollbackProfiles.length > 0 ||
+        rollbackSkills.length > 0 ||
         beforeIds.size !== afterIds.size ||
         current.some((entry) => {
           const next = result.entries.find((item) => item.id === entry.id);
@@ -6065,15 +6216,18 @@ export class Workbench {
         {
           event: "rollback",
           ...(profileRollback ? { harnessProfile: profileRollback } : {}),
+          ...(skillRollback ? { harnessSkill: skillRollback } : {}),
           harnessLifecycle: {
             digest,
             events: [
               ...(rollbackProfiles.length ? [PROFILE_ROLLED_BACK_EVENT] : []),
+              ...(rollbackSkills.length ? [SKILL_ROLLED_BACK_EVENT] : []),
               "refinement:rolled-back",
               ...(tombstones.length ? ["entry:tombstone"] : []),
             ],
             tombstones,
             ...(profileRollback ? { restoredIds: profileRollback.restoredIds } : {}),
+            ...(skillRollback ? { restoredSkillIds: skillRollback.restoredIds } : {}),
             atSeq: activation.seq,
           },
           harnessRefinement: {
@@ -6093,6 +6247,9 @@ export class Workbench {
                       : {}),
                   },
                 }
+              : {}),
+            ...(rollbackSkills.length
+              ? { skills: { digest, changes: rollbackSkills } }
               : {}),
             // Not "operator". That label decides whether the harness shows
             // a restored entry as an instruction to follow, and the operator
@@ -8219,11 +8376,21 @@ export class Workbench {
       // conversation's first turn on. A chain that fails verification throws
       // here, before any provider request, as a workspace chain does.
       const operatorScope = await this.operatorHarnessEntries();
-      if (session.messages.length > 2 || operatorScope.length > 0) {
+      // A promoted markdown skill is workspace-scoped signed guidance (H4b), so
+      // it applies from the conversation's first turn on, exactly as an
+      // operator-promoted entry does. It rides the same transient system
+      // message as the retrieved context, so it is removed before the
+      // conversation is stored and never becomes durable text.
+      const promotedSkills = await this.promotedSkills(session.view.workspace);
+      if (
+        session.messages.length > 2 ||
+        operatorScope.length > 0 ||
+        promotedSkills.length > 0
+      ) {
         const latestUser = [...session.messages]
           .reverse()
           .find((message) => message.role === "user");
-        const block = retrievalContext(
+        const retrieved = retrievalContext(
           withOperatorScope(
             session.messages.length > 2
               ? await this.harnessEntries(session.view.workspace)
@@ -8233,6 +8400,19 @@ export class Workbench {
           String(latestUser?.content ?? ""),
           this.harness,
         );
+        // A quarter of the operator's ceiling, so guidance can never crowd out
+        // the retrieved context that was there first. Both blocks already fit
+        // their own budgets; this is the share, not a second limit.
+        const skillsBlock = formatPromotedSkillsForPrompt(
+          promotedSkills,
+          Math.max(0, Math.floor(this.harness.maxPromptCharacters / 4)),
+        );
+        const block =
+          retrieved === ""
+            ? skillsBlock
+            : skillsBlock === ""
+              ? retrieved
+              : `${retrieved}\n\n${skillsBlock}`;
         if (block !== "") {
           digestMarker = { role: "system", content: block };
           session.messages.push(digestMarker);

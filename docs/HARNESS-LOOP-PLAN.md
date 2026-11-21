@@ -356,6 +356,19 @@ against Hermes Agent and Prime Agent and orders the slices that close the gap:
   tests. Stop: the tool is offered while disabled, the current session leaks,
   system instructions are searched, or raw known secrets reach the result.
 
+- H4b. Skill promotion. Status: implemented 2026-11-21. Paths:
+  `packages/workbench/src/skill-promotion.ts`,
+  `packages/workbench/src/index.ts`, `docs/NOMO-AGENT-HARNESS-SPEC.md`. Goal: a
+  markdown skill promotion gets its own signed `harnessSkill` record with
+  `skill:promoted` and `skill:rolled-back`, replays from the verified chain by
+  id, and reaches a prompt only as labelled untrusted guidance inside the
+  operator's ceiling. Verifier:
+  `packages/workbench/src/skill-promotion.test.ts`,
+  `packages/workbench/src/harness-skill-promotion.test.ts`, workbench and full
+  typecheck, documentation tests. Stop: a learned skill alters policy,
+  permissions or the tool catalog, or is written as a file into `.agents/skills`.
+  Design record: `docs/superpowers/designs/2026-11-21-h4b-skill-promotion.md`.
+
 - HP7. Goals with completion gates. Status: implemented 2026-11-21. Paths:
   `packages/workbench/src/goals.ts`, `packages/workbench/src/index.ts`,
   `apps/control-plane/api/server.ts`, `packages/cli/src/goal.ts`,
