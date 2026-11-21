@@ -765,6 +765,11 @@ Vlastník schválil work package pro projektové schopnosti v
   `skills-lock.json`, explicitně přes `--skill`. Kontroluje se drift a do
   session se vloží neměnný snapshot jako nedůvěryhodný, nevykonatelný prompt
   context. Bez globálního lookupu a bez změny policy či allowlistu.
+- Kořenové `AGENTS.md` a `CLAUDE.md` se čtou pouze z chráněného baseline
+  filtrované kopie, ověří se proti manifestu a vloží se jako nedůvěryhodný
+  projektový text. Symlink, překročený limit, neplatné UTF-8 nebo nesedící
+  digest je odmítnutí jménem; změněný digest se po restartu nespojí se starou
+  session bez nového potvrzení (HP3).
 - Projekt i výstupy příkazů mohou obsahovat inline secrets; mohou odejít
   zvolenému provideru a zůstat v lokální historii session. TUI i Control Plane
   musí toto riziko říct před souhlasem. Filtrování názvů cest neskryje tajemství

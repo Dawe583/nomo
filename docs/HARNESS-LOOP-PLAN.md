@@ -298,6 +298,18 @@ against Hermes Agent and Prime Agent and orders the slices that close the gap:
   group, or a learned-entry digest that survives in the stored conversation
   stops the node.
 
+- HP3. Project context files. Status: implemented 2026-11-21. Paths:
+  `packages/workbench/src/project-context-files.ts`,
+  `packages/workbench/src/index.ts`, `apps/control-plane/api/server.ts`.
+  Goal: root-level `AGENTS.md` and `CLAUDE.md` reach the project access context
+  only from the protected filtered-copy baseline, with manifest digests and
+  explicit refusals; accepted digests bind restored sessions. Verifier:
+  `packages/workbench/src/project-context-files.test.ts`,
+  `packages/workbench/src/project-access.test.ts`, workbench typecheck,
+  `apps/control-plane/api/server.test.ts`, documentation tests. Stop: reading
+  the agent-writable copy, loading a symlink or unverified content, or silently
+  rebinding changed project text stops the node.
+
 ## 7. Verification commands
 
 - Typecheck: `npx tsc -p packages/workbench/tsconfig.json --noEmit`

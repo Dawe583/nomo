@@ -429,7 +429,13 @@ is inserted into the session as an immutable snapshot and is treated as
 untrusted project content, so it cannot widen tools or permissions. The
 operator is told, before any project data reaches the model, that project
 files, selected skill text, command arguments and command output may be sent
-to the configured model and kept in local session history.
+to the configured model and kept in local session history. Root-level
+`AGENTS.md` and `CLAUDE.md` are read from the protected baseline of that copy,
+with their SHA-256 digests, as untrusted project text rather than operator
+instructions. Files over 32 KiB, symlinks, non-UTF-8 text and digest mismatches
+are refused by name; the project confirmation and local API report what loaded
+and what was refused. A changed context digest requires reconfirmation after a
+restart instead of silently replacing text a restored session approved.
 
 ### 8.1 The eleven tabs
 

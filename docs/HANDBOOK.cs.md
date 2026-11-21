@@ -336,7 +336,13 @@ počítá se jako nedůvěryhodný obsah projektu, takže nemůže rozšířit n
 ani oprávnění. Operátor je předtím, než se jakákoliv projektová data dostanou
 k modelu, informován, že soubory projektu, text vybraných skillů, argumenty
 příkazů a výstup příkazů mohou být odeslány nakonfigurovanému modelu a
-ponechány v místní historii session.
+ponechány v místní historii session. Kořenové `AGENTS.md` a `CLAUDE.md` se
+čtou z chráněného baseline této kopie s SHA-256 digestem, jako nedůvěryhodný
+text projektu, nikoli jako instrukce operátora. Soubory nad 32 KiB, symlinky,
+neplatné UTF-8 a nesedící digesty jsou odmítnuty jménem; potvrzení projektu a
+lokální API ukážou, co bylo načteno a co odmítnuto. Změněný digest kontextu po
+restartu vyžaduje nové potvrzení, místo aby tiše nahradil text, který obnovená
+session schválila.
 
 ### 8.1 Jedenáct karet
 

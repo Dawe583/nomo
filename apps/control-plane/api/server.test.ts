@@ -101,6 +101,7 @@ test("project workspace API reviews and applies one exact local file change", as
   await mkdir(join(projectRoot, "src"));
   await writeFile(join(projectRoot, "src/main.ts"), "before\n");
   await writeFile(join(projectRoot, "src/other.ts"), "untouched\n");
+  await writeFile(join(projectRoot, "AGENTS.md"), "Read the project plan first.\n");
   execFileSync("git", ["init", "--quiet"], { cwd: projectRoot, stdio: "ignore" });
   t.after(async () => {
     await workbench.shutdown();
@@ -125,8 +126,15 @@ test("project workspace API reviews and applies one exact local file change", as
       const confirmed = await access.json() as {
         project: { rootDigest: string };
         workspace: { fileCount: number };
+        context: {
+          files: Array<{ path: string; sha256: string; size: number }>;
+          refused: Array<{ path: string; reason: string }>;
+        };
       };
-      assert.equal(confirmed.workspace.fileCount, 2);
+      assert.equal(confirmed.workspace.fileCount, 3);
+      assert.deepEqual(confirmed.context.files.map(({ path }) => path), ["AGENTS.md"]);
+      assert.equal(confirmed.context.files[0]!.sha256.length, 64);
+      assert.deepEqual(confirmed.context.refused, []);
       const summaryResponse = await fetch(`${origin}/api/project-workspace`, { headers: local });
       assert.equal(summaryResponse.status, 200);
       const summary = await summaryResponse.json() as {

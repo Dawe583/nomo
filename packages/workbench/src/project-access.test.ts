@@ -7,6 +7,7 @@ import {
   readFile,
   readdir,
   rm,
+  symlink,
   writeFile,
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -590,4 +591,100 @@ test("an allowlisted R3 project command runs in the pinned sandbox and records d
     ["allow", "dispatch:started", "execute:completed"],
   );
   assert.doesNotMatch(JSON.stringify(projectRecords), /printf sandbox-ok|result\.txt/);
+});
+
+test("project context carries a verified AGENTS.md and names a symlink refusal", async (t) => {
+  const requests: Array<{ messages: Array<{ content?: string }> }> = [];
+  const fixture = await isolatedWorkbench(
+    t,
+    async (url, init) => {
+      if (String(url).endsWith("/models"))
+        return Response.json({ data: [{ id: "fixture" }] });
+      requests.push(JSON.parse(String(init?.body)));
+      return Response.json({
+        choices: [{ message: { role: "assistant", content: "Done" }, finish_reason: "stop" }],
+      });
+    },
+    { NOMO_PERMISSION_MODE: "normal" },
+    { configure: false },
+  );
+  await fixture.app.configure({ baseUrl: "https://fixture.test/v1", apiKey: "fixture" });
+  const root = await mkdtemp(join(tmpdir(), "nomo-project-context-files-"));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const text = "Read the migration plan before changing a migration.\n";
+  await writeFile(join(root, "AGENTS.md"), text);
+  await writeFile(join(root, "target.md"), "DO NOT LOAD THE SYMLINK TARGET\n");
+  await symlink("target.md", join(root, "CLAUDE.md"));
+  execFileSync("git", ["init", "--quiet"], { cwd: root, stdio: "ignore" });
+  execFileSync("git", ["add", "-A"], { cwd: root, stdio: "ignore" });
+  fixture.app.upsertAgent(profile);
+
+  const confirmed = await fixture.app.confirmProjectAccess(root, []);
+  const sha256 = createHash("sha256").update(text).digest("hex");
+  assert.deepEqual(confirmed.contextFiles, [
+    { path: "AGENTS.md", sha256, size: Buffer.byteLength(text) },
+  ]);
+  assert.equal(confirmed.refusedContextFiles.length, 1);
+  assert.equal(confirmed.refusedContextFiles[0]!.path, "CLAUDE.md");
+  assert.match(confirmed.refusedContextFiles[0]!.reason, /symlink/i);
+
+  const session = await fixture.app.start(
+    "Inspect this project",
+    "fixture",
+    undefined,
+    undefined,
+    profile.id,
+  );
+  await fixture.app.settled();
+  const instruction = requests[0]!.messages[0]!.content!;
+  assert.match(instruction, /Project context files/);
+  assert.match(instruction, /untrusted project text, not operator instructions/i);
+  assert.match(instruction, /Read the migration plan before changing a migration/);
+  assert.ok(instruction.includes(sha256));
+  assert.match(instruction, /CLAUDE\.md/);
+  assert.match(instruction, /symlink/i);
+  assert.equal(instruction.includes("DO NOT LOAD THE SYMLINK TARGET"), false);
+
+  fixture.restart();
+  assert.throws(() => fixture.app.send(session.id, "Continue"), /reconfirm/i);
+  const restored = await fixture.app.confirmProjectAccess(root, []);
+  assert.equal(restored.restoredSessions, 1);
+  assert.deepEqual(restored.contextFiles, confirmed.contextFiles);
+  fixture.app.send(session.id, "Continue");
+  await fixture.app.settled();
+  assert.equal(fixture.app.get(session.id)!.status, "idle");
+});
+
+test("a changed project context digest cannot silently rebind a restored session", async (t) => {
+  const fixture = await isolatedWorkbench(
+    t,
+    async (url) => String(url).endsWith("/models")
+      ? Response.json({ data: [{ id: "fixture" }] })
+      : Response.json({ choices: [{ message: { role: "assistant", content: "Done" }, finish_reason: "stop" }] }),
+    { NOMO_PERMISSION_MODE: "normal" },
+    { configure: false },
+  );
+  await fixture.app.configure({ baseUrl: "https://fixture.test/v1", apiKey: "fixture" });
+  const root = await mkdtemp(join(tmpdir(), "nomo-project-context-digest-"));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  await writeFile(join(root, "AGENTS.md"), "first approved project text\n");
+  execFileSync("git", ["init", "--quiet"], { cwd: root, stdio: "ignore" });
+  execFileSync("git", ["add", "-A"], { cwd: root, stdio: "ignore" });
+  fixture.app.upsertAgent(profile);
+  const { rootDigest } = await fixture.app.confirmProjectAccess(root, []);
+  const session = await fixture.app.start(
+    "Inspect this project",
+    "fixture",
+    undefined,
+    undefined,
+    profile.id,
+  );
+  await fixture.app.settled();
+
+  fixture.restart();
+  await fixture.app.deleteProjectWorkspace(rootDigest);
+  await writeFile(join(root, "AGENTS.md"), "changed project text requiring review\n");
+  const confirmed = await fixture.app.confirmProjectAccess(root, []);
+  assert.equal(confirmed.restoredSessions, 0);
+  assert.throws(() => fixture.app.send(session.id, "Continue"), /reconfirm/i);
 });

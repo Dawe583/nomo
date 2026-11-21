@@ -60,7 +60,12 @@ allowlist `nomo_project_changes` for read-only status/diff and
 `nomo_project_exec` for commands in the filtered copy. Allowlisting
 `nomo_project_exec` alone does not enable review. Reconfirm the project after
 a Workbench restart; the saved-workspace catalog exposes metadata only, never
-the original path.
+the original path. Root-level `AGENTS.md` and `CLAUDE.md` are loaded from
+`control/baseline/`, verified against the filtered-copy manifest and labelled as
+untrusted project text. The same 32 KiB, regular-file and UTF-8 rules as project
+skills apply; refusals name the file. Accepted digests form part of the saved
+session binding, so changed project context cannot silently rebind after a
+restart (`project-context-files.test.ts`, `project-access.test.ts`).
 
 Review changes in the local Control Plane. The UI pages paths by 50, shows one
 file diff and its exact digest, and requires a separate confirmation to apply

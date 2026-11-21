@@ -2305,6 +2305,7 @@ async function handleProjectWorkspaceRoute(
           fileCount: summary.workspace.fileCount,
           totalBytes: summary.workspace.totalBytes,
         },
+        context: summary.context,
       });
     }
     if (pathname === "/api/project-workspace/diff") {
