@@ -72,6 +72,7 @@ export type HarnessSurface = {
       readonly digest: string;
       readonly at: string;
       readonly summary: string;
+      readonly profileReviewText?: string;
       readonly proposal: {
         readonly edits: readonly {
           readonly action: string;
@@ -628,6 +629,10 @@ export async function runHarnessCommand(
       for (const proposal of proposals) {
         io.stdout(`${proposal.digest}  ${proposal.summary}  ${proposal.at}`);
         for (const edit of proposal.proposal.edits) io.stdout(describeEdit(edit));
+        if (proposal.profileReviewText) {
+          for (const line of proposal.profileReviewText.split("\n"))
+            io.stdout(`    ${line}`);
+        }
       }
       return 0;
     }

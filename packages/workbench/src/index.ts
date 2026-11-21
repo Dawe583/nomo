@@ -27,6 +27,18 @@ import {
   projectWorkspaceSearch,
 } from "./project-read.ts";
 import {
+  PROFILE_PROMOTED_EVENT,
+  PROFILE_ROLLED_BACK_EVENT,
+  describeProfilePromotionReview,
+  prepareProfilePromotion,
+  prepareProfileRollback,
+  replayPromotedProfiles,
+  reviewProfilePromotion,
+  type HarnessProfileRecord,
+  type ParentBound,
+  type ProfilePromotionReview,
+} from "./profile-promotion.ts";
+import {
   recoveryRequest,
   runtimeSelection,
   recoveryOperationMap,
@@ -858,6 +870,8 @@ export type PendingHarnessProposal = {
   readonly proposal: RefinementProposal;
   /** Compatibility view for callers that only render prompt addenda. */
   readonly addendum: string;
+  readonly profileReview?: ProfilePromotionReview;
+  readonly profileReviewText?: string;
 };
 /** What `/harness review` gets back.
  *
@@ -5312,45 +5326,31 @@ export class Workbench {
 
   async promotedAgentProfiles(workspace: string): Promise<AgentProfile[]> {
     const entries = (await this.ledger(workspace))?.entries ?? [];
-    const profiles = new Map<string, AgentProfile>();
+    const records: unknown[] = [];
     for (const entry of entries) {
       const body = entry.body as Record<string, unknown>;
       const refinement = body.harnessRefinement;
-      if (!refinement || typeof refinement !== "object") continue;
-      const profileRecord = (refinement as Record<string, unknown>).profiles;
+      const refinementRecord =
+        refinement && typeof refinement === "object"
+          ? (refinement as Record<string, unknown>)
+          : undefined;
+      const profileRecord =
+        body.harnessProfile ?? refinementRecord?.profiles;
       if (!profileRecord || typeof profileRecord !== "object") continue;
       const event = profileRecord as Record<string, unknown>;
-      const refinementRecord = refinement as Record<string, unknown>;
-      const expectedDigest =
-        refinementRecord.digest ?? refinementRecord.rolledBackDigest;
-      if (
-        typeof event.digest !== "string" ||
-        !/^[a-f0-9]{64}$/.test(event.digest) ||
-        event.digest !== expectedDigest
-      )
-        throw new Error("The signed profile digest does not match its refinement.");
-      if (!Array.isArray(event.changes))
-        throw new Error("The signed profile activation is malformed.");
-      for (const raw of event.changes) {
-        if (!raw || typeof raw !== "object")
-          throw new Error("The signed profile change is malformed.");
-        const change = raw as Record<string, unknown>;
-        if (typeof change.id !== "string" || !change.id)
-          throw new Error("The signed profile change has no id.");
-        const before = profiles.get(change.id) ?? null;
-        if (JSON.stringify(before) !== JSON.stringify(change.before))
-          throw new Error("The signed profile history does not replay consistently.");
-        if (change.after === null) {
-          profiles.delete(change.id);
-          continue;
-        }
-        const after = validateAgentProfile(change.after, "signed workspace profile");
-        if (after.id !== change.id)
-          throw new Error("The signed profile change id does not match its snapshot.");
-        profiles.set(change.id, after);
+      if (refinementRecord) {
+        const expectedDigest =
+          refinementRecord.digest ?? refinementRecord.rolledBackDigest;
+        if (
+          typeof event.digest !== "string" ||
+          !/^[a-f0-9]{64}$/.test(event.digest) ||
+          event.digest !== expectedDigest
+        )
+          throw new Error("The signed profile digest does not match its refinement.");
       }
+      records.push(profileRecord);
     }
-    return [...profiles.values()].map((profile) => structuredClone(profile));
+    return replayPromotedProfiles(records);
   }
 
   /**
@@ -5501,22 +5501,89 @@ export class Workbench {
     return [...pending.values()].sort((a, b) => a.atSeq - b.atSeq || a.digest.localeCompare(b.digest));
   }
 
+  private sessionParentBound(session: {
+    readonly tools?: readonly { readonly name: string }[];
+    readonly agentProfile?: AgentProfile;
+  }): ParentBound {
+    return {
+      allowedTools: [...new Set((session.tools ?? []).map((tool) => tool.name))].sort(),
+      policyProfile: session.agentProfile?.policyProfile ?? DEFAULT_POLICY_PROFILE,
+      maxTurns: session.agentProfile?.maxTurns ?? this.harness.maxTurns,
+      maxContextTokens: session.agentProfile?.maxContextTokens ?? AGENT_LIMITS.maxContextTokens,
+    };
+  }
+
   async pendingApprovalsFor(sessionId: string): Promise<readonly PendingHarnessProposal[]> {
     const session = this.sessions.get(sessionId);
     if (!session || session.view.id !== sessionId) return [];
     const proof = await this.ledger(session.view.workspace);
     if (!proof) return [];
-    return (await this.pendingForWorkspace(proof.entries)).map((pending) => ({
-      digest: pending.digest,
-      at: pending.at,
-      atSeq: pending.atSeq,
-      summary: pending.proposal.summary,
-      proposal: structuredClone(pending.proposal),
-      addendum: pending.proposal.edits
-        .filter((edit) => edit.kind === "prompt")
-        .map((edit) => edit.promptAddendum ?? "")
-        .join("\n"),
-    }));
+    const activeProfiles = new Map(
+      (await this.promotedAgentProfiles(session.view.workspace)).map((profile) => [
+        profile.id,
+        profile,
+      ]),
+    );
+    const parentBound = this.sessionParentBound(session);
+    return (await this.pendingForWorkspace(proof.entries)).map((pending) => {
+      const subagentEdits = pending.proposal.edits.filter((edit) => edit.kind === "subagent");
+      let profileReview: ProfilePromotionReview | undefined;
+      let profileReviewText: string | undefined;
+      if (subagentEdits.length > 0) {
+        const previewRecord: HarnessProfileRecord = {
+          digest: pending.digest,
+          atSeq: pending.atSeq,
+          parentBound,
+          changes: subagentEdits.map((edit) => {
+            const id = edit.profile?.id ?? edit.id ?? "";
+            return {
+              id,
+              before: activeProfiles.get(id) ?? null,
+              after: edit.action === "delete" ? null : (edit.profile ?? null),
+            };
+          }),
+        };
+        try {
+          profileReview = reviewProfilePromotion(previewRecord);
+          profileReviewText = describeProfilePromotionReview(previewRecord);
+        } catch {
+          profileReview = {
+            digest: pending.digest,
+            atSeq: pending.atSeq,
+            parentBound: {
+              allowedTools: [...parentBound.allowedTools],
+              policyProfile: parentBound.policyProfile,
+              maxTurns: parentBound.maxTurns,
+              maxContextTokens: parentBound.maxContextTokens,
+            },
+            edits: previewRecord.changes.map((change) => ({
+              id: change.id,
+              action:
+                change.before === null
+                  ? "create"
+                  : change.after === null
+                    ? "delete"
+                    : "update",
+              before: change.before ? structuredClone(change.before) : null,
+              after: change.after ? structuredClone(change.after) : null,
+            })),
+          };
+        }
+      }
+      return {
+        digest: pending.digest,
+        at: pending.at,
+        atSeq: pending.atSeq,
+        summary: pending.proposal.summary,
+        proposal: structuredClone(pending.proposal),
+        addendum: pending.proposal.edits
+          .filter((edit) => edit.kind === "prompt")
+          .map((edit) => edit.promptAddendum ?? "")
+          .join("\n"),
+        ...(profileReview ? { profileReview } : {}),
+        ...(profileReviewText ? { profileReviewText } : {}),
+      };
+    });
   }
 
   async approveHarnessProposal(
@@ -5551,64 +5618,22 @@ export class Workbench {
       );
       if (!result.applied.length && !result.profileEdits.length)
         throw new Error("The approved proposal has no supported edit to activate.");
-      const profiles = new Map(
-        (await this.promotedAgentProfiles(workspace)).map((profile) => [
-          profile.id,
-          profile,
-        ]),
-      );
-      const profileChanges: Array<{
-        id: string;
-        before: AgentProfile | null;
-        after: AgentProfile | null;
-      }> = [];
-      const seenProfileIds = new Set<string>();
-      const parentTools = new Set(
-        (session.tools ?? []).map((tool) => tool.name),
-      );
-      const parentPolicy =
-        session.agentProfile?.policyProfile ?? DEFAULT_POLICY_PROFILE;
-      const parentTurns =
-        session.agentProfile?.maxTurns ?? this.harness.maxTurns;
-      const parentContext =
-        session.agentProfile?.maxContextTokens ?? AGENT_LIMITS.maxContextTokens;
-      for (const edit of result.profileEdits) {
-        const id = edit.profile?.id ?? edit.id!;
-        if (seenProfileIds.has(id))
-          throw new Error(`Only one subagent profile edit per id is allowed: ${id}.`);
-        seenProfileIds.add(id);
-        const before = profiles.get(id) ?? null;
-        if (edit.action === "create" && before)
-          throw new Error(`Workspace profile ${id} already exists.`);
-        if (edit.action !== "create" && !before)
-          throw new Error(`Workspace profile ${id} does not exist.`);
-        if (edit.action !== "delete") {
-          const profile = validateAgentProfile(edit.profile, "subagent profile");
-          if (
-            AGENT_PRESETS.some((preset) => preset.id === id) ||
-            this.agentProfiles.some((candidate) => candidate.id === id)
-          )
-            throw new Error(`Workspace profile ${id} collides with an existing agent.`);
-          if (profile.allowedTools.some((name) => !parentTools.has(name)))
-            throw new Error(`Subagent profile ${id} exceeds the parent tool scope.`);
-          if (
-            profile.policyProfile !== parentPolicy ||
-            profile.maxTurns > parentTurns ||
-            profile.maxContextTokens > parentContext
-          )
-            throw new Error(`Subagent profile ${id} exceeds the parent run bounds or policy.`);
-          profiles.set(id, profile);
-        } else {
-          profiles.delete(id);
-        }
-        profileChanges.push({
-          id,
-          before,
-          after: edit.action === "delete" ? null : profiles.get(id)!,
-        });
-      }
-      const signedProfiles = profileChanges.length
-        ? { digest, changes: profileChanges }
+      const signedProfiles = result.profileEdits.length
+        ? prepareProfilePromotion({
+            digest,
+            approvedDigest: pending.digest,
+            refinementDigest: digest,
+            atSeq: pending.atSeq,
+            chainLength: proof.entries.length,
+            parent: this.sessionParentBound(session),
+            edits: result.profileEdits,
+            activeProfiles: await this.promotedAgentProfiles(workspace),
+            builtinProfileIds: [
+              ...AGENT_PRESETS.map((preset) => preset.id),
+              ...this.agentProfiles.map((candidate) => candidate.id),
+            ],
+            knownSecrets: this.knownSecretValues(),
+          })
         : undefined;
       const { overrides, suppressedIds } = this.refinementDelta(
         workspace,
@@ -5635,10 +5660,11 @@ export class Workbench {
         { by: "operator" },
         {
           harnessProposal: { digest, status: "approved", proposal: pending.proposal },
+          ...(signedProfiles ? { harnessProfile: signedProfiles } : {}),
           harnessLifecycle: {
             digest,
             events: [
-              ...(signedProfiles ? ["profile:activated"] : []),
+              ...(signedProfiles ? [PROFILE_PROMOTED_EVENT, "profile:activated"] : []),
               "proposal:approved",
               "proposal:activated",
               ...(tombstones.length ? ["entry:tombstone"] : []),
@@ -5655,7 +5681,9 @@ export class Workbench {
             applied: result.applied,
             overrides,
             suppressedIds,
-            ...(signedProfiles ? { profiles: signedProfiles } : {}),
+            ...(signedProfiles
+              ? { profiles: { digest, changes: signedProfiles.changes } }
+              : {}),
             approvedBy: "operator",
             digest,
             atSeq: pending.atSeq,
@@ -5812,7 +5840,9 @@ export class Workbench {
       const applied = Array.isArray(activation.record.applied)
         ? activation.record.applied
         : [];
-      const profileRecord = activation.record.profiles;
+      const activationBody = entries[activation.index]!.body as Record<string, unknown>;
+      const profileRecord =
+        activationBody.harnessProfile ?? activation.record.profiles;
       const profileEvent = profileRecord && typeof profileRecord === "object"
         ? profileRecord as Record<string, unknown>
         : undefined;
@@ -5821,16 +5851,26 @@ export class Workbench {
         : [];
       if (!applied.length && !activatedProfileChanges.length)
         throw new Error("The activated refinement carries no applied edit to roll back.");
-      const activeProfiles = new Map(
-        (await this.promotedAgentProfiles(workspace)).map((profile) => [profile.id, profile]),
-      );
-      const rollbackProfiles = activatedProfileChanges.map((change) => {
-        const id = change.id;
-        if (typeof id !== "string" ||
-          JSON.stringify(activeProfiles.get(id) ?? null) !== JSON.stringify(change.after))
-          throw new Error("The active profile no longer matches the signed activation.");
-        return { id, before: change.after, after: change.before };
-      });
+      const secrets = this.knownSecretValues();
+      const profileRollback = activatedProfileChanges.length
+        ? prepareProfileRollback({
+            digest,
+            activation: {
+              digest: typeof profileEvent?.digest === "string" ? profileEvent.digest : digest,
+              atSeq:
+                typeof profileEvent?.atSeq === "number"
+                  ? profileEvent.atSeq
+                  : activation.seq,
+              ...(profileEvent?.parentBound && typeof profileEvent.parentBound === "object"
+                ? { parentBound: profileEvent.parentBound as ParentBound }
+                : {}),
+              changes: activatedProfileChanges as unknown as HarnessProfileRecord["changes"],
+            },
+            activeProfiles: await this.promotedAgentProfiles(workspace),
+            knownSecrets: secrets,
+          })
+        : undefined;
+      const rollbackProfiles = profileRollback?.changes ?? [];
       const edits: RefinementEdit[] = [];
       // Backwards, because the inverse of a sequence of edits on one entry is
       // that sequence reversed. Applied forwards, two updates of the same id
@@ -5970,7 +6010,6 @@ export class Workbench {
       // environment after that write would travel into the chain again
       // through the rollback, and the guarantee the write path gives has to
       // be re-established here rather than assumed.
-      const secrets = this.knownSecretValues();
       if (
         refinementTextIsSensitive(inverse, secrets) ||
         secretLikeText(JSON.stringify(rollbackProfiles), secrets)
@@ -6025,14 +6064,16 @@ export class Workbench {
         { by: "operator" },
         {
           event: "rollback",
+          ...(profileRollback ? { harnessProfile: profileRollback } : {}),
           harnessLifecycle: {
             digest,
             events: [
-              ...(rollbackProfiles.length ? ["profile:rolled-back"] : []),
+              ...(rollbackProfiles.length ? [PROFILE_ROLLED_BACK_EVENT] : []),
               "refinement:rolled-back",
               ...(tombstones.length ? ["entry:tombstone"] : []),
             ],
             tombstones,
+            ...(profileRollback ? { restoredIds: profileRollback.restoredIds } : {}),
             atSeq: activation.seq,
           },
           harnessRefinement: {
@@ -6043,7 +6084,15 @@ export class Workbench {
             overrides,
             suppressedIds,
             ...(rollbackProfiles.length
-              ? { profiles: { digest, changes: rollbackProfiles } }
+              ? {
+                  profiles: {
+                    digest,
+                    changes: rollbackProfiles,
+                    ...(profileRollback
+                      ? { restoredIds: profileRollback.restoredIds }
+                      : {}),
+                  },
+                }
               : {}),
             // Not "operator". That label decides whether the harness shows
             // a restored entry as an instruction to follow, and the operator

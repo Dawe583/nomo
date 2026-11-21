@@ -183,12 +183,21 @@ Each node follows the loop in section 3.2. Statuses are tracked in
   Verifier: `node --test` for the CLI and UI test files plus typecheck.
   Stop: the operator sees guardrail movement before approving.
 
-- H4. Profile evidence chain. Status: blocked on design, depends on H3. Paths:
-  `packages/workbench/src/agents.ts`, `packages/workbench/src/refine-pass.ts`,
-  `docs/NOMO-AGENT-HARNESS-SPEC.md`. Goal: a skill or subagent promotion
-  writes the prior and next profile into the signed chain with digest approval
-  and rollback. Verifier: refinement and rollback tests. Stop: a rollback
-  restores a profile the way it restores an entry.
+- H4. Profile evidence chain. Status: implemented 2026-11-21. Paths:
+  `packages/workbench/src/profile-promotion.ts`,
+  `packages/workbench/src/index.ts`, `packages/cli/src/harness.ts`,
+  `docs/NOMO-AGENT-HARNESS-SPEC.md`. Goal: subagent profile promotion writes
+  `harnessProfile` (`digest`, `atSeq`, `parentBound`, `before` and `after`
+  snapshots) and `profile:promoted` into the signed chain, exposes `before`,
+  `after` and `parentBound` on the review surface, and writes symmetric
+  `profile:rolled-back` naming `restoredIds`. Verifier:
+  `packages/workbench/src/profile-promotion.test.ts`,
+  `packages/workbench/src/harness-profile-audit.test.ts`,
+  `packages/workbench/src/harness-refinement-ledger.test.ts`,
+  `packages/workbench/src/harness-rollback.test.ts`, workbench and full
+  typecheck, documentation tests. Stop: a rollback restores a profile the way it
+  restores an entry. Design ruling:
+  `docs/superpowers/designs/2026-10-29-h4-profile-judge.md`.
 
 - H5. Harness settings audit. Status: done. Paths:
   `docs/HARNESS-SETTINGS.md`, `packages/workbench/src/harness-settings.ts`.
