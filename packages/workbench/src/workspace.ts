@@ -1,5 +1,6 @@
 import { PROJECT_EXEC_TOOL } from "./project-sandbox.ts";
 import { PROJECT_CHANGES_TOOL } from "./project-workspace.ts";
+import { PLAN_TOOL } from "./plan.ts";
 import { createHash } from 'node:crypto';
 
 /** Managed text documents, never paths on the host filesystem. Persistence and
@@ -29,13 +30,14 @@ export const workspaceTools = [
   { name: 'void_workspace_read', description: 'Read a managed NOMO document.', inputSchema: { type: 'object', properties: { path: { type: 'string' } }, required: ['path'], additionalProperties: false } },
   { name: 'void_workspace_write', description: 'Create or replace a managed NOMO text document. NOMO captures its prior content for operator-controlled undo.', inputSchema: { type: 'object', properties: { path: { type: 'string' }, content: { type: 'string' } }, required: ['path', 'content'], additionalProperties: false } },
   { name: 'void_workspace_delete', description: 'Delete a managed NOMO document. NOMO captures its prior content for operator-controlled undo.', inputSchema: { type: 'object', properties: { path: { type: 'string' } }, required: ['path'], additionalProperties: false } },
+  PLAN_TOOL,
   PROJECT_EXEC_TOOL,
 ];
 
 export function createWorkspace(): WorkspaceState { return { version: 1, files: {}, operations: [] }; }
 
 export function workspaceToolClass(name: string): 'r0' | 'r1' | 'r3' | undefined {
-  if (name === 'void_workspace_list' || name === 'void_workspace_read' || name === PROJECT_CHANGES_TOOL.name) return 'r0';
+  if (name === 'void_workspace_list' || name === 'void_workspace_read' || name === PROJECT_CHANGES_TOOL.name || name === PLAN_TOOL.name) return 'r0';
   if (name === 'void_workspace_write' || name === 'void_workspace_delete') return 'r1';
   if (name === PROJECT_EXEC_TOOL.name) return 'r3';
   return undefined;
@@ -43,7 +45,7 @@ export function workspaceToolClass(name: string): 'r0' | 'r1' | 'r3' | undefined
 
 export function executeWorkspaceTool(state: WorkspaceState, input: { readonly id: string; readonly name: string; readonly arguments: Readonly<Record<string, unknown>>; readonly at?: string }): WorkspaceTransition {
   try {
-    if (!workspaceTools.some(tool => tool.name === input.name) || input.name === PROJECT_EXEC_TOOL.name || input.name === PROJECT_CHANGES_TOOL.name) throw new Error('Unknown managed workspace tool.');
+    if (!workspaceTools.some(tool => tool.name === input.name) || input.name === PROJECT_EXEC_TOOL.name || input.name === PROJECT_CHANGES_TOOL.name || input.name === PLAN_TOOL.name) throw new Error('Unknown managed workspace tool.');
     if (input.name === 'void_workspace_list') return { state, result: result({ files: Object.keys(state.files).sort().map(path => ({ path, bytes: bytes(state.files[path]!) })) }) };
     const path = validPath(input.arguments.path);
     const before = Object.hasOwn(state.files, path) ? state.files[path]! : null;

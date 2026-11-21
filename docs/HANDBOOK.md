@@ -606,6 +606,12 @@ instead of ending at the 200-message cap. The summary is labelled as untrusted
 history, never as instructions, and the event log shows
 `Context compacted automatically.`
 
+The model can replace its working plan through `nomo_plan_update`, an R0 tool
+with at most 50 items and the states `pending`, `in_progress` and `done`. The
+complete plan is returned as the tool result, persisted on the session view and
+exposed by `GET /api/sessions/:id`. Invalid replacements leave the prior plan
+unchanged; a plan is descriptive and never widens tools or permissions.
+
 ## 9. The web and desktop app
 
 `pnpm gui` builds the client and starts the local API server. For frontend work,

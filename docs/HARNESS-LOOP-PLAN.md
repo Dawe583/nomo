@@ -310,6 +310,17 @@ against Hermes Agent and Prime Agent and orders the slices that close the gap:
   the agent-writable copy, loading a symlink or unverified content, or silently
   rebinding changed project text stops the node.
 
+- HP4. Plan tool. Status: implemented 2026-11-21. Paths:
+  `packages/workbench/src/plan.ts`, `packages/workbench/src/workspace.ts`,
+  `packages/workbench/src/index.ts`. Goal: `nomo_plan_update`, class `r0`,
+  replaces at most 50 validated plan items, returns the complete plan, persists
+  it on the session view and exposes it through the existing session API.
+  Verifier: `packages/workbench/src/plan.test.ts`,
+  `packages/workbench/src/plan-tool.test.ts`, workbench typecheck,
+  `apps/control-plane/api/plan.test.ts`, documentation tests. Stop: an invalid
+  replacement changes the stored plan, or a plan changes policy, tools or
+  permissions.
+
 ## 7. Verification commands
 
 - Typecheck: `npx tsc -p packages/workbench/tsconfig.json --noEmit`

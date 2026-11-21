@@ -1,4 +1,5 @@
 import { compactMessages, dropsHistory, omittedByCompaction } from "./context.ts";
+import { parsePlanUpdate, PLAN_TOOL, type PlanItem } from "./plan.ts";
 import {
   recoveryRequest,
   runtimeSelection,
@@ -307,6 +308,7 @@ export type SessionView = {
   readonly parentId?: string;
   readonly compaction?: CompactionResult;
   readonly contextMessages?: number;
+  readonly plan?: readonly PlanItem[];
   readonly lastRecoveryJob?: { readonly jobId: string };
   readonly state?: RunState;
   readonly status:
@@ -7334,6 +7336,47 @@ export class Workbench {
     if (!tool.connectorId && tool.name === PROJECT_CHANGES_TOOL.name) {
       observed.decision = "project-review";
       return this.executeProjectChangesTool(session, args, id);
+    }
+    if (!tool.connectorId && tool.name === PLAN_TOOL.name) {
+      observed.decision = "plan-update";
+      return this.locked(async () => {
+        await this.ledger(session.view.workspace);
+        let plan: PlanItem[];
+        try {
+          plan = parsePlanUpdate(args);
+        } catch (error) {
+          const result = {
+            isError: true as const,
+            content: [{
+              type: "text" as const,
+              text: error instanceof Error ? error.message : "Invalid plan update.",
+            }],
+          };
+          await this.commitWorkspace(
+            session,
+            this.workspace(session.view.id),
+            tool.name,
+            args,
+            "execute:failed",
+          );
+          return result;
+        }
+        session.view = { ...session.view, plan };
+        const result = {
+          content: [{
+            type: "text" as const,
+            text: JSON.stringify({ items: plan }),
+          }],
+        };
+        await this.commitWorkspace(
+          session,
+          this.workspace(session.view.id),
+          tool.name,
+          args,
+          "execute:completed",
+        );
+        return result;
+      });
     }
     if (!tool.connectorId) {
       observed.decision = "managed-document";

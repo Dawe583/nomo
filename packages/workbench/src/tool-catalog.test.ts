@@ -17,7 +17,8 @@ test('tool catalogue never claims Undo for a connector impersonating a built-in 
 });
 test('slash search filters metadata, does not capture prose, and selection only prepares a request', () => {
   const tools = toolCatalog(workspaceTools);
-  assert.equal(filterCommands(tools, '/').length, 5);
+  assert.equal(filterCommands(tools, '/').length, 6);
+  assert.ok(filterCommands(tools, '/').some(tool => tool.name === 'nomo_plan_update'));
   assert.deepEqual(filterCommands(tools, '/read').map(t => t.name), ['void_workspace_read']);
   assert.equal(filterCommands(tools, '/unknown').length, 0);
   assert.equal(filterCommands(tools, '/read document').length, 0);

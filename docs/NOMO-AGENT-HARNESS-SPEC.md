@@ -770,6 +770,9 @@ Vlastník schválil work package pro projektové schopnosti v
   projektový text. Symlink, překročený limit, neplatné UTF-8 nebo nesedící
   digest je odmítnutí jménem; změněný digest se po restartu nespojí se starou
   session bez nového potvrzení (HP3).
+- `nomo_plan_update` je R0 nástroj pro nejvýše 50 validovaných položek plánu.
+  Nahrazuje celý plán, vrací jej modelu, ukládá na `SessionView.plan` a nikdy
+  nemění policy, katalog nástrojů ani oprávnění (HP4).
 - Projekt i výstupy příkazů mohou obsahovat inline secrets; mohou odejít
   zvolenému provideru a zůstat v lokální historii session. TUI i Control Plane
   musí toto riziko říct před souhlasem. Filtrování názvů cest neskryje tajemství

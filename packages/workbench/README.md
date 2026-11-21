@@ -436,6 +436,12 @@ to 200 messages; a run compacts the conversation with a model summary once it
 holds `autoCompactMessages` messages (150 by default), so a long conversation
 continues instead of ending at the cap (`auto-compaction.test.ts`). Signed tool
 ledgers remain on disk after runtime restart.
+
+`nomo_plan_update` replaces a session plan with at most 50 validated items
+(`pending`, `in_progress`, `done`), records the R0 call and persists the plan on
+`SessionView.plan`. The complete plan is returned to the model and exposed by
+the existing session API; invalid replacements leave the previous plan intact
+(`plan.test.ts`, `plan-tool.test.ts`).
 Assistant text streams to the UI. There is no claim of Codex, Claude Code or
 OpenCode process adapters, PTY, or desktop packaging. Those are separate AW
 work packages.

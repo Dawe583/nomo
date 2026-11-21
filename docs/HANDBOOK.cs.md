@@ -508,6 +508,12 @@ tahů a pokračuje, místo aby skončil na stropu 200 zpráv. Shrnutí je označ
 jako nedůvěryhodná historie, nikdy jako instrukce, a log událostí ukáže
 `Context compacted automatically.`
 
+Model může nahradit svůj pracovní plán přes `nomo_plan_update`, R0 nástroj s
+nejvýše 50 položkami a stavy `pending`, `in_progress` a `done`. Celý plán se
+vrátí jako výsledek nástroje, uloží se ve view session a zpřístupní přes
+`GET /api/sessions/:id`. Neplatná náhrada ponechá předchozí plán beze změny;
+plán je popisný a nikdy nerozšiřuje nástroje ani oprávnění.
+
 ## 9. Webová a desktopová aplikace
 
 `pnpm gui` sestaví klienta a spustí lokální API server. Pro práci na frontendu
