@@ -671,7 +671,7 @@ seznamu zmizí, protože harness čte stav, který vrácení obnovilo.
 
 ## 10. Příkazová řáda
 
-Dvacet čtyři příkazů. `nomo --help` vypíše seznam; `nomo <příkaz>` bez argumentů
+Dvacet pět příkazů. `nomo --help` vypíše seznam; `nomo <příkaz>` bez argumentů
 vypíše usage daného příkazu.
 
 | Příkaz               | Co dělá                                                         |
@@ -700,6 +700,7 @@ vypíše usage daného příkazu.
 | `nomo state`      | Shrnutí nebo migrace trvalého stavu pracovního prostoru.             |
 | `nomo harness`    | Seznam a rozhodnutí nad návrhy harnesse relace a model, na kterém jeho recenze běží. |
 | `nomo goal`       | Spustit, zobrazit nebo zrušit cíl: jeden objektiv, tokenový rozpočet a volitelné dokončovací gate. |
+| `nomo schedule`   | Operátorská tabulka plánů: výpis, přidání, pozastavení, obnovení, odebrání a jedna kontrola splatnosti. |
 
 Tě s argumenty, přesně:
 
@@ -787,6 +788,17 @@ Poznámky, které ušetří čas:
   `stalled` a `nomo goal cancel` ho označí `cancelled` a zahodí zařazené
   pokračování. `nomo goal status` vypíše objektiv, stav, rozpočet, gate a počet
   pokračování; relaci bez cíle ohlásí jako takovou, místo aby selhala.
+- `nomo schedule add` zapíše prompt, kadence a strop počtu běhů, které
+  workbench spouští bez dozoru. Záznam patří operátorovi: id, stav, počítadla a
+  další slot vydává workbench a tělo, které některé z nich pojmenuje, je odmítnuto
+  jménem. Interval je nejméně 60 sekund, tabulka drží nejvýše 32 záznamů a
+  `--paused` vytvoří záznam, který do obnovení nevystřelí. Tento příkaz sám žádný
+  běh nespouští: jen `nomo schedule run-due` vyžádá jednu kontrolu splatnosti a
+  workbench každý běh provede stejnou řízenou cestou jako běh člověka, s policy,
+  holdy a ledgerem v platnosti. To je příkaz, který volá cron nebo systemd timer,
+  protože NOMO vlastní hodiny nemá. Běh, jehož výsledek skončí `unknown`, záznam
+  zaparkuje jako `paused_unknown` a vypne ho, a obsazený cíl se přeskočí místo
+  zařazení do fronty za běžícím tahem.
 - `nomo config` vypíše rozřešené adresáře dat, ledgeru a schválení a zda je
   nastaven ověřovací klíč. Klíč nikdy nevypíše.
 - `nomo verify` na ledgeru s prázdným adresářem selže prostým `ENOENT` se

@@ -397,6 +397,24 @@ against Hermes Agent and Prime Agent and orders the slices that close the gap:
   baseline, follows a symlink, accepts a protected path, or lacks its binding or
   profile allowlist.
 
+- HP9. Scheduled prompts. Status: implemented 2026-11-21. Paths:
+  `packages/workbench/src/schedules.ts`, `packages/workbench/src/index.ts`,
+  `apps/control-plane/api/server.ts`, `packages/cli/src/schedule.ts`,
+  `packages/cli/src/argv.ts`, `packages/cli/src/dispatch.ts`. Goal: an operator
+  record binds a prompt, a cadence (interval floor 60 seconds, or one instant)
+  and a run and token ceiling; the workbench mints its id, status, counters and
+  next slot, persists them across a restart, and runs each firing through the
+  normal governed path. A busy target is skipped, an unreadable target or an
+  `unknown` outcome parks the record as `paused_unknown` and switches it off,
+  and no model tool reaches the table. Verifier:
+  `packages/workbench/src/schedules.test.ts`,
+  `packages/workbench/src/schedule-runtime.test.ts`,
+  `apps/control-plane/api/schedules.test.ts`, `packages/cli/src/schedule.test.ts`,
+  workbench and full typecheck, documentation tests. Stop: a model tool creates
+  or fires a schedule, a firing bypasses policy or the ledger, or a record that
+  cannot prove its last outcome fires again. Design record:
+  `docs/superpowers/designs/2026-11-21-hp9-scheduled-prompts.md`.
+
 ## 7. Verification commands
 
 - Typecheck: `npx tsc -p packages/workbench/tsconfig.json --noEmit`

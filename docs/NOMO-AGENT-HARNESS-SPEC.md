@@ -792,6 +792,15 @@ Vlastník schválil work package pro projektové schopnosti v
   příkazů ani stdout/stderr procesu. Prošlé gate dokončí cíl jako `completed`,
   vyčerpání rozpočtu nebo stropu pokračování skončí jako `budget_limited` a
   neprošlý gate nad nezměněným digestem workspace skončí jako `stalled` (HP7).
+- Operátorská tabulka plánů (`Workbench.listSchedules`, `createSchedule`,
+  `pauseSchedule`, `resumeSchedule`, `deleteSchedule`, `runDueSchedules`,
+  `/api/schedules`, `nomo schedule`) drží nejvýše 32 záznamů, interval nejméně
+  60 sekund, nejvýše 1000 běhů a tokenový strop 1e6. Id, stav, počítadla a další
+  slot vydává workbench, ne tělo požadavku. Model nemá žádný nástroj, který by
+  tabulku četl nebo měnil. `run-due` spouští každý splatný záznam normální
+  řízenou cestou, obsazený cíl přeskočí bez zařazení do fronty, nečitelný cíl
+  zaparkuje bez běhu a výsledek `unknown` záznam zaparkuje jako `paused_unknown`
+  a vypne (HP9).
 - Markdown skill promotion má vlastní podepsaný záznam `harnessSkill` s
   událostmi `skill:promoted` a `skill:rolled-back` a replay
   `Workbench.promotedSkills`. Skill se nikdy nezapíše jako soubor do

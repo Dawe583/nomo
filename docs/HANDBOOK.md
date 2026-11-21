@@ -773,7 +773,7 @@ harness reads the state the rollback restored.
 
 ## 10. The command line
 
-Twenty-four commands. `nomo --help` prints the list; `nomo <command>` with no
+Twenty-five commands. `nomo --help` prints the list; `nomo <command>` with no
 arguments prints that command's usage.
 
 | Command          | What it does                                                              |
@@ -802,6 +802,7 @@ arguments prints that command's usage.
 | `nomo state`     | Summarise or migrate persisted workspace state.                           |
 | `nomo harness`   | List and decide the harness proposals of a session, and name the model its reviews run on. |
 | `nomo goal`      | Start, inspect or cancel a goal: one objective, a token budget and optional completion gates. |
+| `nomo schedule`  | The operator schedule table: list, add, pause, resume, remove, and ask for one due evaluation. |
 
 The ones that take arguments, exactly:
 
@@ -891,6 +892,18 @@ Notes that save time:
   `cancelled` and drops a queued continuation. `nomo goal status` prints the
   objective, status, budget, gates and continuation count, and reports a
   session with no goal as such instead of failing.
+- `nomo schedule add` records a prompt, a cadence and a run ceiling that the
+  workbench starts without a person watching. The record is the operator's:
+  the workbench mints its id, status, counters and next slot, and a body that
+  names one of those is refused by name. An interval is at least 60 seconds,
+  the table holds at most 32 records, and `--paused` creates a record that
+  cannot fire until it is resumed. Nothing here runs a firing: only
+  `nomo schedule run-due` asks for one due evaluation, and the workbench runs
+  each firing through the same governed path a person's run uses, with policy,
+  holds and the ledger in force. That is the command a cron entry or a systemd
+  timer calls, because NOMO owns no clock of its own. A firing whose run ends
+  `unknown` parks the record as `paused_unknown` and switches it off, and a
+  target that is busy is skipped rather than queued behind the running turn.
 - `nomo config` prints the resolved data, ledger and approvals directories and
   whether a verification key is set. It never prints the key.
 - `nomo verify` on a ledger with no entries in the current directory fails with a

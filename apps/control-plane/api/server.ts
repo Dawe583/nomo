@@ -1694,6 +1694,60 @@ async function route(
     response.end(image.bytes);
     return;
   }
+  // HP9: the operator's schedule table. Every route here is an operator door:
+  // no model tool reaches it, and `run-due` is the one route that starts work,
+  // through the same governed path a person's run uses.
+  if (parsed.pathname === "/api/schedules") {
+    if (request.method === "GET")
+      return sendJson(response, 200, { schedules: wb.listSchedules() });
+    if (request.method === "POST") {
+      try {
+        return sendJson(response, 201, {
+          schedule: wb.createSchedule(await readJsonBody(request)),
+        });
+      } catch (error) {
+        return sendRequestError(response, error, 400, {
+          error: "schedule_request_refused",
+          message:
+            error instanceof Error ? error.message : "Schedule request refused.",
+        });
+      }
+    }
+  }
+  if (request.method === "POST" && parsed.pathname === "/api/schedules/run-due") {
+    try {
+      return sendJson(response, 200, { results: await wb.runDueSchedules() });
+    } catch (error) {
+      return sendRequestError(response, error, 400, {
+        error: "schedule_run_refused",
+        message: error instanceof Error ? error.message : "Schedule run refused.",
+      });
+    }
+  }
+  const scheduleActionMatch =
+    /^\/api\/schedules\/([a-f0-9-]+)(?:\/(pause|resume))?$/.exec(parsed.pathname);
+  if (scheduleActionMatch) {
+    const id = scheduleActionMatch[1]!;
+    const action = scheduleActionMatch[2];
+    if (!wb.listSchedules().some((schedule) => schedule.id === id))
+      return sendJson(response, 404, { error: "schedule_not_found" });
+    try {
+      if (request.method === "DELETE" && action === undefined)
+        return sendJson(response, 200, { deleted: wb.deleteSchedule(id) });
+      if (request.method === "POST" && action === "pause")
+        return sendJson(response, 200, { schedule: wb.pauseSchedule(id) });
+      if (request.method === "POST" && action === "resume")
+        return sendJson(response, 200, { schedule: wb.resumeSchedule(id) });
+    } catch (error) {
+      // A resume of finished work is a conflict with the record's own state,
+      // not a malformed request, so it answers 409 rather than 400.
+      return sendRequestError(response, error, 409, {
+        error: "schedule_request_refused",
+        message:
+          error instanceof Error ? error.message : "Schedule request refused.",
+      });
+    }
+  }
   const goalMatch = /^\/api\/sessions\/([a-f0-9-]+)\/goal$/.exec(parsed.pathname);
   if (goalMatch) {
     const id = goalMatch[1]!;

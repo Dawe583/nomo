@@ -50,6 +50,14 @@ import {
   type ParsedSkillChange,
 } from "./skill-promotion.ts";
 import {
+  SCHEDULE_LIMITS,
+  dueSchedules,
+  parseScheduleInput,
+  recordScheduleRun,
+  type Schedule,
+  type ScheduleOutcome,
+} from "./schedules.ts";
+import {
   recoveryRequest,
   runtimeSelection,
   recoveryOperationMap,
@@ -841,6 +849,83 @@ function refinementTextIsSensitive(
  * written is exactly the case a re-scan catches and an inherited guarantee
  * does not.
  */
+/** One settled firing, as `runDueSchedules` reports it. */
+export type ScheduleFiring = {
+  readonly scheduleId: string;
+  readonly sessionId: string;
+  readonly outcome: ScheduleOutcome;
+};
+
+/**
+ * A stored schedule, re-checked against the rules in force now.
+ *
+ * The operator's prompt ceiling and the cadence floor can both have narrowed
+ * since the record was written, so the snapshot is re-parsed rather than
+ * trusted. The derived fields (`id`, `status`, counters, the stored slot) are
+ * carried as written, because they are history rather than operator input.
+ */
+function validateStoredSchedule(
+  value: unknown,
+  maxPromptCharacters: number,
+): Schedule {
+  const record = value as Schedule;
+  if (record === null || typeof record !== "object")
+    throw new Error("A stored schedule is not an object.");
+  if (typeof record.id !== "string" || record.id === "")
+    throw new Error("A stored schedule has no id.");
+  const createdAt = Date.parse(record.createdAt);
+  if (!Number.isFinite(createdAt))
+    throw new Error(`Schedule ${record.id} has an unreadable creation time.`);
+  const parsed = parseScheduleInput(
+    {
+      name: record.name,
+      prompt: record.prompt,
+      cadence: record.cadence,
+      ...(record.sessionId === undefined ? {} : { sessionId: record.sessionId }),
+      ...(record.model === undefined ? {} : { model: record.model }),
+      ...(record.agent === undefined ? {} : { agent: record.agent }),
+      maxRuns: record.maxRuns,
+      ...(record.tokenBudget === undefined
+        ? {}
+        : { tokenBudget: record.tokenBudget }),
+      enabled: record.enabled,
+    },
+    maxPromptCharacters,
+    createdAt,
+  );
+  const statuses: readonly string[] = [
+    "active",
+    "paused",
+    "completed",
+    "budget_limited",
+    "paused_unknown",
+  ];
+  if (!statuses.includes(record.status))
+    throw new Error(`Schedule ${record.id} has an unknown status.`);
+  if (!Number.isInteger(record.runCount) || record.runCount < 0)
+    throw new Error(`Schedule ${record.id} has an unreadable run count.`);
+  if (!Number.isInteger(record.tokensUsed) || record.tokensUsed < 0)
+    throw new Error(`Schedule ${record.id} has an unreadable token count.`);
+  if (!Number.isFinite(Date.parse(record.nextRunAt)))
+    throw new Error(`Schedule ${record.id} has an unreadable next slot.`);
+  return {
+    id: record.id,
+    ...parsed,
+    status: record.status,
+    runCount: record.runCount,
+    tokensUsed: record.tokensUsed,
+    createdAt: record.createdAt,
+    nextRunAt: record.nextRunAt,
+    ...(record.lastRunAt === undefined ? {} : { lastRunAt: record.lastRunAt }),
+    ...(record.lastSessionId === undefined
+      ? {}
+      : { lastSessionId: record.lastSessionId }),
+    ...(record.lastOutcome === undefined
+      ? {}
+      : { lastOutcome: record.lastOutcome }),
+  };
+}
+
 function knownSecretValues(
   env: Readonly<NodeJS.ProcessEnv>,
   config: WorkbenchProviderConfig | undefined,
@@ -1006,6 +1091,9 @@ export class Workbench {
   private ignoreEnvironment = false;
   private catalog: readonly Model[] = [];
   private readonly sessions = new Map<string, Session>();
+  /** The operator's schedule table (HP9). Persisted with the rest of the
+   * workbench state, so a restart cannot silently forget an unattended loop. */
+  private schedules: Schedule[] = [];
   private readonly queued = new Set<string>();
   private readonly jobs = new Map<string, Promise<void>>();
   private readonly agentRunners = new Map<string, AgentRunner>();
@@ -1154,6 +1242,7 @@ export class Workbench {
         root: string;
         updatedAt: string;
       }>;
+      schedules?: unknown[];
     }>();
     if (saved) {
       let migrated = false;
@@ -1273,6 +1362,17 @@ export class Workbench {
         }
       });
       this.projectList = saved.projects ?? [];
+      // A stored schedule is re-validated, not trusted because it was accepted
+      // once: the operator's prompt ceiling and the cadence floor can both have
+      // narrowed since the record was written, and a snapshot that outlived the
+      // rule that admitted it would fire on a bound nobody chose.
+      this.schedules = (saved.schedules ?? []).flatMap((schedule) => {
+        try {
+          return [validateStoredSchedule(schedule, this.harness.maxPromptCharacters)];
+        } catch {
+          return [];
+        }
+      });
       if (this.config)
         this.provider = createProviderClient(
           this.config,
@@ -1416,6 +1516,7 @@ export class Workbench {
       agentProfiles: this.agentProfiles,
       hooks: this.hooks,
       projects: this.projectList,
+      schedules: this.schedules,
       sessions: [...this.sessions.values()].map(
         ({
           view,
@@ -3857,6 +3958,180 @@ export class Workbench {
     this.persist();
     return structuredClone(goal);
   }
+
+  /**
+   * The operator's schedule table (HP9).
+   *
+   * A schedule decides when unattended work starts, so every method here is an
+   * operator door: no model tool reaches this table, and the firing runs
+   * through the normal `start` or `send` path, which is where policy, holds,
+   * turn limits and the ledger already live. The rules (cadence floor, run and
+   * token bounds, what a settled firing means) belong to `schedules.ts`; this
+   * only stores the table and drives it.
+   */
+  listSchedules(): Schedule[] {
+    return this.schedules.map((schedule) => structuredClone(schedule));
+  }
+
+  createSchedule(input: unknown, nowMs?: number): Schedule {
+    const parsed = parseScheduleInput(
+      input,
+      this.harness.maxPromptCharacters,
+      nowMs,
+    );
+    if (this.schedules.length >= SCHEDULE_LIMITS.schedules)
+      throw new Error(
+        `A workbench holds at most ${SCHEDULE_LIMITS.schedules} schedules.`,
+      );
+    const createdAtMs = nowMs ?? Date.now();
+    const schedule: Schedule = {
+      id: randomUUID(),
+      ...parsed,
+      status: parsed.enabled ? "active" : "paused",
+      runCount: 0,
+      tokensUsed: 0,
+      createdAt: new Date(createdAtMs).toISOString(),
+    };
+    this.schedules.push(schedule);
+    this.persist();
+    return structuredClone(schedule);
+  }
+
+  pauseSchedule(id: string): Schedule {
+    const index = this.schedules.findIndex((schedule) => schedule.id === id);
+    if (index < 0) throw new Error(`No schedule matches ${id}.`);
+    const paused: Schedule = {
+      ...this.schedules[index]!,
+      status: "paused",
+      enabled: false,
+    };
+    this.schedules[index] = paused;
+    this.persist();
+    return structuredClone(paused);
+  }
+
+  resumeSchedule(id: string): Schedule {
+    const index = this.schedules.findIndex((schedule) => schedule.id === id);
+    if (index < 0) throw new Error(`No schedule matches ${id}.`);
+    const current = this.schedules[index]!;
+    if (current.status !== "paused" && current.status !== "active")
+      throw new Error(
+        `Schedule ${id} is ${current.status}; only a paused schedule can resume.`,
+      );
+    const now = Date.now();
+    const nextRunAt =
+      current.cadence.kind === "interval"
+        ? new Date(now + current.cadence.everySeconds * 1000).toISOString()
+        : current.nextRunAt;
+    // A once instant that passed while the record was paused cannot be
+    // resumed into the past: the operator would be asking for a firing at a
+    // moment nobody meant, and the first evaluation would run it immediately.
+    if (Date.parse(nextRunAt) <= now)
+      throw new Error(
+        `Schedule ${id} has no future slot to resume; create a new schedule.`,
+      );
+    const resumed: Schedule = {
+      ...current,
+      status: "active",
+      enabled: true,
+      nextRunAt,
+    };
+    this.schedules[index] = resumed;
+    this.persist();
+    return structuredClone(resumed);
+  }
+
+  deleteSchedule(id: string): boolean {
+    const index = this.schedules.findIndex((schedule) => schedule.id === id);
+    if (index < 0) return false;
+    this.schedules.splice(index, 1);
+    this.persist();
+    return true;
+  }
+
+  /**
+   * Fire every schedule that is due, once each, and report what settled.
+   *
+   * A target that is busy is skipped and its record is left exactly as it was,
+   * so the next evaluation sees the same slot. A target whose state cannot be
+   * read parks the record without starting a run, because repeating an
+   * unverified side effect is the one thing a loop must not do.
+   */
+  async runDueSchedules(nowMs?: number): Promise<ScheduleFiring[]> {
+    const now = nowMs ?? Date.now();
+    const due = dueSchedules(this.schedules, now);
+    const firings: ScheduleFiring[] = [];
+    for (const dueSchedule of due) {
+      const index = this.schedules.findIndex(
+        (schedule) => schedule.id === dueSchedule.id,
+      );
+      if (index < 0) continue;
+      const current = this.schedules[index]!;
+      // Re-checked per record: an earlier firing in this pass may have paused
+      // or completed a record that the first read still saw as due.
+      if (dueSchedules([current], now).length === 0) continue;
+
+      let sessionId = current.sessionId;
+      if (sessionId !== undefined) {
+        const target = this.sessions.get(sessionId);
+        if (!target || target.view.status === "unknown") {
+          this.schedules[index] = {
+            ...current,
+            status: "paused_unknown",
+            enabled: false,
+          };
+          this.persist();
+          continue;
+        }
+        if (target.view.status !== "idle") continue;
+      }
+
+      const tokensBefore =
+        sessionId === undefined
+          ? 0
+          : (this.sessions.get(sessionId)?.view.runTokenCount ?? 0);
+      // A firing that cannot start is not a firing: the error propagates after
+      // the table is persisted, so the operator sees why the loop stopped
+      // instead of a schedule that silently never runs. The record keeps its
+      // slot, so the next evaluation retries the same instant.
+      if (sessionId === undefined) {
+        const created = await this.start(
+          current.prompt,
+          current.model,
+          `schedule:${current.id}:${current.runCount}`,
+          undefined,
+          current.agent,
+        );
+        sessionId = created.id;
+      } else {
+        this.send(
+          sessionId,
+          current.prompt,
+          `schedule:${current.id}:${current.runCount}`,
+        );
+      }
+      const view = await this.waitForRun(sessionId);
+      const tokensUsed = Math.max(0, (view.runTokenCount ?? 0) - tokensBefore);
+      const outcome: ScheduleOutcome =
+        view.status === "idle"
+          ? "idle"
+          : view.status === "failed"
+            ? "failed"
+            : view.status === "cancelled"
+              ? "cancelled"
+              : "unknown";
+      this.schedules[index] = recordScheduleRun(current, {
+        firedAtMs: now,
+        sessionId,
+        tokensUsed,
+        outcome,
+      });
+      firings.push({ scheduleId: current.id, sessionId, outcome });
+      this.persist();
+    }
+    return firings;
+  }
+
   sessionPage(query: URLSearchParams) {
     const all = filterRows(this.allViews(), query)
       .filter(
