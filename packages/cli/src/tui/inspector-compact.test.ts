@@ -50,3 +50,13 @@ test("empty panels, badges and double-width glyphs stay inside tiny columns", ()
     }
   }
 });
+
+test("long action hints remain available in narrow detail views", () => {
+  const hint = "Enter opens the document. Esc returns to the list.";
+  const rows = renderInspector(
+    { title: "Document", sections: [], hint },
+    { width: 20 },
+  );
+  assert.equal(rows.slice(3).join("").trim(), hint);
+  assert.ok(rows.every((row) => visibleLength(row) <= 20));
+});

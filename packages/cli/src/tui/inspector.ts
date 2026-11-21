@@ -176,10 +176,11 @@ function pushHint(
 ): void {
   if (hint === undefined) return;
   const clean = sanitizeText(hint);
-  // A truncated hint says nothing useful, so it is omitted unless whole.
-  if (clean === "" || visibleLength(clean) > width) return;
+  if (clean === "") return;
   rows.push("");
-  rows.push(paintField(paint, clean, "muted"));
+  for (const line of wrapCells(clean, width)) {
+    rows.push(paintField(paint, line, "muted"));
+  }
 }
 
 export function renderInspector(
