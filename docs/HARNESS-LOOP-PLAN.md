@@ -222,6 +222,17 @@ Each node follows the loop in section 3.2. Statuses are tracked in
   Verifier: `node scripts/src/check-tests.mjs` inside the gate. Stop: the gate
   is green or a double-red blocker is recorded.
 
+- H10. Refinement outcome feedback. Status: implemented 2026-11-21, pending
+  the gate. Paths: `packages/workbench/src/refinement-outcomes.ts`,
+  `packages/workbench/src/harness-runtime.ts`, `packages/workbench/src/index.ts`.
+  Goal: the reviewer reads the signed fate of the workspace's earlier
+  proposals, and a rejected or rolled back refinement cannot be proposed again
+  without newer evidence. Verifier:
+  `NO_COLOR=1 node --test packages/workbench/src/refinement-outcomes.test.ts packages/workbench/src/harness-outcome-feedback.test.ts packages/workbench/src/harness-runtime.test.ts`
+  plus the workbench typecheck. Stop: an outcome never reaches `decide`,
+  policy or the agent prompt. Design record:
+  `docs/superpowers/designs/2026-11-21-h10-refinement-outcome-feedback.md`.
+
 ## 7. Verification commands
 
 - Typecheck: `npx tsc -p packages/workbench/tsconfig.json --noEmit`

@@ -707,6 +707,18 @@ nejsou, se v tomhle stromu objevují jako falešné tvrzení později.
   výstupech.** Regresní smyčka. Řešitelné, ale `derivedFromSeq` je jen
   zachytí, ne řešení.
 
+  Stav 2026-11-21, uzel H10: první řez zpětné vazby je implementován v
+  `packages/workbench/src/refinement-outcomes.ts`. Čistá funkce
+  `mineRefinementOutcomes` čte z podepsaného chainu, co se stalo s dřívějšími
+  návrhy (čeká, zamítnuto, aktivováno, vráceno), nejvýše jeden výsledek na
+  digest návrhu. Reviewer tento blok dostane v požadavku v rámci stropu
+  `maxPromptCharacters` a `refineHarness` odmítne návrh, který nese přesně
+  stejné edity jako zamítnutý nebo vrácený návrh a necituje žádný záznam
+  novější než rozhodnutí operátora. Výsledky nevstupují do `decide`, policy,
+  katalogu nástrojů ani do promptu agenta. Neměří se tím, zda aktivovaná
+  změna pomohla; to zůstává otevřené. Návrh a zamítnuté varianty:
+  `docs/superpowers/designs/2026-11-21-h10-refinement-outcome-feedback.md`.
+
 ### 7.1 Rozsah schválený vlastníkem, 2026-10-18
 
 Vlastník schválil work package pro projektové schopnosti v

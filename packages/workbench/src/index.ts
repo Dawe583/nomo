@@ -167,6 +167,12 @@ import {
 } from "./policy-profile.ts";
 import { mineLearnedRules } from "./learned-rules.ts";
 import { mineHarnessEntries, type HarnessEntry } from "./learned-harness.ts";
+import {
+  mineRefinementOutcomes,
+  repeatRefusal,
+  repeatsSettledProposal,
+  type RefinementOutcome,
+} from "./refinement-outcomes.ts";
 import type { SpawnSubagentOptions } from "./subagents.ts";
 import {
   validateIdempotencyKey,
@@ -4909,6 +4915,17 @@ export class Workbench {
     return [...byId.values()];
   }
 
+  /**
+   * What became of this workspace's harness proposals, from the verified
+   * chain. Kept apart from `harnessEntries` on purpose: those entries feed the
+   * agent's prompt, and a record that an operator rejected something is not an
+   * approved instruction. The reviewer and the operator read this; the agent
+   * does not, and nothing here reaches a decision.
+   */
+  async harnessOutcomes(workspace: string): Promise<RefinementOutcome[]> {
+    return mineRefinementOutcomes((await this.ledger(workspace))?.entries ?? []);
+  }
+
   async promotedAgentProfiles(workspace: string): Promise<AgentProfile[]> {
     const entries = (await this.ledger(workspace))?.entries ?? [];
     const profiles = new Map<string, AgentProfile>();
@@ -4998,6 +5015,16 @@ export class Workbench {
         for (const seq of edit.derivedFromSeq)
           if (!verifiedSeqs.has(seq))
             throw new Error(`Refinement cites unverified workspace sequence ${seq}.`);
+
+      // An operator's answer binds the next question. Checked here, under the
+      // lock and before the record, so a repeat costs the operator nothing and
+      // leaves nothing in the chain; checked on the edits and the sequences
+      // they cite, because the prose around them is what a model rewords.
+      const repeated = repeatsSettledProposal(
+        proposal,
+        mineRefinementOutcomes(proof?.entries ?? []),
+      );
+      if (repeated) throw new Error(repeatRefusal(repeated));
 
       const digest = await sha256Hex(canonicalJson(proposal));
       const state = this.documents[workspace] ?? createWorkspace();
@@ -6028,6 +6055,10 @@ export class Workbench {
       // round is worth paying for, and handing over the full rule list would
       // answer a question the chain does not support.
       rules: () => mineLearnedRules(this.evidence[session.view.workspace] ?? []).length,
+      // The return path: what an operator did with the earlier proposals,
+      // from the same verified chain. Without it the reviewer proposes what
+      // was already rejected.
+      outcomes: async () => await this.harnessOutcomes(session.view.workspace),
       ask: async (request) => {
         // The review may name another model than the conversation runs on:
         // a review is a bounded, structured request, and an operator may want

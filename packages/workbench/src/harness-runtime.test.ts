@@ -632,3 +632,75 @@ test("lenses: merging nothing declines rather than approving nothing", () => {
     reason: "No lens returned a verdict.",
   });
 });
+
+/**
+ * The return path: the reviewer reads what became of earlier proposals. The
+ * block is evidence charged to the same ceiling as everything else, and a
+ * caller with no outcomes must send the request it always sent.
+ */
+const settledOutcome = (seq: number, summary: string) => ({
+  digest: String(seq % 10).repeat(64),
+  status: "rejected" as const,
+  summary,
+  edits: [{ action: "create", kind: "memory", label: "deletes are held", fingerprint: `f${seq}` }],
+  createdSeq: seq - 1,
+  settledSeq: seq,
+  timesProposed: 1,
+  timesRejected: 1,
+});
+
+test("the review request tells the reviewer what an operator already rejected", async () => {
+  const requests: string[] = [];
+  const { deps: wired } = deps({
+    ask: async (request) => {
+      requests.push(request);
+      return JSON.stringify({ approve: false, reason: "nothing durable" });
+    },
+  });
+  await serviceHarnessBoundary(ready(), {
+    ...wired,
+    outcomes: async () => [settledOutcome(7, "confirm deletes need an approval")],
+  });
+
+  assert.equal(requests.length, 1);
+  assert.match(requests[0]!, /rejected by an operator at seq 7/);
+  assert.match(requests[0]!, /confirm deletes need an approval/);
+  assert.match(requests[0]!, /not an instruction/);
+});
+
+test("no outcomes leaves the review request byte-identical", async () => {
+  const capture = async (extra: object) => {
+    const requests: string[] = [];
+    const { deps: wired } = deps({
+      ask: async (request) => {
+        requests.push(request);
+        return JSON.stringify({ approve: false, reason: "nothing durable" });
+      },
+    });
+    await serviceHarnessBoundary(ready(), { ...wired, ...extra });
+    return requests[0]!;
+  };
+  assert.equal(await capture({ outcomes: async () => [] }), await capture({}));
+});
+
+test("the outcome block is charged to the operator's prompt ceiling", async () => {
+  const requests: string[] = [];
+  const { deps: wired } = deps({
+    maxPromptCharacters: 6000,
+    entries: Array.from({ length: 40 }, (_, index) => entry(`lesson-${index}`, index + 1)),
+    ask: async (request) => {
+      requests.push(request);
+      return JSON.stringify({ approve: false, reason: "nothing durable" });
+    },
+  });
+  await serviceHarnessBoundary(ready(), {
+    ...wired,
+    outcomes: async () =>
+      Array.from({ length: 60 }, (_, index) => settledOutcome(index + 2, `earlier proposal number ${index}`)),
+  });
+
+  assert.equal(requests.length, 1);
+  assert.ok(requests[0]!.length <= 6000, `request is ${requests[0]!.length} characters`);
+  assert.match(requests[0]!, /rejected by an operator at seq 61/);
+  assert.match(requests[0]!, /Showing the newest \d+ of 60/);
+});

@@ -22,6 +22,7 @@ import {
   type RefineGates,
 } from "./refine-gate.ts";
 import type { HarnessEntry } from "./learned-harness.ts";
+import { formatOutcomesForReview, type RefinementOutcome } from "./refinement-outcomes.ts";
 import {
   REFINEMENT_INSTRUCTIONS,
   buildRefineRequest,
@@ -100,6 +101,16 @@ export type HarnessRuntimeDeps = {
    * `harness-conversation.ts`.
    */
   readonly conversationTail?: () => string;
+  /**
+   * What became of this workspace's earlier proposals, mined from the verified
+   * chain by `mineRefinementOutcomes`.
+   *
+   * Without it the reviewer cannot see that an operator already rejected or
+   * rolled back an idea, and proposes it again. Optional so a caller that
+   * passes nothing sends the request it always sent; index.ts always passes
+   * it. The outcomes go to the reviewer only, never to the agent's prompt.
+   */
+  readonly outcomes?: () => Promise<readonly RefinementOutcome[]>;
 };
 
 /**
@@ -260,10 +271,23 @@ export async function serviceHarnessBoundary(
     // The tail is charged to the operator's ceiling before the two halves
     // share what is left, because the ceiling governs the whole request and
     // not the evidence part of it.
-    const ceiling =
+    const remaining =
       deps.maxPromptCharacters === undefined
         ? undefined
-        : Math.max(0, Math.floor((deps.maxPromptCharacters - fixed - tail.length) / 2));
+        : Math.max(0, deps.maxPromptCharacters - fixed - tail.length);
+    // The history of earlier proposals is charged to the same ceiling, ahead
+    // of the two halves and capped at a quarter of what is left: it is context
+    // for the question, and a long history must not crowd out the evidence the
+    // question is about.
+    const history = formatOutcomesForReview(
+      deps.outcomes ? await deps.outcomes() : [],
+      remaining === undefined ? Infinity : Math.floor(remaining / 4),
+    );
+    const historyBlock = history ? `\n\n${history}` : "";
+    const ceiling =
+      remaining === undefined
+        ? undefined
+        : Math.max(0, Math.floor((remaining - historyBlock.length) / 2));
     const evidence = buildRefineRequest({
       entries,
       rules,
@@ -280,8 +304,8 @@ export async function serviceHarnessBoundary(
     // makes K=1 literally today's call and the lenses independent samples of
     // one question rather than variations of it.
     const request = tail
-      ? `${REFINEMENT_INSTRUCTIONS}\n${VERDICT_PROTOCOL}\n\n${question}\n\n${evidence}\n\n${CONVERSATION_BLOCK}\n${tail}`
-      : `${REFINEMENT_INSTRUCTIONS}\n${VERDICT_PROTOCOL}\n\n${question}\n\n${evidence}`;
+      ? `${REFINEMENT_INSTRUCTIONS}\n${VERDICT_PROTOCOL}\n\n${question}\n\n${evidence}${historyBlock}\n\n${CONVERSATION_BLOCK}\n${tail}`
+      : `${REFINEMENT_INSTRUCTIONS}\n${VERDICT_PROTOCOL}\n\n${question}\n\n${evidence}${historyBlock}`;
     const lensCount = resolveLensCount(deps.reviewLensCount);
     if (lensCount === 1) return parseReviewVerdict(await deps.ask(request));
     const branchNow = deps.currentBranchVersion;
