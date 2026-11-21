@@ -18,16 +18,19 @@ test('tool catalogue never claims Undo for a connector impersonating a built-in 
 });
 test('slash search filters metadata, does not capture prose, and selection only prepares a request', () => {
   const tools = toolCatalog(workspaceTools);
-  assert.equal(filterCommands(tools, '/').length, 11);
+  assert.equal(filterCommands(tools, '/').length, 14);
   assert.ok(filterCommands(tools, '/').some(tool => tool.name === 'nomo_plan_update'));
   assert.ok(filterCommands(tools, '/').some(tool => tool.name === 'nomo_delegate'));
   assert.ok(filterCommands(tools, '/').some(tool => tool.name === 'nomo_subagent_result'));
   assert.ok(filterCommands(tools, '/').some(tool => tool.name === 'nomo_session_search'));
   assert.ok(filterCommands(tools, '/').some(tool => tool.name === 'nomo_web_fetch'));
   assert.ok(filterCommands(tools, '/').some(tool => tool.name === 'nomo_web_search'));
+  assert.ok(filterCommands(tools, '/').some(tool => tool.name === 'nomo_agent_list'));
+  assert.ok(filterCommands(tools, '/').some(tool => tool.name === 'nomo_agent_inbox'));
+  assert.ok(filterCommands(tools, '/').some(tool => tool.name === 'nomo_agent_send'));
   // `/read` matches metadata, so it names every tool whose description
   // mentions reading, including the web fetch that returns readable text.
-  assert.deepEqual(filterCommands(tools, '/read').map(t => t.name), ['void_workspace_read', 'nomo_delegate', 'nomo_subagent_result', 'nomo_web_fetch']);
+  assert.deepEqual(filterCommands(tools, '/read').map(t => t.name), ['void_workspace_read', 'nomo_delegate', 'nomo_subagent_result', 'nomo_web_fetch', 'nomo_agent_inbox', 'nomo_agent_send']);
   assert.equal(filterCommands(tools, '/unknown').length, 0);
   assert.equal(filterCommands(tools, '/read document').length, 0);
   assert.equal(filterCommands(tools, 'a /read').length, 0);
@@ -63,7 +66,14 @@ test('session tool catalogue uses its snapshot and rejects unknown sessions', as
       ...HARNESS_TOOLS.map(tool => tool.name),
     ],
   );
-  assert.doesNotMatch(JSON.stringify(snapshot), /private-key|messages|baseUrl/);
+  // The catalogue is built from tool metadata, never from the conversation:
+  // the prompt and the answer the fixture exchanged must not appear, and
+  // neither must the provider key or its base URL. A tool description that
+  // legitimately says "messages" is not a leak of the session's messages.
+  const snapshotJson = JSON.stringify(snapshot);
+  assert.doesNotMatch(snapshotJson, /private-key|baseUrl/);
+  assert.equal(snapshotJson.includes('Hello'), false, 'the prompt is not in the catalogue');
+  assert.equal(snapshotJson.includes('Ready'), false, 'the answer is not in the catalogue');
 });
 
 test('catalogue redacts known connector credentials even if echoed in remote schemas', () => {

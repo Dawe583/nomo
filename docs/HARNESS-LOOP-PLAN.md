@@ -433,6 +433,25 @@ against Hermes Agent and Prime Agent and orders the slices that close the gap:
   offered while `webToolsEnabled` is zero. Design record:
   `docs/superpowers/designs/2026-11-21-hp10-web-tools.md`.
 
+- HP11. Family-scoped agent messaging. Status: implemented 2026-11-21. Paths:
+  `packages/workbench/src/agent-messages.ts`, `packages/workbench/src/workspace.ts`,
+  `packages/workbench/src/index.ts`. Goal: `nomo_agent_list` and
+  `nomo_agent_inbox` (R0) and `nomo_agent_send` (R1) reach only the direct
+  parent, children and siblings; the workbench's own session id is the sender;
+  a send is held by the default policy for a session with no agent profile,
+  writes its signed record before the text reaches the mailbox, and records the
+  sender, recipient, relation, mailbox seq and the digest of the delivered text
+  rather than the text; a secret-shaped body is refused and a known secret is
+  redacted with `redacted: true` in the record; mailboxes survive a restart and
+  the inbox cursor is exclusive. Verifier:
+  `packages/workbench/src/agent-messages.test.ts`,
+  `packages/workbench/src/agent-messages-tool.test.ts`,
+  `packages/workbench/src/tool-catalog.test.ts`, workbench and full typecheck,
+  documentation tests. Stop: a message reaches a session outside the direct
+  family, a model names its own sender id, or prompt text lands in the signed
+  record. Design record:
+  `docs/superpowers/designs/2026-11-21-hp11-agent-messaging.md`.
+
 - HP12. Stop releases run capacity before the transport settles. Status:
   discovered 2026-11-21, open. Paths: `packages/workbench/src/index.ts`
   (`cancel`, the run job's `finally`). Evidence: `lifecycle.test.ts` fails

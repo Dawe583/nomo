@@ -538,6 +538,28 @@ výňatků po 240 znacích. Provider klíče a connector tokeny se před zobraze
 modelu redigují a výňatek vypadající jako tajemství se zadrží. Vypnutí nastavení
 nástroj odstraní z dalších požadavků a odmítne i dříve uložené volání.
 
+Webové nástroje jsou také výchozí vypnuté. Nastavení `webToolsEnabled` na `1`
+nabídne `nomo_web_fetch` a `nomo_web_search`, oba třídy R1 a oba držené pro
+session bez agent profilu, takže operátor vidí odchozí požadavek dřív, než se
+stane. Fetch přijme jen absolutní HTTPS URL na portu 443 a odmítne každou
+loopback, privátní, link-local, CGNAT, multicast, rezervovanou i cloud metadata
+adresu a každý redirect ověří stejnými pravidly znovu. Search potřebuje
+`NOMO_WEB_SEARCH_URL` a volitelně `NOMO_WEB_SEARCH_API_KEY`; bez endpointu
+odmítne a proměnnou pojmenuje. Text stránky dorazí ohraničený jako
+nedůvěryhodný, se skripty a styly odstraněnými a s tajemstvími běhu i tvary
+povědomými jako credential nahrazenými `[redacted]`.
+
+Agentní session může mluvit i se svou rodinou. `nomo_agent_list` (R0) vypíše
+přímého rodiče, přímé děti a přímé sourozence s vztahem, titulkem a stavem;
+`nomo_agent_inbox` (R0) vrátí další dávku schránky této session od výlučného
+kurzoru `sinceSeq`, každou zprávu ohraničenou jako nedůvěryhodnou;
+`nomo_agent_send` (R1) zapíše jednu zprávu do schránky člena rodiny. Odeslání
+mimo rodinu nebo sobě je odmítnuto a odesílatelem je id samotného workbenche,
+takže model nemůže tvrdit, že je jiná session. Pro session bez agent profilu
+send drží výchozí policy a podepsaný záznam nese odesílatele, příjemce, vztah,
+pořadí ve schránce a digest doručeného textu místo textu samotného. Tělo
+vypadající jako tajemství je odmítnuto dřív, než se cokoli zapíše.
+
 ## 9. Webová a desktopová aplikace
 
 `pnpm gui` sestaví klienta a spustí lokální API server. Pro práci na frontendu

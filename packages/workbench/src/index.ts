@@ -50,6 +50,17 @@ import {
   type ParsedSkillChange,
 } from "./skill-promotion.ts";
 import {
+  AGENT_INBOX_TOOL,
+  AGENT_LIST_TOOL,
+  AGENT_SEND_TOOL,
+  formatInboxMessages,
+  parseAgentSend,
+  reachableFamily,
+  validateAgentMessageDelivery,
+  type AgentMessage,
+  type FamilyMember,
+} from "./agent-messages.ts";
+import {
   WEB_FETCH_TOOL,
   WEB_SEARCH_TOOL,
   executeWebFetch,
@@ -873,6 +884,52 @@ function gatedWorkspaceToolEnabled(
   return true;
 }
 
+/**
+ * A stored mailbox, re-checked row by row.
+ *
+ * A message that cannot be read back exactly as it was delivered is dropped
+ * rather than repaired: a recipient that is shown a guessed sender or a
+ * truncated body would be reading text nobody sent. The signed ledger remains
+ * the proof that the message was sent, so dropping the copy loses no evidence.
+ */
+function restoreAgentMailboxes(value: unknown): Record<string, AgentMessage[]> {
+  if (value === null || typeof value !== "object" || Array.isArray(value))
+    return {};
+  const relations: readonly string[] = ["parent", "child", "sibling"];
+  const restored: Record<string, AgentMessage[]> = {};
+  for (const [recipient, rows] of Object.entries(
+    value as Record<string, unknown>,
+  )) {
+    if (!Array.isArray(rows)) continue;
+    const messages: AgentMessage[] = [];
+    for (const row of rows) {
+      const message = row as AgentMessage;
+      if (
+        message === null ||
+        typeof message !== "object" ||
+        !Number.isInteger(message.seq) ||
+        message.seq < 1 ||
+        typeof message.from !== "string" ||
+        !message.from ||
+        typeof message.to !== "string" ||
+        message.to !== recipient ||
+        typeof message.text !== "string" ||
+        !relations.includes(message.relation)
+      )
+        continue;
+      messages.push({
+        seq: message.seq,
+        from: message.from,
+        to: message.to,
+        relation: message.relation,
+        text: message.text,
+      });
+    }
+    if (messages.length) restored[recipient] = messages.sort((left, right) => left.seq - right.seq);
+  }
+  return restored;
+}
+
 /** One settled firing, as `runDueSchedules` reports it. */
 export type ScheduleFiring = {
   readonly scheduleId: string;
@@ -1118,6 +1175,10 @@ export class Workbench {
   /** The operator's schedule table (HP9). Persisted with the rest of the
    * workbench state, so a restart cannot silently forget an unattended loop. */
   private schedules: Schedule[] = [];
+  /** Delivered agent messages, by recipient session (HP11). The signed
+   * ledger holds the proof that a message was sent; this holds the text the
+   * recipient has not read yet, and it is persisted for the same reason. */
+  private agentMailboxes: Record<string, AgentMessage[]> = {};
   private readonly queued = new Set<string>();
   private readonly jobs = new Map<string, Promise<void>>();
   private readonly agentRunners = new Map<string, AgentRunner>();
@@ -1267,6 +1328,7 @@ export class Workbench {
         updatedAt: string;
       }>;
       schedules?: unknown[];
+      agentMailboxes?: unknown;
     }>();
     if (saved) {
       let migrated = false;
@@ -1390,6 +1452,7 @@ export class Workbench {
       // once: the operator's prompt ceiling and the cadence floor can both have
       // narrowed since the record was written, and a snapshot that outlived the
       // rule that admitted it would fire on a bound nobody chose.
+      this.agentMailboxes = restoreAgentMailboxes(saved.agentMailboxes);
       this.schedules = (saved.schedules ?? []).flatMap((schedule) => {
         try {
           return [validateStoredSchedule(schedule, this.harness.maxPromptCharacters)];
@@ -1541,6 +1604,7 @@ export class Workbench {
       hooks: this.hooks,
       projects: this.projectList,
       schedules: this.schedules,
+      agentMailboxes: this.agentMailboxes,
       sessions: [...this.sessions.values()].map(
         ({
           view,
@@ -7883,6 +7947,137 @@ export class Workbench {
     }
   }
   /**
+   * Run one agent-to-agent tool (HP11).
+   *
+   * Reachability is the direct family only, and the workbench's own session id
+   * is the sender: a model cannot name who it is, so a forged `from` is not a
+   * thing this surface can express. A send writes its signed record before the
+   * text reaches a mailbox, so a reader can always tell a delivered message
+   * from a refused one, and the record carries the digest rather than the body.
+   */
+  private async executeAgentTool(
+    session: Session,
+    name: string,
+    args: JsonObject,
+  ) {
+    const refuse = (error: unknown) => ({
+      isError: true as const,
+      content: [
+        {
+          type: "text" as const,
+          text: error instanceof Error ? error.message : "Agent message refused.",
+        },
+      ],
+    });
+    if (name === AGENT_LIST_TOOL.name) {
+      try {
+        return {
+          content: [{
+            type: "text" as const,
+            text: JSON.stringify({
+              family: reachableFamily(session.view.id, this.familyMembers()),
+            }),
+          }],
+        };
+      } catch (error) {
+        return refuse(error);
+      }
+    }
+    if (name === AGENT_INBOX_TOOL.name) {
+      try {
+        const read = formatInboxMessages(
+          {
+            selfId: session.view.id,
+            messages: this.agentMailboxes[session.view.id] ?? [],
+          },
+          args,
+        );
+        return {
+          content: [{ type: "text" as const, text: JSON.stringify(read) }],
+        };
+      } catch (error) {
+        return refuse(error);
+      }
+    }
+    try {
+      const call = parseAgentSend(args);
+      const mailbox = this.agentMailboxes[call.to] ?? [];
+      const delivery = validateAgentMessageDelivery({
+        callerId: session.view.id,
+        call,
+        sessions: this.familyMembers(),
+        sentByCaller: this.sentMessageCount(session),
+        recipientUnread: mailbox.length,
+        recipientRetained: mailbox.length,
+        knownSecrets: this.knownSecretValues(),
+      });
+      const seq = (mailbox.at(-1)?.seq ?? 0) + 1;
+      await this.commitWorkspace(
+        session,
+        this.workspace(session.view.id),
+        name,
+        args,
+        "execute:completed",
+        undefined,
+        undefined,
+        {
+          from: delivery.from,
+          to: delivery.to,
+          relation: delivery.relation,
+          seq,
+          digest: await sha256Hex(delivery.text),
+          ...(delivery.redacted ? { redacted: true } : {}),
+        },
+      );
+      this.agentMailboxes[delivery.to] = [
+        ...mailbox,
+        {
+          seq,
+          from: delivery.from,
+          to: delivery.to,
+          relation: delivery.relation,
+          text: delivery.text,
+        },
+      ];
+      this.persist();
+      return {
+        content: [{
+          type: "text" as const,
+          text: JSON.stringify({
+            to: delivery.to,
+            seq,
+            relation: delivery.relation,
+            redacted: delivery.redacted,
+          }),
+        }],
+      };
+    } catch (error) {
+      return refuse(error);
+    }
+  }
+
+  /** The caller's family, as the messaging rules read it. */
+  private familyMembers(): FamilyMember[] {
+    return [...this.sessions.values()].map((candidate) => ({
+      id: candidate.view.id,
+      ...(candidate.view.parentId === undefined
+        ? {}
+        : { parentSessionId: candidate.view.parentId }),
+      title: candidate.view.title ?? "",
+      status: candidate.view.status,
+      ...(candidate.view.agent === undefined ? {} : { agent: candidate.view.agent }),
+    }));
+  }
+
+  /** Messages this session already sent, counted from its signed chain. */
+  private sentMessageCount(session: Session): number {
+    return (this.evidence[session.view.workspace] ?? []).filter((entry) => {
+      const body = entry.body as Record<string, unknown>;
+      return typeof body.from === "string" && body.from === session.view.id;
+    }).length;
+  }
+
+  /**
    * Run one governed web tool and return its untrusted result.
    *
    * The module owns every rule (SSRF ranges, redirects, bounds, framing). This
@@ -8379,6 +8574,57 @@ export class Workbench {
       observed.decision =
         tool.name === WEB_FETCH_TOOL.name ? "web-fetch" : "web-search";
       return this.executeWebTool(session, tool.name, args);
+    }
+    if (
+      !tool.connectorId &&
+      (tool.name === AGENT_LIST_TOOL.name || tool.name === AGENT_INBOX_TOOL.name)
+    ) {
+      observed.decision = "agent-family";
+      return this.executeAgentTool(session, tool.name, args);
+    }
+    if (!tool.connectorId && tool.name === AGENT_SEND_TOOL.name) {
+      // A send writes into another conversation, so a profile-less session is
+      // held by the same default policy a profile would have applied, before
+      // the family is resolved and before anything is written.
+      if (!session.agentProfile) {
+        const profile = resolvePolicyProfile(
+          DEFAULT_POLICY_PROFILE,
+          this.env.NOMO_POLICY_PATH,
+        );
+        if (!profile.ok) throw new Error(`Default policy is unusable: ${profile.reason}.`);
+        const call = {
+          tool: tool.name,
+          workspace: session.view.workspace,
+          connector: "workspace",
+          klass: "r1" as const,
+          blastRadius: 1,
+          reason: "Send one message into a family session's mailbox.",
+          arguments: args,
+        };
+        const decision = decide(profile.policy, call);
+        const allowed = await this.authorizeTool(
+          session,
+          call,
+          decision,
+          profile.policy,
+        );
+        observed.decision =
+          decision.kind === "hold"
+            ? allowed
+              ? "hold:approved"
+              : "hold:denied"
+            : decision.kind;
+        if (!allowed)
+          return {
+            isError: true,
+            content: [{
+              type: "text",
+              text: denialText(tool.name, call.klass, decision),
+            }],
+          };
+      }
+      observed.decision = "agent-send";
+      return this.executeAgentTool(session, tool.name, args);
     }
     if (!tool.connectorId && tool.name === DELEGATE_TOOL.name) {
       // A profile already authorized this call above. A profile-less session

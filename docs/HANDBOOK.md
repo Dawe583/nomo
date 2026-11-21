@@ -636,6 +636,29 @@ of 240 characters. Provider keys and connector tokens are redacted before the
 model sees a hit, and a secret-shaped excerpt is withheld. Switching the
 setting off removes the tool from later requests and refuses a persisted call.
 
+Web tools are off by default too. Setting `webToolsEnabled` to `1` offers
+`nomo_web_fetch` and `nomo_web_search`, both classed R1 and both held for a
+session with no agent profile, so an outbound request is seen before it
+happens. A fetch accepts only an absolute HTTPS URL on port 443 and refuses
+every loopback, private, link-local, carrier-grade NAT, multicast, reserved and
+cloud metadata address, revalidating each redirect hop against the same rules.
+A search needs `NOMO_WEB_SEARCH_URL` and optionally `NOMO_WEB_SEARCH_API_KEY`;
+with no endpoint it refuses and names the variable. Page text arrives framed as
+untrusted, with script and style bodies stripped and both the run's own secrets
+and credential shapes replaced by `[redacted]`.
+
+An agent session can also talk to its own family. `nomo_agent_list` (R0) names
+the direct parent, the direct children and the direct siblings with their
+relation, title and status; `nomo_agent_inbox` (R0) returns the next batch of
+this session's mailbox from an exclusive `sinceSeq` cursor, each message framed
+as untrusted; and `nomo_agent_send` (R1) writes one message into a family
+member's mailbox. A send to anything outside that family, or to itself, is
+refused, and the workbench's own id is the sender, so a model cannot claim to
+be another session. A send is held by the default policy for a session with no
+agent profile, and the signed record carries the sender, the recipient, the
+relation, the mailbox sequence and the digest of the delivered text rather than
+the text itself. A secret-shaped body is refused before anything is written.
+
 ## 9. The web and desktop app
 
 `pnpm gui` builds the client and starts the local API server. For frontend work,
