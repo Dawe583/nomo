@@ -27,7 +27,6 @@ import {
   workspaceTools,
   previewWorkspaceUndo,
 } from "../packages/workbench/src/workspace.ts";
-import { PROJECT_EXEC_TOOL } from "../packages/workbench/src/project-sandbox.ts";
 import { envValue } from "./env.mjs";
 
 /** The public demo has no operator to ask, so it chooses its own configuration
@@ -42,8 +41,19 @@ export const DEMO_MODEL = "z-ai/glm-5.3-flash";
  * visitor has no operator, no project and no approval, so the demo must not
  * advertise that tool at all: a catalog entry is an offer, and a refused
  * offer still tells a visitor the surface exists. */
-const demoWorkspaceTools = workspaceTools.filter(
-  (tool) => tool.name !== PROJECT_EXEC_TOOL.name,
+/** The public demo offers the managed document surface and nothing else.
+ * The workspace module's list grows with the harness (planning, delegation,
+ * cross-session search, web tools, agent messaging), and every one of those
+ * reaches state a public visitor must not touch, so the demo names the four
+ * document tools it does offer instead of subtracting from a list that will
+ * keep growing. */
+const demoWorkspaceTools = workspaceTools.filter((tool) =>
+  [
+    "void_workspace_list",
+    "void_workspace_read",
+    "void_workspace_write",
+    "void_workspace_delete",
+  ].includes(tool.name),
 );
 
 export function demoFailureMessage(error) {
