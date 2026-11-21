@@ -337,7 +337,7 @@ konzumenta.** Bez toho je to jen přání operátora.
 | Schopnost | Stav podle zdrojového kódu a testů | Zbývající limit |
 | --- | --- | --- |
 | Učení z úspěchů i refusals | Implementováno: odmítnutí vytvářejí návrhy pravidel `hold`; opakovaná schválení vytvářejí oddělené lessons, které nerozhodují policy. | Mined lessons jsou pozorování, ne automaticky schválená pravidla. |
-| Session a workspace scope | Implementováno: session entries zanikají se session; workspace entries se odvozují z podepsaného řetězce. | Workspace scope není sdílená globální paměť napříč pracovními prostory. |
+| Session, workspace a operator scope | Implementováno: session entries zanikají se session; workspace entries se odvozují z podepsaného řetězce; operator scope (HP1, `packages/workbench/src/operator-harness.ts`) nese digestem povýšené záznamy aktivované rafinace do všech konverzací z ověřeného operátorského řetězce a demote je ukončí. | Povýšit lze jen operátorem schválený lesson; mined pozorování a pravidla zůstávají v řetězci konverzace. Účinek povýšení napříč konverzacemi se zatím neměří. |
 | Relevance ranking | Implementováno: deterministické rankování a omezený retrieval do promptu. | Výsledek závisí na aktuálním lokálním korpusu; nejde o benchmark kvality. |
 | Brána a cooldown refinementu | Implementováno: brána rozhoduje před placenou kontrolou, trigger a cooldown řídí další pokus. | Neprokazuje optimální cenu ani kvalitu živého modelu. |
 | Editovatelný stav a evidence | Částečně implementováno: digestem schválené změny workspace a profile se zapisují do podepsaného řetězce a lze je vrátit. | Nejde o obecný externí memory backend. |

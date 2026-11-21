@@ -515,6 +515,18 @@ reaching `decide`, policy or the agent's prompt:
   reaches the reviewer and `nomo harness ratchet` as descriptive evidence only
   (decision D1).
 
+Operator scope (`packages/workbench/src/operator-harness.ts`,
+`Workbench.promoteHarnessProposal`, `Workbench.demoteHarnessPromotion`,
+`Workbench.operatorHarnessEntries`, pinned by `operator-harness.test.ts` and
+`harness-operator-scope.test.ts`) closes the gap between conversations. Every
+conversation, branch and subagent has its own chain, so an approved lesson was
+read only where it was approved. A promotion signs the exact entries one
+activated refinement produced into the operator chain
+(`OPERATOR_HARNESS_WORKSPACE`), every run merges them into its retrieval set
+from the verified chain (a conversation's own entry with the same id wins), and
+a demotion ends them. A tampered operator chain fails the run before any
+provider request.
+
 End-to-end proof: `packages/workbench/src/harness-proof.test.ts` drives both a
 loopback HTTP MCP connector (hold + operator denial) and the real stdio
 `packages/proxy` transport (`fixtures/e2e-server.mjs`, direct policy denial)

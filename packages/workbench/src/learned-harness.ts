@@ -75,8 +75,10 @@ export type HarnessKind = (typeof HARNESS_KINDS)[number];
  * `session` entries live in session state and are gone when the session is.
  * `workspace` entries are derived from the chain and therefore survive a
  * restart, which is not the same as being promoted: nothing here writes.
+ * `operator` entries were promoted by an operator from one conversation's
+ * activated refinement to every conversation (`operator-harness.ts`).
  */
-export type HarnessScope = "session" | "workspace";
+export type HarnessScope = "session" | "workspace" | "operator";
 
 export type HarnessEntry = {
   readonly id: string;

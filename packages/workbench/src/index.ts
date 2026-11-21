@@ -168,6 +168,14 @@ import {
 import { mineLearnedRules } from "./learned-rules.ts";
 import { mineHarnessEntries, type HarnessEntry } from "./learned-harness.ts";
 import {
+  OPERATOR_HARNESS_WORKSPACE,
+  minePromotions,
+  operatorEntries,
+  promotionCandidate,
+  withOperatorScope,
+  type OperatorPromotion,
+} from "./operator-harness.ts";
+import {
   mineRefinementEffects,
   mineRefinementOutcomes,
   repeatRefusal,
@@ -4944,6 +4952,108 @@ export class Workbench {
     );
   }
 
+  /** Every promotion the verified operator chain records, standing or
+   * demoted, in the order they were first promoted. */
+  async operatorHarnessPromotions(): Promise<OperatorPromotion[]> {
+    return minePromotions(
+      (await this.ledger(OPERATOR_HARNESS_WORKSPACE))?.entries ?? [],
+    );
+  }
+
+  /** The entries every conversation reads besides its own. Kept apart from
+   * `harnessEntries` on purpose: a refinement applies to its own
+   * conversation's entries, and folding these in there would copy them into
+   * that conversation's chain, out of reach of a demotion. */
+  async operatorHarnessEntries(): Promise<HarnessEntry[]> {
+    return operatorEntries(await this.operatorHarnessPromotions());
+  }
+
+  /**
+   * Promote the entries one activated refinement produced to every
+   * conversation.
+   *
+   * A second, separate operator decision: approving a refinement decides it
+   * for the conversation whose chain supports it, and carrying it into every
+   * other conversation is a different claim. The digest named is the one the
+   * operator approved; the record carries the exact entries that activation
+   * signed, so a later edit of the source never changes what was promoted.
+   */
+  async promoteHarnessProposal(
+    sessionId: string,
+    digest: string,
+  ): Promise<{ readonly digest: string; readonly entries: readonly HarnessEntry[] }> {
+    const session = this.sessions.get(sessionId);
+    if (!session || session.view.id !== sessionId) throw new Error("Session not found.");
+    this.assertNormalMutation("harness promotion");
+    if (this.closing || session.recoveryBlock)
+      throw new Error(
+        "Wait for the workbench to reopen. Reconcile unresolved recovery before refining the harness.",
+      );
+    const workspace = session.view.workspace;
+    return this.locked(async () => {
+      const candidate = promotionCandidate(
+        (await this.ledger(workspace))?.entries ?? [],
+        await this.harnessEntries(workspace),
+        digest,
+        await this.operatorHarnessPromotions(),
+      );
+      // Screened again although the proposal was screened when it was made:
+      // the known secrets may have grown since, and this text is about to
+      // reach every conversation rather than one.
+      if (secretLikeText(JSON.stringify(candidate.entries), this.knownSecretValues()))
+        throw new Error("The refinement carries secret-like text and cannot be promoted.");
+      const promotion = await sha256Hex(
+        canonicalJson({ sourceWorkspace: workspace, sourceDigest: digest, entries: candidate.entries }),
+      );
+      await this.commitWorkspace(
+        { view: { workspace: OPERATOR_HARNESS_WORKSPACE } },
+        this.documents[OPERATOR_HARNESS_WORKSPACE] ?? createWorkspace(),
+        "harness.promotion",
+        { digest: promotion },
+        "promotion:activated",
+        undefined,
+        { by: "operator" },
+        {
+          harnessPromotion: {
+            digest: promotion,
+            status: "promoted",
+            sourceWorkspace: workspace,
+            sourceDigest: digest,
+            sourceSeq: candidate.sourceSeq,
+            entries: candidate.entries,
+            approvedBy: "operator",
+          },
+        },
+      );
+      return { digest: promotion, entries: candidate.entries };
+    });
+  }
+
+  /** End a standing promotion. The entries stay in the chain as history and
+   * leave every conversation's prompt from the next run on. */
+  async demoteHarnessPromotion(digest: string): Promise<{ readonly digest: string }> {
+    this.assertNormalMutation("harness promotion");
+    if (this.closing) throw new Error("Wait for the workbench to reopen.");
+    return this.locked(async () => {
+      const promotion = (await this.operatorHarnessPromotions()).find(
+        (item) => item.digest === digest,
+      );
+      if (!promotion) throw new Error("No promotion matches that digest.");
+      if (promotion.status === "demoted") throw new Error("That promotion is already demoted.");
+      await this.commitWorkspace(
+        { view: { workspace: OPERATOR_HARNESS_WORKSPACE } },
+        this.documents[OPERATOR_HARNESS_WORKSPACE] ?? createWorkspace(),
+        "harness.demotion",
+        { digest },
+        "promotion:demoted",
+        undefined,
+        { by: "operator" },
+        { harnessPromotion: { digest, status: "demoted", approvedBy: "operator" } },
+      );
+      return { digest };
+    });
+  }
+
   async promotedAgentProfiles(workspace: string): Promise<AgentProfile[]> {
     const entries = (await this.ledger(workspace))?.entries ?? [];
     const profiles = new Map<string, AgentProfile>();
@@ -5367,6 +5477,18 @@ export class Workbench {
     return this.locked(async () => {
       const proof = await this.ledger(workspace);
       if (!proof) throw new Error("No activated refinement matches that digest.");
+      // A rollback here would leave the promoted copy standing in every other
+      // conversation, so the demotion comes first and stays its own decision.
+      const promoted = (await this.operatorHarnessPromotions()).find(
+        (item) =>
+          item.status === "promoted" &&
+          item.sourceWorkspace === workspace &&
+          item.sourceDigest === digest,
+      );
+      if (promoted)
+        throw new Error(
+          `That refinement is promoted to every conversation as ${promoted.digest.slice(0, 8)}. Demote that promotion first.`,
+        );
       const entries = proof.entries;
       // The latest refinement record is the state the view reads, so it is the
       // only rollback target. A rollback record carries no digest of its own,
@@ -6243,7 +6365,9 @@ export class Workbench {
     return resolved;
   }
   private async commitWorkspace(
-    session: Session,
+    // Only the workspace name is read, so the operator chain, which belongs
+    // to no session, signs through this same path and never through a copy.
+    session: { readonly view: { readonly workspace: string } },
     state: WorkspaceState,
     tool: string,
     args: unknown,
@@ -7334,12 +7458,21 @@ export class Workbench {
           typeof message.content !== "string" ||
           !message.content.startsWith("NOMO learned-entry digest,"),
       );
-      if (session.messages.length > 2) {
+      // Promoted entries come from the operator chain, so they apply from a
+      // conversation's first turn on. A chain that fails verification throws
+      // here, before any provider request, as a workspace chain does.
+      const operatorScope = await this.operatorHarnessEntries();
+      if (session.messages.length > 2 || operatorScope.length > 0) {
         const latestUser = [...session.messages]
           .reverse()
           .find((message) => message.role === "user");
         const block = retrievalContext(
-          await this.harnessEntries(session.view.workspace),
+          withOperatorScope(
+            session.messages.length > 2
+              ? await this.harnessEntries(session.view.workspace)
+              : [],
+            operatorScope,
+          ),
           String(latestUser?.content ?? ""),
           this.harness,
         );

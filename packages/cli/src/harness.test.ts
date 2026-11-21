@@ -595,3 +595,147 @@ test("the ratchet filters refinement effect by digest prefix and rejects unknown
   assert.equal(codeMissing, 1);
   assert.match(missing.err.join("\n"), /No activated refinement matches/);
 });
+
+test("promote binds to an activated digest of the session and prints the promotion digest", async () => {
+  const activated = "c".repeat(64);
+  const promotionDigest = "e".repeat(64);
+  const { surface, calls } = fake({
+    get: (id) => (id === "s1" ? { workspace: "agent-s1" } : undefined),
+    async harnessOutcomes(workspace) {
+      calls.push({ method: "outcomes", args: [workspace] });
+      // The same prefix also names a rejected proposal. Only an activated one
+      // can be promoted, so the prefix still names exactly one.
+      return [
+        { digest: activated, status: "activated" },
+        { digest: `${"c".repeat(63)}d`, status: "rejected" },
+      ];
+    },
+    async promoteHarnessProposal(sessionId, digest) {
+      calls.push({ method: "promote", args: [sessionId, digest] });
+      return { digest: promotionDigest, entries: [{ id: "x" }] };
+    },
+  });
+  const terminal = io();
+  const code = await runHarnessCommand(
+    ["promote", "--session", "s1", "cccccccc"],
+    terminal,
+    { workbench: async () => surface },
+  );
+  assert.equal(code, 0, terminal.err.join("\n"));
+  assert.deepEqual(calls, [
+    { method: "outcomes", args: ["agent-s1"] },
+    { method: "promote", args: ["s1", activated] },
+  ]);
+  assert.match(
+    terminal.out.join("\n"),
+    new RegExp(`Promoted 1 entry from ${activated} to every conversation as ${promotionDigest}\\.`),
+  );
+
+  const missing = io();
+  assert.equal(
+    await runHarnessCommand(["promote", "--session", "s1", "dddd"], missing, {
+      workbench: async () => surface,
+    }),
+    1,
+  );
+  assert.match(missing.err.join("\n"), /No activated refinement matches the digest prefix dddd\./);
+
+  const noSession = io();
+  assert.equal(
+    await runHarnessCommand(["promote", activated], noSession, { workbench: async () => surface }),
+    1,
+  );
+  assert.match(noSession.err.join("\n"), /need a session/);
+});
+
+test("global lists every promotion and demote binds to a standing promotion digest", async () => {
+  const standing = "e".repeat(64);
+  const demoted = `${"e".repeat(63)}f`;
+  const entry = {
+    id: "x",
+    kind: "lesson",
+    title: "plan first",
+    content: "Read the migration plan first.",
+    tool: "",
+    klass: "",
+  };
+  const { surface, calls } = fake({
+    async operatorHarnessPromotions() {
+      return [
+        {
+          digest: standing,
+          status: "promoted",
+          sourceWorkspace: "agent-s1",
+          sourceDigest: "c".repeat(64),
+          sourceSeq: 4,
+          promotedSeq: 1,
+          demotedSeq: null,
+          entries: [entry],
+        },
+        {
+          digest: demoted,
+          status: "demoted",
+          sourceWorkspace: "agent-s2",
+          sourceDigest: "b".repeat(64),
+          sourceSeq: 7,
+          promotedSeq: 2,
+          demotedSeq: 3,
+          entries: [entry],
+        },
+      ];
+    },
+    async demoteHarnessPromotion(digest) {
+      calls.push({ method: "demote", args: [digest] });
+    },
+  });
+  const listed = io();
+  assert.equal(await runHarnessCommand(["global"], listed, { workbench: async () => surface }), 0);
+  const text = listed.out.join("\n");
+  assert.match(text, new RegExp(`${standing}  promoted  from agent-s1 cccccccc at sequence 4`));
+  assert.match(text, new RegExp(`${demoted}  demoted at sequence 3  from agent-s2 bbbbbbbb at sequence 7`));
+  assert.match(text, /lesson: plan first \| Read the migration plan first\./);
+
+  const terminal = io();
+  // The prefix names both digests; only the standing one can be demoted.
+  assert.equal(
+    await runHarnessCommand(["demote", "eeeeeeee"], terminal, { workbench: async () => surface }),
+    0,
+    terminal.err.join("\n"),
+  );
+  assert.deepEqual(calls, [{ method: "demote", args: [standing] }]);
+  assert.match(terminal.out.join("\n"), new RegExp(`Demoted ${standing}\\.`));
+
+  const none = io();
+  assert.equal(
+    await runHarnessCommand(["global"], none, {
+      workbench: async () => fake({ async operatorHarnessPromotions() { return []; } }).surface,
+    }),
+    0,
+  );
+  assert.match(none.out.join("\n"), /No refinement is promoted to every conversation\./);
+});
+
+test("a rollback prefix names an activated refinement, never a pending proposal", async () => {
+  // A rollback undoes an activation, so its prefix has to be resolved among
+  // the activated refinements. Resolving it among the pending proposals, as
+  // approve does, refused every documented rollback by prefix.
+  const activated = "c".repeat(64);
+  const { surface, calls } = fake({
+    get: (id) => (id === "s1" ? { workspace: "agent-s1" } : undefined),
+    async harnessOutcomes() {
+      return [
+        { digest: activated, status: "activated" },
+        { digest: `${"c".repeat(63)}e`, status: "rolled-back" },
+      ];
+    },
+  });
+  const terminal = io();
+  assert.equal(
+    await runHarnessCommand(["rollback", "--session", "s1", "cccccccc"], terminal, {
+      workbench: async () => surface,
+    }),
+    0,
+    terminal.err.join("\n"),
+  );
+  assert.deepEqual(calls, [{ method: "rollback", args: ["s1", activated] }]);
+});

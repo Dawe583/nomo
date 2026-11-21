@@ -775,6 +775,9 @@ nomo harness list --session <id>
 nomo harness approve --session <id> <digest-or-prefix>
 nomo harness reject --session <id> <digest-or-prefix> --reason <text>
 nomo harness rollback --session <id> <digest-or-prefix>
+nomo harness promote --session <id> <digest-or-prefix>
+nomo harness demote <promotion-digest-or-prefix>
+nomo harness global
 nomo harness ratchet --session <id> [<digest-or-prefix>]
 nomo harness entries --session <id>
 nomo harness model [<model-id>|--clear]
@@ -813,6 +816,21 @@ Notes that save time:
   proposal without citing newer signed records is refused before reaching the
   ledger. The web panel's harness shelf shows the same three guardrails, so an
   operator who never opens a terminal sees them too.
+- `nomo harness promote` carries the entries one activated refinement
+  produced into every conversation, as a second operator decision on top of
+  the approval. Every conversation, branch and subagent signs into its own
+  chain, so without it an approved lesson is read only by the conversation
+  that approved it. The promotion is signed into the operator chain
+  (`nomo-operator-harness`), every run reads it back from the verified chain
+  and marks it `every conversation` in the learned-entry digest, and
+  `nomo harness demote` ends it from the next run on. `nomo harness global`
+  lists every promotion, standing or demoted. A refinement that is promoted
+  cannot be rolled back until its promotion is demoted, and a pending,
+  rejected or rolled back refinement cannot be promoted. Like every learned
+  entry, a promoted one never reaches a policy decision. Over HTTP the same
+  decisions are `POST /api/sessions/:id/harness/proposals/:digest/promote`,
+  `GET /api/harness/promotions` and
+  `POST /api/harness/promotions/:digest/demote`.
 - `nomo config` prints the resolved data, ledger and approvals directories and
   whether a verification key is set. It never prints the key.
 - `nomo verify` on a ledger with no entries in the current directory fails with a

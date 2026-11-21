@@ -1108,7 +1108,7 @@ async function route(
       });
     }
     const harnessDecision =
-      /^\/api\/sessions\/([a-f0-9-]+)\/harness\/proposals\/([a-f0-9]{64})\/(approve|reject|rollback)$/.exec(
+      /^\/api\/sessions\/([a-f0-9-]+)\/harness\/proposals\/([a-f0-9]{64})\/(approve|reject|rollback|promote)$/.exec(
         parsed.pathname,
       );
     if (harnessDecision) {
@@ -1125,6 +1125,10 @@ async function route(
       // back from the surface they decided on is not reversible.
       if (action === "rollback")
         return sendJson(response, 200, await wb.rollbackHarnessProposal(id, digest));
+      // Carrying an activation into every conversation is its own decision,
+      // taken on the same surface as the approval it builds on.
+      if (action === "promote")
+        return sendJson(response, 200, await wb.promoteHarnessProposal(id, digest));
       const body = await readJsonBody(request).catch(() => ({})) as {
         reason?: unknown;
       };
@@ -1136,6 +1140,23 @@ async function route(
         typeof body.reason === "string" ? body.reason : "",
       );
       return sendJson(response, 200, { rejected: true, digest });
+    }
+    // The operator scope belongs to no conversation, so it has its own path:
+    // what every conversation reads, and the demotion that ends a promotion.
+    if (parsed.pathname === "/api/harness/promotions") {
+      if (request.method !== "GET")
+        return sendJson(response, 405, { error: "method_not_allowed" });
+      return sendJson(response, 200, {
+        promotions: await wb.operatorHarnessPromotions(),
+        entries: await wb.operatorHarnessEntries(),
+      });
+    }
+    const harnessDemotion =
+      /^\/api\/harness\/promotions\/([a-f0-9]{64})\/demote$/.exec(parsed.pathname);
+    if (harnessDemotion) {
+      if (request.method !== "POST")
+        return sendJson(response, 405, { error: "method_not_allowed" });
+      return sendJson(response, 200, await wb.demoteHarnessPromotion(harnessDemotion[1]!));
     }
     const feature =
       /^\/api\/sessions\/([a-f0-9-]+)\/(events|stream|documents|branches|compact)$/.exec(

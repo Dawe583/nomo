@@ -268,6 +268,23 @@ Each node follows the loop in section 3.2. Statuses are tracked in
   or the agent prompt stops the node (decision D1). Design record:
   `docs/superpowers/designs/2026-11-21-h11-refinement-effect.md`.
 
+The parity lane (HP0 to HP11, owner request 2026-11-21) measures the harness
+against Hermes Agent and Prime Agent and orders the slices that close the gap:
+`docs/superpowers/designs/2026-11-21-hp0-harness-parity.md`.
+
+- HP1. Operator scope. Status: implemented 2026-11-21. Paths:
+  `packages/workbench/src/operator-harness.ts`,
+  `packages/workbench/src/index.ts`, `packages/workbench/src/harness-ranking.ts`,
+  `packages/cli/src/harness.ts`, `apps/control-plane/api/server.ts`. Goal: an
+  operator promotes the entries one activated refinement produced, by digest,
+  into a signed operator chain that every conversation reads from its first
+  turn; a demotion ends it. Verifier: workbench typecheck,
+  `packages/workbench/src/*.test.ts`, `packages/cli/src/harness.test.ts`,
+  `apps/control-plane/api/harness-proposals.test.ts`,
+  `scripts/src/doc-truth.test.mjs`, `scripts/src/no-dash.test.mjs`. Stop: a
+  path that promotes a mined observation, an unapproved or rolled back
+  refinement, or lets a promoted entry reach `decide` stops the node.
+
 ## 7. Verification commands
 
 - Typecheck: `npx tsc -p packages/workbench/tsconfig.json --noEmit`

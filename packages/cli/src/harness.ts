@@ -97,6 +97,31 @@ export type HarnessSurface = {
     sessionId: string,
     digest: string,
   ): Promise<{ readonly applied: readonly unknown[] }>;
+  /** What became of a workspace's proposals, so a promotion prefix can be
+   * resolved against the activated ones only. */
+  harnessOutcomes?(
+    workspace: string,
+  ): Promise<readonly { readonly digest: string; readonly status: string }[]>;
+  promoteHarnessProposal?(
+    sessionId: string,
+    digest: string,
+  ): Promise<{ readonly digest: string; readonly entries: readonly unknown[] }>;
+  demoteHarnessPromotion?(digest: string): Promise<unknown>;
+  operatorHarnessPromotions?(): Promise<
+    readonly {
+      readonly digest: string;
+      readonly status: string;
+      readonly sourceWorkspace: string;
+      readonly sourceDigest: string;
+      readonly sourceSeq: number;
+      readonly demotedSeq: number | null;
+      readonly entries: readonly {
+        readonly kind: string;
+        readonly title: string;
+        readonly content: string;
+      }[];
+    }[]
+  >;
 };
 
 export type HarnessDeps = {
@@ -120,6 +145,9 @@ const USAGE = [
   "  nomo harness approve --session <id> <digest>",
   "  nomo harness reject --session <id> <digest> --reason <text>",
   "  nomo harness rollback --session <id> <digest>",
+  "  nomo harness promote --session <id> <digest> apply an activated refinement to every conversation",
+  "  nomo harness demote <promotion-digest>      end a promotion",
+  "  nomo harness global                show every promotion",
   "  nomo harness entries --session <id> show what the harness holds",
   "  nomo harness ratchet --session <id> measure the guardrails before and after the last refinement",
   "  nomo harness model                 show the reviewer model",
@@ -214,6 +242,48 @@ async function resolveDigest(
   );
 }
 
+/** The same rule as `resolveDigest`, over a list the caller already narrowed
+ * to the digests the action can apply to. */
+function resolveAmong(
+  digests: readonly string[],
+  typed: string,
+  noun: string,
+): string {
+  if (typed.length === 64) return typed;
+  const matches = digests.filter((digest) => digest.startsWith(typed));
+  if (matches.length === 1) return matches[0]!;
+  if (matches.length > 1)
+    throw new Error(
+      `The digest prefix ${typed} names ${matches.length} ${noun}s. Use more of it.`,
+    );
+  throw new Error(`No ${noun} matches the digest prefix ${typed}.`);
+}
+
+/** A rollback and a promotion act on an activation, so their prefix is
+ * resolved among the session's activated refinements, never its pending
+ * proposals. */
+async function resolveActivated(
+  workbench: HarnessSurface,
+  sessionId: string,
+  typed: string,
+): Promise<string> {
+  if (typed.length === 64) return typed;
+  let workspace: string | undefined;
+  try {
+    workspace = workbench.get?.(sessionId)?.workspace;
+  } catch {
+    workspace = undefined;
+  }
+  if (!workspace || !workbench.harnessOutcomes) throw new Error("Session not found.");
+  return resolveAmong(
+    (await workbench.harnessOutcomes(workspace))
+      .filter((outcome) => outcome.status === "activated")
+      .map((outcome) => outcome.digest),
+    typed,
+    "activated refinement",
+  );
+}
+
 export async function runHarnessCommand(
   args: readonly string[],
   io: HarnessIo,
@@ -224,7 +294,20 @@ export async function runHarnessCommand(
     io.stdout(USAGE);
     return action ? 0 : 1;
   }
-  if (!["list", "entries", "approve", "reject", "rollback", "model", "ratchet"].includes(action)) {
+  if (
+    ![
+      "list",
+      "entries",
+      "approve",
+      "reject",
+      "rollback",
+      "model",
+      "ratchet",
+      "promote",
+      "demote",
+      "global",
+    ].includes(action)
+  ) {
     io.stderr(`Unknown harness action ${action}.`);
     io.stderr(USAGE);
     return 1;
@@ -274,12 +357,12 @@ export async function runHarnessCommand(
       return 1;
     }
   }
-  if (!flags.session && !["model", "ratchet"].includes(action)) {
+  if (!flags.session && !["model", "ratchet", "demote", "global"].includes(action)) {
     io.stderr("The harness commands need a session: --session <id>.");
     io.stderr(USAGE);
     return 1;
   }
-  if (!["list", "entries", "model", "ratchet"].includes(action) && !flags.digest) {
+  if (!["list", "entries", "model", "ratchet", "global"].includes(action) && !flags.digest) {
     io.stderr(`The ${action} action needs the digest of the proposal.`);
     io.stderr(USAGE);
     return 1;
@@ -303,6 +386,60 @@ export async function runHarnessCommand(
     ? await deps.workbench()
     : new Workbench(env);
   try {
+    if (action === "global" || action === "demote") {
+      if (
+        !workbench.operatorHarnessPromotions ||
+        (action === "demote" && !workbench.demoteHarnessPromotion)
+      ) {
+        io.stderr("This workbench has no operator scope.");
+        return 1;
+      }
+      const promotions = await workbench.operatorHarnessPromotions();
+      if (action === "demote") {
+        const digest = resolveAmong(
+          promotions
+            .filter((promotion) => promotion.status === "promoted")
+            .map((promotion) => promotion.digest),
+          flags.digest,
+          "standing promotion",
+        );
+        await workbench.demoteHarnessPromotion!(digest);
+        io.stdout(`Demoted ${digest}.`);
+        return 0;
+      }
+      if (!promotions.length) {
+        io.stdout("No refinement is promoted to every conversation.");
+        return 0;
+      }
+      for (const promotion of promotions) {
+        const status =
+          promotion.status === "demoted"
+            ? `demoted at sequence ${promotion.demotedSeq}`
+            : "promoted";
+        io.stdout(
+          `${promotion.digest}  ${status}  from ${promotion.sourceWorkspace} ${promotion.sourceDigest.slice(0, 8)} at sequence ${promotion.sourceSeq}`,
+        );
+        for (const entry of promotion.entries) {
+          const content =
+            entry.content.length > 160 ? `${entry.content.slice(0, 160)}...` : entry.content;
+          io.stdout(`    ${entry.kind}: ${entry.title} | ${content}`);
+        }
+      }
+      return 0;
+    }
+    if (action === "promote") {
+      if (!workbench.promoteHarnessProposal) {
+        io.stderr("This workbench has no operator scope.");
+        return 1;
+      }
+      const digest = await resolveActivated(workbench, flags.session, flags.digest);
+      const promoted = await workbench.promoteHarnessProposal(flags.session, digest);
+      const count = promoted.entries.length;
+      io.stdout(
+        `Promoted ${count} ${count === 1 ? "entry" : "entries"} from ${digest} to every conversation as ${promoted.digest}.`,
+      );
+      return 0;
+    }
     if (action === "ratchet") {
       // The workbench owns the sessions; a test double may not, so the
       // session lookup falls back to a pending-proposals probe.
@@ -514,7 +651,7 @@ export async function runHarnessCommand(
     }
     const rolled = await workbench.rollbackHarnessProposal(
       flags.session,
-      await resolveDigest(workbench, flags.session, flags.digest),
+      await resolveActivated(workbench, flags.session, flags.digest),
     );
     io.stdout(`Rolled back ${flags.digest}: ${rolled.applied.length} edit(s) undone.`);
     return 0;

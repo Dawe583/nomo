@@ -674,6 +674,9 @@ nomo harness list --session <id>
 nomo harness approve --session <id> <digest-or-prefix>
 nomo harness reject --session <id> <digest-or-prefix> --reason <text>
 nomo harness rollback --session <id> <digest-or-prefix>
+nomo harness promote --session <id> <digest-or-prefix>
+nomo harness demote <promotion-digest-or-prefix>
+nomo harness global
 nomo harness ratchet --session <id> [<digest-or-prefix>]
 nomo harness entries --session <id>
 nomo harness model [<model-id>|--clear]
@@ -711,6 +714,21 @@ Poznámky, které ušetří čas:
   vráceného návrhu bez citace novějších podepsaných záznamů je odmítnuto ještě
   před zápisem do ledgeru. Webový panel zobrazuje stejné tři guardraily, takže
   je operátor uvidí i bez terminálu.
+- `nomo harness promote` přenese záznamy, které vytvořila jedna aktivovaná
+  rafinace, do všech konverzací, jako druhé rozhodnutí operátora navíc ke
+  schválení. Každá konverzace, větev i subagent podepisuje do vlastního
+  řetězce, takže bez toho čte schválenou lekci jen konverzace, která ji
+  schválila. Povýšení se podepíše do operátorského řetězce
+  (`nomo-operator-harness`), každý běh ho čte zpět z ověřeného řetězce a v
+  learned-entry digestu ho označí `every conversation`, a `nomo harness demote`
+  ho od dalšího běhu ukončí. `nomo harness global` vypíše všechna povýšení,
+  platná i ukončená. Povýšenou rafinaci nelze vrátit, dokud se její povýšení
+  neukončí, a čekající, zamítnutou ani vrácenou rafinaci nelze povýšit. Jako
+  každý naučený záznam ani povýšený nikdy nevstupuje do rozhodnutí policy. Přes
+  HTTP jsou stejná rozhodnutí
+  `POST /api/sessions/:id/harness/proposals/:digest/promote`,
+  `GET /api/harness/promotions` a
+  `POST /api/harness/promotions/:digest/demote`.
 - `nomo config` vypíše rozřešené adresáře dat, ledgeru a schválení a zda je
   nastaven ověřovací klíč. Klíč nikdy nevypíše.
 - `nomo verify` na ledgeru s prázdným adresářem selže prostým `ENOENT` se
