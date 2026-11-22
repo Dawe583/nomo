@@ -1,7 +1,33 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { WorkspaceInput, nextModelId, workspaceShortcut } from "./workspace-runner.ts";
+import {
+  WorkspaceInput,
+  nextModelId,
+  workspaceListAction,
+  workspacePanelAction,
+  workspaceShortcut,
+} from "./workspace-runner.ts";
 import { parseWorkspaceKeybindings } from "./workspace-keybindings.ts";
+
+test("composer arrows and deletion keep combining and joined graphemes intact", () => {
+  const input = new WorkspaceInput();
+  input.editing = true;
+  const accent = "e\u0301";
+  const emoji = "\u{1f469}\u200d\u{1f4bb}";
+  input.set(`x${accent}${emoji}z`);
+  input.key(undefined, { name: "left" });
+  assert.equal(input.cursor, 6);
+  input.key(undefined, { name: "left" });
+  assert.equal(input.cursor, 3);
+  input.key(undefined, { name: "right" });
+  assert.equal(input.cursor, 6);
+  input.key(undefined, { name: "left" });
+  input.key(undefined, { name: "delete" });
+  assert.equal(input.value, `x${accent}z`);
+  input.key(undefined, { name: "backspace" });
+  assert.equal(input.value, "xz");
+  assert.equal(input.cursor, 1);
+});
 
 test("Alt+Backspace deletes the previous word and leaves an insertable cursor", () => {
   const input = new WorkspaceInput();
@@ -373,4 +399,41 @@ test("workspace keybinding configuration rejects reserved or duplicate keys atom
     assert.equal(result.bindings.redraw.label, "Ctrl+L");
     assert.equal(result.bindings["cycle-activity"].label, "Ctrl+O");
   }
+});
+
+test("workspace panel navigation keeps composer completion ahead of Tab", () => {
+  assert.equal(workspacePanelAction({ name: "tab" }, false, false), "next");
+  assert.equal(workspacePanelAction({ name: "tab" }, true, false), "next");
+  assert.equal(workspacePanelAction({ name: "tab" }, true, true), "complete");
+  assert.equal(workspacePanelAction({ name: "tab", shift: true }, true, false), "mode");
+});
+
+test("composer arrows remain cursor motion and Enter and Escape keep input semantics", () => {
+  const input = new WorkspaceInput();
+  input.editing = true;
+  input.set("chat");
+  input.cursor = 2;
+  input.key(undefined, { name: "left" });
+  assert.equal(input.cursor, 1);
+  input.key(undefined, { name: "right" });
+  assert.equal(input.cursor, 2);
+  assert.equal(input.key(undefined, { name: "return" }), "submit");
+  assert.equal(input.key(undefined, { name: "return", shift: true }), undefined);
+  input.key(undefined, { name: "escape" });
+  assert.equal(input.editing, false);
+});
+
+test("Sessions and Documents list navigation distinguishes tree and panel arrows", () => {
+  assert.equal(workspacePanelAction({ name: "left" }, false, false, true), "collapse");
+  assert.equal(workspacePanelAction({ name: "right" }, false, false, true), "expand");
+  assert.equal(workspacePanelAction({ name: "left" }, false, false), "previous");
+  assert.equal(workspacePanelAction({ name: "right" }, false, false), "next");
+  assert.equal(workspacePanelAction({ name: "tab" }, false, false), "next");
+  assert.equal(workspacePanelAction({ name: "tab", shift: true }, false, false), "mode");
+});
+test("Sessions and Documents Enter and Escape preserve list inspection and back behavior", () => {
+  assert.equal(workspaceListAction({ name: "return" }, false, false), "inspect");
+  assert.equal(workspaceListAction({ name: "escape" }, true, true), "clear-filter");
+  assert.equal(workspaceListAction({ name: "escape" }, false, true), "close-detail");
+  assert.equal(workspaceListAction({ name: "escape" }, false, false), "back");
 });

@@ -96,7 +96,11 @@ export function bindingsFor(context: {
 }): Binding[] {
   const out: Binding[] = [...ALWAYS_BINDINGS, escBindingFor(context)];
   if (context.editing) out.push(...EDITING_BINDINGS);
-  if (context.running) out.push(...RUNNING_BINDINGS);
+  if (context.running)
+    out.push(
+      { keys: "Ctrl+O", action: "cycle agent activity detail", when: "running" },
+      ...RUNNING_BINDINGS,
+    );
   if (context.reviewing) out.push(...REVIEW_BINDINGS);
   return out;
 }

@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { previewState } from "./fixtures.ts";
+import { previewHold, previewState } from "./fixtures.ts";
 import { stripAnsi, visibleLength } from "./layout.ts";
 import type { TerminalCapabilities } from "./types.ts";
 import { renderWatchFrame } from "./watch.ts";
@@ -40,6 +40,17 @@ for (const columns of [80, 99, 100, 159, 160]) {
   }
 }
 
+test("short watch frame keeps q quit and help in view at row boundary", () => {
+  const frame = stripAnsi(
+    renderWatchFrame(previewState, capabilities(80, 9), 0),
+  );
+
+  const lines = frame.split("\n");
+  assert.ok(lines.length <= 9);
+  assert.match(lines.at(-1) ?? "", /\? help\s+q quit/);
+  assert.match(frame, /billing 12500tok/);
+});
+
 test("narrow watch frame shows the selected decision record", () => {
   const frame = stripAnsi(
     renderWatchFrame(previewState, capabilities(80, 48), 0),
@@ -48,6 +59,43 @@ test("narrow watch frame shows the selected decision record", () => {
   assert.match(frame, /DECISION RECORD/);
   assert.match(frame, /decision\s+deny/);
   assert.match(frame, /blast radius\s+41883 targets, measured/);
+});
+
+test("wide watch footer does not advertise unhandled replay", () => {
+  const frame = stripAnsi(
+    renderWatchFrame(previewState, capabilities(120, 48), 0),
+  );
+
+  assert.doesNotMatch(frame, /\br replay\b/);
+  assert.match(frame, /\bv verify\b/);
+});
+
+test("pending hold banner exposes no unhandled action keys", () => {
+  const frame = stripAnsi(
+    renderWatchFrame(
+      { ...previewState, holds: [previewHold] },
+      capabilities(120, 48),
+      0,
+    ),
+  );
+
+  assert.match(frame, /ACTION REQUIRED/);
+  assert.doesNotMatch(frame, /\[a\] approve|\[c\] cancel/);
+});
+test("short pending hold keeps action state and footer in view", () => {
+  const frame = stripAnsi(
+    renderWatchFrame(
+      { ...previewState, holds: [previewHold] },
+      capabilities(80, 9),
+      0,
+    ),
+  );
+  const lines = frame.split("\n");
+
+  assert.ok(lines.length <= 9);
+  assert.match(frame, /ACTION REQUIRED/);
+  assert.match(frame, /stripe\.refund\.create/);
+  assert.match(lines.at(-1) ?? "", /\? help\s+q quit/);
 });
 
 test("untrusted cost model text cannot inject terminal controls", () => {

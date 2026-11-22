@@ -413,22 +413,23 @@ test("u on a documents row previews that document's undo without opening it", as
   const session = await app.start("Edit", "fixture");
   await app.settled();
   await app.editDocument(session.id, {
-    path: "undo.md",
+    path: "notes/undo.md",
     content: "first",
     expectedRevision: null,
   });
   await ui.initialize();
   ui.choose("documents");
-  const row = ui.items().findIndex((item) => item.path === "undo.md");
-  assert.ok(row >= 0, "the edited document is listed");
-  ui.selected = row;
+  assert.ok(ui.items().some((item) => item.path === "notes/undo.md"));
+  await assert.rejects(ui.prepareUndo(), /Select a document row/);
+  assert.equal(Boolean(ui.confirmation), false, "folder focus cannot target a hidden document");
+  assert.ok(ui.moveDocumentCursor(1));
   // Enter deliberately only inspects, so documentPath is still unset here:
   // the shortcut must take the target from the row, not from a document an
   // earlier command happened to open.
   await ui.prepareUndo();
-  assert.match(ui.confirmation!.title, /UNDO undo\.md\?/);
+  assert.match(ui.confirmation!.title, /UNDO notes\/undo\.md\?/);
   await ui.confirm();
-  assert.equal(app.workspace(session.id).files["undo.md"], undefined);
+  assert.equal(app.workspace(session.id).files["notes/undo.md"], undefined);
 });
 
 test("custom agent files use Workbench validation and persist without broadening existing sessions", async (t) => {

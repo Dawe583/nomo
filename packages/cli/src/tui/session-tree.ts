@@ -51,12 +51,14 @@ function kindIcon(kind: string | undefined): string {
 
 interface BuildRow {
   readonly parts: readonly string[];
+  readonly leafId?: string;
   readonly leafIcon: string;
   readonly detail: string | undefined;
 }
 
 interface MutableLeaf {
   readonly id: string;
+  readonly sortKey: string;
   readonly label: string;
 }
 
@@ -123,7 +125,9 @@ function freezeChildren(folder: MutableFolder): TreeNode[] {
   const folders = [...folder.children.values()].sort((a, b) =>
     compareStrings(a.id, b.id),
   );
-  const leaves = [...folder.leaves].sort((a, b) => compareStrings(a.id, b.id));
+  const leaves = [...folder.leaves].sort(
+    (a, b) => compareStrings(a.sortKey, b.sortKey) || compareStrings(a.id, b.id),
+  );
   const out: TreeNode[] = [];
   for (const child of folders) {
     const children = freezeChildren(child);
@@ -185,9 +189,9 @@ function buildPathNodes(
   const seen = new Set<string>();
   for (const row of ordered) {
     const id = fullId(row.parts);
-    // Exact duplicate paths collapse to the first row in sort order, so node
-    // ids stay unique and selection stays one to one.
-    if (folderIds.has(id) || seen.has(id)) continue;
+    // Documents retain path-based deduplication; sessions have their own
+    // identities and may share a path or a path with a folder.
+    if (row.leafId === undefined && (folderIds.has(id) || seen.has(id))) continue;
     seen.add(id);
     for (let level = 1; level < row.parts.length; level += 1) {
       const folderId = fullId(row.parts.slice(0, level));
@@ -206,11 +210,16 @@ function buildPathNodes(
     const parent = byId.get(fullId(row.parts.slice(0, row.parts.length - 1)))!;
     const base = row.parts[row.parts.length - 1]!;
     parent.leaves.push({
-      id,
+      id: row.leafId ?? id,
+      sortKey: id,
       label: leafLabel(row.leafIcon, base, row.detail),
     });
   }
   return freezeChildren(root);
+}
+
+export function documentLeafId(entryId: string): string {
+  return `\0document:${entryId}`;
 }
 
 export function buildDocumentTree(
@@ -223,10 +232,16 @@ export function buildDocumentTree(
   if (entries.length === 0) return [];
   const rows: BuildRow[] = entries.map((entry) => ({
     parts: splitPath(entry.path, entry.id),
+    leafId: documentLeafId(entry.id),
     leafIcon: FILE_ICON,
     detail: entry.detail,
   }));
   return buildPathNodes(rows, -1, "");
+}
+
+/** Session leaf ids are independent of titles and distinct from path ids. */
+export function sessionLeafId(sessionId: string): string {
+  return `\0session:${sessionId}`;
 }
 
 export function buildSessionTree(
@@ -245,6 +260,7 @@ export function buildSessionTree(
     const key = raw === "" ? "other" : raw;
     const row: BuildRow = {
       parts: splitPath(entry.path, entry.id),
+      leafId: sessionLeafId(entry.id),
       leafIcon: kindIcon(entry.kind),
       detail: entry.detail,
     };
@@ -255,10 +271,12 @@ export function buildSessionTree(
   const keys = [...groups.keys()].sort(compareStrings);
   const out: TreeNode[] = [];
   for (const key of keys) {
-    const children = buildPathNodes(groups.get(key)!, 0, `${key}/`);
+    const rows = groups.get(key)!;
+    const children = buildPathNodes(rows, 0, `${key}/`);
+    const noun = rows.length === 1 ? "session" : "sessions";
     out.push({
       id: key,
-      label: `${kindIcon(key)} ${key}/`,
+      label: `${kindIcon(key)} ${key}/ (${rows.length} ${noun})`,
       depth: 0,
       hasChildren: true,
       children,

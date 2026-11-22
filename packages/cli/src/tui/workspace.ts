@@ -1,4 +1,6 @@
 import { ProxyWorkspace } from "./workspace-proxy.ts";
+import { assistantMarkdownLine } from "./chat-markdown.ts";
+import { ansi256 } from "./theme-config.ts";
 import { execFile } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { access, mkdir, readFile, writeFile } from "node:fs/promises";
@@ -64,7 +66,6 @@ import { formatRunActivity, type RunActivityMode } from "./run-activity.ts";
 import {
   advanceSelection as advancePaletteSelection,
   backspaceInPalette,
-  filterPalette,
   initialPaletteState,
   paletteFromCommands,
   recordPaletteCommand,
@@ -110,6 +111,7 @@ import {
 import { renderInspector } from "./inspector.ts";
 import { roleIcon } from "./blocks.ts";
 import {
+  groupTools,
   filterTools,
   toolRows,
   toolSchemaLines,
@@ -138,9 +140,11 @@ import { bindingsFor, filterBindings, renderCheatSheet } from "./cheatsheet.ts";
 import { buildTimeline, renderTimeline } from "./run-timeline.ts";
 import {
   buildDocumentTree,
+  documentLeafId,
   buildSessionTree,
   collapsedSummary,
   initialTreeState,
+  sessionLeafId,
 } from "./session-tree.ts";
 import {
   flattenTree,
@@ -158,13 +162,13 @@ export const WORKSPACE_TABS = [
   "documents",
   "ledger",
   "approvals",
-  "policy",
   "tools",
   "models",
   "usage",
   "help",
 ] as const;
 const SPACIOUS_NAVIGATION_HINT = ["⇥ Tab panels"];
+const THEME_CHOICES = Object.keys(COLOR_THEMES) as ColorTheme[];
 export type WorkspaceTab = (typeof WORKSPACE_TABS)[number];
 export const WORKSPACE_VIEWS = {
   overview: "runs",
@@ -173,7 +177,6 @@ export const WORKSPACE_VIEWS = {
   documents: "documents",
   ledger: "ledger",
   approvals: "approvals",
-  policy: null,
   tools: "tools",
   models: "models",
   usage: "models",
@@ -193,6 +196,7 @@ type Item = {
   path?: string;
   operationId?: string;
   digest?: string;
+  ledgerRecord?: { workspace: string; seq: number; body: Record<string, unknown> };
   /**
    * What kind of record this is, used to group a tab that mixes several.
    * The ledger tab holds signed entries, proxy entries, mined rules, harness
@@ -326,6 +330,13 @@ const MCP_NEXT = {
   probed: (id: string) => `/mcp confirm ${id}`,
   confirmed: () => "in use by new conversations",
 } as const;
+
+const nextMcpStep = (consent: string, id: string) => {
+  if (!Object.prototype.hasOwnProperty.call(MCP_NEXT, consent))
+    return `/mcp inspect ${id}`;
+  const next = MCP_NEXT[consent as keyof typeof MCP_NEXT];
+  return typeof next === "function" ? next(id) : `/mcp inspect ${id}`;
+};
 const MCP_COMMANDS: readonly string[] = [
   "inspect",
   "add",
@@ -405,7 +416,7 @@ export function approvalLabel(hold: {
  * sorting it to the top would claim it is the most dangerous thing here.
  */
 export function holdSeverity(hold: {
-  readonly status: string;
+  readonly status?: string;
   readonly call: {
     readonly klass?: string;
     readonly blastRadius?: number;
@@ -415,11 +426,45 @@ export function holdSeverity(hold: {
   // A decided hold is not waiting on anyone, so it sorts below everything
   // that is. Weighting it upward would put an answer the operator already
   // gave at the top of the list of things to answer.
-  const settled = /reject|deny|expir|approv|grant/i.test(hold.status) ? 1 : 0;
+  const settled = /reject|deny|expir|approv|grant/i.test(
+    hold.status ?? "pending",
+  )
+    ? 1
+    : 0;
   const radius = hold.call.blastRadius;
   // An unknown radius scores below every known one, including zero.
   const measured = radius === undefined ? -1 : radius;
   return (measured + 1) * 1e6 + (hold.expiresAt ? 1 : 0) - settled * 1e9;
+}
+
+/** Shared ordering for approval rows and the pinned banner. */
+function compareApprovalHolds(
+  a: {
+    readonly status?: string;
+    readonly expiresAt?: number;
+    readonly call: { readonly blastRadius?: number; readonly klass?: string };
+  },
+  b: {
+    readonly status?: string;
+    readonly expiresAt?: number;
+    readonly call: { readonly blastRadius?: number; readonly klass?: string };
+  },
+): number {
+  const severity = holdSeverity(b) - holdSeverity(a);
+  if (severity) return severity;
+  const aDeadline =
+    typeof a.expiresAt === "number" &&
+    Number.isFinite(a.expiresAt) &&
+    a.expiresAt > 0
+      ? a.expiresAt
+      : Number.POSITIVE_INFINITY;
+  const bDeadline =
+    typeof b.expiresAt === "number" &&
+    Number.isFinite(b.expiresAt) &&
+    b.expiresAt > 0
+      ? b.expiresAt
+      : Number.POSITIVE_INFINITY;
+  return aDeadline - bDeadline;
 }
 
 /**
@@ -648,18 +693,28 @@ function sessionGroup(status: string, archived: boolean): string {
   return "other";
 }
 
-/** One line banner for the oldest pending hold, pinned above every tab so
- * an approval is never hidden behind a panel switch. The status bar badge
- * keeps the count; this banner keeps the decision and its keys. */
+/** One line banner for the highest-severity pending hold, pinned above every
+ * tab. Equal-severity holds use the nearest deadline. The status badge keeps
+ * the count; this banner keeps the decision and its keys. */
 export function approvalBannerLines(
   holds: readonly {
     readonly holdId: string;
-    readonly call: { readonly tool: string; readonly klass?: string };
+    readonly status?: string;
+    readonly expiresAt?: number;
+    readonly call: {
+      readonly tool: string;
+      readonly klass?: string;
+      readonly blastRadius?: number;
+    };
   }[],
   width: number,
 ): string[] {
   if (!holds.length) return [];
-  const first = holds[0]!;
+  let first = holds[0]!;
+  for (let i = 1; i < holds.length; i += 1) {
+    const hold = holds[i]!;
+    if (compareApprovalHolds(hold, first) < 0) first = hold;
+  }
   const klass = first.call.klass ? ` [${first.call.klass.toUpperCase()}]` : "";
   const rest =
     holds.length > 1
@@ -815,14 +870,12 @@ export function approvalReview(hold: {
   };
 }
 
-/** Tabs where typing filters the list, like a finder. Chat, overview,
- * policy text and help take no filter; every other tab lists items. */
+/** Tabs where typing filters the list. Chat, overview and help have no filter. */
 const FILTER_TABS: readonly WorkspaceTab[] = [
   "sessions",
   "documents",
   "ledger",
   "approvals",
-  "policy",
   "tools",
   "models",
   "usage",
@@ -1005,7 +1058,7 @@ export async function launchSystemBrowserAuthorization(
   }
 }
 
-const DEFAULT_CHAT_COMPOSER_HEIGHT_PX = 123;
+const DEFAULT_CHAT_COMPOSER_HEIGHT_PX = 185;
 const MIN_CHAT_COMPOSER_HEIGHT_PX = 72;
 const MAX_CHAT_COMPOSER_HEIGHT_PX = 320;
 export type TuiLocalSettings = { chatComposerHeightPx: number };
@@ -1068,6 +1121,10 @@ export class WorkspaceTui {
   readonly proxy: ProxyWorkspace;
   readonly env: Readonly<NodeJS.ProcessEnv>;
   tab: WorkspaceTab = "overview";
+  private toolsView: "catalog" | "policy" = "catalog";
+  get showingPolicy(): boolean {
+    return this.tab === "tools" && this.toolsView === "policy";
+  }
   selected = 0;
   scroll = 0;
   viewport = { offset: 0, height: 1, total: 0 };
@@ -1089,18 +1146,8 @@ export class WorkspaceTui {
   keybindingQuery = "";
   /** True while the visible detail is the keybinding table. */
   keybindingDetail = false;
-  /**
-   * The cheat sheet, summoned from anywhere.
-   *
-   * Separate from keybindingDetail on purpose. The keybinding table is a page
-   * an operator visits to read every binding, and it renders into the detail
-   * pane. The cheat sheet answers "that key did not do what I expected",
-   * which is a question about right now, and it opens over whatever was on
-   * screen. It still renders into detail because that pane is the only thing
-   * in the frame that does not disturb the body behind it, and re-laying the
-   * body would drop the scroll position the operator was reading at.
-   */
   cheatSheet = false;
+  private cheatReturn?: { detail: string[] | undefined; scroll: number };
   /**
    * The filter typed into the cheat sheet. Its own field, not keybindingQuery,
    * for the reason the keybinding query has its own field: two overlays sharing
@@ -1114,7 +1161,18 @@ export class WorkspaceTui {
    * those is open, which is what makes its presence the signal that the tree
    * keys are live rather than another meaning for left and right.
    */
-  groupTree?: { nodes: TreeNode[]; state: TreeState };
+  groupTree?: {
+    nodes: TreeNode[];
+    state: TreeState;
+    filter?: string;
+    sessionIds?: ReadonlyMap<string, string>;
+    sessionEntries?: readonly {
+      id: string;
+      path: string;
+      detail: string;
+      kind: string;
+    }[];
+  };
   /** Terminal width the keybinding table was last laid out for. */
   keybindingWidth = 0;
   /**
@@ -1140,6 +1198,7 @@ export class WorkspaceTui {
   colorOverride?: boolean;
   motionOverride?: boolean;
   themeConfig: ThemeConfig;
+  themePicker?: ThemeConfig;
   chatPanelVisuals: ChatPanelVisuals;
   queuedPrompt: string | null = null;
   queuedPromptPaused = false;
@@ -1262,6 +1321,7 @@ export class WorkspaceTui {
   }
   choose(tab: WorkspaceTab) {
     this.tab = tab;
+    this.toolsView = "catalog";
     this.selected = 0;
     this.scroll = tab === "chat" ? -1 : 0;
     this.detail = undefined;
@@ -1272,6 +1332,7 @@ export class WorkspaceTui {
     // Same reason, same hazard: the sheet is filtered by ordinary typing, so a
     // flag left set after the panel changed would eat every letter typed next.
     this.cheatSheet = false;
+    this.cheatReturn = undefined;
     this.cheatQuery = "";
     // The tree belongs to the documents tab. Left on elsewhere it would let
     // the arrow keys collapse a folder the operator is not even looking at.
@@ -1560,56 +1621,29 @@ export class WorkspaceTui {
    * The cursor clamps against the flattened visible list, not the full tree,
    * so moving after a collapse cannot land on a row that is no longer there.
    */
+  private treeRowIndex(node: TreeNode, rows: readonly Item[]): number {
+    if (!node.id || node.hasChildren) return -1;
+    if (this.tab === "documents")
+      return rows.findIndex((row) => documentLeafId(row.id) === node.id);
+    const sessionId = this.groupTree?.sessionIds?.get(node.id);
+    return sessionId
+      ? rows.findIndex((row) => row.sessionId === sessionId)
+      : -1;
+  }
+  private focusedTreeRowIndex(rows: readonly Item[]): number {
+    const tree = this.groupTree;
+    const node = tree && flattenTree(tree.nodes, tree.state)[tree.state.cursor];
+    return node ? this.treeRowIndex(node, rows) : -1;
+  }
   moveDocumentCursor(delta: number): boolean {
+    const rows = this.tab === "sessions" || this.tab === "documents"
+      ? this.items()
+      : [];
     const tree = this.groupTree;
     if (!tree) return false;
     tree.state = moveTree(tree.state, delta, tree.nodes);
-    // The selected row in the flat list follows the cursor, so Enter opens
-    // whatever the tree is pointing at rather than whatever it pointed at
-    // before the tree was folded.
-    this.selected = Math.max(0, this.selected);
-    // Live document preview: when cursor lands on a document (leaf), show
-    // a preview in the detail pane without requiring Enter. The operator
-    // can scan documents with arrow keys and see content instantly.
-    if (this.tab === "documents") {
-      const visible = flattenTree(tree.nodes, tree.state);
-      const node = visible[tree.state.cursor];
-      if (node && !node.hasChildren && node.id) {
-        const [sessionId, path] = node.id.split(":");
-        if (sessionId && path) {
-          const doc = this.workbench.document(sessionId, path);
-          if (doc) {
-            const preview = doc.content
-              ? doc.content.split("\n").slice(0, 20).join("\n")
-              : "(empty)";
-            this.detail = [
-              ...renderInspector(
-                {
-                  title: path,
-                  subtitle: `${sessionId.slice(0, 8)} · ${doc.bytes} B`,
-                  icon: ROW_ICONS.document,
-                  sections: [
-                    {
-                      title: "preview (first 20 lines)",
-                      fields: [
-                        {
-                          label: "content",
-                          value: preview,
-                          tone: "muted",
-                        },
-                      ],
-                    },
-                  ],
-                  hint: "Enter opens editor. Left/Right folds tree.",
-                },
-                { width: 76 },
-              ),
-            ];
-            this.scroll = 0;
-          }
-        }
-      }
-    }
+    const selected = this.focusedTreeRowIndex(rows);
+    if (selected >= 0) this.selected = selected;
     return true;
   }
   /**
@@ -1709,22 +1743,19 @@ export class WorkspaceTui {
   }
   /** Open the cheat sheet, optionally with a filter already typed. */
   openCheatSheet(query = "") {
+    if (!this.showingCheatSheet)
+      this.cheatReturn = { detail: this.detail, scroll: this.scroll };
     this.cheatSheet = true;
     this.cheatQuery = query;
     this.refreshCheatSheet();
   }
-  /**
-   * Close it and hand the frame back to whatever was on screen.
-   *
-   * The detail is dropped rather than restored, because nothing under it
-   * changed while the sheet was open, so re-deriving it would cost a render
-   * pass to produce a result identical to the one already in the body rows.
-   */
   closeCheatSheet() {
+    const previous = this.cheatReturn;
+    this.cheatReturn = undefined;
     this.cheatSheet = false;
     this.cheatQuery = "";
-    this.detail = undefined;
-    this.scroll = 0;
+    this.detail = previous?.detail;
+    this.scroll = previous?.scroll ?? 0;
     this.notice = "Cheat sheet closed.";
   }
   /** Re-lay the cheat sheet after a keystroke or a terminal width change. */
@@ -1926,7 +1957,7 @@ export class WorkspaceTui {
         const doc = this.workbench.document(sessionId, path);
         const isBinary = hasBinary(path);
         if (isBinary) {
-          return `${path} [binární soubor - capability check required]`;
+          return `${path} [binary file - capability check required]`;
         }
         return `${path} (quoted context):
 ${(doc.content ?? "").slice(0, 2000)}`;
@@ -2552,32 +2583,82 @@ ${(doc.content ?? "").slice(0, 2000)}`;
     // stay flat underneath so selecting, filtering and opening still index
     // into one list. Two parallel lists would mean the row the operator
     // selected and the row Enter opens could drift apart.
-    if (
-      !this.groupTree &&
-      (this.tab === "documents" || this.tab === "sessions")
-    ) {
-      const nodes =
-        this.tab === "documents"
-          ? buildDocumentTree(
-              this.workbench.documentsList().map((d) => ({
-                id: `${d.sessionId}:${d.path}`,
-                path: d.path,
-                detail: `${d.bytes} B`,
-                kind: "document",
-              })),
-            )
-          : buildSessionTree(
-              this.workbench.list().map((s) => ({
-                id: s.id,
-                // Conversations have no folder structure worth inventing, so
-                // the useful cut is by state: what is still running, what
-                // settled, what failed.
-                path: s.title ?? s.id,
-                detail: `${s.id.slice(0, 8)} ${s.model}`,
-                kind: sessionGroup(s.status, s.archived === true),
-              })),
-            );
-      this.groupTree = { nodes, state: initialTreeState(nodes) };
+    const normalizedFilter = this.filter.toLowerCase();
+    const matchesFilter = (row: Item) =>
+      !normalizedFilter ||
+      `${row.label} ${row.lines.join(" ")}`
+        .toLowerCase()
+        .includes(normalizedFilter);
+    const sessionRows =
+      this.tab === "sessions" ? rows.filter(matchesFilter) : [];
+    const sessionTreeMatches =
+      this.tab !== "sessions" ||
+      (this.groupTree?.filter === this.filter &&
+        this.groupTree.sessionEntries?.length === sessionRows.length &&
+        sessionRows.every((row, index) => {
+          const session = row.sessionId
+            ? this.workbench.get(row.sessionId)
+            : undefined;
+          const cached = this.groupTree?.sessionEntries?.[index];
+          return (
+            !!session &&
+            !!cached &&
+            cached.id === session.id &&
+            cached.path === (session.title ?? session.id) &&
+            cached.detail === `${session.id.slice(0, 8)} ${session.model}` &&
+            cached.kind ===
+              sessionGroup(session.status, session.archived === true)
+          );
+        }));
+    if (!this.groupTree || !sessionTreeMatches || this.groupTree.filter !== this.filter) {
+      if (this.tab === "documents" || this.tab === "sessions") {
+        let sessionIds: Map<string, string> | undefined;
+        const sessions =
+          this.tab === "sessions"
+            ? sessionRows.flatMap((row) => {
+                const session = row.sessionId
+                  ? this.workbench.get(row.sessionId)
+                  : undefined;
+                return session
+                  ? [
+                      {
+                        id: session.id,
+                        path: session.title ?? session.id,
+                        detail: `${session.id.slice(0, 8)} ${session.model}`,
+                        kind: sessionGroup(
+                          session.status,
+                          session.archived === true,
+                        ),
+                      },
+                    ]
+                  : [];
+              })
+            : [];
+        if (this.tab === "sessions") {
+          sessionIds = new Map();
+          for (const session of sessions)
+            sessionIds.set(sessionLeafId(session.id), session.id);
+        }
+        const nodes =
+          this.tab === "documents"
+            ? buildDocumentTree(
+                rows.filter(matchesFilter).map((row) => ({
+                  id: row.id,
+                  path: row.path!,
+                  detail: row.sessionId,
+                  kind: "document",
+                })),
+              )
+            : buildSessionTree(sessions);
+        this.groupTree = {
+          nodes,
+          state: initialTreeState(nodes),
+          filter: this.filter,
+          ...(this.tab === "sessions"
+            ? { sessionIds, sessionEntries: sessions }
+            : {}),
+        };
+      }
     }
     if (this.tab === "ledger") {
       for (const [id, entries] of this.proofs)
@@ -2590,6 +2671,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
               ? { operationId: b.operationId }
               : {}),
             kind: "entry",
+            ledgerRecord: { workspace: id, seq: e.seq, body: b },
             label: `${ROW_ICONS.ledgerEntry} ${id.slice(0, 8)} #${e.seq} [${text(b.klass)}] ${text(b.decision)} ${text(b.tool)}`,
             lines: [
               this.managedVerificationStatus === undefined
@@ -2608,6 +2690,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
           rows.push({
             id: `proxy:${workspace}:${e.seq}`,
             kind: "proxy",
+            ledgerRecord: { workspace, seq: e.seq, body: b },
             label: `${ROW_ICONS.proxyEntry} proxy:${workspace} #${e.seq} [${text(b.klass)}] ${text(b.decision)} ${text(b.tool)}`,
             lines: [
               this.proxy.signed
@@ -2873,72 +2956,77 @@ ${(doc.content ?? "").slice(0, 2000)}`;
               approvalLabel(h),
             lines: json(h),
           };
-        })
-        // Most consequential first, not newest first. The list used to
-        // arrive in backend order, which put a read next to a write and let
-        // an operator clear three harmless holds before reaching the one
-        // that touches every document.
-        .sort((a, b) => holdSeverity(b.hold) - holdSeverity(a.hold));
+        });
     if (this.tab === "approvals")
       rows.push(
         ...this.proxy.holds.map(({ decisionToken, ...h }) => ({
           id: `proxy:${h.holdId}`,
+          hold: h,
           label: `${ROW_ICONS.approval} [proxy pending] ${h.call.tool} ${h.holdId}`,
           lines: json(h),
         })),
       );
-    if (this.tab === "tools")
-      rows = this.workbench
-        .availableTools(this.sessionId)
-        .tools.map((tool) => ({
-          id: tool.id,
-          // The Undo marker is decoration on top of a label that already
-          // states the fact in words, so a monochrome terminal and a screen
-          // reader lose nothing by not seeing the glyph.
-          label:
-            `${ROW_ICONS.tool} ${tool.klass.toUpperCase()} ${tool.name} / ${tool.source}` +
-            `${
-              tool.capturedUndo ? " / ↩ captured Undo" : " / no captured Undo"
-            }`,
-          // The detail is the schema as a property table rather than as JSON.
-          // Raw JSON buried the two facts the operator actually reads, which
-          // property is required and what the call does, under a dozen keys
-          // nobody scans.
-          lines: [
-            ...toolSchemaLines(
-              {
-                id: tool.id,
-                name: tool.name,
-                klass: tool.klass,
-                source: tool.source,
-                description: tool.description,
-                capturedUndo: tool.capturedUndo,
-                inputSchema: tool.inputSchema,
-              },
-              76,
-            ),
-            "",
-            `Scope: ${this.sessionId ? "current conversation" : "new conversations"}`,
-            tool.capturedUndo
-              ? "Captured document Undo available."
-              : "Undo is not guaranteed for this tool.",
-            "",
-            "The model requests tools through NOMO policy and approvals.",
-            "",
-            REGISTRY_DISCLAIMER,
-          ],
-        }));
-    if (this.tab === "policy")
+    if (this.tab === "approvals")
+      rows.sort((a, b) => compareApprovalHolds(a.hold!, b.hold!));
+    if (this.tab === "tools" && !this.showingPolicy) {
+      rows = [];
+      for (const { tools: toolsInGroup } of groupTools(
+        this.workbench.availableTools(this.sessionId).tools,
+      )) {
+        for (const tool of toolsInGroup) {
+          rows.push({
+            id: tool.id,
+            // The Undo marker is decoration on top of a label that already
+            // states the fact in words, so a monochrome terminal and a screen
+            // reader lose nothing by not seeing the glyph.
+            label:
+              `${ROW_ICONS.tool} ${tool.klass.toUpperCase()} ${tool.name} / ${tool.source}` +
+              `${
+                tool.capturedUndo ? " / ↩ captured Undo" : " / no captured Undo"
+              }`,
+            // The detail is the schema as a property table rather than as JSON.
+            // Raw JSON buried the two facts the operator actually reads, which
+            // property is required and what the call does, under a dozen keys
+            // nobody scans.
+            lines: [
+              `Tool: ${tool.name}`,
+              ...toolSchemaLines(
+                {
+                  id: tool.id,
+                  name: tool.name,
+                  klass: tool.klass,
+                  source: tool.source,
+                  description: tool.description,
+                  capturedUndo: tool.capturedUndo,
+                  inputSchema: tool.inputSchema,
+                },
+                76,
+              ),
+              "",
+              `Scope: ${this.sessionId ? "current conversation" : "new conversations"}`,
+              tool.capturedUndo
+                ? "Captured document Undo available."
+                : "Undo is not guaranteed for this tool.",
+              "",
+              "The model requests tools through NOMO policy and approvals.",
+              "",
+              REGISTRY_DISCLAIMER,
+            ],
+          });
+        }
+      }
+    }
+    if (this.showingPolicy)
       rows = this.workbench.connectionState().connectors.map((c) => ({
         id: c.id,
-        label: `${ROW_ICONS.connector} ${c.name} (${c.tools.length} tools)`,
+        label: `${ROW_ICONS.connector} ${c.name || c.id} [${c.consentState}] (${c.tools.length} tools)`,
         connector: {
           id: c.id,
           name: c.name,
           tools: c.tools,
           consentState: c.consentState,
         },
-        lines: json(c),
+        lines: [c.id, c.consentState, ...c.tools],
       }));
     if (this.tab === "models")
       rows = (this.provider?.models ?? []).map((m) => ({
@@ -2959,13 +3047,11 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         usage: r,
         lines: json(r),
       }));
-    return this.filter
-      ? rows.filter((r) =>
-          `${r.label} ${r.lines.join(" ")}`
-            .toLowerCase()
-            .includes(this.filter.toLowerCase()),
-        )
-      : rows;
+    return this.tab === "sessions"
+      ? sessionRows
+      : this.filter
+        ? rows.filter(matchesFilter)
+        : rows;
   }
   /**
    * How many existing conversations already ran on a model.
@@ -2984,7 +3070,17 @@ ${(doc.content ?? "").slice(0, 2000)}`;
   }
 
   async openSelected() {
-    const row = this.items()[this.selected];
+    const rows = this.items();
+    if (this.tab === "sessions" || this.tab === "documents") {
+      const selected = this.focusedTreeRowIndex(rows);
+      if (selected < 0) {
+        const noun = this.tab === "sessions" ? "conversation" : "document";
+        this.notice = `Select a ${noun} row before pressing Enter.`;
+        return;
+      }
+      this.selected = selected;
+    }
+    const row = rows[this.selected];
     if (!row) return;
     if (this.tab === "overview") {
       // The overview rows are runs. Enter inspects the run rather than
@@ -3028,12 +3124,12 @@ ${(doc.content ?? "").slice(0, 2000)}`;
                         ? "required, outcome unknown"
                         : "not needed",
                     },
-                    { label: "started", value: run.createdAt ?? "neznámo" },
+                    { label: "started", value: run.createdAt ?? "unknown" },
                     {
                       label: "ended",
                       value:
                         run.updatedAt ??
-                        (run.state === "running" ? "probíhá" : "neznámo"),
+                        (run.state === "running" ? "in progress" : "unknown"),
                     },
                   ],
                 },
@@ -3141,7 +3237,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
                   ],
                 },
               ],
-              hint: "Enter opens the conversation. /resume picks one by number.",
+              hint: `/resume ${session.id} opens this conversation.`,
             },
             { width: 76 },
           ),
@@ -3203,7 +3299,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
                   ],
                 },
               ],
-              hint: "Enter opens the document. /document path opens it too.",
+              hint: "Read-only metadata. /document path opens a document in the active conversation.",
             },
             { width: 76 },
           ),
@@ -3231,7 +3327,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
     // find out is what a connector is allowed to do and whether they have
     // agreed to it, and both are two lines down inside the JSON dump they used
     // to get.
-    if (this.tab === "policy" && row.connector) {
+    if (this.showingPolicy && row.connector) {
       const c = row.connector;
       const confirmed = c.consentState === "confirmed";
       this.detail = [
@@ -3256,8 +3352,8 @@ ${(doc.content ?? "").slice(0, 2000)}`;
                   {
                     label: "means",
                     value: confirmed
-                      ? "Calls go through without asking again."
-                      : "Calls ask before they run. /connector-file confirms it.",
+                      ? "Connector can offer tools. Calls still follow the policy and approval gates."
+                      : "Connector tools are not available. Use /mcp to review consent.",
                   },
                   {
                     label: "tools",
@@ -3275,13 +3371,10 @@ ${(doc.content ?? "").slice(0, 2000)}`;
                 })),
               },
             ],
-            hint: "/mcp lists connectors; /connector-file reviews a save.",
+            hint: "/mcp lists connectors; /policy-file reviews a policy change.",
           },
           { width: 76 },
         ),
-        "",
-        "RAW RECORD",
-        ...row.lines,
       ];
       this.scroll = 0;
       return;
@@ -3433,20 +3526,21 @@ ${(doc.content ?? "").slice(0, 2000)}`;
     }
     // A ledger entry or proxy entry is the core record. Enter reads it as
     // an aligned inspector rather than a JSON dump. The row already carries
-    // the parsed body in lines, so we render it the same way approvals do.
-    if (
-      this.tab === "ledger" &&
-      (row.kind === "entry" || row.kind === "proxy")
-    ) {
-      const b = row.lines[0] ? JSON.parse(row.lines.slice(2).join("\n")) : {};
+    // its verified record independently of the rendered verification notes.
+    if (this.tab === "ledger" && row.ledgerRecord) {
+      const { workspace, seq, body: b } = row.ledgerRecord;
       const isProxy = row.kind === "proxy";
-      const workspace = isProxy ? row.id.split(":")[1] : row.sessionId;
+      const keyStatus = isProxy
+        ? this.proxy.verificationStatus
+        : this.managedVerificationStatus;
+      const integrityChecked = isProxy || keyStatus !== undefined;
+      const signatureChecked = isProxy ? this.proxy.signed : integrityChecked;
       this.detail = [
         ...renderInspector(
           {
             title: isProxy
               ? `PROXY LEDGER ${workspace}`
-              : `MANAGED LEDGER ${workspace?.slice(0, 8)}`,
+              : `MANAGED LEDGER ${workspace.slice(0, 8)}`,
             subtitle: row.id,
             icon: isProxy ? ROW_ICONS.proxyEntry : ROW_ICONS.ledgerEntry,
             sections: [
@@ -3479,7 +3573,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
                   },
                   {
                     label: "sequence",
-                    value: row.id.split(":").pop() ?? "?",
+                    value: String(seq),
                   },
                 ],
               },
@@ -3487,19 +3581,19 @@ ${(doc.content ?? "").slice(0, 2000)}`;
                 title: isProxy ? "proxy verification" : "managed verification",
                 fields: [
                   {
-                    label: isProxy ? "status" : "hash chain",
-                    value: isProxy
-                      ? this.proxy.signed
-                        ? "verified"
-                        : "integrity only"
-                      : (this.managedVerificationStatus ?? "unknown"),
-                    tone: isProxy
-                      ? this.proxy.signed
-                        ? "success"
-                        : "warning"
-                      : this.managedVerificationStatus?.startsWith("verified")
-                        ? "success"
-                        : "muted",
+                    label: "hash chain",
+                    value: integrityChecked ? "verified" : "unknown",
+                    tone: integrityChecked ? "success" : "muted",
+                  },
+                  {
+                    label: "signature",
+                    value: signatureChecked ? "verified against resolved key" : "not verified",
+                    tone: signatureChecked ? "default" : "warning",
+                  },
+                  {
+                    label: "key trust",
+                    value: keyStatus ?? "unknown",
+                    tone: "muted",
                   },
                   {
                     label: isProxy ? "verification key" : "verification note",
@@ -3511,13 +3605,10 @@ ${(doc.content ?? "").slice(0, 2000)}`;
                 ],
               },
             ],
-            hint: "Enter on a hook or agent row acts on it. Other rows are read only.",
+            hint: "Read only. /verify rechecks the ledger.",
           },
           { width: 76 },
         ),
-        "",
-        "RAW RECORD",
-        ...row.lines,
       ];
       this.scroll = 0;
       return;
@@ -3607,7 +3698,8 @@ ${(doc.content ?? "").slice(0, 2000)}`;
   }
   async prepareUndo(id?: string) {
     this.queuedPromptPaused = true;
-    const selected = this.items()[this.selected];
+    const rows = this.items();
+    const selected = rows[this.selected];
     if (this.tab === "ledger" && selected?.operationId && !id) {
       this.useSession(selected.sessionId!);
       id = selected.operationId;
@@ -3616,9 +3708,12 @@ ${(doc.content ?? "").slice(0, 2000)}`;
     // undo target: Enter inspects on purpose (reading a document is not
     // aiming an undo), so documentPath would otherwise still name whatever
     // an earlier command opened, and u would undo the wrong file or nothing.
-    if (this.tab === "documents" && selected?.path && !id) {
-      this.useSession(selected.sessionId!);
-      this.documentPath = selected.path;
+    if (this.tab === "documents" && !id) {
+      const focused = rows[this.focusedTreeRowIndex(rows)];
+      if (!focused?.sessionId || !focused.path)
+        throw Error("Select a document row with an outstanding change.");
+      this.useSession(focused.sessionId);
+      this.documentPath = focused.path;
     }
     if (!this.sessionId) throw Error("Select a conversation or ledger entry.");
     const sessionId = this.sessionId;
@@ -4023,7 +4118,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
           `    id ${c.id}`,
           c.builtin
             ? "    in use: the NOMO document workspace"
-            : `    next: ${MCP_NEXT[c.consent as keyof typeof MCP_NEXT]?.(c.id) ?? "/mcp inspect " + c.id}`,
+            : `    next: ${nextMcpStep(c.consent, c.id)}`,
         ]),
         "",
       ]),
@@ -4052,7 +4147,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       ...(c.builtin || !c.tools.length ? [] : this.policyPreviewLines(c)),
       c.builtin
         ? "The document workspace is built in and always in use."
-        : `next: ${MCP_NEXT[c.consent](c.id)}`,
+        : `next: ${nextMcpStep(c.consent, c.id)}`,
     ];
   }
   /** An unknown id or subcommand answers with the usage block, so a mistyped
@@ -4093,7 +4188,8 @@ ${(doc.content ?? "").slice(0, 2000)}`;
     ];
   }
   private async mcpCommand(arg: string) {
-    this.choose("policy");
+    this.choose("tools");
+    this.toolsView = "policy";
     const space = arg.indexOf(" "),
       verb = (space < 0 ? arg : arg.slice(0, space)).toLowerCase(),
       rest = space < 0 ? "" : arg.slice(space + 1).trim(),
@@ -4386,6 +4482,25 @@ ${(doc.content ?? "").slice(0, 2000)}`;
     );
   }
 
+  handleThemePickerKey(key: string | undefined): boolean {
+    const original = this.themePicker;
+    if (!original) return false;
+    if (key === "escape") {
+      this.themeConfig = original;
+      this.themePicker = undefined;
+      this.notice = "Previous theme restored.";
+    } else if (key === "return" || key === "enter") {
+      this.themePicker = undefined;
+      this.notice = `Theme kept for this session: ${this.themeConfig.colorTheme}.`;
+    } else if (key === "up" || key === "down") {
+      const index = THEME_CHOICES.indexOf(this.themeConfig.colorTheme);
+      const step = key === "up" ? -1 : 1;
+      const next = (index + step + THEME_CHOICES.length) % THEME_CHOICES.length;
+      this.themeConfig = { ...this.themeConfig, colorTheme: THEME_CHOICES[next]! };
+    }
+    return true;
+  }
+
   async command(raw: string): Promise<"edit" | "quit" | void> {
     const value = raw.trim();
     if (!value) return;
@@ -4517,12 +4632,18 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       if (this.notice === COMMAND_PALETTE_NOTICE) this.notice = "";
       return;
     }
+    if (cmd === "themes") {
+      if (arg) throw Error("Use /themes to open the theme picker.");
+      if (this.confirmation) throw Error("Close the active review before previewing themes.");
+      this.themePicker ??= { ...this.themeConfig };
+      return;
+    }
     if (cmd === "theme") {
       // /theme [color-theme] [symbol-preset] | list | preview | reset
       // Session override only. Lasting choice stays in the environment
       // (NOMO_TUI_THEME, NOMO_TUI_SYMBOLS). A checked-out repo never
       // restyles another operator.
-      const themes = Object.keys(COLOR_THEMES) as ColorTheme[];
+      const themes = THEME_CHOICES;
       const symbols = Object.keys(SYMBOL_SETS) as SymbolPreset[];
 
       if (!arg) {
@@ -4595,7 +4716,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
 
       this.themeConfig = {
         colorTheme: color,
-        symbolPreset: symbol ?? this.themeConfig.symbolPreset,
+        symbolPreset: symbol || this.themeConfig.symbolPreset,
       };
       this.notice = `Theme set: ${this.themeConfig.colorTheme} + ${this.themeConfig.symbolPreset}. Set NOMO_TUI_THEME and NOMO_TUI_SYMBOLS to persist.`;
       this.scroll = 0;
@@ -4646,8 +4767,10 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       this.scroll = 0;
       return;
     }
-    if (cmd === "permissions") {
-      this.choose("policy");
+    if (cmd === "policy" || cmd === "permissions") {
+      this.choose("tools");
+      this.toolsView = "policy";
+      this.filter = arg;
       this.notice =
         "Connector policy stays authoritative. Use /tools for the catalog.";
       return;
@@ -4977,7 +5100,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
     if (cmd === "resume") {
       if (!arg) {
         this.choose("sessions");
-        this.notice = "Select a conversation and press Enter to resume.";
+        this.notice = "Enter inspects a conversation. /resume ID opens it.";
         return;
       }
       const rows = [...this.workbench.list()].reverse();
@@ -5639,8 +5762,6 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       // palette.recent is ReadonlyMap, paletteState.recent is Map
       this.paletteState = { recent: new Map(this.palette.recent) };
       if (seed) this.palette = typeInPalette(this.palette, seed);
-      this.choose("help");
-      this.detail = undefined;
       this.notice = COMMAND_PALETTE_NOTICE;
       return;
     }
@@ -5725,7 +5846,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
     // Tools are grouped by class, low risk first, because that is the order
     // an operator reasoning about authority reads them in. A flat list put a
     // read next to a write with nothing between them.
-    if (this.tab === "tools") {
+    if (this.tab === "tools" && !this.showingPolicy) {
       const summaries: ToolSummary[] = this.workbench
         .availableTools(this.sessionId)
         .tools.map((tool) => ({
@@ -5760,6 +5881,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
           ? `Filter: ${this.filter} (Esc clears, Backspace deletes)`
           : "Type to filter by name, class, source or description.",
         "Enter inspects a tool. Inspecting never executes it.",
+        "/policy inspects tool authority. /mcp shows connector consent.",
       ];
     }
     if (this.tab === "chat")
@@ -5876,11 +5998,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         ...this.proxy.errors,
       ];
     }
-    // The policy tab used to open with the raw YAML and then a JSON dump per
-    // connector. The question it exists to answer is what this workspace is
-    // allowed to do, and that is a summary of classes and decisions, not the
-    // text of the rules. The YAML stays below for the operator who wants it.
-    if (this.tab === "policy") {
+    if (this.showingPolicy) {
       const connectors = this.workbench.connectionState().connectors;
       const policyTools = connectors.flatMap((c) =>
         c.tools.map((tool) => ({ name: tool, source: c.name || c.id })),
@@ -5903,6 +6021,10 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         .join(", ");
       return [
         `POLICY, ${connectors.length} connectors: ${consentCounts}`,
+        "",
+        ...this.listRows(),
+        "",
+        "Enter inspects a connector. /mcp manages consent. /tools returns to the catalog.",
         "",
         ...renderInspector(
           {
@@ -5950,11 +6072,18 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         "",
         "DEFAULT POLICY FOR EXTERNAL MCP",
         ...DEFAULT_POLICY.split("\n"),
-        "",
-        ...this.items().flatMap((r) => [r.label, ...r.lines, ""]),
       ];
     }
     const rows = this.items();
+    const ledgerEntryRows = rows.filter(
+      (row) => row.kind === "entry" || row.kind === "proxy",
+    );
+    const managedEntryCount = [...this.proofs.values()].reduce(
+      (total, entries) => total + entries.length,
+      0,
+    );
+    if (this.tab === "ledger" && ledgerEntryRows.length === 0)
+      return ["No entries yet.", "", ...this.listRows()];
     // Documents group by folder and conversations by state, for the same</path>
     // reason: a flat list of forty rows cannot be scanned, and a group the
     // operator does not care about should be one keystroke to hide rather
@@ -5967,6 +6096,12 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       const openOps = this.recoveryRows().filter(
         (row) => row.recoverable === "recoverable",
       );
+      const focused = this.tab === "documents"
+        ? rows[this.focusedTreeRowIndex(rows)]
+        : undefined;
+      const preview = focused?.sessionId && focused.path
+        ? this.workbench.document(focused.sessionId, focused.path).content
+        : undefined;
       return [
         ...renderTree(this.groupTree.nodes, this.groupTree.state, 76, 24, {
           motion: motionContext(this.frame),
@@ -5987,8 +6122,11 @@ ${(doc.content ?? "").slice(0, 2000)}`;
             ]
           : []),
         this.tab === "documents"
-          ? "Left/Right collapse and expand a folder. Enter opens the document."
-          : "Left/Right collapse and expand a group. Enter opens the conversation.",
+          ? "Left/Right folds folders. Enter inspects the document."
+          : "Left/Right folds groups. Enter inspects the conversation.",
+        ...(preview === undefined
+          ? []
+          : ["", "DOCUMENT PREVIEW", ...(preview || "(empty)").split("\n", 5)]),
       ];
     }
     // The tools tab is answered earlier, by the grouped browser, so the
@@ -5997,18 +6135,9 @@ ${(doc.content ?? "").slice(0, 2000)}`;
     // different here than on every other list: it inspects rather than
     // selects.
     if (this.tab === "models" && rows.length) {
-      const byProvider = new Map<string, number>();
-      for (const row of rows) {
-        const match = /\[([^\]]+)\]/.exec(row.label);
-        const provider = match?.[1] ?? "unknown";
-        byProvider.set(provider, (byProvider.get(provider) ?? 0) + 1);
-      }
-      const counts = [...byProvider.entries()]
-        .sort((a, b) => b[1] - a[1])
-        .map(([provider, count]) => `${count} ${provider}`)
-        .join(", ");
+      const provider = this.provider?.providerId || "unknown";
       return [
-        `MODELS, ${rows.length} available: ${counts}`,
+        `MODELS, ${rows.length} available: ${rows.length} ${provider}`,
         "",
         ...this.listRows(),
         "",
@@ -6093,9 +6222,9 @@ ${(doc.content ?? "").slice(0, 2000)}`;
     // The ledger tab groups by kind, but the question an operator arrives with
     // is "is this chain intact and how long is it", which the grouping answers
     // only by listing every group.
-    if (this.tab === "ledger" && rows.length) {
+    if (this.tab === "ledger" && ledgerEntryRows.length) {
       const byKind = new Map<string, number>();
-      for (const row of rows) {
+      for (const row of ledgerEntryRows) {
         const kind = row.kind ?? "entry";
         byKind.set(kind, (byKind.get(kind) ?? 0) + 1);
       }
@@ -6105,11 +6234,13 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         .join(", ");
       const errors = this.proofErrors.size + this.proxy.errors.length;
       return [
-        `LEDGER, ${rows.length} entries: ${counts}`,
+        `LEDGER, ${ledgerEntryRows.length} entries: ${counts}`,
         "",
         errors
           ? `${errors} chain(s) could not be verified. /verify rechecks.`
-          : `All ${rows.length} entries verified against the managed chain.`,
+          : managedEntryCount
+            ? `${managedEntryCount} managed entries verified against the managed chain.`
+            : "No managed entries to verify; proxy chains are verified separately.",
         "",
         ...this.listRows(),
       ];
@@ -6129,18 +6260,17 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       const counts = [...byStatus.entries()]
         .map(([status, count]) => `${count} ${status}`)
         .join(", ");
-      // The deadline rides at the front of the label in one of two shapes:
-      // "NNNs left | " while it runs and "EXPIRED | " once it has. Matching the
-      // shape rather than any number is what keeps a hold id or a tool name
-      // from being read as a deadline.
-      const expiries = rows
-        .map((row) => /^(\d+)s left \| /.exec(row.label)?.[1])
-        .filter((v): v is string => !!v)
-        .map(Number);
-      const expired = rows.filter((row) =>
-        row.label.startsWith("EXPIRED"),
-      ).length;
-      const soonest = expiries.length ? `${Math.min(...expiries)}s` : undefined;
+      const now = Date.now();
+      let soonestSeconds: number | undefined;
+      let expired = 0;
+      for (const row of rows) {
+        const seconds = row.hold ? holdSecondsLeft(row.hold, now) : null;
+        if (seconds === null) continue;
+        if (seconds <= 0) expired += 1;
+        else soonestSeconds = Math.min(soonestSeconds ?? seconds, seconds);
+      }
+      const soonest =
+        soonestSeconds === undefined ? undefined : `${soonestSeconds}s`;
       return [
         `APPROVALS, ${rows.length} waiting: ${counts}`,
         "",
@@ -6152,7 +6282,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         "",
         ...this.listRows(),
         "",
-        "Enter opens the decision. a approves, d denies, y accepts a diff.",
+        "Enter opens the decision. a reviews approval, d reviews denial.",
       ];
     }
     return rows.length ? this.listRows() : ["No entries yet.", ""];
@@ -6220,7 +6350,7 @@ export function transcript(events: readonly SessionEvent[]): string[] {
 }
 type ChatRow = {
   text: string;
-  style: "user" | "assistant" | "heading" | "code" | "tool" | "error" | "text";
+  style: "user" | "assistant" | "heading" | "list" | "quote" | "code" | "tool" | "error" | "text";
 };
 /** Terminal-only presentation. Never evaluate Markdown, HTML or terminal escapes. */
 export function chatRows(
@@ -6271,20 +6401,11 @@ export function chatRows(
             (i ? " ".repeat(prefix.length - 2) + "│ " : prefix) + chunk,
             "code",
           );
+      } else if (kind === "assistant") {
+        const row = assistantMarkdownLine(raw);
+        add(row.text, row.style);
       } else {
-        const heading = kind === "assistant" && /^#{1,6}\s/.test(raw);
-        add(
-          heading ? raw.replace(/^#{1,6}\s+/, "") : raw,
-          kind === "user"
-            ? "user"
-            : kind === "error"
-              ? "error"
-              : kind === "tool"
-                ? "tool"
-                : heading
-                  ? "heading"
-                  : "text",
-        );
+        add(raw, kind === "user" ? "user" : kind === "error" ? "error" : kind === "tool" ? "tool" : "text");
       }
     }
     if (spacerAfter) add("", "text");
@@ -6438,6 +6559,7 @@ export const TUI_COMMANDS = [
   ["/diff", "Outstanding document changes"],
   ["/diff-next", "Next outstanding change in the diff panel"],
   ["/theme", "Color and motion for this session"],
+  ["/themes", "Preview color themes for this session"],
   ["/keybindings", "Keyboard shortcut reference"],
   ["/exit", "Save and quit"],
   ["/export", "Save ledger, chat or document"],
@@ -6573,7 +6695,6 @@ export const TAB_ICON_TONE: Record<WorkspaceTab, string> = {
   documents: "38;5;78",
   ledger: "38;5;179",
   approvals: "38;5;203",
-  policy: "38;5;245",
   tools: "38;5;214",
   models: "38;5;75",
   usage: "38;5;228",
@@ -6590,7 +6711,6 @@ export const TAB_ICONS: Record<WorkspaceTab, string> = {
   documents: "▤",
   ledger: "▪",
   approvals: "◉",
-  policy: "§",
   tools: "+",
   models: "◐",
   usage: "◔",
@@ -6655,11 +6775,13 @@ export const MODE_ICON: Record<TuiMode, string> = {
 };
 // Clean prompt frame. Box drawing characters are removed in favour of
 // a minimal border that reads as a modern input surface.
-export function promptFrameTop(title: string, width: number): string {
+export function promptFrameTop(title: string, width: number, ascii = false): string {
   const fitted = fit(title, Math.max(1, width - 4));
+  if (ascii) return `+ ${fitted} ${"-".repeat(Math.max(0, width - visibleLength(fitted) - 4))}+`;
   return `┌ ${fitted} ${"─".repeat(Math.max(0, width - visibleLength(fitted) - 4))}┐`;
 }
-export function promptFrameBottom(width: number): string {
+export function promptFrameBottom(width: number, ascii = false): string {
+  if (ascii) return `+${"-".repeat(Math.max(0, width - 2))}+`;
   return `└${"─".repeat(Math.max(0, width - 2))}┘`;
 }
 export function promptFrameRow(content: string, width: number): string {
@@ -6735,6 +6857,10 @@ export function renderWorkspace(
 ): string {
   const width = Math.max(20, columns),
     height = Math.max(8, rows);
+  const ascii = ui.themeConfig.symbolPreset === "ascii";
+  const symbols = getSymbols(ui.themeConfig.symbolPreset);
+  const themePicker = ui.themePicker !== undefined;
+  if (themePicker) editing = false;
   const spaciousShell = height >= 22 && width >= 78 && !ui.confirmation;
   // The keybinding table sizes its columns to the terminal, so a resize has to
   // re-lay it out. Re-rendering on every frame would be wasteful, so it only
@@ -6763,10 +6889,19 @@ export function renderWorkspace(
   const ink = (value: string, code: string) =>
     visuals.color ? `\x1b[${code}m${value}\x1b[0;38;5;252m` : value;
   const text = (value: string) => fit(sanitizeText(value), width);
-  const amber = "38;5;215",
-    ice = "38;5;117",
-    mutedAnsi = "38;5;245",
-    violet = "38;5;183";
+  const palette = getPalette(ui.themeConfig.colorTheme);
+  const customTheme = ui.themeConfig.colorTheme !== "default";
+  const foreground = (tone: keyof typeof palette, fallback: number) =>
+    `38;5;${customTheme ? ansi256(palette[tone]) : fallback}`;
+  const background = (tone: keyof typeof palette, fallback: number) =>
+    `48;5;${customTheme ? ansi256(palette[tone]) : fallback}`;
+  const amber = foreground("warning", 215),
+    ice = foreground("info", 117),
+    mutedAnsi = foreground("muted", 245),
+    violet = foreground("user", 183),
+    errorAnsi = foreground("error", 203);
+  const composerBackground = background("bg", 236);
+  const selectionBackground = background("bg", 24);
   const running = busy || ui.workbench.running();
   const frame = visuals.motion === false ? 0 : (visuals.frame ?? 0);
   // One motion context drives every effect in the frame, so they stay in phase
@@ -6793,20 +6928,39 @@ export function renderWorkspace(
       ? cautionSpinner(motion)
       : runningIndicator(motion)
     : "◆";
-  // Sticky approval banner: the oldest pending hold stays pinned above the
-  // body on every tab, so a hold is never hidden behind a panel switch.
+  // Sticky approval banner: the most consequential pending hold stays pinned
+  // above the body on every tab; equal-severity holds use the nearest deadline.
   const banner = approvalBannerLines(
     [
-      ...pending.map((hold) => ({
-        holdId: hold.holdId,
-        call: {
-          tool: String((hold.call as { tool?: unknown }).tool ?? "unknown"),
-          klass: (hold.call as { klass?: unknown }).klass as string | undefined,
-        },
-      })),
+      ...pending.map((hold) => {
+        const call = hold.call as {
+          tool?: unknown;
+          klass?: unknown;
+          blastRadius?: unknown;
+        };
+        return {
+          holdId: hold.holdId,
+          status: hold.status,
+          expiresAt: hold.expiresAt,
+          call: {
+            tool: String(call.tool ?? "unknown"),
+            klass: typeof call.klass === "string" ? call.klass : undefined,
+            blastRadius:
+              typeof call.blastRadius === "number"
+                ? call.blastRadius
+                : undefined,
+          },
+        };
+      }),
       ...ui.proxy.holds.map((hold) => ({
         holdId: hold.holdId,
-        call: { tool: hold.call.tool, klass: hold.call.klass },
+        status: hold.status,
+        expiresAt: hold.expiresAt,
+        call: {
+          tool: hold.call.tool,
+          klass: hold.call.klass,
+          blastRadius: hold.call.blastRadius,
+        },
       })),
     ],
     width,
@@ -6865,7 +7019,7 @@ export function renderWorkspace(
       columns: width,
       rows: height,
       reason: "interactive",
-    });
+    }, ascii);
     mark.forEach((markRow, i) => {
       header.push(
         ink(markRow, visuals.boot && frame % 5 !== i ? mutedAnsi : ice) +
@@ -6885,10 +7039,10 @@ export function renderWorkspace(
       ui.session()?.model || ui.model || "Connect a model with /connect";
     header.push(
       fit(
-        ink("▣ NOMO", `1;${ice}`) +
+        ink(ascii ? "[NOMO]" : "▣ NOMO", `1;${ice}`) +
           ink(`  ${sanitizeText(model)}`, mutedAnsi) +
           ink(
-            `  ·  ${conversationCount} conversations / ${holds} pending approvals`,
+            `  ${symbols.separator.dot}  ${conversationCount} conversations / ${holds} pending approvals`,
             mutedAnsi,
           ),
         width,
@@ -6907,10 +7061,10 @@ export function renderWorkspace(
       fit(
         tabs
           .map((t) => {
-            const icon = ink(`${TAB_ICONS[t]}`, TAB_ICON_TONE[t]);
+            const icon = ink(ascii ? symbols.tab[t]!.slice(1, 2) : TAB_ICONS[t], TAB_ICON_TONE[t]);
             const active = t === ui.tab;
             const name = active
-              ? ink(` [${t}] `, `1;${ice};48;5;24`)
+              ? ink(` [${t}] `, `1;${ice};${selectionBackground}`)
               : ink(` ${t} `, mutedAnsi);
             return `${icon}${name}`;
           })
@@ -6985,7 +7139,9 @@ export function renderWorkspace(
   const composerInner = Math.max(1, width - 6);
   // The palette query stands in for the draft while the overlay is open, so
   // the same wrapping and cursor arithmetic serve both surfaces.
-  const composerText = ui.palette
+  const composerText = ui.confirmation
+    ? ["Review in progress"]
+    : ui.palette
     ? [ui.palette.query]
     : (
         input ||
@@ -7056,11 +7212,7 @@ export function renderWorkspace(
   const paletteView = ui.palette
     ? renderPalette(
         ui.palette,
-        filterPalette(
-          paletteFromCommands(TUI_COMMANDS),
-          ui.palette.query,
-          ui.palette.recent,
-        ),
+        paletteFromCommands(TUI_COMMANDS),
         width - 4,
         { color: visuals.color },
       )
@@ -7069,8 +7221,10 @@ export function renderWorkspace(
   // height is known, because the body height is what decides how many legend
   // rows fit. Measuring it here is what keeps the frame exactly height rows
   // tall on every terminal size, which the parity tests pin.
-  const legendRows = spaciousShell
-    ? SPACIOUS_NAVIGATION_HINT
+  const legendRows = themePicker || ui.confirmation
+    ? []
+    : spaciousShell
+    ? ascii ? ["> Tab panels"] : SPACIOUS_NAVIGATION_HINT
     : paletteView
       ? renderShortcutLegend(
           { editing: false, confirming: false, running: false, pending: 0 },
@@ -7166,7 +7320,7 @@ export function renderWorkspace(
   const shownRuleRows =
     !spaciousShell &&
     (spare > legendRows.length || (summaryRowsCount === 1 && spare >= 1))
-      ? [separator(width, motion, running)]
+      ? [ascii ? "-".repeat(width) : separator(width, motion, running)]
       : [];
   spare -= shownRuleRows.length;
 
@@ -7178,8 +7332,24 @@ export function renderWorkspace(
     !ui.detail &&
     !ui.confirmation &&
     !ui.palette;
+  const selectedApproval =
+    ui.tab === "approvals" &&
+    !ui.detail &&
+    !ui.confirmation
+      ? ui.items()[ui.selected]?.hold
+      : undefined;
+  const approvalActions = selectedApproval
+    ? selectedApproval.status === "pending" &&
+      (holdSecondsLeft(selectedApproval, Date.now()) ?? 1) > 0
+      ? "Enter inspect / a approve / d deny"
+      : "Enter inspect"
+    : undefined;
   const shownLegendRows =
-    !readingChatHistory && spare >= legendRows.length ? legendRows : [];
+    !readingChatHistory &&
+    !(approvalActions && height < 18) &&
+    spare >= legendRows.length
+      ? legendRows
+      : [];
   spare -= shownLegendRows.length;
 
   const ruleRows = shownRuleRows;
@@ -7190,18 +7360,26 @@ export function renderWorkspace(
     !!ui.session() &&
     !ui.detail &&
     !ui.confirmation &&
-    !paletteView;
-  let content = paletteView
-    ? [...paletteView.lines]
-    : richChat
-      ? []
-      : ui.lines();
+    !paletteView &&
+    !themePicker;
+  const themeRow = THEME_CHOICES.indexOf(ui.themeConfig.colorTheme) + 1;
+  let content = themePicker
+    ? [
+        "Themes / Preview",
+        ...THEME_CHOICES.map((theme, index) => `${index + 1 === themeRow ? ">" : " "} ${theme}`),
+      ]
+    : paletteView
+      ? [...paletteView.lines]
+      : richChat
+        ? []
+        : ui.lines();
   if (
     ui.tab === "chat" &&
     !ui.session() &&
     !ui.detail &&
     !ui.confirmation &&
-    !paletteView
+    !paletteView &&
+    !themePicker
   ) {
     content =
       width < 50 || height < 14
@@ -7233,9 +7411,10 @@ export function renderWorkspace(
     styled?.map((row) => row.text) ??
     (paletteView ? paletteView.lines : wrap(content, width - 4));
   let offset = ui.scroll;
-  // The palette windows its own list internally and the window follows the
-  // selection, so the body always starts at the top here.
-  if (paletteView) offset = 0;
+  // The palette page may still exceed the frame after group headers are added.
+  if (themePicker) offset = Math.max(0, themeRow - bodyHeight + 1);
+  else if (paletteView)
+    offset = Math.max(0, paletteView.selectedRow - bodyHeight + 1);
   else if (
     !ui.detail &&
     !ui.confirmation &&
@@ -7268,9 +7447,17 @@ export function renderWorkspace(
   } else if (
     !ui.detail &&
     !ui.confirmation &&
-    !["chat", "overview", "policy", "help"].includes(ui.tab)
-  )
-    offset = Math.max(0, ui.selected - bodyHeight + 1);
+    !["chat", "overview", "help"].includes(ui.tab)
+  ) {
+    const selectedMarker = cursorMarker(true, motion);
+    const selectedLine = lines.findIndex((line) =>
+      line.startsWith(selectedMarker),
+    );
+    offset =
+      selectedLine >= 0
+        ? selectedLine
+        : Math.max(0, ui.selected - bodyHeight + 1);
+  }
   offset = Math.min(
     Math.max(0, offset),
     Math.max(0, lines.length - bodyHeight),
@@ -7308,15 +7495,15 @@ export function renderWorkspace(
     const style = styled?.[offset + index]?.style;
     const tone =
       style === "user"
-        ? `1;${violet};48;5;236`
+        ? `1;${violet};${composerBackground}`
         : style === "assistant" || style === "heading"
           ? `1;${amber}`
           : style === "code"
-            ? `${ice};48;5;235`
+            ? `${ice};${background("bg", 235)}`
             : style === "tool"
               ? mutedAnsi
               : style === "error"
-                ? "38;5;203"
+                ? errorAnsi
                 : style === "text"
                   ? "38;5;252"
                   : /^>/.test(line)
@@ -7326,7 +7513,7 @@ export function renderWorkspace(
                       : / NOMO(?: streaming)?$/.test(line)
                         ? `1;${amber}`
                         : /^(Error|Invalid|Failed)/.test(line)
-                          ? "38;5;203"
+                          ? errorAnsi
                           : "38;5;252";
     // A sweep crosses the newest run's last row while it is live, so the eye
     // is drawn to the line that just changed. It rides on a row that is
@@ -7426,8 +7613,6 @@ export function renderWorkspace(
   const ctx = ui.contextNumbers();
 
   // Status segments with theme colors (omp-style segment catalog)
-  const symbols = getSymbols(ui.themeConfig.symbolPreset);
-  const palette = getPalette(ui.themeConfig.colorTheme);
   // Render minimap rows now that palette is available
   minimapRows =
     richChat && minimapEvents.length > 0
@@ -7626,42 +7811,48 @@ export function renderWorkspace(
   // The palette status names the match count and the key that runs the
   // selection, because an empty result set and a closed overlay look the
   // same otherwise.
-  const status = paletteView
+  const status = themePicker
+    ? "Up/Down preview Enter keep Esc restore"
+    : paletteView
     ? `${paletteMatches} command${paletteMatches === 1 ? "" : "s"}${width < 50 ? "" : " match"} / Enter run / Esc close`
     : ui.confirmation
       ? width < 50
         ? "Review y accept n reject Esc cancel"
         : "[!] REVIEW / y accept / n reject / Esc cancel / PgDn preview"
-      : running && (busy || ui.session()?.status === "running")
+      : approvalActions ?? (
+      running && (busy || ui.session()?.status === "running")
         ? `${spinner} ${ui.session()?.status === "running" ? (waiting ? "[wait] Waiting for approval" : `● ${phase}${dots}`) : `[run] Finishing operation${dots}`}${elapsed} / Esc stop${historyStatus ? " / [history] reading history" : ""}${todoBadge}${chatContextBadge ? ` / ${chatContextBadge}` : ""}`
-        : `${ui.notice && ui.notice !== "Tab: panels | i: type | /help: commands" ? ui.notice : (historyStatus ?? (spaciousShell ? "Ready" : ui.notice))}${chatContextBadge ? `${historyStatus ? " / " : ""}${chatContextBadge}` : ""}`;
+        : `${ui.notice && ui.notice !== "Tab: panels | i: type | /help: commands" ? ui.notice : (historyStatus ?? (spaciousShell ? "Ready" : ui.notice))}${chatContextBadge ? `${historyStatus ? " / " : ""}${chatContextBadge}` : ""}`);
   const menuRows = menu.map(([name, description], i) =>
     ink(
       text(
         `${i + menuStart === selection ? " ›" : "  "} ${name.padEnd(13)} ${description}`,
       ),
-      i + menuStart === selection ? `1;${ice};48;5;24` : muted,
+      i + menuStart === selection ? `1;${ice};${selectionBackground}` : muted,
     ),
   );
   // Add mode indicator with icon
-  const modeIndicator =
-    ui.mode === "plan" ? "○" : ui.mode === "accept" ? "●" : "◆";
+  const modeIndicator = ascii
+    ? symbols.mode[ui.mode]
+    : ui.mode === "plan" ? "○" : ui.mode === "accept" ? "●" : "◆";
   // While the palette is open the composer shows the query rather than the
   // prompt draft, because that is the text the operator is editing.
   const frameTitle = spaciousShell
     ? ""
     : paletteView
-      ? `⌘ ${ui.palette?.query || "all commands"}`
+      ? `${ascii ? ":" : "⌘"} ${ui.palette?.query || "all commands"}`
       : editing
         ? `${modeIndicator} Write a prompt [${ui.mode.toUpperCase()}]`
-        : `${TAB_ICONS[ui.tab]} ${ui.tab} / navigation`;
+        : `${ascii ? symbols.tab[ui.tab] : TAB_ICONS[ui.tab]} ${ui.tab} / navigation`;
   // The caret marker is a one-cell placeholder so animation cannot alter
   // wrapping. Inactive spacious composers deliberately keep the hint static.
-  const caret = typeCursor(ui.palette ? true : editing, motion);
+  const caret = ascii ? "_" : typeCursor(ui.palette ? true : editing, motion);
   const composerRows = Array.from({ length: composerHeight }, (_, i) => {
     const promptRow = i === Math.floor(composerHeight / 2);
     const placeholder =
-      !input && !editing && !ui.palette ? "i type / Enter details" : undefined;
+      !input && !editing && !ui.palette && !ui.confirmation
+        ? "i type / Enter details"
+        : undefined;
     const value =
       promptRow && placeholder
         ? placeholder
@@ -7674,18 +7865,18 @@ export function renderWorkspace(
   const promptBox = spaciousShell
     ? [promptFrameRow("", width), ...composerRows, promptFrameRow("", width)]
     : [
-        promptFrameTop(frameTitle, width),
+        promptFrameTop(frameTitle, width, ascii),
         ...composerRows,
-        promptFrameBottom(width),
+        promptFrameBottom(width, ascii),
       ];
   // Composer tone follows permission mode; compact layouts reuse it for their
   // frame while the mode text keeps color redundant.
   const frameTone = !editing
     ? muted
     : ui.mode === "plan"
-      ? "38;5;75"
+      ? foreground("info", 75)
       : ui.mode === "accept"
-        ? "38;5;78"
+        ? foreground("success", 78)
         : ice;
   // Narrow overflows cannot fit a page hint in the status row, so reuse the
   // body/control divider only when the current view has more content.
@@ -7744,7 +7935,7 @@ export function renderWorkspace(
     // terminal, and the operator would lose the prompt frame's bottom rule.
     ...paintedLegendRows,
     ...promptBox.map((row) =>
-      ink(row, visuals.color ? `${frameTone};48;5;236` : frameTone),
+      ink(row, visuals.color ? `${frameTone};${composerBackground}` : frameTone),
     ),
     // The status dock follows the composer; narrow layouts reserve extra
     // rows for the full model, authority and context values.

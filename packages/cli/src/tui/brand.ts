@@ -406,6 +406,7 @@ export function kittyActivityIconLabel(
 export function brandHeader(
   label: string,
   caps: TerminalCapabilities,
+  ascii = false,
 ): string[] {
   const title = sanitizeText(label).trim();
   const rows: readonly (readonly ("base" | "stem" | "coral" | "cyan")[])[] = [
@@ -424,7 +425,7 @@ export function brandHeader(
     const cells = tones.map((tone) => {
       // Replace the grid gap between the stem's two source columns with ink;
       // keep the normal gap before the next tile.
-      const glyph = tone === "stem" ? "█████" : "██";
+      const glyph = (ascii ? "#" : "█").repeat(tone === "stem" ? 5 : 2);
       return paintBrand(glyph, tone, caps);
     });
     return cells.join(" ");

@@ -8,31 +8,30 @@ import type {
 
 export function renderHelp(capabilities: TerminalCapabilities): string {
   const width = Math.min(78, capabilities.columns);
-  return crop(
-    box(
-      "NOMO / KEYS",
-      [
-        "Navigation",
-        "  j / k       move through intercepted calls",
-        "  enter       open the complete decision record",
-        "  f           filter by R0, R1, R2, R3 or all",
-        "",
-        "Actions",
-        "  a / c       approve once or cancel a pending hold",
-        "  r           preview replay, never execute immediately",
-        "  v           verify ledger body, links and signatures",
-        "  e           export the selected ledger slice",
-        "",
-        "Session",
-        "  p           pause display updates, never the proxy",
-        "  ?           close this help",
-        "  q           leave watch mode, never stop the proxy",
-      ],
-      width,
-    ),
-    capabilities.columns,
-    capabilities.rows,
-  ).join("\n");
+  const shortHint = "q quits UI, not proxy";
+  const longHint = "? close; q leave watch mode, never stop the proxy";
+  const hint = longHint.length <= width - 2 ? longHint : shortHint;
+  const help = box(
+    "NOMO / KEYS",
+    [
+      hint,
+      "Navigation",
+      "  j / k       move through intercepted calls",
+      "  enter       open the complete decision record",
+      "  f           filter by R0, R1, R2, R3 or all",
+      "",
+      "Actions",
+      "  v           verify ledger body, links and signatures",
+      "",
+      "Session",
+      "  p           pause display updates, never the proxy",
+    ],
+    width,
+  );
+  if (capabilities.rows <= 0) return "";
+  if (capabilities.rows === 1)
+    return fit(hint, capabilities.columns);
+  return crop(help, capabilities.columns, capabilities.rows).join("\n");
 }
 
 export function renderReplayPreview(
@@ -59,8 +58,8 @@ export function renderReplayPreview(
     box(
       "REPLAY PREVIEW / NO CHANGES MADE",
       [
-        `workspace ${plan.workspace}`,
-        `restore to ${plan.to}`,
+        `workspace ${sanitizeText(plan.workspace)}`,
+        `restore to ${sanitizeText(plan.to)}`,
         `snapshots ${plan.snapshotBytes} bytes in customer storage`,
         paint(rule(inner), "rule", capabilities),
         ...rows,

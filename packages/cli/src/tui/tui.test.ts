@@ -221,17 +221,35 @@ describe("external strings cannot inject terminal control", () => {
 });
 
 describe("the hold modal under constraints", () => {
-  test("the action row survives a 12 row terminal", () => {
-    // Twelve rows is the floor caps.ts clamps to, and a modal whose approve
-    // and cancel keys are cropped away still accepts those keys invisibly,
-    // which is the worst shape a decision screen can fail in.
-    const modal = renderHoldPrompt(previewHold, capabilities(76, 12));
-    assert.match(modal, /\[a\] approve once/);
-    assert.match(modal, /\[c\] cancel/);
-    assert.match(modal, /HOLDING/);
-    const lines = modal.split("\n");
-    assert.ok(lines.length <= 12);
-    for (const line of lines) assert.ok(visibleLength(line) <= 76);
+  test("actions lead at short heights and compact-height frames stay intact", () => {
+    for (const rows of [1, 2, 3]) {
+      const modal = renderHoldPrompt(previewHold, capabilities(76, rows));
+      const lines = modal.split("\n");
+      assert.ok(lines.length <= rows, `${lines.length} lines at ${rows} rows`);
+      assert.doesNotMatch(modal, /[+\-|]/);
+      assert.match(lines[0], /\[a\] approve once/);
+      assert.match(lines[0], /\[c\] cancel/);
+      for (const line of lines) assert.ok(visibleLength(line) <= 76);
+    }
+
+    for (const columns of [40, 76]) {
+      for (const rows of [4, 5, 6, 8, 12]) {
+        const modal = renderHoldPrompt(previewHold, capabilities(columns, rows));
+        const lines = modal.split("\n");
+        assert.equal(lines.length, rows);
+        assert.match(lines.at(-1)!, /^\+/);
+        assert.match(modal, /\[a\] approve once.*\[c\] cancel/);
+        assert.equal(modal.includes("HOLDING"), rows >= 5);
+        for (const line of lines) assert.ok(visibleLength(line) <= columns);
+      }
+    }
+  });
+
+
+  test("narrow modal preserves dimensions", () => {
+    const modal = renderHoldPrompt(previewHold, capabilities(24, 12));
+    assert.ok(modal.split("\n").length <= 12);
+    for (const line of modal.split("\n")) assert.ok(visibleLength(line) <= 24);
   });
 
   test("an expired hold cannot be approved by a late keypress", async () => {
@@ -405,6 +423,35 @@ describe("approvals view", () => {
 });
 
 describe("decision views", () => {
+  test("replay preview sanitizes externally supplied plan text", () => {
+    const view = renderReplayPreview(
+      {
+        workspace: "pay\u001b[2Jments",
+        to: "2026-09-06\u0007T12:00:00Z",
+        steps: [
+          {
+            order: 1,
+            callId: "call_7fs1",
+            tool: "postgres.row.update",
+            target: "orders/42",
+            class: "r0",
+            action: "restore\u001b[2J before image",
+            precondition: "row version unchanged",
+          },
+        ],
+        blocked: [],
+        snapshotBytes: 248,
+      },
+      capabilities(96),
+    );
+
+    assert.doesNotMatch(view, /\u001b|\u0007/);
+    assert.match(stripAnsi(view), /pay\?\[2Jments/);
+    assert.match(stripAnsi(view), /2026-09-06\?T12:00:00Z/);
+    assert.match(stripAnsi(view), /restore\?\[2J before image/);
+  });
+
+
   test("replay is always presented as a preview before confirmation", () => {
     const view = renderReplayPreview(
       {
@@ -453,6 +500,7 @@ describe("decision views", () => {
     const help = renderHelp(capabilities(80));
     assert.match(help, /pause display updates, never the proxy/);
     assert.match(help, /leave watch mode, never stop the proxy/);
+    assert.doesNotMatch(help, /\ba \/ c\b|\be\s+export\b|\br\s+preview replay/);
   });
 });
 

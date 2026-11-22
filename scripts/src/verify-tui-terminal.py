@@ -121,6 +121,24 @@ DiffScreenWriter.prototype.write = function(frame) {
         read_until("  > ", ready=True)
         os.write(master, b"draft first")
         read_until("draft first", ready=True)
+        os.write(master, b"\x10themes")
+        read_until("/themes", ready=True)
+        os.write(master, b"\x1b[200~\r\x1b[201~")
+        read_until("nomo-test-ready")
+        assert "Enter run" in _visible_screen(screenPath), "Paste activated palette selection"
+        os.write(master, b"\r")
+        read_until("Enter keep Esc restore", ready=True)
+        os.write(master, b"\x1b[B")
+        read_until("> paper", ready=True)
+        fcntl.ioctl(master, termios.TIOCSWINSZ, struct.pack("HHHH", 12, 40, 0, 0))
+        os.kill(process.pid, signal.SIGWINCH)
+        read_until("Enter keep Esc restore", ready=True)
+        os.write(master, b"\x1b")
+        read_until("Previous theme restored.", ready=True)
+        os.write(master, b" intact")
+        read_until("draft first intact", ready=True)
+        fcntl.ioctl(master, termios.TIOCSWINSZ, struct.pack("HHHH", 32, 100, 0, 0))
+        os.kill(process.pid, signal.SIGWINCH)
         os.write(master, b"\x1b\rdraft second")
         read_until("draft second", ready=True)
         os.write(master, b"\x03/led")
@@ -197,13 +215,23 @@ process.stdout.write = (...args) => {
   return result;
 };
 """)
-    for width, termination in [(40, "SIGINT"), (80, "SIGINT"), (120, "SIGTERM"), (200, "SIGHUP"), (80, "fatal"), (80, "exit")]:
+    for width, height, termination, monochrome in [
+        (40, 12, "SIGINT", False),
+        (60, 16, "SIGINT", True),
+        (80, 24, "SIGINT", False),
+        (120, 32, "SIGTERM", False),
+        (200, 48, "SIGHUP", True),
+        (80, 24, "fatal", False),
+        (80, 24, "exit", False),
+    ]:
         master, slave = pty.openpty()
         original = termios.tcgetattr(slave)
-        fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack("HHHH", 32, width, 0, 0))
+        fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack("HHHH", height, width, 0, 0))
         env = {"PATH": os.environ["PATH"], "HOME": data, "NOMO_DATA_DIR": data,
                "TERM": "xterm-256color", "NO_COLOR": "1", "NOMO_TUI_MOTION": "0",
                "NOMO_TEST_EXIT": "1" if termination == "exit" else ""}
+        if monochrome:
+            env.update(NOMO_TUI_COLOR="0", NOMO_TUI_SYMBOLS="ascii")
         command = ["node"]
         if termination in ["fatal", "exit"]:
             command.extend(["--import", str(preload)])
@@ -237,7 +265,11 @@ process.stdout.write = (...args) => {
             assert b"\x1b[?1049l" in captured and b"\x1b[?2004l" in captured
             if termination == "fatal":
                 assert b"fixture fatal terminal failure" in captured
-            print(f"PASS: actual TUI {width} columns {termination}, termios and screen restored")
+            if termination not in ["fatal", "exit"]:
+                colored = b"\x1b[38;5;" in captured or b"\x1b[1;38;5;" in captured
+                assert colored != monochrome, f"{width}x{height}: incorrect color mode"
+            mode = "ASCII/monochrome" if monochrome else "color"
+            print(f"PASS: actual TUI {width}x{height} {mode}, motion off, {termination}, termios and screen restored")
         finally:
             if process.poll() is None:
                 process.kill()

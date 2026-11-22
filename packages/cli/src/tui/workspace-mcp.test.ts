@@ -295,6 +295,36 @@ test("/mcp inspect shows what the policy would decide, and admits an unknown rad
   assert.match(shown, /radius unknown/);
   for (const line of ui.detail!) assert.ok(visibleLength(line) <= 80, line);
 });
+test("/mcp list and inspect safely fall back for inherited consent keys", async (t) => {
+  const { app, ui } = await workspace(t, "mcp-unknown-consent");
+  const server = await upstream(t);
+  await app.addConnector({ url: server.url, name: "future connector" });
+  const state = app.connectionState();
+  const connector = state.connectors.find((entry) => "url" in entry);
+  assert.ok(connector);
+  const id = connector.id;
+  let consentState = "__proto__";
+  t.mock.method(app, "connectionState", () => ({
+    ...state,
+    connectors: state.connectors.map((entry) =>
+      entry.id === id
+        ? { ...entry, consentState: consentState as never }
+        : entry,
+    ),
+  }));
+
+  for (consentState of ["__proto__", "constructor", "toString"]) {
+    await ui.command("/mcp");
+    assert.match(ui.detail!.join("\n"), new RegExp(`next: /mcp inspect ${id}`));
+    await ui.command(`/mcp inspect ${id}`);
+    const shown = ui.detail!.join("\n");
+    assert.match(shown, new RegExp(`consent ${consentState}`));
+    assert.match(shown, new RegExp(`next: /mcp inspect ${id}`));
+  }
+  assert.deepEqual(server.hits, [], "listing and inspection never contact it");
+  assert.equal(connector.consentState, "staged", "inspection changes no consent");
+});
+
 
 test("/mcp rename re-stages and /mcp remove deletes after a review", async (t) => {
   const { app, ui, last } = await workspace(t, "mcp-edit");

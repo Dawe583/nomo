@@ -189,6 +189,8 @@ test("the cheat sheet opens over any view and only lists keys that work now", as
   // It opens without leaving the panel it was opened from, because the whole
   // reason to open it is a key that did not do what was expected here.
   ui.choose("documents");
+  ui.detail = ["Open document inspector"];
+  ui.scroll = 2;
   const tabBefore = ui.tab;
   ui.openCheatSheet();
   assert.ok(ui.showingCheatSheet, "the sheet is the visible detail");
@@ -248,7 +250,8 @@ test("the cheat sheet opens over any view and only lists keys that work now", as
 
   ui.closeCheatSheet();
   assert.equal(ui.showingCheatSheet, false);
-  assert.equal(ui.detail, undefined, "the detail pane is handed back");
+  assert.deepEqual(ui.detail, ["Open document inspector"]);
+  assert.equal(ui.scroll, 2);
 
   // Changing panel clears the flag, so ordinary typing is not swallowed by a
   // filter for a sheet that is no longer on screen.
@@ -650,6 +653,24 @@ test("the ledger tab groups mixed records in the order they are read", async (t)
   for (const heading of headings)
     assert.ok(!/\d+\.\s/.test(heading), `heading carries a number: ${heading}`);
   assert.ok(numbered.length >= headings.length);
+
+  const managed = ui.items().findIndex((row) => row.kind === "entry");
+  assert.notEqual(managed, -1);
+  ui.selected = managed;
+  await ui.openSelected();
+  assert.match(ui.detail?.join("\n") ?? "", /hash chain\s*:\s*verified/);
+  assert.match(ui.detail?.join("\n") ?? "", /signature\s*:\s*verified/);
+  assert.doesNotMatch(ui.detail?.join("\n") ?? "", /RAW RECORD/);
+
+  const entries = ui.proofs.get(ui.sessionId!)!;
+  ui.proxy.entries.set("fixture-proxy", entries);
+  ui.proxy.signed = false;
+  const proxy = ui.items().findIndex((row) => row.kind === "proxy");
+  assert.notEqual(proxy, -1);
+  ui.selected = proxy;
+  await ui.openSelected();
+  assert.match(ui.detail?.join("\n") ?? "", /hash chain\s*:\s*verified/);
+  assert.match(ui.detail?.join("\n") ?? "", /signature\s*:\s*not verified/);
 });
 
 test("Enter on a model inspects it; it does not switch the model", async (t) => {
@@ -757,6 +778,7 @@ test("Enter on a session row opens a readable panel, not the transcript", async 
   ui.choose("sessions");
   const rows = ui.items();
   assert.ok(rows.length > 0, "the sessions tab has rows");
+  assert.ok(ui.moveDocumentCursor(1), "move from the group to the conversation");
   await ui.openSelected();
   const detail = ui.detail!.join("\n");
   // The facts the operator came for are the first thing on the panel.
@@ -776,17 +798,25 @@ test("Enter on a connector row opens the policy, not a JSON dump", async (t) => 
   });
   const ui = new WorkspaceTui(app, env);
   await ui.initialize();
-  ui.choose("policy");
+  await ui.command("/policy");
+  assert.equal(ui.tab, "tools");
+  assert.match(ui.lines().join("\n"), /POLICY/);
   const rows = ui.items();
-  assert.ok(rows.length > 0, "the policy tab has connector rows");
+  assert.ok(rows.length > 0, "the Tools policy view has connector rows");
   await ui.openSelected();
   const detail = ui.detail!.join("\n");
   // The two facts the operator came for are the first thing on the panel,
   // not buried inside a dump.
-  assert.match(detail, /consent/);
+  assert.match(detail, /\bCONSENT\b/);
   assert.match(detail, /granted|not granted/);
   assert.match(detail, /tools/);
-  assert.ok(!detail.startsWith("{"), "the panel is not a raw JSON dump");
+  assert.doesNotMatch(detail, /RAW RECORD|"consentState"/);
+  await ui.command("/permissions");
+  assert.equal(ui.tab, "tools");
+  assert.match(ui.lines().join("\n"), /POLICY/);
+  await ui.command("/tools");
+  assert.equal(ui.tab, "tools");
+  assert.match(ui.lines().join("\n"), /TOOLS/);
 });
 
 test("no rendered row exceeds its width, whatever glyphs it carries", async (t) => {
@@ -812,7 +842,6 @@ test("no rendered row exceeds its width, whatever glyphs it carries", async (t) 
     "documents",
     "ledger",
     "approvals",
-    "policy",
     "tools",
     "models",
     "usage",
@@ -1922,6 +1951,48 @@ test("/theme switches color theme and symbol preset without touching env", async
   );
 });
 
+test("/themes previews on movement, cancels to the previous look, and keeps only for this session", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-themes-"));
+  const env = { NOMO_DATA_DIR: root, NOMO_TUI_THEME: "dark", NOMO_TUI_SYMBOLS: "ascii" };
+  const app = new Workbench(env);
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, env);
+  await ui.command("/theme paper ascii");
+  ui.scroll = 4;
+  await ui.command("/themes");
+  assert.equal(ui.themeConfig.colorTheme, "paper");
+  const paintFrame = () => renderWorkspace(ui, 80, 24, "draft", false, false, {
+    color: true,
+    motion: false,
+  });
+  const paperHeader = paintFrame().split("\n")[0];
+  assert.ok(ui.handleThemePickerKey("down"));
+  assert.equal(ui.themeConfig.colorTheme, "dark");
+  assert.notEqual(paintFrame().split("\n")[0], paperHeader, "preview changes the shell header color");
+  for (const [width, height] of [[40, 12], [80, 24]] as const) {
+    const frame = stripAnsi(renderWorkspace(ui, width, height, "draft"));
+    assert.match(frame, /> dark\b/);
+    assert.match(frame, /Enter keep.*Esc restore/);
+    assert.match(frame.split("\n")[0]!, width < 50 ? /^\[NOMO\]/ : /^## ##/);
+  }
+  assert.ok(ui.handleThemePickerKey("escape"));
+  assert.deepEqual(ui.themeConfig, { colorTheme: "paper", symbolPreset: "ascii" });
+  assert.equal(ui.scroll, 4);
+  assert.equal(ui.handleThemePickerKey("return"), false);
+
+  await ui.command("/themes");
+  assert.ok(ui.handleThemePickerKey("up"));
+  assert.ok(ui.handleThemePickerKey("return"));
+  assert.deepEqual(ui.themeConfig, { colorTheme: "default", symbolPreset: "ascii" });
+  assert.deepEqual(new WorkspaceTui(app, env).themeConfig, {
+    colorTheme: "dark",
+    symbolPreset: "ascii",
+  });
+});
+
 test("command suggestions include /theme", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "nomo-tui-suggest-"));
   const full = { NOMO_DATA_DIR: root };
@@ -2280,4 +2351,129 @@ test("/learned reports what the signed chain taught, and what it may not overrid
     ui.lines().join("\n"),
     /void_workspace_delete \(r1\) -> hold/,
   );
+});
+test("session tree filtering and Enter follow only visible session leaves", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-session-cursor-"));
+  const { app, env } = await fixtureApp(root);
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, env);
+  await ui.initialize();
+  for (const title of [
+    "Charlie conversation",
+    "Alpha conversation",
+    "Bravo conversation",
+  ]) {
+    await ui.command("/clear");
+    await ui.command(title);
+    await app.settled();
+  }
+
+  ui.choose("sessions");
+  const rows = ui.items();
+  assert.equal(rows.length, 3);
+  assert.match(ui.lines().join("\n"), /3 sessions/);
+  assert.match(rows[ui.selected]!.label, /Bravo conversation/);
+  await ui.openSelected();
+  assert.equal(ui.detail, undefined, "Enter on the initial group is inert");
+  assert.equal(ui.moveDocumentCursor(1), true);
+  assert.match(rows[ui.selected]!.label, /Alpha conversation/);
+  await ui.openSelected();
+  assert.match(ui.detail!.join("\n"), /Alpha conversation/);
+
+  ui.detail = undefined;
+  assert.equal(ui.moveDocumentCursor(-1), true);
+  await ui.openSelected();
+  assert.equal(ui.detail, undefined, "Enter on a group cannot open a flat row");
+
+  ui.filter = "Charlie conversation";
+  const filtered = ui.items();
+  assert.equal(ui.selected, 1, "flat selection still points at an unfiltered row");
+  assert.equal(filtered.length, 1);
+  assert.match(filtered[0]!.label, /Charlie conversation/);
+  assert.doesNotMatch(ui.lines().join("\n"), /Alpha conversation|Bravo conversation/);
+  await ui.openSelected();
+  assert.equal(ui.detail, undefined, "filter rebuilds at the group cursor");
+
+  assert.equal(ui.moveDocumentCursor(1), true);
+  assert.equal(ui.selected, 0, "the visible leaf replaces the stale flat index");
+  assert.match(filtered[ui.selected]!.label, /Charlie conversation/);
+  await ui.openSelected();
+  assert.match(ui.detail!.join("\n"), /Charlie conversation/);
+
+  assert.equal(ui.moveDocumentCursor(-1), true);
+  assert.equal(ui.collapseOrExpand(false), true);
+  ui.detail = undefined;
+  await ui.openSelected();
+  assert.equal(ui.detail, undefined, "Enter on a collapsed group stays inert");
+  ui.filter = "conversation";
+  assert.equal(ui.items().length, 3);
+  await app.start("Delta conversation");
+  await app.settled();
+  assert.equal(ui.items().length, 4);
+  assert.match(ui.lines().join("\n"), /Delta conversation/);
+});
+
+test("Enter opens each session when titles normalize to the same tree path", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-session-collision-"));
+  const { app, env } = await fixtureApp(root);
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, env);
+  await ui.initialize();
+  for (const title of ["Same//title", "Same/title"]) {
+    await ui.command("/clear");
+    await ui.command(title);
+    await app.settled();
+  }
+
+  ui.choose("sessions");
+  const rows = ui.items();
+  assert.equal(rows.length, 2);
+  assert.equal(ui.moveDocumentCursor(1), true); // folder
+  assert.equal(ui.collapseOrExpand(true), true);
+  assert.equal(ui.moveDocumentCursor(1), true); // first leaf
+  const firstId = rows[ui.selected]!.sessionId!;
+  const firstTitle = app.get(firstId)!.title!;
+  await ui.openSelected();
+  assert.ok(ui.detail!.join("\n").includes(firstId));
+  assert.ok(ui.detail!.join("\n").includes(firstTitle));
+
+  ui.detail = undefined;
+  assert.equal(ui.moveDocumentCursor(1), true); // second leaf
+  const secondId = rows[ui.selected]!.sessionId!;
+  const secondTitle = app.get(secondId)!.title!;
+  assert.notEqual(secondId, firstId);
+  assert.deepEqual(new Set([firstTitle, secondTitle]), new Set(["Same//title", "Same/title"]));
+  await ui.openSelected();
+  assert.ok(ui.detail!.join("\n").includes(secondId));
+  assert.ok(ui.detail!.join("\n").includes(secondTitle));
+});
+
+test("model summary counts use provider identity, not the selected marker", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-model-provider-count-"));
+  const { app, env } = await fixtureApp(root);
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, env);
+  await ui.initialize();
+  ui.provider = {
+    ...ui.provider!,
+    providerId: "fixture-provider",
+    models: [
+      { id: "model-one", name: "Model One" },
+      { id: "model-two", name: "Model Two" },
+    ],
+  };
+  ui.model = "model-one";
+  ui.choose("models");
+
+  const summary = ui.lines()[0]!;
+  assert.equal(summary, "MODELS, 2 available: 2 fixture-provider");
 });

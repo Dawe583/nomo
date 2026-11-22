@@ -35,6 +35,7 @@ import {
 import { moveHunk, setSide, toggleHunk } from "./diff-panel.ts";
 import { DiffScreenWriter } from "./watch.ts";
 import { sanitizeText } from "./layout.ts";
+import { withShortcutLegendBindings } from "./shortcuts.ts";
 import { nextRunActivityMode } from "./run-activity.ts";
 import { dataDir as productDataDir } from "../../../ledger/src/paths.ts";
 import { envValue } from "../../../ledger/src/env-compat.ts";
@@ -86,6 +87,45 @@ export function workspaceShortcut(
   if (action === "show-todos" && !editing) return "show-todos";
   if (key.name === "d" && (!editing || !input)) return "quit";
   return undefined;
+}
+
+export type WorkspacePanelAction =
+  | "complete"
+  | "mode"
+  | "next"
+  | "previous"
+  | "collapse"
+  | "expand";
+
+/** Resolve panel keys after higher-priority composer completion has had a turn. */
+export function workspacePanelAction(
+  key: Key,
+  editing: boolean,
+  completion: boolean,
+  group = false,
+): WorkspacePanelAction | undefined {
+  if (key.name === "tab")
+    return key.shift ? "mode" : completion ? "complete" : "next";
+  if (editing || (key.name !== "left" && key.name !== "right")) return;
+  if (group) return key.name === "left" ? "collapse" : "expand";
+  return key.name === "left" ? "previous" : "next";
+}
+export type WorkspaceListAction =
+  | "inspect"
+  | "clear-filter"
+  | "close-detail"
+  | "back";
+
+/** Preserve list actions while making Escape precedence explicit and testable. */
+export function workspaceListAction(
+  key: Key,
+  hasFilter: boolean,
+  hasDetail: boolean,
+): WorkspaceListAction | undefined {
+  if (key.name === "return" || key.name === "enter") return "inspect";
+  if (key.name !== "escape") return;
+  if (hasFilter) return "clear-filter";
+  return hasDetail ? "close-detail" : "back";
 }
 
 /** Two key chords with a short window, for readline native bindings the
@@ -144,6 +184,8 @@ export function nextPromptRow(
   if (direction === 1) return rows.find((row) => row > offset) ?? -1;
   return [...rows].reverse().find((row) => row < offset) ?? -1;
 }
+
+const promptGraphemes = new Intl.Segmenter(undefined, { granularity: "grapheme" });
 
 /** Bracketed paste never submits a message or an approval. */
 export class WorkspaceInput {
@@ -506,22 +548,28 @@ export class WorkspaceInput {
     }
     if (this.editKey(key)) return;
     const points = [...this.value];
-    if (key.name === "backspace") {
-      if (this.cursor) {
+    if (
+      key.name === "left" ||
+      key.name === "right" ||
+      key.name === "backspace" ||
+      key.name === "delete" ||
+      (key.ctrl && key.name === "d")
+    ) {
+      // Keep the public cursor in code points; Segmenter indexes UTF-16.
+      const backward = key.name === "left" || key.name === "backspace";
+      const offset = points.slice(0, this.cursor).join("").length;
+      const span = promptGraphemes.segment(this.value).containing(offset - Number(backward));
+      if (!span) return;
+      const start = [...this.value.slice(0, span.index)].length;
+      if (key.name === "left") this.cursor = start;
+      else if (key.name === "right") this.cursor = start + [...span.segment].length;
+      else {
         this.remember();
-        points.splice(--this.cursor, 1);
+        const end = span.index + span.segment.length;
+        this.value = this.value.slice(0, span.index) + this.value.slice(end);
+        this.cursor = start;
       }
-      this.value = points.join("");
-    } else if (key.name === "delete" || (key.ctrl && key.name === "d")) {
-      if (this.cursor < points.length) {
-        this.remember();
-        points.splice(this.cursor, 1);
-        this.value = points.join("");
-      }
-    } else if (key.name === "left") this.cursor = Math.max(0, this.cursor - 1);
-    else if (key.name === "right")
-      this.cursor = Math.min(points.length, this.cursor + 1);
-    else if (key.name === "home" || (key.ctrl && key.name === "a"))
+    } else if (key.name === "home" || (key.ctrl && key.name === "a"))
       this.cursor = 0;
     else if (key.name === "end" || (key.ctrl && key.name === "e"))
       this.cursor = points.length;
@@ -558,6 +606,7 @@ export async function runWorkspaceTui(
     projectPath: string | undefined;
   const skillIds: string[] = [];
   let tab: WorkspaceTab = "chat";
+  let policyView = false;
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if (arg === "--once") once = true;
@@ -581,7 +630,8 @@ export async function runWorkspaceTui(
       if (!value || value.startsWith("--"))
         throw Error(`${arg} requires a value`);
       if (arg === "--view") {
-        const selected = workspaceTab(value);
+        policyView = value === "policy";
+        const selected = workspaceTab(policyView ? "tools" : value);
         if (!selected) throw Error("Unknown TUI view");
         tab = selected;
       }
@@ -667,7 +717,8 @@ export async function runWorkspaceTui(
   if (selected && app.get(selected)) ui.sessionId = selected;
   if (saved?.model && ui.provider?.models.some((m) => m.id === saved.model))
     ui.model = saved.model;
-  ui.choose(tab);
+  if (policyView) await ui.command("/policy");
+  else ui.choose(tab);
   if (app.listProjects().some((item) => item.id === saved?.projectId))
     ui.projectId = saved?.projectId;
   if (app.agents().agents.some((item) => item.id === saved?.agentId))
@@ -745,24 +796,26 @@ export async function runWorkspaceTui(
   const draw = () => {
     if (!stopped && !suspended)
       screen.write(
-        renderWorkspace(
-          ui,
-          process.stdout.columns ?? 80,
-          process.stdout.rows ?? 24,
-          input.display(),
-          input.editing,
-          busy,
-          {
-            now: Date.now(),
-            color: ui.colorOverride ?? color,
-            motion: ui.motionOverride ?? motion,
-            frame: Math.floor((Date.now() - startedAt) / 140),
-            boot: motion && Date.now() - startedAt < 1800,
-            command: input.value,
-            suggestion,
-            cursor: input.cursor,
-            cellHeightPixels: Number(env.NOMO_TUI_CELL_HEIGHT_PX),
-          },
+        withShortcutLegendBindings(keybindings, () =>
+          renderWorkspace(
+            ui,
+            process.stdout.columns ?? 80,
+            process.stdout.rows ?? 24,
+            input.display(),
+            input.editing,
+            busy,
+            {
+              now: Date.now(),
+              color: ui.colorOverride ?? color,
+              motion: ui.motionOverride ?? motion,
+              frame: Math.floor((Date.now() - startedAt) / 140),
+              boot: motion && Date.now() - startedAt < 1800,
+              command: input.value,
+              suggestion,
+              cursor: input.cursor,
+              cellHeightPixels: Number(env.NOMO_TUI_CELL_HEIGHT_PX),
+            },
+          ),
         ),
       );
   };
@@ -916,13 +969,36 @@ export async function runWorkspaceTui(
     };
     const onKey = async (value: string | undefined, key: Key) => {
       if (stopped || suspended) return;
+      if (ui.themePicker || ui.palette || ui.showingCheatSheet) {
+        if (key.name === "paste-start") input.pasting = true;
+        if (input.pasting) {
+          if (key.name === "paste-end") input.pasting = false;
+          return;
+        }
+      }
+      if (
+        ui.handleThemePickerKey(
+          key.name === "escape" || (key.ctrl && key.name === "c")
+            ? "escape"
+            : key.ctrl || key.meta
+              ? undefined
+              : key.name,
+        )
+      ) {
+        lastEsc = 0;
+        lastCtrlC = 0;
+        draw();
+        return;
+      }
       // An open palette consumes every key except the ones it binds itself.
       // Letting the key fall through would move tabs or run a shortcut behind
       // a filter surface, which is how a search box starts deleting work.
       if (ui.palette) {
-        if (key.name === "escape") {
+        if (key.name === "escape" || (key.ctrl && key.name === "c")) {
           ui.palette = undefined;
           ui.notice = "Palette closed.";
+          lastEsc = 0;
+          lastCtrlC = 0;
           draw();
           return;
         }
@@ -930,6 +1006,7 @@ export async function runWorkspaceTui(
           const matches = filterPalette(
             paletteFromCommands(TUI_COMMANDS),
             ui.palette.query,
+            ui.palette.recent,
           );
           const picked = matches[ui.palette.selected];
           ui.palette = undefined;
@@ -938,14 +1015,26 @@ export async function runWorkspaceTui(
             draw();
             return;
           }
-          input.set(picked.id);
-          await task(() => ui.command(picked.id));
+          const previousTab = ui.tab;
+          await task(async () => {
+            await navigate(async () => {
+              const result = await ui.command(picked.id);
+              if (result === "quit") stop();
+              else if (result === "edit") await editor();
+              if (ui.tab !== previousTab || ui.detail)
+                input.editing = ui.tab === "chat" && !ui.detail;
+            });
+          });
           return;
         }
         if (key.name === "up" || key.name === "down") {
           ui.palette = advancePaletteSelection(
             ui.palette,
-            filterPalette(paletteFromCommands(TUI_COMMANDS), ui.palette.query),
+            filterPalette(
+              paletteFromCommands(TUI_COMMANDS),
+              ui.palette.query,
+              ui.palette.recent,
+            ),
             key.name === "down" ? 1 : -1,
           );
           draw();
@@ -1054,7 +1143,7 @@ export async function runWorkspaceTui(
           draw();
           return;
         }
-        if (key.name === "escape") {
+        if (key.name === "escape" || (key.ctrl && key.name === "c")) {
           ui.closeCheatSheet();
           draw();
           return;
@@ -1065,6 +1154,11 @@ export async function runWorkspaceTui(
           draw();
           return;
         }
+        if (key.name === "pageup" || key.name === "pagedown") {
+          ui.scrollPage(key.name === "pageup" ? -1 : 1);
+          draw();
+        }
+        return;
       }
       // ? is bound twice on purpose, and neither binding is here. One sits in
       // the composer path and fires only for a lone ? on an empty prompt,
@@ -1280,7 +1374,10 @@ export async function runWorkspaceTui(
         draw();
         return;
       }
-      if (!input.pasting && key.name === "tab" && key.shift) {
+      if (
+        !input.pasting &&
+        workspacePanelAction(key, input.editing, false) === "mode"
+      ) {
         ui.cycleMode();
         try {
           saveDraft();
@@ -1319,7 +1416,7 @@ export async function runWorkspaceTui(
       if (!input.pasting && key.meta && key.name === "p") {
         ui.choose("models");
         input.editing = false;
-        ui.notice = "Models. Enter picks the model for new conversations.";
+        ui.notice = "Enter inspects a model. /model ID sets the next conversation's model.";
         draw();
         return;
       }
@@ -1357,7 +1454,6 @@ export async function runWorkspaceTui(
         // must reach the model.
         if (!input.pasting && input.value === "" && value === "?") {
           ui.openCheatSheet();
-          input.editing = false;
           draw();
           return;
         }
@@ -1368,7 +1464,10 @@ export async function runWorkspaceTui(
           token === undefined
             ? []
             : mentionCandidates(token, ui.documentPaths());
-        if (mentions.length && key.name === "tab" && !key.shift) {
+        if (
+          mentions.length &&
+          workspacePanelAction(key, input.editing, true) === "complete"
+        ) {
           const pick = mentions[mentionIndex % mentions.length]!;
           const start = input.cursor - [...token!].length;
           input.replaceRange(start, [...token!].length, `${pick} `);
@@ -1384,7 +1483,8 @@ export async function runWorkspaceTui(
         const candidates = input.pasting ? [] : commandSuggestions(input.value);
         if (
           candidates.length &&
-          ["up", "down", "tab", "return", "enter"].includes(key.name ?? "")
+          (["up", "down", "return", "enter"].includes(key.name ?? "") ||
+            workspacePanelAction(key, input.editing, true) === "complete")
         ) {
           if (key.name === "up" || key.name === "down")
             suggestion =
@@ -1403,8 +1503,17 @@ export async function runWorkspaceTui(
         }
         if (
           !input.pasting &&
+          workspacePanelAction(key, input.editing, false) === "next"
+        ) {
+          ui.cycle(1);
+          input.editing = ui.tab === "chat";
+          draw();
+          return;
+        }
+        if (
+          !input.pasting &&
           (["up", "down"].includes(key.name ?? "") ||
-            (key.ctrl && (key.name === "p" || key.name === "n"))) &&
+            (key.ctrl && key.name === "n")) &&
           !input.value.includes("\n")
         ) {
           const history = (ui.session()?.events ?? [])
@@ -1413,7 +1522,7 @@ export async function runWorkspaceTui(
             .reverse();
           if (history.length) {
             if (historyIndex < 0) historyDraft = input.value;
-            const older = key.name === "up" || (key.ctrl && key.name === "p");
+            const older = key.name === "up";
             historyIndex = older
               ? Math.min(history.length - 1, historyIndex + 1)
               : Math.max(-1, historyIndex - 1);
@@ -1428,8 +1537,6 @@ export async function runWorkspaceTui(
           return;
         }
         const action = input.key(value, key);
-        suggestion = 0;
-        historyIndex = -1;
         if (input.pendingCommand !== undefined) {
           const command = input.pendingCommand;
           input.pendingCommand = undefined;
@@ -1437,6 +1544,8 @@ export async function runWorkspaceTui(
           draw();
           return;
         }
+        suggestion = 0;
+        historyIndex = -1;
         if (action === "submit") {
           const text = input.value;
           const plain =
@@ -1478,23 +1587,24 @@ export async function runWorkspaceTui(
         draw();
         return;
       }
-      if (key.name === "tab") {
-        ui.cycle(key.shift ? -1 : 1);
+      const panelAction = workspacePanelAction(key, input.editing, false);
+      const groupAction = workspacePanelAction(key, input.editing, false, true);
+      if (panelAction === "next" && key.name === "tab") {
+        ui.cycle(1);
         input.editing = ui.tab === "chat";
       } else if (
-        !input.pasting &&
-        (key.name === "right" || key.name === "left")
+        panelAction === "previous" ||
+        panelAction === "next"
       ) {
-        // Panels follow the reference: Right is next, Left is previous.
-        // In editing mode the same arrows move the cursor instead.
-        //
-        // The documents tab is the one exception: its arrows fold and unfold
-        // a folder, because switching panels while reading a tree is a much
-        // bigger jump than opening or closing one branch of it.
-        if (ui.collapseOrExpand(key.name === "right")) {
+        const isGroupAction =
+          groupAction === "collapse" || groupAction === "expand";
+        if (
+          isGroupAction &&
+          ui.collapseOrExpand(groupAction === "expand")
+        ) {
           draw();
         } else {
-          ui.cycle(key.name === "right" ? 1 : -1);
+          ui.cycle(panelAction === "next" ? 1 : -1);
           input.editing = ui.tab === "chat";
         }
       } else if (value === "q") {
@@ -1529,7 +1639,10 @@ export async function runWorkspaceTui(
       else if (value === "?") ui.openCheatSheet();
       else if (key.name === "escape") {
         // An active filter clears first, before details or checkpoints.
-        if (ui.filter) {
+        if (
+          workspaceListAction(key, Boolean(ui.filter), ui.detail !== undefined) ===
+          "clear-filter"
+        ) {
           ui.filter = "";
           ui.selected = 0;
           lastEsc = 0;
@@ -1559,9 +1672,12 @@ export async function runWorkspaceTui(
           ui.scroll = 0;
           if (closingChatDetail) ui.notice = "Returned to Chat.";
         }
-      } else if (key.name === "return")
+      } else if (
+        workspaceListAction(key, Boolean(ui.filter), ui.detail !== undefined) ===
+        "inspect"
+      ) {
         void task(() => navigate(() => ui.openSelected()));
-      else if (key.name === "pageup") ui.scrollPage(-1);
+      } else if (key.name === "pageup") ui.scrollPage(-1);
       else if (key.name === "pagedown") ui.scrollPage(1);
       else if (value === "{" || value === "}") {
         const target = nextPromptRow(

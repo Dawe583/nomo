@@ -44,6 +44,8 @@ import {
   stripAnsi,
   unifiedDiff,
 } from "./layout.ts";
+import { flattenTree } from "./widgets.ts";
+import { documentLeafId } from "./session-tree.ts";
 
 test("Ctrl+P requests the command palette through the input, not a submit", () => {
   const input = new WorkspaceInput();
@@ -64,6 +66,9 @@ test("command palette opens a live filter over the real command list", async (t)
     await rm(root, { recursive: true, force: true });
   });
   const ui = new WorkspaceTui(app);
+  ui.choose("ledger");
+  ui.detail = ["Open ledger inspector"];
+  ui.scroll = 3;
   // The palette is an overlay with its own state, not a printed reference.
   // Asserting on the state rather than on rendered text is what makes the
   // fuzzy filter testable without a terminal.
@@ -76,7 +81,9 @@ test("command palette opens a live filter over the real command list", async (t)
   if (!opened) throw Error("opening the palette must set its state");
   assert.equal(opened.query, "", "it starts unfiltered");
   assert.equal(opened.selected, 0, "the first row starts selected");
-  assert.equal(ui.detail, undefined, "the underlying detail view is replaced");
+  assert.deepEqual(ui.detail, ["Open ledger inspector"]);
+  assert.equal(ui.tab, "ledger");
+  assert.equal(ui.scroll, 3);
   // Every registered command must be reachable, so the source of truth stays
   // TUI_COMMANDS rather than a second list that can drift.
   const items = filterPalette(paletteFromCommands(TUI_COMMANDS), opened.query);
@@ -166,6 +173,35 @@ test("palette keeps selected commands visible across color modes", async (t) => 
   }
 
   assert.deepEqual(visualFailures, []);
+});
+
+test("short palette keeps a late keyboard selection visible on resize", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-palette-resize-"));
+  const app = new Workbench({ NOMO_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
+  await ui.command("/command-palette");
+  const palette = ui.palette;
+  assert.ok(palette);
+  const matches = filterPalette(
+    paletteFromCommands(TUI_COMMANDS),
+    palette.query,
+    palette.recent,
+  );
+  const selected = palette.visible - 1;
+  const item = matches[selected];
+  assert.ok(item);
+  ui.palette = { ...palette, selected };
+  for (const [width, height] of [[80, 24], [60, 12], [40, 12], [80, 24]] as const) {
+    const frame = stripAnsi(renderWorkspace(ui, width, height));
+    assert.ok(
+      frame.includes(`> ${item.icon} ${item.id}`),
+      `${width}x${height} hides the action Enter would run: ${item.id}`,
+    );
+  }
 });
 
 test("keybindings preserves direct notices and clears palette-only guidance", async (t) => {
@@ -393,6 +429,10 @@ test("composer pixel target maps to terminal cells with a stable fallback", () =
   assert.equal(composerContentRows(123, 24), 3);
   assert.equal(composerContentRows(123, 48), 1);
   assert.equal(composerContentRows(123, Number.NaN), 3);
+  assert.equal(composerContentRows(185), 5);
+  assert.equal(composerContentRows(185, 24), 5);
+  assert.equal(composerContentRows(185, 48), 1);
+  assert.equal(composerContentRows(185, Number.NaN), 5);
 });
 
 test("multiline editing moves across Unicode lines and deletes words without touching other lines", () => {
@@ -467,9 +507,9 @@ test("Claude style management aliases open real NOMO views", async (t) => {
   await ui.command("/context");
   assert.equal(ui.tab, "documents");
   await ui.command("/permissions");
-  assert.equal(ui.tab, "policy");
+  assert.ok(ui.showingPolicy);
   await ui.command("/mcp");
-  assert.equal(ui.tab, "policy");
+  assert.ok(ui.showingPolicy);
   await ui.command("/clear");
   assert.equal(ui.tab, "chat");
   assert.equal(ui.sessionId, undefined);
@@ -948,7 +988,7 @@ test("compact confirmation preview and decisions stay visible at 40x12", async (
     assert.ok(text.includes("fixture-model"));
     assert.ok(text.includes("mode: normal (local only, not enforced)"));
     assert.ok(text.includes("ctx ?"));
-    assert.ok(text.includes("Enter details"));
+    assert.doesNotMatch(text, /Tab panels|Enter details/);
     assert.equal(frame.split("\n").length, 12);
     assert.ok(frame.split("\n").every((line) => visibleLength(line) <= 40));
     assert.equal(frame.includes("\x1b["), color);
@@ -992,8 +1032,7 @@ test("compact confirmation exposes PageDown scrolling in the existing preview", 
     assert.ok(text.includes("fixture-model"));
     assert.ok(text.includes("mode: normal (local only, not enforced)"));
     assert.ok(text.includes("ctx ?"));
-    assert.ok(text.includes("⇥ Tab panels"));
-    assert.ok(text.includes("Enter details"));
+    assert.doesNotMatch(text, /Tab panels|Enter details/);
     assert.equal(rows.length, 12);
     assert.ok(rows.every((row) => visibleLength(row) <= 40));
     assert.equal(frame.includes("\x1b["), color);
@@ -1062,7 +1101,7 @@ test("status dock keeps full authority and context at narrow sizes", async (t) =
         );
       }
       assert.ok(
-        text.includes("⇥ Tab panels"),
+        text.includes("Tab panels"),
         `${width}x${height} loses panel navigation hint`,
       );
       assert.equal(
@@ -1227,7 +1266,7 @@ test("status and activity dock render beneath the composer across sizes", async 
       height - 1,
       `${width}x${height} activity is not the bottom rail`,
     );
-    assert.ok(lines.some((line) => line.includes("⇥ Tab panels")));
+    assert.ok(lines.some((line) => line.includes("Tab panels")));
     assert.equal(
       lines.some((line) => line.includes("Enter open/details")),
       !spacious,
@@ -1386,7 +1425,7 @@ test("empty workspace views center the existing placeholder in the body", async 
           row.includes("No entries yet."),
         );
         const panelsHint = rows.findIndex((row) =>
-          row.includes("⇥ Tab panels"),
+          row.includes("Tab panels"),
         );
 
         assert.ok(bodyStart > 0, `${tab} ${width}x${height} loses its header`);
@@ -1424,7 +1463,7 @@ test("settings and theme controls render under the NOMO shell", async (t) => {
   });
   const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
   ui.choose("chat");
-  assert.equal(ui.localSettings().chatComposerHeightPx, 123);
+  assert.equal(ui.localSettings().chatComposerHeightPx, 185);
   ui.applySavedSettings({ chatComposerHeightPx: 144 });
   assert.equal(ui.localSettings().chatComposerHeightPx, 144);
   const envSizedUi = new WorkspaceTui(app, {
@@ -1482,9 +1521,76 @@ test("settings and theme controls render under the NOMO shell", async (t) => {
   );
   assert.ok(theme.includes("NOMO_TUI_THEME"));
 });
+test("document tree selection keeps preview and Enter on the highlighted session document", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-document-tree-"));
+  const app = new Workbench({ NOMO_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const documents = [
+    {
+      sessionId: "session-a",
+      path: "notes/shared.md",
+      content: "SESSION-A-CONTENT",
+      bytes: 17,
+      revision: "revision-a",
+    },
+    {
+      sessionId: "session-b",
+      path: "notes/shared.md",
+      content: "SESSION-B-CONTENT",
+      bytes: 17,
+      revision: "revision-b",
+    },
+  ];
+  t.mock.method(app, "documentsList", () => documents);
+  t.mock.method(app, "document", (sessionId: string, path: string) =>
+    documents.find((document) => document.sessionId === sessionId && document.path === path),
+  );
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
+  ui.choose("documents");
+  const rows = ui.items();
+  const targetIndex = rows.findIndex((row) => row.sessionId === "session-b");
+  assert.notEqual(targetIndex, -1);
+
+  const tree = ui.groupTree!;
+  const visible = flattenTree(tree.nodes, tree.state);
+  const targetTreeIndex = visible.findIndex(
+    (node) => node.id === documentLeafId(rows[targetIndex]!.id),
+  );
+  assert.notEqual(targetTreeIndex, -1);
+  const delta =
+    (targetTreeIndex - tree.state.cursor + visible.length) % visible.length;
+  assert.equal(ui.moveDocumentCursor(delta), true);
+
+  const highlighted = flattenTree(tree.nodes, tree.state)[tree.state.cursor];
+
+  assert.equal(highlighted?.id, documentLeafId(rows[targetIndex]!.id));
+  assert.equal(ui.selected, targetIndex);
+  assert.equal(Boolean(ui.detail), false, "preview does not take focus away from the tree");
+  assert.match(ui.lines().join("\n"), /SESSION-B-CONTENT/);
+  await ui.openSelected();
+  assert.match(ui.detail?.join("\n") ?? "", /"sessionId": "session-b"/);
+});
+
 test("TUI text wrapping prefers words and hard-wraps long tokens", () => {
   assert.deepEqual(wrap(["alpha beta"], 7), ["alpha", "beta"]);
   assert.deepEqual(wrap(["abcdefghij"], 4), ["abcd", "efgh", "ij"]);
+});
+
+test("assistant Markdown reveals hierarchy without rewriting the user's text", () => {
+  const text = "- [x] **Read** `ledger`\n> Evidence\n[Guide](https://example.invalid)";
+  const base = { at: "2026-09-14T10:00:00Z", text };
+  const rows = chatRows([
+    { ...base, seq: 1, kind: "assistant" },
+    { ...base, seq: 2, kind: "user" },
+  ], 60);
+  assert.ok(rows.some((row) => row.text === "✓ Read ledger"));
+  assert.ok(rows.some((row) => row.text === "│ Evidence"));
+  assert.ok(rows.some((row) => row.text === "Guide <https://example.invalid>"));
+  assert.ok(rows.some((row) => row.style === "user" && row.text === "- [x] **Read** `ledger`"));
+  assert.ok(rows.every((row) => visibleLength(row.text) <= 60));
 });
 
 test("chat presentation preserves code, sanitizes escapes, and distinguishes event roles", async () => {
@@ -1735,7 +1841,7 @@ test("streaming code remains visible in a one-row chat viewport", async (t) => {
   assert.ok(text.includes("console.log(42);"));
   assert.ok(text.includes("Writing response"));
   assert.ok(
-    text.includes("⇥ Tab panels"),
+    text.includes("Tab panels"),
     "running 40x12 chat hides tab navigation",
   );
   assert.ok(
@@ -1956,6 +2062,104 @@ test("A2 approval banner names the hold and its keys, and counts the rest", () =
   );
   assert.match(two[0]!, /\(\+1 more/);
 });
+test("approval banner leads with the highest-severity pending hold", () => {
+  const lines = approvalBannerLines(
+    [
+      {
+        holdId: "low-risk",
+        status: "pending",
+        expiresAt: 1_000,
+        call: { tool: "read.item", klass: "r0", blastRadius: 0 },
+      },
+      {
+        holdId: "high-risk",
+        status: "pending",
+        expiresAt: 2_000,
+        call: { tool: "delete.workspace", klass: "r3", blastRadius: 3 },
+      },
+    ],
+    120,
+  );
+  assert.match(lines[0]!, /delete\.workspace high-ri/);
+
+  const sameSeverity = approvalBannerLines(
+    [
+      {
+        holdId: "later",
+        status: "pending",
+        expiresAt: 2_000,
+        call: { tool: "later.expiry", klass: "r2", blastRadius: 2 },
+      },
+      {
+        holdId: "sooner",
+        status: "pending",
+        expiresAt: 1_000,
+        call: { tool: "sooner.expiry", klass: "r2", blastRadius: 2 },
+      },
+    ],
+    120,
+  );
+  assert.match(sameSeverity[0]!, /sooner\.expiry sooner/);
+});
+test("approval list and banner share urgency across local and proxy holds", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-approval-order-"));
+  const app = new Workbench({ NOMO_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
+  const localHolds = [
+    {
+      holdId: "localR2L",
+      status: "pending",
+      expiresAt: 4_000,
+      call: { tool: "local.late", klass: "r2", blastRadius: 2 },
+    },
+    {
+      holdId: "localR2S",
+      status: "pending",
+      expiresAt: 2_000,
+      call: { tool: "local.soon", klass: "r2", blastRadius: 2 },
+    },
+    {
+      holdId: "localR3",
+      status: "pending",
+      expiresAt: 5_000,
+      call: { tool: "local.urgent", klass: "r3", blastRadius: 3 },
+    },
+  ];
+  t.mock.method(app, "approvals", () => localHolds);
+  t.mock.method(app, "pending", () => localHolds);
+  ui.proxy.holds = [
+    {
+      holdId: "proxyR2",
+      call: {
+        tool: "proxy.soon",
+        connector: "fixture",
+        workspace: undefined,
+        klass: "r2",
+        blastRadius: 2,
+      },
+      expiresAt: 2_000,
+      status: "pending",
+      notify: ["cli"],
+    },
+  ];
+  ui.choose("approvals");
+
+  assert.deepEqual(
+    ui.items().map((row) => row.id),
+    ["localR3", "localR2S", "proxy:proxyR2", "localR2L"],
+  );
+  assert.match(stripAnsi(renderWorkspace(ui, 120, 32)), /localR3/);
+  localHolds.splice(0, 1);
+  localHolds.splice(1, 1);
+  const tiedSources = stripAnsi(renderWorkspace(ui, 120, 32));
+  assert.match(tiedSources, /local\.soon localR2S/);
+});
+
+
 
 test("A2 banner sanitizes hostile tool ids", () => {
   const lines = approvalBannerLines(
@@ -2350,4 +2554,322 @@ test("A1 hunk toggle flips scope and the suffix rides with the decision", async 
   };
   ui.toggleHunk(0);
   assert.match(ui.notice, /no diff hunks/);
+});
+test("Ledger empty state reflects actual verified count at 100x32", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-ledger-empty-"));
+  const app = new Workbench({ NOMO_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
+  await ui.initialize();
+  ui.choose("ledger");
+
+  const frame = stripAnsi(renderWorkspace(ui, 100, 32));
+  assert.match(frame, /No entries yet\./);
+  assert.doesNotMatch(frame, /All \d+ entries verified against the managed chain\./);
+  assert.equal(frame.split("\n").length, 32);
+});
+test("Ledger empty state preserves helper rows without counting them as verified", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-ledger-helper-rows-"));
+  const app = new Workbench({ NOMO_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
+  await ui.initialize();
+  ui.choose("ledger");
+
+  const rows = ui.items();
+  const auxiliaryRows = rows.filter((row) =>
+    [
+      "ledger:verification",
+      "learned:none",
+      "harness:scores",
+      "harness:current",
+      "hook:none",
+    ].includes(row.id) || row.id.startsWith("agent:"),
+  );
+  assert.equal(rows.filter((row) => row.id.startsWith("agent:")).length, 4);
+  for (const id of [
+    "ledger:verification",
+    "learned:none",
+    "harness:scores",
+    "harness:current",
+    "hook:none",
+  ]) {
+    assert.ok(auxiliaryRows.some((row) => row.id === id), `${id} exists`);
+  }
+  const lines = ui.lines();
+  assert.ok(lines.includes("No entries yet."));
+  for (const row of auxiliaryRows)
+    assert.ok(
+      lines.some((line) => line.includes(row.label)),
+      `${row.id} remains visible`,
+    );
+  assert.doesNotMatch(
+    lines.join("\n"),
+    /All \d+ entries verified against the managed chain\./,
+  );
+  const frame = stripAnsi(renderWorkspace(ui, 100, 32));
+  assert.match(frame, /No entries yet\./);
+  assert.doesNotMatch(frame, /All \d+ entries verified against the managed chain\./);
+});
+test("proxy and Workbench hold deadlines use structured expiry in summary", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-hold-deadlines-"));
+  const app = new Workbench({ NOMO_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const now = 1_000_000;
+  t.mock.method(Date, "now", () => now);
+  const localHolds = [
+    {
+      holdId: "local-later",
+      status: "pending",
+      expiresAt: now + 90_000,
+      call: { tool: "local.read", klass: "r1", blastRadius: 1 },
+    },
+  ];
+  t.mock.method(app, "approvals", () => localHolds);
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
+  ui.proxy.holds = [
+    {
+      holdId: "proxy-sooner",
+      call: {
+        tool: "proxy.write",
+        connector: "fixture",
+        workspace: undefined,
+        klass: "r2",
+        blastRadius: 2,
+      },
+      expiresAt: now + 60_000,
+      status: "pending",
+      notify: ["cli"],
+    },
+  ];
+  ui.choose("approvals");
+
+  assert.match(ui.lines().join("\n"), /soonest deadline: 60s/);
+});
+test("40x16 keeps selected content visible and Enter reaches its detail", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-selected-40x16-"));
+  const app = new Workbench({ NOMO_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const now = 1_000_000;
+  t.mock.method(Date, "now", () => now);
+  const session = {
+    id: "selected-session",
+    title: "Selected session",
+    model: "fixture-model",
+    status: "idle",
+    archived: false,
+    events: [
+      {
+        seq: 1,
+        at: new Date(now).toISOString(),
+        kind: "usage",
+        payload: { total_tokens: 987, prompt_tokens: 600, completion_tokens: 387 },
+      },
+    ],
+  };
+  t.mock.method(app, "allViews", () => [session]);
+  t.mock.method(app, "get", (id: string) =>
+    id === session.id ? session : undefined,
+  );
+  t.mock.method(app, "documentsList", () => [
+    {
+      sessionId: session.id,
+      path: "notes/selected.md",
+      bytes: 7,
+      revision: "revision-1",
+      workspace: {},
+    },
+  ]);
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
+  const frame = () => stripAnsi(renderWorkspace(ui, 40, 16));
+
+  const holdId = "proxy-hold-40x16";
+  const proxyTool = "proxy.critical.write";
+  ui.proxy.holds = [
+    {
+      holdId,
+      call: {
+        tool: proxyTool,
+        connector: "fixture",
+        workspace: undefined,
+        klass: "r2",
+        blastRadius: 2,
+      },
+      expiresAt: now + 60_000,
+      status: "pending",
+      notify: ["cli"],
+    },
+  ];
+  ui.choose("approvals");
+  const approvalRow = ui.items().findIndex((row) => row.id === `proxy:${holdId}`);
+  assert.notEqual(approvalRow, -1);
+  ui.selected = approvalRow;
+  let rendered = frame();
+  assert.match(rendered, /APPROVAL PENDING/);
+  assert.ok(rendered.includes(proxyTool));
+  assert.ok(rendered.includes(holdId));
+  assert.match(rendered, /Enter inspect \/ a approve \/ d deny/);
+  assert.equal(rendered.split("\n").length, 16);
+  await ui.openSelected();
+  assert.ok(ui.detail?.some((line) => line.includes(proxyTool)));
+  assert.ok(ui.detail?.some((line) => line.includes(holdId)));
+
+  ui.choose("ledger");
+  ui.proofs.set("ledger-session", [
+    {
+      seq: 1,
+      body: { klass: "r1", decision: "allow", tool: "ledger-selected-tool" },
+    } as never,
+  ]);
+  const ledgerRow = ui.items().findIndex((row) => row.id === "ledger-session:1");
+  assert.notEqual(ledgerRow, -1);
+  ui.selected = ledgerRow;
+  rendered = frame();
+  assert.ok(rendered.includes("ledger-selected-tool"));
+  await ui.openSelected();
+  assert.match(ui.detail?.join("\n") ?? "", /tool\s*:\s*ledger-selected-tool/);
+
+  ui.choose("tools");
+  const selectedTool = ui.items()[0]!;
+  const toolName = selectedTool.label.split(" ")[2]!;
+  rendered = frame();
+  assert.ok(rendered.includes(toolName));
+  await ui.openSelected();
+  assert.ok(ui.detail?.some((line) => line.includes(toolName)));
+
+  ui.choose("usage");
+  assert.ok(ui.items().length > 0);
+  rendered = frame();
+  assert.ok(rendered.includes("tokens 987"));
+  await ui.openSelected();
+  assert.ok(ui.detail?.some((line) => line.includes("987")));
+
+  ui.choose("sessions");
+  rendered = frame();
+  assert.ok(rendered.includes("Selected session"));
+  ui.choose("documents");
+  rendered = frame();
+  assert.match(rendered, /notes\/[\s\S]*selected\.md/);
+  ui.provider = {
+    providerId: "fixture",
+    models: [{ id: "selected-model", name: "Selected model" }],
+  } as never;
+  ui.model = "selected-model";
+  ui.choose("models");
+  rendered = frame();
+  assert.ok(rendered.includes("Selected model"));
+});
+test("compact list viewport follows the selected rendered item", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-compact-list-viewport-"));
+  const app = new Workbench({ NOMO_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+
+  const tools = [
+    {
+      id: "tool-r2-zulu",
+      name: "nomo_zulu",
+      klass: "R2",
+      source: "fixture",
+      description: "Fixture tool",
+      capturedUndo: false,
+      inputSchema: { type: "object", properties: { value: { type: "string" } } },
+    },
+    {
+      id: "tool-r0-zulu",
+      name: "nomo_echo",
+      klass: "R0",
+      source: "fixture",
+      description: "Fixture tool",
+      capturedUndo: false,
+      inputSchema: { type: "object", properties: { value: { type: "string" } } },
+    },
+    {
+      id: "tool-r1-charlie",
+      name: "nomo_charlie",
+      klass: "R1",
+      source: "fixture",
+      description: "Fixture tool",
+      capturedUndo: false,
+      inputSchema: { type: "object", properties: { value: { type: "string" } } },
+    },
+    {
+      id: "tool-r0-alpha",
+      name: "nomo_alpha",
+      klass: "R0",
+      source: "fixture",
+      description: "Fixture tool",
+      capturedUndo: false,
+      inputSchema: { type: "object", properties: { value: { type: "string" } } },
+    },
+  ] as never;
+  t.mock.method(app, "availableTools", () => ({ tools }) as never);
+
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
+  const sizes = [
+    [40, 12],
+    [60, 16],
+    [80, 24],
+  ] as const;
+  const assertSelectedVisible = (
+    label: string,
+    columns: number,
+    rows: number,
+  ) => {
+    const selectedItem = ui.items()[ui.selected]!;
+    assert.ok(
+      selectedItem.label.includes(label),
+      `${label} belongs to the actual selected item`,
+    );
+    const rendered = stripAnsi(renderWorkspace(ui, columns, rows));
+    assert.ok(rendered.includes("▸ "), `${columns}x${rows} shows its cursor`);
+    assert.ok(
+      rendered.includes(label),
+      `${columns}x${rows} shows the selected ${label} label`,
+    );
+  };
+
+  ui.choose("tools");
+  const toolsInDisplayOrder = ui.items();
+  assert.deepEqual(
+    toolsInDisplayOrder.map((item) => item.id),
+    ["tool-r0-alpha", "tool-r0-zulu", "tool-r1-charlie", "tool-r2-zulu"],
+  );
+  ui.selected = toolsInDisplayOrder.length - 1;
+  for (const [columns, rows] of sizes)
+    assertSelectedVisible("nomo_zulu", columns, rows);
+  await ui.openSelected();
+  assert.ok(ui.detail?.some((line) => line.includes("nomo_zulu")));
+
+  ui.proofs.set(
+    "ledger-session",
+    Array.from({ length: 9 }, (_, index) => ({
+      seq: index + 1,
+      body: {
+        klass: "r1",
+        decision: "allow",
+        tool: `ledger-selected-tool-${index + 1}`,
+      },
+    })) as never,
+  );
+  ui.choose("ledger");
+  const ledgerRow = ui.items().findIndex((item) => item.id === "ledger-session:9");
+  assert.notEqual(ledgerRow, -1, "the ninth ledger row remains selectable");
+  ui.selected = ledgerRow;
+  for (const [columns, rows] of sizes)
+    assertSelectedVisible("ledger-selected-tool-9", columns, rows);
 });
