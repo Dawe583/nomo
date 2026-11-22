@@ -65,8 +65,8 @@ import { isOwner, OPERATOR_OWNER } from "./owner.mjs";
  * The other five section 5 names are absent here on purpose, and each absence is
  * a different reason rather than an oversight:
  *
- * - `apps/control-plane` and SSO do not exist in this tree, so there is nothing
- *   to serve conditionally.
+ * - `apps/control-plane` exists as a closed directory, not as an entitlement
+ *   in this capability set. SSO does not exist in this tree.
  * - Multiple workspaces do not exist either, for the same reason.
  * - Irreversibility budgets live in `packages/runtime/src/budget.ts`, an open
  *   package, so gating them would be a feature flag inside Apache 2.0 code
