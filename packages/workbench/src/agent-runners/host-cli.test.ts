@@ -14,16 +14,19 @@
  * provider request and is therefore opt-in.
  */
 import assert from "node:assert/strict";
+import { Buffer } from "node:buffer";
 import { chmod, mkdtemp, mkdir, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 import {
+  HOST_CLI_ENV_ALLOWLIST,
   HOST_CLI_LIMITS,
   HOST_CLI_PROVIDERS,
   HostCliRunner,
   hostCliArguments,
   hostCliEnvironment,
+  hostRunMetrics,
   parseHostCliLine,
   probeHostCli,
   resetHostCliProbeCache,
@@ -567,6 +570,361 @@ test("the binary resolver only accepts absolute PATH entries", async (t) => {
   assert.equal(await resolveHostBinary("prime-agent", { PATH: f.bin }), script);
   assert.equal(await resolveHostBinary("prime-agent", { PATH: "bin" }), undefined);
   assert.equal(await resolveHostBinary("missing-host", { PATH: f.bin }), undefined);
+  // An empty PATH segment would otherwise mean "the current directory", which
+  // is exactly the lookup this resolver must never perform.
+  assert.equal(await resolveHostBinary("prime-agent", { PATH: `:${f.bin}` }), script);
+  const directory = join(f.root, "not-a-file");
+  await mkdir(join(directory, "prime-agent"), { recursive: true });
+  assert.equal(await resolveHostBinary("prime-agent", { PATH: directory }), undefined);
+});
+
+/** One host run through a fresh fixture host, returning its events. */
+async function runWith(
+  f: Awaited<ReturnType<typeof fixture>>,
+  host: HostCliId,
+  task: string,
+  extra: { readonly timeoutMs?: number } = {},
+): Promise<AgentRunEvent[]> {
+  const runner = runnerFor(host, f.env, f.cwd, extra);
+  const run = await runner.start({
+    task,
+    systemPrompt: SYSTEM_PROMPT,
+    workspace: WORKSPACE,
+    tools: [],
+    signal: new AbortController().signal,
+  });
+  return collect(run);
+}
+
+test("the child environment is exactly the allowlist even when the caller widens it", async (t) => {
+  const f = await fixture(t);
+  await f.script(
+    "prime-agent",
+    [
+      "env > \"$HOME/child-env.txt\"",
+      `printf '%s\\n' ${JSON.stringify(
+        json({
+          type: "message_end",
+          message: {
+            role: "assistant",
+            content: [{ type: "text", text: "Ready." }],
+            stopReason: "end_turn",
+          },
+        }),
+      )}`,
+    ].join("\n"),
+  );
+  const runner = new HostCliRunner({
+    host: "prime-agent",
+    env: {
+      ...f.env,
+      // Every one of these is a value a profile, a config file or a caller
+      // could try to smuggle in; none may become a host environment variable.
+      NOMO_PROFILE_EXTRA: "1",
+      HOST_ENV_EXTRA: "1",
+      NODE_OPTIONS: "--require /tmp/inject.js",
+      ANTHROPIC_API_KEY: "sk-ant-fixture-provider",
+      CLAUDE_CODE_OAUTH_TOKEN: "fixture-oauth",
+      GITHUB_TOKEN: "ghp_fixturefixturefixturefixture",
+    },
+    cwd: f.cwd,
+  });
+  const events = await collect(
+    await runner.start({
+      task: "Check the environment",
+      systemPrompt: SYSTEM_PROMPT,
+      workspace: WORKSPACE,
+      tools: [],
+      signal: new AbortController().signal,
+    }),
+  );
+  assert.equal(terminal(events).status, "completed");
+  const childEnv = await readFile(join(f.home, "child-env.txt"), "utf8");
+  const names = childEnv
+    .split("\n")
+    .filter((line) => line.length > 0)
+    .map((line) => line.slice(0, line.indexOf("=")));
+  // `/bin/sh` adds PWD, SHLVL and `_` to its own environment; everything else
+  // must come from the allowlist NOMO hands the child.
+  const shellAdded = new Set(["PWD", "SHLVL", "_"]);
+  assert.deepEqual(
+    names.filter((name) => !shellAdded.has(name)).sort(),
+    // The fixture supplies PATH, HOME and TMPDIR; NOMO adds NO_COLOR. Nothing
+    // else from the caller's object may appear.
+    ["HOME", "NO_COLOR", "PATH", "TMPDIR"],
+    "the host child receives the allowlist and nothing else",
+  );
+  assert.deepEqual(
+    names.filter((name) => !HOST_CLI_ENV_ALLOWLIST.includes(name as never) && name !== "NO_COLOR").sort(),
+    ["PWD", "SHLVL", "_"],
+    "the only extra names are the ones the fixture shell adds itself",
+  );
+  assert.ok(!childEnv.includes("sk-ant-fixture-provider"));
+  assert.ok(!childEnv.includes("fixture-oauth"));
+});
+
+test("a host-supplied event name cannot carry a token into a terminal message", async (t) => {
+  const f = await fixture(t);
+  const token = "sk-ant-abcdefghijklmnopqrst";
+  // The event name is the part NOMO quotes back in its terminal message, so a
+  // host that puts a credential there must not see it echoed.
+  await f.script(
+    "prime-agent",
+    `printf '%s\\n' ${JSON.stringify(json({ type: `permission_${token}` }))}`,
+  );
+  const events = await runWith(f, "prime-agent", "Ask permission");
+  const end = terminal(events);
+  assert.equal(end.status, "failed");
+  assert.ok(
+    !JSON.stringify(events).includes(token),
+    "a host-authored event name must never carry a credential into an event",
+  );
+  assert.ok(
+    JSON.stringify(events).includes("[redacted]"),
+    "the credential-shaped name must be marked as redacted",
+  );
+});
+
+test("a host echo of a token-bearing prompt is masked before it becomes an event", async (t) => {
+  const f = await fixture(t);
+  const token = "sk-ant-fixture-echoed-token";
+  await f.script(
+    "prime-agent",
+    `printf '%s\\n' ${JSON.stringify(
+      json({
+        type: "message_end",
+        message: {
+          role: "assistant",
+          content: [{ type: "text", text: `The token is ${token}.` }],
+          stopReason: "end_turn",
+        },
+      }),
+    )}`,
+  );
+  const events = await runWith(f, "prime-agent", `Repeat ${token}`);
+  assert.equal(terminal(events).status, "completed");
+  assert.ok(!JSON.stringify(events).includes(token));
+  assert.ok(
+    JSON.stringify(events).includes("[redacted]"),
+    "the token-shaped run must be marked as redacted, not silently dropped",
+  );
+});
+
+test("host run metrics are real measurements of the run that produced them", async (t) => {
+  const f = await fixture(t);
+  await f.script(
+    "prime-agent",
+    [
+      "printf '%s\\n' 'not json' 1>&2",
+      `printf '%s\\n' ${JSON.stringify(json({ type: "message_start" }))}`,
+      "sleep 0.05",
+      `printf '%s\\n' ${JSON.stringify(
+        json({
+          type: "message_end",
+          message: {
+            role: "assistant",
+            content: [{ type: "text", text: "Measured." }],
+            stopReason: "end_turn",
+          },
+        }),
+      )}`,
+    ].join("\n"),
+  );
+  const runner = runnerFor("prime-agent", f.env, f.cwd);
+  const run = await runner.start({
+    task: "Measure",
+    systemPrompt: SYSTEM_PROMPT,
+    workspace: WORKSPACE,
+    tools: [],
+    signal: new AbortController().signal,
+  });
+  const events = await collect(run);
+  assert.equal(terminal(events).status, "completed");
+
+  const metrics = runner.metricsForRun(run.id);
+  assert.ok(metrics, "a finished run must report its metrics");
+  assert.equal(metrics.runId, run.id);
+  assert.equal(metrics.host, "prime-agent");
+  assert.equal(metrics.terminalStatus, "completed");
+  assert.equal(metrics.exitCode, 0);
+  assert.equal(metrics.signal, null);
+  assert.equal(metrics.timedOut, false);
+  assert.equal(metrics.aborted, false);
+  assert.equal(metrics.spawnFailed, false);
+  assert.equal(metrics.outputExceeded, false);
+  assert.ok(Number.isSafeInteger(metrics.spawnedAt));
+  assert.ok(metrics.closedAt >= metrics.spawnedAt);
+  assert.ok(metrics.durationMs >= 50, "the 50ms host pause must be measured");
+  assert.ok(metrics.firstByteAt !== null);
+  assert.ok(metrics.firstByteLatencyMs !== null);
+  assert.ok(metrics.firstByteLatencyMs >= 0);
+  assert.ok(
+    metrics.firstByteLatencyMs <= metrics.durationMs,
+    "first output cannot follow the end of the run",
+  );
+  assert.ok(metrics.stdoutBytes > 0);
+  assert.ok(metrics.stderrBytes > 0, "stderr is counted even though it is discarded");
+  assert.equal(metrics.lines, 2);
+  assert.equal(metrics.events.assistantMessages, 1);
+  assert.equal(metrics.events.ignored, 1);
+  assert.equal(metrics.events.toolEvents, 0);
+  assert.equal(metrics.events.resultEvents, 0);
+  assert.equal(metrics.events.unmappable, 0);
+  assert.equal(metrics.assistantBytes, Buffer.byteLength("Measured.", "utf8"));
+
+  // The generic accessor a Workbench session uses, and the honest answer for a
+  // run id this runner never started.
+  assert.deepEqual(hostRunMetrics(runner, run.id), metrics);
+  assert.equal(runner.metricsForRun("never-started"), undefined);
+  assert.equal(hostRunMetrics(new HostCliRunner({ host: "claude" }), run.id), undefined);
+});
+
+test("metrics stay bounded when many runs finish on one runner", async (t) => {
+  const f = await fixture(t);
+  await f.script("prime-agent", "exit 0");
+  const runner = runnerFor("prime-agent", f.env, f.cwd);
+  const ids: string[] = [];
+  for (let index = 0; index < 40; index++) {
+    const run = await runner.start({
+      task: `Run ${index}`,
+      systemPrompt: SYSTEM_PROMPT,
+      workspace: WORKSPACE,
+      tools: [],
+      signal: new AbortController().signal,
+    });
+    ids.push(run.id);
+    await collect(run);
+  }
+  const retained = HOST_CLI_LIMITS.metricsHistory;
+  assert.ok(
+    ids.slice(ids.length - retained).every((id) => runner.metricsForRun(id) !== undefined),
+    "the most recent runs must stay readable",
+  );
+  assert.equal(
+    ids.slice(0, ids.length - retained).every((id) => runner.metricsForRun(id) === undefined),
+    true,
+    "older metrics are evicted so the map cannot grow without bound",
+  );
+});
+
+test("cancel reaps the host process group and the children it started", async (t) => {
+  const f = await fixture(t);
+  const pidFile = join(f.home, "orphan.pid");
+  await f.script(
+    "prime-agent",
+    ["sleep 30 &", `printf '%s\\n' $! > ${JSON.stringify(pidFile)}`, "wait"].join(
+      "\n",
+    ),
+  );
+  const runner = runnerFor("prime-agent", f.env, f.cwd);
+  const run = await runner.start({
+    task: "Wait",
+    systemPrompt: SYSTEM_PROMPT,
+    workspace: WORKSPACE,
+    tools: [],
+    signal: new AbortController().signal,
+  });
+  const eventsPromise = collect(run);
+  // The child is spawned before `start` resolves, so the pid file appears once
+  // the script runs; wait for it rather than assuming an ordering.
+  const deadline = Date.now() + 5_000;
+  let pid: number | undefined;
+  while (Date.now() < deadline && pid === undefined) {
+    const text = await readFile(pidFile, "utf8").catch(() => "");
+    const parsed = Number.parseInt(text.trim(), 10);
+    if (Number.isSafeInteger(parsed) && parsed > 0) pid = parsed;
+    else await new Promise((resolve) => setTimeout(resolve, 20));
+  }
+  assert.ok(pid, "the fixture must report the pid of the child it started");
+
+  const result = await runner.cancel(run.id);
+  const events = await eventsPromise;
+  assert.equal(result, "confirmed");
+  assert.equal(terminal(events).status, "cancelled");
+
+  const goneBy = Date.now() + 3_000;
+  let alive = true;
+  while (Date.now() < goneBy) {
+    try {
+      process.kill(pid, 0);
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    } catch {
+      alive = false;
+      break;
+    }
+  }
+  assert.equal(alive, false, "a cancelled host run must not leave its children running");
+});
+
+test("two concurrent host runs on one runner keep separate state and metrics", async (t) => {
+  const f = await fixture(t);
+  await f.script(
+    "prime-agent",
+    [
+      'last=""',
+      'for arg in "$@"; do last="$arg"; done',
+      'case "$last" in',
+      `  alpha*) printf '%s\\n' ${JSON.stringify(
+        json({
+          type: "message_end",
+          message: {
+            role: "assistant",
+            content: [{ type: "text", text: "alpha answer" }],
+            stopReason: "end_turn",
+          },
+        }),
+      )} ;;`,
+      `  *) printf '%s\\n' ${JSON.stringify(
+        json({
+          type: "message_end",
+          message: {
+            role: "assistant",
+            content: [{ type: "text", text: "beta answer" }],
+            stopReason: "end_turn",
+          },
+        }),
+      )} ;;`,
+      "esac",
+    ].join("\n"),
+  );
+  const runner = runnerFor("prime-agent", f.env, f.cwd);
+  const signal = new AbortController().signal;
+  const alpha = await runner.start({
+    task: "alpha",
+    systemPrompt: SYSTEM_PROMPT,
+    workspace: WORKSPACE,
+    tools: [],
+    signal,
+  });
+  const beta = await runner.start({
+    task: "beta",
+    systemPrompt: SYSTEM_PROMPT,
+    workspace: WORKSPACE,
+    tools: [],
+    signal,
+  });
+  assert.notEqual(alpha.id, beta.id);
+  const [alphaEvents, betaEvents] = await Promise.all([
+    collect(alpha),
+    collect(beta),
+  ]);
+  const texts = (events: readonly AgentRunEvent[]) =>
+    events
+      .filter((event) => event.type === "assistant-message")
+      .map((event) => (event.type === "assistant-message" ? event.text : ""));
+  assert.deepEqual(texts(alphaEvents), ["alpha answer"]);
+  assert.deepEqual(texts(betaEvents), ["beta answer"]);
+  assert.ok(alphaEvents.every((event) => event.runId === alpha.id));
+  assert.ok(betaEvents.every((event) => event.runId === beta.id));
+  const alphaMetrics = runner.metricsForRun(alpha.id);
+  const betaMetrics = runner.metricsForRun(beta.id);
+  assert.equal(alphaMetrics?.runId, alpha.id);
+  assert.equal(betaMetrics?.runId, beta.id);
+  assert.equal(alphaMetrics?.terminalStatus, "completed");
+  assert.equal(betaMetrics?.terminalStatus, "completed");
+  assert.equal(alphaMetrics?.events.assistantMessages, 1);
+  assert.equal(betaMetrics?.events.assistantMessages, 1);
+  assert.equal(await runner.cancel(alpha.id), "unknown");
 });
 
 test("host source ids stay stable for discovery and /connect", () => {

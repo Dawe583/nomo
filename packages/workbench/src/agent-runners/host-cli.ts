@@ -42,6 +42,8 @@ export const HOST_CLI_LIMITS = {
   probeMaxOutputBytes: 512 * 1024,
   probeCacheMs: 10_000,
   cancelGraceMs: 5_000,
+  /** Finished runs whose measured telemetry stays readable. */
+  metricsHistory: 32,
 } as const;
 
 export type HostCliId = "prime-agent" | "claude";
@@ -107,6 +109,28 @@ export type HostCliProbe = {
 };
 
 /**
+ * The complete set of environment variables a host child may inherit.
+ *
+ * This is a closed list, not a filter: a name that is not here never reaches
+ * the child, so no profile, config file or caller-supplied object can widen it
+ * by adding a key. `NO_COLOR` is the one variable NOMO sets itself.
+ */
+export const HOST_CLI_ENV_ALLOWLIST = [
+  "PATH",
+  "HOME",
+  "USERPROFILE",
+  "TMPDIR",
+  "TMP",
+  "TEMP",
+  "LANG",
+  "LC_ALL",
+  "LC_CTYPE",
+  "SYSTEMROOT",
+  "APPDATA",
+  "LOCALAPPDATA",
+] as const;
+
+/**
  * The environment a host child receives.
  *
  * Provider keys and NOMO secrets are deliberately absent: the host must run on
@@ -115,27 +139,57 @@ export type HostCliProbe = {
 export function hostCliEnvironment(
   env: Readonly<NodeJS.ProcessEnv>,
 ): NodeJS.ProcessEnv {
-  const allowed = [
-    "PATH",
-    "HOME",
-    "USERPROFILE",
-    "TMPDIR",
-    "TMP",
-    "TEMP",
-    "LANG",
-    "LC_ALL",
-    "LC_CTYPE",
-    "SYSTEMROOT",
-    "APPDATA",
-    "LOCALAPPDATA",
-  ];
   const sanitized: NodeJS.ProcessEnv = {};
-  for (const key of allowed) {
+  for (const key of HOST_CLI_ENV_ALLOWLIST) {
     const value = env[key];
-    if (typeof value === "string" && value.length > 0) sanitized[key] = value;
+    // A NUL byte cannot be an environment value; dropping it here keeps a
+    // malformed operator environment from failing the spawn for every run.
+    if (typeof value === "string" && value.length > 0 && !value.includes("\u0000"))
+      sanitized[key] = value;
   }
   sanitized.NO_COLOR = "1";
   return sanitized;
+}
+
+/**
+ * Credential shapes that must never travel out of a host line.
+ *
+ * The host is a third party that may echo its own prompt or a token it holds,
+ * and NOMO cannot assume it does not. The same shapes the Workbench secret
+ * scan uses are applied here, at the boundary where host text becomes a NOMO
+ * event, so a direct runner consumer is protected too.
+ */
+const HOST_SECRET_PATTERNS: readonly RegExp[] = [
+  // No leading word boundary: a host may glue a token to a word character
+  // (`permission_sk-ant-...`), and masking must not depend on how it did.
+  /sk-ant-[A-Za-z0-9_-]{10,}/g,
+  /sk-[A-Za-z0-9_-]{12,}/g,
+  /gh[pousr]_[A-Za-z0-9]{20,}/g,
+  /AKIA[0-9A-Z]{16}/g,
+  /xox[abprs]-[A-Za-z0-9-]{10,}/g,
+  /glpat-[A-Za-z0-9_-]{10,}/g,
+  /npm_[A-Za-z0-9]{20,}/g,
+  /hf_[A-Za-z0-9]{20,}/g,
+  /eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}/g,
+  /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/g,
+];
+
+/** Masks every credential-shaped run in host-authored text. */
+export function redactHostCliText(text: string): string {
+  let safe = text;
+  for (const pattern of HOST_SECRET_PATTERNS) safe = safe.replace(pattern, "[redacted]");
+  return safe;
+}
+
+/**
+ * A host-authored event name, reduced to a bounded diagnostic token.
+ *
+ * The name is quoted in a terminal message, so it may not carry control
+ * characters, line breaks or an unbounded length from the host.
+ */
+function safeEventType(value: string): string {
+  const cleaned = value.replace(/[^\w.:@+-]/g, "_").slice(0, 80);
+  return redactHostCliText(cleaned.length > 0 ? cleaned : "unknown-event");
 }
 
 const PROVIDER_PATTERN = /^[a-z0-9][a-z0-9._-]{0,63}$/;
@@ -310,7 +364,7 @@ export function parseHostCliLine(
         return { kind: "result", status: "cancelled" };
       if (stopReason === "error") return { kind: "result", status: "failed" };
       return content.text
-        ? { kind: "assistant", text: content.text }
+        ? { kind: "assistant", text: redactHostCliText(content.text) }
         : { kind: "ignored" };
     }
     if (event.type === "tool_execution_start")
@@ -322,7 +376,7 @@ export function parseHostCliLine(
             : "tool",
       };
     if (/permission|approval/i.test(event.type))
-      return { kind: "unmappable", reason: event.type };
+      return { kind: "unmappable", reason: safeEventType(event.type) };
     return { kind: "ignored" };
   }
 
@@ -335,7 +389,7 @@ export function parseHostCliLine(
     if (content.toolName !== undefined)
       return { kind: "tool", toolName: content.toolName };
     return content.text
-      ? { kind: "assistant", text: content.text }
+      ? { kind: "assistant", text: redactHostCliText(content.text) }
       : { kind: "ignored" };
   }
   if (event.type === "user") {
@@ -353,7 +407,7 @@ export function parseHostCliLine(
   if (event.type === "system" || event.type === "stream_event")
     return { kind: "ignored" };
   if (/permission|approval|tool/i.test(event.type))
-    return { kind: "unmappable", reason: event.type };
+    return { kind: "unmappable", reason: safeEventType(event.type) };
   return { kind: "ignored" };
 }
 
@@ -364,6 +418,16 @@ type HostProcessOutcome = {
   readonly aborted: boolean;
   readonly outputExceeded: boolean;
   readonly spawnFailed: boolean;
+  /** Epoch ms when the spawn was issued. */
+  readonly spawnedAt: number;
+  /** Epoch ms of the first stdout byte, or `undefined` when there was none. */
+  readonly firstByteAt: number | undefined;
+  /** Epoch ms when the child closed. */
+  readonly closedAt: number;
+  readonly stdoutBytes: number;
+  readonly stderrBytes: number;
+  /** Non-empty stdout lines handed to the parser. */
+  readonly lines: number;
 };
 
 type HostProcessOptions = {
@@ -381,6 +445,10 @@ type HostProcessOptions = {
  * Runs one host child with bounded output, a wall-clock limit and an abort
  * path. Only stdout lines reach the caller; stderr is counted and discarded so
  * account or credential text printed by the host cannot reach an event.
+ *
+ * The child is started in its own process group on POSIX. A host may spawn its
+ * own children, and killing only the direct child would leave those running
+ * after a cancel; the group is signalled instead, so the whole tree is reaped.
  */
 function runHostProcess(options: HostProcessOptions): Promise<HostProcessOutcome> {
   return new Promise((complete) => {
@@ -391,8 +459,13 @@ function runHostProcess(options: HostProcessOptions): Promise<HostProcessOutcome
     let spawnFailed = false;
     let pending = "";
     let stdoutBytes = 0;
+    let stderrBytes = 0;
+    let lines = 0;
+    let firstByteAt: number | undefined;
     let killTimer: NodeJS.Timeout | undefined;
     let timeout: NodeJS.Timeout | undefined;
+    const spawnedAt = Date.now();
+    const detached = process.platform !== "win32";
 
     const finish = (code: number | null, signal: string | null) => {
       if (settled) return;
@@ -407,21 +480,34 @@ function runHostProcess(options: HostProcessOptions): Promise<HostProcessOutcome
         aborted,
         outputExceeded,
         spawnFailed,
+        spawnedAt,
+        firstByteAt,
+        closedAt: Date.now(),
+        stdoutBytes,
+        stderrBytes,
+        lines,
       });
     };
-    const terminate = () => {
+    const signalChild = (signal: NodeJS.Signals) => {
+      const pid = child.pid;
+      if (detached && typeof pid === "number" && pid > 0) {
+        try {
+          // Negative pid addresses the process group the child leads.
+          process.kill(-pid, signal);
+          return;
+        } catch {
+          /* The group may already be gone; fall back to the child itself. */
+        }
+      }
       try {
-        child.kill("SIGTERM");
+        child.kill(signal);
       } catch {
         /* The process may already be gone. */
       }
-      killTimer ??= setTimeout(() => {
-        try {
-          child.kill("SIGKILL");
-        } catch {
-          /* The process may already be gone. */
-        }
-      }, 1_000);
+    };
+    const terminate = () => {
+      signalChild("SIGTERM");
+      killTimer ??= setTimeout(() => signalChild("SIGKILL"), 1_000);
     };
     const onAbort = () => {
       aborted = true;
@@ -435,17 +521,11 @@ function runHostProcess(options: HostProcessOptions): Promise<HostProcessOutcome
         env: options.env,
         shell: false,
         stdio: ["ignore", "pipe", "pipe"],
+        detached,
       });
     } catch {
       spawnFailed = true;
-      complete({
-        code: null,
-        signal: null,
-        timedOut: false,
-        aborted: false,
-        outputExceeded: false,
-        spawnFailed,
-      });
+      finish(null, null);
       return;
     }
 
@@ -456,6 +536,7 @@ function runHostProcess(options: HostProcessOptions): Promise<HostProcessOutcome
 
     const emitLine = (line: string) => {
       if (!line.trim()) return;
+      lines += 1;
       try {
         options.onLine(line);
       } catch {
@@ -465,6 +546,7 @@ function runHostProcess(options: HostProcessOptions): Promise<HostProcessOutcome
     };
 
     child.stdout?.on("data", (chunk: Buffer) => {
+      firstByteAt ??= Date.now();
       stdoutBytes += chunk.length;
       if (stdoutBytes > options.maxStdoutBytes) {
         outputExceeded = true;
@@ -490,8 +572,11 @@ function runHostProcess(options: HostProcessOptions): Promise<HostProcessOutcome
       }
     });
     // Stderr is drained and discarded: the host may print account or
-    // credential text there, and none of it belongs in a NOMO event.
-    child.stderr?.on("data", () => undefined);
+    // credential text there, and none of it belongs in a NOMO event. Only its
+    // size is measured, so a run can report that the host wrote something.
+    child.stderr?.on("data", (chunk: Buffer) => {
+      stderrBytes += chunk.length;
+    });
     child.on("error", () => {
       spawnFailed = true;
       finish(null, null);
@@ -721,7 +806,65 @@ function truncateText(
 
 function safeToolName(value: string): string {
   const cleaned = value.replace(/[^\w .:/@+-]/g, "_").slice(0, 160);
-  return cleaned.length > 0 ? cleaned : "tool";
+  const safe = redactHostCliText(cleaned);
+  return safe.length > 0 ? safe : "tool";
+}
+
+/**
+ * What one finished host run actually measured.
+ *
+ * Every field is read from the child process or from the mapped stream: no
+ * value is estimated, defaulted to a plausible number or copied from a host
+ * claim. A run that produced no stdout reports `null` latency rather than `0`,
+ * because zero would be a measurement NOMO did not make.
+ */
+export type HostRunMetrics = {
+  readonly host: HostCliId;
+  readonly runId: string;
+  readonly spawnedAt: number;
+  readonly firstByteAt: number | null;
+  readonly firstByteLatencyMs: number | null;
+  readonly closedAt: number;
+  readonly durationMs: number;
+  readonly exitCode: number | null;
+  readonly signal: string | null;
+  readonly timedOut: boolean;
+  readonly aborted: boolean;
+  readonly outputExceeded: boolean;
+  readonly spawnFailed: boolean;
+  readonly stdoutBytes: number;
+  readonly stderrBytes: number;
+  readonly lines: number;
+  readonly events: {
+    readonly assistantMessages: number;
+    readonly toolEvents: number;
+    readonly resultEvents: number;
+    readonly ignored: number;
+    readonly unmappable: number;
+  };
+  readonly assistantBytes: number;
+  readonly terminalStatus: "completed" | "failed" | "cancelled" | "unknown";
+};
+
+/** A runner that can report the telemetry of a run it finished. */
+export type HostRunMetricsSource = {
+  metricsForRun(runId: string): HostRunMetrics | undefined;
+};
+
+/**
+ * Reads telemetry from any runner that offers it.
+ *
+ * Workbench holds host runners behind the plain `AgentRunner` contract, so the
+ * capability is detected rather than required: a third-party host runner that
+ * measures nothing simply reports nothing.
+ */
+export function hostRunMetrics(
+  runner: AgentRunner,
+  runId: string,
+): HostRunMetrics | undefined {
+  const source = runner as unknown as Partial<HostRunMetricsSource>;
+  if (typeof source.metricsForRun !== "function") return undefined;
+  return source.metricsForRun(runId);
 }
 
 export type HostCliRunnerOptions = {
@@ -759,6 +902,14 @@ export class HostCliRunner implements AgentRunner {
   private readonly timeoutMs: number;
   private readonly env: NodeJS.ProcessEnv;
   private readonly runs = new Map<string, HostRunState>();
+  /**
+   * Telemetry of finished runs, newest last and bounded.
+   *
+   * A run is removed from `runs` when it ends, but its measured numbers stay
+   * readable for a short while so the Workbench session that just saw the
+   * terminal event can record them without racing the cleanup.
+   */
+  private readonly finishedMetrics = new Map<string, HostRunMetrics>();
 
   constructor(options: HostCliRunnerOptions) {
     const provider = HOST_CLI_PROVIDERS.find(
@@ -903,6 +1054,15 @@ export class HostCliRunner implements AgentRunner {
       let unmappable: string | undefined;
       let assistantBytes = 0;
       let truncationNoted = false;
+      // Counted per mapped event, so the telemetry states what the host
+      // actually sent rather than what the run hoped for.
+      const counts = {
+        assistantMessages: 0,
+        toolEvents: 0,
+        resultEvents: 0,
+        ignored: 0,
+        unmappable: 0,
+      };
       const outcome = await runHostProcess({
         binary,
         args: argv,
@@ -914,12 +1074,17 @@ export class HostCliRunner implements AgentRunner {
         onLine: (line) => {
           if (unmappable !== undefined || resultStatus !== undefined) return;
           const parsed = parseHostCliLine(this.provider.host, line);
-          if (parsed.kind === "ignored") return;
+          if (parsed.kind === "ignored") {
+            counts.ignored += 1;
+            return;
+          }
           if (parsed.kind === "unmappable") {
+            counts.unmappable += 1;
             unmappable = parsed.reason;
             return;
           }
           if (parsed.kind === "tool") {
+            counts.toolEvents += 1;
             sawTool = true;
             emit({
               type: "status",
@@ -929,9 +1094,11 @@ export class HostCliRunner implements AgentRunner {
             return;
           }
           if (parsed.kind === "result") {
+            counts.resultEvents += 1;
             resultStatus = parsed.status;
             return;
           }
+          counts.assistantMessages += 1;
           const remaining =
             AGENT_RUNNER_OUTPUT_LIMITS.maxRunBytes - assistantBytes;
           if (remaining <= 0) {
@@ -1001,6 +1168,32 @@ export class HostCliRunner implements AgentRunner {
         await rm(ownedSessionDir, { recursive: true, force: true }).catch(
           () => undefined,
         );
+      // Telemetry is recorded before the terminal event so a consumer that
+      // reads it on that event cannot race this bookkeeping.
+      this.recordMetrics({
+        host: this.provider.host,
+        runId: id,
+        spawnedAt: outcome.spawnedAt,
+        firstByteAt: outcome.firstByteAt ?? null,
+        firstByteLatencyMs:
+          outcome.firstByteAt === undefined
+            ? null
+            : Math.max(0, outcome.firstByteAt - outcome.spawnedAt),
+        closedAt: outcome.closedAt,
+        durationMs: Math.max(0, outcome.closedAt - outcome.spawnedAt),
+        exitCode: outcome.code,
+        signal: outcome.signal,
+        timedOut: outcome.timedOut,
+        aborted: outcome.aborted || controller.signal.aborted,
+        outputExceeded: outcome.outputExceeded,
+        spawnFailed: outcome.spawnFailed,
+        stdoutBytes: outcome.stdoutBytes,
+        stderrBytes: outcome.stderrBytes,
+        lines: outcome.lines,
+        events: { ...counts },
+        assistantBytes,
+        terminalStatus: terminal,
+      });
       emit({
         type: "terminal",
         status: terminal,
@@ -1019,6 +1212,21 @@ export class HostCliRunner implements AgentRunner {
         throw new Error("Host CLI runs do not mediate tools.");
       },
     };
+  }
+
+  /** The measured telemetry of a finished run, if it is still retained. */
+  metricsForRun(runId: string): HostRunMetrics | undefined {
+    const metrics = this.finishedMetrics.get(runId);
+    return metrics === undefined ? undefined : structuredClone(metrics);
+  }
+
+  private recordMetrics(metrics: HostRunMetrics): void {
+    this.finishedMetrics.set(metrics.runId, metrics);
+    while (this.finishedMetrics.size > HOST_CLI_LIMITS.metricsHistory) {
+      const oldest = this.finishedMetrics.keys().next().value;
+      if (oldest === undefined) break;
+      this.finishedMetrics.delete(oldest);
+    }
   }
 
   async cancel(runId: string): Promise<AgentCancelResult> {

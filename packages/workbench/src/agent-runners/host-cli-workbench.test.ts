@@ -470,3 +470,185 @@ test("an unknown host binary name is refused at construction", async () => {
   assert.equal(runner.describe().toolAccess, "unmediated");
   assert.equal(runner.describe().workspaceMode, "opaque");
 });
+
+test("host run telemetry carries real timing into the stream and the ledger", async (t) => {
+  const f = await fixture(t);
+  await successHost(f);
+  const fixtureApp = await isolatedWorkbench(
+    t,
+    undefined,
+    { NOMO_PERMISSION_MODE: "normal" },
+    { configure: false },
+  );
+  const app = fixtureApp.app;
+  app.registerHostRunner(
+    new HostCliRunner({ host: HOST, env: f.env, cwd: f.cwd }),
+  );
+  const preview = await app.prepareHostRun({
+    sourceId: SOURCE_ID,
+    host: HOST,
+    task: "Say hello",
+    cwdDigest: digestOf(f.cwd),
+  });
+  const started = await app.startHostRun({
+    consentId: preview.id,
+    consentDigest: preview.consentDigest,
+  });
+  await app.settled();
+
+  const settled = app.get(started.id);
+  const metricsEvent = settled?.events.find(
+    (event) => event.type === "run.status" && event.payload?.durationMs !== undefined,
+  );
+  assert.ok(metricsEvent, "a host run must publish its measured telemetry");
+  const payload = metricsEvent.payload ?? {};
+  assert.equal(typeof payload.durationMs, "number");
+  assert.ok((payload.durationMs as number) >= 0);
+  assert.equal(typeof payload.firstByteLatencyMs, "number");
+  assert.ok((payload.firstByteLatencyMs as number) >= 0);
+  assert.equal(payload.exitCode, 0);
+  assert.equal(payload.signal, null);
+  assert.equal(payload.timedOut, false);
+  assert.equal(payload.aborted, false);
+  assert.equal(payload.lines, 1);
+  assert.equal(payload.assistantMessages, 1);
+  assert.equal(payload.toolEvents, 0);
+  assert.equal(payload.terminalStatus, "completed");
+  assert.equal(payload.hostOnly, true);
+
+  const ledger = await app.ledger(started.workspace);
+  assert.equal(ledger?.result.ok, true);
+  const bodies = ledgerBodies(ledger?.entries);
+  const terminal = bodies.find((body) => body.tool === "host_runner.terminal");
+  assert.ok(terminal, "host_runner.terminal must be recorded");
+  const ledgerMetrics = terminal.metrics as Record<string, unknown>;
+  assert.ok(ledgerMetrics, "the terminal record must carry the measured telemetry");
+  assert.equal(typeof ledgerMetrics.durationMs, "number");
+  assert.equal(typeof ledgerMetrics.firstByteLatencyMs, "number");
+  assert.equal(ledgerMetrics.exitCode, 0);
+  assert.equal(ledgerMetrics.terminalStatus, "completed");
+  assert.equal(ledgerMetrics.assistantMessages, 1);
+  // Telemetry is measurement only: no prompt, no argv and no host text.
+  assert.equal(
+    bodies.some((body) => JSON.stringify(body).includes("Say hello")),
+    false,
+  );
+});
+
+test("a token-bearing host prompt never reaches the transcript or the ledger", async (t) => {
+  const f = await fixture(t);
+  const token = "sk-ant-fixture-prompt-token";
+  // The host answers by repeating the credential it was given, which is the
+  // case NOMO must withhold rather than present as an answer.
+  await f.script(
+    [
+      PROBE_LINE,
+      `printf '%s\\n' ${JSON.stringify(
+        json({
+          type: "message_end",
+          message: {
+            role: "assistant",
+            content: [{ type: "text", text: `Here it is: ${token}` }],
+            stopReason: "end_turn",
+          },
+        }),
+      )}`,
+    ].join("\n"),
+  );
+  const fixtureApp = await isolatedWorkbench(
+    t,
+    undefined,
+    { NOMO_PERMISSION_MODE: "normal" },
+    { configure: false },
+  );
+  const app = fixtureApp.app;
+  app.registerHostRunner(
+    new HostCliRunner({ host: HOST, env: f.env, cwd: f.cwd }),
+  );
+  const task = `Repeat ${token} exactly`;
+  const preview = await app.prepareHostRun({
+    sourceId: SOURCE_ID,
+    host: HOST,
+    task,
+    cwdDigest: digestOf(f.cwd),
+  });
+  const started = await app.startHostRun({
+    consentId: preview.id,
+    consentDigest: preview.consentDigest,
+  });
+  await app.settled();
+
+  const settled = app.get(started.id);
+  assert.equal(
+    JSON.stringify(settled?.events).includes(token),
+    false,
+    "the transcript must not carry the credential the prompt held",
+  );
+  assert.equal(
+    JSON.stringify(settled?.events).includes(task),
+    false,
+    "the transcript must not carry the prompt text",
+  );
+  const withheld = settled?.events.find(
+    (event) => event.kind === "assistant" && event.payload?.withheld === true,
+  );
+  const masked = settled?.events.find(
+    (event) => event.kind === "assistant" && event.text.includes("[redacted]"),
+  );
+  assert.ok(
+    withheld ?? masked,
+    "a credential-bearing host answer must be withheld or masked, never shown",
+  );
+
+  const ledger = await app.ledger(started.workspace);
+  assert.equal(ledger?.result.ok, true);
+  assert.equal(
+    JSON.stringify(ledger?.entries).includes(token),
+    false,
+    "the ledger must record the prompt digest, never the prompt",
+  );
+  assert.equal(JSON.stringify(ledger?.entries).includes(task), false);
+});
+
+test("a pre-start failure is recorded as failed, not unknown", async (t) => {
+  const f = await fixture(t);
+  const fixtureApp = await isolatedWorkbench(
+    t,
+    undefined,
+    { NOMO_PERMISSION_MODE: "normal" },
+    { configure: false },
+  );
+  const app = fixtureApp.app;
+  // The runner is registered but its host is not on PATH, so the run fails
+  // before any process exists. That is a proven failure, not an unknown one.
+  app.registerHostRunner(
+    new HostCliRunner({
+      host: HOST,
+      env: { ...f.env, PATH: join(f.root, "empty") },
+      cwd: f.cwd,
+    }),
+  );
+  const preview = await app.prepareHostRun({
+    sourceId: SOURCE_ID,
+    host: HOST,
+    task: "Say hello",
+    cwdDigest: digestOf(f.cwd),
+  });
+  const started = await app.startHostRun({
+    consentId: preview.id,
+    consentDigest: preview.consentDigest,
+  });
+  await app.settled();
+
+  const settled = app.get(started.id);
+  assert.equal(settled?.status, "failed");
+  const ledger = await app.ledger(started.workspace);
+  assert.equal(ledger?.result.ok, true);
+  const bodies = ledgerBodies(ledger?.entries);
+  const terminal = bodies.find((body) => body.tool === "host_runner.terminal");
+  assert.ok(terminal, "a pre-start failure must still be recorded");
+  assert.equal(terminal.status, "failed");
+  assert.equal(terminal.ambiguous, false);
+  assert.equal(existsSync(f.runMarker), false);
+});
+

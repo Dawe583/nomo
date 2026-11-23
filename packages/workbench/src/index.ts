@@ -84,7 +84,11 @@ import {
   type AgentToolDefinition,
   type AgentCancelResult,
 } from "./agent-runners/agent-runner.ts";
-import { HOST_RUN_SYSTEM_PROMPT } from "./agent-runners/host-cli.ts";
+import {
+  HOST_RUN_SYSTEM_PROMPT,
+  hostRunMetrics,
+  type HostRunMetrics,
+} from "./agent-runners/host-cli.ts";
 import {
   defaultHarnessSettings,
   defaultHarnessTextSettings,
@@ -157,7 +161,13 @@ import {
   type VerificationKey,
 } from "../../ledger/src/verify-key.ts";
 import type { KeyProvider } from "../../ledger/src/index.ts";
-import { verifyChain, readLedgerEntries } from "../../ledger/src/verify.ts";
+import {
+  verifyChain,
+  verifyChainRecords,
+  readLedgerEntries,
+  type LedgerRecordVerification,
+  type VerifyChainRecordsResult,
+} from "../../ledger/src/verify.ts";
 import type { JsonlEntry } from "../../ledger/src/store.ts";
 import { classifyTool } from "../../registry/src/evaluate.ts";
 import {
@@ -760,6 +770,37 @@ const HOST_RUN_PROFILE: AgentProfile = {
   maxContextTokens: 8192,
 };
 
+/**
+ * The measured telemetry of a host run, in the shape a session event and a
+ * ledger record carry.
+ *
+ * Every value comes from the runner's own observation of the child process.
+ * Nothing is derived from the host's claims, and a run that produced no stdout
+ * reports a `null` first-byte latency instead of an invented zero.
+ */
+function hostMetricsPayload(metrics: HostRunMetrics): Record<string, unknown> {
+  return {
+    startedAt: new Date(metrics.spawnedAt).toISOString(),
+    durationMs: metrics.durationMs,
+    firstByteLatencyMs: metrics.firstByteLatencyMs,
+    exitCode: metrics.exitCode,
+    signal: metrics.signal,
+    timedOut: metrics.timedOut,
+    aborted: metrics.aborted,
+    outputExceeded: metrics.outputExceeded,
+    stdoutBytes: metrics.stdoutBytes,
+    stderrBytes: metrics.stderrBytes,
+    lines: metrics.lines,
+    assistantMessages: metrics.events.assistantMessages,
+    toolEvents: metrics.events.toolEvents,
+    resultEvents: metrics.events.resultEvents,
+    ignoredLines: metrics.events.ignored,
+    unmappableEvents: metrics.events.unmappable,
+    assistantBytes: metrics.assistantBytes,
+    terminalStatus: metrics.terminalStatus,
+  };
+}
+
 /** Model tools always cross NOMO's SDK. A provider has no shell or
  * filesystem authority; operators configure the MCP upstream on the runtime. */
 const REFINEMENT_SECRET_PATTERNS = [
@@ -891,6 +932,24 @@ export type ManualReviewResult = {
 const UNAVAILABLE_PROVIDER_APIS = PROVIDER_MODEL_MANIFEST.apiTransports
   .filter((api) => api.status !== "implemented")
   .map((api) => ({ ...api, disabled: true }));
+
+/**
+ * One workspace chain as `ledgerStatus` reports it: every record with its own
+ * verdict, plus the key the signatures were checked with when one resolved.
+ *
+ * `verification` is absent, and `keyError` says why, when no verification key
+ * could be resolved. The records are still returned in that case, marked
+ * `unverified`: a surface that has to show the operator the chain cannot go
+ * blank because the key is missing, and it must not call those records
+ * verified either.
+ */
+export type WorkspaceLedgerStatus = {
+  readonly entries: readonly JsonlEntry[];
+  readonly records: readonly LedgerRecordVerification[];
+  readonly result: VerifyChainRecordsResult;
+  readonly verification?: VerificationKey;
+  readonly keyError?: string;
+};
 
 export class Workbench {
   private readonly env: Readonly<NodeJS.ProcessEnv>;
@@ -2970,6 +3029,7 @@ export class Workbench {
     const { session, prepared } = active;
     let terminal: Extract<AgentRunEvent, { type: "terminal" }> | undefined;
     let finalStatus: SessionView["status"] = "unknown";
+    let failureMessage: string | undefined;
     const knownSecrets = this.knownSecretValues();
     const output = { bytes: 0, truncationNoted: false };
     const context = {
@@ -3045,32 +3105,62 @@ export class Workbench {
         finalStatus = "unknown";
       else if (terminal.status === "failed") finalStatus = "failed";
       else finalStatus = "idle";
-    } catch {
+    } catch (error) {
+      // A run that never produced a handle never started: no host process
+      // exists, so its failure is proven rather than unknown. Only an abort
+      // that arrived before the spawn makes it a cancellation.
+      const started = active.handle !== undefined;
       if (active.handle && !active.cancelPromise)
         active.cancelPromise = Promise.resolve()
           .then(() => active.runner.cancel(active.handle!.id))
           .catch((): AgentCancelResult => "unknown");
       if (active.cancelPromise)
         active.cancelResult = await active.cancelPromise;
+      if (!started)
+        failureMessage =
+          error instanceof Error && error.message.length > 0
+            ? error.message.slice(0, 240)
+            : undefined;
       finalStatus = active.ambiguous
         ? "unknown"
         : active.cancelResult === "confirmed"
           ? "cancelled"
-          : "unknown";
+          : !started
+            ? session.controller.signal.aborted
+              ? "cancelled"
+              : "failed"
+            : "unknown";
     }
 
+    // Telemetry is read after the run has settled, so the numbers describe the
+    // whole child process rather than a prefix of it. A host runner that
+    // measures nothing simply reports nothing.
+    const metrics =
+      active.handle === undefined
+        ? undefined
+        : hostRunMetrics(active.runner, active.handle.id);
     // The terminal message is runner-authored, but it can quote a host event
     // name, so it goes through the same secret scan before it is written.
+    const reportedMessage =
+      terminal?.message ?? (finalStatus === "failed" ? failureMessage : undefined);
     const terminalMessage =
-      terminal?.message && !secretLikeText(terminal.message, knownSecrets)
-        ? (session.provider?.redact(terminal.message) ?? terminal.message)
+      reportedMessage && !secretLikeText(reportedMessage, knownSecrets)
+        ? (session.provider?.redact(reportedMessage) ?? reportedMessage)
         : undefined;
     session.view = { ...session.view, status: finalStatus };
     this.event(
       session,
       "tool",
       terminalMessage ?? "Host run reached a terminal state",
-      { ...context, status: finalStatus, ambiguous: active.ambiguous },
+      {
+        ...context,
+        status: finalStatus,
+        ambiguous: active.ambiguous,
+        // Real measurements of the child process, on the terminal status the
+        // session already records. A reader can show the duration and the
+        // first-byte latency without a second event or a guess.
+        ...(metrics === undefined ? {} : hostMetricsPayload(metrics)),
+      },
       "run.status",
     );
     await this.commitWorkspace(
@@ -3092,7 +3182,14 @@ export class Workbench {
       // what was allowed, and this names what the host run ended as, so a
       // reader can tell a cancelled run from a failed one without replaying
       // the args digest.
-      { ...context, status: finalStatus, ambiguous: active.ambiguous },
+      {
+        ...context,
+        status: finalStatus,
+        ambiguous: active.ambiguous,
+        ...(metrics === undefined
+          ? {}
+          : { metrics: hostMetricsPayload(metrics) }),
+      },
     );
   }
   /**
@@ -6511,6 +6608,69 @@ export class Workbench {
     if (!result.ok)
       throw new Error("Workspace ledger signature verification failed.");
     return { entries: structuredClone(entries), result, verification: key };
+  }
+  /**
+   * Every record in the workspace chain with its own verdict, and no throw for
+   * a bad one.
+   *
+   * `ledger()` is the strict read and stays strict: a caller that must not act
+   * on unverified evidence gets one error rather than a chain it might filter
+   * by accident. That shape is exactly wrong for a surface that has to show
+   * the operator what the file holds, because one corrupt record would hide
+   * every record after it. This returns them all, each marked `verified`,
+   * `corrupt` or `unverified` with the finding that decided it.
+   *
+   * A key that cannot be resolved is not a reason to withhold the records:
+   * they are returned as `unverified` with `keyError` naming the cause, which
+   * is a weaker and more honest claim than "the ledger is broken".
+   */
+  async ledgerStatus(
+    workspace: string,
+  ): Promise<WorkspaceLedgerStatus | undefined> {
+    if (!Object.hasOwn(this.documents, workspace)) return undefined;
+    const entries = this.evidence[workspace] ?? [];
+    let verification: VerificationKey | undefined;
+    let keyError: string | undefined;
+    try {
+      verification = await this.verificationKey(() => this.retainedSigner());
+    } catch (error) {
+      keyError = error instanceof Error ? error.message : String(error);
+    }
+    const result = await verifyChainRecords(
+      entries,
+      verification === undefined ? {} : { publicKey: verification.publicKey },
+    );
+    return {
+      entries: structuredClone(entries),
+      records: result.records,
+      result,
+      ...(verification === undefined ? {} : { verification }),
+      ...(keyError === undefined ? {} : { keyError }),
+    };
+  }
+  /**
+   * One record's verdict, by id (`<workspace>:<seq>`) or by sequence.
+   *
+   * Undefined when the workspace is not managed or the record is not there,
+   * which is the same answer the enumerating read gives for a missing key.
+   * It never throws for a bad record: a corrupt record is a value, and the
+   * caller decides what to do with it.
+   */
+  async verifyRecord(
+    workspace: string,
+    id: string | number,
+  ): Promise<LedgerRecordVerification | undefined> {
+    const status = await this.ledgerStatus(workspace);
+    if (status === undefined) return undefined;
+    const byId = status.records.find((record) => record.id === id);
+    if (byId !== undefined) return byId;
+    // A bare sequence is accepted too, so a surface that already holds the
+    // record's position does not have to rebuild the id string.
+    const seq =
+      typeof id === "number"
+        ? id
+        : Number(id.slice(id.lastIndexOf(":") + 1));
+    return status.records.find((record) => record.seq === seq);
   }
   /** Changes only after a signed ledger append has been persisted. */
   ledgerRevision(): number {

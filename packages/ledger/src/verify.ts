@@ -195,6 +195,197 @@ export async function verifyChain(
   return { ok: true, checked, head: prev, lines };
 }
 
+/**
+ * How one record stands on its own.
+ *
+ * `verified` means every check this verifier can run was run and passed.
+ * `corrupt` means a check ran and failed. `unverified` means no check failed
+ * but at least one could not be run: the signing key is unknown, or the caller
+ * supplied no public key at all. Keeping those three apart is the whole point
+ * of this surface. A record signed by a key this machine does not hold is not
+ * the same fact as a record whose body no longer hashes to its digest, and a
+ * surface that renders both as "error" tells the operator nothing about which
+ * one to act on.
+ */
+export type LedgerRecordStatus = "verified" | "corrupt" | "unverified";
+
+export type LedgerRecordVerification = {
+  /** Stable key inside one chain: `<workspace>:<seq>`. */
+  readonly id: string;
+  readonly seq: number;
+  /** The digest the file stores for this record, never a recomputed one. */
+  readonly hash: string;
+  readonly status: LedgerRecordStatus;
+  readonly reason?: string;
+};
+
+export type VerifyChainRecordsResult = {
+  /** True only when every record is `verified`. An empty chain is true. */
+  readonly ok: boolean;
+  readonly checked: number;
+  /** The last stored digest, or the genesis digest for an empty chain. */
+  readonly head: string;
+  readonly records: readonly LedgerRecordVerification[];
+  /** The first record's finding, in chain order, for a caller that wants one. */
+  readonly reason?: string;
+};
+
+/**
+ * Every record in the chain with its own verdict, without stopping at the
+ * first bad one.
+ *
+ * `verifyChain` above is the strict read and stays the strict read: it stops
+ * at the first finding so a caller that must not act on unverified evidence
+ * cannot. That is exactly the wrong shape for a surface that has to show the
+ * operator what is in the file, because one corrupt record would hide every
+ * record after it. This walks the whole chain and reports each record
+ * separately.
+ *
+ * The checks are the same ones, with one deliberate difference that makes the
+ * per record verdicts independent. The link check compares a record's
+ * `prev_hash` with the digest the *previous record stores*, not with a digest
+ * this run recomputed. A tampered body therefore produces exactly one corrupt
+ * record: its own digest no longer matches its body, while the record after it
+ * still points at the stored digest it was written against. The body hash is
+ * likewise recomputed over `entry.prev_hash`, so a broken link does not make
+ * every later record look corrupt as well. Neither choice weakens the verdict:
+ * the strict verifier still refuses the whole chain, and a record whose link
+ * is wrong is corrupt on its own.
+ *
+ * A record's hash joins the reversal lookup once its body proves against its
+ * stored digest. A reversal is a claim about a digest the chain holds, not
+ * about a signature, so an unknown signing key at the named record does not
+ * turn a well formed reversal into a finding. A named record whose own body
+ * does not prove is a finding, and it is reported as that, not as a chain that
+ * never held the record.
+ */
+export async function verifyChainRecords(
+  entries: readonly JsonlEntry[],
+  options: VerifyChainOptions = {},
+): Promise<VerifyChainRecordsResult> {
+  const records: LedgerRecordVerification[] = [];
+  /** Every digest already walked, proven or not, by sequence. */
+  const stored = new Map<number, string>();
+  /** Digests whose body proved against them, which is what a reversal names. */
+  const proven = new Map<number, string>();
+  let prev = GENESIS_PREV;
+  let checked = 0;
+  let reason: string | undefined;
+
+  for (const entry of entries) {
+    checked += 1;
+    let corrupt: string | undefined;
+    let unverified: string | undefined;
+
+    if (
+      typeof entry.body !== "object" ||
+      entry.body === null ||
+      !("workspace" in entry.body) ||
+      entry.body.workspace !== entry.workspace
+    ) {
+      corrupt = `workspace: entry ${entry.seq} does not match its signed body`;
+    } else {
+      const attribution = readLedgerReason(entry.body, entry.seq);
+      if (attribution.kind === "malformed")
+        corrupt = `attribution: ${attribution.detail}`;
+      if (corrupt === undefined) {
+        const reversal = readLedgerReversal(entry.body, entry.seq);
+        if (reversal.kind === "malformed") corrupt = `reversal: ${reversal.detail}`;
+        else if (reversal.kind === "reversal") {
+          const finding = reversalFinding(reversal.reversal, entry.seq, (seq) =>
+            proven.get(seq),
+          );
+          if (finding !== undefined) {
+            const named = stored.get(reversal.reversal.seq);
+            corrupt =
+              named === reversal.reversal.digest
+                ? `reversal: entry ${entry.seq} names record ${reversal.reversal.seq}, which is not itself verified`
+                : `reversal: entry ${entry.seq} ${finding}`;
+          }
+        }
+      }
+    }
+    if (corrupt === undefined && entry.seq !== checked)
+      corrupt = `order: expected seq ${checked}, found ${entry.seq}`;
+    if (corrupt === undefined && entry.prev_hash !== prev)
+      corrupt = `link: entry ${entry.seq} points at ${entry.prev_hash.slice(0, 8)} but the chain is at ${prev.slice(0, 8)}`;
+    if (corrupt === undefined) {
+      // A record that names an unusable predecessor digest reaches here when
+      // the record before it stored that same digest. Hashing throws on it,
+      // and letting that escape would end the walk: the one thing this read
+      // must never do is let a hostile record hide the records after it.
+      try {
+        const recomputed = await entryHash(
+          entry.body,
+          entry.prev_hash,
+          sha256Hex,
+        );
+        if (recomputed !== entry.hash)
+          corrupt = `body: entry ${entry.seq} does not hash to its stored digest: computed ${recomputed.slice(0, 16)}, stored ${entry.hash.slice(0, 16)}`;
+      } catch (error) {
+        corrupt = `body: entry ${entry.seq} could not be hashed: ${error instanceof Error ? error.message : String(error)}`;
+      }
+    }
+    if (corrupt === undefined) {
+      if (entry.alg !== "ed25519") {
+        // The signature cannot be checked, but nothing about the record is
+        // proven wrong either, so it is unverified rather than corrupt.
+        unverified = `signature: entry ${entry.seq} carries unsupported algorithm ${entry.alg}`;
+      } else {
+        const signature = signatureBytes(entry);
+        if (signature === null) {
+          corrupt = `signature: entry ${entry.seq} carries a malformed signature tag`;
+        } else if (options.publicKey === undefined) {
+          unverified = `signature: entry ${entry.seq} not checked, no public key was supplied`;
+        } else {
+          const publicKey = await lookupPublicKey(
+            options.publicKey,
+            entry.key_id,
+          );
+          if (publicKey === null) {
+            unverified = `signature: entry ${entry.seq} has no public key for ${entry.key_id}`;
+          } else if (
+            !verifySignature(
+              "ed25519",
+              signingPreimage("ed25519", entry.key_id, entry.hash),
+              signature,
+              publicKey,
+            )
+          ) {
+            corrupt = `signature: entry ${entry.seq} fails signature verification under ${entry.key_id}`;
+          }
+        }
+      }
+    }
+
+    const finding = corrupt ?? unverified;
+    records.push({
+      id: `${entry.workspace}:${entry.seq}`,
+      seq: entry.seq,
+      hash: entry.hash,
+      status:
+        corrupt !== undefined
+          ? "corrupt"
+          : unverified !== undefined
+            ? "unverified"
+            : "verified",
+      ...(finding === undefined ? {} : { reason: finding }),
+    });
+    if (reason === undefined && finding !== undefined) reason = finding;
+    stored.set(entry.seq, entry.hash);
+    if (corrupt === undefined) proven.set(entry.seq, entry.hash);
+    prev = entry.hash;
+  }
+
+  return {
+    ok: records.every((record) => record.status === "verified"),
+    checked,
+    head: prev,
+    records,
+    ...(reason === undefined ? {} : { reason }),
+  };
+}
+
 async function lookupPublicKey(
   lookup: PublicKeyLookup,
   keyId: string,
