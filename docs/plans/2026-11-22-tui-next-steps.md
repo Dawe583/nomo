@@ -351,3 +351,23 @@ Fix `/providers` host row visibility if the sources are missing from the panel.
 
 Acceptance: one real subscription run through each host; no token read or logged; unavailable state
 is explicit.
+
+## 13. Remaining harness and visual roadmap (2026-11-23)
+
+P0 — evidence and real runs
+- Real provider E2E beyond Prime host (needs explicit authorization/cost).
+- Host run observability and security audit of argv/env/transcript.
+- Per-record ledger status instead of fail-whole-workspace.
+
+P1 — visual and interaction polish
+- Command palette with preview and sections.
+- Toast stack with progress bar and dismiss.
+- Sticky header and breadcrumbs in Chat.
+- Mouse hit targets for the new rail and composer chips.
+- Per-tool diff colors and line numbers in tool cards.
+- Accessibility/non-TTY screen-reader tests for new visual surfaces.
+
+P2 — performance and future
+- Profile large transcripts and 200x48 frames.
+- Optional per-session pet persistence and image atlas.
+- Commit/release only on explicit approval.
