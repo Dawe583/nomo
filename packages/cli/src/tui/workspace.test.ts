@@ -1,7 +1,14 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { mkdtemp, rm, readdir, readFile } from "node:fs/promises";
+import {
+  mkdir,
+  mkdtemp,
+  rm,
+  readdir,
+  readFile,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -87,6 +94,7 @@ import {
   todoProgressBar,
   todoRailLines,
 } from "./todo.ts";
+import { petPreferencePath } from "./pet.ts";
 import { getPalette } from "./theme.ts";
 import {
   subagentDurationSeconds,
@@ -4310,7 +4318,9 @@ test("a settled run prints its real receipt and n/a where nothing was measured",
   assert.ok(rows.every((row) => visibleLength(row) <= 80));
   const receipt = rows.find((row) => row.includes("RUN done"));
   assert.ok(receipt, "a settled run prints its receipt");
-  assert.match(receipt!, /time \d+m?s/);
+  // A sub-second run prints `512ms` and a multi-second one `1.6s`, so the
+  // duration is a decimal second as well as a whole one.
+  assert.match(receipt!, /time \d+(?:\.\d+)?m?s/);
   assert.match(receipt!, /tok 100/);
   assert.match(receipt!, /tools 1/);
   assert.match(receipt!, /files 1/);
@@ -5864,22 +5874,36 @@ test("section chevrons and the key bar stay one cell and one short line", () => 
   // before it truncates: a 40 column frame reads a whole phrase.
   assert.equal(
     sessionBrowserHint(80),
-    "↑↓ move · ⏎ inspect · g group · esc chat",
+    "↑↓ move · Enter inspect · g group · esc chat",
   );
   assert.equal(
     sessionBrowserHint(40),
-    "↑↓ move · ⏎ inspect · g group · esc chat",
+    "↑↓ move · Enter inspect · g group · esc",
   );
   // A 40 column frame leaves the body 37 cells after its gutter, so the bar
   // gives up the group key before it gives up a whole phrase.
-  assert.equal(sessionBrowserHint(37), "↑↓ move · ⏎ inspect · esc chat");
-  assert.equal(sessionBrowserHint(30), "↑↓ move · ⏎ inspect · esc chat");
-  assert.equal(sessionBrowserHint(20), "↑↓ move · ⏎ inspect");
-  assert.equal(sessionBrowserHint(12), "↑↓ move · ⏎");
-  assert.equal(sessionBrowserHint(10), "↑↓ ⏎");
+  assert.equal(sessionBrowserHint(37), "↑↓ move · Enter inspect · esc chat");
+  assert.equal(sessionBrowserHint(30), "↑↓ move · Enter inspect");
+  assert.equal(sessionBrowserHint(20), "↑↓ Enter inspect");
+  assert.equal(sessionBrowserHint(12), "↑↓ Enter");
+  assert.equal(sessionBrowserHint(10), "↑↓ Enter");
   assert.ok(!sessionBrowserHint(80).includes("returns to Chat"));
   for (const width of [80, 40, 30, 20, 12, 10])
     assert.ok(visibleLength(sessionBrowserHint(width)) <= width);
+  // An ASCII terminal has no arrow shapes, so movement is spelled with the
+  // preset's own `^` and `v`. The words stay identical, so the bar never
+  // names a key in one preset that it hides in the other.
+  assert.equal(
+    sessionBrowserHint(80, "ascii"),
+    "^v move · Enter inspect · g group · esc chat",
+  );
+  assert.equal(
+    sessionBrowserHint(37, "ascii"),
+    "^v move · Enter inspect · esc chat",
+  );
+  assert.equal(sessionBrowserHint(12, "ascii"), "^v Enter");
+  for (const width of [80, 40, 30, 20, 12, 10])
+    assert.ok(visibleLength(sessionBrowserHint(width, "ascii")) <= width);
 });
 
 test("elapsed and tokens are read from the record, never from a clock", () => {
@@ -6042,7 +6066,7 @@ test("the sessions browser holds every terminal size it is opened in", async (t)
   assert.match(narrow, /▸ children \(1\)/);
   assert.match(narrow, /▸ archived \(1\)/);
   assert.match(narrow, /● Fix parser · ◐ gpt-5 · ◷ 2m · # 12k · ◆ 1/);
-  assert.match(narrow, /↑↓ move · ⏎ inspect · g group · esc chat/);
+  assert.match(narrow, /↑↓ move · Enter inspect · g group · esc chat/);
   // The old bar spelled out where Esc goes and repeated the filter keys the
   // frame's own legend already prints.
   assert.doesNotMatch(narrow, /select · Enter inspects/);
@@ -6064,7 +6088,7 @@ test("the sessions browser holds every terminal size it is opened in", async (t)
   assert.match(wide, /│ ◷ elapsed\s*: 2m/);
   assert.match(wide, /│ # tokens\s*: 12000 run tokens/);
   assert.match(wide, /│ ◆ children: 1 spawned/);
-  assert.match(wide, /↑↓ move · ⏎ inspect · g group · esc chat/);
+  assert.match(wide, /↑↓ move · Enter inspect · g group · esc chat/);
 
   // Enter on a heading folds it, and the rows under it stop being drawn.
   ui.groupTree!.state = { ...ui.groupTree!.state, cursor: 0 };
@@ -6502,3 +6526,99 @@ test("the composer chips publish clickable rects that match their text", async (
   }
 });
 
+
+test("the pet display choice persists per workspace data dir", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-pet-persist-"));
+  const env = { NOMO_DATA_DIR: root };
+  const app = new Workbench(env);
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const file = petPreferencePath(env);
+
+  // The default is unchanged: on, in the automatic spot, and nothing is
+  // written until the operator actually chooses something.
+  const first = new WorkspaceTui(app, env);
+  first.choose("chat");
+  assert.equal(first.petEnabled, true);
+  assert.equal(first.petPlacement, "auto");
+  await assert.rejects(readFile(file), "constructing the pet wrote a file");
+
+  // /pet perch is a display choice, so it survives the process.
+  await first.command("/pet perch");
+  assert.equal(first.petPlacement, "perch");
+  const saved = JSON.parse(await readFile(file, "utf8")) as Record<
+    string,
+    unknown
+  >;
+  assert.deepEqual(saved, { version: 1, enabled: true, placement: "perch" });
+  const second = new WorkspaceTui(app, env);
+  assert.equal(second.petEnabled, true);
+  assert.equal(second.petPlacement, "perch", "the pose preference was lost");
+
+  // Off is remembered too, and stays off across a restart.
+  await second.command("/pet off");
+  assert.equal(second.petEnabled, false);
+  const third = new WorkspaceTui(app, env);
+  assert.equal(third.petEnabled, false, "the off choice was lost");
+  assert.equal(third.petPlacement, "off");
+
+  // /pet on clears the saved off state.
+  await third.command("/pet on");
+  const fourth = new WorkspaceTui(app, env);
+  assert.equal(fourth.petEnabled, true);
+  assert.equal(fourth.petPlacement, "auto");
+  // A display choice never starts a conversation.
+  assert.equal(app.list().length, 0);
+});
+
+test("an explicit environment value outranks the saved pet choice", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-pet-env-"));
+  const env = { NOMO_DATA_DIR: root };
+  const app = new Workbench(env);
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const saved = new WorkspaceTui(app, env);
+  await saved.command("/pet perch");
+
+  // NOMO_TUI_PET is the operator's startup override, so it wins over the file
+  // in both directions and the constructor never rewrites the saved choice.
+  const off = new WorkspaceTui(app, { ...env, NOMO_TUI_PET: "0" });
+  assert.equal(off.petEnabled, false);
+  assert.equal(off.petPlacement, "off");
+  const on = new WorkspaceTui(app, { ...env, NOMO_TUI_PET: "1" });
+  assert.equal(on.petEnabled, true);
+  const restored = new WorkspaceTui(app, env);
+  assert.equal(restored.petPlacement, "perch", "the override rewrote the file");
+});
+
+test("a corrupt pet preference leaves the frame on the defaults", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-pet-corrupt-"));
+  const env = { NOMO_DATA_DIR: root };
+  const app = new Workbench(env);
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const file = petPreferencePath(env);
+  await mkdir(join(root, "tui", "state"), { recursive: true });
+  await writeFile(file, "{ this is not the pet");
+
+  const ui = new WorkspaceTui(app, env);
+  ui.choose("chat");
+  assert.equal(ui.petEnabled, true);
+  assert.equal(ui.petPlacement, "auto");
+  // The frame still draws, and the next real choice repairs the file.
+  const frame = stripAnsi(
+    renderWorkspace(ui, 80, 24, "", true, false, {
+      color: false,
+      motion: false,
+    }),
+  );
+  assert.ok(frame.includes("▦ idle"));
+  await ui.command("/pet dock");
+  assert.equal(new WorkspaceTui(app, env).petPlacement, "dock");
+});

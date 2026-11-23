@@ -142,14 +142,18 @@ import {
   petPose,
   petReaction,
   petStateFrom,
+  readPetPreference,
   renderPetBubble,
   renderPetMini,
   renderPetRows,
   renderPetSplash,
+  writePetPreference,
   type PetContext,
+  type PetPlacement,
   type PetSignal,
   type PetState,
 } from "./pet.ts";
+export type { PetPlacement } from "./pet.ts";
 import { trueColor, type ColorPalette } from "./theme-config.ts";
 import { barChart, deltaLabel, gauge, sparkline } from "./charts.ts";
 import { usageSummaryLines } from "./usage-visual.ts";
@@ -1262,15 +1266,27 @@ export function sessionSectionChevron(
  * of Esc, which the key itself already says, and the filter keys are printed
  * once already by the frame's own legend. The tail drops first, so a 40 column
  * terminal still reads a whole phrase instead of a truncated one.
+ *
+ * The arrow glyphs are the preset's: an ASCII terminal has no arrow shapes and
+ * would print them as a missing-glyph box, so movement is `^v` there. Enter is
+ * spelled in both presets because it has no one-cell ASCII glyph and a
+ * printable stand-in would read as a literal key the browser does not bind.
+ * Spelling it keeps the same words in both presets, so the bar never gains a
+ * word on the ASCII frame that the Unicode one does not print.
  */
-export function sessionBrowserHint(width: number): string {
+export function sessionBrowserHint(
+  width: number,
+  preset?: SymbolPreset,
+): string {
   const cells = Math.max(1, Math.floor(width));
+  const arrows = preset === "ascii" ? "^v" : "↑↓";
   const variants = [
-    "↑↓ move · ⏎ inspect · g group · esc chat",
-    "↑↓ move · ⏎ inspect · esc chat",
-    "↑↓ move · ⏎ inspect",
-    "↑↓ move · ⏎",
-    "↑↓ ⏎",
+    `${arrows} move · Enter inspect · g group · esc chat`,
+    `${arrows} move · Enter inspect · g group · esc`,
+    `${arrows} move · Enter inspect · esc chat`,
+    `${arrows} move · Enter inspect`,
+    `${arrows} Enter inspect`,
+    `${arrows} Enter`,
   ];
   const whole = variants.find((line) => visibleLength(line) <= cells);
   return whole ?? fit(variants[variants.length - 1]!, cells);
@@ -2994,16 +3010,6 @@ function refreshedTreeState(
 }
 
 /**
- * Where NIB is asked to live.
- *
- * `auto` picks the composer dock where it fits and the header otherwise, so a
- * terminal never spends a row on the pet. `dock` and `perch` are explicit
- * requests that still fall back to the header form when the requested surface
- * is too small; `off` is the same display toggle as NOMO_TUI_PET=0.
- */
-export type PetPlacement = "auto" | "dock" | "perch" | "off";
-
-/**
  * What a clickable composer chip or session row icon does.
  *
  * Every action has a keyboard equivalent the frame already documents: the
@@ -3193,12 +3199,16 @@ export class WorkspaceTui {
   colorOverride?: boolean;
   motionOverride?: boolean;
   /**
-   * Whether NIB the pet is drawn. NOMO_TUI_PET=0 turns it off at startup and
-   * Alt+N or /pet toggles it for the session; it is display only, so the
-   * toggle never sends a prompt or writes to the draft.
+   * Whether NIB the pet is drawn. NOMO_TUI_PET turns it on or off at startup
+   * and wins over the saved choice; Alt+N or /pet toggles it, and the choice
+   * is remembered for this workspace. It is display only, so the toggle never
+   * sends a prompt or writes to the draft.
    */
   petEnabled = true;
-  /** Where the pet was asked to live. See PetPlacement. */
+  /**
+   * Where the pet was asked to live. See PetPlacement. Saved beside the other
+   * TUI state by savePetPreference.
+   */
   petPlacement: PetPlacement = "auto";
   /**
    * True while the NIB signal card is open over the Chat body. It is an
@@ -3407,7 +3417,16 @@ export class WorkspaceTui {
     this.themeConfig = getThemeConfig(env);
     this.chatPanelVisuals = chatPanelVisualsFrom(env);
     this.keybindingsOverride = env.NOMO_TUI_KEYBINDINGS;
-    this.petEnabled = env.NOMO_TUI_PET !== "0";
+    // The operator's startup override wins over the saved choice, and a
+    // missing or corrupt file reads as the documented default: on, automatic.
+    // Reading is the only thing that happens here, so a session that never
+    // touches the pet never writes this file.
+    const preference = readPetPreference(env);
+    this.petEnabled =
+      env.NOMO_TUI_PET === undefined
+        ? preference.enabled
+        : env.NOMO_TUI_PET !== "0";
+    this.petPlacement = this.petEnabled ? preference.placement : "off";
     // The icon pack and the optional NIB image travel on the same Kitty
     // transfer, so both follow the same terminal verdict: Ghostty, native
     // Kitty, or an explicitly declared multiplexer passthrough. Every other
@@ -3730,6 +3749,20 @@ export class WorkspaceTui {
         ? {}
         : { motion: this.motionOverride }),
     };
+  }
+  /**
+   * Remember the current pet display choice for this workspace.
+   *
+   * The choice is decoration, so a write that cannot land returns false and
+   * leaves the live choice in place rather than failing the session. Nothing
+   * but the on/off flag and the placement is stored; the pet never persists
+   * run state, a session id or a provider name.
+   */
+  savePetPreference(): boolean {
+    return writePetPreference(this.env, {
+      enabled: this.petEnabled,
+      placement: this.petPlacement,
+    });
   }
   /**
    * Dismiss the startup splash if it still owns the frame.
@@ -8572,23 +8605,27 @@ ${(doc.content ?? "").slice(0, 2000)}`;
     if (cmd === "pet") {
       // /pet on | /pet off | /pet dock | /pet perch, and /pet alone reports
       // the current state. A display choice only: it never sends a prompt,
-      // never inserts text and never touches the draft.
+      // never inserts text and never touches the draft. Every real choice is
+      // also remembered for this workspace, so a restart keeps it.
       const choice = arg.toLowerCase();
       if (choice === "on" || choice === "auto") {
         this.petEnabled = true;
         this.petPlacement = "auto";
+        this.savePetPreference();
         this.notice = "Pet is on. Alt+N hides it again.";
         return;
       }
       if (choice === "off") {
         this.petEnabled = false;
         this.petPlacement = "off";
+        this.savePetPreference();
         this.notice = "Pet is off. Alt+N shows it again.";
         return;
       }
       if (choice === "dock" || choice === "perch") {
         this.petEnabled = true;
         this.petPlacement = choice;
+        this.savePetPreference();
         this.notice =
           choice === "dock"
             ? "Pet docks on the composer rail when the terminal has room."
@@ -10870,7 +10907,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         ];
       return [summary, fit("No sessions yet. /new starts one.", width)];
     }
-    const hint = sessionBrowserHint(width);
+    const hint = sessionBrowserHint(width, this.themeConfig.symbolPreset);
     const hintRows = height >= 6 ? 1 : 0;
     const area = Math.max(1, height - 1 - hintRows);
     const start =
@@ -12081,11 +12118,13 @@ export function chatRows(
         //
         // The fence rows, the `path · +N -M lines` header and the omission
         // notes are context: they are muted rather than toned, so a reader can
-        // tell a change from the frame that reports it.
+        // tell a change from the frame that reports it. A diff card indents
+        // its omission note under the code block while a read card prints it
+        // flush, so the note is recognised at either indent.
         const diffContextRow =
           row.trim() === "┌ code" ||
           row.trim() === "└ code" ||
-          /^ {2}… \d+ (?:more lines|characters omitted)$/u.test(row) ||
+          /^ {0,2}… \d+ (?:more lines|characters omitted)$/u.test(row) ||
           /^[^\s].* · \+\d+ -\d+ lines$/u.test(row);
         const codeStyle: ChatRow["style"] = diffContextRow
           ? "diff-context"
@@ -13065,8 +13104,9 @@ export function sessionRowFactSpans(
 ): { model?: CellSpan; tokens?: CellSpan } {
   // The wide layout paints the inspector beside the list on the same row, so
   // the fact scan stops at the pane divider rather than reading the inspector's
-  // own values as the row's.
-  const plain = stripAnsi(line).split(" │ ")[0] ?? "";
+  // own values as the row's. The divider is one cell wide in both symbol
+  // presets: the Unicode box-drawing bar and the ASCII pipe.
+  const plain = stripAnsi(line).split(/ [│|] /)[0] ?? "";
   const parts = plain.split(" · ");
   if (parts.length < 2) return {};
   let cursor = 0;
@@ -14288,11 +14328,14 @@ export function renderWorkspace(
         lines[offset + bodyIndex] ?? "",
         rowIcons,
       );
+      // A body row paints a two-cell gutter before its content, so a fact span
+      // measured on the raw line starts two cells later on the screen.
+      const factColumn = 3 + panelTopOffset;
       if (factSpans.model)
         ui.rowHitTargets.push({
           row: screenRow,
-          start: 1 + panelTopOffset + factSpans.model.start,
-          end: 1 + panelTopOffset + factSpans.model.end,
+          start: factColumn + factSpans.model.start,
+          end: factColumn + factSpans.model.end,
           kind: "chip",
           index: target.index,
           action: "models-panel",
@@ -14300,8 +14343,8 @@ export function renderWorkspace(
       if (factSpans.tokens)
         ui.rowHitTargets.push({
           row: screenRow,
-          start: 1 + panelTopOffset + factSpans.tokens.start,
-          end: 1 + panelTopOffset + factSpans.tokens.end,
+          start: factColumn + factSpans.tokens.start,
+          end: factColumn + factSpans.tokens.end,
           kind: "chip",
           index: target.index,
           action: "usage",

@@ -549,6 +549,27 @@ export function isPetCardKey(
   );
 }
 
+/**
+ * Ctrl+B dismisses the newest notice in the toast stack.
+ *
+ * A sticky toast (ttl 0) has no deadline, so a mouse click was its only exit
+ * and a keyboard-only operator could not clear one at all. Ctrl+B is the
+ * chord the workspace key table leaves unbound, and the action is display
+ * only: it drops the top toast and never moves a selection, runs a command or
+ * touches the approval banner, which is a separate surface carrying an open
+ * decision.
+ */
+export function isDismissNoticeKey(
+  key: Pick<Key, "name" | "ctrl" | "meta" | "shift">,
+): boolean {
+  return (
+    key.ctrl === true &&
+    !key.shift &&
+    !key.meta &&
+    key.name?.toLowerCase() === "b"
+  );
+}
+
 /** Jump between user prompts in the rendered chat rows. Rows are viewport
  * offsets, so the runner can set the scroll position directly. */
 export function nextPromptRow(
@@ -1612,6 +1633,18 @@ export async function runWorkspaceTui(
         suspendToBackground();
         return;
       }
+      // A sticky notice has no timer, so the chord is its keyboard exit. It is
+      // read here, above every overlay, because the queue is painted on the
+      // panel surfaces too and dismissing a notice never changes what an
+      // overlay is doing.
+      if (isDismissNoticeKey(key) && !input.pasting) {
+        const newest = ui.toasts.toasts[0];
+        if (newest) {
+          ui.toasts = dismissToast(ui.toasts, newest.id);
+          draw();
+          return;
+        }
+      }
       if (key.name !== "escape") dismissedCommandSuggestions = undefined;
       if (!input.pasting && key.meta && key.name === "l") {
         terminal.invalidateDisplay();
@@ -2289,6 +2322,10 @@ export async function runWorkspaceTui(
       if (!input.pasting && isPetToggleKey(key)) {
         ui.petEnabled = !ui.petEnabled;
         ui.petPlacement = ui.petEnabled ? "auto" : "off";
+        // The toggle is a display choice like /pet, so it is remembered for
+        // this workspace too. A write that cannot land is not worth a notice:
+        // the live choice stays either way.
+        ui.savePetPreference();
         ui.notice = ui.petEnabled
           ? "Pet is on. /pet off hides it."
           : "Pet is off. /pet on shows it.";
