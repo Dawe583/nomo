@@ -1694,6 +1694,7 @@ export async function runWorkspaceTui(
           const matches = filterPalette(
             paletteFromCommands(TUI_COMMANDS),
             ui.palette.query,
+            ui.palette.recent,
           );
           const picked = matches[ui.palette.selected];
           ui.palette = undefined;
@@ -1728,7 +1729,11 @@ export async function runWorkspaceTui(
         if (key.name === "up" || key.name === "down") {
           ui.palette = advancePaletteSelection(
             ui.palette,
-            filterPalette(paletteFromCommands(TUI_COMMANDS), ui.palette.query),
+            filterPalette(
+              paletteFromCommands(TUI_COMMANDS),
+              ui.palette.query,
+              ui.palette.recent,
+            ),
             key.name === "down" ? 1 : -1,
           );
           draw();
@@ -1738,6 +1743,7 @@ export async function runWorkspaceTui(
           const matches = filterPalette(
             paletteFromCommands(TUI_COMMANDS),
             ui.palette.query,
+            ui.palette.recent,
           );
           if (key.name === "home") ui.palette = { ...ui.palette, selected: 0 };
           else if (key.name === "end")

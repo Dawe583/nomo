@@ -43,19 +43,6 @@ export interface PaletteView {
   readonly selected: number;
 }
 
-// Fixed section order. Groups with no items are omitted by
-// paletteGroupsInOrder; the constant itself is exported for tests.
-export const PALETTE_GROUP_ORDER: readonly PaletteGroup[] = [
-  "session",
-  "chat",
-  "tools",
-  "ledger",
-  "agents",
-  "settings",
-  "help",
-  "exit",
-];
-
 // Group glyphs. Every pick must stay a single terminal cell under the width
 // table in layout.ts, which counts U+2600-U+27BF as two cells wide, so the
 // gear (U+2699) and the power symbol are deliberately avoided here in favour
@@ -231,15 +218,27 @@ export function filterPalette(
           ? 1
           : 0,
   );
-  return scored.map((entry) => entry.item);
+  // Rank matches first, then keep each section contiguous so up/down follows
+  // visible rows. The section containing the strongest match stays first.
+  const grouped = new Map<PaletteGroup, PaletteItem[]>();
+  for (const { item } of scored) {
+    const group = grouped.get(item.group);
+    if (group) group.push(item);
+    else grouped.set(item.group, [item]);
+  }
+  const ordered: PaletteItem[] = [];
+  for (const group of grouped.values()) {
+    for (const item of group) ordered.push(item);
+  }
+  return ordered;
 }
 
 export function paletteGroupsInOrder(
   items: readonly PaletteItem[],
 ): PaletteGroup[] {
-  const present = new Set<PaletteGroup>();
-  for (const item of items) present.add(item.group);
-  return PALETTE_GROUP_ORDER.filter((group) => present.has(group));
+  const groups = new Set<PaletteGroup>();
+  for (const item of items) groups.add(item.group);
+  return [...groups];
 }
 
 export function initialPaletteState(
@@ -294,7 +293,7 @@ export function renderPalette(
   width: number,
   options?: { color?: boolean },
 ): PaletteView {
-  const filtered = filterPalette(items, state.query);
+  const filtered = filterPalette(items, state.query, state.recent);
   const colour = options?.color === true;
   if (filtered.length === 0) {
     const line = pad(

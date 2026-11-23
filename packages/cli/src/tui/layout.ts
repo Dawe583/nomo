@@ -76,11 +76,17 @@ function cellWidth(point: string): number {
   return 1;
 }
 
-export function visibleLength(value: string): number {
+function plainWidth(value: string): number {
   let total = 0;
-  for (const point of stripAnsi(value)) total += cellWidth(point);
+  for (const point of value) total += cellWidth(point);
   return total;
 }
+
+export function visibleLength(value: string): number {
+  return plainWidth(stripAnsi(value));
+}
+
+const graphemes = new Intl.Segmenter(undefined, { granularity: "grapheme" });
 
 export function fit(
   value: string,
@@ -89,17 +95,16 @@ export function fit(
 ): string {
   if (width <= 0) return "";
   const plain = stripAnsi(value);
-  if (visibleLength(plain) <= width) return value;
+  if (plainWidth(plain) <= width) return value;
   if (width === 1) return ".";
-  const points = [...plain];
+  const points = Array.from(graphemes.segment(plain), ({ segment }) => segment);
   if (side === "left") {
     let kept = "";
     let used = 0;
     for (let index = points.length - 1; index >= 0; index -= 1) {
       const point = points[index]!;
-      const cells = cellWidth(point);
-      // Reserve one cell for the truncation marker and never split a wide
-      // character: a half wide character renders as replacement garbage.
+      const cells = plainWidth(point);
+      // Reserve one cell for the marker without splitting a grapheme.
       if (used + cells > width - 1) break;
       kept = point + kept;
       used += cells;
@@ -109,7 +114,7 @@ export function fit(
   let kept = "";
   let used = 0;
   for (const point of points) {
-    const cells = cellWidth(point);
+    const cells = plainWidth(point);
     if (used + cells > width - 1) break;
     kept += point;
     used += cells;
@@ -151,9 +156,18 @@ export function box(
   width: number,
   frame: SymbolSet["frame"] = ASCII_FRAME,
 ): string[] {
-  const inner = Math.max(1, width - 2);
+  const cells = Number.isFinite(width) ? Math.max(0, Math.floor(width)) : 0;
+  if (cells < 3) {
+    return [
+      rule(cells, frame.tl),
+      ...content.map(() => rule(cells, frame.v)),
+      rule(cells, frame.bl),
+    ];
+  }
+
+  const inner = cells - 2;
   const titleText =
-    title === "" ? "" : ` ${fit(title, Math.max(1, inner - 2))} `;
+    title === "" || inner < 3 ? "" : ` ${fit(title, inner - 2)} `;
   const top = `${frame.tl}${titleText}${rule(inner - visibleLength(titleText), frame.h)}${frame.tr}`;
   const body = content.map((line) => `${frame.v}${pad(line, inner)}${frame.v}`);
   return [top, ...body, `${frame.bl}${rule(inner, frame.h)}${frame.br}`];
