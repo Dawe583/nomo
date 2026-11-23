@@ -1,9 +1,12 @@
 import test, { before, describe } from "node:test";
 import assert from "node:assert/strict";
-import { execFileSync, spawnSync } from "node:child_process";
+import { execFileSync, spawn, spawnSync } from "node:child_process";
+import { generateKeyPairSync, randomBytes } from "node:crypto";
 import { isBuiltin } from "node:module";
 import {
+  chmodSync,
   existsSync,
+  mkdirSync,
   mkdtempSync,
   readdirSync,
   readFileSync,
@@ -70,6 +73,77 @@ function bareSpecifiers(code) {
     for (const match of code.matchAll(form)) found.add(match[1]);
   }
   return [...found];
+}
+
+/**
+ * One MCP session over the stdio transport, spoken as newline-delimited
+ * JSON-RPC.
+ *
+ * The SDK client is a CLI runtime dependency and this package does not declare
+ * it, so the test speaks the protocol the transport actually reads rather than
+ * borrowing a client from another package's node_modules. That is also the
+ * stronger assertion: what has to work is the handshake an MCP host performs,
+ * not what one SDK build happens to send.
+ */
+function mcpSession(bin, args, env) {
+  const child = spawn(process.execPath, [bin, ...args], {
+    env,
+    stdio: ["pipe", "pipe", "pipe"],
+  });
+  const pending = new Map();
+  let buffer = "";
+  let stderr = "";
+  let nextId = 1;
+  child.stdout.on("data", (chunk) => {
+    buffer += chunk.toString();
+    for (
+      let index = buffer.indexOf("\n");
+      index >= 0;
+      index = buffer.indexOf("\n")
+    ) {
+      const line = buffer.slice(0, index).trim();
+      buffer = buffer.slice(index + 1);
+      if (!line) continue;
+      const message = JSON.parse(line);
+      const settle = pending.get(message.id);
+      if (!settle) continue;
+      pending.delete(message.id);
+      settle(message);
+    }
+  });
+  child.stderr.on("data", (chunk) => {
+    stderr += chunk.toString();
+  });
+  const request = (method, params) => {
+    const id = nextId;
+    nextId += 1;
+    return new Promise((resolve, reject) => {
+      // A server that refused to serve has already exited, so a bounded wait
+      // is what turns that into the refusal text instead of a hung suite.
+      const timer = setTimeout(() => {
+        pending.delete(id);
+        reject(new Error(`no response to ${method}\n${stderr}`));
+      }, 30_000);
+      pending.set(id, (message) => {
+        clearTimeout(timer);
+        resolve(message);
+      });
+      child.stdin.write(
+        `${JSON.stringify({ jsonrpc: "2.0", id, method, params })}\n`,
+      );
+    });
+  };
+  return {
+    request,
+    notify(method) {
+      child.stdin.write(`${JSON.stringify({ jsonrpc: "2.0", method })}\n`);
+    },
+    stderr: () => stderr,
+    close() {
+      child.stdin.end();
+      child.kill();
+    },
+  };
 }
 
 describe("the distribution bundle", () => {
@@ -357,5 +431,167 @@ describe("the distribution bundle", () => {
   test("the default output directory is the one the manifest ships", () => {
     assert.equal(DEFAULT_OUT_DIR, "packages/cli/dist");
     assert.match(read("packages/cli/package.json"), /"dist\/"/);
+  });
+
+  test("completes the recovery MCP handshake from a bare --out directory with a retained key", async () => {
+    // The question `--version` and `config` could not answer: the bundle has to
+    // serve the recovery MCP surface from the same bare layout, with the
+    // retained signing key it must adopt rather than mint. A server that cannot
+    // read that key refuses to serve, so a silent regeneration here would be a
+    // second identity over the same signed history.
+    const parent = mkdtempSync(join(tmpdir(), "nomo-bare-mcp-test-"));
+    const bare = join(parent, "out");
+    const workspace = join(parent, "project");
+    const state = join(parent, "state");
+    const keys = join(state, "keys");
+    const keyFile = join(keys, "dev-ed25519.pkcs8");
+    const config = join(parent, "recovery.json");
+    let session;
+    try {
+      await buildBundle({ root, outDir: bare, quiet: true });
+      symlinkSync(
+        join(root, "packages/cli/node_modules"),
+        join(parent, "node_modules"),
+      );
+      mkdirSync(workspace, { recursive: true });
+      writeFileSync(join(workspace, "file.txt"), "before\n");
+      // The key and its directory are created the way the ledger hardening
+      // expects them (0700 parent, 0600 file): a retained key refused for its
+      // permissions would prove nothing about the bundle.
+      mkdirSync(keys, { recursive: true, mode: 0o700 });
+      chmodSync(state, 0o700);
+      chmodSync(keys, 0o700);
+      const { privateKey } = generateKeyPairSync("ed25519");
+      writeFileSync(
+        keyFile,
+        privateKey.export({ format: "der", type: "pkcs8" }),
+        { mode: 0o600 },
+      );
+      const retainedKey = readFileSync(keyFile);
+
+      writeFileSync(
+        config,
+        JSON.stringify({
+          workspace: "test",
+          agentId: "bundle-test-agent",
+          stateDir: "state",
+          encryptionKeyEnv: "TEST_RECOVERY_KEY",
+          filesystem: { root: "project", cooperative: true },
+          policyPath: "policy.yaml",
+        }),
+      );
+      // The rules an operator would write to allow a reversible write and
+      // refuse everything else, so the execute below is policy-authorized
+      // rather than a test-only bypass.
+      writeFileSync(
+        join(parent, "policy.yaml"),
+        [
+          "version: 1",
+          "rules:",
+          "  - match: { class: [r0, r1] }",
+          "    decision: allow",
+          "  - match: {}",
+          "    decision: deny",
+          "",
+        ].join("\n"),
+      );
+
+      const manifest = JSON.parse(read("packages/cli/package.json"));
+      // The vault key is retained state, so it is minted once here and handed
+      // to the server rather than left to whatever a second process invents.
+      const vaultKey = randomBytes(32).toString("base64");
+      session = mcpSession(
+        join(bare, ENTRY_FILE),
+        ["recovery", "serve", "--config", config],
+        { ...process.env, TEST_RECOVERY_KEY: vaultKey },
+      );
+
+      const initialized = await session.request("initialize", {
+        protocolVersion: "2025-06-18",
+        capabilities: {},
+        clientInfo: { name: "bundle-handshake", version: "1" },
+      });
+      assert.equal(initialized.error, undefined, session.stderr());
+      assert.equal(initialized.result.serverInfo.name, "nomo-recovery");
+      // The version comes from the build stamp in a directory with no manifest
+      // above it, which is the one reader that already had to change.
+      assert.equal(initialized.result.serverInfo.version, manifest.version);
+      session.notify("notifications/initialized");
+
+      const listed = await session.request("tools/list", {});
+      assert.equal(listed.error, undefined, session.stderr());
+      assert.deepEqual(
+        listed.result.tools.map(({ name }) => name).sort(),
+        [
+          "nomo_execute",
+          "nomo_reconcile",
+          "nomo_recovery_apply",
+          "nomo_recovery_apply_job",
+          "nomo_recovery_plan",
+          "nomo_recovery_plan_job",
+          "nomo_recovery_reconcile",
+          "nomo_recovery_status_job",
+        ],
+      );
+
+      // A round trip is what separates "the server answered" from "the bundled
+      // runtime, journal and vault work": initialize alone never opens SQLite.
+      const executed = JSON.parse(
+        (
+          await session.request("tools/call", {
+            name: "nomo_execute",
+            arguments: {
+              operationId: "bundle-op",
+              runId: "bundle-run",
+              mutation: {
+                action: "write",
+                path: "file.txt",
+                base64: Buffer.from("bundled\n").toString("base64"),
+              },
+            },
+          })
+        ).result.content[0].text,
+      );
+      assert.equal(executed.status, "succeeded", session.stderr());
+      assert.equal(
+        readFileSync(join(workspace, "file.txt"), "utf8"),
+        "bundled\n",
+      );
+
+      const planned = JSON.parse(
+        (
+          await session.request("tools/call", {
+            name: "nomo_recovery_plan",
+            arguments: { operationId: "bundle-op" },
+          })
+        ).result.content[0].text,
+      );
+      assert.match(planned.digest, /^[a-f0-9]{64}$/);
+
+      const applied = JSON.parse(
+        (
+          await session.request("tools/call", {
+            name: "nomo_recovery_apply",
+            arguments: { plan: planned },
+          })
+        ).result.content[0].text,
+      );
+      assert.equal(applied.status, "restored", session.stderr());
+      assert.equal(
+        readFileSync(join(workspace, "file.txt"), "utf8"),
+        "before\n",
+      );
+
+      // Adopted, not regenerated: the same bytes are on disk after a full
+      // session, so the server never created a replacement identity.
+      assert.deepEqual(readFileSync(keyFile), retainedKey);
+      assert.doesNotMatch(
+        session.stderr(),
+        /ENOENT|__NOMO_|Retained recovery signing key is unavailable/,
+      );
+    } finally {
+      session?.close();
+      rmSync(parent, { recursive: true, force: true });
+    }
   });
 });
