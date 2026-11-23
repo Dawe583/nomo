@@ -9,7 +9,7 @@ NOMO uses three complementary graphs. Never merge their responsibilities.
 
 ## Task graph
 
-The active request graph is the execution plan and single source of task state. Each node has a stable id, status, owner, dependencies, allowed paths, acceptance criteria, verifier, evidence and stop condition. A node becomes done only with captured evidence. Keep one active writer per shared file. Parallelism is optional, not the default.
+Use the graph designated for the request and worktree; do not assume every harness or workstream writes `.nomo/work-state.json`. Nodes have stable IDs, status, owner, actual dependencies, allowed paths, acceptance criteria, verifier, evidence and stop condition. A node becomes done only with captured evidence. Independent nodes with disjoint paths may be active concurrently. Keep one active writer per shared path and one authorized writer per graph file. Add dependencies only for real data/order requirements, not to serialize unrelated work.
 
 ## Source graphs
 

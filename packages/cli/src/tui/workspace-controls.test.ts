@@ -1,192 +1,30 @@
 import test from "node:test";
+import { execFileSync } from "node:child_process";
 import assert from "node:assert/strict";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
-import { execFileSync } from "node:child_process";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Workbench } from "../../../workbench/src/index.ts";
-import { OpenAIChatGPTAuthStore } from "../../../workbench/src/openai-chatgpt-auth.ts";
 import { assertIsolated } from "../../../workbench/src/test-fixture.ts";
-import { WorkspaceTui, renderWorkspace, commandSuggestions, launchSystemBrowserAuthorization } from "./workspace.ts";
+import { WorkspaceTui, renderWorkspace, commandSuggestions } from "./workspace.ts";
 import { stripAnsi, visibleLength } from "./layout.ts";
 
-test("SIWC browser launch uses an argument-safe system command and refuses account hints", async () => {
-  const authorizationUrl = "https://auth.openai.com/api/accounts/authorize?client_id=dynamic_agent_client&state=fixture&nonce=fixture";
-  const calls: Array<{ command: string; args: readonly string[]; options: unknown }> = [];
-  const launch = async (command: string, args: readonly string[], options: unknown) => {
-    calls.push({ command, args, options });
-  };
-  await launchSystemBrowserAuthorization(authorizationUrl, "darwin", launch);
-  assert.deepEqual(calls[0], {
-    command: "open",
-    args: [authorizationUrl],
-    options: { timeout: 10_000, windowsHide: true },
-  });
-  await assert.rejects(
-    launchSystemBrowserAuthorization(`${authorizationUrl}&login_hint=private@example.invalid`, "darwin", launch),
-    /authorization request is invalid/,
-  );
-  await assert.rejects(
-    launchSystemBrowserAuthorization(authorizationUrl.replace("auth.openai.com", "auth.openai.com:8443"), "darwin", launch),
-    /authorization request is invalid/,
-  );
-  assert.equal(calls.length, 1);
-});
-
-test("TUI selects only a model listed for the chosen ChatGPT account", async t => {
-  const data = await mkdtemp(join(tmpdir(), "nomo-siwc-model-data-"));
-  const auth = await mkdtemp(join(tmpdir(), "nomo-siwc-model-auth-"));
-  t.after(async () => {
-    await rm(data, { recursive: true, force: true });
-    await rm(auth, { recursive: true, force: true });
-  });
-  const store = new OpenAIChatGPTAuthStore(auth);
-  await store.update(state => ({
-    state: { ...state, accounts: [{
-      id: "account-fixture", clientId: "oaiapp-fixture", subject: "subject-fixture",
-      scopes: ["resource.invoke", "chatgpt.tokens.use.direct"], usageEnabled: true,
-      accessToken: "access-fixture-secret", refreshToken: "refresh-fixture-secret",
-      expiresAt: Date.now() + 60_000,
-    }] }, result: undefined,
-  }));
-  const requests: string[] = [];
-  const workbench = new Workbench(
-    { NOMO_DATA_DIR: data },
-    async input => {
-      requests.push(String(input));
-      return Response.json({ models: [{ slug: "gpt-visible", display_name: "Visible", visibility: "list" }] });
-    },
-    { openAIChatGPTAuthStore: store },
-    { openAIChatGPTTokenProvider: async () => "access-fixture-secret" },
-  );
-  const ui = new WorkspaceTui(workbench, { NOMO_DATA_DIR: data }, async () => {});
-  await ui.command("/chatgpt models account-fixture");
-  assert.ok((ui.detail ?? []).join("\\n").includes("gpt-visible"));
-  await ui.command("/chatgpt use account-fixture gpt-visible");
-  assert.equal(ui.provider?.authKind, "openai-chatgpt-account");
-  assert.equal(ui.provider?.defaultModel, "gpt-visible");
-  assert.ok(requests.every(url => url === "https://api.openai.com/v1/models"));
-});
-
-test("TUI ChatGPT account status is safe and disconnect requires confirmation", async t => {
-  const data = await mkdtemp(join(tmpdir(), "nomo-siwc-status-data-"));
-  const auth = await mkdtemp(join(tmpdir(), "nomo-siwc-status-auth-"));
-  t.after(async () => {
-    await rm(data, { recursive: true, force: true });
-    await rm(auth, { recursive: true, force: true });
-  });
-  const store = new OpenAIChatGPTAuthStore(auth);
-  await store.update(state => ({
-    state: { ...state, accounts: [{
-      id: "account-fixture",
-      clientId: "oaiapp-fixture",
-      subject: "subject-fixture",
-      email: "person@example.invalid",
-      scopes: ["resource.invoke", "chatgpt.tokens.use.direct"],
-      usageEnabled: true,
-      accessToken: "access-fixture-secret",
-      refreshToken: "refresh-fixture-secret",
-      expiresAt: Date.now() + 60_000,
-    }, {
-      id: "account-reauth", clientId: "oaiapp-reauth", subject: "subject-reauth",
-      scopes: ["resource.invoke", "chatgpt.tokens.use.direct"], usageEnabled: false,
-      reauthRequired: true,
-    }] },
-    result: undefined,
-  }));
-  const workbench = new Workbench({ NOMO_DATA_DIR: data }, fetch, { openAIChatGPTAuthStore: store });
-  const ui = new WorkspaceTui(workbench, { NOMO_DATA_DIR: data }, async () => {});
-  await ui.command("/chatgpt");
-  const status = (ui.detail ?? []).join("\\n");
-  assert.ok(status.includes("person@example.invalid"));
-  assert.ok(status.includes("chatgpt.tokens.use.direct"));
-  assert.equal(status.includes("access-fixture-secret"), false);
-  assert.equal(status.includes("refresh-fixture-secret"), false);
-  assert.ok(status.includes("reauth-required"));
-  await ui.command("/chatgpt disconnect account-reauth");
-  assert.match(ui.confirmation?.title ?? "", /DISCONNECT/);
-  assert.match(ui.confirmation?.lines.join(" ") ?? "", /Remote revocation/);
-  await ui.confirm();
-  assert.match(ui.notice, /remote revocation was not confirmed/i);
-});
-
-test("TUI sign-in failure shows safe provider diagnostics", async t => {
-  const data = await mkdtemp(join(tmpdir(), "nomo-siwc-tui-diagnostics-data-"));
-  const auth = await mkdtemp(join(tmpdir(), "nomo-siwc-tui-diagnostics-auth-"));
-  t.after(async () => {
-    await rm(data, { recursive: true, force: true });
-    await rm(auth, { recursive: true, force: true });
-  });
-  const workbench = new Workbench(
-    { NOMO_DATA_DIR: data },
-    async input => {
-      const url = String(input);
-      if (url === "https://auth.openai.com/api/accounts/oauth/token")
-        return Response.json({ error: "temporarily_unavailable", error_description: "secret-fixture-token" }, {
-          status: 503,
-          headers: { "x-request-id": "req_safe-fixture" },
-        });
-      assert.fail(`Unexpected fixture URL: ${url}`);
-    },
-    { openAIChatGPTAuthStore: new OpenAIChatGPTAuthStore(auth) },
-  );
-  const ui = new WorkspaceTui(workbench, { NOMO_DATA_DIR: data }, async url => {
-    const authorization = new URL(url);
-    const callback = new URL(authorization.searchParams.get("redirect_uri")!);
-    callback.searchParams.set("state", authorization.searchParams.get("state")!);
-    callback.searchParams.set("client_id", "oaiapp-issued-fixture");
-    callback.searchParams.set("code", "safe-code-fixture");
-    assert.equal((await fetch(callback)).status, 200);
-  });
-  await ui.command("/connect chatgpt");
-  assert.match(ui.notice, /temporarily_unavailable/);
-  assert.match(ui.notice, /503/);
-  assert.match(ui.notice, /req_safe-fixture/);
-  assert.equal(ui.notice.includes("secret-fixture-token"), false);
-});
-
-test("TUI ChatGPT connect opens the system browser without displaying the authorization URL", async t => {
-  const data = await mkdtemp(join(tmpdir(), "nomo-siwc-tui-data-"));
-  const auth = await mkdtemp(join(tmpdir(), "nomo-siwc-tui-auth-"));
-  t.after(async () => {
-    await rm(data, { recursive: true, force: true });
-    await rm(auth, { recursive: true, force: true });
-  });
-  const workbench = new Workbench(
-    { NOMO_DATA_DIR: data },
-    fetch,
-    { openAIChatGPTAuthStore: new OpenAIChatGPTAuthStore(auth) },
-  );
-  let launchedUrl = "";
-  const ui = new WorkspaceTui(workbench, { NOMO_DATA_DIR: data }, async url => {
-    launchedUrl = url;
-    const authorization = new URL(url);
-    const callback = new URL(authorization.searchParams.get("redirect_uri")!);
-    callback.searchParams.set("state", authorization.searchParams.get("state")!);
-    callback.searchParams.set("error", "access_denied");
-    assert.equal((await fetch(callback)).status, 200);
-  });
-  await ui.command("/chatgpt");
-  assert.ok((ui.detail ?? []).join("\\n").includes("No ChatGPT account registered."));
-  await ui.command("/connect chatgpt");
-  assert.ok(launchedUrl.startsWith("https://auth.openai.com/api/accounts/authorize?"));
-  assert.equal(ui.notice.includes(launchedUrl), false);
-  assert.equal((ui.detail ?? []).join("\\n").includes(launchedUrl), false);
-  assert.match(ui.notice, /declined/i);
-});
-
-async function fixture(t: test.TestContext, answer = "Fixture reply") {
+async function fixture(
+  t: test.TestContext,
+  answer = "Fixture reply",
+  options: { env?: Record<string, string>; fetcher?: typeof fetch } = {},
+) {
   const root = await mkdtemp(join(tmpdir(), "nomo-parity-controls-"));
-  const env = { NOMO_DATA_DIR: root };
-  let app = new Workbench(env, async (url) =>
+  const env = { NOMO_DATA_DIR: root, ...options.env };
+  const fetcher: typeof fetch = async (url) =>
     String(url).endsWith("/models")
       ? Response.json({ data: [{ id: "fixture" }] })
       : Response.json({
           choices: [
             { message: { role: "assistant", content: answer }, finish_reason: "stop" },
           ],
-        }),
-  );
+        });
+  let app = new Workbench(env, options.fetcher ?? fetcher);
   assertIsolated(root, env);
   t.after(async () => {
     await app.shutdown();
@@ -215,14 +53,20 @@ test("runs navigation keeps unknown outcomes and missing progress explicit", asy
   await app.settled();
   await ui.initialize();
   await ui.command("/runs");
-  assert.equal(ui.tab, "overview");
+  assert.equal(ui.tab, "runs");
   assert.equal(ui.items().length, 1);
   assert.match(ui.items()[0]!.label, /idle/);
-  assert.match(ui.items()[0]!.label, /progress unknown/);
+  assert.match(ui.items()[0]!.label, /progress not reported/);
   assert.doesNotMatch(ui.lines().join("\n"), /Completed runs/);
+  const activeSession = ui.sessionId;
   await ui.openSelected();
-  assert.match(ui.lines().join("\n"), /runId/);
-  assert.equal(ui.sessionId, session.id);
+  // The inspector names the run id it is showing instead of echoing a field
+  // name the operator never sees.
+  assert.match(ui.lines().join("\n"), /run id\s*:\s*[0-9a-f-]{36}/);
+  assert.match(ui.lines().join("\n"), /progress\s*:\s*not reported/);
+  // Inspecting a run is read-only: it never switches the active conversation.
+  assert.equal(ui.sessionId, activeSession);
+  assert.ok(session.id);
   // An unconfirmed runtime outcome must stay visible, never inferred complete.
   t.mock.method(app, "runs", () => [
     {
@@ -243,9 +87,14 @@ test("runs navigation keeps unknown outcomes and missing progress explicit", asy
     },
   ]);
   await ui.command("/runs");
-  assert.match(ui.items()[0]!.label, /unknown.*reconciliation required/);
+  assert.match(ui.items()[0]!.label, /unknown/);
+  assert.match(ui.items()[0]!.label, /progress not reported/);
+  // The unconfirmed outcome stays marked for reconciliation in the panel.
+  assert.match(ui.lines().join("\n"), /1 need reconciliation/);
   await ui.command("/status");
-  assert.match(ui.lines().join("\n"), /Run: unknown.*reconciliation required/);
+  // The status panel counts the unproven outcome instead of dropping it.
+  assert.match(ui.lines().join("\n"), /⚙ STATUS/);
+  assert.match(ui.lines().join("\n"), /1 unknown/);
   for (const width of [40, 80, 120, 200]) {
     const lines = stripAnsi(renderWorkspace(ui, width, 24)).split("\n");
     assert.ok(lines.length <= 24);
@@ -253,16 +102,18 @@ test("runs navigation keeps unknown outcomes and missing progress explicit", asy
   }
 });
 
-test("provider status and setup action never hide unavailable NVIDIA behind another provider", async (t) => {
+test("provider status exposes setup-required without defaulting an unconfigured provider", async (t) => {
   const { app, ui } = await fixture(t);
   await ui.initialize();
   await ui.command("/status");
+  ui.selected = ui.items().findIndex((row) => row.id === "runtime:provider");
+  assert.notEqual(ui.selected, -1);
+  await ui.openSelected();
   assert.match(ui.lines().join("\n"), /setup-required/);
   await ui.command("/connect");
-  assert.match(ui.notice, /NVIDIA_API_KEY/);
-  // No provider is configured, so there is no provider id to report. The
-  // decision to ship no default deletes this assertion's premise: a workspace
-  // that has chosen nothing says nothing rather than naming a vendor.
+  assert.match(ui.notice, /Set an API key in the host environment/);
+  assert.match(ui.notice, /No key is accepted in chat/);
+  // No provider is configured, so setup is required without a vendor ID.
   assert.equal((await app.providerState()).providerId, null);
   ui.provider = {
     ...ui.provider!,
@@ -272,8 +123,97 @@ test("provider status and setup action never hide unavailable NVIDIA behind anot
     retryAt: "2026-09-22T12:00:00.000Z",
   };
   await ui.command("/status");
+  ui.selected = ui.items().findIndex((row) => row.id === "runtime:provider");
+  assert.notEqual(ui.selected, -1);
+  await ui.openSelected();
   assert.match(ui.lines().join("\n"), /rate-limited/);
-  assert.match(ui.lines().join("\n"), /2026-09-22T12:00:00.000Z/);
+  assert.match(ui.lines().join("\n"), /2026-09-\s*22T12:00:00\.000Z/);
+});
+
+test("unavailable provider preserves its failure and avoids assuming it is unconfigured", async (t) => {
+  const { ui } = await fixture(t);
+  await ui.initialize();
+  ui.provider = {
+    ...ui.provider!,
+    connected: false,
+    status: "unavailable",
+    detail: "Configured credential was rejected by the provider endpoint.",
+    retryAt: null,
+  };
+  await ui.command("/status");
+  ui.selected = ui.items().findIndex((row) => row.id === "runtime:provider");
+  assert.notEqual(ui.selected, -1);
+  await ui.openSelected();
+  const lines = ui.lines().join("").replace(/\s+/g, "");
+  assert.match(lines, /unavailable/);
+  assert.ok(
+    lines.includes("Configuredcredentialwasrejectedbytheproviderendpoint"),
+  );
+  assert.ok(
+    lines.includes(
+      "Reviewtheconfiguredcredentialandendpoint;confirmprovideravailabilitybeforeretrying",
+    ),
+  );
+  assert.ok(!lines.includes("Noproviderisconnected"));
+  assert.ok(!lines.includes("Run/connecttoattachone"));
+});
+
+test("bare /connect re-reads the host environment after a refused probe", async (t) => {
+  const home = await mkdtemp(join(tmpdir(), "nomo-controls-home-"));
+  t.after(async () => {
+    await rm(home, { recursive: true, force: true });
+  });
+  let online = false;
+  const { ui } = await fixture(t, "Fixture reply", {
+    env: { HOME: home, NVIDIA_API_KEY: "nvidia-fixture-key" },
+    fetcher: async (url) => {
+      if (!online) throw new Error("fixture connection failure");
+      return String(url).endsWith("/models")
+        ? Response.json({ data: [{ id: "fixture" }] })
+        : Response.json({
+            choices: [
+              {
+                message: { role: "assistant", content: "Fixture reply" },
+                finish_reason: "stop",
+              },
+            ],
+          });
+    },
+  });
+  await ui.initialize();
+  // A key was present and refused, so this is not "nothing configured".
+  assert.equal(ui.provider?.connected, false);
+  assert.equal(ui.provider?.setupRequired, false);
+  assert.equal(ui.provider?.status, "unavailable");
+  online = true;
+  await ui.command("/connect");
+  // Bare /connect is a fresh attempt, not a replay of the earlier refusal.
+  assert.equal(ui.provider?.connected, true);
+  assert.equal(ui.provider?.providerId, "nvidia");
+  assert.equal(ui.provider?.status, "ready");
+  assert.match(ui.notice, /connected/);
+});
+
+test("bare /connect reports an unavailable provider instead of asking for a key again", async (t) => {
+  const home = await mkdtemp(join(tmpdir(), "nomo-controls-home-"));
+  t.after(async () => {
+    await rm(home, { recursive: true, force: true });
+  });
+  const { ui } = await fixture(t, "Fixture reply", {
+    env: { HOME: home, NVIDIA_API_KEY: "nvidia-fixture-key" },
+    fetcher: async () => {
+      throw new Error("fixture connection failure");
+    },
+  });
+  await ui.initialize();
+  await ui.command("/connect");
+  assert.equal(ui.provider?.connected, false);
+  assert.equal(ui.provider?.setupRequired, false);
+  assert.equal(ui.provider?.status, "unavailable");
+  // An unconfigured workspace is told to set a key. A configured workspace
+  // whose key was rejected must not be told the key is missing.
+  assert.doesNotMatch(ui.notice, /Set an API key in the host environment/);
+  assert.match(ui.notice, /unavailable|rejected|failed/i);
 });
 
 test("projects and preset agents apply only to new conversations and projects survive restart", async (t) => {
@@ -413,23 +353,22 @@ test("u on a documents row previews that document's undo without opening it", as
   const session = await app.start("Edit", "fixture");
   await app.settled();
   await app.editDocument(session.id, {
-    path: "notes/undo.md",
+    path: "undo.md",
     content: "first",
     expectedRevision: null,
   });
   await ui.initialize();
   ui.choose("documents");
-  assert.ok(ui.items().some((item) => item.path === "notes/undo.md"));
-  await assert.rejects(ui.prepareUndo(), /Select a document row/);
-  assert.equal(Boolean(ui.confirmation), false, "folder focus cannot target a hidden document");
-  assert.ok(ui.moveDocumentCursor(1));
+  const row = ui.items().findIndex((item) => item.path === "undo.md");
+  assert.ok(row >= 0, "the edited document is listed");
+  ui.selected = row;
   // Enter deliberately only inspects, so documentPath is still unset here:
   // the shortcut must take the target from the row, not from a document an
   // earlier command happened to open.
   await ui.prepareUndo();
-  assert.match(ui.confirmation!.title, /UNDO notes\/undo\.md\?/);
+  assert.match(ui.confirmation!.title, /UNDO undo\.md\?/);
   await ui.confirm();
-  assert.equal(app.workspace(session.id).files["notes/undo.md"], undefined);
+  assert.equal(app.workspace(session.id).files["undo.md"], undefined);
 });
 
 test("custom agent files use Workbench validation and persist without broadening existing sessions", async (t) => {

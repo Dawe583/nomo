@@ -105,8 +105,8 @@ function splitValue(
   return chunks;
 }
 
-// A badge is a framed pill (legible without colour) hung off a fixed two
-// cell rail of spaces after the value. The rail is constant and the badge
+// A badge is a padded label (legible without colour) hung off a fixed two-cell
+// rail of spaces after the value. The rail is constant and the badge
 // trails the value, so adding or removing a badge never moves any value
 // column. The badge is fitted and painted from its plain form: fitting
 // after painting would strip the ANSI escapes that paint just added.

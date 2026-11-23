@@ -3,6 +3,8 @@
   "instructions": [
     "AGENTS.md",
     "AGENTS.local.md",
+    ".opencode/prompts/nomo-system.md",
+    "docs/agent-work-system.md",
     "docs/CONTEXT.md",
     "docs/STANDARDS.md",
     "docs/DECISIONS.md",
@@ -14,7 +16,7 @@
   "agent": {
     "nomo-tui": {
       "description": "NOMO TUI specialist: packages/cli/src/tui, PTY tests, approval evidence",
-      "prompt": "You own NOMO TUI only (packages/cli/src/tui/**). Rules: server is authority for modes/approvals, unknown stays unknown, unified diff for edit/Undo, PTY matrix 80/120/200. Never add bypassPermissions/auto-approve. Verify with pnpm test:tui.",
+      "prompt": "You own NOMO TUI only (packages/cli/src/tui/**). Preserve the user's Chat-screen boundary and implement non-Chat controls from the pinned OMP source. Keep normal harness tools available. Do not add or run test suites or PTY smoke unless the user requests them; use source review, typecheck, build, and diff checks as authorized. Never add bypassPermissions/auto-approve. Follow the active graph and shared NOMO contract.",
       "tools": {
         "write": true,
         "edit": true
@@ -38,11 +40,7 @@
     },
     "nomo-quality": {
       "description": "NOMO ECC quality gate: evidence-first, mutation checks, DoD enforcement",
-      "prompt": "You enforce NOMO quality gates. Every claim needs file+command+output. 4-column DoD (contract+tests+proof+docs). Skipped live test != certified. Demand mutation check (uncertain-reservation release must fail tests). Read-only reviewer: do not modify runtime code.",
-      "tools": {
-        "write": false,
-        "edit": false
-      }
+      "prompt": "You review NOMO quality gates with evidence: every claim needs file, command, and output. Respect the active graph and assigned path ownership. Use normal harness tools; when explicitly assigned an implementation node, make changes only within its scope. Otherwise, review without editing. Report unrun tests or live checks accurately; do not claim certification without their required evidence."
     }
   },
   "command": {

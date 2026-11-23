@@ -323,7 +323,7 @@ small,
   font-size: 20px;
   letter-spacing: 2px;
 }
-.nomo-aperture {
+.nomo-grid-mark {
   width: 32px;
   height: 32px;
   flex-shrink: 0;
@@ -548,7 +548,7 @@ main {
   inset: 10px;
   border-style: dotted;
 }
-.welcome-emblem .nomo-aperture {
+.welcome-emblem .nomo-grid-mark {
   width: 52px;
   height: 52px;
 }
@@ -2153,10 +2153,10 @@ dialog::backdrop {
   }
 
   :root:not([data-motion="off"]) .welcome-emblem::before {
-    animation: v-aperture-frame 1100ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    animation: v-grid-mark-frame 1100ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
   }
   :root:not([data-motion="off"]) .welcome-emblem::after {
-    animation: v-aperture-frame 1400ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    animation: v-grid-mark-frame 1400ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
   }
   :root:not([data-motion="off"]) .starter-arrow {
     transition: transform 220ms;
@@ -2168,8 +2168,8 @@ dialog::backdrop {
   :root:not([data-motion="off"]) .starters button:hover .starter-arrow {
     transform: translate(2px, -2px);
   }
-  :root:not([data-motion="off"]) .brand:hover .nomo-aperture {
-    animation: v-aperture-focus 380ms ease;
+  :root:not([data-motion="off"]) .brand:hover .nomo-grid-mark {
+    animation: v-grid-mark-focus 380ms ease;
   }
   :root:not([data-motion="off"])
     :is(.page-content, .message, .attachments > span, .account-gate) {
@@ -2208,7 +2208,7 @@ dialog::backdrop {
     transform: translateY(0);
   }
 }
-@keyframes v-aperture-frame {
+@keyframes v-grid-mark-frame {
   from {
     opacity: 0;
     transform: scale(1.3) rotate(12deg);
@@ -2218,7 +2218,7 @@ dialog::backdrop {
     transform: scale(1) rotate(0);
   }
 }
-@keyframes v-aperture-focus {
+@keyframes v-grid-mark-focus {
   50% {
     transform: scale(0.88);
   }
@@ -2253,7 +2253,7 @@ dialog::backdrop {
     height: 58px;
     margin-bottom: 20px;
   }
-  .welcome-emblem .nomo-aperture {
+  .welcome-emblem .nomo-grid-mark {
     width: 36px;
     height: 36px;
   }
@@ -2296,7 +2296,7 @@ dialog::backdrop {
     height: 50px;
     margin-bottom: 16px;
   }
-  .welcome-emblem .nomo-aperture {
+  .welcome-emblem .nomo-grid-mark {
     width: 32px;
     height: 32px;
   }
@@ -2533,7 +2533,7 @@ dialog::backdrop {
     height: var(--control-touch);
     margin: 0 auto 20px;
   }
-  .welcome-emblem .nomo-aperture {
+  .welcome-emblem .nomo-grid-mark {
     width: 30px;
     height: 30px;
   }
@@ -2870,7 +2870,7 @@ dialog::backdrop {
   text-decoration: none;
   color: inherit;
 }
-.demo-brand .nomo-aperture {
+.demo-brand .nomo-grid-mark {
   width: 25px;
   height: 25px;
 }
@@ -2909,7 +2909,7 @@ dialog::backdrop {
   padding: 40px 24px;
   width: min(100%, 720px);
 }
-.demo-welcome > .nomo-aperture {
+.demo-welcome > .nomo-grid-mark {
   width: var(--control-touch);
   height: var(--control-touch);
   margin-bottom: 24px;
@@ -3143,7 +3143,7 @@ dialog::backdrop {
   font-size: 13px;
   color: var(--muted);
 }
-.demo-thinking .nomo-aperture {
+.demo-thinking .nomo-grid-mark {
   width: 22px;
   height: 22px;
 }
@@ -3186,14 +3186,14 @@ dialog::backdrop {
   .demo-brand strong {
     font-size: 15px;
   }
-  .demo-brand .nomo-aperture {
+  .demo-brand .nomo-grid-mark {
     width: 20px;
     height: 20px;
   }
   .demo-welcome {
     padding: 24px 20px;
   }
-  .demo-welcome > .nomo-aperture {
+  .demo-welcome > .nomo-grid-mark {
     width: 32px;
     height: 32px;
     margin-bottom: 18px;
@@ -3239,7 +3239,7 @@ dialog::backdrop {
   .demo-welcome {
     padding-block: 16px;
   }
-  .demo-welcome > .nomo-aperture {
+  .demo-welcome > .nomo-grid-mark {
     display: none;
   }
   .demo-starters {
@@ -3502,7 +3502,7 @@ dialog label > textarea {
 .permission-mode[aria-checked="true"] { border-color: var(--action); color: var(--action); }
 .composer-mode-row { padding: 0; margin-bottom: 16px; }
 .chat-options-trigger { flex: none; font-size: 20px; }
-.welcome > .nomo-aperture, .demo-welcome > .nomo-aperture { width: var(--control-macos); height: var(--control-macos); margin-bottom: 16px; }
+.welcome > .nomo-grid-mark, .demo-welcome > .nomo-grid-mark { width: var(--control-macos); height: var(--control-macos); margin-bottom: 16px; }
 
 /* Final hierarchy: one primary status, quiet metrics, explicit evidence. */
 .overview-priority {

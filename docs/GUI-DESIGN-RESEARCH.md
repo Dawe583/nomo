@@ -15,12 +15,7 @@ macOS release uses Tauri and WKWebView; its interface is not implemented in Swif
 
 ## Product identity
 
-The source of the NOMO identity is the aperture mark in
-`Dawe583/void-empty`, pinned to commit
-`25b5e62d49d614f88804b72b55609c74092d98d8`. Its corner frame, central square and
-center dot are preserved exactly. The current shared SVG uses the same paths.
-This is the most reliable visual connection between the product and its website;
-a newly invented icon would weaken it.[^1]
+The current NOMO identity is the user-supplied six-by-six grid mark. It uses a dark navy grid with coral and cyan accent cells. Product surfaces use a transparent SVG or native terminal rendering, without a baked-in background.
 
 The website describes accountable tool execution, classification and recovery.
 The interface should expose those concepts through the work itself: a document
@@ -176,7 +171,7 @@ No template purchase, reuse license or compatibility claim is implied here.
 
 The selected visual system keeps the existing warm paper direction because it
 matches the requested Claude-inspired composition and the NOMO site. Its
-identity comes from the aperture and the recovery workflow, rather than an
+identity comes from the grid mark and the recovery workflow, rather than an
 additional decorative motif. The current tokens are:
 
 | Role | Light | Dark |
@@ -236,7 +231,7 @@ Apple's `NavigationSplitView` supplies a two- or three-column structure with
 selection-driven detail presentation.[^14] That is a suitable future native
 shell for NOMO: workspace/history, conversation, and the recovery inspector.
 SwiftUI toolbars should use standard navigation and system symbols for controls,
-while the product mark remains the exact NOMO aperture. Native file pickers,
+while the product mark remains the supplied NOMO six-by-six grid. Native file pickers,
 Keychain and platform accessibility should be retained rather than recreated in
 JavaScript when the SwiftUI shell becomes the chosen implementation.
 

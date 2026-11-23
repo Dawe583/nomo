@@ -25,11 +25,8 @@ Shell per call, kernel state persistent across calls:
     result = await bash("pnpm run typecheck")
     print(result.output)
 
-## Known limits on this machine (2026-09-08)
+## NOMO delegation
 
-- Free model glm-5.3-free: 8 req/min, so parallel children hit 429 and some
-  return empty. Spawn one child at a time.
-- Paid OpenRouter models through the operator key: 402 (max_tokens 32k
-  rejected, max_tokens not settable via rlm). Not usable for children.
-- The operator's opencode runs on the same tokenrouter key; coordinate spawn
-  bursts between opencode and prime-agent or they eat each other's quota.
+Use Prime Agent's normal native RLM delegation behavior. The project adds no
+subagent count or nesting cap. Continue to honor the selected provider's actual
+service limits and the active task graph's file ownership.

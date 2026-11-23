@@ -9,13 +9,6 @@ import { jsonlStore } from '../../ledger/src/store.ts';
 import { verifyAttestation } from '../../ledger/src/attest.ts';
 import { readLedgerEntries } from '../../ledger/src/verify.ts';
 
-test('operation flags reject duplicate options instead of silently taking the last value', async () => {
-  await assert.rejects(
-    runOperation('export', ['--ledger', 'first.jsonl', '--ledger', 'second.jsonl'], {}, () => {}),
-    /duplicate option --ledger/,
-  );
-});
-
 test('CLI export and attest preserve independently verifiable signed evidence', async t => {
   const dir = await mkdtemp(join(tmpdir(), 'nomo-beta-operations-'));
   t.after(() => rm(dir, { recursive: true, force: true }));

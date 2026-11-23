@@ -1,32 +1,32 @@
 ---
 name: nomo-loops
-description: Run NOMO engineering as bounded, evidence producing loops over one active task graph. Use for every NOMO task, continuation or handoff.
+description: Run NOMO engineering as bounded, evidence-producing loops over the designated task graph. Independent nodes can proceed concurrently.
 ---
 
 # NOMO loop protocol
 
 ## Begin
 
-1. Read `AGENTS.local.md`, the NOMO context pack, and the relevant Obsidian project memory.
-2. Inspect current Git state and active sessions. Never overwrite existing work or infer that another session is idle from stale notes.
-3. Select the existing active graph node. If no graph exists, create one concise work graph with dependencies, owner, scope, evidence and stop conditions. Do not duplicate an active plan.
+1. Read `AGENTS.md`, `AGENTS.local.md`, `.opencode/prompts/nomo-system.md`, the NOMO context pack, and relevant Obsidian memory.
+2. Inspect current Git/worktree state and active task ownership. Never overwrite dirty work or infer that another session is idle from stale notes.
+3. Select the graph designated for this request and worktree. If none exists, follow the project graph procedure; never write another graph owner’s file. Do not duplicate an active plan.
 4. State the goal, in scope paths, protected paths, acceptance evidence and verifier before editing.
 
 ## Execute one loop
 
 `DISCOVER -> SPECIFY -> CHANGE -> VERIFY -> REVIEW -> RECORD`
 
-- Discover using Graphify and validated Understand Anything where useful, then confirm conclusions against contracts, source and tests.
-- Specify one expected behavior and one minimal slice. For behavior changes, use test first and establish a failing regression test.
-- Change only owned paths. Preserve foreign dirty changes and use an isolated worktree for code changes when possible.
-- Verify focused tests first, then required typecheck, full relevant suite, formatting, security and diff checks. Use one heavy test process at a time.
+- Discover using Graphify and validated Understand Anything where useful, then confirm conclusions against contracts, source and available evidence.
+- Specify one expected result, owned paths and minimal complete slice. Add or run tests only when the user requests them.
+- Change only owned paths. Preserve dirty changes and reuse the assigned worktree. Do not create a worktree solely for parallel work; disjoint writers may share a worktree when safe.
+- Verify with the narrowest authorized check. Run broader checks only when requested or required by the current project contract. Use one heavy process at a time.
 - Review the resulting diff and evidence. A successful command must be observed, not assumed.
 - Record node state, exact commands and outcomes, files changed, known limitations, and the next safe node in the Obsidian work log.
 
 ## Stop rules
 
-Stop after one targeted repair attempt if a gate fails again. Diagnose before retrying. Stop for dirty ownership conflict, secrets exposure risk, conflicting source authority, external account effect, unavailable permission, or a decision requiring user judgment. Mark the node blocked with evidence; continue only independent safe nodes.
+After one targeted repair attempt, stop that node if a check still fails. Diagnose before retrying. Stop only the affected node for a concrete ownership conflict, secrets risk, conflicting authority, required external approval, unavailable runtime capability, or materially ambiguous decision. Record evidence and continue independent safe nodes. Never bypass real approval, safety, security, service, or resource boundaries.
 
 ## Completion
 
-A node is done only when acceptance criteria pass and its evidence is recorded. The request is done only when all required graph nodes are done, relevant tests pass, no unreviewed diff remains, and the handoff says what was not verified. Never commit, push, merge, deploy or close a project goal without explicit scope permission.
+A node is done only when acceptance criteria pass and evidence is recorded. Do not claim tests ran unless requested and observed. The request is done only when required nodes are done, relevant authorized checks pass, owned diffs are reviewed, and the handoff says what was not verified. Do not commit, push, merge or deploy without explicit current-task authorization.

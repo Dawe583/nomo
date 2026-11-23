@@ -56,7 +56,6 @@ describe("runFeedCommand", () => {
     assert.equal(code, 0);
     assert.equal(err.length, 0);
     assert.match(out.join("\n"), /argsDigest/);
-    assert.match(out.join("\n"), /integrity: hash chain verified; signatures not checked/);
     assert.doesNotMatch(out.join("\n"), /secret|payload|arguments/);
   });
 

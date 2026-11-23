@@ -1,17 +1,14 @@
 import test from "node:test";
-import { workspaceShortcut } from "./workspace-runner.ts";
 import assert from "node:assert/strict";
 import { stripAnsi, visibleLength } from "./layout.ts";
 import { NOMO_PALETTE } from "./theme.ts";
 import type { TerminalCapabilities } from "./types.ts";
-import { parseWorkspaceKeybindings } from "./workspace-keybindings.ts";
 import {
   SHORTCUT_ICONS,
   categoryTone,
   renderShortcutKey,
   renderShortcutLegend,
   shortcutHintsFor,
-  withShortcutLegendBindings,
   type ShortcutCategory,
   type ShortcutHint,
   type ShortcutLegendContext,
@@ -102,33 +99,11 @@ test("every category tone is a valid palette key", () => {
   }
 });
 
-test("editing and running contexts list only applicable control shortcuts", () => {
-  const editing = hintKeys(makeContext({ editing: true }));
-  assert.ok(editing.includes("Ctrl+R"), "editing offers history search");
-  assert.ok(!editing.includes("Ctrl+O"), "editing does not offer activity detail cycling");
-  assert.ok(!editing.includes("Ctrl+T"), "editing does not offer the idle-only TODO action");
-  const idle = hintKeys(makeContext());
-  assert.ok(idle.includes("Ctrl+T"), "idle offers TODOs");
-  const running = hintKeys(makeContext({ running: true }));
-  assert.ok(running.includes("Ctrl+O"), "running offers activity detail cycling");
-});
-
-test("configured hint labels match the effective binding dispatched", () => {
-  const { bindings } = parseWorkspaceKeybindings('{"search-history":"Ctrl+V"}');
-  const hints = withShortcutLegendBindings(bindings, () =>
-    shortcutHintsFor(makeContext({ editing: true })),
-  );
-  assert.ok(hints.some((hint) => hint.key === "Ctrl+V" && hint.label === "search"));
-  assert.ok(!hints.some((hint) => hint.key === "Ctrl+R" && hint.label === "search"));
-  assert.equal(
-    workspaceShortcut({ name: "v", ctrl: true }, true, "", bindings),
-    "search-history",
-  );
-  assert.equal(
-    workspaceShortcut({ name: "r", ctrl: true }, true, "", bindings),
-    undefined,
-    "the overridden default key no longer dispatches",
-  );
+test("editing context lists the composer control shortcuts", () => {
+  const keys = hintKeys(makeContext({ editing: true }));
+  assert.ok(keys.includes("Ctrl+R"), "editing offers history search");
+  assert.ok(keys.includes("Ctrl+O"), "editing offers tools toggle");
+  assert.ok(keys.includes("Ctrl+T"), "editing offers TODOs");
 });
 
 test("confirmation context lists the decision keys and cancel", () => {
@@ -195,80 +170,6 @@ test("rendered legend fits the requested width", () => {
       );
     }
   }
-});
-
-test("discovery cue stays visible in narrow and normal one-row legends", () => {
-  for (const width of [12, 120]) {
-    for (const { name, context } of ALL_CONTEXTS) {
-      const lines = renderShortcutLegend(
-        context,
-        makeOptions({ width }),
-      );
-      assert.equal(lines.length, 1, `${name} keeps the legend to one row`);
-      assert.ok(
-        stripAnsi(lines[0]!).includes(`${SHORTCUT_ICONS.panel} ? cheat`),
-        `${name} keeps the searchable shortcut-help cue at width ${width}`,
-      );
-      assert.ok(
-        visibleLength(lines[0]!) <= width,
-        `${name} cue exceeds width ${width}`,
-      );
-    }
-  }
-});
-
-test("narrow legends preserve full essential labels while dropping icons", () => {
-  const line = stripAnsi(
-    renderShortcutLegend(
-      makeContext(),
-      makeOptions({ width: 40 }),
-    )[0]!,
-  );
-  assert.ok(line.includes("? cheat"), line);
-  assert.ok(line.includes("Tab panels"), line);
-  assert.ok(line.includes("Enter open/details"), line);
-  assert.ok(visibleLength(line) <= 40, line);
-
-  const normal = stripAnsi(
-    renderShortcutLegend(makeContext(), makeOptions({ width: 120 }))[0]!,
-  );
-  assert.ok(normal.includes(`${SHORTCUT_ICONS.panel} ? cheat`), normal);
-  assert.ok(normal.includes(`${SHORTCUT_ICONS.nav} Tab panels`), normal);
-});
-
-test("editing Tab completes suggestions before falling back to panel navigation", () => {
-  const editingHints = shortcutHintsFor(makeContext({ editing: true }));
-  assert.equal(editingHints[0]?.key, "?", "help remains the first hint");
-  assert.ok(
-    editingHints.some(
-      (hint) => hint.key === "Tab" && hint.label === "complete; else panels",
-    ),
-    "editing Tab completes suggestions before panel navigation",
-  );
-  assert.ok(
-    !editingHints.some((hint) => hint.key === "Tab" && hint.label === "panels"),
-    "editing must not describe Tab as panel navigation only",
-  );
-  assert.ok(
-    editingHints.some(
-      (hint) => hint.key === "Shift+Tab" && hint.label === "cycle mode",
-    ),
-    "Shift+Tab keeps its mode-cycling action while editing",
-  );
-
-  const idleHints = shortcutHintsFor(makeContext());
-  assert.ok(
-    idleHints.some((hint) => hint.key === "Tab" && hint.label === "panels"),
-    "non-editing still advertises Tab panel navigation",
-  );
-  const narrow = renderShortcutLegend(
-    makeContext({ editing: true }),
-    makeOptions({ width: 12 }),
-  );
-  assert.ok(
-    stripAnsi(narrow[0]!).includes(`${SHORTCUT_ICONS.panel} ? cheat`),
-    "the narrow legend keeps its own ? discovery trigger visible",
-  );
 });
 
 test("every context renders at least one legend line", () => {

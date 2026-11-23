@@ -38,10 +38,11 @@ const facts = (over: Partial<UpdateFacts> = {}): UpdateFacts => ({
   ...over,
 });
 
-const onTargetFacts = (): UpdateFacts => facts({
-  installedCommit: "a".repeat(40),
-  targetCommit: "a".repeat(40),
-});
+const onTargetFacts = (): UpdateFacts =>
+  facts({
+    installedCommit: "a".repeat(40),
+    targetCommit: "a".repeat(40),
+  });
 
 /** A real clone with a real remote. The policy under test is about commits and
  * worktrees, and a test double for `git status` would be testing the double. */
@@ -76,10 +77,7 @@ async function installedTree(t: { after: (fn: () => unknown) => void }) {
   t.after(() => rm(root, { recursive: true, force: true }));
   const remote = join(root, "remote.git");
   const tree = join(root, "tree");
-  // Named, not inherited: with no init.defaultBranch the bare HEAD is master,
-  // a later clone checks out nothing, and its push to main is not a
-  // fast-forward.
-  git(root, ["init", "--bare", "--quiet", "--initial-branch=main", remote]);
+  git(root, ["init", "--bare", "--quiet", remote]);
   git(root, ["clone", "--quiet", remote, tree]);
   await commit(tree, "one.txt", "one");
   git(tree, ["push", "--quiet", "origin", "HEAD:refs/heads/main"]);
@@ -88,7 +86,11 @@ async function installedTree(t: { after: (fn: () => unknown) => void }) {
 }
 
 /** Publishes a commit the installed tree has not seen, and returns its sha. */
-async function publish(remote: string, tree: string, name: string): Promise<string> {
+async function publish(
+  remote: string,
+  tree: string,
+  name: string,
+): Promise<string> {
   const publisher = join(remote, "..", `publisher-${name}`);
   git(tree, ["clone", "--quiet", remote, publisher]);
   await commit(publisher, name, name);
@@ -138,7 +140,10 @@ test("update refuses --check combined with --force, because one moves the tree a
 
 test("the tree is NOMO_HOME, else the installer's location, else the source tree", () => {
   assert.equal(
-    resolveUpdateHome({ NOMO_HOME: "/opt/void", HOME: "/home/op" }, "/src/tree"),
+    resolveUpdateHome(
+      { NOMO_HOME: "/opt/void", HOME: "/home/op" },
+      "/src/tree",
+    ),
     "/opt/void",
   );
   // `nomo-cli`, and not `nomo`: this has to be the tree the installed
@@ -249,7 +254,9 @@ test("a dirty worktree is refused and left alone, and --force does not override 
 
   const forced = collect();
   assert.equal(
-    await runUpdateCommand(["--force"], forced.io, { env: { NOMO_HOME: tree } }),
+    await runUpdateCommand(["--force"], forced.io, {
+      env: { NOMO_HOME: tree },
+    }),
     1,
   );
   assert.match(forced.err.join("\n"), /uncommitted changes/);
@@ -266,7 +273,9 @@ test("a dirty worktree is refused and left alone, and --force does not override 
   // update exists whether or not this command is allowed to apply it.
   const checked = collect();
   assert.equal(
-    await runUpdateCommand(["--check"], checked.io, { env: { NOMO_HOME: tree } }),
+    await runUpdateCommand(["--check"], checked.io, {
+      env: { NOMO_HOME: tree },
+    }),
     3,
   );
   assert.match(

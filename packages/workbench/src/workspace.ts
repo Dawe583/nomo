@@ -1,11 +1,6 @@
 import { PROJECT_EXEC_TOOL } from "./project-sandbox.ts";
 import { PROJECT_CHANGES_TOOL } from "./project-workspace.ts";
-import { PLAN_TOOL } from "./plan.ts";
-import { DELEGATE_TOOL, SUBAGENT_RESULT_TOOL } from "./delegate-tools.ts";
-import { SESSION_SEARCH_TOOL } from "./session-search.ts";
-import { PROJECT_READ_TOOL, PROJECT_SEARCH_TOOL } from "./project-read.ts";
-import { WEB_FETCH_TOOL, WEB_SEARCH_TOOL } from "./web-tools.ts";
-import { AGENT_INBOX_TOOL, AGENT_LIST_TOOL, AGENT_SEND_TOOL } from "./agent-messages.ts";
+import { TODO_WRITE_TOOL } from "./todo-tool.ts";
 import { createHash } from 'node:crypto';
 
 /** Managed text documents, never paths on the host filesystem. Persistence and
@@ -35,30 +30,26 @@ export const workspaceTools = [
   { name: 'void_workspace_read', description: 'Read a managed NOMO document.', inputSchema: { type: 'object', properties: { path: { type: 'string' } }, required: ['path'], additionalProperties: false } },
   { name: 'void_workspace_write', description: 'Create or replace a managed NOMO text document. NOMO captures its prior content for operator-controlled undo.', inputSchema: { type: 'object', properties: { path: { type: 'string' }, content: { type: 'string' } }, required: ['path', 'content'], additionalProperties: false } },
   { name: 'void_workspace_delete', description: 'Delete a managed NOMO document. NOMO captures its prior content for operator-controlled undo.', inputSchema: { type: 'object', properties: { path: { type: 'string' } }, required: ['path'], additionalProperties: false } },
-  PLAN_TOOL,
-  DELEGATE_TOOL,
-  SUBAGENT_RESULT_TOOL,
-  SESSION_SEARCH_TOOL,
   PROJECT_EXEC_TOOL,
-  WEB_FETCH_TOOL,
-  WEB_SEARCH_TOOL,
-  AGENT_LIST_TOOL,
-  AGENT_INBOX_TOOL,
-  AGENT_SEND_TOOL,
 ];
 
 export function createWorkspace(): WorkspaceState { return { version: 1, files: {}, operations: [] }; }
 
 export function workspaceToolClass(name: string): 'r0' | 'r1' | 'r3' | undefined {
-  if (name === 'void_workspace_list' || name === 'void_workspace_read' || name === PROJECT_CHANGES_TOOL.name || name === PLAN_TOOL.name || name === SUBAGENT_RESULT_TOOL.name || name === SESSION_SEARCH_TOOL.name || name === PROJECT_READ_TOOL.name || name === PROJECT_SEARCH_TOOL.name || name === AGENT_LIST_TOOL.name || name === AGENT_INBOX_TOOL.name) return 'r0';
-  if (name === 'void_workspace_write' || name === 'void_workspace_delete' || name === DELEGATE_TOOL.name || name === WEB_FETCH_TOOL.name || name === WEB_SEARCH_TOOL.name || name === AGENT_SEND_TOOL.name) return 'r1';
+  if (name === 'void_workspace_list' || name === 'void_workspace_read' || name === PROJECT_CHANGES_TOOL.name) return 'r0';
+  // The checklist reaches nothing outside the conversation, so it carries the
+  // same class as reading: no document changes, nothing to undo. The class is
+  // declared here rather than at dispatch so the catalogue and the policy
+  // decision cannot disagree about what the tool is.
+  if (name === TODO_WRITE_TOOL.name) return 'r0';
+  if (name === 'void_workspace_write' || name === 'void_workspace_delete') return 'r1';
   if (name === PROJECT_EXEC_TOOL.name) return 'r3';
   return undefined;
 }
 
 export function executeWorkspaceTool(state: WorkspaceState, input: { readonly id: string; readonly name: string; readonly arguments: Readonly<Record<string, unknown>>; readonly at?: string }): WorkspaceTransition {
   try {
-    if (!workspaceTools.some(tool => tool.name === input.name) || input.name === PROJECT_EXEC_TOOL.name || input.name === PROJECT_CHANGES_TOOL.name || input.name === PLAN_TOOL.name || input.name === DELEGATE_TOOL.name || input.name === SUBAGENT_RESULT_TOOL.name || input.name === SESSION_SEARCH_TOOL.name || input.name === WEB_FETCH_TOOL.name || input.name === WEB_SEARCH_TOOL.name || input.name === AGENT_LIST_TOOL.name || input.name === AGENT_INBOX_TOOL.name || input.name === AGENT_SEND_TOOL.name) throw new Error('Unknown managed workspace tool.');
+    if (!workspaceTools.some(tool => tool.name === input.name) || input.name === PROJECT_EXEC_TOOL.name || input.name === PROJECT_CHANGES_TOOL.name) throw new Error('Unknown managed workspace tool.');
     if (input.name === 'void_workspace_list') return { state, result: result({ files: Object.keys(state.files).sort().map(path => ({ path, bytes: bytes(state.files[path]!) })) }) };
     const path = validPath(input.arguments.path);
     const before = Object.hasOwn(state.files, path) ? state.files[path]! : null;

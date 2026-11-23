@@ -1,4 +1,3 @@
-import { brandHeader } from "./brand.ts";
 import { CLASS_MARKER, classLabel, decisionLabel, paint } from "./theme.ts";
 import {
   box,
@@ -73,20 +72,13 @@ function header(
       ? `billing ${state.context.billing}tok`
       : "";
 
-  const compact = capabilities.rows <= 10;
-  return compact
-    ? [
-        fit(`NOMO | ${right}`, capabilities.columns),
-        fit(ctxLine, capabilities.columns),
-        ...(billingLine === "" ? [] : [fit(billingLine, capabilities.columns)]),
-      ]
-    : [
-        ...brandHeader("NOMO", capabilities),
-        right,
-        ctxLine,
-        billingLine,
-        paint(rule(capabilities.columns), "rule", capabilities),
-      ];
+  return [
+    paint("NOMO  Watch", "accent", capabilities, true),
+    right,
+    ctxLine,
+    billingLine,
+    paint(rule(capabilities.columns), "rule", capabilities),
+  ];
 }
 
 function activityRows(
@@ -189,10 +181,10 @@ function costPanel(
   const rows: string[] = [];
   // Table model × tokens × records
   for (const record of state.cost ?? []) {
-    const label = sanitizeText(costRecordLabel(record, capabilities));
+    const label = costRecordLabel(record, capabilities);
     rows.push(
       `${pad(paint(label.split(" ")[0] ?? "unknown", "muted", capabilities), labelWidth)}${fit(
-        label,
+        sanitizeText(label),
         width - labelWidth,
       )}`,
     );
@@ -235,31 +227,19 @@ function holdBanner(
 ): string[] {
   if (hold === undefined) return [];
   const remaining = Math.max(0, Math.ceil((hold.expiresAt - now) / 1000));
-  const compact = capabilities.rows <= 10;
   return box(
     paint("ACTION REQUIRED", "r3", capabilities, true),
-    compact
-      ? [
-          fit(
-            `${classLabel(hold.call.class, capabilities)} ${sanitizeText(hold.call.tool)}`,
-            width - 4,
-          ),
-          fit(
-            `${hold.call.blastRadius ?? "?"} target${hold.call.blastRadius === 1 ? "" : "s"} | expires in ${remaining}s`,
-            width - 4,
-          ),
-        ]
-      : [
-          fit(
-            `${classLabel(hold.call.class, capabilities)} ${sanitizeText(hold.call.tool)}`,
-            width - 4,
-          ),
-          fit(
-            `${hold.call.blastRadius ?? "?"} target${hold.call.blastRadius === 1 ? "" : "s"} | ${sanitizeText(hold.call.reason)}`,
-            width - 4,
-          ),
-          `expires in ${remaining}s`,
-        ],
+    [
+      fit(
+        `${classLabel(hold.call.class, capabilities)} ${sanitizeText(hold.call.tool)}`,
+        width - 4,
+      ),
+      fit(
+        `${hold.call.blastRadius ?? "?"} target${hold.call.blastRadius === 1 ? "" : "s"} | ${sanitizeText(hold.call.reason)}`,
+        width - 4,
+      ),
+      `${paint("[a] approve", "r0", capabilities, true)}  ${paint("[c] cancel", "r3", capabilities, true)}  expires in ${remaining}s`,
+    ],
     width,
   );
 }
@@ -302,7 +282,7 @@ function footer(
   const keys =
     capabilities.columns < 100
       ? "j/k move  enter open  f filter  p pause  ? help  q quit"
-      : "j/k move  enter detail  f filter  p pause  v verify  ? help  q quit";
+      : "j/k move  enter detail  f filter  p pause  r replay  v verify  ? help  q quit";
   return fit(`${mode} | ${keys}`, capabilities.columns);
 }
 
@@ -323,13 +303,7 @@ export function renderWatchFrame(
   const selected =
     state.calls.find((call) => call.id === state.selectedCallId) ??
     state.calls.at(-1);
-  const footerRule = paint(rule(width), "rule", capabilities);
-  const footerLine = footer(state, capabilities);
-  const availableRows = Math.max(
-    0,
-    capabilities.rows - lines.length - 2,
-  );
-
+  const availableRows = Math.max(5, capabilities.rows - lines.length - 9);
 
   function activityRowBlock(width: number, limit: number): string[] {
     if (width < 100) {
@@ -402,12 +376,11 @@ export function renderWatchFrame(
     ];
   }
 
-  const body = activityRowBlock(width, availableRows);
-  const bodyRows = Math.min(
-    body.length,
-    Math.max(0, capabilities.rows - lines.length - 2),
-  );
-  lines.push(...body.slice(0, bodyRows), footerRule, footerLine);
+  lines.push(...activityRowBlock(width, availableRows));
+
+  lines.push(paint(rule(width), "rule", capabilities));
+  lines.push(footer(state, capabilities));
+
   return crop(lines, width, capabilities.rows).join("\n");
 }
 

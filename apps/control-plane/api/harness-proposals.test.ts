@@ -72,7 +72,7 @@ async function fixture(t: { after(fn: () => Promise<void>): void }) {
       },
     decide: (
       digest: string,
-      action: "approve" | "reject" | "rollback" | "promote",
+      action: "approve" | "reject" | "rollback",
       body?: unknown,
     ) =>
       fetch(`${origin}/api/sessions/${session.id}/harness/proposals/${digest}/${action}`, {
@@ -163,45 +163,4 @@ test("POST rollback of a digest nobody activated reads as refused", async (t) =>
   assert.notEqual(rolled.status, 200);
   const refused = (await rolled.json()) as { message?: string };
   assert.match(refused.message ?? "", /No activated refinement matches that digest\./);
-});
-
-test("POST promote carries an activation to every conversation and POST demote ends it", async (t) => {
-  const f = await fixture(t);
-  const created = await f.app.refineHarness(f.session.id, proposal("approval pattern"));
-  await f.decide(created.proposalDigest!, "approve");
-
-  const promoted = await f.decide(created.proposalDigest!, "promote");
-
-  assert.equal(promoted.status, 200);
-  const body = (await promoted.json()) as { digest: string; entries: unknown[] };
-  assert.match(body.digest, /^[a-f0-9]{64}$/);
-  assert.equal(body.entries.length, 1);
-  const list = async () =>
-    (await (await fetch(`${f.origin}/api/harness/promotions`)).json()) as {
-      promotions: { digest: string; status: string }[];
-      entries: { content: string }[];
-    };
-  const standing = await list();
-  assert.deepEqual(
-    standing.promotions.map((item) => [item.digest, item.status]),
-    [[body.digest, "promoted"]],
-  );
-  assert.deepEqual(
-    standing.entries.map((entry) => entry.content),
-    ["The operator repeatedly approved the same action."],
-  );
-
-  const demote = () =>
-    fetch(`${f.origin}/api/harness/promotions/${body.digest}/demote`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: "{}",
-    });
-  assert.equal((await demote()).status, 200);
-  const after = await list();
-  assert.deepEqual(after.promotions.map((item) => item.status), ["demoted"]);
-  assert.deepEqual(after.entries, []);
-  const twice = await demote();
-  assert.notEqual(twice.status, 200);
-  assert.match(((await twice.json()) as { message?: string }).message ?? "", /That promotion is already demoted\./);
 });

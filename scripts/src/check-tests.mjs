@@ -11,7 +11,10 @@
 import { readdirSync, readFileSync, existsSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
-import { interpretSwiftRun, isSwiftMacroFlake } from "./check-tests-swift-result.mjs";
+import {
+  interpretSwiftRun,
+  isSwiftMacroFlake,
+} from "./check-tests-swift-result.mjs";
 
 const root = resolve(import.meta.dirname, "..", "..");
 const packagesDir = join(root, "packages");
@@ -54,7 +57,11 @@ const results = [];
 const suites = [
   ...readdirSync(packagesDir)
     .sort()
-    .map((name) => ({ name, dir: join(packagesDir, name), runner: "packages" })),
+    .map((name) => ({
+      name,
+      dir: join(packagesDir, name),
+      runner: "packages",
+    })),
   // `apps/*` suites carry a label naming the directory they actually live in.
   // Printing them under `packages/` would send a reader chasing a failure to
   // the wrong tree.
@@ -62,7 +69,11 @@ const suites = [
   // dedicated entry here would run those 123 tests twice in one gate run and
   // double-count them in the totals. Listed in the log so a reader does not
   // re-add it.
-  { name: "control-plane", dir: join(root, "apps", "control-plane"), runner: "apps" },
+  {
+    name: "control-plane",
+    dir: join(root, "apps", "control-plane"),
+    runner: "apps",
+  },
   { name: "desktop", dir: join(root, "apps", "desktop"), runner: "apps" },
   { name: "scripts", dir: join(root, "scripts"), runner: "scripts" },
 ];
@@ -345,10 +356,10 @@ function runSwiftSuite(suite) {
     // The retry gate is deliberately inside the loop, not around it: each
     // flake attempt ends the preceding process, and the cleared .build is the
     // only state the next attempt bases its plan on.
-    if (
-      isSwiftMacroFlake({ output, status: run.status ?? 1, timedOut })
-    ) {
-      retryNotes.push(`attempt ${attempt + 1}: macro plugin flake, no tests ran`);
+    if (isSwiftMacroFlake({ output, status: run.status ?? 1, timedOut })) {
+      retryNotes.push(
+        `attempt ${attempt + 1}: macro plugin flake, no tests ran`,
+      );
       continue;
     }
     if (mapped.verdict === "unrun") {
@@ -405,10 +416,7 @@ const scriptSuites = [
     name: "apple-project",
     file: "scripts/src/check-apple-project.mjs",
   },
-  // The PTY regression ran only through the manual `test:tui` script, and
-  // manual commands rot: the 10-17 TUI upgrade left four of its markers stale
-  // and disabled the documents-tab undo shortcut with nothing watching. Gating
-  // it turns operator-visible breakage into a gate row every round.
+  // The PTY regression launches the active Node workspace renderer.
   {
     name: "tui-pty",
     command: ["python3", "scripts/src/verify-tui-terminal.py"],
@@ -455,14 +463,19 @@ function runScriptSuite(suite) {
   if (!timedOut && suite.unrunPattern?.test(output)) {
     return {
       ...unrunResult(suite.name, "script", suite.unrunReason),
-      tried: [output.split("\n").find((line) => suite.unrunPattern.test(line)) ?? ""],
+      tried: [
+        output.split("\n").find((line) => suite.unrunPattern.test(line)) ?? "",
+      ],
       elapsed: Date.now() - started,
     };
   }
   if (!timedOut && /is not on PATH/.test(output)) {
     return {
       ...unrunResult(suite.name, "script"),
-      tried: [output.split("\n").find((line) => /is not on PATH/.test(line)) ?? "not on PATH"],
+      tried: [
+        output.split("\n").find((line) => /is not on PATH/.test(line)) ??
+          "not on PATH",
+      ],
       elapsed: Date.now() - started,
     };
   }
@@ -507,12 +520,16 @@ function runSuite(name, dir, files, runner) {
   // the event loop alive past the timeout and defeat the bound entirely.
   // Node defaults to availableParallelism() - 1 concurrent test files.
   // Keep the gate serial to bound local CPU use.
-  const run = spawnSync("node", ["--test", "--test-concurrency=1", "--test-reporter=tap", ...files], {
-    cwd: dir,
-    encoding: "utf8",
-    timeout: suiteTimeoutMs > 0 ? suiteTimeoutMs : undefined,
-    killSignal: "SIGKILL",
-  });
+  const run = spawnSync(
+    "node",
+    ["--test", "--test-concurrency=1", "--test-reporter=tap", ...files],
+    {
+      cwd: dir,
+      encoding: "utf8",
+      timeout: suiteTimeoutMs > 0 ? suiteTimeoutMs : undefined,
+      killSignal: "SIGKILL",
+    },
+  );
   // `spawnSync` reports its own deadline as a null status with an ETIMEDOUT
   // error, and the status is mapped to 1 further down, so without this the
   // timeout would print as an ordinary crash and name neither the cause nor

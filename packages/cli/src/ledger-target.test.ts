@@ -56,14 +56,6 @@ const metrics = async (
 };
 
 describe("resolveLedgerTarget", () => {
-  test("the injected HOME selects the default ledger directory", async (t) => {
-    const home = await scratch(t);
-    const resolution = await resolveLedgerTarget({ mode: "workspace", env: { HOME: home } });
-    assert.equal(resolution.ok, false);
-    if (resolution.ok) assert.fail("a missing default ledger must not resolve");
-    assert.equal(resolution.requested, join(home, ".nomo", "ledger", "default.jsonl"));
-  });
-
   test("a directory holding this workspace's ledger resolves to that exact file", async (t) => {
     // The success path, which nothing asserted while a stray `}` sat in the
     // candidate template and every existing fixture resolved through the

@@ -1,39 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { CompatibleProvider } from './provider.ts';
-test('Prime Kimi Coding descriptor builds the documented Anthropic messages request locally', async () => {
-  let requestUrl = '';
-  const provider = new CompatibleProvider(
-    {
-      baseUrl: 'https://api.kimi.com/coding',
-      apiKey: 'fixture-kimi-key',
-      kind: 'anthropic',
-      providerId: 'kimi-coding',
-    },
-    async (url, options) => {
-      requestUrl = String(url);
-      const headers = options?.headers as Record<string, string>;
-      assert.equal(headers['x-api-key'], 'fixture-kimi-key');
-      assert.equal(headers.authorization, undefined);
-      assert.equal(headers['anthropic-version'], '2023-06-01');
-      assert.equal(JSON.parse(String(options?.body)).model, 'k3');
-      return Response.json({
-        content: [{ type: 'text', text: 'fixture response' }],
-        stop_reason: 'end_turn',
-        usage: { input_tokens: 3, output_tokens: 2 },
-      });
-    },
-  );
-  const result = await provider.complete(
-    'k3',
-    [{ role: 'user', content: 'fixture prompt' }],
-    [],
-    new AbortController().signal,
-  );
-  assert.equal(requestUrl, 'https://api.kimi.com/coding/v1/messages');
-  assert.equal(result.message.content, 'fixture response');
-});
-
 test('Anthropic models, native tool messages and usage share the agent interface', async () => {
   let requestBody: Record<string, unknown> = {};
   const provider = new CompatibleProvider({ baseUrl: 'https://api.anthropic.com/v1', apiKey: 'secret', kind: 'anthropic' }, async (url, options) => {

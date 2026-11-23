@@ -13,7 +13,7 @@ production assets remain immutable. An already open old tab needs one reload.
 
 - Shared ASCII wordmark, monospace controls, terminal prompt starter actions,
   square surfaces and touch feedback across private chat and public demo.
-  The existing NOMO aperture and light/dark palette remain recognizable.
+  The current NOMO grid mark and light/dark palette remain recognizable.
   Long responses retain the readable text face. No new runtime dependency.
 - One clipped text reveal for the welcome screen. Motion follows the saved
   animation setting and system reduced motion; touch states do not require hover.

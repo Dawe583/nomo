@@ -43,14 +43,22 @@ test("SDK docs match the public barrel", () => {
   assert.doesNotMatch(docs, /ApplyReportLike|ReplayRefusalLike/);
 });
 
-test("changelog stays user facing", () => {
+test("latest Unreleased changelog entry stays user facing", () => {
   const text = readFileSync("CHANGELOG.md", "utf8");
-  const summary = text
-    .split("## Unreleased")[1]
-    ?.split("## Engineering history")[0];
-  assert.ok(summary, "the user-facing Unreleased section is present");
-  assert.doesNotMatch(summary, /WP-[0-9]/);
-  assert.doesNotMatch(summary, /packages\//);
-  assert.doesNotMatch(summary, /docs\//);
-  assert.doesNotMatch(summary, / tests?\b/i);
+  const unreleased =
+    text.split("## Unreleased\n", 2)[1]?.split("\n## ", 1)[0] ?? "";
+  const entries = unreleased
+    .split(/(?=^- )/mu)
+    .filter((entry) => entry.startsWith("- "));
+  const prose = (entries[0] ?? "").replace(/https?:\/\/\S+/gu, "");
+  assert.notEqual(
+    entries.length,
+    0,
+    "Unreleased must contain a changelog entry",
+  );
+  assert.doesNotMatch(prose, /WP-[0-9]/);
+  assert.doesNotMatch(prose, /packages\//);
+  assert.doesNotMatch(prose, /docs\//);
+  assert.doesNotMatch(prose, /\btests?\b/iu);
+  assert.doesNotMatch(entries[0] ?? "", /[\u2013\u2014]/u);
 });

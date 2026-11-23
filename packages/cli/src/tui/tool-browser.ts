@@ -198,8 +198,8 @@ function toolRow(
   const icon = paint(classIcon(tool.klass), tone, selected);
   const name = paint(sanitizeText(tool.name), "default", selected);
   const source = paint(sanitizeText(tool.source), "muted");
-  // The undo marker is a framed pill with a word inside when captured, plain
-  // words when not: both states read without colour, and the pill never shows
+  // The undo marker is an accented label when captured, plain words when not:
+  // both states read without colour, and the label never shows
   // an invented state, only what the tool reported.
   const undo =
     tool.capturedUndo === true

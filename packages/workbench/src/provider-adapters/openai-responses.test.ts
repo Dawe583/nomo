@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createProviderClient } from "./factory.ts";
-import { ProviderRequestError, type ModelReply } from "../provider.ts";
+import type { ModelReply } from "../provider.ts";
 import type { ProviderAdapterConfig } from "./types.ts";
 
 const config: ProviderAdapterConfig = {
@@ -22,165 +22,6 @@ test("OpenAI Responses model discovery excludes blank model IDs", async () => {
   assert.deepEqual(await client.models(), [
     { id: "gpt-fixture", name: "Fixture" },
   ]);
-});
-
-test("ChatGPT plan usage errors preserve safe guidance, code and request ID", async () => {
-  const accountConfig: ProviderAdapterConfig = {
-    providerId: "openai",
-    transport: "openai-responses",
-    baseUrl: "https://api.openai.com/v1",
-    auth: { kind: "openai-chatgpt-account", accountId: "account-fixture" },
-  };
-  const client = createProviderClient(accountConfig, async () => Response.json(
-    { error: { code: "subscription_sharing_usage_limit_exceeded", message: "fixture-secret" } },
-    { status: 429, headers: { "x-request-id": "req_fixture123" } },
-  ), {}, { openAIChatGPTTokenProvider: async () => "access-fixture-secret" });
-  await assert.rejects(
-    client.complete("gpt-fixture", [], [], new AbortController().signal),
-    error => error instanceof ProviderRequestError &&
-      error.status === 429 &&
-      error.code === "subscription_sharing_usage_limit_exceeded" &&
-      error.requestId === "req_fixture123" &&
-      error.message.includes("https://chatgpt.com/settings/usage") &&
-      error.message.includes("req_fixture123") &&
-      !error.message.includes("fixture-secret"),
-  );
-});
-
-test("ChatGPT account auth uses the account model shape and an unpersisted streamed Responses request", async () => {
-  const accountConfig: ProviderAdapterConfig = {
-    providerId: "openai",
-    transport: "openai-responses",
-    baseUrl: "https://api.openai.com/v1",
-    auth: { kind: "openai-chatgpt-account", accountId: "account-fixture" },
-  };
-  const requests: Array<{ url: string; init?: RequestInit }> = [];
-  const tokens: string[] = [];
-  const client = createProviderClient(accountConfig, async (input, init) => {
-    const url = String(input);
-    requests.push({ url, init });
-    if (url.endsWith("/models")) return Response.json({ models: [
-      { slug: "gpt-visible", display_name: "GPT Visible", visibility: "list" },
-      { slug: "gpt-hidden", display_name: "GPT Hidden", visibility: "hidden" },
-      { slug: "", display_name: "Blank", visibility: "list" },
-    ] });
-    return new Response(
-      'data: {"type":"response.completed","response":{"status":"completed","output":[{"type":"message","content":[{"type":"output_text","text":"ready"}]}]}}\n\n',
-      { headers: { "content-type": "text/event-stream" } },
-    );
-  }, {}, {
-    openAIChatGPTTokenProvider: async accountId => {
-      tokens.push(accountId);
-      return "access-fixture-secret";
-    },
-  });
-
-  assert.deepEqual(await client.models(), [{ id: "gpt-visible", name: "GPT Visible" }]);
-  const reply = await client.complete("gpt-visible", [{ role: "user", content: "go" }], [], new AbortController().signal);
-  assert.equal(reply.message.content, "ready");
-  const completion = requests.find(request => request.url.endsWith("/responses"));
-  assert.ok(completion);
-  assert.equal((completion.init?.headers as Record<string, string>).authorization, "Bearer access-fixture-secret");
-  assert.deepEqual(JSON.parse(String(completion.init?.body)), {
-    model: "gpt-visible",
-    input: [{ role: "user", content: [{ type: "input_text", text: "go" }] }],
-    max_output_tokens: 4096,
-    store: false,
-    stream: true,
-  });
-  assert.deepEqual(tokens, ["account-fixture", "account-fixture"]);
-});
-
-test("ChatGPT account inference rejects a non-streaming response", async () => {
-  const client = createProviderClient({
-    providerId: "openai",
-    transport: "openai-responses",
-    baseUrl: "https://api.openai.com/v1",
-    auth: { kind: "openai-chatgpt-account", accountId: "account-fixture" },
-  }, async () => Response.json({
-    status: "completed",
-    output: [{ type: "message", content: [{ type: "output_text", text: "unexpected" }] }],
-  }), {}, { openAIChatGPTTokenProvider: async () => "synthetic-token" });
-  await assert.rejects(
-    client.complete("gpt-fixture", [], [], new AbortController().signal),
-    /stream/i,
-  );
-});
-
-test("ChatGPT plan errors preserve HTTP status, body shape, code, and request ID", async () => {
-  const accountConfig: ProviderAdapterConfig = {
-    providerId: "openai",
-    transport: "openai-responses",
-    baseUrl: "https://api.openai.com/v1",
-    auth: { kind: "openai-chatgpt-account", accountId: "account-fixture" },
-  };
-  const client = createProviderClient(accountConfig, async () => Response.json({
-    error: { code: "subscription_sharing_usage_limit_exceeded", param: "model", message: "access-fixture-secret" },
-  }, { status: 429, headers: { "x-request-id": "req-fixture" } }), {}, {
-    openAIChatGPTTokenProvider: async () => "access-fixture-secret",
-  });
-  await assert.rejects(
-    client.complete("gpt-fixture", [{ role: "user", content: "go" }], [], new AbortController().signal),
-    error => {
-      const requestError = error as Error & { status?: number; code?: string; requestId?: string; body?: unknown };
-      assert.equal(requestError.status, 429);
-      assert.equal(requestError.code, "subscription_sharing_usage_limit_exceeded");
-      assert.equal(requestError.requestId, "req-fixture");
-      assert.deepEqual(requestError.body, {
-        error: { code: "subscription_sharing_usage_limit_exceeded", param: "model" },
-      });
-      assert.doesNotMatch(JSON.stringify(requestError.body), /access-fixture-secret/);
-      return true;
-    },
-  );
-});
-
-test("ChatGPT direct-admission errors preserve the detail shape without sensitive text", async () => {
-  const client = createProviderClient({
-    providerId: "openai",
-    transport: "openai-responses",
-    baseUrl: "https://api.openai.com/v1",
-    auth: { kind: "openai-chatgpt-account", accountId: "account-fixture" },
-  }, async () => Response.json({ detail: "access-fixture-secret" }, {
-    status: 503, headers: { "x-request-id": "req-admission" },
-  }), {}, { openAIChatGPTTokenProvider: async () => "access-fixture-secret" });
-  await assert.rejects(
-    client.complete("gpt-fixture", [], [], new AbortController().signal),
-    error => {
-      assert.ok(error instanceof ProviderRequestError);
-      assert.equal(error.status, 503);
-      assert.equal(error.requestId, "req-admission");
-      assert.deepEqual(error.body, { detail: "[redacted]" });
-      assert.doesNotMatch(JSON.stringify(error.body), /access-fixture-secret/);
-      return true;
-    },
-  );
-});
-
-test("ChatGPT streamed errors exclude sensitive provider messages", async () => {
-  const accountConfig: ProviderAdapterConfig = {
-    providerId: "openai",
-    transport: "openai-responses",
-    baseUrl: "https://api.openai.com/v1",
-    auth: { kind: "openai-chatgpt-account", accountId: "account-fixture" },
-  };
-  const event = { type: "response.failed", response: { error: {
-    code: "subscription_sharing_usage_unavailable", message: "access-fixture-secret",
-  } } };
-  const client = createProviderClient(accountConfig, async () =>
-    new Response(`data: ${JSON.stringify(event)}\n\n`, {
-      headers: { "content-type": "text/event-stream", "x-request-id": "req-stream" },
-    }), {}, { openAIChatGPTTokenProvider: async () => "access-fixture-secret" });
-  await assert.rejects(
-    client.complete("gpt-fixture", [], [], new AbortController().signal),
-    error => {
-      assert.ok(error instanceof ProviderRequestError);
-      assert.equal(error.code, "subscription_sharing_usage_unavailable");
-      assert.equal(error.requestId, "req-stream");
-      assert.doesNotMatch(JSON.stringify(error.body), /access-fixture-secret/);
-      return true;
-    },
-  );
 });
 
 test("Responses adapter maps chat messages and function tools to the Responses request contract", async () => {
@@ -251,19 +92,6 @@ test("OpenAI Responses rejects custom hosts instead of sending credentials to an
     }),
     /official HTTPS API endpoint/,
   );
-});
-
-test("ChatGPT account credentials require the exact official API base", () => {
-  for (const baseUrl of ["https://api.openai.com:8443/v1", "https://api.openai.com/other"]) {
-    assert.throws(() => createProviderClient({
-      providerId: "openai",
-      transport: "openai-responses",
-      baseUrl,
-      auth: { kind: "openai-chatgpt-account", accountId: "fixture" },
-    }, async () => { throw new Error("request must not run"); }, {}, {
-      openAIChatGPTTokenProvider: async () => "synthetic-token",
-    }), /official HTTPS API endpoint/);
-  }
 });
 test("Bedrock Mantle Responses uses the regional path and Bearer API key", async () => {
   const mantleConfig: ProviderAdapterConfig = {
@@ -462,66 +290,6 @@ test("Responses HTTP errors preserve status without exposing response bodies", a
     },
   );
 });
-test("ChatGPT account onDelta withholds an access token split across events", async () => {
-  const accountToken = "account-access-fixture-secret";
-  const events = [
-    { type: "response.output_text.delta", delta: `Echo ${accountToken.slice(0, 13)}` },
-    { type: "response.output_text.delta", delta: `${accountToken.slice(13)} suffix` },
-    { type: "response.completed", response: {
-      id: "resp-account-token-redaction",
-      status: "completed",
-      output: [{ type: "message", content: [{ type: "output_text", text: `Echo ${accountToken} suffix` }] }],
-    } },
-  ];
-  const response = new Response(events.map(event => `data: ${JSON.stringify(event)}\n\n`).join(""), {
-    headers: { "content-type": "text/event-stream" },
-  });
-  const client = createProviderClient({
-    providerId: "openai",
-    transport: "openai-responses",
-    baseUrl: "https://api.openai.com/v1",
-    auth: { kind: "openai-chatgpt-account", accountId: "account-fixture" },
-  }, async () => response, {}, {
-    openAIChatGPTTokenProvider: async () => accountToken,
-  });
-  const visibleDeltas: string[] = [];
-  const reply = await client.complete("gpt-fixture", [{ role: "user", content: "go" }], [], new AbortController().signal, delta => {
-    visibleDeltas.push(delta);
-  });
-  assert.equal(visibleDeltas.join(""), "Echo [redacted] suffix");
-  assert.equal(JSON.stringify(visibleDeltas).includes(accountToken), false);
-  assert.equal(reply.message.content, "Echo [redacted] suffix");
-});
-
-test("ChatGPT account onDelta redacts a token prefix left at stream completion", async () => {
-  const accountToken = "account-access-fixture-secret";
-  const partialToken = accountToken.slice(0, 19);
-  const response = new Response([
-    { type: "response.output_text.delta", delta: `Echo ${partialToken}` },
-    { type: "response.completed", response: {
-      id: "resp-account-token-prefix",
-      status: "completed",
-      output: [{ type: "message", content: [{ type: "output_text", text: `Echo ${partialToken}` }] }],
-    } },
-  ].map(event => `data: ${JSON.stringify(event)}\n\n`).join(""), {
-    headers: { "content-type": "text/event-stream" },
-  });
-  const client = createProviderClient({
-    providerId: "openai",
-    transport: "openai-responses",
-    baseUrl: "https://api.openai.com/v1",
-    auth: { kind: "openai-chatgpt-account", accountId: "account-fixture" },
-  }, async () => response, {}, {
-    openAIChatGPTTokenProvider: async () => accountToken,
-  });
-  const visibleDeltas: string[] = [];
-  const reply = await client.complete("gpt-fixture", [{ role: "user", content: "go" }], [], new AbortController().signal, delta => {
-    visibleDeltas.push(delta);
-  });
-  assert.equal(visibleDeltas.join(""), "Echo [redacted]");
-  assert.equal(reply.message.content, "Echo [redacted]");
-});
-
 test("Responses onDelta redacts an API key split across events without changing tool data", async () => {
   const events = [
     { type: "response.output_text.delta", delta: "Echo fixture-" },

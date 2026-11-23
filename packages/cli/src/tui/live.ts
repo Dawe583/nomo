@@ -1,4 +1,3 @@
-import { brandHeader } from "./brand.ts";
 import type { FeedPage } from "../../../ledger/src/feed.ts";
 import type { TerminalCapabilities } from "./types.ts";
 import { crop, fit, pad, rule, sanitizeText, visibleLength } from "./layout.ts";
@@ -31,10 +30,7 @@ export type LiveView = {
 };
 
 export function liveRecords(view: LiveView) {
-  return (view.page?.records ?? [])
-    .filter((row) => !view.filter || row.klass === view.filter)
-    .slice()
-    .reverse();
+  return (view.page?.records ?? []).filter(row => !view.filter || row.klass === view.filter).slice().reverse();
 }
 
 function splitCells(value: string, width: number): string[] {
@@ -60,7 +56,7 @@ export function renderLiveFeed(view: LiveView, caps: TerminalCapabilities): stri
   const rows = liveRecords(view);
   const selected = rows[Math.min(view.selected, Math.max(0, rows.length - 1))];
   const lines = [
-    ...brandHeader(`NOMO / ${view.workspace}`, caps),
+    paint(`NOMO  ${sanitizeText(view.workspace)}`, "accent", caps, true),
     `${view.paused ? "Paused view" : "Live ledger"}  |  ${view.filter || "All classes"}  |  ${rows.length} records`,
     paint(rule(width), "rule", caps),
     view.error

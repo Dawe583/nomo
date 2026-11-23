@@ -14,8 +14,6 @@ import { runWatchCommand } from "./watch.ts";
 import { runApproveCommand, runApprovalsCommand } from "./approve.ts";
 import { runDoctorCommand } from "./doctor.ts";
 import { runHarnessCommand } from "./harness.ts";
-import { runGoalCommand } from "./goal.ts";
-import { runScheduleCommand } from "./schedule.ts";
 import { runConfigCommand } from "./config.ts";
 import { runInitCommand } from "./init.ts";
 import { runUpdateCommand } from "./update.ts";
@@ -29,15 +27,12 @@ import {
   runVerifyCommand,
 } from "./index.ts";
 import { parseInvocation, type ParsedInvocation } from "./argv.ts";
+import { packageVersion } from "./package-version.ts";
 
-export function packageVersion(): string {
-  const meta = JSON.parse(
-    readFileSync(new URL("../package.json", import.meta.url), "utf8"),
-  );
-  if (!meta || typeof meta.version !== "string" || !meta.version)
-    throw Error("Package version is missing.");
-  return meta.version;
-}
+// Re-exported where it was defined before it moved, because the bin and the
+// recovery server already reach for it by this path and a second definition is
+// exactly the drift the shared reader exists to prevent.
+export { packageVersion };
 
 /** Any command not wired yet fails loudly rather than pretending to succeed. */
 export async function runCommand(
@@ -118,26 +113,6 @@ export async function runCommand(
       stdout: (line) => console.log(line),
       stderr: (line) => console.error(line),
     }, { env: injected });
-  }
-  if (parsed.command === "goal") {
-    return await runGoalCommand(
-      parsed.args,
-      {
-        stdout: (line) => console.log(line),
-        stderr: (line) => console.error(line),
-      },
-      { env: injected },
-    );
-  }
-  if (parsed.command === "schedule") {
-    return await runScheduleCommand(
-      parsed.args,
-      {
-        stdout: (line) => console.log(line),
-        stderr: (line) => console.error(line),
-      },
-      { env: injected },
-    );
   }
   if (parsed.command === "verify") {
     return await runVerifyCommand(parsed.args, {

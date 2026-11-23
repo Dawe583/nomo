@@ -2,15 +2,15 @@
 /**
  * The nomo binary.
  *
- * A thin entry point on purpose. `--help` and `--version` are answered from
- * argv.ts, which imports nothing, so neither path loads the command surface and
- * neither prints node's SQLite experimental warning. The dispatch is imported
- * only once a real command is named.
+ * A thin entry point on purpose. `--help` is answered from argv.ts, which
+ * imports nothing, and `--version` from the shared version reader, which
+ * imports only node:fs, so neither path loads the command surface and neither
+ * prints node's SQLite experimental warning. The dispatch is imported only once
+ * a real command is named.
  */
 
 import "./silence-experimental-warning.mjs";
 
-import { readFileSync } from "node:fs";
 import { parseInvocation, withDefaultTui } from "../src/argv.ts";
 
 const rawArgv = process.argv.slice(2);
@@ -25,14 +25,16 @@ if (flag === "--help" || flag === "-h") {
 }
 
 if (flag === "--version" || flag === "-v") {
-  const meta = JSON.parse(
-    readFileSync(new URL("../package.json", import.meta.url), "utf8"),
-  );
-  if (!meta || typeof meta.version !== "string" || !meta.version) {
-    console.error("Package version is missing.");
+  // Imported rather than imported statically, so the entry chunk still imports
+  // nothing but Node builtins: a version request must not pull the command
+  // graph, and its SQLite engine, into the process.
+  const { packageVersion } = await import("../src/package-version.ts");
+  try {
+    console.log(`nomo ${packageVersion()}`);
+  } catch (error) {
+    console.error(error instanceof Error ? error.message : String(error));
     process.exit(1);
   }
-  console.log(`nomo ${meta.version}`);
   process.exit(0);
 }
 

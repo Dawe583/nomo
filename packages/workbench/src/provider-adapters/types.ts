@@ -161,10 +161,6 @@ export type ProviderAuthProfile =
     }
   | {
       readonly kind: "none";
-    }
-  | {
-      readonly kind: "openai-chatgpt-account";
-      readonly accountId: string;
     };
 export type AwsCredentialProvider = () => Promise<{
   readonly accessKeyId: string;
@@ -173,7 +169,6 @@ export type AwsCredentialProvider = () => Promise<{
 }>;
 export type ProviderAdapterDependencies = {
   readonly awsCredentialProvider?: AwsCredentialProvider;
-  readonly openAIChatGPTTokenProvider?: (accountId: string) => Promise<string>;
 };
 
 export type ProviderAdapterConfig = {
@@ -190,12 +185,28 @@ export type ProviderAdapterConfig = {
 
 export interface ProviderClient {
   models(): Promise<readonly Model[]>;
+  /**
+   * One model turn.
+   *
+   * `onDelta` receives the answer text. `onReasoning` receives provider-native
+   * reasoning text when the transport actually emits it: Anthropic
+   * `thinking_delta`, Chat Completions `reasoning_content`/`reasoning`,
+   * Responses reasoning-summary deltas, Bedrock `reasoningContent`. A
+   * transport without a reasoning channel never calls it, so a caller must
+   * not present silence, latency or any other timing signal as thinking.
+   *
+   * Reasoning is not answer text: it is never returned in
+   * `reply.message.content`, never becomes a tool call and never completes a
+   * turn. Both callbacks are optional, so a five-argument caller keeps the
+   * behaviour it had.
+   */
   complete(
     model: string,
     messages: readonly ModelMessage[],
     tools: readonly unknown[],
     signal: AbortSignal,
     onDelta?: (text: string) => void | Promise<void>,
+    onReasoning?: (text: string) => void | Promise<void>,
   ): Promise<ModelReply>;
   redact(text: string): string;
 }

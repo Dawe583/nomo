@@ -1,5 +1,5 @@
 import type { Model, ModelMessage, ModelReply, ToolCall } from "../provider.ts";
-import { ProviderRequestError } from "../provider.ts";
+import { ProviderRequestError, parseRetryAfter } from "../provider.ts";
 import { defaultHarnessSettings, type HarnessSettings } from "../harness-settings.ts";
 import type { ProviderAdapterConfig, ProviderClient, ProviderVertexOptions } from "./types.ts";
 import { PROVIDER_MODEL_MANIFEST } from "../provider-catalog.ts";
@@ -199,8 +199,9 @@ export class GoogleGenerativeAIAdapter implements ProviderClient {
         signal,
       });
       if (response.ok) return response;
+      const retryAfter = parseRetryAfter(response.headers.get("retry-after"));
       await response.body?.cancel().catch(() => {});
-      throw new ProviderRequestError(response.status);
+      throw new ProviderRequestError(response.status, undefined, retryAfter);
     } catch (error) {
       if (error instanceof ProviderRequestError) throw error;
       if (signal.aborted) {

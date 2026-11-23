@@ -285,7 +285,7 @@ function clip(entry: HarnessEntry, limit: number): HarnessEntry {
 export function formatForPrompt(ranked: readonly RankedEntry[], at: string): string {
   if (ranked.length === 0) return "";
   const line = ({ entry, score }: RankedEntry) =>
-    `- [${entry.kind}${entry.scope === "operator" ? ", every conversation" : ""}] ${entry.tool} (${entry.klass}) ${entry.content}, ${score.toFixed(2)}`;
+    `- [${entry.kind}] ${entry.tool} (${entry.klass}) ${entry.content}, ${score.toFixed(2)}`;
   const approved = ranked.filter((row) => row.entry.decidedByOperator);
   const mined = ranked.filter((row) => !row.entry.decidedByOperator);
   // Each section header sits directly above its own entries. Emitting both

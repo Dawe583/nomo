@@ -20,8 +20,9 @@ export function renderHoldPrompt(
   // agent and the upstream server. The modal is the one screen a human reads
   // immediately before approving a write, so nothing enters it unescaped.
   const call = hold.call;
-  // Keep the action row visible before optional fields when height is tight.
-  // At heights below the frame's minimum, not all modal chrome can fit.
+  // Information rows lose their place before the countdown and the action
+  // row do: a short terminal must still show what to press, so the drop
+  // order here is agent and workspace first, then policy and reason.
   const information = [
     `agent          ${sanitizeText(call.agent)}`,
     `workspace      ${sanitizeText(call.workspace)}`,
@@ -31,34 +32,36 @@ export function renderHoldPrompt(
     `compensation   ${call.compensation === null ? "none" : sanitizeText(call.compensation)}`,
     `reason         ${fit(sanitizeText(call.reason), width - 19)}`,
   ];
-  const actions = `${paint("[a] approve once", "r0", capabilities, true)} ${paint("[c] cancel", "r3", capabilities, true)}`;
-  const countdown = paint(
-    `HOLDING ${String(remaining).padStart(3)}s`,
-    "r2",
-    capabilities,
-    true,
-  );
-  if (capabilities.rows <= 3) {
-    return crop([actions, countdown], capabilities.columns, capabilities.rows).join(
-      "\n",
-    );
-  }
-
-  // Reserve both borders, the tool identity and actions before optional rows.
-  const showCountdown = capabilities.rows >= 5;
-  const showDivider = capabilities.rows >= 6;
-  const headroom =
-    capabilities.rows - 4 - Number(showCountdown) - Number(showDivider);
+  const tail = [
+    paint(
+      `HOLDING ${String(remaining).padStart(3)}s`,
+      "r2",
+      capabilities,
+      true,
+    ),
+    `${paint("[a] approve once", "r0", capabilities, true)}   ${paint("[c] cancel", "r3", capabilities, true)}   [d] details`,
+  ];
+  // The box costs 4 lines of chrome (top, rule, tail rule is inside contents
+  // below, bottom); keep the arithmetic explicit so the reservation cannot
+  // drift when a row is added later.
+  const chrome = 4;
+  const headroom = capabilities.rows - chrome - tail.length;
+  const kept =
+    headroom >= information.length
+      ? information
+      : information.slice(Math.max(0, information.length - headroom));
   const contents = [
     `${classLabel(call.class, capabilities)}  ${fit(sanitizeText(call.tool), width - 14, "left")}`,
-    ...(showDivider ? [paint(rule(width - 4), "rule", capabilities)] : []),
-    ...information.slice(0, headroom),
-    ...(showCountdown ? [countdown] : []),
-    actions,
+    paint(rule(width - 4), "rule", capabilities),
+    ...kept,
+    ...(headroom > information.length ? [""] : []),
+    ...tail,
   ];
-  return box("NOMO / HUMAN DECISION", contents, width)
-    .map((line) => fit(line, capabilities.columns))
-    .join("\n");
+  return crop(
+    box("NOMO / HUMAN DECISION", contents, width),
+    capabilities.columns,
+    capabilities.rows,
+  ).join("\n");
 }
 
 export type HoldResolution = "approve" | "cancel" | "expired";

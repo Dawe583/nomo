@@ -403,7 +403,7 @@ export function ComponentGallery() {
           <BrandMark />{" "}
           {t(
             "Značka NOMO zůstává jediným znakem značky.",
-            "The NOMO aperture stays the only brand mark.",
+            "The NOMO six-by-six grid stays the only brand mark.",
           )}
         </p>
       </Section>

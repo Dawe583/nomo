@@ -45,7 +45,7 @@ config.
 ```
 gui-web/
   index.html       shell, black 44px nav, parchment sub nav, sidebar
-  icon.svg          aperture mark, the icon the manifest points at
+  icon.svg          NOMO grid mark, the icon the manifest points at
   styles.css       Apple tokens from docs/GUI-RULES.md plus chat layer
   fixtures.js      MOCK session, calls, holds, ledger, registry, policy,
                    providers, models, routing, usage, keys
@@ -119,7 +119,7 @@ no policy is enforced.
 
 ## Design
 
-NOMO Aperture, exactly like apps/tui-preview: warm near-black paper,
+NOMO Grid, exactly like apps/tui-preview: warm near-black paper,
 single orange accent, mono labels, serif display, ASCII glyphs,
 no gradients, one soft shadow reserved for palette and drawers.
 Dark first, light theme fully supported, theme toggle in nav,

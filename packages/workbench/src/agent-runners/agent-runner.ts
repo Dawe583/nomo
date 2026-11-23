@@ -135,7 +135,13 @@ export function assertKnownAgentRunnerProfile(
     throw new AgentRunnerContractError("unknown-profile");
 }
 
-export function assertSafeAgentRunnerDescription(
+/**
+ * The shape every adapter description shares, whatever contract it claims.
+ *
+ * Both validators below start here, so a host description cannot smuggle a
+ * field or an unbounded value past a check the mediated one performs.
+ */
+function assertDescriptionShape(
   raw: unknown,
 ): asserts raw is AgentRunnerDescription {
   if (raw === null || typeof raw !== "object" || Array.isArray(raw))
@@ -175,6 +181,13 @@ export function assertSafeAgentRunnerDescription(
     (description.dataTransfer === "remote" && description.dataSent.length === 0) ||
     (description.dataTransfer === "local-only" && description.dataSent.length > 0)
   ) throw new AgentRunnerContractError("invalid-description");
+}
+
+export function assertSafeAgentRunnerDescription(
+  raw: unknown,
+): asserts raw is AgentRunnerDescription {
+  assertDescriptionShape(raw);
+  const description = raw;
 
   if (description.dataTransfer === "remote") {
     let endpoint: URL;
@@ -201,6 +214,49 @@ export function assertSafeAgentRunnerDescription(
   if (description.toolAccess !== "mediated" ||
       description.workspaceMode !== "approved-copy")
     throw new AgentRunnerContractError("invalid-description");
+}
+
+/**
+ * The claims a host-delegated subscription runner must make.
+ *
+ * This is a separate contract, not a relaxed mediated one. A host runner is
+ * opaque by construction: the installed host keeps its own tools and its own
+ * view of the workspace, and NOMO observes the run without mediating either,
+ * so it may only claim `unmediated` tools, an `opaque` workspace and a
+ * cancellation whose outcome can stay unproven. Its only remote payload is the
+ * task and the fixed system prompt, sent to the vendor over https. The
+ * mediated validator is unchanged and the mediated catalog stays
+ * mediated-only, so a host runner cannot reach a tool-dispatch path.
+ */
+export function assertHostAgentRunnerDescription(
+  raw: unknown,
+): asserts raw is AgentRunnerDescription {
+  assertDescriptionShape(raw);
+  const description = raw;
+  if (
+    description.dataTransfer !== "remote" ||
+    description.execution !== "local" ||
+    description.toolAccess !== "unmediated" ||
+    description.workspaceMode !== "opaque" ||
+    description.dataSent.length === 0 ||
+    !description.dataSent.every(
+      (item) => item === "task" || item === "system-prompt",
+    )
+  ) throw new AgentRunnerContractError("invalid-description");
+
+  let endpoint: URL;
+  try {
+    endpoint = new URL(description.endpoint);
+  } catch {
+    throw new AgentRunnerContractError("invalid-description");
+  }
+  if (
+    endpoint.protocol !== "https:" ||
+    endpoint.username ||
+    endpoint.password ||
+    endpoint.search ||
+    endpoint.hash
+  ) throw new AgentRunnerContractError("invalid-description");
 }
 
 export async function* validateAgentRunEvents(

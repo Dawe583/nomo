@@ -263,27 +263,6 @@ test("an operator-approved addendum is not filed under 'no operator decided this
   assert.match(text, /nothing here changes a policy/, "the policy boundary still holds");
 });
 
-test("an operator-scope entry says it applies to every conversation", () => {
-  // The model reads one block. Without the marker an instruction promoted to
-  // every conversation is indistinguishable from one this conversation
-  // approved, and an operator reading the request cannot tell either.
-  const ranked = rankEntries(
-    [
-      {
-        ...entry("a", "inventory", "read the inventory first"),
-        scope: "operator",
-        decidedByOperator: true,
-      },
-      { ...entry("b", "inventory", "inventory reads are cheap"), decidedByOperator: true },
-    ],
-    queryTermsFrom({ user: "inventory" }),
-    OPTS,
-  );
-  const text = formatForPrompt(ranked, "2026-11-21");
-  assert.match(text, /- \[lesson, every conversation\] fs\.write \(r1\) read the inventory first/);
-  assert.match(text, /- \[lesson\] fs\.write \(r1\) inventory reads are cheap/);
-});
-
 test("an empty ranking renders nothing rather than an empty section", () => {
   assert.equal(formatForPrompt([], "2026-10-07"), "");
 });

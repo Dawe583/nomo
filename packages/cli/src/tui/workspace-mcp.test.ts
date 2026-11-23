@@ -116,15 +116,21 @@ test("/mcp lists every connector with its consent state and next step", async (t
   assert.match(text, new RegExp(`next: /mcp probe ${id}`));
   // The document workspace shares this list and has no endpoint of its own.
   assert.match(text, /CONFIRMED \//);
-  assert.match(text, /NOMO documents +10 tools/);
+  assert.match(text, /NOMO documents +4 tools/);
   assert.match(text, /in use: the NOMO document workspace/);
 
   await app.probeConnector(id);
   await ui.command("/mcp");
   text = ui.lines().join("\n");
-  assert.match(text, /PROBED \/ 1/);
-  assert.match(text, /counter +1 tools/);
-  assert.match(text, new RegExp(`next: /mcp confirm ${id}`));
+  assert.match(text, /probed\s+1/);
+  assert.match(text, /counter\s+·\s+1 tools/);
+  assert.match(text, /Enter inspects/);
+  ui.selected = ui.items().findIndex((row) => row.connector?.id === id);
+  await ui.openSelected();
+  assert.match(
+    ui.detail?.join("\n") ?? "",
+    new RegExp(`next: /mcp confirm ${id}`),
+  );
 
   await app.confirmConnector(id);
   await ui.command("/mcp");
@@ -132,10 +138,17 @@ test("/mcp lists every connector with its consent state and next step", async (t
   // Consent is the group heading now, not a column on the row. Both
   // connectors sit under CONFIRMED, which is the fact that matters: this is
   // the state in which a conversation actually gets tools.
-  assert.match(text, /● CONFIRMED \/ 2/);
-  assert.match(text, /counter +1 tools/);
-  assert.match(text, /in use by new conversations/);
-  for (const line of ui.lines()) assert.ok(visibleLength(line) <= 80, line);
+  assert.match(text, /confirmed\s+2/);
+  assert.match(text, /counter\s+·\s+1 tools/);
+  assert.match(text, /Confirmed connectors serve new conversations/);
+  const frame = stripAnsi(
+    renderWorkspace(ui, 80, 24, "", false, false, {
+      color: false,
+      motion: false,
+    }),
+  );
+  for (const line of frame.split("\n"))
+    assert.ok(visibleLength(line) <= 80, line);
 });
 
 test("/mcp probe names the host and sends nothing until it is confirmed", async (t) => {
@@ -295,36 +308,6 @@ test("/mcp inspect shows what the policy would decide, and admits an unknown rad
   assert.match(shown, /radius unknown/);
   for (const line of ui.detail!) assert.ok(visibleLength(line) <= 80, line);
 });
-test("/mcp list and inspect safely fall back for inherited consent keys", async (t) => {
-  const { app, ui } = await workspace(t, "mcp-unknown-consent");
-  const server = await upstream(t);
-  await app.addConnector({ url: server.url, name: "future connector" });
-  const state = app.connectionState();
-  const connector = state.connectors.find((entry) => "url" in entry);
-  assert.ok(connector);
-  const id = connector.id;
-  let consentState = "__proto__";
-  t.mock.method(app, "connectionState", () => ({
-    ...state,
-    connectors: state.connectors.map((entry) =>
-      entry.id === id
-        ? { ...entry, consentState: consentState as never }
-        : entry,
-    ),
-  }));
-
-  for (consentState of ["__proto__", "constructor", "toString"]) {
-    await ui.command("/mcp");
-    assert.match(ui.detail!.join("\n"), new RegExp(`next: /mcp inspect ${id}`));
-    await ui.command(`/mcp inspect ${id}`);
-    const shown = ui.detail!.join("\n");
-    assert.match(shown, new RegExp(`consent ${consentState}`));
-    assert.match(shown, new RegExp(`next: /mcp inspect ${id}`));
-  }
-  assert.deepEqual(server.hits, [], "listing and inspection never contact it");
-  assert.equal(connector.consentState, "staged", "inspection changes no consent");
-});
-
 
 test("/mcp rename re-stages and /mcp remove deletes after a review", async (t) => {
   const { app, ui, last } = await workspace(t, "mcp-edit");

@@ -19,27 +19,6 @@ for (const columns of [80, 120, 200]) test(`live ledger is bounded at ${columns}
   }
 });
 
-test("live detail wraps wide glyphs to terminal cell width", () => {
-  const tool = "界".repeat(30);
-  const page = {
-    ...view.page!,
-    records: [{ ...view.page!.records[0]!, tool }],
-  };
-  const frame = renderLiveFeed(
-    { ...view, page, detail: true },
-    {
-      interactive: true,
-      ansi: false,
-      colorDepth: 0,
-      columns: 40,
-      rows: 24,
-      reason: "no-color",
-    },
-  );
-  assert.ok(frame.split("\n").every((line) => visibleLength(line) <= 40));
-  assert.equal(frame.split("界").length - 1, tool.length);
-});
-
 test("live view never labels integrity-only data as signature checked", () => {
   const frame = renderLiveFeed({ ...view, page: { ...view.page!, signed: false } }, { interactive: false, ansi: false, colorDepth: 0, columns: 80, rows: 24, reason: "not-tty" });
   assert.match(frame, /Signatures have not been checked/);

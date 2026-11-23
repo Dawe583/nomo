@@ -7,6 +7,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { dataDir } from "../../../ledger/src/paths.ts";
 import { ansi256, trueColor, type ColorTheme } from "./theme-config.ts";
+import { petImageTransfer } from "./pet.ts";
 
 const TAB_ICON_ID_BASE = process.pid & 0xffffff || 1;
 const MARKS = [
@@ -291,7 +292,19 @@ export function loadLocalTabIcons(
   };
 }
 
-export function kittyTabIconsTransfer(icons: LocalTabIcons): string {
+/**
+ * Every image the workspace transfers at startup.
+ *
+ * The tab icons and the optional NIB image share one channel because the
+ * terminal has one: a Kitty transfer is written once, outside the frame, before
+ * the placeholder cells that reference it are drawn. The pet transfer is empty
+ * unless NOMO_TUI_IMAGE=1 and the terminal speaks the protocol, so the default
+ * output here is unchanged.
+ */
+export function kittyTabIconsTransfer(
+  icons: LocalTabIcons,
+  env: Readonly<NodeJS.ProcessEnv> = process.env,
+): string {
   const transfers: string[] = [];
   for (const variant of ICON_VARIANTS)
     for (const tab of TAB_ICON_KEYS)
@@ -314,7 +327,7 @@ export function kittyTabIconsTransfer(icons: LocalTabIcons): string {
             }),
           );
       }
-  return transfers.join("");
+  return `${transfers.join("")}${petImageTransfer(env)}`;
 }
 
 export function kittyTabIconsCleanup(icons: LocalTabIcons): string {
@@ -406,7 +419,6 @@ export function kittyActivityIconLabel(
 export function brandHeader(
   label: string,
   caps: TerminalCapabilities,
-  ascii = false,
 ): string[] {
   const title = sanitizeText(label).trim();
   const rows: readonly (readonly ("base" | "stem" | "coral" | "cyan")[])[] = [
@@ -425,7 +437,7 @@ export function brandHeader(
     const cells = tones.map((tone) => {
       // Replace the grid gap between the stem's two source columns with ink;
       // keep the normal gap before the next tile.
-      const glyph = (ascii ? "#" : "█").repeat(tone === "stem" ? 5 : 2);
+      const glyph = tone === "stem" ? "█████" : "██";
       return paintBrand(glyph, tone, caps);
     });
     return cells.join(" ");

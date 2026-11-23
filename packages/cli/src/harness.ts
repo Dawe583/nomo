@@ -72,7 +72,6 @@ export type HarnessSurface = {
       readonly digest: string;
       readonly at: string;
       readonly summary: string;
-      readonly profileReviewText?: string;
       readonly proposal: {
         readonly edits: readonly {
           readonly action: string;
@@ -98,31 +97,6 @@ export type HarnessSurface = {
     sessionId: string,
     digest: string,
   ): Promise<{ readonly applied: readonly unknown[] }>;
-  /** What became of a workspace's proposals, so a promotion prefix can be
-   * resolved against the activated ones only. */
-  harnessOutcomes?(
-    workspace: string,
-  ): Promise<readonly { readonly digest: string; readonly status: string }[]>;
-  promoteHarnessProposal?(
-    sessionId: string,
-    digest: string,
-  ): Promise<{ readonly digest: string; readonly entries: readonly unknown[] }>;
-  demoteHarnessPromotion?(digest: string): Promise<unknown>;
-  operatorHarnessPromotions?(): Promise<
-    readonly {
-      readonly digest: string;
-      readonly status: string;
-      readonly sourceWorkspace: string;
-      readonly sourceDigest: string;
-      readonly sourceSeq: number;
-      readonly demotedSeq: number | null;
-      readonly entries: readonly {
-        readonly kind: string;
-        readonly title: string;
-        readonly content: string;
-      }[];
-    }[]
-  >;
 };
 
 export type HarnessDeps = {
@@ -146,9 +120,6 @@ const USAGE = [
   "  nomo harness approve --session <id> <digest>",
   "  nomo harness reject --session <id> <digest> --reason <text>",
   "  nomo harness rollback --session <id> <digest>",
-  "  nomo harness promote --session <id> <digest> apply an activated refinement to every conversation",
-  "  nomo harness demote <promotion-digest>      end a promotion",
-  "  nomo harness global                show every promotion",
   "  nomo harness entries --session <id> show what the harness holds",
   "  nomo harness ratchet --session <id> measure the guardrails before and after the last refinement",
   "  nomo harness model                 show the reviewer model",
@@ -243,48 +214,6 @@ async function resolveDigest(
   );
 }
 
-/** The same rule as `resolveDigest`, over a list the caller already narrowed
- * to the digests the action can apply to. */
-function resolveAmong(
-  digests: readonly string[],
-  typed: string,
-  noun: string,
-): string {
-  if (typed.length === 64) return typed;
-  const matches = digests.filter((digest) => digest.startsWith(typed));
-  if (matches.length === 1) return matches[0]!;
-  if (matches.length > 1)
-    throw new Error(
-      `The digest prefix ${typed} names ${matches.length} ${noun}s. Use more of it.`,
-    );
-  throw new Error(`No ${noun} matches the digest prefix ${typed}.`);
-}
-
-/** A rollback and a promotion act on an activation, so their prefix is
- * resolved among the session's activated refinements, never its pending
- * proposals. */
-async function resolveActivated(
-  workbench: HarnessSurface,
-  sessionId: string,
-  typed: string,
-): Promise<string> {
-  if (typed.length === 64) return typed;
-  let workspace: string | undefined;
-  try {
-    workspace = workbench.get?.(sessionId)?.workspace;
-  } catch {
-    workspace = undefined;
-  }
-  if (!workspace || !workbench.harnessOutcomes) throw new Error("Session not found.");
-  return resolveAmong(
-    (await workbench.harnessOutcomes(workspace))
-      .filter((outcome) => outcome.status === "activated")
-      .map((outcome) => outcome.digest),
-    typed,
-    "activated refinement",
-  );
-}
-
 export async function runHarnessCommand(
   args: readonly string[],
   io: HarnessIo,
@@ -295,20 +224,7 @@ export async function runHarnessCommand(
     io.stdout(USAGE);
     return action ? 0 : 1;
   }
-  if (
-    ![
-      "list",
-      "entries",
-      "approve",
-      "reject",
-      "rollback",
-      "model",
-      "ratchet",
-      "promote",
-      "demote",
-      "global",
-    ].includes(action)
-  ) {
+  if (!["list", "entries", "approve", "reject", "rollback", "model", "ratchet"].includes(action)) {
     io.stderr(`Unknown harness action ${action}.`);
     io.stderr(USAGE);
     return 1;
@@ -358,12 +274,12 @@ export async function runHarnessCommand(
       return 1;
     }
   }
-  if (!flags.session && !["model", "ratchet", "demote", "global"].includes(action)) {
+  if (!flags.session && !["model", "ratchet"].includes(action)) {
     io.stderr("The harness commands need a session: --session <id>.");
     io.stderr(USAGE);
     return 1;
   }
-  if (!["list", "entries", "model", "ratchet", "global"].includes(action) && !flags.digest) {
+  if (!["list", "entries", "model", "ratchet"].includes(action) && !flags.digest) {
     io.stderr(`The ${action} action needs the digest of the proposal.`);
     io.stderr(USAGE);
     return 1;
@@ -387,60 +303,6 @@ export async function runHarnessCommand(
     ? await deps.workbench()
     : new Workbench(env);
   try {
-    if (action === "global" || action === "demote") {
-      if (
-        !workbench.operatorHarnessPromotions ||
-        (action === "demote" && !workbench.demoteHarnessPromotion)
-      ) {
-        io.stderr("This workbench has no operator scope.");
-        return 1;
-      }
-      const promotions = await workbench.operatorHarnessPromotions();
-      if (action === "demote") {
-        const digest = resolveAmong(
-          promotions
-            .filter((promotion) => promotion.status === "promoted")
-            .map((promotion) => promotion.digest),
-          flags.digest,
-          "standing promotion",
-        );
-        await workbench.demoteHarnessPromotion!(digest);
-        io.stdout(`Demoted ${digest}.`);
-        return 0;
-      }
-      if (!promotions.length) {
-        io.stdout("No refinement is promoted to every conversation.");
-        return 0;
-      }
-      for (const promotion of promotions) {
-        const status =
-          promotion.status === "demoted"
-            ? `demoted at sequence ${promotion.demotedSeq}`
-            : "promoted";
-        io.stdout(
-          `${promotion.digest}  ${status}  from ${promotion.sourceWorkspace} ${promotion.sourceDigest.slice(0, 8)} at sequence ${promotion.sourceSeq}`,
-        );
-        for (const entry of promotion.entries) {
-          const content =
-            entry.content.length > 160 ? `${entry.content.slice(0, 160)}...` : entry.content;
-          io.stdout(`    ${entry.kind}: ${entry.title} | ${content}`);
-        }
-      }
-      return 0;
-    }
-    if (action === "promote") {
-      if (!workbench.promoteHarnessProposal) {
-        io.stderr("This workbench has no operator scope.");
-        return 1;
-      }
-      const digest = await resolveActivated(workbench, flags.session, flags.digest);
-      const promoted = await workbench.promoteHarnessProposal(flags.session, digest);
-      const count = promoted.entries.length;
-      io.stdout(
-        `Promoted ${count} ${count === 1 ? "entry" : "entries"} from ${digest} to every conversation as ${promoted.digest}.`,
-      );
-      return 0;
-    }
     if (action === "ratchet") {
       // The workbench owns the sessions; a test double may not, so the
       // session lookup falls back to a pending-proposals probe.
@@ -470,113 +332,56 @@ export async function runHarnessCommand(
         io.stdout("No signed entry in this workspace, so there is nothing to measure.");
         return 0;
       }
-      const orderedEntries = entries
-        .slice()
-        .sort((a, b) => a.seq - b.seq);
-      const { mineRefinementEffects } = await import(
-        "../../workbench/src/refinement-outcomes.ts"
-      );
-      const effects = mineRefinementEffects(orderedEntries, now);
-      if (!effects.length) {
+      const previous = [...entries]
+        .reverse()
+        .find(
+          (entry) =>
+            (entry.body as Record<string, unknown> | null)?.decision ===
+            "proposal:activated",
+        );
+      if (!previous) {
         const { measureBoard, scoreCases } = await import(
           "../../workbench/src/harness-scores.ts"
         );
-        const current = measureBoard(scoreCases(orderedEntries), now);
+        const current = measureBoard(scoreCases(entries), now);
         io.stdout("No previous refinement: nothing to compare against.");
         io.stdout(
           `Current board: verdict ${current.verdict}, ${current.caseCount} cases, deny_rate ${current.metrics.deny_rate.n} measured.`,
         );
         return 0;
       }
+      const baselineIndex = entries.indexOf(previous);
       const { compareBoards, measureBoard, scoreCases, SCORE_GUARDRAILS, SCORE_METRICS } = await import(
         "../../workbench/src/harness-scores.ts"
       );
-      const fmt = (summary: { readonly mean: number | null; readonly n: number } | undefined) =>
-        summary && summary.mean !== null
-          ? `${summary.mean.toFixed(3)} (n=${summary.n})`
-          : "unmeasured";
-      let selectedEffects = effects.slice().reverse();
-      if (flags.digest) {
-        const matched = selectedEffects.filter(
-          (item) => item.digest !== null && item.digest.startsWith(flags.digest),
-        );
-        if (matched.length === 0) {
-          io.stderr(`No activated refinement matches the digest prefix ${flags.digest}.`);
-          return 1;
-        }
-        if (matched.length > 1) {
-          io.stderr(
-            `The digest prefix ${flags.digest} names ${matched.length} activated refinements. Use more of it.`,
-          );
-          return 1;
-        }
-        selectedEffects = matched;
-      }
-      let anyRegression = false;
-      if (!flags.digest) {
-        const previous = [...orderedEntries].reverse().find((entry) => {
-          const decision = (entry.body as Record<string, unknown> | null)?.decision;
-          return decision === "proposal:activated" || decision === "refinement:approved";
-        })!;
-        const baselineIndex = orderedEntries.indexOf(previous);
-        const before = measureBoard(scoreCases(orderedEntries.slice(0, baselineIndex)), now);
-        const after = measureBoard(scoreCases(orderedEntries), now);
-        const compared = compareBoards(before, after);
-        io.stdout(`Baseline: the board before the refinement activated at sequence ${previous.seq}.`);
-        io.stdout(`Verdict: ${compared.verdict}`);
-        io.stdout("");
-        for (const key of SCORE_GUARDRAILS) {
-          const metric = SCORE_METRICS[key];
-          const b = before.guardrails[key];
-          const a = after.guardrails[key];
-          // A breach is stored as a sentence naming the metric, so the marker
-          // matches the metric it starts with rather than the whole sentence.
-          // Comparing against the bare key never matched, and the marker that
-          // told an operator which line moved was dead code.
-          const moved = compared.guardrailBreaches.some((line) =>
-            line.startsWith(`${key} `),
-          )
-            ? "  REGRESSED"
-            : "";
-          io.stdout(
-            `${key}  ${metric ? metric.label : key}: ${fmt(b)} -> ${fmt(a)}${moved}`,
-          );
-        }
-        if (compared.guardrailBreaches.length) anyRegression = true;
-        io.stdout("");
-      }
-      io.stdout("Refinement effect (strictly before vs after activation):");
-      for (const item of selectedEffects) {
-        const tag = [
-          item.digest ? item.digest.slice(0, 8) : "",
-          item.status === "rolled-back"
-            ? `rolled back at sequence ${item.rolledBackSeq}`
-            : "standing",
-        ]
-          .filter(Boolean)
-          .join(", ");
-        const summarySuffix = item.summary ? `: ${JSON.stringify(item.summary)}` : "";
-        io.stdout(`Activation at sequence ${item.activationSeq} (${tag})${summarySuffix}`);
+      const before = measureBoard(scoreCases(entries.slice(0, baselineIndex)), now);
+      const after = measureBoard(scoreCases(entries), now);
+      const compared = compareBoards(before, after);
+      io.stdout(`Baseline: the board before the refinement activated at sequence ${previous.seq}.`);
+      io.stdout(`Verdict: ${compared.verdict}`);
+      io.stdout("");
+      for (const key of SCORE_GUARDRAILS) {
+        const metric = SCORE_METRICS[key];
+        const b = before.guardrails[key];
+        const a = after.guardrails[key];
+        const fmt = (summary: { readonly mean: number | null; readonly n: number } | undefined) =>
+          summary && summary.mean !== null
+            ? `${summary.mean.toFixed(3)} (n=${summary.n})`
+            : "unmeasured";
+        // A breach is stored as a sentence naming the metric, so the marker
+        // matches the metric it starts with rather than the whole sentence.
+        // Comparing against the bare key never matched, and the marker that
+        // told an operator which line moved was dead code.
+        const moved = compared.guardrailBreaches.some((line) =>
+          line.startsWith(`${key} `),
+        )
+          ? "  REGRESSED"
+          : "";
         io.stdout(
-          `  verdict ${item.effect.verdict}, cases ${item.effect.before.caseCount} -> ${item.effect.after.caseCount}`,
+          `${key}  ${metric ? metric.label : key}: ${fmt(b)} -> ${fmt(a)}${moved}`,
         );
-        io.stdout(
-          `  hold_rate  ${SCORE_METRICS.hold_rate.label}: ${fmt(item.effect.before.metrics.hold_rate)} -> ${fmt(item.effect.after.metrics.hold_rate)}`,
-        );
-        for (const guardrail of item.effect.guardrails) {
-          const moved = guardrail.regressed ? "  REGRESSED" : "";
-          io.stdout(
-            `  ${guardrail.key}  ${guardrail.label}: ${fmt(guardrail.before)} -> ${fmt(guardrail.after)}${moved}`,
-          );
-        }
-        if (item.effect.unmeasuredGuardrails.length) {
-          io.stdout(`  Unmeasured guardrails: ${item.effect.unmeasuredGuardrails.join(", ")}`);
-        } else {
-          io.stdout("  All guardrails measured.");
-        }
-        if (item.effect.guardrailBreaches.length) anyRegression = true;
       }
-      if (anyRegression) {
+      if (compared.guardrailBreaches.length) {
         io.stdout("");
         io.stdout(
           "A guardrail regressed outside noise. This is a report, not a refusal: the workbench decides, and it decides on evidence the harness chain carries.",
@@ -629,10 +434,6 @@ export async function runHarnessCommand(
       for (const proposal of proposals) {
         io.stdout(`${proposal.digest}  ${proposal.summary}  ${proposal.at}`);
         for (const edit of proposal.proposal.edits) io.stdout(describeEdit(edit));
-        if (proposal.profileReviewText) {
-          for (const line of proposal.profileReviewText.split("\n"))
-            io.stdout(`    ${line}`);
-        }
       }
       return 0;
     }
@@ -656,7 +457,7 @@ export async function runHarnessCommand(
     }
     const rolled = await workbench.rollbackHarnessProposal(
       flags.session,
-      await resolveActivated(workbench, flags.session, flags.digest),
+      await resolveDigest(workbench, flags.session, flags.digest),
     );
     io.stdout(`Rolled back ${flags.digest}: ${rolled.applied.length} edit(s) undone.`);
     return 0;

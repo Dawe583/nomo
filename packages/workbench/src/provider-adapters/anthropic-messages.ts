@@ -15,6 +15,7 @@ const MAX_TOOL_ARGUMENT_CHARS = 1_000_000;
 
 type StreamBlock =
   | { kind: "text"; text: string; stopped: boolean }
+  | { kind: "reasoning"; stopped: boolean }
   | { kind: "tool"; id: string; name: string; initialInput: Record<string, unknown>; arguments: string; hasArguments: boolean; stopped: boolean }
   | { kind: "ignored"; stopped: boolean };
 export class AnthropicMessagesAdapter {
@@ -30,6 +31,7 @@ export class AnthropicMessagesAdapter {
     tools: readonly unknown[],
     signal: AbortSignal,
     onDelta?: (text: string) => void | Promise<void>,
+    onReasoning?: (text: string) => void | Promise<void>,
   ): Promise<ModelReply> {
     const converted: Array<{ role: string; content: unknown }> = [];
     for (const message of messages.filter(item => item.role !== "system")) {
@@ -66,7 +68,7 @@ export class AnthropicMessagesAdapter {
       } : {}),
     };
     const body = onDelta
-      ? await this.consumeStream(await this.dependencies.stream({ ...request, stream: true }, signal), signal, onDelta)
+      ? await this.consumeStream(await this.dependencies.stream({ ...request, stream: true }, signal), signal, onDelta, onReasoning)
       : await this.dependencies.send(request, signal);
     const result = body as {
       content?: Array<{ type: string; text?: string; id?: string; name?: string; input?: unknown }>;
@@ -102,6 +104,7 @@ export class AnthropicMessagesAdapter {
     response: Response,
     signal: AbortSignal,
     onDelta: (text: string) => void | Promise<void>,
+    onReasoning?: (text: string) => void | Promise<void>,
   ): Promise<unknown> {
     if (!response.headers.get("content-type")?.toLowerCase().includes("text/event-stream") || !response.body) {
       await response.body?.cancel().catch(() => {});
@@ -121,27 +124,42 @@ export class AnthropicMessagesAdapter {
     let inputTokens: number | undefined;
     let outputTokens: number | undefined;
     let textLength = 0;
+    let reasoningLength = 0;
     let toolArgumentLength = 0;
     let streamLength = 0;
-    let emission = "";
 
-    const emit = async (value: string, flush = false): Promise<void> => {
-      emission = this.dependencies.redact(emission + value);
-      let hold = 0;
-      const secret = this.dependencies.apiKey;
-      if (secret) {
-        for (let index = 1; index < secret.length; index++) {
-          if (emission.endsWith(secret.slice(0, index))) hold = index;
+    /**
+     * One redacting emitter per channel. Answer text and reasoning each hold
+     * back a trailing fragment that could be the start of the API key, so a
+     * secret split across two deltas is redacted rather than printed in
+     * halves. Separate buffers keep one channel's held fragment from leaking
+     * into the other.
+     */
+    const createEmitter = (
+      sink: ((text: string) => void | Promise<void>) | undefined,
+    ) => {
+      let emission = "";
+      return async (value: string, flush = false): Promise<void> => {
+        if (!sink) return;
+        emission = this.dependencies.redact(emission + value);
+        let hold = 0;
+        const secret = this.dependencies.apiKey;
+        if (secret) {
+          for (let index = 1; index < secret.length; index++) {
+            if (emission.endsWith(secret.slice(0, index))) hold = index;
+          }
         }
-      }
-      if (flush && hold) {
-        emission = `${emission.slice(0, emission.length - hold)}[redacted]`;
-        hold = 0;
-      }
-      const visible = emission.slice(0, emission.length - hold);
-      emission = hold ? emission.slice(-hold) : "";
-      if (visible) await onDelta(visible);
+        if (flush && hold) {
+          emission = `${emission.slice(0, emission.length - hold)}[redacted]`;
+          hold = 0;
+        }
+        const visible = emission.slice(0, emission.length - hold);
+        emission = hold ? emission.slice(-hold) : "";
+        if (visible) await sink(visible);
+      };
     };
+    const emit = createEmitter(onDelta);
+    const emitReasoning = createEmitter(onReasoning);
 
     const consumeEvent = async (): Promise<void> => {
       if (!dataLines.length) {
@@ -181,6 +199,12 @@ export class AnthropicMessagesAdapter {
           if (block.type === "text") {
             if (block.text !== undefined && block.text !== "") throw new Error("Anthropic returned an invalid text block.");
             blocks.set(event.index as number, { kind: "text", text: "", stopped: false });
+          } else if (block.type === "thinking") {
+            // A thinking block carries no answer text. It is tracked so its
+            // deltas can be attributed to reasoning rather than to the answer,
+            // and so the block's stop is accounted for like any other.
+            if (block.thinking !== undefined && block.thinking !== "") throw new Error("Anthropic returned an invalid thinking block.");
+            blocks.set(event.index as number, { kind: "reasoning", stopped: false });
           } else if (block.type === "tool_use") {
             if (typeof block.id !== "string" || !block.id || typeof block.name !== "string" || !block.name || !isRecord(block.input) ||
                 JSON.stringify(block.input).length > MAX_TOOL_ARGUMENT_CHARS) {
@@ -208,6 +232,18 @@ export class AnthropicMessagesAdapter {
             if (textLength > MAX_STREAM_CHARS) throw new Error("Anthropic response exceeded the supported size.");
             block.text += delta.text;
             await emit(delta.text);
+          } else if (block.kind === "reasoning") {
+            // `thinking_delta` is the provider's own chain of thought;
+            // `signature_delta` is its cryptographic signature and is not
+            // reasoning text, so it is validated and dropped.
+            if (delta.type === "thinking_delta") {
+              if (typeof delta.thinking !== "string") throw new Error("Anthropic returned an unsupported reasoning delta.");
+              reasoningLength += delta.thinking.length;
+              if (reasoningLength > MAX_STREAM_CHARS) throw new Error("Anthropic response exceeded the supported size.");
+              await emitReasoning(delta.thinking);
+            } else if (delta.type === "signature_delta") {
+              if (typeof delta.signature !== "string") throw new Error("Anthropic returned an unsupported reasoning delta.");
+            } else throw new Error("Anthropic returned an unsupported reasoning delta.");
           } else if (block.kind === "tool") {
             if (delta.type !== "input_json_delta" || typeof delta.partial_json !== "string") throw new Error("Anthropic returned an unsupported tool delta.");
             toolArgumentLength += delta.partial_json.length;
@@ -280,6 +316,7 @@ export class AnthropicMessagesAdapter {
         }
       }
       if (!terminal || buffer.trim() || dataLines.length) throw new Error("Anthropic stream ended before message_stop.");
+      await emitReasoning("", true);
       await emit("", true);
       const content: Array<{ type: string; text?: string; id?: string; name?: string; input?: unknown }> = [];
       for (const [, block] of [...blocks.entries()].sort(([a], [b]) => a - b)) {

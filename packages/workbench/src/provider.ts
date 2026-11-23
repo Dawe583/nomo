@@ -5,52 +5,85 @@ import type {
 } from "./provider-adapters/types.ts";
 import { OpenAICompletionsAdapter } from "./provider-adapters/openai-completions.ts";
 import { AnthropicMessagesAdapter } from "./provider-adapters/anthropic-messages.ts";
+import { isRecord } from "./provider-adapters/guards.ts";
 import {
-  HARNESS_SETTINGS,
   defaultHarnessSettings,
   type HarnessSettings,
 } from "./harness-settings.ts";
-function providerRequestMessage(status: number, code: string | undefined, requestId: string | undefined): string {
-  const messages: Record<string, string> = {
-    subscription_sharing_usage_limit_exceeded:
-      "ChatGPT plan usage for this app reached its limit. Pause requests and review https://chatgpt.com/settings/usage; no reset time is implied.",
-    subscription_sharing_usage_unavailable:
-      "ChatGPT plan usage could not be checked. Preserve the account credentials and retry later.",
-    subscription_sharing_user_not_eligible:
-      "ChatGPT plan usage is unavailable for the selected account, workspace or policy. No API-key billing fallback was attempted.",
-    subscription_sharing_unsupported_capability:
-      "The selected ChatGPT account does not support this request capability. No API-key billing fallback was attempted.",
-    subscription_sharing_route_not_supported:
-      "The selected ChatGPT account does not support this API route. No API-key billing fallback was attempted.",
-    subscription_sharing_invalid_user:
-      "OpenAI rejected the selected ChatGPT account. Check its account and granted scopes; credentials were not automatically cleared.",
-    chatpass_v2_scope_not_authorized:
-      "The selected ChatGPT account has not granted the required usage permission. Reauthorize it explicitly to enable plan usage.",
-  };
-  const detail = code === "email_verification_required"
-    ? "Token Harbor requires email verification. Open your confirmation email or request a new one at https://tokenharbor.ai/dashboard, then reconnect."
-    : code === "customer_verification_required"
-      ? "Vercel AI Gateway requires account verification. Add a card in Vercel AI Gateway settings or connect your own provider key."
-      : (code && messages[code]) || `Provider request failed (HTTP ${status}). Check credentials, model access or rate limits.`;
-  const safeRequestId = requestId && /^[A-Za-z0-9._-]{1,128}$/.test(requestId) ? requestId : undefined;
-  return `${detail}${safeRequestId ? ` Request ID: ${safeRequestId}.` : ""}`;
-}
-
 export class ProviderRequestError extends Error {
   readonly status: number;
   readonly code: string | undefined;
   readonly retryAfter: number | undefined;
-  readonly requestId?: string;
-  readonly body?: unknown;
-  constructor(status: number, code?: string, retryAfter?: number, requestId?: string, body?: unknown) {
-    super(providerRequestMessage(status, code, requestId));
+  constructor(status: number, code?: string, retryAfter?: number) {
+    super(
+      code === "email_verification_required"
+        ? "Token Harbor requires email verification. Open your confirmation email or request a new one at https://tokenharbor.ai/dashboard, then reconnect."
+        : code === "customer_verification_required"
+          ? "Vercel AI Gateway requires account verification. Add a card in Vercel AI Gateway settings or connect your own provider key."
+          : status === 503
+            ? `Provider service unavailable (HTTP 503).${retryAfter === undefined ? " Try again later." : ` Retry after ${retryAfter}s.`}`
+            : `Provider request failed (HTTP ${status}). Check credentials, model access or rate limits.`,
+    );
     this.status = status;
     this.code = code;
     this.retryAfter = retryAfter;
-    if (requestId) this.requestId = requestId;
-    if (body !== undefined) Object.defineProperty(this, "body", { value: body, enumerable: false });
   }
 }
+
+export function parseRetryAfter(
+  value: string | null,
+  now = Date.now(),
+): number | undefined {
+  const header = value?.trim();
+  if (!header) return undefined;
+  if (/^\d+$/.test(header)) {
+    const seconds = Number(header);
+    return Number.isSafeInteger(seconds) ? seconds : undefined;
+  }
+  if (/^[+-]?\d/.test(header)) return undefined;
+  const timestamp = Date.parse(header);
+  if (!Number.isFinite(timestamp)) return undefined;
+  const seconds = Math.max(0, Math.ceil((timestamp - now) / 1000));
+  return Number.isSafeInteger(seconds) ? seconds : undefined;
+}
+
+/**
+ * OpenRouter's Chat Completions usage frame repeats the terminal finish reason
+ * with an empty assistant delta. Treat that accounting frame as metadata, but
+ * keep rejecting any new content or tool data after completion.
+ */
+function isRepeatedUsageAccountingFrame(
+  value: unknown,
+  finishReason: string | undefined,
+): boolean {
+  if (!finishReason || !isRecord(value) || !isRecord(value.usage)) return false;
+  const choices = value.choices;
+  if (!Array.isArray(choices) || choices.length !== 1) return false;
+  const choice = choices[0];
+  if (
+    !isRecord(choice) ||
+    (choice.index !== undefined && choice.index !== 0) ||
+    choice.finish_reason !== finishReason ||
+    (choice.native_finish_reason !== undefined &&
+      typeof choice.native_finish_reason !== "string")
+  )
+    return false;
+  const delta = choice.delta;
+  if (!isRecord(delta)) return false;
+  if (
+    (delta.role !== undefined && delta.role !== "assistant") ||
+    (delta.content !== undefined &&
+      delta.content !== "" &&
+      delta.content !== null) ||
+    Object.keys(delta).some((key) => key !== "role" && key !== "content") ||
+    (choice.function_call !== undefined && choice.function_call !== null) ||
+    choice.tool_calls !== undefined ||
+    choice.refusal !== undefined
+  )
+    return false;
+  return true;
+}
+
 export type ProviderKind = "compatible" | "anthropic";
 export type ProviderConfig = {
   readonly baseUrl: string;
@@ -82,6 +115,25 @@ export function normalizeProviderConfig(config: {
     ...(config.api ? { api: config.api } : {}),
     ...(config.model ? { model: config.model } : {}),
   };
+}
+
+function hasOpenRouterCatalogMetadata(config: ProviderConfig): boolean {
+  if (config.providerId === "openrouter") return true;
+  try {
+    const endpoint = new URL(config.baseUrl);
+    return (
+      endpoint.protocol === "https:" &&
+      endpoint.hostname === "openrouter.ai" &&
+      endpoint.port === "" &&
+      endpoint.username === "" &&
+      endpoint.password === "" &&
+      endpoint.pathname.replace(/\/$/, "") === "/api/v1" &&
+      endpoint.search === "" &&
+      endpoint.hash === ""
+    );
+  } catch {
+    return false;
+  }
 }
 /**
  * Resolve the model catalog for a configured provider.
@@ -120,9 +172,7 @@ export async function catalogFor(
     if (!(error instanceof ProviderRequestError && error.status === 404))
       throw error;
   }
-  return config.model
-    ? [{ id: config.model, name: config.model }]
-    : [];
+  return config.model ? [{ id: config.model, name: config.model }] : [];
 }
 export type Model = {
   readonly id: string;
@@ -221,12 +271,14 @@ export class CompatibleProvider implements ProviderClient {
       resolveSettings: this.resolveSettings,
       response: (path, body, signal) => this.response(path, body, signal),
       decode: (response, signal) => this.decode(response, signal),
-      streamReply: (response, signal, onDelta) => this.streamReply(response, signal, onDelta),
+      streamReply: (response, signal, onDelta, onReasoning) =>
+        this.streamReply(response, signal, onDelta, onReasoning),
     });
     this.anthropic = new AnthropicMessagesAdapter({
       send: (body, signal) => this.json("messages", body, signal),
-      stream: (body, signal) => this.response("messages", body, signal, "text/event-stream"),
-      redact: text => this.redact(text),
+      stream: (body, signal) =>
+        this.response("messages", body, signal, "text/event-stream"),
+      redact: (text) => this.redact(text),
       apiKey: this.config.apiKey,
       resolveSettings: this.resolveSettings,
     });
@@ -255,11 +307,7 @@ export class CompatibleProvider implements ProviderClient {
         throw new Error("Provider returned an invalid model catalog.");
       if (!body.has_more) break;
       const lastId = body.last_id;
-      if (
-        typeof lastId !== "string" ||
-        !lastId.trim() ||
-        cursors.has(lastId)
-      )
+      if (typeof lastId !== "string" || !lastId.trim() || cursors.has(lastId))
         throw new Error("Provider returned an invalid model catalog.");
       cursors.add(lastId);
       afterId = lastId;
@@ -267,11 +315,18 @@ export class CompatibleProvider implements ProviderClient {
     return this.modelsFrom(catalog);
   }
   private modelsFrom(data: readonly unknown[]): readonly Model[] {
+    const openRouterCatalog = hasOpenRouterCatalogMetadata(this.config);
     return data
       .filter(
         (
           model: unknown,
-        ): model is { id: string; name?: string; display_name?: string } =>
+        ): model is {
+          id: string;
+          name?: string;
+          display_name?: string;
+          context_length?: unknown;
+          top_provider?: { context_length?: unknown };
+        } =>
           typeof model === "object" &&
           model !== null &&
           "id" in model &&
@@ -281,12 +336,24 @@ export class CompatibleProvider implements ProviderClient {
             model.type === "language" ||
             (this.config.kind === "anthropic" && model.type === "model")),
       )
-      .map((model: { id: string; name?: string; display_name?: string }) => ({
-        id: model.id,
-        name:
-          model.display_name ??
-          (typeof model.name === "string" ? model.name : model.id),
-      }));
+      .map((model) => {
+        const reportedContextWindow =
+          model.context_length ?? model.top_provider?.context_length;
+        const contextWindow =
+          openRouterCatalog &&
+          typeof reportedContextWindow === "number" &&
+          Number.isSafeInteger(reportedContextWindow) &&
+          reportedContextWindow > 0
+            ? reportedContextWindow
+            : undefined;
+        return {
+          id: model.id,
+          name:
+            model.display_name ??
+            (typeof model.name === "string" ? model.name : model.id),
+          ...(contextWindow === undefined ? {} : { contextWindow }),
+        };
+      });
   }
   async complete(
     model: string,
@@ -294,10 +361,25 @@ export class CompatibleProvider implements ProviderClient {
     tools: readonly unknown[],
     signal: AbortSignal,
     onDelta?: (text: string) => void | Promise<void>,
+    onReasoning?: (text: string) => void | Promise<void>,
   ): Promise<ModelReply> {
     if (this.config.kind === "anthropic")
-      return this.anthropic.complete(model, messages, tools, signal, onDelta);
-    return this.completions.complete(model, messages, tools, signal, onDelta);
+      return this.anthropic.complete(
+        model,
+        messages,
+        tools,
+        signal,
+        onDelta,
+        onReasoning,
+      );
+    return this.completions.complete(
+      model,
+      messages,
+      tools,
+      signal,
+      onDelta,
+      onReasoning,
+    );
   }
   redact(text: string): string {
     return this.config.apiKey
@@ -308,6 +390,7 @@ export class CompatibleProvider implements ProviderClient {
     response: Response,
     signal: AbortSignal,
     onDelta?: (text: string) => void | Promise<void>,
+    onReasoning?: (text: string) => void | Promise<void>,
   ): Promise<ModelReply> {
     if (!response.body) throw new Error("Provider returned an empty stream.");
     const reader = response.body.getReader(),
@@ -315,18 +398,31 @@ export class CompatibleProvider implements ProviderClient {
     let pending = "",
       content = "",
       terminal = false,
-      finish = false,
-      emission = "";
-    const emit = async (text: string, flush = false) => {
-      emission = this.redact(emission + text);
-      let hold = 0;
-      if (!flush)
-        for (let i = 1; i < this.config.apiKey.length; i++)
-          if (emission.endsWith(this.config.apiKey.slice(0, i))) hold = i;
-      const visible = emission.slice(0, emission.length - hold);
-      emission = hold ? emission.slice(-hold) : "";
-      if (visible) await onDelta?.(visible);
+      finish = false;
+    /**
+     * One redacting emitter per channel. Answer text and reasoning each hold
+     * back a trailing fragment that could be the start of the API key, so a
+     * secret split across two deltas is redacted rather than printed in
+     * halves. Separate buffers keep one channel's held fragment from leaking
+     * into the other.
+     */
+    const createEmitter = (
+      sink: ((text: string) => void | Promise<void>) | undefined,
+    ) => {
+      let emission = "";
+      return async (text: string, flush = false) => {
+        emission = this.redact(emission + text);
+        let hold = 0;
+        if (!flush)
+          for (let i = 1; i < this.config.apiKey.length; i++)
+            if (emission.endsWith(this.config.apiKey.slice(0, i))) hold = i;
+        const visible = emission.slice(0, emission.length - hold);
+        emission = hold ? emission.slice(-hold) : "";
+        if (visible) await sink?.(visible);
+      };
     };
+    const emit = createEmitter(onDelta);
+    const emitReasoning = createEmitter(onReasoning);
     const appendContent = async (text: string) => {
       content += text;
       if (content.length > 2_000_000)
@@ -361,21 +457,40 @@ export class CompatibleProvider implements ProviderClient {
         (item: { index?: number }) => (item.index ?? 0) === 0,
       );
       if (!choice) return;
-      if (finish) throw new Error("Provider returned data after completion.");
+      if (finish) {
+        if (isRepeatedUsageAccountingFrame(chunk, finishReason)) return;
+        throw new Error("Provider returned data after completion.");
+      }
       const chunkFinishReason = choice.finish_reason;
-      if (chunkFinishReason === "length" || chunkFinishReason === "content_filter")
-        throw new Error(chunkFinishReason === "content_filter" ? "Provider response was blocked by the content filter; no answer or tools were returned." : "Provider response was truncated. No tools were executed.");
+      if (
+        chunkFinishReason === "length" ||
+        chunkFinishReason === "content_filter"
+      )
+        throw new Error(
+          chunkFinishReason === "content_filter"
+            ? "Provider response was blocked by the content filter; no answer or tools were returned."
+            : "Provider response was truncated. No tools were executed.",
+        );
       if (chunkFinishReason !== undefined && chunkFinishReason !== null) {
         if (
           chunkFinishReason !== "stop" &&
           chunkFinishReason !== "tool_calls" &&
           chunkFinishReason !== "function_call"
-        ) throw new Error("Provider returned an invalid completion status.");
+        )
+          throw new Error("Provider returned an invalid completion status.");
         finish = true;
         finishReason = chunkFinishReason;
       }
       const delta = choice.delta;
       if (!delta) return;
+      // Provider-native reasoning rides the same delta object as the answer
+      // but is a separate channel: it never enters `content`, never becomes a
+      // tool call and never satisfies the no-answer check below. A delta
+      // without a reasoning channel simply never calls `onReasoning`.
+      if (typeof delta.reasoning_content === "string")
+        await emitReasoning(delta.reasoning_content);
+      if (typeof delta.reasoning === "string")
+        await emitReasoning(delta.reasoning);
       if (typeof delta.content === "string") await appendContent(delta.content);
       if (typeof delta.refusal === "string") await appendContent(delta.refusal);
       const functionDelta = delta.function_call;
@@ -383,12 +498,17 @@ export class CompatibleProvider implements ProviderClient {
         if (
           typeof functionDelta !== "object" ||
           Array.isArray(functionDelta) ||
-          (functionDelta.name !== undefined && typeof functionDelta.name !== "string") ||
-          (functionDelta.arguments !== undefined && typeof functionDelta.arguments !== "string") ||
+          (functionDelta.name !== undefined &&
+            typeof functionDelta.name !== "string") ||
+          (functionDelta.arguments !== undefined &&
+            typeof functionDelta.arguments !== "string") ||
           (calls.size > 0 && !legacyFunctionCall)
-        ) throw new Error("Provider returned invalid tool stream data.");
+        )
+          throw new Error("Provider returned invalid tool stream data.");
         const previous = calls.get(0);
-        const args = (previous?.function.arguments ?? "") + (functionDelta.arguments ?? "");
+        const args =
+          (previous?.function.arguments ?? "") +
+          (functionDelta.arguments ?? "");
         if (args.length > 1_000_000)
           throw new Error("Provider returned invalid tool stream data.");
         calls.set(0, {
@@ -402,15 +522,9 @@ export class CompatibleProvider implements ProviderClient {
         legacyFunctionCall = true;
       }
       for (const part of delta.tool_calls ?? []) {
-        if (legacyFunctionCall) throw new Error("Provider returned invalid tool stream data.");
-        // Match the maximum tool-call batch the settings table permits so a
-        // raised `maxToolCallsPerTurn` reaches the workbench governance check
-        // instead of failing here as a malformed stream at slot 32.
-        if (
-          !Number.isInteger(part.index) ||
-          part.index < 0 ||
-          part.index >= HARNESS_SETTINGS.maxToolCallsPerTurn.max
-        )
+        if (legacyFunctionCall)
+          throw new Error("Provider returned invalid tool stream data.");
+        if (!Number.isInteger(part.index) || part.index < 0 || part.index > 31)
           throw new Error("Provider returned invalid tool stream index.");
         const previous = calls.get(part.index);
         const id = part.id ?? previous?.id ?? "";
@@ -484,6 +598,7 @@ export class CompatibleProvider implements ProviderClient {
         });
       if (!content.trim() && !toolCalls.length)
         throw new Error("Provider returned no answer. Retry the response.");
+      await emitReasoning("", true);
       await emit("", true);
       return {
         message: {
@@ -498,16 +613,15 @@ export class CompatibleProvider implements ProviderClient {
       reader.releaseLock();
     }
   }
-  private async response(path: string, body?: unknown, signal?: AbortSignal, accept?: string) {
+  private async response(
+    path: string,
+    body?: unknown,
+    signal?: AbortSignal,
+    accept?: string,
+  ) {
     let response: Response;
     try {
-      const requestUrl =
-        this.config.kind === "anthropic" &&
-        this.config.providerId === "kimi-coding" &&
-        !this.base.pathname.replace(/\/$/, "").endsWith("/v1")
-          ? new URL(`v1/${path}`, this.base)
-          : new URL(path, this.base);
-      response = await this.request(requestUrl, {
+      response = await this.request(new URL(path, this.base), {
         method: body === undefined ? "GET" : "POST",
         headers: {
           ...(this.config.kind === "anthropic"
@@ -524,10 +638,7 @@ export class CompatibleProvider implements ProviderClient {
         ...(body === undefined ? {} : { body: JSON.stringify(body) }),
         redirect: "error",
         signal: signal
-          ? AbortSignal.any([
-              signal,
-              AbortSignal.timeout(this.resolveSettings().providerRequestTimeoutMs),
-            ])
+          ? AbortSignal.any([signal, AbortSignal.timeout(60000)])
           : AbortSignal.timeout(15000),
       });
     } catch (error) {
@@ -560,18 +671,9 @@ export class CompatibleProvider implements ProviderClient {
             code = error.error.type;
         } catch {}
       }
-      const rawRetry = response.headers.get("retry-after");
-      const retryAfter = rawRetry
-        ? /^\d+$/.test(rawRetry)
-          ? Number(rawRetry)
-          : Math.max(0, Math.ceil((Date.parse(rawRetry) - Date.now()) / 1000))
-        : undefined;
+      const retryAfter = parseRetryAfter(response.headers.get("retry-after"));
       await response.body?.cancel().catch(() => {});
-      throw new ProviderRequestError(
-        response.status,
-        code,
-        Number.isFinite(retryAfter) ? retryAfter : undefined,
-      );
+      throw new ProviderRequestError(response.status, code, retryAfter);
     }
     return response;
   }

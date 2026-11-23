@@ -1,4 +1,3 @@
-
 import test from "node:test";
 import assert from "node:assert/strict";
 import { mkdtemp, rm } from "node:fs/promises";
@@ -7,22 +6,6 @@ import { join } from "node:path";
 import { Workbench } from "../../../workbench/src/index.ts";
 import type { JsonlEntry } from "../../../ledger/src/store.ts";
 import { WorkspaceTui } from "./workspace.ts";
-import { bindingsFor } from "./cheatsheet.ts";
-
-test("help exposes activity detail cycling only while a run is active", () => {
-  const idle = bindingsFor({ editing: false, running: false, reviewing: false });
-  const running = bindingsFor({ editing: false, running: true, reviewing: false });
-  assert.ok(!idle.some((binding) => binding.keys === "Ctrl+O"));
-  assert.ok(
-    running.some(
-      (binding) =>
-        binding.keys === "Ctrl+O" &&
-        binding.action === "cycle agent activity detail" &&
-        binding.when === "running",
-    ),
-  );
-});
-
 
 /**
  * The ledger tab's learning rows: what identifies them, and what they say

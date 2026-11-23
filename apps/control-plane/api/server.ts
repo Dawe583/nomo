@@ -371,9 +371,7 @@ export function createControlPlaneServer(
     const parsedRequestUrl = parseRequestUrl(request);
     const localOnlyRequest = parsedRequestUrl !== null && (
       isProjectWorkspaceRoutePath(parsedRequestUrl.pathname) ||
-      SESSION_IMAGE_ROUTE.test(parsedRequestUrl.pathname) ||
-      parsedRequestUrl.pathname === "/api/provider/openai-chatgpt" ||
-      parsedRequestUrl.pathname.startsWith("/api/provider/openai-chatgpt/")
+      SESSION_IMAGE_ROUTE.test(parsedRequestUrl.pathname)
     );
     if (
       localOnlyRequest
@@ -1108,7 +1106,7 @@ async function route(
       });
     }
     const harnessDecision =
-      /^\/api\/sessions\/([a-f0-9-]+)\/harness\/proposals\/([a-f0-9]{64})\/(approve|reject|rollback|promote)$/.exec(
+      /^\/api\/sessions\/([a-f0-9-]+)\/harness\/proposals\/([a-f0-9]{64})\/(approve|reject|rollback)$/.exec(
         parsed.pathname,
       );
     if (harnessDecision) {
@@ -1125,10 +1123,6 @@ async function route(
       // back from the surface they decided on is not reversible.
       if (action === "rollback")
         return sendJson(response, 200, await wb.rollbackHarnessProposal(id, digest));
-      // Carrying an activation into every conversation is its own decision,
-      // taken on the same surface as the approval it builds on.
-      if (action === "promote")
-        return sendJson(response, 200, await wb.promoteHarnessProposal(id, digest));
       const body = await readJsonBody(request).catch(() => ({})) as {
         reason?: unknown;
       };
@@ -1140,23 +1134,6 @@ async function route(
         typeof body.reason === "string" ? body.reason : "",
       );
       return sendJson(response, 200, { rejected: true, digest });
-    }
-    // The operator scope belongs to no conversation, so it has its own path:
-    // what every conversation reads, and the demotion that ends a promotion.
-    if (parsed.pathname === "/api/harness/promotions") {
-      if (request.method !== "GET")
-        return sendJson(response, 405, { error: "method_not_allowed" });
-      return sendJson(response, 200, {
-        promotions: await wb.operatorHarnessPromotions(),
-        entries: await wb.operatorHarnessEntries(),
-      });
-    }
-    const harnessDemotion =
-      /^\/api\/harness\/promotions\/([a-f0-9]{64})\/demote$/.exec(parsed.pathname);
-    if (harnessDemotion) {
-      if (request.method !== "POST")
-        return sendJson(response, 405, { error: "method_not_allowed" });
-      return sendJson(response, 200, await wb.demoteHarnessPromotion(harnessDemotion[1]!));
     }
     const feature =
       /^\/api\/sessions\/([a-f0-9-]+)\/(events|stream|documents|branches|compact)$/.exec(
@@ -1245,99 +1222,6 @@ async function route(
     return sendRequestError(response, error, 409, {
       message: error instanceof Error ? error.message : "Request failed.",
     });
-  }
-  const chatGPTAccountsPath = "/api/provider/openai-chatgpt";
-  if (parsed.pathname === chatGPTAccountsPath) {
-    if (request.method !== "GET")
-      return sendJson(response, 405, { error: "method_not_allowed" });
-    return sendJson(response, 200, { accounts: options.workbench.openAIChatGPTAccounts() });
-  }
-  if (parsed.pathname === `${chatGPTAccountsPath}/auth`) {
-    if (request.method !== "POST")
-      return sendJson(response, 405, { error: "method_not_allowed" });
-    try {
-      const body = await readJsonBody(request);
-      if (!jsonObject(body) || Object.keys(body).some(key => !["accountId", "enablePlanUsage"].includes(key)) ||
-        (body.accountId !== undefined && !nonEmptyString(body.accountId)) ||
-        (body.enablePlanUsage !== undefined && typeof body.enablePlanUsage !== "boolean"))
-        return sendJson(response, 400, { error: "invalid_openai_chatgpt_auth" });
-      const attempt = await options.workbench.beginOpenAIChatGPTSignIn({
-        ...(typeof body.accountId === "string" ? { accountId: body.accountId } : {}),
-        ...(typeof body.enablePlanUsage === "boolean" ? { enablePlanUsage: body.enablePlanUsage } : {}),
-      });
-      return sendJson(response, 201, attempt);
-    } catch (error) {
-      return sendRequestError(response, error, 400, {
-        error: "openai_chatgpt_auth_unavailable",
-        message: error instanceof Error ? error.message : "OpenAI sign-in could not start.",
-      });
-    }
-  }
-  const chatGPTAttemptPrefix = `${chatGPTAccountsPath}/auth/`;
-  const chatGPTAttemptId = parsed.pathname.startsWith(chatGPTAttemptPrefix)
-    ? parsed.pathname.slice(chatGPTAttemptPrefix.length)
-    : "";
-  if (chatGPTAttemptId) {
-    if (request.method !== "GET")
-      return sendJson(response, 405, { error: "method_not_allowed" });
-    if (!/^[a-f0-9-]{36}$/.test(chatGPTAttemptId))
-      return sendJson(response, 404, { error: "openai_chatgpt_attempt_not_found" });
-    const attempt = await options.workbench.openAIChatGPTAuthAttempt(chatGPTAttemptId);
-    return attempt
-      ? sendJson(response, 200, attempt)
-      : sendJson(response, 404, { error: "openai_chatgpt_attempt_not_found" });
-  }
-  if (parsed.pathname === `${chatGPTAccountsPath}/models`) {
-    if (request.method !== "GET")
-      return sendJson(response, 405, { error: "method_not_allowed" });
-    const accountIds = parsed.searchParams.getAll("accountId");
-    if (accountIds.length !== 1 || !nonEmptyString(accountIds[0]) ||
-      [...parsed.searchParams.keys()].some(key => key !== "accountId"))
-      return sendJson(response, 400, { error: "invalid_openai_chatgpt_model_query" });
-    try {
-      const models = await options.workbench.openAIChatGPTModels(accountIds[0]!);
-      return sendJson(response, 200, { models });
-    } catch (error) {
-      return sendRequestError(response, error, 400, {
-        error: "openai_chatgpt_models_unavailable",
-        message: error instanceof Error ? error.message : "OpenAI models unavailable.",
-      });
-    }
-  }
-  if (parsed.pathname === `${chatGPTAccountsPath}/select`) {
-    if (request.method !== "POST")
-      return sendJson(response, 405, { error: "method_not_allowed" });
-    try {
-      const body = await readJsonBody(request);
-      if (!jsonObject(body) || Object.keys(body).some(key => !["accountId", "model"].includes(key)) ||
-        !nonEmptyString(body.accountId) || !nonEmptyString(body.model))
-        return sendJson(response, 400, { error: "invalid_openai_chatgpt_selection" });
-      const models = await options.workbench.connectOpenAIChatGPTAccount(body.accountId, body.model);
-      return sendJson(response, 200, { connected: true, models });
-    } catch (error) {
-      return sendRequestError(response, error, 400, {
-        error: "openai_chatgpt_selection_unavailable",
-        message: error instanceof Error ? error.message : "OpenAI account could not be selected.",
-      });
-    }
-  }
-  const chatGPTAccountPrefix = `${chatGPTAccountsPath}/accounts/`;
-  const chatGPTAccountId = parsed.pathname.startsWith(chatGPTAccountPrefix)
-    ? parsed.pathname.slice(chatGPTAccountPrefix.length)
-    : "";
-  if (chatGPTAccountId) {
-    if (request.method !== "DELETE")
-      return sendJson(response, 405, { error: "method_not_allowed" });
-    if (!/^[a-f0-9-]{36}$/.test(chatGPTAccountId))
-      return sendJson(response, 404, { error: "openai_chatgpt_account_not_found" });
-    try {
-      return sendJson(response, 200, await options.workbench.disconnectOpenAIChatGPTAccount(chatGPTAccountId));
-    } catch (error) {
-      return sendRequestError(response, error, 400, {
-        error: "openai_chatgpt_disconnect_unavailable",
-        message: error instanceof Error ? error.message : "OpenAI account could not be disconnected.",
-      });
-    }
   }
   if (parsed.pathname === "/api/provider/model-capabilities") {
     if (request.method !== "GET")
@@ -1693,81 +1577,6 @@ async function route(
     response.statusCode = 200;
     response.end(image.bytes);
     return;
-  }
-  // HP9: the operator's schedule table. Every route here is an operator door:
-  // no model tool reaches it, and `run-due` is the one route that starts work,
-  // through the same governed path a person's run uses.
-  if (parsed.pathname === "/api/schedules") {
-    if (request.method === "GET")
-      return sendJson(response, 200, { schedules: wb.listSchedules() });
-    if (request.method === "POST") {
-      try {
-        return sendJson(response, 201, {
-          schedule: wb.createSchedule(await readJsonBody(request)),
-        });
-      } catch (error) {
-        return sendRequestError(response, error, 400, {
-          error: "schedule_request_refused",
-          message:
-            error instanceof Error ? error.message : "Schedule request refused.",
-        });
-      }
-    }
-  }
-  if (request.method === "POST" && parsed.pathname === "/api/schedules/run-due") {
-    try {
-      return sendJson(response, 200, { results: await wb.runDueSchedules() });
-    } catch (error) {
-      return sendRequestError(response, error, 400, {
-        error: "schedule_run_refused",
-        message: error instanceof Error ? error.message : "Schedule run refused.",
-      });
-    }
-  }
-  const scheduleActionMatch =
-    /^\/api\/schedules\/([a-f0-9-]+)(?:\/(pause|resume))?$/.exec(parsed.pathname);
-  if (scheduleActionMatch) {
-    const id = scheduleActionMatch[1]!;
-    const action = scheduleActionMatch[2];
-    if (!wb.listSchedules().some((schedule) => schedule.id === id))
-      return sendJson(response, 404, { error: "schedule_not_found" });
-    try {
-      if (request.method === "DELETE" && action === undefined)
-        return sendJson(response, 200, { deleted: wb.deleteSchedule(id) });
-      if (request.method === "POST" && action === "pause")
-        return sendJson(response, 200, { schedule: wb.pauseSchedule(id) });
-      if (request.method === "POST" && action === "resume")
-        return sendJson(response, 200, { schedule: wb.resumeSchedule(id) });
-    } catch (error) {
-      // A resume of finished work is a conflict with the record's own state,
-      // not a malformed request, so it answers 409 rather than 400.
-      return sendRequestError(response, error, 409, {
-        error: "schedule_request_refused",
-        message:
-          error instanceof Error ? error.message : "Schedule request refused.",
-      });
-    }
-  }
-  const goalMatch = /^\/api\/sessions\/([a-f0-9-]+)\/goal$/.exec(parsed.pathname);
-  if (goalMatch) {
-    const id = goalMatch[1]!;
-    if (!wb.get(id))
-      return sendJson(response, 404, { message: "Session not found." });
-    try {
-      if (request.method === "GET")
-        return sendJson(response, 200, { goal: wb.getGoal(id) });
-      if (request.method === "POST")
-        return sendJson(response, 201, {
-          goal: await wb.startGoal(id, await readJsonBody(request)),
-        });
-      if (request.method === "DELETE")
-        return sendJson(response, 200, { goal: wb.cancelGoal(id) });
-    } catch (error) {
-      return sendRequestError(response, error, 400, {
-        error: "goal_request_refused",
-        message: error instanceof Error ? error.message : "Goal request refused.",
-      });
-    }
   }
   const sessionMatch = /^\/api\/sessions\/([a-f0-9-]+)$/.exec(parsed.pathname);
   if (sessionMatch) {
@@ -2380,7 +2189,6 @@ async function handleProjectWorkspaceRoute(
           fileCount: summary.workspace.fileCount,
           totalBytes: summary.workspace.totalBytes,
         },
-        context: summary.context,
       });
     }
     if (pathname === "/api/project-workspace/diff") {

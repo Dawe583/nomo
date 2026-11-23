@@ -29,6 +29,7 @@ export type OpenAICompletionsDependencies = {
     response: Response,
     signal: AbortSignal,
     onDelta?: (text: string) => void | Promise<void>,
+    onReasoning?: (text: string) => void | Promise<void>,
   ) => Promise<ModelReply>;
 };
 
@@ -45,6 +46,7 @@ export class OpenAICompletionsAdapter {
     tools: readonly unknown[],
     signal: AbortSignal,
     onDelta?: (text: string) => void | Promise<void>,
+    onReasoning?: (text: string) => void | Promise<void>,
   ): Promise<ModelReply> {
     const settings = this.dependencies.resolveSettings();
     const body = {
@@ -84,7 +86,12 @@ export class OpenAICompletionsAdapter {
       }
     }
     if (response.headers.get("content-type")?.includes("text/event-stream")) {
-      return this.dependencies.streamReply(response, signal, onDelta);
+      // The stream reader is injected: it owns frame parsing, so it is also
+      // where `choices[].delta.reasoning_content` / `reasoning` is separated
+      // from answer text. A reader without that channel simply never calls
+      // `onReasoning`, and the caller sees no reasoning rather than invented
+      // reasoning.
+      return this.dependencies.streamReply(response, signal, onDelta, onReasoning);
     }
     const decoded = await this.dependencies.decode(response, signal);
     const choice = decoded.choices?.[0];

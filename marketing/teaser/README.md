@@ -8,7 +8,7 @@ Delivery verified: 450 frames decoded without errors; video and audio are both e
 
 ## Creative treatment
 
-The palette comes from the NOMO web client: charcoal `#12100a`, paper `#f6f0e3`, and orange `#e8702c`. Instrument Serif and JetBrains Mono are the same fonts used on the site. The extruded aperture logo follows `apps/control-plane/ui/src/brand.tsx`.
+The palette comes from the NOMO web client: charcoal `#12100a`, paper `#f6f0e3`, and orange `#e8702c`. Instrument Serif and JetBrains Mono are the same fonts used on the site. The beveled 3D grid logo follows the supplied six-by-six mark in `apps/control-plane/ui/src/brand.tsx`.
 
 The film combines an original 3D data canyon, hard camera cuts, reverse travel, luminance-driven ASCII, scanlines, horizontal displacement, precision-machined logo details and an assembling logo reveal. The original synthesized industrial score includes timed impacts, bass, percussion, risers and a final logo sting.
 

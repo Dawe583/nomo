@@ -8,13 +8,9 @@ import {
   getSymbols,
   NOMO_PALETTE,
 } from "./theme.ts";
-import {
-  DEFAULT_WORKSPACE_KEYBINDINGS,
-  type WorkspaceKeybindings,
-} from "./workspace-keybindings.ts";
 
 export type ShortcutCategory =
-  "nav" | "edit" | "action" | "mode" | "panel" | "approval";
+  "nav" | "edit" | "action" | "mode" | "panel" | "approval" | "model";
 
 export interface ShortcutHint {
   readonly icon: string;
@@ -23,15 +19,18 @@ export interface ShortcutHint {
   readonly category: ShortcutCategory;
 }
 
-// The frozen legend context. Only these four facts change which shortcuts
-// are shown: the composer state, the review state, the run state and the
-// approval count. Mode and tab tint the frame elsewhere, so they stay out
-// of this interface and the hint catalog needs no other inputs.
+// The shortcut legend depends on the focused composer, current panel, review
+// or overlay ownership, active run and pending approval count. Panels are
+// opened from Chat and use Escape or Tab to return to the conversation.
 export interface ShortcutLegendContext {
   readonly editing: boolean;
   readonly confirming: boolean;
   readonly running: boolean;
   readonly pending: number;
+  readonly retryable?: boolean;
+  readonly backable?: boolean;
+  readonly tab?: string;
+  readonly suspendSupported?: boolean;
 }
 
 export interface ShortcutLegendOptions {
@@ -54,6 +53,7 @@ export const SHORTCUT_ICONS: Record<ShortcutCategory, string> = {
   mode: "⎇",
   panel: "⊞",
   approval: "!",
+  model: "◐",
 };
 
 // Plain ascii twins for the ascii symbol preset, where even the tab icons
@@ -65,6 +65,7 @@ export const ASCII_SHORTCUT_ICONS: Record<ShortcutCategory, string> = {
   mode: "M",
   panel: "#",
   approval: "!",
+  model: "M",
 };
 
 // The bar is exactly one row. The workspace frame subtracts the legend from
@@ -72,6 +73,7 @@ export const ASCII_SHORTCUT_ICONS: Record<ShortcutCategory, string> = {
 // the body a different height at every width, which the parity tests pin as
 // a frame of exactly height rows. One row with truncation keeps the frame the
 // same shape everywhere; every hint is still listed by /keybindings.
+const MAX_LEGEND_LINES = 1;
 
 export function categoryTone(category: ShortcutCategory): Tone {
   switch (category) {
@@ -87,6 +89,8 @@ export function categoryTone(category: ShortcutCategory): Tone {
       return "muted";
     case "approval":
       return "error";
+    case "model":
+      return "accent";
   }
 }
 
@@ -106,22 +110,6 @@ function resolvePalette(theme: ColorTheme | undefined): ColorPalette {
   return theme ? getPalette(theme) : NOMO_PALETTE;
 }
 
-let workspaceKeybindings: WorkspaceKeybindings = DEFAULT_WORKSPACE_KEYBINDINGS;
-
-/** Render a workspace legend with its runner's bindings without leaking state. */
-export function withShortcutLegendBindings<T>(
-  bindings: WorkspaceKeybindings,
-  render: () => T,
-): T {
-  const previous = workspaceKeybindings;
-  workspaceKeybindings = bindings;
-  try {
-    return render();
-  } finally {
-    workspaceKeybindings = previous;
-  }
-}
-
 export function shortcutHintsFor(
   context: ShortcutLegendContext,
 ): ShortcutHint[] {
@@ -133,25 +121,70 @@ export function shortcutHintsFor(
   ): void => {
     hints.push({ icon: SHORTCUT_ICONS[category], key, label, category });
   };
-  // Keep the help trigger first so the one-row legend preserves its
-  // discovery path even when later contextual hints are truncated.
-  push("?", "cheat", "panel");
-  if (context.editing) push("Tab", "complete; else panels", "nav");
-  else push("Tab", "panels", "nav");
-  push("Enter", "open/details", "nav");
+  // Tab is a completion/focus key in Chat and a return-to-Chat key in panels.
+  // It never cycles screens, so the legend must not imply that it does.
+  push(
+    "Tab",
+    context.tab !== undefined && context.tab !== "chat"
+      ? "return Chat"
+      : context.editing
+        ? "complete"
+        : "focus composer",
+    "nav",
+  );
+  if (context.editing && context.tab === "chat") push("Enter", "send", "edit");
+  else if (context.editing) push("Enter", "run command", "action");
+  else if (context.tab === "sessions") push("Enter", "open chat", "nav");
+  else if (context.tab === "documents") push("Enter", "preview", "nav");
+  else if (context.tab === "models") push("Enter", "set future model", "model");
+  else if (context.tab === "approvals") push("Enter", "inspect", "nav");
+  else push("Enter", "open/details", "nav");
+  if (context.tab !== undefined && !context.editing) {
+    if (context.tab !== "chat") {
+      push("Type", "filter", "edit");
+      push("Up/Down", "select", "nav");
+      push("Home/End", "bounds", "nav");
+      push("PgUp/PgDn", "page", "panel");
+      push("Ctrl+P/N", "select", "nav");
+    }
+  }
+  if (context.editing) push("Ctrl+P", "commands", "action");
+  if (context.tab !== undefined) {
+    push("Alt+M", "choose model", "model");
+  }
+  push("Alt+L", "redraw view", "action");
+  push("Ctrl+O", "cycle agent activity details during a run", "panel");
+  if (context.editing) push("Ctrl+T", "transpose", "edit");
+  else push("Ctrl+T", "todos", "panel");
+  if (context.retryable) push("F5 / Alt+R", "retry", "action");
   // One Esc key, one current meaning. Listing Esc back next to Esc stop
   // would show the same key twice with conflicting labels, so the label
-  // follows the state that owns Esc right now: review, then run, then back.
+  // follows the state that owns Esc right now: review, detail/filter, panel,
+  // run, then the underlying Chat view.
   if (context.confirming) push("Esc", "cancel", "approval");
+  else if (context.backable) push("Esc", "close", "nav");
+  else if (context.tab !== undefined && context.tab !== "chat")
+    push("Esc", "return Chat", "nav");
   else if (context.running) push("Esc", "stop", "action");
   else push("Esc", "back", "nav");
-  if (!context.confirming && context.editing) {
+  if (context.editing) {
     push("Shift+Enter", "newline", "edit");
-    push(workspaceKeybindings["search-history"].label, "search", "edit");
+    push("Alt+D / Alt+Delete", "delete next word", "edit");
+    push(
+      "Alt+Backspace / Ctrl+Backspace / Ctrl+W",
+      "delete previous word",
+      "edit",
+    );
+    push("Ctrl+K", "delete to end of prompt", "edit");
+    push("Ctrl+U", "delete to start of prompt", "edit");
+    push("Ctrl+R", "search", "edit");
+    push("Ctrl+] / Ctrl+Alt+]", "jump to character", "edit");
     push("Ctrl+J", "newline", "edit");
     push("/", "commands", "edit");
-  } else if (!context.confirming) {
-    push(workspaceKeybindings["show-todos"].label, "todos", "edit");
+  }
+  if (context.editing && context.tab === "chat") {
+    push("Alt+Shift+C", "copy prompt", "edit");
+    push("Alt+Shift+P", "plan mode", "mode");
   }
   if (context.confirming) {
     push("y", "accept", "approval");
@@ -159,14 +192,9 @@ export function shortcutHintsFor(
     push("PgUp/PgDn", "scroll", "panel");
     push("1-9", "toggle hunks", "panel");
   }
-  if (!context.confirming && context.running) {
-    push(
-      workspaceKeybindings["cycle-activity"].label,
-      "activity detail",
-      "panel",
-    );
-    push("/queue", "prompt", "action");
-  }
+  if (context.running) push("/queue", "prompt", "action");
+  if (context.running && context.editing && context.tab === "chat")
+    push("Ctrl+Q / Ctrl+Enter", "queue follow-up", "action");
   // The count itself never enters a label: the status bar owns the number,
   // and a stale count baked into a hint reads as authority after it changes.
   if (context.pending > 0) {
@@ -174,7 +202,14 @@ export function shortcutHintsFor(
     push("d", "deny", "approval");
   }
   push("Shift+Tab", "cycle mode", "mode");
+  push("Alt+A", "agents", "panel");
+  if (context.suspendSupported !== false)
+    push("Ctrl+Z", "suspend to shell", "action");
   push("u", "undo", "action");
+  // The label says cheat, not keys, because that is what the key does: it
+  // opens a filterable sheet over the current view, not a page listing every
+  // binding. The legend has to describe the press, not the intent behind it.
+  push("?", "cheat", "panel");
   return hints;
 }
 
@@ -187,37 +222,37 @@ export function renderShortcutLegend(
   const icons = resolveIcons(options.symbolPreset);
   const palette = resolvePalette(options.colorTheme);
   const caps = options.caps;
+  const lines: string[] = [];
   let current = "";
-  let currentCompact = "";
-  for (const [index, hint] of shortcutHintsFor(context).entries()) {
+  for (const hint of shortcutHintsFor(context)) {
     const icon = sanitizeText(icons[hint.category]);
     const key = sanitizeText(hint.key);
     const label = sanitizeText(hint.label);
     const tone = categoryTone(hint.category);
+    // Icon plus key carry the category tone, the description stays muted.
+    // Colour is redundant information: icon shape plus words keep every
+    // state legible with NOMO_TUI_COLOR=0.
     const paint = options.paint ?? ((text: string) => text);
-    const chip = (includeIcon: boolean): string => {
-      const shortcut = includeIcon ? `${icon} ${key}` : key;
-      return `${paint(shortcut, tone, true)} ${paint(label, "muted")}`;
-    };
-    const renderedChip = chip(true);
-    const compactChip = chip(false);
-    const separator = current === "" ? "" : "  ";
-    const next = `${current}${separator}${renderedChip}`;
-    const compactNext = `${currentCompact}${separator}${compactChip}`;
-    if (visibleLength(next) <= width) {
-      current = next;
-      currentCompact = compactNext;
-    } else if (index < 3 && visibleLength(compactNext) <= width) {
-      // Compact only to keep the essential help, Tab and Enter labels.
-      // Optional hints must not change how the discovery controls look.
-      current = compactNext;
-      currentCompact = compactNext;
+    const chip =
+      `${paint(`${icon} ${key}`, tone, true)} ` + `${paint(label, "muted")}`;
+    const next = current === "" ? chip : `${current}  ${chip}`;
+    // visibleLength sees through the ANSI paint, so the measure is cells on
+    // screen rather than bytes in the string.
+    if (current !== "" && visibleLength(next) > width) {
+      lines.push(current);
+      current = chip;
     } else {
-      if (!current) current = compactChip;
-      break;
+      current = next;
     }
   }
-  return [pad(fit(current, width), width)];
+  if (current !== "") lines.push(current);
+  if (lines.length === 0) return [pad("", width)];
+  // Dropped hints stay listed under ? keys. fit() is the backstop for a
+  // single chip wider than the whole bar; pad() keeps each row aligned to the
+  // terminal width without painting a background over the user's terminal.
+  return lines
+    .slice(0, MAX_LEGEND_LINES)
+    .map((line) => pad(fit(line, width), width));
 }
 
 export function renderShortcutKey(

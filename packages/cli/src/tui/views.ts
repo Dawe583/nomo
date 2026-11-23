@@ -8,30 +8,31 @@ import type {
 
 export function renderHelp(capabilities: TerminalCapabilities): string {
   const width = Math.min(78, capabilities.columns);
-  const shortHint = "q quits UI, not proxy";
-  const longHint = "? close; q leave watch mode, never stop the proxy";
-  const hint = longHint.length <= width - 2 ? longHint : shortHint;
-  const help = box(
-    "NOMO / KEYS",
-    [
-      hint,
-      "Navigation",
-      "  j / k       move through intercepted calls",
-      "  enter       open the complete decision record",
-      "  f           filter by R0, R1, R2, R3 or all",
-      "",
-      "Actions",
-      "  v           verify ledger body, links and signatures",
-      "",
-      "Session",
-      "  p           pause display updates, never the proxy",
-    ],
-    width,
-  );
-  if (capabilities.rows <= 0) return "";
-  if (capabilities.rows === 1)
-    return fit(hint, capabilities.columns);
-  return crop(help, capabilities.columns, capabilities.rows).join("\n");
+  return crop(
+    box(
+      "NOMO / KEYS",
+      [
+        "Navigation",
+        "  j / k       move through intercepted calls",
+        "  enter       open the complete decision record",
+        "  f           filter by R0, R1, R2, R3 or all",
+        "",
+        "Actions",
+        "  a / c       approve once or cancel a pending hold",
+        "  r           preview replay, never execute immediately",
+        "  v           verify ledger body, links and signatures",
+        "  e           export the selected ledger slice",
+        "",
+        "Session",
+        "  p           pause display updates, never the proxy",
+        "  ?           close this help",
+        "  q           leave watch mode, never stop the proxy",
+      ],
+      width,
+    ),
+    capabilities.columns,
+    capabilities.rows,
+  ).join("\n");
 }
 
 export function renderReplayPreview(
@@ -49,7 +50,9 @@ export function renderReplayPreview(
   const blockers =
     plan.blocked.length === 0
       ? [paint("[+] no blocked steps", "r0", capabilities)]
-      : plan.blocked.map((item) => paint(`[x] ${sanitizeText(item)}`, "r3", capabilities));
+      : plan.blocked.map((item) =>
+          paint(`[x] ${sanitizeText(item)}`, "r3", capabilities),
+        );
   // The responsive contract says every output is cropped to the reported
   // width and height; a replay plan longer than the screen must lose its
   // middle rows, not paint past the bottom into DiffScreenWriter row

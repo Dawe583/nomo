@@ -52,14 +52,14 @@ const GROUP_BLURBS: Record<string, string> = {
 };
 
 // Deliberate absences, matching what the workspace already tells the
-// operator: background tasks, image paste, suspend and Vim editing have no
-// NOMO equivalent. Each sentence says what to do instead, so an operator
+// operator: background tasks, clipboard image paste and text paste, voice,
+// and Vim editing have no NOMO equivalent. Each sentence says what to do instead, so an operator
 // who expected the feature learns it is absent on purpose rather than
 // assuming it is broken.
 const ABSENT: readonly string[] = [
   "Background tasks have no equivalent here -- keep the session open while a run works instead of parking it in the background.",
-  "Image paste has no equivalent here -- save the image to a file and give the agent the path so it can read it.",
-  "Suspend (Ctrl+Z) has no equivalent here -- open a second terminal instead of suspending this one.",
+  "Clipboard paste has no shortcut beyond the operating system's normal terminal paste; clipboard image attachments are unsupported.",
+  "Live voice and speech input have no NOMO TUI backend here.",
   "Vim editing has no equivalent here -- press Ctrl+G for the configured editor, or type directly at the prompt.",
 ];
 
@@ -206,7 +206,7 @@ export function discoveryRows(
       : `${total} commands in ${groups.length} groups`;
   // One field per group: the inspector is the single column renderer, so
   // labels align without a second implementation. The count rides as a
-  // framed pill badge, legible without colour; the meter beside the blurb
+  // padded badge, legible without colour; the meter beside the blurb
   // shows the group's share as shape, never as the only signal.
   const fields: Field[] = groups.map((entry) => ({
     label: `${groupIcon(entry.group)} ${groupTitle(entry.group)}`,

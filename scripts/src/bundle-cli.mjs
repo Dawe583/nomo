@@ -23,10 +23,13 @@ import {
   writeFileSync,
 } from "node:fs";
 import { join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
 import { rollup } from "rollup";
 
-import { bundleOptions, bundleOutput } from "../../rollup.config.mjs";
+import {
+  BUNDLED_VERSION_PLACEHOLDER,
+  bundleOptions,
+  bundleOutput,
+} from "../../rollup.config.mjs";
 
 const USAGE = "usage: node scripts/src/bundle-cli.mjs [--out <dir>] [--quiet]";
 
@@ -70,9 +73,7 @@ export async function buildBundle({
   outDir = DEFAULT_OUT_DIR,
   quiet = false,
 } = {}) {
-  const base = resolve(
-    root ?? fileURLToPath(new URL("../..", import.meta.url)),
-  );
+  const base = resolve(root ?? new URL("../..", import.meta.url).pathname);
   const out = resolve(base, outDir);
 
   const bundle = await rollup(bundleOptions({ root: base }));
@@ -82,6 +83,16 @@ export async function buildBundle({
     if (chunks.length === 0) throw new Error("rollup emitted no chunks");
     const entryChunk = chunks.find((chunk) => chunk.isEntry);
     if (!entryChunk) throw new Error("rollup emitted no entry chunk");
+
+    // The artifact answers `--version` from a stamp, because `--out` need not
+    // have a manifest above it. An unreplaced placeholder would ship a version
+    // token, so the build stops before it writes anything.
+    for (const chunk of chunks) {
+      if (chunk.code.includes(BUNDLED_VERSION_PLACEHOLDER))
+        throw new Error(
+          `${chunk.fileName} still carries ${BUNDLED_VERSION_PLACEHOLDER}`,
+        );
+    }
 
     // Cleared first, so a chunk from an earlier build cannot survive into a
     // tarball as dead weight and then be imported by a chunk that no longer

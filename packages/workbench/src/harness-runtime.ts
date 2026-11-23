@@ -23,12 +23,6 @@ import {
 } from "./refine-gate.ts";
 import type { HarnessEntry } from "./learned-harness.ts";
 import {
-  formatEffectsForReview,
-  formatOutcomesForReview,
-  type MeasuredRefinementEffect,
-  type RefinementOutcome,
-} from "./refinement-outcomes.ts";
-import {
   REFINEMENT_INSTRUCTIONS,
   buildRefineRequest,
   extractJsonObject,
@@ -106,26 +100,6 @@ export type HarnessRuntimeDeps = {
    * `harness-conversation.ts`.
    */
   readonly conversationTail?: () => string;
-  /**
-   * What became of this workspace's earlier proposals, mined from the verified
-   * chain by `mineRefinementOutcomes`.
-   *
-   * Without it the reviewer cannot see that an operator already rejected or
-   * rolled back an idea, and proposes it again. Optional so a caller that
-   * passes nothing sends the request it always sent; index.ts always passes
-   * it. The outcomes go to the reviewer only, never to the agent's prompt.
-   */
-  readonly outcomes?: () => Promise<readonly RefinementOutcome[]>;
-  /**
-   * Measured before-and-after ratchet effects of this workspace's activated
-   * refinements, mined from the verified chain by `mineRefinementEffects`.
-   *
-   * Descriptive only (decision D1): shown to the reviewer inside the
-   * operator's existing prompt ceiling. Never changes decisions, policy,
-   * permissions or the agent's prompt, and never triggers a rollback. Optional
-   * so callers that omit it send the exact request they sent before.
-   */
-  readonly effects?: () => Promise<readonly MeasuredRefinementEffect[]>;
 };
 
 /**
@@ -286,33 +260,10 @@ export async function serviceHarnessBoundary(
     // The tail is charged to the operator's ceiling before the two halves
     // share what is left, because the ceiling governs the whole request and
     // not the evidence part of it.
-    const remaining =
+    const ceiling =
       deps.maxPromptCharacters === undefined
         ? undefined
-        : Math.max(0, deps.maxPromptCharacters - fixed - tail.length);
-    // The history of earlier proposals is charged to the same ceiling, ahead
-    // of the two halves and capped at a quarter of what is left: it is context
-    // for the question, and a long history must not crowd out the evidence the
-    // question is about.
-    const history = formatOutcomesForReview(
-      deps.outcomes ? await deps.outcomes() : [],
-      remaining === undefined ? Infinity : Math.max(0, Math.floor(remaining / 4) - 2),
-    );
-    const historyBlock = history ? `\n\n${history}` : "";
-    // Measured effects of activated refinements share the same ceiling with
-    // their own quarter-budget so neither return-path block crowds out the
-    // evidence or each other.
-    const effects = formatEffectsForReview(
-      deps.effects ? await deps.effects() : [],
-      remaining === undefined
-        ? Infinity
-        : Math.max(0, Math.min(Math.floor(remaining / 4), remaining - historyBlock.length) - 2),
-    );
-    const effectsBlock = effects ? `\n\n${effects}` : "";
-    const ceiling =
-      remaining === undefined
-        ? undefined
-        : Math.max(0, Math.floor((remaining - historyBlock.length - effectsBlock.length) / 2));
+        : Math.max(0, Math.floor((deps.maxPromptCharacters - fixed - tail.length) / 2));
     const evidence = buildRefineRequest({
       entries,
       rules,
@@ -329,8 +280,8 @@ export async function serviceHarnessBoundary(
     // makes K=1 literally today's call and the lenses independent samples of
     // one question rather than variations of it.
     const request = tail
-      ? `${REFINEMENT_INSTRUCTIONS}\n${VERDICT_PROTOCOL}\n\n${question}\n\n${evidence}${historyBlock}${effectsBlock}\n\n${CONVERSATION_BLOCK}\n${tail}`
-      : `${REFINEMENT_INSTRUCTIONS}\n${VERDICT_PROTOCOL}\n\n${question}\n\n${evidence}${historyBlock}${effectsBlock}`;
+      ? `${REFINEMENT_INSTRUCTIONS}\n${VERDICT_PROTOCOL}\n\n${question}\n\n${evidence}\n\n${CONVERSATION_BLOCK}\n${tail}`
+      : `${REFINEMENT_INSTRUCTIONS}\n${VERDICT_PROTOCOL}\n\n${question}\n\n${evidence}`;
     const lensCount = resolveLensCount(deps.reviewLensCount);
     if (lensCount === 1) return parseReviewVerdict(await deps.ask(request));
     const branchNow = deps.currentBranchVersion;

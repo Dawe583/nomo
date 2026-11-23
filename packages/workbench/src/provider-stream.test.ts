@@ -151,6 +151,29 @@ test("stream redacts a secret split across provider chunks", async () => {
   });
   assert.equal(output, "Result [redacted] end");
 });
+test("stream keeps reasoning off the answer channel and redacts it", async () => {
+  const text =
+    frame({ choices: [{ delta: { content: "Answer " } }] }) +
+    frame({ choices: [{ delta: { reasoning_content: "checking fixture-" } }] }) +
+    frame({ choices: [{ delta: { reasoning: "secret now" } }] }) +
+    frame({ choices: [{ delta: { content: "done." }, finish_reason: "stop" }] }) +
+    "data: [DONE]\n\n";
+  const provider = new CompatibleProvider(config, async () => stream(text));
+  const answers: string[] = [];
+  const reasoning: string[] = [];
+  const reply = await provider.complete(
+    "m",
+    [],
+    [],
+    new AbortController().signal,
+    (delta) => { answers.push(delta); },
+    (delta) => { reasoning.push(delta); },
+  );
+
+  assert.equal(answers.join(""), "Answer done.");
+  assert.equal(reasoning.join(""), "checking [redacted] now");
+  assert.equal(reply.message.content, "Answer done.");
+});
 test("stream maps refusal deltas to assistant content and onDelta", async () => {
   const refusal = "I cannot help with that request.";
   const text =

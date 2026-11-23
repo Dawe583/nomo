@@ -1,7 +1,7 @@
 import type { Model, ModelMessage, ModelReply, ToolCall } from "../provider.ts";
-import { ProviderRequestError } from "../provider.ts";
+import { ProviderRequestError, parseRetryAfter } from "../provider.ts";
 import { defaultHarnessSettings, type HarnessSettings } from "../harness-settings.ts";
-import type { ProviderAdapterConfig, ProviderAdapterDependencies, ProviderClient } from "./types.ts";
+import type { ProviderAdapterConfig, ProviderClient } from "./types.ts";
 import { isBedrockMantleBaseUrl } from "./bedrock-mantle-config.ts";
 
 type ResponsesOutputItem = {
@@ -18,58 +18,13 @@ type ResponsesObject = {
   readonly id?: string;
   readonly status?: string;
   readonly output?: readonly ResponsesOutputItem[];
-  readonly error?: { readonly code?: string; readonly param?: string; readonly message?: string };
   readonly usage?: { readonly input_tokens?: number; readonly output_tokens?: number; readonly total_tokens?: number };
 };
-function safeErrorField(value: unknown, token: string): string | undefined {
-  return typeof value === "string" && /^[A-Za-z0-9._-]{1,128}$/.test(value) &&
-    (!token || !value.includes(token)) ? value : undefined;
-}
-
-function safeErrorBody(body: unknown, token: string): { error?: { code?: string; param?: string }; detail?: string } | undefined {
-  if (!body || typeof body !== "object") return undefined;
-  if ("detail" in body && typeof body.detail === "string") return { detail: "[redacted]" };
-  if (!("error" in body)) return undefined;
-  const error = body.error;
-  if (!error || typeof error !== "object") return undefined;
-  const code = safeErrorField("code" in error ? error.code : undefined, token);
-  const param = safeErrorField("param" in error ? error.param : undefined, token);
-  return { error: { ...(code ? { code } : {}), ...(param ? { param } : {}) } };
-}
-
-
-async function requestError(response: Response, preserveBody: boolean, token: string): Promise<ProviderRequestError> {
-  const retryAfter = response.headers.get("retry-after");
-  let body: unknown;
-  if (preserveBody) {
-    try {
-      const text = await response.text();
-      if (text.length <= 65_536) {
-        try { body = JSON.parse(text); }
-        catch { body = text; }
-      }
-    } catch { /* Keep the HTTP status even when the error body is unreadable. */ }
-  } else {
-    await response.body?.cancel().catch(() => {});
-  }
-  const safeBody = safeErrorBody(body, token);
-  const code = safeBody?.error?.code;
-  return new ProviderRequestError(
-    response.status,
-    code,
-    retryAfter && /^\d+$/.test(retryAfter) ? Number(retryAfter) : undefined,
-    safeErrorField(response.headers.get("x-request-id"), token),
-    safeBody,
-  );
-}
 
 class ResponsesAdapter implements ProviderClient {
   private readonly base: URL;
   private readonly request: typeof fetch;
   private readonly apiKey: string;
-  private readonly isChatGPTAccount: boolean;
-  private readonly resolveAccessToken?: (accountId: string) => Promise<string>;
-  private readonly accountId?: string;
   private readonly resolveSettings: () => HarnessSettings;
   private readonly protocol: "openai" | "azure";
   private readonly azureApiVersion?: "v1" | "preview";
@@ -79,21 +34,11 @@ class ResponsesAdapter implements ProviderClient {
     request: typeof fetch,
     settings: Partial<HarnessSettings> | (() => HarnessSettings),
     protocol: "openai" | "azure",
-    dependencies: ProviderAdapterDependencies = {},
   ) {
     const cloudflare = config.providerId === "cloudflare-ai-gateway";
     const bedrockMantle = config.providerId === "bedrock-mantle";
-    this.isChatGPTAccount = config.auth.kind === "openai-chatgpt-account";
-    if (config.auth.kind !== "api-key" && !this.isChatGPTAccount) {
-      throw new Error("Responses requires a supported authentication profile.");
-    }
-    if (this.isChatGPTAccount) {
-      if (protocol !== "openai" || config.providerId !== "openai" || config.transport !== "openai-responses")
-        throw new Error("ChatGPT account auth is supported only by OpenAI Responses.");
-      this.accountId = config.auth.kind === "openai-chatgpt-account" ? config.auth.accountId : undefined;
-      this.resolveAccessToken = dependencies.openAIChatGPTTokenProvider;
-      if (!this.accountId || !this.resolveAccessToken)
-        throw new Error("OpenAI ChatGPT account is not available.");
+    if (config.auth.kind !== "api-key") {
+      throw new Error("Responses requires an API-key authentication profile.");
     }
     if (protocol === "openai") {
       if (
@@ -111,7 +56,6 @@ class ResponsesAdapter implements ProviderClient {
       if (
         this.base.protocol !== "https:" ||
         !validHost ||
-        (this.isChatGPTAccount && (this.base.port !== "" || path !== "/v1")) ||
         (cloudflare && !/^\/v1\/[^/]+\/[^/]+\/openai$/.test(path)) ||
         this.base.username || this.base.password || this.base.search || this.base.hash
       ) throw new Error("OpenAI Responses requires its declared official HTTPS API endpoint.");
@@ -143,7 +87,7 @@ class ResponsesAdapter implements ProviderClient {
       this.azureApiVersion = apiVersion;
     }
     this.protocol = protocol;
-    this.apiKey = config.auth.kind === "api-key" ? config.auth.apiKey : "";
+    this.apiKey = config.auth.apiKey;
     this.request = request;
     this.resolveSettings =
       typeof settings === "function"
@@ -154,17 +98,6 @@ class ResponsesAdapter implements ProviderClient {
 
   async models(): Promise<readonly Model[]> {
     const body = await this.json("models");
-    if (this.isChatGPTAccount) {
-      if (!Array.isArray(body.models)) throw new Error("Provider returned an invalid ChatGPT model catalog.");
-      return body.models.flatMap((item: unknown) => {
-        if (
-          typeof item !== "object" || item === null || !("visibility" in item) ||
-          item.visibility !== "list" || !("slug" in item) ||
-          typeof item.slug !== "string" || !item.slug.trim()
-        ) return [];
-        return [{ id: item.slug, name: "display_name" in item && typeof item.display_name === "string" && item.display_name.trim() ? item.display_name : item.slug }];
-      });
-    }
     if (!Array.isArray(body.data)) throw new Error("Provider returned an invalid model catalog.");
     return body.data.flatMap((item: unknown) => {
       if (typeof item !== "object" || item === null || !("id" in item) || typeof item.id !== "string" || !item.id.trim()) return [];
@@ -178,6 +111,7 @@ class ResponsesAdapter implements ProviderClient {
     tools: readonly unknown[],
     signal: AbortSignal,
     onDelta?: (text: string) => void | Promise<void>,
+    onReasoning?: (text: string) => void | Promise<void>,
   ): Promise<ModelReply> {
     const instructions = messages.filter(message => message.role === "system").map(message => message.content ?? "").join("\n\n");
     const input: unknown[] = [];
@@ -210,18 +144,12 @@ class ResponsesAdapter implements ProviderClient {
       input,
       ...(responseTools.length ? { tools: responseTools } : {}),
       max_output_tokens: settings.maxOutputTokens,
-      ...(this.isChatGPTAccount ? { store: false } : {}),
-      stream: this.isChatGPTAccount || !!onDelta,
+      stream: !!onDelta,
     };
-    const accessToken = await this.authorizationToken();
-    const response = await this.post(body, signal, accessToken);
+    const response = await this.post(body, signal);
     if (response.headers.get("content-type")?.includes("text/event-stream")) {
-      if (!onDelta && !this.isChatGPTAccount) throw new Error("Provider returned an unexpected stream.");
-      return this.stream(response, signal, onDelta ?? (() => {}), accessToken);
-    }
-    if (this.isChatGPTAccount) {
-      await response.body?.cancel().catch(() => {});
-      throw new Error("Provider returned a non-streaming response.");
+      if (!onDelta) throw new Error("Provider returned an unexpected stream.");
+      return this.stream(response, signal, onDelta, onReasoning);
     }
     const decoded = await this.decode(response);
     return this.toReply(decoded);
@@ -231,14 +159,7 @@ class ResponsesAdapter implements ProviderClient {
     return this.apiKey ? text.split(this.apiKey).join("[redacted]") : text;
   }
 
-  private async authorizationToken(): Promise<string> {
-    if (!this.isChatGPTAccount) return this.apiKey;
-    const token = await this.resolveAccessToken!(this.accountId!);
-    if (!token) throw new Error("OpenAI account requires sign-in again.");
-    return token;
-  }
-
-  private async post(body: unknown, signal: AbortSignal, accessToken: string): Promise<Response> {
+  private async post(body: unknown, signal: AbortSignal): Promise<Response> {
     try {
       const url = new URL("responses", this.base);
       if (this.azureApiVersion) url.searchParams.set("api-version", this.azureApiVersion);
@@ -247,7 +168,7 @@ class ResponsesAdapter implements ProviderClient {
         accept: "application/json, text/event-stream",
       };
       if (this.protocol === "azure") headers["api-key"] = this.apiKey;
-      else headers.authorization = `Bearer ${accessToken}`;
+      else headers.authorization = `Bearer ${this.apiKey}`;
       const response = await this.request(url, {
         method: "POST",
         headers,
@@ -256,7 +177,9 @@ class ResponsesAdapter implements ProviderClient {
         signal: AbortSignal.any([signal, AbortSignal.timeout(60000)]),
       });
       if (!response.ok) {
-        throw await requestError(response, this.isChatGPTAccount, accessToken);
+        const retryAfter = parseRetryAfter(response.headers.get("retry-after"));
+        await response.body?.cancel().catch(() => {});
+        throw new ProviderRequestError(response.status, undefined, retryAfter);
       }
       return response;
     } catch (error) {
@@ -278,23 +201,26 @@ class ResponsesAdapter implements ProviderClient {
   }
 
 
-  private async json(path: string): Promise<Record<string, unknown>> {
+  private async json(path: string): Promise<{ data?: unknown }> {
     const url = new URL(path, this.base);
     const headers: Record<string, string> = { accept: "application/json" };
-    const accessToken = await this.authorizationToken();
     if (this.protocol === "azure") {
       if (this.azureApiVersion) url.searchParams.set("api-version", this.azureApiVersion);
       headers["api-key"] = this.apiKey;
     } else {
-      headers.authorization = `Bearer ${accessToken}`;
+      headers.authorization = `Bearer ${this.apiKey}`;
     }
     const response = await this.request(url, {
       headers,
       redirect: "error",
       signal: AbortSignal.timeout(15000),
     });
-    if (!response.ok) throw await requestError(response, this.isChatGPTAccount, accessToken);
-    try { return await response.json() as Record<string, unknown>; }
+    if (!response.ok) {
+      const retryAfter = parseRetryAfter(response.headers.get("retry-after"));
+      await response.body?.cancel().catch(() => {});
+      throw new ProviderRequestError(response.status, undefined, retryAfter);
+    }
+    try { return await response.json() as { data?: unknown }; }
     catch { throw new Error("Provider returned invalid JSON."); }
   }
 
@@ -335,7 +261,12 @@ class ResponsesAdapter implements ProviderClient {
     };
   }
 
-  private async stream(response: Response, signal: AbortSignal, onDelta: (text: string) => void | Promise<void>, accessToken = this.apiKey): Promise<ModelReply> {
+  private async stream(
+    response: Response,
+    signal: AbortSignal,
+    onDelta: (text: string) => void | Promise<void>,
+    onReasoning?: (text: string) => void | Promise<void>,
+  ): Promise<ModelReply> {
     if (!response.body) throw new Error("Provider returned an empty stream.");
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
@@ -343,25 +274,26 @@ class ResponsesAdapter implements ProviderClient {
     let completed: ResponsesObject | undefined;
     let terminal = false;
     let text = "";
-    let emission = "";
-    const emit = async (delta: string, flush = false) => {
-      emission = this.redact(emission + delta);
-      const secrets = [this.apiKey, this.isChatGPTAccount ? accessToken : ""].filter(Boolean);
-      for (const secret of secrets) emission = emission.split(secret).join("[redacted]");
-      let hold = 0;
-      if (!flush || this.isChatGPTAccount) {
-        for (const secret of secrets) {
-          for (let index = 1; index < secret.length; index++) {
-            if (emission.endsWith(secret.slice(0, index))) hold = Math.max(hold, index);
+    let reasoning = "";
+    /** One redacting emitter per channel; see the Anthropic adapter's twin. */
+    const createEmitter = (sink: (delta: string) => void | Promise<void>) => {
+      let emission = "";
+      return async (delta: string, flush = false) => {
+        emission = this.redact(emission + delta);
+        let hold = 0;
+        if (!flush) {
+          for (let index = 1; index < this.apiKey.length; index++) {
+            if (emission.endsWith(this.apiKey.slice(0, index))) hold = index;
           }
         }
-      }
-      const visible = flush && hold
-        ? `${emission.slice(0, -hold)}[redacted]`
-        : emission.slice(0, emission.length - hold);
-      emission = hold ? emission.slice(-hold) : "";
-      if (visible) await onDelta(visible);
+        const visible = emission.slice(0, emission.length - hold);
+        emission = hold ? emission.slice(-hold) : "";
+        if (visible) await sink(visible);
+      };
     };
+    const emit = createEmitter(onDelta);
+    const emitReasoning: (delta: string, flush?: boolean) => Promise<void> =
+      onReasoning ? createEmitter(onReasoning) : async () => {};
     try {
       while (true) {
         let value: Uint8Array | undefined;
@@ -385,7 +317,7 @@ class ResponsesAdapter implements ProviderClient {
           pending = pending.slice(boundary + 2);
           const data = frame.split("\n").filter(line => line.startsWith("data:")).map(line => line.slice(5).trimStart()).join("\n");
           if (!data || data === "[DONE]") continue;
-          let event: { type?: string; delta?: string; response?: ResponsesObject; error?: unknown; message?: string };
+          let event: { type?: string; delta?: string; response?: ResponsesObject; message?: string };
           try { event = JSON.parse(data) as typeof event; }
           catch { throw new Error("Provider returned malformed stream data."); }
           if (
@@ -395,25 +327,24 @@ class ResponsesAdapter implements ProviderClient {
             text += event.delta;
             if (text.length > 2_000_000) throw new Error("Provider response exceeded the supported size.");
             await emit(event.delta);
+          } else if (
+            // The provider's own reasoning channel. `reasoning_summary_text` is
+            // the summarized form most accounts receive; `reasoning_text` is
+            // the raw form some organizations are allowed to stream. Both are
+            // reasoning, never answer text, so neither reaches `text`.
+            (event.type === "response.reasoning_summary_text.delta" ||
+              event.type === "response.reasoning_text.delta") &&
+            typeof event.delta === "string"
+          ) {
+            reasoning += event.delta;
+            if (reasoning.length > 2_000_000) throw new Error("Provider response exceeded the supported size.");
+            await emitReasoning(event.delta);
           } else if (event.type === "response.completed") {
             completed = event.response;
             terminal = true;
           } else if (event.type === "response.incomplete") {
             throw new Error("Provider Responses request did not complete.");
           } else if (event.type === "error" || event.type === "response.failed") {
-            if (this.isChatGPTAccount) {
-              const errorBody = event.response ?? event.error ?? event;
-              const errorObject = errorBody && typeof errorBody === "object" && "error" in errorBody
-                ? errorBody.error : errorBody;
-              const safeBody = safeErrorBody({ error: errorObject }, accessToken);
-              throw new ProviderRequestError(
-                response.status,
-                safeBody?.error?.code,
-                undefined,
-                safeErrorField(response.headers.get("x-request-id"), accessToken),
-                safeBody,
-              );
-            }
             throw new Error("Provider reported a Responses stream error.");
           }
           if (terminal) break;
@@ -422,31 +353,9 @@ class ResponsesAdapter implements ProviderClient {
       }
       if (!completed) throw new Error("Provider Responses stream ended before completion.");
       const reply = this.toReply(completed);
+      await emitReasoning("", true);
       await emit("", true);
-      const content = text || reply.message.content;
-      if (this.isChatGPTAccount && accessToken) {
-        const redact = (value: string) => {
-          let redacted = value.split(accessToken).join("[redacted]");
-          let suffixLength = 0;
-          for (let index = 1; index < accessToken.length; index++) {
-            if (redacted.endsWith(accessToken.slice(0, index))) suffixLength = index;
-          }
-          if (suffixLength) redacted = `${redacted.slice(0, -suffixLength)}[redacted]`;
-          return redacted;
-        };
-        return {
-          ...reply,
-          message: {
-            ...reply.message,
-            content: content === null ? null : redact(content),
-            ...(reply.message.tool_calls ? { tool_calls: reply.message.tool_calls.map(call => ({
-              ...call,
-              function: { ...call.function, arguments: redact(call.function.arguments) },
-            })) } : {}),
-          },
-        };
-      }
-      if (reply.message.content !== content && content) return { ...reply, message: { ...reply.message, content } };
+      if (reply.message.content !== text && text) return { ...reply, message: { ...reply.message, content: text } };
       return reply;
     } finally {
       await reader.cancel().catch(() => {});
@@ -459,9 +368,8 @@ export class OpenAIResponsesAdapter extends ResponsesAdapter {
     config: ProviderAdapterConfig,
     request: typeof fetch = fetch,
     settings: Partial<HarnessSettings> | (() => HarnessSettings) = {},
-    dependencies: ProviderAdapterDependencies = {},
   ) {
-    super(config, request, settings, "openai", dependencies);
+    super(config, request, settings, "openai");
   }
 }
 

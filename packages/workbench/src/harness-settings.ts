@@ -49,13 +49,7 @@ export type HarnessSettingKey =
   | "refinementEnabled"
   | "refinementTurnInterval"
   | "refinementCooldownMs"
-  | "refinementLensCount"
-  | "providerRequestTimeoutMs"
-  | "toolRequestTimeoutMs"
-  | "maxToolResultCharacters"
-  | "autoCompactMessages"
-  | "sessionSearchEnabled"
-  | "webToolsEnabled";
+  | "refinementLensCount";
 
 export type HarnessSettingSpec = {
   /** Operator-facing name, shown by /settings and the web settings panel. */
@@ -310,74 +304,6 @@ export const HARNESS_SETTINGS: {
     // With unanimous merging each added lens buys only more veto power at
     // full K cost; past three the spend has no named buyer.
     max: 3,
-    icon: "◑",
-  },
-  providerRequestTimeoutMs: {
-    label: "Provider request timeout (ms)",
-    description:
-      "Per-request HTTP timeout for provider completions during a run, separate from the whole-run ceiling.",
-    consumerFile: "provider.ts",
-    consumers: ["response"],
-    default: 60000,
-    min: 1000,
-    max: 600000,
-    icon: "◴",
-  },
-  toolRequestTimeoutMs: {
-    label: "MCP tool request timeout (ms)",
-    description:
-      "Per-request timeout for MCP tool calls routed through the stdio proxy client.",
-    consumerFile: "index.ts",
-    consumers: ["start", "spawnSubagent"],
-    default: 180000,
-    min: 1000,
-    max: 600000,
-    icon: "◶",
-  },
-  maxToolResultCharacters: {
-    label: "Tool result characters in context",
-    description:
-      "Most characters of a tool result retained in the conversation message returned to the model.",
-    consumerFile: "index.ts",
-    consumers: ["run"],
-    default: 64000,
-    min: 256,
-    max: 200000,
-    icon: "◳",
-  },
-  autoCompactMessages: {
-    label: "Automatic compaction",
-    description:
-      "Compact a conversation with a model-written summary once it holds this many messages, before the 200-message cap ends it. Zero switches it off.",
-    consumerFile: "index.ts",
-    consumers: ["run", "autoCompact"],
-    // Below the hard cap of 200 by design: a value at the cap would compact a
-    // conversation only after the cap had already ended it.
-    default: 150,
-    min: 0,
-    max: 199,
-    icon: "◌",
-  },
-  sessionSearchEnabled: {
-    label: "Cross-session search",
-    description:
-      "Allow the model to search bounded, redacted excerpts from the operator's other conversations. Zero keeps session text isolated.",
-    consumerFile: "index.ts",
-    consumers: ["startSession", "executeTool", "spawnSubagent", "availableTools", "run"],
-    default: 0,
-    min: 0,
-    max: 1,
-    icon: "◔",
-  },
-  webToolsEnabled: {
-    label: "Web fetch and search",
-    description:
-      "Offer nomo_web_fetch and nomo_web_search, both held at r1. Private, loopback, link-local and cloud metadata addresses are always refused. Zero leaves both tools out of the catalog.",
-    consumerFile: "index.ts",
-    consumers: ["startSession", "executeTool", "spawnSubagent", "availableTools", "run"],
-    default: 0,
-    min: 0,
-    max: 1,
     icon: "◑",
   },
 };

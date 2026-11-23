@@ -3,14 +3,6 @@ import { sanitizeText, stripAnsi } from "./layout.ts";
 
 export type RunActivityMode = "compact" | "details" | "expanded";
 
-export function nextRunActivityMode(mode: RunActivityMode): RunActivityMode {
-  return mode === "compact"
-    ? "details"
-    : mode === "details"
-      ? "expanded"
-      : "compact";
-}
-
 const PREVIEW_KEYS = [
   "command",
   "cmd",

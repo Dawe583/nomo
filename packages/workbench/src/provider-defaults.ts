@@ -20,8 +20,12 @@ export const FREE_MODEL_BY_ORIGIN: Readonly<Record<string, string>> = {
 
 /** Public endpoints. A preset is a choice, so these stay exported. */
 export const NVIDIA_URL = "https://integrate.api.nvidia.com/v1";
+export const OPENROUTER_URL = "https://openrouter.ai/api/v1";
 export const TOKENROUTER_URL = "https://api.tokenrouter.com/v1";
 export const OPENCODE_ZEN_URL = "https://opencode.ai/zen/v1";
+/** The Go endpoint is the manifest's OpenAI-compatible URL for `opencode-go`;
+ * its Anthropic route shares the origin but is not an OpenAI-compatible base. */
+export const OPENCODE_GO_URL = "https://opencode.ai/zen/go/v1";
 export const PUTER_URL = "https://api.puter.com/puterai/v1";
 export const QWEN_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1";
 export const PROVIDER_PRESETS = [
@@ -35,6 +39,12 @@ export const PROVIDER_PRESETS = [
     id: "opencode-zen",
     name: "OpenCode Zen",
     baseUrl: OPENCODE_ZEN_URL,
+    kind: "compatible",
+  },
+  {
+    id: "opencode-go",
+    name: "OpenCode Go",
+    baseUrl: OPENCODE_GO_URL,
     kind: "compatible",
   },
   {
@@ -64,7 +74,7 @@ export const PROVIDER_PRESETS = [
   {
     id: "openrouter",
     name: "OpenRouter",
-    baseUrl: "https://openrouter.ai/api/v1",
+    baseUrl: OPENROUTER_URL,
     kind: "compatible",
   },
   {

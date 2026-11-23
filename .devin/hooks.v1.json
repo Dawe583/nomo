@@ -1,0 +1,13 @@
+{
+  "PreToolUse": [
+    {
+      "matcher": "^run_subagent$",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "if node -e 'const { tool_input } = JSON.parse(require(\"node:fs\").readFileSync(0, \"utf8\")); process.exit([\"scout\", \"builder\", \"orchestrator\", \"ui-designer\", \"verifier\"].includes(tool_input?.profile) ? 0 : 1)' 2>/dev/null; then exit 0; fi; printf '%s\\n' 'NOMO: use scout, builder, orchestrator, ui-designer, or verifier for subagent work.' >&2; exit 2"
+        }
+      ]
+    }
+  ]
+}

@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "license": "Apache-2.0",
   "scripts": {
+    "test:tui": "node --test --test-concurrency=1 packages/cli/src/tui/*.test.ts && python3 scripts/src/verify-tui-terminal.py",
     "preinstall": "node scripts/src/preinstall.mjs",
     "nomo": "node packages/cli/bin/nomo.mjs",
     "tui": "node packages/cli/bin/nomo.mjs tui",
@@ -22,7 +23,6 @@
     "apple:design:test": "swift test -j 1 --package-path apps/apple/NomoDesignSystem",
     "build:web": "node scripts/src/build-web.mjs",
     "dev:web": "pnpm --filter @void/control-plane-ui dev",
-    "test:tui": "node --test --test-concurrency=1 packages/cli/src/tui/workspace*.test.ts && python3 scripts/src/verify-tui-terminal.py",
     "test:reverse": "node scripts/src/check-reverse-engine.mjs",
     "build": "node scripts/src/build-web.mjs && nitro build && node scripts/src/check-cloud-build.mjs"
   },

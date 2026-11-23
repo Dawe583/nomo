@@ -10,7 +10,7 @@ export function toolCatalog(tools: readonly { name: string; description?: string
     source: tool.connectorId ?? 'workspace',
     // External tools are classified by their configured policy at execution time.
     klass: tool.connectorId ? 'policy' : workspaceToolClass(tool.name) ?? 'policy',
-    capturedUndo: !tool.connectorId && (tool.name === 'void_workspace_write' || tool.name === 'void_workspace_delete'),
+    capturedUndo: !tool.connectorId && workspaceToolClass(tool.name) === 'r1',
   }));
   let serialized = JSON.stringify(rows);
   for (const secret of secrets) if (secret) serialized = serialized.split(JSON.stringify(secret).slice(1, -1)).join("[redacted]");

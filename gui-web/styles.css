@@ -1,4 +1,4 @@
-/* NOMO Aperture web theme. Exact tokens from apps/tui-preview.
+/* NOMO grid identity theme. Exact tokens from apps/tui-preview.
    Dark first, light via [data-theme="light"]. System stacks only. */
 :root {
   --bg: #0d0c09;
@@ -111,7 +111,7 @@ a { color: var(--accent); }
 }
 .nav-icon-btn:hover { border-color: var(--accent); color: var(--accent); }
 #side-toggle { display: none; }
-.aperture-mark { color: var(--ink); }
+.grid-mark { color: var(--ink); }
 
 /* Sub nav */
 .sub-nav {
@@ -520,8 +520,8 @@ h2 .ph { color: var(--accent); }
 main.view-in { animation: viewin 0.2s var(--ease); }
 @keyframes viewin { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 
-/* Aperture mark pulse while booting. */
-body.booting .aperture-mark { animation: markpulse 1s var(--ease) infinite; }
+/* Grid mark pulse while booting. */
+body.booting .grid-mark { animation: markpulse 1s var(--ease) infinite; }
 @keyframes markpulse { 50% { opacity: 0.35; } }
 
 /* Skeleton loaders: the shape of the final layout. */

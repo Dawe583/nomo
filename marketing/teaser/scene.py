@@ -69,6 +69,19 @@ def box(name,loc,scale,mat,group,bevel=0):
         o.modifiers.new('Weighted reflections','WEIGHTED_NORMAL')
     return o
 
+def prism(name,points,depth,mat,group,bevel=0):
+    n=len(points); half=depth/2
+    vertices=[(x,y,z) for z in (half,-half) for x,y in points]
+    faces=[tuple(reversed(range(n))),tuple(range(n,2*n))]
+    faces.extend((i,(i+1)%n,n+(i+1)%n,n+i) for i in range(n))
+    mesh=bpy.data.meshes.new(name);mesh.from_pydata(vertices,[],faces);mesh.update()
+    o=bpy.data.objects.new(name,mesh);scene.collection.objects.link(o)
+    o.data.materials.append(mat);group.append(o)
+    if bevel:
+        mod=o.modifiers.new('Machined edges','BEVEL');mod.width=bevel;mod.segments=3
+        o.modifiers.new('Weighted reflections','WEIGHTED_NORMAL')
+    return o
+
 # A purpose-built data canyon; all geometry is original, with no stock footage.
 for i in range(580):
     wall=i%4; y=random.uniform(-10,130); lateral=random.uniform(-5.3,5.3)
@@ -96,38 +109,27 @@ for mat in [coal,bronze,signal,white]:
     bpy.context.view_layer.objects.active=objects[0]; bpy.ops.object.join()
 city=[o for o in bpy.context.scene.objects if o.type=='MESH']
 
-def extrude(name,points,mat,depth=.42):
-    n=len(points); verts=[((x-128)/25,(128-y)/25,z) for z in [-depth/2,depth/2] for x,y in points]
-    faces=[tuple(range(n-1,-1,-1)),tuple(range(n,n*2))]
-    faces += [(i,(i+1)%n,(i+1)%n+n,i+n) for i in range(n)]
-    mesh=bpy.data.meshes.new(name); mesh.from_pydata(verts,[],faces);mesh.update()
-    o=bpy.data.objects.new(name,mesh); scene.collection.objects.link(o);o.data.materials.append(mat)
-    mod=o.modifiers.new('Precision bevel','BEVEL');mod.width=.035;mod.segments=4
-    o.modifiers.new('Weighted normals','WEIGHTED_NORMAL');hero.append(o);return o
-
-# Same square-capped outer strokes as BrandMark in brand.tsx, not a substitute logo.
-corner=[(65.5,65.5),(109.5,65.5),(109.5,80.5),(80.5,80.5),(80.5,109.5),(65.5,109.5)]
-for sx,sy in [(1,1),(-1,1),(1,-1),(-1,-1)]:
-    pts=[(128+sx*(x-128),128+sy*(y-128)) for x,y in corner]
-    if sx*sy<0:pts.reverse()
-    extrude('NOMO aperture bracket',pts,paper)
-# Continuous ring mesh prevents overlapping coplanar faces in the square stroke.
-verts=[]
-for z in [-.22,.22]:
-    for radius in [1.04,.56]:
-        verts += [(-radius,-radius,z),(radius,-radius,z),(radius,radius,z),(-radius,radius,z)]
-faces=[]
-for i in range(4):
-    j=(i+1)%4
-    faces += [(i,j,j+8,i+8),(i+4,i+12,j+12,j+4),(i+8,j+8,j+12,i+12),(i+4,j+4,j,i)]
-mesh=bpy.data.meshes.new('Orange ring');mesh.from_pydata(verts,[],faces);mesh.update()
-ring=bpy.data.objects.new('NOMO centre square',mesh);scene.collection.objects.link(ring);ring.data.materials.append(orange);hero.append(ring)
-mod=ring.modifiers.new('Precision bevel','BEVEL');mod.width=.025;mod.segments=4
-ring.modifiers.new('Weighted normals','WEIGHTED_NORMAL')
-bpy.ops.mesh.primitive_cylinder_add(vertices=64,radius=.24,depth=.45,location=(0,0,0))
-dot=bpy.context.object;dot.name='NOMO centre dot';dot.data.materials.append(paper);hero.append(dot)
-bev=dot.modifiers.new('Dot bevel','BEVEL');bev.width=.025;bev.segments=3
-dot.modifiers.new('Weighted normals','WEIGHTED_NORMAL')
+grid_navy=material('NOMO | grid navy',(.014,.028,.049),.65,.24)
+grid_coral=material('NOMO | grid coral',(1,.19,.14),.45,.22,.08)
+grid_cyan=material('NOMO | grid cyan',(0,.39,.47),.5,.22,.08)
+cell=.44; gap=.15; pitch=cell+gap
+for row in range(6):
+    for column in range(6):
+        if row in (1,2,3) and column in (0,1):
+            continue
+        mat=(grid_coral if (row,column)==(1,2) else
+             grid_cyan if (row,column)==(4,4) else grid_navy)
+        tile=box('NOMO grid tile',((column-2.5)*pitch,(2.5-row)*pitch,0),
+                 (cell,cell,.42),mat,hero,.025)
+        tile['grid_origin']=tuple(tile.location)
+stem_width=cell*2+gap; stem_height=cell*3+gap*2; notch_width=gap; notch_height=.14
+half_w=stem_width/2; half_h=stem_height/2; half_notch=notch_width/2
+stem=prism('NOMO grid stem',[
+    (-half_w,half_h),(half_w,half_h),(half_w,-half_h),
+    (half_notch,-half_h),(half_notch,-half_h+notch_height),
+    (-half_notch,-half_h+notch_height),(-half_notch,-half_h),(-half_w,-half_h),
+],.42,grid_navy,hero,.025)
+stem.location=(-2*pitch,pitch/2,0); stem['grid_origin']=tuple(stem.location)
 bpy.ops.object.empty_add(); root=bpy.context.object;root.name='NOMO logo assembly'
 for o in hero:o.parent=root
 
@@ -166,11 +168,14 @@ def setup(frame):
         aim((.5*math.sin(t*2),progress,.5*math.cos(t)),(0,progress+14,0),bank)
     else:
         root.rotation_euler=(.08,0,0)
+        spread=max(0,1-(t-10.5)/.8)*.7 if t>=10.5 else 0
         for o in hero:
-            if o.name.startswith('NOMO aperture bracket'):
-                center=sum((v.co for v in o.data.vertices),Vector())/len(o.data.vertices)
-                spread=max(0,1-(t-10.5)/.8)*.7 if t>=10.5 else 0
-                o.location=(center.x*spread,center.y*spread,spread*.25)
+            if o.name.startswith('NOMO grid'):
+                center=Vector(o.get('grid_origin',o.location))
+                direction=Vector((center.x,center.y,0))
+                if direction.length:
+                    direction.normalize()
+                    o.location=center+direction*spread
         camera.data.lens=52
         if t<10.125:
             aim((3.0,-.1,2.6),(1.4,.8,0),-.5)

@@ -14,12 +14,16 @@ export function detectCapabilities(
   env: Readonly<NodeJS.ProcessEnv> = process.env,
   stream: CapabilityStream = process.stdout,
 ): TerminalCapabilities {
+  const graphics =
+    env.TERM_PROGRAM === "ghostty" && env.TERM === "xterm-ghostty"
+      ? { graphicsProtocol: "kitty" as const }
+      : {};
   const columns = Math.max(40, stream.columns ?? 80);
   const rows = Math.max(12, stream.rows ?? 24);
   const tty = stream.isTTY === true;
   const dumb = env.TERM === "dumb";
   const ci = positive(env.CI);
-  const noColor = "NO_COLOR" in env && !positive(env.FORCE_COLOR);
+  const noColor = positive(env.NO_COLOR) && !positive(env.FORCE_COLOR);
 
   if (!tty)
     return {
@@ -56,6 +60,7 @@ export function detectCapabilities(
       columns,
       rows,
       reason: "no-color",
+      ...graphics,
     };
 
   const reported = stream.getColorDepth?.() ?? 4;
@@ -67,5 +72,6 @@ export function detectCapabilities(
     columns,
     rows,
     reason: "interactive",
+    ...graphics,
   };
 }

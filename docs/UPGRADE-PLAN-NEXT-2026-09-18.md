@@ -18,7 +18,7 @@ Vstupní dokumenty: `PLAN-GAPS.md` (audit 2026-09-16), `REVERSE-TOOL-UPGRADE-PLA
 - `git clone https://github.com/Dawe583/void.git` do prázdného `NOMO/`, OK. `git status` čistý.
 - `main` HEAD `5eac884` „Default to TokenHarbor mimo-v2.5:free from the opencode setup".
   Předtím: `27acd74` standalone CLI verify, `8929f9e` Pollinations keyless fallback,
-  `2d1f792` all-in-one GUI s Hermes paritou, `39194c3` web aperture + wordmark,
+  `2d1f792` all-in-one GUI s Hermes paritou, `39194c3` web grid mark + wordmark,
   `2f81882` provider/harness settings + thinking dots, `76ad907` attestace slices + offline verify,
   `fc04d8d` TUI theme switch za běhu.
 - Aktivní vzdálené větve: `origin/GUI-WEB` (starší web preview, Wave 1/2), `origin/codex/gui-upgrade`

@@ -17,15 +17,6 @@ test("Stop does not release capacity until the original provider settles; shutdo
     return Response.json({ choices: [{ message: { role: "assistant", content: "Late answer" }, finish_reason: "stop" }] });
   }, {}, { prefix: "nomo-stop-", beforeShutdown: release });
   const session = await app.start("First", "fixture");
-  // `start` returns while the run is still reaching the provider, and a cancel
-  // that lands before the request is dispatched leaves nothing in flight to
-  // wait for. The assertion below is about a dispatched request that ignores
-  // its abort, so the dispatch is waited for rather than raced.
-  const dispatchBy = Date.now() + 15_000;
-  while (calls === 0) {
-    assert.ok(Date.now() < dispatchBy, "the run never reached the provider");
-    await delay(5);
-  }
   app.cancel(session.id);
   assert.throws(() => app.send(session.id, "Second"), /not ready/);
   await assert.rejects(

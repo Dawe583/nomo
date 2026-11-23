@@ -1,0 +1,53 @@
+{
+  "name": "@nomo/cli",
+  "version": "1.0.1",
+  "private": true,
+  "license": "Apache-2.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "bin": {
+    "nomo": "./dist/nomo.mjs"
+  },
+  "files": [
+    "dist/"
+  ],
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "node --test",
+    "tui:preview": "node src/tui/preview.ts"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "@types/pg": "8.15.5",
+    "@nomo/registry": "workspace:*"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "3.1036.0",
+    "@aws-sdk/credential-provider-node": "3.972.83",
+    "@electric-sql/pglite": "0.3.7",
+    "@modelcontextprotocol/sdk": "1.30.0",
+    "node-sql-parser": "^5.4.0",
+    "pg": "8.16.3",
+    "web-tree-sitter": "0.25.10",
+    "yaml": "^2.8.0"
+  },
+  "description": "Inspect classifications, verify ledgers, and plan replay from the NOMO command line.",
+  "keywords": [
+    "nomo",
+    "ai-safety",
+    "cli",
+    "replay",
+    "verification"
+  ],
+  "engines": {
+    "node": ">=24"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Dawe583/void.git",
+    "directory": "packages/cli"
+  },
+  "homepage": "https://github.com/Dawe583/void/tree/main/packages/cli"
+}

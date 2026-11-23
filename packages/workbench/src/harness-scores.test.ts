@@ -7,7 +7,6 @@ import {
   compareBoards,
   compareSplit,
   measureBoard,
-  measureRefinementEffect,
   summariseCases,
   unmeasuredMetrics,
   type SplitSummary,
@@ -372,97 +371,4 @@ test("a chain with nothing decided has no first-pass rate at all", () => {
   assert.deepEqual(board.reasons, [
     "no decided call in the chain, so nothing was measured",
   ]);
-});
-
-const seqCall = (
-  seq: number,
-  tool: string,
-  decision: string,
-  extra: Record<string, unknown> = {},
-) => ({ seq, body: { tool, klass: "r3", decision, ...extra } });
-
-const seqActivation = (seq: number) => ({
-  seq,
-  body: { tool: "harness.activation", klass: "r3", decision: "proposal:activated" },
-});
-
-test("measureRefinementEffect splits strictly before and after activation without leakage", () => {
-  const chain = [
-    seqCall(1, "postgres.row.read", "execute:completed"),
-    seqCall(2, "postgres.row.update", "execute:completed"),
-    seqCall(3, "postgres.row.delete", "execute:completed"),
-    seqActivation(4),
-    seqCall(5, "postgres.row.read", "deny:policy"),
-    seqCall(6, "postgres.row.update", "deny:policy"),
-    seqCall(7, "postgres.row.delete", "deny:policy"),
-  ];
-  const effect = measureRefinementEffect(chain, 4, { generatedAt: "t0" });
-
-  assert.equal(effect.activationSeq, 4);
-  assert.equal(effect.untilSeq, null);
-  assert.equal(effect.before.caseCount, 3);
-  assert.equal(effect.after.caseCount, 3);
-  const deny = effect.guardrails.find((g) => g.key === "deny_rate")!;
-  assert.equal(deny.measured, true);
-  assert.equal(deny.before.mean, 0);
-  assert.equal(deny.after.mean, 1);
-  assert.equal(deny.regressed, true);
-  assert.equal(deny.verdict, "declining");
-  assert.ok(effect.guardrailBreaches.some((line) => line.startsWith("deny_rate ")));
-  assert.deepEqual(effect.unmeasuredGuardrails, ["unknown_tool_rate"]);
-  assert.equal(effect.verdict, "insufficient-data");
-});
-
-test("measureRefinementEffect is order-independent and skips unsequenced entries", () => {
-  const chain = [
-    seqCall(1, "postgres.row.read", "execute:completed"),
-    seqCall(2, "postgres.row.update", "execute:completed"),
-    seqActivation(3),
-    seqCall(4, "postgres.row.read", "deny:policy"),
-    seqCall(5, "postgres.row.update", "deny:policy"),
-  ];
-  const withNoise = [...chain, { body: { tool: "postgres.row.read", klass: "r3", decision: "execute:completed" } }];
-  assert.deepEqual(
-    measureRefinementEffect([...withNoise].reverse(), 3, { generatedAt: "t0" }),
-    measureRefinementEffect(chain, 3, { generatedAt: "t0" }),
-  );
-});
-
-test("measureRefinementEffect reports zero post-activation calls as unmeasured rather than echoing before", () => {
-  const chain = [
-    seqCall(1, "postgres.row.read", "execute:completed"),
-    seqCall(2, "postgres.row.update", "execute:completed"),
-    seqCall(3, "postgres.row.delete", "execute:completed"),
-    seqActivation(4),
-  ];
-  const effect = measureRefinementEffect(chain, 4, { generatedAt: "t0" });
-
-  assert.equal(effect.before.caseCount, 3);
-  assert.equal(effect.after.caseCount, 0);
-  assert.equal(effect.verdict, "insufficient-data");
-  assert.deepEqual(effect.guardrailBreaches, []);
-  assert.deepEqual(effect.unmeasuredGuardrails, [...SCORE_GUARDRAILS]);
-  assert.ok(effect.guardrails.every((g) => g.measured === false && g.after.mean === null));
-});
-
-test("measureRefinementEffect caps the post window at untilSeq and clears unmeasured when all guardrails are observed", () => {
-  const chain = [
-    seqCall(1, "postgres.row.read", "execute:completed", { classification: "classified" }),
-    seqCall(2, "postgres.row.update", "execute:completed", { classification: "classified" }),
-    seqActivation(3),
-    seqCall(4, "postgres.row.read", "execute:completed", { classification: "classified" }),
-    seqCall(5, "postgres.row.update", "execute:completed", { classification: "classified" }),
-    // Calls after seq 6 happened after rollback and must not enter this activation's effect.
-    seqCall(7, "postgres.row.read", "deny:policy", { classification: "unclassified" }),
-    seqCall(8, "postgres.row.update", "deny:policy", { classification: "unclassified" }),
-  ];
-  const effect = measureRefinementEffect(chain, 3, { untilSeq: 6, generatedAt: "t0" });
-
-  assert.equal(effect.untilSeq, 6);
-  assert.deepEqual(effect.unmeasuredGuardrails, []);
-  assert.deepEqual(effect.guardrailBreaches, []);
-  const deny = effect.guardrails.find((g) => g.key === "deny_rate")!;
-  assert.equal(deny.before.mean, 0);
-  assert.equal(deny.after.mean, 0);
-  assert.equal(deny.regressed, false);
 });

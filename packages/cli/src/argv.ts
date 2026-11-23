@@ -33,8 +33,6 @@ export const COMMANDS = [
   "update",
   "state",
   "harness",
-  "goal",
-  "schedule",
 ] as const;
 
 export type Command = (typeof COMMANDS)[number];

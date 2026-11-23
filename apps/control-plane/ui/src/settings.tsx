@@ -6,6 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { api, items, json, type Row } from "./api";
 import { Badge, Dialog, ErrorBox, JsonDetail, useApi, useText } from "./ui";
 import { DESKTOP_DOWNLOADS } from "./desktop-downloads";
+import { providerMatrix } from "./provider-matrix.ts";
 import { GALLERY_PATH } from "./gallery-path";
 // NOMO has no default provider and no default model. The panel below reports
 // what is connected and, when nothing is, says that.
@@ -403,6 +404,12 @@ function DesktopSetup() {
           "Import switches the active provider. The key stays in encrypted local storage and is sent only to its provider, not to NOMO Cloud. OAuth logins are not transferred.",
         )}
       </p>
+      <p className="muted">
+        {t(
+          "Řádky host-subscription jsou jen v hostu: přihlášení a token zůstávají v nainstalovaném host CLI a NOMO je nikdy neimportuje. Ověřuje se pouze to, zda host umí daného poskytovatele spustit.",
+          "Host-subscription rows are host-only: the login and token stay in the installed host CLI and NOMO never imports them. Only whether the host can run the provider is checked.",
+        )}
+      </p>
       <ErrorBox error={setup.error ?? error} />
       {!setup.data && !setup.error && (
         <p role="status">
@@ -410,28 +417,70 @@ function DesktopSetup() {
         </p>
       )}
       {setup.data && (
-        <ul>
-          {items(setup.data, "sources").map((source) => (
-            <li key={source.id}>
-              {source.name} · {source.source}{" "}
-              {source.available ? (
-                <button
-                  disabled={busy}
-                  onClick={() => void importProvider(source.id)}
-                >
-                  {t("Importovat", "Import")} {source.name} ({source.source})
-                </button>
-              ) : (
-                <span className="muted">
-                  {t(
-                    "Podporovaný API klíč nenalezen",
-                    "No supported API key found",
-                  )}
-                </span>
-              )}
-            </li>
-          ))}
-        </ul>
+        <div
+          className="table-scroll"
+          tabIndex={0}
+          aria-label={t("Matice zdrojů poskytovatelů", "Provider source matrix")}
+        >
+          <table>
+            <thead>
+              <tr>
+                <th>{t("Zdroj", "Source")}</th>
+                <th>{t("Poskytovatel", "Provider")}</th>
+                <th>{t("Přihlášení", "Auth method")}</th>
+                <th>{t("Dostupnost", "Availability")}</th>
+                <th>{t("Akce", "Action")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {providerMatrix(items(setup.data, "sources")).map((row) => (
+                <tr key={row.id}>
+                  <td data-label={t("Zdroj", "Source")}>
+                    <code>{row.id}</code>
+                  </td>
+                  <td data-label={t("Poskytovatel", "Provider")}>
+                    {row.name}
+                    {row.source ? ` · ${row.source}` : ""}
+                  </td>
+                  <td data-label={t("Přihlášení", "Auth method")}>
+                    <code>{row.authMethod}</code>
+                    {row.hostOnly && (
+                      <>
+                        {" "}
+                        <Badge value="unknown">
+                          {t("jen v hostu", "host-only")}
+                        </Badge>
+                      </>
+                    )}
+                  </td>
+                  <td data-label={t("Dostupnost", "Availability")}>
+                    {row.availability}
+                  </td>
+                  <td data-label={t("Akce", "Action")}>
+                    {row.importable ? (
+                      <button
+                        disabled={busy}
+                        aria-label={`${t("Importovat", "Import")} ${row.name} (${row.id})`}
+                        onClick={() => void importProvider(row.id)}
+                      >
+                        {t("Importovat", "Import")}
+                      </button>
+                    ) : (
+                      <span className="muted">
+                        {row.hostOnly
+                          ? t(
+                              "Přihlášení zůstává v host CLI, NOMO ho neimportuje.",
+                              "Login stays in the host CLI. NOMO never imports it.",
+                            )
+                          : t("Nelze importovat", "Not importable")}
+                      </span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
       <p role="status">
         {done

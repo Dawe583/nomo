@@ -947,11 +947,7 @@ function isProtectedProjectPath(path: string): boolean {
   return normalized === "packages/cli/src/tui" || normalized.startsWith("packages/cli/src/tui/");
 }
 
-/**
- * Exported for the read and search tools: they must accept exactly the files
- * the copy preparation accepted, not a second interpretation of "safe".
- */
-export async function readRegularProjectFile(
+async function readRegularProjectFile(
   root: string,
   path: string,
   rootDevice: number,

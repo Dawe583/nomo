@@ -37,7 +37,7 @@ The current compact direction is already part of the contract. The following con
 - Instrument Serif is reserved for welcome or strong display headings, not data-heavy pages.
 - One restrained orange action accent is retained. Color is not the only carrier of state.
 - System, light, and dark appearance use the same semantic token model.
-- The existing aperture brand mark, navigation vocabulary, route slugs, and server-controlled safety states are not silently replaced.
+- The current NOMO six-by-six grid mark, navigation vocabulary, route slugs, and server-controlled safety states are not silently replaced.
 - Motion is limited to action feedback and state transitions. Reduced motion remains supported through the existing preference and `prefers-reduced-motion` behavior.
 - No design direction invents provider capability, usage, price, verification, approval, or recovery state.
 
