@@ -5,7 +5,8 @@ import {
   type Tool,
 } from "@modelcontextprotocol/sdk/types.js";
 import { isAbsolute } from "node:path";
-import { readFileSync } from "node:fs";
+
+import { packageVersion } from "./package-version.ts";
 
 import type {
   RecoveryJobPlan,
@@ -19,22 +20,12 @@ import type {
 /**
  * The version this server reports in its `initialize` response.
  *
- * Read from the manifest rather than written here, because a literal in this
- * file is a version nobody has to bump and no gate reads. It answers exactly
- * what `bin/nomo.mjs --version` answers, from the same manifest and for the
- * same reason. `dispatch.packageVersion()` is the reader the commands use;
- * importing the dispatcher here would make this module carry the whole command
- * surface, and its SQLite graph, to answer one field.
+ * It answers exactly what `bin/nomo.mjs --version` answers, from the same
+ * shared reader and for the same reason: a literal in this file is a version
+ * nobody has to bump and no gate reads. `dispatch.packageVersion()` is the same
+ * reader the commands use; importing the dispatcher here would make this module
+ * carry the whole command surface, and its SQLite graph, to answer one field.
  */
-function productVersion(): string {
-  const meta = JSON.parse(
-    readFileSync(new URL("../package.json", import.meta.url), "utf8"),
-  );
-  if (!meta || typeof meta.version !== "string" || !meta.version) {
-    throw Error("Package version is missing.");
-  }
-  return meta.version;
-}
 
 type Runtime = Pick<
   RecoveryRuntime,
@@ -318,7 +309,7 @@ export function recoveryMcpServer(options: {
   permitted: (tool: RecoveryTool) => Promise<boolean>;
 }) {
   const server = new Server(
-    { name: "nomo-recovery", version: productVersion() },
+    { name: "nomo-recovery", version: packageVersion() },
     { capabilities: { tools: {} } },
   );
   const definitions =

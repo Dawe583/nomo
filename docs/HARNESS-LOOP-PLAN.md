@@ -1,6 +1,13 @@
+> **Historical document — non-operative.** This 2026-10-21 Harness product plan
+> is retained for decision history only. It is not an active permission, release,
+> worktree, graph, CI, or workflow source. Use `.opencode/prompts/nomo-system.md`,
+> `AGENTS.local.md`, and `docs/agent-work-system.md` for current project rules.
+> In particular, its single-active-node, push-to-main, and launchctl instructions
+> are superseded.
+
 # NOMO Harness Loop Plan
 
-Status: active, 2026-10-21. Scope: the coding-agent Harness as a NOMO product-v1
+Status: historical, 2026-10-21 (non-operative). Scope: the coding-agent Harness as a NOMO product-v1
 release gate. Owner: the main session. The task graph in `.nomo/work-state.json`
 remains the execution state. The context pack (`docs/CONTEXT.md`,
 `docs/DECISIONS.md`, `docs/STANDARDS.md`), the harness specs

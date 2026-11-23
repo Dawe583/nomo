@@ -4,13 +4,7 @@ import * as brand from "./brand.ts";
 import { brandHeader } from "./brand.ts";
 import { visibleLength, stripAnsi } from "./layout.ts";
 import type { TerminalCapabilities } from "./types.ts";
-import {
-  mkdirSync,
-  mkdtempSync,
-  readFileSync,
-  rmSync,
-  writeFileSync,
-} from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Workbench } from "../../../workbench/src/index.ts";
@@ -33,17 +27,6 @@ const graphicsCaps = (columns: number): TerminalCapabilities => ({
 const monoCaps = (columns: number): TerminalCapabilities => ({
   ...colorCaps(columns),
   colorDepth: 0,
-});
-
-test("the new OpenTUI logo asset is 9 columns by 5 rows with alpha transparency", () => {
-  const bytes = readFileSync(new URL("./nomo-logo.png", import.meta.url));
-  assert.deepEqual(
-    [...bytes.subarray(0, 8)],
-    [137, 80, 78, 71, 13, 10, 26, 10],
-  );
-  assert.equal(bytes.readUInt32BE(16), 320);
-  assert.equal(bytes.readUInt32BE(20), 315);
-  assert.equal(bytes[25], 6);
 });
 
 const tabIconKeys = [
@@ -78,8 +61,12 @@ test("legacy snapshot keeps readable active panel context", async (t) => {
   const frame = stripAnsi(
     renderWorkspace(ui, 160, 24, "", false, false, { color: false }),
   );
-  assert.match(frame, /NOMO \/ overview/);
-  assert.match(frame, /Tab panels/);
+  // Chat is the only base screen now: its header carries the identity and the
+  // panel dock carries the context, so there is no overview to name.
+  assert.match(frame, /NOMO {2}Chat/);
+  assert.match(frame, /NEW CONVERSATION/);
+  assert.match(frame, /← Sessions/);
+  assert.doesNotMatch(frame, /NOMO \/ overview/);
 });
 
 test("a complete private tab icon pack renders as themed Kitty image cells", () => {
@@ -92,11 +79,22 @@ test("a complete private tab icon pack renders as themed Kitty image cells", () 
     const icons = brand.loadLocalTabIcons({ NOMO_TUI_ICONS_DIR: directory });
     assert.ok(icons);
     const transfer = brand.kittyTabIconsTransfer(icons);
+    // A Kitty transfer is one header per image; a PNG larger than one 4096
+    // byte chunk only completes on its last chunk, so the count of complete
+    // single-chunk transfers is smaller than the number of images.
     const transfers = [
       ...transfer.matchAll(/\x1b_Ga=T,f=100,i=(\d+),U=1,c=2,r=1,q=2,m=0;/g),
     ];
-    assert.equal(transfers.length, 22);
-    assert.equal(new Set(transfers.map((match) => match[1])).size, 22);
+    assert.equal(transfers.length, 38);
+    assert.equal(new Set(transfers.map((match) => match[1])).size, 38);
+
+    // Every tab icon in both variants plus every bundled semantic icon is
+    // transferred exactly once: 2 x 11 tab icons + 2 x 16 semantic icons.
+    const images = [
+      ...transfer.matchAll(/\x1b_Ga=T,f=100,i=(\d+),U=1,c=2,r=1,q=2,m=[01];/g),
+    ];
+    assert.equal(images.length, 54);
+    assert.equal(new Set(images.map((match) => match[1])).size, 54);
 
     for (const tab of tabIconKeys) {
       const dark = brand.kittyTabIconLabel(tab, icons, "default");
@@ -111,20 +109,24 @@ test("a complete private tab icon pack renders as themed Kitty image cells", () 
     const cleanup = brand.kittyTabIconsCleanup(icons);
     assert.equal(
       [...cleanup.matchAll(/\x1b_Ga=d,d=I,i=\d+,q=2\x1b\\/g)].length,
-      22,
+      54,
     );
 
     rmSync(join(directory, "help.light.png"));
-    assert.equal(
-      brand.loadLocalTabIcons({ NOMO_TUI_ICONS_DIR: directory }),
-      undefined,
+    // An incomplete local pack must not blank the icon system: the shipped
+    // Iconoir pack takes over rather than leaving the tabs with no artwork.
+    const fallback = brand.loadLocalTabIcons({ NOMO_TUI_ICONS_DIR: directory });
+    assert.ok(fallback, "an incomplete local pack still yields icons");
+    assert.ok(
+      !fallback.dark.chat.png.equals(iconPng),
+      "the bundled artwork replaced the incomplete local pack",
     );
   } finally {
     rmSync(directory, { recursive: true, force: true });
   }
 });
 
-test("Ghostty workspace tabs use the private Untitled UI icon pack", async (t) => {
+test("Ghostty workspace tabs use local Iconoir artwork with text fallbacks", async (t) => {
   const dataDirectory = mkdtempSync(join(tmpdir(), "nomo-tui-icon-data-"));
   const iconDirectory = mkdtempSync(join(tmpdir(), "nomo-tui-icon-files-"));
   for (const tab of tabIconKeys)
@@ -137,6 +139,21 @@ test("Ghostty workspace tabs use the private Untitled UI icon pack", async (t) =
     TERM_PROGRAM: "ghostty",
     TERM: "xterm-ghostty",
   };
+  // WorkspaceTui decides whether to load the icon pack from
+  // detectCapabilities, which reads process.stdout. The test runner pipes
+  // stdout, so declare a TTY for this test only and restore it afterwards.
+  const ttyDescriptor = Object.getOwnPropertyDescriptor(process.stdout, "isTTY");
+  Object.defineProperty(process.stdout, "isTTY", {
+    value: true,
+    configurable: true,
+    writable: true,
+  });
+  t.after(() => {
+    if (ttyDescriptor)
+      Object.defineProperty(process.stdout, "isTTY", ttyDescriptor);
+    else delete (process.stdout as { isTTY?: boolean }).isTTY;
+  });
+
   const app = new Workbench(env);
   t.after(async () => {
     await app.shutdown();
@@ -147,16 +164,32 @@ test("Ghostty workspace tabs use the private Untitled UI icon pack", async (t) =
   await ui.initialize();
   assert.ok(
     ui.localTabIcons,
-    "the configured private icon pack is loaded for the OpenTUI renderer",
+    "the configured private icon pack is loaded for the interactive renderer",
   );
+  // The tabs only exist outside Chat, so open a panel before checking that the
+  // bundled artwork reaches the header next to its text label.
+  ui.choose("sessions");
   const frame = stripAnsi(
     renderWorkspace(ui, 80, 24, "", false, false, {
       color: true,
       motion: false,
     }),
   );
-  assert.match(frame, /overview/);
+  const artwork = stripAnsi(
+    brand.kittyTabIconLabel("sessions", ui.localTabIcons, ui.themeConfig.colorTheme),
+  );
+  assert.ok(visibleLength(artwork) === 2, "the local icon is two cells wide");
+  assert.ok(
+    frame.includes(artwork),
+    "the local sessions artwork renders in the tab header",
+  );
+  assert.match(frame, /Sessions/, "the text label stays beside the artwork");
+  assert.match(frame, /← Chat/, "the panel keeps its text fallback navigation");
   assert.ok(visibleLength(frame.split("\n")[0] ?? "") <= 80);
+  assert.ok(
+    frame.split("\n").every((line) => visibleLength(line) <= 80),
+    "the artwork never pushes a row past the terminal width",
+  );
 });
 
 test("local icons default to the active NOMO data directory", () => {

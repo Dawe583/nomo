@@ -23,7 +23,7 @@ export function detectCapabilities(
   const tty = stream.isTTY === true;
   const dumb = env.TERM === "dumb";
   const ci = positive(env.CI);
-  const noColor = "NO_COLOR" in env && !positive(env.FORCE_COLOR);
+  const noColor = positive(env.NO_COLOR) && !positive(env.FORCE_COLOR);
 
   if (!tty)
     return {

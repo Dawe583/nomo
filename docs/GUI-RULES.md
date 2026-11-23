@@ -44,7 +44,7 @@ fonts. A default model provider sat here too, until `DECISIONS.md` removed it on
   the active locale.
 - The terminal is out of scope and keeps its own identity: nothing may pull
   it toward the platform look.
-- The only approved logo is the aperture mark in
+- The only approved logo is the six-by-six grid mark in
   `apps/control-plane/ui/src/brand.tsx`; preserve its exact SVG geometry,
   use no ASCII or letter-tile substitute, and treat the rule as provenance
   rather than a direction.

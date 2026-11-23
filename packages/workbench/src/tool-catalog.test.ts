@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { toolCatalog } from './tool-catalog.ts';
 import { workspaceTools } from './workspace.ts';
 import { HARNESS_TOOLS } from './harness-tools.ts';
+import { TODO_TOOLS } from './todo-tool.ts';
 import { filterCommands, toolPrompt } from '../../../apps/control-plane/ui/src/commands.ts';
 import { isolatedWorkbench } from './test-fixture.ts';
 
@@ -44,6 +45,7 @@ test('session tool catalogue uses its snapshot and rejects unknown sessions', as
     [
       ...workspaceTools.filter(t => t.name !== 'nomo_project_exec').map(t => t.name),
       ...HARNESS_TOOLS.map(tool => tool.name),
+      ...TODO_TOOLS.map(tool => tool.name),
     ],
   );
   assert.doesNotMatch(JSON.stringify(snapshot), /private-key|messages|baseUrl/);

@@ -15,6 +15,7 @@ import {
   ansi256,
   getColorPalette,
   getSymbolSet,
+  paintUserMessageWithPalette,
   paintWithPalette,
   resolveThemeConfig,
   trueColor,
@@ -26,6 +27,7 @@ export {
   type SymbolPreset,
 } from "./theme-config.ts";
 export type { ThemeConfig } from "./theme-config.ts";
+export type { SymbolSet } from "./theme-config.ts";
 
 export type Tone = keyof ColorPalette;
 
@@ -115,5 +117,13 @@ export function paintThemed(
 ): string {
   const palette = config ? getPalette(config.colorTheme) : NOMO_PALETTE;
   return paintWithPalette(text, tone, palette, capabilities, bold);
+}
+
+export function paintUserMessage(
+  text: string,
+  palette: ColorPalette,
+  capabilities: TerminalCapabilities,
+): string {
+  return paintUserMessageWithPalette(text, palette, capabilities);
 }
 export { paintWithPalette } from "./theme-config.ts";

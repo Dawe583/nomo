@@ -5,9 +5,11 @@ import { isBuiltin } from "node:module";
 import {
   existsSync,
   mkdtempSync,
+  readdirSync,
   readFileSync,
   rmSync,
   statSync,
+  symlinkSync,
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
@@ -71,13 +73,19 @@ function bareSpecifiers(code) {
 }
 
 describe("the distribution bundle", () => {
-  test("bundles the OpenTUI workspace component", () => {
+  test("keeps the active workspace renderer on Node and local chunks", () => {
     assert.ok(
-      chunks.includes("workspace-app.mjs"),
-      "workspace app chunk is missing",
+      chunks.includes("workspace-runner.mjs"),
+      "workspace runner chunk is missing",
     );
-    const app = readFileSync(join(outDir, "workspace-app.mjs"), "utf8");
-    assert.match(app, /@opentui\/react/);
+    const code = readFileSync(join(outDir, "workspace-runner.mjs"), "utf8");
+    for (const specifier of bareSpecifiers(code)) {
+      if (specifier.startsWith(".") || specifier.startsWith("/")) continue;
+      assert.ok(
+        isBuiltin(specifier),
+        `workspace renderer imports non-Node dependency ${specifier}`,
+      );
+    }
   });
 
   test("builds an executable entry chunk with a Node shebang", () => {
@@ -105,13 +113,13 @@ describe("the distribution bundle", () => {
 
   test("the entry chunk defers the command graph instead of inlining it", () => {
     // The bin entry is documented as answering --help and --version without
-    // loading the command surface, so the entry imports nothing but Node
-    // builtins. A third-party import here means node:sqlite or the MCP SDK is
-    // loaded on a help request, which is the regression this split prevents.
+    // loading the command surface, so it must not statically import anything
+    // but Node builtins. Zero static imports is the strictest form of that:
+    // --version reaches its reader through a local chunk, so no third-party
+    // module and no SQLite engine is loaded on a help or version request.
     const imports = [...artifact.matchAll(/^import\s.*$/gm)].map(
       (line) => line[0],
     );
-    assert.ok(imports.length > 0, "the entry chunk imports nothing at all");
     for (const line of imports) {
       assert.match(
         line,
@@ -119,6 +127,13 @@ describe("the distribution bundle", () => {
         `the entry eagerly imports ${line}`,
       );
     }
+    // The graph is deferred rather than absent, which is what keeps `nomo run`
+    // and `nomo doctor` working: it stays reachable through a dynamic import.
+    assert.match(
+      artifact,
+      /\bimport\(\s*['"]\.\/dispatch\.mjs['"]\s*\)/,
+      "the entry does not defer the command graph",
+    );
   });
 
   test("every chunk is valid JavaScript the runtime can parse", () => {
@@ -171,15 +186,6 @@ describe("the distribution bundle", () => {
         `${chunk} still imports workspace packages rather than inlining them: ${workspaceImports.join(", ")}`,
       );
     }
-  });
-
-  test("includes the OpenTUI NOMO logo asset required at runtime", () => {
-    const logo = join(outDir, "nomo-logo.png");
-    assert.ok(existsSync(logo), "the runtime icon path requires nomo-logo.png");
-    assert.deepEqual(
-      readFileSync(logo),
-      readFileSync(join(root, "packages/cli/src/tui/nomo-logo.png")),
-    );
   });
 
   test("includes the Workbench provider catalog required at runtime", () => {
@@ -245,7 +251,7 @@ describe("the distribution bundle", () => {
     }
   });
 
-  test("npm packs only the manifest and distribution chunks", () => {
+  test("npm packs only the manifest, distribution chunks and licensed icons", () => {
     // A tarball that also carried src, tests or a node_modules tree would put
     // unbuilt TypeScript and workspace links back in front of the consumer.
     const manifest = JSON.parse(read("packages/cli/package.json"));
@@ -258,12 +264,15 @@ describe("the distribution bundle", () => {
       }),
     );
     const files = packed[0].files.map(({ path }) => path).sort();
+    const icons = readdirSync(join(outDir, "icons")).map(
+      (icon) => `dist/icons/${icon}`,
+    );
     assert.deepEqual(
       files,
       [
         ...chunks.map((chunk) => `dist/${chunk}`),
-        "dist/nomo-logo.png",
         "dist/provider-manifest.json",
+        ...icons,
         "package.json",
       ].sort(),
     );
@@ -293,6 +302,55 @@ describe("the distribution bundle", () => {
       assert.equal(version.stderr, "");
     } finally {
       rmSync(consumer, { recursive: true, force: true });
+    }
+  });
+
+  test("answers version and config from a bare --out directory", async () => {
+    // `--out` is any directory, so the artifact can land somewhere with no
+    // packages/cli/package.json one level above it. Reading the manifest there
+    // answered `--version` with ENOENT /private/tmp/package.json. The build
+    // stamps the version into the bundle, so the manifest stays an optimisation
+    // for the shipped layout rather than a requirement for the artifact.
+    const parent = mkdtempSync(join(tmpdir(), "nomo-bare-out-test-"));
+    const bare = join(parent, "out");
+    try {
+      await buildBundle({ root, outDir: bare, quiet: true });
+      // Third-party dependencies stay external on purpose, so the artifact
+      // resolves them from a consumer's node_modules. The parent is exactly
+      // that fixture, and decisively carries no package.json.
+      symlinkSync(
+        join(root, "packages/cli/node_modules"),
+        join(parent, "node_modules"),
+      );
+      const bin = join(bare, ENTRY_FILE);
+      const manifest = JSON.parse(read("packages/cli/package.json"));
+
+      const version = spawnSync(bin, ["--version"], {
+        cwd: parent,
+        encoding: "utf8",
+      });
+      assert.ifError(version.error);
+      assert.equal(version.status, 0, version.stderr);
+      assert.equal(version.stdout, `nomo ${manifest.version}\n`);
+      assert.doesNotMatch(version.stderr, /ENOENT/);
+
+      // `config` is the other reader: it reaches the same version through the
+      // dispatcher, which is why the fix has to be one shared helper rather
+      // than a special case in the entry point.
+      const config = spawnSync(bin, ["config"], {
+        cwd: parent,
+        encoding: "utf8",
+      });
+      assert.ifError(config.error);
+      assert.equal(config.status, 0, config.stderr);
+      const stamped = manifest.version.replaceAll(".", "\\.");
+      assert.match(
+        config.stdout,
+        new RegExp(`^version: ${stamped} \\(package\\)$`, "m"),
+      );
+      assert.doesNotMatch(config.stderr, /ENOENT/);
+    } finally {
+      rmSync(parent, { recursive: true, force: true });
     }
   });
 

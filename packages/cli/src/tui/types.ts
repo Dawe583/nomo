@@ -125,6 +125,8 @@ export interface TerminalCapabilities {
   readonly colorDepth: 0 | 4 | 8 | 24;
   readonly columns: number;
   readonly rows: number;
+  /** Physical terminal cell height when the terminal reports it. */
+  readonly cellHeightPixels?: number;
   readonly graphicsProtocol?: "kitty";
   readonly reason: "interactive" | "not-tty" | "dumb" | "no-color" | "ci";
 }

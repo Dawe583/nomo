@@ -3,6 +3,8 @@ import assert from "node:assert/strict";
 
 import {
   dispatchQueuedPrompt,
+  isToolActivityCycleKey,
+  DoubleLeftSessionShortcut,
   escapeOwnedByOverlay,
   normalizePastedPrompt,
   shouldCancelActiveRun,
@@ -11,10 +13,40 @@ import {
   signalQuitAction,
 } from "./workspace-runner.ts";
 
-test("OpenTUI paste normalizes newlines and removes terminal controls", () => {
+test("Double-Left opens Sessions only for two deliberate empty-Chat presses", () => {
+  const shortcut = new DoubleLeftSessionShortcut();
+  const left = { name: "left" };
+  assert.equal(shortcut.press(left, true, 1000), false);
+  assert.equal(shortcut.press(left, true, 1120), true);
+
+  const repeat = new DoubleLeftSessionShortcut();
+  assert.equal(repeat.press(left, true, 2000), false);
+  assert.equal(repeat.press(left, true, 2050), false, "autorepeat is ignored");
+  assert.equal(repeat.press(left, true, 2090), false);
+  assert.equal(
+    repeat.press(left, true, 2600),
+    false,
+    "slow presses do not pair",
+  );
+
+  const scoped = new DoubleLeftSessionShortcut();
+  assert.equal(scoped.press(left, true, 3000), false);
+  assert.equal(scoped.press(left, false, 3120), false, "non-empty composer");
+  assert.equal(scoped.press(left, true, 3200), false);
+  assert.equal(scoped.press(left, true, 3320), true);
+  assert.equal(scoped.press(left, false, 3400), false, "other panel resets");
+});
+test("Ctrl+O only cycles agent activity detail during a run", () => {
+  const key = { ctrl: true, name: "o" };
+  assert.equal(isToolActivityCycleKey(key, true), true);
+  assert.equal(isToolActivityCycleKey(key, false), false);
+  assert.equal(isToolActivityCycleKey({ ...key, shift: true }, true), false);
+});
+
+test("bracketed paste normalizes newlines and removes terminal controls", () => {
   assert.equal(
     normalizePastedPrompt("first\rsecond\x00\x1b[31mred\x9b\x80last\nline"),
-    "first\nsecond[31mredlast\nline",
+    "first\nsecondredlast\nline",
   );
 });
 
@@ -22,7 +54,7 @@ test("paste focuses the composer and uses the same control-byte normalization", 
   const input = new WorkspaceInput();
   input.paste("first\rsecond\x00\x1b[31mred\nline");
   assert.equal(input.editing, true);
-  assert.equal(input.value, "first\nsecond[31mred\nline");
+  assert.equal(input.value, "first\nsecondred\nline");
 });
 
 test("SIGINT requires a second press within the confirmation window", () => {

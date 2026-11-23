@@ -1,6 +1,6 @@
 import { defaultProvider } from "@aws-sdk/credential-provider-node";
 import type { Model, ModelMessage, ModelReply, ToolCall } from "../provider.ts";
-import { ProviderRequestError } from "../provider.ts";
+import { ProviderRequestError, parseRetryAfter } from "../provider.ts";
 import { defaultHarnessSettings, type HarnessSettings } from "../harness-settings.ts";
 import type {
   AwsCredentialProvider,
@@ -139,6 +139,7 @@ export class BedrockConverseStreamAdapter implements ProviderClient {
     tools: readonly unknown[],
     signal: AbortSignal,
     onDelta?: (text: string) => void | Promise<void>,
+    onReasoning?: (text: string) => void | Promise<void>,
   ): Promise<ModelReply> {
     if (!model || model.length > 2048) throw new Error("Bedrock model ID is invalid.");
     const request = this.requestBody(messages, tools);
@@ -156,8 +157,9 @@ export class BedrockConverseStreamAdapter implements ProviderClient {
         signal: AbortSignal.any([signal, AbortSignal.timeout(60000)]),
       });
       if (!response.ok) {
+        const retryAfter = parseRetryAfter(response.headers.get("retry-after"));
         await response.body?.cancel().catch(() => {});
-        throw new ProviderRequestError(response.status);
+        throw new ProviderRequestError(response.status, undefined, retryAfter);
       }
     } catch (error) {
       if (error instanceof ProviderRequestError) throw error;
@@ -175,7 +177,7 @@ export class BedrockConverseStreamAdapter implements ProviderClient {
         "Provider connection failed. Check its endpoint and availability.",
       );
     }
-    return this.consume(response, signal, onDelta);
+    return this.consume(response, signal, onDelta, onReasoning);
   }
 
   redact(text: string): string {
@@ -254,7 +256,13 @@ export class BedrockConverseStreamAdapter implements ProviderClient {
     };
   }
 
-  private async consume(response: Response, signal: AbortSignal, onDelta?: (text: string) => void | Promise<void>): Promise<ModelReply> {
+  private async consume(
+    response: Response,
+    signal: AbortSignal,
+    onDelta?: (text: string) => void | Promise<void>,
+    onReasoning?: (text: string) => void | Promise<void>,
+  ): Promise<ModelReply> {
+    const retryAfter = parseRetryAfter(response.headers.get("retry-after"));
     if (!response.body) throw new Error("Bedrock returned an empty stream.");
     if (response.headers.get("content-type")?.split(";")[0]?.trim() !== "application/vnd.amazon.eventstream") {
       throw new Error("Bedrock returned an unsupported stream content type.");
@@ -262,6 +270,7 @@ export class BedrockConverseStreamAdapter implements ProviderClient {
     const reader = response.body.getReader();
     let pending = Buffer.alloc(0);
     let text = "";
+    let reasoning = "";
     let stopReason: string | undefined;
     let messageStopped = false;
     let usage: ModelReply["usage"];
@@ -296,7 +305,7 @@ export class BedrockConverseStreamAdapter implements ProviderClient {
               ? STREAM_EXCEPTION_STATUSES[exceptionName]
               : undefined;
             if (status === undefined) throw new Error("Bedrock stream returned an error event.");
-            throw new ProviderRequestError(status);
+            throw new ProviderRequestError(status, undefined, retryAfter);
           }
           if (event.type === "contentBlockStart") {
             const block = payload.contentBlockStart as { contentBlockIndex?: unknown; start?: { toolUse?: { toolUseId?: unknown; name?: unknown } } } | undefined;
@@ -311,7 +320,7 @@ export class BedrockConverseStreamAdapter implements ProviderClient {
             const delta = block?.delta;
             if (!delta || typeof delta !== "object" || Array.isArray(delta)) throw new Error("Bedrock returned an unsupported content block delta.");
             const variants = Object.keys(delta);
-            if (variants.length !== 1 || (variants[0] !== "text" && variants[0] !== "toolUse")) {
+            if (variants.length !== 1 || (variants[0] !== "text" && variants[0] !== "toolUse" && variants[0] !== "reasoningContent")) {
               throw new Error("Bedrock returned an unsupported content block delta.");
             }
             if (variants[0] === "text") {
@@ -319,6 +328,29 @@ export class BedrockConverseStreamAdapter implements ProviderClient {
               text += delta.text;
               if (text.length > MAX_FRAME_BYTES) throw new Error("Bedrock response exceeded the supported size.");
               await onDelta?.(delta.text);
+            } else if (variants[0] === "reasoningContent") {
+              const value = "reasoningContent" in delta ? delta.reasoningContent : undefined;
+              if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("Bedrock returned an invalid reasoning delta.");
+              // `text` is reasoning the model emitted; `signature` attests it
+              // and `redactedContent` is already-redacted bytes. Only `text` is
+              // surfaced, and it never counts as answer text.
+              for (const key of Object.keys(value)) {
+                if (!["text", "signature", "redactedContent"].includes(key)) throw new Error("Bedrock returned an invalid reasoning delta.");
+              }
+              const reasoningDelta = value as { text?: unknown; signature?: unknown; redactedContent?: unknown };
+              if (
+                reasoningDelta.text === undefined &&
+                reasoningDelta.signature === undefined &&
+                reasoningDelta.redactedContent === undefined
+              ) throw new Error("Bedrock returned an invalid reasoning delta.");
+              if (reasoningDelta.signature !== undefined && typeof reasoningDelta.signature !== "string") throw new Error("Bedrock returned an invalid reasoning delta.");
+              if (reasoningDelta.redactedContent !== undefined && typeof reasoningDelta.redactedContent !== "string") throw new Error("Bedrock returned an invalid reasoning delta.");
+              if (reasoningDelta.text !== undefined) {
+                if (typeof reasoningDelta.text !== "string") throw new Error("Bedrock returned an invalid reasoning delta.");
+                reasoning += reasoningDelta.text;
+                if (reasoning.length > MAX_FRAME_BYTES) throw new Error("Bedrock response exceeded the supported size.");
+                await onReasoning?.(reasoningDelta.text);
+              }
             } else {
               if (
                 typeof block?.contentBlockIndex !== "number" ||

@@ -1,5 +1,6 @@
 import { PROJECT_EXEC_TOOL } from "./project-sandbox.ts";
 import { PROJECT_CHANGES_TOOL } from "./project-workspace.ts";
+import { TODO_WRITE_TOOL } from "./todo-tool.ts";
 import { createHash } from 'node:crypto';
 
 /** Managed text documents, never paths on the host filesystem. Persistence and
@@ -36,6 +37,11 @@ export function createWorkspace(): WorkspaceState { return { version: 1, files: 
 
 export function workspaceToolClass(name: string): 'r0' | 'r1' | 'r3' | undefined {
   if (name === 'void_workspace_list' || name === 'void_workspace_read' || name === PROJECT_CHANGES_TOOL.name) return 'r0';
+  // The checklist reaches nothing outside the conversation, so it carries the
+  // same class as reading: no document changes, nothing to undo. The class is
+  // declared here rather than at dispatch so the catalogue and the policy
+  // decision cannot disagree about what the tool is.
+  if (name === TODO_WRITE_TOOL.name) return 'r0';
   if (name === 'void_workspace_write' || name === 'void_workspace_delete') return 'r1';
   if (name === PROJECT_EXEC_TOOL.name) return 'r3';
   return undefined;

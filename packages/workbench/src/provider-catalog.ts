@@ -383,6 +383,146 @@ export const CONFIGURABLE_PROVIDER_DESCRIPTORS:
       ),
   );
 
+/** Why a discovered local credential has no import route. */
+export type ProviderImportUnavailableReason =
+  | "unknown-provider"
+  | "no-api-key-transport"
+  | "endpoint-requires-options"
+  | "adapter-rejects-provider";
+
+export type ProviderImportRoute =
+  | {
+      readonly status: "api-key";
+      readonly descriptor: ConfigurableProviderDescriptor & {
+        readonly endpoint: string;
+      };
+    }
+  | {
+      readonly status: "unsupported";
+      readonly reason: ProviderImportUnavailableReason;
+    };
+
+/** Transport order used when one provider offers several importable rows. An
+ * OpenAI-compatible key normally speaks the first one. */
+const IMPORTABLE_TRANSPORT_ORDER: readonly ImplementedProviderTransport[] = [
+  "openai-completions",
+  "anthropic-messages",
+  "openai-responses",
+  "openrouter",
+  "google-generative-ai",
+  "mistral-conversations",
+  "ollama-chat",
+];
+
+function transportRank(transport: ImplementedProviderTransport): number {
+  const index = IMPORTABLE_TRANSPORT_ORDER.indexOf(transport);
+  return index === -1 ? IMPORTABLE_TRANSPORT_ORDER.length : index;
+}
+
+/** Whether the adapter for this transport accepts this provider id with an
+ * API-key profile. These are the guards in provider-adapters/factory.ts and the
+ * adapters themselves, not a preference: a descriptor that reaches an adapter
+ * with a mismatched provider id throws before any request, so offering it as an
+ * import would fail every time. */
+function adapterAcceptsApiKeyDescriptor(
+  descriptor: ConfigurableProviderDescriptor,
+): boolean {
+  switch (descriptor.transport) {
+    case "openai-completions":
+      // CompatibleProvider refuses direct OpenAI URLs; that provider speaks
+      // the Responses transport instead.
+      return descriptor.providerId !== "openai";
+    case "anthropic-messages":
+      return true;
+    case "openai-responses":
+      return descriptor.providerId === "openai";
+    case "openrouter":
+      return descriptor.providerId === "openrouter";
+    case "google-generative-ai":
+      return descriptor.providerId === "google";
+    case "mistral-conversations":
+      return descriptor.providerId === "mistral";
+    case "ollama-chat":
+      return descriptor.providerId === "ollama-cloud";
+    default:
+      // Azure, Vertex and Bedrock need options or a host credential chain that
+      // a local API-key file does not carry.
+      return false;
+  }
+}
+
+/** Resolve a provider id to a manifest-backed API-key import route.
+ *
+ * Only rows whose endpoint is a literal manifest URL are importable: a
+ * rule-driven endpoint needs project, location or account values that a local
+ * credential file does not carry, and this importer never invents them. A
+ * provider that the manifest knows only through blocked transports returns a
+ * structured unsupported state instead of throwing, so discovery of an
+ * unknown local credential can never crash setup. */
+export function providerImportRoute(providerId: string): ProviderImportRoute {
+  const descriptors = CONFIGURABLE_PROVIDER_DESCRIPTORS.filter(
+    (descriptor) => descriptor.providerId === providerId,
+  );
+  const keyDescriptors = descriptors.filter(
+    (
+      descriptor,
+    ): descriptor is ConfigurableProviderDescriptor & {
+      readonly endpoint: string;
+    } =>
+      descriptor.authKind === "api-key" &&
+      descriptor.endpoint !== null &&
+      adapterAcceptsApiKeyDescriptor(descriptor),
+  );
+  if (keyDescriptors.length) {
+    const ranked = [...keyDescriptors].sort(
+      (left, right) =>
+        transportRank(left.transport) - transportRank(right.transport) ||
+        left.endpoint.localeCompare(right.endpoint) ||
+        left.model.localeCompare(right.model),
+    );
+    const [descriptor] = ranked;
+    if (descriptor) return { status: "api-key", descriptor };
+  }
+  if (!descriptors.length) {
+    const known = PROVIDER_MODEL_MANIFEST.providers.some(
+      (provider) =>
+        provider.status === "in-scope" && provider.providerId === providerId,
+    );
+    return {
+      status: "unsupported",
+      reason: known ? "no-api-key-transport" : "unknown-provider",
+    };
+  }
+  const apiKeyDescriptors = descriptors.filter(
+    (descriptor) => descriptor.authKind === "api-key",
+  );
+  return {
+    status: "unsupported",
+    reason: !apiKeyDescriptors.length
+      ? "no-api-key-transport"
+      : apiKeyDescriptors.some(
+            (descriptor) =>
+              descriptor.endpoint !== null &&
+              !adapterAcceptsApiKeyDescriptor(descriptor),
+          )
+        ? "adapter-rejects-provider"
+        : "endpoint-requires-options",
+  };
+}
+
+/** Whether the pinned manifest or a preset knows this provider at all. */
+export function isKnownProviderId(providerId: string): boolean {
+  return (
+    PROVIDER_MODEL_MANIFEST.providers.some(
+      (provider) =>
+        provider.status === "in-scope" && provider.providerId === providerId,
+    ) ||
+    CONFIGURABLE_PROVIDER_DESCRIPTORS.some(
+      (descriptor) => descriptor.providerId === providerId,
+    )
+  );
+}
+
 const providerModelBlockerKeys = new Set<string>();
 export const UNAVAILABLE_PROVIDER_MODELS = Object.freeze(
   PROVIDER_MODEL_BLOCKERS.map((blocker) => {

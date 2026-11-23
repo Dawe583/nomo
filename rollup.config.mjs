@@ -22,7 +22,8 @@
  */
 
 import { stripTypeScriptTypes } from "node:module";
-import ts from "typescript";
+import { readFileSync } from "node:fs";
+import { join, relative, sep } from "node:path";
 
 /** Packages whose `exports` point at raw TypeScript, which npm cannot resolve. */
 const WORKSPACE_TYPED = {
@@ -63,27 +64,64 @@ const workspaceSource = {
  * would only add a file to the tarball that cannot be more accurate than the
  * stripped source it describes.
  */
-const stripTypes = {
+const stripTypes = (sourceRoot) => ({
   name: "nomo-strip-types",
   transform(code, id) {
-    if (/\.tsx$/.test(id)) {
-      const result = ts.transpileModule(code, {
-        fileName: id,
-        compilerOptions: {
-          jsx: ts.JsxEmit.ReactJSX,
-          jsxImportSource: "@opentui/react",
-          target: ts.ScriptTarget.ES2022,
-        },
-      });
-      return { code: result.outputText, map: null };
-    }
     if (!/\.(ts|mts|cts)$/.test(id)) return null;
+    const relativeId = relative(sourceRoot, id).split(sep).join("/");
+    const sourceUrl = relativeId.startsWith("../")
+      ? `external/${relativeId.split("/").at(-1)}`
+      : relativeId;
     return {
-      code: stripTypeScriptTypes(code, { mode: "strip", sourceUrl: id }),
+      code: stripTypeScriptTypes(code, { mode: "strip", sourceUrl }),
       map: null,
     };
   },
-};
+});
+
+/**
+ * The placeholder `packages/cli/src/package-version.ts` carries, and the token
+ * the version plugin replaces.
+ *
+ * Exported so `scripts/src/bundle-cli.mjs` can refuse to write an artifact that
+ * still contains it. A bundle stamped with nothing is a version nobody bumped.
+ */
+export const BUNDLED_VERSION_PLACEHOLDER = "__NOMO_BUNDLED_VERSION__";
+
+/** The manifest whose `version` is the single source of truth for the stamp. */
+export function readPackageVersion(base) {
+  const path = join(base, "packages/cli/package.json");
+  const manifest = JSON.parse(readFileSync(path, "utf8"));
+  if (typeof manifest.version !== "string" || !manifest.version)
+    throw new Error(`${path} has no version`);
+  return manifest.version;
+}
+
+/**
+ * Rollup plugin: stamp the manifest version over the bundle placeholder.
+ *
+ * The artifact can be written to any `--out` directory, and only the shipped
+ * `packages/cli/dist` has a manifest one level above it. Without the stamp a
+ * bundle elsewhere answered `--version` with ENOENT. The plugin is scoped to the
+ * one module that declares the placeholder, so no other literal is rewritten.
+ */
+const bundleVersion = (version) => ({
+  name: "nomo-bundle-version",
+  transform(code, id) {
+    if (!/(^|\/)packages\/cli\/src\/package-version\.ts$/.test(id)) return null;
+    const stamped = code.replaceAll(
+      `"${BUNDLED_VERSION_PLACEHOLDER}"`,
+      JSON.stringify(version),
+    );
+    // A renamed or removed placeholder would silently ship an unstamped bundle,
+    // so the build stops here instead.
+    if (stamped === code)
+      throw new Error(
+        `packages/cli/src/package-version.ts no longer carries ${BUNDLED_VERSION_PLACEHOLDER}`,
+      );
+    return { code: stamped, map: null };
+  },
+});
 
 /**
  * @param {{ root?: string, outDir?: string }} [options]
@@ -94,7 +132,11 @@ export function bundleOptions({ root, outDir } = {}) {
   return {
     input: new URL("packages/cli/bin/nomo.mjs", import.meta.url).pathname,
     external: isExternal,
-    plugins: [workspaceSource, stripTypes],
+    plugins: [
+      workspaceSource,
+      bundleVersion(readPackageVersion(base)),
+      stripTypes(base),
+    ],
     // A cycle between workspace siblings is a property of the source graph, not
     // a defect in the artifact, and it emits one warning per pair per build.
     onwarn(warning, warn) {

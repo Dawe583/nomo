@@ -52,7 +52,7 @@ The macOS build host needs Rust and Xcode Command Line Tools. Windows x64 needs
 Rust MSVC, Visual Studio C++ build tools and WebView2; see `docs/WINDOWS-DESKTOP.md`. macOS 13.5 or newer is
 required by the bundled Node runtime. macOS arm64 and x64 are
 supported on their matching host architectures. The build pins and verifies the
-SHA-256 of the official Node distribution. The exact website Aperture logo is
+SHA-256 of the official Node distribution. The exact website NOMO grid logo is
 used to generate the application icons.
 
 The first release-compile on a host can fail with `can't find crate for ...` even though the named proc-macro artifact exists on disk and reads cleanly on the next compile. The observed remedy is `cargo clean --release -p <crate>` with the crate name taken from the error, then re-run `pnpm --dir apps/desktop build`; the second pass completes and the crate is never in this state again on that machine. This is a toolchain-level first-pass defect, not a repository defect: the same source builds green in debug mode and in a second release pass, and this repository's tests do not depend on the release profile.

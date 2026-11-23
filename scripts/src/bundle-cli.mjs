@@ -17,6 +17,7 @@ import {
   copyFileSync,
   existsSync,
   mkdirSync,
+  readdirSync,
   rmSync,
   statSync,
   writeFileSync,
@@ -24,7 +25,11 @@ import {
 import { join, resolve } from "node:path";
 import { rollup } from "rollup";
 
-import { bundleOptions, bundleOutput } from "../../rollup.config.mjs";
+import {
+  BUNDLED_VERSION_PLACEHOLDER,
+  bundleOptions,
+  bundleOutput,
+} from "../../rollup.config.mjs";
 
 const USAGE = "usage: node scripts/src/bundle-cli.mjs [--out <dir>] [--quiet]";
 
@@ -79,6 +84,16 @@ export async function buildBundle({
     const entryChunk = chunks.find((chunk) => chunk.isEntry);
     if (!entryChunk) throw new Error("rollup emitted no entry chunk");
 
+    // The artifact answers `--version` from a stamp, because `--out` need not
+    // have a manifest above it. An unreplaced placeholder would ship a version
+    // token, so the build stops before it writes anything.
+    for (const chunk of chunks) {
+      if (chunk.code.includes(BUNDLED_VERSION_PLACEHOLDER))
+        throw new Error(
+          `${chunk.fileName} still carries ${BUNDLED_VERSION_PLACEHOLDER}`,
+        );
+    }
+
     // Cleared first, so a chunk from an earlier build cannot survive into a
     // tarball as dead weight and then be imported by a chunk that no longer
     // needs it.
@@ -91,10 +106,29 @@ export async function buildBundle({
       join(base, "packages/workbench/src/provider-manifest.json"),
       join(out, "provider-manifest.json"),
     );
-    copyFileSync(
-      join(base, "packages/cli/src/tui/nomo-logo.png"),
-      join(out, "nomo-logo.png"),
-    );
+
+    const iconSource = join(base, "packages/cli/src/tui/icons");
+    const iconFiles = readdirSync(iconSource)
+      .filter(
+        (file) =>
+          file.endsWith(".png") ||
+          file === "LICENSE" ||
+          file === "ATTRIBUTION.md",
+      )
+      .sort();
+    const pngFiles = iconFiles.filter((file) => file.endsWith(".png"));
+    if (
+      pngFiles.length !== 56 ||
+      !iconFiles.includes("LICENSE") ||
+      !iconFiles.includes("ATTRIBUTION.md")
+    )
+      throw new Error(
+        "expected 56 bundled TUI icon variants with license and attribution",
+      );
+    const iconOutput = join(out, "icons");
+    mkdirSync(iconOutput, { recursive: true });
+    for (const file of iconFiles)
+      copyFileSync(join(iconSource, file), join(iconOutput, file));
 
     const file = join(out, entryChunk.fileName);
     if (!quiet) {

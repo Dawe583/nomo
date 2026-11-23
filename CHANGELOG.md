@@ -17,7 +17,7 @@ All notable user-facing changes since the first repository commit.
 - A one-row live chat viewport now follows non-empty streamed code rows instead
   of the blank separator after a newline.
 - Removed a width-40 debug diagnostic that leaked renderer details to stderr.
-- Spacious NOMO TUI views keep the pale aperture and live metadata, dock a full-width flat charcoal composer and compact counts, suppress verbose shortcut chrome, and render user/error messages as a flat sequence.
+- Spacious NOMO TUI views show the supplied six-by-six grid mark and live metadata. The prompt composer leaves the terminal background untouched and user/error messages retain readable role labels.
 - Spacious prompt surfaces now include vertical padding, and the workspace canvas uses the terminal's default background.
 - Empty TUI lists center their existing placeholder in the available body.
 - Status rows retain model names when the displayed row has enough room.

@@ -1,5 +1,5 @@
 import type { Model, ModelMessage, ModelReply, ToolCall } from "../provider.ts";
-import { ProviderRequestError } from "../provider.ts";
+import { ProviderRequestError, parseRetryAfter } from "../provider.ts";
 import { defaultHarnessSettings, type HarnessSettings } from "../harness-settings.ts";
 import type { ProviderAdapterConfig, ProviderClient } from "./types.ts";
 import { isBedrockMantleBaseUrl } from "./bedrock-mantle-config.ts";
@@ -111,6 +111,7 @@ class ResponsesAdapter implements ProviderClient {
     tools: readonly unknown[],
     signal: AbortSignal,
     onDelta?: (text: string) => void | Promise<void>,
+    onReasoning?: (text: string) => void | Promise<void>,
   ): Promise<ModelReply> {
     const instructions = messages.filter(message => message.role === "system").map(message => message.content ?? "").join("\n\n");
     const input: unknown[] = [];
@@ -148,7 +149,7 @@ class ResponsesAdapter implements ProviderClient {
     const response = await this.post(body, signal);
     if (response.headers.get("content-type")?.includes("text/event-stream")) {
       if (!onDelta) throw new Error("Provider returned an unexpected stream.");
-      return this.stream(response, signal, onDelta);
+      return this.stream(response, signal, onDelta, onReasoning);
     }
     const decoded = await this.decode(response);
     return this.toReply(decoded);
@@ -176,9 +177,9 @@ class ResponsesAdapter implements ProviderClient {
         signal: AbortSignal.any([signal, AbortSignal.timeout(60000)]),
       });
       if (!response.ok) {
-        const retryAfter = response.headers.get("retry-after");
+        const retryAfter = parseRetryAfter(response.headers.get("retry-after"));
         await response.body?.cancel().catch(() => {});
-        throw new ProviderRequestError(response.status, undefined, retryAfter && /^\d+$/.test(retryAfter) ? Number(retryAfter) : undefined);
+        throw new ProviderRequestError(response.status, undefined, retryAfter);
       }
       return response;
     } catch (error) {
@@ -215,8 +216,9 @@ class ResponsesAdapter implements ProviderClient {
       signal: AbortSignal.timeout(15000),
     });
     if (!response.ok) {
+      const retryAfter = parseRetryAfter(response.headers.get("retry-after"));
       await response.body?.cancel().catch(() => {});
-      throw new ProviderRequestError(response.status);
+      throw new ProviderRequestError(response.status, undefined, retryAfter);
     }
     try { return await response.json() as { data?: unknown }; }
     catch { throw new Error("Provider returned invalid JSON."); }
@@ -259,7 +261,12 @@ class ResponsesAdapter implements ProviderClient {
     };
   }
 
-  private async stream(response: Response, signal: AbortSignal, onDelta: (text: string) => void | Promise<void>): Promise<ModelReply> {
+  private async stream(
+    response: Response,
+    signal: AbortSignal,
+    onDelta: (text: string) => void | Promise<void>,
+    onReasoning?: (text: string) => void | Promise<void>,
+  ): Promise<ModelReply> {
     if (!response.body) throw new Error("Provider returned an empty stream.");
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
@@ -267,19 +274,26 @@ class ResponsesAdapter implements ProviderClient {
     let completed: ResponsesObject | undefined;
     let terminal = false;
     let text = "";
-    let emission = "";
-    const emit = async (delta: string, flush = false) => {
-      emission = this.redact(emission + delta);
-      let hold = 0;
-      if (!flush) {
-        for (let index = 1; index < this.apiKey.length; index++) {
-          if (emission.endsWith(this.apiKey.slice(0, index))) hold = index;
+    let reasoning = "";
+    /** One redacting emitter per channel; see the Anthropic adapter's twin. */
+    const createEmitter = (sink: (delta: string) => void | Promise<void>) => {
+      let emission = "";
+      return async (delta: string, flush = false) => {
+        emission = this.redact(emission + delta);
+        let hold = 0;
+        if (!flush) {
+          for (let index = 1; index < this.apiKey.length; index++) {
+            if (emission.endsWith(this.apiKey.slice(0, index))) hold = index;
+          }
         }
-      }
-      const visible = emission.slice(0, emission.length - hold);
-      emission = hold ? emission.slice(-hold) : "";
-      if (visible) await onDelta(visible);
+        const visible = emission.slice(0, emission.length - hold);
+        emission = hold ? emission.slice(-hold) : "";
+        if (visible) await sink(visible);
+      };
     };
+    const emit = createEmitter(onDelta);
+    const emitReasoning: (delta: string, flush?: boolean) => Promise<void> =
+      onReasoning ? createEmitter(onReasoning) : async () => {};
     try {
       while (true) {
         let value: Uint8Array | undefined;
@@ -313,6 +327,18 @@ class ResponsesAdapter implements ProviderClient {
             text += event.delta;
             if (text.length > 2_000_000) throw new Error("Provider response exceeded the supported size.");
             await emit(event.delta);
+          } else if (
+            // The provider's own reasoning channel. `reasoning_summary_text` is
+            // the summarized form most accounts receive; `reasoning_text` is
+            // the raw form some organizations are allowed to stream. Both are
+            // reasoning, never answer text, so neither reaches `text`.
+            (event.type === "response.reasoning_summary_text.delta" ||
+              event.type === "response.reasoning_text.delta") &&
+            typeof event.delta === "string"
+          ) {
+            reasoning += event.delta;
+            if (reasoning.length > 2_000_000) throw new Error("Provider response exceeded the supported size.");
+            await emitReasoning(event.delta);
           } else if (event.type === "response.completed") {
             completed = event.response;
             terminal = true;
@@ -327,6 +353,7 @@ class ResponsesAdapter implements ProviderClient {
       }
       if (!completed) throw new Error("Provider Responses stream ended before completion.");
       const reply = this.toReply(completed);
+      await emitReasoning("", true);
       await emit("", true);
       if (reply.message.content !== text && text) return { ...reply, message: { ...reply.message, content: text } };
       return reply;

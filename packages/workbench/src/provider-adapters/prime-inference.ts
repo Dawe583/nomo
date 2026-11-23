@@ -1,6 +1,7 @@
 import {
   CompatibleProvider,
   ProviderRequestError,
+  parseRetryAfter,
   type Model,
   type ModelMessage,
   type ModelReply,
@@ -179,7 +180,11 @@ export class PrimeInferenceProvider implements ProviderClient {
       await response.body?.cancel().catch(() => {});
       if (response.status === 404)
         throw new Error("Prime Inference model catalog is unavailable.");
-      throw new ProviderRequestError(response.status);
+      throw new ProviderRequestError(
+        response.status,
+        undefined,
+        parseRetryAfter(response.headers.get("retry-after")),
+      );
     }
     let catalog: unknown;
     try {

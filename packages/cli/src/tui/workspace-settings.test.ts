@@ -52,36 +52,37 @@ test("/settings with no argument lists every limit and the value in force", asyn
   await ui.command("/settings");
 
   const shown = ui.lines().join("\n");
+  assert.match(shown, /⚙ SETTINGS/, "the interactive panel is the visible surface");
   for (const key of keys) {
-    assert.match(shown, new RegExp(`\\b${key}\\b`), `${key} is not listed`);
-    const spec = HARNESS_SETTINGS[key];
-    // The range belongs on the row: a number an operator cannot bound is a
-    // number they have to guess at.
-    assert.match(
-      shown,
-      new RegExp(`\\[${spec.min}-${spec.max}\\]`),
-      `${key} does not show its allowed range`,
-    );
+    const label = HARNESS_SETTINGS[key].label;
+    const value = app.harnessSettings()[key];
+    // The panel speaks in operator language, so the human label is the row.
+    assert.ok(shown.includes(label), `${key} (${label}) is not listed`);
+    // The range belongs beside the value: a number an operator cannot bound
+    // is a number they have to guess at, and a literal table would still show
+    // the default.
+    const row =
+      key === "refinementEnabled"
+        ? `${label} ‹ ${value ? "on" : "off"} ›`
+        : `${label} = ${value}`;
+    assert.ok(shown.includes(row), `${key} does not show the value in force`);
   }
-  assert.match(shown, /maxTurns\s+20/, "the current value is not shown");
   // Every default agrees with a hardcoded table, so listing at defaults proves
-  // nothing about the wiring. A configured value does: the row has to move
-  // with the stored setting, and a table of literals would still print 20.
+  // nothing about the wiring. A configured value does.
   app.patchHarnessSettings({ maxTurns: 7, maxRequestBytes: 2048 });
   await ui.command("/settings");
   const configured = ui.lines().join("\n");
-  assert.match(configured, /maxTurns\s+7/, "the row did not follow the setting");
+  assert.match(configured, /Turns per run = 7/, "the row did not follow the setting");
   assert.match(
     configured,
-    /maxRequestBytes\s+2048/,
+    /Request bytes = 2048/,
     "the row did not follow the setting",
   );
   assert.match(
     configured,
-    /maxOutputTokens\s+4096/,
+    /Output tokens per request = 4096/,
     "an untouched limit must still show its own value",
   );
-  assert.match(configured, /maxTurns\s+7\s+\[1-20\]\s+\(changed\)/);
   assert.ok(
     commandSuggestions("/sett").some(([name]) => name === "/settings"),
     "the command is not discoverable in the palette",
@@ -100,15 +101,21 @@ test("/settings key value changes the limit and the notice names it", async (t) 
 
   assert.equal(app.harnessSettings().maxTurns, 5);
   assert.match(ui.notice, /Turns per run is now 5/);
-  assert.match(ui.lines().join("\n"), /maxTurns\s+5/);
-  // The change is marked, so a set value reads differently from a default.
-  assert.match(ui.lines().join("\n"), /\(changed\)/);
+  assert.match(ui.lines().join("\n"), /Turns per run = 5/);
+  // A neighbour keeps its own value, so the row is not a shared literal.
+  assert.match(ui.lines().join("\n"), /Output tokens per request = 4096/);
 
   // A second limit is independent: one patch must not move a neighbour.
   await ui.command("/settings maxQueuedRuns 3");
   assert.equal(app.harnessSettings().maxTurns, 5);
   assert.equal(app.harnessSettings().maxQueuedRuns, 3);
   assert.match(ui.notice, /Queued background runs is now 3/);
+  assert.match(ui.lines().join("\n"), /Queued background runs = 3/);
+  assert.match(
+    ui.lines().join("\n"),
+    /Turns per run = 5/,
+    "the first limit is untouched",
+  );
 });
 
 test("an unknown setting is refused by name and changes nothing", async (t) => {
@@ -117,7 +124,7 @@ test("an unknown setting is refused by name and changes nothing", async (t) => {
 
   await assert.rejects(
     ui.command("/settings nonsense 5"),
-    /Unknown harness setting nonsense/,
+    /Unknown setting: nonsense\. Use \/settings/,
   );
   assert.deepEqual({ ...app.harnessSettings() }, before);
 });

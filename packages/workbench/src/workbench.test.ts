@@ -34,6 +34,121 @@ const root = fileURLToPath(new URL("../../../", import.meta.url));
  */
 const storeDirUnder = (ledgerDir: string) => join(ledgerDir, "workbench");
 
+test("providerModelsProjection separates configured profiles from attached catalog", async (t) => {
+  const fetcher: typeof fetch = async (url) =>
+    String(url).endsWith("/models")
+      ? Response.json({ data: [{ id: "shared", name: "Shared" }, { id: "shared", name: "Duplicate" }, { id: "active-only", name: "Active" }] })
+      : Response.json({ choices: [{ message: { role: "assistant", content: "ok" } }] });
+  const fixture = await isolatedWorkbench(t, fetcher, {}, { configure: false });
+  const app = fixture.app;
+
+  assert.deepEqual(app.providerModelsProjection(), {
+    activeProviderId: null,
+    providers: [],
+  });
+  await app.configure({ baseUrl: "https://first.test/v1", apiKey: "first-secret" });
+  const projection = app.providerModelsProjection();
+  assert.equal(projection.providers.length, 1);
+  assert.equal(projection.activeProviderId, "https://first.test/v1");
+  assert.deepEqual(projection.providers[0], {
+    id: "https://first.test/v1",
+    configured: true,
+    attached: true,
+    catalogStatus: "ready",
+    models: [
+      { id: "shared", name: "Shared" },
+      { id: "active-only", name: "Active" },
+    ],
+  });
+  assert.doesNotMatch(JSON.stringify(projection), /first-secret/);
+});
+
+test("providerModelsProjection keeps inactive profiles configured but never claims their catalogs", async (t) => {
+  const catalogRequests: string[] = [];
+  const fetcher: typeof fetch = async (url) => {
+    const value = String(url);
+    if (value.endsWith("/models")) {
+      catalogRequests.push(value);
+      if (value.startsWith("https://broken.test/")) return new Response("secret upstream body", { status: 503 });
+      return Response.json({ data: [{ id: "same", name: "First" }] });
+    }
+    return Response.json({ choices: [{ message: { role: "assistant", content: "ok" } }] });
+  };
+  const fixture = await isolatedWorkbench(t, fetcher, {}, { configure: false });
+  const app = fixture.app;
+  await app.configure({ baseUrl: "https://first.test/v1", apiKey: "first-secret" });
+  await app.configure({ baseUrl: "https://second.test/v1", apiKey: "second-secret" });
+  const projection = app.providerModelsProjection();
+  assert.equal(projection.providers.length, 2);
+  assert.equal(projection.activeProviderId, "https://second.test/v1");
+  assert.deepEqual(projection.providers.map(({ attached, catalogStatus, models }) => ({ attached, catalogStatus, models })), [
+    { attached: false, catalogStatus: "unavailable", models: [] },
+    { attached: true, catalogStatus: "ready", models: [{ id: "same", name: "First" }] },
+  ]);
+  assert.deepEqual(catalogRequests, ["https://first.test/v1/models", "https://second.test/v1/models"]);
+  await assert.rejects(app.configure({ baseUrl: "https://broken.test/v1", apiKey: "bad-secret" }), /HTTP 503/);
+  assert.equal(app.providerModelsProjection().activeProviderId, "https://second.test/v1");
+  assert.doesNotMatch(JSON.stringify(app.providerModelsProjection()), /first-secret|second-secret|bad-secret|secret upstream body/);
+});
+
+test("providerModelsProjection preserves the attached provider after empty or malformed setup catalogs", async (t) => {
+  const fetcher: typeof fetch = async (url) => {
+    const value = String(url);
+    if (value.endsWith("/models")) {
+      if (value.startsWith("https://empty.test/")) return Response.json({ data: [] });
+      if (value.startsWith("https://malformed.test/")) return Response.json({ message: "bad-secret" });
+      return Response.json({ data: [{ id: "live", name: "Live" }] });
+    }
+    return Response.json({ choices: [{ message: { role: "assistant", content: "ok" } }] });
+  };
+  const fixture = await isolatedWorkbench(t, fetcher, {}, { configure: false });
+  await fixture.app.configure({ baseUrl: "https://live.test/v1", apiKey: "live-secret" });
+  const before = fixture.app.providerModelsProjection();
+  await assert.rejects(fixture.app.configure({ baseUrl: "https://empty.test/v1", apiKey: "empty-secret" }), /no available models/i);
+  await assert.rejects(fixture.app.configure({ baseUrl: "https://malformed.test/v1", apiKey: "malformed-secret" }), /malformed|unexpected|invalid|data/i);
+  assert.deepEqual(fixture.app.providerModelsProjection(), before);
+  assert.doesNotMatch(JSON.stringify(fixture.app.providerModelsProjection()), /live-secret|empty-secret|malformed-secret|bad-secret/);
+});
+
+test("providerModelsProjection ignores a superseded catalog setup result", async (t) => {
+  let resolveFirst: ((response: Response) => void) | undefined;
+  let firstRequested: (() => void) | undefined;
+  const requested = new Promise<void>((resolve) => { firstRequested = resolve; });
+  const fetcher: typeof fetch = async (url) => {
+    const value = String(url);
+    if (value === "https://slow.test/v1/models") {
+      firstRequested?.();
+      return await new Promise<Response>((resolve) => { resolveFirst = resolve; });
+    }
+    if (value.endsWith("/models")) return Response.json({ data: [{ id: "winner", name: "Winner" }] });
+    return Response.json({ choices: [{ message: { role: "assistant", content: "ok" } }] });
+  };
+  const fixture = await isolatedWorkbench(t, fetcher, {}, { configure: false });
+  const staleSetup = fixture.app.configure({ baseUrl: "https://slow.test/v1", apiKey: "slow-secret" });
+  await requested;
+  await fixture.app.configure({ baseUrl: "https://winner.test/v1", apiKey: "winner-secret" });
+  resolveFirst?.(Response.json({ data: [{ id: "loser", name: "Loser" }] }));
+  await assert.rejects(staleSetup, /superseded/i);
+  assert.equal(fixture.app.providerModelsProjection().activeProviderId, "https://winner.test/v1");
+  assert.deepEqual(fixture.app.providerModelsProjection().providers.at(-1)?.models, [{ id: "winner", name: "Winner" }]);
+  assert.doesNotMatch(JSON.stringify(fixture.app.providerModelsProjection()), /slow-secret|winner-secret/);
+});
+
+test("providerModelsProjection does not probe during reads and omits stale catalogs when detached", async (t) => {
+  let requests = 0;
+  const fixture = await isolatedWorkbench(t, async (url) => {
+    if (String(url).endsWith("/models")) { requests++; return Response.json({ data: [{ id: "stale", name: "Stale" }] }); }
+    return Response.json({ choices: [{ message: { role: "assistant", content: "ok" } }] });
+  }, {}, { configure: false });
+  await fixture.app.configure({ baseUrl: "https://cached.test/v1", apiKey: "cached-secret" });
+  assert.equal(requests, 1);
+  assert.equal(fixture.app.providerModelsProjection().providers[0]?.catalogStatus, "ready");
+  assert.equal(requests, 1);
+  fixture.app.clearProvider();
+  assert.deepEqual(fixture.app.providerModelsProjection(), { activeProviderId: null, providers: [] });
+  assert.equal(requests, 1);
+});
+
 test("provider rejects direct OpenAI hosts and never echoes upstream error bodies", async () => {
   for (const baseUrl of [
     "https://openai.com/v1",

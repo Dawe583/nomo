@@ -1,6 +1,15 @@
-import { brandHeader } from "./brand.ts";
 import { CLASS_MARKER, classLabel, decisionLabel, paint } from "./theme.ts";
-import { box, columns, crop, fit, meter, pad, progressBar, rule, sanitizeText } from "./layout.ts";
+import {
+  box,
+  columns,
+  crop,
+  fit,
+  meter,
+  pad,
+  progressBar,
+  rule,
+  sanitizeText,
+} from "./layout.ts";
 import type {
   CostRecord,
   DashboardState,
@@ -36,10 +45,7 @@ function header(
   capabilities: TerminalCapabilities,
   now: number,
 ): string[] {
-  const age = Math.max(
-    0,
-    Math.floor((now - state.session.startedAt) / 1000),
-  );
+  const age = Math.max(0, Math.floor((now - state.session.startedAt) / 1000));
   const posture =
     state.session.posture === "enforce"
       ? paint("ENFORCE", "r0", capabilities, true)
@@ -61,12 +67,13 @@ function header(
   }
 
   // Billing tokens separate from context tokens
-  const billingLine = state.context?.billing !== undefined
-    ? `billing ${state.context.billing}tok`
-    : "";
+  const billingLine =
+    state.context?.billing !== undefined
+      ? `billing ${state.context.billing}tok`
+      : "";
 
   return [
-    ...brandHeader("NOMO", capabilities),
+    paint("NOMO  Watch", "accent", capabilities, true),
     right,
     ctxLine,
     billingLine,
@@ -160,7 +167,8 @@ function costRecordLabel(
 ): string {
   const usd = formatUsd(record.usd);
   // `unknown` nikdy `$0.00` - pokud je cena missing, renderuj `unknown`
-  if (record.usd === null) return `${record.model} ${record.tokens}tok ${record.records}rec unknown`;
+  if (record.usd === null)
+    return `${record.model} ${record.tokens}tok ${record.records}rec unknown`;
   return `${record.model} ${record.tokens}tok ${record.records}rec ${usd}`;
 }
 
@@ -172,7 +180,7 @@ function costPanel(
   const labelWidth = 20;
   const rows: string[] = [];
   // Table model × tokens × records
-  for (const record of (state.cost ?? [])) {
+  for (const record of state.cost ?? []) {
     const label = costRecordLabel(record, capabilities);
     rows.push(
       `${pad(paint(label.split(" ")[0] ?? "unknown", "muted", capabilities), labelWidth)}${fit(
@@ -181,10 +189,8 @@ function costPanel(
       )}`,
     );
   }
-  // Rate-limit reset info
-  const resetInfo = state.context?.billing !== undefined ? "5h 42% (resets 2h 10m)" : "";
-  if (resetInfo) rows.push(resetInfo);
   if (rows.length === 0) rows.push("-");
+  rows.push(fit("ctx reset unavailable; field absent", width));
   return rows;
 }
 
@@ -237,7 +243,6 @@ function holdBanner(
     width,
   );
 }
-
 
 function resolvedHoldBanner(
   resolved: ResolvedHold,
@@ -300,10 +305,7 @@ export function renderWatchFrame(
     state.calls.at(-1);
   const availableRows = Math.max(5, capabilities.rows - lines.length - 9);
 
-  function activityRowBlock(
-    width: number,
-    limit: number,
-  ): string[] {
+  function activityRowBlock(width: number, limit: number): string[] {
     if (width < 100) {
       return [
         ...box(
@@ -365,7 +367,13 @@ export function renderWatchFrame(
       ].slice(0, limit),
       signalWidth,
     );
-    return [...columns(columns(left, middle, activityWidth), right, activityWidth + 1 + detailWidth)];
+    return [
+      ...columns(
+        columns(left, middle, activityWidth),
+        right,
+        activityWidth + 1 + detailWidth,
+      ),
+    ];
   }
 
   lines.push(...activityRowBlock(width, availableRows));

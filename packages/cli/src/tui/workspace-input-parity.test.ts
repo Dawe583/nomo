@@ -193,6 +193,23 @@ test("yanking into the prompt respects the Unicode character limit", () => {
   assert.equal(input.cursor, 32000);
 });
 
+test("Alt+Y cycles within a yank truncated by the prompt limit", () => {
+  const input = new WorkspaceInput();
+  input.editing = true;
+  for (const value of ["first", "second"]) {
+    input.set(value);
+    input.key(undefined, { name: "u", ctrl: true });
+  }
+  input.set("x".repeat(31998));
+  input.key(undefined, { name: "y", ctrl: true });
+  assert.equal(input.value, "x".repeat(31998) + "se");
+
+  input.key(undefined, { name: "y", meta: true });
+  assert.equal(input.value, "x".repeat(31998) + "fi");
+  input.key(undefined, { name: "y", meta: true });
+  assert.equal(input.value, "x".repeat(31998) + "se");
+});
+
 test("prompt replacement ranges truncate without splitting Unicode", () => {
   const input = new WorkspaceInput();
   input.editing = true;

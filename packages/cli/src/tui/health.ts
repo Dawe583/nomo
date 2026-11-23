@@ -141,9 +141,7 @@ function buildValue(check: Check, motion: MotionContext): string {
   );
   const detail: string = sanitizeText(check.detail).trim();
   const core: string =
-    detail !== ""
-      ? `${icon} ${statePill} -- ${detail}`
-      : `${icon} ${statePill}`;
+    detail !== "" ? `${icon} ${statePill} · ${detail}` : `${icon} ${statePill}`;
   const remedy: string =
     check.remedy === undefined ? "" : sanitizeText(check.remedy).trim();
   return remedy !== "" ? `${core} (fix: ${remedy})` : core;

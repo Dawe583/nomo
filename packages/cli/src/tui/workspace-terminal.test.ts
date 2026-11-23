@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
-import { mkdtemp, mkdir, writeFile, rm, readdir } from "node:fs/promises";
+import { mkdtemp, mkdir, writeFile, rm, readdir, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -42,7 +42,8 @@ test("bare nomo and TUI flags open the real workspace", async (t) => {
   const bare = await exec(process.execPath, [binary], {
     env: { PATH: process.env.PATH, HOME: root, NOMO_DATA_DIR: root },
   });
-  assert.match(bare.stdout, /Welcome to NOMO|NOMO \/ local workspace/);
+  assert.match(bare.stdout, /NOMO {2}Chat/);
+  assert.match(bare.stdout, /NEW CONVERSATION/);
   assert.doesNotMatch(bare.stdout, /usage: nomo/);
   const result = await exec(
     process.execPath,
@@ -51,8 +52,8 @@ test("bare nomo and TUI flags open the real workspace", async (t) => {
       env: { PATH: process.env.PATH, HOME: root, NOMO_DATA_DIR: root },
     },
   );
-  // The overview leads with whether anything needs attention, then counts.
-  assert.match(result.stdout, /Runs 0/);
+  // The runs panel leads with the panel title and how many runs it recorded.
+  assert.match(result.stdout, /▶ RUNS · 0 recorded/);
   assert.doesNotMatch(result.stdout, /usage: nomo/);
   assert.equal(result.stderr, "");
 });
@@ -64,11 +65,16 @@ test("checkout launcher exposes the same bare nomo command on POSIX", async (t) 
   }
   const root = await mkdtemp(join(tmpdir(), "nomo-checkout-launcher-"));
   t.after(() => rm(root, { recursive: true, force: true }));
+  // The launcher reports the package version, so read it from the manifest
+  // instead of pinning a release number the checkout no longer carries.
+  const manifest = JSON.parse(
+    await readFile(new URL("../../package.json", import.meta.url), "utf8"),
+  ) as { version: string };
   const result = await exec(checkoutLauncher, ["--version"], {
     cwd: root,
     env: { PATH: process.env.PATH, HOME: root },
   });
-  assert.match(result.stdout, /^nomo 0\.1\.0\n$/);
+  assert.equal(result.stdout, `nomo ${manifest.version}\n`);
   assert.equal(result.stderr, "");
   const tui = await exec(
     checkoutLauncher,
@@ -78,7 +84,7 @@ test("checkout launcher exposes the same bare nomo command on POSIX", async (t) 
       env: { PATH: process.env.PATH, HOME: root, NOMO_DATA_DIR: root },
     },
   );
-  assert.match(tui.stdout, /Runs 0/);
+  assert.match(tui.stdout, /▶ RUNS · 0 recorded/);
   assert.doesNotMatch(tui.stdout, /usage: nomo/);
 });
 
@@ -111,8 +117,10 @@ test("shared runs view is available in plain one-shot output", async (t) => {
       env: { PATH: process.env.PATH, HOME: root, NOMO_DATA_DIR: root },
     },
   );
-  // The overview leads with whether anything needs attention, then counts.
-  assert.match(result.stdout, /Runs 0/);
-  assert.match(result.stdout, /setup-required/);
+  // The runs panel leads with its own title and the honest record count, then
+  // states that the provider still needs setup. Plain output stays plain.
+  assert.match(result.stdout, /▶ RUNS · 0 recorded/);
+  assert.match(result.stdout, /No run records are available/);
+  assert.match(result.stdout, /Provider unknown \| setup-required/);
   assert.doesNotMatch(result.stdout, /\x1b/);
 });

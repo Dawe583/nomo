@@ -27,7 +27,8 @@ Po přesunu klonu nebo výběru jiného klonu příkaz spusť znovu. Bez globál
 instalace funguje `pnpm nomo` nebo přímo
 `./nomo` na macOS/Linux a `.\nomo.cmd` v PowerShellu či cmd na Windows. Na macOS
 lze použít také `NOMO.command` dvojklikem. TUI potřebuje dostupný Node.js 24+ a
-pnpm. Není to `tui:preview`: tento příkaz používá skutečný lokální Workbench,
+pnpm. Interaktivní rozhraní běží přímo v Node.js, bez Bun nebo FFI re-execu.
+Není to `tui:preview`: tento příkaz používá skutečný lokální Workbench,
 šifrované uložiště, skutečný model a skutečné dokumentové operace.
 
 Výchozí provider je NVIDIA NIM, model `z-ai/glm-5.3-flash`, endpoint
@@ -62,8 +63,11 @@ zachovají vlastní profil.
 
 1. Po spuštění lze rovnou psát. `/new` založí novou konverzaci.
 2. Napiš: `Vytvoř plán testování a ulož ho do plan.md.` Enter odešle.
-3. Escape přejde do navigace. Tab přepíná přehled, chat, konverzace, dokumenty, ledger, schválení,
-   pravidla, nástroje, modely, spotřebu a nápovědu.
+3. Chat je jediná základní obrazovka. Napiš `/` pro nabídku příkazů nebo přímo
+   `/sessions`, `/documents`, `/ledger`, `/approvals`, `/policy`, `/tools`,
+   `/models`, `/usage` či `/help`. Otevře se celoobrazovkový panel. Escape
+   nejprve zavře detail nebo filtr; další Escape vrátí do Chatu. Tab v panelu
+   vrací do Chatu; při psaní v Chatu zůstává doplňováním.
 4. V dokumentech j/k nebo šipky vyberou řádek; Enter otevře obsah.
 5. `/edit` otevře lokální editor. Po jeho ukončení TUI zobrazí obsah před/po.
    `y` změnu uloží, Escape zruší. Uložení kontroluje očekávanou revizi.
@@ -76,14 +80,16 @@ zachovají vlastní profil.
 9. `q` v navigaci nebo Ctrl+C ukončí TUI a obnoví terminál. Již odeslaný
    externí nástroj může ještě dobíhat; automaticky se neopakuje.
 
-TUI má velké ASCII logo, barevné role zpráv, zvýrazněná rozhodnutí a nabídku
-příkazů. `/` nabídku otevře, šipky vybírají, Tab doplní a Enter spustí příkaz.
+TUI má barevné role zpráv, zvýrazněná rozhodnutí a nabídku příkazů. `/`
+nabídku otevře, šipky vybírají, Tab doplní a Enter spustí příkaz.
 Nabídka přijímá i fuzzy zkratku, například `/rs` pro `/resume`. `/clear`,
 `/status`, `/cost`, `/context`, `/permissions`, `/resume` a `/rewind`
 používají existující chat, přehled, usage, dokumenty, policy, historii
 konverzací a kontrolovaný Undo tok. Nevytvářejí druhou management vrstvu.
 `/mcp` je naopak správa MCP konektorů a má vlastní podpříkazy; popis je níže.
-Ctrl+R připraví hledání historie, Ctrl+O přepne úplný výpis nástrojů, Ctrl+L
+Ctrl+R připraví hledání historie. Ctrl+O během běhu přepíná podrobnost
+aktivity agenta a nikdy nemění výšku editoru; Ctrl+Shift+O skryje nebo zobrazí
+aktivitu nástrojů a uloží volbu pro další relaci. Ctrl+L
 překreslí terminál a Ctrl+D ukončí pouze prázdný vstup. Potvrzení editace
 a Undo ukazuje unified diff se změněnými úseky místo plného textu před a po.
 Při psaní šipka nahoru prochází předchozí pokyny dané konverzace. Po odeslání
@@ -91,12 +97,16 @@ zůstává chat připravený k psaní další zprávy; nový požadavek lze odes
 skončení běhu. Escape nebo Ctrl+C během běhu zastavuje model. Ctrl+C ve vstupu
 nejprve vymaže koncept; s prázdným vstupem ukončí aplikaci.
 
-Logo při startu krátce prosvítá; běh modelu má animovaný indikátor a pohyb
-na oddělovači vstupu. `NOMO_TUI_MOTION=0 pnpm tui` vypne animace.
-`NOMO_TUI_COLOR=0 pnpm tui` vypne barvy. Rozhraní je standardně anglické
-a barevné, i když prostředí zdědí `NO_COLOR=1`; barvy řídí vlastní nastavení NOMOu. Výpis `--once` je vždy statický bez barev.
-Malé terminály používají kompaktní logo a kratší navigaci. Zůstává vlastní
-ovládání NOMOu pro ledger a explicitní rozhodnutí; nejde o úplný klon Claude Code.
+Běh modelu má animovaný indikátor a pohyb na oddělovači vstupu.
+`NOMO_TUI_MOTION=0 pnpm tui` vypne animace.
+`NO_COLOR=1 pnpm tui` respektuje monochromatické nastavení terminálu.
+`FORCE_COLOR=1` může barvy explicitně zapnout a `NOMO_TUI_COLOR=0` je vždy
+vypne. Rozhraní je standardně anglické. Interaktivní výstup používá výchozí
+pozadí terminálu a respektuje jeho barevné schopnosti; `--once` zůstává statický
+a bez escape sekvencí. Při neinteraktivním výstupu přijímá `COLUMNS` a `LINES`
+pro náhled zvoleného rozměru; skutečné rozměry TTY mají přednost.
+Malé terminály používají kratší navigaci. Zůstává vlastní ovládání NOMOu pro
+ledger a explicitní rozhodnutí; nejde o úplný klon Claude Code.
 
 ### Čtení chatu a průběh práce
 
@@ -262,9 +272,14 @@ v TUI a nic nepřepíše. Escape vědomě zahodí náhled.
 ## Režimy, fronta a nové příkazy
 
 - Shift+Tab přepíná režim `normal` / `accept` / `plan`; volba přetrvá restart.
-  Alt+M a Shift+Alt+M přepínají vpřed a vzad mezi načtenými modely aktuálního
-  poskytovatele pro nové konverzace. Výběr modelu se nepoužívá jako náhrada za
-  chybějící katalog.
+  Alt+M otevře provider/model picker pro budoucí konverzace; Alt+P vybere
+  model jen pro aktuální konverzaci a pouze v jejím původním provideru.
+  Změna je dostupná jen při neaktivní konverzaci, ne během běhu, fronty,
+  neznámého výsledku nebo nevyřešené obnovy. Šipky vlevo a vpravo přepínají mezi
+  provider listem a katalogem vybraného providera; modely se nikdy neslévají.
+  Výběr nastaví model pro nové konverzace. Ctrl+P a Shift+Ctrl+P mimo Chat
+  cyklují modely připojeného providera. Chybějící
+  katalog nikdy nenahrazujeme odhadovanými modely.
 - Režim `plan` předřadí pokynu větu, aby model nejprve navrhl postup a nežádal
   hned nástroje měnící stav. Režim `accept` zkracuje klávesy editace, ale
   schválení externích nástrojů zůstává vždy explicitní. NOMO nikdy nic
@@ -283,9 +298,9 @@ v TUI a nic nepřepíše. Escape vědomě zahodí náhled.
   citaci obsahu do pokynu. Neznámá cesta odeslání zastaví a vypíše se.
 - Potvrzení změny ukazuje unified diff. Klávesa `y` přijme, `n` odmítne,
   Escape zruší. Nic se neaplikuje bez explicitní klávesy.
-- Stavový řádek ukazuje model, režim, čítač kontextu, tokeny z providera
-  a cenu. Workbench nedostává cenové údaje, takže je cena v TUI vždy
-  `unknown`, nikdy odhad.
+- Chat footer ukazuje model, nahlášené tokeny a cenu. Nezobrazuje režim,
+  čítač kontextu ani počet zpráv. Chybějící hodnoty zůstávají `?`; cena se
+  nikdy neodhaduje.
 - `/todos` vypíše checklist z reálných zpráv agenta. Přehled ukazuje
   otevřené položky aktuální konverzace.
 - `/compact` ukáže lokální výtah z uchovaných zpráv. Souhrn přes providera

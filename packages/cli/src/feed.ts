@@ -91,8 +91,14 @@ function printPage(
       stdout(JSON.stringify({ ...page, records }));
     }
   } else {
-    if (!follow || afterSeq === 0)
+    if (!follow || afterSeq === 0) {
+      stdout(
+        `integrity: hash chain verified; signatures ${
+          page.signed ? "checked" : "not checked"
+        }`,
+      );
       stdout("seq at tool klass decision argsDigest rule policyDigest rationale digest");
+    }
     for (const record of records) {
       // "-" is the honest rendering of both kinds of absence: a record with no
       // attribution and a record whose decision named no rule. Printing an

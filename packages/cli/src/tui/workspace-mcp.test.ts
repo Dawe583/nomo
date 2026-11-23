@@ -122,9 +122,15 @@ test("/mcp lists every connector with its consent state and next step", async (t
   await app.probeConnector(id);
   await ui.command("/mcp");
   text = ui.lines().join("\n");
-  assert.match(text, /PROBED \/ 1/);
-  assert.match(text, /counter +1 tools/);
-  assert.match(text, new RegExp(`next: /mcp confirm ${id}`));
+  assert.match(text, /probed\s+1/);
+  assert.match(text, /counter\s+·\s+1 tools/);
+  assert.match(text, /Enter inspects/);
+  ui.selected = ui.items().findIndex((row) => row.connector?.id === id);
+  await ui.openSelected();
+  assert.match(
+    ui.detail?.join("\n") ?? "",
+    new RegExp(`next: /mcp confirm ${id}`),
+  );
 
   await app.confirmConnector(id);
   await ui.command("/mcp");
@@ -132,10 +138,17 @@ test("/mcp lists every connector with its consent state and next step", async (t
   // Consent is the group heading now, not a column on the row. Both
   // connectors sit under CONFIRMED, which is the fact that matters: this is
   // the state in which a conversation actually gets tools.
-  assert.match(text, /● CONFIRMED \/ 2/);
-  assert.match(text, /counter +1 tools/);
-  assert.match(text, /in use by new conversations/);
-  for (const line of ui.lines()) assert.ok(visibleLength(line) <= 80, line);
+  assert.match(text, /confirmed\s+2/);
+  assert.match(text, /counter\s+·\s+1 tools/);
+  assert.match(text, /Confirmed connectors serve new conversations/);
+  const frame = stripAnsi(
+    renderWorkspace(ui, 80, 24, "", false, false, {
+      color: false,
+      motion: false,
+    }),
+  );
+  for (const line of frame.split("\n"))
+    assert.ok(visibleLength(line) <= 80, line);
 });
 
 test("/mcp probe names the host and sends nothing until it is confirmed", async (t) => {

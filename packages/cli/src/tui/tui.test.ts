@@ -586,6 +586,9 @@ describe("A6 cost panel", () => {
     };
     const caps = capabilities(80);
     const frame = renderWatchFrame(stateWithBilling, caps);
-    assert.match(frame, /5h 42% \(resets 2h 10m\)/);
+    // The renderer holds no reset window: the cost panel says so instead of
+    // inventing a countdown from a field the ledger does not carry.
+    assert.match(frame, /ctx reset unavailable; field absent/);
+    assert.doesNotMatch(frame, /resets \d/);
   });
 });

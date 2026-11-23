@@ -50,7 +50,9 @@ export function renderReplayPreview(
   const blockers =
     plan.blocked.length === 0
       ? [paint("[+] no blocked steps", "r0", capabilities)]
-      : plan.blocked.map((item) => paint(`[x] ${sanitizeText(item)}`, "r3", capabilities));
+      : plan.blocked.map((item) =>
+          paint(`[x] ${sanitizeText(item)}`, "r3", capabilities),
+        );
   // The responsive contract says every output is cropped to the reported
   // width and height; a replay plan longer than the screen must lose its
   // middle rows, not paint past the bottom into DiffScreenWriter row
@@ -59,8 +61,8 @@ export function renderReplayPreview(
     box(
       "REPLAY PREVIEW / NO CHANGES MADE",
       [
-        `workspace ${plan.workspace}`,
-        `restore to ${plan.to}`,
+        `workspace ${sanitizeText(plan.workspace)}`,
+        `restore to ${sanitizeText(plan.to)}`,
         `snapshots ${plan.snapshotBytes} bytes in customer storage`,
         paint(rule(inner), "rule", capabilities),
         ...rows,

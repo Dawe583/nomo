@@ -1,7 +1,6 @@
-import { brandHeader } from "./brand.ts";
 import type { FeedPage } from "../../../ledger/src/feed.ts";
 import type { TerminalCapabilities } from "./types.ts";
-import { crop, fit, pad, rule, sanitizeText } from "./layout.ts";
+import { crop, fit, pad, rule, sanitizeText, visibleLength } from "./layout.ts";
 import { paint } from "./theme.ts";
 
 import type { ApprovalRecord } from "../../../policy/src/approvals.ts";
@@ -34,12 +33,30 @@ export function liveRecords(view: LiveView) {
   return (view.page?.records ?? []).filter(row => !view.filter || row.klass === view.filter).slice().reverse();
 }
 
+function splitCells(value: string, width: number): string[] {
+  const chunks: string[] = [];
+  let chunk = "";
+  let cells = 0;
+  for (const point of value) {
+    const pointWidth = visibleLength(point);
+    if (chunk && cells + pointWidth > width) {
+      chunks.push(chunk);
+      chunk = "";
+      cells = 0;
+    }
+    chunk += point;
+    cells += pointWidth;
+  }
+  if (chunk) chunks.push(chunk);
+  return chunks;
+}
+
 export function renderLiveFeed(view: LiveView, caps: TerminalCapabilities): string {
   const width = caps.columns;
   const rows = liveRecords(view);
   const selected = rows[Math.min(view.selected, Math.max(0, rows.length - 1))];
   const lines = [
-    ...brandHeader(`NOMO / ${view.workspace}`, caps),
+    paint(`NOMO  ${sanitizeText(view.workspace)}`, "accent", caps, true),
     `${view.paused ? "Paused view" : "Live ledger"}  |  ${view.filter || "All classes"}  |  ${rows.length} records`,
     paint(rule(width), "rule", caps),
     view.error
@@ -73,9 +90,10 @@ export function renderLiveFeed(view: LiveView, caps: TerminalCapabilities): stri
     lines.push(paint(`Record #${selected.seq}`, "ink", caps, true), "");
     for (const [label, value] of [["Tool", selected.tool], ["Class", selected.klass.toUpperCase()], ["Decision", selected.decision], ["Time", selected.at], ["Digest", selected.digest], ["Previous", selected.prevDigest], ["Arguments", selected.argsDigest]]) {
       const text = sanitizeText(String(value));
-      const valueWidth = Math.max(1, width - 12);
-      for (let offset = 0; offset < text.length; offset += valueWidth)
-        lines.push(`${pad(offset === 0 ? `${label}:` : "", 12)}${text.slice(offset, offset + valueWidth)}`);
+      const labelWidth = Math.min(12, Math.max(0, width - 1));
+      const valueWidth = Math.max(1, width - labelWidth);
+      for (const [index, chunk] of splitCells(text, valueWidth).entries())
+        lines.push(`${pad(index === 0 ? `${label}:` : "", labelWidth)}${chunk}`);
     }
   } else if (rows.length === 0) {
     lines.push(view.filter ? "No records in this class. Press f to change the filter." : "No recorded calls yet.", "", "Run an agent through nomo-proxy to record its tool calls.");

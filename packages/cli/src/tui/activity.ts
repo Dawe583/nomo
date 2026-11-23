@@ -7,6 +7,7 @@ import type { MotionContext } from "./motion.ts";
 import { idleBreath, motionContext } from "./motion.ts";
 import { sparkline } from "./charts.ts";
 import { phaseIcon } from "./run-timeline.ts";
+import { getSymbols, type SymbolPreset, type SymbolSet } from "./theme.ts";
 
 export interface ActivityEvent {
   readonly kind: string;
@@ -26,6 +27,7 @@ export interface ActivityStrip {
 export interface ActivityOptions {
   readonly motion?: MotionContext;
   readonly paint?: (text: string, tone: string, bold?: boolean) => string;
+  readonly symbolPreset?: SymbolPreset;
   /** Maximum rows returned. Without it every row is returned. */
   readonly height?: number;
 }
@@ -35,21 +37,16 @@ export interface ActivityOptions {
 // something stalled, which is exactly the gap worth seeing on return.
 export const GAP_THRESHOLD_MS = 5 * 60 * 1000;
 
-// Conversation roles are not run lifecycle phases, so run-timeline's phase
-// model cannot label them: there is no phase for "the human wrote back". The
-// marks below are a separate small table on purpose, but they reuse
-// phaseIcon where the meaning already matches (failure, unknown) so the two
-// views never disagree on those glyphs. Every mark is plain ASCII, which is
-// one cell under layout.ts; anything in U+2600 to U+27BF counts two cells
-// and would halve the strip resolution and shift every mark after it.
-function markFor(kind: string, timed: boolean): string {
+// Event roles share the block glyph catalog, while unknown/timestamp states
+// retain their run-timeline marks. All role glyphs remain one terminal cell.
+function markFor(kind: string, timed: boolean, symbols: SymbolSet): string {
   if (!timed) return "?";
-  if (kind === "error") return phaseIcon("failed");
+  if (kind === "error") return symbols.role.error;
   if (kind === "unknown") return phaseIcon("unknown");
-  if (kind === "user") return ">";
-  if (kind === "assistant") return "=";
-  if (kind === "tool") return "*";
-  if (kind === "usage") return "+";
+  if (kind === "user") return symbols.role.user;
+  if (kind === "assistant") return symbols.role.assistant;
+  if (kind === "tool") return symbols.role.tool;
+  if (kind === "usage") return symbols.role.usage;
   return "?";
 }
 
@@ -198,18 +195,26 @@ export function buildActivity(
 // One mark per event plus a break mark for each long silence, in order. Gap
 // breaks are part of the shape: a flat run of marks hides the hour the
 // operator was away, and that hour is often where something went wrong.
-function stripMarks(strip: ActivityStrip): string[] {
-  const marks: string[] = [];
-  for (const event of strip.events) {
+interface ActivityMark {
+  readonly text: string;
+  readonly eventIndex: number | null;
+}
+
+function stripMarks(strip: ActivityStrip, symbols: SymbolSet): ActivityMark[] {
+  const marks: ActivityMark[] = [];
+  strip.events.forEach((event, eventIndex) => {
     if (
       event.gapMs !== undefined &&
       Number.isFinite(event.gapMs) &&
       event.gapMs > GAP_THRESHOLD_MS
     ) {
-      marks.push(GAP_MARK);
+      marks.push({ text: GAP_MARK, eventIndex: null });
     }
-    marks.push(markFor(event.kind, event.at !== ""));
-  }
+    marks.push({
+      text: markFor(event.kind, event.at !== "", symbols),
+      eventIndex,
+    });
+  });
   return marks;
 }
 
@@ -227,9 +232,13 @@ function resolveMotion(motion: MotionContext | undefined): MotionContext {
 export function activityStrip(
   strip: ActivityStrip,
   width: number,
-  options?: { readonly motion?: MotionContext },
+  options?: {
+    readonly motion?: MotionContext;
+    readonly symbolPreset?: SymbolPreset;
+  },
 ): string {
   const cells: number = Number.isFinite(width) ? Math.floor(width) : 0;
+  const symbols = getSymbols(options?.symbolPreset ?? "ascii");
   const motion: MotionContext = resolveMotion(options?.motion);
   if (strip.events.length === 0) {
     // The breath dot is decoration on a named state, so a frozen frame and
@@ -240,11 +249,11 @@ export function activityStrip(
   // Degenerate widths cannot bound anything, so the newest mark at least
   // keeps the return non-empty rather than honest about width.
   if (cells <= 0) {
-    const marks: readonly string[] = stripMarks(strip);
-    return sanitizeText(marks[marks.length - 1] ?? "?");
+    const marks: readonly ActivityMark[] = stripMarks(strip, symbols);
+    return sanitizeText(marks[marks.length - 1]?.text ?? "?");
   }
-  const marks: string[] = stripMarks(strip);
-  const row: string = marks.join("");
+  const marks: ActivityMark[] = stripMarks(strip, symbols);
+  const row: string = marks.map((mark) => mark.text).join("");
   if (visibleLength(row) <= cells) return fit(sanitizeText(row), cells);
   // Compression keeps the newest marks, because the end is where the
   // conversation is now, and counts the folded head. The count is events,
@@ -253,16 +262,22 @@ export function activityStrip(
   // narrow for any prefix still names the total rather than going silent.
   const maxShown: number = Math.min(marks.length - 1, cells);
   for (let shown = maxShown; shown >= 1; shown -= 1) {
-    const folded: number = marks.length - shown;
+    const tail: readonly ActivityMark[] = marks.slice(marks.length - shown);
+    const visibleEvents: Set<number> = new Set(
+      tail.flatMap((mark) =>
+        mark.eventIndex === null ? [] : [mark.eventIndex],
+      ),
+    );
+    const folded: number = strip.events.length - visibleEvents.size;
     const prefix: string = `+${folded} `;
     if (visibleLength(prefix) + shown <= cells) {
       return fit(
-        sanitizeText(`${prefix}${row.slice(row.length - shown)}`),
+        sanitizeText(`${prefix}${tail.map((mark) => mark.text).join("")}`),
         cells,
       );
     }
   }
-  return fit(sanitizeText(`+${marks.length}`), cells);
+  return fit(sanitizeText(`+${strip.events.length}`), cells);
 }
 
 function formatSpan(ms: number): string {
@@ -334,9 +349,9 @@ export function activitySummary(strip: ActivityStrip, now?: number): string {
 
 // The legend pairs every mark with its word, so the strip stays legible
 // without colour and without memorising glyphs.
-function legendRow(): string {
+function legendRow(symbols: SymbolSet): string {
   return sanitizeText(
-    "> user = assistant * tool x error + usage ? unknown/time | gap 5m+",
+    `${symbols.role.user} user ${symbols.role.assistant} assistant ${symbols.role.tool} tool ${symbols.role.error} error ${symbols.role.usage} usage ? unknown/time | gap 5m+`,
   );
 }
 
@@ -349,10 +364,7 @@ function legendRow(): string {
 export function renderActivity(
   strip: ActivityStrip,
   width: number,
-  options?: {
-    readonly motion?: MotionContext;
-    readonly paint?: (text: string, tone: string, bold?: boolean) => string;
-  } & { readonly height?: number },
+  options?: ActivityOptions,
 ): string[] {
   const cells: number = Number.isFinite(width) ? Math.floor(width) : 0;
   const height: number =
@@ -365,7 +377,10 @@ export function renderActivity(
   const paint: (text: string, tone: string, bold?: boolean) => string =
     options?.paint ?? ((text: string) => text);
   const rows: string[] = [];
-  const stripRow: string = activityStrip(strip, Math.max(cells, 1), { motion });
+  const stripRow: string = activityStrip(strip, Math.max(cells, 1), {
+    motion,
+    symbolPreset: options?.symbolPreset,
+  });
   rows.push(
     cells <= 0
       ? stripRow
@@ -397,7 +412,8 @@ export function renderActivity(
     rows.push(cells <= 0 ? summary : fit(paint(summary, "muted"), cells));
   }
   if (height <= 0 || rows.length < height) {
-    rows.push(cells <= 0 ? legendRow() : fit(legendRow(), cells));
+    const symbols = getSymbols(options?.symbolPreset ?? "ascii");
+    rows.push(cells <= 0 ? legendRow(symbols) : fit(legendRow(symbols), cells));
   }
   if (rows.length === 0)
     return [cells <= 0 ? "?" : fit(sanitizeText("?"), cells)];

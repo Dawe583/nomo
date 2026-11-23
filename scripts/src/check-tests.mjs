@@ -438,11 +438,10 @@ const scriptSuites = [
     name: "apple-project",
     file: "scripts/src/check-apple-project.mjs",
   },
-  // The PTY regression must launch the interactive OpenTUI renderer used by
-  // the CLI, not the retired watch-renderer verifier.
+  // The PTY regression launches the active Node workspace renderer.
   {
     name: "tui-pty",
-    command: ["python3", "scripts/src/verify-opentui-terminal.py"],
+    command: ["python3", "scripts/src/verify-tui-terminal.py"],
     unrunPattern: /ModuleNotFoundError: (?:pty|termios|fcntl|select)/,
     passes: "lines",
     unrunReason: "no python3 or the POSIX pty modules it needs",

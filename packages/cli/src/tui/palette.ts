@@ -137,6 +137,22 @@ function scoreCandidate(
   return 1000 + idBonus - gaps * 10 - first - idLength;
 }
 
+export function fuzzyTextScore(
+  query: string,
+  candidates: readonly string[],
+): number | undefined {
+  const normalised = matchText(query.trim());
+  if (normalised === "") return 0;
+  let best: number | undefined;
+  for (const value of candidates) {
+    const candidate = matchText(value);
+    const score = scoreCandidate(candidate, candidate.length, normalised, 0);
+    if (score !== undefined && (best === undefined || score > best))
+      best = score;
+  }
+  return best;
+}
+
 export function fuzzyScore(
   item: PaletteItem,
   query: string,

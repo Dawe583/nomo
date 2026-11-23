@@ -1,5 +1,5 @@
 import type { Model, ModelMessage, ModelReply, ToolCall } from "../provider.ts";
-import { ProviderRequestError } from "../provider.ts";
+import { ProviderRequestError, parseRetryAfter } from "../provider.ts";
 import { defaultHarnessSettings, type HarnessSettings } from "../harness-settings.ts";
 import type { ProviderAdapterConfig, ProviderClient } from "./types.ts";
 import { isLoopbackHostname, isRecord } from "./guards.ts";
@@ -102,7 +102,7 @@ export class OllamaChatAdapter implements ProviderClient {
       body: JSON.stringify(body),
       signal,
     });
-    if (!response.ok) { await response.body?.cancel().catch(() => {}); throw new ProviderRequestError(response.status); }
+    if (!response.ok) { const retryAfter = parseRetryAfter(response.headers.get("retry-after")); await response.body?.cancel().catch(() => {}); throw new ProviderRequestError(response.status, undefined, retryAfter); }
     if (!response.body) throw new Error("Ollama returned an empty stream.");
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
@@ -225,7 +225,7 @@ export class OllamaChatAdapter implements ProviderClient {
       headers: { accept: "application/json" },
       signal: AbortSignal.timeout(15_000),
     });
-    if (!response.ok) { await response.body?.cancel().catch(() => {}); throw new ProviderRequestError(response.status); }
+    if (!response.ok) { const retryAfter = parseRetryAfter(response.headers.get("retry-after")); await response.body?.cancel().catch(() => {}); throw new ProviderRequestError(response.status, undefined, retryAfter); }
     let body: unknown;
     try { body = await response.json(); } catch { throw new Error("Ollama returned invalid JSON."); }
     if (!isRecord(body)) throw new Error("Ollama returned an invalid response.");

@@ -9,8 +9,9 @@
 // motion off. A filterable list lived here too and was removed: items() in
 // workspace.ts already filters, and a second filter on top of it would have
 // narrowed the rows twice.
-import { pad, sanitizeText, visibleLength } from "./layout.ts";
+import { pad, sanitizeText } from "./layout.ts";
 import { cursorMarker, type MotionContext } from "./motion.ts";
+import { getSymbols, type SymbolPreset } from "./theme.ts";
 
 export interface TreeNode {
   readonly id: string;
@@ -31,6 +32,7 @@ export interface TreeState {
 export interface RenderOptions {
   readonly motion?: MotionContext;
   readonly paint?: (text: string, tone: string, bold?: boolean) => string;
+  readonly symbolPreset?: SymbolPreset;
 }
 
 // Base frame used when the caller passes no motion: the static marker, so a
@@ -142,13 +144,11 @@ export function renderTree(
   state: TreeState,
   width: number,
   height: number,
-  options?: {
-    readonly motion?: MotionContext;
-    readonly paint?: (text: string, tone: string, bold?: boolean) => string;
-  },
+  options?: RenderOptions,
 ): string[] {
   const motion = resolveMotion(options);
   const paint = resolvePaint(options);
+  const symbols = getSymbols(options?.symbolPreset ?? "ascii");
   const safeWidth = Math.max(1, width);
   const safeHeight = Math.max(1, height);
   const flat = flattenTree(nodes, state);
@@ -170,7 +170,7 @@ export function renderTree(
     const expand = treeExpandMarker(node, state.expanded.has(node.id));
     // One guide segment per depth level, drawn as text so nesting survives
     // without colour. Depth is clamped at zero against malformed input.
-    const guide = "| ".repeat(Math.max(0, node.depth));
+    const guide = `${symbols.frame.v} `.repeat(Math.max(0, node.depth));
     const label = sanitizeText(node.label);
     const row = pad(`${marker}${expand} ${guide}${label}`, safeWidth);
     rows.push(selected ? paint(row, "accent", true) : row);

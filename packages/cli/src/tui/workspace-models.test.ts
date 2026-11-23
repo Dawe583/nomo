@@ -71,6 +71,78 @@ test("Models entry replaces cached rows with every current connected-provider mo
   assert.doesNotMatch(rows.map((row) => row.label).join("\n"), /retired-model/);
 });
 
+test("Models rows show configured provider sections but only active-provider models", async (t) => {
+  const requests: string[] = [];
+  const directory = await mkdtemp(
+    join(tmpdir(), "nomo-tui-provider-sections-"),
+  );
+  const app = new Workbench({ NOMO_DATA_DIR: directory }, async (input) => {
+    const url = String(input);
+    if (url.endsWith("/models")) {
+      requests.push(url);
+      return catalog([
+        { id: "shared", name: "Shared" },
+        { id: "shared", name: "Duplicate" },
+      ]);
+    }
+    return Response.json({
+      choices: [{ message: { role: "assistant", content: "ok" } }],
+    });
+  });
+  await app.configure({
+    baseUrl: "https://first.test/v1",
+    apiKey: "first-secret",
+  });
+  await app.configure({
+    baseUrl: "https://second.test/v1",
+    apiKey: "second-secret",
+  });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: directory });
+  await ui.initialize();
+  t.after(async () => {
+    await app.shutdown();
+    await rm(directory, { recursive: true, force: true });
+  });
+
+  ui.choose("models");
+  await tick();
+  const rows = ui.items();
+  assert.deepEqual(
+    rows.map((row) => row.id),
+    ["shared"],
+  );
+  assert.deepEqual(ui.modelProjection, {
+    activeProviderId: "https://second.test/v1",
+    providers: [
+      {
+        id: "https://first.test/v1",
+        name: "https://first.test/v1",
+        configured: true,
+        attached: false,
+        catalogStatus: "idle",
+        models: [],
+      },
+      {
+        id: "https://second.test/v1",
+        name: "https://second.test/v1",
+        configured: true,
+        attached: true,
+        catalogStatus: "ready",
+        models: [{ id: "shared", name: "Shared" }],
+      },
+    ],
+  });
+  assert.equal(
+    requests.length,
+    2,
+    "reading or rendering Models does not probe providers",
+  );
+  assert.doesNotMatch(
+    JSON.stringify(ui.modelProjection),
+    /first-secret|second-secret/,
+  );
+});
+
 test("/model applies only a model from the current connected-provider catalog", async (t) => {
   let requests = 0;
   const { app, ui } = await configuredUi(t, async (input) => {
@@ -98,16 +170,24 @@ test("/model applies only a model from the current connected-provider catalog", 
   assert.equal((await app.providerState()).defaultModel, "current-model");
 });
 
-test("unavailable model catalog hides stale provider rows", async (t) => {
-  const { ui } = await configuredUi(t, async (input) =>
-    String(input).endsWith("/models")
-      ? catalog([{ id: "last-known-model", name: "Last known" }])
-      : Response.json({
-          choices: [{ message: { role: "assistant", content: "ok" } }],
-        }),
+test("Models after local logout hide stale provider and model rows", async (t) => {
+  let requests = 0;
+  const { ui } = await configuredUi(t, async (input) => {
+    if (String(input).endsWith("/models")) {
+      requests++;
+      return catalog([{ id: "last-known-model", name: "Last known" }]);
+    }
+    return Response.json({
+      choices: [{ message: { role: "assistant", content: "ok" } }],
+    });
+  });
+  const requestsBeforeLogout = requests;
+  await ui.command("/logout");
+  assert.equal(
+    requests,
+    requestsBeforeLogout,
+    "logout does not contact a provider",
   );
-  ui.modelCatalogStatus = "unavailable";
-  ui.provider = { ...ui.provider!, connected: false };
   ui.choose("models");
 
   assert.deepEqual(ui.items(), [], "stale provider models are not selectable");
@@ -118,7 +198,7 @@ test("unavailable model catalog hides stale provider rows", async (t) => {
     }),
   );
   assert.match(frame, /connect/i);
-  assert.doesNotMatch(ui.lines().join("\n"), /last-known-model/);
+  assert.doesNotMatch(frame, /last-known-model|ready · active/);
 });
 
 test("Models view with no connected provider does not request a catalog", async (t) => {

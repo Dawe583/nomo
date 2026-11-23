@@ -29,33 +29,60 @@ export function createGatewayProvider(
   request: typeof fetch,
   settings: Partial<HarnessSettings> | (() => HarnessSettings),
 ): ProviderClient {
-  if (config.auth.kind !== "api-key") throw new Error("Gateway providers require an API-key profile.");
+  if (config.auth.kind !== "api-key")
+    throw new Error("Gateway providers require an API-key profile.");
   const baseUrl = validateGatewayEndpoint(config);
   const gatewayRequest = createGatewayFetch(config, request);
-  const delegate = config.transport === "openai-responses"
-    ? new OpenAIResponsesAdapter({ ...config, baseUrl }, gatewayRequest, settings)
-    : new CompatibleProvider(
-        normalizeProviderConfig({
-          baseUrl,
-          apiKey: config.auth.apiKey,
-          providerId: config.providerId,
-          api: config.transport === "openrouter" ? "openai-completions" : config.transport,
-          kind: config.transport === "anthropic-messages" ? "anthropic" : "compatible",
-          model: config.model,
-        }),
-        gatewayRequest,
-        settings,
-      );
+  const delegate =
+    config.transport === "openai-responses"
+      ? new OpenAIResponsesAdapter(
+          { ...config, baseUrl },
+          gatewayRequest,
+          settings,
+        )
+      : new CompatibleProvider(
+          normalizeProviderConfig({
+            baseUrl,
+            apiKey: config.auth.apiKey,
+            providerId: config.providerId,
+            api:
+              config.transport === "openrouter"
+                ? "openai-completions"
+                : config.transport,
+            kind:
+              config.transport === "anthropic-messages"
+                ? "anthropic"
+                : "compatible",
+            model: config.model,
+          }),
+          gatewayRequest,
+          settings,
+        );
   return {
     models: async () => {
-      if (
+      const discovered =
         config.providerId !== "cloudflare-ai-gateway" &&
         config.providerId !== "cloudflare-workers-ai"
-      ) await delegate.models();
-      return pinnedModels(config);
+          ? await delegate.models()
+          : [];
+      const pinned = pinnedModels(config);
+      if (config.providerId !== "openrouter") return pinned;
+
+      // Keep the pinned provider/model set, but retain exact OpenRouter
+      // context metadata for selected models absent from the static manifest.
+      const discoveredById = new Map(
+        discovered.map((model) => [model.id, model]),
+      );
+      return pinned.map((model) => {
+        if (model.contextWindow !== undefined) return model;
+        const contextWindow = discoveredById.get(model.id)?.contextWindow;
+        return contextWindow === undefined
+          ? model
+          : { ...model, contextWindow };
+      });
     },
     complete: (...args) => delegate.complete(...args),
-    redact: text => delegate.redact(text),
+    redact: (text) => delegate.redact(text),
   };
 }
 
@@ -66,62 +93,102 @@ function validateGatewayEndpoint(config: ProviderAdapterConfig): string {
   } catch {
     throw new Error("Gateway endpoint must be an absolute HTTPS URL.");
   }
-  if (url.protocol !== "https:" || url.username || url.password || url.search || url.hash) {
-    throw new Error("Gateway endpoint must use HTTPS without credentials or query parameters.");
+  if (
+    url.protocol !== "https:" ||
+    url.username ||
+    url.password ||
+    url.search ||
+    url.hash
+  ) {
+    throw new Error(
+      "Gateway endpoint must use HTTPS without credentials or query parameters.",
+    );
   }
   const path = url.pathname.replace(/\/$/, "");
   if (config.providerId === "openrouter") {
-    if (!["openrouter", "openai-completions"].includes(config.transport) || url.hostname !== "openrouter.ai" || path !== "/api/v1") {
-      throw new Error("OpenRouter requires its official HTTPS endpoint and a supported Chat Completions transport.");
+    if (
+      !["openrouter", "openai-completions"].includes(config.transport) ||
+      url.hostname !== "openrouter.ai" ||
+      path !== "/api/v1"
+    ) {
+      throw new Error(
+        "OpenRouter requires its official HTTPS endpoint and a supported Chat Completions transport.",
+      );
     }
     return "https://openrouter.ai/api/v1";
   }
   if (config.providerId === "cloudflare-ai-gateway") {
-    if (url.hostname !== "gateway.ai.cloudflare.com") throw new Error("Cloudflare AI Gateway requires its official HTTPS endpoint.");
-    const match = /^\/v1\/([^/]+)\/([^/]+)\/(anthropic|compat|openai)(?:\/v1)?$/.exec(path);
+    if (url.hostname !== "gateway.ai.cloudflare.com")
+      throw new Error(
+        "Cloudflare AI Gateway requires its official HTTPS endpoint.",
+      );
+    const match =
+      /^\/v1\/([^/]+)\/([^/]+)\/(anthropic|compat|openai)(?:\/v1)?$/.exec(path);
     const expected = cloudflareAiGatewayRouteForTransport(config.transport);
-    const normalized = normalizeCloudflareAiGatewayEndpoint(url, config.transport);
+    const normalized = normalizeCloudflareAiGatewayEndpoint(
+      url,
+      config.transport,
+    );
     if (!normalized) {
       if (
         match &&
         (!expected ||
           match[3] !== expected ||
           (match[3] !== "anthropic" && path.endsWith("/v1")))
-      ) throw new Error("Cloudflare route conflicts with the declared provider transport.");
-      throw new Error("Cloudflare AI Gateway endpoint must include resolved account, gateway, and route IDs.");
+      )
+        throw new Error(
+          "Cloudflare route conflicts with the declared provider transport.",
+        );
+      throw new Error(
+        "Cloudflare AI Gateway endpoint must include resolved account, gateway, and route IDs.",
+      );
     }
     return normalized;
   }
   if (config.providerId === "cloudflare-workers-ai") {
     if (config.transport !== "openai-completions")
-      throw new Error("Cloudflare Workers AI requires OpenAI Chat Completions.");
+      throw new Error(
+        "Cloudflare Workers AI requires OpenAI Chat Completions.",
+      );
     const normalized = normalizeCloudflareWorkersAiEndpoint(url);
     if (!normalized)
-      throw new Error("Cloudflare Workers AI requires its official account-scoped HTTPS endpoint.");
+      throw new Error(
+        "Cloudflare Workers AI requires its official account-scoped HTTPS endpoint.",
+      );
     return normalized;
   }
   if (config.providerId === "vercel-ai-gateway") {
-    if (config.transport !== "anthropic-messages" || url.hostname !== "ai-gateway.vercel.sh" || !["", "/v1"].includes(path)) {
-      throw new Error("Vercel AI Gateway supports its official Anthropic Messages endpoint in this manifest.");
+    if (
+      config.transport !== "anthropic-messages" ||
+      url.hostname !== "ai-gateway.vercel.sh" ||
+      !["", "/v1"].includes(path)
+    ) {
+      throw new Error(
+        "Vercel AI Gateway supports its official Anthropic Messages endpoint in this manifest.",
+      );
     }
     return "https://ai-gateway.vercel.sh/v1";
   }
   throw new Error("Unsupported gateway provider.");
 }
 
-function createGatewayFetch(config: ProviderAdapterConfig, request: typeof fetch): typeof fetch {
+function createGatewayFetch(
+  config: ProviderAdapterConfig,
+  request: typeof fetch,
+): typeof fetch {
   const options = config.gatewayOptions;
   const endpoint = new URL(validateGatewayEndpoint(config));
   const gatewayPath = endpoint.pathname;
-  const expectedPath = config.providerId === "openrouter"
-    ? `${gatewayPath}/chat/completions`
-    : config.providerId === "vercel-ai-gateway"
-      ? `${gatewayPath}/messages`
-      : config.transport === "anthropic-messages"
+  const expectedPath =
+    config.providerId === "openrouter"
+      ? `${gatewayPath}/chat/completions`
+      : config.providerId === "vercel-ai-gateway"
         ? `${gatewayPath}/messages`
-        : config.transport === "openai-responses"
-          ? `${gatewayPath}/responses`
-          : `${gatewayPath}/chat/completions`;
+        : config.transport === "anthropic-messages"
+          ? `${gatewayPath}/messages`
+          : config.transport === "openai-responses"
+            ? `${gatewayPath}/responses`
+            : `${gatewayPath}/chat/completions`;
   return async (input, init) => {
     const url = new URL(input instanceof Request ? input.url : String(input));
     const modelListing =
@@ -130,7 +197,12 @@ function createGatewayFetch(config: ProviderAdapterConfig, request: typeof fetch
       init?.method === "GET" &&
       url.origin === endpoint.origin &&
       url.pathname === `${gatewayPath}/models`;
-    if (!modelListing && (url.origin !== endpoint.origin || url.pathname !== expectedPath || init?.method !== "POST")) {
+    if (
+      !modelListing &&
+      (url.origin !== endpoint.origin ||
+        url.pathname !== expectedPath ||
+        init?.method !== "POST")
+    ) {
       throw new Error("Gateway request escaped its declared provider route.");
     }
     const headers = new Headers(init?.headers);
@@ -138,9 +210,14 @@ function createGatewayFetch(config: ProviderAdapterConfig, request: typeof fetch
     if (config.providerId === "cloudflare-ai-gateway") {
       headers.delete("authorization");
       headers.delete("x-api-key");
-      headers.set("cf-aig-authorization", `Bearer ${config.auth.kind === "api-key" ? config.auth.apiKey : ""}`);
+      headers.set(
+        "cf-aig-authorization",
+        `Bearer ${config.auth.kind === "api-key" ? config.auth.apiKey : ""}`,
+      );
       if (config.transport === "anthropic-messages") {
-        if (!headers.get("accept")?.toLowerCase().includes("text/event-stream")) {
+        if (
+          !headers.get("accept")?.toLowerCase().includes("text/event-stream")
+        ) {
           headers.set("accept", "application/json");
         }
         headers.set("anthropic-dangerous-direct-browser-access", "true");
@@ -150,28 +227,49 @@ function createGatewayFetch(config: ProviderAdapterConfig, request: typeof fetch
       const gateway = options?.openrouter;
       if (gateway?.referer) headers.set("http-referer", gateway.referer);
       if (gateway?.title) headers.set("x-openrouter-title", gateway.title);
-      if (gateway?.categories?.length) headers.set("x-openrouter-categories", gateway.categories.join(","));
+      if (gateway?.categories?.length)
+        headers.set("x-openrouter-categories", gateway.categories.join(","));
       if (gateway?.provider && typeof body === "string") {
         const parsed = JSON.parse(body) as Record<string, unknown>;
-        parsed.provider = { ...(typeof parsed.provider === "object" && parsed.provider !== null ? parsed.provider : {}), ...gateway.provider };
+        parsed.provider = {
+          ...(typeof parsed.provider === "object" && parsed.provider !== null
+            ? parsed.provider
+            : {}),
+          ...gateway.provider,
+        };
         body = JSON.stringify(parsed);
       }
     }
     if (config.providerId === "vercel-ai-gateway") {
-      if (options?.vercel?.referer) headers.set("http-referer", options.vercel.referer);
+      if (options?.vercel?.referer)
+        headers.set("http-referer", options.vercel.referer);
       if (options?.vercel?.title) headers.set("x-title", options.vercel.title);
     }
-    return request(input, { ...init, headers, ...(body === undefined ? {} : { body }) });
+    return request(input, {
+      ...init,
+      headers,
+      ...(body === undefined ? {} : { body }),
+    });
   };
 }
 
 function pinnedModels(config: ProviderAdapterConfig): readonly Model[] {
   const rows = PROVIDER_MODEL_MANIFEST.providers
-    .filter(provider => provider.status === "in-scope" && provider.providerId === config.providerId)
-    .flatMap(provider => provider.models.filter(model => model.kind === "chat" && (
-      model.transport === config.transport ||
-      (config.providerId === "openrouter" && provider.source === "prime" && model.transport === "openai-completions")
-    )));
+    .filter(
+      (provider) =>
+        provider.status === "in-scope" &&
+        provider.providerId === config.providerId,
+    )
+    .flatMap((provider) =>
+      provider.models.filter(
+        (model) =>
+          model.kind === "chat" &&
+          (model.transport === config.transport ||
+            (config.providerId === "openrouter" &&
+              provider.source === "prime" &&
+              model.transport === "openai-completions")),
+      ),
+    );
   const models: Model[] = [];
   const seen = new Set<string>();
   for (const model of rows) {
@@ -180,8 +278,12 @@ function pinnedModels(config: ProviderAdapterConfig): readonly Model[] {
     models.push({
       id: model.id,
       name: model.name,
-      ...(model.capabilities.contextWindow === null ? {} : { contextWindow: model.capabilities.contextWindow }),
-      ...(model.capabilities.maxTokens === null ? {} : { maxTokens: model.capabilities.maxTokens }),
+      ...(model.capabilities.contextWindow === null
+        ? {}
+        : { contextWindow: model.capabilities.contextWindow }),
+      ...(model.capabilities.maxTokens === null
+        ? {}
+        : { maxTokens: model.capabilities.maxTokens }),
       capabilities: [
         ...model.capabilities.input,
         ...(model.capabilities.reasoning ? ["reasoning"] : []),
@@ -189,7 +291,7 @@ function pinnedModels(config: ProviderAdapterConfig): readonly Model[] {
       ],
     });
   }
-  if (config.model && !models.some(model => model.id === config.model)) {
+  if (config.model && !models.some((model) => model.id === config.model)) {
     return [...models, { id: config.model, name: config.model }];
   }
   return models;

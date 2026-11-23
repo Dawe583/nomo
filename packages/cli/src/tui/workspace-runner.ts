@@ -19,10 +19,18 @@ import {
   mentionCandidates,
   mentionToken,
   renderWorkspace,
+  modelPickerMatches,
+  modelPickerSelectionWindowStart,
+  modelPickerWindowStart,
+  wrap,
   searchHistoryPrompts,
   message,
+  nextToolActivityMode,
+  PET_SPLASH_MS,
   TUI_COMMANDS,
   type WorkspaceTab,
+  type ToolActivityMode,
+  type TuiLocalSettings,
 } from "./workspace.ts";
 import {
   advanceSelection as advancePaletteSelection,
@@ -32,10 +40,26 @@ import {
   typeInPalette,
 } from "./palette.ts";
 import { moveHunk, setSide, toggleHunk } from "./diff-panel.ts";
-import { handleModelPickerKey } from "./workspace-app-model.ts";
+import {
+  createWorkspaceTerminal,
+  type WorkspaceMouseEvent,
+} from "./workspace-terminal.ts";
+import {
+  kittyProviderIconCleanup,
+  kittyProviderIconTransfer,
+  kittyTabIconsCleanup,
+  kittyTabIconsTransfer,
+} from "./brand.ts";
 import { detectCapabilities } from "./caps.ts";
-import type { CliRenderer, KeyEvent as OpenTuiKeyEvent } from "@opentui/core";
-import { sanitizeText } from "./layout.ts";
+import { copyTextToClipboard } from "./clipboard.ts";
+import {
+  highlightMouseSelection,
+  mouseSelectionLimit,
+  railOwnsPoint,
+  selectedMouseText,
+  type MousePoint,
+} from "./mouse-selection.ts";
+import { sanitizeText, stripAnsi } from "./layout.ts";
 import { dataDir as productDataDir } from "../../../ledger/src/paths.ts";
 import { envValue } from "../../../ledger/src/env-compat.ts";
 import { normalizeOwnedEnv } from "../env-keys.ts";
@@ -44,6 +68,230 @@ import {
   parseWorkspaceKeybindings,
   type WorkspaceKeybindings,
 } from "./workspace-keybindings.ts";
+
+function modelPickerPageSize(ui: WorkspaceTui, direction: -1 | 1): number {
+  const picker = ui.modelPicker;
+  if (!picker) return 1;
+  const width = Math.max(1, (ui.viewport.width ?? 80) - 4);
+  const height = Math.max(1, ui.viewport.height);
+  const lines = ui.lines(width, height);
+  const matches = modelPickerMatches(picker.models, picker.query);
+  if (!matches.length) return 1;
+  // The stacked picker has three summary rows; the wide two-pane picker has
+  // only two before its model list. Page sizing must follow the active layout
+  // or PageUp/PageDown counts a provider row as part of the model catalog.
+  const modelStart = width < 88 ? 3 : 2;
+  const modelEnd = modelStart + matches.length;
+  const reservedRows =
+    wrap(lines.slice(0, modelStart), width).length +
+    wrap(lines.slice(modelEnd), width).length;
+  const visibleRows = Math.max(1, height - reservedRows);
+  let index = direction < 0 ? picker.selected - 1 : picker.selected;
+  let usedRows = 0;
+  let count = 0;
+  while (index >= 0 && index < matches.length) {
+    const row = lines[modelStart + index] ?? "";
+    const rowHeight = Math.max(1, wrap([row], width).length);
+    if (count > 0 && usedRows + rowHeight > visibleRows) break;
+    if (count === 0 && rowHeight > visibleRows) return 1;
+    usedRows += rowHeight;
+    count += 1;
+    index += direction;
+  }
+  return Math.max(1, count);
+}
+
+function modelPickerVisibleRows(ui: WorkspaceTui): number {
+  const columns = Math.max(1, (ui.viewport.width ?? 80) - 4);
+  return Math.max(1, ui.viewport.height - (columns >= 88 ? 2 : 5));
+}
+
+function oneShotDimension(name: "COLUMNS" | "LINES", fallback: number): number {
+  const value = Number(process.env[name]);
+  return Number.isSafeInteger(value) && value > 0
+    ? Math.min(value, 1000)
+    : fallback;
+}
+
+function setModelPickerQuery(
+  ui: WorkspaceTui,
+  picker: NonNullable<WorkspaceTui["modelPicker"]>,
+  query: string,
+  cursor: number,
+): void {
+  ui.modelPicker = {
+    ...picker,
+    query,
+    cursor: Math.max(0, Math.min([...query].length, cursor)),
+    selected: 0,
+    modelWindowStart: undefined,
+  };
+}
+function handleModelPickerKey(
+  ui: WorkspaceTui,
+  value: string | undefined,
+  key: Readonly<{ name?: string; ctrl?: boolean; meta?: boolean }>,
+): false | true | string | { readonly loadProviderId: string } {
+  const picker = ui.modelPicker;
+  if (!picker?.open) return false;
+  const matches = modelPickerMatches(picker.models, picker.query);
+  if (
+    key.name === "escape" &&
+    picker.query &&
+    picker.focusedPane === "models"
+  ) {
+    setModelPickerQuery(ui, picker, "", 0);
+    return true;
+  }
+  if (key.name === "escape" || (key.ctrl && key.name === "c")) {
+    ui.closeModelPicker();
+    ui.notice = "Model selection cancelled.";
+    return true;
+  }
+  if (
+    picker.focusedPane === "models" &&
+    picker.query !== "" &&
+    key.ctrl &&
+    (key.name === "left" || key.name === "right")
+  ) {
+    const length = [...picker.query].length;
+    const cursor = Math.max(
+      0,
+      Math.min(length, picker.cursor + (key.name === "right" ? 1 : -1)),
+    );
+    ui.modelPicker = { ...picker, cursor };
+    return true;
+  }
+  if (key.name === "left" || key.name === "right") {
+    if (key.name === "left") {
+      ui.modelPicker = { ...picker, focusedPane: "providers" };
+      return true;
+    }
+    const provider = picker.providers[picker.providerIndex];
+    if (!provider) return true;
+    ui.modelPicker = { ...picker, focusedPane: "models" };
+    return { loadProviderId: provider.id };
+  }
+  if (key.name === "return" || key.name === "enter") {
+    if (picker.focusedPane === "providers") {
+      const provider = picker.providers[picker.providerIndex];
+      if (!provider) return true;
+      ui.modelPicker = { ...picker, focusedPane: "models" };
+      return { loadProviderId: provider.id };
+    }
+    return matches[picker.selected]?.id ?? true;
+  }
+  if (key.name === "up" || key.name === "down") {
+    const delta = key.name === "down" ? 1 : -1;
+    if (picker.focusedPane === "providers") {
+      const providers = picker.providers;
+      if (!providers.length) return true;
+      const index =
+        (picker.providerIndex + delta + providers.length) % providers.length;
+      ui.selectModelPickerProvider(index);
+      return true;
+    }
+    const selected = matches.length
+      ? (picker.selected + delta + matches.length) % matches.length
+      : Math.max(
+          0,
+          Math.min(Math.max(0, matches.length - 1), picker.selected + delta),
+        );
+    ui.modelPicker = {
+      ...picker,
+      selected,
+      modelWindowStart: modelPickerSelectionWindowStart(
+        picker.selected,
+        selected,
+        matches.length,
+        modelPickerVisibleRows(ui),
+        picker.modelWindowStart,
+      ),
+    };
+    return true;
+  }
+  if (["home", "end", "pageup", "pagedown"].includes(key.name ?? "")) {
+    if (picker.focusedPane === "providers") {
+      const providers = picker.providers;
+      if (providers.length) {
+        const step = Math.max(1, Math.floor(ui.viewport.height / 2));
+        const index =
+          key.name === "home"
+            ? 0
+            : key.name === "end"
+              ? providers.length - 1
+              : Math.max(
+                  0,
+                  Math.min(
+                    providers.length - 1,
+                    picker.providerIndex +
+                      (key.name === "pagedown" ? step : -step),
+                  ),
+                );
+        ui.selectModelPickerProvider(index);
+      }
+      return true;
+    }
+    const last = Math.max(0, matches.length - 1);
+    const direction = key.name === "pagedown" ? 1 : -1;
+    const page = modelPickerPageSize(ui, direction);
+    const selected =
+      key.name === "home"
+        ? 0
+        : key.name === "end"
+          ? last
+          : Math.max(0, Math.min(last, picker.selected + direction * page));
+    ui.modelPicker = {
+      ...picker,
+      selected,
+      modelWindowStart: modelPickerSelectionWindowStart(
+        picker.selected,
+        selected,
+        matches.length,
+        modelPickerVisibleRows(ui),
+        picker.modelWindowStart,
+      ),
+    };
+    return true;
+  }
+  if (picker.focusedPane === "providers") return true;
+  if (key.name === "home" || (key.ctrl && key.name === "a")) {
+    ui.modelPicker = { ...picker, cursor: 0 };
+    return true;
+  }
+  if (key.name === "end" || (key.ctrl && key.name === "e")) {
+    ui.modelPicker = { ...picker, cursor: [...picker.query].length };
+    return true;
+  }
+  if (key.ctrl && key.name === "u") {
+    setModelPickerQuery(ui, picker, "", 0);
+    return true;
+  }
+  if (key.name === "backspace") {
+    const points = [...picker.query];
+    if (picker.cursor > 0) {
+      points.splice(picker.cursor - 1, 1);
+      setModelPickerQuery(ui, picker, points.join(""), picker.cursor - 1);
+    }
+    return true;
+  }
+  if (key.name === "delete") {
+    const points = [...picker.query];
+    if (picker.cursor < points.length) {
+      points.splice(picker.cursor, 1);
+      setModelPickerQuery(ui, picker, points.join(""), picker.cursor);
+    }
+    return true;
+  }
+  if (value && !key.ctrl && !key.meta && !/[\x00-\x1f\x7f-\x9f]/.test(value)) {
+    const points = [...picker.query];
+    const inserted = [...value];
+    points.splice(picker.cursor, 0, ...inserted);
+    const query = points.join("");
+    setModelPickerQuery(ui, picker, query, picker.cursor + inserted.length);
+  }
+  return true;
+}
 
 export function nextModelId(
   models: readonly { readonly id: string }[],
@@ -61,8 +309,10 @@ export function nextModelId(
 }
 
 export function normalizePastedPrompt(text: string): string {
-  return text
-    .replace(/\r/g, "\n")
+  return stripAnsi(text)
+    .replace(/\u009b[0-?]*[ -/]*[@-~]/g, "")
+    .replace(/\u009d[^\u0007\u009c]*(?:\u0007|\u009c|$)/g, "")
+    .replace(/\r\n?/g, "\n")
     .replace(/[\x00-\x08\x0b-\x1f\x7f-\x9f]/g, "");
 }
 
@@ -80,6 +330,9 @@ export function escapeOwnedByOverlay(
     keybindings: boolean;
     cheatSheet: boolean;
     filter: string;
+    panel?: boolean;
+    detail?: boolean;
+    suggestions?: boolean;
   }>,
 ): boolean {
   return (
@@ -87,6 +340,9 @@ export function escapeOwnedByOverlay(
     state.palette ||
     state.keybindings ||
     state.cheatSheet ||
+    state.panel === true ||
+    state.detail === true ||
+    state.suggestions === true ||
     state.filter.length > 0
   );
 }
@@ -135,20 +391,55 @@ export async function dispatchQueuedPrompt(
 
 export type WorkspaceShortcut =
   | "redraw"
+  | "suspend"
   | "toggle-tools"
+  | "toggle-tool-visibility"
   | "search-history"
   | "stash"
   | "external-editor"
+  | "show-agents"
+  | "toggle-plan"
+  | "copy-prompt"
   | "show-todos"
+  | "retry"
   | "quit";
+
+function isSuspendKey(key: Key): boolean {
+  return key.ctrl === true && !key.shift && !key.meta && key.name === "z";
+}
 
 export function workspaceShortcut(
   key: Key,
   editing: boolean,
   input: string,
   bindings: WorkspaceKeybindings = DEFAULT_WORKSPACE_KEYBINDINGS,
+  tab?: WorkspaceTab,
 ): WorkspaceShortcut | undefined {
-  if (!key.ctrl) return undefined;
+  const chatEditing = editing && (tab === undefined || tab === "chat");
+  if (isSuspendKey(key)) return "suspend";
+  if (key.ctrl && key.shift && !key.meta && key.name?.toLowerCase() === "o")
+    return "toggle-tool-visibility";
+  if (!key.ctrl && !key.shift && !key.meta && key.name === "f5") return "retry";
+  if (!key.ctrl && !key.shift && key.meta && key.name === "r") return "retry";
+  if (!key.ctrl && !key.shift && key.meta && key.name === "a")
+    return "show-agents";
+  if (
+    chatEditing &&
+    !key.ctrl &&
+    key.shift &&
+    key.meta &&
+    key.name?.toLowerCase() === "p"
+  )
+    return "toggle-plan";
+  if (
+    chatEditing &&
+    !key.ctrl &&
+    key.shift &&
+    key.meta &&
+    key.name?.toLowerCase() === "c"
+  )
+    return "copy-prompt";
+  if (!key.ctrl || key.shift || key.meta) return undefined;
   const action = (
     Object.keys(bindings) as Array<keyof WorkspaceKeybindings>
   ).find((candidate) => bindings[candidate].name === key.name);
@@ -177,6 +468,85 @@ export class ChordTracker {
     return;
   }
 }
+/** The terminal keypress stream has no key-up event, so ignore rapid
+ * autorepeat pairs and accept only a deliberate second Left press. */
+export class DoubleLeftSessionShortcut {
+  private lastPressAt: number | undefined;
+
+  press(
+    key: Pick<Key, "name" | "ctrl" | "meta" | "shift">,
+    eligible: boolean,
+    now = Date.now(),
+  ): boolean {
+    if (!eligible || key.name !== "left" || key.ctrl || key.meta || key.shift) {
+      this.lastPressAt = undefined;
+      return false;
+    }
+    const previous = this.lastPressAt;
+    this.lastPressAt = now;
+    if (previous === undefined) return false;
+    const elapsed = now - previous;
+    if (elapsed < 100) {
+      this.lastPressAt = undefined;
+      return false;
+    }
+    if (elapsed <= 450) {
+      this.lastPressAt = undefined;
+      return true;
+    }
+    return false;
+  }
+}
+
+export function isToolActivityCycleKey(
+  key: Pick<Key, "name" | "ctrl" | "meta" | "shift">,
+  running: boolean,
+): boolean {
+  return (
+    running &&
+    !!key.ctrl &&
+    !key.shift &&
+    !key.meta &&
+    key.name?.toLowerCase() === "o"
+  );
+}
+
+/**
+ * Alt+N (or the older Alt+K) toggles the pet.
+ *
+ * It is a display toggle, so the key is recognised before the composer sees
+ * it: toggling never sends a prompt and never inserts text. A plain `n` stays
+ * ordinary input, which is why the modifier is required.
+ */
+export function isPetToggleKey(
+  key: Pick<Key, "name" | "ctrl" | "meta" | "shift">,
+): boolean {
+  const name = key.name?.toLowerCase();
+  return (
+    key.meta === true &&
+    !key.ctrl &&
+    !key.shift &&
+    (name === "n" || name === "k")
+  );
+}
+
+/**
+ * Alt+Shift+N opens the NIB signal card.
+ *
+ * The card is an overlay, not a prompt: the key is recognised before the
+ * composer, so opening it never sends a prompt or edits the draft. It needs
+ * the shifted modifier so the unshifted toggle keeps its one meaning.
+ */
+export function isPetCardKey(
+  key: Pick<Key, "name" | "ctrl" | "meta" | "shift">,
+): boolean {
+  return (
+    key.meta === true &&
+    key.shift === true &&
+    !key.ctrl &&
+    key.name?.toLowerCase() === "n"
+  );
+}
 
 /** Jump between user prompts in the rendered chat rows. Rows are viewport
  * offsets, so the runner can set the scroll position directly. */
@@ -195,18 +565,22 @@ export class WorkspaceInput {
   value = "";
   cursor = 0;
   pasting = false;
+  pendingCommand?: string;
+  private pendingCharacterJump?: "forward" | "backward";
   // Recent kills and the latest yank are process-local editor state.
   private killRing: string[] = [];
   private lastKillKind?: "backward" | "forward";
   private lastYank?: { start: number; length: number; ringIndex: number };
   // Undo keeps one previous state for Ctrl+_.
-  /** A slash command requested by a bound key (Ctrl+P); the runner consumes it. */
-  pendingCommand?: string;
   private undoState?: { value: string; cursor: number };
   private redoState?: { value: string; cursor: number };
   set(value: string) {
-    this.value = value;
-    this.cursor = [...value].length;
+    // Drafts can outlive the terminal session that created them. Normalize
+    // them at the same boundary as live input so an older raw ANSI escape
+    // sequence cannot be rendered as visible `?[...m` text on the next launch.
+    this.value = normalizePastedPrompt(value);
+    this.cursor = [...this.value].length;
+    this.pendingCharacterJump = undefined;
     this.lastKillKind = undefined;
     this.lastYank = undefined;
     this.undoState = undefined;
@@ -243,15 +617,16 @@ export class WorkspaceInput {
   }
   paste(value: string) {
     this.editing = true;
-    this.insert(normalizePastedPrompt(value));
+    this.insert(value);
   }
   replaceRange(start: number, length: number, value: string) {
+    const normalized = normalizePastedPrompt(value);
     this.remember();
     const points = [...this.value];
-    points.splice(start, length, ...value);
+    points.splice(start, length, ...normalized);
     points.length = Math.min(points.length, 32000);
     this.value = points.join("");
-    this.cursor = Math.min(start + [...value].length, points.length);
+    this.cursor = Math.min(start + [...normalized].length, points.length);
     this.lastYank = undefined;
     this.lastKillKind = undefined;
   }
@@ -280,7 +655,11 @@ export class WorkspaceInput {
     if (!text) return;
     const start = this.cursor;
     this.insert(text);
-    this.lastYank = { start, length: [...text].length, ringIndex: index };
+    this.lastYank = {
+      start,
+      length: this.cursor - start,
+      ringIndex: index,
+    };
   }
   private yankPop() {
     const yank = this.lastYank;
@@ -302,7 +681,7 @@ export class WorkspaceInput {
     this.cursor = yank.start + inserted.length;
     this.lastYank = {
       start: yank.start,
-      length: [...text].length,
+      length: inserted.length,
       ringIndex: index,
     };
   }
@@ -427,7 +806,7 @@ export class WorkspaceInput {
       this.cursor = pos;
       return true;
     }
-    if (key.meta && key.name === "d") {
+    if (key.meta && (key.name === "d" || key.name === "delete")) {
       const start = this.cursor;
       let pos = start;
       while (pos < points.length && !WorkspaceInput.isWordChar(points[pos]!))
@@ -443,7 +822,7 @@ export class WorkspaceInput {
       return true;
     }
     if (
-      (key.ctrl && key.name === "w") ||
+      (key.ctrl && (key.name === "w" || key.name === "backspace")) ||
       (key.meta && key.name === "backspace")
     ) {
       let start = this.cursor;
@@ -479,9 +858,12 @@ export class WorkspaceInput {
       return true;
     }
     if (key.ctrl && key.name === "k") {
-      const end = points.indexOf("\n", this.cursor);
-      const count =
-        end < 0 ? points.length - this.cursor : Math.max(1, end - this.cursor);
+      const newline = points.indexOf("\n", this.cursor);
+      const lineEnd = newline < 0 ? points.length : newline;
+      let count = lineEnd - this.cursor;
+      // At the end of a line, Ctrl+K joins the next line by removing the
+      // newline; it never runs past the line break on the first press.
+      if (count === 0 && newline >= 0) count = 1;
       if (count > 0) {
         this.remember();
         this.killText(
@@ -510,9 +892,61 @@ export class WorkspaceInput {
       if (value)
         this.insert(
           value
-            .replace(/\r/g, "\n")
+            .replace(/\r\n?/g, "\n")
             .replace(/[\x00-\x08\x0b-\x1f\x7f-\x9f]/g, ""),
         );
+      return;
+    }
+    if (this.pendingCharacterJump) {
+      const direction = this.pendingCharacterJump;
+      this.pendingCharacterJump = undefined;
+      if (key.ctrl && key.name === "]") return;
+      if (!key.ctrl && !key.meta && !key.shift && value) {
+        const target = [...value];
+        const points = [...this.value];
+        const matches = (index: number) =>
+          target.every((point, offset) => points[index + offset] === point);
+        let index = -1;
+        if (target.length) {
+          if (direction === "forward") {
+            for (
+              let candidate = this.cursor + 1;
+              candidate <= points.length - target.length;
+              candidate++
+            ) {
+              if (matches(candidate)) {
+                index = candidate;
+                break;
+              }
+            }
+          } else {
+            for (
+              let candidate = Math.min(
+                this.cursor - 1,
+                points.length - target.length,
+              );
+              candidate >= 0;
+              candidate--
+            ) {
+              if (matches(candidate)) {
+                index = candidate;
+                break;
+              }
+            }
+          }
+        }
+        if (index >= 0) this.cursor = index;
+        this.lastKillKind = undefined;
+        this.lastYank = undefined;
+        return;
+      }
+      // A non-printable key cancels the pending jump, then retains its normal
+      // composer behavior below, matching OMP's editor state machine.
+    }
+    if (key.ctrl && key.name === "]") {
+      this.pendingCharacterJump = key.meta ? "backward" : "forward";
+      this.lastKillKind = undefined;
+      this.lastYank = undefined;
       return;
     }
     const isKill =
@@ -567,8 +1001,8 @@ export class WorkspaceInput {
       }
       return "submit";
     }
-    // Ctrl+P requests the command palette before the edit keys: the palette
-    // must win over the Ctrl+P cursor-up alias.
+    // Ctrl+P opens the command palette while editing. The outer dispatcher
+    // uses Ctrl+P/Ctrl+N for list navigation when the composer is unfocused.
     if (key.ctrl && key.name === "p") {
       this.pendingCommand = "/command-palette";
       return;
@@ -597,7 +1031,8 @@ export class WorkspaceInput {
     else if (key.ctrl && key.name === "u") {
       this.remember();
       this.killText(points.slice(0, this.cursor).join(""), "backward");
-      this.value = "";
+      points.splice(0, this.cursor);
+      this.value = points.join("");
       this.cursor = 0;
     } else if (
       !key.ctrl &&
@@ -617,6 +1052,15 @@ export class WorkspaceInput {
   }
 }
 
+/**
+ * Whether the startup splash has already been offered in this process.
+ *
+ * Once per process, not once per conversation: a splash on every re-entry
+ * would delay the frame the operator already knows. Module scope is the
+ * process scope here because the TUI runs one workspace at a time.
+ */
+let petSplashShown = false;
+
 export async function runWorkspaceTui(
   argv: readonly string[],
 ): Promise<number> {
@@ -632,7 +1076,7 @@ export async function runWorkspaceTui(
     if (arg === "--once") once = true;
     else if (arg === "--help") {
       console.log(
-        "nomo tui [--once] [--project PATH] [--skill ID ...] [--view runs|overview|chat|sessions|documents|ledger|approvals|policy|tools|models|usage|help] [--session ID] [--data-dir PATH] [--import-provider opencode:zen|opencode:tokenrouter]",
+        "nomo tui [--once] [--project PATH] [--skill ID ...] [--view chat|sessions|documents|ledger|approvals|policy|tools|models|usage|help] [--session ID] [--data-dir PATH] [--import-provider SOURCE-ID]",
       );
       return 0;
     } else if (arg === "--project" || arg === "--skill") {
@@ -665,53 +1109,6 @@ export async function runWorkspaceTui(
     process.stdout.isTTY &&
     process.env.TERM !== "dumb" &&
     !process.env.CI;
-  const [nodeMajor, nodeMinor] = process.versions.node.split(".").map(Number);
-  const nodeSupportsOpenTui =
-    nodeMajor! > 26 || (nodeMajor === 26 && nodeMinor! >= 4);
-  if (interactive && !process.versions.bun && !nodeSupportsOpenTui) {
-    try {
-      return await new Promise<number>((resolveExit, reject) => {
-        const child = spawn("bun", [process.argv[1]!, "tui", ...argv], {
-          stdio: "inherit",
-          shell: false,
-          env: process.env,
-        });
-        child.once("error", reject);
-        child.once("exit", (code) => resolveExit(code ?? 1));
-      });
-    } catch {
-      console.error(
-        "Interactive NOMO TUI requires Bun >=1.3.14 or Node >=26.4 with --experimental-ffi. Install Bun or upgrade Node.",
-      );
-      return 1;
-    }
-  }
-  if (
-    interactive &&
-    !process.versions.bun &&
-    nodeSupportsOpenTui &&
-    !process.execArgv.includes("--experimental-ffi")
-  ) {
-    return await new Promise<number>((resolveExit, reject) => {
-      const child = spawn(
-        process.execPath,
-        [
-          ...process.execArgv,
-          "--experimental-ffi",
-          process.argv[1]!,
-          "tui",
-          ...argv,
-        ],
-        {
-          stdio: "inherit",
-          shell: false,
-          env: process.env,
-        },
-      );
-      child.once("error", reject);
-      child.once("exit", (code) => resolveExit(code ?? 1));
-    });
-  }
   const env: NodeJS.ProcessEnv = {
     ...process.env,
     ...(directory ? { NOMO_DATA_DIR: directory } : {}),
@@ -720,8 +1117,6 @@ export async function runWorkspaceTui(
   // TUI entry point directly sees the same settings an operator configured
   // under the old names.
   Object.assign(env, normalizeOwnedEnv(env));
-  const parsedKeybindings = parseWorkspaceKeybindings(env.NOMO_TUI_KEYBINDINGS);
-  const keybindings = parsedKeybindings.bindings;
   if (skillIds.length && !projectPath)
     throw Error("--skill requires --project");
   if (projectPath && (once || !interactive)) {
@@ -736,8 +1131,6 @@ export async function runWorkspaceTui(
   const projectSkills = projectRoot
     ? await readProjectSkills(projectRoot, skillIds)
     : [];
-  const app = new Workbench(env),
-    ui = new WorkspaceTui(app, env);
   const dataDir =
     envValue(env, "NOMO_DATA_DIR") ??
     join(
@@ -751,10 +1144,17 @@ export async function runWorkspaceTui(
     agentId?: string;
     lastRecoveryJob?: { sessionId: string; jobId: string };
     model?: string;
-    compactTools?: boolean;
+    toolActivityMode?: ToolActivityMode;
+    hideToolActivity?: boolean;
     mode?: string;
+    settings?: Partial<TuiLocalSettings>;
     drafts: Record<string, string>;
   }>();
+  const app = new Workbench(env),
+    ui = new WorkspaceTui(app, env);
+  ui.applySavedSettings(saved?.settings);
+  const parsedKeybindings = parseWorkspaceKeybindings(ui.keybindingsOverride);
+  let keybindings = parsedKeybindings.bindings;
   const drafts = saved?.drafts ?? {};
   const input = new WorkspaceInput();
   await ui.initialize();
@@ -772,7 +1172,13 @@ export async function runWorkspaceTui(
     }
     ui.prepareProjectAccess(projectRoot, projectSkills, sandboxConfigured);
   }
-  ui.compactTools = saved?.compactTools ?? true;
+  ui.toolActivityMode =
+    saved?.toolActivityMode === "compact" ||
+    saved?.toolActivityMode === "details" ||
+    saved?.toolActivityMode === "expanded"
+      ? saved.toolActivityMode
+      : "details";
+  ui.hideToolActivity = saved?.hideToolActivity ?? false;
   if (
     saved?.mode === "normal" ||
     saved?.mode === "accept" ||
@@ -784,7 +1190,8 @@ export async function runWorkspaceTui(
   if (selected && app.get(selected)) ui.sessionId = selected;
   if (saved?.model && ui.provider?.models.some((m) => m.id === saved.model))
     ui.model = saved.model;
-  ui.choose(tab);
+  if (tab === "models") await ui.openModelPicker();
+  else ui.choose(tab);
   if (app.listProjects().some((item) => item.id === saved?.projectId))
     ui.projectId = saved?.projectId;
   if (app.agents().agents.some((item) => item.id === saved?.agentId))
@@ -796,8 +1203,8 @@ export async function runWorkspaceTui(
     console.log(
       renderWorkspace(
         ui,
-        process.stdout.columns ?? 100,
-        process.stdout.rows ?? 32,
+        process.stdout.columns ?? oneShotDimension("COLUMNS", 100),
+        process.stdout.rows ?? oneShotDimension("LINES", 32),
       ),
     );
     await app.shutdown();
@@ -817,42 +1224,28 @@ export async function runWorkspaceTui(
   let stashCursor = 0;
   let lastCtrlL = 0;
   let lastCtrlD = 0;
+  let lastMouseClick: { target: string; at: number } | undefined;
+  let dismissedCommandSuggestions: string | undefined;
+  const doubleLeftSessions = new DoubleLeftSessionShortcut();
   const chord = new ChordTracker();
-  const startedAt = Date.now();
-  // NOMO has its own explicit color preference; inherited NO_COLOR must not hide its UI.
-  const color = env.NOMO_TUI_COLOR !== "0";
-  const graphicsProtocol = detectCapabilities(
-    env,
-    process.stdout,
-  ).graphicsProtocol;
+  let startedAt = Date.now();
+  let terminalCapabilities = detectCapabilities(env, process.stdout);
+  const color = env.NOMO_TUI_COLOR === "0" ? false : terminalCapabilities.ansi;
   const motion = env.NOMO_TUI_MOTION !== "0" && env.TERM !== "dumb";
-  const [
-    { createCliRenderer },
-    { createRoot, flushSync },
-    { createElement },
-    { WorkspaceApp },
-  ] = await Promise.all([
-    import("@opentui/core"),
-    import("@opentui/react"),
-    import("react"),
-    import("./workspace-app.tsx"),
-  ]);
-  const renderer: CliRenderer = await createCliRenderer({
-    exitOnCtrlC: false,
-    exitSignals: [],
-    screenMode: "alternate-screen",
-    useMouse: true,
-    environment: {
-      ...(process.env.NO_COLOR ? { NO_COLOR: process.env.NO_COLOR } : {}),
-    },
-  });
-  const root = createRoot(renderer);
-  let keyHandler: (event: OpenTuiKeyEvent) => void = () => {};
+  const terminal = createWorkspaceTerminal(process.stdin, process.stdout);
   let busy = false,
     suspended = false,
     stopped = false,
-    refreshing = false;
-  let timer: NodeJS.Timeout | undefined, draftTimer: NodeJS.Timeout | undefined;
+    refreshing = false,
+    initializingTerminal = true;
+  let timer: NodeJS.Timeout | undefined,
+    motionTimer: NodeJS.Timeout | undefined,
+    draftTimer: NodeJS.Timeout | undefined,
+    cellPixelTimer: NodeJS.Timeout | undefined,
+    splashTimer: NodeJS.Timeout | undefined;
+  let mouseSelection: { anchor: MousePoint; focus: MousePoint } | undefined;
+  let selectionDragging = false;
+  let renderedFrame = "";
   const setInputEditing = (editing: boolean, reset = false) => {
     input.editing = editing;
     if (reset) {
@@ -860,6 +1253,18 @@ export async function runWorkspaceTui(
       suggestion = 0;
     }
   };
+  // Keep input focus in sync with the same visible Chat surface the renderer
+  // treats as the base view. Returning from a panel must restore typing.
+  const chatComposerOwnsFocus = () =>
+    ui.tab === "chat" &&
+    !ui.detail &&
+    !ui.confirmation &&
+    !ui.settingsOpen &&
+    !ui.palette &&
+    !ui.modelPicker?.open &&
+    !ui.diffView &&
+    !ui.showingKeybindings &&
+    !ui.showingCheatSheet;
   const saveDraft = () => {
     if (!input.value.startsWith("/"))
       drafts[ui.sessionId ?? "new"] = input.value;
@@ -869,8 +1274,10 @@ export async function runWorkspaceTui(
       agentId: ui.agentId,
       lastRecoveryJob: ui.lastRecoveryJob,
       model: ui.model,
-      compactTools: ui.compactTools,
+      toolActivityMode: ui.toolActivityMode,
+      hideToolActivity: ui.hideToolActivity,
       mode: ui.mode,
+      settings: ui.localSettings(),
       drafts,
     });
   };
@@ -885,48 +1292,81 @@ export async function runWorkspaceTui(
     }, 500);
   };
   const draw = () => {
-    if (stopped || suspended) return;
-    flushSync(() =>
-      root.render(
-        createElement(WorkspaceApp, {
-          ui,
-          input: input.display(),
-          editing: input.editing,
-          busy,
-          color: ui.colorOverride ?? color,
-          ...(graphicsProtocol === "kitty"
-            ? { graphicsProtocol: "kitty" as const }
-            : {}),
-          onKey: keyHandler,
-          onPaste: (text: string) => {
-            input.pasting = true;
-            input.paste(text);
-            input.pasting = false;
-            try {
-              saveDraft();
-            } catch (error) {
-              ui.notice = message(error);
-            }
-            draw();
-          },
-          onTab: (tab: WorkspaceTab) => {
-            void task(async () => {
-              saveDraft();
-              await ui.choose(tab);
-              setInputEditing(tab === "chat");
-            });
-          },
-          onSelect: (index: number) => {
-            ui.selected = index;
-            draw();
-          },
-        }),
-      ),
+    if (stopped || suspended || initializingTerminal) return;
+    // Derive input ownership from the visible surface on every redraw. A panel
+    // can close through several paths (Escape, Tab, mouse or command result);
+    // keeping this invariant here prevents stale focus from freezing Chat.
+    input.editing = chatComposerOwnsFocus();
+    const now = Date.now();
+    renderedFrame = renderWorkspace(
+      ui,
+      terminal.columns,
+      terminal.rows,
+      input.value,
+      input.editing,
+      busy,
+      {
+        color: ui.colorOverride ?? color,
+        capabilities: terminalCapabilities,
+        motion: ui.motionOverride ?? motion,
+        now,
+        frame:
+          motion && ui.motionOverride !== false
+            ? Math.floor((now - startedAt) / 100)
+            : 0,
+        command: input.value,
+        cursor: input.cursor,
+        suggestion,
+        suggestionsDismissed: dismissedCommandSuggestions === input.value,
+      },
+    );
+    terminal.render(
+      mouseSelection
+        ? highlightMouseSelection(
+            renderedFrame,
+            mouseSelection.anchor,
+            mouseSelection.focus,
+            terminal.columns,
+            // A rail frame highlights the transcript pane only, so the status
+            // rail is never painted as selected text.
+            mouseSelectionLimit(terminal.columns, ui.viewport),
+          )
+        : renderedFrame,
     );
   };
+  const applyCellPixelHeight = (
+    cellPixels: { height: number; width: number } | undefined,
+  ) => {
+    if (
+      !cellPixels ||
+      stopped ||
+      suspended ||
+      terminalCapabilities.cellHeightPixels === cellPixels.height
+    )
+      return;
+    terminalCapabilities = {
+      ...terminalCapabilities,
+      cellHeightPixels: cellPixels.height,
+    };
+    draw();
+  };
+  const scheduleCellPixelMeasurement = () => {
+    if (cellPixelTimer !== undefined) clearTimeout(cellPixelTimer);
+    cellPixelTimer = setTimeout(() => {
+      cellPixelTimer = undefined;
+      if (stopped || suspended) return;
+      void terminal
+        .measureCellPixels()
+        .then(applyCellPixelHeight, () => undefined);
+    }, 120);
+  };
   let activeTask: Promise<void> = Promise.resolve();
-  const task = (fn: () => Promise<unknown>) => {
-    if (busy) return activeTask;
+  const task = (fn: () => Promise<unknown>, allowBusy = false) => {
+    if (busy && !allowBusy) {
+      ui.notice = "An action is already running. Try again when it finishes.";
+      draw();
+      return activeTask;
+    }
     busy = true;
     activeTask = (async () => {
       try {
@@ -973,7 +1413,7 @@ export async function runWorkspaceTui(
     let captured = false;
     await writeFile(file, target.content, { mode: 0o600 });
     suspended = true;
-    await renderer.suspend();
+    terminal.suspend();
     try {
       const code = await new Promise<number | null>((done, reject) => {
         const child = spawn(config[0], [...config.slice(1), file], {
@@ -997,22 +1437,42 @@ export async function runWorkspaceTui(
     } finally {
       if (captured) await rm(temp, { recursive: true, force: true });
       suspended = false;
-      if (!stopped) await renderer.resume();
+      if (!stopped) {
+        terminal.resume();
+        scheduleCellPixelMeasurement();
+      }
     }
   };
   return new Promise<number>((resolveDone) => {
+    let suspendKeepalive: NodeJS.Timeout | undefined;
+    let resumeOnContinue: (() => void) | undefined;
     const restoreTerminal = () => {
       if (stopped) return;
       stopped = true;
       clearInterval(timer);
+      clearInterval(motionTimer);
       clearTimeout(draftTimer);
+      clearTimeout(cellPixelTimer);
+      clearTimeout(splashTimer);
+      if (suspendKeepalive) clearInterval(suspendKeepalive);
+      suspendKeepalive = undefined;
+      if (resumeOnContinue) process.off("SIGCONT", resumeOnContinue);
+      resumeOnContinue = undefined;
       process.off("SIGINT", stopOnSigint);
       process.off("SIGTERM", stopOnSigterm);
       process.off("SIGHUP", stopOnSighup);
       process.off("exit", restoreTerminal);
       process.off("uncaughtExceptionMonitor", restoreTerminal);
-      root.unmount();
-      renderer.destroy();
+      if (ui.localTabIcons) {
+        try {
+          terminal.writeGraphics(
+            `${kittyTabIconsCleanup(ui.localTabIcons)}${kittyProviderIconCleanup(ui.localTabIcons)}`,
+          );
+        } catch {
+          // Terminal restoration must still run if the graphics cleanup fails.
+        }
+      }
+      terminal.destroy();
     };
     const stop = () => {
       if (stopped) return;
@@ -1032,7 +1492,6 @@ export async function runWorkspaceTui(
         app.close();
         await activeTask;
         await app.settled();
-        await renderer.closed;
       })().then(
         () => resolveDone(draftError ? 1 : 0),
         () => {
@@ -1056,6 +1515,60 @@ export async function runWorkspaceTui(
     };
     const stopOnSigterm = () => stop();
     const stopOnSighup = () => stop();
+    const suspendToBackground = () => {
+      if (process.platform === "win32") {
+        ui.notice = "Ctrl+Z suspend is not supported on Windows.";
+        draw();
+        return;
+      }
+      try {
+        saveDraft();
+      } catch (error) {
+        ui.notice = message(error);
+        draw();
+        return;
+      }
+      suspended = true;
+      const suspendedAt = Date.now();
+      suspendKeepalive = setInterval(() => {}, 2 ** 30);
+      resumeOnContinue = () => {
+        if (suspendKeepalive) clearInterval(suspendKeepalive);
+        suspendKeepalive = undefined;
+        resumeOnContinue = undefined;
+        startedAt += Date.now() - suspendedAt;
+        suspended = false;
+        try {
+          terminal.resume();
+          scheduleCellPixelMeasurement();
+          draw();
+        } catch {
+          stop();
+        }
+      };
+      try {
+        terminal.suspend();
+        process.once("SIGCONT", resumeOnContinue);
+        // Stop the foreground job as a group so shells and pipelines resume
+        // coherently. SIGSTOP cannot be swallowed by child-installed handlers.
+        process.kill(0, "SIGSTOP");
+      } catch (error) {
+        if (suspendKeepalive) clearInterval(suspendKeepalive);
+        suspendKeepalive = undefined;
+        if (resumeOnContinue)
+          process.removeListener("SIGCONT", resumeOnContinue);
+        resumeOnContinue = undefined;
+        suspended = false;
+        try {
+          terminal.resume();
+          scheduleCellPixelMeasurement();
+        } catch {
+          stop();
+          return;
+        }
+        ui.notice = `Could not suspend: ${message(error)}`;
+        draw();
+      }
+    };
     const submit = async () => {
       const original = input.value,
         oldSession = ui.sessionId ?? "new";
@@ -1066,7 +1579,7 @@ export async function runWorkspaceTui(
       }
       if (!original.trimStart().startsWith("/")) drafts[oldSession] = "";
       input.set(drafts[ui.sessionId ?? "new"] ?? "");
-      input.editing = ui.tab === "chat" && !ui.detail;
+      input.editing = chatComposerOwnsFocus();
       suggestion = 0;
       historyIndex = -1;
       if (result === "edit") await editor();
@@ -1078,14 +1591,58 @@ export async function runWorkspaceTui(
       await fn();
       if (prior !== ui.sessionId)
         input.set(drafts[ui.sessionId ?? "new"] ?? "");
+      input.editing = chatComposerOwnsFocus();
     };
     const onKey = async (value: string | undefined, key: Key) => {
       if (stopped || suspended) return;
+      lastMouseClick = undefined;
+      // The splash is dismissed by any key. The key keeps its normal meaning,
+      // so the dismissal is one redraw rather than a swallowed keystroke.
+      if (ui.dismissPetSplash()) draw();
+      // The card is the topmost chat overlay, so Escape closes it before it
+      // reaches the tab or confirmation handling below.
+      if (ui.petCard && key.name === "escape" && !input.pasting) {
+        ui.petCard = false;
+        ui.notice = "NIB card closed.";
+        draw();
+        return;
+      }
+      if (isSuspendKey(key)) {
+        suspendToBackground();
+        return;
+      }
+      if (key.name !== "escape") dismissedCommandSuggestions = undefined;
+      if (!input.pasting && key.meta && key.name === "l") {
+        terminal.invalidateDisplay();
+        draw();
+        return;
+      }
+      if (ui.modelPicker?.open && key.name === "tab") {
+        ui.modelPicker = {
+          ...ui.modelPicker,
+          focusedPane:
+            ui.modelPicker.focusedPane === "providers" ? "models" : "providers",
+        };
+        draw();
+        return;
+      }
       const pickerResult = handleModelPickerKey(ui, value, key);
       if (pickerResult !== false) {
         if (typeof pickerResult === "string")
-          await task(async () => ui.selectModel(pickerResult));
-        else draw();
+          await task(async () => {
+            await ui.selectModel(pickerResult);
+            input.editing = chatComposerOwnsFocus();
+          });
+        else if (typeof pickerResult === "object") {
+          void task(() =>
+            ui.loadModelPickerProvider(pickerResult.loadProviderId),
+          );
+          input.editing = false;
+          draw();
+        } else {
+          if (!ui.modelPicker?.open) input.editing = chatComposerOwnsFocus();
+          draw();
+        }
         return;
       }
       // An open palette consumes every key except the ones it binds itself.
@@ -1094,11 +1651,12 @@ export async function runWorkspaceTui(
       if (ui.palette) {
         if (key.name === "escape") {
           ui.palette = undefined;
+          input.editing = chatComposerOwnsFocus();
           ui.notice = "Palette closed.";
           draw();
           return;
         }
-        if (key.name === "return") {
+        if (key.name === "return" || key.name === "enter") {
           const matches = filterPalette(
             paletteFromCommands(TUI_COMMANDS),
             ui.palette.query,
@@ -1106,12 +1664,31 @@ export async function runWorkspaceTui(
           const picked = matches[ui.palette.selected];
           ui.palette = undefined;
           if (!picked) {
+            input.editing = chatComposerOwnsFocus();
             ui.notice = "No command matches that.";
             draw();
             return;
           }
-          input.set(picked.id);
-          await task(() => ui.command(picked.id));
+          const priorSession = ui.sessionId;
+          const priorDraft = input.value;
+          const priorCursor = input.cursor;
+          await task(async () => {
+            saveDraft();
+            const result = await ui.command(picked.id);
+            if (result === "quit") {
+              stop();
+              return;
+            }
+            if (priorSession !== ui.sessionId) {
+              input.set(drafts[ui.sessionId ?? "new"] ?? "");
+            } else {
+              input.set(priorDraft);
+              input.cursor = Math.min(priorCursor, [...priorDraft].length);
+            }
+            input.editing = chatComposerOwnsFocus();
+            if (result === "edit") await editor();
+            saveDraft();
+          });
           return;
         }
         if (key.name === "up" || key.name === "down") {
@@ -1120,6 +1697,27 @@ export async function runWorkspaceTui(
             filterPalette(paletteFromCommands(TUI_COMMANDS), ui.palette.query),
             key.name === "down" ? 1 : -1,
           );
+          draw();
+          return;
+        }
+        if (["home", "end", "pageup", "pagedown"].includes(key.name ?? "")) {
+          const matches = filterPalette(
+            paletteFromCommands(TUI_COMMANDS),
+            ui.palette.query,
+          );
+          if (key.name === "home") ui.palette = { ...ui.palette, selected: 0 };
+          else if (key.name === "end")
+            ui.palette = {
+              ...ui.palette,
+              selected: Math.max(0, matches.length - 1),
+            };
+          else
+            ui.palette = advancePaletteSelection(
+              ui.palette,
+              matches,
+              (key.name === "pagedown" ? 1 : -1) *
+                Math.max(1, ui.palette.visible - 1),
+            );
           draw();
           return;
         }
@@ -1136,11 +1734,48 @@ export async function runWorkspaceTui(
         draw();
         return;
       }
+      if (
+        doubleLeftSessions.press(
+          key,
+          input.editing &&
+            input.value === "" &&
+            !input.pasting &&
+            chatComposerOwnsFocus(),
+        )
+      ) {
+        ui.choose("sessions");
+        input.editing = chatComposerOwnsFocus();
+        draw();
+        return;
+      }
+      if (
+        isToolActivityCycleKey(key, app.running()) &&
+        chatComposerOwnsFocus() &&
+        !input.pasting
+      ) {
+        ui.toolActivityMode = nextToolActivityMode(ui.toolActivityMode);
+        ui.notice = `Agent activity: ${ui.toolActivityMode}.`;
+        try {
+          saveDraft();
+        } catch (error) {
+          ui.notice = message(error);
+        }
+        draw();
+        return;
+      }
       // The diff panel owns a small set of keys while it is on screen. They
       // are bound here rather than in the normal shortcut path because j, k
       // and space are already filter keys on the list tabs, and the panel is
       // the only surface where staging a hunk is the obvious meaning.
       if (ui.diffView) {
+        if (key.name === "escape") {
+          ui.diffView = undefined;
+          ui.detail = undefined;
+          ui.scroll = 0;
+          input.editing = chatComposerOwnsFocus();
+          draw();
+          return;
+        }
         if (key.name === "down" || value === "j") {
           ui.diffView = moveHunk(ui.diffView, 1);
           ui.rediff();
@@ -1188,7 +1823,7 @@ export async function runWorkspaceTui(
       // the whole task.
       if (ui.showingKeybindings) {
         if (key.name === "backspace") {
-          ui.keybindingQuery = ui.keybindingQuery.slice(0, -1);
+          ui.keybindingQuery = [...ui.keybindingQuery].slice(0, -1).join("");
           ui.refreshKeybindings();
           draw();
           return;
@@ -1215,7 +1850,7 @@ export async function runWorkspaceTui(
       // so one key covers both ends of the same action.
       if (ui.showingCheatSheet) {
         if (key.name === "backspace") {
-          ui.cheatQuery = ui.cheatQuery.slice(0, -1);
+          ui.cheatQuery = [...ui.cheatQuery].slice(0, -1).join("");
           ui.refreshCheatSheet();
           draw();
           return;
@@ -1228,6 +1863,7 @@ export async function runWorkspaceTui(
         }
         if (key.name === "escape") {
           ui.closeCheatSheet();
+          input.editing = chatComposerOwnsFocus();
           draw();
           return;
         }
@@ -1253,6 +1889,19 @@ export async function runWorkspaceTui(
       if (!ctrlC) lastCtrlC = 0;
       // Double Escape must be consecutive, not span commands typed in between.
       if (key.name !== "escape") lastEsc = 0;
+      const commandSuggestionsVisible =
+        input.editing &&
+        !input.pasting &&
+        !ui.confirmation &&
+        dismissedCommandSuggestions !== input.value &&
+        commandSuggestions(input.value).length > 0;
+      if (key.name === "escape" && commandSuggestionsVisible) {
+        dismissedCommandSuggestions = input.value;
+        suggestion = 0;
+        lastEsc = 0;
+        draw();
+        return;
+      }
       if (
         ctrlC &&
         !input.pasting &&
@@ -1272,6 +1921,9 @@ export async function runWorkspaceTui(
             keybindings: ui.showingKeybindings,
             cheatSheet: ui.showingCheatSheet,
             filter: ui.filter,
+            panel: ui.tab !== "chat" || !!ui.diffView,
+            detail: !!ui.detail,
+            suggestions: commandSuggestionsVisible,
           }),
           input.pasting,
         ) &&
@@ -1322,9 +1974,39 @@ export async function runWorkspaceTui(
         }
         return;
       }
-      const shortcut = ui.confirmation
-        ? undefined
-        : workspaceShortcut(key, input.editing, input.value, keybindings);
+      const shortcut =
+        ui.confirmation || (ui.settingsOpen && !(key.ctrl && key.name === "d"))
+          ? undefined
+          : workspaceShortcut(
+              key,
+              input.editing,
+              input.value,
+              keybindings,
+              ui.tab,
+            );
+      if (ui.settingsOpen && shortcut !== "quit") {
+        const wasOpen = ui.settingsOpen;
+        const wasToolActivityHidden = ui.hideToolActivity;
+        const settingsBefore = JSON.stringify(ui.localSettings());
+        if (ui.handleSettingsKey(value, key)) {
+          const parsed = parseWorkspaceKeybindings(ui.keybindingsOverride);
+          keybindings = parsed.bindings;
+          if (
+            wasToolActivityHidden !== ui.hideToolActivity ||
+            settingsBefore !== JSON.stringify(ui.localSettings())
+          ) {
+            try {
+              saveDraft();
+            } catch (error) {
+              ui.notice = message(error);
+            }
+          }
+          if (wasOpen && !ui.settingsOpen)
+            input.editing = chatComposerOwnsFocus();
+          draw();
+          return;
+        }
+      }
       if (shortcut === "quit") {
         // Empty input exits on the second press within 800 ms, like the
         // reference terminal. Text input clears first instead of quitting.
@@ -1357,6 +2039,68 @@ export async function runWorkspaceTui(
         void task(() => ui.command("/todos"));
         return;
       }
+      if (shortcut === "show-agents") {
+        void task(async () => {
+          await navigate(() => ui.command("/agents"));
+          input.editing = false;
+        });
+        return;
+      }
+      if (shortcut === "toggle-plan") {
+        ui.togglePlanMode();
+        try {
+          saveDraft();
+        } catch (error) {
+          ui.notice = message(error);
+        }
+        draw();
+        return;
+      }
+      if (shortcut === "copy-prompt") {
+        if (!input.value) {
+          ui.notice = "There is no prompt to copy.";
+          draw();
+          return;
+        }
+        if (busy) {
+          ui.notice = "Wait for the current action before copying the prompt.";
+          draw();
+          return;
+        }
+        busy = true;
+        void copyTextToClipboard(input.value)
+          .then(() => {
+            ui.notice = "Prompt copied to clipboard.";
+          })
+          .catch((error) => {
+            ui.notice = message(error);
+          })
+          .finally(() => {
+            busy = false;
+            draw();
+          });
+        draw();
+        return;
+      }
+      if (shortcut === "retry") {
+        if (!ui.canRetryLastTurn()) {
+          ui.notice = "Nothing to retry.";
+          draw();
+        } else if (busy || app.running()) {
+          ui.notice = "Wait for the active run to settle before retrying.";
+          draw();
+        } else {
+          try {
+            saveDraft();
+          } catch (error) {
+            ui.notice = message(error);
+            draw();
+            return;
+          }
+          void task(() => ui.command("/retry"));
+        }
+        return;
+      }
       if (shortcut === "redraw") {
         // Second Ctrl+L within 2 s runs /clear, like the reference terminal.
         const nowL = Date.now();
@@ -1368,6 +2112,7 @@ export async function runWorkspaceTui(
           });
         } else {
           lastCtrlL = nowL;
+          terminal.invalidateDisplay();
           draw();
         }
         return;
@@ -1402,10 +2147,21 @@ export async function runWorkspaceTui(
         return;
       }
       if (shortcut === "toggle-tools") {
-        ui.compactTools = !ui.compactTools;
-        ui.notice = ui.compactTools
-          ? "Compact tool output. Ctrl+O shows full results."
-          : "Full tool output. Ctrl+O collapses results.";
+        ui.toolActivityMode = nextToolActivityMode(ui.toolActivityMode);
+        ui.notice = `Agent activity: ${ui.toolActivityMode}.`;
+        try {
+          saveDraft();
+        } catch (error) {
+          ui.notice = message(error);
+        }
+        draw();
+        return;
+      }
+      if (shortcut === "toggle-tool-visibility") {
+        ui.hideToolActivity = !ui.hideToolActivity;
+        ui.notice = ui.hideToolActivity
+          ? "Tool activity hidden. Ctrl+Shift+O shows it again."
+          : "Tool activity visible.";
         try {
           saveDraft();
         } catch (error) {
@@ -1455,7 +2211,7 @@ export async function runWorkspaceTui(
           ui.confirmation = undefined;
           ui.scroll = 0;
         } else if (value === "y" && !input.pasting)
-          void task(() => ui.confirm());
+          void task(() => ui.confirm(), true);
         else if (value === "n" && !input.pasting) ui.reject();
         else if (/^[1-9]$/.test(value ?? "") && !input.pasting) {
           // Per hunk diff scope, client side. The selection rides with
@@ -1467,6 +2223,37 @@ export async function runWorkspaceTui(
         else if (key.name === "pagedown") ui.scroll += 10;
         draw();
         return;
+      }
+      // The sticky banner's a/d actions open the existing review before any
+      // decision. Respect focused views, filters and Chat input; the full hold
+      // id is resolved from the same ordering the renderer shows.
+      if (
+        !input.pasting &&
+        !input.editing &&
+        ui.tab !== "chat" &&
+        !ui.filter &&
+        !ui.detail &&
+        !ui.diffView &&
+        !ui.confirmation &&
+        !ui.palette &&
+        !ui.modelPicker &&
+        !ui.showingKeybindings &&
+        !ui.showingCheatSheet &&
+        (value === "a" || value === "d")
+      ) {
+        const pending = ui.workbench.pending()[0];
+        const proxy = ui.proxy.holds[0];
+        const id =
+          pending?.holdId ?? (proxy ? `proxy:${proxy.holdId}` : undefined);
+        if (id) {
+          try {
+            ui.prepareApproval(value === "a" ? "approved" : "denied", id);
+          } catch (error) {
+            ui.notice = message(error);
+          }
+          draw();
+          return;
+        }
       }
       if (!input.pasting && key.name === "tab" && key.shift) {
         ui.cycleMode();
@@ -1487,25 +2274,85 @@ export async function runWorkspaceTui(
         });
         return;
       }
-      // Prime cycles the configured provider's models. The operation changes
-      // only the default for future conversations, matching `/model <id>`.
-      if (!input.pasting && key.meta && key.name === "m") {
-        const models = ui.provider?.models ?? [];
-        const selected = nextModelId(models, ui.model, key.shift ? -1 : 1);
-        if (selected) {
-          void task(() => ui.command(`/model ${selected}`));
-        } else {
-          ui.notice =
-            "No other models are available for the configured provider.";
-          draw();
-        }
-        return;
-      }
-      if (!input.pasting && key.meta && key.name === "p") {
-        ui.openModelPicker();
-        input.editing = false;
+      // Alt+N toggles the pet and Alt+Shift+N opens its signal card. Both are
+      // handled here, before the composer, so neither ever sends a prompt or
+      // inserts text into the draft.
+      if (!input.pasting && isPetCardKey(key)) {
+        ui.petCard = !ui.petCard;
+        ui.notice = ui.petCard
+          ? "NIB card open. Alt+Shift+N closes it."
+          : "NIB card closed.";
         draw();
         return;
+      }
+      if (!input.pasting && isPetToggleKey(key)) {
+        ui.petEnabled = !ui.petEnabled;
+        ui.petPlacement = ui.petEnabled ? "auto" : "off";
+        ui.notice = ui.petEnabled
+          ? "Pet is on. /pet off hides it."
+          : "Pet is off. /pet on shows it.";
+        draw();
+        return;
+      }
+      const modelPickerAllowed =
+        !ui.confirmation &&
+        !ui.detail &&
+        !ui.diffView &&
+        !ui.palette &&
+        !ui.showingKeybindings &&
+        !ui.showingCheatSheet;
+      // Alt+M changes the future default; Alt+P changes only the current
+      // conversation, restricted to the provider that created that session.
+      if (
+        !input.pasting &&
+        key.meta &&
+        (key.name === "m" || key.name === "p") &&
+        modelPickerAllowed
+      ) {
+        const selection = key.name === "p" ? "session" : "default";
+        await task(async () => ui.openModelPicker(selection));
+        input.editing = chatComposerOwnsFocus();
+        draw();
+        return;
+      }
+      // Panels are opened from Chat with slash commands. Tab never cycles
+      // screens: in a panel it returns to Chat, and in Chat it belongs to the
+      // composer and its completion behavior.
+      if (
+        !input.pasting &&
+        key.name === "tab" &&
+        !key.shift &&
+        ui.tab !== "chat" &&
+        !ui.confirmation
+      ) {
+        try {
+          saveDraft();
+        } catch (error) {
+          ui.notice = message(error);
+        }
+        ui.choose("chat");
+        input.editing = chatComposerOwnsFocus();
+        draw();
+        return;
+      }
+      if (
+        !input.pasting &&
+        input.editing &&
+        ui.tab === "chat" &&
+        key.name === "tab" &&
+        !key.shift
+      ) {
+        const token = mentionToken(input.value, input.cursor);
+        const hasMentionCandidates =
+          token !== undefined &&
+          mentionCandidates(token, ui.documentPaths()).length > 0;
+        const hasCommandCandidates = commandSuggestions(input.value).length > 0;
+        if (!hasMentionCandidates && !hasCommandCandidates) {
+          // Tab stays a completion key. Without a candidate it leaves the
+          // Chat draft untouched instead of sending the user to another view.
+          draw();
+          return;
+        }
       }
       if (
         !input.pasting &&
@@ -1515,6 +2362,54 @@ export async function runWorkspaceTui(
         !ui.detail
       ) {
         ui.scroll = -1;
+        draw();
+        return;
+      }
+      if (
+        !input.pasting &&
+        input.editing &&
+        ui.tab === "chat" &&
+        key.ctrl &&
+        (key.name === "q" || key.name === "enter" || key.name === "return")
+      ) {
+        if (ui.workbench.running()) {
+          if (ui.queueFollowUpPrompt(input.value)) {
+            drafts[ui.sessionId ?? "new"] = "";
+            input.set("");
+            try {
+              saveDraft();
+            } catch (error) {
+              ui.notice = message(error);
+            }
+          }
+          draw();
+          return;
+        }
+        if (key.name === "q" && input.value.trim()) {
+          await task(submit);
+          return;
+        }
+      }
+      if (
+        !input.pasting &&
+        ui.queuedPrompt &&
+        (key.meta || key.shift) &&
+        key.name === "up"
+      ) {
+        const queued = ui.dequeueQueuedPrompt();
+        if (queued) {
+          const current = input.value;
+          input.set(
+            [queued, current].filter((text) => text.trim()).join("\n\n"),
+          );
+          ui.choose("chat");
+          input.editing = true;
+          try {
+            saveDraft();
+          } catch (error) {
+            ui.notice = message(error);
+          }
+        }
         draw();
         return;
       }
@@ -1573,6 +2468,7 @@ export async function runWorkspaceTui(
           !input.pasting &&
           (["up", "down"].includes(key.name ?? "") ||
             (key.ctrl && (key.name === "p" || key.name === "n"))) &&
+          !(key.ctrl && key.name === "p") &&
           !input.value.includes("\n")
         ) {
           const history = (ui.session()?.events ?? [])
@@ -1598,6 +2494,10 @@ export async function runWorkspaceTui(
         const action = input.key(value, key);
         suggestion = 0;
         historyIndex = -1;
+        // The failed run's rail names Escape, so Escape is what dismisses it.
+        // The key keeps its normal meaning (leaving the composer) and the
+        // dismissal only removes the rail's call to action.
+        if (action === "escape") ui.dismissRunError();
         if (input.pendingCommand !== undefined) {
           const command = input.pendingCommand;
           input.pendingCommand = undefined;
@@ -1624,6 +2524,43 @@ export async function runWorkspaceTui(
         return;
       }
       if (busy && key.name !== "tab") return;
+      if (
+        !input.pasting &&
+        !input.editing &&
+        ui.tab !== "chat" &&
+        (key.name === "home" || key.name === "end")
+      ) {
+        const end = key.name === "end";
+        if (ui.detail && !ui.documentPreview)
+          ui.scroll = end
+            ? Math.max(0, ui.viewport.total - ui.viewport.height)
+            : 0;
+        else if (ui.tab === "help")
+          ui.scroll = end
+            ? Math.max(0, ui.viewport.total - ui.viewport.height)
+            : 0;
+        else if (ui.groupTree) ui.moveTreeCursorToBoundary(end);
+        else ui.selected = end ? Math.max(0, ui.items().length - 1) : 0;
+        draw();
+        return;
+      }
+      if (!input.pasting && ui.tab === "sessions") {
+        if (value === "g" && !key.ctrl && !key.meta) {
+          ui.toggleSessionGroup();
+          draw();
+          return;
+        }
+        if (value === "[" && !key.ctrl && !key.meta) {
+          ui.cycleSessionGroup(-1);
+          draw();
+          return;
+        }
+        if (value === "]" && !key.ctrl && !key.meta) {
+          ui.cycleSessionGroup(1);
+          draw();
+          return;
+        }
+      }
       // Type to filter in list tabs. Bound keys keep their action; every
       // other printable character narrows the list instead of needing /filter.
       const filterChar = !input.pasting
@@ -1632,14 +2569,19 @@ export async function runWorkspaceTui(
       if (filterChar !== undefined) {
         ui.filter += filterChar;
         ui.selected = 0;
+        ui.hoveredRow = undefined;
         ui.detail = undefined;
+        ui.documentPreview = false;
         ui.notice = `Filter: ${ui.filter} (Esc clears, Backspace deletes)`;
         draw();
         return;
       }
       if (!input.pasting && key.name === "backspace" && ui.filter) {
-        ui.filter = ui.filter.slice(0, -1);
+        ui.filter = [...ui.filter].slice(0, -1).join("");
         ui.selected = 0;
+        ui.hoveredRow = undefined;
+        ui.detail = undefined;
+        ui.documentPreview = false;
         ui.notice = ui.filter
           ? `Filter: ${ui.filter} (Esc clears, Backspace deletes)`
           : "Filter cleared.";
@@ -1647,61 +2589,64 @@ export async function runWorkspaceTui(
         return;
       }
       if (key.name === "tab") {
-        ui.cycle(key.shift ? -1 : 1);
-        input.editing = ui.tab === "chat";
+        if (ui.tab === "chat") input.editing = true;
       } else if (
         !input.pasting &&
         (key.name === "right" || key.name === "left")
       ) {
-        // Panels follow the reference: Right is next, Left is previous.
-        // In editing mode the same arrows move the cursor instead.
-        //
-        // The documents tab is the one exception: its arrows fold and unfold
-        // a folder, because switching panels while reading a tree is a much
-        // bigger jump than opening or closing one branch of it.
-        if (ui.collapseOrExpand(key.name === "right")) {
+        // OMP's tree selector uses Left/Right as page navigation too.
+        if (ui.groupTree) {
+          ui.moveTreeCursorByPage(
+            key.name === "right" ? 1 : -1,
+            Math.max(1, ui.viewport.height),
+          );
           draw();
-        } else {
-          ui.cycle(key.name === "right" ? 1 : -1);
-          input.editing = ui.tab === "chat";
         }
-      } else if (value === "q") {
-        stop();
-        return;
-      } else if (value === "i" || value === "/") {
-        input.editing = true;
-        if (value === "/") {
-          try {
-            saveDraft();
-          } catch (e) {
-            ui.notice = message(e);
-          }
-          input.set("/");
+      } else if (key.name === "escape") {
+        // A focused detail closes before its underlying list filter, matching
+        // selector cancellation precedence while preserving the filtered rows.
+        if (ui.detail) {
+          ui.detail = undefined;
+          ui.documentPreview = false;
+          ui.scroll = 0;
+          input.editing = chatComposerOwnsFocus();
+          lastEsc = 0;
+          draw();
+          return;
         }
-      } else if (value === "n")
-        void task(async () => {
-          await navigate(() => ui.command("/new"));
-          input.editing = true;
-        });
-      else if (value === "u") void task(() => ui.prepareUndo());
-      else if (value === "a" || value === "d")
-        void task(async () =>
-          ui.prepareApproval(value === "a" ? "approved" : "denied"),
-        );
-      else if (value === "r") void task(() => ui.refresh(true));
-      // ? opens the cheat sheet over whatever is on screen. It used to jump
-      // to the help tab, which is a fine destination and the wrong response to
-      // the actual press: an operator who opened it because a key did not work
-      // loses the panel they were looking at, and has to find their way back.
-      // The help tab is still one keystroke away through /help and Tab.
-      else if (value === "?") ui.openCheatSheet();
-      else if (key.name === "escape") {
-        // An active filter clears first, before details or checkpoints.
+        // An active filter clears after a focused detail, before checkpoints.
         if (ui.filter) {
           ui.filter = "";
           ui.selected = 0;
           lastEsc = 0;
           ui.notice = "Filter cleared.";
+          draw();
+          return;
+        }
+        if (ui.tab !== "chat") {
+          ui.choose("chat");
+          input.editing = chatComposerOwnsFocus();
+          lastEsc = 0;
+          ui.notice = "Returned to Chat.";
+          draw();
+          return;
+        }
+        // An unfocused composer still owns the dismissal the rail names,
+        // unless a search/detail/palette surface already owns Escape.
+        if (
+          !escapeOwnedByOverlay({
+            confirmation: !!ui.confirmation,
+            palette: !!ui.palette,
+            keybindings: ui.showingKeybindings,
+            cheatSheet: ui.showingCheatSheet,
+            filter: ui.filter,
+            panel: ui.tab !== "chat" || !!ui.diffView,
+            detail: !!ui.detail,
+            suggestions: false,
+          }) &&
+          ui.dismissRunError()
+        ) {
+          lastEsc = 0;
           draw();
           return;
         }
@@ -1724,11 +2669,35 @@ export async function runWorkspaceTui(
           ui.detail = undefined;
           ui.scroll = 0;
         }
-      } else if (key.name === "return")
-        void task(() => navigate(() => ui.openSelected()));
-      else if (key.name === "pageup") ui.scrollPage(-1);
-      else if (key.name === "pagedown") ui.scrollPage(1);
-      else if (value === "{" || value === "}") {
+      } else if (
+        (key.name === "return" && (ui.tab === "chat" || !ui.diffView)) ||
+        (key.name === "enter" && ui.tab !== "chat" && !ui.diffView)
+      ) {
+        if (ui.groupTree && ui.tab !== "chat") {
+          if (ui.activateTreeCursor() === "row")
+            void task(() => navigate(() => ui.openSelected()));
+          else draw();
+        } else void task(() => navigate(() => ui.openSelected()));
+      } else if (key.name === "pageup" || key.name === "pagedown") {
+        const direction = key.name === "pageup" ? -1 : 1;
+        if (ui.groupTree && (!ui.detail || ui.documentPreview)) {
+          ui.moveTreeCursorByPage(direction, Math.max(1, ui.viewport.height));
+        } else if (
+          ui.tab === "chat" ||
+          ui.tab === "help" ||
+          ui.detail ||
+          ui.diffView
+        ) {
+          ui.scrollPage(direction);
+        } else {
+          const pageSize = Math.max(1, ui.viewport.height);
+          const last = Math.max(0, ui.items().length - 1);
+          ui.selected = Math.max(
+            0,
+            Math.min(last, ui.selected + direction * pageSize),
+          );
+        }
+      } else if (value === "{" || value === "}") {
         const target = nextPromptRow(
           ui.promptRows,
           ui.viewport.offset,
@@ -1736,23 +2705,330 @@ export async function runWorkspaceTui(
         );
         if (target < 0) ui.notice = "No further prompt in this direction.";
         else ui.scroll = target;
-      } else if (
-        key.name === "up" ||
-        (key.ctrl && key.name === "p") ||
-        value === "k"
-      ) {
-        if (ui.detail) ui.scroll = Math.max(0, ui.scroll - 1);
-        else if (!ui.moveDocumentCursor(-1))
-          ui.selected = Math.max(0, ui.selected - 1);
-      } else if (
-        key.name === "down" ||
-        (key.ctrl && key.name === "n") ||
-        value === "j"
-      ) {
-        if (ui.detail) ui.scroll++;
-        else if (!ui.moveDocumentCursor(1))
-          ui.selected = Math.min(ui.items().length - 1, ui.selected + 1);
+      } else if (key.name === "up" || (key.ctrl && key.name === "p")) {
+        if (ui.tab === "documents" && ui.groupTree && ui.documentPreview)
+          ui.moveTreeCursor(-1);
+        else if (ui.detail) ui.scroll = Math.max(0, ui.scroll - 1);
+        else if (ui.tab === "help")
+          ui.scroll = Math.max(
+            0,
+            Math.min(
+              Math.max(0, ui.viewport.total - ui.viewport.height),
+              ui.scroll - 1,
+            ),
+          );
+        else if (ui.tab !== "chat" && !ui.moveTreeCursor(-1) && !ui.groupTree)
+          ui.selected = ui.items().length
+            ? (ui.selected - 1 + ui.items().length) % ui.items().length
+            : 0;
+      } else if (key.name === "down" || (key.ctrl && key.name === "n")) {
+        if (ui.tab === "documents" && ui.groupTree && ui.documentPreview)
+          ui.moveTreeCursor(1);
+        else if (ui.detail) ui.scroll++;
+        else if (ui.tab === "help")
+          ui.scroll = Math.max(
+            0,
+            Math.min(
+              Math.max(0, ui.viewport.total - ui.viewport.height),
+              ui.scroll + 1,
+            ),
+          );
+        else if (ui.tab !== "chat" && !ui.moveTreeCursor(1) && !ui.groupTree)
+          ui.selected = ui.items().length
+            ? (ui.selected + 1) % ui.items().length
+            : 0;
       }
+      draw();
+    };
+    const onMouse = (event: WorkspaceMouseEvent) => {
+      const point = {
+        x: Math.max(0, event.x - 1),
+        y: Math.max(0, event.y - 1),
+      };
+      if (event.motion) {
+        if (selectionDragging && mouseSelection) {
+          mouseSelection = { ...mouseSelection, focus: point };
+          draw();
+          return;
+        }
+        const rowTarget = ui.rowHitTargets.find(
+          (item) =>
+            item.row === event.y &&
+            event.x >= item.start &&
+            event.x <= item.end,
+        );
+        const hoveredRow = rowTarget
+          ? { kind: rowTarget.kind, index: rowTarget.index }
+          : undefined;
+        if (
+          ui.hoveredRow?.kind !== hoveredRow?.kind ||
+          ui.hoveredRow?.index !== hoveredRow?.index
+        ) {
+          ui.hoveredRow = hoveredRow;
+          draw();
+        }
+        return;
+      }
+      const button = event.button & ~32;
+      if (!event.pressed) {
+        if (selectionDragging && mouseSelection) {
+          const moved =
+            mouseSelection.anchor.x !== point.x ||
+            mouseSelection.anchor.y !== point.y;
+          mouseSelection = moved
+            ? { ...mouseSelection, focus: point }
+            : undefined;
+          selectionDragging = false;
+          const selectedText =
+            moved && mouseSelection
+              ? selectedMouseText(
+                  renderedFrame,
+                  mouseSelection.anchor,
+                  mouseSelection.focus,
+                  terminal.columns,
+                  // Copying stops at the transcript edge: a drag that ends on
+                  // the rail must not paste status text into the prompt.
+                  mouseSelectionLimit(terminal.columns, ui.viewport),
+                )
+              : "";
+          draw();
+          if (selectedText.length > 0) {
+            void copyTextToClipboard(selectedText)
+              .then(() => {
+                ui.notice = "Selection copied to clipboard.";
+              })
+              .catch((error) => {
+                ui.notice = message(error);
+              })
+              .finally(draw);
+          }
+        }
+        return;
+      }
+      if (button === 64 || button === 65) {
+        lastMouseClick = undefined;
+        // SGR wheel reports use button 64/65 for up/down.
+        if (ui.modelPicker?.open) {
+          const picker = ui.modelPicker;
+          const delta = button === 64 ? -1 : 1;
+          const columns = Math.max(1, (ui.viewport.width ?? 80) - 4);
+          const wide = columns >= 88;
+          const sidebarWidth = wide
+            ? Math.min(28, Math.max(20, Math.floor(columns * 0.27)))
+            : 0;
+          const pane = wide
+            ? event.x <= sidebarWidth + 4
+              ? "providers"
+              : "models"
+            : picker.focusedPane;
+          const visibleRows = Math.max(1, ui.viewport.height - (wide ? 2 : 5));
+          const rows =
+            pane === "providers"
+              ? picker.providers
+              : modelPickerMatches(picker.models, picker.query);
+          const selected =
+            pane === "providers" ? picker.providerIndex : picker.selected;
+          const field =
+            pane === "providers" ? "providerWindowStart" : "modelWindowStart";
+          const currentStart = modelPickerWindowStart(
+            selected,
+            rows.length,
+            visibleRows,
+            picker[field],
+          );
+          const nextStart = modelPickerWindowStart(
+            selected,
+            rows.length,
+            visibleRows,
+            currentStart + delta,
+          );
+          ui.modelPicker = {
+            ...picker,
+            [field]: nextStart,
+          };
+          draw();
+          return;
+        }
+        const delta = button === 64 ? -1 : 1;
+        if (ui.settingsOpen) {
+          const settingsCount = ui.visibleSettingsControls().length;
+          ui.selectSetting(
+            Math.max(
+              0,
+              Math.min(settingsCount - 1, ui.settingsSelected + delta * 3),
+            ),
+          );
+        } else if (ui.detail) ui.scroll = Math.max(0, ui.scroll + delta * 3);
+        else if (ui.tab === "chat") {
+          const maxOffset = Math.max(0, ui.viewport.total - ui.viewport.height);
+          const current = ui.scroll < 0 ? maxOffset : ui.viewport.offset;
+          const next = Math.max(0, Math.min(maxOffset, current + delta * 3));
+          ui.scroll = next >= maxOffset ? -1 : next;
+        } else if (ui.groupTree) ui.moveTreeCursor(delta);
+        else {
+          const last = Math.max(0, ui.items().length - 1);
+          ui.selected = Math.max(0, Math.min(last, ui.selected + delta));
+        }
+        draw();
+        return;
+      }
+      if ((button & 3) === 0 && (button & 4) !== 0) {
+        lastMouseClick = undefined;
+        // The rail is status, not conversation text: a Shift click there must
+        // not open a selection the transcript never owned.
+        if (railOwnsPoint(ui.viewport, point)) return;
+        mouseSelection = { anchor: point, focus: point };
+        selectionDragging = true;
+        draw();
+        return;
+      }
+      if (button !== 0) {
+        lastMouseClick = undefined;
+        return;
+      }
+      const tabTarget = ui.tabHitTargets.find(
+        (item) =>
+          item.row === event.y && event.x >= item.start && event.x <= item.end,
+      );
+      const rowTarget = ui.rowHitTargets.find(
+        (item) =>
+          item.row === event.y && event.x >= item.start && event.x <= item.end,
+      );
+      const actionableRow =
+        rowTarget &&
+        !(
+          ui.tab === "chat" &&
+          !(ui.settingsOpen && rowTarget.kind === "setting") &&
+          rowTarget.kind !== "provider" &&
+          rowTarget.kind !== "model"
+        );
+      // Ordinary drags select passive text; interactive rows keep click
+      // behavior, while Shift explicitly selects through those hit targets.
+      // A rail cell is neither: it is status painted beside the transcript, so
+      // the click neither selects nor moves input focus.
+      if (!tabTarget && !actionableRow) {
+        lastMouseClick = undefined;
+        if (railOwnsPoint(ui.viewport, point)) return;
+        mouseSelection = { anchor: point, focus: point };
+        selectionDragging = true;
+        draw();
+        return;
+      }
+      mouseSelection = undefined;
+      if (tabTarget) {
+        const targetKey = `tab:${tabTarget.tab}:${tabTarget.row}`;
+        const now = Date.now();
+        const doubleClick =
+          lastMouseClick?.target === targetKey &&
+          now >= lastMouseClick.at &&
+          now - lastMouseClick.at <= 450;
+        lastMouseClick = doubleClick
+          ? undefined
+          : { target: targetKey, at: now };
+        if (ui.tab === "chat" && tabTarget.tab === "sessions" && !doubleClick) {
+          return;
+        }
+        try {
+          saveDraft();
+        } catch (error) {
+          ui.notice = message(error);
+        }
+        ui.choose(tabTarget.tab);
+        input.editing = chatComposerOwnsFocus();
+        draw();
+        return;
+      }
+      if (
+        !rowTarget ||
+        (ui.tab === "chat" &&
+          !(ui.settingsOpen && rowTarget.kind === "setting") &&
+          rowTarget.kind !== "provider" &&
+          rowTarget.kind !== "model")
+      ) {
+        lastMouseClick = undefined;
+        return;
+      }
+      const picker = ui.modelPicker;
+      const targetIdentity =
+        rowTarget.kind === "model" && picker
+          ? [
+              picker.providerId,
+              modelPickerMatches(picker.models, picker.query)[rowTarget.index]
+                ?.id,
+            ]
+          : rowTarget.kind === "provider" && picker
+            ? picker.providers[rowTarget.index]?.id
+            : rowTarget.index;
+      const targetKey = JSON.stringify([
+        ui.tab,
+        rowTarget.kind,
+        targetIdentity,
+      ]);
+      const now = Date.now();
+      const doubleClick =
+        lastMouseClick?.target === targetKey &&
+        now >= lastMouseClick.at &&
+        now - lastMouseClick.at <= 450;
+      lastMouseClick = doubleClick ? undefined : { target: targetKey, at: now };
+      if (rowTarget.kind === "tree") {
+        ui.hoveredRow = { kind: rowTarget.kind, index: rowTarget.index };
+        ui.selectTreeCursor(rowTarget.index);
+        if (doubleClick && ui.activateTreeCursor() === "row")
+          void task(() => navigate(() => ui.openSelected()));
+      } else if (rowTarget.kind === "model") {
+        ui.hoveredRow = { kind: rowTarget.kind, index: rowTarget.index };
+        const picker = ui.modelPicker;
+        const matches = picker
+          ? modelPickerMatches(picker.models, picker.query)
+          : undefined;
+        const model = matches?.[rowTarget.index];
+        if (!picker || !model) return;
+        ui.modelPicker = {
+          ...picker,
+          selected: rowTarget.index,
+          modelWindowStart: modelPickerWindowStart(
+            picker.selected,
+            matches.length,
+            modelPickerVisibleRows(ui),
+            picker.modelWindowStart,
+          ),
+        };
+        if (doubleClick)
+          void task(async () => {
+            await ui.selectModel(model.id);
+            input.editing = chatComposerOwnsFocus();
+          });
+      } else if (rowTarget.kind === "setting") {
+        const editing = !!ui.settingsEdit;
+        const settingsBefore = JSON.stringify(ui.localSettings());
+        const toolActivityHiddenBefore = ui.hideToolActivity;
+        ui.hoveredRow = { kind: "setting", index: rowTarget.index };
+        ui.selectSetting(rowTarget.index);
+        // A single click selects; a double-click applies exactly once.
+        if (!editing && doubleClick) ui.activateSetting();
+        if (
+          settingsBefore !== JSON.stringify(ui.localSettings()) ||
+          toolActivityHiddenBefore !== ui.hideToolActivity
+        ) {
+          try {
+            saveDraft();
+          } catch (error) {
+            ui.notice = message(error);
+          }
+        }
+      } else if (rowTarget.kind === "provider") {
+        const picker = ui.modelPicker;
+        const provider = picker?.providers[rowTarget.index];
+        if (!provider || !ui.modelPicker?.open) return;
+        ui.selectModelPickerProvider(rowTarget.index);
+        if (doubleClick)
+          void task(() => ui.loadModelPickerProvider(provider.id));
+      } else {
+        ui.hoveredRow = { kind: rowTarget.kind, index: rowTarget.index };
+        ui.selected = rowTarget.index;
+        void task(() => navigate(() => ui.openSelected()));
+      }
+      input.editing = false;
       draw();
     };
     process.on("SIGINT", stopOnSigint);
@@ -1760,12 +3036,111 @@ export async function runWorkspaceTui(
     process.on("SIGHUP", stopOnSighup);
     process.once("exit", restoreTerminal);
     process.once("uncaughtExceptionMonitor", restoreTerminal);
-    keyHandler = (event: OpenTuiKeyEvent) => {
-      if (event.eventType !== "press" && event.eventType !== "repeat") return;
-      const value = event.name.length === 1 ? event.name : undefined;
-      void onKey(value, event as unknown as Key);
+    terminal.start(
+      onKey,
+      (text) => {
+        if (ui.settingsOpen) {
+          ui.insertSettingsText(text);
+          draw();
+          return;
+        }
+        if (ui.modelPicker?.open) {
+          const picker = ui.modelPicker;
+          if (picker.focusedPane !== "models") return;
+          const inserted = [
+            ...sanitizeText(stripAnsi(text).replace(/[\r\n\t]+/g, " ")),
+          ];
+          const points = [...picker.query];
+          points.splice(picker.cursor, 0, ...inserted);
+          const query = points.join("");
+          setModelPickerQuery(
+            ui,
+            picker,
+            query,
+            picker.cursor + inserted.length,
+          );
+          draw();
+          return;
+        }
+        input.pasting = true;
+        try {
+          input.paste(text);
+        } finally {
+          input.pasting = false;
+        }
+        try {
+          saveDraft();
+        } catch (error) {
+          ui.notice = message(error);
+        }
+        draw();
+      },
+      () => {
+        draw();
+        scheduleCellPixelMeasurement();
+      },
+      onMouse,
+      { deferDisplay: true },
+    );
+    const activateTerminal = (
+      cellPixels: { height: number; width: number } | undefined,
+    ) => {
+      if (stopped) return;
+      if (cellPixels?.height) {
+        terminalCapabilities = {
+          ...terminalCapabilities,
+          cellHeightPixels: cellPixels.height,
+        };
+      }
+      terminal.activate();
+      initializingTerminal = false;
+      if (ui.localTabIcons)
+        terminal.writeGraphics(
+          `${kittyTabIconsTransfer(ui.localTabIcons)}${kittyProviderIconTransfer(ui.localTabIcons)}`,
+        );
+      // The splash is offered once per process, at the first interactive
+      // frame only. It is skipped when the pet is off and when the terminal
+      // cannot print the card, and a timer takes it down after 900 ms even if
+      // no key arrives. Any key dismisses it through ui.dismissPetSplash.
+      if (!petSplashShown) {
+        petSplashShown = true;
+        if (ui.petEnabled && process.stdout.isTTY) {
+          ui.petSplashUntil = Date.now() + PET_SPLASH_MS;
+          splashTimer = setTimeout(() => {
+            ui.petSplashUntil = 0;
+            draw();
+          }, PET_SPLASH_MS);
+        }
+      }
+      draw();
     };
-    draw();
+    // Measure before the first visible frame so the pixel-based composer
+    // height is correct immediately instead of visibly reflowing afterward.
+    void terminal
+      .measureCellPixels()
+      .then(activateTerminal, () => activateTerminal(undefined));
+    // The idle pet breathes at 4 fps, so its pose only changes four times a
+    // second. Remembering the last idle step keeps the existing 100 ms timer
+    // from repainting a static screen ten times a second.
+    let lastIdlePetStep = -1;
+    motionTimer = setInterval(() => {
+      if (!motion || ui.motionOverride === false || stopped || suspended)
+        return;
+      // Motion frames redraw active runs on any panel; provider and ledger
+      // refreshes remain on their separate, slower timer.
+      if (busy || app.running()) {
+        draw();
+        return;
+      }
+      // Nothing is running, so the only thing motion can change is the pet.
+      // A settled or hidden pet renders identically on every frame and costs
+      // nothing.
+      if (!ui.petAnimating) return;
+      const idleStep = Math.floor((Date.now() - startedAt) / 250);
+      if (idleStep === lastIdlePetStep) return;
+      lastIdlePetStep = idleStep;
+      draw();
+    }, 100);
     timer = setInterval(() => {
       if (refreshing || stopped || suspended) return;
       refreshing = true;
@@ -1784,7 +3159,7 @@ export async function runWorkspaceTui(
           const queued = takeReadyQueuedPrompt(ui, {
             workbenchRunning: app.running(),
             hasConfirmation: !!ui.confirmation,
-            runnerBusy: busy,
+            runnerBusy: busy || ui.hostRunBusy(),
           });
           if (!queued) return;
           busy = true;

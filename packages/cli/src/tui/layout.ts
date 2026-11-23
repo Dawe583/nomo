@@ -1,3 +1,5 @@
+import type { SymbolSet } from "./theme-config.ts";
+
 // CSI (any final byte), OSC terminated by BEL or ST, and two character ESC
 // sequences. paint() emits only SGR, but stripAnsi also guards the width
 // accounting against sequences that arrived from outside the render model,
@@ -121,20 +123,40 @@ export function pad(value: string, width: number): string {
 }
 
 export function rule(width: number, character = "-"): string {
-  return character.repeat(Math.max(0, width));
+  const cells = Number.isFinite(width) ? Math.max(0, Math.floor(width)) : 0;
+  const glyph = sanitizeText(character);
+  const glyphWidth = visibleLength(glyph);
+  if (glyphWidth <= 0) return " ".repeat(cells);
+  const repeats = Math.floor(cells / glyphWidth);
+  return glyph.repeat(repeats) + " ".repeat(cells - repeats * glyphWidth);
 }
+
+const ASCII_FRAME: SymbolSet["frame"] = {
+  tl: "+",
+  tr: "+",
+  bl: "+",
+  br: "+",
+  h: "-",
+  v: "|",
+  teeL: "+",
+  teeR: "+",
+  teeT: "+",
+  teeB: "+",
+  cross: "+",
+};
 
 export function box(
   title: string,
   content: readonly string[],
   width: number,
+  frame: SymbolSet["frame"] = ASCII_FRAME,
 ): string[] {
   const inner = Math.max(1, width - 2);
   const titleText =
     title === "" ? "" : ` ${fit(title, Math.max(1, inner - 2))} `;
-  const top = `+${titleText}${rule(inner - visibleLength(titleText))}+`;
-  const body = content.map((line) => `|${pad(line, inner)}|`);
-  return [top, ...body, `+${rule(inner)}+`];
+  const top = `${frame.tl}${titleText}${rule(inner - visibleLength(titleText), frame.h)}${frame.tr}`;
+  const body = content.map((line) => `${frame.v}${pad(line, inner)}${frame.v}`);
+  return [top, ...body, `${frame.bl}${rule(inner, frame.h)}${frame.br}`];
 }
 
 export function columns(

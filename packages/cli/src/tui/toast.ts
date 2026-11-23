@@ -158,7 +158,8 @@ export function renderToasts(
     // safe, and sanitizeText turns agent supplied controls into visible
     // marks instead of cursor movement. Newlines become "?" there too, so
     // one toast can never claim two lines.
-    const icon = sanitizeText(entry.icon).slice(0, 1) || "?";
+    const fittedIcon = fit(sanitizeText(entry.icon), 1);
+    const icon = visibleLength(fittedIcon) === 1 ? fittedIcon : "?";
     const line = fit(
       `${icon} [${entry.tone.toUpperCase()}] ${sanitizeText(entry.message)}`,
       width,

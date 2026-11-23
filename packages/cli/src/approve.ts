@@ -41,7 +41,12 @@ export async function runApprovalsCommand(
   catch (error) { io.stderr(message(error)); return 2; }
   try {
     const pending = loadPending(args.dir, options.fs).filter((record) => record.expiresAt > (options.now ?? Date.now)());
-    if (args.json) io.stdout(JSON.stringify(pending));
+    if (args.json)
+      io.stdout(
+        JSON.stringify(pending, (key, value) =>
+          key === "decisionToken" ? undefined : value,
+        ),
+      );
     else if (pending.length === 0) io.stdout("no pending holds in state directory");
     else for (const record of pending) io.stdout(`${record.holdId} ${record.call.tool} ${record.call.klass} radius ${record.call.blastRadius ?? "unknown"} expires ${new Date(record.expiresAt).toISOString()}`);
     return 0;

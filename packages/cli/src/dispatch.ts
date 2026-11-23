@@ -27,15 +27,12 @@ import {
   runVerifyCommand,
 } from "./index.ts";
 import { parseInvocation, type ParsedInvocation } from "./argv.ts";
+import { packageVersion } from "./package-version.ts";
 
-export function packageVersion(): string {
-  const meta = JSON.parse(
-    readFileSync(new URL("../package.json", import.meta.url), "utf8"),
-  );
-  if (!meta || typeof meta.version !== "string" || !meta.version)
-    throw Error("Package version is missing.");
-  return meta.version;
-}
+// Re-exported where it was defined before it moved, because the bin and the
+// recovery server already reach for it by this path and a second definition is
+// exactly the drift the shared reader exists to prevent.
+export { packageVersion };
 
 /** Any command not wired yet fails loudly rather than pretending to succeed. */
 export async function runCommand(

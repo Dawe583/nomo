@@ -93,19 +93,20 @@ test("workspace model labels are sanitized before summary rendering", async (t) 
   for (const color of [false, true]) {
     const frame = renderWorkspace(ui, 80, 24, "", false, false, { color });
     const plain = stripAnsi(frame);
-    // The model label appears in the overview body as "Model: ... | idle".
+    // The model label appears in the Chat header as "    Model: ...".
     // Check that this specific line has no control characters.
     const modelLine = plain
       .split("\n")
-      .find((line) => line.startsWith("  Model:"));
-    assert.ok(modelLine, "model line should exist in overview");
+      .find((line) => /^\s*Model: /.test(line));
+    assert.ok(modelLine, "model line should exist in the Chat header");
+    assert.match(modelLine, /evil/);
     assert.doesNotMatch(
       modelLine,
       /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f-\u009f]/u,
     );
-    // Also check header line that includes model (brand header line 3).
+    // Also check the dock line that includes model (status rail).
     const headerLine = plain.split("\n").find((line) => line.includes("evil"));
-    assert.ok(headerLine, "header line with model should exist");
+    assert.ok(headerLine, "dock line with model should exist");
     assert.doesNotMatch(
       headerLine,
       /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f-\u009f]/u,

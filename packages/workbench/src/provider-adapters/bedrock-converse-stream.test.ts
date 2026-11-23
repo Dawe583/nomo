@@ -249,7 +249,7 @@ test("Bedrock stream read timeouts are reported distinctly", async () => {
 });
 test("fails closed on unsupported content block delta variants", async () => {
   const client = new BedrockConverseStreamAdapter(config, async () => stream(
-    event("contentBlockDelta", { contentBlockDelta: { contentBlockIndex: 0, delta: { reasoningContent: { text: "hidden reasoning" } } } }),
+    event("contentBlockDelta", { contentBlockDelta: { contentBlockIndex: 0, delta: { guardrailContent: { text: "blocked" } } } }),
     event("contentBlockDelta", { contentBlockDelta: { contentBlockIndex: 1, delta: { text: "answer" } } }),
     completeEvent,
   ));
@@ -257,6 +257,80 @@ test("fails closed on unsupported content block delta variants", async () => {
     client.complete(config.model!, [{ role: "user", content: "x" }], [], new AbortController().signal),
     /unsupported content block delta/,
   );
+});
+
+test("Bedrock reasoning content is surfaced separately from the answer", async () => {
+  const answers: string[] = [];
+  const reasoning: string[] = [];
+  const client = new BedrockConverseStreamAdapter(config, async () => stream(
+    event("contentBlockDelta", { contentBlockDelta: { contentBlockIndex: 0, delta: { reasoningContent: { text: "hidden reasoning" } } } }),
+    event("contentBlockDelta", { contentBlockDelta: { contentBlockIndex: 0, delta: { reasoningContent: { signature: "signed" } } } }),
+    event("contentBlockDelta", { contentBlockDelta: { contentBlockIndex: 0, delta: { reasoningContent: { redactedContent: "cHJvdmlkZXItcmVkYWN0ZWQ=" } } } }),
+    event("contentBlockDelta", { contentBlockDelta: { contentBlockIndex: 1, delta: { text: "answer" } } }),
+    completeEvent,
+  ));
+  const result = await client.complete(
+    config.model!,
+    [{ role: "user", content: "x" }],
+    [],
+    new AbortController().signal,
+    text => {
+      answers.push(text);
+    },
+    text => {
+      reasoning.push(text);
+    },
+  );
+  assert.deepEqual(reasoning, ["hidden reasoning"]);
+  assert.equal(answers.join(""), "answer");
+  assert.equal(result.message.content, "answer");
+  assert.equal(result.message.tool_calls, undefined);
+});
+
+test("Bedrock reasoning alone is not an answer and dispatches nothing", async () => {
+  const reasoning: string[] = [];
+  const client = new BedrockConverseStreamAdapter(config, async () => stream(
+    event("contentBlockDelta", { contentBlockDelta: { contentBlockIndex: 0, delta: { reasoningContent: { text: "hidden reasoning" } } } }),
+    completeEvent,
+  ));
+  await assert.rejects(
+    client.complete(
+      config.model!,
+      [{ role: "user", content: "x" }],
+      [],
+      new AbortController().signal,
+      () => {},
+      text => {
+        reasoning.push(text);
+      },
+    ),
+    /no answer/,
+  );
+  assert.deepEqual(reasoning, ["hidden reasoning"]);
+});
+
+test("a Bedrock stream without reasoning deltas never calls onReasoning", async () => {
+  const answers: string[] = [];
+  const reasoning: string[] = [];
+  const client = new BedrockConverseStreamAdapter(config, async () => stream(
+    event("contentBlockDelta", { contentBlockDelta: { contentBlockIndex: 0, delta: { text: "answer" } } }),
+    completeEvent,
+  ));
+  const result = await client.complete(
+    config.model!,
+    [{ role: "user", content: "x" }],
+    [],
+    new AbortController().signal,
+    text => {
+      answers.push(text);
+    },
+    text => {
+      reasoning.push(text);
+    },
+  );
+  assert.deepEqual(reasoning, []);
+  assert.equal(answers.join(""), "answer");
+  assert.equal(result.message.content, "answer");
 });
 
 test("validates Bedrock tool names and supplied descriptions before requesting", async () => {

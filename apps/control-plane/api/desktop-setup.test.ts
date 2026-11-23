@@ -1,8 +1,9 @@
 import test, { type TestContext } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, mkdir, writeFile, readFile, rm, symlink } from 'node:fs/promises';
+import { mkdtemp, mkdir, writeFile, readFile, rm, symlink, open } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
+import { DatabaseSync } from 'node:sqlite';
 import { desktopSetup, importDesktopProvider } from './desktop-setup.ts';
 import { listenControlPlane } from './server.ts';
 import { Workbench } from '../../../packages/workbench/src/index.ts';
@@ -27,6 +28,25 @@ async function fixture(t: TestContext, fetcher: typeof fetch = async () => Respo
 }
 const auth = '.local/share/opencode/auth.json';
 const key = 'fixture-private-key-never-expose';
+const ompKey = 'fixture-omp-key-never-expose';
+
+/** OMP keeps its API keys in a read-only SQLite table, so the fixture builds
+ * one under HOME exactly where the importer resolves it. Only the columns the
+ * importer reads are created; a missing column would be a fixture bug, not a
+ * product one. */
+async function writeOmpCredentials(home: string, entries: Record<string, string>) {
+  const directory = join(home, '.omp', 'agent');
+  await mkdir(directory, { recursive: true });
+  const database = new DatabaseSync(join(directory, 'agent.db'));
+  try {
+    database.exec("CREATE TABLE auth_credentials (id TEXT PRIMARY KEY, provider TEXT NOT NULL, credential_type TEXT NOT NULL, disabled_cause TEXT, data TEXT NOT NULL, updated_at INTEGER NOT NULL)");
+    const insert = database.prepare("INSERT INTO auth_credentials (id, provider, credential_type, disabled_cause, data, updated_at) VALUES (?, ?, 'api_key', NULL, ?, ?)");
+    let stamp = 1_700_000_000_000;
+    for (const [provider, apiKey] of Object.entries(entries))
+      insert.run(`fixture-${provider}`, provider, JSON.stringify({ key: apiKey }), stamp++);
+  } finally { database.close(); }
+  return join(directory, 'agent.db');
+}
 
 test('local import uses fixed endpoint, hides key, selects valid model and survives restart encrypted', async t => {
   let calls = 0;
@@ -182,4 +202,126 @@ test('TokenRouter JSONC import preserves strings, accepts comments and rejects s
   assert.equal((await importDesktopProvider('opencode:tokenrouter', f.env, f.app)).defaultModel, 'z-ai/glm-5.3-free');
   await f.save(file, content.replace('api.tokenrouter.com', 'attacker.example'));
   await assert.rejects(importDesktopProvider('opencode:tokenrouter', f.env, f.app), /unavailable/);
+});
+
+test('provider matrix discovers OMP, Prime and OpenCode sources without contacting providers', async t => {
+  let calls = 0;
+  const f = await fixture(t, async () => { calls++; return Response.json({ data: [{ id: 'matrix-model' }] }); });
+  await f.save(auth, { opencode: { type: 'api', key }, openrouter: { type: 'api', key } });
+  await f.save('.prime/agent/auth.json', {
+    opencode: { type: 'api_key', key },
+    openrouter: { type: 'api_key', key },
+    anthropic: { type: 'oauth', access: key, refresh: 'fixture-refresh', expires: 4_102_444_800_000 },
+  });
+  await writeOmpCredentials(f.home, { nvidia: ompKey, 'opencode-zen': ompKey, 'opencode-go': ompKey, openrouter: ompKey });
+  const scan = await desktopSetup(f.env);
+  const sources = new Map(scan.sources.map(source => [source.id, source]));
+  for (const id of ['omp:nvidia', 'omp:opencode-zen', 'omp:opencode-go', 'prime:anthropic', 'prime:zen', 'prime:openrouter', 'opencode:openrouter'])
+    assert.ok(sources.has(id), `discovery must list ${id}`);
+  for (const id of ['omp:nvidia', 'omp:opencode-zen', 'omp:opencode-go', 'prime:zen', 'prime:openrouter', 'opencode:openrouter'])
+    assert.equal(sources.get(id)?.available, true, `${id} must report its stored key as available`);
+  // A subscription entry is offered but explicitly unavailable, never treated
+  // as an API key.
+  assert.equal(sources.get('prime:anthropic')?.available, false);
+  assert.match(String(sources.get('prime:anthropic')?.reason), /^oauth-/);
+  assert.equal(calls, 0, 'Discovery must not contact providers');
+  const shown = JSON.stringify(scan);
+  assert.ok(!shown.includes(key), 'Discovery must never echo an OpenCode or Prime key');
+  assert.ok(!shown.includes(ompKey), 'Discovery must never echo an OMP key');
+});
+
+test('OMP OpenCode Go is importable from the key OMP already stores', async t => {
+  // The Go endpoint is its own origin, not the Zen one: provider-defaults.ts
+  // exports OPENCODE_GO_URL = https://opencode.ai/zen/go/v1 and desktop-setup.ts
+  // resolves it through the preset rather than guessing a URL from disk.
+  const f = await fixture(t, async () => Response.json({ data: [{ id: 'matrix-model' }] }));
+  await writeOmpCredentials(f.home, { 'opencode-go': ompKey });
+  assert.equal(
+    (await desktopSetup(f.env)).sources.find(source => source.id === 'omp:opencode-go')?.available,
+    true,
+    'a stored opencode-go key must be available through its provider endpoint',
+  );
+  const result = await importDesktopProvider('omp:opencode-go', f.env, f.app);
+  assert.equal(result.baseUrl, 'https://opencode.ai/zen/go/v1');
+});
+
+test('a Prime OAuth entry is never read as an API key', async t => {
+  const f = await fixture(t, async () => Response.json({ data: [{ id: 'anthropic-model' }] }));
+  const prime = '.prime/agent/auth.json';
+  // An expired OAuth session is not a credential the importer can use.
+  await f.save(prime, { anthropic: { type: 'oauth', access: key, refresh: 'fixture-refresh', expires: 1 } });
+  assert.equal((await desktopSetup(f.env)).sources.find(source => source.id === 'prime:anthropic')?.available, false);
+  await assert.rejects(importDesktopProvider('prime:anthropic', f.env, f.app), /unavailable/);
+  // A live OAuth session is either imported explicitly with its type and
+  // expiry, or refused with a reason. It is never treated as the `key` of an
+  // API key entry.
+  await f.save(prime, { anthropic: { type: 'oauth', access: key, refresh: 'fixture-refresh', expires: 4_102_444_800_000 } });
+  const source = (await desktopSetup(f.env)).sources.find(candidate => candidate.id === 'prime:anthropic');
+  assert.ok(source, 'discovery must list prime:anthropic');
+  if (source.available) {
+    const result = await importDesktopProvider('prime:anthropic', f.env, f.app);
+    assert.equal(result.providerId, 'anthropic');
+    assert.equal(result.baseUrl, 'https://api.anthropic.com/v1');
+  } else {
+    assert.match(String(source.reason), /^oauth-/);
+    await assert.rejects(importDesktopProvider('prime:anthropic', f.env, f.app), /OAuth subscription import is unavailable/);
+  }
+  // A hybrid entry that also carries a `key` field is still an OAuth entry.
+  await f.save(prime, { anthropic: { type: 'oauth', key, access: key, expires: 4_102_444_800_000 } });
+  const hybrid = (await desktopSetup(f.env)).sources.find(candidate => candidate.id === 'prime:anthropic');
+  assert.equal(hybrid?.available, false, 'an OAuth entry must not be read through its key field');
+});
+
+test('an unknown provider id is unsupported and discovery still resolves', async t => {
+  const f = await fixture(t, async () => { assert.fail('Must not send credentials'); });
+  await assert.rejects(importDesktopProvider('omp:not-a-provider', f.env, f.app), error => {
+    assert.ok(error instanceof Error);
+    assert.match(error.message, /Unsupported/);
+    return true;
+  });
+  // Discovery is a report, not an exception: a HOME with nothing in it still
+  // yields every source marked unavailable.
+  const absent = await desktopSetup({ HOME: join(f.home, 'absent-home'), NOMO_DATA_DIR: join(f.home, 'nomo') });
+  assert.ok(absent.sources.length > 0);
+  assert.ok(absent.sources.every(source => source.available === false));
+});
+
+test('OMP credentials outside HOME, an oversized database and a symlink fail closed', async t => {
+  const f = await fixture(t, async () => { assert.fail('Must not send credentials'); });
+  const database = await writeOmpCredentials(f.home, { nvidia: ompKey });
+  const outside = await mkdtemp(join(tmpdir(), 'nomo-omp-outside-'));
+  t.after(async () => { await rm(outside, { recursive: true, force: true }); });
+  // A config root the importer is not allowed to follow.
+  const escaped = { ...f.env, PI_CODING_AGENT_DIR: outside };
+  assert.equal((await desktopSetup(escaped)).sources.find(source => source.id === 'omp:nvidia')?.available, false);
+  await assert.rejects(importDesktopProvider('omp:nvidia', escaped, f.app), /unavailable/);
+  // A database larger than the importer reads is refused before it is opened.
+  const handle = await open(database, 'r+');
+  try { await handle.truncate(67_108_865); } finally { await handle.close(); }
+  assert.equal((await desktopSetup(f.env)).sources.find(source => source.id === 'omp:nvidia')?.available, false);
+  await assert.rejects(importDesktopProvider('omp:nvidia', f.env, f.app), /unavailable/);
+  // A planted symlink is refused even when it points at a valid database.
+  await rm(database);
+  const target = await writeOmpCredentials(join(f.home, 'elsewhere'), { nvidia: ompKey });
+  if (process.platform !== 'win32') {
+    await symlink(target, database);
+    assert.equal((await desktopSetup(f.env)).sources.find(source => source.id === 'omp:nvidia')?.available, false);
+    await assert.rejects(importDesktopProvider('omp:nvidia', f.env, f.app), /unavailable/);
+  }
+});
+
+test('every discovered source imports without echoing its key in results or errors', async t => {
+  const f = await fixture(t, async () => Response.json({ data: [{ id: 'matrix-model' }] }));
+  await f.save(auth, { opencode: { type: 'api', key }, openrouter: { type: 'api', key } });
+  await f.save('.prime/agent/auth.json', { opencode: { type: 'api_key', key }, openrouter: { type: 'api_key', key } });
+  await writeOmpCredentials(f.home, { nvidia: ompKey, 'opencode-zen': ompKey, openrouter: ompKey });
+  for (const id of ['opencode:zen', 'opencode:openrouter', 'prime:zen', 'prime:openrouter', 'omp:nvidia', 'omp:opencode-zen', 'omp:openrouter']) {
+    const shown = JSON.stringify(await importDesktopProvider(id, f.env, f.app));
+    assert.ok(!shown.includes(key), `${id} result leaked the OpenCode or Prime key`);
+    assert.ok(!shown.includes(ompKey), `${id} result leaked the OMP key`);
+  }
+  await assert.rejects(importDesktopProvider('prime:anthropic', f.env, f.app), error => {
+    assert.ok(!String((error as Error).message).includes(key));
+    return true;
+  });
 });

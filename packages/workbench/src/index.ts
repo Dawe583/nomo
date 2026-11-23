@@ -16,7 +16,12 @@ import {
   digest,
   type Json,
 } from "../../runtime/src/index.ts";
-import { NVIDIA_URL, QWEN_URL, PROVIDER_PRESETS } from "./provider-defaults.ts";
+import {
+  NVIDIA_URL,
+  OPENROUTER_URL,
+  QWEN_URL,
+  PROVIDER_PRESETS,
+} from "./provider-defaults.ts";
 import {
   assertProviderDescriptorInManifest,
   CONFIGURABLE_PROVIDER_DESCRIPTORS,
@@ -66,9 +71,11 @@ import {
 } from "./agent-identity.ts";
 import {
   AGENT_RUNNER_OUTPUT_LIMITS,
+  assertHostAgentRunnerDescription,
   assertSafeAgentRunnerDescription,
   assertKnownAgentRunnerProfile,
   mediateAgentRunEvents,
+  validateAgentRunEvents,
   type AgentRunner,
   type AgentRunnerDescription,
   type AgentRun,
@@ -77,6 +84,7 @@ import {
   type AgentToolDefinition,
   type AgentCancelResult,
 } from "./agent-runners/agent-runner.ts";
+import { HOST_RUN_SYSTEM_PROMPT } from "./agent-runners/host-cli.ts";
 import {
   defaultHarnessSettings,
   defaultHarnessTextSettings,
@@ -190,6 +198,7 @@ import {
   harnessToolPlan,
   type HarnessToolArgs,
 } from "./harness-tools.ts";
+import { TODO_TOOLS, TODO_WRITE_TOOL, todoWritePlan } from "./todo-tool.ts";
 import {
   resolveRefineGates,
   type GateSurface,
@@ -292,6 +301,14 @@ export type SessionView = {
   readonly events: readonly SessionEvent[];
   readonly continuationCount: number;
   readonly runTokenCount: number;
+  /**
+   * True for a run delegated to an installed host application.
+   *
+   * The host owns the conversation, so this session carries no provider turn,
+   * no mediated tools and no project copy. It exists so the run has a real
+   * transcript and a signed ledger record instead of a side channel.
+   */
+  readonly hostOnly?: boolean;
 };
 /** Model ids that earlier releases shipped as defaults are retired on sight: the
  * workspace picks from its own validated catalog or has no model at all. */
@@ -693,6 +710,55 @@ type ActiveAgentRunnerRun = {
   cancelResult?: "confirmed" | "unknown";
   cancelPromise?: Promise<AgentCancelResult>;
 };
+/**
+ * The consent snapshot of one host-delegated run.
+ *
+ * There is no project copy, no tool list and no user profile here, because a
+ * host run has none of them: the host sees its own workspace and its own
+ * tools. The snapshot therefore names exactly what NOMO hands over, which is
+ * the task, the fixed system prompt and the working directory it was given.
+ */
+type PreparedHostRun = {
+  readonly id: string;
+  readonly consentDigest: string;
+  readonly expiresAt: number;
+  readonly runner: AgentRunner;
+  readonly description: AgentRunnerDescription;
+  readonly sourceId: string;
+  readonly host: string;
+  readonly task: string;
+  readonly taskDigest: string;
+  readonly cwdDigest: string;
+};
+type ActiveHostRun = {
+  readonly runner: AgentRunner;
+  readonly session: Session;
+  readonly prepared: PreparedHostRun;
+  handle?: AgentRun;
+  ambiguous: boolean;
+  cancelResult?: "confirmed" | "unknown";
+  cancelPromise?: Promise<AgentCancelResult>;
+};
+/** The host id must be a short lower-case token; it becomes a model prefix. */
+const HOST_ID_PATTERN = /^[a-z0-9][a-z0-9-]{0,63}$/;
+const SHA256_DIGEST_PATTERN = /^sha256:[a-f0-9]{64}$/;
+/**
+ * The only profile a host session carries.
+ *
+ * It is reserved, fixed and never registered: a host run has no mediated
+ * tools and its system prompt is the constant this module ships, so no stored
+ * profile can widen what the session is allowed to ask Workbench for.
+ */
+export const HOST_RUN_PROFILE_ID = "host-run";
+const HOST_RUN_PROFILE: AgentProfile = {
+  id: HOST_RUN_PROFILE_ID,
+  name: "Host subscription run",
+  systemPrompt: HOST_RUN_SYSTEM_PROMPT,
+  allowedTools: [],
+  policyProfile: "default",
+  maxTurns: 1,
+  maxContextTokens: 8192,
+};
 
 /** Model tools always cross NOMO's SDK. A provider has no shell or
  * filesystem authority; operators configure the MCP upstream on the runtime. */
@@ -719,6 +785,38 @@ function secretLikeText(text: string, knownSecrets: readonly string[]): boolean 
     REFINEMENT_SECRET_PATTERNS.some((pattern) => pattern.test(text)) ||
     knownSecrets.some((secret) => secret.length >= 4 && text.includes(secret))
   );
+}
+
+function safeAgentRunnerPreview(
+  value: unknown,
+  redact: (text: string) => string,
+  knownSecrets: readonly string[],
+): unknown | undefined {
+  let text: string;
+  try {
+    text = JSON.stringify(value) ?? "null";
+  } catch {
+    return undefined;
+  }
+  text = redact(text);
+  for (const secret of knownSecrets) {
+    if (secret.length < 4) {
+      if (secret && text.includes(secret)) return undefined;
+      continue;
+    }
+    text = text.split(secret).join("[redacted]");
+  }
+  if (
+    Buffer.byteLength(text, "utf8") >
+      AGENT_RUNNER_OUTPUT_LIMITS.maxMessageBytes ||
+    secretLikeText(text, [])
+  )
+    return undefined;
+  try {
+    return JSON.parse(text);
+  } catch {
+    return undefined;
+  }
 }
 
 function refinementTextIsSensitive(
@@ -833,6 +931,7 @@ export class Workbench {
   private connectors: Connector[] = [];
   private documents: Record<string, WorkspaceState> = {};
   private evidence: Record<string, JsonlEntry[]> = {};
+  private evidenceRevision = 0;
   private recoveryRequests: Record<string, RecoveryRequest> = {};
   private agentProfiles: AgentProfile[] = [];
   private hooks: Hook[] = [];
@@ -865,6 +964,15 @@ export class Workbench {
   private readonly localIdentityIssuer = new LocalAgentIdentityIssuer();
   /** In-flight learning passes, awaited by `settled()` and never by `jobs`. */
   private readonly harnessJobs = new Set<Promise<void>>();
+  /**
+   * Cancellations started by `stopRun` and awaited by `settled()`.
+   *
+   * A stop is fire-and-forget for the caller, but its ledger entry is not
+   * optional: `settled()` means the cancellation was recorded, not merely
+   * requested, so a reader never sees a stopped session with no cancel entry
+   * just because the write was still in flight.
+   */
+  private readonly pendingCancels = new Set<Promise<void>>();
   /** The timeout `NOMO_HOOK_TIMEOUT_MS` asked for, or undefined when the
    * launcher set none. Kept apart from the resolved setting so an explicit
    * runtime environment still wins: it is the more specific statement about
@@ -895,8 +1003,19 @@ export class Workbench {
   private readonly queued = new Set<string>();
   private readonly jobs = new Map<string, Promise<void>>();
   private readonly agentRunners = new Map<string, AgentRunner>();
+  /**
+   * Host-delegated runners, kept apart from the mediated registry.
+   *
+   * `agentRunnerCatalog()` reports only the mediated map and `prepareAgentRun`
+   * resolves only from it, so a host runner can never be reached by a path
+   * that expects tool mediation. A host run is prepared and started by its own
+   * pair of methods and carries no grant.
+   */
+  private readonly hostRunners = new Map<string, AgentRunner>();
   private readonly preparedAgentRuns = new Map<string, PreparedAgentRun>();
+  private readonly preparedHostRuns = new Map<string, PreparedHostRun>();
   private readonly activeAgentRuns = new Map<string, ActiveAgentRunnerRun>();
+  private readonly activeHostRuns = new Map<string, ActiveHostRun>();
   private projectAccess?: ProjectAccess;
   private projectExecutionTail: Promise<void> = Promise.resolve();
   private projectExecutionQueued = 0;
@@ -914,9 +1033,19 @@ export class Workbench {
     // turn's own job is still resolving, so the pass that this call was asked
     // about often does not exist yet when the list is taken. Waiting again is
     // what makes `settled` mean every turn that started has finished,
-    // including the pass that turn scheduled.
-    while (this.jobs.size > 0 || this.harnessJobs.size > 0)
-      await Promise.allSettled([...this.jobs.values(), ...this.harnessJobs]);
+    // including the pass that turn scheduled. A cancellation counts too, so a
+    // `stopRun` that returned before its ledger write finished is still
+    // settled once this call returns.
+    while (
+      this.jobs.size > 0 ||
+      this.harnessJobs.size > 0 ||
+      this.pendingCancels.size > 0
+    )
+      await Promise.allSettled([
+        ...this.jobs.values(),
+        ...this.harnessJobs,
+        ...this.pendingCancels,
+      ]);
   }
   async shutdown() {
     await this.disposeReviews();
@@ -1373,24 +1502,43 @@ export class Workbench {
       );
     return [...new Set(parsed.map((item) => (item as string).trim()))];
   }
-  async configure(input: WorkbenchProviderConfig): Promise<readonly Model[]> {
+  private setupProviderConfig(
+    input: WorkbenchProviderConfig,
+  ): WorkbenchProviderConfig {
+    if ("auth" in input) {
+      assertProviderDescriptorInManifest(input);
+      return input;
+    }
+    const existing = this.profiles[providerConfigKey(input)];
+    return normalizeProviderConfig({
+      ...input,
+      apiKey:
+        input.apiKey ||
+        (existing && !("auth" in existing) ? existing.apiKey : "") ||
+        "",
+    });
+  }
+  /** Read a setup candidate's catalog without activating or persisting it. */
+  async providerModelsForConfig(
+    input: WorkbenchProviderConfig,
+  ): Promise<readonly Model[]> {
+    const config = this.setupProviderConfig(input);
+    const provider = createProviderClient(
+      config,
+      this.fetcher,
+      () => this.harness,
+      this.providerDependencies,
+    );
+    return catalogFor(provider, config);
+  }
+  async configure(
+    input: WorkbenchProviderConfig,
+    preferredModel?: string,
+  ): Promise<readonly Model[]> {
     const generation = ++this.providerGeneration;
     this.providerSetupCount++;
     try {
-      let config: WorkbenchProviderConfig;
-      if ("auth" in input) {
-        assertProviderDescriptorInManifest(input);
-        config = input;
-      } else {
-        const existing = this.profiles[providerConfigKey(input)];
-        config = normalizeProviderConfig({
-          ...input,
-          apiKey:
-            input.apiKey ||
-            (existing && !("auth" in existing) ? existing.apiKey : "") ||
-            "",
-        });
-      }
+      const config = this.setupProviderConfig(input);
       const provider = createProviderClient(
         config,
         this.fetcher,
@@ -1404,6 +1552,8 @@ export class Workbench {
         throw new Error(
           "Provider returned no available models. Previous configuration was kept.",
         );
+      if (preferredModel && !models.some((model) => model.id === preferredModel))
+        throw new Error("The selected model is not available from this provider.");
       if ("auth" in config && !models.some((model) => model.id === config.model))
         throw new Error(
           "Selected manifest model is unavailable. Previous configuration was kept.",
@@ -1416,6 +1566,7 @@ export class Workbench {
         preferences: this.preferences,
       };
       const preferred =
+        preferredModel ??
         models.find((model) => model.id === this.preferences.defaultModel)
           ?.id ??
         ("auth" in config
@@ -1448,6 +1599,163 @@ export class Workbench {
     } finally {
       this.providerSetupCount--;
     }
+  }
+  /**
+   * Models projection for renderers. Configured profiles are persisted setup
+   * records; only the currently attached provider has a live catalog. Inactive
+   * profiles stay unprobed until an operator opens that provider in Models.
+   */
+  providerModelsProjection() {
+    const profiles = Object.values(this.profiles);
+    const activeId = this.config ? providerConfigKey(this.config) : null;
+    const activeAttached = Boolean(this.provider && this.config);
+    const configured = [...profiles];
+    if (this.config && !configured.some((profile) => providerConfigKey(profile) === activeId))
+      configured.push(this.config);
+    for (const presetId of ["nvidia", "openrouter"] as const) {
+      const preset = PROVIDER_PRESETS.find((entry) => entry.id === presetId);
+      const key =
+        presetId === "nvidia"
+          ? this.env.NVIDIA_API_KEY
+          : this.env.OPENROUTER_API_KEY;
+      if (
+        preset &&
+        key &&
+        !configured.some((profile) => providerConfigKey(profile) === preset.baseUrl)
+      ) {
+        configured.push({
+          baseUrl: preset.baseUrl,
+          apiKey: key,
+          kind: preset.kind,
+        });
+      }
+    }
+    return {
+      activeProviderId: activeAttached ? activeId : null,
+      providers: configured.map((config) => {
+        const id = providerConfigKey(config);
+        const attached = activeAttached && id === activeId;
+        const preset = PROVIDER_PRESETS.find((entry) => entry.baseUrl === config.baseUrl);
+        return {
+          id,
+          name:
+            preset?.name ??
+            ("auth" in config ? config.providerId : config.baseUrl),
+          configured: true as const,
+          attached,
+          catalogStatus: attached
+            ? this.catalog.length
+              ? "ready" as const
+              : "unavailable" as const
+            : "idle" as const,
+          models: attached
+            ? this.catalog
+              .filter((model, index, models) => models.findIndex((candidate) => candidate.id === model.id) === index)
+              .map(({ id: modelId, name }) => ({ id: modelId, name }))
+            : [],
+        };
+      }),
+    };
+  }
+  private configuredProvider(providerId: string): WorkbenchProviderConfig | undefined {
+    const saved = this.profiles[providerId];
+    if (saved) return saved;
+    if (this.config && providerConfigKey(this.config) === providerId) return this.config;
+    const preset = PROVIDER_PRESETS.find((entry) => entry.baseUrl === providerId);
+    const apiKey =
+      preset?.id === "nvidia"
+        ? this.env.NVIDIA_API_KEY
+        : preset?.id === "openrouter"
+          ? this.env.OPENROUTER_API_KEY
+          : undefined;
+    return preset && apiKey
+      ? { baseUrl: preset.baseUrl, apiKey, kind: preset.kind }
+      : undefined;
+  }
+  async providerModels(providerId: string): Promise<readonly Model[]> {
+    const config = this.configuredProvider(providerId);
+    if (!config) throw new Error("Provider is not configured.");
+    const provider = createProviderClient(
+      config,
+      this.fetcher,
+      () => this.harness,
+      this.providerDependencies,
+    );
+    return catalogFor(provider, config);
+  }
+  async sessionModelCatalog(sessionId: string): Promise<{
+    readonly providerId: string;
+    readonly models: readonly Model[];
+  }> {
+    const session = this.sessions.get(sessionId);
+    if (!session) throw new Error("Conversation not found.");
+    if (!session.config)
+      throw new Error("This conversation has no saved provider identity.");
+    const providerId = session.config.profileKey ?? session.config.baseUrl;
+    const config = this.configuredProvider(providerId);
+    if (!config || !providerMatchesSession(config, session.config))
+      throw new Error(
+        "Reconnect this conversation's provider before choosing a temporary model.",
+      );
+    return { providerId, models: await this.providerModels(providerId) };
+  }
+  async selectSessionModel(
+    sessionId: string,
+    modelId: string,
+  ): Promise<SessionView> {
+    const requireIdle = () => {
+      const session = this.sessions.get(sessionId);
+      if (!session) throw new Error("Conversation not found.");
+      if (
+        this.closing ||
+        this.jobs.has(sessionId) ||
+        this.queued.has(sessionId) ||
+        session.queuedPrompt ||
+        session.recoveryBlock ||
+        session.view.status === "running" ||
+        session.view.status === "queued" ||
+        session.view.status === "unknown"
+      )
+        throw new Error(
+          "Wait for this conversation to settle and reconcile recovery before changing its model.",
+        );
+      return session;
+    };
+    const session = requireIdle();
+    const { models } = await this.sessionModelCatalog(sessionId);
+    if (!models.some((model) => model.id === modelId))
+      throw new Error("Model is not in this conversation's provider catalog.");
+    requireIdle();
+    const previous = session.view;
+    session.view = {
+      ...session.view,
+      model: modelId,
+      updatedAt: new Date().toISOString(),
+    };
+    try {
+      this.persist();
+    } catch (error) {
+      session.view = previous;
+      throw error;
+    }
+    return this.view(session);
+  }
+  async selectProviderModel(
+    providerId: string,
+    modelId: string,
+  ): Promise<readonly Model[]> {
+    const config = this.configuredProvider(providerId);
+    if (!config) throw new Error("Provider is not configured.");
+    if (
+      this.config &&
+      this.provider &&
+      providerConfigKey(this.config) === providerId &&
+      this.catalog.some((model) => model.id === modelId)
+    ) {
+      this.patchPreferences({ defaultModel: modelId });
+      return this.catalog;
+    }
+    return this.configure(config, modelId);
   }
   async providerState(
     options: {
@@ -1561,6 +1869,7 @@ export class Workbench {
         (probeEnvironment &&
           !this.ignoreEnvironment &&
           (this.env.NVIDIA_API_KEY ||
+            this.env.OPENROUTER_API_KEY ||
             this.env.DASHSCOPE_API_KEY ||
             this.env.OPENAI_API_KEY)),
     );
@@ -1662,6 +1971,7 @@ export class Workbench {
       [
         ...workspaceTools,
         ...this.connectors.flatMap((connector) => connector.tools),
+        ...TODO_TOOLS,
         PROJECT_CHANGES_TOOL,
       ].map((tool) => tool.name),
     );
@@ -2034,7 +2344,7 @@ export class Workbench {
       );
     const tools = (
       session
-        ? (session.tools ?? [...workspaceTools, ...HARNESS_TOOLS])
+        ? (session.tools ?? [...workspaceTools, ...HARNESS_TOOLS, ...TODO_TOOLS])
         : [
             ...workspaceTools,
             ...this.connectors
@@ -2097,6 +2407,7 @@ export class Workbench {
           tool.name !== PROJECT_CHANGES_TOOL.name,
       ),
       ...HARNESS_TOOLS,
+      ...TODO_TOOLS,
       PROJECT_EXEC_TOOL,
       PROJECT_CHANGES_TOOL,
     ];
@@ -2152,6 +2463,248 @@ export class Workbench {
       return structuredClone(description);
     });
   }
+  /**
+   * Register the installed-host runner a /connect selection uses.
+   *
+   * Re-registering the same description is idempotent, so reconnecting does not
+   * fail. A different runner claiming an id already in use is refused: a
+   * consent snapshot taken against the first one must not silently start
+   * describing the second.
+   */
+  registerHostRunner(runner: AgentRunner): AgentRunnerDescription {
+    if (this.closing) throw new Error("Workbench is closing.");
+    const description = runner.describe();
+    assertHostAgentRunnerDescription(description);
+    if (!description.id.startsWith("host-"))
+      throw new Error("Host runner IDs must be host-<host>.");
+    if (this.agentRunners.has(description.id))
+      throw new Error("A mediated agent runner already uses this ID.");
+    const existing = this.hostRunners.get(description.id);
+    if (
+      existing &&
+      canonicalJson(existing.describe()) !== canonicalJson(description)
+    )
+      throw new Error("A different host runner is already registered for this host.");
+    this.hostRunners.set(description.id, runner);
+    return structuredClone(description);
+  }
+  private runnerConsentPreview(description: AgentRunnerDescription) {
+    return {
+      id: description.id,
+      displayName: description.displayName,
+      provider: description.provider,
+      endpoint: description.endpoint,
+      dataTransfer: description.dataTransfer,
+      dataSent: description.dataSent,
+      execution: description.execution,
+      toolAccess: description.toolAccess,
+      workspaceMode: description.workspaceMode,
+      cancellation: description.cancellation,
+    };
+  }
+  /**
+   * The consent a host run is started against.
+   *
+   * Recomputed at prepare and again at start, so a runner whose claims changed
+   * between the preview and the start is refused instead of started against
+   * stale terms.
+   */
+  private async hostRunConsent(input: {
+    sourceId: string;
+    host: string;
+    task: string;
+    cwdDigest: string;
+  }) {
+    if (
+      !input.task.trim() ||
+      input.task.length > this.harness.maxPromptCharacters
+    ) throw new Error("Host-run task is empty or exceeds the prompt limit.");
+    if (!HOST_ID_PATTERN.test(input.host))
+      throw new Error("Host-run host id is invalid.");
+    if (!input.sourceId || input.sourceId.length > 256)
+      throw new Error("Host-run source id is invalid.");
+    if (!SHA256_DIGEST_PATTERN.test(input.cwdDigest))
+      throw new Error("Host-run working-directory digest is invalid.");
+    const runner = this.hostRunners.get(`host-${input.host}`);
+    if (!runner) throw new Error("No host runner is registered for this host.");
+    const description = runner.describe();
+    assertHostAgentRunnerDescription(description);
+    if (description.id !== `host-${input.host}`)
+      throw new Error("Host runner ID does not match its registry entry.");
+    const taskDigest = `sha256:${await sha256Hex(input.task)}`;
+    const consentDigest = `sha256:${await sha256Hex(
+      canonicalJson({
+        runner: description,
+        sourceId: input.sourceId,
+        host: input.host,
+        cwdDigest: input.cwdDigest,
+        taskDigest,
+        hostOnly: true,
+      }),
+    )}`;
+    return {
+      runner,
+      description: structuredClone(description),
+      taskDigest,
+      consentDigest,
+    };
+  }
+  /**
+   * Preview one host run without starting it.
+   *
+   * The task itself is never returned or written: only its digest travels, so
+   * a preview and a ledger record both prove what was consented to without
+   * retaining the prompt.
+   */
+  async prepareHostRun(input: {
+    sourceId: string;
+    host: string;
+    task: string;
+    cwdDigest: string;
+  }) {
+    const now = Date.now();
+    for (const [id, prepared] of this.preparedHostRuns)
+      if (prepared.expiresAt <= now) this.preparedHostRuns.delete(id);
+    if (this.preparedHostRuns.size >= 32)
+      throw new Error("Too many pending host-run consent previews.");
+    const snapshot = await this.hostRunConsent(input);
+    const id = randomUUID();
+    const prepared: PreparedHostRun = {
+      id,
+      consentDigest: snapshot.consentDigest,
+      expiresAt: Date.now() + 10 * 60_000,
+      runner: snapshot.runner,
+      description: snapshot.description,
+      sourceId: input.sourceId,
+      host: input.host,
+      task: input.task,
+      taskDigest: snapshot.taskDigest,
+      cwdDigest: input.cwdDigest,
+    };
+    this.preparedHostRuns.set(id, prepared);
+    return {
+      id,
+      consentDigest: prepared.consentDigest,
+      host: prepared.host,
+      sourceId: prepared.sourceId,
+      cwdDigest: prepared.cwdDigest,
+      taskDigest: prepared.taskDigest,
+      runner: this.runnerConsentPreview(prepared.description),
+      hostOnly: true as const,
+    };
+  }
+  /**
+   * Start a consented host run as a real Workbench session.
+   *
+   * The session is what makes the run observable: its transcript is the
+   * mapped host output and its workspace carries a signed ledger entry. It is
+   * marked `hostOnly`, carries no project access and no agent-runner grant,
+   * and refuses a later turn, because the host owns the conversation.
+   */
+  async startHostRun(input: {
+    consentId: string;
+    consentDigest: string;
+  }): Promise<SessionView> {
+    const prepared = this.preparedHostRuns.get(input.consentId);
+    if (
+      !prepared ||
+      prepared.expiresAt <= Date.now() ||
+      prepared.consentDigest !== input.consentDigest
+    ) throw new Error("Host-run consent is missing, expired, or changed.");
+    this.preparedHostRuns.delete(input.consentId);
+    const current = await this.hostRunConsent({
+      sourceId: prepared.sourceId,
+      host: prepared.host,
+      task: prepared.task,
+      cwdDigest: prepared.cwdDigest,
+    });
+    if (
+      current.consentDigest !== prepared.consentDigest ||
+      canonicalJson(current.description) !== canonicalJson(prepared.description)
+    ) throw new Error("Host-run consent no longer matches the current host runner.");
+    if (this.closing || this.countRunning() >= this.harness.maxConcurrentRuns)
+      throw new Error("Workbench cannot start another agent run right now.");
+
+    const id = randomUUID();
+    const runId = randomUUID();
+    const session: Session = {
+      view: {
+        id,
+        workspace: `host-${id}`,
+        model: `host-${prepared.host}/host`,
+        agent: HOST_RUN_PROFILE.id,
+        createdAt: new Date().toISOString(),
+        title: `Host run: ${prepared.sourceId}`,
+        status: "running",
+        runId,
+        events: [],
+        continuationCount: 0,
+        runTokenCount: 0,
+        hostOnly: true,
+      },
+      messages: [],
+      // No user profile and no tools: the reserved host profile is the whole
+      // of this session's authority, and it allows nothing.
+      agentProfile: structuredClone(HOST_RUN_PROFILE),
+      tools: [],
+      controller: new AbortController(),
+    };
+    this.sessions.set(id, session);
+    this.documents[session.view.workspace] = createWorkspace();
+    this.activeHostRuns.set(id, {
+      runner: prepared.runner,
+      session,
+      prepared,
+      ambiguous: false,
+    });
+    try {
+      await this.commitWorkspace(
+        session,
+        this.workspace(id),
+        "host_runner.start",
+        {
+          host: prepared.host,
+          sourceId: prepared.sourceId,
+          cwdDigest: prepared.cwdDigest,
+          consentDigest: prepared.consentDigest,
+          taskDigest: prepared.taskDigest,
+          hostOnly: true,
+        },
+        "allow",
+        undefined,
+        undefined,
+        {
+          host: prepared.host,
+          sourceId: prepared.sourceId,
+          hostOnly: true,
+        },
+      );
+    } catch (error) {
+      this.activeHostRuns.delete(id);
+      this.sessions.delete(id);
+      delete this.documents[session.view.workspace];
+      this.persist();
+      throw error;
+    }
+    this.event(session, "tool", "Host run started", {
+      status: "running",
+      host: prepared.host,
+      sourceId: prepared.sourceId,
+      hostOnly: true,
+    }, "run.status");
+    const job = this.runHostRun(this.activeHostRuns.get(id)!);
+    this.jobs.set(id, job);
+    void job.catch(() => {
+      if (session.view.status === "running")
+        session.view = { ...session.view, status: "unknown" };
+    }).finally(() => {
+      this.jobs.delete(id);
+      this.activeHostRuns.delete(id);
+      this.persist();
+      this.drainQueued();
+    });
+    return this.view(session);
+  }
   async prepareAgentRun(input: {
     runnerId: string;
     task: string;
@@ -2182,18 +2735,7 @@ export class Workbench {
       id,
       consentDigest: prepared.consentDigest,
       task: prepared.task,
-      runner: {
-        id: prepared.description.id,
-        displayName: prepared.description.displayName,
-        provider: prepared.description.provider,
-        endpoint: prepared.description.endpoint,
-        dataTransfer: prepared.description.dataTransfer,
-        dataSent: prepared.description.dataSent,
-        execution: prepared.description.execution,
-        toolAccess: prepared.description.toolAccess,
-        workspaceMode: prepared.description.workspaceMode,
-        cancellation: prepared.description.cancellation,
-      },
+      runner: this.runnerConsentPreview(prepared.description),
       runnerProfileId: prepared.runnerProfileId,
       profile: {
         id: prepared.profile.id,
@@ -2335,6 +2877,8 @@ export class Workbench {
     return this.view(session);
   }
   async cancelAgentRun(sessionId: string): Promise<AgentCancelResult> {
+    const host = this.activeHostRuns.get(sessionId);
+    if (host) return this.cancelHostRun(host);
     const active = this.activeAgentRuns.get(sessionId);
     if (!active) throw new Error("Agent run is not active.");
     active.session.controller.abort();
@@ -2370,63 +2914,265 @@ export class Workbench {
     this.persist();
     return result;
   }
+  /**
+   * Stops one host run and records only what could be proven about it.
+   *
+   * The host owns its process, so its `cancel` may report `unknown`; that is
+   * what the ledger keeps, and it is never upgraded to a cancellation NOMO did
+   * not observe.
+   */
+  private async cancelHostRun(
+    active: ActiveHostRun,
+  ): Promise<AgentCancelResult> {
+    const { session, prepared } = active;
+    session.controller.abort();
+    const record = async (result: AgentCancelResult) => {
+      active.cancelResult = result;
+      session.view = {
+        ...session.view,
+        status: result === "confirmed" ? "cancelled" : "unknown",
+      };
+      await this.commitWorkspace(
+        session,
+        this.workspace(session.view.id),
+        "host_runner.cancel",
+        {
+          host: prepared.host,
+          sourceId: prepared.sourceId,
+          result,
+          hostOnly: true,
+        },
+        result,
+        undefined,
+        undefined,
+        { host: prepared.host, sourceId: prepared.sourceId, hostOnly: true },
+      );
+      this.persist();
+      return result;
+    };
+    if (!active.handle) return record("unknown");
+    active.cancelPromise ??= Promise.resolve()
+      .then(() => active.runner.cancel(active.handle!.id))
+      .catch((): AgentCancelResult => "unknown");
+    return record(await active.cancelPromise);
+  }
+  /**
+   * The host loop: observe a host run and record it as a session.
+   *
+   * There is no provider turn, no tool dispatch and no grant here. The runner
+   * is started with the reserved profile's fixed prompt and no tools, its
+   * mapped events are validated and written through the same redaction and
+   * byte budget as a mediated run, and its terminal message is recorded as a
+   * run status rather than assistant prose: the host said it, and NOMO must
+   * not present it as an answer this workspace produced.
+   */
+  private async runHostRun(active: ActiveHostRun): Promise<void> {
+    const { session, prepared } = active;
+    let terminal: Extract<AgentRunEvent, { type: "terminal" }> | undefined;
+    let finalStatus: SessionView["status"] = "unknown";
+    const knownSecrets = this.knownSecretValues();
+    const output = { bytes: 0, truncationNoted: false };
+    const context = {
+      host: prepared.host,
+      sourceId: prepared.sourceId,
+      hostOnly: true,
+    };
+    try {
+      const handle = await active.runner.start({
+        task: prepared.task,
+        // Fixed. The host runner refuses to forward any other prompt, and the
+        // session view names the same constant.
+        systemPrompt: HOST_RUN_SYSTEM_PROMPT,
+        workspace: {
+          id: `host:${prepared.host}`,
+          rootDigest: prepared.cwdDigest as `sha256:${string}`,
+          allowedTools: [],
+        },
+        tools: [],
+        signal: session.controller.signal,
+      });
+      active.handle = handle;
+      if (session.controller.signal.aborted && !active.cancelPromise) {
+        active.cancelPromise = Promise.resolve()
+          .then(() => active.runner.cancel(handle.id))
+          .catch((): AgentCancelResult => "unknown");
+        active.cancelResult = await active.cancelPromise;
+      }
+      for await (const event of validateAgentRunEvents(
+        handle.id,
+        handle.events,
+      )) {
+        if (event.type === "terminal") {
+          terminal = event;
+          continue;
+        }
+        if (event.type === "assistant-message") {
+          this.appendAgentOutput(
+            session,
+            prepared.description.id,
+            knownSecrets,
+            output,
+            event.text,
+          );
+          continue;
+        }
+        // A host run has no mediated tool path, so a tool event means the
+        // adapter broke its contract rather than a request to dispatch.
+        if (event.type === "tool-request" || event.type === "tool-result") {
+          active.ambiguous = true;
+          throw new Error("Host runner reported a tool event it cannot mediate.");
+        }
+        this.event(
+          session,
+          "tool",
+          event.message ?? "Host run status updated",
+          { ...context, status: event.status },
+          "run.status",
+        );
+      }
+      if (!terminal)
+        throw new Error("Host runner ended without a terminal event.");
+      if (active.ambiguous) finalStatus = "unknown";
+      else if (
+        active.cancelResult === "confirmed" ||
+        terminal.status === "cancelled"
+      )
+        finalStatus = "cancelled";
+      else if (
+        active.cancelResult === "unknown" ||
+        terminal.status === "unknown"
+      )
+        finalStatus = "unknown";
+      else if (terminal.status === "failed") finalStatus = "failed";
+      else finalStatus = "idle";
+    } catch {
+      if (active.handle && !active.cancelPromise)
+        active.cancelPromise = Promise.resolve()
+          .then(() => active.runner.cancel(active.handle!.id))
+          .catch((): AgentCancelResult => "unknown");
+      if (active.cancelPromise)
+        active.cancelResult = await active.cancelPromise;
+      finalStatus = active.ambiguous
+        ? "unknown"
+        : active.cancelResult === "confirmed"
+          ? "cancelled"
+          : "unknown";
+    }
+
+    // The terminal message is runner-authored, but it can quote a host event
+    // name, so it goes through the same secret scan before it is written.
+    const terminalMessage =
+      terminal?.message && !secretLikeText(terminal.message, knownSecrets)
+        ? (session.provider?.redact(terminal.message) ?? terminal.message)
+        : undefined;
+    session.view = { ...session.view, status: finalStatus };
+    this.event(
+      session,
+      "tool",
+      terminalMessage ?? "Host run reached a terminal state",
+      { ...context, status: finalStatus, ambiguous: active.ambiguous },
+      "run.status",
+    );
+    await this.commitWorkspace(
+      session,
+      this.workspace(session.view.id),
+      "host_runner.terminal",
+      {
+        host: prepared.host,
+        sourceId: prepared.sourceId,
+        status: finalStatus,
+        ambiguous: active.ambiguous,
+        consentDigest: prepared.consentDigest,
+        hostOnly: true,
+      },
+      finalStatus,
+      undefined,
+      undefined,
+      // The outcome is metadata as well as the decision: the decision names
+      // what was allowed, and this names what the host run ended as, so a
+      // reader can tell a cancelled run from a failed one without replaying
+      // the args digest.
+      { ...context, status: finalStatus, ambiguous: active.ambiguous },
+    );
+  }
+  /**
+   * Appends one bounded, redacted slice of runner output to the transcript.
+   *
+   * Shared by the mediated loop and the host loop so a host answer goes
+   * through exactly the same secret scan, connection-token scrub and byte
+   * budget as a mediated one. A host run is not a case of output that may
+   * skip them.
+   */
+  private appendAgentOutput(
+    session: Session,
+    runnerId: string,
+    knownSecrets: readonly string[],
+    state: { bytes: number; truncationNoted: boolean },
+    raw: string,
+  ): void {
+    let safe = session.provider?.redact(raw) ?? raw;
+    for (const config of Object.values(session.connections ?? {}))
+      if (config.token) safe = safe.split(config.token).join("[redacted]");
+    if (secretLikeText(safe, knownSecrets)) {
+      this.event(
+        session,
+        "assistant",
+        "Výstup agenta byl skryt kvůli detekci tajných údajů.",
+        { runnerId, withheld: true },
+        "message.completed",
+      );
+      return;
+    }
+    if (state.bytes >= AGENT_RUNNER_OUTPUT_LIMITS.maxRunBytes) {
+      if (!state.truncationNoted) {
+        this.event(
+          session,
+          "assistant",
+          "Další výstup agenta byl zkrácen kvůli limitu velikosti.",
+          { runnerId, textTruncated: true },
+          "message.completed",
+        );
+        state.truncationNoted = true;
+      }
+      return;
+    }
+    const budget = Math.min(
+      AGENT_RUNNER_OUTPUT_LIMITS.maxMessageBytes,
+      AGENT_RUNNER_OUTPUT_LIMITS.maxRunBytes - state.bytes,
+    );
+    let prefixBytes = 0;
+    let prefixLength = 0;
+    for (const character of safe) {
+      const characterBytes = Buffer.byteLength(character, "utf8");
+      if (prefixBytes + characterBytes > budget) break;
+      prefixBytes += characterBytes;
+      prefixLength += character.length;
+    }
+    const truncated = prefixLength < safe.length;
+    safe = truncated ? safe.slice(0, prefixLength) : safe;
+    state.bytes += Buffer.byteLength(safe, "utf8");
+    this.event(
+      session,
+      "assistant",
+      safe,
+      { runnerId, textTruncated: truncated },
+      "message.completed",
+    );
+  }
   private async runAgentRunner(active: ActiveAgentRunnerRun): Promise<void> {
     const { session, prepared } = active;
     let terminal: Extract<AgentRunEvent, { type: "terminal" }> | undefined;
     let finalStatus: SessionView["status"] = "unknown";
-    let outputBytes = 0;
-    let truncationNoticeEmitted = false;
     const knownSecrets = this.knownSecretValues();
-    const appendOutput = (raw: string) => {
-      let safe = session.provider?.redact(raw) ?? raw;
-      for (const config of Object.values(session.connections ?? {}))
-        if (config.token) safe = safe.split(config.token).join("[redacted]");
-      if (secretLikeText(safe, knownSecrets)) {
-        this.event(
-          session,
-          "assistant",
-          "Výstup agenta byl skryt kvůli detekci tajných údajů.",
-          { runnerId: prepared.description.id, withheld: true },
-          "message.completed",
-        );
-        return;
-      }
-      if (outputBytes >= AGENT_RUNNER_OUTPUT_LIMITS.maxRunBytes) {
-        if (!truncationNoticeEmitted) {
-          this.event(
-            session,
-            "assistant",
-            "Další výstup agenta byl zkrácen kvůli limitu velikosti.",
-            { runnerId: prepared.description.id, textTruncated: true },
-            "message.completed",
-          );
-          truncationNoticeEmitted = true;
-        }
-        return;
-      }
-      const budget = Math.min(
-        AGENT_RUNNER_OUTPUT_LIMITS.maxMessageBytes,
-        AGENT_RUNNER_OUTPUT_LIMITS.maxRunBytes - outputBytes,
-      );
-      let prefixBytes = 0;
-      let prefixLength = 0;
-      for (const character of safe) {
-        const characterBytes = Buffer.byteLength(character, "utf8");
-        if (prefixBytes + characterBytes > budget) break;
-        prefixBytes += characterBytes;
-        prefixLength += character.length;
-      }
-      const truncated = prefixLength < safe.length;
-      safe = truncated ? safe.slice(0, prefixLength) : safe;
-      outputBytes += Buffer.byteLength(safe, "utf8");
-      this.event(
+    const output = { bytes: 0, truncationNoted: false };
+    const appendOutput = (raw: string) =>
+      this.appendAgentOutput(
         session,
-        "assistant",
-        safe,
-        { runnerId: prepared.description.id, textTruncated: truncated },
-        "message.completed",
+        prepared.description.id,
+        knownSecrets,
+        output,
+        raw,
       );
-    };
     try {
       const gate = await this.fireHooks(
         "before-run",
@@ -2537,6 +3283,38 @@ export class Workbench {
     request: Extract<AgentRunEvent, { type: "tool-request" }>,
   ) {
     const { session, prepared } = active;
+    const knownSecrets = [
+      ...this.knownSecretValues(),
+      ...Object.values(session.connections ?? {}).flatMap((config) =>
+        config.token ? [config.token] : [],
+      ),
+    ];
+    const redactPreview = (text: string) =>
+      session.provider?.redact(text) ?? text;
+    const callId = `agent-runner:${active.handle?.id ?? prepared.id}:${request.requestId}`;
+    let requestedArgs: unknown;
+    try {
+      requestedArgs = JSON.parse(request.argsJson);
+    } catch {}
+    const safeArgs =
+      requestedArgs &&
+      typeof requestedArgs === "object" &&
+      !Array.isArray(requestedArgs)
+        ? safeAgentRunnerPreview(requestedArgs, redactPreview, knownSecrets)
+        : undefined;
+    this.event(
+      session,
+      "tool",
+      `Requested ${request.toolName}.`,
+      {
+        tool: request.toolName,
+        callId,
+        arguments: safeArgs ?? {
+          preview: "Input withheld by Workbench safety limits.",
+        },
+      },
+      "tool.started",
+    );
     const deny = async (reason: string) => {
       await this.commitWorkspace(
         session,
@@ -2555,7 +3333,29 @@ export class Workbench {
           requestedTool: request.toolName,
         },
       );
-      return { kind: "error" as const, message: "Tool request denied by Workbench policy." };
+      this.event(
+        session,
+        "tool",
+        "Tool request denied by Workbench policy.",
+        {
+          tool: request.toolName,
+          callId,
+          result: {
+            isError: true,
+            content: [
+              {
+                type: "text",
+                text: "Tool request denied by Workbench policy.",
+              },
+            ],
+          },
+        },
+        "tool.result",
+      );
+      return {
+        kind: "error" as const,
+        message: "Tool request denied by Workbench policy.",
+      };
     };
     if (
       active.ambiguous ||
@@ -2626,6 +3426,30 @@ export class Workbench {
         undefined,
         { runnerId: prepared.description.id },
       );
+      const safeResult = safeAgentRunnerPreview(
+        result,
+        redactPreview,
+        knownSecrets,
+      );
+      this.event(
+        session,
+        "tool",
+        `${tool.name}: ${refused ? "refused or failed" : "result received"}`,
+        {
+          tool: tool.name,
+          callId,
+          result: safeResult ?? {
+            isError: refused,
+            content: [
+              {
+                type: "text",
+                text: "Output withheld by Workbench safety limits.",
+              },
+            ],
+          },
+        },
+        "tool.result",
+      );
       if (tooLarge) {
         active.ambiguous = true;
         return { kind: "error" as const, message: "Tool result exceeded the safe response limit; do not retry." };
@@ -2648,6 +3472,24 @@ export class Workbench {
         // The dispatch intent above still proves that this request crossed the
         // broker boundary; no second execution is permitted after this point.
       }
+      const text =
+        error instanceof UnknownToolOutcome
+          ? "Tool outcome unknown. Inspect the ledger before retrying."
+          : "Tool execution failed. Inspect the ledger before continuing.";
+      this.event(
+        session,
+        "tool",
+        text,
+        {
+          tool: request.toolName,
+          callId,
+          result: {
+            isError: true,
+            content: [{ type: "text", text }],
+          },
+        },
+        "tool.result",
+      );
       return {
         kind: "error" as const,
         message: error instanceof UnknownToolOutcome
@@ -2839,6 +3681,9 @@ export class Workbench {
       // operator approves its exact digest, so the tool cannot write the
       // harness into being anything.
       ...HARNESS_TOOLS,
+      // The checklist is the run's own plan. It reaches nothing outside the
+      // conversation, so it needs no hold and no document authority.
+      ...TODO_TOOLS,
       ...(projectToolEnabled ? [PROJECT_EXEC_TOOL] : []),
       ...(projectChangesToolEnabled ? [PROJECT_CHANGES_TOOL] : []),
     ];
@@ -2890,7 +3735,7 @@ export class Workbench {
         `Concurrent run limit reached (${this.harness.maxConcurrentRuns}). Wait for a running session to finish or increase the limit.`,
       );
     }
-    const systemInstruction = `You are operating through NOMO. Tool calls are classified, governed by policy, and recorded. Respect denied calls; do not retry them with reworded arguments. Wait for operator approval of held calls. Only claim completed actions when they are proven by tool results. You have a managed document workspace with list, read, write and delete tools. Changes in that workspace are captured and can be undone by the operator. These tools do not access the host filesystem. Use them when asked to create or edit documents.${selectedAgent?.instruction ? `\n\nActive agent preset (${selectedAgent.id}): ${selectedAgent.instruction}` : ""}${selectedProfile ? `\n\nActive agent profile (${selectedProfile.id}): ${selectedProfile.systemPrompt}` : ""}${projectSystemContext(projectBinding)}`;
+    const systemInstruction = `You are operating through NOMO. Tool calls are classified, governed by policy, and recorded. Respect denied calls; do not retry them with reworded arguments. Wait for operator approval of held calls. Only claim completed actions when they are proven by tool results. You have a managed document workspace with list, read, write and delete tools. Changes in that workspace are captured and can be undone by the operator. These tools do not access the host filesystem. Use them when asked to create or edit documents. You also have a todo_write tool: call it with the complete checklist and each row's real state whenever your plan changes, so the operator's TODO rail reflects the work instead of a guess.${selectedAgent?.instruction ? `\n\nActive agent preset (${selectedAgent.id}): ${selectedAgent.instruction}` : ""}${selectedProfile ? `\n\nActive agent profile (${selectedProfile.id}): ${selectedProfile.systemPrompt}` : ""}${projectSystemContext(projectBinding)}`;
     const queued =
       background &&
       (this.jobs.size > 0 ||
@@ -2973,6 +3818,13 @@ export class Workbench {
     const imageFingerprint = imageRequestFingerprint(images);
     if (this.request(key, [id, prompt, imageFingerprint])) return;
     const session = this.sessions.get(id);
+    // A host session belongs to the host application. NOMO observed one run
+    // and cannot continue that conversation, so a later turn is refused rather
+    // than sent to a provider that never saw it.
+    if (session?.view.hostOnly)
+      throw new Error(
+        "This conversation is owned by the host application and cannot take another turn. Start a new host run instead.",
+      );
     if (
       session?.projectAccessRequired &&
       (!this.projectAccess || session.projectBinding !== this.projectAccess)
@@ -3217,11 +4069,15 @@ export class Workbench {
       throw new Error(
         `Session not found. ${JSON.stringify(id)} is not a live session in this workspace; the registry holds ${this.sessions.size}.`,
       );
-    if (this.activeAgentRuns.has(id)) {
-      void this.cancelAgentRun(id).catch(() => {
-        session.view = { ...session.view, status: "unknown" };
-        this.persist();
-      });
+    if (this.activeAgentRuns.has(id) || this.activeHostRuns.has(id)) {
+      const cancellation = this.cancelAgentRun(id)
+        .then(() => undefined)
+        .catch(() => {
+          session.view = { ...session.view, status: "unknown" };
+          this.persist();
+        });
+      this.pendingCancels.add(cancellation);
+      void cancellation.finally(() => this.pendingCancels.delete(cancellation));
       return;
     }
     if (session.view.status === "unknown" || session.recoveryBlock) return;
@@ -3255,10 +4111,13 @@ export class Workbench {
   close(): void {
     this.closing = true;
     for (const session of this.sessions.values()) {
-      if (this.activeAgentRuns.has(session.view.id)) {
-        void this.cancelAgentRun(session.view.id).catch(() => {
-          session.view = { ...session.view, status: "unknown" };
-        });
+      if (
+        this.activeAgentRuns.has(session.view.id) ||
+        this.activeHostRuns.has(session.view.id)
+      ) {
+        // The same tracked path `stopRun` uses, so `settled()` after `close()`
+        // waits for the cancellation record too.
+        this.cancel(session.view.id);
         continue;
       }
       session.controller.abort();
@@ -3831,6 +4690,9 @@ export class Workbench {
         // an operator approves its exact digest, so the tool cannot write
         // the harness into being anything.
         ...HARNESS_TOOLS,
+        // A child records its own checklist; the event names the child
+        // session, so the parent's rail is never given the child's rows.
+        ...TODO_TOOLS,
         ...(projectToolEnabled ? [PROJECT_EXEC_TOOL] : []),
         ...(projectChangesToolEnabled ? [PROJECT_CHANGES_TOOL] : []),
       ];
@@ -3873,7 +4735,7 @@ export class Workbench {
         );
       }
 
-      const systemInstruction = `You are operating through NOMO. Tool calls are classified, governed by policy, and recorded. Respect denied calls; do not retry them with reworded arguments. Wait for operator approval of held calls. Only claim completed actions when they are proven by tool results. You have a managed document workspace with list, read, write and delete tools. Changes in that workspace are captured and can be undone by the operator. These tools do not access the host filesystem. Use them when asked to create or edit documents.${selectedAgent?.instruction ? `\n\nActive agent preset (${selectedAgent.id}): ${selectedAgent.instruction}` : ""}${selectedProfile ? `\n\nActive agent profile (${selectedProfile.id}): ${selectedProfile.systemPrompt}` : ""}${projectSystemContext(projectBinding)}`;
+      const systemInstruction = `You are operating through NOMO. Tool calls are classified, governed by policy, and recorded. Respect denied calls; do not retry them with reworded arguments. Wait for operator approval of held calls. Only claim completed actions when they are proven by tool results. You have a managed document workspace with list, read, write and delete tools. Changes in that workspace are captured and can be undone by the operator. These tools do not access the host filesystem. Use them when asked to create or edit documents. You also have a todo_write tool: call it with the complete checklist and each row's real state whenever your plan changes, so the operator's TODO rail reflects the work instead of a guess.${selectedAgent?.instruction ? `\n\nActive agent preset (${selectedAgent.id}): ${selectedAgent.instruction}` : ""}${selectedProfile ? `\n\nActive agent profile (${selectedProfile.id}): ${selectedProfile.systemPrompt}` : ""}${projectSystemContext(projectBinding)}`;
 
       // ---- effective tool list (mirrors startSession) then narrowed to parent ----
       const baseTools = (selectedProfile
@@ -5650,6 +6512,10 @@ export class Workbench {
       throw new Error("Workspace ledger signature verification failed.");
     return { entries: structuredClone(entries), result, verification: key };
   }
+  /** Changes only after a signed ledger append has been persisted. */
+  ledgerRevision(): number {
+    return this.evidenceRevision;
+  }
   /**
    * Service one settled turn at the harness boundary.
    *
@@ -6079,6 +6945,17 @@ export class Workbench {
       );
     return resolved;
   }
+  /**
+   * One commit at a time per workspace.
+   *
+   * Two paths can commit to the same session at once: a run reaching its
+   * terminal state and a cancellation requested while it was finishing. Both
+   * would read the same chain head and write the same sequence number, so the
+   * later write would replace the earlier one and the ledger would lose a
+   * record it had already reported. Queuing per workspace keeps every entry in
+   * the chain, in the order the commits were requested.
+   */
+  private readonly commitTails = new Map<string, Promise<void>>();
   private async commitWorkspace(
     session: Session,
     state: WorkspaceState,
@@ -6091,6 +6968,43 @@ export class Workbench {
     attribution?: LedgerAttribution,
   ) {
     const workspace = session.view.workspace;
+    const queued = (
+      this.commitTails.get(workspace) ?? Promise.resolve()
+    ).then(() =>
+      this.commitWorkspaceEntry(
+        workspace,
+        state,
+        tool,
+        args,
+        decision,
+        operation,
+        approval,
+        metadata,
+        attribution,
+      ),
+    );
+    // The tail always settles, so one failed commit cannot block the next.
+    const tail = queued.then(
+      () => undefined,
+      () => undefined,
+    );
+    this.commitTails.set(workspace, tail);
+    void tail.then(() => {
+      if (this.commitTails.get(workspace) === tail) this.commitTails.delete(workspace);
+    });
+    return queued;
+  }
+  private async commitWorkspaceEntry(
+    workspace: string,
+    state: WorkspaceState,
+    tool: string,
+    args: unknown,
+    decision: string,
+    operation?: WorkspaceOperation,
+    approval?: { by?: string; reason?: string },
+    metadata?: Record<string, unknown>,
+    attribution?: LedgerAttribution,
+  ) {
     const current = this.evidence[workspace] ?? [];
     const key = await devKeyProvider({
       dir: join(this.storage.directory, "keys"),
@@ -6152,6 +7066,7 @@ export class Workbench {
       this.evidence[workspace] = current;
       throw error;
     }
+    this.evidenceRevision++;
   }
   private async syncStdio(session: Session) {
     return this.locked(async () => {
@@ -6898,6 +7813,39 @@ export class Workbench {
         ],
       };
     }
+    if (!tool.connectorId && tool.name === TODO_WRITE_TOOL.name) {
+      // A checklist is not an action: it reaches no document, no command and
+      // no connector. It still goes through the same policy decision above,
+      // so a mode that forbids it refuses here like any other tool.
+      observed.decision = "todo";
+      const plan = todoWritePlan(args);
+      if (!plan.ok)
+        return {
+          isError: true,
+          content: [{ type: "text", text: plan.reason }],
+        };
+      const complete = plan.items.filter(
+        (item) => item.status === "completed",
+      ).length;
+      // The event carries exactly what the model sent. The rail reads this
+      // event instead of scanning markdown, so a row that is not in the call
+      // cannot appear in the rail.
+      this.event(
+        session,
+        "tool",
+        `Checklist updated: ${complete}/${plan.items.length} complete.`,
+        { items: plan.items.map((item) => ({ text: item.text, status: item.status })) },
+        "todo.updated",
+      );
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Checklist recorded: ${plan.items.length} items, ${complete} complete.`,
+          },
+        ],
+      };
+    }
     if (!tool.connectorId && tool.name === PROJECT_EXEC_TOOL.name) {
       observed.decision = "sandbox";
       return this.executeProjectTool(session, args, id);
@@ -7073,6 +8021,13 @@ export class Workbench {
     // Declared outside the try so the finally below can always take the block
     // back out, whichever way the run ends.
     let digestMarker: ModelMessage | undefined;
+    /**
+     * Flushes the answer and reasoning text buffered by the turn in flight.
+     * Declared outside the try so a run that fails mid-stream still records
+     * the reasoning the operator already watched arrive, instead of losing it
+     * with the failed request.
+     */
+    let flushPendingDeltas: () => void = () => {};
     try {
       if (!provider)
         throw new Error(
@@ -7230,7 +8185,35 @@ export class Workbench {
             "Session context limit reached. Start a new session.",
           );
         let delta = "";
+        let reasoning = "";
         let flushed = Date.now();
+        /**
+         * Appends whatever each channel has buffered, reasoning first.
+         *
+         * A reasoning event is its own type, `reasoning.delta`, so a renderer
+         * can label it and a transcript can tell it apart from the answer. It
+         * is not answer text: nothing below reads it back, it never becomes a
+         * tool call, and it never ends the turn. Only `reply.message` decides
+         * those, which is why a reasoning-only stream still fails as
+         * "no answer" instead of completing a run.
+         */
+        const flushDeltas = () => {
+          if (reasoning) {
+            this.event(
+              session,
+              "assistant",
+              reasoning,
+              { text: reasoning },
+              "reasoning.delta",
+            );
+            reasoning = "";
+          }
+          if (delta) {
+            this.event(session, "assistant", delta, {}, "message.delta");
+            delta = "";
+          }
+        };
+        flushPendingDeltas = flushDeltas;
         const reply = await Promise.race([
           provider.complete(
             session.view.model,
@@ -7241,8 +8224,16 @@ export class Workbench {
               if (session.controller.signal.aborted) return;
               delta += text;
               if (Date.now() - flushed > 250 || delta.length > 512) {
-                this.event(session, "assistant", delta, {}, "message.delta");
-                delta = "";
+                flushDeltas();
+                flushed = Date.now();
+                this.persist();
+              }
+            },
+            (text) => {
+              if (session.controller.signal.aborted) return;
+              reasoning += text;
+              if (Date.now() - flushed > 250 || reasoning.length > 512) {
+                flushDeltas();
                 flushed = Date.now();
                 this.persist();
               }
@@ -7260,7 +8251,7 @@ export class Workbench {
           }),
         ]);
         if (session.controller.signal.aborted) return;
-        if (delta) this.event(session, "assistant", delta, {}, "message.delta");
+        flushDeltas();
         session.messages.push(reply.message);
         this.checkContextBudget(session, tools, 0);
         if (provider === this.provider) this.providerFailureState = null;
@@ -7368,6 +8359,7 @@ export class Workbench {
       ) {
         if (cause instanceof ProviderRequestError && provider === this.provider)
           this.recordProviderFailure(cause);
+        flushPendingDeltas();
         const failure =
           cause instanceof ProviderRequestError
             ? providerFailure(cause)

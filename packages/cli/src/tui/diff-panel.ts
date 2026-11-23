@@ -129,7 +129,7 @@ function hunkHeaderLine(
   return `${cursorMark} ${stageMark} hunk ${hunkIndex + 1}/${total} ${header}`;
 }
 
-function unifiedBody(state: DiffViewState): string[] {
+function unifiedBody(state: DiffViewState, compact = false): string[] {
   const out: string[] = [];
   const total = state.hunks.length;
   state.hunks.forEach((hunk, hunkIndex) => {
@@ -139,8 +139,16 @@ function unifiedBody(state: DiffViewState): string[] {
     // so "+" and "-" stay in column for scanning while the current hunk
     // still stands out without colour.
     const bar = isCursor ? ">" : " ";
-    for (const row of hunk.rows.slice(1))
-      out.push(`${bar} ${sanitizeText(row)}`);
+    for (const row of hunk.rows.slice(1)) {
+      if (!compact) {
+        out.push(`${bar} ${sanitizeText(row)}`);
+        continue;
+      }
+      const changed = row.startsWith("+") || row.startsWith("-");
+      const marker = changed ? (row[0] ?? " ") : " ";
+      const content = changed || row.startsWith(" ") ? row.slice(1) : row;
+      out.push(`${marker}${sanitizeText(content)}`);
+    }
   });
   return out;
 }
@@ -216,9 +224,11 @@ export function renderDiffPanel(
   const total = state.hunks.length;
   const staged = state.hunks.filter((hunk) => hunk.staged).length;
   const counts = diffStats(state.hunks.flatMap((hunk) => hunk.rows));
+  const compact = state.side === "split" && safeWidth < 3;
+  const displaySide = compact ? "unified" : state.side;
   const header = paint(
     fit(
-      `Diff [${state.side}] staged ${staged}/${total} +${counts.added} -${counts.removed}`,
+      `Diff [${displaySide}] staged ${staged}/${total} +${counts.added} -${counts.removed}`,
       safeWidth,
     ),
     "info",
@@ -235,26 +245,43 @@ export function renderDiffPanel(
   const fullBody: readonly string[] =
     total === 0
       ? ["No differences: before and after are identical."]
-      : state.side === "split"
+      : state.side === "split" && !compact
         ? splitBody(state, safeWidth)
-        : unifiedBody(state);
+        : unifiedBody(state, compact);
   const bodyCount = safeHeight - 2;
   const scroll = Number.isFinite(state.scroll)
     ? Math.max(0, Math.floor(state.scroll))
     : 0;
   const visible = fullBody.slice(scroll, scroll + bodyCount);
   const body: string[] = visible.map((line, index) => {
-    const fitted = fit(line, safeWidth);
+    const absolute = scroll + index;
+    const hunkStart = isHunkHeaderRow(fullBody, absolute);
+    const fitted =
+      compact && hunkStart !== null
+        ? hunkStart === state.cursor
+          ? safeWidth === 1
+            ? ">"
+            : ">>"
+          : " ".repeat(safeWidth)
+        : compact && safeWidth === 1 && /^[+-]/.test(line)
+          ? line[0]!
+          : fit(line, safeWidth);
     if (!useColor) return fitted;
     // Colour decorates the already legible text markers: the cursor hunk
     // header carries the accent, change rows keep their +/- sigils.
-    const absolute = scroll + index;
-    const hunkStart = isHunkHeaderRow(fullBody, absolute);
     if (hunkStart !== null && hunkStart === state.cursor)
       return paintWithPalette(fitted, "accent", NOMO_PALETTE, caps, true);
-    if (line.startsWith("> +") || line.startsWith("  +"))
+    if (
+      line.startsWith("> +") ||
+      line.startsWith("  +") ||
+      line.startsWith("+")
+    )
       return paintWithPalette(fitted, "success", NOMO_PALETTE, caps);
-    if (line.startsWith("> -") || line.startsWith("  -"))
+    if (
+      line.startsWith("> -") ||
+      line.startsWith("  -") ||
+      line.startsWith("-")
+    )
       return paintWithPalette(fitted, "error", NOMO_PALETTE, caps);
     return fitted;
   });

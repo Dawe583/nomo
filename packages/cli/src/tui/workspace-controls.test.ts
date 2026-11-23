@@ -9,18 +9,22 @@ import { assertIsolated } from "../../../workbench/src/test-fixture.ts";
 import { WorkspaceTui, renderWorkspace, commandSuggestions } from "./workspace.ts";
 import { stripAnsi, visibleLength } from "./layout.ts";
 
-async function fixture(t: test.TestContext, answer = "Fixture reply") {
+async function fixture(
+  t: test.TestContext,
+  answer = "Fixture reply",
+  options: { env?: Record<string, string>; fetcher?: typeof fetch } = {},
+) {
   const root = await mkdtemp(join(tmpdir(), "nomo-parity-controls-"));
-  const env = { NOMO_DATA_DIR: root };
-  let app = new Workbench(env, async (url) =>
+  const env = { NOMO_DATA_DIR: root, ...options.env };
+  const fetcher: typeof fetch = async (url) =>
     String(url).endsWith("/models")
       ? Response.json({ data: [{ id: "fixture" }] })
       : Response.json({
           choices: [
             { message: { role: "assistant", content: answer }, finish_reason: "stop" },
           ],
-        }),
-  );
+        });
+  let app = new Workbench(env, options.fetcher ?? fetcher);
   assertIsolated(root, env);
   t.after(async () => {
     await app.shutdown();
@@ -49,14 +53,20 @@ test("runs navigation keeps unknown outcomes and missing progress explicit", asy
   await app.settled();
   await ui.initialize();
   await ui.command("/runs");
-  assert.equal(ui.tab, "overview");
+  assert.equal(ui.tab, "runs");
   assert.equal(ui.items().length, 1);
   assert.match(ui.items()[0]!.label, /idle/);
-  assert.match(ui.items()[0]!.label, /progress unknown/);
+  assert.match(ui.items()[0]!.label, /progress not reported/);
   assert.doesNotMatch(ui.lines().join("\n"), /Completed runs/);
+  const activeSession = ui.sessionId;
   await ui.openSelected();
-  assert.match(ui.lines().join("\n"), /runId/);
-  assert.equal(ui.sessionId, session.id);
+  // The inspector names the run id it is showing instead of echoing a field
+  // name the operator never sees.
+  assert.match(ui.lines().join("\n"), /run id\s*:\s*[0-9a-f-]{36}/);
+  assert.match(ui.lines().join("\n"), /progress\s*:\s*not reported/);
+  // Inspecting a run is read-only: it never switches the active conversation.
+  assert.equal(ui.sessionId, activeSession);
+  assert.ok(session.id);
   // An unconfirmed runtime outcome must stay visible, never inferred complete.
   t.mock.method(app, "runs", () => [
     {
@@ -77,9 +87,14 @@ test("runs navigation keeps unknown outcomes and missing progress explicit", asy
     },
   ]);
   await ui.command("/runs");
-  assert.match(ui.items()[0]!.label, /unknown.*reconciliation required/);
+  assert.match(ui.items()[0]!.label, /unknown/);
+  assert.match(ui.items()[0]!.label, /progress not reported/);
+  // The unconfirmed outcome stays marked for reconciliation in the panel.
+  assert.match(ui.lines().join("\n"), /1 need reconciliation/);
   await ui.command("/status");
-  assert.match(ui.lines().join("\n"), /Run: unknown.*reconciliation required/);
+  // The status panel counts the unproven outcome instead of dropping it.
+  assert.match(ui.lines().join("\n"), /⚙ STATUS/);
+  assert.match(ui.lines().join("\n"), /1 unknown/);
   for (const width of [40, 80, 120, 200]) {
     const lines = stripAnsi(renderWorkspace(ui, width, 24)).split("\n");
     assert.ok(lines.length <= 24);
@@ -87,16 +102,18 @@ test("runs navigation keeps unknown outcomes and missing progress explicit", asy
   }
 });
 
-test("provider status and setup action never hide unavailable NVIDIA behind another provider", async (t) => {
+test("provider status exposes setup-required without defaulting an unconfigured provider", async (t) => {
   const { app, ui } = await fixture(t);
   await ui.initialize();
   await ui.command("/status");
+  ui.selected = ui.items().findIndex((row) => row.id === "runtime:provider");
+  assert.notEqual(ui.selected, -1);
+  await ui.openSelected();
   assert.match(ui.lines().join("\n"), /setup-required/);
   await ui.command("/connect");
-  assert.match(ui.notice, /NVIDIA_API_KEY/);
-  // No provider is configured, so there is no provider id to report. The
-  // decision to ship no default deletes this assertion's premise: a workspace
-  // that has chosen nothing says nothing rather than naming a vendor.
+  assert.match(ui.notice, /Set an API key in the host environment/);
+  assert.match(ui.notice, /No key is accepted in chat/);
+  // No provider is configured, so setup is required without a vendor ID.
   assert.equal((await app.providerState()).providerId, null);
   ui.provider = {
     ...ui.provider!,
@@ -106,8 +123,97 @@ test("provider status and setup action never hide unavailable NVIDIA behind anot
     retryAt: "2026-09-22T12:00:00.000Z",
   };
   await ui.command("/status");
+  ui.selected = ui.items().findIndex((row) => row.id === "runtime:provider");
+  assert.notEqual(ui.selected, -1);
+  await ui.openSelected();
   assert.match(ui.lines().join("\n"), /rate-limited/);
-  assert.match(ui.lines().join("\n"), /2026-09-22T12:00:00.000Z/);
+  assert.match(ui.lines().join("\n"), /2026-09-\s*22T12:00:00\.000Z/);
+});
+
+test("unavailable provider preserves its failure and avoids assuming it is unconfigured", async (t) => {
+  const { ui } = await fixture(t);
+  await ui.initialize();
+  ui.provider = {
+    ...ui.provider!,
+    connected: false,
+    status: "unavailable",
+    detail: "Configured credential was rejected by the provider endpoint.",
+    retryAt: null,
+  };
+  await ui.command("/status");
+  ui.selected = ui.items().findIndex((row) => row.id === "runtime:provider");
+  assert.notEqual(ui.selected, -1);
+  await ui.openSelected();
+  const lines = ui.lines().join("").replace(/\s+/g, "");
+  assert.match(lines, /unavailable/);
+  assert.ok(
+    lines.includes("Configuredcredentialwasrejectedbytheproviderendpoint"),
+  );
+  assert.ok(
+    lines.includes(
+      "Reviewtheconfiguredcredentialandendpoint;confirmprovideravailabilitybeforeretrying",
+    ),
+  );
+  assert.ok(!lines.includes("Noproviderisconnected"));
+  assert.ok(!lines.includes("Run/connecttoattachone"));
+});
+
+test("bare /connect re-reads the host environment after a refused probe", async (t) => {
+  const home = await mkdtemp(join(tmpdir(), "nomo-controls-home-"));
+  t.after(async () => {
+    await rm(home, { recursive: true, force: true });
+  });
+  let online = false;
+  const { ui } = await fixture(t, "Fixture reply", {
+    env: { HOME: home, NVIDIA_API_KEY: "nvidia-fixture-key" },
+    fetcher: async (url) => {
+      if (!online) throw new Error("fixture connection failure");
+      return String(url).endsWith("/models")
+        ? Response.json({ data: [{ id: "fixture" }] })
+        : Response.json({
+            choices: [
+              {
+                message: { role: "assistant", content: "Fixture reply" },
+                finish_reason: "stop",
+              },
+            ],
+          });
+    },
+  });
+  await ui.initialize();
+  // A key was present and refused, so this is not "nothing configured".
+  assert.equal(ui.provider?.connected, false);
+  assert.equal(ui.provider?.setupRequired, false);
+  assert.equal(ui.provider?.status, "unavailable");
+  online = true;
+  await ui.command("/connect");
+  // Bare /connect is a fresh attempt, not a replay of the earlier refusal.
+  assert.equal(ui.provider?.connected, true);
+  assert.equal(ui.provider?.providerId, "nvidia");
+  assert.equal(ui.provider?.status, "ready");
+  assert.match(ui.notice, /connected/);
+});
+
+test("bare /connect reports an unavailable provider instead of asking for a key again", async (t) => {
+  const home = await mkdtemp(join(tmpdir(), "nomo-controls-home-"));
+  t.after(async () => {
+    await rm(home, { recursive: true, force: true });
+  });
+  const { ui } = await fixture(t, "Fixture reply", {
+    env: { HOME: home, NVIDIA_API_KEY: "nvidia-fixture-key" },
+    fetcher: async () => {
+      throw new Error("fixture connection failure");
+    },
+  });
+  await ui.initialize();
+  await ui.command("/connect");
+  assert.equal(ui.provider?.connected, false);
+  assert.equal(ui.provider?.setupRequired, false);
+  assert.equal(ui.provider?.status, "unavailable");
+  // An unconfigured workspace is told to set a key. A configured workspace
+  // whose key was rejected must not be told the key is missing.
+  assert.doesNotMatch(ui.notice, /Set an API key in the host environment/);
+  assert.match(ui.notice, /unavailable|rejected|failed/i);
 });
 
 test("projects and preset agents apply only to new conversations and projects survive restart", async (t) => {

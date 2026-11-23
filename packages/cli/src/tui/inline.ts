@@ -11,12 +11,17 @@ export function renderInlineCall(
     call.blastRadius === null
       ? "? targets"
       : `${call.blastRadius} target${call.blastRadius === 1 ? "" : "s"}`;
-  const fixed = `${sanitizeText(call.time)} ${classLabel(call.class, capabilities)} ${decisionLabel(call.decision, capabilities)} `;
+  const classText = classLabel(call.class, capabilities);
+  const decisionText = decisionLabel(call.decision, capabilities);
+  const compactFixed = `${classText} ${decisionText} `;
+  const timedFixed = `${sanitizeText(call.time)} ${compactFixed}`;
   const suffix = ` ${radius} ${call.durationMs}ms`;
-  const toolWidth = Math.max(
-    12,
-    width - visibleLength(fit(fixed, width)) - suffix.length,
-  );
+  const suffixWidth = visibleLength(suffix);
+  const fixed =
+    visibleLength(timedFixed) + suffixWidth <= width
+      ? timedFixed
+      : compactFixed;
+  const toolWidth = Math.max(0, width - visibleLength(fixed) - suffixWidth);
   // Left truncation keeps the resource and action suffix of a long tool id,
   // which is where the meaning lives. The tool id is external data, so it is
   // sanitized before any of the width math, not after.

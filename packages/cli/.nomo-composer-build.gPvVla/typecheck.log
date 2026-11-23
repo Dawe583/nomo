@@ -1,0 +1,49 @@
+
+> @nomo/workspace@0.1.0 typecheck /Users/dawe/Developer/Claude-Projects/NOMO/.worktrees/tui-opentui-integration
+> pnpm -r --workspace-concurrency=1 --filter "./packages/**" --filter "./scripts" --if-present run typecheck && tsc -p apps/control-plane/tsconfig.json && tsc -p paid/tsconfig.json && pnpm --filter @void/control-plane-ui typecheck
+
+Scope: 12 of 14 workspace projects
+
+> @nomo/agent-policy@0.1.0 typecheck /Users/dawe/Developer/Claude-Projects/NOMO/.worktrees/tui-opentui-integration/packages/agent-policy
+> tsc -p tsconfig.json
+
+
+> @nomo/connectors@0.1.0 typecheck /Users/dawe/Developer/Claude-Projects/NOMO/.worktrees/tui-opentui-integration/packages/connectors
+> tsc -p tsconfig.json
+
+
+> @nomo/ledger@0.1.0 typecheck /Users/dawe/Developer/Claude-Projects/NOMO/.worktrees/tui-opentui-integration/packages/ledger
+> tsc -p tsconfig.json
+
+
+> @nomo/policy@0.1.0 typecheck /Users/dawe/Developer/Claude-Projects/NOMO/.worktrees/tui-opentui-integration/packages/policy
+> tsc -p tsconfig.json
+
+
+> @nomo/registry@0.1.0 typecheck /Users/dawe/Developer/Claude-Projects/NOMO/.worktrees/tui-opentui-integration/packages/registry
+> tsc -p tsconfig.json
+
+
+> @nomo/runtime@0.1.0 typecheck /Users/dawe/Developer/Claude-Projects/NOMO/.worktrees/tui-opentui-integration/packages/runtime
+> tsc -p tsconfig.json
+
+
+> @nomo/cli@1.0.1 typecheck /Users/dawe/Developer/Claude-Projects/NOMO/.worktrees/tui-opentui-integration/packages/cli
+> tsc -p tsconfig.json
+
+
+> @nomo/proxy@0.1.0 typecheck /Users/dawe/Developer/Claude-Projects/NOMO/.worktrees/tui-opentui-integration/packages/proxy
+> tsc -p tsconfig.json
+
+
+> @nomo/sdk@0.1.0 typecheck /Users/dawe/Developer/Claude-Projects/NOMO/.worktrees/tui-opentui-integration/packages/sdk
+> tsc -p tsconfig.json
+
+
+> @nomo/workbench@0.1.0 typecheck /Users/dawe/Developer/Claude-Projects/NOMO/.worktrees/tui-opentui-integration/packages/workbench
+> tsc -p tsconfig.json
+
+
+> @void/control-plane-ui@ typecheck /Users/dawe/Developer/Claude-Projects/NOMO/.worktrees/tui-opentui-integration/apps/control-plane/ui
+> tsc --noEmit
+

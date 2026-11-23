@@ -27,7 +27,7 @@ and the barrel `packages/cli/src/tui/index.ts:1-11`.
 | `theme.ts` | 126 | `NOMO_PALETTE` (`:7`), class/decision markers (`:27`, `:34`), `paint` (`:87`). |
 | `types.ts` | 143 | `ReversibilityClass`, `CallDecision`, `PipelineStage`, the render model. |
 | `caps.ts` | 71 | `detectCapabilities` (`:13`); the only TTY/env reader. |
-| `brand.ts` | 28 | `brandHeader` (`:16`); rasterizes the aperture mark to half blocks. |
+| `brand.ts` | 28 | `brandHeader`; renders the six-by-six NOMO grid mark as terminal cells. |
 | `watch.ts` | 424 | `renderWatchFrame` (`:284`), `DiffScreenWriter` (`:379`); the alternate-screen watch surface. |
 | `views.ts` | 118 | `renderHelp` (`:9`), `renderReplayPreview` (`:38`), `renderLedgerVerification` (`:79`). |
 | `modal.ts` | 182 | `renderHoldPrompt` (`:5`), `promptForHold` (`:79`); the blocking-hold keypress. |

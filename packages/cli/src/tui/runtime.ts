@@ -31,7 +31,10 @@ export class WatchRuntime {
       options.capabilities ??
       (() => detectCapabilities(process.env, this.output as CapabilityStream));
     this.onKey = options.onKey ?? (() => undefined);
-    this.refreshMs = options.refreshMs ?? 250;
+    const refreshMs = options.refreshMs ?? 250;
+    this.refreshMs = Number.isFinite(refreshMs)
+      ? Math.max(100, Math.min(refreshMs, 2_147_483_647))
+      : 250;
     this.writer = new DiffScreenWriter(this.output);
   }
 

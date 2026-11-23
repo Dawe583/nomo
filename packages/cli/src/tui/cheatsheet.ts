@@ -34,16 +34,30 @@ export interface CheatSheetOptions {
 // by situation (always, editing, running, review), so deriving one from the
 // other would silently misfile keys every time the legend gains a hint.
 const ALWAYS_BINDINGS: readonly Binding[] = [
-  { keys: "Tab", action: "switch panels", when: "always" },
-  { keys: "Shift+Tab", action: "cycle mode", when: "always" },
-  { keys: "Enter", action: "open details", when: "always" },
+  {
+    keys: "Tab",
+    action: "complete Chat suggestions, focus composer, or return from a panel",
+    when: "always",
+  },
+  { keys: "Shift+Tab", action: "cycle local mode", when: "always" },
+  {
+    keys: "Enter",
+    action: "inspect selected row; tree groups and folders toggle",
+    when: "always",
+  },
   { keys: "u", action: "undo last change", when: "always" },
   {
-    keys: "Ctrl+P",
-    action: "command palette",
+    keys: "Alt+M",
+    action: "open the connected-provider model picker",
     when: "always",
-    also: ["Ctrl+N"],
   },
+  {
+    keys: "Alt+P",
+    action: "choose a model for the current conversation",
+    when: "always",
+  },
+  { keys: "Alt+A", action: "open the Agents panel", when: "always" },
+  { keys: "Alt+L", action: "redraw the current terminal view", when: "always" },
   { keys: "?", action: "this cheat sheet", when: "always" },
 ];
 
@@ -55,8 +69,27 @@ const EDITING_BINDINGS: readonly Binding[] = [
     also: ["Ctrl+J"],
   },
   { keys: "Ctrl+R", action: "search composer", when: "editing" },
-  { keys: "Ctrl+O", action: "toggle output", when: "editing" },
-  { keys: "Ctrl+T", action: "toggle todos", when: "editing" },
+  { keys: "Ctrl+T", action: "transpose adjacent characters", when: "editing" },
+  {
+    keys: "Ctrl+] / Ctrl+Alt+], then a character",
+    action: "jump to the next or previous match",
+    when: "editing",
+  },
+  {
+    keys: "Alt+D / Alt+Delete",
+    action: "delete the next word",
+    when: "editing",
+  },
+  {
+    keys: "Alt+Backspace / Ctrl+Backspace / Ctrl+W",
+    action: "delete the previous word",
+    when: "editing",
+  },
+  { keys: "Ctrl+K", action: "delete to end of prompt", when: "editing" },
+  { keys: "Ctrl+U", action: "delete to start of prompt", when: "editing" },
+  { keys: "Ctrl+P", action: "command palette", when: "editing" },
+  { keys: "Alt+Shift+C", action: "copy the Chat prompt", when: "editing" },
+  { keys: "Alt+Shift+P", action: "toggle local plan mode", when: "editing" },
   { keys: "/", action: "command menu", when: "editing" },
 ];
 
@@ -81,9 +114,16 @@ function escBindingFor(context: {
   readonly editing: boolean;
   readonly running: boolean;
   readonly reviewing: boolean;
+  readonly backable?: boolean;
 }): Binding {
   if (context.reviewing)
     return { keys: "Esc", action: "cancel review", when: "review" };
+  if (context.backable)
+    return {
+      keys: "Esc",
+      action: "close the current overlay, detail or filter",
+      when: "always",
+    };
   if (context.running)
     return { keys: "Esc", action: "stop run", when: "running" };
   return { keys: "Esc", action: "back", when: "always" };
@@ -92,11 +132,82 @@ function escBindingFor(context: {
 export function bindingsFor(context: {
   readonly editing: boolean;
   readonly running: boolean;
+  readonly suspendSupported?: boolean;
+  readonly queued?: boolean;
+  readonly retryable?: boolean;
   readonly reviewing: boolean;
+  readonly backable?: boolean;
+  readonly tab?: string;
 }): Binding[] {
-  const out: Binding[] = [...ALWAYS_BINDINGS, escBindingFor(context)];
+  const enterAction =
+    context.editing && context.tab === "chat"
+      ? "send the Chat prompt; modified Enter inserts a newline"
+      : context.editing
+        ? "run the typed command or prompt"
+        : context.tab === "sessions"
+          ? "open selected conversation in Chat; tree groups toggle"
+          : context.tab === "documents"
+            ? "preview selected document; folders toggle"
+            : context.tab === "models"
+              ? "set selected model for new conversations"
+              : context.tab === "approvals"
+                ? "inspect the selected approval before deciding"
+                : "inspect selected row; tree groups toggle";
+  const always = ALWAYS_BINDINGS.map((binding) =>
+    binding.keys === "Enter" ? { ...binding, action: enterAction } : binding,
+  );
+  const out: Binding[] = [...always, escBindingFor(context)];
+  out.push({
+    keys: "Ctrl+O",
+    action:
+      "cycle compact, details and expanded agent activity only during a run; never resizes the composer",
+    when: "running",
+  });
+  if (context.suspendSupported !== false)
+    out.push({
+      keys: "Ctrl+Z",
+      action: "suspend NOMO to the shell; resume with fg",
+      when: "always",
+    });
+  if (context.tab !== undefined && context.tab !== "chat" && !context.editing)
+    out.push(
+      {
+        keys: "Ctrl+P",
+        action: "move selection up",
+        when: "always",
+      },
+      {
+        keys: "Ctrl+N",
+        action: "move selection down",
+        when: "always",
+      },
+    );
+  if (!context.editing)
+    out.push({
+      keys: "Ctrl+T",
+      action: "show todos from the selected conversation",
+      when: "always",
+    });
   if (context.editing) out.push(...EDITING_BINDINGS);
   if (context.running) out.push(...RUNNING_BINDINGS);
+  if (context.running && context.editing && context.tab === "chat")
+    out.push({
+      keys: "Ctrl+Q / Ctrl+Enter",
+      action: "queue the Chat draft behind the active turn",
+      when: "running",
+    });
+  if (context.queued)
+    out.push({
+      keys: "Alt+Up / Shift+Up",
+      action: "restore the queued prompt to Chat and keep the current draft",
+      when: "running",
+    });
+  if (context.retryable)
+    out.push({
+      keys: "F5 / Alt+R",
+      action: "retry the failed prompt in a new branch after confirmation",
+      when: "always",
+    });
   if (context.reviewing) out.push(...REVIEW_BINDINGS);
   return out;
 }

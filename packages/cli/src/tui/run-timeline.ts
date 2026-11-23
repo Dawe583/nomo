@@ -119,6 +119,22 @@ function firstNumber(
   return undefined;
 }
 
+function eventTimestamp(record: Record<string, unknown>): number | undefined {
+  const numeric: number | undefined = firstNumber(record, [
+    "ts",
+    "timestamp",
+    "time",
+    "at",
+  ]);
+  if (numeric !== undefined) return numeric;
+
+  const value: unknown = record["at"];
+  if (typeof value !== "string") return undefined;
+  const timestamp: number = Date.parse(value);
+  if (!Number.isFinite(timestamp)) return undefined;
+  return new Date(timestamp).toISOString() === value ? timestamp : undefined;
+}
+
 // Map one event to a phase. Returns null for events with no type so the
 // caller drops them: an event nobody typed is not a phase, it is noise.
 function eventPhase(event: Record<string, unknown>): RunPhase | null {
@@ -176,7 +192,7 @@ export function buildTimeline(events: readonly unknown[]): TimelineState {
     const withCost: TimelineStep =
       tokens !== undefined ? { ...withDetail, tokens } : withDetail;
     steps.push(withCost);
-    stamps.push(firstNumber(event, ["ts", "timestamp", "time", "at"]));
+    stamps.push(eventTimestamp(event));
   }
   // A duration needs both neighbours stamped. A missing end stamp leaves ms
   // undefined: zero would read as instant, and instant is a claim.
@@ -184,8 +200,10 @@ export function buildTimeline(events: readonly unknown[]): TimelineState {
     (step: TimelineStep, index: number) => {
       const start: number | undefined = stamps[index];
       const end: number | undefined = stamps[index + 1];
-      if (start === undefined || end === undefined) return step;
-      return { ...step, ms: Math.max(0, end - start) };
+      if (start === undefined || end === undefined || end < start) return step;
+      const duration: number = end - start;
+      if (!Number.isFinite(duration)) return step;
+      return { ...step, ms: duration };
     },
   );
   return { steps: timed, current: timed.length === 0 ? 0 : timed.length - 1 };
@@ -356,3 +374,81 @@ export function renderBudget(
 }
 
 export { ALL_PHASES };
+
+// ---------------------------------------------------------------------------
+// Run summary: the receipt for a settled run.
+// ---------------------------------------------------------------------------
+
+/** How a settled run ended, as the run's own terminal event reported it. */
+export type RunOutcome = "done" | "failed" | "cancelled";
+
+/**
+ * The measured cost of one settled run.
+ *
+ * Every field is optional because every field is measured: `undefined` means
+ * the source did not report that metric, and the renderer then prints `n/a`
+ * rather than a zero that would read as a measurement. Nothing here is
+ * estimated from wall clock or from a ratio.
+ */
+export interface RunSummary {
+  readonly outcome: RunOutcome;
+  /** Milliseconds between the run's first and last recorded event. */
+  readonly ms?: number;
+  /** Provider reported tokens for this run, never a rate times a duration. */
+  readonly tokens?: number;
+  /** Tool calls the run actually started. */
+  readonly tools?: number;
+  /** Distinct paths the run wrote or edited. */
+  readonly files?: number;
+  /** Only set when a tool result text explicitly reported a test outcome. */
+  readonly tests?: "passed" | "failed";
+}
+
+function summaryMetric(label: string, value: string | undefined): string {
+  return `${label} ${value === undefined ? "n/a" : value}`;
+}
+
+/** A measured duration, or undefined so the row can name it as `n/a`. */
+function summaryDuration(ms: number | undefined): string | undefined {
+  return ms === undefined || !Number.isFinite(ms) ? undefined : formatDuration(ms);
+}
+
+/**
+ * The one-line receipt that rides the header slot after the run settles.
+ *
+ * It replaces the task header that named the phase while the run was in
+ * flight, so a finished run costs no row of its own. Missing metrics are named
+ * as `n/a`; a blank would read as zero.
+ */
+export function runSummaryRow(summary: RunSummary, width: number): string {
+  const cells = Number.isFinite(width) ? Math.max(0, Math.floor(width)) : 0;
+  const parts: string[] = [
+    `RUN ${summary.outcome}`,
+    summaryMetric("time", summaryDuration(summary.ms)),
+    summaryMetric("tok", summary.tokens?.toString()),
+    summaryMetric("tools", summary.tools?.toString()),
+    summaryMetric("files", summary.files?.toString()),
+    summaryMetric("tests", summary.tests),
+  ];
+  return fit(sanitizeText(parts.join(" · ")), cells);
+}
+
+/**
+ * The RUN card: a heading, then one measured metric per row.
+ *
+ * One metric per row keeps a long token count from truncating the file count
+ * beside it on a narrow rail, and every row states its own name so the block
+ * is readable without colour.
+ */
+export function runSummaryLines(summary: RunSummary, width: number): string[] {
+  const cells = Number.isFinite(width) ? Math.max(0, Math.floor(width)) : 0;
+  if (cells <= 0) return [];
+  return [
+    `RUN ${summary.outcome}`,
+    summaryMetric("time", summaryDuration(summary.ms)),
+    summaryMetric("tokens", summary.tokens?.toString()),
+    summaryMetric("tools", summary.tools?.toString()),
+    summaryMetric("files", summary.files?.toString()),
+    summaryMetric("tests", summary.tests),
+  ].map((row) => fit(sanitizeText(row), cells));
+}

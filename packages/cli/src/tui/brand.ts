@@ -1,91 +1,18 @@
 import { readFileSync } from "node:fs";
-import { fit, sanitizeText, visibleLength } from "./layout.ts";
-import { paint } from "./theme.ts";
+import { fit, sanitizeText } from "./layout.ts";
+import { paint, type Tone } from "./theme.ts";
 import type { TerminalCapabilities } from "./types.ts";
 import { homedir } from "node:os";
-import { join, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { dataDir } from "../../../ledger/src/paths.ts";
-import type { ColorTheme } from "./theme-config.ts";
+import { ansi256, trueColor, type ColorTheme } from "./theme-config.ts";
+import { petImageTransfer } from "./pet.ts";
 
-const MARK_COLS = 13;
-const MARK_ROWS = 7;
-const MARK_HALF_ROWS = MARK_ROWS * 2;
-
-const LAST_COL = MARK_COLS - 1;
-const LAST_HALF_ROW = MARK_HALF_ROWS - 1;
-/** Inset of the inner rule, in cells, from the outer rule. */
-const INNER_INSET = 2;
-const INNER_LOW_COL = INNER_INSET;
-const INNER_HIGH_COL = LAST_COL - INNER_INSET;
-const INNER_LOW_ROW = INNER_INSET * 2;
-const INNER_HIGH_ROW = LAST_HALF_ROW - INNER_INSET * 2;
-const DOT_COL = Math.floor(MARK_COLS / 2);
-
-function sample(column: number, halfRow: number): "ink" | "accent" | undefined {
-  // A horizontal rule fills both half rows of its cell, so the edge lands on
-  // a cell boundary instead of drifting half a cell inside the mark. Both
-  // rows of the top and bottom cell are ink, which is what a bold terminal
-  // font draws for a rule anyway.
-  const onOuterHorizontal =
-    halfRow === 0 ||
-    halfRow === 1 ||
-    halfRow === LAST_HALF_ROW - 1 ||
-    halfRow === LAST_HALF_ROW;
-  const onOuterVertical = column === 0 || column === LAST_COL;
-  if (onOuterHorizontal || onOuterVertical) return "ink";
-  const inInnerColumn = column >= INNER_LOW_COL && column <= INNER_HIGH_COL;
-  const inInnerRow = halfRow >= INNER_LOW_ROW && halfRow <= INNER_HIGH_ROW;
-  const onInnerHorizontal =
-    halfRow === INNER_LOW_ROW || halfRow === INNER_HIGH_ROW;
-  const onInnerVertical = column === INNER_LOW_COL || column === INNER_HIGH_COL;
-  // The inner rule stops at the outer rule instead of crossing it, so the
-  // two squares read as separate shapes rather than one thick frame.
-  if (inInnerColumn && inInnerRow && (onInnerHorizontal || onInnerVertical))
-    return "accent";
-  // The dot is two half rows tall so it fills one character cell.
-  if (column === DOT_COL && (halfRow === DOT_COL || halfRow === DOT_COL + 1))
-    return "accent";
-  return undefined;
-}
-
-const LOGO_ID = process.pid & 0xffffff || 1;
-const LOGO_COLUMNS = 9;
-const LOGO_ROWS = 5;
-const LOGO_WIDTH = 320;
-const LOGO_HEIGHT = 315;
+const TAB_ICON_ID_BASE = process.pid & 0xffffff || 1;
 const MARKS = [
   0x0305, 0x030d, 0x030e, 0x0310, 0x0312, 0x033d, 0x033e, 0x033f, 0x0346,
 ];
-const LOGO_CELLS = Array.from({ length: LOGO_ROWS }, (_, row) =>
-  Array.from(
-    { length: LOGO_COLUMNS },
-    (_, column) =>
-      `\u{10eeee}${String.fromCodePoint(MARKS[row]!)}${String.fromCodePoint(MARKS[column]!)}`,
-  ).join(""),
-);
-let transfer: string | undefined;
-let workspaceTransfer: string | undefined;
-
-export function kittyLogoTransfer(): string {
-  if (transfer !== undefined) return transfer;
-  const encoded = readFileSync(
-    new URL("./nomo-logo.png", import.meta.url),
-  ).toString("base64");
-  const chunks: string[] = [];
-  for (let offset = 0; offset < encoded.length; offset += 4096) {
-    const chunk = encoded.slice(offset, offset + 4096);
-    const more = offset + 4096 < encoded.length;
-    chunks.push(
-      `\x1b_Ga=t,f=100,i=${LOGO_ID},q=2,m=${more ? 1 : 0};${chunk}\x1b\\`,
-    );
-  }
-  transfer = chunks.join("");
-  return transfer;
-}
-
-export function kittyLogoCleanup(): string {
-  return `\x1b_Ga=d,d=I,i=${LOGO_ID},q=2\x1b\\`;
-}
 // Ink drops Kitty escapes from frames, so virtual placements must exist before
 // it renders their Unicode cells.
 function kittyVirtualImageTransfer(
@@ -107,36 +34,60 @@ function kittyVirtualImageTransfer(
   return chunks.join("");
 }
 
-export function kittyWorkspaceLogoTransfer(): string {
-  if (workspaceTransfer !== undefined) return workspaceTransfer;
-  return (workspaceTransfer = kittyVirtualImageTransfer(
-    LOGO_ID,
-    readFileSync(new URL("./nomo-logo.png", import.meta.url)),
-    { columns: LOGO_COLUMNS, rows: LOGO_ROWS },
-  ));
-}
-
 const TAB_ICON_FILES = {
-  overview: "home-01",
-  chat: "message-chat-circle",
-  sessions: "clock",
-  documents: "file-06",
-  ledger: "book-open-01",
-  approvals: "shield-tick",
-  policy: "lock-01",
-  tools: "tool-02",
-  models: "cpu-chip-01",
-  usage: "bar-chart-03",
+  overview: "home-simple",
+  chat: "chat-bubble",
+  sessions: "clock-rotate-right",
+  documents: "multiple-pages",
+  ledger: "open-book",
+  approvals: "shield-check",
+  policy: "lock",
+  tools: "tools",
+  models: "cpu",
+  usage: "graph-up",
   help: "help-circle",
 } as const;
+const SEMANTIC_ICON_FILES = {
+  subagents: "group",
+  heartbeats: "activity",
+  shells: "terminal",
+  appearance: "palette",
+  interaction: "key",
+  composer: "app-window",
+  timestamps: "clock",
+  context: "brain",
+  queue: "list-select",
+  network: "network",
+  run: "play",
+  retry: "refresh-double",
+  refinement: "magic-wand",
+  search: "search",
+  settings: "settings",
+  timeout: "timer",
+} as const;
 type TabIconKey = keyof typeof TAB_ICON_FILES;
+type SemanticIconKey = keyof typeof SEMANTIC_ICON_FILES;
+type ActivityIconKey = "subagents" | "heartbeats" | "shells";
 type IconVariant = "dark" | "light";
 type TabIcon = { readonly id: number; readonly png: Buffer };
-export type LocalTabIcons = Readonly<
-  Record<IconVariant, Readonly<Record<TabIconKey, TabIcon>>>
->;
+export type LocalTabIcons = Readonly<{
+  readonly dark: Readonly<Record<TabIconKey, TabIcon>>;
+  readonly light: Readonly<Record<TabIconKey, TabIcon>>;
+  readonly provider?: Readonly<Record<IconVariant, TabIcon>>;
+  readonly semantic?: Readonly<
+    Record<IconVariant, Readonly<Partial<Record<SemanticIconKey, TabIcon>>>>
+  >;
+}>;
 
 const TAB_ICON_KEYS = Object.keys(TAB_ICON_FILES) as TabIconKey[];
+const SEMANTIC_ICON_KEYS = Object.keys(
+  SEMANTIC_ICON_FILES,
+) as SemanticIconKey[];
+const ACTIVITY_ICON_KEYS: readonly ActivityIconKey[] = [
+  "subagents",
+  "heartbeats",
+  "shells",
+];
 const ICON_VARIANTS: readonly IconVariant[] = ["dark", "light"];
 const PNG_SIGNATURE = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
 const KITTY_ICON_BASE = "\u{10eeee}";
@@ -159,38 +110,201 @@ function validTabIcon(png: Buffer): boolean {
 export function loadLocalTabIcons(
   env: Readonly<NodeJS.ProcessEnv> = process.env,
 ): LocalTabIcons | undefined {
-  const directory = resolve(
+  const loadDirectory = (
+    directory: string,
+    filename: (tab: TabIconKey, variant: IconVariant) => string,
+    providerFilename?: (variant: IconVariant) => string,
+    semanticFilename?: (
+      semantic: SemanticIconKey,
+      variant: IconVariant,
+    ) => string,
+  ): LocalTabIcons | undefined => {
+    const icons = {
+      dark: {} as Record<TabIconKey, TabIcon>,
+      light: {} as Record<TabIconKey, TabIcon>,
+    };
+    const usedIds = new Set([TAB_ICON_ID_BASE]);
+    let nextId = TAB_ICON_ID_BASE;
+    try {
+      for (const variant of ICON_VARIANTS) {
+        for (const tab of TAB_ICON_KEYS) {
+          const png = readFileSync(join(directory, filename(tab, variant)));
+          if (!validTabIcon(png)) return undefined;
+          let id = nextId;
+          do {
+            id = (id + 1) & 0xffffff;
+            if (id === 0) id = 1;
+          } while (usedIds.has(id));
+          usedIds.add(id);
+          nextId = id;
+          icons[variant][tab] = { id, png };
+        }
+      }
+    } catch {
+      return undefined;
+    }
+    const result: {
+      dark: Record<TabIconKey, TabIcon>;
+      light: Record<TabIconKey, TabIcon>;
+      provider?: Record<IconVariant, TabIcon>;
+      semantic?: Record<IconVariant, Partial<Record<SemanticIconKey, TabIcon>>>;
+    } = icons;
+    const allocate = (png: Buffer): TabIcon => {
+      let id = nextId;
+      do {
+        id = (id + 1) & 0xffffff;
+        if (id === 0) id = 1;
+      } while (usedIds.has(id));
+      usedIds.add(id);
+      nextId = id;
+      return { id, png };
+    };
+    if (providerFilename) {
+      const provider: Partial<Record<IconVariant, TabIcon>> = {};
+      try {
+        for (const variant of ICON_VARIANTS) {
+          const png = readFileSync(join(directory, providerFilename(variant)));
+          if (!validTabIcon(png)) break;
+          provider[variant] = allocate(png);
+        }
+      } catch {
+        // Private icon packs may not include optional provider artwork.
+      }
+      if (ICON_VARIANTS.every((variant) => provider[variant]))
+        result.provider = provider as Record<IconVariant, TabIcon>;
+    }
+    if (semanticFilename) {
+      const semantic: Record<
+        IconVariant,
+        Partial<Record<SemanticIconKey, TabIcon>>
+      > = {
+        dark: {},
+        light: {},
+      };
+      for (const variant of ICON_VARIANTS)
+        for (const key of SEMANTIC_ICON_KEYS) {
+          try {
+            const png = readFileSync(
+              join(directory, semanticFilename(key, variant)),
+            );
+            if (validTabIcon(png)) semantic[variant][key] = allocate(png);
+          } catch {
+            // A private pack may override any subset of bundled semantic icons.
+          }
+        }
+      if (
+        ICON_VARIANTS.some((variant) => Object.keys(semantic[variant]).length)
+      )
+        result.semantic = semantic;
+    }
+    return result;
+  };
+  const localDirectory = resolve(
     env.NOMO_TUI_ICONS_DIR ||
       join(dataDir(env.HOME || homedir()), "tui", "icons"),
   );
-  const icons = {
-    dark: {} as Record<TabIconKey, TabIcon>,
-    light: {} as Record<TabIconKey, TabIcon>,
+  const localIcons = loadDirectory(
+    localDirectory,
+    (tab, variant) => `${tab}.${variant}.png`,
+    (variant) => `provider.${variant}.png`,
+    (semantic, variant) => `${SEMANTIC_ICON_FILES[semantic]}.${variant}.png`,
+  );
+  // Rollup places this module's chunks beside the copied `icons/` directory.
+  // The same relative path also works from source during local development.
+  const bundledDirectory = join(
+    dirname(fileURLToPath(import.meta.url)),
+    "icons",
+  );
+  const bundledIcons = loadDirectory(
+    bundledDirectory,
+    (tab, variant) => `${TAB_ICON_FILES[tab]}.${variant}.png`,
+    (variant) => `cloud.${variant}.png`,
+    (semantic, variant) => `${SEMANTIC_ICON_FILES[semantic]}.${variant}.png`,
+  );
+  // An incomplete user icon override must not blank the entire icon system.
+  // Fall back to the shipped Iconoir pack; valid complete local packs still
+  // override it below.
+  if (!localIcons) return bundledIcons;
+  const usedIds = new Set([
+    TAB_ICON_ID_BASE,
+    ...ICON_VARIANTS.flatMap((variant) =>
+      TAB_ICON_KEYS.map((tab) => localIcons[variant][tab].id),
+    ),
+    ...(localIcons.provider
+      ? ICON_VARIANTS.map((variant) => localIcons.provider![variant].id)
+      : []),
+    ...(localIcons.semantic
+      ? ICON_VARIANTS.flatMap((variant) =>
+          SEMANTIC_ICON_KEYS.flatMap((key) => {
+            const icon = localIcons.semantic![variant][key];
+            return icon ? [icon.id] : [];
+          }),
+        )
+      : []),
+  ]);
+  let nextId = TAB_ICON_ID_BASE;
+  const useBundled = (icon: TabIcon): TabIcon => {
+    let id = nextId;
+    do {
+      id = (id + 1) & 0xffffff;
+      if (id === 0) id = 1;
+    } while (usedIds.has(id));
+    usedIds.add(id);
+    nextId = id;
+    return { ...icon, id };
   };
-  const usedIds = new Set([LOGO_ID]);
-  let nextId = LOGO_ID;
-  try {
-    for (const variant of ICON_VARIANTS) {
-      for (const tab of TAB_ICON_KEYS) {
-        const png = readFileSync(join(directory, `${tab}.${variant}.png`));
-        if (!validTabIcon(png)) return undefined;
-        let id = nextId;
-        do {
-          id = (id + 1) & 0xffffff;
-          if (id === 0) id = 1;
-        } while (usedIds.has(id));
-        usedIds.add(id);
-        nextId = id;
-        icons[variant][tab] = { id, png };
-      }
-    }
-  } catch {
-    return undefined;
-  }
-  return icons;
+  const provider =
+    localIcons.provider ??
+    (bundledIcons?.provider
+      ? (Object.fromEntries(
+          ICON_VARIANTS.map((variant) => [
+            variant,
+            useBundled(bundledIcons.provider![variant]),
+          ]),
+        ) as Record<IconVariant, TabIcon>)
+      : undefined);
+  const semantic = bundledIcons?.semantic
+    ? (Object.fromEntries(
+        ICON_VARIANTS.map((variant) => [
+          variant,
+          Object.fromEntries(
+            SEMANTIC_ICON_KEYS.flatMap((key) => {
+              const icon =
+                localIcons.semantic?.[variant][key] ??
+                bundledIcons.semantic?.[variant][key];
+              return icon
+                ? [
+                    [
+                      key,
+                      localIcons.semantic?.[variant][key] ?? useBundled(icon),
+                    ],
+                  ]
+                : [];
+            }),
+          ) as Partial<Record<SemanticIconKey, TabIcon>>,
+        ]),
+      ) as Record<IconVariant, Partial<Record<SemanticIconKey, TabIcon>>>)
+    : localIcons.semantic;
+  return {
+    ...localIcons,
+    ...(provider ? { provider } : {}),
+    ...(semantic ? { semantic } : {}),
+  };
 }
 
-export function kittyTabIconsTransfer(icons: LocalTabIcons): string {
+/**
+ * Every image the workspace transfers at startup.
+ *
+ * The tab icons and the optional NIB image share one channel because the
+ * terminal has one: a Kitty transfer is written once, outside the frame, before
+ * the placeholder cells that reference it are drawn. The pet transfer is empty
+ * unless NOMO_TUI_IMAGE=1 and the terminal speaks the protocol, so the default
+ * output here is unchanged.
+ */
+export function kittyTabIconsTransfer(
+  icons: LocalTabIcons,
+  env: Readonly<NodeJS.ProcessEnv> = process.env,
+): string {
   const transfers: string[] = [];
   for (const variant of ICON_VARIANTS)
     for (const tab of TAB_ICON_KEYS)
@@ -201,7 +315,19 @@ export function kittyTabIconsTransfer(icons: LocalTabIcons): string {
           { columns: 2, rows: 1 },
         ),
       );
-  return transfers.join("");
+  if (icons.semantic)
+    for (const variant of ICON_VARIANTS)
+      for (const key of SEMANTIC_ICON_KEYS) {
+        const icon = icons.semantic[variant][key];
+        if (icon)
+          transfers.push(
+            kittyVirtualImageTransfer(icon.id, icon.png, {
+              columns: 2,
+              rows: 1,
+            }),
+          );
+      }
+  return `${transfers.join("")}${petImageTransfer(env)}`;
 }
 
 export function kittyTabIconsCleanup(icons: LocalTabIcons): string {
@@ -209,7 +335,42 @@ export function kittyTabIconsCleanup(icons: LocalTabIcons): string {
   for (const variant of ICON_VARIANTS)
     for (const tab of TAB_ICON_KEYS)
       cleanup.push(`\x1b_Ga=d,d=I,i=${icons[variant][tab].id},q=2\x1b\\`);
+  if (icons.semantic)
+    for (const variant of ICON_VARIANTS)
+      for (const key of SEMANTIC_ICON_KEYS) {
+        const icon = icons.semantic[variant][key];
+        if (icon) cleanup.push(`\x1b_Ga=d,d=I,i=${icon.id},q=2\x1b\\`);
+      }
   return cleanup.join("");
+}
+
+export function kittyProviderIconTransfer(icons: LocalTabIcons): string {
+  if (!icons.provider) return "";
+  return ICON_VARIANTS.map((variant) =>
+    kittyVirtualImageTransfer(
+      icons.provider![variant].id,
+      icons.provider![variant].png,
+      {
+        columns: 2,
+        rows: 1,
+      },
+    ),
+  ).join("");
+}
+
+export function kittyProviderIconCleanup(icons: LocalTabIcons): string {
+  return icons.provider
+    ? ICON_VARIANTS.map(
+        (variant) => `\x1b_Ga=d,d=I,i=${icons.provider![variant].id},q=2\x1b\\`,
+      ).join("")
+    : "";
+}
+
+function kittyIconLabel(id: number): string {
+  const color = [(id >> 16) & 0xff, (id >> 8) & 0xff, id & 0xff].join(";");
+  const cell = (column: number) =>
+    `${KITTY_ICON_BASE}${String.fromCodePoint(MARKS[0]!)}${String.fromCodePoint(MARKS[column]!)}`;
+  return `\x1b[38;2;${color}m${cell(0)}${cell(1)}\x1b[39m`;
 }
 
 export function kittyTabIconLabel(
@@ -220,58 +381,94 @@ export function kittyTabIconLabel(
   if (!Object.hasOwn(TAB_ICON_FILES, tab)) return "";
   const variant = LIGHT_THEMES.has(theme) ? "light" : "dark";
   const { id } = icons[variant][tab as TabIconKey];
-  const color = [(id >> 16) & 0xff, (id >> 8) & 0xff, id & 0xff].join(";");
-  const cell = (column: number) =>
-    `${KITTY_ICON_BASE}${String.fromCodePoint(MARKS[0]!)}${String.fromCodePoint(MARKS[column]!)}`;
-  return `\x1b[38;2;${color}m${cell(0)}${cell(1)}\x1b[39m`;
+  return kittyIconLabel(id);
+}
+
+export function kittyProviderIconLabel(
+  icons: LocalTabIcons,
+  theme: ColorTheme,
+): string {
+  if (!icons.provider) return "";
+  const variant = LIGHT_THEMES.has(theme) ? "light" : "dark";
+  return kittyIconLabel(icons.provider[variant].id);
+}
+
+export function kittySemanticIconLabel(
+  semantic: string,
+  icons: LocalTabIcons,
+  theme: ColorTheme,
+): string {
+  if (!icons.semantic || !Object.hasOwn(SEMANTIC_ICON_FILES, semantic))
+    return "";
+  const variant = LIGHT_THEMES.has(theme) ? "light" : "dark";
+  const icon = icons.semantic[variant][semantic as SemanticIconKey];
+  return icon ? kittyIconLabel(icon.id) : "";
+}
+
+export function kittyActivityIconLabel(
+  activity: string,
+  icons: LocalTabIcons,
+  theme: ColorTheme,
+): string {
+  return Object.hasOwn(SEMANTIC_ICON_FILES, activity) &&
+    ACTIVITY_ICON_KEYS.includes(activity as ActivityIconKey)
+    ? kittySemanticIconLabel(activity, icons, theme)
+    : "";
 }
 
 export function brandHeader(
   label: string,
   caps: TerminalCapabilities,
-  mark = "◈",
 ): string[] {
-  const width = Math.max(0, caps.columns);
-  if (
-    caps.graphicsProtocol === "kitty" &&
-    caps.ansi &&
-    width >= 80 &&
-    caps.rows >= 24
-  ) {
-    const context = sanitizeText(label)
-      .replace(/^NOMO\b\s*/i, "")
-      .replace(/^\/\s*/, "")
-      .trim();
-    const logoIdColor = [
-      (LOGO_ID >> 16) & 0xff,
-      (LOGO_ID >> 8) & 0xff,
-      LOGO_ID & 0xff,
-    ].join(";");
-    const placement =
-      `\x1b_Ga=p,U=1,i=${LOGO_ID},c=${LOGO_COLUMNS},r=${LOGO_ROWS},` +
-      `x=0,y=0,w=${LOGO_WIDTH},h=${LOGO_HEIGHT},q=2\x1b\\`;
-    return Array.from({ length: LOGO_ROWS }, (_, row) => {
-      const cells = LOGO_CELLS[row]!;
-      const contextWidth = Math.max(0, width - visibleLength(cells) - 1);
-      const contextLine =
-        context && contextWidth > 0
-          ? row === Math.floor(LOGO_ROWS / 2) - 1
-            ? paint(" WORKSPACE", "muted", caps, false)
-            : row === Math.floor(LOGO_ROWS / 2)
-              ? paint(` ${fit(context, contextWidth)}`, "accent", caps, true)
-              : ""
-          : "";
-      return `${row === 0 ? placement : ""}\x1b[38;2;${logoIdColor}m${cells}\x1b[39m${contextLine}`;
+  const title = sanitizeText(label).trim();
+  const rows: readonly (readonly ("base" | "stem" | "coral" | "cyan")[])[] = [
+    ["base", "base", "base", "base", "base", "base"],
+    ["stem", "coral", "base", "base", "base"],
+    ["stem", "base", "base", "base", "base"],
+    ["stem", "base", "base", "base", "base"],
+    ["base", "base", "base", "base", "cyan", "base"],
+    ["base", "base", "base", "base", "base", "base"],
+  ];
+  // Render every tile at two terminal cells wide to keep the supplied 6×6
+  // mark close to square in terminals whose cells are taller than they are
+  // wide. The merged left stem and its deliberate empty cells follow the
+  // supplied grid artwork without setting a terminal background.
+  const art = rows.map((tones) => {
+    const cells = tones.map((tone) => {
+      // Replace the grid gap between the stem's two source columns with ink;
+      // keep the normal gap before the next tile.
+      const glyph = tone === "stem" ? "█████" : "██";
+      return paintBrand(glyph, tone, caps);
     });
-  }
-  return Array.from({ length: MARK_ROWS }, (_, row) => {
-    let line = "";
-    for (let column = 0; column < MARK_COLS; column++) {
-      const top = sample(column, row * 2);
-      const bottom = sample(column, row * 2 + 1);
-      const glyph = top && bottom ? "█" : top ? "▀" : bottom ? "▄" : " ";
-      line += paint(glyph, top ?? bottom ?? "ink", caps);
-    }
-    return fit(`${line}  ${sanitizeText(label)}`, width);
+    return cells.join(" ");
   });
+  if (title)
+    art[2] = `${art[2]}  ${paint(fit(title, Math.max(0, caps.columns - 23)), "accent", caps, true)}`;
+  return art;
+}
+
+function paintBrand(
+  value: string,
+  tone: "base" | "stem" | "coral" | "cyan",
+  caps: TerminalCapabilities,
+): string {
+  // Let the terminal choose the primary ink so the mark stays legible on the
+  // user's own light or dark background. Only the two signal tiles are tinted.
+  if (tone === "base" || tone === "stem" || !caps.ansi || caps.colorDepth === 0)
+    return value;
+  const hex = tone === "coral" ? "#ff705e" : "#00a9bd";
+  const color =
+    caps.colorDepth === 24
+      ? trueColor(hex)
+      : caps.colorDepth === 8
+        ? `38;5;${ansi256(hex)}`
+        : tone === "coral"
+          ? "91"
+          : "96";
+  return `\x1b[1;${color}m${value}\x1b[39m`;
+}
+
+/** Compact grid mark for narrow terminal headers. */
+export function compactBrandMark(caps: TerminalCapabilities): string {
+  return paintBrand("▦", "base", caps);
 }

@@ -15,6 +15,9 @@ export interface FlatEntry {
   readonly detail?: string;
   /** Status or class, used to pick an icon. */
   readonly kind?: string;
+  /** Optional descending priority and sort key for Sessions tree leaves. */
+  readonly sortPriority?: number;
+  readonly sortOrder?: number;
 }
 
 export interface GroupOptions {
@@ -50,14 +53,19 @@ function kindIcon(kind: string | undefined): string {
 }
 
 interface BuildRow {
+  readonly id: string;
   readonly parts: readonly string[];
   readonly leafIcon: string;
   readonly detail: string | undefined;
+  readonly sortPriority: number | undefined;
+  readonly sortOrder: number | undefined;
 }
 
 interface MutableLeaf {
   readonly id: string;
   readonly label: string;
+  readonly sortPriority: number | undefined;
+  readonly sortOrder: number | undefined;
 }
 
 interface MutableFolder {
@@ -117,13 +125,33 @@ function makeFolder(
   return { id, name, depth, icon, children: new Map(), leaves: [] };
 }
 
-// Folders sort before files and each group sorts by id, so the tree is stable
-// across frames and a caller can compare state frame to frame.
+// Folders sort by path. Leaves use a caller's recency key when supplied;
+// other trees retain stable id order.
 function freezeChildren(folder: MutableFolder): TreeNode[] {
   const folders = [...folder.children.values()].sort((a, b) =>
     compareStrings(a.id, b.id),
   );
-  const leaves = [...folder.leaves].sort((a, b) => compareStrings(a.id, b.id));
+  const leaves = [...folder.leaves].sort((a, b) => {
+    const aPriority = Number.isFinite(a.sortPriority)
+      ? a.sortPriority
+      : undefined;
+    const bPriority = Number.isFinite(b.sortPriority)
+      ? b.sortPriority
+      : undefined;
+    if (aPriority !== undefined || bPriority !== undefined) {
+      if (aPriority === undefined) return 1;
+      if (bPriority === undefined) return -1;
+      if (aPriority !== bPriority) return bPriority - aPriority;
+    }
+    const aOrder = Number.isFinite(a.sortOrder) ? a.sortOrder : undefined;
+    const bOrder = Number.isFinite(b.sortOrder) ? b.sortOrder : undefined;
+    if (aOrder !== undefined || bOrder !== undefined) {
+      if (aOrder === undefined) return 1;
+      if (bOrder === undefined) return -1;
+      if (aOrder !== bOrder) return bOrder - aOrder;
+    }
+    return compareStrings(a.id, b.id);
+  });
   const out: TreeNode[] = [];
   for (const child of folders) {
     const children = freezeChildren(child);
@@ -158,18 +186,11 @@ function buildPathNodes(
 ): TreeNode[] {
   const fullId = (parts: readonly string[]): string =>
     idPrefix + parts.join("/");
-  // Folder ids are every strict parent prefix, collected before inserting so
-  // a path naming both a file and a folder resolves one way: the folder wins
-  // and the lone file row is dropped, because collapsible structure beats a
-  // duplicate id that would select two rows at once.
-  const folderIds = new Set<string>();
-  for (const row of rows) {
-    for (let level = 1; level < row.parts.length; level += 1) {
-      folderIds.add(fullId(row.parts.slice(0, level)));
-    }
-  }
-  // Fewest segments first so folders exist before a same-id file row is
-  // considered, then by id so any input order freezes to the same tree.
+  // Documents from separate sessions can share a visible path where one is a
+  // file and another is a folder, so derived folders may coexist with
+  // session-scoped source leaves.
+  // Fewest segments first creates parent folders before descendants; sorting
+  // by path makes the tree stable regardless of input order.
   const ordered = [...rows].sort((a, b) => {
     if (a.parts.length !== b.parts.length)
       return a.parts.length - b.parts.length;
@@ -185,10 +206,10 @@ function buildPathNodes(
   const seen = new Set<string>();
   for (const row of ordered) {
     const id = fullId(row.parts);
-    // Exact duplicate paths collapse to the first row in sort order, so node
-    // ids stay unique and selection stays one to one.
-    if (folderIds.has(id) || seen.has(id)) continue;
-    seen.add(id);
+    // Duplicate source ids collapse, but identical paths from different
+    // conversations remain separate selectable rows.
+    if (seen.has(row.id)) continue;
+    seen.add(row.id);
     for (let level = 1; level < row.parts.length; level += 1) {
       const folderId = fullId(row.parts.slice(0, level));
       if (!byId.has(folderId)) {
@@ -206,8 +227,10 @@ function buildPathNodes(
     const parent = byId.get(fullId(row.parts.slice(0, row.parts.length - 1)))!;
     const base = row.parts[row.parts.length - 1]!;
     parent.leaves.push({
-      id,
+      id: row.id,
       label: leafLabel(row.leafIcon, base, row.detail),
+      sortPriority: row.sortPriority,
+      sortOrder: row.sortOrder,
     });
   }
   return freezeChildren(root);
@@ -222,9 +245,12 @@ export function buildDocumentTree(
   void options;
   if (entries.length === 0) return [];
   const rows: BuildRow[] = entries.map((entry) => ({
+    id: entry.id,
     parts: splitPath(entry.path, entry.id),
     leafIcon: FILE_ICON,
     detail: entry.detail,
+    sortPriority: undefined,
+    sortOrder: undefined,
   }));
   return buildPathNodes(rows, -1, "");
 }
@@ -244,15 +270,37 @@ export function buildSessionTree(
     const raw = (entry.kind ?? "").trim();
     const key = raw === "" ? "other" : raw;
     const row: BuildRow = {
-      parts: splitPath(entry.path, entry.id),
+      id: entry.id,
+      // A conversation title is a label, not a directory path. Keep slashes
+      // inside the title instead of inventing nested session folders.
+      parts: [entry.path || entry.id],
       leafIcon: kindIcon(entry.kind),
       detail: entry.detail,
+      sortPriority: entry.sortPriority,
+      sortOrder: entry.sortOrder,
     };
     const list = groups.get(key);
     if (list === undefined) groups.set(key, [row]);
     else list.push(row);
   }
-  const keys = [...groups.keys()].sort(compareStrings);
+  const groupOrder = [
+    "running",
+    "queued",
+    "failed",
+    "settled",
+    "archived",
+    "other",
+  ];
+  const keys = [...groups.keys()].sort((a, b) => {
+    const aIndex = groupOrder.indexOf(a);
+    const bIndex = groupOrder.indexOf(b);
+    if (aIndex >= 0 || bIndex >= 0) {
+      if (aIndex < 0) return 1;
+      if (bIndex < 0) return -1;
+      if (aIndex !== bIndex) return aIndex - bIndex;
+    }
+    return compareStrings(a, b);
+  });
   const out: TreeNode[] = [];
   for (const key of keys) {
     const children = buildPathNodes(groups.get(key)!, 0, `${key}/`);
