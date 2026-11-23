@@ -1,3 +1,8 @@
+import { mkdirSync, readFileSync, renameSync, unlinkSync, writeFileSync } from "node:fs";
+import { homedir } from "node:os";
+import { dirname, join } from "node:path";
+import { envValue } from "../../../ledger/src/env-compat.ts";
+import { dataDir } from "../../../ledger/src/paths.ts";
 import { box, fit, pad, sanitizeText, visibleLength } from "./layout.ts";
 import { SPINNER, type MotionContext } from "./motion.ts";
 import { getSymbolSet, type SymbolPreset } from "./theme-config.ts";
@@ -70,6 +75,15 @@ export const PET_REACTION_MAX_WIDTH = 40;
 const TICK_MS = 100;
 /** Ticks per approval breathe step: twelve ticks are the 1200 ms cadence. */
 const BREATHE_TICKS = PET_APPROVAL_BREATHE_MS / TICK_MS;
+/** Ticks a waiting face holds before it swaps. */
+const WAITING_HOLD_TICKS = 5;
+/** Ticks the tool mark holds before it swaps, and the typing cycle. */
+const TOOL_HOLD_TICKS = 2;
+const TOOL_CYCLE = TOOL_HOLD_TICKS * 2;
+/** Steps in the streaming cycle: the star row and the bounce share it. */
+const STREAMING_CYCLE = 7;
+/** The bound on the atlas period scan. Every animating state repeats inside it. */
+const PET_ATLAS_MAX_STEPS = 240;
 
 /** The state words the caption prints. Text carries the meaning. */
 const PET_WORD: Record<PetState, string> = {
@@ -382,7 +396,7 @@ function tailWag(step: number): boolean {
  */
 function workBounce(state: PetState, step: number): boolean {
   if (state !== "streaming" && state !== "tool") return false;
-  const cycle = state === "streaming" ? 7 : 4;
+  const cycle = state === "streaming" ? STREAMING_CYCLE : TOOL_CYCLE;
   return step % cycle >= cycle - 2;
 }
 
@@ -452,7 +466,7 @@ function eyesRow(
       return sleeping ? " - - " : (BLINK[step % BLINK.length] ?? BLINK[0]);
     case "waiting":
       // Two steps, held for five ticks each so waiting reads as calm.
-      return Math.floor(step / 5) % 2 === 0 ? " o o " : " O O ";
+      return Math.floor(step / WAITING_HOLD_TICKS) % 2 === 0 ? " o o " : " O O ";
     case "thinking": {
       // Ten braille frames on every preset that can print braille. The ASCII
       // preset keeps its own four frame spinner, which is the only spinner
@@ -487,10 +501,10 @@ function bodyRow(state: PetState, step: number): string {
       return "  .  ";
     case "streaming":
       // Seven cells, one lit cell, moving right once per tick.
-      return travel(step, 7);
+      return travel(step, STREAMING_CYCLE);
     case "tool":
       // Two steps: typing, then the tool mark.
-      return Math.floor(step / 2) % 2 === 0 ? "  ===  " : "  ###  ";
+      return Math.floor(step / TOOL_HOLD_TICKS) % 2 === 0 ? "  ===  " : "  ###  ";
     case "approval":
       return "   !   ";
     case "done":
@@ -607,6 +621,68 @@ export function petPose(
 
 function rightAlign(text: string, width: number): string {
   return `${" ".repeat(Math.max(0, width - visibleLength(text)))}${text}`;
+}
+
+/**
+ * How many frames one full animation cycle of `state` in `pose` produces.
+ *
+ * The period is measured rather than declared: it is the smallest step count
+ * after which the whole sequence repeats, checked against every frame in the
+ * window and not just against frame zero. That distinction matters because a
+ * state cycle and the seated pose's ear and tail layer share the same counter,
+ * so the combined period is the least common multiple of the two rather than
+ * either one, and some individual steps repeat by coincidence. Measuring it
+ * from the same renderer the text path uses means the atlas cannot drift from
+ * the ASCII frames, and a settled state reports one frame because it never
+ * animates.
+ *
+ * The scan is bounded, and the bound is a guard on work rather than a second
+ * cadence: every animating state in this module repeats well inside it.
+ */
+export function petAtlasFrameCount(
+  state: PetState,
+  pose: PetPoseKind = petPoseKind(state),
+  preset: SymbolPreset = "unicode",
+): number {
+  if (SETTLED.has(state)) return 1;
+  const frames = Array.from({ length: PET_ATLAS_MAX_STEPS }, (_, step) =>
+    poseRows(state, step, preset, pose).join("\n"),
+  );
+  const window = Math.floor(frames.length / 2);
+  for (let period = 1; period <= window; period += 1) {
+    let repeats = true;
+    for (let index = 0; index < frames.length - period; index += 1) {
+      if (frames[index] !== frames[index + period]) {
+        repeats = false;
+        break;
+      }
+    }
+    if (repeats) return period;
+  }
+  return PET_ATLAS_MAX_STEPS;
+}
+
+/**
+ * The ordered frames of one animation cycle, for an image sprite sheet.
+ *
+ * Each frame is the same PET_HEIGHT rows of PET_WIDTH cells the ASCII renderer
+ * draws, in cycle order, so an atlas consumer indexes by animation step and
+ * gets exactly the sprite the text path shows at that step. The frames are
+ * preset specific because the glyphs are and pose specific because the
+ * silhouette is.
+ *
+ * This is groundwork, not a second renderer: the ASCII path still draws from
+ * `petPose`, and nothing here reads a clock, a terminal capability or a file.
+ */
+export function petAtlasFrames(
+  state: PetState,
+  pose: PetPoseKind,
+  preset: SymbolPreset = "unicode",
+): readonly (readonly string[])[] {
+  const count = petAtlasFrameCount(state, pose, preset);
+  return Array.from({ length: count }, (_, step) =>
+    poseRows(state, step, preset, pose),
+  );
 }
 
 /**
@@ -1235,4 +1311,132 @@ export function petImagePlan(
     transfer: petImageTransferEscape(support.terminal),
     block: Array.from({ length: rows }, (_, row) => petImageRow(row)),
   };
+}
+
+// ---------------------------------------------------------------------------
+// Per-workspace display preference
+//
+// The pet is decoration, so the only thing worth remembering is where the
+// operator put it: on or off, and in which spot. That choice is display state
+// and nothing else, so it is a two field JSON file beside the TUI state the
+// workspace store already keeps. No run state, no session id, no provider
+// name, no token and no path is written, and every failure mode (missing file,
+// unreadable file, torn write, a directory where the file belongs) falls back
+// to the documented default instead of interrupting a session.
+
+/**
+ * Where NIB is asked to live.
+ *
+ * `auto` picks the composer dock where it fits and the header otherwise, so a
+ * terminal never spends a row on the pet. `dock` and `perch` are explicit
+ * requests that still fall back to the header form when the requested surface
+ * is too small; `off` is the same display toggle as NOMO_TUI_PET=0.
+ */
+export type PetPlacement = "auto" | "dock" | "perch" | "off";
+
+/** The display choice persisted for one workspace. */
+export interface PetPreference {
+  readonly enabled: boolean;
+  readonly placement: PetPlacement;
+}
+
+/** The default the product ships: the pet is on, in the automatic spot. */
+export const PET_DEFAULT_PREFERENCE: PetPreference = {
+  enabled: true,
+  placement: "auto",
+};
+
+/** The placements a saved file may name. Anything else is not a choice. */
+const PET_PLACEMENTS: readonly PetPlacement[] = ["auto", "dock", "perch", "off"];
+
+/**
+ * The preference file for `env`, beside the TUI state it belongs to.
+ *
+ * The base directory follows the same resolution the TUI store uses, so a
+ * machine that set NOMO_DATA_DIR or NOMO_LEDGER_DIR keeps one state tree
+ * rather than a second one holding a stray pet file.
+ */
+export function petPreferencePath(
+  env: Readonly<NodeJS.ProcessEnv> = process.env,
+): string {
+  const home = env.HOME ?? homedir();
+  const base =
+    envValue(env, "NOMO_DATA_DIR") ??
+    join(envValue(env, "NOMO_LEDGER_DIR") ?? dataDir(home), "workbench");
+  return join(base, "tui", "state", "pet.json");
+}
+
+/**
+ * Validate one parsed value.
+ *
+ * A mistyped field falls back to its default rather than discarding the whole
+ * record, and the two fields are normalized together: an off pet always reads
+ * `off`, and an on pet is never placed at `off`. A file written by an older or
+ * a hand edited build therefore cannot leave the renderer in a state the
+ * toggle could not produce.
+ */
+export function petPreferenceFrom(value: unknown): PetPreference {
+  if (!value || typeof value !== "object" || Array.isArray(value))
+    return PET_DEFAULT_PREFERENCE;
+  const record = value as { enabled?: unknown; placement?: unknown };
+  const enabled =
+    typeof record.enabled === "boolean"
+      ? record.enabled
+      : PET_DEFAULT_PREFERENCE.enabled;
+  const placement = PET_PLACEMENTS.includes(record.placement as PetPlacement)
+    ? (record.placement as PetPlacement)
+    : PET_DEFAULT_PREFERENCE.placement;
+  if (!enabled) return { enabled: false, placement: "off" };
+  return { enabled: true, placement: placement === "off" ? "auto" : placement };
+}
+
+/**
+ * Read the saved choice, or the default.
+ *
+ * Every failure is the same answer on purpose: a session that cannot read a
+ * decoration file must still start, and the default is the documented one.
+ */
+export function readPetPreference(
+  env: Readonly<NodeJS.ProcessEnv> = process.env,
+): PetPreference {
+  try {
+    return petPreferenceFrom(
+      JSON.parse(readFileSync(petPreferencePath(env), "utf8")),
+    );
+  } catch {
+    return PET_DEFAULT_PREFERENCE;
+  }
+}
+
+/**
+ * Save the choice for this workspace.
+ *
+ * The write is atomic (a temporary file renamed over the target) and private
+ * (0700 directory, 0600 file), so a crash mid-write leaves the previous choice
+ * intact rather than a half written file that would parse as corrupt. Returns
+ * false when the choice could not be stored; the caller keeps the live choice
+ * either way, because a display preference is never worth failing a session.
+ */
+export function writePetPreference(
+  env: Readonly<NodeJS.ProcessEnv> = process.env,
+  preference: PetPreference = PET_DEFAULT_PREFERENCE,
+): boolean {
+  const path = petPreferencePath(env);
+  const temporary = `${path}.${process.pid}.tmp`;
+  const record = { version: 1, ...petPreferenceFrom(preference) };
+  try {
+    mkdirSync(dirname(path), { recursive: true, mode: 0o700 });
+    writeFileSync(temporary, `${JSON.stringify(record, null, 2)}\n`, {
+      mode: 0o600,
+    });
+    renameSync(temporary, path);
+    return true;
+  } catch {
+    try {
+      unlinkSync(temporary);
+    } catch {
+      // The temporary file never landed, or already went with the rename.
+    }
+    return false;
+  }
 }

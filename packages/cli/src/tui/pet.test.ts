@@ -1,5 +1,16 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
+import { dirname, join } from "node:path";
 import { visibleLength } from "./layout.ts";
 import { motionContext } from "./motion.ts";
 import {
@@ -20,8 +31,11 @@ import {
   PET_SPLASH_MIN_WIDTH,
   PET_SPLASH_ROWS,
   PET_WIDTH,
+  PET_DEFAULT_PREFERENCE,
   attachPetRow,
   detectPetTerminal,
+  petAtlasFrameCount,
+  petAtlasFrames,
   petCaption,
   petCardLines,
   petImageCleanup,
@@ -31,13 +45,17 @@ import {
   petLayout,
   petPose,
   petPoseKind,
+  petPreferenceFrom,
+  petPreferencePath,
   petReaction,
   petStateFrom,
+  readPetPreference,
   renderPetBubble,
   renderPetDock,
   renderPetMini,
   renderPetRows,
   renderPetSplash,
+  writePetPreference,
   type PetImageReason,
   type PetSignal,
   type PetState,
@@ -1223,4 +1241,317 @@ test("macOS Terminal.app is never handed a graphics escape", () => {
   const rows = renderPetRows("streaming", 80, motionContext(0));
   assert.ok(plain(rows.join("")));
   assert.ok(!rows.join("").includes("\x1b[48;"));
+});
+
+// ---------------------------------------------------------------------------
+// Atlas groundwork. The frame data the ASCII renderer already produces is
+// exposed as an ordered cycle so a future image sprite sheet consumes the same
+// frames the text path draws, instead of a second copy that can drift.
+// ---------------------------------------------------------------------------
+
+/**
+ * The full cycle of each state in each pose, by design.
+ *
+ * The seated pose adds an ear and a tail layer on the same counter, so its
+ * period is the least common multiple of the state cycle and that layer, while
+ * the working and closed poses carry only the state cycle. These numbers are
+ * written out so a cadence change has to be a deliberate edit here too.
+ */
+const ATLAS_CYCLES: Record<PetPoseKind, Record<PetState, number>> = {
+  sit: {
+    idle: 24,
+    waiting: 40,
+    thinking: 40,
+    streaming: 56,
+    tool: 8,
+    approval: 48,
+    error: 1,
+    done: 1,
+    cancelled: 1,
+  },
+  work: {
+    idle: 4,
+    waiting: 10,
+    thinking: 10,
+    streaming: 7,
+    tool: 4,
+    approval: 48,
+    error: 1,
+    done: 1,
+    cancelled: 1,
+  },
+  report: {
+    idle: 4,
+    waiting: 10,
+    thinking: 10,
+    streaming: 7,
+    tool: 4,
+    approval: 48,
+    error: 1,
+    done: 1,
+    cancelled: 1,
+  },
+};
+
+/**
+ * The frame counter that lands on a given animation step.
+ *
+ * Idle breathes at four steps per second while the tick is 100 ms, so its step
+ * is a compressed function of the frame counter. Every other state advances
+ * once per tick. The atlas is indexed by step, so this is how a test asks the
+ * renderer for the frame the atlas claims.
+ */
+function frameForStep(state: PetState, step: number): number {
+  return state === "idle" ? Math.ceil((step * 5) / 2) : step;
+}
+
+test("the atlas exposes one ordered cycle per state and pose", () => {
+  for (const pose of POSES) {
+    for (const state of STATES) {
+      const atlas = petAtlasFrames(state, pose);
+      assert.equal(
+        atlas.length,
+        ATLAS_CYCLES[pose][state],
+        `${state}/${pose} cycle length`,
+      );
+      assert.equal(
+        atlas.length,
+        petAtlasFrameCount(state, pose),
+        `${state}/${pose} count disagreed with the frames`,
+      );
+      assert.equal(
+        petAtlasFrameCount(state),
+        ATLAS_CYCLES[petPoseKind(state)][state],
+        `${state} defaulted to the wrong pose`,
+      );
+      for (const frame of atlas) {
+        assert.equal(frame.length, PET_HEIGHT, `${state}/${pose} frame height`);
+        for (const row of frame) {
+          assert.equal(
+            visibleLength(row),
+            PET_WIDTH,
+            `${state}/${pose} row width`,
+          );
+          assert.ok(plain(row), `${state}/${pose} row carried an escape`);
+          for (const point of row)
+            assert.ok(
+              allowedGlyph(point),
+              `${state}/${pose} uses U+${(point.codePointAt(0) ?? 0).toString(16)}`,
+            );
+        }
+      }
+    }
+  }
+});
+
+test("the atlas frames are the frames the ASCII renderer draws", () => {
+  const moving = motionContext(0);
+  for (const pose of POSES) {
+    for (const state of STATES) {
+      const atlas = petAtlasFrames(state, pose);
+      atlas.forEach((frame, step) => {
+        // The atlas is indexed by animation step, so the renderer's frame
+        // counter has to be mapped back to that step for idle.
+        assert.deepEqual(
+          frame,
+          petPose(state, frameForStep(state, step), moving, "unicode", pose)
+            .rows,
+          `${state}/${pose} step ${step}`,
+        );
+      });
+      // Frame zero is also the reduced motion frame: the atlas never starts on
+      // a mid-cycle pose.
+      assert.deepEqual(
+        atlas[0],
+        petPose(state, 0, motionContext(0, true, true), "unicode", pose).rows,
+        `${state}/${pose} reduced motion frame`,
+      );
+    }
+  }
+});
+
+test("the atlas cycle wraps onto its first frame", () => {
+  const moving = motionContext(0);
+  for (const pose of POSES) {
+    for (const state of STATES) {
+      const count = petAtlasFrameCount(state, pose);
+      const wrap = petPose(
+        state,
+        frameForStep(state, count),
+        moving,
+        "unicode",
+        pose,
+      ).rows;
+      assert.deepEqual(
+        wrap,
+        petAtlasFrames(state, pose)[0],
+        `${state}/${pose} did not wrap at ${count}`,
+      );
+    }
+  }
+  // The animating states actually move, so a sprite sheet has something to
+  // play. A settled state holds one frame on purpose. Frame one is allowed to
+  // match frame zero (the blink opens twice), so the check is over the cycle.
+  for (const pose of POSES) {
+    for (const state of STATES) {
+      const atlas = petAtlasFrames(state, pose);
+      if (atlas.length === 1) continue;
+      const first = atlas[0]!.join("\n");
+      assert.ok(
+        atlas.some((frame) => frame.join("\n") !== first),
+        `${state}/${pose} never moved`,
+      );
+    }
+  }
+});
+
+test("the atlas follows the symbol preset without changing the ASCII path", () => {
+  // The ASCII preset has its own four frame spinner; every other preset shares
+  // the ten frame braille spinner, so the cycle length is preset specific.
+  assert.equal(petAtlasFrameCount("thinking", "work", "ascii"), 4);
+  for (const preset of PRESETS.filter((item) => item !== "ascii"))
+    assert.equal(petAtlasFrameCount("thinking", "work", preset), 10);
+  // The seated pose layers the ear and tail on the same counter, so its period
+  // is the multiple that brings both back to frame zero.
+  assert.equal(petAtlasFrameCount("thinking", "sit", "ascii"), 8);
+  for (const preset of PRESETS.filter((item) => item !== "ascii"))
+    assert.equal(petAtlasFrameCount("thinking", "sit", preset), 40);
+  assert.deepEqual(
+    petAtlasFrames("thinking", "sit", "ascii")[0],
+    petPose("thinking", 0, motionContext(0), "ascii", "sit").rows,
+  );
+  // A settled state is one frame in every pose, so a finished run cannot be
+  // animated by a sprite sheet that the text path holds still.
+  for (const pose of POSES)
+    assert.equal(
+      petAtlasFrames("done", pose, "ascii").length,
+      1,
+      "a settled state animated",
+    );
+});
+
+// ---------------------------------------------------------------------------
+// Per-workspace preference. A display choice is the only thing stored: no run
+// state, no provider data and no secret ever reaches this file.
+// ---------------------------------------------------------------------------
+
+test("the preference lives beside the existing TUI state", () => {
+  assert.equal(
+    petPreferencePath({ NOMO_DATA_DIR: "/data" }),
+    join("/data", "tui", "state", "pet.json"),
+  );
+  // Without an explicit data directory the resolution follows the same
+  // ledger-then-home fallback the TUI store uses, so the file never lands in a
+  // second tree beside the state it belongs to.
+  assert.equal(
+    petPreferencePath({ NOMO_LEDGER_DIR: "/ledger", HOME: "/home/operator" }),
+    join("/ledger", "workbench", "tui", "state", "pet.json"),
+  );
+});
+
+test("the preference round-trips through the workspace state file", () => {
+  const root = mkdtempSync(join(tmpdir(), "nomo-pet-pref-"));
+  try {
+    const env = { NOMO_DATA_DIR: root };
+    const file = petPreferencePath(env);
+    assert.deepEqual(readPetPreference(env), PET_DEFAULT_PREFERENCE);
+    assert.equal(existsSync(file), false, "a read created the file");
+
+    assert.equal(
+      writePetPreference(env, { enabled: false, placement: "off" }),
+      true,
+    );
+    assert.deepEqual(readPetPreference(env), {
+      enabled: false,
+      placement: "off",
+    });
+    assert.equal(
+      writePetPreference(env, { enabled: true, placement: "perch" }),
+      true,
+    );
+    assert.deepEqual(readPetPreference(env), {
+      enabled: true,
+      placement: "perch",
+    });
+
+    // Only the display choice is written, under a versioned shape.
+    const stored = JSON.parse(readFileSync(file, "utf8")) as Record<
+      string,
+      unknown
+    >;
+    assert.deepEqual(Object.keys(stored).sort(), [
+      "enabled",
+      "placement",
+      "version",
+    ]);
+    assert.equal(stored.version, 1);
+    assert.equal(typeof stored.enabled, "boolean");
+    if (process.platform !== "win32") {
+      assert.equal(statSync(file).mode & 0o777, 0o600);
+      assert.equal(statSync(dirname(file)).mode & 0o777, 0o700);
+    }
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("a corrupt or unreadable preference falls back to the defaults", () => {
+  const root = mkdtempSync(join(tmpdir(), "nomo-pet-pref-corrupt-"));
+  try {
+    const env = { NOMO_DATA_DIR: root };
+    const file = petPreferencePath(env);
+    mkdirSync(dirname(file), { recursive: true });
+    const corrupt = [
+      "",
+      "{",
+      "null",
+      "[]",
+      '"perch"',
+      "42",
+      '{"enabled":"yes"}',
+      '{"placement":"sideways"}',
+      '{"enabled":null,"placement":7}',
+      "not json at all",
+    ];
+    for (const text of corrupt) {
+      writeFileSync(file, text);
+      assert.deepEqual(
+        readPetPreference(env),
+        PET_DEFAULT_PREFERENCE,
+        `read ${JSON.stringify(text)}`,
+      );
+    }
+    // A directory where the file belongs is unreadable state, not a crash, and
+    // a write that cannot land reports failure instead of throwing.
+    rmSync(file, { force: true });
+    mkdirSync(file);
+    assert.deepEqual(readPetPreference(env), PET_DEFAULT_PREFERENCE);
+    assert.equal(
+      writePetPreference(env, { enabled: false, placement: "off" }),
+      false,
+    );
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("a saved preference is normalized so the two fields never disagree", () => {
+  assert.deepEqual(petPreferenceFrom({ enabled: false, placement: "perch" }), {
+    enabled: false,
+    placement: "off",
+  });
+  assert.deepEqual(petPreferenceFrom({ enabled: true, placement: "off" }), {
+    enabled: true,
+    placement: "auto",
+  });
+  assert.deepEqual(petPreferenceFrom({ enabled: true, placement: "dock" }), {
+    enabled: true,
+    placement: "dock",
+  });
+  assert.deepEqual(petPreferenceFrom({ enabled: true }), {
+    enabled: true,
+    placement: "auto",
+  });
+  assert.deepEqual(petPreferenceFrom(undefined), PET_DEFAULT_PREFERENCE);
+  assert.deepEqual(petPreferenceFrom([]), PET_DEFAULT_PREFERENCE);
 });
