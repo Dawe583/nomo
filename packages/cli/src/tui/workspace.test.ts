@@ -57,7 +57,10 @@ import {
   runTestsVerdict,
   sessionElapsedLabel,
   sessionInspectorLayout,
+  sessionBrowserHint,
+  sessionRowIcons,
   sessionRowLine,
+  sessionSectionChevron,
   sessionTokenLabel,
   shortenHomePath,
   subagentActivityFromEvents,
@@ -5784,17 +5787,25 @@ test("a sessions row keeps its title and drops the least useful fact first", () 
     title: "Fix parser",
     model: "gpt-5",
     elapsed: "2m",
-    tokens: "12k tok",
+    tokens: "12k",
     children: 2,
   };
   assert.equal(
     sessionRowLine(facts, 60),
-    "● Fix parser · gpt-5 · 2m · 12k tok · 2 sub",
+    "● Fix parser · ◐ gpt-5 · ◷ 2m · # 12k · ◆ 2",
   );
+  // Every fact carries a one-cell icon, so a count never needs the word beside
+  // it: "tok" and "sub" would repeat the glyph they follow.
+  const whole = sessionRowLine(facts, 60);
+  assert.doesNotMatch(whole, / tok| sub/u);
+  assert.ok(whole.includes("◐ gpt-5"), "the model icon names the model");
+  assert.ok(whole.includes("◷ 2m"), "the clock names the elapsed span");
+  assert.ok(whole.includes("# 12k"), "the token icon names the count");
+  assert.ok(whole.includes("◆ 2"), "the agent icon names the subagents");
   // The child count goes first, then the token count, then elapsed, then the
   // model. The title is kept at every width, because it is the only cell that
   // says which conversation the row is.
-  assert.equal(sessionRowLine(facts, 24), "● Fix parser · gpt-5");
+  assert.equal(sessionRowLine(facts, 24), "● Fix parser · ◐ gpt-5");
   // A row too narrow for any fact keeps the whole title rather than trading
   // half of it for a count nobody asked for.
   assert.equal(sessionRowLine(facts, 18), "● Fix parser");
@@ -5810,6 +5821,54 @@ test("a sessions row keeps its title and drops the least useful fact first", () 
     ),
     "○ Quiet",
   );
+  // The ASCII preset cannot spend three cells on "[M]", so every row icon
+  // falls back to one cell and the facts stay in the same columns.
+  const ascii = sessionRowIcons("ascii");
+  assert.deepEqual(
+    [ascii.model, ascii.time, ascii.tokens, ascii.children],
+    ["m", "t", "#", "a"],
+  );
+  assert.equal(
+    sessionRowLine(facts, 60, ascii),
+    "● Fix parser · m gpt-5 · t 2m · # 12k · a 2",
+  );
+  for (const icon of Object.values(sessionRowIcons())) {
+    assert.equal(visibleLength(icon), 1, `${icon} must occupy one cell`);
+  }
+});
+
+test("section chevrons and the key bar stay one cell and one short line", () => {
+  // The heading pair is the task's own vocabulary: open reads down, folded
+  // reads across. Both are one cell, so a heading never shifts its rows.
+  assert.equal(sessionSectionChevron(true), "▾");
+  assert.equal(sessionSectionChevron(false), "▸");
+  assert.equal(sessionSectionChevron(true, "ascii"), "v");
+  assert.equal(sessionSectionChevron(false, "ascii"), ">");
+  for (const line of [true, false].flatMap((open) => [
+    sessionSectionChevron(open),
+    sessionSectionChevron(open, "ascii"),
+  ]))
+    assert.equal(visibleLength(line), 1);
+  // The key bar names only what the browser itself does, and drops its tail
+  // before it truncates: a 40 column frame reads a whole phrase.
+  assert.equal(
+    sessionBrowserHint(80),
+    "↑↓ move · ⏎ inspect · g group · esc chat",
+  );
+  assert.equal(
+    sessionBrowserHint(40),
+    "↑↓ move · ⏎ inspect · g group · esc chat",
+  );
+  // A 40 column frame leaves the body 37 cells after its gutter, so the bar
+  // gives up the group key before it gives up a whole phrase.
+  assert.equal(sessionBrowserHint(37), "↑↓ move · ⏎ inspect · esc chat");
+  assert.equal(sessionBrowserHint(30), "↑↓ move · ⏎ inspect · esc chat");
+  assert.equal(sessionBrowserHint(20), "↑↓ move · ⏎ inspect");
+  assert.equal(sessionBrowserHint(12), "↑↓ move · ⏎");
+  assert.equal(sessionBrowserHint(10), "↑↓ ⏎");
+  assert.ok(!sessionBrowserHint(80).includes("returns to Chat"));
+  for (const width of [80, 40, 30, 20, 12, 10])
+    assert.ok(visibleLength(sessionBrowserHint(width)) <= width);
 });
 
 test("elapsed and tokens are read from the record, never from a clock", () => {
@@ -5828,10 +5887,10 @@ test("elapsed and tokens are read from the record, never from a clock", () => {
   // An unparsable timestamp is not a zero-second span.
   assert.equal(sessionElapsedLabel(undefined, undefined), "");
   assert.equal(sessionTokenLabel(undefined), "");
-  assert.equal(sessionTokenLabel(0), "0 tok");
-  assert.equal(sessionTokenLabel(1200), "1.2k tok");
-  assert.equal(sessionTokenLabel(12_345), "12k tok");
-  assert.equal(sessionTokenLabel(1_500_000), "1.5M tok");
+  assert.equal(sessionTokenLabel(0), "0");
+  assert.equal(sessionTokenLabel(1200), "1.2k");
+  assert.equal(sessionTokenLabel(12_345), "12k");
+  assert.equal(sessionTokenLabel(1_500_000), "1.5M");
 });
 
 test("sessions are filed by what needs attention, and only active starts open", () => {
@@ -5943,9 +6002,17 @@ test("the sessions browser holds every terminal size it is opened in", async (t)
     // Every session is one row, and no row is a tree line with a guide. Only
     // the working set starts open, so the two active conversations are the
     // rows drawn; the 40x12 body has room for one of them under its heading.
-    const sessionRows = rows.filter((row) =>
-      /(?:^|\s)[●○×◐▸] \S/.test(row),
-    );
+    // A heading carries the same chevron vocabulary as a child row, so the
+    // count badge at its end is what tells the two apart.
+    const sessionRows = rows.filter((row) => {
+      // Only the list pane can hold a conversation row; the inspector beside
+      // it prints the same glyphs as its field icons.
+      const listPane = row.split("│")[0] ?? "";
+      return (
+        /^\s+(?:› | {2})[●○×◐▸] \S/.test(listPane) &&
+        !/\(\d+\)$/u.test(listPane.trimEnd())
+      );
+    });
     assert.equal(
       sessionRows.length,
       width === 40 ? 1 : 2,
@@ -5959,12 +6026,15 @@ test("the sessions browser holds every terminal size it is opened in", async (t)
   const narrow = stripAnsi(
     renderWorkspace(ui, 80, 24, "", false, false, { color: false, motion: false }),
   );
-  assert.match(narrow, /\[-\] active \(2\)/);
-  assert.match(narrow, /\[\+\] attention \(1\)/);
-  assert.match(narrow, /\[\+\] children \(1\)/);
-  assert.match(narrow, /\[\+\] archived \(1\)/);
-  assert.match(narrow, /● Fix parser · gpt-5 · 2m · 12k tok · 1 sub/);
-  assert.match(narrow, /Up\/Down select · Enter inspects · Esc returns to Chat/);
+  assert.match(narrow, /▾ active \(2\)/);
+  assert.match(narrow, /▸ attention \(1\)/);
+  assert.match(narrow, /▸ children \(1\)/);
+  assert.match(narrow, /▸ archived \(1\)/);
+  assert.match(narrow, /● Fix parser · ◐ gpt-5 · ◷ 2m · # 12k · ◆ 1/);
+  assert.match(narrow, /↑↓ move · ⏎ inspect · g group · esc chat/);
+  // The old bar spelled out where Esc goes and repeated the filter keys the
+  // frame's own legend already prints.
+  assert.doesNotMatch(narrow, /select · Enter inspects/);
   assert.doesNotMatch(narrow, /│ status/);
 
   // 120x40 keeps the inspector beside the list and shows recorded facts only.
@@ -5976,14 +6046,14 @@ test("the sessions browser holds every terminal size it is opened in", async (t)
   );
   assert.match(wide, /● Fix parser/);
   assert.match(wide, /│ CONVERSATION/);
-  // Labels share a column per section, so the padding between a label and its
-  // colon is part of the layout rather than part of the value.
-  assert.match(wide, /│ status\s*: running/);
-  assert.match(wide, /│ model\s*: gpt-5/);
-  assert.match(wide, /│ elapsed\s*: 2m/);
-  assert.match(wide, /│ tokens\s*: 12000 run tokens/);
-  assert.match(wide, /│ children: 1 spawned/);
-  assert.match(wide, /Up\/Down select · Enter opens · Type filters/);
+  // Every label carries the one-cell icon of its fact, so the names line up in
+  // one column; the padding before the colon is the shared label column.
+  assert.match(wide, /│ ● status\s*: running/);
+  assert.match(wide, /│ ◐ model\s*: gpt-5/);
+  assert.match(wide, /│ ◷ elapsed\s*: 2m/);
+  assert.match(wide, /│ # tokens\s*: 12000 run tokens/);
+  assert.match(wide, /│ ◆ children: 1 spawned/);
+  assert.match(wide, /↑↓ move · ⏎ inspect · g group · esc chat/);
 
   // Enter on a heading folds it, and the rows under it stop being drawn.
   ui.groupTree!.state = { ...ui.groupTree!.state, cursor: 0 };
@@ -5991,7 +6061,7 @@ test("the sessions browser holds every terminal size it is opened in", async (t)
   const collapsed = stripAnsi(
     renderWorkspace(ui, 80, 24, "", false, false, { color: false, motion: false }),
   );
-  assert.match(collapsed, /\[\+\] active \(2\)/);
+  assert.match(collapsed, /▸ active \(2\)/);
   assert.doesNotMatch(collapsed, /● Fix parser/);
 
   // Below the threshold, Enter on a conversation swaps the list for the

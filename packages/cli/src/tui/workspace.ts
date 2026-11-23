@@ -980,6 +980,38 @@ export function sessionRowGlyph(
 }
 
 /**
+ * The one-cell icons the browser and its inspector print beside a fact.
+ *
+ * They come from the same symbol set as the rest of the chrome, but only when
+ * the preset's glyph is one cell: layout.ts counts U+2600 to U+27BF as two
+ * cells and the ASCII preset spells several icons as three-character tags, so
+ * either would push every fact one column right. Those presets get a plain
+ * ASCII letter instead, which keeps the facts aligned at every width.
+ */
+export interface SessionRowIcons {
+  readonly model: string;
+  readonly time: string;
+  readonly tokens: string;
+  readonly children: string;
+  readonly parent: string;
+  readonly created: string;
+}
+
+export function sessionRowIcons(preset?: SymbolPreset): SessionRowIcons {
+  const icons = getSymbols(preset).icons;
+  const oneCell = (value: string, fallback: string): string =>
+    visibleLength(value) === 1 ? value : fallback;
+  return {
+    model: oneCell(icons.model, "m"),
+    time: oneCell(icons.time, "t"),
+    tokens: oneCell(icons.tokens, "#"),
+    children: oneCell(icons.agent, "a"),
+    parent: oneCell(icons.network, "n"),
+    created: oneCell(icons.session, "s"),
+  };
+}
+
+/**
  * How long the recorded work spanned, from the timestamps the conversation
  * carries. Nothing is measured against the wall clock: an idle conversation
  * has no elapsed time, and a browser that grew a number every second would
@@ -1004,20 +1036,21 @@ export function sessionElapsedLabel(
 /**
  * The token count a run reported, compacted for a row.
  *
- * A conversation whose run reported nothing gets an empty label rather than
- * "0 tok": absent and zero are different measurements, and printing a zero
- * would claim the provider counted it.
+ * The row prints the token icon in front of it, so the unit is never spelled
+ * out twice. A conversation whose run reported nothing gets an empty label
+ * rather than "0": absent and zero are different measurements, and printing a
+ * zero would claim the provider counted it.
  */
 export function sessionTokenLabel(tokens: number | undefined): string {
   if (typeof tokens !== "number" || !Number.isFinite(tokens) || tokens < 0)
     return "";
   const value = Math.round(tokens);
-  if (value < 1000) return `${value} tok`;
+  if (value < 1000) return `${value}`;
   if (value < 1_000_000) {
     const thousands = value / 1000;
-    return `${thousands < 10 ? thousands.toFixed(1).replace(/\.0$/u, "") : Math.round(thousands)}k tok`;
+    return `${thousands < 10 ? thousands.toFixed(1).replace(/\.0$/u, "") : Math.round(thousands)}k`;
   }
-  return `${(value / 1_000_000).toFixed(1).replace(/\.0$/u, "")}M tok`;
+  return `${(value / 1_000_000).toFixed(1).replace(/\.0$/u, "")}M`;
 }
 
 /** The model id without its provider prefix, so a row names the model. */
@@ -1043,19 +1076,25 @@ export interface SessionRowFacts {
 /**
  * One browser row: glyph, title, then as many facts as still fit.
  *
- * The title is what identifies the row, so it is kept at every width and the
+ * Each fact carries its own icon, so a number says what it measures without
+ * the word beside it: "tok" and "sub" would repeat the glyph they follow. The
+ * title is what identifies the row, so it is kept at every width and the
  * trailing facts drop from the least important end: child count first, then
  * tokens, then elapsed, then model. A row that dropped the title to keep a
  * token count would be a row nobody could pick out.
  */
-export function sessionRowLine(facts: SessionRowFacts, width: number): string {
+export function sessionRowLine(
+  facts: SessionRowFacts,
+  width: number,
+  icons: SessionRowIcons = sessionRowIcons(),
+): string {
   const cells = Math.max(1, Math.floor(width));
   const head = `${facts.glyph} `;
   const factsTail = [
-    facts.model,
-    facts.elapsed,
-    facts.tokens,
-    facts.children > 0 ? `${facts.children} sub` : "",
+    facts.model === "" ? "" : `${icons.model} ${facts.model}`,
+    facts.elapsed === "" ? "" : `${icons.time} ${facts.elapsed}`,
+    facts.tokens === "" ? "" : `${icons.tokens} ${facts.tokens}`,
+    facts.children > 0 ? `${icons.children} ${facts.children}` : "",
   ].filter((part) => part !== "");
   const titleWidth = visibleLength(facts.title);
   // First pass: keep the whole title, so a row that can afford the facts
@@ -1166,7 +1205,7 @@ export function buildSessionBrowser(
     sections.push({ id, count: children.length });
     nodes.push({
       id: `section:${id}`,
-      label: `${id} (${children.length})`,
+      label: sessionSectionLabel(id, children.length),
       depth: 0,
       hasChildren: true,
       children,
@@ -1191,12 +1230,49 @@ export function initialSessionBrowserState(
   return { expanded, cursor };
 }
 
-/** The heading text for one section row. */
+/** The heading text for one section row: the bucket and its count badge. */
 export function sessionSectionLabel(
   id: SessionSectionId,
   count: number,
 ): string {
   return `${id} (${count})`;
+}
+
+/**
+ * The chevron in front of a section heading.
+ *
+ * It is one cell in every preset, because layout.ts counts U+2600 to U+27BF as
+ * two and a heavier triangle would shift the heading and every row under it.
+ * The ASCII preset gets the plain pair for terminals without the shapes.
+ */
+export function sessionSectionChevron(
+  expanded: boolean,
+  preset?: SymbolPreset,
+): string {
+  if (preset === "ascii") return expanded ? "v" : ">";
+  return expanded ? "▾" : "▸";
+}
+
+/**
+ * The one-line key bar under the browser.
+ *
+ * Only the keys that change what is on screen stay: movement, inspect, group
+ * fold and the way back to Chat. "returns to Chat" spelled out the destination
+ * of Esc, which the key itself already says, and the filter keys are printed
+ * once already by the frame's own legend. The tail drops first, so a 40 column
+ * terminal still reads a whole phrase instead of a truncated one.
+ */
+export function sessionBrowserHint(width: number): string {
+  const cells = Math.max(1, Math.floor(width));
+  const variants = [
+    "↑↓ move · ⏎ inspect · g group · esc chat",
+    "↑↓ move · ⏎ inspect · esc chat",
+    "↑↓ move · ⏎ inspect",
+    "↑↓ move · ⏎",
+    "↑↓ ⏎",
+  ];
+  const whole = variants.find((line) => visibleLength(line) <= cells);
+  return whole ?? fit(variants[variants.length - 1]!, cells);
 }
 
 function sessionTimestamp(value: string | undefined): string {
@@ -10758,9 +10834,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         ];
       return [summary, fit("No sessions yet. /new starts one.", width)];
     }
-    const hint = layout.sideBySide
-      ? "Up/Down select · Enter opens · Type filters · Esc returns to Chat"
-      : "Up/Down select · Enter inspects · Esc returns to Chat";
+    const hint = sessionBrowserHint(width);
     const hintRows = height >= 6 ? 1 : 0;
     const area = Math.max(1, height - 1 - hintRows);
     const start =
@@ -10785,7 +10859,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         const expanded = tree?.state.expanded.has(node.id) === true;
         listRows.push(
           fit(
-            `${marker}${expanded ? "[-]" : "[+]"} ${sanitizeText(node.label)}`,
+            `${marker}${sessionSectionChevron(expanded, this.themeConfig.symbolPreset)} ${sanitizeText(node.label)}`,
             listWidth,
           ),
         );
@@ -10796,7 +10870,11 @@ ${(doc.content ?? "").slice(0, 2000)}`;
           fit(
             `${marker}${
               entry
-                ? sessionRowLine(entry, Math.max(1, listWidth - 2))
+                ? sessionRowLine(
+                    entry,
+                    Math.max(1, listWidth - 2),
+                    sessionRowIcons(this.themeConfig.symbolPreset),
+                  )
                 : sanitizeText(node.label)
             }`,
             listWidth,
@@ -10879,7 +10957,10 @@ ${(doc.content ?? "").slice(0, 2000)}`;
   }
   /** The inspector lines for one conversation, from recorded fields only. */
   private sessionInspectorSpec(session: SessionView): InspectorSpec {
-    const icons = getSymbols(this.themeConfig.symbolPreset).icons;
+    const icons = sessionRowIcons(this.themeConfig.symbolPreset);
+    // The status label carries the same glyph the row shows, so the two panes
+    // name one state instead of two spellings of it.
+    const statusGlyph = sessionRowGlyph(session, sessionSection(session));
     const children = this.workbench
       .list()
       .filter((candidate) => candidate.parentId === session.id);
@@ -10903,16 +10984,26 @@ ${(doc.content ?? "").slice(0, 2000)}`;
     return {
       title: session.title || session.id,
       subtitle: session.id,
-      icon: icons.session,
+      icon: icons.created,
       sections: [
         {
           title: "conversation",
           fields: [
-            { label: "status", value: session.status, tone: statusTone },
-            { label: "model", value: session.model || "not set" },
-            { label: "created", value: sessionTimestamp(session.createdAt) },
             {
-              label: "elapsed",
+              label: `${statusGlyph} status`,
+              value: session.status,
+              tone: statusTone,
+            },
+            {
+              label: `${icons.model} model`,
+              value: session.model || "not set",
+            },
+            {
+              label: `${icons.created} created`,
+              value: sessionTimestamp(session.createdAt),
+            },
+            {
+              label: `${icons.time} elapsed`,
               value:
                 sessionElapsedLabel(
                   session.createdAt,
@@ -10920,17 +11011,19 @@ ${(doc.content ?? "").slice(0, 2000)}`;
                 ) || "not recorded",
             },
             {
-              label: "tokens",
+              label: `${icons.tokens} tokens`,
               value:
                 typeof session.runTokenCount === "number"
                   ? `${session.runTokenCount} run tokens`
                   : "not reported",
             },
-            ...(parent ? [{ label: "parent", value: parent.id }] : []),
+            ...(parent
+              ? [{ label: `${icons.parent} parent`, value: parent.id }]
+              : []),
             ...(children.length
               ? [
                   {
-                    label: "children",
+                    label: `${icons.children} children`,
                     value: `${children.length} spawned`,
                   },
                 ]

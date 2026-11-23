@@ -729,7 +729,7 @@ test("the sessions tab groups by state and words the summary for the tab", async
   // A settled conversation reports "idle", which belongs to the working set:
   // a bucket named after what is not happening would hold every finished
   // conversation, and the glyph is what separates idle from running there.
-  assert.match(shown, /\[-\] active \(1\)/);
+  assert.match(shown, /▾ active \(1\)/);
   assert.match(shown, /○ first conversation/);
   // The summary names what is on screen and what state it is in.
   assert.match(shown, /SESSIONS · 1 conversation · 0 running · 0 attention/);

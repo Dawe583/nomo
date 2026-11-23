@@ -52,27 +52,27 @@
       "maxVisibleLength": 200
     },
     "sessions@40x12": {
-      "sha256": "443070d04599c2fd17b1171087287590b0896e1e2f57c9362f30f56ae93616db",
+      "sha256": "e6369c86fae319cbdd1a2f0ef1671273f91ff54fce6302d8a5e0ed39fbf3472b",
       "rows": 12,
       "maxVisibleLength": 40
     },
     "sessions@80x24": {
-      "sha256": "94e40fa5f850f5dc00fbfa17b19118f69bbe42fec6027dbc06dde75ca3510752",
+      "sha256": "93db08aeda6f2b8e2c493405fffef4d4f1d46c9311d77d7583387119d0a87047",
       "rows": 24,
       "maxVisibleLength": 80
     },
     "sessions@120x40": {
-      "sha256": "a8543884c7530bf59dc617db08290fc1cece391ec83a3ee21d17039ca4492f3a",
+      "sha256": "ba1f6a6e1855d72f00236056357148fdb127b3eb400cde8399f2451667e7a478",
       "rows": 40,
       "maxVisibleLength": 120
     },
     "sessions@160x45": {
-      "sha256": "6d12be5bb3e38bebf5ee1a5f2b6c00156cb2eb80c4f93e06c0b3b9c847b3634b",
+      "sha256": "d08d167e0bfb223d2c43c66ad9810351b5424055c495d714dc16e1677013b9dd",
       "rows": 45,
       "maxVisibleLength": 160
     },
     "sessions@200x48": {
-      "sha256": "e6180f2b323a8a0fff797e1845a3aa0a25f0068ebc2ab072caa7471b29bd103d",
+      "sha256": "f6a6eda901cf1acfa8fcf28583b4d8bd8109af5fa40956b9fbef3416fbd811f9",
       "rows": 48,
       "maxVisibleLength": 200
     },
