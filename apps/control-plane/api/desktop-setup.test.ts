@@ -230,6 +230,36 @@ test('provider matrix discovers OMP, Prime and OpenCode sources without contacti
   assert.ok(!shown.includes(ompKey), 'Discovery must never echo an OMP key');
 });
 
+test('every matrix row reports its auth method and whether it is host-only', async t => {
+  const f = await fixture(t, async () => { assert.fail('Discovery must not contact providers'); });
+  await f.save(auth, { opencode: { type: 'api', key } });
+  const scan = await desktopSetup(f.env);
+  for (const source of scan.sources) {
+    assert.ok(
+      ['api-key', 'oauth', 'host-subscription'].includes(source.authMethod),
+      `${source.id} must report an auth method`,
+    );
+    assert.equal(typeof source.hostOnly, 'boolean');
+    // A host-only row is exactly the row whose login lives in a host CLI.
+    assert.equal(
+      source.hostOnly,
+      source.authMethod === 'host-subscription',
+      `${source.id} host-only must match its auth method`,
+    );
+  }
+  assert.deepEqual(
+    scan.sources.filter(source => source.hostOnly).map(source => source.id).sort(),
+    ['claude:claude-code', 'prime:openai-codex'],
+  );
+  assert.equal(scan.sources.find(source => source.id === 'opencode:zen')?.authMethod, 'api-key');
+  // The matrix is a report of states: no credential value and no path to a
+  // credential file may reach it.
+  const shown = JSON.stringify(scan);
+  assert.ok(!shown.includes('.prime/agent/auth.json'));
+  assert.ok(!shown.includes('.local/share/opencode'));
+  assert.ok(!shown.includes(f.home));
+});
+
 test('OMP OpenCode Go is importable from the key OMP already stores', async t => {
   // The Go endpoint is its own origin, not the Zen one: provider-defaults.ts
   // exports OPENCODE_GO_URL = https://opencode.ai/zen/go/v1 and desktop-setup.ts

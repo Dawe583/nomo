@@ -450,11 +450,16 @@ function publicSource(source: CredentialSource, status: SourceStatus) {
     id: source.id,
     name: source.name,
     source: source.source,
+    // The auth method is part of the matrix for every row, not only for host
+    // subscriptions: an operator has to see whether a row is an API key, an
+    // OAuth entry or a host login before choosing it.
+    authMethod: source.credential,
+    // A host-only row keeps its credential in the installed host CLI. NOMO
+    // never reads it, so no importer may offer it as a token.
+    hostOnly: source.credential === 'host-subscription',
     available: status.available,
     ...(status.reason ? { reason: status.reason } : {}),
-    ...(source.credential === 'host-subscription'
-      ? { authMethod: 'host-subscription' as const, host: source.host }
-      : {}),
+    ...(source.host ? { host: source.host } : {}),
   };
 }
 
