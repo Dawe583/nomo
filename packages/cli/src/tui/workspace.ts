@@ -103,6 +103,7 @@ import {
   paletteFromCommands,
   recordPaletteCommand,
   renderPalette,
+  type PaletteItem,
   type PaletteState,
 } from "./palette.ts";
 import {
@@ -3002,6 +3003,22 @@ function refreshedTreeState(
  */
 export type PetPlacement = "auto" | "dock" | "perch" | "off";
 
+/**
+ * What a clickable composer chip or session row icon does.
+ *
+ * Every action has a keyboard equivalent the frame already documents: the
+ * model chip is `/model`, the context chip is `/usage`, the attachment chip is
+ * `/documents`, the NIB dock is Alt+Shift+N, and the session row icons open
+ * the same panels their rows describe. The pointer is an alternative path,
+ * never the only one.
+ */
+export type ChipAction =
+  | "model"
+  | "usage"
+  | "documents"
+  | "pet"
+  | "models-panel";
+
 /** Same persistent workbench as the web. Rendering never grants tool authority. */
 export class WorkspaceTui {
   readonly workbench: Workbench;
@@ -3032,6 +3049,15 @@ export class WorkspaceTui {
         kind: "setting";
         index: number;
       }
+    | {
+        row: number;
+        start: number;
+        end: number;
+        kind: "chip";
+        index: number;
+        action: ChipAction;
+      }
+    | { row: number; start: number; end: number; kind: "toast"; index: number }
   > = [];
   hoveredRow?: {
     readonly kind: "item" | "tree" | "provider" | "model" | "setting";
@@ -3055,6 +3081,12 @@ export class WorkspaceTui {
     railTop?: number;
     /** Rows the rail band paints below `railTop`. */
     railRows?: number;
+    /**
+     * Rows of the body budget the sticky transcript line took, 0 when it is
+     * not drawn. Paging counts them as window, so a page down still lands on
+     * live follow instead of stopping one row short.
+     */
+    stickyRows?: number;
   } = {
     offset: 0,
     height: 1,
@@ -9806,7 +9838,11 @@ ${(doc.content ?? "").slice(0, 2000)}`;
     this.notice = `Export: ${path}`;
   }
   scrollPage(direction: number) {
-    const { offset, height, total } = this.viewport;
+    const { offset, total } = this.viewport;
+    // The sticky transcript line shares the body budget with the transcript,
+    // so the paging window is the two together; otherwise a page down from the
+    // last full page would stop one row short of live follow.
+    const height = this.viewport.height + (this.viewport.stickyRows ?? 0);
     const next = Math.max(
       0,
       Math.min(
@@ -11083,6 +11119,7 @@ type ChatRow = {
     | "code"
     | "diff-add"
     | "diff-remove"
+    | "diff-context"
     | "tool"
     | "error"
     | "text"
@@ -12041,8 +12078,18 @@ export function chatRows(
         // meaning never depends on it. The sign sits in the two-space gutter
         // the diff rows are built with, which keeps a numbered preview row
         // (`  1 │ ...`) from being mistaken for a diff line.
-        const codeStyle: ChatRow["style"] =
-          /^ {2}\+[ 0-9]/.test(row)
+        //
+        // The fence rows, the `path · +N -M lines` header and the omission
+        // notes are context: they are muted rather than toned, so a reader can
+        // tell a change from the frame that reports it.
+        const diffContextRow =
+          row.trim() === "┌ code" ||
+          row.trim() === "└ code" ||
+          /^ {2}… \d+ (?:more lines|characters omitted)$/u.test(row) ||
+          /^[^\s].* · \+\d+ -\d+ lines$/u.test(row);
+        const codeStyle: ChatRow["style"] = diffContextRow
+          ? "diff-context"
+          : /^ {2}\+[ 0-9]/.test(row)
             ? "diff-add"
             : /^ {2}-[ 0-9]/.test(row)
               ? "diff-remove"
@@ -12056,7 +12103,7 @@ export function chatRows(
               ? event.kind === "error"
                 ? "error"
                 : "tool"
-              : inCodeBlock
+              : inCodeBlock || diffContextRow
                 ? codeStyle
                 : "text";
         add(row, style);
@@ -12785,6 +12832,269 @@ function noticeLine(notice: string): string {
   return notice.split("\n").find((line) => line.trim())?.trim() ?? "";
 }
 
+/**
+ * The terminal width from which the palette can afford a preview pane.
+ *
+ * Below it the list keeps every cell: a preview that squeezed the command ids
+ * into a narrow column would cost the operator the thing they opened the
+ * palette for. The threshold is the terminal, not the inner panel width, so it
+ * is the same number at every tab and border.
+ */
+export const PALETTE_PREVIEW_MIN_COLUMNS = 100;
+
+/** The widest the palette preview pane may grow, and the gap beside it. */
+const PALETTE_PREVIEW_MAX = 40;
+const PALETTE_PREVIEW_GAP = 2;
+/** The narrowest the command list may become before the preview is dropped. */
+const PALETTE_LIST_MIN = 24;
+
+/** The preview pane width for a terminal, or 0 when the frame cannot afford it. */
+export function palettePreviewWidth(
+  columns: number,
+  innerWidth: number,
+): number {
+  if (Math.floor(columns) < PALETTE_PREVIEW_MIN_COLUMNS) return 0;
+  const inner = Math.max(1, Math.floor(innerWidth));
+  const width = Math.min(
+    PALETTE_PREVIEW_MAX,
+    Math.max(24, Math.floor(inner * 0.34)),
+  );
+  return inner - width - PALETTE_PREVIEW_GAP >= PALETTE_LIST_MIN ? width : 0;
+}
+
+/**
+ * What the palette preview says about the selected command.
+ *
+ * Every line is real: the command's own id, the group the palette filed it in,
+ * the summary it was registered with and the argument shape the command
+ * handler actually accepts. A command with no declared argument prints no
+ * usage line rather than a placeholder that would read as a real one.
+ */
+export function palettePreviewLines(
+  item: PaletteItem | undefined,
+  width: number,
+): string[] {
+  const cells = Math.max(1, Math.floor(width));
+  const row = (value: string): string => pad(fit(value, cells), cells);
+  if (!item) return [row("PREVIEW"), row(""), row("No command selected.")];
+  const lines: string[] = [row(`PREVIEW · ${item.group.toUpperCase()}`), row("")];
+  lines.push(row(sanitizeText(item.id)));
+  for (const line of wrap([sanitizeText(item.hint)], cells)) lines.push(row(line));
+  const usage = commandArgumentHint(item.id);
+  if (usage !== undefined && usage !== "") {
+    for (const line of wrap(
+      [`usage: ${sanitizeText(item.id)} ${sanitizeText(usage)}`],
+      cells,
+    ))
+      lines.push(row(line));
+  }
+  lines.push(row(""));
+  lines.push(row("Enter runs it"));
+  lines.push(row("Esc closes"));
+  return lines;
+}
+
+/**
+ * Join the palette list and its preview pane into `left + gap + right` rows.
+ *
+ * Both sides are fitted to their own column, so the merged row is exactly
+ * `leftWidth + gap + rightWidth` cells wide whatever the command text is.
+ */
+export function paletteWithPreview(
+  left: readonly string[],
+  preview: readonly string[],
+  leftWidth: number,
+  previewWidth: number,
+  gap = PALETTE_PREVIEW_GAP,
+): string[] {
+  const listWidth = Math.max(1, Math.floor(leftWidth));
+  const paneWidth = Math.max(1, Math.floor(previewWidth));
+  const space = " ".repeat(Math.max(0, Math.floor(gap)));
+  const height = Math.max(left.length, preview.length);
+  return Array.from({ length: height }, (_, index) =>
+    `${pad(left[index] ?? "", listWidth)}${space}${pad(preview[index] ?? "", paneWidth)}`,
+  );
+}
+
+/** The most toasts the stack shows at once, and where it is allowed to draw. */
+export const TOAST_STACK_MAX = 3;
+export const TOAST_STACK_MIN_COLUMNS = 60;
+export const TOAST_STACK_MIN_ROWS = 18;
+/** The narrowest stack that still reads as a message rather than a stub. */
+const TOAST_STACK_MIN_WIDTH = 24;
+/** The widest one toast may become, so it stays a notice, not a panel. */
+const TOAST_STACK_MAX_WIDTH = 48;
+/** Cells the remaining-life bar spends in front of the message. */
+const TOAST_STACK_BAR_CELLS = 4;
+
+/**
+ * Whether a frame may carry the transient toast stack at all.
+ *
+ * Below this size the composer and the review keys own every row, and a toast
+ * that pushed either off the frame would cost more than it delivered. The
+ * sticky approval banner is a different surface and stays.
+ */
+export function toastStackVisible(columns: number, rows: number): boolean {
+  return (
+    Math.floor(columns) >= TOAST_STACK_MIN_COLUMNS &&
+    Math.floor(rows) >= TOAST_STACK_MIN_ROWS
+  );
+}
+
+/** The width of one right-aligned toast row, or 0 when none can be drawn. */
+export function toastStackWidth(width: number): number {
+  const cells = Math.max(0, Math.floor(width));
+  if (cells < TOAST_STACK_MIN_WIDTH + 2) return 0;
+  return Math.min(TOAST_STACK_MAX_WIDTH, cells - 2);
+}
+
+export type ToastStackOptions = {
+  /** The inner frame width the rows are laid out in. */
+  readonly width: number;
+  /** Epoch milliseconds the frame was drawn at, for the life bar. */
+  readonly now: number;
+  readonly color: boolean;
+  /** The preset's filled and empty progress cells. */
+  readonly filled: string;
+  readonly empty: string;
+  /** The dismiss glyph, one cell in every preset. */
+  readonly close: string;
+  readonly max?: number;
+};
+
+/**
+ * The transient notice stack: the newest few toasts, right aligned.
+ *
+ * Each row carries a thin bar of the life the toast has left, so a notice
+ * about to fade says so instead of vanishing mid-read. A sticky toast (ttl 0)
+ * carries a full bar because it has no deadline to measure. The rows are
+ * exactly `width` cells wide and never wider than one readable message, which
+ * is what keeps the stack off the composer keys below it.
+ */
+export function toastStackRows(
+  host: ToastHost,
+  options: ToastStackOptions,
+): string[] {
+  const width = Math.max(0, Math.floor(options.width));
+  const toastWidth = toastStackWidth(width);
+  if (toastWidth === 0 || host.toasts.length === 0) return [];
+  const maximum = Math.max(1, Math.floor(options.max ?? TOAST_STACK_MAX));
+  const shown = host.toasts.slice(0, maximum);
+  const messageWidth = Math.max(1, toastWidth - TOAST_STACK_BAR_CELLS - 3);
+  const messages = renderToasts(
+    { toasts: shown, active: shown[0] },
+    messageWidth,
+    { color: options.color },
+  );
+  const filledGlyph =
+    visibleLength(options.filled) === 1 ? options.filled : "#";
+  const emptyGlyph = visibleLength(options.empty) === 1 ? options.empty : "-";
+  const closeGlyph = visibleLength(options.close) === 1 ? options.close : "x";
+  const lead = width - toastWidth;
+  return shown.map((toast, index) => {
+    const remaining =
+      toast.ttl <= 0
+        ? 1
+        : Math.max(0, Math.min(1, 1 - (options.now - toast.at) / toast.ttl));
+    const filledCells = Math.max(
+      0,
+      Math.min(TOAST_STACK_BAR_CELLS, Math.ceil(remaining * TOAST_STACK_BAR_CELLS)),
+    );
+    const bar =
+      filledGlyph.repeat(filledCells) +
+      emptyGlyph.repeat(TOAST_STACK_BAR_CELLS - filledCells);
+    const message = messages[index] ?? "";
+    const row = `${bar} ${pad(message, messageWidth)} ${closeGlyph}`;
+    return `${" ".repeat(Math.max(0, lead))}${pad(row, toastWidth)}`;
+  });
+}
+
+export type StickyTranscriptInput = {
+  /** The conversation title, or undefined while it has none. */
+  readonly title?: string;
+  /** The phase word the frame already uses for this run. */
+  readonly phase: string;
+  /** The scrolled-up marker, one cell in the active preset. */
+  readonly arrow: string;
+  readonly width: number;
+};
+
+/**
+ * The slim line that names the conversation while the transcript is scrolled.
+ *
+ * It rides a body row the frame already budgeted, so the composer, the status
+ * row and the review keys keep their places. The breadcrumb is the one thing
+ * the visible transcript rows no longer show, because the message that named
+ * the conversation has scrolled out of view.
+ */
+export function stickyTranscriptLine(input: StickyTranscriptInput): string {
+  const width = Math.max(1, Math.floor(input.width));
+  const title = sanitizeText(stripAnsi(input.title ?? ""))
+    .replace(/\s+/g, " ")
+    .trim();
+  const phase = sanitizeText(stripAnsi(input.phase)).replace(/\s+/g, " ").trim();
+  const breadcrumb = title === "" ? "Chat" : `Chat > ${title}`;
+  const arrow = visibleLength(input.arrow) === 1 ? input.arrow : "^";
+  return fit(`${arrow} ${breadcrumb}${phase === "" ? "" : ` · ${phase}`}`, width);
+}
+
+/** A horizontal span in terminal cells, zero based. */
+export type CellSpan = { readonly start: number; readonly end: number };
+
+/** The first visible span of `needle` in a possibly painted row. */
+export function cellSpan(rowText: string, needle: string): CellSpan | undefined {
+  if (needle === "") return undefined;
+  const plain = stripAnsi(rowText);
+  const at = plain.indexOf(needle);
+  if (at < 0) return undefined;
+  const start = visibleLength(plain.slice(0, at));
+  return { start, end: start + visibleLength(needle) - 1 };
+}
+
+/**
+ * The model and token fact spans in one session browser row.
+ *
+ * The row prints its facts after the title, each behind its own icon, so the
+ * only reliable place to look is the trailing segment list. Scanning it from
+ * the last separator keeps a title that happens to contain the same glyph from
+ * claiming a hit target the fact does not own.
+ */
+export function sessionRowFactSpans(
+  line: string,
+  icons: SessionRowIcons,
+): { model?: CellSpan; tokens?: CellSpan } {
+  // The wide layout paints the inspector beside the list on the same row, so
+  // the fact scan stops at the pane divider rather than reading the inspector's
+  // own values as the row's.
+  const plain = stripAnsi(line).split(" │ ")[0] ?? "";
+  const parts = plain.split(" · ");
+  if (parts.length < 2) return {};
+  let cursor = 0;
+  const spans: CellSpan[] = [];
+  for (const part of parts) {
+    const start = cursor;
+    spans.push({ start, end: start + visibleLength(part) - 1 });
+    cursor = start + visibleLength(part) + 3;
+  }
+  const spanFor = (icon: string): CellSpan | undefined => {
+    const prefix = `${icon} `;
+    for (let index = parts.length - 1; index >= 1; index -= 1) {
+      const part = parts[index]!;
+      if (!part.startsWith(prefix)) continue;
+      const span = spans[index]!;
+      // The span names the icon and its value, not the separator before it.
+      return { start: span.start, end: span.end };
+    }
+    return undefined;
+  };
+  const model = spanFor(icons.model);
+  const tokens = spanFor(icons.tokens);
+  return {
+    ...(model === undefined ? {} : { model }),
+    ...(tokens === undefined ? {} : { tokens }),
+  };
+}
+
 export function renderWorkspace(
   ui: WorkspaceTui,
   columns: number,
@@ -13067,17 +13377,34 @@ export function renderWorkspace(
         !ui.showingKeybindings &&
         !ui.showingCheatSheet),
   );
-  // Toasts sit below the approval banner and above the body. The banner is
-  // sticky and authoritative; toasts are the transient layer under it, so a
-  // raise never has to choose between being seen and being safe.
+  // Toasts sit below the approval banner and above the body on a panel. The
+  // banner is sticky and authoritative; toasts are the transient layer under
+  // it, so a raise never has to choose between being seen and being safe.
   //
-  // On a terminal too short to carry them they are dropped rather than
-  // squeezed. A toast that costs the operator their input surface has
-  // charged more than it delivered, and the approval banner above still
-  // carries everything they actually have to act on.
-  const toastRows = renderToasts(ui.toasts, width - 4, {
-    color: visuals.color === true,
-  });
+  // Chat places the same queue as a right aligned stack just above the
+  // composer, where the operator is already looking, and suppresses it below
+  // 60x18: at that size the composer and the review keys own every row, and a
+  // toast that pushed either off the frame would charge more than it
+  // delivered. The approval banner is a different surface and is never
+  // suppressed.
+  const toastPresetSymbols = getSymbols(ui.themeConfig.symbolPreset);
+  const toastRows = chatBaseVisible
+    ? toastStackVisible(terminalWidth, terminalHeight)
+      ? toastStackRows(ui.toasts, {
+          width,
+          now:
+            typeof visuals.now === "number" && Number.isFinite(visuals.now)
+              ? visuals.now
+              : Date.now(),
+          color: visuals.color === true,
+          filled: toastPresetSymbols.progress.filled,
+          empty: toastPresetSymbols.progress.empty,
+          close: ui.themeConfig.symbolPreset === "ascii" ? "x" : "×",
+        })
+      : []
+    : renderToasts(ui.toasts, width - 4, {
+        color: visuals.color === true,
+      });
   const header: string[] = [];
   const tallBrand = chatBaseVisible && height >= 22 && width >= 64;
   if (chatBaseVisible) {
@@ -13376,7 +13703,11 @@ export function renderWorkspace(
   );
   // An open palette owns the body. It is a filter surface, so whatever the
   // underlying tab would have shown is exactly the noise the operator is
-  // trying to see past.
+  // trying to see past. From 100 columns the frame can also afford a preview
+  // pane beside the list, so the selected command's own summary and argument
+  // shape are readable before it runs; below that the list keeps every cell.
+  const palettePane = palettePreviewWidth(terminalWidth, width - 4);
+  const paletteListWidth = palettePane > 0 ? width - 4 - palettePane - 2 : width - 4;
   const paletteView = ui.palette
     ? renderPalette(
         ui.palette,
@@ -13385,10 +13716,24 @@ export function renderWorkspace(
           ui.palette.query,
           ui.palette.recent,
         ),
-        width - 4,
+        Math.max(1, paletteListWidth),
         { color: visuals.color },
       )
     : undefined;
+  const paletteBody =
+    paletteView === undefined
+      ? undefined
+      : palettePane > 0
+        ? paletteWithPreview(
+            paletteView.lines,
+            palettePreviewLines(
+              paletteView.items[paletteView.selected],
+              palettePane,
+            ),
+            Math.max(1, paletteListWidth),
+            palettePane,
+          )
+        : [...paletteView.lines];
   // The legend is rendered after the paint helpers exist and before the body
   // height is known, because the body height is what decides how many legend
   // rows fit. Measuring it here is what keeps the frame exactly height rows
@@ -13585,8 +13930,8 @@ export function renderWorkspace(
     !modelPickerOpen;
   let content = modelPickerOpen
     ? ui.lines(width - 4, bodyHeight)
-    : paletteView
-      ? [...paletteView.lines]
+    : paletteBody !== undefined
+      ? [...paletteBody]
       : richChat
         ? []
         : ui.lines(width - 4, bodyHeight);
@@ -13599,8 +13944,8 @@ export function renderWorkspace(
   const noWrapPanel = modelPickerOpen || ui.settingsOpen || ui.tab === "models";
   const lines =
     (richChat && styled?.length === 0 ? [] : styled?.map((row) => row.text)) ??
-    (paletteView
-      ? paletteView.lines
+    (paletteBody !== undefined
+      ? paletteBody
       : noWrapPanel
         ? content.map((line) =>
             fitWithTrustedIcons(line, bodyTextWidth, trustedIcons),
@@ -13755,7 +14100,9 @@ export function renderWorkspace(
                   ? "success"
                   : style === "diff-remove"
                     ? "error"
-                    : style === "error"
+                    : style === "diff-context"
+                      ? "muted"
+                      : style === "error"
                   ? "error"
                   : style === "tool"
                     ? "muted"
@@ -13923,6 +14270,7 @@ export function renderWorkspace(
     const listEnd = sessionPane.sideBySide
       ? sessionPane.listWidth + 3
       : width;
+    const rowIcons = sessionRowIcons(ui.themeConfig.symbolPreset);
     for (const target of ui.sessionBrowserLines.rows) {
       const bodyIndex = target.line - offset;
       const screenRow = bodyStart + bodyIndex + 1 + panelTopOffset;
@@ -13932,6 +14280,32 @@ export function renderWorkspace(
         screenRow > height + panelTopOffset
       )
         continue;
+      // The fact icons are pushed before the row so the narrower rect wins the
+      // hit test: clicking the model icon opens Models and the token icon
+      // opens Usage, exactly as `/models` and `/usage` do, while a click on the
+      // rest of the row still selects and opens the conversation.
+      const factSpans = sessionRowFactSpans(
+        lines[offset + bodyIndex] ?? "",
+        rowIcons,
+      );
+      if (factSpans.model)
+        ui.rowHitTargets.push({
+          row: screenRow,
+          start: 1 + panelTopOffset + factSpans.model.start,
+          end: 1 + panelTopOffset + factSpans.model.end,
+          kind: "chip",
+          index: target.index,
+          action: "models-panel",
+        });
+      if (factSpans.tokens)
+        ui.rowHitTargets.push({
+          row: screenRow,
+          start: 1 + panelTopOffset + factSpans.tokens.start,
+          end: 1 + panelTopOffset + factSpans.tokens.end,
+          kind: "chip",
+          index: target.index,
+          action: "usage",
+        });
       ui.rowHitTargets.push({
         row: screenRow,
         start: 1 + panelTopOffset,
@@ -14641,20 +15015,24 @@ export function renderWorkspace(
       editing && motion.enabled && !motion.reduced && ui.composerFocusFrame >= 0
         ? motion.frame - ui.composerFocusFrame
         : -1;
+    // The plain rail is kept beside the painted one: the chip hit targets are
+    // published from the same string the operator reads, so a chip that was
+    // dropped for want of cells can never keep a clickable region.
+    const railText = composerTopRail({
+      label: railLabel,
+      hint: railHint,
+      dock: petDock,
+      attachment: railAttachment,
+      model: "",
+      context: railContext,
+      width,
+      tl: symbols.frame.tl,
+      h: symbols.frame.h,
+      tr: symbols.frame.tr,
+      sweep: sweep >= 0 && sweep < COMPOSER_SWEEP_FRAMES ? sweep : -1,
+    });
     const draftTitle = paintComposerRail(
-      composerTopRail({
-        label: railLabel,
-        hint: railHint,
-        dock: petDock,
-        attachment: railAttachment,
-        model: "",
-        context: railContext,
-        width,
-        tl: symbols.frame.tl,
-        h: symbols.frame.h,
-        tr: symbols.frame.tr,
-        sweep: sweep >= 0 && sweep < COMPOSER_SWEEP_FRAMES ? sweep : -1,
-      }),
+      railText,
       composerRailTone({
         focused: editing,
         approval: waiting,
@@ -14992,7 +15370,6 @@ export function renderWorkspace(
           `1;${amber}`,
         ),
       ),
-      ...shownToastRows,
     ];
     const noticeBand = chatNoticeRows(
       ui.notice,
@@ -15001,6 +15378,10 @@ export function renderWorkspace(
         0,
         height -
           chatPrefix.length -
+          // The toast stack is drawn above the composer below, but it spends
+          // the same rows, so the notice band's budget counts it here or the
+          // frame would grow past the terminal.
+          shownToastRows.length -
           menuRows.length -
           (argumentHint ? 1 : 0) -
           chatInputFooter.length -
@@ -15021,6 +15402,9 @@ export function renderWorkspace(
       // A command result used to be invisible in Chat: the panel branch prints
       // it in the status row, and Chat has no status row of its own.
       ...noticeBand.map((row) => ink(fit(row, width), muted)),
+      // The transient stack sits directly above the composer, on rows the
+      // frame already budgeted, so it never covers the draft or the keys.
+      ...shownToastRows,
     ];
     const availableBodyRows = Math.max(
       0,
@@ -15052,12 +15436,50 @@ export function renderWorkspace(
       chatRail.length > 0
         ? bodyRows.map((row, index) => `${row}${railRow(chatRail[index] ?? "")}`)
         : bodyRows;
-    const visibleChatBody = chatBodyRows.slice(0, availableBodyRows);
-    const statusRowNumber =
+    // The sticky breadcrumb is drawn only while the transcript is scrolled up
+    // and there is more transcript than the body can show. It takes one body
+    // row rather than adding one, so the composer, the status row and the
+    // review keys keep their places on every terminal size.
+    // The sticky breadcrumb is drawn only while the operator has scrolled to an
+    // explicit offset and there is more transcript than the body can show.
+    // Following the tail keeps the full window: the newest row is the one the
+    // operator is reading, and a breadcrumb there would cost them a line of it.
+    const scrolledUp =
+      ui.scroll >= 0 && offset > 0 && lines.length > availableBodyRows;
+    const stickyRow =
+      scrolledUp && availableBodyRows >= 2
+        ? ink(
+            pad(
+              stickyTranscriptLine({
+                ...(ui.session()?.title === undefined
+                  ? {}
+                  : { title: ui.session()?.title }),
+                phase: waiting
+                  ? "Waiting for approval"
+                  : sessionRunning || chatRunActive
+                    ? taskPhaseWord(sessionSummary.lastVisible, waiting)
+                    : "Idle",
+                arrow: symbols.arrow.up,
+                width,
+              }),
+              width,
+            ),
+            muted,
+          )
+        : undefined;
+    const bodyRowBudget = Math.max(
+      0,
+      availableBodyRows - (stickyRow === undefined ? 0 : 1),
+    );
+    const visibleChatBody = chatBodyRows.slice(0, bodyRowBudget);
+    const footerBase =
       chatPrefix.length +
       chatPanelTopMarginY +
+      (stickyRow === undefined ? 0 : 1) +
       visibleChatBody.length +
-      chatOverlays.length +
+      chatOverlays.length;
+    const statusRowNumber =
+      footerBase +
       petBubbleRows.length +
       chatInputRows.length +
       draftEnd.length +
@@ -15071,19 +15493,100 @@ export function renderWorkspace(
       start: chatStatusStart,
       end: chatStatusStart + Math.min(width, visibleLength(chatNav)) - 1,
     });
+    // Composer chips are real click targets: the model chip opens the picker
+    // the same way `/model` does, the context meter opens Usage, the
+    // attachment chip opens Documents and the NIB dock opens the signal card.
+    // Each rect comes from the plain row the operator is reading, so a chip
+    // that was dropped for want of cells publishes nothing.
+    const chipTarget = (
+      rowText: string,
+      needle: string,
+      action: ChipAction,
+      row: number,
+    ) => {
+      const span = cellSpan(rowText, needle);
+      if (span === undefined) return;
+      ui.rowHitTargets.push({
+        row,
+        start: chatStatusStart + span.start,
+        end: chatStatusStart + span.end,
+        kind: "chip",
+        index: 0,
+        action,
+      });
+    };
+    const railRowNumber = footerBase + petBubbleRows.length + 1;
+    chipTarget(railText, petDock, "pet", railRowNumber);
+    chipTarget(railText, railAttachment, "documents", railRowNumber);
+    const modelNeedle = selectedModel
+      ? sanitizeText(selectedModel)
+      : "No model selected";
+    const contextNeedles = [
+      contextStatusText,
+      contextStatusIconCompact,
+      contextStatusCompact,
+      contextPercentage,
+    ];
+    const statusPlain = chatStatusRows.map((row) => stripAnsi(row));
+    if (chatStatusRowCount === 1) {
+      const row = statusRowNumber + 1;
+      chipTarget(statusPlain[0] ?? "", modelNeedle, "model", row);
+      for (const needle of contextNeedles) {
+        if (cellSpan(statusPlain[0] ?? "", needle) === undefined) continue;
+        chipTarget(statusPlain[0] ?? "", needle, "usage", row);
+        break;
+      }
+    } else {
+      chipTarget(statusPlain[1] ?? "", modelNeedle, "model", statusRowNumber + 2);
+      for (const needle of contextNeedles) {
+        if (cellSpan(statusPlain[2] ?? "", needle) === undefined) continue;
+        chipTarget(statusPlain[2] ?? "", needle, "usage", statusRowNumber + 3);
+        break;
+      }
+    }
+    // A click anywhere on a toast row dismisses it. The queue already ages
+    // out on its own, so this is an accelerator, not the only way to clear it.
+    const toastStackWidthCells = toastStackWidth(width);
+    if (shownToastRows.length > 0 && toastStackWidthCells > 0) {
+      const firstToastRow =
+        chatPrefix.length +
+        chatPanelTopMarginY +
+        (stickyRow === undefined ? 0 : 1) +
+        visibleChatBody.length +
+        chatOverlays.length -
+        shownToastRows.length;
+      shownToastRows.forEach((_row, index) => {
+        ui.rowHitTargets.push({
+          row: firstToastRow + index + 1,
+          start: chatStatusStart + (width - toastStackWidthCells),
+          end: chatStatusStart + width - 1,
+          kind: "toast",
+          index,
+        });
+      });
+    }
     ui.viewport = {
       ...ui.viewport,
       height: visibleChatBody.length,
+      // The sticky line is window, not transcript: paging counts it so a page
+      // down still reaches live follow.
+      stickyRows: stickyRow === undefined ? 0 : 1,
       // The rail paints on the transcript rows only, so the band starts after
-      // the header and toast rows. A click inside it belongs to the rail.
+      // the header, the sticky line and the overlay rows. A click inside it
+      // belongs to the rail.
       ...(chatRail.length > 0
         ? {
-            railTop: chatPrefix.length + chatPanelTopMarginY + 1,
+            railTop:
+              chatPrefix.length +
+              chatPanelTopMarginY +
+              (stickyRow === undefined ? 0 : 1) +
+              1,
             railRows: visibleChatBody.length,
           }
         : {}),
     };
     const chatRows = [
+      ...(stickyRow === undefined ? [] : [stickyRow]),
       ...visibleChatBody,
       ...chatOverlays,
       ...chatInputFooter,

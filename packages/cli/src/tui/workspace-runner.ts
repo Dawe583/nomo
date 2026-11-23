@@ -60,6 +60,7 @@ import {
   type MousePoint,
 } from "./mouse-selection.ts";
 import { sanitizeText, stripAnsi } from "./layout.ts";
+import { dismissToast } from "./toast.ts";
 import { dataDir as productDataDir } from "../../../ledger/src/paths.ts";
 import { envValue } from "../../../ledger/src/env-compat.ts";
 import { normalizeOwnedEnv } from "../env-keys.ts";
@@ -2757,9 +2758,17 @@ export async function runWorkspaceTui(
             event.x >= item.start &&
             event.x <= item.end,
         );
-        const hoveredRow = rowTarget
-          ? { kind: rowTarget.kind, index: rowTarget.index }
-          : undefined;
+        // Only the list kinds carry a hover cursor; a chip or a toast has no
+        // selected row to highlight, so hovering it changes nothing.
+        const hoveredRow =
+          rowTarget &&
+          (rowTarget.kind === "item" ||
+            rowTarget.kind === "tree" ||
+            rowTarget.kind === "provider" ||
+            rowTarget.kind === "model" ||
+            rowTarget.kind === "setting")
+            ? { kind: rowTarget.kind, index: rowTarget.index }
+            : undefined;
         if (
           ui.hoveredRow?.kind !== hoveredRow?.kind ||
           ui.hoveredRow?.index !== hoveredRow?.index
@@ -2900,7 +2909,9 @@ export async function runWorkspaceTui(
           ui.tab === "chat" &&
           !(ui.settingsOpen && rowTarget.kind === "setting") &&
           rowTarget.kind !== "provider" &&
-          rowTarget.kind !== "model"
+          rowTarget.kind !== "model" &&
+          rowTarget.kind !== "chip" &&
+          rowTarget.kind !== "toast"
         );
       // Ordinary drags select passive text; interactive rows keep click
       // behavior, while Shift explicitly selects through those hit targets.
@@ -2943,7 +2954,9 @@ export async function runWorkspaceTui(
         (ui.tab === "chat" &&
           !(ui.settingsOpen && rowTarget.kind === "setting") &&
           rowTarget.kind !== "provider" &&
-          rowTarget.kind !== "model")
+          rowTarget.kind !== "model" &&
+          rowTarget.kind !== "chip" &&
+          rowTarget.kind !== "toast")
       ) {
         lastMouseClick = undefined;
         return;
@@ -3023,6 +3036,32 @@ export async function runWorkspaceTui(
         ui.selectModelPickerProvider(rowTarget.index);
         if (doubleClick)
           void task(() => ui.loadModelPickerProvider(provider.id));
+      } else if (rowTarget.kind === "chip") {
+        // A chip click is the pointer form of a command the frame already
+        // documents. Nothing here grants authority a keyboard path lacks.
+        const action = rowTarget.action;
+        if (action === "model") {
+          lastMouseClick = undefined;
+          // The picker takes the keyboard, so the composer stops owning it
+          // exactly as it does when /model runs.
+          input.editing = false;
+          void task(async () => {
+            await ui.openModelPicker(ui.sessionId ? "session" : "default");
+          });
+          return;
+        }
+        if (action === "usage") ui.choose("usage");
+        else if (action === "documents") ui.choose("documents");
+        else if (action === "models-panel") ui.choose("models");
+        else if (action === "pet") {
+          ui.petEnabled = true;
+          ui.petCard = true;
+          ui.notice = "NIB card open · Alt+Shift+N closes it.";
+        }
+      } else if (rowTarget.kind === "toast") {
+        // The queue already ages out on its own; a click just clears it now.
+        const toast = ui.toasts.toasts[rowTarget.index];
+        if (toast) ui.toasts = dismissToast(ui.toasts, toast.id);
       } else {
         ui.hoveredRow = { kind: rowTarget.kind, index: rowTarget.index };
         ui.selected = rowTarget.index;

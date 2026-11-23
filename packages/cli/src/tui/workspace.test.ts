@@ -60,6 +60,7 @@ import {
   sessionBrowserHint,
   sessionRowIcons,
   sessionRowLine,
+  sessionRowFactSpans,
   sessionSectionChevron,
   sessionTokenLabel,
   shortenHomePath,
@@ -68,6 +69,14 @@ import {
   tokensPerSecondLabel,
   transcript,
   wrap,
+  cellSpan,
+  palettePreviewLines,
+  palettePreviewWidth,
+  paletteWithPreview,
+  stickyTranscriptLine,
+  toastStackRows,
+  toastStackVisible,
+  toastStackWidth,
   PET_SPLASH_MS,
   TUI_COMMANDS,
 } from "./workspace.ts";
@@ -97,10 +106,12 @@ import {
 } from "./workspace-runner.ts";
 import {
   filterPalette,
+  initialPaletteState,
   paletteFromCommands,
   type PaletteState,
 } from "./palette.ts";
 import {
+  pad,
   renderHunkSelection,
   splitDiffHunks,
   visibleLength,
@@ -6131,3 +6142,363 @@ test("the sessions browser has an empty state and a filter state", async (t) => 
   assert.match(filtered, /No matches for zzz\./);
   assert.match(filtered, /Backspace edits the filter\. Esc clears it\./);
 });
+
+test("the palette preview appears only from 100 columns and fits its pane", () => {
+  // Below the threshold the list keeps every cell.
+  assert.equal(palettePreviewWidth(99, 95), 0);
+  const wide = palettePreviewWidth(120, 116);
+  assert.ok(wide >= 24 && wide <= 40, `preview pane is ${wide} cells`);
+  // A frame whose inner width cannot carry a readable list gets no preview.
+  assert.equal(palettePreviewWidth(120, 40), 0);
+
+  const item = {
+    id: "/theme",
+    label: "/theme",
+    hint: "Color and motion for this session",
+    icon: "◐",
+    group: "settings" as const,
+  };
+  const lines = palettePreviewLines(item, 40);
+  assert.ok(lines.every((line) => visibleLength(line) === 40));
+  assert.equal(lines[0], pad("PREVIEW · SETTINGS", 40));
+  assert.ok(lines.some((line) => line.trim() === "/theme"));
+  assert.ok(lines.some((line) => line.includes("Color and motion")));
+  // The usage line is the command's real declared argument shape. It wraps to
+  // the pane width, so the assertion reads the pane as one paragraph.
+  assert.ok(
+    lines
+      .map((line) => line.trim())
+      .join(" ")
+      .includes("usage: /theme color, mono, motion, still or reset"),
+  );
+
+  // A command with no declared argument prints no usage line at all.
+  const plain = palettePreviewLines(
+    {
+      id: "/chat",
+      label: "/chat",
+      hint: "Return to chat",
+      icon: "●",
+      group: "session",
+    },
+    40,
+  );
+  assert.equal(
+    plain.some((line) => line.includes("usage:")),
+    false,
+  );
+  assert.ok(plain.every((line) => visibleLength(line) === 40));
+});
+
+test("the palette list and preview merge to one exact width", () => {
+  const merged = paletteWithPreview(
+    [pad("> /theme", 30), pad("  /chat", 30)],
+    palettePreviewLines(undefined, 20),
+    30,
+    20,
+  );
+  assert.ok(merged.every((line) => visibleLength(line) === 52));
+  assert.ok(merged[0]!.startsWith("> /theme"));
+  assert.ok(merged[0]!.includes("PREVIEW"));
+});
+
+test("the toast stack is suppressed below 60x18 and never exceeds three", () => {
+  assert.equal(toastStackVisible(60, 18), true);
+  assert.equal(toastStackVisible(59, 18), false);
+  assert.equal(toastStackVisible(60, 17), false);
+
+  const at = 1_000;
+  const host = {
+    toasts: [0, 1, 2, 3].map((index) => ({
+      id: `t${index}`,
+      tone: "info" as const,
+      message: `notice ${index}`,
+      icon: "i",
+      at,
+      ttl: 4_000,
+    })),
+    active: undefined,
+  };
+  const rows = toastStackRows(host, {
+    width: 116,
+    now: at,
+    color: false,
+    filled: "#",
+    empty: "-",
+    close: "x",
+  });
+  assert.equal(rows.length, 3, "three toasts at most");
+  assert.ok(rows.every((row) => visibleLength(row) === 116));
+  // Right aligned: the row ends at the frame's right edge.
+  assert.equal(rows[0]!.endsWith("x"), true);
+  assert.equal(rows[0]!.startsWith(" "), true);
+  // A fresh toast carries a full life bar, a half spent one carries half.
+  assert.match(rows[0]!, /#### i \[INFO\] notice 0/);
+  const half = toastStackRows(host, {
+    width: 116,
+    now: at + 2_000,
+    color: false,
+    filled: "#",
+    empty: "-",
+    close: "x",
+  });
+  assert.match(half[0]!, /##-- i \[INFO\] notice 0/);
+  // A sticky toast has no deadline, so its bar stays full.
+  const sticky = toastStackRows(
+    { toasts: [{ ...host.toasts[0]!, ttl: 0 }], active: undefined },
+    {
+      width: 116,
+      now: at + 60_000,
+      color: false,
+      filled: "#",
+      empty: "-",
+      close: "x",
+    },
+  );
+  assert.match(sticky[0]!, /#### i \[INFO\] notice 0/);
+  assert.deepEqual(
+    toastStackRows({ toasts: [], active: undefined }, {
+      width: 116,
+      now: at,
+      color: false,
+      filled: "#",
+      empty: "-",
+      close: "x",
+    }),
+    [],
+  );
+  // A frame too narrow for a message drops the stack instead of a stub.
+  assert.equal(toastStackWidth(20), 0);
+});
+
+test("the sticky transcript line names the breadcrumb and the phase", () => {
+  const line = stickyTranscriptLine({
+    title: "Visual snapshot",
+    phase: "Writing",
+    arrow: "▲",
+    width: 60,
+  });
+  assert.equal(line, "▲ Chat > Visual snapshot · Writing");
+  const untitled = stickyTranscriptLine({
+    title: "",
+    phase: "Idle",
+    arrow: "▲",
+    width: 60,
+  });
+  assert.equal(untitled, "▲ Chat · Idle");
+  const narrow = stickyTranscriptLine({
+    title: "A very long conversation title that cannot fit",
+    phase: "Waiting for approval",
+    arrow: "▲",
+    width: 24,
+  });
+  assert.equal(visibleLength(narrow), 24);
+});
+
+test("a chip span is measured in cells, not code units", () => {
+  const span = cellSpan("  ▤ ctx ▰▰▱▱ 62%", "ctx");
+  assert.deepEqual(span, { start: 4, end: 6 });
+  assert.equal(cellSpan("  ▤ ctx", ""), undefined);
+  assert.equal(cellSpan("  ▤ ctx", "model"), undefined);
+});
+
+test("a session row publishes its model and token fact spans", () => {
+  const icons = sessionRowIcons("unicode");
+  const line = sessionRowLine(
+    {
+      glyph: "○",
+      title: "Fix parser",
+      model: "gpt-5",
+      elapsed: "2m",
+      tokens: "12k",
+      children: 0,
+    },
+    70,
+    icons,
+  );
+  const spans = sessionRowFactSpans(line, icons);
+  assert.ok(spans.model);
+  assert.equal(line.slice(spans.model!.start, spans.model!.end + 1), `${icons.model} gpt-5`);
+  assert.ok(spans.tokens);
+  assert.equal(line.slice(spans.tokens!.start, spans.tokens!.end + 1), `${icons.tokens} 12k`);
+  // A title that happens to look like a fact never claims the fact's span.
+  const tricky = sessionRowFactSpans(`  ○ ${icons.model} not a fact`, icons);
+  assert.equal(tricky.model, undefined);
+  // The inspector painted beside the list is not part of the row.
+  const wide = sessionRowFactSpans(
+    `${line} │ ${icons.tokens} 999`,
+    icons,
+  );
+  assert.equal(wide.tokens?.end, spans.tokens?.end);
+});
+
+test("a palette frame shows a preview pane only where the frame can afford it", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-palette-preview-"));
+  const app = new Workbench({ NOMO_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
+  ui.palette = {
+    ...initialPaletteState(paletteFromCommands(TUI_COMMANDS)),
+    query: "mcp",
+  };
+  const wide = stripAnsi(
+    renderWorkspace(ui, 120, 40, "", false, false, { color: false, motion: false }),
+  );
+  assert.match(wide, /PREVIEW ·/);
+  assert.match(wide, /usage: \/mcp/);
+  const narrow = stripAnsi(
+    renderWorkspace(ui, 80, 24, "", false, false, { color: false, motion: false }),
+  );
+  assert.doesNotMatch(narrow, /PREVIEW ·/);
+  for (const [columns, rows] of [[120, 40], [80, 24], [40, 12]] as const) {
+    const frame = renderWorkspace(ui, columns, rows, "", false, false, {
+      color: false,
+      motion: false,
+    });
+    const lines = frame.split("\n");
+    assert.equal(lines.length, rows, `${columns}x${rows} rows`);
+    assert.ok(
+      lines.every((line) => visibleLength(line) <= columns),
+      `${columns}x${rows} overflows`,
+    );
+  }
+});
+
+test("toasts are a right aligned stack above the composer and vanish at 40x12", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-toast-stack-"));
+  const app = new Workbench({ NOMO_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
+  ui.choose("chat");
+  const now = Date.parse("2026-01-02T03:04:10.000Z");
+  ui.toasts = {
+    toasts: [
+      { id: "a", tone: "info", message: "Filter set", icon: "i", at: now, ttl: 4_000 },
+      { id: "b", tone: "success", message: "Connected", icon: "●", at: now, ttl: 4_000 },
+      { id: "c", tone: "info", message: "Pet docked", icon: "i", at: now, ttl: 4_000 },
+      { id: "d", tone: "info", message: "Fourth", icon: "i", at: now, ttl: 4_000 },
+    ],
+    active: undefined,
+  };
+  const wide = stripAnsi(
+    renderWorkspace(ui, 120, 40, "", false, false, {
+      color: false,
+      motion: false,
+      now,
+    }),
+  );
+  const wideRows = wide.split("\n");
+  assert.equal(wideRows.length, 40);
+  assert.match(wide, /Filter set/);
+  assert.match(wide, /Pet docked/);
+  assert.doesNotMatch(wide, /Fourth/, "the stack caps at three");
+  // The stack sits above the composer rail, never below it.
+  const railRow = wideRows.findIndex((row) => row.includes("╭─ Draft"));
+  const toastRow = wideRows.findIndex((row) => row.includes("Filter set"));
+  assert.ok(toastRow >= 0 && toastRow < railRow, "toast above the composer");
+  assert.ok(
+    ui.rowHitTargets.some((target) => target.kind === "toast"),
+    "toast rows are dismissible",
+  );
+
+  const small = stripAnsi(
+    renderWorkspace(ui, 40, 12, "", false, false, {
+      color: false,
+      motion: false,
+      now,
+    }),
+  );
+  assert.doesNotMatch(small, /Filter set/);
+  assert.match(small, /╭─ Draft/);
+  assert.match(small, /← Sessions/);
+  const smallRows = small.split("\n");
+  assert.equal(smallRows.length, 12);
+  assert.ok(smallRows.every((row) => visibleLength(row) <= 40));
+});
+
+test("a scrolled transcript carries a sticky breadcrumb without moving the composer", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-sticky-"));
+  const app = new Workbench({ NOMO_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
+  ui.choose("chat");
+  ui.model = "fixture-model";
+  ui.sessionId = "sess-sticky";
+  t.mock.method(app, "get", (id: string) =>
+    id === "sess-sticky"
+      ? sessionFixture({
+          id: "sess-sticky",
+          title: "Sticky session",
+          events: Array.from({ length: 40 }, (_, index) => ({
+            seq: index + 1,
+            at: `2026-01-02T03:00:${String(index % 60).padStart(2, "0")}.000Z`,
+            kind: "assistant" as const,
+            type: "message.completed",
+            text: `Line ${index + 1}`,
+            payload: {},
+            runId: "run-sticky",
+            sessionId: "sess-sticky",
+          })),
+        })
+      : undefined,
+  );
+  const following = stripAnsi(
+    renderWorkspace(ui, 100, 30, "", false, false, { color: false, motion: false }),
+  );
+  assert.doesNotMatch(following, /Chat > Sticky session/);
+  ui.scroll = 3;
+  const scrolled = stripAnsi(
+    renderWorkspace(ui, 100, 30, "", false, false, { color: false, motion: false }),
+  );
+  assert.match(scrolled, /Chat > Sticky session/);
+  const rows = scrolled.split("\n");
+  assert.equal(rows.length, 30);
+  assert.ok(rows.every((row) => visibleLength(row) <= 100));
+  assert.match(scrolled, /╭─ Draft/, "the composer keeps its rows");
+});
+
+test("the composer chips publish clickable rects that match their text", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-chip-targets-"));
+  const app = new Workbench({ NOMO_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
+  ui.choose("chat");
+  ui.model = "fixture-model";
+  const frame = stripAnsi(
+    renderWorkspace(ui, 120, 32, "see @plan.md", false, false, {
+      color: false,
+      motion: false,
+    }),
+  );
+  const rows = frame.split("\n");
+  const chips = ui.rowHitTargets.filter(
+    (target): target is Extract<(typeof ui.rowHitTargets)[number], { kind: "chip" }> =>
+      target.kind === "chip",
+  );
+  assert.ok(
+    chips.some((chip) => chip.action === "model"),
+    "the model chip is clickable",
+  );
+  assert.ok(
+    chips.some((chip) => chip.action === "usage"),
+    "the context meter is clickable",
+  );
+  for (const chip of chips) {
+    const row = rows[chip.row - 1]!;
+    const text = [...row].slice(chip.start - 1, chip.end).join("");
+    assert.ok(text.trim() !== "", `${chip.action} rect lands on text`);
+  }
+});
+
