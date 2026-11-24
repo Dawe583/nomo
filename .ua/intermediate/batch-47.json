@@ -1,0 +1,41 @@
+{
+ "nodes": [
+  {
+   "id": "file:apps/desktop/src-tauri/Cargo.toml",
+   "type": "config",
+   "name": "Cargo.toml",
+   "filePath": "apps/desktop/src-tauri/Cargo.toml",
+   "summary": "Cargo.toml \u2014 toml config, 25 lines.",
+   "tags": [
+    "toml",
+    "config"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/desktop/src-tauri/tauri.conf.json",
+   "type": "config",
+   "name": "tauri.conf.json",
+   "filePath": "apps/desktop/src-tauri/tauri.conf.json",
+   "summary": "tauri.conf.json \u2014 json config, 23 lines.",
+   "tags": [
+    "json",
+    "config"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/desktop/src-tauri/tauri.windows.conf.json",
+   "type": "config",
+   "name": "tauri.windows.conf.json",
+   "filePath": "apps/desktop/src-tauri/tauri.windows.conf.json",
+   "summary": "tauri.windows.conf.json \u2014 json config, 1 lines.",
+   "tags": [
+    "json",
+    "config"
+   ],
+   "complexity": "simple"
+  }
+ ],
+ "edges": []
+}

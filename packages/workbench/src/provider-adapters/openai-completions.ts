@@ -163,7 +163,17 @@ export class OpenAICompletionsAdapter {
         content,
         ...(toolCalls ? { tool_calls: toolCalls } : {}),
       },
-      usage: decoded.usage,
+      // Zen and a few gateways report a per-call cost beside the tokens. It is
+      // passed through as cost_usd so the harness can record what a call
+      // actually cost instead of estimating it.
+      usage: decoded.usage
+        ? {
+            ...decoded.usage,
+            ...(Number.isFinite((decoded.usage as { cost?: unknown }).cost)
+              ? { cost_usd: (decoded.usage as { cost: number }).cost }
+              : {}),
+          }
+        : undefined,
     };
   }
 }

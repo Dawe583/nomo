@@ -1,0 +1,245 @@
+{
+ "nodes": [
+  {
+   "id": "file:docs/MOBILE-ASCII-DELIVERY.md",
+   "type": "document",
+   "name": "MOBILE-ASCII-DELIVERY.md",
+   "filePath": "docs/MOBILE-ASCII-DELIVERY.md",
+   "summary": "MOBILE-ASCII-DELIVERY.md \u2014 markdown document, 98 lines, 7 sections: Mobile ASCII delivery, 13 September 2026, Scope and evidence, Delivered, Verification (+3 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/MOBILE-LAYOUT-QA.md",
+   "type": "document",
+   "name": "MOBILE-LAYOUT-QA.md",
+   "filePath": "docs/MOBILE-LAYOUT-QA.md",
+   "summary": "MOBILE-LAYOUT-QA.md \u2014 markdown document, 58 lines, 3 sections: Mobile layout checkpoint, 2026-09-14, Delivered, Verification.",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/MOBILE-WEB-REFINEMENT.md",
+   "type": "document",
+   "name": "MOBILE-WEB-REFINEMENT.md",
+   "filePath": "docs/MOBILE-WEB-REFINEMENT.md",
+   "summary": "MOBILE-WEB-REFINEMENT.md \u2014 markdown document, 80 lines, 4 sections: Mobile web refinement, Changes, Verification, Follow-up verification, 2026-09-13.",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/NOMO-AGENT-HARNESS-IMPLEMENTATION-SPEC.md",
+   "type": "document",
+   "name": "NOMO-AGENT-HARNESS-IMPLEMENTATION-SPEC.md",
+   "filePath": "docs/NOMO-AGENT-HARNESS-IMPLEMENTATION-SPEC.md",
+   "summary": "NOMO-AGENT-HARNESS-IMPLEMENTATION-SPEC.md \u2014 markdown document, 229 lines, 11 sections: NOMO agent harness implementation specification, Goal, Capability map, Rename and compatibility contract (+7 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:docs/NOMO-AGENT-HARNESS-SPEC.md",
+   "type": "document",
+   "name": "NOMO-AGENT-HARNESS-SPEC.md",
+   "filePath": "docs/NOMO-AGENT-HARNESS-SPEC.md",
+   "summary": "NOMO-AGENT-HARNESS-SPEC.md \u2014 markdown document, 865 lines, 34 sections: NOMO agent harness, specifikace, 1. Co omp skute\u010dn\u011b d\u011bl\u00e1, 1.1 Pam\u011b\u0165, jak se u\u010d\u00ed, 1.2 Autolearn, kdy se u\u010d\u00ed (+30 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "file:docs/NOMO-ALPHA-READINESS-2026-09-13.md",
+   "type": "document",
+   "name": "NOMO-ALPHA-READINESS-2026-09-13.md",
+   "filePath": "docs/NOMO-ALPHA-READINESS-2026-09-13.md",
+   "summary": "NOMO-ALPHA-READINESS-2026-09-13.md \u2014 markdown document, 136 lines, 9 sections: NOMO: p\u0159ipravenost k testov\u00e1n\u00ed, 13. 9. 2026, Verdikt, GLM 5.3 Free a dne\u0161n\u00ed ov\u011b\u0159en\u00ed, Slib webu versus skute\u010dnost (+5 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/NOMO-LOCAL-IDENTITY-DEMO.md",
+   "type": "document",
+   "name": "NOMO-LOCAL-IDENTITY-DEMO.md",
+   "filePath": "docs/NOMO-LOCAL-IDENTITY-DEMO.md",
+   "summary": "NOMO-LOCAL-IDENTITY-DEMO.md \u2014 markdown document, 89 lines, 9 sections: NOMO local identity demo, Prerequisites, Setup, The demo flow (+5 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/OAUTH-INTEGRATIONS.md",
+   "type": "document",
+   "name": "OAUTH-INTEGRATIONS.md",
+   "filePath": "docs/OAUTH-INTEGRATIONS.md",
+   "summary": "OAUTH-INTEGRATIONS.md \u2014 markdown document, 68 lines, 8 sections: Cloud account connections, Agent access, Provider registration, GitHub (+4 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/OMP-HANDOFF-AGENT-HARNESS.md",
+   "type": "document",
+   "name": "OMP-HANDOFF-AGENT-HARNESS.md",
+   "filePath": "docs/OMP-HANDOFF-AGENT-HARNESS.md",
+   "summary": "OMP-HANDOFF-AGENT-HARNESS.md \u2014 markdown document, 240 lines, 22 sections: OMP Session Handoff, Agent Harness (2026-10-07), Where the tree is right now, What this session delivered, the Agent Harness (kus 1-5), The three non-negotiable invariants in the code (+18 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:docs/OMPHARNESS-SUPERSEDED-KUS7.md",
+   "type": "document",
+   "name": "OMPHARNESS-SUPERSEDED-KUS7.md",
+   "filePath": "docs/OMPHARNESS-SUPERSEDED-KUS7.md",
+   "summary": "OMPHARNESS-SUPERSEDED-KUS7.md \u2014 markdown document, 90 lines, 4 sections: OMP harness, kus 6 and kus 7: superseded, Score rows: the ported module is a different design, not a refactor, Proposal rows: the port would change the shape of the signed ledger, What survived, so nobody loses kus 6.",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/OPENCODE-HANDOFF.md",
+   "type": "document",
+   "name": "OPENCODE-HANDOFF.md",
+   "filePath": "docs/OPENCODE-HANDOFF.md",
+   "summary": "OPENCODE-HANDOFF.md \u2014 markdown document, 228 lines, 12 sections: OPENCODE handoff, Where the tree is right now, Two defects in 7111cc0, and the fix now in the tree, Third change, deliberate and beyond the two defects (+8 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:docs/OPERATIONS.md",
+   "type": "document",
+   "name": "OPERATIONS.md",
+   "filePath": "docs/OPERATIONS.md",
+   "summary": "OPERATIONS.md \u2014 markdown document, 626 lines, 26 sections: NOMO operations runbook, Policy grammar quick table, Ledger directory layout, The verification key is not the signing key (+22 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "file:docs/PLATFORM-REDESIGN-PLAN.md",
+   "type": "document",
+   "name": "PLATFORM-REDESIGN-PLAN.md",
+   "filePath": "docs/PLATFORM-REDESIGN-PLAN.md",
+   "summary": "PLATFORM-REDESIGN-PLAN.md \u2014 markdown document, 212 lines, 14 sections: Platform redesign plan: iOS, macOS and web, The decision this plan implements, What exists today, iOS (+10 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:docs/POLICY-REFERENCE.md",
+   "type": "document",
+   "name": "POLICY-REFERENCE.md",
+   "filePath": "docs/POLICY-REFERENCE.md",
+   "summary": "POLICY-REFERENCE.md \u2014 markdown document, 431 lines, 14 sections: NOMO policy file reference, File shape, Rule fields, Match keys (+10 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:docs/PREMISE-VERIFICATION.md",
+   "type": "document",
+   "name": "PREMISE-VERIFICATION.md",
+   "filePath": "docs/PREMISE-VERIFICATION.md",
+   "summary": "PREMISE-VERIFICATION.md \u2014 markdown document, 141 lines, 4 sections: Historical premise verification: earlier VOID direction, Verdicts, Supporting spot-checks (report claims confirmed in passing), What this means for \"an AI agentic reverse tool for security\".",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/PRESERVED-LANES.md",
+   "type": "document",
+   "name": "PRESERVED-LANES.md",
+   "filePath": "docs/PRESERVED-LANES.md",
+   "summary": "PRESERVED-LANES.md \u2014 markdown document, 153 lines, 10 sections: Preserved lanes, triage of the `wip: preserve uncommitted work` branches, Uniquely held work, lost unless someone reclaims it, `preserve/lane-cli-ops`, the only lane holding a coherent module set, `preserve/lane-cli-wire2`, the same code, a different operations document (+6 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:docs/PRIME-HANDOFF.md",
+   "type": "document",
+   "name": "PRIME-HANDOFF.md",
+   "filePath": "docs/PRIME-HANDOFF.md",
+   "summary": "PRIME-HANDOFF.md \u2014 markdown document, 193 lines, 8 sections: Prime continuation, 11 September 2026, Source recovered, Work completed, Verification (+4 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:docs/PRIME-WEB-BRIDGE.md",
+   "type": "document",
+   "name": "PRIME-WEB-BRIDGE.md",
+   "filePath": "docs/PRIME-WEB-BRIDGE.md",
+   "summary": "PRIME-WEB-BRIDGE.md \u2014 markdown document, 58 lines, 1 sections: Prime Agent in the NOMO web app.",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/RECEIPT-VERIFY.sql",
+   "type": "config",
+   "name": "RECEIPT-VERIFY.sql",
+   "filePath": "docs/RECEIPT-VERIFY.sql",
+   "summary": "RECEIPT-VERIFY.sql \u2014 sql data, 139 lines.",
+   "tags": [
+    "sql",
+    "data"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/RECOVERY-CONTRACT.md",
+   "type": "document",
+   "name": "RECOVERY-CONTRACT.md",
+   "filePath": "docs/RECOVERY-CONTRACT.md",
+   "summary": "RECOVERY-CONTRACT.md \u2014 markdown document, 485 lines, 13 sections: Executable recovery contract, Managed execution, Persistent recovery jobs, Trust boundary (+9 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  }
+ ],
+ "edges": []
+}

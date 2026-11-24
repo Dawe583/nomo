@@ -1,0 +1,41 @@
+{
+ "nodes": [
+  {
+   "id": "file:cloud/0001-account-ownership.sql",
+   "type": "config",
+   "name": "0001-account-ownership.sql",
+   "filePath": "cloud/0001-account-ownership.sql",
+   "summary": "0001-account-ownership.sql \u2014 sql data, 231 lines.",
+   "tags": [
+    "sql",
+    "data"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:cloud/0002-immutable-function-search-path.sql",
+   "type": "config",
+   "name": "0002-immutable-function-search-path.sql",
+   "filePath": "cloud/0002-immutable-function-search-path.sql",
+   "summary": "0002-immutable-function-search-path.sql \u2014 sql data, 2 lines.",
+   "tags": [
+    "sql",
+    "data"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:cloud/schema.sql",
+   "type": "config",
+   "name": "schema.sql",
+   "filePath": "cloud/schema.sql",
+   "summary": "schema.sql \u2014 sql data, 46 lines.",
+   "tags": [
+    "sql",
+    "data"
+   ],
+   "complexity": "simple"
+  }
+ ],
+ "edges": []
+}

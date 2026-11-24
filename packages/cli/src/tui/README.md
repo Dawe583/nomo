@@ -16,6 +16,14 @@ The renderers accept data. They do not fetch, classify, approve, replay or
 verify anything themselves. Those actions remain in the packages that own the
 domain behaviour.
 
+The interactive renderer is deliberately hand-written, and the frame string is
+its contract. `docs/DECISIONS.md`, "Terminal component library: not adopted,
+2026-11-25", records why Ink and `@opentui/core` were rejected, every file a
+migration would replace, and the measured cost of the two attempts already
+made. An Ink skeleton was tried and removed the same day: it carried none of
+the rails, chips, pet, icons or panels, so it was visually worse than the
+renderer it would replace.
+
 ## Visual contract
 
 The workspace frame uses box drawing with joined corners, one unbroken border

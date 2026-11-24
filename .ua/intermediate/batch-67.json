@@ -1,0 +1,41 @@
+{
+ "nodes": [
+  {
+   "id": "file:packages/proxy/docs/interface.md",
+   "type": "document",
+   "name": "interface.md",
+   "filePath": "packages/proxy/docs/interface.md",
+   "summary": "interface.md \u2014 markdown document, 249 lines, 13 sections: The proxy interface, WP-01 frozen design, Modules, The flow, in text, Initialize (+9 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/proxy/docs/message-inventory.md",
+   "type": "document",
+   "name": "message-inventory.md",
+   "filePath": "packages/proxy/docs/message-inventory.md",
+   "summary": "message-inventory.md \u2014 markdown document, 249 lines, 17 sections: MCP message inventory (client and server halves), 1. Lifecycle: initialize handshake, ClientCapabilities, every field, ServerCapabilities, every field (+13 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/proxy/docs/message-inventory.verified.md",
+   "type": "document",
+   "name": "message-inventory.verified.md",
+   "filePath": "packages/proxy/docs/message-inventory.verified.md",
+   "summary": "message-inventory.verified.md \u2014 markdown document, 25 lines, 1 sections: Verification: message-inventory.md.",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  }
+ ],
+ "edges": []
+}

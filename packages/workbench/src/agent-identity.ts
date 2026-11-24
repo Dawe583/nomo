@@ -82,6 +82,7 @@ export class LocalAgentIdentityIssuer {
   readonly #wallNow: () => number;
   readonly #grantsByDigest = new Map<string, GrantRecord>();
   readonly #digestByRun = new Map<string, string>();
+  readonly #revokedAgents = new Set<string>();
   #lastMonotonicNow = Number.NEGATIVE_INFINITY;
   #lastWallNow = Number.NEGATIVE_INFINITY;
 
@@ -104,6 +105,8 @@ export class LocalAgentIdentityIssuer {
       throw new TypeError("Invalid local agent identity binding");
     }
 
+    if (this.#revokedAgents.has(binding.agentId))
+      throw new TypeError("Revoked agent cannot receive a grant");
     const toolScope = canonicalToolScope(binding.toolScope);
     const now = this.#readNow();
     if (now === null) throw new Error("Local agent grant clock is invalid");
@@ -152,6 +155,7 @@ export class LocalAgentIdentityIssuer {
     const digest = tokenDigest(token);
     const record = this.#grantsByDigest.get(digest);
     if (!record) return null;
+    if (this.#revokedAgents.has(record.identity.agentId)) return null;
     const { identity } = record;
     const expired =
       now.monotonic >= record.expiresAtMonotonic || now.wall >= identity.expiresAt;
@@ -177,6 +181,30 @@ export class LocalAgentIdentityIssuer {
 
   revoke(runId: string): boolean {
     return this.#dropRun(runId);
+  }
+
+  /**
+   * Agent-wide revocation, distinct from a run stop: every grant the agent
+   * holds is dropped and no new grant is issued to it again. The spec's
+   * fleet-wide revoke is the same operation coordinated across nodes and is
+   * not claimed here.
+   */
+  revokeAgent(agentId: string): number {
+    if (!validIdentifier(agentId))
+      throw new TypeError("Invalid local agent identity binding");
+    this.#revokedAgents.add(agentId);
+    let dropped = 0;
+    for (const [digest, record] of [...this.#grantsByDigest]) {
+      if (record.identity.agentId !== agentId) continue;
+      this.#grantsByDigest.delete(digest);
+      this.#digestByRun.delete(record.identity.runId);
+      dropped += 1;
+    }
+    return dropped;
+  }
+
+  isAgentRevoked(agentId: string): boolean {
+    return this.#revokedAgents.has(agentId);
   }
 
   #readNow(): ClockReading | null {

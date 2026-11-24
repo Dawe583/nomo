@@ -1615,3 +1615,116 @@ the tree and report UNRUN on a machine without the Apple toolchain, which is
 what a suite nobody could run has to report. A mention of macOS or Linux as an
 operating system the CLI or the Tauri desktop app runs on is a platform fact
 and stays in the plans.
+
+## Terminal component library: not adopted, 2026-11-25
+
+**Decision.** Whether the interactive workspace should be rendered by a
+terminal component library (Ink or `@opentui/core`) instead of the hand-written
+renderer in `packages/cli/src/tui/`.
+
+**Choice.** Not adopted. The renderer stays hand-written and the frame string
+stays the contract: `renderWorkspace(ui, columns, rows, input, editing, busy,
+visuals)` returns exactly `rows` lines, each padded to `columns`, and that one
+string is what the snapshots, the accessibility tests and the PTY matrix pin.
+No migration is started by this decision.
+
+**Why the library would not buy what this renderer needs.** The renderer is a
+pure function from `WorkspaceTui` state to a width-exact frame, not a retained
+widget tree. Every requirement below is a property of the frame, and each one
+is the thing a React reconciler with its own layout and paint model abstracts
+away:
+
+- **Width-exact rails.** `composerTopRail` must emit exactly 40 cells at 40
+  columns, and a test asserts the cell count. The slot ladder drops a chip whole
+  rather than clipping it. A library's flexbox wrapping is a second width model
+  that has to be reconciled with this one on every row.
+- **Its own cell-width table.** `layout.ts:34` records the package's
+  "no dependency rule" and implements East Asian wide, combining, emoji and
+  symbol-block widths by hand, because a wrong model "made the model undercount
+  real terminal rows while agreeing with itself". That is the worst failure
+  shape for a border-drawing renderer.
+- **Glyph presets.** `NOMO_TUI_SYMBOLS=unicode|ascii|nerd` selects from three
+  glyph sets with ASCII parity, and 59 bundled icon files plus the Kitty
+  graphics path in `brand.ts` sit behind them. `brand.ts` still carries the
+  measured Ink defect: "Ink drops Kitty escapes from frames".
+- **Monochrome and motion guarantees.** `a11y.test.ts` holds that every fact a
+  frame prints is a string: a monochrome terminal, the ASCII preset and a
+  frozen motion frame carry the same words as truecolour, Unicode and animated
+  ones. Colour, glyph weight and motion are decoration, never the only carrier
+  of meaning.
+- **Deterministic snapshots.** 40 frames across five sizes are pinned by
+  SHA-256 of the ANSI-stripped frame plus row count and widest row, with a
+  pinned clock, cwd, git cache and fixtures.
+- **The PTY matrix.** `scripts/src/verify-tui-terminal.py` is 1,280 lines with
+  10 scenario bodies and 54 passing assertions across 40x12, 80x24, 120x40,
+  160x45 and 200x48, matching exact text at exact positions.
+
+**There is no measured performance pressure to relieve.** `perf-budget.test.ts`
+measured a steady-state p95 of 2.98 ms at 200x48 over a 12,799-row transcript
+and 2.41 ms at 80x24, against a 50 ms regression ceiling (run 2026-11-25). The
+adapter already compares rows and writes only changed lines with cursor
+addressing (`workspace-terminal.ts:221-255`), so the native-renderer argument
+for `@opentui/core` does not apply to a workload that is already 16x inside
+budget.
+
+**What it would replace.** All 49 production files in `packages/cli/src/tui/`
+(32,207 lines, 1.16 MB). The load-bearing ones are `workspace.ts` (16,430),
+`workspace-runner.ts` (3,274), `pet.ts` (1,526), `theme-config.ts` (623),
+`brand.ts` (474), `watch.ts` (459), `run-timeline.ts` (454), `palette.ts` (450),
+`activity.ts` (421), `motion.ts` (404), `layout.ts` (385), `charts.ts` (383),
+`workspace-terminal.ts` (383), `session-tree.ts` (378), `tool-browser.ts` (365),
+`inspector.ts` (362), `blocks.ts` (344), `cheatsheet.ts` (330) and
+`diff-panel.ts` (307). It would not replace Workbench, the ledger, policy, the
+proxy or the registry: those own behaviour, and the renderer only reads their
+state. The domain content (what each row says and why) lives inside the same
+files, so a migration has to extract it before it can repaint it.
+
+**Measured cost of the two attempts already made.**
+
+- Ink `^8.0.0` was a `packages/cli` dependency from 2026-10-28 (`0748d41e`) and
+  was gone from the mainline by 2026-11-04 (`14a77b36`). Its known defect is
+  still documented in `brand.ts`.
+- `@opentui/core` 0.6.8 with `@opentui/react` and React 19.3.1 arrived in
+  `dd1e3dd4` (2026-11-01) as an additive adapter over the existing state:
+  `workspace-app.tsx` 518 lines, `workspace-app-model.ts` 160,
+  `workspace-app.render.test.tsx` 635, `workspace-app.test.ts` 95, plus
+  `workspace-runner.ts` +298, `bundle-cli.mjs` +52, `rollup.config.mjs` +19 and
+  179 lockfile lines. It rendered the same `workspaceSurface` rows and kept the
+  text renderer for one-shot snapshots, which is the cheapest possible shape.
+- It was deleted whole in `d3252367` (2026-11-23): -2,286 lines across four
+  files, with `react`, `@types/react`, `@opentui/core` and `@opentui/react`
+  removed from `packages/cli/package.json`, and no replacement capability kept.
+  `scripts/src/verify-opentui-terminal.py` (322 lines) is still in the tree
+  with no caller.
+- A real replacement is therefore not "port `workspace.ts`". It is 32,207
+  production lines and 20,191 test lines, with all 40 snapshot hashes and all
+  54 PTY assertions re-derived against a different wrapping, width and paint
+  model. The two earlier attempts are the only local measurement of that cost,
+  and neither survived.
+
+**What would be gained, stated fairly.** A JSX component model that new
+contributors can read; library-maintained key, paste and mouse parsing; a native
+renderer with damage tracking and scroll regions; and less bespoke code per new
+screen. None of these is a current defect: the key, paste, mouse and terminal
+lifecycle paths are already covered by `workspace-input-parity.test.ts`,
+`workspace-terminal-lifecycle.test.ts` and the PTY matrix.
+
+**Re-open triggers.** This decision is not permanent. Re-open it when one of
+these becomes measurable:
+
+1. A steady-state frame p95 exceeds the 50 ms ceiling at 200x48 on the target
+   machine and profiling puts the cost in painting rather than row building.
+2. NOMO needs continuous partial redraws or scroll regions the full-frame plus
+   row-diff model cannot meet, such as a live view above roughly 10 frames per
+   second.
+3. New-screen throughput becomes the bottleneck, measured as screens shipped
+   against review cost, not as an opinion about JSX.
+4. A candidate library can reproduce all 40 snapshot hashes and the 54 PTY
+   assertions byte for byte behind an adapter, with the Kitty graphics path and
+   the monochrome guarantees intact.
+
+**Cheapest bounded experiment if someone insists.** Render one screen (Help or
+Models) through the candidate library behind an adapter and diff its bytes
+against the existing snapshot at the five sizes. No production switch, no
+re-baseline, no dependency added to `packages/cli/package.json` until that diff
+is empty. If it is not empty, this decision stands.

@@ -1,0 +1,2557 @@
+{
+ "nodes": [
+  {
+   "id": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidAppearance.swift",
+   "type": "file",
+   "name": "VoidAppearance.swift",
+   "filePath": "apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidAppearance.swift",
+   "summary": "VoidAppearance.swift \u2014 swift code, 34 lines, 2 functions, 2 classes, 8 exports, 0 imports.",
+   "tags": [
+    "swift",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidAppearance.swift:VoidAppearance.init",
+   "type": "function",
+   "name": "VoidAppearance.init",
+   "filePath": "apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidAppearance.swift",
+   "lineRange": [
+    12,
+    14
+   ],
+   "summary": "VoidAppearance.init(scheme) \u2014 function in VoidAppearance.swift, lines 12-14.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidAppearance.swift:VoidColorComponents.init",
+   "type": "function",
+   "name": "VoidColorComponents.init",
+   "filePath": "apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidAppearance.swift",
+   "lineRange": [
+    28,
+    33
+   ],
+   "summary": "VoidColorComponents.init(red, green, blue, alpha) \u2014 function in VoidAppearance.swift, lines 28-33.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidAppearance.swift:VoidAppearance",
+   "type": "class",
+   "name": "VoidAppearance",
+   "filePath": "apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidAppearance.swift",
+   "lineRange": [
+    8,
+    15
+   ],
+   "summary": "VoidAppearance \u2014 class in VoidAppearance.swift, lines 8-15, methods: init.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidAppearance.swift:VoidColorComponents",
+   "type": "class",
+   "name": "VoidColorComponents",
+   "filePath": "apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidAppearance.swift",
+   "lineRange": [
+    22,
+    34
+   ],
+   "summary": "VoidColorComponents \u2014 class in VoidAppearance.swift, lines 22-34, methods: init.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidContrast.swift",
+   "type": "file",
+   "name": "VoidContrast.swift",
+   "filePath": "apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidContrast.swift",
+   "summary": "VoidContrast.swift \u2014 swift code, 67 lines, 7 functions, 1 classes, 7 exports, 0 imports.",
+   "tags": [
+    "swift",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidContrast.swift:relativeLuminance",
+   "type": "function",
+   "name": "relativeLuminance",
+   "filePath": "apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidContrast.swift",
+   "lineRange": [
+    15,
+    34
+   ],
+   "summary": "relativeLuminance(red, green, blue) \u2014 function in VoidContrast.swift, lines 15-34.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidContrast.swift:ratio",
+   "type": "function",
+   "name": "ratio",
+   "filePath": "apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidContrast.swift",
+   "lineRange": [
+    38,
+    58
+   ],
+   "summary": "ratio(foreground, background) \u2014 function in VoidContrast.swift, lines 38-58.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidContrast.swift:linear",
+   "type": "function",
+   "name": "linear",
+   "filePath": "apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidContrast.swift",
+   "lineRange": [
+    62,
+    66
+   ],
+   "summary": "linear(channel) \u2014 function in VoidContrast.swift, lines 62-66.",
+   "tags": [
+    "swift",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidContrast.swift:VoidContrast",
+   "type": "class",
+   "name": "VoidContrast",
+   "filePath": "apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidContrast.swift",
+   "lineRange": [
+    9,
+    67
+   ],
+   "summary": "VoidContrast \u2014 class in VoidContrast.swift, lines 9-67, methods: relativeLuminance, relativeLuminance, relativeLuminance, ratio, ratio, ratio.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidControlSize.swift",
+   "type": "file",
+   "name": "VoidControlSize.swift",
+   "filePath": "apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidControlSize.swift",
+   "summary": "VoidControlSize.swift \u2014 swift code, 36 lines, 1 functions, 1 classes, 4 exports, 0 imports.",
+   "tags": [
+    "swift",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidControlSize.swift:isValidHitTarget",
+   "type": "function",
+   "name": "isValidHitTarget",
+   "filePath": "apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidControlSize.swift",
+   "lineRange": [
+    33,
+    35
+   ],
+   "summary": "isValidHitTarget(points) \u2014 function in VoidControlSize.swift, lines 33-35.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidControlSize.swift:VoidControlSize",
+   "type": "class",
+   "name": "VoidControlSize",
+   "filePath": "apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidControlSize.swift",
+   "lineRange": [
+    8,
+    36
+   ],
+   "summary": "VoidControlSize \u2014 class in VoidControlSize.swift, lines 8-36, methods: isValidHitTarget.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidPalette.swift",
+   "type": "file",
+   "name": "VoidPalette.swift",
+   "filePath": "apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidPalette.swift",
+   "summary": "VoidPalette.swift \u2014 swift code, 86 lines, 3 functions, 1 classes, 3 exports, 0 imports.",
+   "tags": [
+    "swift",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidPalette.swift:platformColor",
+   "type": "function",
+   "name": "platformColor",
+   "filePath": "apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidPalette.swift",
+   "lineRange": [
+    23,
+    43
+   ],
+   "summary": "platformColor(role) \u2014 function in VoidPalette.swift, lines 23-43.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidPalette.swift:color",
+   "type": "function",
+   "name": "color",
+   "filePath": "apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidPalette.swift",
+   "lineRange": [
+    47,
+    58
+   ],
+   "summary": "color(role, appearance) \u2014 function in VoidPalette.swift, lines 47-58.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidPalette.swift:systemBackground",
+   "type": "function",
+   "name": "systemBackground",
+   "filePath": "apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidPalette.swift",
+   "lineRange": [
+    65,
+    85
+   ],
+   "summary": "systemBackground(role) \u2014 function in VoidPalette.swift, lines 65-85.",
+   "tags": [
+    "swift",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidPalette.swift:VoidPalette",
+   "type": "class",
+   "name": "VoidPalette",
+   "filePath": "apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidPalette.swift",
+   "lineRange": [
+    20,
+    86
+   ],
+   "summary": "VoidPalette \u2014 class in VoidPalette.swift, lines 20-86, methods: platformColor, color, systemBackground.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidRadii.swift",
+   "type": "file",
+   "name": "VoidRadii.swift",
+   "filePath": "apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidRadii.swift",
+   "summary": "VoidRadii.swift \u2014 swift code, 22 lines, 2 functions, 1 classes, 2 exports, 0 imports.",
+   "tags": [
+    "swift",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidRadii.swift:nests",
+   "type": "function",
+   "name": "nests",
+   "filePath": "apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidRadii.swift",
+   "lineRange": [
+    11,
+    13
+   ],
+   "summary": "nests(inner, outer) \u2014 function in VoidRadii.swift, lines 11-13.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidRadii.swift:largestNesting",
+   "type": "function",
+   "name": "largestNesting",
+   "filePath": "apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidRadii.swift",
+   "lineRange": [
+    17,
+    21
+   ],
+   "summary": "largestNesting(outer) \u2014 function in VoidRadii.swift, lines 17-21.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidRadii.swift:extension VoidRadii",
+   "type": "class",
+   "name": "extension VoidRadii",
+   "filePath": "apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidRadii.swift",
+   "lineRange": [
+    8,
+    22
+   ],
+   "summary": "extension VoidRadii \u2014 class in VoidRadii.swift, lines 8-22, methods: nests, largestNesting.",
+   "tags": [
+    "swift",
+    "class"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidSpacing.swift",
+   "type": "file",
+   "name": "VoidSpacing.swift",
+   "filePath": "apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidSpacing.swift",
+   "summary": "VoidSpacing.swift \u2014 swift code, 29 lines, 3 functions, 1 classes, 3 exports, 0 imports.",
+   "tags": [
+    "swift",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidSpacing.swift:isOnRhythm",
+   "type": "function",
+   "name": "isOnRhythm",
+   "filePath": "apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidSpacing.swift",
+   "lineRange": [
+    11,
+    13
+   ],
+   "summary": "isOnRhythm(value) \u2014 function in VoidSpacing.swift, lines 11-13.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidSpacing.swift:steps",
+   "type": "function",
+   "name": "steps",
+   "filePath": "apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidSpacing.swift",
+   "lineRange": [
+    18,
+    22
+   ],
+   "summary": "steps(value) \u2014 function in VoidSpacing.swift, lines 18-22.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidSpacing.swift:measure",
+   "type": "function",
+   "name": "measure",
+   "filePath": "apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidSpacing.swift",
+   "lineRange": [
+    26,
+    28
+   ],
+   "summary": "measure(width) \u2014 function in VoidSpacing.swift, lines 26-28.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidSpacing.swift:extension VoidSpacing",
+   "type": "class",
+   "name": "extension VoidSpacing",
+   "filePath": "apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidSpacing.swift",
+   "lineRange": [
+    8,
+    29
+   ],
+   "summary": "extension VoidSpacing \u2014 class in VoidSpacing.swift, lines 8-29, methods: isOnRhythm, steps, measure.",
+   "tags": [
+    "swift",
+    "class"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidType.swift",
+   "type": "file",
+   "name": "VoidType.swift",
+   "filePath": "apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidType.swift",
+   "summary": "VoidType.swift \u2014 swift code, 93 lines, 3 functions, 3 classes, 8 exports, 0 imports.",
+   "tags": [
+    "swift",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidType.swift:font",
+   "type": "function",
+   "name": "font",
+   "filePath": "apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidType.swift",
+   "lineRange": [
+    57,
+    63
+   ],
+   "summary": "font(role, emphasised) \u2014 function in VoidType.swift, lines 57-63.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidType.swift:metrics",
+   "type": "function",
+   "name": "metrics",
+   "filePath": "apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidType.swift",
+   "lineRange": [
+    67,
+    69
+   ],
+   "summary": "metrics(role, platform) \u2014 function in VoidType.swift, lines 67-69.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidType.swift:builtInFont",
+   "type": "function",
+   "name": "builtInFont",
+   "filePath": "apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidType.swift",
+   "lineRange": [
+    78,
+    92
+   ],
+   "summary": "builtInFont(role) \u2014 function in VoidType.swift, lines 78-92.",
+   "tags": [
+    "swift",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidType.swift:VoidPlatform",
+   "type": "class",
+   "name": "VoidPlatform",
+   "filePath": "apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidType.swift",
+   "lineRange": [
+    8,
+    20
+   ],
+   "summary": "VoidPlatform \u2014 class in VoidType.swift, lines 8-20.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidType.swift:extension VoidTypeWeight",
+   "type": "class",
+   "name": "extension VoidTypeWeight",
+   "filePath": "apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidType.swift",
+   "lineRange": [
+    22,
+    47
+   ],
+   "summary": "extension VoidTypeWeight \u2014 class in VoidType.swift, lines 22-47.",
+   "tags": [
+    "swift",
+    "class"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidType.swift:VoidType",
+   "type": "class",
+   "name": "VoidType",
+   "filePath": "apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidType.swift",
+   "lineRange": [
+    55,
+    93
+   ],
+   "summary": "VoidType \u2014 class in VoidType.swift, lines 55-93, methods: font, metrics, builtInFont.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidContrastTests.swift",
+   "type": "file",
+   "name": "VoidContrastTests.swift",
+   "filePath": "apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidContrastTests.swift",
+   "summary": "VoidContrastTests.swift \u2014 swift code, 73 lines, 6 functions, 1 classes, 7 exports, 0 imports.",
+   "tags": [
+    "swift",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidContrastTests.swift:testEveryContrastPairMeetsItsMinimumInBothAppearances",
+   "type": "function",
+   "name": "testEveryContrastPairMeetsItsMinimumInBothAppearances",
+   "filePath": "apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidContrastTests.swift",
+   "lineRange": [
+    13,
+    24
+   ],
+   "summary": "testEveryContrastPairMeetsItsMinimumInBothAppearances() \u2014 function in VoidContrastTests.swift, lines 13-24.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidContrastTests.swift:testRelativeLuminanceIsZeroForBlackAndOneForWhite",
+   "type": "function",
+   "name": "testRelativeLuminanceIsZeroForBlackAndOneForWhite",
+   "filePath": "apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidContrastTests.swift",
+   "lineRange": [
+    26,
+    29
+   ],
+   "summary": "testRelativeLuminanceIsZeroForBlackAndOneForWhite() \u2014 function in VoidContrastTests.swift, lines 26-29.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidContrastTests.swift:testTheCanvasIsTheLightestRoleInLightAndTheDarkestInDark",
+   "type": "function",
+   "name": "testTheCanvasIsTheLightestRoleInLightAndTheDarkestInDark",
+   "filePath": "apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidContrastTests.swift",
+   "lineRange": [
+    31,
+    43
+   ],
+   "summary": "testTheCanvasIsTheLightestRoleInLightAndTheDarkestInDark() \u2014 function in VoidContrastTests.swift, lines 31-43.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidContrastTests.swift:testTheContrastRatioIsSymmetricInItsTwoColours",
+   "type": "function",
+   "name": "testTheContrastRatioIsSymmetricInItsTwoColours",
+   "filePath": "apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidContrastTests.swift",
+   "lineRange": [
+    45,
+    53
+   ],
+   "summary": "testTheContrastRatioIsSymmetricInItsTwoColours() \u2014 function in VoidContrastTests.swift, lines 45-53.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidContrastTests.swift:testTheContrastRatioOfBlackOnWhiteIsTheSpecificationMaximum",
+   "type": "function",
+   "name": "testTheContrastRatioOfBlackOnWhiteIsTheSpecificationMaximum",
+   "filePath": "apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidContrastTests.swift",
+   "lineRange": [
+    55,
+    59
+   ],
+   "summary": "testTheContrastRatioOfBlackOnWhiteIsTheSpecificationMaximum() \u2014 function in VoidContrastTests.swift, lines 55-59.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidContrastTests.swift:testNoContrastPairMeasuresAgainstADecorativeRole",
+   "type": "function",
+   "name": "testNoContrastPairMeasuresAgainstADecorativeRole",
+   "filePath": "apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidContrastTests.swift",
+   "lineRange": [
+    61,
+    72
+   ],
+   "summary": "testNoContrastPairMeasuresAgainstADecorativeRole() \u2014 function in VoidContrastTests.swift, lines 61-72.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidContrastTests.swift:VoidContrastTests",
+   "type": "class",
+   "name": "VoidContrastTests",
+   "filePath": "apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidContrastTests.swift",
+   "lineRange": [
+    12,
+    73
+   ],
+   "summary": "VoidContrastTests \u2014 class in VoidContrastTests.swift, lines 12-73, methods: testEveryContrastPairMeetsItsMinimumInBothAppearances, testRelativeLuminanceIsZeroForBlackAndOneForWhite, testTheCanvasIsTheLightestRoleInLightAndTheDarkestInDark, testTheContrastRatioIsSymmetricInItsTwoColours, testTheContrastRatioOfBlackOnWhiteIsTheSpecificationMaximum, testNoContrastPairMeasuresAgainstADecorativeRole.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidControlSizeTests.swift",
+   "type": "file",
+   "name": "VoidControlSizeTests.swift",
+   "filePath": "apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidControlSizeTests.swift",
+   "summary": "VoidControlSizeTests.swift \u2014 swift code, 52 lines, 5 functions, 1 classes, 6 exports, 0 imports.",
+   "tags": [
+    "swift",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidControlSizeTests.swift:testEveryControlSizeClearsTheAbsoluteFloor",
+   "type": "function",
+   "name": "testEveryControlSizeClearsTheAbsoluteFloor",
+   "filePath": "apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidControlSizeTests.swift",
+   "lineRange": [
+    10,
+    18
+   ],
+   "summary": "testEveryControlSizeClearsTheAbsoluteFloor() \u2014 function in VoidControlSizeTests.swift, lines 10-18.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidControlSizeTests.swift:testTheTouchSizeClearsTheTouchFloor",
+   "type": "function",
+   "name": "testTheTouchSizeClearsTheTouchFloor",
+   "filePath": "apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidControlSizeTests.swift",
+   "lineRange": [
+    20,
+    25
+   ],
+   "summary": "testTheTouchSizeClearsTheTouchFloor() \u2014 function in VoidControlSizeTests.swift, lines 20-25.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidControlSizeTests.swift:testTheMacOSSizeClearsTheMacOSPointerTarget",
+   "type": "function",
+   "name": "testTheMacOSSizeClearsTheMacOSPointerTarget",
+   "filePath": "apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidControlSizeTests.swift",
+   "lineRange": [
+    27,
+    36
+   ],
+   "summary": "testTheMacOSSizeClearsTheMacOSPointerTarget() \u2014 function in VoidControlSizeTests.swift, lines 27-36.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidControlSizeTests.swift:testATargetAtTheHostFloorIsAcceptedAndOnePointBelowItIsNot",
+   "type": "function",
+   "name": "testATargetAtTheHostFloorIsAcceptedAndOnePointBelowItIsNot",
+   "filePath": "apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidControlSizeTests.swift",
+   "lineRange": [
+    38,
+    43
+   ],
+   "summary": "testATargetAtTheHostFloorIsAcceptedAndOnePointBelowItIsNot() \u2014 function in VoidControlSizeTests.swift, lines 38-43.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidControlSizeTests.swift:testTheHostFloorIsThePlatformTheBuildIsFor",
+   "type": "function",
+   "name": "testTheHostFloorIsThePlatformTheBuildIsFor",
+   "filePath": "apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidControlSizeTests.swift",
+   "lineRange": [
+    45,
+    51
+   ],
+   "summary": "testTheHostFloorIsThePlatformTheBuildIsFor() \u2014 function in VoidControlSizeTests.swift, lines 45-51.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidControlSizeTests.swift:VoidControlSizeTests",
+   "type": "class",
+   "name": "VoidControlSizeTests",
+   "filePath": "apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidControlSizeTests.swift",
+   "lineRange": [
+    9,
+    52
+   ],
+   "summary": "VoidControlSizeTests \u2014 class in VoidControlSizeTests.swift, lines 9-52, methods: testEveryControlSizeClearsTheAbsoluteFloor, testTheTouchSizeClearsTheTouchFloor, testTheMacOSSizeClearsTheMacOSPointerTarget, testATargetAtTheHostFloorIsAcceptedAndOnePointBelowItIsNot, testTheHostFloorIsThePlatformTheBuildIsFor.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift",
+   "type": "file",
+   "name": "VoidPaletteTests.swift",
+   "filePath": "apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift",
+   "summary": "VoidPaletteTests.swift \u2014 swift code, 88 lines, 9 functions, 2 classes, 11 exports, 0 imports.",
+   "tags": [
+    "swift",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift:testThePlatformRolesAreTheOnesWithAPlatformSemanticColour",
+   "type": "function",
+   "name": "testThePlatformRolesAreTheOnesWithAPlatformSemanticColour",
+   "filePath": "apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift",
+   "lineRange": [
+    12,
+    23
+   ],
+   "summary": "testThePlatformRolesAreTheOnesWithAPlatformSemanticColour() \u2014 function in VoidPaletteTests.swift, lines 12-23.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift:testTheFocusRingUsesTheAccentRole",
+   "type": "function",
+   "name": "testTheFocusRingUsesTheAccentRole",
+   "filePath": "apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift",
+   "lineRange": [
+    25,
+    33
+   ],
+   "summary": "testTheFocusRingUsesTheAccentRole() \u2014 function in VoidPaletteTests.swift, lines 25-33.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift:testEveryRoleCarriesBothAppearances",
+   "type": "function",
+   "name": "testEveryRoleCarriesBothAppearances",
+   "filePath": "apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift",
+   "lineRange": [
+    35,
+    41
+   ],
+   "summary": "testEveryRoleCarriesBothAppearances() \u2014 function in VoidPaletteTests.swift, lines 35-41.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift:testEveryRecordedColourIsOpaque",
+   "type": "function",
+   "name": "testEveryRecordedColourIsOpaque",
+   "filePath": "apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift",
+   "lineRange": [
+    43,
+    49
+   ],
+   "summary": "testEveryRecordedColourIsOpaque() \u2014 function in VoidPaletteTests.swift, lines 43-49.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift:testAControlInsideACardTakesTheSmallerRole",
+   "type": "function",
+   "name": "testAControlInsideACardTakesTheSmallerRole",
+   "filePath": "apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift",
+   "lineRange": [
+    55,
+    58
+   ],
+   "summary": "testAControlInsideACardTakesTheSmallerRole() \u2014 function in VoidPaletteTests.swift, lines 55-58.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift:testACardInsideASheetTakesTheSmallerRole",
+   "type": "function",
+   "name": "testACardInsideASheetTakesTheSmallerRole",
+   "filePath": "apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift",
+   "lineRange": [
+    60,
+    63
+   ],
+   "summary": "testACardInsideASheetTakesTheSmallerRole() \u2014 function in VoidPaletteTests.swift, lines 60-63.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift:testACapsuleRoundsPastEveryOtherRole",
+   "type": "function",
+   "name": "testACapsuleRoundsPastEveryOtherRole",
+   "filePath": "apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift",
+   "lineRange": [
+    65,
+    69
+   ],
+   "summary": "testACapsuleRoundsPastEveryOtherRole() \u2014 function in VoidPaletteTests.swift, lines 65-69.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift:testTheRolesAreOrderedFromSmallestToLargest",
+   "type": "function",
+   "name": "testTheRolesAreOrderedFromSmallestToLargest",
+   "filePath": "apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift",
+   "lineRange": [
+    71,
+    74
+   ],
+   "summary": "testTheRolesAreOrderedFromSmallestToLargest() \u2014 function in VoidPaletteTests.swift, lines 71-74.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift:testTheLargestNestingRoleIsTheBiggestThatFits",
+   "type": "function",
+   "name": "testTheLargestNestingRoleIsTheBiggestThatFits",
+   "filePath": "apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift",
+   "lineRange": [
+    76,
+    87
+   ],
+   "summary": "testTheLargestNestingRoleIsTheBiggestThatFits() \u2014 function in VoidPaletteTests.swift, lines 76-87.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift:VoidPaletteTests",
+   "type": "class",
+   "name": "VoidPaletteTests",
+   "filePath": "apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift",
+   "lineRange": [
+    11,
+    50
+   ],
+   "summary": "VoidPaletteTests \u2014 class in VoidPaletteTests.swift, lines 11-50, methods: testThePlatformRolesAreTheOnesWithAPlatformSemanticColour, testTheFocusRingUsesTheAccentRole, testEveryRoleCarriesBothAppearances, testEveryRecordedColourIsOpaque.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift:VoidRadiiTests",
+   "type": "class",
+   "name": "VoidRadiiTests",
+   "filePath": "apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift",
+   "lineRange": [
+    54,
+    88
+   ],
+   "summary": "VoidRadiiTests \u2014 class in VoidPaletteTests.swift, lines 54-88, methods: testAControlInsideACardTakesTheSmallerRole, testACardInsideASheetTakesTheSmallerRole, testACapsuleRoundsPastEveryOtherRole, testTheRolesAreOrderedFromSmallestToLargest, testTheLargestNestingRoleIsTheBiggestThatFits.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidShadowTests.swift",
+   "type": "file",
+   "name": "VoidShadowTests.swift",
+   "filePath": "apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidShadowTests.swift",
+   "summary": "VoidShadowTests.swift \u2014 swift code, 24 lines, 2 functions, 1 classes, 2 exports, 0 imports.",
+   "tags": [
+    "swift",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidShadowTests.swift:testAShadowIsDeeperInTheDarkAppearanceThanInTheLightOne",
+   "type": "function",
+   "name": "testAShadowIsDeeperInTheDarkAppearanceThanInTheLightOne",
+   "filePath": "apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidShadowTests.swift",
+   "lineRange": [
+    10,
+    16
+   ],
+   "summary": "testAShadowIsDeeperInTheDarkAppearanceThanInTheLightOne() \u2014 function in VoidShadowTests.swift, lines 10-16.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidShadowTests.swift:opacity",
+   "type": "function",
+   "name": "opacity",
+   "filePath": "apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidShadowTests.swift",
+   "lineRange": [
+    20,
+    23
+   ],
+   "summary": "opacity(value) \u2014 function in VoidShadowTests.swift, lines 20-23.",
+   "tags": [
+    "swift",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidShadowTests.swift:VoidShadowTests",
+   "type": "class",
+   "name": "VoidShadowTests",
+   "filePath": "apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidShadowTests.swift",
+   "lineRange": [
+    9,
+    24
+   ],
+   "summary": "VoidShadowTests \u2014 class in VoidShadowTests.swift, lines 9-24, methods: testAShadowIsDeeperInTheDarkAppearanceThanInTheLightOne, opacity.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidSpacingTests.swift",
+   "type": "file",
+   "name": "VoidSpacingTests.swift",
+   "filePath": "apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidSpacingTests.swift",
+   "summary": "VoidSpacingTests.swift \u2014 swift code, 60 lines, 6 functions, 1 classes, 7 exports, 0 imports.",
+   "tags": [
+    "swift",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidSpacingTests.swift:testEveryNamedSpacingStepIsAMemberOfTheRhythm",
+   "type": "function",
+   "name": "testEveryNamedSpacingStepIsAMemberOfTheRhythm",
+   "filePath": "apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidSpacingTests.swift",
+   "lineRange": [
+    8,
+    15
+   ],
+   "summary": "testEveryNamedSpacingStepIsAMemberOfTheRhythm() \u2014 function in VoidSpacingTests.swift, lines 8-15.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidSpacingTests.swift:testTheNamedStepsAndTheRhythmAreTheSameSet",
+   "type": "function",
+   "name": "testTheNamedStepsAndTheRhythmAreTheSameSet",
+   "filePath": "apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidSpacingTests.swift",
+   "lineRange": [
+    17,
+    23
+   ],
+   "summary": "testTheNamedStepsAndTheRhythmAreTheSameSet() \u2014 function in VoidSpacingTests.swift, lines 17-23.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidSpacingTests.swift:testTheRhythmRises",
+   "type": "function",
+   "name": "testTheRhythmRises",
+   "filePath": "apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidSpacingTests.swift",
+   "lineRange": [
+    25,
+    28
+   ],
+   "summary": "testTheRhythmRises() \u2014 function in VoidSpacingTests.swift, lines 25-28.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidSpacingTests.swift:testTheGuidelineConstantsSitOutsideTheRhythmOnPurpose",
+   "type": "function",
+   "name": "testTheGuidelineConstantsSitOutsideTheRhythmOnPurpose",
+   "filePath": "apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidSpacingTests.swift",
+   "lineRange": [
+    30,
+    33
+   ],
+   "summary": "testTheGuidelineConstantsSitOutsideTheRhythmOnPurpose() \u2014 function in VoidSpacingTests.swift, lines 30-33.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidSpacingTests.swift:testTheStepsAroundAValueBracketIt",
+   "type": "function",
+   "name": "testTheStepsAroundAValueBracketIt",
+   "filePath": "apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidSpacingTests.swift",
+   "lineRange": [
+    35,
+    43
+   ],
+   "summary": "testTheStepsAroundAValueBracketIt() \u2014 function in VoidSpacingTests.swift, lines 35-43.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidSpacingTests.swift:testTheMeasureNeverExceedsTheWidthItWasGiven",
+   "type": "function",
+   "name": "testTheMeasureNeverExceedsTheWidthItWasGiven",
+   "filePath": "apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidSpacingTests.swift",
+   "lineRange": [
+    45,
+    59
+   ],
+   "summary": "testTheMeasureNeverExceedsTheWidthItWasGiven() \u2014 function in VoidSpacingTests.swift, lines 45-59.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidSpacingTests.swift:VoidSpacingTests",
+   "type": "class",
+   "name": "VoidSpacingTests",
+   "filePath": "apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidSpacingTests.swift",
+   "lineRange": [
+    7,
+    60
+   ],
+   "summary": "VoidSpacingTests \u2014 class in VoidSpacingTests.swift, lines 7-60, methods: testEveryNamedSpacingStepIsAMemberOfTheRhythm, testTheNamedStepsAndTheRhythmAreTheSameSet, testTheRhythmRises, testTheGuidelineConstantsSitOutsideTheRhythmOnPurpose, testTheStepsAroundAValueBracketIt, testTheMeasureNeverExceedsTheWidthItWasGiven.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidTypeTests.swift",
+   "type": "file",
+   "name": "VoidTypeTests.swift",
+   "filePath": "apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidTypeTests.swift",
+   "summary": "VoidTypeTests.swift \u2014 swift code, 57 lines, 4 functions, 1 classes, 5 exports, 0 imports.",
+   "tags": [
+    "swift",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidTypeTests.swift:testEveryTypeRoleIsAtLeastTheDocumentMinimumOnItsPlatform",
+   "type": "function",
+   "name": "testEveryTypeRoleIsAtLeastTheDocumentMinimumOnItsPlatform",
+   "filePath": "apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidTypeTests.swift",
+   "lineRange": [
+    8,
+    22
+   ],
+   "summary": "testEveryTypeRoleIsAtLeastTheDocumentMinimumOnItsPlatform() \u2014 function in VoidTypeTests.swift, lines 8-22.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidTypeTests.swift:testTheRampIsOrderedFromLargestToSmallestOnBothPlatforms",
+   "type": "function",
+   "name": "testTheRampIsOrderedFromLargestToSmallestOnBothPlatforms",
+   "filePath": "apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidTypeTests.swift",
+   "lineRange": [
+    24,
+    29
+   ],
+   "summary": "testTheRampIsOrderedFromLargestToSmallestOnBothPlatforms() \u2014 function in VoidTypeTests.swift, lines 24-29.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidTypeTests.swift:testTheLeadingNeverFallsBelowTheSizeItCarries",
+   "type": "function",
+   "name": "testTheLeadingNeverFallsBelowTheSizeItCarries",
+   "filePath": "apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidTypeTests.swift",
+   "lineRange": [
+    31,
+    42
+   ],
+   "summary": "testTheLeadingNeverFallsBelowTheSizeItCarries() \u2014 function in VoidTypeTests.swift, lines 31-42.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidTypeTests.swift:testTheEmphasisedWeightIsNeverLighterThanTheRoleItEmphasises",
+   "type": "function",
+   "name": "testTheEmphasisedWeightIsNeverLighterThanTheRoleItEmphasises",
+   "filePath": "apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidTypeTests.swift",
+   "lineRange": [
+    44,
+    56
+   ],
+   "summary": "testTheEmphasisedWeightIsNeverLighterThanTheRoleItEmphasises() \u2014 function in VoidTypeTests.swift, lines 44-56.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidTypeTests.swift:VoidTypeTests",
+   "type": "class",
+   "name": "VoidTypeTests",
+   "filePath": "apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidTypeTests.swift",
+   "lineRange": [
+    7,
+    57
+   ],
+   "summary": "VoidTypeTests \u2014 class in VoidTypeTests.swift, lines 7-57, methods: testEveryTypeRoleIsAtLeastTheDocumentMinimumOnItsPlatform, testTheRampIsOrderedFromLargestToSmallestOnBothPlatforms, testTheLeadingNeverFallsBelowTheSizeItCarries, testTheEmphasisedWeightIsNeverLighterThanTheRoleItEmphasises.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  }
+ ],
+ "edges": [
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidAppearance.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidAppearance.swift:VoidAppearance.init",
+   "type": "contains",
+   "direction": "forward",
+   "description": "VoidAppearance.swift defines VoidAppearance.init",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidAppearance.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidAppearance.swift:VoidAppearance.init",
+   "type": "exports",
+   "direction": "forward",
+   "description": "VoidAppearance.swift exports VoidAppearance.init",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidAppearance.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidAppearance.swift:VoidColorComponents.init",
+   "type": "contains",
+   "direction": "forward",
+   "description": "VoidAppearance.swift defines VoidColorComponents.init",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidAppearance.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidAppearance.swift:VoidColorComponents.init",
+   "type": "exports",
+   "direction": "forward",
+   "description": "VoidAppearance.swift exports VoidColorComponents.init",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidAppearance.swift",
+   "target": "class:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidAppearance.swift:VoidAppearance",
+   "type": "contains",
+   "direction": "forward",
+   "description": "VoidAppearance.swift defines class VoidAppearance",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidAppearance.swift",
+   "target": "class:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidAppearance.swift:VoidColorComponents",
+   "type": "contains",
+   "direction": "forward",
+   "description": "VoidAppearance.swift defines class VoidColorComponents",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidContrast.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidContrast.swift:relativeLuminance",
+   "type": "contains",
+   "direction": "forward",
+   "description": "VoidContrast.swift defines relativeLuminance",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidContrast.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidContrast.swift:relativeLuminance",
+   "type": "exports",
+   "direction": "forward",
+   "description": "VoidContrast.swift exports relativeLuminance",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidContrast.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidContrast.swift:ratio",
+   "type": "contains",
+   "direction": "forward",
+   "description": "VoidContrast.swift defines ratio",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidContrast.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidContrast.swift:ratio",
+   "type": "exports",
+   "direction": "forward",
+   "description": "VoidContrast.swift exports ratio",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidContrast.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidContrast.swift:linear",
+   "type": "contains",
+   "direction": "forward",
+   "description": "VoidContrast.swift defines linear",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidContrast.swift",
+   "target": "class:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidContrast.swift:VoidContrast",
+   "type": "contains",
+   "direction": "forward",
+   "description": "VoidContrast.swift defines class VoidContrast",
+   "weight": 1.0
+  },
+  {
+   "source": "function:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidContrast.swift:ratio",
+   "target": "function:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidContrast.swift:relativeLuminance",
+   "type": "calls",
+   "direction": "forward",
+   "description": "ratio calls relativeLuminance",
+   "weight": 0.6
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidControlSize.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidControlSize.swift:isValidHitTarget",
+   "type": "contains",
+   "direction": "forward",
+   "description": "VoidControlSize.swift defines isValidHitTarget",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidControlSize.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidControlSize.swift:isValidHitTarget",
+   "type": "exports",
+   "direction": "forward",
+   "description": "VoidControlSize.swift exports isValidHitTarget",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidControlSize.swift",
+   "target": "class:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidControlSize.swift:VoidControlSize",
+   "type": "contains",
+   "direction": "forward",
+   "description": "VoidControlSize.swift defines class VoidControlSize",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidPalette.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidPalette.swift:platformColor",
+   "type": "contains",
+   "direction": "forward",
+   "description": "VoidPalette.swift defines platformColor",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidPalette.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidPalette.swift:platformColor",
+   "type": "exports",
+   "direction": "forward",
+   "description": "VoidPalette.swift exports platformColor",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidPalette.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidPalette.swift:color",
+   "type": "contains",
+   "direction": "forward",
+   "description": "VoidPalette.swift defines color",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidPalette.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidPalette.swift:color",
+   "type": "exports",
+   "direction": "forward",
+   "description": "VoidPalette.swift exports color",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidPalette.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidPalette.swift:systemBackground",
+   "type": "contains",
+   "direction": "forward",
+   "description": "VoidPalette.swift defines systemBackground",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidPalette.swift",
+   "target": "class:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidPalette.swift:VoidPalette",
+   "type": "contains",
+   "direction": "forward",
+   "description": "VoidPalette.swift defines class VoidPalette",
+   "weight": 1.0
+  },
+  {
+   "source": "function:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidPalette.swift:platformColor",
+   "target": "function:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidPalette.swift:systemBackground",
+   "type": "calls",
+   "direction": "forward",
+   "description": "platformColor calls systemBackground",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidPalette.swift:color",
+   "target": "function:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidPalette.swift:platformColor",
+   "type": "calls",
+   "direction": "forward",
+   "description": "color calls platformColor",
+   "weight": 0.6
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidRadii.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidRadii.swift:nests",
+   "type": "contains",
+   "direction": "forward",
+   "description": "VoidRadii.swift defines nests",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidRadii.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidRadii.swift:nests",
+   "type": "exports",
+   "direction": "forward",
+   "description": "VoidRadii.swift exports nests",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidRadii.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidRadii.swift:largestNesting",
+   "type": "contains",
+   "direction": "forward",
+   "description": "VoidRadii.swift defines largestNesting",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidRadii.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidRadii.swift:largestNesting",
+   "type": "exports",
+   "direction": "forward",
+   "description": "VoidRadii.swift exports largestNesting",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidRadii.swift",
+   "target": "class:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidRadii.swift:extension VoidRadii",
+   "type": "contains",
+   "direction": "forward",
+   "description": "VoidRadii.swift defines class extension VoidRadii",
+   "weight": 1.0
+  },
+  {
+   "source": "function:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidRadii.swift:largestNesting",
+   "target": "function:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidRadii.swift:nests",
+   "type": "calls",
+   "direction": "forward",
+   "description": "largestNesting calls nests",
+   "weight": 0.6
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidSpacing.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidSpacing.swift:isOnRhythm",
+   "type": "contains",
+   "direction": "forward",
+   "description": "VoidSpacing.swift defines isOnRhythm",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidSpacing.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidSpacing.swift:isOnRhythm",
+   "type": "exports",
+   "direction": "forward",
+   "description": "VoidSpacing.swift exports isOnRhythm",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidSpacing.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidSpacing.swift:steps",
+   "type": "contains",
+   "direction": "forward",
+   "description": "VoidSpacing.swift defines steps",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidSpacing.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidSpacing.swift:steps",
+   "type": "exports",
+   "direction": "forward",
+   "description": "VoidSpacing.swift exports steps",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidSpacing.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidSpacing.swift:measure",
+   "type": "contains",
+   "direction": "forward",
+   "description": "VoidSpacing.swift defines measure",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidSpacing.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidSpacing.swift:measure",
+   "type": "exports",
+   "direction": "forward",
+   "description": "VoidSpacing.swift exports measure",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidSpacing.swift",
+   "target": "class:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidSpacing.swift:extension VoidSpacing",
+   "type": "contains",
+   "direction": "forward",
+   "description": "VoidSpacing.swift defines class extension VoidSpacing",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidType.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidType.swift:font",
+   "type": "contains",
+   "direction": "forward",
+   "description": "VoidType.swift defines font",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidType.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidType.swift:font",
+   "type": "exports",
+   "direction": "forward",
+   "description": "VoidType.swift exports font",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidType.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidType.swift:metrics",
+   "type": "contains",
+   "direction": "forward",
+   "description": "VoidType.swift defines metrics",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidType.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidType.swift:metrics",
+   "type": "exports",
+   "direction": "forward",
+   "description": "VoidType.swift exports metrics",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidType.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidType.swift:builtInFont",
+   "type": "contains",
+   "direction": "forward",
+   "description": "VoidType.swift defines builtInFont",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidType.swift",
+   "target": "class:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidType.swift:VoidPlatform",
+   "type": "contains",
+   "direction": "forward",
+   "description": "VoidType.swift defines class VoidPlatform",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidType.swift",
+   "target": "class:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidType.swift:extension VoidTypeWeight",
+   "type": "contains",
+   "direction": "forward",
+   "description": "VoidType.swift defines class extension VoidTypeWeight",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidType.swift",
+   "target": "class:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidType.swift:VoidType",
+   "type": "contains",
+   "direction": "forward",
+   "description": "VoidType.swift defines class VoidType",
+   "weight": 1.0
+  },
+  {
+   "source": "function:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidType.swift:font",
+   "target": "function:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidType.swift:builtInFont",
+   "type": "calls",
+   "direction": "forward",
+   "description": "font calls builtInFont",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidType.swift:font",
+   "target": "function:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidType.swift:metrics",
+   "type": "calls",
+   "direction": "forward",
+   "description": "font calls metrics",
+   "weight": 0.6
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidContrastTests.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidContrastTests.swift:testEveryContrastPairMeetsItsMinimumInBothAppearances",
+   "type": "contains",
+   "direction": "forward",
+   "description": "VoidContrastTests.swift defines testEveryContrastPairMeetsItsMinimumInBothAppearances",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidContrastTests.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidContrastTests.swift:testEveryContrastPairMeetsItsMinimumInBothAppearances",
+   "type": "exports",
+   "direction": "forward",
+   "description": "VoidContrastTests.swift exports testEveryContrastPairMeetsItsMinimumInBothAppearances",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidContrastTests.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidContrastTests.swift:testRelativeLuminanceIsZeroForBlackAndOneForWhite",
+   "type": "contains",
+   "direction": "forward",
+   "description": "VoidContrastTests.swift defines testRelativeLuminanceIsZeroForBlackAndOneForWhite",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidContrastTests.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidContrastTests.swift:testRelativeLuminanceIsZeroForBlackAndOneForWhite",
+   "type": "exports",
+   "direction": "forward",
+   "description": "VoidContrastTests.swift exports testRelativeLuminanceIsZeroForBlackAndOneForWhite",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidContrastTests.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidContrastTests.swift:testTheCanvasIsTheLightestRoleInLightAndTheDarkestInDark",
+   "type": "contains",
+   "direction": "forward",
+   "description": "VoidContrastTests.swift defines testTheCanvasIsTheLightestRoleInLightAndTheDarkestInDark",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidContrastTests.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidContrastTests.swift:testTheCanvasIsTheLightestRoleInLightAndTheDarkestInDark",
+   "type": "exports",
+   "direction": "forward",
+   "description": "VoidContrastTests.swift exports testTheCanvasIsTheLightestRoleInLightAndTheDarkestInDark",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidContrastTests.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidContrastTests.swift:testTheContrastRatioIsSymmetricInItsTwoColours",
+   "type": "contains",
+   "direction": "forward",
+   "description": "VoidContrastTests.swift defines testTheContrastRatioIsSymmetricInItsTwoColours",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidContrastTests.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidContrastTests.swift:testTheContrastRatioIsSymmetricInItsTwoColours",
+   "type": "exports",
+   "direction": "forward",
+   "description": "VoidContrastTests.swift exports testTheContrastRatioIsSymmetricInItsTwoColours",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidContrastTests.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidContrastTests.swift:testTheContrastRatioOfBlackOnWhiteIsTheSpecificationMaximum",
+   "type": "contains",
+   "direction": "forward",
+   "description": "VoidContrastTests.swift defines testTheContrastRatioOfBlackOnWhiteIsTheSpecificationMaximum",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidContrastTests.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidContrastTests.swift:testTheContrastRatioOfBlackOnWhiteIsTheSpecificationMaximum",
+   "type": "exports",
+   "direction": "forward",
+   "description": "VoidContrastTests.swift exports testTheContrastRatioOfBlackOnWhiteIsTheSpecificationMaximum",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidContrastTests.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidContrastTests.swift:testNoContrastPairMeasuresAgainstADecorativeRole",
+   "type": "contains",
+   "direction": "forward",
+   "description": "VoidContrastTests.swift defines testNoContrastPairMeasuresAgainstADecorativeRole",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidContrastTests.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidContrastTests.swift:testNoContrastPairMeasuresAgainstADecorativeRole",
+   "type": "exports",
+   "direction": "forward",
+   "description": "VoidContrastTests.swift exports testNoContrastPairMeasuresAgainstADecorativeRole",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidContrastTests.swift",
+   "target": "class:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidContrastTests.swift:VoidContrastTests",
+   "type": "contains",
+   "direction": "forward",
+   "description": "VoidContrastTests.swift defines class VoidContrastTests",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidControlSizeTests.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidControlSizeTests.swift:testEveryControlSizeClearsTheAbsoluteFloor",
+   "type": "contains",
+   "direction": "forward",
+   "description": "VoidControlSizeTests.swift defines testEveryControlSizeClearsTheAbsoluteFloor",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidControlSizeTests.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidControlSizeTests.swift:testEveryControlSizeClearsTheAbsoluteFloor",
+   "type": "exports",
+   "direction": "forward",
+   "description": "VoidControlSizeTests.swift exports testEveryControlSizeClearsTheAbsoluteFloor",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidControlSizeTests.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidControlSizeTests.swift:testTheTouchSizeClearsTheTouchFloor",
+   "type": "contains",
+   "direction": "forward",
+   "description": "VoidControlSizeTests.swift defines testTheTouchSizeClearsTheTouchFloor",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidControlSizeTests.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidControlSizeTests.swift:testTheTouchSizeClearsTheTouchFloor",
+   "type": "exports",
+   "direction": "forward",
+   "description": "VoidControlSizeTests.swift exports testTheTouchSizeClearsTheTouchFloor",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidControlSizeTests.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidControlSizeTests.swift:testTheMacOSSizeClearsTheMacOSPointerTarget",
+   "type": "contains",
+   "direction": "forward",
+   "description": "VoidControlSizeTests.swift defines testTheMacOSSizeClearsTheMacOSPointerTarget",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidControlSizeTests.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidControlSizeTests.swift:testTheMacOSSizeClearsTheMacOSPointerTarget",
+   "type": "exports",
+   "direction": "forward",
+   "description": "VoidControlSizeTests.swift exports testTheMacOSSizeClearsTheMacOSPointerTarget",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidControlSizeTests.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidControlSizeTests.swift:testATargetAtTheHostFloorIsAcceptedAndOnePointBelowItIsNot",
+   "type": "contains",
+   "direction": "forward",
+   "description": "VoidControlSizeTests.swift defines testATargetAtTheHostFloorIsAcceptedAndOnePointBelowItIsNot",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidControlSizeTests.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidControlSizeTests.swift:testATargetAtTheHostFloorIsAcceptedAndOnePointBelowItIsNot",
+   "type": "exports",
+   "direction": "forward",
+   "description": "VoidControlSizeTests.swift exports testATargetAtTheHostFloorIsAcceptedAndOnePointBelowItIsNot",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidControlSizeTests.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidControlSizeTests.swift:testTheHostFloorIsThePlatformTheBuildIsFor",
+   "type": "contains",
+   "direction": "forward",
+   "description": "VoidControlSizeTests.swift defines testTheHostFloorIsThePlatformTheBuildIsFor",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidControlSizeTests.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidControlSizeTests.swift:testTheHostFloorIsThePlatformTheBuildIsFor",
+   "type": "exports",
+   "direction": "forward",
+   "description": "VoidControlSizeTests.swift exports testTheHostFloorIsThePlatformTheBuildIsFor",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidControlSizeTests.swift",
+   "target": "class:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidControlSizeTests.swift:VoidControlSizeTests",
+   "type": "contains",
+   "direction": "forward",
+   "description": "VoidControlSizeTests.swift defines class VoidControlSizeTests",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift:testThePlatformRolesAreTheOnesWithAPlatformSemanticColour",
+   "type": "contains",
+   "direction": "forward",
+   "description": "VoidPaletteTests.swift defines testThePlatformRolesAreTheOnesWithAPlatformSemanticColour",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift:testThePlatformRolesAreTheOnesWithAPlatformSemanticColour",
+   "type": "exports",
+   "direction": "forward",
+   "description": "VoidPaletteTests.swift exports testThePlatformRolesAreTheOnesWithAPlatformSemanticColour",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift:testTheFocusRingUsesTheAccentRole",
+   "type": "contains",
+   "direction": "forward",
+   "description": "VoidPaletteTests.swift defines testTheFocusRingUsesTheAccentRole",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift:testTheFocusRingUsesTheAccentRole",
+   "type": "exports",
+   "direction": "forward",
+   "description": "VoidPaletteTests.swift exports testTheFocusRingUsesTheAccentRole",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift:testEveryRoleCarriesBothAppearances",
+   "type": "contains",
+   "direction": "forward",
+   "description": "VoidPaletteTests.swift defines testEveryRoleCarriesBothAppearances",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift:testEveryRoleCarriesBothAppearances",
+   "type": "exports",
+   "direction": "forward",
+   "description": "VoidPaletteTests.swift exports testEveryRoleCarriesBothAppearances",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift:testEveryRecordedColourIsOpaque",
+   "type": "contains",
+   "direction": "forward",
+   "description": "VoidPaletteTests.swift defines testEveryRecordedColourIsOpaque",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift:testEveryRecordedColourIsOpaque",
+   "type": "exports",
+   "direction": "forward",
+   "description": "VoidPaletteTests.swift exports testEveryRecordedColourIsOpaque",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift:testAControlInsideACardTakesTheSmallerRole",
+   "type": "contains",
+   "direction": "forward",
+   "description": "VoidPaletteTests.swift defines testAControlInsideACardTakesTheSmallerRole",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift:testAControlInsideACardTakesTheSmallerRole",
+   "type": "exports",
+   "direction": "forward",
+   "description": "VoidPaletteTests.swift exports testAControlInsideACardTakesTheSmallerRole",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift:testACardInsideASheetTakesTheSmallerRole",
+   "type": "contains",
+   "direction": "forward",
+   "description": "VoidPaletteTests.swift defines testACardInsideASheetTakesTheSmallerRole",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift:testACardInsideASheetTakesTheSmallerRole",
+   "type": "exports",
+   "direction": "forward",
+   "description": "VoidPaletteTests.swift exports testACardInsideASheetTakesTheSmallerRole",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift:testACapsuleRoundsPastEveryOtherRole",
+   "type": "contains",
+   "direction": "forward",
+   "description": "VoidPaletteTests.swift defines testACapsuleRoundsPastEveryOtherRole",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift:testACapsuleRoundsPastEveryOtherRole",
+   "type": "exports",
+   "direction": "forward",
+   "description": "VoidPaletteTests.swift exports testACapsuleRoundsPastEveryOtherRole",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift:testTheRolesAreOrderedFromSmallestToLargest",
+   "type": "contains",
+   "direction": "forward",
+   "description": "VoidPaletteTests.swift defines testTheRolesAreOrderedFromSmallestToLargest",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift:testTheRolesAreOrderedFromSmallestToLargest",
+   "type": "exports",
+   "direction": "forward",
+   "description": "VoidPaletteTests.swift exports testTheRolesAreOrderedFromSmallestToLargest",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift:testTheLargestNestingRoleIsTheBiggestThatFits",
+   "type": "contains",
+   "direction": "forward",
+   "description": "VoidPaletteTests.swift defines testTheLargestNestingRoleIsTheBiggestThatFits",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift:testTheLargestNestingRoleIsTheBiggestThatFits",
+   "type": "exports",
+   "direction": "forward",
+   "description": "VoidPaletteTests.swift exports testTheLargestNestingRoleIsTheBiggestThatFits",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift",
+   "target": "class:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift:VoidPaletteTests",
+   "type": "contains",
+   "direction": "forward",
+   "description": "VoidPaletteTests.swift defines class VoidPaletteTests",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift",
+   "target": "class:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift:VoidRadiiTests",
+   "type": "contains",
+   "direction": "forward",
+   "description": "VoidPaletteTests.swift defines class VoidRadiiTests",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidShadowTests.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidShadowTests.swift:testAShadowIsDeeperInTheDarkAppearanceThanInTheLightOne",
+   "type": "contains",
+   "direction": "forward",
+   "description": "VoidShadowTests.swift defines testAShadowIsDeeperInTheDarkAppearanceThanInTheLightOne",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidShadowTests.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidShadowTests.swift:testAShadowIsDeeperInTheDarkAppearanceThanInTheLightOne",
+   "type": "exports",
+   "direction": "forward",
+   "description": "VoidShadowTests.swift exports testAShadowIsDeeperInTheDarkAppearanceThanInTheLightOne",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidShadowTests.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidShadowTests.swift:opacity",
+   "type": "contains",
+   "direction": "forward",
+   "description": "VoidShadowTests.swift defines opacity",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidShadowTests.swift",
+   "target": "class:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidShadowTests.swift:VoidShadowTests",
+   "type": "contains",
+   "direction": "forward",
+   "description": "VoidShadowTests.swift defines class VoidShadowTests",
+   "weight": 1.0
+  },
+  {
+   "source": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidShadowTests.swift:testAShadowIsDeeperInTheDarkAppearanceThanInTheLightOne",
+   "target": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidShadowTests.swift:opacity",
+   "type": "calls",
+   "direction": "forward",
+   "description": "testAShadowIsDeeperInTheDarkAppearanceThanInTheLightOne calls opacity",
+   "weight": 0.6
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidSpacingTests.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidSpacingTests.swift:testEveryNamedSpacingStepIsAMemberOfTheRhythm",
+   "type": "contains",
+   "direction": "forward",
+   "description": "VoidSpacingTests.swift defines testEveryNamedSpacingStepIsAMemberOfTheRhythm",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidSpacingTests.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidSpacingTests.swift:testEveryNamedSpacingStepIsAMemberOfTheRhythm",
+   "type": "exports",
+   "direction": "forward",
+   "description": "VoidSpacingTests.swift exports testEveryNamedSpacingStepIsAMemberOfTheRhythm",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidSpacingTests.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidSpacingTests.swift:testTheNamedStepsAndTheRhythmAreTheSameSet",
+   "type": "contains",
+   "direction": "forward",
+   "description": "VoidSpacingTests.swift defines testTheNamedStepsAndTheRhythmAreTheSameSet",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidSpacingTests.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidSpacingTests.swift:testTheNamedStepsAndTheRhythmAreTheSameSet",
+   "type": "exports",
+   "direction": "forward",
+   "description": "VoidSpacingTests.swift exports testTheNamedStepsAndTheRhythmAreTheSameSet",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidSpacingTests.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidSpacingTests.swift:testTheRhythmRises",
+   "type": "contains",
+   "direction": "forward",
+   "description": "VoidSpacingTests.swift defines testTheRhythmRises",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidSpacingTests.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidSpacingTests.swift:testTheRhythmRises",
+   "type": "exports",
+   "direction": "forward",
+   "description": "VoidSpacingTests.swift exports testTheRhythmRises",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidSpacingTests.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidSpacingTests.swift:testTheGuidelineConstantsSitOutsideTheRhythmOnPurpose",
+   "type": "contains",
+   "direction": "forward",
+   "description": "VoidSpacingTests.swift defines testTheGuidelineConstantsSitOutsideTheRhythmOnPurpose",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidSpacingTests.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidSpacingTests.swift:testTheGuidelineConstantsSitOutsideTheRhythmOnPurpose",
+   "type": "exports",
+   "direction": "forward",
+   "description": "VoidSpacingTests.swift exports testTheGuidelineConstantsSitOutsideTheRhythmOnPurpose",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidSpacingTests.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidSpacingTests.swift:testTheStepsAroundAValueBracketIt",
+   "type": "contains",
+   "direction": "forward",
+   "description": "VoidSpacingTests.swift defines testTheStepsAroundAValueBracketIt",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidSpacingTests.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidSpacingTests.swift:testTheStepsAroundAValueBracketIt",
+   "type": "exports",
+   "direction": "forward",
+   "description": "VoidSpacingTests.swift exports testTheStepsAroundAValueBracketIt",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidSpacingTests.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidSpacingTests.swift:testTheMeasureNeverExceedsTheWidthItWasGiven",
+   "type": "contains",
+   "direction": "forward",
+   "description": "VoidSpacingTests.swift defines testTheMeasureNeverExceedsTheWidthItWasGiven",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidSpacingTests.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidSpacingTests.swift:testTheMeasureNeverExceedsTheWidthItWasGiven",
+   "type": "exports",
+   "direction": "forward",
+   "description": "VoidSpacingTests.swift exports testTheMeasureNeverExceedsTheWidthItWasGiven",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidSpacingTests.swift",
+   "target": "class:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidSpacingTests.swift:VoidSpacingTests",
+   "type": "contains",
+   "direction": "forward",
+   "description": "VoidSpacingTests.swift defines class VoidSpacingTests",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidTypeTests.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidTypeTests.swift:testEveryTypeRoleIsAtLeastTheDocumentMinimumOnItsPlatform",
+   "type": "contains",
+   "direction": "forward",
+   "description": "VoidTypeTests.swift defines testEveryTypeRoleIsAtLeastTheDocumentMinimumOnItsPlatform",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidTypeTests.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidTypeTests.swift:testEveryTypeRoleIsAtLeastTheDocumentMinimumOnItsPlatform",
+   "type": "exports",
+   "direction": "forward",
+   "description": "VoidTypeTests.swift exports testEveryTypeRoleIsAtLeastTheDocumentMinimumOnItsPlatform",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidTypeTests.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidTypeTests.swift:testTheRampIsOrderedFromLargestToSmallestOnBothPlatforms",
+   "type": "contains",
+   "direction": "forward",
+   "description": "VoidTypeTests.swift defines testTheRampIsOrderedFromLargestToSmallestOnBothPlatforms",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidTypeTests.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidTypeTests.swift:testTheRampIsOrderedFromLargestToSmallestOnBothPlatforms",
+   "type": "exports",
+   "direction": "forward",
+   "description": "VoidTypeTests.swift exports testTheRampIsOrderedFromLargestToSmallestOnBothPlatforms",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidTypeTests.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidTypeTests.swift:testTheLeadingNeverFallsBelowTheSizeItCarries",
+   "type": "contains",
+   "direction": "forward",
+   "description": "VoidTypeTests.swift defines testTheLeadingNeverFallsBelowTheSizeItCarries",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidTypeTests.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidTypeTests.swift:testTheLeadingNeverFallsBelowTheSizeItCarries",
+   "type": "exports",
+   "direction": "forward",
+   "description": "VoidTypeTests.swift exports testTheLeadingNeverFallsBelowTheSizeItCarries",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidTypeTests.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidTypeTests.swift:testTheEmphasisedWeightIsNeverLighterThanTheRoleItEmphasises",
+   "type": "contains",
+   "direction": "forward",
+   "description": "VoidTypeTests.swift defines testTheEmphasisedWeightIsNeverLighterThanTheRoleItEmphasises",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidTypeTests.swift",
+   "target": "function:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidTypeTests.swift:testTheEmphasisedWeightIsNeverLighterThanTheRoleItEmphasises",
+   "type": "exports",
+   "direction": "forward",
+   "description": "VoidTypeTests.swift exports testTheEmphasisedWeightIsNeverLighterThanTheRoleItEmphasises",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidTypeTests.swift",
+   "target": "class:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidTypeTests.swift:VoidTypeTests",
+   "type": "contains",
+   "direction": "forward",
+   "description": "VoidTypeTests.swift defines class VoidTypeTests",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidContrastTests.swift",
+   "target": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidAppearance.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "VoidContrastTests.swift imports VoidAppearance.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidContrastTests.swift",
+   "target": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidContrast.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "VoidContrastTests.swift imports VoidContrast.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidContrastTests.swift",
+   "target": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidControlSize.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "VoidContrastTests.swift imports VoidControlSize.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidContrastTests.swift",
+   "target": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidPalette.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "VoidContrastTests.swift imports VoidPalette.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidContrastTests.swift",
+   "target": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidRadii.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "VoidContrastTests.swift imports VoidRadii.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidContrastTests.swift",
+   "target": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidSpacing.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "VoidContrastTests.swift imports VoidSpacing.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidContrastTests.swift",
+   "target": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidType.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "VoidContrastTests.swift imports VoidType.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidControlSizeTests.swift",
+   "target": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidAppearance.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "VoidControlSizeTests.swift imports VoidAppearance.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidControlSizeTests.swift",
+   "target": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidContrast.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "VoidControlSizeTests.swift imports VoidContrast.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidControlSizeTests.swift",
+   "target": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidControlSize.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "VoidControlSizeTests.swift imports VoidControlSize.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidControlSizeTests.swift",
+   "target": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidPalette.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "VoidControlSizeTests.swift imports VoidPalette.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidControlSizeTests.swift",
+   "target": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidRadii.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "VoidControlSizeTests.swift imports VoidRadii.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidControlSizeTests.swift",
+   "target": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidSpacing.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "VoidControlSizeTests.swift imports VoidSpacing.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidControlSizeTests.swift",
+   "target": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidType.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "VoidControlSizeTests.swift imports VoidType.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift",
+   "target": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidAppearance.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "VoidPaletteTests.swift imports VoidAppearance.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift",
+   "target": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidContrast.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "VoidPaletteTests.swift imports VoidContrast.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift",
+   "target": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidControlSize.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "VoidPaletteTests.swift imports VoidControlSize.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift",
+   "target": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidPalette.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "VoidPaletteTests.swift imports VoidPalette.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift",
+   "target": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidRadii.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "VoidPaletteTests.swift imports VoidRadii.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift",
+   "target": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidSpacing.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "VoidPaletteTests.swift imports VoidSpacing.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidPaletteTests.swift",
+   "target": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidType.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "VoidPaletteTests.swift imports VoidType.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidShadowTests.swift",
+   "target": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidAppearance.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "VoidShadowTests.swift imports VoidAppearance.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidShadowTests.swift",
+   "target": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidContrast.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "VoidShadowTests.swift imports VoidContrast.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidShadowTests.swift",
+   "target": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidControlSize.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "VoidShadowTests.swift imports VoidControlSize.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidShadowTests.swift",
+   "target": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidPalette.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "VoidShadowTests.swift imports VoidPalette.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidShadowTests.swift",
+   "target": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidRadii.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "VoidShadowTests.swift imports VoidRadii.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidShadowTests.swift",
+   "target": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidSpacing.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "VoidShadowTests.swift imports VoidSpacing.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidShadowTests.swift",
+   "target": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidType.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "VoidShadowTests.swift imports VoidType.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidSpacingTests.swift",
+   "target": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidAppearance.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "VoidSpacingTests.swift imports VoidAppearance.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidSpacingTests.swift",
+   "target": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidContrast.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "VoidSpacingTests.swift imports VoidContrast.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidSpacingTests.swift",
+   "target": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidControlSize.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "VoidSpacingTests.swift imports VoidControlSize.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidSpacingTests.swift",
+   "target": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidPalette.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "VoidSpacingTests.swift imports VoidPalette.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidSpacingTests.swift",
+   "target": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidRadii.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "VoidSpacingTests.swift imports VoidRadii.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidSpacingTests.swift",
+   "target": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidSpacing.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "VoidSpacingTests.swift imports VoidSpacing.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidSpacingTests.swift",
+   "target": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidType.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "VoidSpacingTests.swift imports VoidType.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidTypeTests.swift",
+   "target": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidAppearance.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "VoidTypeTests.swift imports VoidAppearance.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidTypeTests.swift",
+   "target": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidContrast.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "VoidTypeTests.swift imports VoidContrast.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidTypeTests.swift",
+   "target": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidControlSize.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "VoidTypeTests.swift imports VoidControlSize.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidTypeTests.swift",
+   "target": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidPalette.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "VoidTypeTests.swift imports VoidPalette.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidTypeTests.swift",
+   "target": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidRadii.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "VoidTypeTests.swift imports VoidRadii.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidTypeTests.swift",
+   "target": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidSpacing.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "VoidTypeTests.swift imports VoidSpacing.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/VoidDesignSystem/Tests/VoidDesignSystemTests/VoidTypeTests.swift",
+   "target": "file:apps/apple/VoidDesignSystem/Sources/VoidDesignSystem/VoidType.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "VoidTypeTests.swift imports VoidType.swift",
+   "weight": 0.8
+  }
+ ]
+}

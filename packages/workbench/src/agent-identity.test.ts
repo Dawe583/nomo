@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createServer, type Server } from "node:http";
 import { Workbench } from "./index.ts";
+import { isolatedWorkbench } from "./test-fixture.ts";
 import {
   LocalAgentIdentityIssuer,
   type LocalAgentGrantBinding,
@@ -112,6 +113,38 @@ test("revoking a run invalidates its capability", () => {
   assert.equal(issuer.revoke("run-to-revoke"), true);
   assert.equal(issuer.validate(grant.token, request), null);
   assert.equal(issuer.revoke("run-to-revoke"), false);
+});
+
+test("revoking an agent drops all its runs and blocks re-issue, other agents survive", () => {
+  const issuer = new LocalAgentIdentityIssuer({ now: () => 5000, wallNow: () => 5000 });
+  const first = issuer.issue({ ...binding, runId: "run-a1" });
+  const second = issuer.issue({ ...binding, runId: "run-a2" });
+  const other = issuer.issue({ ...binding, agentId: "other-agent", runId: "run-b1" });
+  assert.equal(issuer.isAgentRevoked("registered-agent-1"), false);
+  assert.equal(issuer.revokeAgent("registered-agent-1"), 2);
+  assert.equal(issuer.isAgentRevoked("registered-agent-1"), true);
+  assert.equal(issuer.isAgentRevoked("other-agent"), false);
+  assert.equal(
+    issuer.validate(first.token, request),
+    null,
+    "a revoked agent grant no longer authenticates",
+  );
+  assert.equal(issuer.validate(second.token, request), null);
+  assert.notEqual(
+    issuer.validate(other.token, request),
+    null,
+    "revocation is agent-scoped, not fleet-scoped",
+  );
+  assert.throws(
+    () => issuer.issue({ ...binding, runId: "run-a3" }),
+    /revoked/i,
+    "a revoked agent cannot receive a new grant",
+  );
+  assert.notEqual(
+    issuer.issue({ ...binding, agentId: "other-agent", runId: "run-b2" }).token.length,
+    0,
+    "an agent that was never revoked still issues",
+  );
 });
 
 test("reissuing a run invalidates the previous grant and narrows scope", () => {
@@ -302,5 +335,69 @@ test("Workbench issues grants from stored active session identity and revokes at
   assert.throws(
     () => app.issueLocalAgentGrant!(session.id, connectorId),
     /active run/i,
+  );
+});
+
+test("revoking an agent stops its sessions, signs evidence and blocks new starts", async (t) => {
+  const fetcher: typeof fetch = async (input) =>
+    String(input).endsWith("/models")
+      ? Response.json({ data: [{ id: "fixture" }] })
+      : Response.json({
+          choices: [
+            { message: { role: "assistant", content: "done" }, finish_reason: "stop" },
+          ],
+        });
+  const { app } = await isolatedWorkbench(t, fetcher);
+  const session = await app.start("do something", "fixture");
+  const agentId = session.agent;
+  assert.ok(agentId, "the session carries an agent identity");
+  assert.equal(app.isAgentRevoked(agentId), false);
+
+  const result = await app.revokeAgent(agentId, "test-operator");
+  assert.equal(app.isAgentRevoked(agentId), true);
+  await assert.rejects(
+    app.start("another run", "fixture"),
+    /revoked/,
+    "a revoked agent cannot start a new session",
+  );
+  await app.settled();
+  const proof = await app.ledger(session.workspace);
+  const record = proof?.entries
+    .map((entry) => entry.body as Record<string, unknown>)
+    .find((body) => body.tool === "agent_revoke");
+  assert.ok(record, "the revocation writes a signed chain record");
+  assert.equal(record.approvedBy, "test-operator");
+  assert.equal(record.revokedAgentId, agentId);
+  assert.ok(result, "revokeAgent reports what it did");
+});
+
+test("a revoked agent stays revoked across a restart", async (t) => {
+  const fetcher: typeof fetch = async (input) =>
+    String(input).endsWith("/models")
+      ? Response.json({ data: [{ id: "fixture" }] })
+      : Response.json({
+          choices: [
+            { message: { role: "assistant", content: "done" }, finish_reason: "stop" },
+          ],
+        });
+  const fixture = await isolatedWorkbench(t, fetcher, {}, {
+    prefix: "nomo-agent-revoke-restart-",
+  });
+  const session = await fixture.app.start("do something", "fixture");
+  const agentId = session.agent;
+  assert.ok(agentId, "the session carries an agent identity");
+  await fixture.app.revokeAgent(agentId, "test-operator");
+  assert.equal(fixture.app.isAgentRevoked(agentId), true);
+
+  const reopened = fixture.restart();
+  assert.equal(
+    reopened.isAgentRevoked(agentId),
+    true,
+    "the revocation restores from signed evidence, not process state",
+  );
+  await assert.rejects(
+    reopened.start("another run", "fixture"),
+    /revoked/,
+    "a revoked agent cannot start after a restart either",
   );
 });

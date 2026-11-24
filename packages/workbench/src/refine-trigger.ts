@@ -28,6 +28,12 @@
  * Nothing here calls a model and nothing here writes. The state is plain data so
  * it can be reasoned about, and the effect is expressed as a value the caller
  * carries out.
+ *
+ * The storable form of that data lives here too (`persistTriggerState` and
+ * `restoreTriggerState`), because a snapshot written by one shape and read by
+ * another is a cooldown that silently disappears. The cooldown has to survive a
+ * restart: a state kept only in memory made "stop the process and start it
+ * again" a way to buy a free review.
  */
 
 /** What one round did. `not-run` means nothing was spent.
@@ -318,4 +324,146 @@ export async function serviceTrigger(
     outcome: { kind: "ran", instructions: reviewed.instructions },
     startedAtBranchVersion: version,
   };
+}
+
+/**
+ * One trigger state as it is stored.
+ *
+ * Field for field the in-memory shape, with one deliberate difference in
+ * meaning rather than in type: a stored `inFlight: true` is a record that a
+ * round never finished, not a claim that one is running. `restoreTriggerState`
+ * explains what that buys and what it costs.
+ */
+export type PersistedTriggerState = {
+  readonly pending: boolean;
+  readonly manualReviewRequested: boolean;
+  readonly settledTurnsSinceReview: number;
+  readonly lastReviewAt: number | null;
+  /** Recorded as it stood. Never trusted as a live round on the way back in. */
+  readonly inFlight: boolean;
+  readonly branchVersion: number;
+  readonly pendingReview: string | null;
+};
+
+/**
+ * The storable form of one state.
+ *
+ * Written field by field rather than spread, so a field added to `TriggerState`
+ * later has to be given a persistence decision instead of entering the snapshot
+ * silently. A field that is stored without a restore rule is a field that
+ * quietly becomes its default on the next start.
+ */
+export function persistTriggerState(state: TriggerState): PersistedTriggerState {
+  return {
+    pending: state.pending,
+    manualReviewRequested: state.manualReviewRequested,
+    settledTurnsSinceReview: state.settledTurnsSinceReview,
+    lastReviewAt: state.lastReviewAt,
+    inFlight: state.inFlight,
+    branchVersion: state.branchVersion,
+    pendingReview: state.pendingReview,
+  };
+}
+
+/** A non-negative safe integer, or zero. A count this process wrote is never
+ * negative, fractional or beyond the safe range, so one that is cannot be
+ * trusted as a count and must not become a negative turn budget. */
+function count(value: unknown): number {
+  return typeof value === "number" && Number.isSafeInteger(value) && value >= 0
+    ? value
+    : 0;
+}
+
+/**
+ * One stored state, validated, with the two normalisations a restart needs.
+ *
+ * **A stored `inFlight: true` means the round never finished.** The process
+ * died between arming the round and writing its outcome back, so there is no
+ * round in flight to protect: restoring the flag would hold the `in-flight`
+ * refusal for the whole life of the next process and the gate would never open
+ * again. It is restored as `false`, and the review gate is re-entered from the
+ * timing facts below instead.
+ *
+ * **The interrupted round stamps the cooldown.** Its review may already have
+ * been paid for, and a restart must not buy a second one; the rule that every
+ * attempt stamps the cooldown, including a failed one, applies to an attempt
+ * the process died in the middle of. The cost is a delayed review after a
+ * crash, which is the direction this repository is willing to be wrong in.
+ *
+ * A stored timestamp in the future is treated the same way, for the same
+ * reason: it cannot be a real attempt time, and trusting it would hold the gate
+ * shut until the clock caught up. Clamping it to `now` keeps a full cooldown
+ * in force instead of an indefinite one.
+ *
+ * An entry that exists but whose timestamp cannot be read becomes `now` rather
+ * than `null`: `null` is a free review, and a record that cannot be parsed is
+ * not evidence that nothing was spent. A value that is not a state at all
+ * returns `undefined`, so a caller can tell a corrupt record from an empty one.
+ */
+export function restoreTriggerState(
+  value: unknown,
+  now: number,
+): TriggerState | undefined {
+  if (typeof value !== "object" || value === null || Array.isArray(value))
+    return undefined;
+  const record = value as Record<string, unknown>;
+  const stored =
+    typeof record.lastReviewAt === "number" && Number.isFinite(record.lastReviewAt)
+      ? record.lastReviewAt
+      : record.lastReviewAt === null
+        ? null
+        : now;
+  const interrupted = record.inFlight === true;
+  return {
+    pending: record.pending === true,
+    manualReviewRequested: record.manualReviewRequested === true,
+    settledTurnsSinceReview: count(record.settledTurnsSinceReview),
+    lastReviewAt:
+      interrupted || (stored !== null && stored > now) ? now : stored,
+    inFlight: false,
+    branchVersion: count(record.branchVersion),
+    pendingReview: typeof record.pendingReview === "string" ? record.pendingReview : null,
+  };
+}
+
+export type RestoredTriggerStates = {
+  readonly states: Map<string, TriggerState>;
+  /**
+   * True when storing what was read back would not reproduce the snapshot: an
+   * entry was dropped, normalised, or belonged to a session that is gone. The
+   * caller writes the cleaned snapshot once, so a repair is not repeated on
+   * every start.
+   */
+  readonly changed: boolean;
+};
+
+/**
+ * Every stored state, keyed by session, validated one entry at a time.
+ *
+ * A trigger belongs to a session. An entry whose session no longer exists is
+ * not state about anything the product can act on, and keeping it would grow
+ * the snapshot for the life of the workspace, so it is dropped rather than
+ * carried.
+ */
+export function restoreTriggerStates(
+  value: unknown,
+  now: number,
+  liveSessions: ReadonlySet<string>,
+): RestoredTriggerStates {
+  const states = new Map<string, TriggerState>();
+  if (value === undefined) return { states, changed: false };
+  if (typeof value !== "object" || value === null || Array.isArray(value))
+    return { states, changed: true };
+  let changed = false;
+  for (const [id, raw] of Object.entries(value as Record<string, unknown>)) {
+    const state = restoreTriggerState(raw, now);
+    if (state === undefined || !liveSessions.has(id)) {
+      changed = true;
+      continue;
+    }
+    states.set(id, state);
+    if (JSON.stringify(persistTriggerState(state)) !== JSON.stringify(raw))
+      changed = true;
+  }
+  return { states, changed };
 }

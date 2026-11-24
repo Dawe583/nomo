@@ -1,0 +1,2259 @@
+{
+ "nodes": [
+  {
+   "id": "file:scripts/receipt-demo/README.md",
+   "type": "document",
+   "name": "README.md",
+   "filePath": "scripts/receipt-demo/README.md",
+   "summary": "README.md \u2014 markdown document, 109 lines, 6 sections: A recovery receipt, verified without NOMO, What it does, Run it, What was observed (+2 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/receipt-demo/recorded-run.json",
+   "type": "config",
+   "name": "recorded-run.json",
+   "filePath": "scripts/receipt-demo/recorded-run.json",
+   "summary": "recorded-run.json \u2014 json config, 44 lines.",
+   "tags": [
+    "json",
+    "config"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/src/bench.test.mjs",
+   "type": "file",
+   "name": "bench.test.mjs",
+   "filePath": "scripts/src/bench.test.mjs",
+   "summary": "bench.test.mjs \u2014 javascript code, 79 lines, 2 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/bench.test.mjs:run",
+   "type": "function",
+   "name": "run",
+   "filePath": "scripts/src/bench.test.mjs",
+   "lineRange": [
+    10,
+    19
+   ],
+   "summary": "run(...args) \u2014 function in bench.test.mjs, lines 10-19.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/bench.test.mjs:assertMetrics",
+   "type": "function",
+   "name": "assertMetrics",
+   "filePath": "scripts/src/bench.test.mjs",
+   "lineRange": [
+    21,
+    30
+   ],
+   "summary": "assertMetrics(metrics) \u2014 function in bench.test.mjs, lines 21-30.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/src/build-web-identity.test.mjs",
+   "type": "file",
+   "name": "build-web-identity.test.mjs",
+   "filePath": "scripts/src/build-web-identity.test.mjs",
+   "summary": "build-web-identity.test.mjs \u2014 javascript code, 15 lines, 0 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/src/check-apple-project.mjs",
+   "type": "file",
+   "name": "check-apple-project.mjs",
+   "filePath": "scripts/src/check-apple-project.mjs",
+   "summary": "check-apple-project.mjs \u2014 javascript code, 132 lines, 0 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/src/check-cloud-build.mjs",
+   "type": "file",
+   "name": "check-cloud-build.mjs",
+   "filePath": "scripts/src/check-cloud-build.mjs",
+   "summary": "check-cloud-build.mjs \u2014 javascript code, 29 lines, 2 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/check-cloud-build.mjs:json",
+   "type": "function",
+   "name": "json",
+   "filePath": "scripts/src/check-cloud-build.mjs",
+   "lineRange": [
+    8,
+    8
+   ],
+   "summary": "json() \u2014 function in check-cloud-build.mjs, lines 8-8.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/check-cloud-build.mjs:file",
+   "type": "function",
+   "name": "file",
+   "filePath": "scripts/src/check-cloud-build.mjs",
+   "lineRange": [
+    9,
+    14
+   ],
+   "summary": "file(root, name) \u2014 function in check-cloud-build.mjs, lines 9-14.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/src/check-cloud.mjs",
+   "type": "file",
+   "name": "check-cloud.mjs",
+   "filePath": "scripts/src/check-cloud.mjs",
+   "summary": "check-cloud.mjs \u2014 javascript code, 127 lines, 0 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/src/check-desktop-rust.mjs",
+   "type": "file",
+   "name": "check-desktop-rust.mjs",
+   "filePath": "scripts/src/check-desktop-rust.mjs",
+   "summary": "check-desktop-rust.mjs \u2014 javascript code, 89 lines, 0 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/src/check-registry-mirror.mjs",
+   "type": "file",
+   "name": "check-registry-mirror.mjs",
+   "filePath": "scripts/src/check-registry-mirror.mjs",
+   "summary": "check-registry-mirror.mjs \u2014 javascript code, 73 lines, 2 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/check-registry-mirror.mjs:body",
+   "type": "function",
+   "name": "body",
+   "filePath": "scripts/src/check-registry-mirror.mjs",
+   "lineRange": [
+    42,
+    47
+   ],
+   "summary": "body(file) \u2014 function in check-registry-mirror.mjs, lines 42-47.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/check-registry-mirror.mjs:digest",
+   "type": "function",
+   "name": "digest",
+   "filePath": "scripts/src/check-registry-mirror.mjs",
+   "lineRange": [
+    51,
+    51
+   ],
+   "summary": "digest(s) \u2014 function in check-registry-mirror.mjs, lines 51-51.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/src/check-reverse-engine.mjs",
+   "type": "file",
+   "name": "check-reverse-engine.mjs",
+   "filePath": "scripts/src/check-reverse-engine.mjs",
+   "summary": "check-reverse-engine.mjs \u2014 javascript code, 16 lines, 0 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/src/check-tests-timeout.test.mjs",
+   "type": "file",
+   "name": "check-tests-timeout.test.mjs",
+   "filePath": "scripts/src/check-tests-timeout.test.mjs",
+   "summary": "check-tests-timeout.test.mjs \u2014 javascript code, 141 lines, 2 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/check-tests-timeout.test.mjs:runGate",
+   "type": "function",
+   "name": "runGate",
+   "filePath": "scripts/src/check-tests-timeout.test.mjs",
+   "lineRange": [
+    26,
+    32
+   ],
+   "summary": "runGate(env) \u2014 function in check-tests-timeout.test.mjs, lines 26-32.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/check-tests-timeout.test.mjs:outputOf",
+   "type": "function",
+   "name": "outputOf",
+   "filePath": "scripts/src/check-tests-timeout.test.mjs",
+   "lineRange": [
+    34,
+    34
+   ],
+   "summary": "outputOf(run) \u2014 function in check-tests-timeout.test.mjs, lines 34-34.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/src/design-source-swift.test.mjs",
+   "type": "file",
+   "name": "design-source-swift.test.mjs",
+   "filePath": "scripts/src/design-source-swift.test.mjs",
+   "summary": "design-source-swift.test.mjs \u2014 javascript code, 259 lines, 5 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "javascript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:scripts/src/design-source-swift.test.mjs:read",
+   "type": "function",
+   "name": "read",
+   "filePath": "scripts/src/design-source-swift.test.mjs",
+   "lineRange": [
+    37,
+    37
+   ],
+   "summary": "read(file) \u2014 function in design-source-swift.test.mjs, lines 37-37.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/design-source-swift.test.mjs:section",
+   "type": "function",
+   "name": "section",
+   "filePath": "scripts/src/design-source-swift.test.mjs",
+   "lineRange": [
+    41,
+    49
+   ],
+   "summary": "section(source, name) \u2014 function in design-source-swift.test.mjs, lines 41-49.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/design-source-swift.test.mjs:declaration",
+   "type": "function",
+   "name": "declaration",
+   "filePath": "scripts/src/design-source-swift.test.mjs",
+   "lineRange": [
+    56,
+    62
+   ],
+   "summary": "declaration(source, name) \u2014 function in design-source-swift.test.mjs, lines 56-62.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/design-source-swift.test.mjs:cases",
+   "type": "function",
+   "name": "cases",
+   "filePath": "scripts/src/design-source-swift.test.mjs",
+   "lineRange": [
+    65,
+    69
+   ],
+   "summary": "cases(source, name) \u2014 function in design-source-swift.test.mjs, lines 65-69.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/design-source-swift.test.mjs:constants",
+   "type": "function",
+   "name": "constants",
+   "filePath": "scripts/src/design-source-swift.test.mjs",
+   "lineRange": [
+    72,
+    80
+   ],
+   "summary": "constants(source, name) \u2014 function in design-source-swift.test.mjs, lines 72-80.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/src/design-token.test.mjs",
+   "type": "file",
+   "name": "design-token.test.mjs",
+   "filePath": "scripts/src/design-token.test.mjs",
+   "summary": "design-token.test.mjs \u2014 javascript code, 443 lines, 3 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:scripts/src/design-token.test.mjs:read",
+   "type": "function",
+   "name": "read",
+   "filePath": "scripts/src/design-token.test.mjs",
+   "lineRange": [
+    62,
+    62
+   ],
+   "summary": "read(file) \u2014 function in design-token.test.mjs, lines 62-62.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/design-token.test.mjs:lightCanvas",
+   "type": "function",
+   "name": "lightCanvas",
+   "filePath": "scripts/src/design-token.test.mjs",
+   "lineRange": [
+    72,
+    77
+   ],
+   "summary": "lightCanvas(spec) \u2014 function in design-token.test.mjs, lines 72-77.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/design-token.test.mjs:normalise",
+   "type": "function",
+   "name": "normalise",
+   "filePath": "scripts/src/design-token.test.mjs",
+   "lineRange": [
+    79,
+    84
+   ],
+   "summary": "normalise(value) \u2014 function in design-token.test.mjs, lines 79-84.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/src/doc-truth.test.mjs",
+   "type": "file",
+   "name": "doc-truth.test.mjs",
+   "filePath": "scripts/src/doc-truth.test.mjs",
+   "summary": "doc-truth.test.mjs \u2014 javascript code, 693 lines, 3 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code",
+    "test"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "function:scripts/src/doc-truth.test.mjs:read",
+   "type": "function",
+   "name": "read",
+   "filePath": "scripts/src/doc-truth.test.mjs",
+   "lineRange": [
+    301,
+    301
+   ],
+   "summary": "read(file) \u2014 function in doc-truth.test.mjs, lines 301-301.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/doc-truth.test.mjs:markdownFiles",
+   "type": "function",
+   "name": "markdownFiles",
+   "filePath": "scripts/src/doc-truth.test.mjs",
+   "lineRange": [
+    319,
+    341
+   ],
+   "summary": "markdownFiles() \u2014 function in doc-truth.test.mjs, lines 319-341.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/doc-truth.test.mjs:deadPaths",
+   "type": "function",
+   "name": "deadPaths",
+   "filePath": "scripts/src/doc-truth.test.mjs",
+   "lineRange": [
+    358,
+    367
+   ],
+   "summary": "deadPaths(text) \u2014 function in doc-truth.test.mjs, lines 358-367.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/src/docs-release.test.mjs",
+   "type": "file",
+   "name": "docs-release.test.mjs",
+   "filePath": "scripts/src/docs-release.test.mjs",
+   "summary": "docs-release.test.mjs \u2014 javascript code, 64 lines, 0 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/src/e2e-final.test.mjs",
+   "type": "file",
+   "name": "e2e-final.test.mjs",
+   "filePath": "scripts/src/e2e-final.test.mjs",
+   "summary": "e2e-final.test.mjs \u2014 javascript code, 29 lines, 0 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/src/e2e.test.mjs",
+   "type": "file",
+   "name": "e2e.test.mjs",
+   "filePath": "scripts/src/e2e.test.mjs",
+   "summary": "e2e.test.mjs \u2014 javascript code, 17 lines, 0 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/src/env-var-truth.test.mjs",
+   "type": "file",
+   "name": "env-var-truth.test.mjs",
+   "filePath": "scripts/src/env-var-truth.test.mjs",
+   "summary": "env-var-truth.test.mjs \u2014 javascript code, 495 lines, 7 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:scripts/src/env-var-truth.test.mjs:legacyAliasedNames",
+   "type": "function",
+   "name": "legacyAliasedNames",
+   "filePath": "scripts/src/env-var-truth.test.mjs",
+   "lineRange": [
+    162,
+    194
+   ],
+   "summary": "legacyAliasedNames(sourceText) \u2014 function in env-var-truth.test.mjs, lines 162-194.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/env-var-truth.test.mjs:knownEnvVars",
+   "type": "function",
+   "name": "knownEnvVars",
+   "filePath": "scripts/src/env-var-truth.test.mjs",
+   "lineRange": [
+    197,
+    207
+   ],
+   "summary": "knownEnvVars(sourceText) \u2014 function in env-var-truth.test.mjs, lines 197-207.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/env-var-truth.test.mjs:findUnknownEnvVars",
+   "type": "function",
+   "name": "findUnknownEnvVars",
+   "filePath": "scripts/src/env-var-truth.test.mjs",
+   "lineRange": [
+    213,
+    222
+   ],
+   "summary": "findUnknownEnvVars(testSource, known) \u2014 function in env-var-truth.test.mjs, lines 213-222.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/env-var-truth.test.mjs:unknownEnvVars",
+   "type": "function",
+   "name": "unknownEnvVars",
+   "filePath": "scripts/src/env-var-truth.test.mjs",
+   "lineRange": [
+    225,
+    226
+   ],
+   "summary": "unknownEnvVars(testSource, knownSource) \u2014 function in env-var-truth.test.mjs, lines 225-226.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/env-var-truth.test.mjs:describeFinding",
+   "type": "function",
+   "name": "describeFinding",
+   "filePath": "scripts/src/env-var-truth.test.mjs",
+   "lineRange": [
+    234,
+    242
+   ],
+   "summary": "describeFinding(file, finding) \u2014 function in env-var-truth.test.mjs, lines 234-242.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/env-var-truth.test.mjs:walk",
+   "type": "function",
+   "name": "walk",
+   "filePath": "scripts/src/env-var-truth.test.mjs",
+   "lineRange": [
+    275,
+    284
+   ],
+   "summary": "walk() \u2014 function in env-var-truth.test.mjs, lines 275-284.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/env-var-truth.test.mjs:readTree",
+   "type": "function",
+   "name": "readTree",
+   "filePath": "scripts/src/env-var-truth.test.mjs",
+   "lineRange": [
+    287,
+    307
+   ],
+   "summary": "readTree() \u2014 function in env-var-truth.test.mjs, lines 287-307.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/src/generate-swift-tokens.mjs",
+   "type": "file",
+   "name": "generate-swift-tokens.mjs",
+   "filePath": "scripts/src/generate-swift-tokens.mjs",
+   "summary": "generate-swift-tokens.mjs \u2014 javascript code, 545 lines, 15 functions, 0 classes, 2 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:scripts/src/generate-swift-tokens.mjs:identifier",
+   "type": "function",
+   "name": "identifier",
+   "filePath": "scripts/src/generate-swift-tokens.mjs",
+   "lineRange": [
+    60,
+    67
+   ],
+   "summary": "identifier(key) \u2014 function in generate-swift-tokens.mjs, lines 60-67.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/generate-swift-tokens.mjs:channels",
+   "type": "function",
+   "name": "channels",
+   "filePath": "scripts/src/generate-swift-tokens.mjs",
+   "lineRange": [
+    70,
+    82
+   ],
+   "summary": "channels(value) \u2014 function in generate-swift-tokens.mjs, lines 70-82.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/generate-swift-tokens.mjs:literal",
+   "type": "function",
+   "name": "literal",
+   "filePath": "scripts/src/generate-swift-tokens.mjs",
+   "lineRange": [
+    91,
+    95
+   ],
+   "summary": "literal(value) \u2014 function in generate-swift-tokens.mjs, lines 91-95.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/generate-swift-tokens.mjs:list",
+   "type": "function",
+   "name": "list",
+   "filePath": "scripts/src/generate-swift-tokens.mjs",
+   "lineRange": [
+    98,
+    98
+   ],
+   "summary": "list(values) \u2014 function in generate-swift-tokens.mjs, lines 98-98.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/generate-swift-tokens.mjs:section",
+   "type": "function",
+   "name": "section",
+   "filePath": "scripts/src/generate-swift-tokens.mjs",
+   "lineRange": [
+    101,
+    106
+   ],
+   "summary": "section(name, body) \u2014 function in generate-swift-tokens.mjs, lines 101-106.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/generate-swift-tokens.mjs:comment",
+   "type": "function",
+   "name": "comment",
+   "filePath": "scripts/src/generate-swift-tokens.mjs",
+   "lineRange": [
+    116,
+    131
+   ],
+   "summary": "comment(text) \u2014 function in generate-swift-tokens.mjs, lines 116-131.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/generate-swift-tokens.mjs:colours",
+   "type": "function",
+   "name": "colours",
+   "filePath": "scripts/src/generate-swift-tokens.mjs",
+   "lineRange": [
+    137,
+    228
+   ],
+   "summary": "colours(tokens) \u2014 function in generate-swift-tokens.mjs, lines 137-228.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/generate-swift-tokens.mjs:shadows",
+   "type": "function",
+   "name": "shadows",
+   "filePath": "scripts/src/generate-swift-tokens.mjs",
+   "lineRange": [
+    231,
+    270
+   ],
+   "summary": "shadows(tokens) \u2014 function in generate-swift-tokens.mjs, lines 231-270.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/generate-swift-tokens.mjs:type",
+   "type": "function",
+   "name": "type",
+   "filePath": "scripts/src/generate-swift-tokens.mjs",
+   "lineRange": [
+    273,
+    364
+   ],
+   "summary": "type(tokens) \u2014 function in generate-swift-tokens.mjs, lines 273-364.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/generate-swift-tokens.mjs:spacing",
+   "type": "function",
+   "name": "spacing",
+   "filePath": "scripts/src/generate-swift-tokens.mjs",
+   "lineRange": [
+    367,
+    399
+   ],
+   "summary": "spacing(tokens) \u2014 function in generate-swift-tokens.mjs, lines 367-399.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/generate-swift-tokens.mjs:radii",
+   "type": "function",
+   "name": "radii",
+   "filePath": "scripts/src/generate-swift-tokens.mjs",
+   "lineRange": [
+    402,
+    441
+   ],
+   "summary": "radii(tokens) \u2014 function in generate-swift-tokens.mjs, lines 402-441.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/generate-swift-tokens.mjs:control",
+   "type": "function",
+   "name": "control",
+   "filePath": "scripts/src/generate-swift-tokens.mjs",
+   "lineRange": [
+    444,
+    462
+   ],
+   "summary": "control(tokens) \u2014 function in generate-swift-tokens.mjs, lines 444-462.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/generate-swift-tokens.mjs:contrast",
+   "type": "function",
+   "name": "contrast",
+   "filePath": "scripts/src/generate-swift-tokens.mjs",
+   "lineRange": [
+    465,
+    497
+   ],
+   "summary": "contrast(tokens) \u2014 function in generate-swift-tokens.mjs, lines 465-497.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/generate-swift-tokens.mjs:renderSwift",
+   "type": "function",
+   "name": "renderSwift",
+   "filePath": "scripts/src/generate-swift-tokens.mjs",
+   "lineRange": [
+    500,
+    525
+   ],
+   "summary": "renderSwift(tokens) \u2014 function in generate-swift-tokens.mjs, lines 500-525.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/generate-swift-tokens.mjs:generate",
+   "type": "function",
+   "name": "generate",
+   "filePath": "scripts/src/generate-swift-tokens.mjs",
+   "lineRange": [
+    528,
+    538
+   ],
+   "summary": "generate() \u2014 function in generate-swift-tokens.mjs, lines 528-538.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/src/h75-cutover-preflight-row-fields.test.mjs",
+   "type": "file",
+   "name": "h75-cutover-preflight-row-fields.test.mjs",
+   "filePath": "scripts/src/h75-cutover-preflight-row-fields.test.mjs",
+   "summary": "h75-cutover-preflight-row-fields.test.mjs \u2014 javascript code, 152 lines, 2 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:scripts/src/h75-cutover-preflight-row-fields.test.mjs:manifest",
+   "type": "function",
+   "name": "manifest",
+   "filePath": "scripts/src/h75-cutover-preflight-row-fields.test.mjs",
+   "lineRange": [
+    13,
+    122
+   ],
+   "summary": "manifest() \u2014 function in h75-cutover-preflight-row-fields.test.mjs, lines 13-122.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/h75-cutover-preflight-row-fields.test.mjs:run",
+   "type": "function",
+   "name": "run",
+   "filePath": "scripts/src/h75-cutover-preflight-row-fields.test.mjs",
+   "lineRange": [
+    124,
+    133
+   ],
+   "summary": "run(t, value) \u2014 function in h75-cutover-preflight-row-fields.test.mjs, lines 124-133.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/src/h75-cutover-preflight.mjs",
+   "type": "file",
+   "name": "h75-cutover-preflight.mjs",
+   "filePath": "scripts/src/h75-cutover-preflight.mjs",
+   "summary": "h75-cutover-preflight.mjs \u2014 javascript code, 1184 lines, 13 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "function:scripts/src/h75-cutover-preflight.mjs:object",
+   "type": "function",
+   "name": "object",
+   "filePath": "scripts/src/h75-cutover-preflight.mjs",
+   "lineRange": [
+    9,
+    15
+   ],
+   "summary": "object(value, path, errors) \u2014 function in h75-cutover-preflight.mjs, lines 9-15.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/h75-cutover-preflight.mjs:text",
+   "type": "function",
+   "name": "text",
+   "filePath": "scripts/src/h75-cutover-preflight.mjs",
+   "lineRange": [
+    17,
+    23
+   ],
+   "summary": "text(value, path, errors) \u2014 function in h75-cutover-preflight.mjs, lines 17-23.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/h75-cutover-preflight.mjs:sameName",
+   "type": "function",
+   "name": "sameName",
+   "filePath": "scripts/src/h75-cutover-preflight.mjs",
+   "lineRange": [
+    25,
+    32
+   ],
+   "summary": "sameName(left, right) \u2014 function in h75-cutover-preflight.mjs, lines 25-32.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/h75-cutover-preflight.mjs:sameText",
+   "type": "function",
+   "name": "sameText",
+   "filePath": "scripts/src/h75-cutover-preflight.mjs",
+   "lineRange": [
+    34,
+    40
+   ],
+   "summary": "sameText(left, right) \u2014 function in h75-cutover-preflight.mjs, lines 34-40.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/h75-cutover-preflight.mjs:items",
+   "type": "function",
+   "name": "items",
+   "filePath": "scripts/src/h75-cutover-preflight.mjs",
+   "lineRange": [
+    42,
+    48
+   ],
+   "summary": "items(value, path, errors) \u2014 function in h75-cutover-preflight.mjs, lines 42-48.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/h75-cutover-preflight.mjs:yes",
+   "type": "function",
+   "name": "yes",
+   "filePath": "scripts/src/h75-cutover-preflight.mjs",
+   "lineRange": [
+    50,
+    52
+   ],
+   "summary": "yes(value, path, errors) \u2014 function in h75-cutover-preflight.mjs, lines 50-52.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/h75-cutover-preflight.mjs:knownFields",
+   "type": "function",
+   "name": "knownFields",
+   "filePath": "scripts/src/h75-cutover-preflight.mjs",
+   "lineRange": [
+    54,
+    58
+   ],
+   "summary": "knownFields(value, fields, path, errors) \u2014 function in h75-cutover-preflight.mjs, lines 54-58.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/h75-cutover-preflight.mjs:evidenceRef",
+   "type": "function",
+   "name": "evidenceRef",
+   "filePath": "scripts/src/h75-cutover-preflight.mjs",
+   "lineRange": [
+    60,
+    69
+   ],
+   "summary": "evidenceRef(value, path, errors) \u2014 function in h75-cutover-preflight.mjs, lines 60-69.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/h75-cutover-preflight.mjs:timestamp",
+   "type": "function",
+   "name": "timestamp",
+   "filePath": "scripts/src/h75-cutover-preflight.mjs",
+   "lineRange": [
+    71,
+    91
+   ],
+   "summary": "timestamp(value, path, errors) \u2014 function in h75-cutover-preflight.mjs, lines 71-91.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/h75-cutover-preflight.mjs:gate",
+   "type": "function",
+   "name": "gate",
+   "filePath": "scripts/src/h75-cutover-preflight.mjs",
+   "lineRange": [
+    184,
+    207
+   ],
+   "summary": "gate(register, name, record, errors) \u2014 function in h75-cutover-preflight.mjs, lines 184-207.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/h75-cutover-preflight.mjs:uniqueRows",
+   "type": "function",
+   "name": "uniqueRows",
+   "filePath": "scripts/src/h75-cutover-preflight.mjs",
+   "lineRange": [
+    209,
+    220
+   ],
+   "summary": "uniqueRows(value, path, errors) \u2014 function in h75-cutover-preflight.mjs, lines 209-220.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/h75-cutover-preflight.mjs:coverage",
+   "type": "function",
+   "name": "coverage",
+   "filePath": "scripts/src/h75-cutover-preflight.mjs",
+   "lineRange": [
+    222,
+    239
+   ],
+   "summary": "coverage(rows, key, expected, path\u2026) \u2014 function in h75-cutover-preflight.mjs, lines 222-239.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/h75-cutover-preflight.mjs:validate",
+   "type": "function",
+   "name": "validate",
+   "filePath": "scripts/src/h75-cutover-preflight.mjs",
+   "lineRange": [
+    241,
+    1149
+   ],
+   "summary": "validate(register) \u2014 function in h75-cutover-preflight.mjs, lines 241-1149.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "file:scripts/src/h75-cutover-preflight.test.mjs",
+   "type": "file",
+   "name": "h75-cutover-preflight.test.mjs",
+   "filePath": "scripts/src/h75-cutover-preflight.test.mjs",
+   "summary": "h75-cutover-preflight.test.mjs \u2014 javascript code, 1313 lines, 2 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code",
+    "test"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "function:scripts/src/h75-cutover-preflight.test.mjs:manifest",
+   "type": "function",
+   "name": "manifest",
+   "filePath": "scripts/src/h75-cutover-preflight.test.mjs",
+   "lineRange": [
+    13,
+    177
+   ],
+   "summary": "manifest() \u2014 function in h75-cutover-preflight.test.mjs, lines 13-177.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:scripts/src/h75-cutover-preflight.test.mjs:run",
+   "type": "function",
+   "name": "run",
+   "filePath": "scripts/src/h75-cutover-preflight.test.mjs",
+   "lineRange": [
+    179,
+    188
+   ],
+   "summary": "run(t, value) \u2014 function in h75-cutover-preflight.test.mjs, lines 179-188.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/src/h75-cutover-register-schema.test.mjs",
+   "type": "file",
+   "name": "h75-cutover-register-schema.test.mjs",
+   "filePath": "scripts/src/h75-cutover-register-schema.test.mjs",
+   "summary": "h75-cutover-register-schema.test.mjs \u2014 javascript code, 227 lines, 0 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:scripts/src/h75-cutover-register.schema.json",
+   "type": "config",
+   "name": "h75-cutover-register.schema.json",
+   "filePath": "scripts/src/h75-cutover-register.schema.json",
+   "summary": "h75-cutover-register.schema.json \u2014 json config, 676 lines.",
+   "tags": [
+    "json",
+    "config"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "file:scripts/src/h75-cutover-register.template.json",
+   "type": "config",
+   "name": "h75-cutover-register.template.json",
+   "filePath": "scripts/src/h75-cutover-register.template.json",
+   "summary": "h75-cutover-register.template.json \u2014 json config, 91 lines.",
+   "tags": [
+    "json",
+    "config"
+   ],
+   "complexity": "simple"
+  }
+ ],
+ "edges": [
+  {
+   "source": "file:scripts/src/bench.test.mjs",
+   "target": "function:scripts/src/bench.test.mjs:run",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bench.test.mjs defines run",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/bench.test.mjs",
+   "target": "function:scripts/src/bench.test.mjs:assertMetrics",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bench.test.mjs defines assertMetrics",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/check-cloud-build.mjs",
+   "target": "function:scripts/src/check-cloud-build.mjs:json",
+   "type": "contains",
+   "direction": "forward",
+   "description": "check-cloud-build.mjs defines json",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/check-cloud-build.mjs",
+   "target": "function:scripts/src/check-cloud-build.mjs:file",
+   "type": "contains",
+   "direction": "forward",
+   "description": "check-cloud-build.mjs defines file",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/check-registry-mirror.mjs",
+   "target": "function:scripts/src/check-registry-mirror.mjs:body",
+   "type": "contains",
+   "direction": "forward",
+   "description": "check-registry-mirror.mjs defines body",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/check-registry-mirror.mjs",
+   "target": "function:scripts/src/check-registry-mirror.mjs:digest",
+   "type": "contains",
+   "direction": "forward",
+   "description": "check-registry-mirror.mjs defines digest",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/check-tests-timeout.test.mjs",
+   "target": "function:scripts/src/check-tests-timeout.test.mjs:runGate",
+   "type": "contains",
+   "direction": "forward",
+   "description": "check-tests-timeout.test.mjs defines runGate",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/check-tests-timeout.test.mjs",
+   "target": "function:scripts/src/check-tests-timeout.test.mjs:outputOf",
+   "type": "contains",
+   "direction": "forward",
+   "description": "check-tests-timeout.test.mjs defines outputOf",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/design-source-swift.test.mjs",
+   "target": "function:scripts/src/design-source-swift.test.mjs:read",
+   "type": "contains",
+   "direction": "forward",
+   "description": "design-source-swift.test.mjs defines read",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/design-source-swift.test.mjs",
+   "target": "function:scripts/src/design-source-swift.test.mjs:section",
+   "type": "contains",
+   "direction": "forward",
+   "description": "design-source-swift.test.mjs defines section",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/design-source-swift.test.mjs",
+   "target": "function:scripts/src/design-source-swift.test.mjs:declaration",
+   "type": "contains",
+   "direction": "forward",
+   "description": "design-source-swift.test.mjs defines declaration",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/design-source-swift.test.mjs",
+   "target": "function:scripts/src/design-source-swift.test.mjs:cases",
+   "type": "contains",
+   "direction": "forward",
+   "description": "design-source-swift.test.mjs defines cases",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/design-source-swift.test.mjs",
+   "target": "function:scripts/src/design-source-swift.test.mjs:constants",
+   "type": "contains",
+   "direction": "forward",
+   "description": "design-source-swift.test.mjs defines constants",
+   "weight": 1.0
+  },
+  {
+   "source": "function:scripts/src/design-source-swift.test.mjs:cases",
+   "target": "function:scripts/src/design-source-swift.test.mjs:declaration",
+   "type": "calls",
+   "direction": "forward",
+   "description": "cases calls declaration",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/design-source-swift.test.mjs:constants",
+   "target": "function:scripts/src/design-source-swift.test.mjs:section",
+   "type": "calls",
+   "direction": "forward",
+   "description": "constants calls section",
+   "weight": 0.6
+  },
+  {
+   "source": "file:scripts/src/design-token.test.mjs",
+   "target": "function:scripts/src/design-token.test.mjs:read",
+   "type": "contains",
+   "direction": "forward",
+   "description": "design-token.test.mjs defines read",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/design-token.test.mjs",
+   "target": "function:scripts/src/design-token.test.mjs:lightCanvas",
+   "type": "contains",
+   "direction": "forward",
+   "description": "design-token.test.mjs defines lightCanvas",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/design-token.test.mjs",
+   "target": "function:scripts/src/design-token.test.mjs:normalise",
+   "type": "contains",
+   "direction": "forward",
+   "description": "design-token.test.mjs defines normalise",
+   "weight": 1.0
+  },
+  {
+   "source": "function:scripts/src/design-token.test.mjs:lightCanvas",
+   "target": "function:scripts/src/design-token.test.mjs:read",
+   "type": "calls",
+   "direction": "forward",
+   "description": "lightCanvas calls read",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/design-token.test.mjs:lightCanvas",
+   "target": "function:scripts/src/design-token.test.mjs:normalise",
+   "type": "calls",
+   "direction": "forward",
+   "description": "lightCanvas calls normalise",
+   "weight": 0.6
+  },
+  {
+   "source": "file:scripts/src/doc-truth.test.mjs",
+   "target": "function:scripts/src/doc-truth.test.mjs:read",
+   "type": "contains",
+   "direction": "forward",
+   "description": "doc-truth.test.mjs defines read",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/doc-truth.test.mjs",
+   "target": "function:scripts/src/doc-truth.test.mjs:markdownFiles",
+   "type": "contains",
+   "direction": "forward",
+   "description": "doc-truth.test.mjs defines markdownFiles",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/doc-truth.test.mjs",
+   "target": "function:scripts/src/doc-truth.test.mjs:deadPaths",
+   "type": "contains",
+   "direction": "forward",
+   "description": "doc-truth.test.mjs defines deadPaths",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/env-var-truth.test.mjs",
+   "target": "function:scripts/src/env-var-truth.test.mjs:legacyAliasedNames",
+   "type": "contains",
+   "direction": "forward",
+   "description": "env-var-truth.test.mjs defines legacyAliasedNames",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/env-var-truth.test.mjs",
+   "target": "function:scripts/src/env-var-truth.test.mjs:knownEnvVars",
+   "type": "contains",
+   "direction": "forward",
+   "description": "env-var-truth.test.mjs defines knownEnvVars",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/env-var-truth.test.mjs",
+   "target": "function:scripts/src/env-var-truth.test.mjs:findUnknownEnvVars",
+   "type": "contains",
+   "direction": "forward",
+   "description": "env-var-truth.test.mjs defines findUnknownEnvVars",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/env-var-truth.test.mjs",
+   "target": "function:scripts/src/env-var-truth.test.mjs:unknownEnvVars",
+   "type": "contains",
+   "direction": "forward",
+   "description": "env-var-truth.test.mjs defines unknownEnvVars",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/env-var-truth.test.mjs",
+   "target": "function:scripts/src/env-var-truth.test.mjs:describeFinding",
+   "type": "contains",
+   "direction": "forward",
+   "description": "env-var-truth.test.mjs defines describeFinding",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/env-var-truth.test.mjs",
+   "target": "function:scripts/src/env-var-truth.test.mjs:walk",
+   "type": "contains",
+   "direction": "forward",
+   "description": "env-var-truth.test.mjs defines walk",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/env-var-truth.test.mjs",
+   "target": "function:scripts/src/env-var-truth.test.mjs:readTree",
+   "type": "contains",
+   "direction": "forward",
+   "description": "env-var-truth.test.mjs defines readTree",
+   "weight": 1.0
+  },
+  {
+   "source": "function:scripts/src/env-var-truth.test.mjs:knownEnvVars",
+   "target": "function:scripts/src/env-var-truth.test.mjs:legacyAliasedNames",
+   "type": "calls",
+   "direction": "forward",
+   "description": "knownEnvVars calls legacyAliasedNames",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/env-var-truth.test.mjs:unknownEnvVars",
+   "target": "function:scripts/src/env-var-truth.test.mjs:findUnknownEnvVars",
+   "type": "calls",
+   "direction": "forward",
+   "description": "unknownEnvVars calls findUnknownEnvVars",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/env-var-truth.test.mjs:unknownEnvVars",
+   "target": "function:scripts/src/env-var-truth.test.mjs:knownEnvVars",
+   "type": "calls",
+   "direction": "forward",
+   "description": "unknownEnvVars calls knownEnvVars",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/env-var-truth.test.mjs:readTree",
+   "target": "function:scripts/src/env-var-truth.test.mjs:walk",
+   "type": "calls",
+   "direction": "forward",
+   "description": "readTree calls walk",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/env-var-truth.test.mjs:readTree",
+   "target": "function:scripts/src/env-var-truth.test.mjs:knownEnvVars",
+   "type": "calls",
+   "direction": "forward",
+   "description": "readTree calls knownEnvVars",
+   "weight": 0.6
+  },
+  {
+   "source": "file:scripts/src/generate-swift-tokens.mjs",
+   "target": "function:scripts/src/generate-swift-tokens.mjs:identifier",
+   "type": "contains",
+   "direction": "forward",
+   "description": "generate-swift-tokens.mjs defines identifier",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/generate-swift-tokens.mjs",
+   "target": "function:scripts/src/generate-swift-tokens.mjs:channels",
+   "type": "contains",
+   "direction": "forward",
+   "description": "generate-swift-tokens.mjs defines channels",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/generate-swift-tokens.mjs",
+   "target": "function:scripts/src/generate-swift-tokens.mjs:literal",
+   "type": "contains",
+   "direction": "forward",
+   "description": "generate-swift-tokens.mjs defines literal",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/generate-swift-tokens.mjs",
+   "target": "function:scripts/src/generate-swift-tokens.mjs:list",
+   "type": "contains",
+   "direction": "forward",
+   "description": "generate-swift-tokens.mjs defines list",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/generate-swift-tokens.mjs",
+   "target": "function:scripts/src/generate-swift-tokens.mjs:section",
+   "type": "contains",
+   "direction": "forward",
+   "description": "generate-swift-tokens.mjs defines section",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/generate-swift-tokens.mjs",
+   "target": "function:scripts/src/generate-swift-tokens.mjs:comment",
+   "type": "contains",
+   "direction": "forward",
+   "description": "generate-swift-tokens.mjs defines comment",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/generate-swift-tokens.mjs",
+   "target": "function:scripts/src/generate-swift-tokens.mjs:colours",
+   "type": "contains",
+   "direction": "forward",
+   "description": "generate-swift-tokens.mjs defines colours",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/generate-swift-tokens.mjs",
+   "target": "function:scripts/src/generate-swift-tokens.mjs:shadows",
+   "type": "contains",
+   "direction": "forward",
+   "description": "generate-swift-tokens.mjs defines shadows",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/generate-swift-tokens.mjs",
+   "target": "function:scripts/src/generate-swift-tokens.mjs:type",
+   "type": "contains",
+   "direction": "forward",
+   "description": "generate-swift-tokens.mjs defines type",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/generate-swift-tokens.mjs",
+   "target": "function:scripts/src/generate-swift-tokens.mjs:spacing",
+   "type": "contains",
+   "direction": "forward",
+   "description": "generate-swift-tokens.mjs defines spacing",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/generate-swift-tokens.mjs",
+   "target": "function:scripts/src/generate-swift-tokens.mjs:radii",
+   "type": "contains",
+   "direction": "forward",
+   "description": "generate-swift-tokens.mjs defines radii",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/generate-swift-tokens.mjs",
+   "target": "function:scripts/src/generate-swift-tokens.mjs:control",
+   "type": "contains",
+   "direction": "forward",
+   "description": "generate-swift-tokens.mjs defines control",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/generate-swift-tokens.mjs",
+   "target": "function:scripts/src/generate-swift-tokens.mjs:contrast",
+   "type": "contains",
+   "direction": "forward",
+   "description": "generate-swift-tokens.mjs defines contrast",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/generate-swift-tokens.mjs",
+   "target": "function:scripts/src/generate-swift-tokens.mjs:renderSwift",
+   "type": "contains",
+   "direction": "forward",
+   "description": "generate-swift-tokens.mjs defines renderSwift",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/generate-swift-tokens.mjs",
+   "target": "function:scripts/src/generate-swift-tokens.mjs:renderSwift",
+   "type": "exports",
+   "direction": "forward",
+   "description": "generate-swift-tokens.mjs exports renderSwift",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/src/generate-swift-tokens.mjs",
+   "target": "function:scripts/src/generate-swift-tokens.mjs:generate",
+   "type": "contains",
+   "direction": "forward",
+   "description": "generate-swift-tokens.mjs defines generate",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/generate-swift-tokens.mjs",
+   "target": "function:scripts/src/generate-swift-tokens.mjs:generate",
+   "type": "exports",
+   "direction": "forward",
+   "description": "generate-swift-tokens.mjs exports generate",
+   "weight": 0.7
+  },
+  {
+   "source": "function:scripts/src/generate-swift-tokens.mjs:colours",
+   "target": "function:scripts/src/generate-swift-tokens.mjs:comment",
+   "type": "calls",
+   "direction": "forward",
+   "description": "colours calls comment",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/generate-swift-tokens.mjs:colours",
+   "target": "function:scripts/src/generate-swift-tokens.mjs:identifier",
+   "type": "calls",
+   "direction": "forward",
+   "description": "colours calls identifier",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/generate-swift-tokens.mjs:colours",
+   "target": "function:scripts/src/generate-swift-tokens.mjs:literal",
+   "type": "calls",
+   "direction": "forward",
+   "description": "colours calls literal",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/generate-swift-tokens.mjs:colours",
+   "target": "function:scripts/src/generate-swift-tokens.mjs:channels",
+   "type": "calls",
+   "direction": "forward",
+   "description": "colours calls channels",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/generate-swift-tokens.mjs:colours",
+   "target": "function:scripts/src/generate-swift-tokens.mjs:section",
+   "type": "calls",
+   "direction": "forward",
+   "description": "colours calls section",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/generate-swift-tokens.mjs:shadows",
+   "target": "function:scripts/src/generate-swift-tokens.mjs:section",
+   "type": "calls",
+   "direction": "forward",
+   "description": "shadows calls section",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/generate-swift-tokens.mjs:shadows",
+   "target": "function:scripts/src/generate-swift-tokens.mjs:identifier",
+   "type": "calls",
+   "direction": "forward",
+   "description": "shadows calls identifier",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/generate-swift-tokens.mjs:type",
+   "target": "function:scripts/src/generate-swift-tokens.mjs:section",
+   "type": "calls",
+   "direction": "forward",
+   "description": "type calls section",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/generate-swift-tokens.mjs:type",
+   "target": "function:scripts/src/generate-swift-tokens.mjs:identifier",
+   "type": "calls",
+   "direction": "forward",
+   "description": "type calls identifier",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/generate-swift-tokens.mjs:type",
+   "target": "function:scripts/src/generate-swift-tokens.mjs:comment",
+   "type": "calls",
+   "direction": "forward",
+   "description": "type calls comment",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/generate-swift-tokens.mjs:type",
+   "target": "function:scripts/src/generate-swift-tokens.mjs:literal",
+   "type": "calls",
+   "direction": "forward",
+   "description": "type calls literal",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/generate-swift-tokens.mjs:spacing",
+   "target": "function:scripts/src/generate-swift-tokens.mjs:section",
+   "type": "calls",
+   "direction": "forward",
+   "description": "spacing calls section",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/generate-swift-tokens.mjs:spacing",
+   "target": "function:scripts/src/generate-swift-tokens.mjs:list",
+   "type": "calls",
+   "direction": "forward",
+   "description": "spacing calls list",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/generate-swift-tokens.mjs:spacing",
+   "target": "function:scripts/src/generate-swift-tokens.mjs:literal",
+   "type": "calls",
+   "direction": "forward",
+   "description": "spacing calls literal",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/generate-swift-tokens.mjs:radii",
+   "target": "function:scripts/src/generate-swift-tokens.mjs:section",
+   "type": "calls",
+   "direction": "forward",
+   "description": "radii calls section",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/generate-swift-tokens.mjs:radii",
+   "target": "function:scripts/src/generate-swift-tokens.mjs:identifier",
+   "type": "calls",
+   "direction": "forward",
+   "description": "radii calls identifier",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/generate-swift-tokens.mjs:radii",
+   "target": "function:scripts/src/generate-swift-tokens.mjs:literal",
+   "type": "calls",
+   "direction": "forward",
+   "description": "radii calls literal",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/generate-swift-tokens.mjs:control",
+   "target": "function:scripts/src/generate-swift-tokens.mjs:section",
+   "type": "calls",
+   "direction": "forward",
+   "description": "control calls section",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/generate-swift-tokens.mjs:control",
+   "target": "function:scripts/src/generate-swift-tokens.mjs:literal",
+   "type": "calls",
+   "direction": "forward",
+   "description": "control calls literal",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/generate-swift-tokens.mjs:contrast",
+   "target": "function:scripts/src/generate-swift-tokens.mjs:section",
+   "type": "calls",
+   "direction": "forward",
+   "description": "contrast calls section",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/generate-swift-tokens.mjs:contrast",
+   "target": "function:scripts/src/generate-swift-tokens.mjs:identifier",
+   "type": "calls",
+   "direction": "forward",
+   "description": "contrast calls identifier",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/generate-swift-tokens.mjs:contrast",
+   "target": "function:scripts/src/generate-swift-tokens.mjs:literal",
+   "type": "calls",
+   "direction": "forward",
+   "description": "contrast calls literal",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/generate-swift-tokens.mjs:renderSwift",
+   "target": "function:scripts/src/generate-swift-tokens.mjs:colours",
+   "type": "calls",
+   "direction": "forward",
+   "description": "renderSwift calls colours",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/generate-swift-tokens.mjs:renderSwift",
+   "target": "function:scripts/src/generate-swift-tokens.mjs:shadows",
+   "type": "calls",
+   "direction": "forward",
+   "description": "renderSwift calls shadows",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/generate-swift-tokens.mjs:renderSwift",
+   "target": "function:scripts/src/generate-swift-tokens.mjs:type",
+   "type": "calls",
+   "direction": "forward",
+   "description": "renderSwift calls type",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/generate-swift-tokens.mjs:renderSwift",
+   "target": "function:scripts/src/generate-swift-tokens.mjs:spacing",
+   "type": "calls",
+   "direction": "forward",
+   "description": "renderSwift calls spacing",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/generate-swift-tokens.mjs:renderSwift",
+   "target": "function:scripts/src/generate-swift-tokens.mjs:radii",
+   "type": "calls",
+   "direction": "forward",
+   "description": "renderSwift calls radii",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/generate-swift-tokens.mjs:renderSwift",
+   "target": "function:scripts/src/generate-swift-tokens.mjs:control",
+   "type": "calls",
+   "direction": "forward",
+   "description": "renderSwift calls control",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/generate-swift-tokens.mjs:renderSwift",
+   "target": "function:scripts/src/generate-swift-tokens.mjs:contrast",
+   "type": "calls",
+   "direction": "forward",
+   "description": "renderSwift calls contrast",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/generate-swift-tokens.mjs:generate",
+   "target": "function:scripts/src/generate-swift-tokens.mjs:renderSwift",
+   "type": "calls",
+   "direction": "forward",
+   "description": "generate calls renderSwift",
+   "weight": 0.6
+  },
+  {
+   "source": "file:scripts/src/h75-cutover-preflight-row-fields.test.mjs",
+   "target": "function:scripts/src/h75-cutover-preflight-row-fields.test.mjs:manifest",
+   "type": "contains",
+   "direction": "forward",
+   "description": "h75-cutover-preflight-row-fields.test.mjs defines manifest",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/h75-cutover-preflight-row-fields.test.mjs",
+   "target": "function:scripts/src/h75-cutover-preflight-row-fields.test.mjs:run",
+   "type": "contains",
+   "direction": "forward",
+   "description": "h75-cutover-preflight-row-fields.test.mjs defines run",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/h75-cutover-preflight.mjs",
+   "target": "function:scripts/src/h75-cutover-preflight.mjs:object",
+   "type": "contains",
+   "direction": "forward",
+   "description": "h75-cutover-preflight.mjs defines object",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/h75-cutover-preflight.mjs",
+   "target": "function:scripts/src/h75-cutover-preflight.mjs:text",
+   "type": "contains",
+   "direction": "forward",
+   "description": "h75-cutover-preflight.mjs defines text",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/h75-cutover-preflight.mjs",
+   "target": "function:scripts/src/h75-cutover-preflight.mjs:sameName",
+   "type": "contains",
+   "direction": "forward",
+   "description": "h75-cutover-preflight.mjs defines sameName",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/h75-cutover-preflight.mjs",
+   "target": "function:scripts/src/h75-cutover-preflight.mjs:sameText",
+   "type": "contains",
+   "direction": "forward",
+   "description": "h75-cutover-preflight.mjs defines sameText",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/h75-cutover-preflight.mjs",
+   "target": "function:scripts/src/h75-cutover-preflight.mjs:items",
+   "type": "contains",
+   "direction": "forward",
+   "description": "h75-cutover-preflight.mjs defines items",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/h75-cutover-preflight.mjs",
+   "target": "function:scripts/src/h75-cutover-preflight.mjs:yes",
+   "type": "contains",
+   "direction": "forward",
+   "description": "h75-cutover-preflight.mjs defines yes",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/h75-cutover-preflight.mjs",
+   "target": "function:scripts/src/h75-cutover-preflight.mjs:knownFields",
+   "type": "contains",
+   "direction": "forward",
+   "description": "h75-cutover-preflight.mjs defines knownFields",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/h75-cutover-preflight.mjs",
+   "target": "function:scripts/src/h75-cutover-preflight.mjs:evidenceRef",
+   "type": "contains",
+   "direction": "forward",
+   "description": "h75-cutover-preflight.mjs defines evidenceRef",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/h75-cutover-preflight.mjs",
+   "target": "function:scripts/src/h75-cutover-preflight.mjs:timestamp",
+   "type": "contains",
+   "direction": "forward",
+   "description": "h75-cutover-preflight.mjs defines timestamp",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/h75-cutover-preflight.mjs",
+   "target": "function:scripts/src/h75-cutover-preflight.mjs:gate",
+   "type": "contains",
+   "direction": "forward",
+   "description": "h75-cutover-preflight.mjs defines gate",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/h75-cutover-preflight.mjs",
+   "target": "function:scripts/src/h75-cutover-preflight.mjs:uniqueRows",
+   "type": "contains",
+   "direction": "forward",
+   "description": "h75-cutover-preflight.mjs defines uniqueRows",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/h75-cutover-preflight.mjs",
+   "target": "function:scripts/src/h75-cutover-preflight.mjs:coverage",
+   "type": "contains",
+   "direction": "forward",
+   "description": "h75-cutover-preflight.mjs defines coverage",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/h75-cutover-preflight.mjs",
+   "target": "function:scripts/src/h75-cutover-preflight.mjs:validate",
+   "type": "contains",
+   "direction": "forward",
+   "description": "h75-cutover-preflight.mjs defines validate",
+   "weight": 1.0
+  },
+  {
+   "source": "function:scripts/src/h75-cutover-preflight.mjs:evidenceRef",
+   "target": "function:scripts/src/h75-cutover-preflight.mjs:text",
+   "type": "calls",
+   "direction": "forward",
+   "description": "evidenceRef calls text",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/h75-cutover-preflight.mjs:timestamp",
+   "target": "function:scripts/src/h75-cutover-preflight.mjs:text",
+   "type": "calls",
+   "direction": "forward",
+   "description": "timestamp calls text",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/h75-cutover-preflight.mjs:gate",
+   "target": "function:scripts/src/h75-cutover-preflight.mjs:object",
+   "type": "calls",
+   "direction": "forward",
+   "description": "gate calls object",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/h75-cutover-preflight.mjs:gate",
+   "target": "function:scripts/src/h75-cutover-preflight.mjs:text",
+   "type": "calls",
+   "direction": "forward",
+   "description": "gate calls text",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/h75-cutover-preflight.mjs:gate",
+   "target": "function:scripts/src/h75-cutover-preflight.mjs:timestamp",
+   "type": "calls",
+   "direction": "forward",
+   "description": "gate calls timestamp",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/h75-cutover-preflight.mjs:gate",
+   "target": "function:scripts/src/h75-cutover-preflight.mjs:evidenceRef",
+   "type": "calls",
+   "direction": "forward",
+   "description": "gate calls evidenceRef",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/h75-cutover-preflight.mjs:gate",
+   "target": "function:scripts/src/h75-cutover-preflight.mjs:sameName",
+   "type": "calls",
+   "direction": "forward",
+   "description": "gate calls sameName",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/h75-cutover-preflight.mjs:uniqueRows",
+   "target": "function:scripts/src/h75-cutover-preflight.mjs:items",
+   "type": "calls",
+   "direction": "forward",
+   "description": "uniqueRows calls items",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/h75-cutover-preflight.mjs:uniqueRows",
+   "target": "function:scripts/src/h75-cutover-preflight.mjs:object",
+   "type": "calls",
+   "direction": "forward",
+   "description": "uniqueRows calls object",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/h75-cutover-preflight.mjs:uniqueRows",
+   "target": "function:scripts/src/h75-cutover-preflight.mjs:text",
+   "type": "calls",
+   "direction": "forward",
+   "description": "uniqueRows calls text",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/h75-cutover-preflight.mjs:coverage",
+   "target": "function:scripts/src/h75-cutover-preflight.mjs:text",
+   "type": "calls",
+   "direction": "forward",
+   "description": "coverage calls text",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/h75-cutover-preflight.mjs:validate",
+   "target": "function:scripts/src/h75-cutover-preflight.mjs:gate",
+   "type": "calls",
+   "direction": "forward",
+   "description": "validate calls gate",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/h75-cutover-preflight.mjs:validate",
+   "target": "function:scripts/src/h75-cutover-preflight.mjs:text",
+   "type": "calls",
+   "direction": "forward",
+   "description": "validate calls text",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/h75-cutover-preflight.mjs:validate",
+   "target": "function:scripts/src/h75-cutover-preflight.mjs:uniqueRows",
+   "type": "calls",
+   "direction": "forward",
+   "description": "validate calls uniqueRows",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/h75-cutover-preflight.mjs:validate",
+   "target": "function:scripts/src/h75-cutover-preflight.mjs:knownFields",
+   "type": "calls",
+   "direction": "forward",
+   "description": "validate calls knownFields",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/h75-cutover-preflight.mjs:validate",
+   "target": "function:scripts/src/h75-cutover-preflight.mjs:timestamp",
+   "type": "calls",
+   "direction": "forward",
+   "description": "validate calls timestamp",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/h75-cutover-preflight.mjs:validate",
+   "target": "function:scripts/src/h75-cutover-preflight.mjs:items",
+   "type": "calls",
+   "direction": "forward",
+   "description": "validate calls items",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/h75-cutover-preflight.mjs:validate",
+   "target": "function:scripts/src/h75-cutover-preflight.mjs:evidenceRef",
+   "type": "calls",
+   "direction": "forward",
+   "description": "validate calls evidenceRef",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/h75-cutover-preflight.mjs:validate",
+   "target": "function:scripts/src/h75-cutover-preflight.mjs:object",
+   "type": "calls",
+   "direction": "forward",
+   "description": "validate calls object",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/h75-cutover-preflight.mjs:validate",
+   "target": "function:scripts/src/h75-cutover-preflight.mjs:coverage",
+   "type": "calls",
+   "direction": "forward",
+   "description": "validate calls coverage",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/h75-cutover-preflight.mjs:validate",
+   "target": "function:scripts/src/h75-cutover-preflight.mjs:yes",
+   "type": "calls",
+   "direction": "forward",
+   "description": "validate calls yes",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/h75-cutover-preflight.mjs:validate",
+   "target": "function:scripts/src/h75-cutover-preflight.mjs:sameText",
+   "type": "calls",
+   "direction": "forward",
+   "description": "validate calls sameText",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/h75-cutover-preflight.mjs:validate",
+   "target": "function:scripts/src/h75-cutover-preflight.mjs:sameName",
+   "type": "calls",
+   "direction": "forward",
+   "description": "validate calls sameName",
+   "weight": 0.6
+  },
+  {
+   "source": "file:scripts/src/h75-cutover-preflight.test.mjs",
+   "target": "function:scripts/src/h75-cutover-preflight.test.mjs:manifest",
+   "type": "contains",
+   "direction": "forward",
+   "description": "h75-cutover-preflight.test.mjs defines manifest",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/h75-cutover-preflight.test.mjs",
+   "target": "function:scripts/src/h75-cutover-preflight.test.mjs:run",
+   "type": "contains",
+   "direction": "forward",
+   "description": "h75-cutover-preflight.test.mjs defines run",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/design-source-swift.test.mjs",
+   "target": "file:scripts/src/generate-swift-tokens.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "design-source-swift.test.mjs imports generate-swift-tokens.mjs",
+   "weight": 0.8
+  }
+ ]
+}

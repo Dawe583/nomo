@@ -1,0 +1,1915 @@
+{
+ "nodes": [
+  {
+   "id": "file:apps/apple/NOMOApp/RootView.swift",
+   "type": "file",
+   "name": "RootView.swift",
+   "filePath": "apps/apple/NOMOApp/RootView.swift",
+   "summary": "RootView.swift \u2014 swift code, 76 lines, 0 functions, 3 classes, 2 exports, 0 imports.",
+   "tags": [
+    "swift",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NOMOApp/RootView.swift:RootView",
+   "type": "class",
+   "name": "RootView",
+   "filePath": "apps/apple/NOMOApp/RootView.swift",
+   "lineRange": [
+    3,
+    41
+   ],
+   "summary": "RootView \u2014 class in RootView.swift, lines 3-41.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NOMOApp/RootView.swift:SidebarDestination",
+   "type": "class",
+   "name": "SidebarDestination",
+   "filePath": "apps/apple/NOMOApp/RootView.swift",
+   "lineRange": [
+    43,
+    46
+   ],
+   "summary": "SidebarDestination \u2014 class in RootView.swift, lines 43-46.",
+   "tags": [
+    "swift",
+    "class"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NOMOApp/RootView.swift:SidebarView",
+   "type": "class",
+   "name": "SidebarView",
+   "filePath": "apps/apple/NOMOApp/RootView.swift",
+   "lineRange": [
+    47,
+    76
+   ],
+   "summary": "SidebarView \u2014 class in RootView.swift, lines 47-76.",
+   "tags": [
+    "swift",
+    "class"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/apple/NOMOApp/SampleChatTransport.swift",
+   "type": "file",
+   "name": "SampleChatTransport.swift",
+   "filePath": "apps/apple/NOMOApp/SampleChatTransport.swift",
+   "summary": "SampleChatTransport.swift \u2014 swift code, 197 lines, 2 functions, 2 classes, 6 exports, 0 imports.",
+   "tags": [
+    "swift",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:apps/apple/NOMOApp/SampleChatTransport.swift:transcript",
+   "type": "function",
+   "name": "transcript",
+   "filePath": "apps/apple/NOMOApp/SampleChatTransport.swift",
+   "lineRange": [
+    28,
+    35
+   ],
+   "summary": "transcript(sessionID) \u2014 function in SampleChatTransport.swift, lines 28-35.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOApp/SampleChatTransport.swift:run",
+   "type": "function",
+   "name": "run",
+   "filePath": "apps/apple/NOMOApp/SampleChatTransport.swift",
+   "lineRange": [
+    37,
+    79
+   ],
+   "summary": "run(request) \u2014 function in SampleChatTransport.swift, lines 37-79.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NOMOApp/SampleChatTransport.swift:SampleChatTransport",
+   "type": "class",
+   "name": "SampleChatTransport",
+   "filePath": "apps/apple/NOMOApp/SampleChatTransport.swift",
+   "lineRange": [
+    12,
+    196
+   ],
+   "summary": "SampleChatTransport \u2014 class in SampleChatTransport.swift, lines 12-196, methods: transcript, run.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "class:apps/apple/NOMOApp/SampleChatTransport.swift:Mode",
+   "type": "class",
+   "name": "Mode",
+   "filePath": "apps/apple/NOMOApp/SampleChatTransport.swift",
+   "lineRange": [
+    13,
+    17
+   ],
+   "summary": "Mode \u2014 class in SampleChatTransport.swift, lines 13-17.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/apple/NOMOApp/SessionDetailView.swift",
+   "type": "file",
+   "name": "SessionDetailView.swift",
+   "filePath": "apps/apple/NOMOApp/SessionDetailView.swift",
+   "summary": "SessionDetailView.swift \u2014 swift code, 86 lines, 0 functions, 2 classes, 5 exports, 0 imports.",
+   "tags": [
+    "swift",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NOMOApp/SessionDetailView.swift:SessionDetailView",
+   "type": "class",
+   "name": "SessionDetailView",
+   "filePath": "apps/apple/NOMOApp/SessionDetailView.swift",
+   "lineRange": [
+    9,
+    21
+   ],
+   "summary": "SessionDetailView \u2014 class in SessionDetailView.swift, lines 9-21.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NOMOApp/SessionDetailView.swift:SettingsView",
+   "type": "class",
+   "name": "SettingsView",
+   "filePath": "apps/apple/NOMOApp/SessionDetailView.swift",
+   "lineRange": [
+    23,
+    86
+   ],
+   "summary": "SettingsView \u2014 class in SessionDetailView.swift, lines 23-86.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/apple/NOMOUITests/NOMOUITests.swift",
+   "type": "file",
+   "name": "NOMOUITests.swift",
+   "filePath": "apps/apple/NOMOUITests/NOMOUITests.swift",
+   "summary": "NOMOUITests.swift \u2014 swift code, 771 lines, 31 functions, 3 classes, 20 exports, 0 imports.",
+   "tags": [
+    "swift",
+    "code"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "function:apps/apple/NOMOUITests/NOMOUITests.swift:setUpWithError",
+   "type": "function",
+   "name": "setUpWithError",
+   "filePath": "apps/apple/NOMOUITests/NOMOUITests.swift",
+   "lineRange": [
+    7,
+    11
+   ],
+   "summary": "setUpWithError() \u2014 function in NOMOUITests.swift, lines 7-11.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testEntryExplainsPairedMacWithoutCredentialsAndContinuesOffline",
+   "type": "function",
+   "name": "testEntryExplainsPairedMacWithoutCredentialsAndContinuesOffline",
+   "filePath": "apps/apple/NOMOUITests/NOMOUITests.swift",
+   "lineRange": [
+    30,
+    51
+   ],
+   "summary": "testEntryExplainsPairedMacWithoutCredentialsAndContinuesOffline() \u2014 function in NOMOUITests.swift, lines 30-51.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testEntrySupportsCzechWithoutCredentialFields",
+   "type": "function",
+   "name": "testEntrySupportsCzechWithoutCredentialFields",
+   "filePath": "apps/apple/NOMOUITests/NOMOUITests.swift",
+   "lineRange": [
+    53,
+    76
+   ],
+   "summary": "testEntrySupportsCzechWithoutCredentialFields() \u2014 function in NOMOUITests.swift, lines 53-76.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testSettingsShowsPrivacyAndRevocationIsDisabledWhileOffline",
+   "type": "function",
+   "name": "testSettingsShowsPrivacyAndRevocationIsDisabledWhileOffline",
+   "filePath": "apps/apple/NOMOUITests/NOMOUITests.swift",
+   "lineRange": [
+    78,
+    88
+   ],
+   "summary": "testSettingsShowsPrivacyAndRevocationIsDisabledWhileOffline() \u2014 function in NOMOUITests.swift, lines 78-88.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testActivitySessionNavigatesToDetailAndShowsOutcome",
+   "type": "function",
+   "name": "testActivitySessionNavigatesToDetailAndShowsOutcome",
+   "filePath": "apps/apple/NOMOUITests/NOMOUITests.swift",
+   "lineRange": [
+    90,
+    102
+   ],
+   "summary": "testActivitySessionNavigatesToDetailAndShowsOutcome() \u2014 function in NOMOUITests.swift, lines 90-102.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testUnavailableSessionDetailExplainsWhyNoExecutorIsNeeded",
+   "type": "function",
+   "name": "testUnavailableSessionDetailExplainsWhyNoExecutorIsNeeded",
+   "filePath": "apps/apple/NOMOUITests/NOMOUITests.swift",
+   "lineRange": [
+    103,
+    111
+   ],
+   "summary": "testUnavailableSessionDetailExplainsWhyNoExecutorIsNeeded() \u2014 function in NOMOUITests.swift, lines 103-111.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testPairingCTAStaysInertAndItsReasonStaysReadable",
+   "type": "function",
+   "name": "testPairingCTAStaysInertAndItsReasonStaysReadable",
+   "filePath": "apps/apple/NOMOUITests/NOMOUITests.swift",
+   "lineRange": [
+    113,
+    136
+   ],
+   "summary": "testPairingCTAStaysInertAndItsReasonStaysReadable() \u2014 function in NOMOUITests.swift, lines 113-136.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testActivityRowIsAnnouncedAsOneCombinedElement",
+   "type": "function",
+   "name": "testActivityRowIsAnnouncedAsOneCombinedElement",
+   "filePath": "apps/apple/NOMOUITests/NOMOUITests.swift",
+   "lineRange": [
+    138,
+    155
+   ],
+   "summary": "testActivityRowIsAnnouncedAsOneCombinedElement() \u2014 function in NOMOUITests.swift, lines 138-155.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testSettingsAndActivityExposeNamedAccessibilityTargets",
+   "type": "function",
+   "name": "testSettingsAndActivityExposeNamedAccessibilityTargets",
+   "filePath": "apps/apple/NOMOUITests/NOMOUITests.swift",
+   "lineRange": [
+    157,
+    165
+   ],
+   "summary": "testSettingsAndActivityExposeNamedAccessibilityTargets() \u2014 function in NOMOUITests.swift, lines 157-165.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testAppearanceControlIsLabelledReachableAndSelectsEveryChoice",
+   "type": "function",
+   "name": "testAppearanceControlIsLabelledReachableAndSelectsEveryChoice",
+   "filePath": "apps/apple/NOMOUITests/NOMOUITests.swift",
+   "lineRange": [
+    167,
+    178
+   ],
+   "summary": "testAppearanceControlIsLabelledReachableAndSelectsEveryChoice() \u2014 function in NOMOUITests.swift, lines 167-178.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testChosenAppearanceSurvivesRelaunchWithoutLaunchArgument",
+   "type": "function",
+   "name": "testChosenAppearanceSurvivesRelaunchWithoutLaunchArgument",
+   "filePath": "apps/apple/NOMOUITests/NOMOUITests.swift",
+   "lineRange": [
+    180,
+    195
+   ],
+   "summary": "testChosenAppearanceSurvivesRelaunchWithoutLaunchArgument() \u2014 function in NOMOUITests.swift, lines 180-195.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testAppearanceSwitchChangesRenderedColorsAndKeepsTextAtAAContrast",
+   "type": "function",
+   "name": "testAppearanceSwitchChangesRenderedColorsAndKeepsTextAtAAContrast",
+   "filePath": "apps/apple/NOMOUITests/NOMOUITests.swift",
+   "lineRange": [
+    197,
+    221
+   ],
+   "summary": "testAppearanceSwitchChangesRenderedColorsAndKeepsTextAtAAContrast() \u2014 function in NOMOUITests.swift, lines 197-221.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testConversationShowsTheUnreachableTranscriptAndAnInertComposerWithItsReason",
+   "type": "function",
+   "name": "testConversationShowsTheUnreachableTranscriptAndAnInertComposerWithItsReason",
+   "filePath": "apps/apple/NOMOUITests/NOMOUITests.swift",
+   "lineRange": [
+    254,
+    293
+   ],
+   "summary": "testConversationShowsTheUnreachableTranscriptAndAnInertComposerWithItsReason() \u2014 function in NOMOUITests.swift, lines 254-293.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testAnEmptyConversationIsNotPresentedAsAnUnreachableOne",
+   "type": "function",
+   "name": "testAnEmptyConversationIsNotPresentedAsAnUnreachableOne",
+   "filePath": "apps/apple/NOMOUITests/NOMOUITests.swift",
+   "lineRange": [
+    295,
+    307
+   ],
+   "summary": "testAnEmptyConversationIsNotPresentedAsAnUnreachableOne() \u2014 function in NOMOUITests.swift, lines 295-307.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testSampleTranscriptIsLabelledAndToolStateIsAnnouncedAsOneElement",
+   "type": "function",
+   "name": "testSampleTranscriptIsLabelledAndToolStateIsAnnouncedAsOneElement",
+   "filePath": "apps/apple/NOMOUITests/NOMOUITests.swift",
+   "lineRange": [
+    309,
+    338
+   ],
+   "summary": "testSampleTranscriptIsLabelledAndToolStateIsAnnouncedAsOneElement() \u2014 function in NOMOUITests.swift, lines 309-338.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testExpandedToolDetailsOpenInTheBoundedRegionAboveTheComposer",
+   "type": "function",
+   "name": "testExpandedToolDetailsOpenInTheBoundedRegionAboveTheComposer",
+   "filePath": "apps/apple/NOMOUITests/NOMOUITests.swift",
+   "lineRange": [
+    340,
+    379
+   ],
+   "summary": "testExpandedToolDetailsOpenInTheBoundedRegionAboveTheComposer() \u2014 function in NOMOUITests.swift, lines 340-379.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testConversationTextKeepsAAContrastInBothAppearances",
+   "type": "function",
+   "name": "testConversationTextKeepsAAContrastInBothAppearances",
+   "filePath": "apps/apple/NOMOUITests/NOMOUITests.swift",
+   "lineRange": [
+    381,
+    433
+   ],
+   "summary": "testConversationTextKeepsAAContrastInBothAppearances() \u2014 function in NOMOUITests.swift, lines 381-433.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testStopEndsAStreamedRunAndKeepsThePartialAnswerTruthful",
+   "type": "function",
+   "name": "testStopEndsAStreamedRunAndKeepsThePartialAnswerTruthful",
+   "filePath": "apps/apple/NOMOUITests/NOMOUITests.swift",
+   "lineRange": [
+    435,
+    471
+   ],
+   "summary": "testStopEndsAStreamedRunAndKeepsThePartialAnswerTruthful() \u2014 function in NOMOUITests.swift, lines 435-471.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testSampleTranscriptRendersTablesAndCodeAsAddressableElements",
+   "type": "function",
+   "name": "testSampleTranscriptRendersTablesAndCodeAsAddressableElements",
+   "filePath": "apps/apple/NOMOUITests/NOMOUITests.swift",
+   "lineRange": [
+    487,
+    544
+   ],
+   "summary": "testSampleTranscriptRendersTablesAndCodeAsAddressableElements() \u2014 function in NOMOUITests.swift, lines 487-544.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOUITests/NOMOUITests.swift:element",
+   "type": "function",
+   "name": "element",
+   "filePath": "apps/apple/NOMOUITests/NOMOUITests.swift",
+   "lineRange": [
+    556,
+    558
+   ],
+   "summary": "element(identifier) \u2014 function in NOMOUITests.swift, lines 556-558.",
+   "tags": [
+    "swift",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOUITests/NOMOUITests.swift:scrollView",
+   "type": "function",
+   "name": "scrollView",
+   "filePath": "apps/apple/NOMOUITests/NOMOUITests.swift",
+   "lineRange": [
+    562,
+    564
+   ],
+   "summary": "scrollView(identifier) \u2014 function in NOMOUITests.swift, lines 562-564.",
+   "tags": [
+    "swift",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOUITests/NOMOUITests.swift:scroll",
+   "type": "function",
+   "name": "scroll",
+   "filePath": "apps/apple/NOMOUITests/NOMOUITests.swift",
+   "lineRange": [
+    571,
+    576
+   ],
+   "summary": "scroll(element, window, attempts) \u2014 function in NOMOUITests.swift, lines 571-576.",
+   "tags": [
+    "swift",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOUITests/NOMOUITests.swift:relaunch",
+   "type": "function",
+   "name": "relaunch",
+   "filePath": "apps/apple/NOMOUITests/NOMOUITests.swift",
+   "lineRange": [
+    578,
+    586
+   ],
+   "summary": "relaunch(theme, chatFixture) \u2014 function in NOMOUITests.swift, lines 578-586.",
+   "tags": [
+    "swift",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOUITests/NOMOUITests.swift:openConversation",
+   "type": "function",
+   "name": "openConversation",
+   "filePath": "apps/apple/NOMOUITests/NOMOUITests.swift",
+   "lineRange": [
+    588,
+    603
+   ],
+   "summary": "openConversation(title) \u2014 function in NOMOUITests.swift, lines 588-603.",
+   "tags": [
+    "swift",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOUITests/NOMOUITests.swift:measureEntryTitle",
+   "type": "function",
+   "name": "measureEntryTitle",
+   "filePath": "apps/apple/NOMOUITests/NOMOUITests.swift",
+   "lineRange": [
+    605,
+    617
+   ],
+   "summary": "measureEntryTitle(name, theme, file, line) \u2014 function in NOMOUITests.swift, lines 605-617.",
+   "tags": [
+    "swift",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOUITests/NOMOUITests.swift:measure",
+   "type": "function",
+   "name": "measure",
+   "filePath": "apps/apple/NOMOUITests/NOMOUITests.swift",
+   "lineRange": [
+    621,
+    671
+   ],
+   "summary": "measure(element, name, file, line) \u2014 function in NOMOUITests.swift, lines 621-671.",
+   "tags": [
+    "swift",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOUITests/NOMOUITests.swift:measureStrongestPair",
+   "type": "function",
+   "name": "measureStrongestPair",
+   "filePath": "apps/apple/NOMOUITests/NOMOUITests.swift",
+   "lineRange": [
+    680,
+    732
+   ],
+   "summary": "measureStrongestPair(element, name, file, line) \u2014 function in NOMOUITests.swift, lines 680-732.",
+   "tags": [
+    "swift",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOUITests/NOMOUITests.swift:rgbaBytes",
+   "type": "function",
+   "name": "rgbaBytes",
+   "filePath": "apps/apple/NOMOUITests/NOMOUITests.swift",
+   "lineRange": [
+    734,
+    754
+   ],
+   "summary": "rgbaBytes(image) \u2014 function in NOMOUITests.swift, lines 734-754.",
+   "tags": [
+    "swift",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOUITests/NOMOUITests.swift:describe",
+   "type": "function",
+   "name": "describe",
+   "filePath": "apps/apple/NOMOUITests/NOMOUITests.swift",
+   "lineRange": [
+    756,
+    758
+   ],
+   "summary": "describe(colour) \u2014 function in NOMOUITests.swift, lines 756-758.",
+   "tags": [
+    "swift",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOUITests/NOMOUITests.swift:assertLabeledContent",
+   "type": "function",
+   "name": "assertLabeledContent",
+   "filePath": "apps/apple/NOMOUITests/NOMOUITests.swift",
+   "lineRange": [
+    760,
+    764
+   ],
+   "summary": "assertLabeledContent(label, value, file, line) \u2014 function in NOMOUITests.swift, lines 760-764.",
+   "tags": [
+    "swift",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOUITests/NOMOUITests.swift:completeOnboarding",
+   "type": "function",
+   "name": "completeOnboarding",
+   "filePath": "apps/apple/NOMOUITests/NOMOUITests.swift",
+   "lineRange": [
+    766,
+    770
+   ],
+   "summary": "completeOnboarding() \u2014 function in NOMOUITests.swift, lines 766-770.",
+   "tags": [
+    "swift",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NOMOUITests/NOMOUITests.swift:NOMOUITests",
+   "type": "class",
+   "name": "NOMOUITests",
+   "filePath": "apps/apple/NOMOUITests/NOMOUITests.swift",
+   "lineRange": [
+    4,
+    771
+   ],
+   "summary": "NOMOUITests \u2014 class in NOMOUITests.swift, lines 4-771, methods: setUpWithError, testEntryExplainsPairedMacWithoutCredentialsAndContinuesOffline, testEntrySupportsCzechWithoutCredentialFields, testSettingsShowsPrivacyAndRevocationIsDisabledWhileOffline, testActivitySessionNavigatesToDetailAndShowsOutcome, testUnavailableSessionDetailExplainsWhyNoExecutorIsNeeded.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "class:apps/apple/NOMOUITests/NOMOUITests.swift:RGB",
+   "type": "class",
+   "name": "RGB",
+   "filePath": "apps/apple/NOMOUITests/NOMOUITests.swift",
+   "lineRange": [
+    223,
+    235
+   ],
+   "summary": "RGB \u2014 class in NOMOUITests.swift, lines 223-235.",
+   "tags": [
+    "swift",
+    "class"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NOMOUITests/NOMOUITests.swift:RenderedText",
+   "type": "class",
+   "name": "RenderedText",
+   "filePath": "apps/apple/NOMOUITests/NOMOUITests.swift",
+   "lineRange": [
+    237,
+    249
+   ],
+   "summary": "RenderedText \u2014 class in NOMOUITests.swift, lines 237-249.",
+   "tags": [
+    "swift",
+    "class"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/apple/NomoDesignSystem/Package.swift",
+   "type": "file",
+   "name": "Package.swift",
+   "filePath": "apps/apple/NomoDesignSystem/Package.swift",
+   "summary": "Package.swift \u2014 swift code, 17 lines, 0 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "swift",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/apple/VoidDesignSystem/Package.swift",
+   "type": "file",
+   "name": "Package.swift",
+   "filePath": "apps/apple/VoidDesignSystem/Package.swift",
+   "summary": "Package.swift \u2014 swift code, 17 lines, 0 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "swift",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/apple/project.yml",
+   "type": "config",
+   "name": "project.yml",
+   "filePath": "apps/apple/project.yml",
+   "summary": "project.yml \u2014 yaml config, 77 lines.",
+   "tags": [
+    "yaml",
+    "config"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/package.json",
+   "type": "config",
+   "name": "package.json",
+   "filePath": "apps/control-plane/package.json",
+   "summary": "package.json \u2014 json config, 26 lines.",
+   "tags": [
+    "json",
+    "config"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/tsconfig.json",
+   "type": "config",
+   "name": "tsconfig.json",
+   "filePath": "apps/control-plane/tsconfig.json",
+   "summary": "tsconfig.json \u2014 json config, 11 lines.",
+   "tags": [
+    "json",
+    "config"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/chat.css",
+   "type": "file",
+   "name": "chat.css",
+   "filePath": "apps/control-plane/ui/src/chat.css",
+   "summary": "chat.css \u2014 css markup, 280 lines.",
+   "tags": [
+    "css",
+    "markup"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/compact-layout.test.ts",
+   "type": "file",
+   "name": "compact-layout.test.ts",
+   "filePath": "apps/control-plane/ui/src/compact-layout.test.ts",
+   "summary": "compact-layout.test.ts \u2014 typescript code, 124 lines, 0 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/permission-mode.test.ts",
+   "type": "file",
+   "name": "permission-mode.test.ts",
+   "filePath": "apps/control-plane/ui/src/permission-mode.test.ts",
+   "summary": "permission-mode.test.ts \u2014 typescript code, 77 lines, 0 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/styles.css",
+   "type": "file",
+   "name": "styles.css",
+   "filePath": "apps/control-plane/ui/src/styles.css",
+   "summary": "styles.css \u2014 css markup, 3763 lines.",
+   "tags": [
+    "css",
+    "markup"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/ui.test.ts",
+   "type": "file",
+   "name": "ui.test.ts",
+   "filePath": "apps/control-plane/ui/src/ui.test.ts",
+   "summary": "ui.test.ts \u2014 typescript code, 103 lines, 0 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/workspace-controls.test.ts",
+   "type": "file",
+   "name": "workspace-controls.test.ts",
+   "filePath": "apps/control-plane/ui/src/workspace-controls.test.ts",
+   "summary": "workspace-controls.test.ts \u2014 typescript code, 73 lines, 0 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/ui/vite.config.ts",
+   "type": "file",
+   "name": "vite.config.ts",
+   "filePath": "apps/control-plane/ui/vite.config.ts",
+   "summary": "vite.config.ts \u2014 typescript code, 12 lines, 0 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/web/cloud-settings.js",
+   "type": "file",
+   "name": "cloud-settings.js",
+   "filePath": "apps/control-plane/web/cloud-settings.js",
+   "summary": "cloud-settings.js \u2014 javascript code, 33 lines, 0 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/web/control-plane-pages.test.mjs",
+   "type": "file",
+   "name": "control-plane-pages.test.mjs",
+   "filePath": "apps/control-plane/web/control-plane-pages.test.mjs",
+   "summary": "control-plane-pages.test.mjs \u2014 javascript code, 73 lines, 1 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/web/control-plane-pages.test.mjs:readPage",
+   "type": "function",
+   "name": "readPage",
+   "filePath": "apps/control-plane/web/control-plane-pages.test.mjs",
+   "lineRange": [
+    10,
+    12
+   ],
+   "summary": "readPage(name) \u2014 function in control-plane-pages.test.mjs, lines 10-12.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/web/manifest.webmanifest",
+   "type": "file",
+   "name": "manifest.webmanifest",
+   "filePath": "apps/control-plane/web/manifest.webmanifest",
+   "summary": "manifest.webmanifest \u2014 webmanifest code, 1 lines.",
+   "tags": [
+    "webmanifest",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/web/sessions.js",
+   "type": "file",
+   "name": "sessions.js",
+   "filePath": "apps/control-plane/web/sessions.js",
+   "summary": "sessions.js \u2014 javascript code, 134 lines, 0 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/web/theme.js",
+   "type": "file",
+   "name": "theme.js",
+   "filePath": "apps/control-plane/web/theme.js",
+   "summary": "theme.js \u2014 javascript code, 11 lines, 0 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/web/workspace-ui.js",
+   "type": "file",
+   "name": "workspace-ui.js",
+   "filePath": "apps/control-plane/web/workspace-ui.js",
+   "summary": "workspace-ui.js \u2014 javascript code, 47 lines, 0 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/desktop/runtime.mjs",
+   "type": "file",
+   "name": "runtime.mjs",
+   "filePath": "apps/desktop/runtime.mjs",
+   "summary": "runtime.mjs \u2014 javascript code, 60 lines, 2 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/desktop/runtime.mjs:ownedValue",
+   "type": "function",
+   "name": "ownedValue",
+   "filePath": "apps/desktop/runtime.mjs",
+   "lineRange": [
+    16,
+    18
+   ],
+   "summary": "ownedValue(env, key) \u2014 function in runtime.mjs, lines 16-18.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/desktop/runtime.mjs:stop",
+   "type": "function",
+   "name": "stop",
+   "filePath": "apps/desktop/runtime.mjs",
+   "lineRange": [
+    50,
+    56
+   ],
+   "summary": "stop() \u2014 function in runtime.mjs, lines 50-56.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/desktop/scripts/prepare.mjs",
+   "type": "file",
+   "name": "prepare.mjs",
+   "filePath": "apps/desktop/scripts/prepare.mjs",
+   "summary": "prepare.mjs \u2014 javascript code, 60 lines, 0 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/desktop/src-tauri/build.rs",
+   "type": "file",
+   "name": "build.rs",
+   "filePath": "apps/desktop/src-tauri/build.rs",
+   "summary": "build.rs \u2014 rust code, 3 lines, 1 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "rust",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/desktop/src-tauri/build.rs:main",
+   "type": "function",
+   "name": "main",
+   "filePath": "apps/desktop/src-tauri/build.rs",
+   "lineRange": [
+    1,
+    3
+   ],
+   "summary": "main() \u2014 function in build.rs, lines 1-3.",
+   "tags": [
+    "rust",
+    "function"
+   ],
+   "complexity": "simple"
+  }
+ ],
+ "edges": [
+  {
+   "source": "file:apps/apple/NOMOApp/RootView.swift",
+   "target": "class:apps/apple/NOMOApp/RootView.swift:RootView",
+   "type": "contains",
+   "direction": "forward",
+   "description": "RootView.swift defines class RootView",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/RootView.swift",
+   "target": "class:apps/apple/NOMOApp/RootView.swift:SidebarDestination",
+   "type": "contains",
+   "direction": "forward",
+   "description": "RootView.swift defines class SidebarDestination",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/RootView.swift",
+   "target": "class:apps/apple/NOMOApp/RootView.swift:SidebarView",
+   "type": "contains",
+   "direction": "forward",
+   "description": "RootView.swift defines class SidebarView",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/SampleChatTransport.swift",
+   "target": "function:apps/apple/NOMOApp/SampleChatTransport.swift:transcript",
+   "type": "contains",
+   "direction": "forward",
+   "description": "SampleChatTransport.swift defines transcript",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/SampleChatTransport.swift",
+   "target": "function:apps/apple/NOMOApp/SampleChatTransport.swift:transcript",
+   "type": "exports",
+   "direction": "forward",
+   "description": "SampleChatTransport.swift exports transcript",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/SampleChatTransport.swift",
+   "target": "function:apps/apple/NOMOApp/SampleChatTransport.swift:run",
+   "type": "contains",
+   "direction": "forward",
+   "description": "SampleChatTransport.swift defines run",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/SampleChatTransport.swift",
+   "target": "function:apps/apple/NOMOApp/SampleChatTransport.swift:run",
+   "type": "exports",
+   "direction": "forward",
+   "description": "SampleChatTransport.swift exports run",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/SampleChatTransport.swift",
+   "target": "class:apps/apple/NOMOApp/SampleChatTransport.swift:SampleChatTransport",
+   "type": "contains",
+   "direction": "forward",
+   "description": "SampleChatTransport.swift defines class SampleChatTransport",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/SampleChatTransport.swift",
+   "target": "class:apps/apple/NOMOApp/SampleChatTransport.swift:Mode",
+   "type": "contains",
+   "direction": "forward",
+   "description": "SampleChatTransport.swift defines class Mode",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/SessionDetailView.swift",
+   "target": "class:apps/apple/NOMOApp/SessionDetailView.swift:SessionDetailView",
+   "type": "contains",
+   "direction": "forward",
+   "description": "SessionDetailView.swift defines class SessionDetailView",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/SessionDetailView.swift",
+   "target": "class:apps/apple/NOMOApp/SessionDetailView.swift:SettingsView",
+   "type": "contains",
+   "direction": "forward",
+   "description": "SessionDetailView.swift defines class SettingsView",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOUITests/NOMOUITests.swift",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:setUpWithError",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NOMOUITests.swift defines setUpWithError",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOUITests/NOMOUITests.swift",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:setUpWithError",
+   "type": "exports",
+   "direction": "forward",
+   "description": "NOMOUITests.swift exports setUpWithError",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NOMOUITests/NOMOUITests.swift",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testEntryExplainsPairedMacWithoutCredentialsAndContinuesOffline",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NOMOUITests.swift defines testEntryExplainsPairedMacWithoutCredentialsAndContinuesOffline",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOUITests/NOMOUITests.swift",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testEntryExplainsPairedMacWithoutCredentialsAndContinuesOffline",
+   "type": "exports",
+   "direction": "forward",
+   "description": "NOMOUITests.swift exports testEntryExplainsPairedMacWithoutCredentialsAndContinuesOffline",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NOMOUITests/NOMOUITests.swift",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testEntrySupportsCzechWithoutCredentialFields",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NOMOUITests.swift defines testEntrySupportsCzechWithoutCredentialFields",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOUITests/NOMOUITests.swift",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testEntrySupportsCzechWithoutCredentialFields",
+   "type": "exports",
+   "direction": "forward",
+   "description": "NOMOUITests.swift exports testEntrySupportsCzechWithoutCredentialFields",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NOMOUITests/NOMOUITests.swift",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testSettingsShowsPrivacyAndRevocationIsDisabledWhileOffline",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NOMOUITests.swift defines testSettingsShowsPrivacyAndRevocationIsDisabledWhileOffline",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOUITests/NOMOUITests.swift",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testSettingsShowsPrivacyAndRevocationIsDisabledWhileOffline",
+   "type": "exports",
+   "direction": "forward",
+   "description": "NOMOUITests.swift exports testSettingsShowsPrivacyAndRevocationIsDisabledWhileOffline",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NOMOUITests/NOMOUITests.swift",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testActivitySessionNavigatesToDetailAndShowsOutcome",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NOMOUITests.swift defines testActivitySessionNavigatesToDetailAndShowsOutcome",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOUITests/NOMOUITests.swift",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testActivitySessionNavigatesToDetailAndShowsOutcome",
+   "type": "exports",
+   "direction": "forward",
+   "description": "NOMOUITests.swift exports testActivitySessionNavigatesToDetailAndShowsOutcome",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NOMOUITests/NOMOUITests.swift",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testUnavailableSessionDetailExplainsWhyNoExecutorIsNeeded",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NOMOUITests.swift defines testUnavailableSessionDetailExplainsWhyNoExecutorIsNeeded",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOUITests/NOMOUITests.swift",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testUnavailableSessionDetailExplainsWhyNoExecutorIsNeeded",
+   "type": "exports",
+   "direction": "forward",
+   "description": "NOMOUITests.swift exports testUnavailableSessionDetailExplainsWhyNoExecutorIsNeeded",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NOMOUITests/NOMOUITests.swift",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testPairingCTAStaysInertAndItsReasonStaysReadable",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NOMOUITests.swift defines testPairingCTAStaysInertAndItsReasonStaysReadable",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOUITests/NOMOUITests.swift",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testPairingCTAStaysInertAndItsReasonStaysReadable",
+   "type": "exports",
+   "direction": "forward",
+   "description": "NOMOUITests.swift exports testPairingCTAStaysInertAndItsReasonStaysReadable",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NOMOUITests/NOMOUITests.swift",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testActivityRowIsAnnouncedAsOneCombinedElement",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NOMOUITests.swift defines testActivityRowIsAnnouncedAsOneCombinedElement",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOUITests/NOMOUITests.swift",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testActivityRowIsAnnouncedAsOneCombinedElement",
+   "type": "exports",
+   "direction": "forward",
+   "description": "NOMOUITests.swift exports testActivityRowIsAnnouncedAsOneCombinedElement",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NOMOUITests/NOMOUITests.swift",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testSettingsAndActivityExposeNamedAccessibilityTargets",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NOMOUITests.swift defines testSettingsAndActivityExposeNamedAccessibilityTargets",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOUITests/NOMOUITests.swift",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testSettingsAndActivityExposeNamedAccessibilityTargets",
+   "type": "exports",
+   "direction": "forward",
+   "description": "NOMOUITests.swift exports testSettingsAndActivityExposeNamedAccessibilityTargets",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NOMOUITests/NOMOUITests.swift",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testAppearanceControlIsLabelledReachableAndSelectsEveryChoice",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NOMOUITests.swift defines testAppearanceControlIsLabelledReachableAndSelectsEveryChoice",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOUITests/NOMOUITests.swift",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testAppearanceControlIsLabelledReachableAndSelectsEveryChoice",
+   "type": "exports",
+   "direction": "forward",
+   "description": "NOMOUITests.swift exports testAppearanceControlIsLabelledReachableAndSelectsEveryChoice",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NOMOUITests/NOMOUITests.swift",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testChosenAppearanceSurvivesRelaunchWithoutLaunchArgument",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NOMOUITests.swift defines testChosenAppearanceSurvivesRelaunchWithoutLaunchArgument",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOUITests/NOMOUITests.swift",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testChosenAppearanceSurvivesRelaunchWithoutLaunchArgument",
+   "type": "exports",
+   "direction": "forward",
+   "description": "NOMOUITests.swift exports testChosenAppearanceSurvivesRelaunchWithoutLaunchArgument",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NOMOUITests/NOMOUITests.swift",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testAppearanceSwitchChangesRenderedColorsAndKeepsTextAtAAContrast",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NOMOUITests.swift defines testAppearanceSwitchChangesRenderedColorsAndKeepsTextAtAAContrast",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOUITests/NOMOUITests.swift",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testAppearanceSwitchChangesRenderedColorsAndKeepsTextAtAAContrast",
+   "type": "exports",
+   "direction": "forward",
+   "description": "NOMOUITests.swift exports testAppearanceSwitchChangesRenderedColorsAndKeepsTextAtAAContrast",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NOMOUITests/NOMOUITests.swift",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testConversationShowsTheUnreachableTranscriptAndAnInertComposerWithItsReason",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NOMOUITests.swift defines testConversationShowsTheUnreachableTranscriptAndAnInertComposerWithItsReason",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOUITests/NOMOUITests.swift",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testConversationShowsTheUnreachableTranscriptAndAnInertComposerWithItsReason",
+   "type": "exports",
+   "direction": "forward",
+   "description": "NOMOUITests.swift exports testConversationShowsTheUnreachableTranscriptAndAnInertComposerWithItsReason",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NOMOUITests/NOMOUITests.swift",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testAnEmptyConversationIsNotPresentedAsAnUnreachableOne",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NOMOUITests.swift defines testAnEmptyConversationIsNotPresentedAsAnUnreachableOne",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOUITests/NOMOUITests.swift",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testAnEmptyConversationIsNotPresentedAsAnUnreachableOne",
+   "type": "exports",
+   "direction": "forward",
+   "description": "NOMOUITests.swift exports testAnEmptyConversationIsNotPresentedAsAnUnreachableOne",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NOMOUITests/NOMOUITests.swift",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testSampleTranscriptIsLabelledAndToolStateIsAnnouncedAsOneElement",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NOMOUITests.swift defines testSampleTranscriptIsLabelledAndToolStateIsAnnouncedAsOneElement",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOUITests/NOMOUITests.swift",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testSampleTranscriptIsLabelledAndToolStateIsAnnouncedAsOneElement",
+   "type": "exports",
+   "direction": "forward",
+   "description": "NOMOUITests.swift exports testSampleTranscriptIsLabelledAndToolStateIsAnnouncedAsOneElement",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NOMOUITests/NOMOUITests.swift",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testExpandedToolDetailsOpenInTheBoundedRegionAboveTheComposer",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NOMOUITests.swift defines testExpandedToolDetailsOpenInTheBoundedRegionAboveTheComposer",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOUITests/NOMOUITests.swift",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testExpandedToolDetailsOpenInTheBoundedRegionAboveTheComposer",
+   "type": "exports",
+   "direction": "forward",
+   "description": "NOMOUITests.swift exports testExpandedToolDetailsOpenInTheBoundedRegionAboveTheComposer",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NOMOUITests/NOMOUITests.swift",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testConversationTextKeepsAAContrastInBothAppearances",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NOMOUITests.swift defines testConversationTextKeepsAAContrastInBothAppearances",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOUITests/NOMOUITests.swift",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testConversationTextKeepsAAContrastInBothAppearances",
+   "type": "exports",
+   "direction": "forward",
+   "description": "NOMOUITests.swift exports testConversationTextKeepsAAContrastInBothAppearances",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NOMOUITests/NOMOUITests.swift",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testStopEndsAStreamedRunAndKeepsThePartialAnswerTruthful",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NOMOUITests.swift defines testStopEndsAStreamedRunAndKeepsThePartialAnswerTruthful",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOUITests/NOMOUITests.swift",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testStopEndsAStreamedRunAndKeepsThePartialAnswerTruthful",
+   "type": "exports",
+   "direction": "forward",
+   "description": "NOMOUITests.swift exports testStopEndsAStreamedRunAndKeepsThePartialAnswerTruthful",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NOMOUITests/NOMOUITests.swift",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testSampleTranscriptRendersTablesAndCodeAsAddressableElements",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NOMOUITests.swift defines testSampleTranscriptRendersTablesAndCodeAsAddressableElements",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOUITests/NOMOUITests.swift",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testSampleTranscriptRendersTablesAndCodeAsAddressableElements",
+   "type": "exports",
+   "direction": "forward",
+   "description": "NOMOUITests.swift exports testSampleTranscriptRendersTablesAndCodeAsAddressableElements",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NOMOUITests/NOMOUITests.swift",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:element",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NOMOUITests.swift defines element",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOUITests/NOMOUITests.swift",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:scrollView",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NOMOUITests.swift defines scrollView",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOUITests/NOMOUITests.swift",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:scroll",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NOMOUITests.swift defines scroll",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOUITests/NOMOUITests.swift",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:relaunch",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NOMOUITests.swift defines relaunch",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOUITests/NOMOUITests.swift",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:openConversation",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NOMOUITests.swift defines openConversation",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOUITests/NOMOUITests.swift",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:measureEntryTitle",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NOMOUITests.swift defines measureEntryTitle",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOUITests/NOMOUITests.swift",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:measure",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NOMOUITests.swift defines measure",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOUITests/NOMOUITests.swift",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:measureStrongestPair",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NOMOUITests.swift defines measureStrongestPair",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOUITests/NOMOUITests.swift",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:rgbaBytes",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NOMOUITests.swift defines rgbaBytes",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOUITests/NOMOUITests.swift",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:describe",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NOMOUITests.swift defines describe",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOUITests/NOMOUITests.swift",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:assertLabeledContent",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NOMOUITests.swift defines assertLabeledContent",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOUITests/NOMOUITests.swift",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:completeOnboarding",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NOMOUITests.swift defines completeOnboarding",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOUITests/NOMOUITests.swift",
+   "target": "class:apps/apple/NOMOUITests/NOMOUITests.swift:NOMOUITests",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NOMOUITests.swift defines class NOMOUITests",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOUITests/NOMOUITests.swift",
+   "target": "class:apps/apple/NOMOUITests/NOMOUITests.swift:RGB",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NOMOUITests.swift defines class RGB",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOUITests/NOMOUITests.swift",
+   "target": "class:apps/apple/NOMOUITests/NOMOUITests.swift:RenderedText",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NOMOUITests.swift defines class RenderedText",
+   "weight": 1.0
+  },
+  {
+   "source": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testSettingsShowsPrivacyAndRevocationIsDisabledWhileOffline",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:completeOnboarding",
+   "type": "calls",
+   "direction": "forward",
+   "description": "testSettingsShowsPrivacyAndRevocationIsDisabledWhileOffline calls completeOnboarding",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testActivitySessionNavigatesToDetailAndShowsOutcome",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:completeOnboarding",
+   "type": "calls",
+   "direction": "forward",
+   "description": "testActivitySessionNavigatesToDetailAndShowsOutcome calls completeOnboarding",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testActivitySessionNavigatesToDetailAndShowsOutcome",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:assertLabeledContent",
+   "type": "calls",
+   "direction": "forward",
+   "description": "testActivitySessionNavigatesToDetailAndShowsOutcome calls assertLabeledContent",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testUnavailableSessionDetailExplainsWhyNoExecutorIsNeeded",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:completeOnboarding",
+   "type": "calls",
+   "direction": "forward",
+   "description": "testUnavailableSessionDetailExplainsWhyNoExecutorIsNeeded calls completeOnboarding",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testUnavailableSessionDetailExplainsWhyNoExecutorIsNeeded",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:assertLabeledContent",
+   "type": "calls",
+   "direction": "forward",
+   "description": "testUnavailableSessionDetailExplainsWhyNoExecutorIsNeeded calls assertLabeledContent",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testActivityRowIsAnnouncedAsOneCombinedElement",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:completeOnboarding",
+   "type": "calls",
+   "direction": "forward",
+   "description": "testActivityRowIsAnnouncedAsOneCombinedElement calls completeOnboarding",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testSettingsAndActivityExposeNamedAccessibilityTargets",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:completeOnboarding",
+   "type": "calls",
+   "direction": "forward",
+   "description": "testSettingsAndActivityExposeNamedAccessibilityTargets calls completeOnboarding",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testAppearanceSwitchChangesRenderedColorsAndKeepsTextAtAAContrast",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:measureEntryTitle",
+   "type": "calls",
+   "direction": "forward",
+   "description": "testAppearanceSwitchChangesRenderedColorsAndKeepsTextAtAAContrast calls measureEntryTitle",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testAppearanceSwitchChangesRenderedColorsAndKeepsTextAtAAContrast",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:describe",
+   "type": "calls",
+   "direction": "forward",
+   "description": "testAppearanceSwitchChangesRenderedColorsAndKeepsTextAtAAContrast calls describe",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testConversationShowsTheUnreachableTranscriptAndAnInertComposerWithItsReason",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:openConversation",
+   "type": "calls",
+   "direction": "forward",
+   "description": "testConversationShowsTheUnreachableTranscriptAndAnInertComposerWithItsReason calls openConversation",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testConversationShowsTheUnreachableTranscriptAndAnInertComposerWithItsReason",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:assertLabeledContent",
+   "type": "calls",
+   "direction": "forward",
+   "description": "testConversationShowsTheUnreachableTranscriptAndAnInertComposerWithItsReason calls assertLabeledContent",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testAnEmptyConversationIsNotPresentedAsAnUnreachableOne",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:relaunch",
+   "type": "calls",
+   "direction": "forward",
+   "description": "testAnEmptyConversationIsNotPresentedAsAnUnreachableOne calls relaunch",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testAnEmptyConversationIsNotPresentedAsAnUnreachableOne",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:openConversation",
+   "type": "calls",
+   "direction": "forward",
+   "description": "testAnEmptyConversationIsNotPresentedAsAnUnreachableOne calls openConversation",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testSampleTranscriptIsLabelledAndToolStateIsAnnouncedAsOneElement",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:relaunch",
+   "type": "calls",
+   "direction": "forward",
+   "description": "testSampleTranscriptIsLabelledAndToolStateIsAnnouncedAsOneElement calls relaunch",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testSampleTranscriptIsLabelledAndToolStateIsAnnouncedAsOneElement",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:openConversation",
+   "type": "calls",
+   "direction": "forward",
+   "description": "testSampleTranscriptIsLabelledAndToolStateIsAnnouncedAsOneElement calls openConversation",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testSampleTranscriptIsLabelledAndToolStateIsAnnouncedAsOneElement",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:element",
+   "type": "calls",
+   "direction": "forward",
+   "description": "testSampleTranscriptIsLabelledAndToolStateIsAnnouncedAsOneElement calls element",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testExpandedToolDetailsOpenInTheBoundedRegionAboveTheComposer",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:relaunch",
+   "type": "calls",
+   "direction": "forward",
+   "description": "testExpandedToolDetailsOpenInTheBoundedRegionAboveTheComposer calls relaunch",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testExpandedToolDetailsOpenInTheBoundedRegionAboveTheComposer",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:openConversation",
+   "type": "calls",
+   "direction": "forward",
+   "description": "testExpandedToolDetailsOpenInTheBoundedRegionAboveTheComposer calls openConversation",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testExpandedToolDetailsOpenInTheBoundedRegionAboveTheComposer",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:element",
+   "type": "calls",
+   "direction": "forward",
+   "description": "testExpandedToolDetailsOpenInTheBoundedRegionAboveTheComposer calls element",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testExpandedToolDetailsOpenInTheBoundedRegionAboveTheComposer",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:scrollView",
+   "type": "calls",
+   "direction": "forward",
+   "description": "testExpandedToolDetailsOpenInTheBoundedRegionAboveTheComposer calls scrollView",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testConversationTextKeepsAAContrastInBothAppearances",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:relaunch",
+   "type": "calls",
+   "direction": "forward",
+   "description": "testConversationTextKeepsAAContrastInBothAppearances calls relaunch",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testConversationTextKeepsAAContrastInBothAppearances",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:openConversation",
+   "type": "calls",
+   "direction": "forward",
+   "description": "testConversationTextKeepsAAContrastInBothAppearances calls openConversation",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testConversationTextKeepsAAContrastInBothAppearances",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:measureStrongestPair",
+   "type": "calls",
+   "direction": "forward",
+   "description": "testConversationTextKeepsAAContrastInBothAppearances calls measureStrongestPair",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testConversationTextKeepsAAContrastInBothAppearances",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:describe",
+   "type": "calls",
+   "direction": "forward",
+   "description": "testConversationTextKeepsAAContrastInBothAppearances calls describe",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testStopEndsAStreamedRunAndKeepsThePartialAnswerTruthful",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:relaunch",
+   "type": "calls",
+   "direction": "forward",
+   "description": "testStopEndsAStreamedRunAndKeepsThePartialAnswerTruthful calls relaunch",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testStopEndsAStreamedRunAndKeepsThePartialAnswerTruthful",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:openConversation",
+   "type": "calls",
+   "direction": "forward",
+   "description": "testStopEndsAStreamedRunAndKeepsThePartialAnswerTruthful calls openConversation",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testStopEndsAStreamedRunAndKeepsThePartialAnswerTruthful",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:element",
+   "type": "calls",
+   "direction": "forward",
+   "description": "testStopEndsAStreamedRunAndKeepsThePartialAnswerTruthful calls element",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testSampleTranscriptRendersTablesAndCodeAsAddressableElements",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:relaunch",
+   "type": "calls",
+   "direction": "forward",
+   "description": "testSampleTranscriptRendersTablesAndCodeAsAddressableElements calls relaunch",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testSampleTranscriptRendersTablesAndCodeAsAddressableElements",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:openConversation",
+   "type": "calls",
+   "direction": "forward",
+   "description": "testSampleTranscriptRendersTablesAndCodeAsAddressableElements calls openConversation",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testSampleTranscriptRendersTablesAndCodeAsAddressableElements",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:element",
+   "type": "calls",
+   "direction": "forward",
+   "description": "testSampleTranscriptRendersTablesAndCodeAsAddressableElements calls element",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/apple/NOMOUITests/NOMOUITests.swift:testSampleTranscriptRendersTablesAndCodeAsAddressableElements",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:scroll",
+   "type": "calls",
+   "direction": "forward",
+   "description": "testSampleTranscriptRendersTablesAndCodeAsAddressableElements calls scroll",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/apple/NOMOUITests/NOMOUITests.swift:scroll",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:scrollView",
+   "type": "calls",
+   "direction": "forward",
+   "description": "scroll calls scrollView",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/apple/NOMOUITests/NOMOUITests.swift:measureEntryTitle",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:measure",
+   "type": "calls",
+   "direction": "forward",
+   "description": "measureEntryTitle calls measure",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/apple/NOMOUITests/NOMOUITests.swift:measure",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:rgbaBytes",
+   "type": "calls",
+   "direction": "forward",
+   "description": "measure calls rgbaBytes",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/apple/NOMOUITests/NOMOUITests.swift:measureStrongestPair",
+   "target": "function:apps/apple/NOMOUITests/NOMOUITests.swift:rgbaBytes",
+   "type": "calls",
+   "direction": "forward",
+   "description": "measureStrongestPair calls rgbaBytes",
+   "weight": 0.6
+  },
+  {
+   "source": "file:apps/control-plane/web/control-plane-pages.test.mjs",
+   "target": "function:apps/control-plane/web/control-plane-pages.test.mjs:readPage",
+   "type": "contains",
+   "direction": "forward",
+   "description": "control-plane-pages.test.mjs defines readPage",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/desktop/runtime.mjs",
+   "target": "function:apps/desktop/runtime.mjs:ownedValue",
+   "type": "contains",
+   "direction": "forward",
+   "description": "runtime.mjs defines ownedValue",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/desktop/runtime.mjs",
+   "target": "function:apps/desktop/runtime.mjs:stop",
+   "type": "contains",
+   "direction": "forward",
+   "description": "runtime.mjs defines stop",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/desktop/src-tauri/build.rs",
+   "target": "function:apps/desktop/src-tauri/build.rs:main",
+   "type": "contains",
+   "direction": "forward",
+   "description": "build.rs defines main",
+   "weight": 1.0
+  }
+ ]
+}

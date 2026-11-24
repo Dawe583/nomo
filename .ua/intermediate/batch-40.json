@@ -1,0 +1,17 @@
+{
+ "nodes": [
+  {
+   "id": "file:packages/workbench/sandbox/Dockerfile",
+   "type": "config",
+   "name": "Dockerfile",
+   "filePath": "packages/workbench/sandbox/Dockerfile",
+   "summary": "Dockerfile \u2014 dockerfile infra, 8 lines.",
+   "tags": [
+    "dockerfile",
+    "infra"
+   ],
+   "complexity": "simple"
+  }
+ ],
+ "edges": []
+}

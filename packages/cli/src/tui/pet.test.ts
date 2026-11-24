@@ -290,8 +290,10 @@ test("idle blinks in four steps and never faster than 4 fps", () => {
     );
     assert.equal(new Set(steps).size <= 10, true, `${state} exceeded 10 fps`);
   }
-  // Settled states hold one frame.
-  for (const state of ["done", "error", "cancelled"] as const) {
+  // Settled states hold one frame. A refusal never moves at all; a completion
+  // plays one flourish and then holds the same frame, which the dedicated done
+  // test measures frame by frame.
+  for (const state of ["error", "cancelled"] as const) {
     const pose = petPose(state, 0, motion);
     assert.equal(pose.moving, false, `${state} is not settled`);
     for (const frame of [1, 13, 900])
@@ -310,6 +312,59 @@ test("waiting alternates o and O in two steps", () => {
   assert.equal(faces.size, 2);
   assert.ok([...faces].some((face) => face.includes("o")));
   assert.ok([...faces].some((face) => face.includes("O")));
+});
+
+test("waiting cocks its head to listen instead of blinking twice", () => {
+  const motion = motionContext(0);
+  const rows = (frame: number) => petPose("waiting", frame, motion).rows;
+  const body = (frame: number) => rows(frame)[2]!;
+  // The eye row keeps exactly its one o/O beat. The listening posture is a
+  // posture, so it must never turn into a third face.
+  const faces = new Set(
+    Array.from({ length: 40 }, (_, frame) => rows(frame)[1]),
+  );
+  assert.equal(faces.size, 2, "listening added a face instead of a posture");
+  // The held posture is the near ear up with the mouth one cell off centre,
+  // which is what makes it read as a cocked head rather than as the one step
+  // ear twitch that shares the same ear.
+  const held = Array.from({ length: 20 }, (_, frame) => frame).filter((frame) =>
+    body(frame).includes("^  _"),
+  );
+  assert.deepEqual(held, [12, 13, 14, 15], "the listening window moved");
+  // Twenty steps is its own beat: the window comes round twice per forty, and
+  // it straddles both eye frames, so it never collapses into the blink. The
+  // ear twitch keeps its own eight step period, which is why the seated pose
+  // as a whole still repeats every forty steps rather than every twenty.
+  for (const frame of [12, 13, 14, 15])
+    assert.ok(
+      body(frame + 20).includes("^  _"),
+      `frame ${frame} lost its listening beat`,
+    );
+  for (const frame of [0, 5, 16, 19])
+    assert.ok(
+      !body(frame + 20).includes("^  _"),
+      `frame ${frame} listened early`,
+    );
+  assert.ok(rows(14)[1]!.includes("o o"), "the window left the calm eyes");
+  assert.ok(rows(15)[1]!.includes("O O"), "the window left the wide eyes");
+  assert.ok(body(14).includes("^  _") && body(15).includes("^  _"));
+  // An attentive pet holds its tail still: the wag belongs to the twitch
+  // layer and is suppressed for the four listening steps.
+  for (const frame of [12, 13, 14, 15])
+    assert.ok(
+      !body(frame).includes("~"),
+      `frame ${frame} wagged while listening`,
+    );
+  // The base frame is clean, so reduced motion starts on a neutral pet.
+  assert.ok(!body(0).includes("^"), "the base frame already listens");
+  assert.ok(body(0).includes("  _  "), "the base frame lost its mouth");
+  // The life layer never moves the silhouette.
+  const outline = (frame: number) => {
+    const drawn = rows(frame);
+    return [drawn[0], drawn[3], drawn[4]];
+  };
+  for (const frame of [0, 3, 12, 15, 19, 31])
+    assert.deepEqual(outline(frame), outline(0), `frame ${frame} moved out`);
 });
 
 test("thinking spins a ten frame braille spinner beside a dot", () => {
@@ -804,6 +859,58 @@ test("work bounces its hands without breaking the seven frame star", () => {
       assert.ok(row.includes("!"), `approval frame ${frame} lost the hold`);
 });
 
+test("done sparkles once and then holds the pose it settled on", () => {
+  const motion = motionContext(0);
+  const rows = (frame: number) => petPose("done", frame, motion).rows;
+  // The settled pose is the one the pet drew before the flourish existed, and
+  // it is frame zero: the frame reduced motion freezes and the frame a
+  // snapshot already contains.
+  const settled = [
+    " ╭─────╮ ",
+    " │ + + │ ",
+    " │  _  │ ",
+    " ╰─────╯ ",
+    "  ─────  ",
+  ];
+  assert.deepEqual(rows(0), settled, "frame zero is not the settled pose");
+  // Three frames of sparkle, then the settled pose for the rest of the cycle.
+  const cycle = Array.from({ length: 40 }, (_, frame) =>
+    rows(frame).join("\n"),
+  );
+  const sparkle = cycle.flatMap((frame, index) =>
+    frame === settled.join("\n") ? [] : [index],
+  );
+  assert.deepEqual(sparkle, [1, 2, 3], "the flourish is not three frames");
+  // The sparkle is in the sprite, not only in the word printed beside it.
+  assert.ok(rows(1)[2]!.includes("*_*"), "the flourish left no sparkle");
+  assert.ok(rows(2)[2]!.includes("  *  "), "the sparkle never peaked");
+  assert.ok(rows(3)[2]!.includes("  .  "), "the sparkle never settled");
+  // It settles and holds: every frame after the flourish is the final pose,
+  // across the cycle wrap as well, so a snapshot taken after the flourish is
+  // the snapshot the pet drew before it existed.
+  for (const frame of [4, 5, 17, 39, 40, 80, 900])
+    assert.deepEqual(rows(frame), settled, `frame ${frame} did not hold`);
+  // Only the content row moves: the silhouette still never breathes.
+  const outline = (frame: number) => {
+    const drawn = rows(frame);
+    return [drawn[0], drawn[3], drawn[4]];
+  };
+  for (const frame of [1, 2, 3, 7, 40])
+    assert.deepEqual(outline(frame), outline(0), `frame ${frame} moved out`);
+  // Reduced motion is the settled pose byte for byte, on every frame.
+  for (const frame of [1, 2, 3, 41, 900])
+    assert.deepEqual(
+      petPose("done", frame, motionContext(frame, true, true)).rows,
+      settled,
+      `frame ${frame} moved while reduced`,
+    );
+  assert.equal(
+    petPose("done", 1, motion).moving,
+    true,
+    "the flourish never runs",
+  );
+});
+
 test("a reaction names only the state and the real context it was given", () => {
   assert.equal(petReaction("idle"), "NIB: idle");
   assert.equal(petReaction("waiting"), "NIB: waiting to start");
@@ -1256,6 +1363,13 @@ test("macOS Terminal.app is never handed a graphics escape", () => {
  * period is the least common multiple of the state cycle and that layer, while
  * the working and closed poses carry only the state cycle. These numbers are
  * written out so a cadence change has to be a deliberate edit here too.
+ *
+ * `done` is forty rather than one in every pose because a completion marks
+ * itself with a three frame sparkle and then holds its settled frame for the
+ * rest of the cycle. Forty steps is four seconds at the motion tick, and the
+ * settled frame is both the first and the last frame of the cycle, so the
+ * flourish is the only thing the atlas gained: a snapshot taken after it is
+ * still the pose the pet drew before it existed.
  */
 const ATLAS_CYCLES: Record<PetPoseKind, Record<PetState, number>> = {
   sit: {
@@ -1266,29 +1380,31 @@ const ATLAS_CYCLES: Record<PetPoseKind, Record<PetState, number>> = {
     tool: 8,
     approval: 48,
     error: 1,
-    done: 1,
+    done: 40,
     cancelled: 1,
   },
   work: {
-    idle: 4,
+    // The idle rhythm is 24 frames in both poses now: a single blink at 3 and
+    // 9 and a double blink at 15 and 16.
+    idle: 24,
     waiting: 10,
     thinking: 10,
     streaming: 7,
     tool: 4,
     approval: 48,
     error: 1,
-    done: 1,
+    done: 40,
     cancelled: 1,
   },
   report: {
-    idle: 4,
+    idle: 24,
     waiting: 10,
     thinking: 10,
     streaming: 7,
     tool: 4,
     approval: 48,
     error: 1,
-    done: 1,
+    done: 40,
     cancelled: 1,
   },
 };
@@ -1420,14 +1536,24 @@ test("the atlas follows the symbol preset without changing the ASCII path", () =
     petAtlasFrames("thinking", "sit", "ascii")[0],
     petPose("thinking", 0, motionContext(0), "ascii", "sit").rows,
   );
-  // A settled state is one frame in every pose, so a finished run cannot be
-  // animated by a sprite sheet that the text path holds still.
-  for (const pose of POSES)
+  // A refusal is one frame in every pose, so a failed run cannot be animated
+  // by a sprite sheet that the text path holds still. A completion carries its
+  // one flourish cycle instead, and that cycle starts and ends on the settled
+  // pose, so the sprite sheet still cannot show a pose the text path does not.
+  for (const pose of POSES) {
     assert.equal(
-      petAtlasFrames("done", pose, "ascii").length,
+      petAtlasFrames("error", pose, "ascii").length,
       1,
-      "a settled state animated",
+      "a settled refusal animated",
     );
+    const done = petAtlasFrames("done", pose, "ascii");
+    assert.equal(done.length, 40, "the completion flourish lost its cycle");
+    assert.deepEqual(
+      done[0],
+      petPose("done", 40, motionContext(0), "ascii", pose).rows,
+      "the flourish did not settle back onto its first frame",
+    );
+  }
 });
 
 // ---------------------------------------------------------------------------

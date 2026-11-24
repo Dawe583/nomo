@@ -1,0 +1,3483 @@
+{
+ "nodes": [
+  {
+   "id": "file:apps/control-plane/ui/src/account-gate.tsx",
+   "type": "file",
+   "name": "account-gate.tsx",
+   "filePath": "apps/control-plane/ui/src/account-gate.tsx",
+   "summary": "account-gate.tsx \u2014 typescript code, 249 lines, 1 functions, 0 classes, 1 exports, 4 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/account-gate.tsx:AccountSignIn",
+   "type": "function",
+   "name": "AccountSignIn",
+   "filePath": "apps/control-plane/ui/src/account-gate.tsx",
+   "lineRange": [
+    40,
+    249
+   ],
+   "summary": "AccountSignIn({) \u2014 function in account-gate.tsx, lines 40-249.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/account-sign-in.test.ts",
+   "type": "file",
+   "name": "account-sign-in.test.ts",
+   "filePath": "apps/control-plane/ui/src/account-sign-in.test.ts",
+   "summary": "account-sign-in.test.ts \u2014 typescript code, 261 lines, 1 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/account-sign-in.test.ts:t",
+   "type": "function",
+   "name": "t",
+   "filePath": "apps/control-plane/ui/src/account-sign-in.test.ts",
+   "lineRange": [
+    22,
+    22
+   ],
+   "summary": "t(_cs, en) \u2014 function in account-sign-in.test.ts, lines 22-22.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/account-sign-in.ts",
+   "type": "file",
+   "name": "account-sign-in.ts",
+   "filePath": "apps/control-plane/ui/src/account-sign-in.ts",
+   "summary": "account-sign-in.ts \u2014 typescript code, 271 lines, 9 functions, 0 classes, 13 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/account-sign-in.ts:accountScreen",
+   "type": "function",
+   "name": "accountScreen",
+   "filePath": "apps/control-plane/ui/src/account-sign-in.ts",
+   "lineRange": [
+    68,
+    76
+   ],
+   "summary": "accountScreen(probe, busy) \u2014 function in account-sign-in.ts, lines 68-76.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/account-sign-in.ts:gateScreen",
+   "type": "function",
+   "name": "gateScreen",
+   "filePath": "apps/control-plane/ui/src/account-sign-in.ts",
+   "lineRange": [
+    86,
+    95
+   ],
+   "summary": "gateScreen(probe) \u2014 function in account-sign-in.ts, lines 86-95.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/account-sign-in.ts:fieldErrors",
+   "type": "function",
+   "name": "fieldErrors",
+   "filePath": "apps/control-plane/ui/src/account-sign-in.ts",
+   "lineRange": [
+    107,
+    126
+   ],
+   "summary": "fieldErrors(email, password, t) \u2014 function in account-sign-in.ts, lines 107-126.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/account-sign-in.ts:firstBrokenField",
+   "type": "function",
+   "name": "firstBrokenField",
+   "filePath": "apps/control-plane/ui/src/account-sign-in.ts",
+   "lineRange": [
+    134,
+    138
+   ],
+   "summary": "firstBrokenField(errors) \u2014 function in account-sign-in.ts, lines 134-138.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/account-sign-in.ts:focusTarget",
+   "type": "function",
+   "name": "focusTarget",
+   "filePath": "apps/control-plane/ui/src/account-sign-in.ts",
+   "lineRange": [
+    152,
+    161
+   ],
+   "summary": "focusTarget(errors, screen, answered) \u2014 function in account-sign-in.ts, lines 152-161.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/account-sign-in.ts:signInBody",
+   "type": "function",
+   "name": "signInBody",
+   "filePath": "apps/control-plane/ui/src/account-sign-in.ts",
+   "lineRange": [
+    171,
+    176
+   ],
+   "summary": "signInBody(email, password) \u2014 function in account-sign-in.ts, lines 171-176.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/account-sign-in.ts:classifyFailure",
+   "type": "function",
+   "name": "classifyFailure",
+   "filePath": "apps/control-plane/ui/src/account-sign-in.ts",
+   "lineRange": [
+    185,
+    191
+   ],
+   "summary": "classifyFailure(status) \u2014 function in account-sign-in.ts, lines 185-191.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/account-sign-in.ts:failureMessage",
+   "type": "function",
+   "name": "failureMessage",
+   "filePath": "apps/control-plane/ui/src/account-sign-in.ts",
+   "lineRange": [
+    200,
+    230
+   ],
+   "summary": "failureMessage(failure, t) \u2014 function in account-sign-in.ts, lines 200-230.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/account-sign-in.ts:accountCopy",
+   "type": "function",
+   "name": "accountCopy",
+   "filePath": "apps/control-plane/ui/src/account-sign-in.ts",
+   "lineRange": [
+    240,
+    271
+   ],
+   "summary": "accountCopy(t) \u2014 function in account-sign-in.ts, lines 240-271.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/agent-input.test.ts",
+   "type": "file",
+   "name": "agent-input.test.ts",
+   "filePath": "apps/control-plane/ui/src/agent-input.test.ts",
+   "summary": "agent-input.test.ts \u2014 typescript code, 75 lines, 0 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/agent-input.ts",
+   "type": "file",
+   "name": "agent-input.ts",
+   "filePath": "apps/control-plane/ui/src/agent-input.ts",
+   "summary": "agent-input.ts \u2014 typescript code, 44 lines, 3 functions, 0 classes, 4 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/agent-input.ts:agentOptions",
+   "type": "function",
+   "name": "agentOptions",
+   "filePath": "apps/control-plane/ui/src/agent-input.ts",
+   "lineRange": [
+    4,
+    16
+   ],
+   "summary": "agentOptions(data) \u2014 function in agent-input.ts, lines 4-16.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/agent-input.ts:agentInput",
+   "type": "function",
+   "name": "agentInput",
+   "filePath": "apps/control-plane/ui/src/agent-input.ts",
+   "lineRange": [
+    18,
+    39
+   ],
+   "summary": "agentInput(values) \u2014 function in agent-input.ts, lines 18-39.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/agent-input.ts:sessionAgent",
+   "type": "function",
+   "name": "sessionAgent",
+   "filePath": "apps/control-plane/ui/src/agent-input.ts",
+   "lineRange": [
+    41,
+    44
+   ],
+   "summary": "sessionAgent(selected, preferences, mode, catalog) \u2014 function in agent-input.ts, lines 41-44.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/api.ts",
+   "type": "file",
+   "name": "api.ts",
+   "filePath": "apps/control-plane/ui/src/api.ts",
+   "summary": "api.ts \u2014 typescript code, 47 lines, 4 functions, 1 classes, 5 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/api.ts:api",
+   "type": "function",
+   "name": "api",
+   "filePath": "apps/control-plane/ui/src/api.ts",
+   "lineRange": [
+    10,
+    32
+   ],
+   "summary": "api(path, method, body) \u2014 function in api.ts, lines 10-32.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/api.ts:items",
+   "type": "function",
+   "name": "items",
+   "filePath": "apps/control-plane/ui/src/api.ts",
+   "lineRange": [
+    33,
+    38
+   ],
+   "summary": "items(data, key) \u2014 function in api.ts, lines 33-38.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/api.ts:download",
+   "type": "function",
+   "name": "download",
+   "filePath": "apps/control-plane/ui/src/api.ts",
+   "lineRange": [
+    39,
+    46
+   ],
+   "summary": "download(name, value, type) \u2014 function in api.ts, lines 39-46.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/api.ts:json",
+   "type": "function",
+   "name": "json",
+   "filePath": "apps/control-plane/ui/src/api.ts",
+   "lineRange": [
+    47,
+    47
+   ],
+   "summary": "json(value) \u2014 function in api.ts, lines 47-47.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/control-plane/ui/src/api.ts:ApiError",
+   "type": "class",
+   "name": "ApiError",
+   "filePath": "apps/control-plane/ui/src/api.ts",
+   "lineRange": [
+    2,
+    9
+   ],
+   "summary": "ApiError \u2014 class in api.ts, lines 2-9.",
+   "tags": [
+    "typescript",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/approval-diff.test.ts",
+   "type": "file",
+   "name": "approval-diff.test.ts",
+   "filePath": "apps/control-plane/ui/src/approval-diff.test.ts",
+   "summary": "approval-diff.test.ts \u2014 typescript code, 67 lines, 0 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/approval-diff.ts",
+   "type": "file",
+   "name": "approval-diff.ts",
+   "filePath": "apps/control-plane/ui/src/approval-diff.ts",
+   "summary": "approval-diff.ts \u2014 typescript code, 129 lines, 6 functions, 0 classes, 3 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/approval-diff.ts:json",
+   "type": "function",
+   "name": "json",
+   "filePath": "apps/control-plane/ui/src/approval-diff.ts",
+   "lineRange": [
+    15,
+    15
+   ],
+   "summary": "json(value) \u2014 function in approval-diff.ts, lines 15-15.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/approval-diff.ts:pick",
+   "type": "function",
+   "name": "pick",
+   "filePath": "apps/control-plane/ui/src/approval-diff.ts",
+   "lineRange": [
+    30,
+    38
+   ],
+   "summary": "pick(source, keys) \u2014 function in approval-diff.ts, lines 30-38.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/approval-diff.ts:extractBeforeAfter",
+   "type": "function",
+   "name": "extractBeforeAfter",
+   "filePath": "apps/control-plane/ui/src/approval-diff.ts",
+   "lineRange": [
+    52,
+    70
+   ],
+   "summary": "extractBeforeAfter(record) \u2014 function in approval-diff.ts, lines 52-70.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/approval-diff.ts:toLines",
+   "type": "function",
+   "name": "toLines",
+   "filePath": "apps/control-plane/ui/src/approval-diff.ts",
+   "lineRange": [
+    77,
+    81
+   ],
+   "summary": "toLines(value) \u2014 function in approval-diff.ts, lines 77-81.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/approval-diff.ts:diffLines",
+   "type": "function",
+   "name": "diffLines",
+   "filePath": "apps/control-plane/ui/src/approval-diff.ts",
+   "lineRange": [
+    87,
+    119
+   ],
+   "summary": "diffLines(before, after) \u2014 function in approval-diff.ts, lines 87-119.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/approval-diff.ts:requiresConfirm",
+   "type": "function",
+   "name": "requiresConfirm",
+   "filePath": "apps/control-plane/ui/src/approval-diff.ts",
+   "lineRange": [
+    126,
+    129
+   ],
+   "summary": "requiresConfirm(record) \u2014 function in approval-diff.ts, lines 126-129.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/approval-review.tsx",
+   "type": "file",
+   "name": "approval-review.tsx",
+   "filePath": "apps/control-plane/ui/src/approval-review.tsx",
+   "summary": "approval-review.tsx \u2014 typescript code, 263 lines, 1 functions, 0 classes, 1 exports, 4 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/approval-review.tsx:ApprovalReview",
+   "type": "function",
+   "name": "ApprovalReview",
+   "filePath": "apps/control-plane/ui/src/approval-review.tsx",
+   "lineRange": [
+    17,
+    263
+   ],
+   "summary": "ApprovalReview({) \u2014 function in approval-review.tsx, lines 17-263.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/approval-text.ts",
+   "type": "file",
+   "name": "approval-text.ts",
+   "filePath": "apps/control-plane/ui/src/approval-text.ts",
+   "summary": "approval-text.ts \u2014 typescript code, 36 lines, 4 functions, 0 classes, 4 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/approval-text.ts:plainAction",
+   "type": "function",
+   "name": "plainAction",
+   "filePath": "apps/control-plane/ui/src/approval-text.ts",
+   "lineRange": [
+    6,
+    12
+   ],
+   "summary": "plainAction(record) \u2014 function in approval-text.ts, lines 6-12.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/approval-text.ts:riskOf",
+   "type": "function",
+   "name": "riskOf",
+   "filePath": "apps/control-plane/ui/src/approval-text.ts",
+   "lineRange": [
+    15,
+    22
+   ],
+   "summary": "riskOf(record) \u2014 function in approval-text.ts, lines 15-22.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/approval-text.ts:sortRiskFirst",
+   "type": "function",
+   "name": "sortRiskFirst",
+   "filePath": "apps/control-plane/ui/src/approval-text.ts",
+   "lineRange": [
+    25,
+    28
+   ],
+   "summary": "sortRiskFirst(rows, risk) \u2014 function in approval-text.ts, lines 25-28.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/approval-text.ts:blastSummary",
+   "type": "function",
+   "name": "blastSummary",
+   "filePath": "apps/control-plane/ui/src/approval-text.ts",
+   "lineRange": [
+    31,
+    36
+   ],
+   "summary": "blastSummary(record) \u2014 function in approval-text.ts, lines 31-36.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/brand.tsx",
+   "type": "file",
+   "name": "brand.tsx",
+   "filePath": "apps/control-plane/ui/src/brand.tsx",
+   "summary": "brand.tsx \u2014 typescript code, 39 lines, 1 functions, 0 classes, 1 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/brand.tsx:BrandMark",
+   "type": "function",
+   "name": "BrandMark",
+   "filePath": "apps/control-plane/ui/src/brand.tsx",
+   "lineRange": [
+    21,
+    39
+   ],
+   "summary": "BrandMark({ className = \"\" }) \u2014 function in brand.tsx, lines 21-39.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/chat-composer.test.ts",
+   "type": "file",
+   "name": "chat-composer.test.ts",
+   "filePath": "apps/control-plane/ui/src/chat-composer.test.ts",
+   "summary": "chat-composer.test.ts \u2014 typescript code, 139 lines, 1 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/chat-composer.test.ts:storage",
+   "type": "function",
+   "name": "storage",
+   "filePath": "apps/control-plane/ui/src/chat-composer.test.ts",
+   "lineRange": [
+    16,
+    28
+   ],
+   "summary": "storage() \u2014 function in chat-composer.test.ts, lines 16-28.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/chat-composer.ts",
+   "type": "file",
+   "name": "chat-composer.ts",
+   "filePath": "apps/control-plane/ui/src/chat-composer.ts",
+   "summary": "chat-composer.ts \u2014 typescript code, 94 lines, 6 functions, 0 classes, 9 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/chat-composer.ts:messageSize",
+   "type": "function",
+   "name": "messageSize",
+   "filePath": "apps/control-plane/ui/src/chat-composer.ts",
+   "lineRange": [
+    19,
+    29
+   ],
+   "summary": "messageSize(prompt) \u2014 function in chat-composer.ts, lines 19-29.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/chat-composer.ts:attachmentBytes",
+   "type": "function",
+   "name": "attachmentBytes",
+   "filePath": "apps/control-plane/ui/src/chat-composer.ts",
+   "lineRange": [
+    33,
+    37
+   ],
+   "summary": "attachmentBytes(list) \u2014 function in chat-composer.ts, lines 33-37.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/chat-composer.ts:filesKey",
+   "type": "function",
+   "name": "filesKey",
+   "filePath": "apps/control-plane/ui/src/chat-composer.ts",
+   "lineRange": [
+    45,
+    45
+   ],
+   "summary": "filesKey(key) \u2014 function in chat-composer.ts, lines 45-45.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/chat-composer.ts:loadDraftFiles",
+   "type": "function",
+   "name": "loadDraftFiles",
+   "filePath": "apps/control-plane/ui/src/chat-composer.ts",
+   "lineRange": [
+    50,
+    72
+   ],
+   "summary": "loadDraftFiles(storage, key) \u2014 function in chat-composer.ts, lines 50-72.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/chat-composer.ts:saveDraftFiles",
+   "type": "function",
+   "name": "saveDraftFiles",
+   "filePath": "apps/control-plane/ui/src/chat-composer.ts",
+   "lineRange": [
+    74,
+    81
+   ],
+   "summary": "saveDraftFiles(storage, key, files) \u2014 function in chat-composer.ts, lines 74-81.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/chat-composer.ts:clearDraftFiles",
+   "type": "function",
+   "name": "clearDraftFiles",
+   "filePath": "apps/control-plane/ui/src/chat-composer.ts",
+   "lineRange": [
+    89,
+    94
+   ],
+   "summary": "clearDraftFiles(storage, key) \u2014 function in chat-composer.ts, lines 89-94.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/chat-stream.test.ts",
+   "type": "file",
+   "name": "chat-stream.test.ts",
+   "filePath": "apps/control-plane/ui/src/chat-stream.test.ts",
+   "summary": "chat-stream.test.ts \u2014 typescript code, 136 lines, 0 functions, 0 classes, 0 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/chat-stream.ts",
+   "type": "file",
+   "name": "chat-stream.ts",
+   "filePath": "apps/control-plane/ui/src/chat-stream.ts",
+   "summary": "chat-stream.ts \u2014 typescript code, 108 lines, 5 functions, 0 classes, 4 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/chat-stream.ts:streamPhase",
+   "type": "function",
+   "name": "streamPhase",
+   "filePath": "apps/control-plane/ui/src/chat-stream.ts",
+   "lineRange": [
+    33,
+    51
+   ],
+   "summary": "streamPhase(source) \u2014 function in chat-stream.ts, lines 33-51.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/chat-stream.ts:runStillStreams",
+   "type": "function",
+   "name": "runStillStreams",
+   "filePath": "apps/control-plane/ui/src/chat-stream.ts",
+   "lineRange": [
+    55,
+    59
+   ],
+   "summary": "runStillStreams(status) \u2014 function in chat-stream.ts, lines 55-59.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/chat-stream.ts:toolTimings",
+   "type": "function",
+   "name": "toolTimings",
+   "filePath": "apps/control-plane/ui/src/chat-stream.ts",
+   "lineRange": [
+    70,
+    89
+   ],
+   "summary": "toolTimings(source) \u2014 function in chat-stream.ts, lines 70-89.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/chat-stream.ts:toolDuration",
+   "type": "function",
+   "name": "toolDuration",
+   "filePath": "apps/control-plane/ui/src/chat-stream.ts",
+   "lineRange": [
+    91,
+    96
+   ],
+   "summary": "toolDuration(timing) \u2014 function in chat-stream.ts, lines 91-96.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/chat-stream.ts:formatDuration",
+   "type": "function",
+   "name": "formatDuration",
+   "filePath": "apps/control-plane/ui/src/chat-stream.ts",
+   "lineRange": [
+    100,
+    108
+   ],
+   "summary": "formatDuration(ms) \u2014 function in chat-stream.ts, lines 100-108.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/chat.tsx",
+   "type": "file",
+   "name": "chat.tsx",
+   "filePath": "apps/control-plane/ui/src/chat.tsx",
+   "summary": "chat.tsx \u2014 typescript code, 1633 lines, 5 functions, 0 classes, 2 exports, 20 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/chat.tsx:CodeBlock",
+   "type": "function",
+   "name": "CodeBlock",
+   "filePath": "apps/control-plane/ui/src/chat.tsx",
+   "lineRange": [
+    53,
+    105
+   ],
+   "summary": "CodeBlock({ children }) \u2014 function in chat.tsx, lines 53-105.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/chat.tsx:RichText",
+   "type": "function",
+   "name": "RichText",
+   "filePath": "apps/control-plane/ui/src/chat.tsx",
+   "lineRange": [
+    106,
+    123
+   ],
+   "summary": "RichText({ text }) \u2014 function in chat.tsx, lines 106-123.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/chat.tsx:toolStatusLabel",
+   "type": "function",
+   "name": "toolStatusLabel",
+   "filePath": "apps/control-plane/ui/src/chat.tsx",
+   "lineRange": [
+    136,
+    139
+   ],
+   "summary": "toolStatusLabel(value, t) \u2014 function in chat.tsx, lines 136-139.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/chat.tsx:ToolCard",
+   "type": "function",
+   "name": "ToolCard",
+   "filePath": "apps/control-plane/ui/src/chat.tsx",
+   "lineRange": [
+    146,
+    196
+   ],
+   "summary": "ToolCard({) \u2014 function in chat.tsx, lines 146-196.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/chat.tsx:Chat",
+   "type": "function",
+   "name": "Chat",
+   "filePath": "apps/control-plane/ui/src/chat.tsx",
+   "lineRange": [
+    197,
+    1633
+   ],
+   "summary": "Chat({) \u2014 function in chat.tsx, lines 197-1633.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/command-menu.tsx",
+   "type": "file",
+   "name": "command-menu.tsx",
+   "filePath": "apps/control-plane/ui/src/command-menu.tsx",
+   "summary": "command-menu.tsx \u2014 typescript code, 116 lines, 1 functions, 0 classes, 1 exports, 3 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/command-menu.tsx:CommandMenu",
+   "type": "function",
+   "name": "CommandMenu",
+   "filePath": "apps/control-plane/ui/src/command-menu.tsx",
+   "lineRange": [
+    7,
+    116
+   ],
+   "summary": "CommandMenu({) \u2014 function in command-menu.tsx, lines 7-116.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/commands.test.ts",
+   "type": "file",
+   "name": "commands.test.ts",
+   "filePath": "apps/control-plane/ui/src/commands.test.ts",
+   "summary": "commands.test.ts \u2014 typescript code, 26 lines, 0 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/commands.ts",
+   "type": "file",
+   "name": "commands.ts",
+   "filePath": "apps/control-plane/ui/src/commands.ts",
+   "summary": "commands.ts \u2014 typescript code, 74 lines, 6 functions, 0 classes, 4 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/commands.ts:filterCommands",
+   "type": "function",
+   "name": "filterCommands",
+   "filePath": "apps/control-plane/ui/src/commands.ts",
+   "lineRange": [
+    11,
+    19
+   ],
+   "summary": "filterCommands(commands, draft) \u2014 function in commands.ts, lines 11-19.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/commands.ts:fuzzyScore",
+   "type": "function",
+   "name": "fuzzyScore",
+   "filePath": "apps/control-plane/ui/src/commands.ts",
+   "lineRange": [
+    21,
+    29
+   ],
+   "summary": "fuzzyScore(text, query, recencyWeight) \u2014 function in commands.ts, lines 21-29.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/commands.ts:searchable",
+   "type": "function",
+   "name": "searchable",
+   "filePath": "apps/control-plane/ui/src/commands.ts",
+   "lineRange": [
+    32,
+    35
+   ],
+   "summary": "searchable(item) \u2014 function in commands.ts, lines 32-35.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/commands.ts:filterPaletteRecentFirst",
+   "type": "function",
+   "name": "filterPaletteRecentFirst",
+   "filePath": "apps/control-plane/ui/src/commands.ts",
+   "lineRange": [
+    40,
+    61
+   ],
+   "summary": "filterPaletteRecentFirst(items, query, recentIds) \u2014 function in commands.ts, lines 40-61.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/commands.ts:filterPalette",
+   "type": "function",
+   "name": "filterPalette",
+   "filePath": "apps/control-plane/ui/src/commands.ts",
+   "lineRange": [
+    64,
+    71
+   ],
+   "summary": "filterPalette(items, query) \u2014 function in commands.ts, lines 64-71.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/commands.ts:toolPrompt",
+   "type": "function",
+   "name": "toolPrompt",
+   "filePath": "apps/control-plane/ui/src/commands.ts",
+   "lineRange": [
+    72,
+    74
+   ],
+   "summary": "toolPrompt(command) \u2014 function in commands.ts, lines 72-74.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/demo.tsx",
+   "type": "file",
+   "name": "demo.tsx",
+   "filePath": "apps/control-plane/ui/src/demo.tsx",
+   "summary": "demo.tsx \u2014 typescript code, 608 lines, 1 functions, 0 classes, 1 exports, 6 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/demo.tsx:PublicDemo",
+   "type": "function",
+   "name": "PublicDemo",
+   "filePath": "apps/control-plane/ui/src/demo.tsx",
+   "lineRange": [
+    17,
+    608
+   ],
+   "summary": "PublicDemo({) \u2014 function in demo.tsx, lines 17-608.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/desktop-downloads.test.ts",
+   "type": "file",
+   "name": "desktop-downloads.test.ts",
+   "filePath": "apps/control-plane/ui/src/desktop-downloads.test.ts",
+   "summary": "desktop-downloads.test.ts \u2014 typescript code, 31 lines, 0 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/desktop-downloads.ts",
+   "type": "file",
+   "name": "desktop-downloads.ts",
+   "filePath": "apps/control-plane/ui/src/desktop-downloads.ts",
+   "summary": "desktop-downloads.ts \u2014 typescript code, 6 lines, 0 functions, 0 classes, 1 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/document-history.test.ts",
+   "type": "file",
+   "name": "document-history.test.ts",
+   "filePath": "apps/control-plane/ui/src/document-history.test.ts",
+   "summary": "document-history.test.ts \u2014 typescript code, 41 lines, 0 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/document-history.ts",
+   "type": "file",
+   "name": "document-history.ts",
+   "filePath": "apps/control-plane/ui/src/document-history.ts",
+   "summary": "document-history.ts \u2014 typescript code, 24 lines, 2 functions, 0 classes, 2 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/document-history.ts:documentHistory",
+   "type": "function",
+   "name": "documentHistory",
+   "filePath": "apps/control-plane/ui/src/document-history.ts",
+   "lineRange": [
+    8,
+    18
+   ],
+   "summary": "documentHistory(operations, search) \u2014 function in document-history.ts, lines 8-18.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/document-history.ts:documentContentState",
+   "type": "function",
+   "name": "documentContentState",
+   "filePath": "apps/control-plane/ui/src/document-history.ts",
+   "lineRange": [
+    20,
+    24
+   ],
+   "summary": "documentContentState(content) \u2014 function in document-history.ts, lines 20-24.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/documents.tsx",
+   "type": "file",
+   "name": "documents.tsx",
+   "filePath": "apps/control-plane/ui/src/documents.tsx",
+   "summary": "documents.tsx \u2014 typescript code, 582 lines, 5 functions, 0 classes, 1 exports, 5 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/documents.tsx:Documents",
+   "type": "function",
+   "name": "Documents",
+   "filePath": "apps/control-plane/ui/src/documents.tsx",
+   "lineRange": [
+    12,
+    68
+   ],
+   "summary": "Documents({) \u2014 function in documents.tsx, lines 12-68.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/documents.tsx:DocumentHistory",
+   "type": "function",
+   "name": "DocumentHistory",
+   "filePath": "apps/control-plane/ui/src/documents.tsx",
+   "lineRange": [
+    69,
+    148
+   ],
+   "summary": "DocumentHistory({ sessionId }) \u2014 function in documents.tsx, lines 69-148.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/documents.tsx:OperationReview",
+   "type": "function",
+   "name": "OperationReview",
+   "filePath": "apps/control-plane/ui/src/documents.tsx",
+   "lineRange": [
+    150,
+    304
+   ],
+   "summary": "OperationReview({) \u2014 function in documents.tsx, lines 150-304.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/documents.tsx:Diff",
+   "type": "function",
+   "name": "Diff",
+   "filePath": "apps/control-plane/ui/src/documents.tsx",
+   "lineRange": [
+    306,
+    376
+   ],
+   "summary": "Diff({) \u2014 function in documents.tsx, lines 306-376.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/documents.tsx:DocumentEditor",
+   "type": "function",
+   "name": "DocumentEditor",
+   "filePath": "apps/control-plane/ui/src/documents.tsx",
+   "lineRange": [
+    377,
+    582
+   ],
+   "summary": "DocumentEditor({) \u2014 function in documents.tsx, lines 377-582.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/draft-state.test.ts",
+   "type": "file",
+   "name": "draft-state.test.ts",
+   "filePath": "apps/control-plane/ui/src/draft-state.test.ts",
+   "summary": "draft-state.test.ts \u2014 typescript code, 80 lines, 1 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/draft-state.test.ts:storage",
+   "type": "function",
+   "name": "storage",
+   "filePath": "apps/control-plane/ui/src/draft-state.test.ts",
+   "lineRange": [
+    4,
+    15
+   ],
+   "summary": "storage() \u2014 function in draft-state.test.ts, lines 4-15.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/draft-state.ts",
+   "type": "file",
+   "name": "draft-state.ts",
+   "filePath": "apps/control-plane/ui/src/draft-state.ts",
+   "summary": "draft-state.ts \u2014 typescript code, 32 lines, 4 functions, 0 classes, 3 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/draft-state.ts:queuedKey",
+   "type": "function",
+   "name": "queuedKey",
+   "filePath": "apps/control-plane/ui/src/draft-state.ts",
+   "lineRange": [
+    2,
+    2
+   ],
+   "summary": "queuedKey(key) \u2014 function in draft-state.ts, lines 2-2.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/draft-state.ts:loadDraft",
+   "type": "function",
+   "name": "loadDraft",
+   "filePath": "apps/control-plane/ui/src/draft-state.ts",
+   "lineRange": [
+    4,
+    10
+   ],
+   "summary": "loadDraft(storage, key) \u2014 function in draft-state.ts, lines 4-10.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/draft-state.ts:saveDraft",
+   "type": "function",
+   "name": "saveDraft",
+   "filePath": "apps/control-plane/ui/src/draft-state.ts",
+   "lineRange": [
+    12,
+    21
+   ],
+   "summary": "saveDraft(storage, key, text, queued) \u2014 function in draft-state.ts, lines 12-21.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/draft-state.ts:submitDraft",
+   "type": "function",
+   "name": "submitDraft",
+   "filePath": "apps/control-plane/ui/src/draft-state.ts",
+   "lineRange": [
+    23,
+    32
+   ],
+   "summary": "submitDraft(storage, key, submit) \u2014 function in draft-state.ts, lines 23-32.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/events.test.ts",
+   "type": "file",
+   "name": "events.test.ts",
+   "filePath": "apps/control-plane/ui/src/events.test.ts",
+   "summary": "events.test.ts \u2014 typescript code, 93 lines, 0 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/events.ts",
+   "type": "file",
+   "name": "events.ts",
+   "filePath": "apps/control-plane/ui/src/events.ts",
+   "summary": "events.ts \u2014 typescript code, 75 lines, 3 functions, 0 classes, 3 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/events.ts:transcriptEvents",
+   "type": "function",
+   "name": "transcriptEvents",
+   "filePath": "apps/control-plane/ui/src/events.ts",
+   "lineRange": [
+    3,
+    50
+   ],
+   "summary": "transcriptEvents(source) \u2014 function in events.ts, lines 3-50.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/events.ts:usageSummary",
+   "type": "function",
+   "name": "usageSummary",
+   "filePath": "apps/control-plane/ui/src/events.ts",
+   "lineRange": [
+    52,
+    64
+   ],
+   "summary": "usageSummary(source) \u2014 function in events.ts, lines 52-64.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/events.ts:lastUserMessage",
+   "type": "function",
+   "name": "lastUserMessage",
+   "filePath": "apps/control-plane/ui/src/events.ts",
+   "lineRange": [
+    66,
+    75
+   ],
+   "summary": "lastUserMessage(source) \u2014 function in events.ts, lines 66-75.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/gallery-path.ts",
+   "type": "file",
+   "name": "gallery-path.ts",
+   "filePath": "apps/control-plane/ui/src/gallery-path.ts",
+   "summary": "gallery-path.ts \u2014 typescript code, 22 lines, 1 functions, 0 classes, 2 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/gallery-path.ts:isGalleryRequest",
+   "type": "function",
+   "name": "isGalleryRequest",
+   "filePath": "apps/control-plane/ui/src/gallery-path.ts",
+   "lineRange": [
+    20,
+    22
+   ],
+   "summary": "isGalleryRequest(location) \u2014 function in gallery-path.ts, lines 20-22.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/gallery.test.ts",
+   "type": "file",
+   "name": "gallery.test.ts",
+   "filePath": "apps/control-plane/ui/src/gallery.test.ts",
+   "summary": "gallery.test.ts \u2014 typescript code, 37 lines, 0 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/gallery.tsx",
+   "type": "file",
+   "name": "gallery.tsx",
+   "filePath": "apps/control-plane/ui/src/gallery.tsx",
+   "summary": "gallery.tsx \u2014 typescript code, 421 lines, 2 functions, 0 classes, 1 exports, 6 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/gallery.tsx:Section",
+   "type": "function",
+   "name": "Section",
+   "filePath": "apps/control-plane/ui/src/gallery.tsx",
+   "lineRange": [
+    121,
+    142
+   ],
+   "summary": "Section({) \u2014 function in gallery.tsx, lines 121-142.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/gallery.tsx:ComponentGallery",
+   "type": "function",
+   "name": "ComponentGallery",
+   "filePath": "apps/control-plane/ui/src/gallery.tsx",
+   "lineRange": [
+    143,
+    421
+   ],
+   "summary": "ComponentGallery() \u2014 function in gallery.tsx, lines 143-421.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/harness-entries.test.ts",
+   "type": "file",
+   "name": "harness-entries.test.ts",
+   "filePath": "apps/control-plane/ui/src/harness-entries.test.ts",
+   "summary": "harness-entries.test.ts \u2014 typescript code, 139 lines, 0 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/harness-entries.ts",
+   "type": "file",
+   "name": "harness-entries.ts",
+   "filePath": "apps/control-plane/ui/src/harness-entries.ts",
+   "summary": "harness-entries.ts \u2014 typescript code, 126 lines, 2 functions, 0 classes, 2 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/harness-entries.ts:harnessRatchetView",
+   "type": "function",
+   "name": "harnessRatchetView",
+   "filePath": "apps/control-plane/ui/src/harness-entries.ts",
+   "lineRange": [
+    51,
+    84
+   ],
+   "summary": "harnessRatchetView(data) \u2014 function in harness-entries.ts, lines 51-84.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/harness-entries.ts:harnessEntries",
+   "type": "function",
+   "name": "harnessEntries",
+   "filePath": "apps/control-plane/ui/src/harness-entries.ts",
+   "lineRange": [
+    93,
+    126
+   ],
+   "summary": "harnessEntries(data) \u2014 function in harness-entries.ts, lines 93-126.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/harness-entries.tsx",
+   "type": "file",
+   "name": "harness-entries.tsx",
+   "filePath": "apps/control-plane/ui/src/harness-entries.tsx",
+   "summary": "harness-entries.tsx \u2014 typescript code, 116 lines, 1 functions, 0 classes, 1 exports, 3 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/harness-entries.tsx:HarnessEntries",
+   "type": "function",
+   "name": "HarnessEntries",
+   "filePath": "apps/control-plane/ui/src/harness-entries.tsx",
+   "lineRange": [
+    16,
+    116
+   ],
+   "summary": "HarnessEntries({ sessionId }) \u2014 function in harness-entries.tsx, lines 16-116.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  }
+ ],
+ "edges": [
+  {
+   "source": "file:apps/control-plane/ui/src/account-gate.tsx",
+   "target": "function:apps/control-plane/ui/src/account-gate.tsx:AccountSignIn",
+   "type": "contains",
+   "direction": "forward",
+   "description": "account-gate.tsx defines AccountSignIn",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/account-gate.tsx",
+   "target": "function:apps/control-plane/ui/src/account-gate.tsx:AccountSignIn",
+   "type": "exports",
+   "direction": "forward",
+   "description": "account-gate.tsx exports AccountSignIn",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/account-sign-in.test.ts",
+   "target": "function:apps/control-plane/ui/src/account-sign-in.test.ts:t",
+   "type": "contains",
+   "direction": "forward",
+   "description": "account-sign-in.test.ts defines t",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/account-sign-in.ts",
+   "target": "function:apps/control-plane/ui/src/account-sign-in.ts:accountScreen",
+   "type": "contains",
+   "direction": "forward",
+   "description": "account-sign-in.ts defines accountScreen",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/account-sign-in.ts",
+   "target": "function:apps/control-plane/ui/src/account-sign-in.ts:accountScreen",
+   "type": "exports",
+   "direction": "forward",
+   "description": "account-sign-in.ts exports accountScreen",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/account-sign-in.ts",
+   "target": "function:apps/control-plane/ui/src/account-sign-in.ts:gateScreen",
+   "type": "contains",
+   "direction": "forward",
+   "description": "account-sign-in.ts defines gateScreen",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/account-sign-in.ts",
+   "target": "function:apps/control-plane/ui/src/account-sign-in.ts:gateScreen",
+   "type": "exports",
+   "direction": "forward",
+   "description": "account-sign-in.ts exports gateScreen",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/account-sign-in.ts",
+   "target": "function:apps/control-plane/ui/src/account-sign-in.ts:fieldErrors",
+   "type": "contains",
+   "direction": "forward",
+   "description": "account-sign-in.ts defines fieldErrors",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/account-sign-in.ts",
+   "target": "function:apps/control-plane/ui/src/account-sign-in.ts:fieldErrors",
+   "type": "exports",
+   "direction": "forward",
+   "description": "account-sign-in.ts exports fieldErrors",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/account-sign-in.ts",
+   "target": "function:apps/control-plane/ui/src/account-sign-in.ts:firstBrokenField",
+   "type": "contains",
+   "direction": "forward",
+   "description": "account-sign-in.ts defines firstBrokenField",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/account-sign-in.ts",
+   "target": "function:apps/control-plane/ui/src/account-sign-in.ts:firstBrokenField",
+   "type": "exports",
+   "direction": "forward",
+   "description": "account-sign-in.ts exports firstBrokenField",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/account-sign-in.ts",
+   "target": "function:apps/control-plane/ui/src/account-sign-in.ts:focusTarget",
+   "type": "contains",
+   "direction": "forward",
+   "description": "account-sign-in.ts defines focusTarget",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/account-sign-in.ts",
+   "target": "function:apps/control-plane/ui/src/account-sign-in.ts:focusTarget",
+   "type": "exports",
+   "direction": "forward",
+   "description": "account-sign-in.ts exports focusTarget",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/account-sign-in.ts",
+   "target": "function:apps/control-plane/ui/src/account-sign-in.ts:signInBody",
+   "type": "contains",
+   "direction": "forward",
+   "description": "account-sign-in.ts defines signInBody",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/account-sign-in.ts",
+   "target": "function:apps/control-plane/ui/src/account-sign-in.ts:signInBody",
+   "type": "exports",
+   "direction": "forward",
+   "description": "account-sign-in.ts exports signInBody",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/account-sign-in.ts",
+   "target": "function:apps/control-plane/ui/src/account-sign-in.ts:classifyFailure",
+   "type": "contains",
+   "direction": "forward",
+   "description": "account-sign-in.ts defines classifyFailure",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/account-sign-in.ts",
+   "target": "function:apps/control-plane/ui/src/account-sign-in.ts:classifyFailure",
+   "type": "exports",
+   "direction": "forward",
+   "description": "account-sign-in.ts exports classifyFailure",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/account-sign-in.ts",
+   "target": "function:apps/control-plane/ui/src/account-sign-in.ts:failureMessage",
+   "type": "contains",
+   "direction": "forward",
+   "description": "account-sign-in.ts defines failureMessage",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/account-sign-in.ts",
+   "target": "function:apps/control-plane/ui/src/account-sign-in.ts:failureMessage",
+   "type": "exports",
+   "direction": "forward",
+   "description": "account-sign-in.ts exports failureMessage",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/account-sign-in.ts",
+   "target": "function:apps/control-plane/ui/src/account-sign-in.ts:accountCopy",
+   "type": "contains",
+   "direction": "forward",
+   "description": "account-sign-in.ts defines accountCopy",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/account-sign-in.ts",
+   "target": "function:apps/control-plane/ui/src/account-sign-in.ts:accountCopy",
+   "type": "exports",
+   "direction": "forward",
+   "description": "account-sign-in.ts exports accountCopy",
+   "weight": 0.7
+  },
+  {
+   "source": "function:apps/control-plane/ui/src/account-sign-in.ts:focusTarget",
+   "target": "function:apps/control-plane/ui/src/account-sign-in.ts:firstBrokenField",
+   "type": "calls",
+   "direction": "forward",
+   "description": "focusTarget calls firstBrokenField",
+   "weight": 0.6
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/agent-input.ts",
+   "target": "function:apps/control-plane/ui/src/agent-input.ts:agentOptions",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agent-input.ts defines agentOptions",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/agent-input.ts",
+   "target": "function:apps/control-plane/ui/src/agent-input.ts:agentOptions",
+   "type": "exports",
+   "direction": "forward",
+   "description": "agent-input.ts exports agentOptions",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/agent-input.ts",
+   "target": "function:apps/control-plane/ui/src/agent-input.ts:agentInput",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agent-input.ts defines agentInput",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/agent-input.ts",
+   "target": "function:apps/control-plane/ui/src/agent-input.ts:agentInput",
+   "type": "exports",
+   "direction": "forward",
+   "description": "agent-input.ts exports agentInput",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/agent-input.ts",
+   "target": "function:apps/control-plane/ui/src/agent-input.ts:sessionAgent",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agent-input.ts defines sessionAgent",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/agent-input.ts",
+   "target": "function:apps/control-plane/ui/src/agent-input.ts:sessionAgent",
+   "type": "exports",
+   "direction": "forward",
+   "description": "agent-input.ts exports sessionAgent",
+   "weight": 0.7
+  },
+  {
+   "source": "function:apps/control-plane/ui/src/agent-input.ts:sessionAgent",
+   "target": "function:apps/control-plane/ui/src/agent-input.ts:agentOptions",
+   "type": "calls",
+   "direction": "forward",
+   "description": "sessionAgent calls agentOptions",
+   "weight": 0.6
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/api.ts",
+   "target": "function:apps/control-plane/ui/src/api.ts:api",
+   "type": "contains",
+   "direction": "forward",
+   "description": "api.ts defines api",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/api.ts",
+   "target": "function:apps/control-plane/ui/src/api.ts:api",
+   "type": "exports",
+   "direction": "forward",
+   "description": "api.ts exports api",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/api.ts",
+   "target": "function:apps/control-plane/ui/src/api.ts:items",
+   "type": "contains",
+   "direction": "forward",
+   "description": "api.ts defines items",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/api.ts",
+   "target": "function:apps/control-plane/ui/src/api.ts:items",
+   "type": "exports",
+   "direction": "forward",
+   "description": "api.ts exports items",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/api.ts",
+   "target": "function:apps/control-plane/ui/src/api.ts:download",
+   "type": "contains",
+   "direction": "forward",
+   "description": "api.ts defines download",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/api.ts",
+   "target": "function:apps/control-plane/ui/src/api.ts:download",
+   "type": "exports",
+   "direction": "forward",
+   "description": "api.ts exports download",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/api.ts",
+   "target": "function:apps/control-plane/ui/src/api.ts:json",
+   "type": "contains",
+   "direction": "forward",
+   "description": "api.ts defines json",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/api.ts",
+   "target": "function:apps/control-plane/ui/src/api.ts:json",
+   "type": "exports",
+   "direction": "forward",
+   "description": "api.ts exports json",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/api.ts",
+   "target": "class:apps/control-plane/ui/src/api.ts:ApiError",
+   "type": "contains",
+   "direction": "forward",
+   "description": "api.ts defines class ApiError",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/approval-diff.ts",
+   "target": "function:apps/control-plane/ui/src/approval-diff.ts:json",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approval-diff.ts defines json",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/approval-diff.ts",
+   "target": "function:apps/control-plane/ui/src/approval-diff.ts:pick",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approval-diff.ts defines pick",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/approval-diff.ts",
+   "target": "function:apps/control-plane/ui/src/approval-diff.ts:extractBeforeAfter",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approval-diff.ts defines extractBeforeAfter",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/approval-diff.ts",
+   "target": "function:apps/control-plane/ui/src/approval-diff.ts:extractBeforeAfter",
+   "type": "exports",
+   "direction": "forward",
+   "description": "approval-diff.ts exports extractBeforeAfter",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/approval-diff.ts",
+   "target": "function:apps/control-plane/ui/src/approval-diff.ts:toLines",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approval-diff.ts defines toLines",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/approval-diff.ts",
+   "target": "function:apps/control-plane/ui/src/approval-diff.ts:diffLines",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approval-diff.ts defines diffLines",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/approval-diff.ts",
+   "target": "function:apps/control-plane/ui/src/approval-diff.ts:diffLines",
+   "type": "exports",
+   "direction": "forward",
+   "description": "approval-diff.ts exports diffLines",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/approval-diff.ts",
+   "target": "function:apps/control-plane/ui/src/approval-diff.ts:requiresConfirm",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approval-diff.ts defines requiresConfirm",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/approval-diff.ts",
+   "target": "function:apps/control-plane/ui/src/approval-diff.ts:requiresConfirm",
+   "type": "exports",
+   "direction": "forward",
+   "description": "approval-diff.ts exports requiresConfirm",
+   "weight": 0.7
+  },
+  {
+   "source": "function:apps/control-plane/ui/src/approval-diff.ts:extractBeforeAfter",
+   "target": "function:apps/control-plane/ui/src/approval-diff.ts:pick",
+   "type": "calls",
+   "direction": "forward",
+   "description": "extractBeforeAfter calls pick",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/ui/src/approval-diff.ts:toLines",
+   "target": "function:apps/control-plane/ui/src/approval-diff.ts:json",
+   "type": "calls",
+   "direction": "forward",
+   "description": "toLines calls json",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/ui/src/approval-diff.ts:diffLines",
+   "target": "function:apps/control-plane/ui/src/approval-diff.ts:toLines",
+   "type": "calls",
+   "direction": "forward",
+   "description": "diffLines calls toLines",
+   "weight": 0.6
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/approval-review.tsx",
+   "target": "function:apps/control-plane/ui/src/approval-review.tsx:ApprovalReview",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approval-review.tsx defines ApprovalReview",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/approval-review.tsx",
+   "target": "function:apps/control-plane/ui/src/approval-review.tsx:ApprovalReview",
+   "type": "exports",
+   "direction": "forward",
+   "description": "approval-review.tsx exports ApprovalReview",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/approval-text.ts",
+   "target": "function:apps/control-plane/ui/src/approval-text.ts:plainAction",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approval-text.ts defines plainAction",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/approval-text.ts",
+   "target": "function:apps/control-plane/ui/src/approval-text.ts:plainAction",
+   "type": "exports",
+   "direction": "forward",
+   "description": "approval-text.ts exports plainAction",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/approval-text.ts",
+   "target": "function:apps/control-plane/ui/src/approval-text.ts:riskOf",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approval-text.ts defines riskOf",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/approval-text.ts",
+   "target": "function:apps/control-plane/ui/src/approval-text.ts:riskOf",
+   "type": "exports",
+   "direction": "forward",
+   "description": "approval-text.ts exports riskOf",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/approval-text.ts",
+   "target": "function:apps/control-plane/ui/src/approval-text.ts:sortRiskFirst",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approval-text.ts defines sortRiskFirst",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/approval-text.ts",
+   "target": "function:apps/control-plane/ui/src/approval-text.ts:sortRiskFirst",
+   "type": "exports",
+   "direction": "forward",
+   "description": "approval-text.ts exports sortRiskFirst",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/approval-text.ts",
+   "target": "function:apps/control-plane/ui/src/approval-text.ts:blastSummary",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approval-text.ts defines blastSummary",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/approval-text.ts",
+   "target": "function:apps/control-plane/ui/src/approval-text.ts:blastSummary",
+   "type": "exports",
+   "direction": "forward",
+   "description": "approval-text.ts exports blastSummary",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/brand.tsx",
+   "target": "function:apps/control-plane/ui/src/brand.tsx:BrandMark",
+   "type": "contains",
+   "direction": "forward",
+   "description": "brand.tsx defines BrandMark",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/brand.tsx",
+   "target": "function:apps/control-plane/ui/src/brand.tsx:BrandMark",
+   "type": "exports",
+   "direction": "forward",
+   "description": "brand.tsx exports BrandMark",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/chat-composer.test.ts",
+   "target": "function:apps/control-plane/ui/src/chat-composer.test.ts:storage",
+   "type": "contains",
+   "direction": "forward",
+   "description": "chat-composer.test.ts defines storage",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/chat-composer.ts",
+   "target": "function:apps/control-plane/ui/src/chat-composer.ts:messageSize",
+   "type": "contains",
+   "direction": "forward",
+   "description": "chat-composer.ts defines messageSize",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/chat-composer.ts",
+   "target": "function:apps/control-plane/ui/src/chat-composer.ts:messageSize",
+   "type": "exports",
+   "direction": "forward",
+   "description": "chat-composer.ts exports messageSize",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/chat-composer.ts",
+   "target": "function:apps/control-plane/ui/src/chat-composer.ts:attachmentBytes",
+   "type": "contains",
+   "direction": "forward",
+   "description": "chat-composer.ts defines attachmentBytes",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/chat-composer.ts",
+   "target": "function:apps/control-plane/ui/src/chat-composer.ts:attachmentBytes",
+   "type": "exports",
+   "direction": "forward",
+   "description": "chat-composer.ts exports attachmentBytes",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/chat-composer.ts",
+   "target": "function:apps/control-plane/ui/src/chat-composer.ts:filesKey",
+   "type": "contains",
+   "direction": "forward",
+   "description": "chat-composer.ts defines filesKey",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/chat-composer.ts",
+   "target": "function:apps/control-plane/ui/src/chat-composer.ts:loadDraftFiles",
+   "type": "contains",
+   "direction": "forward",
+   "description": "chat-composer.ts defines loadDraftFiles",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/chat-composer.ts",
+   "target": "function:apps/control-plane/ui/src/chat-composer.ts:loadDraftFiles",
+   "type": "exports",
+   "direction": "forward",
+   "description": "chat-composer.ts exports loadDraftFiles",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/chat-composer.ts",
+   "target": "function:apps/control-plane/ui/src/chat-composer.ts:saveDraftFiles",
+   "type": "contains",
+   "direction": "forward",
+   "description": "chat-composer.ts defines saveDraftFiles",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/chat-composer.ts",
+   "target": "function:apps/control-plane/ui/src/chat-composer.ts:saveDraftFiles",
+   "type": "exports",
+   "direction": "forward",
+   "description": "chat-composer.ts exports saveDraftFiles",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/chat-composer.ts",
+   "target": "function:apps/control-plane/ui/src/chat-composer.ts:clearDraftFiles",
+   "type": "contains",
+   "direction": "forward",
+   "description": "chat-composer.ts defines clearDraftFiles",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/chat-composer.ts",
+   "target": "function:apps/control-plane/ui/src/chat-composer.ts:clearDraftFiles",
+   "type": "exports",
+   "direction": "forward",
+   "description": "chat-composer.ts exports clearDraftFiles",
+   "weight": 0.7
+  },
+  {
+   "source": "function:apps/control-plane/ui/src/chat-composer.ts:loadDraftFiles",
+   "target": "function:apps/control-plane/ui/src/chat-composer.ts:filesKey",
+   "type": "calls",
+   "direction": "forward",
+   "description": "loadDraftFiles calls filesKey",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/ui/src/chat-composer.ts:saveDraftFiles",
+   "target": "function:apps/control-plane/ui/src/chat-composer.ts:filesKey",
+   "type": "calls",
+   "direction": "forward",
+   "description": "saveDraftFiles calls filesKey",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/ui/src/chat-composer.ts:clearDraftFiles",
+   "target": "function:apps/control-plane/ui/src/chat-composer.ts:filesKey",
+   "type": "calls",
+   "direction": "forward",
+   "description": "clearDraftFiles calls filesKey",
+   "weight": 0.6
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/chat-stream.ts",
+   "target": "function:apps/control-plane/ui/src/chat-stream.ts:streamPhase",
+   "type": "contains",
+   "direction": "forward",
+   "description": "chat-stream.ts defines streamPhase",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/chat-stream.ts",
+   "target": "function:apps/control-plane/ui/src/chat-stream.ts:streamPhase",
+   "type": "exports",
+   "direction": "forward",
+   "description": "chat-stream.ts exports streamPhase",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/chat-stream.ts",
+   "target": "function:apps/control-plane/ui/src/chat-stream.ts:runStillStreams",
+   "type": "contains",
+   "direction": "forward",
+   "description": "chat-stream.ts defines runStillStreams",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/chat-stream.ts",
+   "target": "function:apps/control-plane/ui/src/chat-stream.ts:toolTimings",
+   "type": "contains",
+   "direction": "forward",
+   "description": "chat-stream.ts defines toolTimings",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/chat-stream.ts",
+   "target": "function:apps/control-plane/ui/src/chat-stream.ts:toolTimings",
+   "type": "exports",
+   "direction": "forward",
+   "description": "chat-stream.ts exports toolTimings",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/chat-stream.ts",
+   "target": "function:apps/control-plane/ui/src/chat-stream.ts:toolDuration",
+   "type": "contains",
+   "direction": "forward",
+   "description": "chat-stream.ts defines toolDuration",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/chat-stream.ts",
+   "target": "function:apps/control-plane/ui/src/chat-stream.ts:toolDuration",
+   "type": "exports",
+   "direction": "forward",
+   "description": "chat-stream.ts exports toolDuration",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/chat-stream.ts",
+   "target": "function:apps/control-plane/ui/src/chat-stream.ts:formatDuration",
+   "type": "contains",
+   "direction": "forward",
+   "description": "chat-stream.ts defines formatDuration",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/chat-stream.ts",
+   "target": "function:apps/control-plane/ui/src/chat-stream.ts:formatDuration",
+   "type": "exports",
+   "direction": "forward",
+   "description": "chat-stream.ts exports formatDuration",
+   "weight": 0.7
+  },
+  {
+   "source": "function:apps/control-plane/ui/src/chat-stream.ts:streamPhase",
+   "target": "function:apps/control-plane/ui/src/chat-stream.ts:runStillStreams",
+   "type": "calls",
+   "direction": "forward",
+   "description": "streamPhase calls runStillStreams",
+   "weight": 0.6
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/chat.tsx",
+   "target": "function:apps/control-plane/ui/src/chat.tsx:CodeBlock",
+   "type": "contains",
+   "direction": "forward",
+   "description": "chat.tsx defines CodeBlock",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/chat.tsx",
+   "target": "function:apps/control-plane/ui/src/chat.tsx:RichText",
+   "type": "contains",
+   "direction": "forward",
+   "description": "chat.tsx defines RichText",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/chat.tsx",
+   "target": "function:apps/control-plane/ui/src/chat.tsx:RichText",
+   "type": "exports",
+   "direction": "forward",
+   "description": "chat.tsx exports RichText",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/chat.tsx",
+   "target": "function:apps/control-plane/ui/src/chat.tsx:toolStatusLabel",
+   "type": "contains",
+   "direction": "forward",
+   "description": "chat.tsx defines toolStatusLabel",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/chat.tsx",
+   "target": "function:apps/control-plane/ui/src/chat.tsx:ToolCard",
+   "type": "contains",
+   "direction": "forward",
+   "description": "chat.tsx defines ToolCard",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/chat.tsx",
+   "target": "function:apps/control-plane/ui/src/chat.tsx:Chat",
+   "type": "contains",
+   "direction": "forward",
+   "description": "chat.tsx defines Chat",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/chat.tsx",
+   "target": "function:apps/control-plane/ui/src/chat.tsx:Chat",
+   "type": "exports",
+   "direction": "forward",
+   "description": "chat.tsx exports Chat",
+   "weight": 0.7
+  },
+  {
+   "source": "function:apps/control-plane/ui/src/chat.tsx:ToolCard",
+   "target": "function:apps/control-plane/ui/src/chat.tsx:toolStatusLabel",
+   "type": "calls",
+   "direction": "forward",
+   "description": "ToolCard calls toolStatusLabel",
+   "weight": 0.6
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/command-menu.tsx",
+   "target": "function:apps/control-plane/ui/src/command-menu.tsx:CommandMenu",
+   "type": "contains",
+   "direction": "forward",
+   "description": "command-menu.tsx defines CommandMenu",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/command-menu.tsx",
+   "target": "function:apps/control-plane/ui/src/command-menu.tsx:CommandMenu",
+   "type": "exports",
+   "direction": "forward",
+   "description": "command-menu.tsx exports CommandMenu",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/commands.ts",
+   "target": "function:apps/control-plane/ui/src/commands.ts:filterCommands",
+   "type": "contains",
+   "direction": "forward",
+   "description": "commands.ts defines filterCommands",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/commands.ts",
+   "target": "function:apps/control-plane/ui/src/commands.ts:filterCommands",
+   "type": "exports",
+   "direction": "forward",
+   "description": "commands.ts exports filterCommands",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/commands.ts",
+   "target": "function:apps/control-plane/ui/src/commands.ts:fuzzyScore",
+   "type": "contains",
+   "direction": "forward",
+   "description": "commands.ts defines fuzzyScore",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/commands.ts",
+   "target": "function:apps/control-plane/ui/src/commands.ts:searchable",
+   "type": "contains",
+   "direction": "forward",
+   "description": "commands.ts defines searchable",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/commands.ts",
+   "target": "function:apps/control-plane/ui/src/commands.ts:filterPaletteRecentFirst",
+   "type": "contains",
+   "direction": "forward",
+   "description": "commands.ts defines filterPaletteRecentFirst",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/commands.ts",
+   "target": "function:apps/control-plane/ui/src/commands.ts:filterPaletteRecentFirst",
+   "type": "exports",
+   "direction": "forward",
+   "description": "commands.ts exports filterPaletteRecentFirst",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/commands.ts",
+   "target": "function:apps/control-plane/ui/src/commands.ts:filterPalette",
+   "type": "contains",
+   "direction": "forward",
+   "description": "commands.ts defines filterPalette",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/commands.ts",
+   "target": "function:apps/control-plane/ui/src/commands.ts:filterPalette",
+   "type": "exports",
+   "direction": "forward",
+   "description": "commands.ts exports filterPalette",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/commands.ts",
+   "target": "function:apps/control-plane/ui/src/commands.ts:toolPrompt",
+   "type": "contains",
+   "direction": "forward",
+   "description": "commands.ts defines toolPrompt",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/commands.ts",
+   "target": "function:apps/control-plane/ui/src/commands.ts:toolPrompt",
+   "type": "exports",
+   "direction": "forward",
+   "description": "commands.ts exports toolPrompt",
+   "weight": 0.7
+  },
+  {
+   "source": "function:apps/control-plane/ui/src/commands.ts:filterPaletteRecentFirst",
+   "target": "function:apps/control-plane/ui/src/commands.ts:fuzzyScore",
+   "type": "calls",
+   "direction": "forward",
+   "description": "filterPaletteRecentFirst calls fuzzyScore",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/ui/src/commands.ts:filterPaletteRecentFirst",
+   "target": "function:apps/control-plane/ui/src/commands.ts:searchable",
+   "type": "calls",
+   "direction": "forward",
+   "description": "filterPaletteRecentFirst calls searchable",
+   "weight": 0.6
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/demo.tsx",
+   "target": "function:apps/control-plane/ui/src/demo.tsx:PublicDemo",
+   "type": "contains",
+   "direction": "forward",
+   "description": "demo.tsx defines PublicDemo",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/demo.tsx",
+   "target": "function:apps/control-plane/ui/src/demo.tsx:PublicDemo",
+   "type": "exports",
+   "direction": "forward",
+   "description": "demo.tsx exports PublicDemo",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/document-history.ts",
+   "target": "function:apps/control-plane/ui/src/document-history.ts:documentHistory",
+   "type": "contains",
+   "direction": "forward",
+   "description": "document-history.ts defines documentHistory",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/document-history.ts",
+   "target": "function:apps/control-plane/ui/src/document-history.ts:documentHistory",
+   "type": "exports",
+   "direction": "forward",
+   "description": "document-history.ts exports documentHistory",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/document-history.ts",
+   "target": "function:apps/control-plane/ui/src/document-history.ts:documentContentState",
+   "type": "contains",
+   "direction": "forward",
+   "description": "document-history.ts defines documentContentState",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/document-history.ts",
+   "target": "function:apps/control-plane/ui/src/document-history.ts:documentContentState",
+   "type": "exports",
+   "direction": "forward",
+   "description": "document-history.ts exports documentContentState",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/documents.tsx",
+   "target": "function:apps/control-plane/ui/src/documents.tsx:Documents",
+   "type": "contains",
+   "direction": "forward",
+   "description": "documents.tsx defines Documents",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/documents.tsx",
+   "target": "function:apps/control-plane/ui/src/documents.tsx:Documents",
+   "type": "exports",
+   "direction": "forward",
+   "description": "documents.tsx exports Documents",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/documents.tsx",
+   "target": "function:apps/control-plane/ui/src/documents.tsx:DocumentHistory",
+   "type": "contains",
+   "direction": "forward",
+   "description": "documents.tsx defines DocumentHistory",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/documents.tsx",
+   "target": "function:apps/control-plane/ui/src/documents.tsx:OperationReview",
+   "type": "contains",
+   "direction": "forward",
+   "description": "documents.tsx defines OperationReview",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/documents.tsx",
+   "target": "function:apps/control-plane/ui/src/documents.tsx:Diff",
+   "type": "contains",
+   "direction": "forward",
+   "description": "documents.tsx defines Diff",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/documents.tsx",
+   "target": "function:apps/control-plane/ui/src/documents.tsx:DocumentEditor",
+   "type": "contains",
+   "direction": "forward",
+   "description": "documents.tsx defines DocumentEditor",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/draft-state.test.ts",
+   "target": "function:apps/control-plane/ui/src/draft-state.test.ts:storage",
+   "type": "contains",
+   "direction": "forward",
+   "description": "draft-state.test.ts defines storage",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/draft-state.ts",
+   "target": "function:apps/control-plane/ui/src/draft-state.ts:queuedKey",
+   "type": "contains",
+   "direction": "forward",
+   "description": "draft-state.ts defines queuedKey",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/draft-state.ts",
+   "target": "function:apps/control-plane/ui/src/draft-state.ts:loadDraft",
+   "type": "contains",
+   "direction": "forward",
+   "description": "draft-state.ts defines loadDraft",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/draft-state.ts",
+   "target": "function:apps/control-plane/ui/src/draft-state.ts:loadDraft",
+   "type": "exports",
+   "direction": "forward",
+   "description": "draft-state.ts exports loadDraft",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/draft-state.ts",
+   "target": "function:apps/control-plane/ui/src/draft-state.ts:saveDraft",
+   "type": "contains",
+   "direction": "forward",
+   "description": "draft-state.ts defines saveDraft",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/draft-state.ts",
+   "target": "function:apps/control-plane/ui/src/draft-state.ts:saveDraft",
+   "type": "exports",
+   "direction": "forward",
+   "description": "draft-state.ts exports saveDraft",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/draft-state.ts",
+   "target": "function:apps/control-plane/ui/src/draft-state.ts:submitDraft",
+   "type": "contains",
+   "direction": "forward",
+   "description": "draft-state.ts defines submitDraft",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/draft-state.ts",
+   "target": "function:apps/control-plane/ui/src/draft-state.ts:submitDraft",
+   "type": "exports",
+   "direction": "forward",
+   "description": "draft-state.ts exports submitDraft",
+   "weight": 0.7
+  },
+  {
+   "source": "function:apps/control-plane/ui/src/draft-state.ts:loadDraft",
+   "target": "function:apps/control-plane/ui/src/draft-state.ts:queuedKey",
+   "type": "calls",
+   "direction": "forward",
+   "description": "loadDraft calls queuedKey",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/ui/src/draft-state.ts:saveDraft",
+   "target": "function:apps/control-plane/ui/src/draft-state.ts:queuedKey",
+   "type": "calls",
+   "direction": "forward",
+   "description": "saveDraft calls queuedKey",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/ui/src/draft-state.ts:submitDraft",
+   "target": "function:apps/control-plane/ui/src/draft-state.ts:queuedKey",
+   "type": "calls",
+   "direction": "forward",
+   "description": "submitDraft calls queuedKey",
+   "weight": 0.6
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/events.ts",
+   "target": "function:apps/control-plane/ui/src/events.ts:transcriptEvents",
+   "type": "contains",
+   "direction": "forward",
+   "description": "events.ts defines transcriptEvents",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/events.ts",
+   "target": "function:apps/control-plane/ui/src/events.ts:transcriptEvents",
+   "type": "exports",
+   "direction": "forward",
+   "description": "events.ts exports transcriptEvents",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/events.ts",
+   "target": "function:apps/control-plane/ui/src/events.ts:usageSummary",
+   "type": "contains",
+   "direction": "forward",
+   "description": "events.ts defines usageSummary",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/events.ts",
+   "target": "function:apps/control-plane/ui/src/events.ts:usageSummary",
+   "type": "exports",
+   "direction": "forward",
+   "description": "events.ts exports usageSummary",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/events.ts",
+   "target": "function:apps/control-plane/ui/src/events.ts:lastUserMessage",
+   "type": "contains",
+   "direction": "forward",
+   "description": "events.ts defines lastUserMessage",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/events.ts",
+   "target": "function:apps/control-plane/ui/src/events.ts:lastUserMessage",
+   "type": "exports",
+   "direction": "forward",
+   "description": "events.ts exports lastUserMessage",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/gallery-path.ts",
+   "target": "function:apps/control-plane/ui/src/gallery-path.ts:isGalleryRequest",
+   "type": "contains",
+   "direction": "forward",
+   "description": "gallery-path.ts defines isGalleryRequest",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/gallery-path.ts",
+   "target": "function:apps/control-plane/ui/src/gallery-path.ts:isGalleryRequest",
+   "type": "exports",
+   "direction": "forward",
+   "description": "gallery-path.ts exports isGalleryRequest",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/gallery.tsx",
+   "target": "function:apps/control-plane/ui/src/gallery.tsx:Section",
+   "type": "contains",
+   "direction": "forward",
+   "description": "gallery.tsx defines Section",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/gallery.tsx",
+   "target": "function:apps/control-plane/ui/src/gallery.tsx:ComponentGallery",
+   "type": "contains",
+   "direction": "forward",
+   "description": "gallery.tsx defines ComponentGallery",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/gallery.tsx",
+   "target": "function:apps/control-plane/ui/src/gallery.tsx:ComponentGallery",
+   "type": "exports",
+   "direction": "forward",
+   "description": "gallery.tsx exports ComponentGallery",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/harness-entries.ts",
+   "target": "function:apps/control-plane/ui/src/harness-entries.ts:harnessRatchetView",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-entries.ts defines harnessRatchetView",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/harness-entries.ts",
+   "target": "function:apps/control-plane/ui/src/harness-entries.ts:harnessRatchetView",
+   "type": "exports",
+   "direction": "forward",
+   "description": "harness-entries.ts exports harnessRatchetView",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/harness-entries.ts",
+   "target": "function:apps/control-plane/ui/src/harness-entries.ts:harnessEntries",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-entries.ts defines harnessEntries",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/harness-entries.ts",
+   "target": "function:apps/control-plane/ui/src/harness-entries.ts:harnessEntries",
+   "type": "exports",
+   "direction": "forward",
+   "description": "harness-entries.ts exports harnessEntries",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/harness-entries.tsx",
+   "target": "function:apps/control-plane/ui/src/harness-entries.tsx:HarnessEntries",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-entries.tsx defines HarnessEntries",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/harness-entries.tsx",
+   "target": "function:apps/control-plane/ui/src/harness-entries.tsx:HarnessEntries",
+   "type": "exports",
+   "direction": "forward",
+   "description": "harness-entries.tsx exports HarnessEntries",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/account-gate.tsx",
+   "target": "file:apps/control-plane/ui/src/account-sign-in.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "account-gate.tsx imports account-sign-in.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/account-gate.tsx",
+   "target": "file:apps/control-plane/ui/src/api.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "account-gate.tsx imports api.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/account-gate.tsx",
+   "target": "file:apps/control-plane/ui/src/brand.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "description": "account-gate.tsx imports brand.tsx",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/account-gate.tsx",
+   "target": "file:apps/control-plane/ui/src/ui.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "description": "account-gate.tsx imports ui.tsx",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/account-sign-in.test.ts",
+   "target": "file:apps/control-plane/ui/src/account-sign-in.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "account-sign-in.test.ts imports account-sign-in.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/agent-input.test.ts",
+   "target": "file:apps/control-plane/ui/src/agent-input.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "agent-input.test.ts imports agent-input.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/approval-diff.test.ts",
+   "target": "file:apps/control-plane/ui/src/approval-diff.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "approval-diff.test.ts imports approval-diff.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/approval-diff.ts",
+   "target": "file:apps/control-plane/ui/src/api.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "approval-diff.ts imports api.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/approval-diff.ts",
+   "target": "file:apps/control-plane/ui/src/approval-text.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "approval-diff.ts imports approval-text.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/approval-review.tsx",
+   "target": "file:apps/control-plane/ui/src/api.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "approval-review.tsx imports api.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/approval-review.tsx",
+   "target": "file:apps/control-plane/ui/src/approval-diff.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "approval-review.tsx imports approval-diff.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/approval-review.tsx",
+   "target": "file:apps/control-plane/ui/src/approval-text.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "approval-review.tsx imports approval-text.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/approval-review.tsx",
+   "target": "file:apps/control-plane/ui/src/ui.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "description": "approval-review.tsx imports ui.tsx",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/approval-text.ts",
+   "target": "file:apps/control-plane/ui/src/api.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "approval-text.ts imports api.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/chat-composer.test.ts",
+   "target": "file:apps/control-plane/ui/src/chat-composer.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "chat-composer.test.ts imports chat-composer.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/chat-stream.test.ts",
+   "target": "file:apps/control-plane/ui/src/api.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "chat-stream.test.ts imports api.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/chat-stream.test.ts",
+   "target": "file:apps/control-plane/ui/src/chat-stream.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "chat-stream.test.ts imports chat-stream.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/chat-stream.ts",
+   "target": "file:apps/control-plane/ui/src/api.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "chat-stream.ts imports api.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/chat-stream.ts",
+   "target": "file:apps/control-plane/ui/src/workspace-state.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "chat-stream.ts imports workspace-state.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/chat.tsx",
+   "target": "file:apps/control-plane/ui/src/agent-input.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "chat.tsx imports agent-input.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/chat.tsx",
+   "target": "file:apps/control-plane/ui/src/api.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "chat.tsx imports api.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/chat.tsx",
+   "target": "file:apps/control-plane/ui/src/approval-review.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "description": "chat.tsx imports approval-review.tsx",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/chat.tsx",
+   "target": "file:apps/control-plane/ui/src/brand.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "description": "chat.tsx imports brand.tsx",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/chat.tsx",
+   "target": "file:apps/control-plane/ui/src/chat-composer.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "chat.tsx imports chat-composer.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/chat.tsx",
+   "target": "file:apps/control-plane/ui/src/chat-stream.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "chat.tsx imports chat-stream.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/chat.tsx",
+   "target": "file:apps/control-plane/ui/src/command-menu.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "description": "chat.tsx imports command-menu.tsx",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/chat.tsx",
+   "target": "file:apps/control-plane/ui/src/commands.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "chat.tsx imports commands.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/chat.tsx",
+   "target": "file:apps/control-plane/ui/src/draft-state.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "chat.tsx imports draft-state.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/chat.tsx",
+   "target": "file:apps/control-plane/ui/src/events.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "chat.tsx imports events.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/chat.tsx",
+   "target": "file:apps/control-plane/ui/src/harness-entries.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "description": "chat.tsx imports harness-entries.tsx",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/chat.tsx",
+   "target": "file:apps/control-plane/ui/src/harness-proposals.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "description": "chat.tsx imports harness-proposals.tsx",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/chat.tsx",
+   "target": "file:apps/control-plane/ui/src/icons.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "description": "chat.tsx imports icons.tsx",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/chat.tsx",
+   "target": "file:apps/control-plane/ui/src/permission-mode.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "description": "chat.tsx imports permission-mode.tsx",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/chat.tsx",
+   "target": "file:apps/control-plane/ui/src/recovery-dialog.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "description": "chat.tsx imports recovery-dialog.tsx",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/chat.tsx",
+   "target": "file:apps/control-plane/ui/src/session-context.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "description": "chat.tsx imports session-context.tsx",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/chat.tsx",
+   "target": "file:apps/control-plane/ui/src/status-label.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "chat.tsx imports status-label.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/chat.tsx",
+   "target": "file:apps/control-plane/ui/src/ui.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "description": "chat.tsx imports ui.tsx",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/chat.tsx",
+   "target": "file:apps/control-plane/ui/src/workspace-state.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "chat.tsx imports workspace-state.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/chat.tsx",
+   "target": "file:apps/control-plane/ui/src/workspace-status.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "description": "chat.tsx imports workspace-status.tsx",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/command-menu.tsx",
+   "target": "file:apps/control-plane/ui/src/commands.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "command-menu.tsx imports commands.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/command-menu.tsx",
+   "target": "file:apps/control-plane/ui/src/ui.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "description": "command-menu.tsx imports ui.tsx",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/commands.test.ts",
+   "target": "file:apps/control-plane/ui/src/commands.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "commands.test.ts imports commands.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/demo.tsx",
+   "target": "file:apps/control-plane/ui/src/api.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "demo.tsx imports api.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/demo.tsx",
+   "target": "file:apps/control-plane/ui/src/brand.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "description": "demo.tsx imports brand.tsx",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/demo.tsx",
+   "target": "file:apps/control-plane/ui/src/command-menu.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "description": "demo.tsx imports command-menu.tsx",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/demo.tsx",
+   "target": "file:apps/control-plane/ui/src/commands.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "demo.tsx imports commands.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/demo.tsx",
+   "target": "file:apps/control-plane/ui/src/icons.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "description": "demo.tsx imports icons.tsx",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/demo.tsx",
+   "target": "file:apps/control-plane/ui/src/ui.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "description": "demo.tsx imports ui.tsx",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/desktop-downloads.test.ts",
+   "target": "file:apps/control-plane/ui/src/desktop-downloads.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "desktop-downloads.test.ts imports desktop-downloads.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/document-history.test.ts",
+   "target": "file:apps/control-plane/ui/src/document-history.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "document-history.test.ts imports document-history.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/documents.tsx",
+   "target": "file:apps/control-plane/ui/src/api.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "documents.tsx imports api.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/documents.tsx",
+   "target": "file:apps/control-plane/ui/src/chat.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "description": "documents.tsx imports chat.tsx",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/documents.tsx",
+   "target": "file:apps/control-plane/ui/src/document-history.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "documents.tsx imports document-history.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/documents.tsx",
+   "target": "file:apps/control-plane/ui/src/recovery-dialog.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "description": "documents.tsx imports recovery-dialog.tsx",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/documents.tsx",
+   "target": "file:apps/control-plane/ui/src/ui.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "description": "documents.tsx imports ui.tsx",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/draft-state.test.ts",
+   "target": "file:apps/control-plane/ui/src/draft-state.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "draft-state.test.ts imports draft-state.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/events.test.ts",
+   "target": "file:apps/control-plane/ui/src/events.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "events.test.ts imports events.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/events.ts",
+   "target": "file:apps/control-plane/ui/src/api.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "events.ts imports api.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/gallery.test.ts",
+   "target": "file:apps/control-plane/ui/src/gallery-path.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "gallery.test.ts imports gallery-path.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/gallery.tsx",
+   "target": "file:apps/control-plane/ui/src/api.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "gallery.tsx imports api.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/gallery.tsx",
+   "target": "file:apps/control-plane/ui/src/brand.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "description": "gallery.tsx imports brand.tsx",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/gallery.tsx",
+   "target": "file:apps/control-plane/ui/src/icons.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "description": "gallery.tsx imports icons.tsx",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/gallery.tsx",
+   "target": "file:apps/control-plane/ui/src/permission-mode.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "description": "gallery.tsx imports permission-mode.tsx",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/gallery.tsx",
+   "target": "file:apps/control-plane/ui/src/ui.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "description": "gallery.tsx imports ui.tsx",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/gallery.tsx",
+   "target": "file:apps/control-plane/ui/src/workspace-status.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "description": "gallery.tsx imports workspace-status.tsx",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/harness-entries.test.ts",
+   "target": "file:apps/control-plane/ui/src/harness-entries.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "harness-entries.test.ts imports harness-entries.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/harness-entries.ts",
+   "target": "file:apps/control-plane/ui/src/api.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "harness-entries.ts imports api.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/harness-entries.tsx",
+   "target": "file:apps/control-plane/ui/src/api.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "harness-entries.tsx imports api.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/harness-entries.tsx",
+   "target": "file:apps/control-plane/ui/src/harness-entries.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "harness-entries.tsx imports harness-entries.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/harness-entries.tsx",
+   "target": "file:apps/control-plane/ui/src/ui.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "description": "harness-entries.tsx imports ui.tsx",
+   "weight": 0.8
+  }
+ ]
+}

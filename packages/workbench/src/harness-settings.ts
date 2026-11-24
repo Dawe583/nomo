@@ -49,7 +49,13 @@ export type HarnessSettingKey =
   | "refinementEnabled"
   | "refinementTurnInterval"
   | "refinementCooldownMs"
-  | "refinementLensCount";
+  | "refinementLensCount"
+  | "providerRequestTimeoutMs"
+  | "webToolsEnabled"
+  | "sessionSearchEnabled"
+  | "toolRequestTimeoutMs"
+  | "maxToolResultCharacters"
+  | "autoCompactMessages";
 
 export type HarnessSettingSpec = {
   /** Operator-facing name, shown by /settings and the web settings panel. */
@@ -305,6 +311,72 @@ export const HARNESS_SETTINGS: {
     // full K cost; past three the spend has no named buyer.
     max: 3,
     icon: "◑",
+  },
+  providerRequestTimeoutMs: {
+    label: "Provider request timeout (ms)",
+    description:
+      "Per-request HTTP timeout for provider completions during a run, separate from the whole-run ceiling.",
+    consumerFile: "provider.ts",
+    consumers: ["response"],
+    default: 60000,
+    min: 1000,
+    max: 600000,
+    icon: "◴",
+  },
+  webToolsEnabled: {
+    label: "Web fetch and search",
+    description:
+      "Offer nomo_web_fetch and nomo_web_search, both held at r1. Private, loopback, link-local and cloud metadata addresses are always refused. Zero leaves both tools out of the catalog.",
+    consumerFile: "index.ts",
+    consumers: ["startSession", "executeTool", "spawnSubagent", "availableTools", "run"],
+    default: 0,
+    min: 0,
+    max: 1,
+    icon: "◑",
+  },
+  sessionSearchEnabled: {
+    label: "Search other conversations",
+    description:
+      "Offer nomo_session_search, which reads other conversations in this workbench and returns redacted excerpts. Secrets are withheld and a withheld hit is reported as truncated. Zero leaves the tool out of the catalog.",
+    consumerFile: "index.ts",
+    consumers: ["startSession", "executeTool", "spawnSubagent", "availableTools", "run"],
+    default: 0,
+    min: 0,
+    max: 1,
+    icon: "⌕",
+  },
+  toolRequestTimeoutMs: {
+    label: "Tool request timeout",
+    description:
+      "How long one tool call may take before the run stops waiting for it. The call is not cancelled upstream, so a timeout is recorded as an unanswered call rather than a completed one.",
+    consumerFile: "index.ts",
+    consumers: ["execute", "run"],
+    default: 180000,
+    min: 1000,
+    max: 600000,
+    icon: "◔",
+  },
+  maxToolResultCharacters: {
+    label: "Tool result characters",
+    description:
+      "Characters of one tool result retained in the conversation. A longer result is cut and the cut is marked, so the model is never shown a truncated result that looks complete.",
+    consumerFile: "index.ts",
+    consumers: ["run"],
+    default: 64000,
+    min: 256,
+    max: 200000,
+    icon: "◧",
+  },
+  autoCompactMessages: {
+    label: "Automatic compaction",
+    description:
+      "Messages at which a run compacts the conversation before its next turn. Zero disables it, so a conversation grows until the operator compacts it or the context limit stops the run.",
+    consumerFile: "index.ts",
+    consumers: ["run", "compact"],
+    default: 150,
+    min: 0,
+    max: 199,
+    icon: "◫",
   },
 };
 

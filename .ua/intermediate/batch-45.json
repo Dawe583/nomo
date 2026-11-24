@@ -1,0 +1,65 @@
+{
+ "nodes": [
+  {
+   "id": "file:apps/control-plane/web/approvals.html",
+   "type": "file",
+   "name": "approvals.html",
+   "filePath": "apps/control-plane/web/approvals.html",
+   "summary": "approvals.html \u2014 html markup, 41 lines.",
+   "tags": [
+    "html",
+    "markup"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/web/feed.html",
+   "type": "file",
+   "name": "feed.html",
+   "filePath": "apps/control-plane/web/feed.html",
+   "summary": "feed.html \u2014 html markup, 44 lines.",
+   "tags": [
+    "html",
+    "markup"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/web/index.html",
+   "type": "file",
+   "name": "index.html",
+   "filePath": "apps/control-plane/web/index.html",
+   "summary": "index.html \u2014 html markup, 60 lines.",
+   "tags": [
+    "html",
+    "markup"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/web/ledger.html",
+   "type": "file",
+   "name": "ledger.html",
+   "filePath": "apps/control-plane/web/ledger.html",
+   "summary": "ledger.html \u2014 html markup, 44 lines.",
+   "tags": [
+    "html",
+    "markup"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/web/workbench.css",
+   "type": "file",
+   "name": "workbench.css",
+   "filePath": "apps/control-plane/web/workbench.css",
+   "summary": "workbench.css \u2014 css markup, 242 lines.",
+   "tags": [
+    "css",
+    "markup"
+   ],
+   "complexity": "moderate"
+  }
+ ],
+ "edges": []
+}

@@ -533,6 +533,16 @@ class Tui:
             self.pump(0.1)
         self.fail("timed out waiting for %s; state=%s" % (what, self.state()))
 
+    def answer_count(self):
+        return len(self.state().get("answers") or [])
+
+    def wait_new_answer(self, before, timeout=30):
+        return self.wait(
+            lambda snapshot: len(snapshot.get("answers") or []) > before,
+            timeout=timeout,
+            what="a new recorded answer (had %d)" % before,
+        )
+
     def wait_idle(self, timeout=30):
         return self.wait(
             lambda snapshot: not snapshot.get("running")
@@ -662,8 +672,9 @@ def scenario_chat(tui):
     tui.expect("draft survives resize")
     tui.assert_frame_fits()
     # The surviving draft is still sendable, which is the point of keeping it.
+    answers = tui.answer_count()
     tui.enter()
-    tui.wait_answer("Streamed answer arrived.")
+    tui.wait_new_answer(answers)
     tui.wait_idle()
     tui.expect("╭─ Draft")
 
@@ -761,7 +772,7 @@ def scenario_approval(tui):
     tui.command("/approvals")
     tui.expect("Approvals")
     tui.send("d")
-    tui.expect("DENY TOOL?")
+    tui.expect("DENY aws.ses.email.send?")
     tui.expect("aws.ses.email.send")
     tui.expect("R3")
     tui.send("\x1b[6~")
@@ -783,7 +794,7 @@ def scenario_approval(tui):
     tui.expect("APPROVAL PENDING")
     tui.command("/approvals")
     tui.send("a")
-    tui.expect("APPROVE TOOL?")
+    tui.expect("APPROVE aws.ses.email.send?")
     tui.expect("blast radius")
     tui.send("\x1b[6~")
     tui.pump(0.3)
@@ -880,8 +891,9 @@ def scenario_resize(tui):
         tui.expect("draft across resize")
         tui.expect("Draft")
         tui.assert_frame_fits()
+    answers = tui.answer_count()
     tui.enter()
-    tui.wait_answer("Streamed answer arrived.")
+    tui.wait_new_answer(answers)
     tui.wait_idle()
 
     # Resize while the model is streaming.

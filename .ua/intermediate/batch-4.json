@@ -1,0 +1,5862 @@
+{
+ "nodes": [
+  {
+   "id": "file:packages/cli/src/taint.test.ts",
+   "type": "file",
+   "name": "taint.test.ts",
+   "filePath": "packages/cli/src/taint.test.ts",
+   "summary": "taint.test.ts \u2014 typescript code, 151 lines, 4 functions, 0 classes, 0 exports, 3 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/cli/src/taint.test.ts:options",
+   "type": "function",
+   "name": "options",
+   "filePath": "packages/cli/src/taint.test.ts",
+   "lineRange": [
+    114,
+    119
+   ],
+   "summary": "options() \u2014 function in taint.test.ts, lines 114-119.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/taint.test.ts:record",
+   "type": "function",
+   "name": "record",
+   "filePath": "packages/cli/src/taint.test.ts",
+   "lineRange": [
+    121,
+    133
+   ],
+   "summary": "record(seq, digest, tool, decision) \u2014 function in taint.test.ts, lines 121-133.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/taint.test.ts:node",
+   "type": "function",
+   "name": "node",
+   "filePath": "packages/cli/src/taint.test.ts",
+   "lineRange": [
+    135,
+    144
+   ],
+   "summary": "node(seq, digest, tool, decision) \u2014 function in taint.test.ts, lines 135-144.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/taint.test.ts:ledgerFile",
+   "type": "function",
+   "name": "ledgerFile",
+   "filePath": "packages/cli/src/taint.test.ts",
+   "lineRange": [
+    146,
+    151
+   ],
+   "summary": "ledgerFile() \u2014 function in taint.test.ts, lines 146-151.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/taint.ts",
+   "type": "file",
+   "name": "taint.ts",
+   "filePath": "packages/cli/src/taint.ts",
+   "summary": "taint.ts \u2014 typescript code, 163 lines, 12 functions, 0 classes, 1 exports, 4 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/cli/src/taint.ts:runTaintCommand",
+   "type": "function",
+   "name": "runTaintCommand",
+   "filePath": "packages/cli/src/taint.ts",
+   "lineRange": [
+    36,
+    59
+   ],
+   "summary": "runTaintCommand(argv, io, options) \u2014 function in taint.ts, lines 36-59.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/taint.ts:parseTaintArgs",
+   "type": "function",
+   "name": "parseTaintArgs",
+   "filePath": "packages/cli/src/taint.ts",
+   "lineRange": [
+    61,
+    85
+   ],
+   "summary": "parseTaintArgs(argv, env) \u2014 function in taint.ts, lines 61-85.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/taint.ts:needValue",
+   "type": "function",
+   "name": "needValue",
+   "filePath": "packages/cli/src/taint.ts",
+   "lineRange": [
+    87,
+    91
+   ],
+   "summary": "needValue(argv, index, name) \u2014 function in taint.ts, lines 87-91.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/taint.ts:positiveInteger",
+   "type": "function",
+   "name": "positiveInteger",
+   "filePath": "packages/cli/src/taint.ts",
+   "lineRange": [
+    93,
+    97
+   ],
+   "summary": "positiveInteger(raw, name) \u2014 function in taint.ts, lines 93-97.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/taint.ts:nonNegativeInteger",
+   "type": "function",
+   "name": "nonNegativeInteger",
+   "filePath": "packages/cli/src/taint.ts",
+   "lineRange": [
+    99,
+    103
+   ],
+   "summary": "nonNegativeInteger(raw, name) \u2014 function in taint.ts, lines 99-103.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/taint.ts:resolveLedgerPath",
+   "type": "function",
+   "name": "resolveLedgerPath",
+   "filePath": "packages/cli/src/taint.ts",
+   "lineRange": [
+    105,
+    118
+   ],
+   "summary": "resolveLedgerPath(path, env) \u2014 function in taint.ts, lines 105-118.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/taint.ts:findRecord",
+   "type": "function",
+   "name": "findRecord",
+   "filePath": "packages/cli/src/taint.ts",
+   "lineRange": [
+    120,
+    125
+   ],
+   "summary": "findRecord(page, seq) \u2014 function in taint.ts, lines 120-125.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/taint.ts:loadTaintGraph",
+   "type": "function",
+   "name": "loadTaintGraph",
+   "filePath": "packages/cli/src/taint.ts",
+   "lineRange": [
+    127,
+    129
+   ],
+   "summary": "loadTaintGraph(ledger) \u2014 function in taint.ts, lines 127-129.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/taint.ts:printJson",
+   "type": "function",
+   "name": "printJson",
+   "filePath": "packages/cli/src/taint.ts",
+   "lineRange": [
+    131,
+    138
+   ],
+   "summary": "printJson(neighborhood, stdout, exporter) \u2014 function in taint.ts, lines 131-138.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/taint.ts:exportTaintNeighborhood",
+   "type": "function",
+   "name": "exportTaintNeighborhood",
+   "filePath": "packages/cli/src/taint.ts",
+   "lineRange": [
+    140,
+    142
+   ],
+   "summary": "exportTaintNeighborhood(graph) \u2014 function in taint.ts, lines 140-142.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/taint.ts:neighborhoodToGraph",
+   "type": "function",
+   "name": "neighborhoodToGraph",
+   "filePath": "packages/cli/src/taint.ts",
+   "lineRange": [
+    144,
+    149
+   ],
+   "summary": "neighborhoodToGraph(neighborhood) \u2014 function in taint.ts, lines 144-149.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/taint.ts:printNeighborhood",
+   "type": "function",
+   "name": "printNeighborhood",
+   "filePath": "packages/cli/src/taint.ts",
+   "lineRange": [
+    151,
+    163
+   ],
+   "summary": "printNeighborhood(neighborhood, stdout) \u2014 function in taint.ts, lines 151-163.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/tui/workspace-ledger-chain-status.test.ts",
+   "type": "file",
+   "name": "workspace-ledger-chain-status.test.ts",
+   "filePath": "packages/cli/src/tui/workspace-ledger-chain-status.test.ts",
+   "summary": "workspace-ledger-chain-status.test.ts \u2014 typescript code, 145 lines, 1 functions, 0 classes, 0 exports, 5 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/workspace-ledger-chain-status.test.ts:assistantFetcher",
+   "type": "function",
+   "name": "assistantFetcher",
+   "filePath": "packages/cli/src/tui/workspace-ledger-chain-status.test.ts",
+   "lineRange": [
+    29,
+    35
+   ],
+   "summary": "assistantFetcher(content) \u2014 function in workspace-ledger-chain-status.test.ts, lines 29-35.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/tui/workspace-proxy.test.ts",
+   "type": "file",
+   "name": "workspace-proxy.test.ts",
+   "filePath": "packages/cli/src/tui/workspace-proxy.test.ts",
+   "summary": "workspace-proxy.test.ts \u2014 typescript code, 77 lines, 0 functions, 0 classes, 0 exports, 4 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/tui/workspace-proxy.ts",
+   "type": "file",
+   "name": "workspace-proxy.ts",
+   "filePath": "packages/cli/src/tui/workspace-proxy.ts",
+   "summary": "workspace-proxy.ts \u2014 typescript code, 133 lines, 0 functions, 1 classes, 1 exports, 6 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:packages/cli/src/tui/workspace-proxy.ts:ProxyWorkspace",
+   "type": "class",
+   "name": "ProxyWorkspace",
+   "filePath": "packages/cli/src/tui/workspace-proxy.ts",
+   "lineRange": [
+    26,
+    133
+   ],
+   "summary": "ProxyWorkspace \u2014 class in workspace-proxy.ts, lines 26-133, methods: refresh, decide.",
+   "tags": [
+    "typescript",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/update.test.ts",
+   "type": "file",
+   "name": "update.test.ts",
+   "filePath": "packages/cli/src/update.test.ts",
+   "summary": "update.test.ts \u2014 typescript code, 452 lines, 8 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/cli/src/update.test.ts:collect",
+   "type": "function",
+   "name": "collect",
+   "filePath": "packages/cli/src/update.test.ts",
+   "lineRange": [
+    16,
+    31
+   ],
+   "summary": "collect() \u2014 function in update.test.ts, lines 16-31.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/update.test.ts:facts",
+   "type": "function",
+   "name": "facts",
+   "filePath": "packages/cli/src/update.test.ts",
+   "lineRange": [
+    33,
+    39
+   ],
+   "summary": "facts(over) \u2014 function in update.test.ts, lines 33-39.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/update.test.ts:onTargetFacts",
+   "type": "function",
+   "name": "onTargetFacts",
+   "filePath": "packages/cli/src/update.test.ts",
+   "lineRange": [
+    41,
+    45
+   ],
+   "summary": "onTargetFacts() \u2014 function in update.test.ts, lines 41-45.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/update.test.ts:git",
+   "type": "function",
+   "name": "git",
+   "filePath": "packages/cli/src/update.test.ts",
+   "lineRange": [
+    49,
+    57
+   ],
+   "summary": "git(cwd, args) \u2014 function in update.test.ts, lines 49-57.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/update.test.ts:commit",
+   "type": "function",
+   "name": "commit",
+   "filePath": "packages/cli/src/update.test.ts",
+   "lineRange": [
+    60,
+    72
+   ],
+   "summary": "commit(tree, name, body) \u2014 function in update.test.ts, lines 60-72.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/update.test.ts:installedTree",
+   "type": "function",
+   "name": "installedTree",
+   "filePath": "packages/cli/src/update.test.ts",
+   "lineRange": [
+    75,
+    86
+   ],
+   "summary": "installedTree(t) \u2014 function in update.test.ts, lines 75-86.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/update.test.ts:publish",
+   "type": "function",
+   "name": "publish",
+   "filePath": "packages/cli/src/update.test.ts",
+   "lineRange": [
+    89,
+    99
+   ],
+   "summary": "publish(remote, tree, name) \u2014 function in update.test.ts, lines 89-99.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/update.test.ts:makeInstallable",
+   "type": "function",
+   "name": "makeInstallable",
+   "filePath": "packages/cli/src/update.test.ts",
+   "lineRange": [
+    106,
+    120
+   ],
+   "summary": "makeInstallable(tree) \u2014 function in update.test.ts, lines 106-120.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/update.ts",
+   "type": "file",
+   "name": "update.ts",
+   "filePath": "packages/cli/src/update.ts",
+   "summary": "update.ts \u2014 typescript code, 365 lines, 10 functions, 0 classes, 4 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/cli/src/update.ts:message",
+   "type": "function",
+   "name": "message",
+   "filePath": "packages/cli/src/update.ts",
+   "lineRange": [
+    76,
+    77
+   ],
+   "summary": "message(error) \u2014 function in update.ts, lines 76-77.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/update.ts:short",
+   "type": "function",
+   "name": "short",
+   "filePath": "packages/cli/src/update.ts",
+   "lineRange": [
+    79,
+    79
+   ],
+   "summary": "short(commit) \u2014 function in update.ts, lines 79-79.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/update.ts:parseUpdateArgs",
+   "type": "function",
+   "name": "parseUpdateArgs",
+   "filePath": "packages/cli/src/update.ts",
+   "lineRange": [
+    95,
+    106
+   ],
+   "summary": "parseUpdateArgs(argv) \u2014 function in update.ts, lines 95-106.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/update.ts:resolveUpdateHome",
+   "type": "function",
+   "name": "resolveUpdateHome",
+   "filePath": "packages/cli/src/update.ts",
+   "lineRange": [
+    119,
+    127
+   ],
+   "summary": "resolveUpdateHome(env, sourceTree) \u2014 function in update.ts, lines 119-127.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/update.ts:planUpdate",
+   "type": "function",
+   "name": "planUpdate",
+   "filePath": "packages/cli/src/update.ts",
+   "lineRange": [
+    153,
+    167
+   ],
+   "summary": "planUpdate(facts, force) \u2014 function in update.ts, lines 153-167.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/update.ts:noCheckout",
+   "type": "function",
+   "name": "noCheckout",
+   "filePath": "packages/cli/src/update.ts",
+   "lineRange": [
+    171,
+    175
+   ],
+   "summary": "noCheckout(home) \u2014 function in update.ts, lines 171-175.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/update.ts:git",
+   "type": "function",
+   "name": "git",
+   "filePath": "packages/cli/src/update.ts",
+   "lineRange": [
+    186,
+    198
+   ],
+   "summary": "git(home, args) \u2014 function in update.ts, lines 186-198.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/update.ts:readFacts",
+   "type": "function",
+   "name": "readFacts",
+   "filePath": "packages/cli/src/update.ts",
+   "lineRange": [
+    202,
+    223
+   ],
+   "summary": "readFacts(home, upstream) \u2014 function in update.ts, lines 202-223.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/update.ts:installDependencies",
+   "type": "function",
+   "name": "installDependencies",
+   "filePath": "packages/cli/src/update.ts",
+   "lineRange": [
+    233,
+    248
+   ],
+   "summary": "installDependencies(home, io) \u2014 function in update.ts, lines 233-248.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/update.ts:runUpdateCommand",
+   "type": "function",
+   "name": "runUpdateCommand",
+   "filePath": "packages/cli/src/update.ts",
+   "lineRange": [
+    250,
+    365
+   ],
+   "summary": "runUpdateCommand(argv, io, deps) \u2014 function in update.ts, lines 250-365.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/verify.test.ts",
+   "type": "file",
+   "name": "verify.test.ts",
+   "filePath": "packages/cli/src/verify.test.ts",
+   "summary": "verify.test.ts \u2014 typescript code, 137 lines, 1 functions, 0 classes, 0 exports, 4 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/verify.test.ts:seedLedger",
+   "type": "function",
+   "name": "seedLedger",
+   "filePath": "packages/cli/src/verify.test.ts",
+   "lineRange": [
+    23,
+    47
+   ],
+   "summary": "seedLedger() \u2014 function in verify.test.ts, lines 23-47.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/verify.ts",
+   "type": "file",
+   "name": "verify.ts",
+   "filePath": "packages/cli/src/verify.ts",
+   "summary": "verify.ts \u2014 typescript code, 278 lines, 5 functions, 0 classes, 1 exports, 6 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/cli/src/verify.ts:runVerifyCommand",
+   "type": "function",
+   "name": "runVerifyCommand",
+   "filePath": "packages/cli/src/verify.ts",
+   "lineRange": [
+    50,
+    138
+   ],
+   "summary": "runVerifyCommand(argv, io, options) \u2014 function in verify.ts, lines 50-138.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/verify.ts:parseVerifyArgs",
+   "type": "function",
+   "name": "parseVerifyArgs",
+   "filePath": "packages/cli/src/verify.ts",
+   "lineRange": [
+    140,
+    179
+   ],
+   "summary": "parseVerifyArgs(argv) \u2014 function in verify.ts, lines 140-179.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/verify.ts:resolveVerifyKey",
+   "type": "function",
+   "name": "resolveVerifyKey",
+   "filePath": "packages/cli/src/verify.ts",
+   "lineRange": [
+    193,
+    224
+   ],
+   "summary": "resolveVerifyKey(args, env, options) \u2014 function in verify.ts, lines 193-224.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/verify.ts:runStandalone",
+   "type": "function",
+   "name": "runStandalone",
+   "filePath": "packages/cli/src/verify.ts",
+   "lineRange": [
+    237,
+    270
+   ],
+   "summary": "runStandalone(target, args, io, key) \u2014 function in verify.ts, lines 237-270.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/verify.ts:needValue",
+   "type": "function",
+   "name": "needValue",
+   "filePath": "packages/cli/src/verify.ts",
+   "lineRange": [
+    273,
+    277
+   ],
+   "summary": "needValue(argv, index, name) \u2014 function in verify.ts, lines 273-277.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/watch.test.ts",
+   "type": "file",
+   "name": "watch.test.ts",
+   "filePath": "packages/cli/src/watch.test.ts",
+   "summary": "watch.test.ts \u2014 typescript code, 39 lines, 0 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/watch.ts",
+   "type": "file",
+   "name": "watch.ts",
+   "filePath": "packages/cli/src/watch.ts",
+   "summary": "watch.ts \u2014 typescript code, 184 lines, 2 functions, 0 classes, 2 exports, 9 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/cli/src/watch.ts:resolveLedgerPath",
+   "type": "function",
+   "name": "resolveLedgerPath",
+   "filePath": "packages/cli/src/watch.ts",
+   "lineRange": [
+    23,
+    28
+   ],
+   "summary": "resolveLedgerPath(value, workspace) \u2014 function in watch.ts, lines 23-28.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/watch.ts:runWatchCommand",
+   "type": "function",
+   "name": "runWatchCommand",
+   "filePath": "packages/cli/src/watch.ts",
+   "lineRange": [
+    30,
+    184
+   ],
+   "summary": "runWatchCommand(argv) \u2014 function in watch.ts, lines 30-184.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/connectors/src/postgres/reverse-exercise.ts",
+   "type": "file",
+   "name": "reverse-exercise.ts",
+   "filePath": "packages/connectors/src/postgres/reverse-exercise.ts",
+   "summary": "reverse-exercise.ts \u2014 typescript code, 133 lines, 1 functions, 0 classes, 1 exports, 4 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/postgres/reverse-exercise.ts:runDatabaseReverseExercise",
+   "type": "function",
+   "name": "runDatabaseReverseExercise",
+   "filePath": "packages/connectors/src/postgres/reverse-exercise.ts",
+   "lineRange": [
+    27,
+    133
+   ],
+   "summary": "runDatabaseReverseExercise() \u2014 function in reverse-exercise.ts, lines 27-133.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/ledger/src/anchor.test.ts",
+   "type": "file",
+   "name": "anchor.test.ts",
+   "filePath": "packages/ledger/src/anchor.test.ts",
+   "summary": "anchor.test.ts \u2014 typescript code, 244 lines, 4 functions, 0 classes, 0 exports, 6 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/ledger/src/anchor.test.ts:seed",
+   "type": "function",
+   "name": "seed",
+   "filePath": "packages/ledger/src/anchor.test.ts",
+   "lineRange": [
+    16,
+    29
+   ],
+   "summary": "seed(dir, count) \u2014 function in anchor.test.ts, lines 16-29.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/anchor.test.ts:scratch",
+   "type": "function",
+   "name": "scratch",
+   "filePath": "packages/ledger/src/anchor.test.ts",
+   "lineRange": [
+    31,
+    35
+   ],
+   "summary": "scratch(t, prefix) \u2014 function in anchor.test.ts, lines 31-35.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/anchor.test.ts:lookup",
+   "type": "function",
+   "name": "lookup",
+   "filePath": "packages/ledger/src/anchor.test.ts",
+   "lineRange": [
+    37,
+    37
+   ],
+   "summary": "lookup(key) \u2014 function in anchor.test.ts, lines 37-37.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/anchor.test.ts:anchorsIn",
+   "type": "function",
+   "name": "anchorsIn",
+   "filePath": "packages/ledger/src/anchor.test.ts",
+   "lineRange": [
+    40,
+    44
+   ],
+   "summary": "anchorsIn(path) \u2014 function in anchor.test.ts, lines 40-44.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/ledger/src/anchor.ts",
+   "type": "file",
+   "name": "anchor.ts",
+   "filePath": "packages/ledger/src/anchor.ts",
+   "summary": "anchor.ts \u2014 typescript code, 157 lines, 3 functions, 0 classes, 4 exports, 3 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/ledger/src/anchor.ts:appendAnchor",
+   "type": "function",
+   "name": "appendAnchor",
+   "filePath": "packages/ledger/src/anchor.ts",
+   "lineRange": [
+    49,
+    58
+   ],
+   "summary": "appendAnchor(path, doc) \u2014 function in anchor.ts, lines 49-58.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/anchor.ts:readAnchors",
+   "type": "function",
+   "name": "readAnchors",
+   "filePath": "packages/ledger/src/anchor.ts",
+   "lineRange": [
+    70,
+    93
+   ],
+   "summary": "readAnchors(path) \u2014 function in anchor.ts, lines 70-93.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/anchor.ts:checkAnchors",
+   "type": "function",
+   "name": "checkAnchors",
+   "filePath": "packages/ledger/src/anchor.ts",
+   "lineRange": [
+    120,
+    157
+   ],
+   "summary": "checkAnchors(anchors, ledgerEntries, options) \u2014 function in anchor.ts, lines 120-157.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/ledger/src/attest.test.ts",
+   "type": "file",
+   "name": "attest.test.ts",
+   "filePath": "packages/ledger/src/attest.test.ts",
+   "summary": "attest.test.ts \u2014 typescript code, 75 lines, 1 functions, 0 classes, 0 exports, 4 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/attest.test.ts:seedLedger",
+   "type": "function",
+   "name": "seedLedger",
+   "filePath": "packages/ledger/src/attest.test.ts",
+   "lineRange": [
+    23,
+    39
+   ],
+   "summary": "seedLedger() \u2014 function in attest.test.ts, lines 23-39.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/ledger/src/attest.ts",
+   "type": "file",
+   "name": "attest.ts",
+   "filePath": "packages/ledger/src/attest.ts",
+   "summary": "attest.ts \u2014 typescript code, 278 lines, 12 functions, 0 classes, 6 exports, 6 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/ledger/src/attest.ts:parseAttestationDocument",
+   "type": "function",
+   "name": "parseAttestationDocument",
+   "filePath": "packages/ledger/src/attest.ts",
+   "lineRange": [
+    51,
+    74
+   ],
+   "summary": "parseAttestationDocument(value, label) \u2014 function in attest.ts, lines 51-74.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/attest.ts:attestLedger",
+   "type": "function",
+   "name": "attestLedger",
+   "filePath": "packages/ledger/src/attest.ts",
+   "lineRange": [
+    83,
+    110
+   ],
+   "summary": "attestLedger(dir, workspace, key, options) \u2014 function in attest.ts, lines 83-110.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/attest.ts:storeAttestation",
+   "type": "function",
+   "name": "storeAttestation",
+   "filePath": "packages/ledger/src/attest.ts",
+   "lineRange": [
+    112,
+    138
+   ],
+   "summary": "storeAttestation(dir, doc) \u2014 function in attest.ts, lines 112-138.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/attest.ts:verifyAttestation",
+   "type": "function",
+   "name": "verifyAttestation",
+   "filePath": "packages/ledger/src/attest.ts",
+   "lineRange": [
+    140,
+    161
+   ],
+   "summary": "verifyAttestation(doc, ledgerEntries, options) \u2014 function in attest.ts, lines 140-161.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/attest.ts:verifyAnchor",
+   "type": "function",
+   "name": "verifyAnchor",
+   "filePath": "packages/ledger/src/attest.ts",
+   "lineRange": [
+    174,
+    209
+   ],
+   "summary": "verifyAnchor(doc, ledgerEntries, options) \u2014 function in attest.ts, lines 174-209.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/attest.ts:verifyAnchorSignature",
+   "type": "function",
+   "name": "verifyAnchorSignature",
+   "filePath": "packages/ledger/src/attest.ts",
+   "lineRange": [
+    212,
+    225
+   ],
+   "summary": "verifyAnchorSignature(doc, publicKey) \u2014 function in attest.ts, lines 212-225.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/attest.ts:merkleDigest",
+   "type": "function",
+   "name": "merkleDigest",
+   "filePath": "packages/ledger/src/attest.ts",
+   "lineRange": [
+    227,
+    241
+   ],
+   "summary": "merkleDigest(hashes) \u2014 function in attest.ts, lines 227-241.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/attest.ts:unsignedAttestation",
+   "type": "function",
+   "name": "unsignedAttestation",
+   "filePath": "packages/ledger/src/attest.ts",
+   "lineRange": [
+    243,
+    254
+   ],
+   "summary": "unsignedAttestation(doc) \u2014 function in attest.ts, lines 243-254.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/attest.ts:attestationPreimage",
+   "type": "function",
+   "name": "attestationPreimage",
+   "filePath": "packages/ledger/src/attest.ts",
+   "lineRange": [
+    256,
+    258
+   ],
+   "summary": "attestationPreimage(doc) \u2014 function in attest.ts, lines 256-258.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/attest.ts:attestationSignatureBytes",
+   "type": "function",
+   "name": "attestationSignatureBytes",
+   "filePath": "packages/ledger/src/attest.ts",
+   "lineRange": [
+    260,
+    265
+   ],
+   "summary": "attestationSignatureBytes(doc) \u2014 function in attest.ts, lines 260-265.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/attest.ts:lookupAttestationKey",
+   "type": "function",
+   "name": "lookupAttestationKey",
+   "filePath": "packages/ledger/src/attest.ts",
+   "lineRange": [
+    267,
+    273
+   ],
+   "summary": "lookupAttestationKey(lookup, keyId) \u2014 function in attest.ts, lines 267-273.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/attest.ts:assertDigest",
+   "type": "function",
+   "name": "assertDigest",
+   "filePath": "packages/ledger/src/attest.ts",
+   "lineRange": [
+    275,
+    278
+   ],
+   "summary": "assertDigest(hash) \u2014 function in attest.ts, lines 275-278.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/ledger/src/attribution.test.ts",
+   "type": "file",
+   "name": "attribution.test.ts",
+   "filePath": "packages/ledger/src/attribution.test.ts",
+   "summary": "attribution.test.ts \u2014 typescript code, 451 lines, 6 functions, 0 classes, 0 exports, 7 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/ledger/src/attribution.test.ts:body",
+   "type": "function",
+   "name": "body",
+   "filePath": "packages/ledger/src/attribution.test.ts",
+   "lineRange": [
+    23,
+    31
+   ],
+   "summary": "body(extra) \u2014 function in attribution.test.ts, lines 23-31.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/attribution.test.ts:fixture",
+   "type": "function",
+   "name": "fixture",
+   "filePath": "packages/ledger/src/attribution.test.ts",
+   "lineRange": [
+    38,
+    44
+   ],
+   "summary": "fixture(t) \u2014 function in attribution.test.ts, lines 38-44.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/attribution.test.ts:collect",
+   "type": "function",
+   "name": "collect",
+   "filePath": "packages/ledger/src/attribution.test.ts",
+   "lineRange": [
+    46,
+    50
+   ],
+   "summary": "collect(store) \u2014 function in attribution.test.ts, lines 46-50.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/attribution.test.ts:rewriteChain",
+   "type": "function",
+   "name": "rewriteChain",
+   "filePath": "packages/ledger/src/attribution.test.ts",
+   "lineRange": [
+    58,
+    83
+   ],
+   "summary": "rewriteChain(entries, attacker, mutate) \u2014 function in attribution.test.ts, lines 58-83.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/attribution.test.ts:file",
+   "type": "function",
+   "name": "file",
+   "filePath": "packages/ledger/src/attribution.test.ts",
+   "lineRange": [
+    85,
+    86
+   ],
+   "summary": "file(dir, entries) \u2014 function in attribution.test.ts, lines 85-86.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/attribution.test.ts:asFile",
+   "type": "function",
+   "name": "asFile",
+   "filePath": "packages/ledger/src/attribution.test.ts",
+   "lineRange": [
+    88,
+    89
+   ],
+   "summary": "asFile(entries) \u2014 function in attribution.test.ts, lines 88-89.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/ledger/src/attribution.ts",
+   "type": "file",
+   "name": "attribution.ts",
+   "filePath": "packages/ledger/src/attribution.ts",
+   "summary": "attribution.ts \u2014 typescript code, 236 lines, 4 functions, 0 classes, 2 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/ledger/src/attribution.ts:buildAttribution",
+   "type": "function",
+   "name": "buildAttribution",
+   "filePath": "packages/ledger/src/attribution.ts",
+   "lineRange": [
+    105,
+    124
+   ],
+   "summary": "buildAttribution(policyDigest, decision, context) \u2014 function in attribution.ts, lines 105-124.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/attribution.ts:optional",
+   "type": "function",
+   "name": "optional",
+   "filePath": "packages/ledger/src/attribution.ts",
+   "lineRange": [
+    136,
+    143
+   ],
+   "summary": "optional(context) \u2014 function in attribution.ts, lines 136-143.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/attribution.ts:readLedgerReason",
+   "type": "function",
+   "name": "readLedgerReason",
+   "filePath": "packages/ledger/src/attribution.ts",
+   "lineRange": [
+    162,
+    232
+   ],
+   "summary": "readLedgerReason(body, seq) \u2014 function in attribution.ts, lines 162-232.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/attribution.ts:malformed",
+   "type": "function",
+   "name": "malformed",
+   "filePath": "packages/ledger/src/attribution.ts",
+   "lineRange": [
+    234,
+    236
+   ],
+   "summary": "malformed(seq, detail) \u2014 function in attribution.ts, lines 234-236.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/ledger/src/canonical.ts",
+   "type": "file",
+   "name": "canonical.ts",
+   "filePath": "packages/ledger/src/canonical.ts",
+   "summary": "canonical.ts \u2014 typescript code, 105 lines, 4 functions, 0 classes, 4 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/canonical.ts:SORTED_PAIRS",
+   "type": "function",
+   "name": "SORTED_PAIRS",
+   "filePath": "packages/ledger/src/canonical.ts",
+   "lineRange": [
+    17,
+    18
+   ],
+   "summary": "SORTED_PAIRS(a, b) \u2014 function in canonical.ts, lines 17-18.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/canonical.ts:canonicalJson",
+   "type": "function",
+   "name": "canonicalJson",
+   "filePath": "packages/ledger/src/canonical.ts",
+   "lineRange": [
+    28,
+    30
+   ],
+   "summary": "canonicalJson(value) \u2014 function in canonical.ts, lines 28-30.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/canonical.ts:canonicalize",
+   "type": "function",
+   "name": "canonicalize",
+   "filePath": "packages/ledger/src/canonical.ts",
+   "lineRange": [
+    38,
+    81
+   ],
+   "summary": "canonicalize(value, seen, depth) \u2014 function in canonical.ts, lines 38-81.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/canonical.ts:entryHash",
+   "type": "function",
+   "name": "entryHash",
+   "filePath": "packages/ledger/src/canonical.ts",
+   "lineRange": [
+    92,
+    102
+   ],
+   "summary": "entryHash(body, prevHash, sha256) \u2014 function in canonical.ts, lines 92-102.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/ledger/src/feed.test.ts",
+   "type": "file",
+   "name": "feed.test.ts",
+   "filePath": "packages/ledger/src/feed.test.ts",
+   "summary": "feed.test.ts \u2014 typescript code, 120 lines, 1 functions, 0 classes, 0 exports, 3 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/feed.test.ts:seedLedger",
+   "type": "function",
+   "name": "seedLedger",
+   "filePath": "packages/ledger/src/feed.test.ts",
+   "lineRange": [
+    24,
+    42
+   ],
+   "summary": "seedLedger(count) \u2014 function in feed.test.ts, lines 24-42.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/ledger/src/feed.ts",
+   "type": "file",
+   "name": "feed.ts",
+   "filePath": "packages/ledger/src/feed.ts",
+   "summary": "feed.ts \u2014 typescript code, 163 lines, 4 functions, 0 classes, 2 exports, 4 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/ledger/src/feed.ts:readLedgerFeed",
+   "type": "function",
+   "name": "readLedgerFeed",
+   "filePath": "packages/ledger/src/feed.ts",
+   "lineRange": [
+    61,
+    83
+   ],
+   "summary": "readLedgerFeed(ledgerPath, options) \u2014 function in feed.ts, lines 61-83.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/feed.ts:watchLedgerFeed",
+   "type": "function",
+   "name": "watchLedgerFeed",
+   "filePath": "packages/ledger/src/feed.ts",
+   "lineRange": [
+    85,
+    126
+   ],
+   "summary": "watchLedgerFeed(ledgerPath, onChange, options) \u2014 function in feed.ts, lines 85-126.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/feed.ts:toFeedRecord",
+   "type": "function",
+   "name": "toFeedRecord",
+   "filePath": "packages/ledger/src/feed.ts",
+   "lineRange": [
+    128,
+    155
+   ],
+   "summary": "toFeedRecord(entry) \u2014 function in feed.ts, lines 128-155.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/feed.ts:stringField",
+   "type": "function",
+   "name": "stringField",
+   "filePath": "packages/ledger/src/feed.ts",
+   "lineRange": [
+    157,
+    162
+   ],
+   "summary": "stringField(body, name, seq) \u2014 function in feed.ts, lines 157-162.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/ledger/src/hardening.test.ts",
+   "type": "file",
+   "name": "hardening.test.ts",
+   "filePath": "packages/ledger/src/hardening.test.ts",
+   "summary": "hardening.test.ts \u2014 typescript code, 132 lines, 0 functions, 0 classes, 0 exports, 3 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/ledger/src/hardening.ts",
+   "type": "file",
+   "name": "hardening.ts",
+   "filePath": "packages/ledger/src/hardening.ts",
+   "summary": "hardening.ts \u2014 typescript code, 888 lines, 29 functions, 0 classes, 14 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "function:packages/ledger/src/hardening.ts:windowsPathKey",
+   "type": "function",
+   "name": "windowsPathKey",
+   "filePath": "packages/ledger/src/hardening.ts",
+   "lineRange": [
+    32,
+    36
+   ],
+   "summary": "windowsPathKey(path) \u2014 function in hardening.ts, lines 32-36.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/hardening.ts:windowsDirectories",
+   "type": "function",
+   "name": "windowsDirectories",
+   "filePath": "packages/ledger/src/hardening.ts",
+   "lineRange": [
+    38,
+    47
+   ],
+   "summary": "windowsDirectories(path, includePath) \u2014 function in hardening.ts, lines 38-47.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/hardening.ts:shareWindowsAclCheck",
+   "type": "function",
+   "name": "shareWindowsAclCheck",
+   "filePath": "packages/ledger/src/hardening.ts",
+   "lineRange": [
+    49,
+    66
+   ],
+   "summary": "shareWindowsAclCheck(key, check) \u2014 function in hardening.ts, lines 49-66.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/hardening.ts:windowsPowerShell",
+   "type": "function",
+   "name": "windowsPowerShell",
+   "filePath": "packages/ledger/src/hardening.ts",
+   "lineRange": [
+    81,
+    108
+   ],
+   "summary": "windowsPowerShell(script, env) \u2014 function in hardening.ts, lines 81-108.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/hardening.ts:windowsPathAcl",
+   "type": "function",
+   "name": "windowsPathAcl",
+   "filePath": "packages/ledger/src/hardening.ts",
+   "lineRange": [
+    110,
+    145
+   ],
+   "summary": "windowsPathAcl(path, kind, protect, leafToCheck\u2026) \u2014 function in hardening.ts, lines 110-145.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/hardening.ts:checkWindowsPathAcl",
+   "type": "function",
+   "name": "checkWindowsPathAcl",
+   "filePath": "packages/ledger/src/hardening.ts",
+   "lineRange": [
+    147,
+    276
+   ],
+   "summary": "checkWindowsPathAcl(path, kind, protect, leafToCheck\u2026) \u2014 function in hardening.ts, lines 147-276.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/hardening.ts:windowsPrivateTreeAcl",
+   "type": "function",
+   "name": "windowsPrivateTreeAcl",
+   "filePath": "packages/ledger/src/hardening.ts",
+   "lineRange": [
+    278,
+    311
+   ],
+   "summary": "windowsPrivateTreeAcl(root) \u2014 function in hardening.ts, lines 278-311.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/hardening.ts:windowsParentAcl",
+   "type": "function",
+   "name": "windowsParentAcl",
+   "filePath": "packages/ledger/src/hardening.ts",
+   "lineRange": [
+    313,
+    329
+   ],
+   "summary": "windowsParentAcl(directory, allowVerified) \u2014 function in hardening.ts, lines 313-329.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/hardening.ts:checkWindowsParentAcl",
+   "type": "function",
+   "name": "checkWindowsParentAcl",
+   "filePath": "packages/ledger/src/hardening.ts",
+   "lineRange": [
+    331,
+    376
+   ],
+   "summary": "checkWindowsParentAcl(directory, directories, allowVerified) \u2014 function in hardening.ts, lines 331-376.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/hardening.ts:assertSafeAncestorChain",
+   "type": "function",
+   "name": "assertSafeAncestorChain",
+   "filePath": "packages/ledger/src/hardening.ts",
+   "lineRange": [
+    378,
+    430
+   ],
+   "summary": "assertSafeAncestorChain(directory, allowVerified) \u2014 function in hardening.ts, lines 378-430.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/hardening.ts:assertExistingAncestorChain",
+   "type": "function",
+   "name": "assertExistingAncestorChain",
+   "filePath": "packages/ledger/src/hardening.ts",
+   "lineRange": [
+    432,
+    449
+   ],
+   "summary": "assertExistingAncestorChain(path, allowVerified) \u2014 function in hardening.ts, lines 432-449.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/hardening.ts:windowsKeyAcl",
+   "type": "function",
+   "name": "windowsKeyAcl",
+   "filePath": "packages/ledger/src/hardening.ts",
+   "lineRange": [
+    452,
+    457
+   ],
+   "summary": "windowsKeyAcl(file, protect) \u2014 function in hardening.ts, lines 452-457.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/hardening.ts:sanitizeWorkspace",
+   "type": "function",
+   "name": "sanitizeWorkspace",
+   "filePath": "packages/ledger/src/hardening.ts",
+   "lineRange": [
+    459,
+    470
+   ],
+   "summary": "sanitizeWorkspace(workspace) \u2014 function in hardening.ts, lines 459-470.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/hardening.ts:currentUid",
+   "type": "function",
+   "name": "currentUid",
+   "filePath": "packages/ledger/src/hardening.ts",
+   "lineRange": [
+    472,
+    474
+   ],
+   "summary": "currentUid() \u2014 function in hardening.ts, lines 472-474.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/hardening.ts:assertFileStat",
+   "type": "function",
+   "name": "assertFileStat",
+   "filePath": "packages/ledger/src/hardening.ts",
+   "lineRange": [
+    476,
+    495
+   ],
+   "summary": "assertFileStat(info, file, label) \u2014 function in hardening.ts, lines 476-495.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/hardening.ts:assertDirectoryStat",
+   "type": "function",
+   "name": "assertDirectoryStat",
+   "filePath": "packages/ledger/src/hardening.ts",
+   "lineRange": [
+    497,
+    517
+   ],
+   "summary": "assertDirectoryStat(info, directory, label) \u2014 function in hardening.ts, lines 497-517.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/hardening.ts:ensurePrivateDirectory",
+   "type": "function",
+   "name": "ensurePrivateDirectory",
+   "filePath": "packages/ledger/src/hardening.ts",
+   "lineRange": [
+    520,
+    540
+   ],
+   "summary": "ensurePrivateDirectory(directory, label, allowVerified) \u2014 function in hardening.ts, lines 520-540.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/hardening.ts:assertPrivateDirectoryPath",
+   "type": "function",
+   "name": "assertPrivateDirectoryPath",
+   "filePath": "packages/ledger/src/hardening.ts",
+   "lineRange": [
+    542,
+    554
+   ],
+   "summary": "assertPrivateDirectoryPath(directory, label, leafToCheck, allowVerified) \u2014 function in hardening.ts, lines 542-554.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/hardening.ts:assertPrivateDirectoryIfPresent",
+   "type": "function",
+   "name": "assertPrivateDirectoryIfPresent",
+   "filePath": "packages/ledger/src/hardening.ts",
+   "lineRange": [
+    557,
+    570
+   ],
+   "summary": "assertPrivateDirectoryIfPresent(directory, label, allowVerified) \u2014 function in hardening.ts, lines 557-570.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/hardening.ts:assertPrivateFilePath",
+   "type": "function",
+   "name": "assertPrivateFilePath",
+   "filePath": "packages/ledger/src/hardening.ts",
+   "lineRange": [
+    572,
+    584
+   ],
+   "summary": "assertPrivateFilePath(file, label) \u2014 function in hardening.ts, lines 572-584.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/hardening.ts:assertPrivateFileIfPresent",
+   "type": "function",
+   "name": "assertPrivateFileIfPresent",
+   "filePath": "packages/ledger/src/hardening.ts",
+   "lineRange": [
+    586,
+    597
+   ],
+   "summary": "assertPrivateFileIfPresent(file, label) \u2014 function in hardening.ts, lines 586-597.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/hardening.ts:assertPrivateHandle",
+   "type": "function",
+   "name": "assertPrivateHandle",
+   "filePath": "packages/ledger/src/hardening.ts",
+   "lineRange": [
+    599,
+    605
+   ],
+   "summary": "assertPrivateHandle(handle, file, label) \u2014 function in hardening.ts, lines 599-605.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/hardening.ts:openPrivateFile",
+   "type": "function",
+   "name": "openPrivateFile",
+   "filePath": "packages/ledger/src/hardening.ts",
+   "lineRange": [
+    614,
+    677
+   ],
+   "summary": "openPrivateFile(file, mode, label) \u2014 function in hardening.ts, lines 614-677.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/hardening.ts:ensurePrivateFile",
+   "type": "function",
+   "name": "ensurePrivateFile",
+   "filePath": "packages/ledger/src/hardening.ts",
+   "lineRange": [
+    680,
+    695
+   ],
+   "summary": "ensurePrivateFile(file, label) \u2014 function in hardening.ts, lines 680-695.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/hardening.ts:secureGeneratedPrivateSidecar",
+   "type": "function",
+   "name": "secureGeneratedPrivateSidecar",
+   "filePath": "packages/ledger/src/hardening.ts",
+   "lineRange": [
+    698,
+    780
+   ],
+   "summary": "secureGeneratedPrivateSidecar(file, label) \u2014 function in hardening.ts, lines 698-780.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/hardening.ts:readPrivateFile",
+   "type": "function",
+   "name": "readPrivateFile",
+   "filePath": "packages/ledger/src/hardening.ts",
+   "lineRange": [
+    782,
+    796
+   ],
+   "summary": "readPrivateFile(file, label, maxBytes) \u2014 function in hardening.ts, lines 782-796.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/hardening.ts:auditPrivatePath",
+   "type": "function",
+   "name": "auditPrivatePath",
+   "filePath": "packages/ledger/src/hardening.ts",
+   "lineRange": [
+    799,
+    818
+   ],
+   "summary": "auditPrivatePath(path, kind) \u2014 function in hardening.ts, lines 799-818.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/hardening.ts:auditPrivateTree",
+   "type": "function",
+   "name": "auditPrivateTree",
+   "filePath": "packages/ledger/src/hardening.ts",
+   "lineRange": [
+    821,
+    884
+   ],
+   "summary": "auditPrivateTree(root) \u2014 function in hardening.ts, lines 821-884.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/hardening.ts:assertPrivateKeyFileMode",
+   "type": "function",
+   "name": "assertPrivateKeyFileMode",
+   "filePath": "packages/ledger/src/hardening.ts",
+   "lineRange": [
+    886,
+    888
+   ],
+   "summary": "assertPrivateKeyFileMode(file) \u2014 function in hardening.ts, lines 886-888.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/ledger/src/index.test.ts",
+   "type": "file",
+   "name": "index.test.ts",
+   "filePath": "packages/ledger/src/index.test.ts",
+   "summary": "index.test.ts \u2014 typescript code, 345 lines, 1 functions, 0 classes, 0 exports, 5 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/ledger/src/index.test.ts:store",
+   "type": "function",
+   "name": "store",
+   "filePath": "packages/ledger/src/index.test.ts",
+   "lineRange": [
+    30,
+    33
+   ],
+   "summary": "store() \u2014 function in index.test.ts, lines 30-33.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/ledger/src/index.ts",
+   "type": "file",
+   "name": "index.ts",
+   "filePath": "packages/ledger/src/index.ts",
+   "summary": "index.ts \u2014 typescript code, 89 lines, 1 functions, 0 classes, 2 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/index.ts:signingPreimage",
+   "type": "function",
+   "name": "signingPreimage",
+   "filePath": "packages/ledger/src/index.ts",
+   "lineRange": [
+    69,
+    77
+   ],
+   "summary": "signingPreimage(alg, keyId, entryHash) \u2014 function in index.ts, lines 69-77.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/ledger/src/paths.test.ts",
+   "type": "file",
+   "name": "paths.test.ts",
+   "filePath": "packages/ledger/src/paths.test.ts",
+   "summary": "paths.test.ts \u2014 typescript code, 92 lines, 1 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/paths.test.ts:withHome",
+   "type": "function",
+   "name": "withHome",
+   "filePath": "packages/ledger/src/paths.test.ts",
+   "lineRange": [
+    13,
+    17
+   ],
+   "summary": "withHome(t) \u2014 function in paths.test.ts, lines 13-17.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/ledger/src/paths.ts",
+   "type": "file",
+   "name": "paths.ts",
+   "filePath": "packages/ledger/src/paths.ts",
+   "summary": "paths.ts \u2014 typescript code, 113 lines, 4 functions, 0 classes, 4 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/paths.ts:dataDir",
+   "type": "function",
+   "name": "dataDir",
+   "filePath": "packages/ledger/src/paths.ts",
+   "lineRange": [
+    35,
+    40
+   ],
+   "summary": "dataDir(home) \u2014 function in paths.ts, lines 35-40.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/paths.ts:isEmptyDirectory",
+   "type": "function",
+   "name": "isEmptyDirectory",
+   "filePath": "packages/ledger/src/paths.ts",
+   "lineRange": [
+    61,
+    62
+   ],
+   "summary": "isEmptyDirectory(path) \u2014 function in paths.ts, lines 61-62.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/paths.ts:nonEmpty",
+   "type": "function",
+   "name": "nonEmpty",
+   "filePath": "packages/ledger/src/paths.ts",
+   "lineRange": [
+    64,
+    65
+   ],
+   "summary": "nonEmpty(path) \u2014 function in paths.ts, lines 64-65.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/paths.ts:describeState",
+   "type": "function",
+   "name": "describeState",
+   "filePath": "packages/ledger/src/paths.ts",
+   "lineRange": [
+    76,
+    114
+   ],
+   "summary": "describeState(home) \u2014 function in paths.ts, lines 76-114.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/ledger/src/reversal-boundary.test.ts",
+   "type": "file",
+   "name": "reversal-boundary.test.ts",
+   "filePath": "packages/ledger/src/reversal-boundary.test.ts",
+   "summary": "reversal-boundary.test.ts \u2014 typescript code, 223 lines, 4 functions, 0 classes, 0 exports, 8 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/ledger/src/reversal-boundary.test.ts:body",
+   "type": "function",
+   "name": "body",
+   "filePath": "packages/ledger/src/reversal-boundary.test.ts",
+   "lineRange": [
+    36,
+    44
+   ],
+   "summary": "body(extra) \u2014 function in reversal-boundary.test.ts, lines 36-44.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/reversal-boundary.test.ts:writeChain",
+   "type": "function",
+   "name": "writeChain",
+   "filePath": "packages/ledger/src/reversal-boundary.test.ts",
+   "lineRange": [
+    47,
+    77
+   ],
+   "summary": "writeChain(dir, key, bodies) \u2014 function in reversal-boundary.test.ts, lines 47-77.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/reversal-boundary.test.ts:rewriteAs",
+   "type": "function",
+   "name": "rewriteAs",
+   "filePath": "packages/ledger/src/reversal-boundary.test.ts",
+   "lineRange": [
+    80,
+    98
+   ],
+   "summary": "rewriteAs(attacker, entries) \u2014 function in reversal-boundary.test.ts, lines 80-98.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/reversal-boundary.test.ts:fixture",
+   "type": "function",
+   "name": "fixture",
+   "filePath": "packages/ledger/src/reversal-boundary.test.ts",
+   "lineRange": [
+    100,
+    106
+   ],
+   "summary": "fixture(t) \u2014 function in reversal-boundary.test.ts, lines 100-106.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/ledger/src/reversal.test.ts",
+   "type": "file",
+   "name": "reversal.test.ts",
+   "filePath": "packages/ledger/src/reversal.test.ts",
+   "summary": "reversal.test.ts \u2014 typescript code, 211 lines, 6 functions, 0 classes, 0 exports, 7 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/ledger/src/reversal.test.ts:body",
+   "type": "function",
+   "name": "body",
+   "filePath": "packages/ledger/src/reversal.test.ts",
+   "lineRange": [
+    21,
+    29
+   ],
+   "summary": "body(extra) \u2014 function in reversal.test.ts, lines 21-29.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/reversal.test.ts:fixture",
+   "type": "function",
+   "name": "fixture",
+   "filePath": "packages/ledger/src/reversal.test.ts",
+   "lineRange": [
+    31,
+    37
+   ],
+   "summary": "fixture(t) \u2014 function in reversal.test.ts, lines 31-37.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/reversal.test.ts:collect",
+   "type": "function",
+   "name": "collect",
+   "filePath": "packages/ledger/src/reversal.test.ts",
+   "lineRange": [
+    39,
+    43
+   ],
+   "summary": "collect(store) \u2014 function in reversal.test.ts, lines 39-43.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/reversal.test.ts:file",
+   "type": "function",
+   "name": "file",
+   "filePath": "packages/ledger/src/reversal.test.ts",
+   "lineRange": [
+    45,
+    45
+   ],
+   "summary": "file(dir) \u2014 function in reversal.test.ts, lines 45-45.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/reversal.test.ts:asFile",
+   "type": "function",
+   "name": "asFile",
+   "filePath": "packages/ledger/src/reversal.test.ts",
+   "lineRange": [
+    47,
+    48
+   ],
+   "summary": "asFile(entries) \u2014 function in reversal.test.ts, lines 47-48.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/reversal.test.ts:rewriteChain",
+   "type": "function",
+   "name": "rewriteChain",
+   "filePath": "packages/ledger/src/reversal.test.ts",
+   "lineRange": [
+    56,
+    81
+   ],
+   "summary": "rewriteChain(entries, attacker, mutate) \u2014 function in reversal.test.ts, lines 56-81.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/ledger/src/reversal.ts",
+   "type": "file",
+   "name": "reversal.ts",
+   "filePath": "packages/ledger/src/reversal.ts",
+   "summary": "reversal.ts \u2014 typescript code, 121 lines, 4 functions, 0 classes, 3 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/reversal.ts:buildReversal",
+   "type": "function",
+   "name": "buildReversal",
+   "filePath": "packages/ledger/src/reversal.ts",
+   "lineRange": [
+    55,
+    57
+   ],
+   "summary": "buildReversal(seq, digest) \u2014 function in reversal.ts, lines 55-57.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/reversal.ts:readLedgerReversal",
+   "type": "function",
+   "name": "readLedgerReversal",
+   "filePath": "packages/ledger/src/reversal.ts",
+   "lineRange": [
+    65,
+    88
+   ],
+   "summary": "readLedgerReversal(body, seq) \u2014 function in reversal.ts, lines 65-88.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/reversal.ts:reversalFinding",
+   "type": "function",
+   "name": "reversalFinding",
+   "filePath": "packages/ledger/src/reversal.ts",
+   "lineRange": [
+    106,
+    117
+   ],
+   "summary": "reversalFinding(reversal, atSeq, hashOf) \u2014 function in reversal.ts, lines 106-117.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/reversal.ts:malformed",
+   "type": "function",
+   "name": "malformed",
+   "filePath": "packages/ledger/src/reversal.ts",
+   "lineRange": [
+    119,
+    121
+   ],
+   "summary": "malformed(seq, detail) \u2014 function in reversal.ts, lines 119-121.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/ledger/src/rotation-drill.test.ts",
+   "type": "file",
+   "name": "rotation-drill.test.ts",
+   "filePath": "packages/ledger/src/rotation-drill.test.ts",
+   "summary": "rotation-drill.test.ts \u2014 typescript code, 154 lines, 4 functions, 0 classes, 0 exports, 6 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/ledger/src/rotation-drill.test.ts:body",
+   "type": "function",
+   "name": "body",
+   "filePath": "packages/ledger/src/rotation-drill.test.ts",
+   "lineRange": [
+    32,
+    40
+   ],
+   "summary": "body(extra) \u2014 function in rotation-drill.test.ts, lines 32-40.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/rotation-drill.test.ts:fixture",
+   "type": "function",
+   "name": "fixture",
+   "filePath": "packages/ledger/src/rotation-drill.test.ts",
+   "lineRange": [
+    42,
+    46
+   ],
+   "summary": "fixture(t) \u2014 function in rotation-drill.test.ts, lines 42-46.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/rotation-drill.test.ts:collect",
+   "type": "function",
+   "name": "collect",
+   "filePath": "packages/ledger/src/rotation-drill.test.ts",
+   "lineRange": [
+    48,
+    52
+   ],
+   "summary": "collect(store) \u2014 function in rotation-drill.test.ts, lines 48-52.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/rotation-drill.test.ts:rotatedChain",
+   "type": "function",
+   "name": "rotatedChain",
+   "filePath": "packages/ledger/src/rotation-drill.test.ts",
+   "lineRange": [
+    59,
+    76
+   ],
+   "summary": "rotatedChain(t) \u2014 function in rotation-drill.test.ts, lines 59-76.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/ledger/src/security.test.ts",
+   "type": "file",
+   "name": "security.test.ts",
+   "filePath": "packages/ledger/src/security.test.ts",
+   "summary": "security.test.ts \u2014 typescript code, 169 lines, 0 functions, 0 classes, 0 exports, 4 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  }
+ ],
+ "edges": [
+  {
+   "source": "file:packages/cli/src/taint.test.ts",
+   "target": "function:packages/cli/src/taint.test.ts:options",
+   "type": "contains",
+   "direction": "forward",
+   "description": "taint.test.ts defines options",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/taint.test.ts",
+   "target": "function:packages/cli/src/taint.test.ts:record",
+   "type": "contains",
+   "direction": "forward",
+   "description": "taint.test.ts defines record",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/taint.test.ts",
+   "target": "function:packages/cli/src/taint.test.ts:node",
+   "type": "contains",
+   "direction": "forward",
+   "description": "taint.test.ts defines node",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/taint.test.ts",
+   "target": "function:packages/cli/src/taint.test.ts:ledgerFile",
+   "type": "contains",
+   "direction": "forward",
+   "description": "taint.test.ts defines ledgerFile",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/taint.ts",
+   "target": "function:packages/cli/src/taint.ts:runTaintCommand",
+   "type": "contains",
+   "direction": "forward",
+   "description": "taint.ts defines runTaintCommand",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/taint.ts",
+   "target": "function:packages/cli/src/taint.ts:runTaintCommand",
+   "type": "exports",
+   "direction": "forward",
+   "description": "taint.ts exports runTaintCommand",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/taint.ts",
+   "target": "function:packages/cli/src/taint.ts:parseTaintArgs",
+   "type": "contains",
+   "direction": "forward",
+   "description": "taint.ts defines parseTaintArgs",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/taint.ts",
+   "target": "function:packages/cli/src/taint.ts:needValue",
+   "type": "contains",
+   "direction": "forward",
+   "description": "taint.ts defines needValue",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/taint.ts",
+   "target": "function:packages/cli/src/taint.ts:positiveInteger",
+   "type": "contains",
+   "direction": "forward",
+   "description": "taint.ts defines positiveInteger",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/taint.ts",
+   "target": "function:packages/cli/src/taint.ts:nonNegativeInteger",
+   "type": "contains",
+   "direction": "forward",
+   "description": "taint.ts defines nonNegativeInteger",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/taint.ts",
+   "target": "function:packages/cli/src/taint.ts:resolveLedgerPath",
+   "type": "contains",
+   "direction": "forward",
+   "description": "taint.ts defines resolveLedgerPath",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/taint.ts",
+   "target": "function:packages/cli/src/taint.ts:findRecord",
+   "type": "contains",
+   "direction": "forward",
+   "description": "taint.ts defines findRecord",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/taint.ts",
+   "target": "function:packages/cli/src/taint.ts:loadTaintGraph",
+   "type": "contains",
+   "direction": "forward",
+   "description": "taint.ts defines loadTaintGraph",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/taint.ts",
+   "target": "function:packages/cli/src/taint.ts:printJson",
+   "type": "contains",
+   "direction": "forward",
+   "description": "taint.ts defines printJson",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/taint.ts",
+   "target": "function:packages/cli/src/taint.ts:exportTaintNeighborhood",
+   "type": "contains",
+   "direction": "forward",
+   "description": "taint.ts defines exportTaintNeighborhood",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/taint.ts",
+   "target": "function:packages/cli/src/taint.ts:neighborhoodToGraph",
+   "type": "contains",
+   "direction": "forward",
+   "description": "taint.ts defines neighborhoodToGraph",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/taint.ts",
+   "target": "function:packages/cli/src/taint.ts:printNeighborhood",
+   "type": "contains",
+   "direction": "forward",
+   "description": "taint.ts defines printNeighborhood",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/cli/src/taint.ts:runTaintCommand",
+   "target": "function:packages/cli/src/taint.ts:parseTaintArgs",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runTaintCommand calls parseTaintArgs",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/taint.ts:runTaintCommand",
+   "target": "function:packages/cli/src/taint.ts:findRecord",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runTaintCommand calls findRecord",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/taint.ts:runTaintCommand",
+   "target": "function:packages/cli/src/taint.ts:printJson",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runTaintCommand calls printJson",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/taint.ts:runTaintCommand",
+   "target": "function:packages/cli/src/taint.ts:printNeighborhood",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runTaintCommand calls printNeighborhood",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/taint.ts:parseTaintArgs",
+   "target": "function:packages/cli/src/taint.ts:needValue",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parseTaintArgs calls needValue",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/taint.ts:parseTaintArgs",
+   "target": "function:packages/cli/src/taint.ts:positiveInteger",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parseTaintArgs calls positiveInteger",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/taint.ts:parseTaintArgs",
+   "target": "function:packages/cli/src/taint.ts:nonNegativeInteger",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parseTaintArgs calls nonNegativeInteger",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/taint.ts:parseTaintArgs",
+   "target": "function:packages/cli/src/taint.ts:resolveLedgerPath",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parseTaintArgs calls resolveLedgerPath",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/taint.ts:printJson",
+   "target": "function:packages/cli/src/taint.ts:neighborhoodToGraph",
+   "type": "calls",
+   "direction": "forward",
+   "description": "printJson calls neighborhoodToGraph",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/cli/src/tui/workspace-ledger-chain-status.test.ts",
+   "target": "function:packages/cli/src/tui/workspace-ledger-chain-status.test.ts:assistantFetcher",
+   "type": "contains",
+   "direction": "forward",
+   "description": "workspace-ledger-chain-status.test.ts defines assistantFetcher",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/workspace-proxy.ts",
+   "target": "class:packages/cli/src/tui/workspace-proxy.ts:ProxyWorkspace",
+   "type": "contains",
+   "direction": "forward",
+   "description": "workspace-proxy.ts defines class ProxyWorkspace",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/update.test.ts",
+   "target": "function:packages/cli/src/update.test.ts:collect",
+   "type": "contains",
+   "direction": "forward",
+   "description": "update.test.ts defines collect",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/update.test.ts",
+   "target": "function:packages/cli/src/update.test.ts:facts",
+   "type": "contains",
+   "direction": "forward",
+   "description": "update.test.ts defines facts",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/update.test.ts",
+   "target": "function:packages/cli/src/update.test.ts:onTargetFacts",
+   "type": "contains",
+   "direction": "forward",
+   "description": "update.test.ts defines onTargetFacts",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/update.test.ts",
+   "target": "function:packages/cli/src/update.test.ts:git",
+   "type": "contains",
+   "direction": "forward",
+   "description": "update.test.ts defines git",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/update.test.ts",
+   "target": "function:packages/cli/src/update.test.ts:commit",
+   "type": "contains",
+   "direction": "forward",
+   "description": "update.test.ts defines commit",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/update.test.ts",
+   "target": "function:packages/cli/src/update.test.ts:installedTree",
+   "type": "contains",
+   "direction": "forward",
+   "description": "update.test.ts defines installedTree",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/update.test.ts",
+   "target": "function:packages/cli/src/update.test.ts:publish",
+   "type": "contains",
+   "direction": "forward",
+   "description": "update.test.ts defines publish",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/update.test.ts",
+   "target": "function:packages/cli/src/update.test.ts:makeInstallable",
+   "type": "contains",
+   "direction": "forward",
+   "description": "update.test.ts defines makeInstallable",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/cli/src/update.test.ts:onTargetFacts",
+   "target": "function:packages/cli/src/update.test.ts:facts",
+   "type": "calls",
+   "direction": "forward",
+   "description": "onTargetFacts calls facts",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/update.test.ts:commit",
+   "target": "function:packages/cli/src/update.test.ts:git",
+   "type": "calls",
+   "direction": "forward",
+   "description": "commit calls git",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/update.test.ts:installedTree",
+   "target": "function:packages/cli/src/update.test.ts:git",
+   "type": "calls",
+   "direction": "forward",
+   "description": "installedTree calls git",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/update.test.ts:installedTree",
+   "target": "function:packages/cli/src/update.test.ts:commit",
+   "type": "calls",
+   "direction": "forward",
+   "description": "installedTree calls commit",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/update.test.ts:publish",
+   "target": "function:packages/cli/src/update.test.ts:git",
+   "type": "calls",
+   "direction": "forward",
+   "description": "publish calls git",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/update.test.ts:publish",
+   "target": "function:packages/cli/src/update.test.ts:commit",
+   "type": "calls",
+   "direction": "forward",
+   "description": "publish calls commit",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/cli/src/update.ts",
+   "target": "function:packages/cli/src/update.ts:message",
+   "type": "contains",
+   "direction": "forward",
+   "description": "update.ts defines message",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/update.ts",
+   "target": "function:packages/cli/src/update.ts:short",
+   "type": "contains",
+   "direction": "forward",
+   "description": "update.ts defines short",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/update.ts",
+   "target": "function:packages/cli/src/update.ts:parseUpdateArgs",
+   "type": "contains",
+   "direction": "forward",
+   "description": "update.ts defines parseUpdateArgs",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/update.ts",
+   "target": "function:packages/cli/src/update.ts:parseUpdateArgs",
+   "type": "exports",
+   "direction": "forward",
+   "description": "update.ts exports parseUpdateArgs",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/update.ts",
+   "target": "function:packages/cli/src/update.ts:resolveUpdateHome",
+   "type": "contains",
+   "direction": "forward",
+   "description": "update.ts defines resolveUpdateHome",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/update.ts",
+   "target": "function:packages/cli/src/update.ts:resolveUpdateHome",
+   "type": "exports",
+   "direction": "forward",
+   "description": "update.ts exports resolveUpdateHome",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/update.ts",
+   "target": "function:packages/cli/src/update.ts:planUpdate",
+   "type": "contains",
+   "direction": "forward",
+   "description": "update.ts defines planUpdate",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/update.ts",
+   "target": "function:packages/cli/src/update.ts:planUpdate",
+   "type": "exports",
+   "direction": "forward",
+   "description": "update.ts exports planUpdate",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/update.ts",
+   "target": "function:packages/cli/src/update.ts:noCheckout",
+   "type": "contains",
+   "direction": "forward",
+   "description": "update.ts defines noCheckout",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/update.ts",
+   "target": "function:packages/cli/src/update.ts:git",
+   "type": "contains",
+   "direction": "forward",
+   "description": "update.ts defines git",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/update.ts",
+   "target": "function:packages/cli/src/update.ts:readFacts",
+   "type": "contains",
+   "direction": "forward",
+   "description": "update.ts defines readFacts",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/update.ts",
+   "target": "function:packages/cli/src/update.ts:installDependencies",
+   "type": "contains",
+   "direction": "forward",
+   "description": "update.ts defines installDependencies",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/update.ts",
+   "target": "function:packages/cli/src/update.ts:runUpdateCommand",
+   "type": "contains",
+   "direction": "forward",
+   "description": "update.ts defines runUpdateCommand",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/update.ts",
+   "target": "function:packages/cli/src/update.ts:runUpdateCommand",
+   "type": "exports",
+   "direction": "forward",
+   "description": "update.ts exports runUpdateCommand",
+   "weight": 0.7
+  },
+  {
+   "source": "function:packages/cli/src/update.ts:readFacts",
+   "target": "function:packages/cli/src/update.ts:git",
+   "type": "calls",
+   "direction": "forward",
+   "description": "readFacts calls git",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/update.ts:runUpdateCommand",
+   "target": "function:packages/cli/src/update.ts:resolveUpdateHome",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runUpdateCommand calls resolveUpdateHome",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/update.ts:runUpdateCommand",
+   "target": "function:packages/cli/src/update.ts:parseUpdateArgs",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runUpdateCommand calls parseUpdateArgs",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/update.ts:runUpdateCommand",
+   "target": "function:packages/cli/src/update.ts:message",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runUpdateCommand calls message",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/update.ts:runUpdateCommand",
+   "target": "function:packages/cli/src/update.ts:noCheckout",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runUpdateCommand calls noCheckout",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/update.ts:runUpdateCommand",
+   "target": "function:packages/cli/src/update.ts:git",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runUpdateCommand calls git",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/update.ts:runUpdateCommand",
+   "target": "function:packages/cli/src/update.ts:readFacts",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runUpdateCommand calls readFacts",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/update.ts:runUpdateCommand",
+   "target": "function:packages/cli/src/update.ts:planUpdate",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runUpdateCommand calls planUpdate",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/update.ts:runUpdateCommand",
+   "target": "function:packages/cli/src/update.ts:short",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runUpdateCommand calls short",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/update.ts:runUpdateCommand",
+   "target": "function:packages/cli/src/update.ts:installDependencies",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runUpdateCommand calls installDependencies",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/cli/src/verify.test.ts",
+   "target": "function:packages/cli/src/verify.test.ts:seedLedger",
+   "type": "contains",
+   "direction": "forward",
+   "description": "verify.test.ts defines seedLedger",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/verify.ts",
+   "target": "function:packages/cli/src/verify.ts:runVerifyCommand",
+   "type": "contains",
+   "direction": "forward",
+   "description": "verify.ts defines runVerifyCommand",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/verify.ts",
+   "target": "function:packages/cli/src/verify.ts:runVerifyCommand",
+   "type": "exports",
+   "direction": "forward",
+   "description": "verify.ts exports runVerifyCommand",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/verify.ts",
+   "target": "function:packages/cli/src/verify.ts:parseVerifyArgs",
+   "type": "contains",
+   "direction": "forward",
+   "description": "verify.ts defines parseVerifyArgs",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/verify.ts",
+   "target": "function:packages/cli/src/verify.ts:resolveVerifyKey",
+   "type": "contains",
+   "direction": "forward",
+   "description": "verify.ts defines resolveVerifyKey",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/verify.ts",
+   "target": "function:packages/cli/src/verify.ts:runStandalone",
+   "type": "contains",
+   "direction": "forward",
+   "description": "verify.ts defines runStandalone",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/verify.ts",
+   "target": "function:packages/cli/src/verify.ts:needValue",
+   "type": "contains",
+   "direction": "forward",
+   "description": "verify.ts defines needValue",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/cli/src/verify.ts:runVerifyCommand",
+   "target": "function:packages/cli/src/verify.ts:parseVerifyArgs",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runVerifyCommand calls parseVerifyArgs",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/verify.ts:runVerifyCommand",
+   "target": "function:packages/cli/src/verify.ts:resolveVerifyKey",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runVerifyCommand calls resolveVerifyKey",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/verify.ts:runVerifyCommand",
+   "target": "function:packages/cli/src/verify.ts:runStandalone",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runVerifyCommand calls runStandalone",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/verify.ts:parseVerifyArgs",
+   "target": "function:packages/cli/src/verify.ts:needValue",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parseVerifyArgs calls needValue",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/cli/src/watch.ts",
+   "target": "function:packages/cli/src/watch.ts:resolveLedgerPath",
+   "type": "contains",
+   "direction": "forward",
+   "description": "watch.ts defines resolveLedgerPath",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/watch.ts",
+   "target": "function:packages/cli/src/watch.ts:resolveLedgerPath",
+   "type": "exports",
+   "direction": "forward",
+   "description": "watch.ts exports resolveLedgerPath",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/watch.ts",
+   "target": "function:packages/cli/src/watch.ts:runWatchCommand",
+   "type": "contains",
+   "direction": "forward",
+   "description": "watch.ts defines runWatchCommand",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/watch.ts",
+   "target": "function:packages/cli/src/watch.ts:runWatchCommand",
+   "type": "exports",
+   "direction": "forward",
+   "description": "watch.ts exports runWatchCommand",
+   "weight": 0.7
+  },
+  {
+   "source": "function:packages/cli/src/watch.ts:runWatchCommand",
+   "target": "function:packages/cli/src/watch.ts:resolveLedgerPath",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runWatchCommand calls resolveLedgerPath",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/reverse-exercise.ts",
+   "target": "function:packages/connectors/src/postgres/reverse-exercise.ts:runDatabaseReverseExercise",
+   "type": "contains",
+   "direction": "forward",
+   "description": "reverse-exercise.ts defines runDatabaseReverseExercise",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/reverse-exercise.ts",
+   "target": "function:packages/connectors/src/postgres/reverse-exercise.ts:runDatabaseReverseExercise",
+   "type": "exports",
+   "direction": "forward",
+   "description": "reverse-exercise.ts exports runDatabaseReverseExercise",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/ledger/src/anchor.test.ts",
+   "target": "function:packages/ledger/src/anchor.test.ts:seed",
+   "type": "contains",
+   "direction": "forward",
+   "description": "anchor.test.ts defines seed",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/anchor.test.ts",
+   "target": "function:packages/ledger/src/anchor.test.ts:scratch",
+   "type": "contains",
+   "direction": "forward",
+   "description": "anchor.test.ts defines scratch",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/anchor.test.ts",
+   "target": "function:packages/ledger/src/anchor.test.ts:lookup",
+   "type": "contains",
+   "direction": "forward",
+   "description": "anchor.test.ts defines lookup",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/anchor.test.ts",
+   "target": "function:packages/ledger/src/anchor.test.ts:anchorsIn",
+   "type": "contains",
+   "direction": "forward",
+   "description": "anchor.test.ts defines anchorsIn",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/anchor.ts",
+   "target": "function:packages/ledger/src/anchor.ts:appendAnchor",
+   "type": "contains",
+   "direction": "forward",
+   "description": "anchor.ts defines appendAnchor",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/anchor.ts",
+   "target": "function:packages/ledger/src/anchor.ts:appendAnchor",
+   "type": "exports",
+   "direction": "forward",
+   "description": "anchor.ts exports appendAnchor",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/ledger/src/anchor.ts",
+   "target": "function:packages/ledger/src/anchor.ts:readAnchors",
+   "type": "contains",
+   "direction": "forward",
+   "description": "anchor.ts defines readAnchors",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/anchor.ts",
+   "target": "function:packages/ledger/src/anchor.ts:readAnchors",
+   "type": "exports",
+   "direction": "forward",
+   "description": "anchor.ts exports readAnchors",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/ledger/src/anchor.ts",
+   "target": "function:packages/ledger/src/anchor.ts:checkAnchors",
+   "type": "contains",
+   "direction": "forward",
+   "description": "anchor.ts defines checkAnchors",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/anchor.ts",
+   "target": "function:packages/ledger/src/anchor.ts:checkAnchors",
+   "type": "exports",
+   "direction": "forward",
+   "description": "anchor.ts exports checkAnchors",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/ledger/src/attest.test.ts",
+   "target": "function:packages/ledger/src/attest.test.ts:seedLedger",
+   "type": "contains",
+   "direction": "forward",
+   "description": "attest.test.ts defines seedLedger",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/attest.ts",
+   "target": "function:packages/ledger/src/attest.ts:parseAttestationDocument",
+   "type": "contains",
+   "direction": "forward",
+   "description": "attest.ts defines parseAttestationDocument",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/attest.ts",
+   "target": "function:packages/ledger/src/attest.ts:parseAttestationDocument",
+   "type": "exports",
+   "direction": "forward",
+   "description": "attest.ts exports parseAttestationDocument",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/ledger/src/attest.ts",
+   "target": "function:packages/ledger/src/attest.ts:attestLedger",
+   "type": "contains",
+   "direction": "forward",
+   "description": "attest.ts defines attestLedger",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/attest.ts",
+   "target": "function:packages/ledger/src/attest.ts:attestLedger",
+   "type": "exports",
+   "direction": "forward",
+   "description": "attest.ts exports attestLedger",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/ledger/src/attest.ts",
+   "target": "function:packages/ledger/src/attest.ts:storeAttestation",
+   "type": "contains",
+   "direction": "forward",
+   "description": "attest.ts defines storeAttestation",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/attest.ts",
+   "target": "function:packages/ledger/src/attest.ts:storeAttestation",
+   "type": "exports",
+   "direction": "forward",
+   "description": "attest.ts exports storeAttestation",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/ledger/src/attest.ts",
+   "target": "function:packages/ledger/src/attest.ts:verifyAttestation",
+   "type": "contains",
+   "direction": "forward",
+   "description": "attest.ts defines verifyAttestation",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/attest.ts",
+   "target": "function:packages/ledger/src/attest.ts:verifyAttestation",
+   "type": "exports",
+   "direction": "forward",
+   "description": "attest.ts exports verifyAttestation",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/ledger/src/attest.ts",
+   "target": "function:packages/ledger/src/attest.ts:verifyAnchor",
+   "type": "contains",
+   "direction": "forward",
+   "description": "attest.ts defines verifyAnchor",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/attest.ts",
+   "target": "function:packages/ledger/src/attest.ts:verifyAnchor",
+   "type": "exports",
+   "direction": "forward",
+   "description": "attest.ts exports verifyAnchor",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/ledger/src/attest.ts",
+   "target": "function:packages/ledger/src/attest.ts:verifyAnchorSignature",
+   "type": "contains",
+   "direction": "forward",
+   "description": "attest.ts defines verifyAnchorSignature",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/attest.ts",
+   "target": "function:packages/ledger/src/attest.ts:merkleDigest",
+   "type": "contains",
+   "direction": "forward",
+   "description": "attest.ts defines merkleDigest",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/attest.ts",
+   "target": "function:packages/ledger/src/attest.ts:merkleDigest",
+   "type": "exports",
+   "direction": "forward",
+   "description": "attest.ts exports merkleDigest",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/ledger/src/attest.ts",
+   "target": "function:packages/ledger/src/attest.ts:unsignedAttestation",
+   "type": "contains",
+   "direction": "forward",
+   "description": "attest.ts defines unsignedAttestation",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/attest.ts",
+   "target": "function:packages/ledger/src/attest.ts:attestationPreimage",
+   "type": "contains",
+   "direction": "forward",
+   "description": "attest.ts defines attestationPreimage",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/attest.ts",
+   "target": "function:packages/ledger/src/attest.ts:attestationSignatureBytes",
+   "type": "contains",
+   "direction": "forward",
+   "description": "attest.ts defines attestationSignatureBytes",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/attest.ts",
+   "target": "function:packages/ledger/src/attest.ts:lookupAttestationKey",
+   "type": "contains",
+   "direction": "forward",
+   "description": "attest.ts defines lookupAttestationKey",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/attest.ts",
+   "target": "function:packages/ledger/src/attest.ts:assertDigest",
+   "type": "contains",
+   "direction": "forward",
+   "description": "attest.ts defines assertDigest",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/ledger/src/attest.ts:attestLedger",
+   "target": "function:packages/ledger/src/attest.ts:merkleDigest",
+   "type": "calls",
+   "direction": "forward",
+   "description": "attestLedger calls merkleDigest",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/ledger/src/attest.ts:attestLedger",
+   "target": "function:packages/ledger/src/attest.ts:attestationPreimage",
+   "type": "calls",
+   "direction": "forward",
+   "description": "attestLedger calls attestationPreimage",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/ledger/src/attest.ts:verifyAttestation",
+   "target": "function:packages/ledger/src/attest.ts:merkleDigest",
+   "type": "calls",
+   "direction": "forward",
+   "description": "verifyAttestation calls merkleDigest",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/ledger/src/attest.ts:verifyAttestation",
+   "target": "function:packages/ledger/src/attest.ts:verifyAnchorSignature",
+   "type": "calls",
+   "direction": "forward",
+   "description": "verifyAttestation calls verifyAnchorSignature",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/ledger/src/attest.ts:verifyAnchor",
+   "target": "function:packages/ledger/src/attest.ts:merkleDigest",
+   "type": "calls",
+   "direction": "forward",
+   "description": "verifyAnchor calls merkleDigest",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/ledger/src/attest.ts:verifyAnchor",
+   "target": "function:packages/ledger/src/attest.ts:verifyAnchorSignature",
+   "type": "calls",
+   "direction": "forward",
+   "description": "verifyAnchor calls verifyAnchorSignature",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/ledger/src/attest.ts:verifyAnchorSignature",
+   "target": "function:packages/ledger/src/attest.ts:attestationSignatureBytes",
+   "type": "calls",
+   "direction": "forward",
+   "description": "verifyAnchorSignature calls attestationSignatureBytes",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/ledger/src/attest.ts:verifyAnchorSignature",
+   "target": "function:packages/ledger/src/attest.ts:lookupAttestationKey",
+   "type": "calls",
+   "direction": "forward",
+   "description": "verifyAnchorSignature calls lookupAttestationKey",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/ledger/src/attest.ts:verifyAnchorSignature",
+   "target": "function:packages/ledger/src/attest.ts:attestationPreimage",
+   "type": "calls",
+   "direction": "forward",
+   "description": "verifyAnchorSignature calls attestationPreimage",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/ledger/src/attest.ts:verifyAnchorSignature",
+   "target": "function:packages/ledger/src/attest.ts:unsignedAttestation",
+   "type": "calls",
+   "direction": "forward",
+   "description": "verifyAnchorSignature calls unsignedAttestation",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/ledger/src/attest.ts:merkleDigest",
+   "target": "function:packages/ledger/src/attest.ts:assertDigest",
+   "type": "calls",
+   "direction": "forward",
+   "description": "merkleDigest calls assertDigest",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/ledger/src/attribution.test.ts",
+   "target": "function:packages/ledger/src/attribution.test.ts:body",
+   "type": "contains",
+   "direction": "forward",
+   "description": "attribution.test.ts defines body",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/attribution.test.ts",
+   "target": "function:packages/ledger/src/attribution.test.ts:fixture",
+   "type": "contains",
+   "direction": "forward",
+   "description": "attribution.test.ts defines fixture",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/attribution.test.ts",
+   "target": "function:packages/ledger/src/attribution.test.ts:collect",
+   "type": "contains",
+   "direction": "forward",
+   "description": "attribution.test.ts defines collect",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/attribution.test.ts",
+   "target": "function:packages/ledger/src/attribution.test.ts:rewriteChain",
+   "type": "contains",
+   "direction": "forward",
+   "description": "attribution.test.ts defines rewriteChain",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/attribution.test.ts",
+   "target": "function:packages/ledger/src/attribution.test.ts:file",
+   "type": "contains",
+   "direction": "forward",
+   "description": "attribution.test.ts defines file",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/attribution.test.ts",
+   "target": "function:packages/ledger/src/attribution.test.ts:asFile",
+   "type": "contains",
+   "direction": "forward",
+   "description": "attribution.test.ts defines asFile",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/attribution.ts",
+   "target": "function:packages/ledger/src/attribution.ts:buildAttribution",
+   "type": "contains",
+   "direction": "forward",
+   "description": "attribution.ts defines buildAttribution",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/attribution.ts",
+   "target": "function:packages/ledger/src/attribution.ts:buildAttribution",
+   "type": "exports",
+   "direction": "forward",
+   "description": "attribution.ts exports buildAttribution",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/ledger/src/attribution.ts",
+   "target": "function:packages/ledger/src/attribution.ts:optional",
+   "type": "contains",
+   "direction": "forward",
+   "description": "attribution.ts defines optional",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/attribution.ts",
+   "target": "function:packages/ledger/src/attribution.ts:readLedgerReason",
+   "type": "contains",
+   "direction": "forward",
+   "description": "attribution.ts defines readLedgerReason",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/attribution.ts",
+   "target": "function:packages/ledger/src/attribution.ts:readLedgerReason",
+   "type": "exports",
+   "direction": "forward",
+   "description": "attribution.ts exports readLedgerReason",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/ledger/src/attribution.ts",
+   "target": "function:packages/ledger/src/attribution.ts:malformed",
+   "type": "contains",
+   "direction": "forward",
+   "description": "attribution.ts defines malformed",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/ledger/src/attribution.ts:buildAttribution",
+   "target": "function:packages/ledger/src/attribution.ts:optional",
+   "type": "calls",
+   "direction": "forward",
+   "description": "buildAttribution calls optional",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/ledger/src/attribution.ts:readLedgerReason",
+   "target": "function:packages/ledger/src/attribution.ts:malformed",
+   "type": "calls",
+   "direction": "forward",
+   "description": "readLedgerReason calls malformed",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/ledger/src/canonical.ts",
+   "target": "function:packages/ledger/src/canonical.ts:SORTED_PAIRS",
+   "type": "contains",
+   "direction": "forward",
+   "description": "canonical.ts defines SORTED_PAIRS",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/canonical.ts",
+   "target": "function:packages/ledger/src/canonical.ts:canonicalJson",
+   "type": "contains",
+   "direction": "forward",
+   "description": "canonical.ts defines canonicalJson",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/canonical.ts",
+   "target": "function:packages/ledger/src/canonical.ts:canonicalJson",
+   "type": "exports",
+   "direction": "forward",
+   "description": "canonical.ts exports canonicalJson",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/ledger/src/canonical.ts",
+   "target": "function:packages/ledger/src/canonical.ts:canonicalize",
+   "type": "contains",
+   "direction": "forward",
+   "description": "canonical.ts defines canonicalize",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/canonical.ts",
+   "target": "function:packages/ledger/src/canonical.ts:entryHash",
+   "type": "contains",
+   "direction": "forward",
+   "description": "canonical.ts defines entryHash",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/canonical.ts",
+   "target": "function:packages/ledger/src/canonical.ts:entryHash",
+   "type": "exports",
+   "direction": "forward",
+   "description": "canonical.ts exports entryHash",
+   "weight": 0.7
+  },
+  {
+   "source": "function:packages/ledger/src/canonical.ts:canonicalJson",
+   "target": "function:packages/ledger/src/canonical.ts:canonicalize",
+   "type": "calls",
+   "direction": "forward",
+   "description": "canonicalJson calls canonicalize",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/ledger/src/canonical.ts:entryHash",
+   "target": "function:packages/ledger/src/canonical.ts:canonicalJson",
+   "type": "calls",
+   "direction": "forward",
+   "description": "entryHash calls canonicalJson",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/ledger/src/feed.test.ts",
+   "target": "function:packages/ledger/src/feed.test.ts:seedLedger",
+   "type": "contains",
+   "direction": "forward",
+   "description": "feed.test.ts defines seedLedger",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/feed.ts",
+   "target": "function:packages/ledger/src/feed.ts:readLedgerFeed",
+   "type": "contains",
+   "direction": "forward",
+   "description": "feed.ts defines readLedgerFeed",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/feed.ts",
+   "target": "function:packages/ledger/src/feed.ts:readLedgerFeed",
+   "type": "exports",
+   "direction": "forward",
+   "description": "feed.ts exports readLedgerFeed",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/ledger/src/feed.ts",
+   "target": "function:packages/ledger/src/feed.ts:watchLedgerFeed",
+   "type": "contains",
+   "direction": "forward",
+   "description": "feed.ts defines watchLedgerFeed",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/feed.ts",
+   "target": "function:packages/ledger/src/feed.ts:watchLedgerFeed",
+   "type": "exports",
+   "direction": "forward",
+   "description": "feed.ts exports watchLedgerFeed",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/ledger/src/feed.ts",
+   "target": "function:packages/ledger/src/feed.ts:toFeedRecord",
+   "type": "contains",
+   "direction": "forward",
+   "description": "feed.ts defines toFeedRecord",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/feed.ts",
+   "target": "function:packages/ledger/src/feed.ts:stringField",
+   "type": "contains",
+   "direction": "forward",
+   "description": "feed.ts defines stringField",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/ledger/src/feed.ts:readLedgerFeed",
+   "target": "function:packages/ledger/src/feed.ts:toFeedRecord",
+   "type": "calls",
+   "direction": "forward",
+   "description": "readLedgerFeed calls toFeedRecord",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/ledger/src/feed.ts:toFeedRecord",
+   "target": "function:packages/ledger/src/feed.ts:stringField",
+   "type": "calls",
+   "direction": "forward",
+   "description": "toFeedRecord calls stringField",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/ledger/src/hardening.ts",
+   "target": "function:packages/ledger/src/hardening.ts:windowsPathKey",
+   "type": "contains",
+   "direction": "forward",
+   "description": "hardening.ts defines windowsPathKey",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/hardening.ts",
+   "target": "function:packages/ledger/src/hardening.ts:windowsDirectories",
+   "type": "contains",
+   "direction": "forward",
+   "description": "hardening.ts defines windowsDirectories",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/hardening.ts",
+   "target": "function:packages/ledger/src/hardening.ts:shareWindowsAclCheck",
+   "type": "contains",
+   "direction": "forward",
+   "description": "hardening.ts defines shareWindowsAclCheck",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/hardening.ts",
+   "target": "function:packages/ledger/src/hardening.ts:windowsPowerShell",
+   "type": "contains",
+   "direction": "forward",
+   "description": "hardening.ts defines windowsPowerShell",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/hardening.ts",
+   "target": "function:packages/ledger/src/hardening.ts:windowsPathAcl",
+   "type": "contains",
+   "direction": "forward",
+   "description": "hardening.ts defines windowsPathAcl",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/hardening.ts",
+   "target": "function:packages/ledger/src/hardening.ts:checkWindowsPathAcl",
+   "type": "contains",
+   "direction": "forward",
+   "description": "hardening.ts defines checkWindowsPathAcl",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/hardening.ts",
+   "target": "function:packages/ledger/src/hardening.ts:windowsPrivateTreeAcl",
+   "type": "contains",
+   "direction": "forward",
+   "description": "hardening.ts defines windowsPrivateTreeAcl",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/hardening.ts",
+   "target": "function:packages/ledger/src/hardening.ts:windowsParentAcl",
+   "type": "contains",
+   "direction": "forward",
+   "description": "hardening.ts defines windowsParentAcl",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/hardening.ts",
+   "target": "function:packages/ledger/src/hardening.ts:checkWindowsParentAcl",
+   "type": "contains",
+   "direction": "forward",
+   "description": "hardening.ts defines checkWindowsParentAcl",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/hardening.ts",
+   "target": "function:packages/ledger/src/hardening.ts:assertSafeAncestorChain",
+   "type": "contains",
+   "direction": "forward",
+   "description": "hardening.ts defines assertSafeAncestorChain",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/hardening.ts",
+   "target": "function:packages/ledger/src/hardening.ts:assertExistingAncestorChain",
+   "type": "contains",
+   "direction": "forward",
+   "description": "hardening.ts defines assertExistingAncestorChain",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/hardening.ts",
+   "target": "function:packages/ledger/src/hardening.ts:windowsKeyAcl",
+   "type": "contains",
+   "direction": "forward",
+   "description": "hardening.ts defines windowsKeyAcl",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/hardening.ts",
+   "target": "function:packages/ledger/src/hardening.ts:windowsKeyAcl",
+   "type": "exports",
+   "direction": "forward",
+   "description": "hardening.ts exports windowsKeyAcl",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/ledger/src/hardening.ts",
+   "target": "function:packages/ledger/src/hardening.ts:sanitizeWorkspace",
+   "type": "contains",
+   "direction": "forward",
+   "description": "hardening.ts defines sanitizeWorkspace",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/hardening.ts",
+   "target": "function:packages/ledger/src/hardening.ts:sanitizeWorkspace",
+   "type": "exports",
+   "direction": "forward",
+   "description": "hardening.ts exports sanitizeWorkspace",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/ledger/src/hardening.ts",
+   "target": "function:packages/ledger/src/hardening.ts:currentUid",
+   "type": "contains",
+   "direction": "forward",
+   "description": "hardening.ts defines currentUid",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/hardening.ts",
+   "target": "function:packages/ledger/src/hardening.ts:assertFileStat",
+   "type": "contains",
+   "direction": "forward",
+   "description": "hardening.ts defines assertFileStat",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/hardening.ts",
+   "target": "function:packages/ledger/src/hardening.ts:assertDirectoryStat",
+   "type": "contains",
+   "direction": "forward",
+   "description": "hardening.ts defines assertDirectoryStat",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/hardening.ts",
+   "target": "function:packages/ledger/src/hardening.ts:ensurePrivateDirectory",
+   "type": "contains",
+   "direction": "forward",
+   "description": "hardening.ts defines ensurePrivateDirectory",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/hardening.ts",
+   "target": "function:packages/ledger/src/hardening.ts:ensurePrivateDirectory",
+   "type": "exports",
+   "direction": "forward",
+   "description": "hardening.ts exports ensurePrivateDirectory",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/ledger/src/hardening.ts",
+   "target": "function:packages/ledger/src/hardening.ts:assertPrivateDirectoryPath",
+   "type": "contains",
+   "direction": "forward",
+   "description": "hardening.ts defines assertPrivateDirectoryPath",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/hardening.ts",
+   "target": "function:packages/ledger/src/hardening.ts:assertPrivateDirectoryPath",
+   "type": "exports",
+   "direction": "forward",
+   "description": "hardening.ts exports assertPrivateDirectoryPath",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/ledger/src/hardening.ts",
+   "target": "function:packages/ledger/src/hardening.ts:assertPrivateDirectoryIfPresent",
+   "type": "contains",
+   "direction": "forward",
+   "description": "hardening.ts defines assertPrivateDirectoryIfPresent",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/hardening.ts",
+   "target": "function:packages/ledger/src/hardening.ts:assertPrivateDirectoryIfPresent",
+   "type": "exports",
+   "direction": "forward",
+   "description": "hardening.ts exports assertPrivateDirectoryIfPresent",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/ledger/src/hardening.ts",
+   "target": "function:packages/ledger/src/hardening.ts:assertPrivateFilePath",
+   "type": "contains",
+   "direction": "forward",
+   "description": "hardening.ts defines assertPrivateFilePath",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/hardening.ts",
+   "target": "function:packages/ledger/src/hardening.ts:assertPrivateFilePath",
+   "type": "exports",
+   "direction": "forward",
+   "description": "hardening.ts exports assertPrivateFilePath",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/ledger/src/hardening.ts",
+   "target": "function:packages/ledger/src/hardening.ts:assertPrivateFileIfPresent",
+   "type": "contains",
+   "direction": "forward",
+   "description": "hardening.ts defines assertPrivateFileIfPresent",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/hardening.ts",
+   "target": "function:packages/ledger/src/hardening.ts:assertPrivateFileIfPresent",
+   "type": "exports",
+   "direction": "forward",
+   "description": "hardening.ts exports assertPrivateFileIfPresent",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/ledger/src/hardening.ts",
+   "target": "function:packages/ledger/src/hardening.ts:assertPrivateHandle",
+   "type": "contains",
+   "direction": "forward",
+   "description": "hardening.ts defines assertPrivateHandle",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/hardening.ts",
+   "target": "function:packages/ledger/src/hardening.ts:openPrivateFile",
+   "type": "contains",
+   "direction": "forward",
+   "description": "hardening.ts defines openPrivateFile",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/hardening.ts",
+   "target": "function:packages/ledger/src/hardening.ts:openPrivateFile",
+   "type": "exports",
+   "direction": "forward",
+   "description": "hardening.ts exports openPrivateFile",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/ledger/src/hardening.ts",
+   "target": "function:packages/ledger/src/hardening.ts:ensurePrivateFile",
+   "type": "contains",
+   "direction": "forward",
+   "description": "hardening.ts defines ensurePrivateFile",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/hardening.ts",
+   "target": "function:packages/ledger/src/hardening.ts:ensurePrivateFile",
+   "type": "exports",
+   "direction": "forward",
+   "description": "hardening.ts exports ensurePrivateFile",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/ledger/src/hardening.ts",
+   "target": "function:packages/ledger/src/hardening.ts:secureGeneratedPrivateSidecar",
+   "type": "contains",
+   "direction": "forward",
+   "description": "hardening.ts defines secureGeneratedPrivateSidecar",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/hardening.ts",
+   "target": "function:packages/ledger/src/hardening.ts:secureGeneratedPrivateSidecar",
+   "type": "exports",
+   "direction": "forward",
+   "description": "hardening.ts exports secureGeneratedPrivateSidecar",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/ledger/src/hardening.ts",
+   "target": "function:packages/ledger/src/hardening.ts:readPrivateFile",
+   "type": "contains",
+   "direction": "forward",
+   "description": "hardening.ts defines readPrivateFile",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/hardening.ts",
+   "target": "function:packages/ledger/src/hardening.ts:readPrivateFile",
+   "type": "exports",
+   "direction": "forward",
+   "description": "hardening.ts exports readPrivateFile",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/ledger/src/hardening.ts",
+   "target": "function:packages/ledger/src/hardening.ts:auditPrivatePath",
+   "type": "contains",
+   "direction": "forward",
+   "description": "hardening.ts defines auditPrivatePath",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/hardening.ts",
+   "target": "function:packages/ledger/src/hardening.ts:auditPrivatePath",
+   "type": "exports",
+   "direction": "forward",
+   "description": "hardening.ts exports auditPrivatePath",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/ledger/src/hardening.ts",
+   "target": "function:packages/ledger/src/hardening.ts:auditPrivateTree",
+   "type": "contains",
+   "direction": "forward",
+   "description": "hardening.ts defines auditPrivateTree",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/hardening.ts",
+   "target": "function:packages/ledger/src/hardening.ts:auditPrivateTree",
+   "type": "exports",
+   "direction": "forward",
+   "description": "hardening.ts exports auditPrivateTree",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/ledger/src/hardening.ts",
+   "target": "function:packages/ledger/src/hardening.ts:assertPrivateKeyFileMode",
+   "type": "contains",
+   "direction": "forward",
+   "description": "hardening.ts defines assertPrivateKeyFileMode",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/hardening.ts",
+   "target": "function:packages/ledger/src/hardening.ts:assertPrivateKeyFileMode",
+   "type": "exports",
+   "direction": "forward",
+   "description": "hardening.ts exports assertPrivateKeyFileMode",
+   "weight": 0.7
+  },
+  {
+   "source": "function:packages/ledger/src/hardening.ts:windowsPathAcl",
+   "target": "function:packages/ledger/src/hardening.ts:windowsPathKey",
+   "type": "calls",
+   "direction": "forward",
+   "description": "windowsPathAcl calls windowsPathKey",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/ledger/src/hardening.ts:windowsPathAcl",
+   "target": "function:packages/ledger/src/hardening.ts:windowsDirectories",
+   "type": "calls",
+   "direction": "forward",
+   "description": "windowsPathAcl calls windowsDirectories",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/ledger/src/hardening.ts:windowsPathAcl",
+   "target": "function:packages/ledger/src/hardening.ts:shareWindowsAclCheck",
+   "type": "calls",
+   "direction": "forward",
+   "description": "windowsPathAcl calls shareWindowsAclCheck",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/ledger/src/hardening.ts:windowsPathAcl",
+   "target": "function:packages/ledger/src/hardening.ts:checkWindowsPathAcl",
+   "type": "calls",
+   "direction": "forward",
+   "description": "windowsPathAcl calls checkWindowsPathAcl",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/ledger/src/hardening.ts:checkWindowsPathAcl",
+   "target": "function:packages/ledger/src/hardening.ts:windowsPathKey",
+   "type": "calls",
+   "direction": "forward",
+   "description": "checkWindowsPathAcl calls windowsPathKey",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/ledger/src/hardening.ts:checkWindowsPathAcl",
+   "target": "function:packages/ledger/src/hardening.ts:windowsPowerShell",
+   "type": "calls",
+   "direction": "forward",
+   "description": "checkWindowsPathAcl calls windowsPowerShell",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/ledger/src/hardening.ts:windowsPrivateTreeAcl",
+   "target": "function:packages/ledger/src/hardening.ts:windowsPowerShell",
+   "type": "calls",
+   "direction": "forward",
+   "description": "windowsPrivateTreeAcl calls windowsPowerShell",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/ledger/src/hardening.ts:windowsParentAcl",
+   "target": "function:packages/ledger/src/hardening.ts:windowsDirectories",
+   "type": "calls",
+   "direction": "forward",
+   "description": "windowsParentAcl calls windowsDirectories",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/ledger/src/hardening.ts:windowsParentAcl",
+   "target": "function:packages/ledger/src/hardening.ts:windowsPathKey",
+   "type": "calls",
+   "direction": "forward",
+   "description": "windowsParentAcl calls windowsPathKey",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/ledger/src/hardening.ts:windowsParentAcl",
+   "target": "function:packages/ledger/src/hardening.ts:shareWindowsAclCheck",
+   "type": "calls",
+   "direction": "forward",
+   "description": "windowsParentAcl calls shareWindowsAclCheck",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/ledger/src/hardening.ts:windowsParentAcl",
+   "target": "function:packages/ledger/src/hardening.ts:checkWindowsParentAcl",
+   "type": "calls",
+   "direction": "forward",
+   "description": "windowsParentAcl calls checkWindowsParentAcl",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/ledger/src/hardening.ts:checkWindowsParentAcl",
+   "target": "function:packages/ledger/src/hardening.ts:windowsPathKey",
+   "type": "calls",
+   "direction": "forward",
+   "description": "checkWindowsParentAcl calls windowsPathKey",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/ledger/src/hardening.ts:checkWindowsParentAcl",
+   "target": "function:packages/ledger/src/hardening.ts:windowsPowerShell",
+   "type": "calls",
+   "direction": "forward",
+   "description": "checkWindowsParentAcl calls windowsPowerShell",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/ledger/src/hardening.ts:assertSafeAncestorChain",
+   "target": "function:packages/ledger/src/hardening.ts:windowsParentAcl",
+   "type": "calls",
+   "direction": "forward",
+   "description": "assertSafeAncestorChain calls windowsParentAcl",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/ledger/src/hardening.ts:assertSafeAncestorChain",
+   "target": "function:packages/ledger/src/hardening.ts:currentUid",
+   "type": "calls",
+   "direction": "forward",
+   "description": "assertSafeAncestorChain calls currentUid",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/ledger/src/hardening.ts:assertExistingAncestorChain",
+   "target": "function:packages/ledger/src/hardening.ts:assertSafeAncestorChain",
+   "type": "calls",
+   "direction": "forward",
+   "description": "assertExistingAncestorChain calls assertSafeAncestorChain",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/ledger/src/hardening.ts:windowsKeyAcl",
+   "target": "function:packages/ledger/src/hardening.ts:windowsPathAcl",
+   "type": "calls",
+   "direction": "forward",
+   "description": "windowsKeyAcl calls windowsPathAcl",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/ledger/src/hardening.ts:assertFileStat",
+   "target": "function:packages/ledger/src/hardening.ts:currentUid",
+   "type": "calls",
+   "direction": "forward",
+   "description": "assertFileStat calls currentUid",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/ledger/src/hardening.ts:assertDirectoryStat",
+   "target": "function:packages/ledger/src/hardening.ts:currentUid",
+   "type": "calls",
+   "direction": "forward",
+   "description": "assertDirectoryStat calls currentUid",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/ledger/src/hardening.ts:ensurePrivateDirectory",
+   "target": "function:packages/ledger/src/hardening.ts:assertExistingAncestorChain",
+   "type": "calls",
+   "direction": "forward",
+   "description": "ensurePrivateDirectory calls assertExistingAncestorChain",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/ledger/src/hardening.ts:ensurePrivateDirectory",
+   "target": "function:packages/ledger/src/hardening.ts:assertSafeAncestorChain",
+   "type": "calls",
+   "direction": "forward",
+   "description": "ensurePrivateDirectory calls assertSafeAncestorChain",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/ledger/src/hardening.ts:ensurePrivateDirectory",
+   "target": "function:packages/ledger/src/hardening.ts:assertDirectoryStat",
+   "type": "calls",
+   "direction": "forward",
+   "description": "ensurePrivateDirectory calls assertDirectoryStat",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/ledger/src/hardening.ts:ensurePrivateDirectory",
+   "target": "function:packages/ledger/src/hardening.ts:windowsPathAcl",
+   "type": "calls",
+   "direction": "forward",
+   "description": "ensurePrivateDirectory calls windowsPathAcl",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/ledger/src/hardening.ts:assertPrivateDirectoryPath",
+   "target": "function:packages/ledger/src/hardening.ts:assertDirectoryStat",
+   "type": "calls",
+   "direction": "forward",
+   "description": "assertPrivateDirectoryPath calls assertDirectoryStat",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/ledger/src/hardening.ts:assertPrivateDirectoryPath",
+   "target": "function:packages/ledger/src/hardening.ts:windowsPathAcl",
+   "type": "calls",
+   "direction": "forward",
+   "description": "assertPrivateDirectoryPath calls windowsPathAcl",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/ledger/src/hardening.ts:assertPrivateDirectoryPath",
+   "target": "function:packages/ledger/src/hardening.ts:assertSafeAncestorChain",
+   "type": "calls",
+   "direction": "forward",
+   "description": "assertPrivateDirectoryPath calls assertSafeAncestorChain",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/ledger/src/hardening.ts:assertPrivateDirectoryIfPresent",
+   "target": "function:packages/ledger/src/hardening.ts:assertPrivateDirectoryPath",
+   "type": "calls",
+   "direction": "forward",
+   "description": "assertPrivateDirectoryIfPresent calls assertPrivateDirectoryPath",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/ledger/src/hardening.ts:assertPrivateDirectoryIfPresent",
+   "target": "function:packages/ledger/src/hardening.ts:assertExistingAncestorChain",
+   "type": "calls",
+   "direction": "forward",
+   "description": "assertPrivateDirectoryIfPresent calls assertExistingAncestorChain",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/ledger/src/hardening.ts:assertPrivateFilePath",
+   "target": "function:packages/ledger/src/hardening.ts:assertPrivateDirectoryPath",
+   "type": "calls",
+   "direction": "forward",
+   "description": "assertPrivateFilePath calls assertPrivateDirectoryPath",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/ledger/src/hardening.ts:assertPrivateFilePath",
+   "target": "function:packages/ledger/src/hardening.ts:assertFileStat",
+   "type": "calls",
+   "direction": "forward",
+   "description": "assertPrivateFilePath calls assertFileStat",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/ledger/src/hardening.ts:assertPrivateFilePath",
+   "target": "function:packages/ledger/src/hardening.ts:windowsPathAcl",
+   "type": "calls",
+   "direction": "forward",
+   "description": "assertPrivateFilePath calls windowsPathAcl",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/ledger/src/hardening.ts:assertPrivateFileIfPresent",
+   "target": "function:packages/ledger/src/hardening.ts:assertPrivateFilePath",
+   "type": "calls",
+   "direction": "forward",
+   "description": "assertPrivateFileIfPresent calls assertPrivateFilePath",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/ledger/src/hardening.ts:assertPrivateHandle",
+   "target": "function:packages/ledger/src/hardening.ts:assertFileStat",
+   "type": "calls",
+   "direction": "forward",
+   "description": "assertPrivateHandle calls assertFileStat",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/ledger/src/hardening.ts:openPrivateFile",
+   "target": "function:packages/ledger/src/hardening.ts:assertPrivateDirectoryPath",
+   "type": "calls",
+   "direction": "forward",
+   "description": "openPrivateFile calls assertPrivateDirectoryPath",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/ledger/src/hardening.ts:openPrivateFile",
+   "target": "function:packages/ledger/src/hardening.ts:assertPrivateHandle",
+   "type": "calls",
+   "direction": "forward",
+   "description": "openPrivateFile calls assertPrivateHandle",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/ledger/src/hardening.ts:openPrivateFile",
+   "target": "function:packages/ledger/src/hardening.ts:windowsPathAcl",
+   "type": "calls",
+   "direction": "forward",
+   "description": "openPrivateFile calls windowsPathAcl",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/ledger/src/hardening.ts:ensurePrivateFile",
+   "target": "function:packages/ledger/src/hardening.ts:openPrivateFile",
+   "type": "calls",
+   "direction": "forward",
+   "description": "ensurePrivateFile calls openPrivateFile",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/ledger/src/hardening.ts:ensurePrivateFile",
+   "target": "function:packages/ledger/src/hardening.ts:assertPrivateFilePath",
+   "type": "calls",
+   "direction": "forward",
+   "description": "ensurePrivateFile calls assertPrivateFilePath",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/ledger/src/hardening.ts:secureGeneratedPrivateSidecar",
+   "target": "function:packages/ledger/src/hardening.ts:assertPrivateDirectoryPath",
+   "type": "calls",
+   "direction": "forward",
+   "description": "secureGeneratedPrivateSidecar calls assertPrivateDirectoryPath",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/ledger/src/hardening.ts:secureGeneratedPrivateSidecar",
+   "target": "function:packages/ledger/src/hardening.ts:currentUid",
+   "type": "calls",
+   "direction": "forward",
+   "description": "secureGeneratedPrivateSidecar calls currentUid",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/ledger/src/hardening.ts:secureGeneratedPrivateSidecar",
+   "target": "function:packages/ledger/src/hardening.ts:windowsPathAcl",
+   "type": "calls",
+   "direction": "forward",
+   "description": "secureGeneratedPrivateSidecar calls windowsPathAcl",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/ledger/src/hardening.ts:secureGeneratedPrivateSidecar",
+   "target": "function:packages/ledger/src/hardening.ts:assertFileStat",
+   "type": "calls",
+   "direction": "forward",
+   "description": "secureGeneratedPrivateSidecar calls assertFileStat",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/ledger/src/hardening.ts:readPrivateFile",
+   "target": "function:packages/ledger/src/hardening.ts:openPrivateFile",
+   "type": "calls",
+   "direction": "forward",
+   "description": "readPrivateFile calls openPrivateFile",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/ledger/src/hardening.ts:auditPrivatePath",
+   "target": "function:packages/ledger/src/hardening.ts:assertPrivateDirectoryPath",
+   "type": "calls",
+   "direction": "forward",
+   "description": "auditPrivatePath calls assertPrivateDirectoryPath",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/ledger/src/hardening.ts:auditPrivatePath",
+   "target": "function:packages/ledger/src/hardening.ts:assertPrivateFilePath",
+   "type": "calls",
+   "direction": "forward",
+   "description": "auditPrivatePath calls assertPrivateFilePath",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/ledger/src/hardening.ts:auditPrivateTree",
+   "target": "function:packages/ledger/src/hardening.ts:assertPrivateDirectoryPath",
+   "type": "calls",
+   "direction": "forward",
+   "description": "auditPrivateTree calls assertPrivateDirectoryPath",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/ledger/src/hardening.ts:auditPrivateTree",
+   "target": "function:packages/ledger/src/hardening.ts:windowsPrivateTreeAcl",
+   "type": "calls",
+   "direction": "forward",
+   "description": "auditPrivateTree calls windowsPrivateTreeAcl",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/ledger/src/hardening.ts:assertPrivateKeyFileMode",
+   "target": "function:packages/ledger/src/hardening.ts:assertPrivateFilePath",
+   "type": "calls",
+   "direction": "forward",
+   "description": "assertPrivateKeyFileMode calls assertPrivateFilePath",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/ledger/src/index.test.ts",
+   "target": "function:packages/ledger/src/index.test.ts:store",
+   "type": "contains",
+   "direction": "forward",
+   "description": "index.test.ts defines store",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/index.ts",
+   "target": "function:packages/ledger/src/index.ts:signingPreimage",
+   "type": "contains",
+   "direction": "forward",
+   "description": "index.ts defines signingPreimage",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/index.ts",
+   "target": "function:packages/ledger/src/index.ts:signingPreimage",
+   "type": "exports",
+   "direction": "forward",
+   "description": "index.ts exports signingPreimage",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/ledger/src/paths.test.ts",
+   "target": "function:packages/ledger/src/paths.test.ts:withHome",
+   "type": "contains",
+   "direction": "forward",
+   "description": "paths.test.ts defines withHome",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/paths.ts",
+   "target": "function:packages/ledger/src/paths.ts:dataDir",
+   "type": "contains",
+   "direction": "forward",
+   "description": "paths.ts defines dataDir",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/paths.ts",
+   "target": "function:packages/ledger/src/paths.ts:dataDir",
+   "type": "exports",
+   "direction": "forward",
+   "description": "paths.ts exports dataDir",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/ledger/src/paths.ts",
+   "target": "function:packages/ledger/src/paths.ts:isEmptyDirectory",
+   "type": "contains",
+   "direction": "forward",
+   "description": "paths.ts defines isEmptyDirectory",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/paths.ts",
+   "target": "function:packages/ledger/src/paths.ts:nonEmpty",
+   "type": "contains",
+   "direction": "forward",
+   "description": "paths.ts defines nonEmpty",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/paths.ts",
+   "target": "function:packages/ledger/src/paths.ts:describeState",
+   "type": "contains",
+   "direction": "forward",
+   "description": "paths.ts defines describeState",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/paths.ts",
+   "target": "function:packages/ledger/src/paths.ts:describeState",
+   "type": "exports",
+   "direction": "forward",
+   "description": "paths.ts exports describeState",
+   "weight": 0.7
+  },
+  {
+   "source": "function:packages/ledger/src/paths.ts:nonEmpty",
+   "target": "function:packages/ledger/src/paths.ts:isEmptyDirectory",
+   "type": "calls",
+   "direction": "forward",
+   "description": "nonEmpty calls isEmptyDirectory",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/ledger/src/paths.ts:describeState",
+   "target": "function:packages/ledger/src/paths.ts:dataDir",
+   "type": "calls",
+   "direction": "forward",
+   "description": "describeState calls dataDir",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/ledger/src/paths.ts:describeState",
+   "target": "function:packages/ledger/src/paths.ts:nonEmpty",
+   "type": "calls",
+   "direction": "forward",
+   "description": "describeState calls nonEmpty",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/ledger/src/reversal-boundary.test.ts",
+   "target": "function:packages/ledger/src/reversal-boundary.test.ts:body",
+   "type": "contains",
+   "direction": "forward",
+   "description": "reversal-boundary.test.ts defines body",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/reversal-boundary.test.ts",
+   "target": "function:packages/ledger/src/reversal-boundary.test.ts:writeChain",
+   "type": "contains",
+   "direction": "forward",
+   "description": "reversal-boundary.test.ts defines writeChain",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/reversal-boundary.test.ts",
+   "target": "function:packages/ledger/src/reversal-boundary.test.ts:rewriteAs",
+   "type": "contains",
+   "direction": "forward",
+   "description": "reversal-boundary.test.ts defines rewriteAs",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/reversal-boundary.test.ts",
+   "target": "function:packages/ledger/src/reversal-boundary.test.ts:fixture",
+   "type": "contains",
+   "direction": "forward",
+   "description": "reversal-boundary.test.ts defines fixture",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/reversal.test.ts",
+   "target": "function:packages/ledger/src/reversal.test.ts:body",
+   "type": "contains",
+   "direction": "forward",
+   "description": "reversal.test.ts defines body",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/reversal.test.ts",
+   "target": "function:packages/ledger/src/reversal.test.ts:fixture",
+   "type": "contains",
+   "direction": "forward",
+   "description": "reversal.test.ts defines fixture",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/reversal.test.ts",
+   "target": "function:packages/ledger/src/reversal.test.ts:collect",
+   "type": "contains",
+   "direction": "forward",
+   "description": "reversal.test.ts defines collect",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/reversal.test.ts",
+   "target": "function:packages/ledger/src/reversal.test.ts:file",
+   "type": "contains",
+   "direction": "forward",
+   "description": "reversal.test.ts defines file",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/reversal.test.ts",
+   "target": "function:packages/ledger/src/reversal.test.ts:asFile",
+   "type": "contains",
+   "direction": "forward",
+   "description": "reversal.test.ts defines asFile",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/reversal.test.ts",
+   "target": "function:packages/ledger/src/reversal.test.ts:rewriteChain",
+   "type": "contains",
+   "direction": "forward",
+   "description": "reversal.test.ts defines rewriteChain",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/reversal.ts",
+   "target": "function:packages/ledger/src/reversal.ts:buildReversal",
+   "type": "contains",
+   "direction": "forward",
+   "description": "reversal.ts defines buildReversal",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/reversal.ts",
+   "target": "function:packages/ledger/src/reversal.ts:buildReversal",
+   "type": "exports",
+   "direction": "forward",
+   "description": "reversal.ts exports buildReversal",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/ledger/src/reversal.ts",
+   "target": "function:packages/ledger/src/reversal.ts:readLedgerReversal",
+   "type": "contains",
+   "direction": "forward",
+   "description": "reversal.ts defines readLedgerReversal",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/reversal.ts",
+   "target": "function:packages/ledger/src/reversal.ts:readLedgerReversal",
+   "type": "exports",
+   "direction": "forward",
+   "description": "reversal.ts exports readLedgerReversal",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/ledger/src/reversal.ts",
+   "target": "function:packages/ledger/src/reversal.ts:reversalFinding",
+   "type": "contains",
+   "direction": "forward",
+   "description": "reversal.ts defines reversalFinding",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/reversal.ts",
+   "target": "function:packages/ledger/src/reversal.ts:reversalFinding",
+   "type": "exports",
+   "direction": "forward",
+   "description": "reversal.ts exports reversalFinding",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/ledger/src/reversal.ts",
+   "target": "function:packages/ledger/src/reversal.ts:malformed",
+   "type": "contains",
+   "direction": "forward",
+   "description": "reversal.ts defines malformed",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/ledger/src/reversal.ts:readLedgerReversal",
+   "target": "function:packages/ledger/src/reversal.ts:malformed",
+   "type": "calls",
+   "direction": "forward",
+   "description": "readLedgerReversal calls malformed",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/ledger/src/rotation-drill.test.ts",
+   "target": "function:packages/ledger/src/rotation-drill.test.ts:body",
+   "type": "contains",
+   "direction": "forward",
+   "description": "rotation-drill.test.ts defines body",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/rotation-drill.test.ts",
+   "target": "function:packages/ledger/src/rotation-drill.test.ts:fixture",
+   "type": "contains",
+   "direction": "forward",
+   "description": "rotation-drill.test.ts defines fixture",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/rotation-drill.test.ts",
+   "target": "function:packages/ledger/src/rotation-drill.test.ts:collect",
+   "type": "contains",
+   "direction": "forward",
+   "description": "rotation-drill.test.ts defines collect",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/rotation-drill.test.ts",
+   "target": "function:packages/ledger/src/rotation-drill.test.ts:rotatedChain",
+   "type": "contains",
+   "direction": "forward",
+   "description": "rotation-drill.test.ts defines rotatedChain",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/ledger/src/rotation-drill.test.ts:rotatedChain",
+   "target": "function:packages/ledger/src/rotation-drill.test.ts:fixture",
+   "type": "calls",
+   "direction": "forward",
+   "description": "rotatedChain calls fixture",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/ledger/src/rotation-drill.test.ts:rotatedChain",
+   "target": "function:packages/ledger/src/rotation-drill.test.ts:body",
+   "type": "calls",
+   "direction": "forward",
+   "description": "rotatedChain calls body",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/cli/src/taint.test.ts",
+   "target": "file:packages/cli/src/taint.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "taint.test.ts imports taint.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/taint.test.ts",
+   "target": "file:packages/ledger/src/feed.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "taint.test.ts imports feed.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/taint.test.ts",
+   "target": "file:packages/ledger/src/taint/graph.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "taint.test.ts imports graph.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/taint.ts",
+   "target": "file:packages/ledger/src/feed.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "taint.ts imports feed.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/taint.ts",
+   "target": "file:packages/ledger/src/taint/capture.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "taint.ts imports capture.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/taint.ts",
+   "target": "file:packages/ledger/src/taint/graph.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "taint.ts imports graph.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/taint.ts",
+   "target": "file:packages/ledger/src/taint/query.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "taint.ts imports query.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/workspace-ledger-chain-status.test.ts",
+   "target": "file:packages/cli/src/tui/workspace.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "workspace-ledger-chain-status.test.ts imports workspace.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/workspace-ledger-chain-status.test.ts",
+   "target": "file:packages/ledger/src/sign.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "workspace-ledger-chain-status.test.ts imports sign.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/workspace-ledger-chain-status.test.ts",
+   "target": "file:packages/ledger/src/store.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "workspace-ledger-chain-status.test.ts imports store.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/workspace-ledger-chain-status.test.ts",
+   "target": "file:packages/ledger/src/verify.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "workspace-ledger-chain-status.test.ts imports verify.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/workspace-ledger-chain-status.test.ts",
+   "target": "file:packages/workbench/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "workspace-ledger-chain-status.test.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/workspace-proxy.test.ts",
+   "target": "file:packages/cli/src/tui/workspace-proxy.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "workspace-proxy.test.ts imports workspace-proxy.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/workspace-proxy.test.ts",
+   "target": "file:packages/ledger/src/sign.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "workspace-proxy.test.ts imports sign.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/workspace-proxy.test.ts",
+   "target": "file:packages/ledger/src/store.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "workspace-proxy.test.ts imports store.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/workspace-proxy.test.ts",
+   "target": "file:packages/policy/src/approvals.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "workspace-proxy.test.ts imports approvals.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/workspace-proxy.ts",
+   "target": "file:packages/ledger/src/paths.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "workspace-proxy.ts imports paths.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/workspace-proxy.ts",
+   "target": "file:packages/ledger/src/sign.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "workspace-proxy.ts imports sign.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/workspace-proxy.ts",
+   "target": "file:packages/ledger/src/store.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "workspace-proxy.ts imports store.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/workspace-proxy.ts",
+   "target": "file:packages/ledger/src/verify-key.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "workspace-proxy.ts imports verify-key.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/workspace-proxy.ts",
+   "target": "file:packages/ledger/src/verify.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "workspace-proxy.ts imports verify.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/workspace-proxy.ts",
+   "target": "file:packages/policy/src/approvals.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "workspace-proxy.ts imports approvals.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/update.test.ts",
+   "target": "file:packages/cli/src/update.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "update.test.ts imports update.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/verify.test.ts",
+   "target": "file:packages/cli/src/verify.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "verify.test.ts imports verify.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/verify.test.ts",
+   "target": "file:packages/ledger/src/attest.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "verify.test.ts imports attest.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/verify.test.ts",
+   "target": "file:packages/ledger/src/sign.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "verify.test.ts imports sign.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/verify.test.ts",
+   "target": "file:packages/ledger/src/store.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "verify.test.ts imports store.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/verify.ts",
+   "target": "file:packages/cli/src/ledger-target.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "verify.ts imports ledger-target.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/verify.ts",
+   "target": "file:packages/ledger/src/anchor.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "verify.ts imports anchor.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/verify.ts",
+   "target": "file:packages/ledger/src/attest.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "verify.ts imports attest.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/verify.ts",
+   "target": "file:packages/ledger/src/verify-key.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "verify.ts imports verify-key.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/verify.ts",
+   "target": "file:packages/ledger/src/verify.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "verify.ts imports verify.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/watch.test.ts",
+   "target": "file:packages/cli/src/watch.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "watch.test.ts imports watch.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/watch.ts",
+   "target": "file:packages/cli/src/tui/caps.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "watch.ts imports caps.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/watch.ts",
+   "target": "file:packages/cli/src/tui/live.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "watch.ts imports live.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/watch.ts",
+   "target": "file:packages/cli/src/tui/watch.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "watch.ts imports watch.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/watch.ts",
+   "target": "file:packages/ledger/src/env-compat.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "watch.ts imports env-compat.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/watch.ts",
+   "target": "file:packages/ledger/src/feed.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "watch.ts imports feed.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/watch.ts",
+   "target": "file:packages/ledger/src/paths.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "watch.ts imports paths.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/watch.ts",
+   "target": "file:packages/ledger/src/sign.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "watch.ts imports sign.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/watch.ts",
+   "target": "file:packages/ledger/src/verify-key.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "watch.ts imports verify-key.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/watch.ts",
+   "target": "file:packages/policy/src/approvals.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "watch.ts imports approvals.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/reverse-exercise.ts",
+   "target": "file:packages/connectors/src/postgres/managed.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "reverse-exercise.ts imports managed.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/reverse-exercise.ts",
+   "target": "file:packages/ledger/src/sign.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "reverse-exercise.ts imports sign.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/reverse-exercise.ts",
+   "target": "file:packages/ledger/src/verify.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "reverse-exercise.ts imports verify.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/reverse-exercise.ts",
+   "target": "file:packages/runtime/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "reverse-exercise.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/ledger/src/anchor.test.ts",
+   "target": "file:packages/ledger/src/anchor.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "anchor.test.ts imports anchor.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/ledger/src/anchor.test.ts",
+   "target": "file:packages/ledger/src/attest.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "anchor.test.ts imports attest.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/ledger/src/anchor.test.ts",
+   "target": "file:packages/ledger/src/canonical.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "anchor.test.ts imports canonical.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/ledger/src/anchor.test.ts",
+   "target": "file:packages/ledger/src/sign.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "anchor.test.ts imports sign.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/ledger/src/anchor.test.ts",
+   "target": "file:packages/ledger/src/store.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "anchor.test.ts imports store.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/ledger/src/anchor.test.ts",
+   "target": "file:packages/ledger/src/verify.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "anchor.test.ts imports verify.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/ledger/src/anchor.ts",
+   "target": "file:packages/ledger/src/attest.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "anchor.ts imports attest.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/ledger/src/anchor.ts",
+   "target": "file:packages/ledger/src/store.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "anchor.ts imports store.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/ledger/src/anchor.ts",
+   "target": "file:packages/ledger/src/verify.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "anchor.ts imports verify.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/ledger/src/attest.test.ts",
+   "target": "file:packages/ledger/src/attest.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "attest.test.ts imports attest.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/ledger/src/attest.test.ts",
+   "target": "file:packages/ledger/src/sign.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "attest.test.ts imports sign.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/ledger/src/attest.test.ts",
+   "target": "file:packages/ledger/src/store.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "attest.test.ts imports store.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/ledger/src/attest.test.ts",
+   "target": "file:packages/ledger/src/verify.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "attest.test.ts imports verify.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/ledger/src/attest.ts",
+   "target": "file:packages/ledger/src/canonical.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "attest.ts imports canonical.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/ledger/src/attest.ts",
+   "target": "file:packages/ledger/src/hardening.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "attest.ts imports hardening.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/ledger/src/attest.ts",
+   "target": "file:packages/ledger/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "attest.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/ledger/src/attest.ts",
+   "target": "file:packages/ledger/src/sign.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "attest.ts imports sign.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/ledger/src/attest.ts",
+   "target": "file:packages/ledger/src/store.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "attest.ts imports store.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/ledger/src/attest.ts",
+   "target": "file:packages/ledger/src/verify.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "attest.ts imports verify.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/ledger/src/attribution.test.ts",
+   "target": "file:packages/ledger/src/attribution.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "attribution.test.ts imports attribution.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/ledger/src/attribution.test.ts",
+   "target": "file:packages/ledger/src/canonical.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "attribution.test.ts imports canonical.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/ledger/src/attribution.test.ts",
+   "target": "file:packages/ledger/src/feed.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "attribution.test.ts imports feed.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/ledger/src/attribution.test.ts",
+   "target": "file:packages/ledger/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "attribution.test.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/ledger/src/attribution.test.ts",
+   "target": "file:packages/ledger/src/sign.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "attribution.test.ts imports sign.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/ledger/src/attribution.test.ts",
+   "target": "file:packages/ledger/src/store.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "attribution.test.ts imports store.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/ledger/src/attribution.test.ts",
+   "target": "file:packages/ledger/src/verify.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "attribution.test.ts imports verify.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/ledger/src/feed.test.ts",
+   "target": "file:packages/ledger/src/feed.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "feed.test.ts imports feed.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/ledger/src/feed.test.ts",
+   "target": "file:packages/ledger/src/sign.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "feed.test.ts imports sign.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/ledger/src/feed.test.ts",
+   "target": "file:packages/ledger/src/store.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "feed.test.ts imports store.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/ledger/src/feed.ts",
+   "target": "file:packages/ledger/src/attribution.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "feed.ts imports attribution.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/ledger/src/feed.ts",
+   "target": "file:packages/ledger/src/reversal.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "feed.ts imports reversal.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/ledger/src/feed.ts",
+   "target": "file:packages/ledger/src/store.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "feed.ts imports store.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/ledger/src/feed.ts",
+   "target": "file:packages/ledger/src/verify.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "feed.ts imports verify.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/ledger/src/hardening.test.ts",
+   "target": "file:packages/ledger/src/hardening.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "hardening.test.ts imports hardening.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/ledger/src/hardening.test.ts",
+   "target": "file:packages/ledger/src/sign.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "hardening.test.ts imports sign.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/ledger/src/hardening.test.ts",
+   "target": "file:packages/ledger/src/store.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "hardening.test.ts imports store.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/ledger/src/index.test.ts",
+   "target": "file:packages/ledger/src/canonical.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "index.test.ts imports canonical.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/ledger/src/index.test.ts",
+   "target": "file:packages/ledger/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "index.test.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/ledger/src/index.test.ts",
+   "target": "file:packages/ledger/src/sign.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "index.test.ts imports sign.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/ledger/src/index.test.ts",
+   "target": "file:packages/ledger/src/store.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "index.test.ts imports store.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/ledger/src/paths.test.ts",
+   "target": "file:packages/ledger/src/paths.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "paths.test.ts imports paths.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/ledger/src/reversal-boundary.test.ts",
+   "target": "file:packages/ledger/src/canonical.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "reversal-boundary.test.ts imports canonical.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/ledger/src/reversal-boundary.test.ts",
+   "target": "file:packages/ledger/src/feed.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "reversal-boundary.test.ts imports feed.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/ledger/src/reversal-boundary.test.ts",
+   "target": "file:packages/ledger/src/hardening.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "reversal-boundary.test.ts imports hardening.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/ledger/src/reversal-boundary.test.ts",
+   "target": "file:packages/ledger/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "reversal-boundary.test.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/ledger/src/reversal-boundary.test.ts",
+   "target": "file:packages/ledger/src/reversal.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "reversal-boundary.test.ts imports reversal.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/ledger/src/reversal-boundary.test.ts",
+   "target": "file:packages/ledger/src/sign.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "reversal-boundary.test.ts imports sign.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/ledger/src/reversal-boundary.test.ts",
+   "target": "file:packages/ledger/src/store.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "reversal-boundary.test.ts imports store.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/ledger/src/reversal-boundary.test.ts",
+   "target": "file:packages/ledger/src/verify.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "reversal-boundary.test.ts imports verify.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/ledger/src/reversal.test.ts",
+   "target": "file:packages/ledger/src/canonical.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "reversal.test.ts imports canonical.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/ledger/src/reversal.test.ts",
+   "target": "file:packages/ledger/src/feed.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "reversal.test.ts imports feed.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/ledger/src/reversal.test.ts",
+   "target": "file:packages/ledger/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "reversal.test.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/ledger/src/reversal.test.ts",
+   "target": "file:packages/ledger/src/reversal.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "reversal.test.ts imports reversal.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/ledger/src/reversal.test.ts",
+   "target": "file:packages/ledger/src/sign.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "reversal.test.ts imports sign.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/ledger/src/reversal.test.ts",
+   "target": "file:packages/ledger/src/store.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "reversal.test.ts imports store.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/ledger/src/reversal.test.ts",
+   "target": "file:packages/ledger/src/verify.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "reversal.test.ts imports verify.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/ledger/src/rotation-drill.test.ts",
+   "target": "file:packages/ledger/src/canonical.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "rotation-drill.test.ts imports canonical.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/ledger/src/rotation-drill.test.ts",
+   "target": "file:packages/ledger/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "rotation-drill.test.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/ledger/src/rotation-drill.test.ts",
+   "target": "file:packages/ledger/src/sign.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "rotation-drill.test.ts imports sign.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/ledger/src/rotation-drill.test.ts",
+   "target": "file:packages/ledger/src/store.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "rotation-drill.test.ts imports store.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/ledger/src/rotation-drill.test.ts",
+   "target": "file:packages/ledger/src/verify-key.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "rotation-drill.test.ts imports verify-key.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/ledger/src/rotation-drill.test.ts",
+   "target": "file:packages/ledger/src/verify.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "rotation-drill.test.ts imports verify.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/ledger/src/security.test.ts",
+   "target": "file:packages/ledger/src/attest.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "security.test.ts imports attest.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/ledger/src/security.test.ts",
+   "target": "file:packages/ledger/src/sign.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "security.test.ts imports sign.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/ledger/src/security.test.ts",
+   "target": "file:packages/ledger/src/store.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "security.test.ts imports store.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/ledger/src/security.test.ts",
+   "target": "file:packages/ledger/src/verify.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "security.test.ts imports verify.ts",
+   "weight": 0.8
+  }
+ ]
+}

@@ -1,0 +1,6661 @@
+{
+ "nodes": [
+  {
+   "id": "file:apps/control-plane/api/server.test.ts",
+   "type": "file",
+   "name": "server.test.ts",
+   "filePath": "apps/control-plane/api/server.test.ts",
+   "summary": "server.test.ts \u2014 typescript code, 2541 lines, 3 functions, 0 classes, 0 exports, 9 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "function:apps/control-plane/api/server.test.ts:seedLedger",
+   "type": "function",
+   "name": "seedLedger",
+   "filePath": "apps/control-plane/api/server.test.ts",
+   "lineRange": [
+    34,
+    51
+   ],
+   "summary": "seedLedger(count) \u2014 function in server.test.ts, lines 34-51.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/server.test.ts:withServer",
+   "type": "function",
+   "name": "withServer",
+   "filePath": "apps/control-plane/api/server.test.ts",
+   "lineRange": [
+    60,
+    82
+   ],
+   "summary": "withServer(ledgerPath, run, options) \u2014 function in server.test.ts, lines 60-82.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/server.test.ts:responseErrorCode",
+   "type": "function",
+   "name": "responseErrorCode",
+   "filePath": "apps/control-plane/api/server.test.ts",
+   "lineRange": [
+    2031,
+    2039
+   ],
+   "summary": "responseErrorCode(response) \u2014 function in server.test.ts, lines 2031-2039.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/api/verify-key.test.ts",
+   "type": "file",
+   "name": "verify-key.test.ts",
+   "filePath": "apps/control-plane/api/verify-key.test.ts",
+   "summary": "verify-key.test.ts \u2014 typescript code, 339 lines, 7 functions, 0 classes, 0 exports, 8 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:apps/control-plane/api/verify-key.test.ts:seed",
+   "type": "function",
+   "name": "seed",
+   "filePath": "apps/control-plane/api/verify-key.test.ts",
+   "lineRange": [
+    18,
+    31
+   ],
+   "summary": "seed(root, dir, tools) \u2014 function in verify-key.test.ts, lines 18-31.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/verify-key.test.ts:spkiOf",
+   "type": "function",
+   "name": "spkiOf",
+   "filePath": "apps/control-plane/api/verify-key.test.ts",
+   "lineRange": [
+    33,
+    37
+   ],
+   "summary": "spkiOf(key) \u2014 function in verify-key.test.ts, lines 33-37.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/verify-key.test.ts:serve",
+   "type": "function",
+   "name": "serve",
+   "filePath": "apps/control-plane/api/verify-key.test.ts",
+   "lineRange": [
+    39,
+    56
+   ],
+   "summary": "serve(ledgerPath, env, run) \u2014 function in verify-key.test.ts, lines 39-56.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/verify-key.test.ts:verify",
+   "type": "function",
+   "name": "verify",
+   "filePath": "apps/control-plane/api/verify-key.test.ts",
+   "lineRange": [
+    76,
+    77
+   ],
+   "summary": "verify(origin, query) \u2014 function in verify-key.test.ts, lines 76-77.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/verify-key.test.ts:seedWorkbench",
+   "type": "function",
+   "name": "seedWorkbench",
+   "filePath": "apps/control-plane/api/verify-key.test.ts",
+   "lineRange": [
+    85,
+    110
+   ],
+   "summary": "seedWorkbench(dataDir, entries) \u2014 function in verify-key.test.ts, lines 85-110.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/verify-key.test.ts:treeOf",
+   "type": "function",
+   "name": "treeOf",
+   "filePath": "apps/control-plane/api/verify-key.test.ts",
+   "lineRange": [
+    113,
+    122
+   ],
+   "summary": "treeOf(dir, prefix) \u2014 function in verify-key.test.ts, lines 113-122.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/verify-key.test.ts:keyMaterial",
+   "type": "function",
+   "name": "keyMaterial",
+   "filePath": "apps/control-plane/api/verify-key.test.ts",
+   "lineRange": [
+    129,
+    130
+   ],
+   "summary": "keyMaterial(paths) \u2014 function in verify-key.test.ts, lines 129-130.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/web/app.js",
+   "type": "file",
+   "name": "app.js",
+   "filePath": "apps/control-plane/web/app.js",
+   "summary": "app.js \u2014 javascript code, 325 lines, 15 functions, 0 classes, 8 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:apps/control-plane/web/app.js:escapeHtml",
+   "type": "function",
+   "name": "escapeHtml",
+   "filePath": "apps/control-plane/web/app.js",
+   "lineRange": [
+    1,
+    1
+   ],
+   "summary": "escapeHtml() \u2014 function in app.js, lines 1-1.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/web/app.js:errorMessage",
+   "type": "function",
+   "name": "errorMessage",
+   "filePath": "apps/control-plane/web/app.js",
+   "lineRange": [
+    2,
+    2
+   ],
+   "summary": "errorMessage() \u2014 function in app.js, lines 2-2.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/web/app.js:errorHtml",
+   "type": "function",
+   "name": "errorHtml",
+   "filePath": "apps/control-plane/web/app.js",
+   "lineRange": [
+    3,
+    3
+   ],
+   "summary": "errorHtml() \u2014 function in app.js, lines 3-3.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/web/app.js:expiry",
+   "type": "function",
+   "name": "expiry",
+   "filePath": "apps/control-plane/web/app.js",
+   "lineRange": [
+    4,
+    4
+   ],
+   "summary": "expiry() \u2014 function in app.js, lines 4-4.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/web/app.js:feedUrl",
+   "type": "function",
+   "name": "feedUrl",
+   "filePath": "apps/control-plane/web/app.js",
+   "lineRange": [
+    6,
+    12
+   ],
+   "summary": "feedUrl(workspace) \u2014 function in app.js, lines 6-12.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/web/app.js:decisionRequest",
+   "type": "function",
+   "name": "decisionRequest",
+   "filePath": "apps/control-plane/web/app.js",
+   "lineRange": [
+    14,
+    20
+   ],
+   "summary": "decisionRequest(id, kind) \u2014 function in app.js, lines 14-20.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/web/app.js:decisionState",
+   "type": "function",
+   "name": "decisionState",
+   "filePath": "apps/control-plane/web/app.js",
+   "lineRange": [
+    22,
+    28
+   ],
+   "summary": "decisionState(state, event) \u2014 function in app.js, lines 22-28.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/web/app.js:classTag",
+   "type": "function",
+   "name": "classTag",
+   "filePath": "apps/control-plane/web/app.js",
+   "lineRange": [
+    30,
+    33
+   ],
+   "summary": "classTag(klass) \u2014 function in app.js, lines 30-33.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/web/app.js:renderFeed",
+   "type": "function",
+   "name": "renderFeed",
+   "filePath": "apps/control-plane/web/app.js",
+   "lineRange": [
+    35,
+    39
+   ],
+   "summary": "renderFeed(entries, error) \u2014 function in app.js, lines 35-39.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/web/app.js:renderRecord",
+   "type": "function",
+   "name": "renderRecord",
+   "filePath": "apps/control-plane/web/app.js",
+   "lineRange": [
+    41,
+    48
+   ],
+   "summary": "renderRecord(entry, signed) \u2014 function in app.js, lines 41-48.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/web/app.js:renderApprovals",
+   "type": "function",
+   "name": "renderApprovals",
+   "filePath": "apps/control-plane/web/app.js",
+   "lineRange": [
+    50,
+    61
+   ],
+   "summary": "renderApprovals(records, now, error) \u2014 function in app.js, lines 50-61.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/web/app.js:renderVerification",
+   "type": "function",
+   "name": "renderVerification",
+   "filePath": "apps/control-plane/web/app.js",
+   "lineRange": [
+    63,
+    73
+   ],
+   "summary": "renderVerification(result, error) \u2014 function in app.js, lines 63-73.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/web/app.js:validateFeed",
+   "type": "function",
+   "name": "validateFeed",
+   "filePath": "apps/control-plane/web/app.js",
+   "lineRange": [
+    75,
+    78
+   ],
+   "summary": "validateFeed(body) \u2014 function in app.js, lines 75-78.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/web/app.js:validateApprovals",
+   "type": "function",
+   "name": "validateApprovals",
+   "filePath": "apps/control-plane/web/app.js",
+   "lineRange": [
+    80,
+    83
+   ],
+   "summary": "validateApprovals(body) \u2014 function in app.js, lines 80-83.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/web/app.js:createApp",
+   "type": "function",
+   "name": "createApp",
+   "filePath": "apps/control-plane/web/app.js",
+   "lineRange": [
+    85,
+    258
+   ],
+   "summary": "createApp() \u2014 function in app.js, lines 85-258.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:apps/control-plane/web/app.test.mjs",
+   "type": "file",
+   "name": "app.test.mjs",
+   "filePath": "apps/control-plane/web/app.test.mjs",
+   "summary": "app.test.mjs \u2014 javascript code, 201 lines, 2 functions, 0 classes, 0 exports, 4 imports.",
+   "tags": [
+    "javascript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:apps/control-plane/web/app.test.mjs:response",
+   "type": "function",
+   "name": "response",
+   "filePath": "apps/control-plane/web/app.test.mjs",
+   "lineRange": [
+    13,
+    13
+   ],
+   "summary": "response(body) \u2014 function in app.test.mjs, lines 13-13.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/web/app.test.mjs:harness",
+   "type": "function",
+   "name": "harness",
+   "filePath": "apps/control-plane/web/app.test.mjs",
+   "lineRange": [
+    15,
+    26
+   ],
+   "summary": "harness(fetchImpl) \u2014 function in app.test.mjs, lines 15-26.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/desktop/runtime.test.mjs",
+   "type": "file",
+   "name": "runtime.test.mjs",
+   "filePath": "apps/desktop/runtime.test.mjs",
+   "summary": "runtime.test.mjs \u2014 javascript code, 187 lines, 3 functions, 0 classes, 0 exports, 2 imports.",
+   "tags": [
+    "javascript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:apps/desktop/runtime.test.mjs:withoutOwned",
+   "type": "function",
+   "name": "withoutOwned",
+   "filePath": "apps/desktop/runtime.test.mjs",
+   "lineRange": [
+    26,
+    30
+   ],
+   "summary": "withoutOwned(env) \u2014 function in runtime.test.mjs, lines 26-30.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/desktop/runtime.test.mjs:withRuntime",
+   "type": "function",
+   "name": "withRuntime",
+   "filePath": "apps/desktop/runtime.test.mjs",
+   "lineRange": [
+    36,
+    67
+   ],
+   "summary": "withRuntime(env, run) \u2014 function in runtime.test.mjs, lines 36-67.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/desktop/runtime.test.mjs:seedLedger",
+   "type": "function",
+   "name": "seedLedger",
+   "filePath": "apps/desktop/runtime.test.mjs",
+   "lineRange": [
+    134,
+    138
+   ],
+   "summary": "seedLedger(dir, workspace, tool) \u2014 function in runtime.test.mjs, lines 134-138.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:cloud/gui.test.mjs",
+   "type": "file",
+   "name": "gui.test.mjs",
+   "filePath": "cloud/gui.test.mjs",
+   "summary": "gui.test.mjs \u2014 javascript code, 275 lines, 0 functions, 0 classes, 0 exports, 8 imports.",
+   "tags": [
+    "javascript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/cli/src/config.test.ts",
+   "type": "file",
+   "name": "config.test.ts",
+   "filePath": "packages/cli/src/config.test.ts",
+   "summary": "config.test.ts \u2014 typescript code, 56 lines, 1 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/config.test.ts:collect",
+   "type": "function",
+   "name": "collect",
+   "filePath": "packages/cli/src/config.test.ts",
+   "lineRange": [
+    6,
+    16
+   ],
+   "summary": "collect() \u2014 function in config.test.ts, lines 6-16.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/config.ts",
+   "type": "file",
+   "name": "config.ts",
+   "filePath": "packages/cli/src/config.ts",
+   "summary": "config.ts \u2014 typescript code, 116 lines, 2 functions, 0 classes, 2 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/config.ts:resolveConfig",
+   "type": "function",
+   "name": "resolveConfig",
+   "filePath": "packages/cli/src/config.ts",
+   "lineRange": [
+    26,
+    101
+   ],
+   "summary": "resolveConfig(env) \u2014 function in config.ts, lines 26-101.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/config.ts:runConfigCommand",
+   "type": "function",
+   "name": "runConfigCommand",
+   "filePath": "packages/cli/src/config.ts",
+   "lineRange": [
+    103,
+    117
+   ],
+   "summary": "runConfigCommand(argv, io, deps) \u2014 function in config.ts, lines 103-117.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/dispatch.ts",
+   "type": "file",
+   "name": "dispatch.ts",
+   "filePath": "packages/cli/src/dispatch.ts",
+   "summary": "dispatch.ts \u2014 typescript code, 198 lines, 1 functions, 0 classes, 2 exports, 15 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/cli/src/dispatch.ts:runCommand",
+   "type": "function",
+   "name": "runCommand",
+   "filePath": "packages/cli/src/dispatch.ts",
+   "lineRange": [
+    38,
+    198
+   ],
+   "summary": "runCommand(parsed, context) \u2014 function in dispatch.ts, lines 38-198.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/cli/src/doctor.test.ts",
+   "type": "file",
+   "name": "doctor.test.ts",
+   "filePath": "packages/cli/src/doctor.test.ts",
+   "summary": "doctor.test.ts \u2014 typescript code, 161 lines, 2 functions, 0 classes, 0 exports, 3 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/cli/src/doctor.test.ts:collect",
+   "type": "function",
+   "name": "collect",
+   "filePath": "packages/cli/src/doctor.test.ts",
+   "lineRange": [
+    11,
+    21
+   ],
+   "summary": "collect() \u2014 function in doctor.test.ts, lines 11-21.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/doctor.test.ts:doctorWith",
+   "type": "function",
+   "name": "doctorWith",
+   "filePath": "packages/cli/src/doctor.test.ts",
+   "lineRange": [
+    86,
+    99
+   ],
+   "summary": "doctorWith(env) \u2014 function in doctor.test.ts, lines 86-99.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/doctor.ts",
+   "type": "file",
+   "name": "doctor.ts",
+   "filePath": "packages/cli/src/doctor.ts",
+   "summary": "doctor.ts \u2014 typescript code, 436 lines, 6 functions, 0 classes, 1 exports, 4 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/cli/src/doctor.ts:message",
+   "type": "function",
+   "name": "message",
+   "filePath": "packages/cli/src/doctor.ts",
+   "lineRange": [
+    36,
+    37
+   ],
+   "summary": "message(error) \u2014 function in doctor.ts, lines 36-37.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/doctor.ts:defaultRun",
+   "type": "function",
+   "name": "defaultRun",
+   "filePath": "packages/cli/src/doctor.ts",
+   "lineRange": [
+    39,
+    50
+   ],
+   "summary": "defaultRun(cmd, args) \u2014 function in doctor.ts, lines 39-50.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/doctor.ts:defaultWritable",
+   "type": "function",
+   "name": "defaultWritable",
+   "filePath": "packages/cli/src/doctor.ts",
+   "lineRange": [
+    52,
+    60
+   ],
+   "summary": "defaultWritable(dir) \u2014 function in doctor.ts, lines 52-60.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/doctor.ts:defaultPresent",
+   "type": "function",
+   "name": "defaultPresent",
+   "filePath": "packages/cli/src/doctor.ts",
+   "lineRange": [
+    62,
+    69
+   ],
+   "summary": "defaultPresent(path) \u2014 function in doctor.ts, lines 62-69.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/doctor.ts:runDoctorCommand",
+   "type": "function",
+   "name": "runDoctorCommand",
+   "filePath": "packages/cli/src/doctor.ts",
+   "lineRange": [
+    71,
+    348
+   ],
+   "summary": "runDoctorCommand(argv, io, deps) \u2014 function in doctor.ts, lines 71-348.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/cli/src/doctor.ts:runDoctorInit",
+   "type": "function",
+   "name": "runDoctorInit",
+   "filePath": "packages/cli/src/doctor.ts",
+   "lineRange": [
+    350,
+    436
+   ],
+   "summary": "runDoctorInit(argv, io, deps) \u2014 function in doctor.ts, lines 350-436.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/evidence-integrity.test.ts",
+   "type": "file",
+   "name": "evidence-integrity.test.ts",
+   "filePath": "packages/cli/src/evidence-integrity.test.ts",
+   "summary": "evidence-integrity.test.ts \u2014 typescript code, 168 lines, 3 functions, 0 classes, 0 exports, 6 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/cli/src/evidence-integrity.test.ts:scratch",
+   "type": "function",
+   "name": "scratch",
+   "filePath": "packages/cli/src/evidence-integrity.test.ts",
+   "lineRange": [
+    16,
+    20
+   ],
+   "summary": "scratch(t) \u2014 function in evidence-integrity.test.ts, lines 16-20.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/evidence-integrity.test.ts:seed",
+   "type": "function",
+   "name": "seed",
+   "filePath": "packages/cli/src/evidence-integrity.test.ts",
+   "lineRange": [
+    22,
+    35
+   ],
+   "summary": "seed(dir, tools) \u2014 function in evidence-integrity.test.ts, lines 22-35.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/evidence-integrity.test.ts:collect",
+   "type": "function",
+   "name": "collect",
+   "filePath": "packages/cli/src/evidence-integrity.test.ts",
+   "lineRange": [
+    37,
+    49
+   ],
+   "summary": "collect(env) \u2014 function in evidence-integrity.test.ts, lines 37-49.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/export-bundle.test.ts",
+   "type": "file",
+   "name": "export-bundle.test.ts",
+   "filePath": "packages/cli/src/export-bundle.test.ts",
+   "summary": "export-bundle.test.ts \u2014 typescript code, 452 lines, 8 functions, 0 classes, 0 exports, 7 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/cli/src/export-bundle.test.ts:operationEvent",
+   "type": "function",
+   "name": "operationEvent",
+   "filePath": "packages/cli/src/export-bundle.test.ts",
+   "lineRange": [
+    31,
+    43
+   ],
+   "summary": "operationEvent(operationId, stage) \u2014 function in export-bundle.test.ts, lines 31-43.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/export-bundle.test.ts:fixture",
+   "type": "function",
+   "name": "fixture",
+   "filePath": "packages/cli/src/export-bundle.test.ts",
+   "lineRange": [
+    46,
+    91
+   ],
+   "summary": "fixture(t) \u2014 function in export-bundle.test.ts, lines 46-91.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/export-bundle.test.ts:run",
+   "type": "function",
+   "name": "run",
+   "filePath": "packages/cli/src/export-bundle.test.ts",
+   "lineRange": [
+    93,
+    101
+   ],
+   "summary": "run(command, argv, env) \u2014 function in export-bundle.test.ts, lines 93-101.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/export-bundle.test.ts:lines",
+   "type": "function",
+   "name": "lines",
+   "filePath": "packages/cli/src/export-bundle.test.ts",
+   "lineRange": [
+    104,
+    105
+   ],
+   "summary": "lines(emitted) \u2014 function in export-bundle.test.ts, lines 104-105.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/export-bundle.test.ts:exportBundle",
+   "type": "function",
+   "name": "exportBundle",
+   "filePath": "packages/cli/src/export-bundle.test.ts",
+   "lineRange": [
+    108,
+    119
+   ],
+   "summary": "exportBundle(f) \u2014 function in export-bundle.test.ts, lines 108-119.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/export-bundle.test.ts:manifestOf",
+   "type": "function",
+   "name": "manifestOf",
+   "filePath": "packages/cli/src/export-bundle.test.ts",
+   "lineRange": [
+    121,
+    122
+   ],
+   "summary": "manifestOf(dir) \u2014 function in export-bundle.test.ts, lines 121-122.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/export-bundle.test.ts:anchorOf",
+   "type": "function",
+   "name": "anchorOf",
+   "filePath": "packages/cli/src/export-bundle.test.ts",
+   "lineRange": [
+    125,
+    128
+   ],
+   "summary": "anchorOf(dir) \u2014 function in export-bundle.test.ts, lines 125-128.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/export-bundle.test.ts:counters",
+   "type": "function",
+   "name": "counters",
+   "filePath": "packages/cli/src/export-bundle.test.ts",
+   "lineRange": [
+    130,
+    143
+   ],
+   "summary": "counters(argv, f) \u2014 function in export-bundle.test.ts, lines 130-143.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/export-bundle.ts",
+   "type": "file",
+   "name": "export-bundle.ts",
+   "filePath": "packages/cli/src/export-bundle.ts",
+   "summary": "export-bundle.ts \u2014 typescript code, 951 lines, 24 functions, 1 classes, 18 exports, 5 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "function:packages/cli/src/export-bundle.ts:refuse",
+   "type": "function",
+   "name": "refuse",
+   "filePath": "packages/cli/src/export-bundle.ts",
+   "lineRange": [
+    122,
+    124
+   ],
+   "summary": "refuse(category, detail) \u2014 function in export-bundle.ts, lines 122-124.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/export-bundle.ts:sha256",
+   "type": "function",
+   "name": "sha256",
+   "filePath": "packages/cli/src/export-bundle.ts",
+   "lineRange": [
+    128,
+    129
+   ],
+   "summary": "sha256(bytes) \u2014 function in export-bundle.ts, lines 128-129.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/export-bundle.ts:isVaultArtifact",
+   "type": "function",
+   "name": "isVaultArtifact",
+   "filePath": "packages/cli/src/export-bundle.ts",
+   "lineRange": [
+    186,
+    201
+   ],
+   "summary": "isVaultArtifact(value) \u2014 function in export-bundle.ts, lines 186-201.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/export-bundle.ts:section",
+   "type": "function",
+   "name": "section",
+   "filePath": "packages/cli/src/export-bundle.ts",
+   "lineRange": [
+    272,
+    287
+   ],
+   "summary": "section(name, bytes, entries, range) \u2014 function in export-bundle.ts, lines 272-287.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/export-bundle.ts:createBundle",
+   "type": "function",
+   "name": "createBundle",
+   "filePath": "packages/cli/src/export-bundle.ts",
+   "lineRange": [
+    289,
+    376
+   ],
+   "summary": "createBundle(options) \u2014 function in export-bundle.ts, lines 289-376.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/export-bundle.ts:verifyBundle",
+   "type": "function",
+   "name": "verifyBundle",
+   "filePath": "packages/cli/src/export-bundle.ts",
+   "lineRange": [
+    383,
+    508
+   ],
+   "summary": "verifyBundle(options) \u2014 function in export-bundle.ts, lines 383-508.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/export-bundle.ts:readSignedSection",
+   "type": "function",
+   "name": "readSignedSection",
+   "filePath": "packages/cli/src/export-bundle.ts",
+   "lineRange": [
+    536,
+    595
+   ],
+   "summary": "readSignedSection(path, workspace, options) \u2014 function in export-bundle.ts, lines 536-595.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/export-bundle.ts:replayJournal",
+   "type": "function",
+   "name": "replayJournal",
+   "filePath": "packages/cli/src/export-bundle.ts",
+   "lineRange": [
+    602,
+    623
+   ],
+   "summary": "replayJournal(entries) \u2014 function in export-bundle.ts, lines 602-623.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/export-bundle.ts:readVaultManifest",
+   "type": "function",
+   "name": "readVaultManifest",
+   "filePath": "packages/cli/src/export-bundle.ts",
+   "lineRange": [
+    631,
+    707
+   ],
+   "summary": "readVaultManifest(stateDir, workspace) \u2014 function in export-bundle.ts, lines 631-707.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/export-bundle.ts:vaultArtifact",
+   "type": "function",
+   "name": "vaultArtifact",
+   "filePath": "packages/cli/src/export-bundle.ts",
+   "lineRange": [
+    710,
+    730
+   ],
+   "summary": "vaultArtifact(row) \u2014 function in export-bundle.ts, lines 710-730.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/export-bundle.ts:legacyVaultManifest",
+   "type": "function",
+   "name": "legacyVaultManifest",
+   "filePath": "packages/cli/src/export-bundle.ts",
+   "lineRange": [
+    732,
+    791
+   ],
+   "summary": "legacyVaultManifest(root, workspace) \u2014 function in export-bundle.ts, lines 732-791.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/export-bundle.ts:operationStageNames",
+   "type": "function",
+   "name": "operationStageNames",
+   "filePath": "packages/cli/src/export-bundle.ts",
+   "lineRange": [
+    793,
+    795
+   ],
+   "summary": "operationStageNames() \u2014 function in export-bundle.ts, lines 793-795.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/export-bundle.ts:terminalOperationStageNames",
+   "type": "function",
+   "name": "terminalOperationStageNames",
+   "filePath": "packages/cli/src/export-bundle.ts",
+   "lineRange": [
+    797,
+    801
+   ],
+   "summary": "terminalOperationStageNames() \u2014 function in export-bundle.ts, lines 797-801.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/export-bundle.ts:jobStageNames",
+   "type": "function",
+   "name": "jobStageNames",
+   "filePath": "packages/cli/src/export-bundle.ts",
+   "lineRange": [
+    803,
+    805
+   ],
+   "summary": "jobStageNames() \u2014 function in export-bundle.ts, lines 803-805.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/export-bundle.ts:terminalJobStageNames",
+   "type": "function",
+   "name": "terminalJobStageNames",
+   "filePath": "packages/cli/src/export-bundle.ts",
+   "lineRange": [
+    807,
+    811
+   ],
+   "summary": "terminalJobStageNames() \u2014 function in export-bundle.ts, lines 807-811.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/export-bundle.ts:transitionCount",
+   "type": "function",
+   "name": "transitionCount",
+   "filePath": "packages/cli/src/export-bundle.ts",
+   "lineRange": [
+    813,
+    814
+   ],
+   "summary": "transitionCount(table) \u2014 function in export-bundle.ts, lines 813-814.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/export-bundle.ts:capabilitySection",
+   "type": "function",
+   "name": "capabilitySection",
+   "filePath": "packages/cli/src/export-bundle.ts",
+   "lineRange": [
+    816,
+    844
+   ],
+   "summary": "capabilitySection(workspace) \u2014 function in export-bundle.ts, lines 816-844.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/export-bundle.ts:assertDeclared",
+   "type": "function",
+   "name": "assertDeclared",
+   "filePath": "packages/cli/src/export-bundle.ts",
+   "lineRange": [
+    846,
+    854
+   ],
+   "summary": "assertDeclared(declared, entries, range) \u2014 function in export-bundle.ts, lines 846-854.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/export-bundle.ts:parseManifest",
+   "type": "function",
+   "name": "parseManifest",
+   "filePath": "packages/cli/src/export-bundle.ts",
+   "lineRange": [
+    856,
+    884
+   ],
+   "summary": "parseManifest(bytes) \u2014 function in export-bundle.ts, lines 856-884.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/export-bundle.ts:parseJson",
+   "type": "function",
+   "name": "parseJson",
+   "filePath": "packages/cli/src/export-bundle.ts",
+   "lineRange": [
+    886,
+    898
+   ],
+   "summary": "parseJson(bytes) \u2014 function in export-bundle.ts, lines 886-898.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/export-bundle.ts:parseJsonl",
+   "type": "function",
+   "name": "parseJsonl",
+   "filePath": "packages/cli/src/export-bundle.ts",
+   "lineRange": [
+    900,
+    921
+   ],
+   "summary": "parseJsonl(text, category, path) \u2014 function in export-bundle.ts, lines 900-921.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/export-bundle.ts:jsonBytes",
+   "type": "function",
+   "name": "jsonBytes",
+   "filePath": "packages/cli/src/export-bundle.ts",
+   "lineRange": [
+    923,
+    924
+   ],
+   "summary": "jsonBytes(value) \u2014 function in export-bundle.ts, lines 923-924.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/export-bundle.ts:jsonlBytes",
+   "type": "function",
+   "name": "jsonlBytes",
+   "filePath": "packages/cli/src/export-bundle.ts",
+   "lineRange": [
+    927,
+    930
+   ],
+   "summary": "jsonlBytes(entries) \u2014 function in export-bundle.ts, lines 927-930.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/export-bundle.ts:describeBundle",
+   "type": "function",
+   "name": "describeBundle",
+   "filePath": "packages/cli/src/export-bundle.ts",
+   "lineRange": [
+    938,
+    951
+   ],
+   "summary": "describeBundle(result, verification) \u2014 function in export-bundle.ts, lines 938-951.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:packages/cli/src/export-bundle.ts:BundleError",
+   "type": "class",
+   "name": "BundleError",
+   "filePath": "packages/cli/src/export-bundle.ts",
+   "lineRange": [
+    110,
+    120
+   ],
+   "summary": "BundleError \u2014 class in export-bundle.ts, lines 110-120.",
+   "tags": [
+    "typescript",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/feed.test.ts",
+   "type": "file",
+   "name": "feed.test.ts",
+   "filePath": "packages/cli/src/feed.test.ts",
+   "summary": "feed.test.ts \u2014 typescript code, 119 lines, 0 functions, 0 classes, 0 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/feed.ts",
+   "type": "file",
+   "name": "feed.ts",
+   "filePath": "packages/cli/src/feed.ts",
+   "summary": "feed.ts \u2014 typescript code, 123 lines, 5 functions, 0 classes, 2 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/feed.ts:runFeedCommand",
+   "type": "function",
+   "name": "runFeedCommand",
+   "filePath": "packages/cli/src/feed.ts",
+   "lineRange": [
+    17,
+    37
+   ],
+   "summary": "runFeedCommand(argv, io, options) \u2014 function in feed.ts, lines 17-37.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/feed.ts:closeActiveFeedWatch",
+   "type": "function",
+   "name": "closeActiveFeedWatch",
+   "filePath": "packages/cli/src/feed.ts",
+   "lineRange": [
+    41,
+    44
+   ],
+   "summary": "closeActiveFeedWatch() \u2014 function in feed.ts, lines 41-44.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/feed.ts:parseFeedArgs",
+   "type": "function",
+   "name": "parseFeedArgs",
+   "filePath": "packages/cli/src/feed.ts",
+   "lineRange": [
+    52,
+    71
+   ],
+   "summary": "parseFeedArgs(argv, env) \u2014 function in feed.ts, lines 52-71.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/feed.ts:defaultLedgerPath",
+   "type": "function",
+   "name": "defaultLedgerPath",
+   "filePath": "packages/cli/src/feed.ts",
+   "lineRange": [
+    73,
+    77
+   ],
+   "summary": "defaultLedgerPath(env) \u2014 function in feed.ts, lines 73-77.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/feed.ts:printPage",
+   "type": "function",
+   "name": "printPage",
+   "filePath": "packages/cli/src/feed.ts",
+   "lineRange": [
+    79,
+    123
+   ],
+   "summary": "printPage(page, json, stdout, afterSeq\u2026) \u2014 function in feed.ts, lines 79-123.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/index.test.ts",
+   "type": "file",
+   "name": "index.test.ts",
+   "filePath": "packages/cli/src/index.test.ts",
+   "summary": "index.test.ts \u2014 typescript code, 57 lines, 0 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/index.ts",
+   "type": "file",
+   "name": "index.ts",
+   "filePath": "packages/cli/src/index.ts",
+   "summary": "index.ts \u2014 typescript code, 22 lines, 0 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/init.test.ts",
+   "type": "file",
+   "name": "init.test.ts",
+   "filePath": "packages/cli/src/init.test.ts",
+   "summary": "init.test.ts \u2014 typescript code, 234 lines, 2 functions, 0 classes, 0 exports, 4 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/cli/src/init.test.ts:collect",
+   "type": "function",
+   "name": "collect",
+   "filePath": "packages/cli/src/init.test.ts",
+   "lineRange": [
+    13,
+    28
+   ],
+   "summary": "collect() \u2014 function in init.test.ts, lines 13-28.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/init.test.ts:seedSignedLedger",
+   "type": "function",
+   "name": "seedSignedLedger",
+   "filePath": "packages/cli/src/init.test.ts",
+   "lineRange": [
+    50,
+    63
+   ],
+   "summary": "seedSignedLedger(root) \u2014 function in init.test.ts, lines 50-63.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/init.ts",
+   "type": "file",
+   "name": "init.ts",
+   "filePath": "packages/cli/src/init.ts",
+   "summary": "init.ts \u2014 typescript code, 240 lines, 7 functions, 0 classes, 2 exports, 4 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/cli/src/init.ts:message",
+   "type": "function",
+   "name": "message",
+   "filePath": "packages/cli/src/init.ts",
+   "lineRange": [
+    26,
+    27
+   ],
+   "summary": "message(error) \u2014 function in init.ts, lines 26-27.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/init.ts:resolveInitOptions",
+   "type": "function",
+   "name": "resolveInitOptions",
+   "filePath": "packages/cli/src/init.ts",
+   "lineRange": [
+    41,
+    74
+   ],
+   "summary": "resolveInitOptions(argv, env) \u2014 function in init.ts, lines 41-74.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/init.ts:retainedKeyId",
+   "type": "function",
+   "name": "retainedKeyId",
+   "filePath": "packages/cli/src/init.ts",
+   "lineRange": [
+    84,
+    94
+   ],
+   "summary": "retainedKeyId(keyDir, env) \u2014 function in init.ts, lines 84-94.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/init.ts:signingReport",
+   "type": "function",
+   "name": "signingReport",
+   "filePath": "packages/cli/src/init.ts",
+   "lineRange": [
+    105,
+    127
+   ],
+   "summary": "signingReport(keyId, env, home) \u2014 function in init.ts, lines 105-127.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/init.ts:divergentKeyNote",
+   "type": "function",
+   "name": "divergentKeyNote",
+   "filePath": "packages/cli/src/init.ts",
+   "lineRange": [
+    138,
+    153
+   ],
+   "summary": "divergentKeyNote(dir, env, home, pinnedKeyId) \u2014 function in init.ts, lines 138-153.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/init.ts:pinVerifyKey",
+   "type": "function",
+   "name": "pinVerifyKey",
+   "filePath": "packages/cli/src/init.ts",
+   "lineRange": [
+    175,
+    207
+   ],
+   "summary": "pinVerifyKey(dir, env, fromSpki) \u2014 function in init.ts, lines 175-207.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/init.ts:runInitCommand",
+   "type": "function",
+   "name": "runInitCommand",
+   "filePath": "packages/cli/src/init.ts",
+   "lineRange": [
+    209,
+    240
+   ],
+   "summary": "runInitCommand(argv, io, deps) \u2014 function in init.ts, lines 209-240.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/ledger-target.test.ts",
+   "type": "file",
+   "name": "ledger-target.test.ts",
+   "filePath": "packages/cli/src/ledger-target.test.ts",
+   "summary": "ledger-target.test.ts \u2014 typescript code, 287 lines, 4 functions, 0 classes, 0 exports, 3 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/cli/src/ledger-target.test.ts:scratch",
+   "type": "function",
+   "name": "scratch",
+   "filePath": "packages/cli/src/ledger-target.test.ts",
+   "lineRange": [
+    20,
+    24
+   ],
+   "summary": "scratch(t) \u2014 function in ledger-target.test.ts, lines 20-24.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/ledger-target.test.ts:canDenyAccess",
+   "type": "function",
+   "name": "canDenyAccess",
+   "filePath": "packages/cli/src/ledger-target.test.ts",
+   "lineRange": [
+    27,
+    27
+   ],
+   "summary": "canDenyAccess() \u2014 function in ledger-target.test.ts, lines 27-27.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/ledger-target.test.ts:run",
+   "type": "function",
+   "name": "run",
+   "filePath": "packages/cli/src/ledger-target.test.ts",
+   "lineRange": [
+    29,
+    40
+   ],
+   "summary": "run(argv) \u2014 function in ledger-target.test.ts, lines 29-40.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/ledger-target.test.ts:metrics",
+   "type": "function",
+   "name": "metrics",
+   "filePath": "packages/cli/src/ledger-target.test.ts",
+   "lineRange": [
+    42,
+    56
+   ],
+   "summary": "metrics(argv, env) \u2014 function in ledger-target.test.ts, lines 42-56.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/ledger-target.ts",
+   "type": "file",
+   "name": "ledger-target.ts",
+   "filePath": "packages/cli/src/ledger-target.ts",
+   "summary": "ledger-target.ts \u2014 typescript code, 181 lines, 3 functions, 0 classes, 1 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/cli/src/ledger-target.ts:code",
+   "type": "function",
+   "name": "code",
+   "filePath": "packages/cli/src/ledger-target.ts",
+   "lineRange": [
+    72,
+    73
+   ],
+   "summary": "code(error) \u2014 function in ledger-target.ts, lines 72-73.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/ledger-target.ts:fail",
+   "type": "function",
+   "name": "fail",
+   "filePath": "packages/cli/src/ledger-target.ts",
+   "lineRange": [
+    75,
+    86
+   ],
+   "summary": "fail(kind, requested, path, lines) \u2014 function in ledger-target.ts, lines 75-86.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/ledger-target.ts:resolveLedgerTarget",
+   "type": "function",
+   "name": "resolveLedgerTarget",
+   "filePath": "packages/cli/src/ledger-target.ts",
+   "lineRange": [
+    88,
+    182
+   ],
+   "summary": "resolveLedgerTarget(request) \u2014 function in ledger-target.ts, lines 88-182.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/mcp-reverse-exercise.ts",
+   "type": "file",
+   "name": "mcp-reverse-exercise.ts",
+   "filePath": "packages/cli/src/mcp-reverse-exercise.ts",
+   "summary": "mcp-reverse-exercise.ts \u2014 typescript code, 200 lines, 4 functions, 0 classes, 1 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/cli/src/mcp-reverse-exercise.ts:payload",
+   "type": "function",
+   "name": "payload",
+   "filePath": "packages/cli/src/mcp-reverse-exercise.ts",
+   "lineRange": [
+    22,
+    27
+   ],
+   "summary": "payload(result) \u2014 function in mcp-reverse-exercise.ts, lines 22-27.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/mcp-reverse-exercise.ts:bin",
+   "type": "function",
+   "name": "bin",
+   "filePath": "packages/cli/src/mcp-reverse-exercise.ts",
+   "lineRange": [
+    28,
+    28
+   ],
+   "summary": "bin() \u2014 function in mcp-reverse-exercise.ts, lines 28-28.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/mcp-reverse-exercise.ts:policy",
+   "type": "function",
+   "name": "policy",
+   "filePath": "packages/cli/src/mcp-reverse-exercise.ts",
+   "lineRange": [
+    30,
+    30
+   ],
+   "summary": "policy(lines) \u2014 function in mcp-reverse-exercise.ts, lines 30-30.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/mcp-reverse-exercise.ts:runMcpReverseExercise",
+   "type": "function",
+   "name": "runMcpReverseExercise",
+   "filePath": "packages/cli/src/mcp-reverse-exercise.ts",
+   "lineRange": [
+    47,
+    200
+   ],
+   "summary": "runMcpReverseExercise(options) \u2014 function in mcp-reverse-exercise.ts, lines 47-200.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/cli/src/metrics.ts",
+   "type": "file",
+   "name": "metrics.ts",
+   "filePath": "packages/cli/src/metrics.ts",
+   "summary": "metrics.ts \u2014 typescript code, 379 lines, 8 functions, 0 classes, 4 exports, 4 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/cli/src/metrics.ts:decisionOf",
+   "type": "function",
+   "name": "decisionOf",
+   "filePath": "packages/cli/src/metrics.ts",
+   "lineRange": [
+    92,
+    100
+   ],
+   "summary": "decisionOf(body) \u2014 function in metrics.ts, lines 92-100.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/metrics.ts:collectMetrics",
+   "type": "function",
+   "name": "collectMetrics",
+   "filePath": "packages/cli/src/metrics.ts",
+   "lineRange": [
+    102,
+    215
+   ],
+   "summary": "collectMetrics(options) \u2014 function in metrics.ts, lines 102-215.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/metrics.ts:journalSamples",
+   "type": "function",
+   "name": "journalSamples",
+   "filePath": "packages/cli/src/metrics.ts",
+   "lineRange": [
+    217,
+    296
+   ],
+   "summary": "journalSamples(stateDir, workspace, journalPublicKey) \u2014 function in metrics.ts, lines 217-296.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/metrics.ts:scanLedgerFile",
+   "type": "function",
+   "name": "scanLedgerFile",
+   "filePath": "packages/cli/src/metrics.ts",
+   "lineRange": [
+    299,
+    315
+   ],
+   "summary": "scanLedgerFile(path, publicKey) \u2014 function in metrics.ts, lines 299-315.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/metrics.ts:scanLedgerDirectory",
+   "type": "function",
+   "name": "scanLedgerDirectory",
+   "filePath": "packages/cli/src/metrics.ts",
+   "lineRange": [
+    322,
+    354
+   ],
+   "summary": "scanLedgerDirectory(path, publicKey) \u2014 function in metrics.ts, lines 322-354.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/metrics.ts:countDecisions",
+   "type": "function",
+   "name": "countDecisions",
+   "filePath": "packages/cli/src/metrics.ts",
+   "lineRange": [
+    356,
+    363
+   ],
+   "summary": "countDecisions(bodies) \u2014 function in metrics.ts, lines 356-363.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/metrics.ts:renderMetricsText",
+   "type": "function",
+   "name": "renderMetricsText",
+   "filePath": "packages/cli/src/metrics.ts",
+   "lineRange": [
+    366,
+    376
+   ],
+   "summary": "renderMetricsText(report) \u2014 function in metrics.ts, lines 366-376.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/metrics.ts:renderMetricsJson",
+   "type": "function",
+   "name": "renderMetricsJson",
+   "filePath": "packages/cli/src/metrics.ts",
+   "lineRange": [
+    378,
+    379
+   ],
+   "summary": "renderMetricsJson(report) \u2014 function in metrics.ts, lines 378-379.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/migrate-state.test.ts",
+   "type": "file",
+   "name": "migrate-state.test.ts",
+   "filePath": "packages/cli/src/migrate-state.test.ts",
+   "summary": "migrate-state.test.ts \u2014 typescript code, 254 lines, 4 functions, 0 classes, 0 exports, 6 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/cli/src/migrate-state.test.ts:withHome",
+   "type": "function",
+   "name": "withHome",
+   "filePath": "packages/cli/src/migrate-state.test.ts",
+   "lineRange": [
+    14,
+    18
+   ],
+   "summary": "withHome(t) \u2014 function in migrate-state.test.ts, lines 14-18.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/migrate-state.test.ts:seedLegacy",
+   "type": "function",
+   "name": "seedLegacy",
+   "filePath": "packages/cli/src/migrate-state.test.ts",
+   "lineRange": [
+    28,
+    35
+   ],
+   "summary": "seedLegacy(home) \u2014 function in migrate-state.test.ts, lines 28-35.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/migrate-state.test.ts:hashTree",
+   "type": "function",
+   "name": "hashTree",
+   "filePath": "packages/cli/src/migrate-state.test.ts",
+   "lineRange": [
+    37,
+    48
+   ],
+   "summary": "hashTree(root) \u2014 function in migrate-state.test.ts, lines 37-48.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/migrate-state.test.ts:current",
+   "type": "function",
+   "name": "current",
+   "filePath": "packages/cli/src/migrate-state.test.ts",
+   "lineRange": [
+    127,
+    127
+   ],
+   "summary": "current(home) \u2014 function in migrate-state.test.ts, lines 127-127.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/migrate-state.ts",
+   "type": "file",
+   "name": "migrate-state.ts",
+   "filePath": "packages/cli/src/migrate-state.ts",
+   "summary": "migrate-state.ts \u2014 typescript code, 171 lines, 6 functions, 0 classes, 4 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/cli/src/migrate-state.ts:manifest",
+   "type": "function",
+   "name": "manifest",
+   "filePath": "packages/cli/src/migrate-state.ts",
+   "lineRange": [
+    49,
+    72
+   ],
+   "summary": "manifest(root, prefix) \u2014 function in migrate-state.ts, lines 49-72.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/migrate-state.ts:sameManifest",
+   "type": "function",
+   "name": "sameManifest",
+   "filePath": "packages/cli/src/migrate-state.ts",
+   "lineRange": [
+    74,
+    79
+   ],
+   "summary": "sameManifest(a, b) \u2014 function in migrate-state.ts, lines 74-79.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/migrate-state.ts:migrateState",
+   "type": "function",
+   "name": "migrateState",
+   "filePath": "packages/cli/src/migrate-state.ts",
+   "lineRange": [
+    90,
+    120
+   ],
+   "summary": "migrateState(home) \u2014 function in migrate-state.ts, lines 90-120.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/migrate-state.ts:exists",
+   "type": "function",
+   "name": "exists",
+   "filePath": "packages/cli/src/migrate-state.ts",
+   "lineRange": [
+    122,
+    126
+   ],
+   "summary": "exists(path) \u2014 function in migrate-state.ts, lines 122-126.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/migrate-state.ts:runMigrateStateCommand",
+   "type": "function",
+   "name": "runMigrateStateCommand",
+   "filePath": "packages/cli/src/migrate-state.ts",
+   "lineRange": [
+    128,
+    165
+   ],
+   "summary": "runMigrateStateCommand(argv, io, deps) \u2014 function in migrate-state.ts, lines 128-165.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/migrate-state.ts:stateSummary",
+   "type": "function",
+   "name": "stateSummary",
+   "filePath": "packages/cli/src/migrate-state.ts",
+   "lineRange": [
+    168,
+    170
+   ],
+   "summary": "stateSummary(home) \u2014 function in migrate-state.ts, lines 168-170.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/operations.test.ts",
+   "type": "file",
+   "name": "operations.test.ts",
+   "filePath": "packages/cli/src/operations.test.ts",
+   "summary": "operations.test.ts \u2014 typescript code, 27 lines, 0 functions, 0 classes, 0 exports, 5 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/operations.ts",
+   "type": "file",
+   "name": "operations.ts",
+   "filePath": "packages/cli/src/operations.ts",
+   "summary": "operations.ts \u2014 typescript code, 203 lines, 4 functions, 0 classes, 1 exports, 10 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/cli/src/operations.ts:parse",
+   "type": "function",
+   "name": "parse",
+   "filePath": "packages/cli/src/operations.ts",
+   "lineRange": [
+    26,
+    44
+   ],
+   "summary": "parse(argv, allowed) \u2014 function in operations.ts, lines 26-44.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/operations.ts:requestedWorkspace",
+   "type": "function",
+   "name": "requestedWorkspace",
+   "filePath": "packages/cli/src/operations.ts",
+   "lineRange": [
+    51,
+    55
+   ],
+   "summary": "requestedWorkspace(flags) \u2014 function in operations.ts, lines 51-55.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/operations.ts:ledgerPath",
+   "type": "function",
+   "name": "ledgerPath",
+   "filePath": "packages/cli/src/operations.ts",
+   "lineRange": [
+    58,
+    62
+   ],
+   "summary": "ledgerPath(flags, env) \u2014 function in operations.ts, lines 58-62.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/operations.ts:runOperation",
+   "type": "function",
+   "name": "runOperation",
+   "filePath": "packages/cli/src/operations.ts",
+   "lineRange": [
+    64,
+    203
+   ],
+   "summary": "runOperation(command, argv, env, output\u2026) \u2014 function in operations.ts, lines 64-203.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/recovery-filesystem.test.ts",
+   "type": "file",
+   "name": "recovery-filesystem.test.ts",
+   "filePath": "packages/cli/src/recovery-filesystem.test.ts",
+   "summary": "recovery-filesystem.test.ts \u2014 typescript code, 749 lines, 5 functions, 0 classes, 0 exports, 6 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "function:packages/cli/src/recovery-filesystem.test.ts:toolJson",
+   "type": "function",
+   "name": "toolJson",
+   "filePath": "packages/cli/src/recovery-filesystem.test.ts",
+   "lineRange": [
+    53,
+    63
+   ],
+   "summary": "toolJson(stream) \u2014 function in recovery-filesystem.test.ts, lines 53-63.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/recovery-filesystem.test.ts:runBackupTool",
+   "type": "function",
+   "name": "runBackupTool",
+   "filePath": "packages/cli/src/recovery-filesystem.test.ts",
+   "lineRange": [
+    64,
+    70
+   ],
+   "summary": "runBackupTool(args) \u2014 function in recovery-filesystem.test.ts, lines 64-70.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/recovery-filesystem.test.ts:backupToolFailure",
+   "type": "function",
+   "name": "backupToolFailure",
+   "filePath": "packages/cli/src/recovery-filesystem.test.ts",
+   "lineRange": [
+    71,
+    77
+   ],
+   "summary": "backupToolFailure(args) \u2014 function in recovery-filesystem.test.ts, lines 71-77.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/recovery-filesystem.test.ts:copyBackup",
+   "type": "function",
+   "name": "copyBackup",
+   "filePath": "packages/cli/src/recovery-filesystem.test.ts",
+   "lineRange": [
+    85,
+    89
+   ],
+   "summary": "copyBackup(from, to) \u2014 function in recovery-filesystem.test.ts, lines 85-89.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/recovery-filesystem.test.ts:planFailureCategory",
+   "type": "function",
+   "name": "planFailureCategory",
+   "filePath": "packages/cli/src/recovery-filesystem.test.ts",
+   "lineRange": [
+    90,
+    136
+   ],
+   "summary": "planFailureCategory(options) \u2014 function in recovery-filesystem.test.ts, lines 90-136.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/recovery-health.test.ts",
+   "type": "file",
+   "name": "recovery-health.test.ts",
+   "filePath": "packages/cli/src/recovery-health.test.ts",
+   "summary": "recovery-health.test.ts \u2014 typescript code, 368 lines, 1 functions, 0 classes, 0 exports, 5 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/cli/src/recovery-health.test.ts:fixture",
+   "type": "function",
+   "name": "fixture",
+   "filePath": "packages/cli/src/recovery-health.test.ts",
+   "lineRange": [
+    26,
+    57
+   ],
+   "summary": "fixture(t) \u2014 function in recovery-health.test.ts, lines 26-57.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/recovery-health.ts",
+   "type": "file",
+   "name": "recovery-health.ts",
+   "filePath": "packages/cli/src/recovery-health.ts",
+   "summary": "recovery-health.ts \u2014 typescript code, 513 lines, 9 functions, 0 classes, 2 exports, 6 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/cli/src/recovery-health.ts:recoveryHealthExitCode",
+   "type": "function",
+   "name": "recoveryHealthExitCode",
+   "filePath": "packages/cli/src/recovery-health.ts",
+   "lineRange": [
+    23,
+    25
+   ],
+   "summary": "recoveryHealthExitCode(status) \u2014 function in recovery-health.ts, lines 23-25.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/recovery-health.ts:isMissing",
+   "type": "function",
+   "name": "isMissing",
+   "filePath": "packages/cli/src/recovery-health.ts",
+   "lineRange": [
+    81,
+    85
+   ],
+   "summary": "isMissing(error) \u2014 function in recovery-health.ts, lines 81-85.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/recovery-health.ts:numberField",
+   "type": "function",
+   "name": "numberField",
+   "filePath": "packages/cli/src/recovery-health.ts",
+   "lineRange": [
+    86,
+    90
+   ],
+   "summary": "numberField(row, key) \u2014 function in recovery-health.ts, lines 86-90.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/recovery-health.ts:addRepair",
+   "type": "function",
+   "name": "addRepair",
+   "filePath": "packages/cli/src/recovery-health.ts",
+   "lineRange": [
+    91,
+    93
+   ],
+   "summary": "addRepair(repairs, code) \u2014 function in recovery-health.ts, lines 91-93.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/recovery-health.ts:markUnavailable",
+   "type": "function",
+   "name": "markUnavailable",
+   "filePath": "packages/cli/src/recovery-health.ts",
+   "lineRange": [
+    94,
+    96
+   ],
+   "summary": "markUnavailable(report) \u2014 function in recovery-health.ts, lines 94-96.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/recovery-health.ts:legacyBytes",
+   "type": "function",
+   "name": "legacyBytes",
+   "filePath": "packages/cli/src/recovery-health.ts",
+   "lineRange": [
+    98,
+    120
+   ],
+   "summary": "legacyBytes(root) \u2014 function in recovery-health.ts, lines 98-120.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/recovery-health.ts:readJournal",
+   "type": "function",
+   "name": "readJournal",
+   "filePath": "packages/cli/src/recovery-health.ts",
+   "lineRange": [
+    122,
+    188
+   ],
+   "summary": "readJournal(input, signer) \u2014 function in recovery-health.ts, lines 122-188.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/recovery-health.ts:readVault",
+   "type": "function",
+   "name": "readVault",
+   "filePath": "packages/cli/src/recovery-health.ts",
+   "lineRange": [
+    190,
+    408
+   ],
+   "summary": "readVault(input) \u2014 function in recovery-health.ts, lines 190-408.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/cli/src/recovery-health.ts:inspectRecoveryHealth",
+   "type": "function",
+   "name": "inspectRecoveryHealth",
+   "filePath": "packages/cli/src/recovery-health.ts",
+   "lineRange": [
+    410,
+    513
+   ],
+   "summary": "inspectRecoveryHealth(input) \u2014 function in recovery-health.ts, lines 410-513.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/replay.ts",
+   "type": "file",
+   "name": "replay.ts",
+   "filePath": "packages/cli/src/replay.ts",
+   "summary": "replay.ts \u2014 typescript code, 499 lines, 17 functions, 1 classes, 2 exports, 14 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/cli/src/replay.ts:runReplayCommand",
+   "type": "function",
+   "name": "runReplayCommand",
+   "filePath": "packages/cli/src/replay.ts",
+   "lineRange": [
+    139,
+    215
+   ],
+   "summary": "runReplayCommand(argv, io, options) \u2014 function in replay.ts, lines 139-215.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/replay.ts:reversalSigner",
+   "type": "function",
+   "name": "reversalSigner",
+   "filePath": "packages/cli/src/replay.ts",
+   "lineRange": [
+    222,
+    235
+   ],
+   "summary": "reversalSigner(env) \u2014 function in replay.ts, lines 222-235.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/replay.ts:appendReversal",
+   "type": "function",
+   "name": "appendReversal",
+   "filePath": "packages/cli/src/replay.ts",
+   "lineRange": [
+    244,
+    282
+   ],
+   "summary": "appendReversal(ledgerPath, signer, record, report) \u2014 function in replay.ts, lines 244-282.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/replay.ts:printConnectors",
+   "type": "function",
+   "name": "printConnectors",
+   "filePath": "packages/cli/src/replay.ts",
+   "lineRange": [
+    284,
+    303
+   ],
+   "summary": "printConnectors(options, env, stdout) \u2014 function in replay.ts, lines 284-303.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/replay.ts:configuredConnector",
+   "type": "function",
+   "name": "configuredConnector",
+   "filePath": "packages/cli/src/replay.ts",
+   "lineRange": [
+    308,
+    346
+   ],
+   "summary": "configuredConnector(tool, args, env, options) \u2014 function in replay.ts, lines 308-346.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/replay.ts:parseReplayArgs",
+   "type": "function",
+   "name": "parseReplayArgs",
+   "filePath": "packages/cli/src/replay.ts",
+   "lineRange": [
+    348,
+    379
+   ],
+   "summary": "parseReplayArgs(argv, env) \u2014 function in replay.ts, lines 348-379.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/replay.ts:needValue",
+   "type": "function",
+   "name": "needValue",
+   "filePath": "packages/cli/src/replay.ts",
+   "lineRange": [
+    381,
+    385
+   ],
+   "summary": "needValue(argv, index, name) \u2014 function in replay.ts, lines 381-385.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/replay.ts:resolveLedgerPath",
+   "type": "function",
+   "name": "resolveLedgerPath",
+   "filePath": "packages/cli/src/replay.ts",
+   "lineRange": [
+    387,
+    396
+   ],
+   "summary": "resolveLedgerPath(ledger, env) \u2014 function in replay.ts, lines 387-396.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/replay.ts:findRecord",
+   "type": "function",
+   "name": "findRecord",
+   "filePath": "packages/cli/src/replay.ts",
+   "lineRange": [
+    398,
+    403
+   ],
+   "summary": "findRecord(page, seq) \u2014 function in replay.ts, lines 398-403.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/replay.ts:readSnapshotManifest",
+   "type": "function",
+   "name": "readSnapshotManifest",
+   "filePath": "packages/cli/src/replay.ts",
+   "lineRange": [
+    405,
+    421
+   ],
+   "summary": "readSnapshotManifest(snapshotDir) \u2014 function in replay.ts, lines 405-421.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/replay.ts:asManifestRecord",
+   "type": "function",
+   "name": "asManifestRecord",
+   "filePath": "packages/cli/src/replay.ts",
+   "lineRange": [
+    423,
+    441
+   ],
+   "summary": "asManifestRecord(value, line) \u2014 function in replay.ts, lines 423-441.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/replay.ts:findSnapshot",
+   "type": "function",
+   "name": "findSnapshot",
+   "filePath": "packages/cli/src/replay.ts",
+   "lineRange": [
+    443,
+    455
+   ],
+   "summary": "findSnapshot(manifest, record) \u2014 function in replay.ts, lines 443-455.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/replay.ts:findConnector",
+   "type": "function",
+   "name": "findConnector",
+   "filePath": "packages/cli/src/replay.ts",
+   "lineRange": [
+    457,
+    464
+   ],
+   "summary": "findConnector(registry, tool) \u2014 function in replay.ts, lines 457-464.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/replay.ts:toolVendor",
+   "type": "function",
+   "name": "toolVendor",
+   "filePath": "packages/cli/src/replay.ts",
+   "lineRange": [
+    466,
+    469
+   ],
+   "summary": "toolVendor(tool) \u2014 function in replay.ts, lines 466-469.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/replay.ts:printReplayHeader",
+   "type": "function",
+   "name": "printReplayHeader",
+   "filePath": "packages/cli/src/replay.ts",
+   "lineRange": [
+    471,
+    480
+   ],
+   "summary": "printReplayHeader(record, snapshot, stdout) \u2014 function in replay.ts, lines 471-480.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/replay.ts:printPlan",
+   "type": "function",
+   "name": "printPlan",
+   "filePath": "packages/cli/src/replay.ts",
+   "lineRange": [
+    482,
+    488
+   ],
+   "summary": "printPlan(plan, stdout) \u2014 function in replay.ts, lines 482-488.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/replay.ts:printApplyReport",
+   "type": "function",
+   "name": "printApplyReport",
+   "filePath": "packages/cli/src/replay.ts",
+   "lineRange": [
+    490,
+    499
+   ],
+   "summary": "printApplyReport(report, stdout) \u2014 function in replay.ts, lines 490-499.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:packages/cli/src/replay.ts:ReplayConfigurationError",
+   "type": "class",
+   "name": "ReplayConfigurationError",
+   "filePath": "packages/cli/src/replay.ts",
+   "lineRange": [
+    111,
+    121
+   ],
+   "summary": "ReplayConfigurationError \u2014 class in replay.ts, lines 111-121.",
+   "tags": [
+    "typescript",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  }
+ ],
+ "edges": [
+  {
+   "source": "file:apps/control-plane/api/server.test.ts",
+   "target": "function:apps/control-plane/api/server.test.ts:seedLedger",
+   "type": "contains",
+   "direction": "forward",
+   "description": "server.test.ts defines seedLedger",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/server.test.ts",
+   "target": "function:apps/control-plane/api/server.test.ts:withServer",
+   "type": "contains",
+   "direction": "forward",
+   "description": "server.test.ts defines withServer",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/server.test.ts",
+   "target": "function:apps/control-plane/api/server.test.ts:responseErrorCode",
+   "type": "contains",
+   "direction": "forward",
+   "description": "server.test.ts defines responseErrorCode",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/verify-key.test.ts",
+   "target": "function:apps/control-plane/api/verify-key.test.ts:seed",
+   "type": "contains",
+   "direction": "forward",
+   "description": "verify-key.test.ts defines seed",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/verify-key.test.ts",
+   "target": "function:apps/control-plane/api/verify-key.test.ts:spkiOf",
+   "type": "contains",
+   "direction": "forward",
+   "description": "verify-key.test.ts defines spkiOf",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/verify-key.test.ts",
+   "target": "function:apps/control-plane/api/verify-key.test.ts:serve",
+   "type": "contains",
+   "direction": "forward",
+   "description": "verify-key.test.ts defines serve",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/verify-key.test.ts",
+   "target": "function:apps/control-plane/api/verify-key.test.ts:verify",
+   "type": "contains",
+   "direction": "forward",
+   "description": "verify-key.test.ts defines verify",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/verify-key.test.ts",
+   "target": "function:apps/control-plane/api/verify-key.test.ts:seedWorkbench",
+   "type": "contains",
+   "direction": "forward",
+   "description": "verify-key.test.ts defines seedWorkbench",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/verify-key.test.ts",
+   "target": "function:apps/control-plane/api/verify-key.test.ts:treeOf",
+   "type": "contains",
+   "direction": "forward",
+   "description": "verify-key.test.ts defines treeOf",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/verify-key.test.ts",
+   "target": "function:apps/control-plane/api/verify-key.test.ts:keyMaterial",
+   "type": "contains",
+   "direction": "forward",
+   "description": "verify-key.test.ts defines keyMaterial",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/web/app.js",
+   "target": "function:apps/control-plane/web/app.js:escapeHtml",
+   "type": "contains",
+   "direction": "forward",
+   "description": "app.js defines escapeHtml",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/web/app.js",
+   "target": "function:apps/control-plane/web/app.js:errorMessage",
+   "type": "contains",
+   "direction": "forward",
+   "description": "app.js defines errorMessage",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/web/app.js",
+   "target": "function:apps/control-plane/web/app.js:errorHtml",
+   "type": "contains",
+   "direction": "forward",
+   "description": "app.js defines errorHtml",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/web/app.js",
+   "target": "function:apps/control-plane/web/app.js:expiry",
+   "type": "contains",
+   "direction": "forward",
+   "description": "app.js defines expiry",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/web/app.js",
+   "target": "function:apps/control-plane/web/app.js:feedUrl",
+   "type": "contains",
+   "direction": "forward",
+   "description": "app.js defines feedUrl",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/web/app.js",
+   "target": "function:apps/control-plane/web/app.js:feedUrl",
+   "type": "exports",
+   "direction": "forward",
+   "description": "app.js exports feedUrl",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/web/app.js",
+   "target": "function:apps/control-plane/web/app.js:decisionRequest",
+   "type": "contains",
+   "direction": "forward",
+   "description": "app.js defines decisionRequest",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/web/app.js",
+   "target": "function:apps/control-plane/web/app.js:decisionRequest",
+   "type": "exports",
+   "direction": "forward",
+   "description": "app.js exports decisionRequest",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/web/app.js",
+   "target": "function:apps/control-plane/web/app.js:decisionState",
+   "type": "contains",
+   "direction": "forward",
+   "description": "app.js defines decisionState",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/web/app.js",
+   "target": "function:apps/control-plane/web/app.js:decisionState",
+   "type": "exports",
+   "direction": "forward",
+   "description": "app.js exports decisionState",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/web/app.js",
+   "target": "function:apps/control-plane/web/app.js:classTag",
+   "type": "contains",
+   "direction": "forward",
+   "description": "app.js defines classTag",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/web/app.js",
+   "target": "function:apps/control-plane/web/app.js:renderFeed",
+   "type": "contains",
+   "direction": "forward",
+   "description": "app.js defines renderFeed",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/web/app.js",
+   "target": "function:apps/control-plane/web/app.js:renderFeed",
+   "type": "exports",
+   "direction": "forward",
+   "description": "app.js exports renderFeed",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/web/app.js",
+   "target": "function:apps/control-plane/web/app.js:renderRecord",
+   "type": "contains",
+   "direction": "forward",
+   "description": "app.js defines renderRecord",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/web/app.js",
+   "target": "function:apps/control-plane/web/app.js:renderRecord",
+   "type": "exports",
+   "direction": "forward",
+   "description": "app.js exports renderRecord",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/web/app.js",
+   "target": "function:apps/control-plane/web/app.js:renderApprovals",
+   "type": "contains",
+   "direction": "forward",
+   "description": "app.js defines renderApprovals",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/web/app.js",
+   "target": "function:apps/control-plane/web/app.js:renderApprovals",
+   "type": "exports",
+   "direction": "forward",
+   "description": "app.js exports renderApprovals",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/web/app.js",
+   "target": "function:apps/control-plane/web/app.js:renderVerification",
+   "type": "contains",
+   "direction": "forward",
+   "description": "app.js defines renderVerification",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/web/app.js",
+   "target": "function:apps/control-plane/web/app.js:renderVerification",
+   "type": "exports",
+   "direction": "forward",
+   "description": "app.js exports renderVerification",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/web/app.js",
+   "target": "function:apps/control-plane/web/app.js:validateFeed",
+   "type": "contains",
+   "direction": "forward",
+   "description": "app.js defines validateFeed",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/web/app.js",
+   "target": "function:apps/control-plane/web/app.js:validateApprovals",
+   "type": "contains",
+   "direction": "forward",
+   "description": "app.js defines validateApprovals",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/web/app.js",
+   "target": "function:apps/control-plane/web/app.js:createApp",
+   "type": "contains",
+   "direction": "forward",
+   "description": "app.js defines createApp",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/web/app.js",
+   "target": "function:apps/control-plane/web/app.js:createApp",
+   "type": "exports",
+   "direction": "forward",
+   "description": "app.js exports createApp",
+   "weight": 0.7
+  },
+  {
+   "source": "function:apps/control-plane/web/app.js:errorHtml",
+   "target": "function:apps/control-plane/web/app.js:escapeHtml",
+   "type": "calls",
+   "direction": "forward",
+   "description": "errorHtml calls escapeHtml",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/web/app.js:classTag",
+   "target": "function:apps/control-plane/web/app.js:escapeHtml",
+   "type": "calls",
+   "direction": "forward",
+   "description": "classTag calls escapeHtml",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/web/app.js:renderFeed",
+   "target": "function:apps/control-plane/web/app.js:errorHtml",
+   "type": "calls",
+   "direction": "forward",
+   "description": "renderFeed calls errorHtml",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/web/app.js:renderFeed",
+   "target": "function:apps/control-plane/web/app.js:escapeHtml",
+   "type": "calls",
+   "direction": "forward",
+   "description": "renderFeed calls escapeHtml",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/web/app.js:renderFeed",
+   "target": "function:apps/control-plane/web/app.js:classTag",
+   "type": "calls",
+   "direction": "forward",
+   "description": "renderFeed calls classTag",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/web/app.js:renderRecord",
+   "target": "function:apps/control-plane/web/app.js:escapeHtml",
+   "type": "calls",
+   "direction": "forward",
+   "description": "renderRecord calls escapeHtml",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/web/app.js:renderRecord",
+   "target": "function:apps/control-plane/web/app.js:classTag",
+   "type": "calls",
+   "direction": "forward",
+   "description": "renderRecord calls classTag",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/web/app.js:renderApprovals",
+   "target": "function:apps/control-plane/web/app.js:errorHtml",
+   "type": "calls",
+   "direction": "forward",
+   "description": "renderApprovals calls errorHtml",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/web/app.js:renderApprovals",
+   "target": "function:apps/control-plane/web/app.js:expiry",
+   "type": "calls",
+   "direction": "forward",
+   "description": "renderApprovals calls expiry",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/web/app.js:renderApprovals",
+   "target": "function:apps/control-plane/web/app.js:escapeHtml",
+   "type": "calls",
+   "direction": "forward",
+   "description": "renderApprovals calls escapeHtml",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/web/app.js:renderApprovals",
+   "target": "function:apps/control-plane/web/app.js:classTag",
+   "type": "calls",
+   "direction": "forward",
+   "description": "renderApprovals calls classTag",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/web/app.js:renderVerification",
+   "target": "function:apps/control-plane/web/app.js:escapeHtml",
+   "type": "calls",
+   "direction": "forward",
+   "description": "renderVerification calls escapeHtml",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/web/app.js:validateApprovals",
+   "target": "function:apps/control-plane/web/app.js:expiry",
+   "type": "calls",
+   "direction": "forward",
+   "description": "validateApprovals calls expiry",
+   "weight": 0.6
+  },
+  {
+   "source": "file:apps/control-plane/web/app.test.mjs",
+   "target": "function:apps/control-plane/web/app.test.mjs:response",
+   "type": "contains",
+   "direction": "forward",
+   "description": "app.test.mjs defines response",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/web/app.test.mjs",
+   "target": "function:apps/control-plane/web/app.test.mjs:harness",
+   "type": "contains",
+   "direction": "forward",
+   "description": "app.test.mjs defines harness",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/desktop/runtime.test.mjs",
+   "target": "function:apps/desktop/runtime.test.mjs:withoutOwned",
+   "type": "contains",
+   "direction": "forward",
+   "description": "runtime.test.mjs defines withoutOwned",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/desktop/runtime.test.mjs",
+   "target": "function:apps/desktop/runtime.test.mjs:withRuntime",
+   "type": "contains",
+   "direction": "forward",
+   "description": "runtime.test.mjs defines withRuntime",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/desktop/runtime.test.mjs",
+   "target": "function:apps/desktop/runtime.test.mjs:seedLedger",
+   "type": "contains",
+   "direction": "forward",
+   "description": "runtime.test.mjs defines seedLedger",
+   "weight": 1.0
+  },
+  {
+   "source": "function:apps/desktop/runtime.test.mjs:withRuntime",
+   "target": "function:apps/desktop/runtime.test.mjs:withoutOwned",
+   "type": "calls",
+   "direction": "forward",
+   "description": "withRuntime calls withoutOwned",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/cli/src/config.test.ts",
+   "target": "function:packages/cli/src/config.test.ts:collect",
+   "type": "contains",
+   "direction": "forward",
+   "description": "config.test.ts defines collect",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/config.ts",
+   "target": "function:packages/cli/src/config.ts:resolveConfig",
+   "type": "contains",
+   "direction": "forward",
+   "description": "config.ts defines resolveConfig",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/config.ts",
+   "target": "function:packages/cli/src/config.ts:resolveConfig",
+   "type": "exports",
+   "direction": "forward",
+   "description": "config.ts exports resolveConfig",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/config.ts",
+   "target": "function:packages/cli/src/config.ts:runConfigCommand",
+   "type": "contains",
+   "direction": "forward",
+   "description": "config.ts defines runConfigCommand",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/config.ts",
+   "target": "function:packages/cli/src/config.ts:runConfigCommand",
+   "type": "exports",
+   "direction": "forward",
+   "description": "config.ts exports runConfigCommand",
+   "weight": 0.7
+  },
+  {
+   "source": "function:packages/cli/src/config.ts:runConfigCommand",
+   "target": "function:packages/cli/src/config.ts:resolveConfig",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runConfigCommand calls resolveConfig",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/cli/src/dispatch.ts",
+   "target": "function:packages/cli/src/dispatch.ts:runCommand",
+   "type": "contains",
+   "direction": "forward",
+   "description": "dispatch.ts defines runCommand",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/dispatch.ts",
+   "target": "function:packages/cli/src/dispatch.ts:runCommand",
+   "type": "exports",
+   "direction": "forward",
+   "description": "dispatch.ts exports runCommand",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/doctor.test.ts",
+   "target": "function:packages/cli/src/doctor.test.ts:collect",
+   "type": "contains",
+   "direction": "forward",
+   "description": "doctor.test.ts defines collect",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/doctor.test.ts",
+   "target": "function:packages/cli/src/doctor.test.ts:doctorWith",
+   "type": "contains",
+   "direction": "forward",
+   "description": "doctor.test.ts defines doctorWith",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/cli/src/doctor.test.ts:doctorWith",
+   "target": "function:packages/cli/src/doctor.test.ts:collect",
+   "type": "calls",
+   "direction": "forward",
+   "description": "doctorWith calls collect",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/cli/src/doctor.ts",
+   "target": "function:packages/cli/src/doctor.ts:message",
+   "type": "contains",
+   "direction": "forward",
+   "description": "doctor.ts defines message",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/doctor.ts",
+   "target": "function:packages/cli/src/doctor.ts:defaultRun",
+   "type": "contains",
+   "direction": "forward",
+   "description": "doctor.ts defines defaultRun",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/doctor.ts",
+   "target": "function:packages/cli/src/doctor.ts:defaultWritable",
+   "type": "contains",
+   "direction": "forward",
+   "description": "doctor.ts defines defaultWritable",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/doctor.ts",
+   "target": "function:packages/cli/src/doctor.ts:defaultPresent",
+   "type": "contains",
+   "direction": "forward",
+   "description": "doctor.ts defines defaultPresent",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/doctor.ts",
+   "target": "function:packages/cli/src/doctor.ts:runDoctorCommand",
+   "type": "contains",
+   "direction": "forward",
+   "description": "doctor.ts defines runDoctorCommand",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/doctor.ts",
+   "target": "function:packages/cli/src/doctor.ts:runDoctorCommand",
+   "type": "exports",
+   "direction": "forward",
+   "description": "doctor.ts exports runDoctorCommand",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/doctor.ts",
+   "target": "function:packages/cli/src/doctor.ts:runDoctorInit",
+   "type": "contains",
+   "direction": "forward",
+   "description": "doctor.ts defines runDoctorInit",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/cli/src/doctor.ts:runDoctorCommand",
+   "target": "function:packages/cli/src/doctor.ts:runDoctorInit",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runDoctorCommand calls runDoctorInit",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/doctor.ts:runDoctorCommand",
+   "target": "function:packages/cli/src/doctor.ts:message",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runDoctorCommand calls message",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/cli/src/evidence-integrity.test.ts",
+   "target": "function:packages/cli/src/evidence-integrity.test.ts:scratch",
+   "type": "contains",
+   "direction": "forward",
+   "description": "evidence-integrity.test.ts defines scratch",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/evidence-integrity.test.ts",
+   "target": "function:packages/cli/src/evidence-integrity.test.ts:seed",
+   "type": "contains",
+   "direction": "forward",
+   "description": "evidence-integrity.test.ts defines seed",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/evidence-integrity.test.ts",
+   "target": "function:packages/cli/src/evidence-integrity.test.ts:collect",
+   "type": "contains",
+   "direction": "forward",
+   "description": "evidence-integrity.test.ts defines collect",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/export-bundle.test.ts",
+   "target": "function:packages/cli/src/export-bundle.test.ts:operationEvent",
+   "type": "contains",
+   "direction": "forward",
+   "description": "export-bundle.test.ts defines operationEvent",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/export-bundle.test.ts",
+   "target": "function:packages/cli/src/export-bundle.test.ts:fixture",
+   "type": "contains",
+   "direction": "forward",
+   "description": "export-bundle.test.ts defines fixture",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/export-bundle.test.ts",
+   "target": "function:packages/cli/src/export-bundle.test.ts:run",
+   "type": "contains",
+   "direction": "forward",
+   "description": "export-bundle.test.ts defines run",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/export-bundle.test.ts",
+   "target": "function:packages/cli/src/export-bundle.test.ts:lines",
+   "type": "contains",
+   "direction": "forward",
+   "description": "export-bundle.test.ts defines lines",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/export-bundle.test.ts",
+   "target": "function:packages/cli/src/export-bundle.test.ts:exportBundle",
+   "type": "contains",
+   "direction": "forward",
+   "description": "export-bundle.test.ts defines exportBundle",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/export-bundle.test.ts",
+   "target": "function:packages/cli/src/export-bundle.test.ts:manifestOf",
+   "type": "contains",
+   "direction": "forward",
+   "description": "export-bundle.test.ts defines manifestOf",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/export-bundle.test.ts",
+   "target": "function:packages/cli/src/export-bundle.test.ts:anchorOf",
+   "type": "contains",
+   "direction": "forward",
+   "description": "export-bundle.test.ts defines anchorOf",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/export-bundle.test.ts",
+   "target": "function:packages/cli/src/export-bundle.test.ts:counters",
+   "type": "contains",
+   "direction": "forward",
+   "description": "export-bundle.test.ts defines counters",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/cli/src/export-bundle.test.ts:fixture",
+   "target": "function:packages/cli/src/export-bundle.test.ts:operationEvent",
+   "type": "calls",
+   "direction": "forward",
+   "description": "fixture calls operationEvent",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/export-bundle.test.ts:exportBundle",
+   "target": "function:packages/cli/src/export-bundle.test.ts:lines",
+   "type": "calls",
+   "direction": "forward",
+   "description": "exportBundle calls lines",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/export-bundle.test.ts:exportBundle",
+   "target": "function:packages/cli/src/export-bundle.test.ts:run",
+   "type": "calls",
+   "direction": "forward",
+   "description": "exportBundle calls run",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/export-bundle.test.ts:counters",
+   "target": "function:packages/cli/src/export-bundle.test.ts:run",
+   "type": "calls",
+   "direction": "forward",
+   "description": "counters calls run",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/cli/src/export-bundle.ts",
+   "target": "function:packages/cli/src/export-bundle.ts:refuse",
+   "type": "contains",
+   "direction": "forward",
+   "description": "export-bundle.ts defines refuse",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/export-bundle.ts",
+   "target": "function:packages/cli/src/export-bundle.ts:sha256",
+   "type": "contains",
+   "direction": "forward",
+   "description": "export-bundle.ts defines sha256",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/export-bundle.ts",
+   "target": "function:packages/cli/src/export-bundle.ts:sha256",
+   "type": "exports",
+   "direction": "forward",
+   "description": "export-bundle.ts exports sha256",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/export-bundle.ts",
+   "target": "function:packages/cli/src/export-bundle.ts:isVaultArtifact",
+   "type": "contains",
+   "direction": "forward",
+   "description": "export-bundle.ts defines isVaultArtifact",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/export-bundle.ts",
+   "target": "function:packages/cli/src/export-bundle.ts:section",
+   "type": "contains",
+   "direction": "forward",
+   "description": "export-bundle.ts defines section",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/export-bundle.ts",
+   "target": "function:packages/cli/src/export-bundle.ts:createBundle",
+   "type": "contains",
+   "direction": "forward",
+   "description": "export-bundle.ts defines createBundle",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/export-bundle.ts",
+   "target": "function:packages/cli/src/export-bundle.ts:createBundle",
+   "type": "exports",
+   "direction": "forward",
+   "description": "export-bundle.ts exports createBundle",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/export-bundle.ts",
+   "target": "function:packages/cli/src/export-bundle.ts:verifyBundle",
+   "type": "contains",
+   "direction": "forward",
+   "description": "export-bundle.ts defines verifyBundle",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/export-bundle.ts",
+   "target": "function:packages/cli/src/export-bundle.ts:verifyBundle",
+   "type": "exports",
+   "direction": "forward",
+   "description": "export-bundle.ts exports verifyBundle",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/export-bundle.ts",
+   "target": "function:packages/cli/src/export-bundle.ts:readSignedSection",
+   "type": "contains",
+   "direction": "forward",
+   "description": "export-bundle.ts defines readSignedSection",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/export-bundle.ts",
+   "target": "function:packages/cli/src/export-bundle.ts:readSignedSection",
+   "type": "exports",
+   "direction": "forward",
+   "description": "export-bundle.ts exports readSignedSection",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/export-bundle.ts",
+   "target": "function:packages/cli/src/export-bundle.ts:replayJournal",
+   "type": "contains",
+   "direction": "forward",
+   "description": "export-bundle.ts defines replayJournal",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/export-bundle.ts",
+   "target": "function:packages/cli/src/export-bundle.ts:readVaultManifest",
+   "type": "contains",
+   "direction": "forward",
+   "description": "export-bundle.ts defines readVaultManifest",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/export-bundle.ts",
+   "target": "function:packages/cli/src/export-bundle.ts:readVaultManifest",
+   "type": "exports",
+   "direction": "forward",
+   "description": "export-bundle.ts exports readVaultManifest",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/export-bundle.ts",
+   "target": "function:packages/cli/src/export-bundle.ts:vaultArtifact",
+   "type": "contains",
+   "direction": "forward",
+   "description": "export-bundle.ts defines vaultArtifact",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/export-bundle.ts",
+   "target": "function:packages/cli/src/export-bundle.ts:legacyVaultManifest",
+   "type": "contains",
+   "direction": "forward",
+   "description": "export-bundle.ts defines legacyVaultManifest",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/export-bundle.ts",
+   "target": "function:packages/cli/src/export-bundle.ts:operationStageNames",
+   "type": "contains",
+   "direction": "forward",
+   "description": "export-bundle.ts defines operationStageNames",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/export-bundle.ts",
+   "target": "function:packages/cli/src/export-bundle.ts:operationStageNames",
+   "type": "exports",
+   "direction": "forward",
+   "description": "export-bundle.ts exports operationStageNames",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/export-bundle.ts",
+   "target": "function:packages/cli/src/export-bundle.ts:terminalOperationStageNames",
+   "type": "contains",
+   "direction": "forward",
+   "description": "export-bundle.ts defines terminalOperationStageNames",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/export-bundle.ts",
+   "target": "function:packages/cli/src/export-bundle.ts:terminalOperationStageNames",
+   "type": "exports",
+   "direction": "forward",
+   "description": "export-bundle.ts exports terminalOperationStageNames",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/export-bundle.ts",
+   "target": "function:packages/cli/src/export-bundle.ts:jobStageNames",
+   "type": "contains",
+   "direction": "forward",
+   "description": "export-bundle.ts defines jobStageNames",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/export-bundle.ts",
+   "target": "function:packages/cli/src/export-bundle.ts:jobStageNames",
+   "type": "exports",
+   "direction": "forward",
+   "description": "export-bundle.ts exports jobStageNames",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/export-bundle.ts",
+   "target": "function:packages/cli/src/export-bundle.ts:terminalJobStageNames",
+   "type": "contains",
+   "direction": "forward",
+   "description": "export-bundle.ts defines terminalJobStageNames",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/export-bundle.ts",
+   "target": "function:packages/cli/src/export-bundle.ts:terminalJobStageNames",
+   "type": "exports",
+   "direction": "forward",
+   "description": "export-bundle.ts exports terminalJobStageNames",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/export-bundle.ts",
+   "target": "function:packages/cli/src/export-bundle.ts:transitionCount",
+   "type": "contains",
+   "direction": "forward",
+   "description": "export-bundle.ts defines transitionCount",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/export-bundle.ts",
+   "target": "function:packages/cli/src/export-bundle.ts:capabilitySection",
+   "type": "contains",
+   "direction": "forward",
+   "description": "export-bundle.ts defines capabilitySection",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/export-bundle.ts",
+   "target": "function:packages/cli/src/export-bundle.ts:capabilitySection",
+   "type": "exports",
+   "direction": "forward",
+   "description": "export-bundle.ts exports capabilitySection",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/export-bundle.ts",
+   "target": "function:packages/cli/src/export-bundle.ts:assertDeclared",
+   "type": "contains",
+   "direction": "forward",
+   "description": "export-bundle.ts defines assertDeclared",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/export-bundle.ts",
+   "target": "function:packages/cli/src/export-bundle.ts:parseManifest",
+   "type": "contains",
+   "direction": "forward",
+   "description": "export-bundle.ts defines parseManifest",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/export-bundle.ts",
+   "target": "function:packages/cli/src/export-bundle.ts:parseJson",
+   "type": "contains",
+   "direction": "forward",
+   "description": "export-bundle.ts defines parseJson",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/export-bundle.ts",
+   "target": "function:packages/cli/src/export-bundle.ts:parseJsonl",
+   "type": "contains",
+   "direction": "forward",
+   "description": "export-bundle.ts defines parseJsonl",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/export-bundle.ts",
+   "target": "function:packages/cli/src/export-bundle.ts:jsonBytes",
+   "type": "contains",
+   "direction": "forward",
+   "description": "export-bundle.ts defines jsonBytes",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/export-bundle.ts",
+   "target": "function:packages/cli/src/export-bundle.ts:jsonlBytes",
+   "type": "contains",
+   "direction": "forward",
+   "description": "export-bundle.ts defines jsonlBytes",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/export-bundle.ts",
+   "target": "function:packages/cli/src/export-bundle.ts:describeBundle",
+   "type": "contains",
+   "direction": "forward",
+   "description": "export-bundle.ts defines describeBundle",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/export-bundle.ts",
+   "target": "function:packages/cli/src/export-bundle.ts:describeBundle",
+   "type": "exports",
+   "direction": "forward",
+   "description": "export-bundle.ts exports describeBundle",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/export-bundle.ts",
+   "target": "class:packages/cli/src/export-bundle.ts:BundleError",
+   "type": "contains",
+   "direction": "forward",
+   "description": "export-bundle.ts defines class BundleError",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/cli/src/export-bundle.ts:section",
+   "target": "function:packages/cli/src/export-bundle.ts:sha256",
+   "type": "calls",
+   "direction": "forward",
+   "description": "section calls sha256",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/export-bundle.ts:createBundle",
+   "target": "function:packages/cli/src/export-bundle.ts:refuse",
+   "type": "calls",
+   "direction": "forward",
+   "description": "createBundle calls refuse",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/export-bundle.ts:createBundle",
+   "target": "function:packages/cli/src/export-bundle.ts:readSignedSection",
+   "type": "calls",
+   "direction": "forward",
+   "description": "createBundle calls readSignedSection",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/export-bundle.ts:createBundle",
+   "target": "function:packages/cli/src/export-bundle.ts:readVaultManifest",
+   "type": "calls",
+   "direction": "forward",
+   "description": "createBundle calls readVaultManifest",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/export-bundle.ts:createBundle",
+   "target": "function:packages/cli/src/export-bundle.ts:capabilitySection",
+   "type": "calls",
+   "direction": "forward",
+   "description": "createBundle calls capabilitySection",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/export-bundle.ts:createBundle",
+   "target": "function:packages/cli/src/export-bundle.ts:jsonlBytes",
+   "type": "calls",
+   "direction": "forward",
+   "description": "createBundle calls jsonlBytes",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/export-bundle.ts:createBundle",
+   "target": "function:packages/cli/src/export-bundle.ts:jsonBytes",
+   "type": "calls",
+   "direction": "forward",
+   "description": "createBundle calls jsonBytes",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/export-bundle.ts:createBundle",
+   "target": "function:packages/cli/src/export-bundle.ts:section",
+   "type": "calls",
+   "direction": "forward",
+   "description": "createBundle calls section",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/export-bundle.ts:createBundle",
+   "target": "function:packages/cli/src/export-bundle.ts:sha256",
+   "type": "calls",
+   "direction": "forward",
+   "description": "createBundle calls sha256",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/export-bundle.ts:verifyBundle",
+   "target": "function:packages/cli/src/export-bundle.ts:refuse",
+   "type": "calls",
+   "direction": "forward",
+   "description": "verifyBundle calls refuse",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/export-bundle.ts:verifyBundle",
+   "target": "function:packages/cli/src/export-bundle.ts:sha256",
+   "type": "calls",
+   "direction": "forward",
+   "description": "verifyBundle calls sha256",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/export-bundle.ts:verifyBundle",
+   "target": "function:packages/cli/src/export-bundle.ts:parseManifest",
+   "type": "calls",
+   "direction": "forward",
+   "description": "verifyBundle calls parseManifest",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/export-bundle.ts:verifyBundle",
+   "target": "function:packages/cli/src/export-bundle.ts:readSignedSection",
+   "type": "calls",
+   "direction": "forward",
+   "description": "verifyBundle calls readSignedSection",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/export-bundle.ts:verifyBundle",
+   "target": "function:packages/cli/src/export-bundle.ts:assertDeclared",
+   "type": "calls",
+   "direction": "forward",
+   "description": "verifyBundle calls assertDeclared",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/export-bundle.ts:verifyBundle",
+   "target": "function:packages/cli/src/export-bundle.ts:parseJson",
+   "type": "calls",
+   "direction": "forward",
+   "description": "verifyBundle calls parseJson",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/export-bundle.ts:readSignedSection",
+   "target": "function:packages/cli/src/export-bundle.ts:parseJsonl",
+   "type": "calls",
+   "direction": "forward",
+   "description": "readSignedSection calls parseJsonl",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/export-bundle.ts:readSignedSection",
+   "target": "function:packages/cli/src/export-bundle.ts:refuse",
+   "type": "calls",
+   "direction": "forward",
+   "description": "readSignedSection calls refuse",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/export-bundle.ts:readSignedSection",
+   "target": "function:packages/cli/src/export-bundle.ts:replayJournal",
+   "type": "calls",
+   "direction": "forward",
+   "description": "readSignedSection calls replayJournal",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/export-bundle.ts:replayJournal",
+   "target": "function:packages/cli/src/export-bundle.ts:refuse",
+   "type": "calls",
+   "direction": "forward",
+   "description": "replayJournal calls refuse",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/export-bundle.ts:readVaultManifest",
+   "target": "function:packages/cli/src/export-bundle.ts:refuse",
+   "type": "calls",
+   "direction": "forward",
+   "description": "readVaultManifest calls refuse",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/export-bundle.ts:readVaultManifest",
+   "target": "function:packages/cli/src/export-bundle.ts:legacyVaultManifest",
+   "type": "calls",
+   "direction": "forward",
+   "description": "readVaultManifest calls legacyVaultManifest",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/export-bundle.ts:vaultArtifact",
+   "target": "function:packages/cli/src/export-bundle.ts:refuse",
+   "type": "calls",
+   "direction": "forward",
+   "description": "vaultArtifact calls refuse",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/export-bundle.ts:legacyVaultManifest",
+   "target": "function:packages/cli/src/export-bundle.ts:refuse",
+   "type": "calls",
+   "direction": "forward",
+   "description": "legacyVaultManifest calls refuse",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/export-bundle.ts:terminalOperationStageNames",
+   "target": "function:packages/cli/src/export-bundle.ts:operationStageNames",
+   "type": "calls",
+   "direction": "forward",
+   "description": "terminalOperationStageNames calls operationStageNames",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/export-bundle.ts:terminalJobStageNames",
+   "target": "function:packages/cli/src/export-bundle.ts:jobStageNames",
+   "type": "calls",
+   "direction": "forward",
+   "description": "terminalJobStageNames calls jobStageNames",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/export-bundle.ts:capabilitySection",
+   "target": "function:packages/cli/src/export-bundle.ts:operationStageNames",
+   "type": "calls",
+   "direction": "forward",
+   "description": "capabilitySection calls operationStageNames",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/export-bundle.ts:capabilitySection",
+   "target": "function:packages/cli/src/export-bundle.ts:terminalOperationStageNames",
+   "type": "calls",
+   "direction": "forward",
+   "description": "capabilitySection calls terminalOperationStageNames",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/export-bundle.ts:capabilitySection",
+   "target": "function:packages/cli/src/export-bundle.ts:transitionCount",
+   "type": "calls",
+   "direction": "forward",
+   "description": "capabilitySection calls transitionCount",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/export-bundle.ts:capabilitySection",
+   "target": "function:packages/cli/src/export-bundle.ts:jobStageNames",
+   "type": "calls",
+   "direction": "forward",
+   "description": "capabilitySection calls jobStageNames",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/export-bundle.ts:capabilitySection",
+   "target": "function:packages/cli/src/export-bundle.ts:terminalJobStageNames",
+   "type": "calls",
+   "direction": "forward",
+   "description": "capabilitySection calls terminalJobStageNames",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/export-bundle.ts:assertDeclared",
+   "target": "function:packages/cli/src/export-bundle.ts:refuse",
+   "type": "calls",
+   "direction": "forward",
+   "description": "assertDeclared calls refuse",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/export-bundle.ts:parseManifest",
+   "target": "function:packages/cli/src/export-bundle.ts:parseJson",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parseManifest calls parseJson",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/export-bundle.ts:parseManifest",
+   "target": "function:packages/cli/src/export-bundle.ts:refuse",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parseManifest calls refuse",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/export-bundle.ts:parseJson",
+   "target": "function:packages/cli/src/export-bundle.ts:refuse",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parseJson calls refuse",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/export-bundle.ts:parseJsonl",
+   "target": "function:packages/cli/src/export-bundle.ts:refuse",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parseJsonl calls refuse",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/cli/src/feed.ts",
+   "target": "function:packages/cli/src/feed.ts:runFeedCommand",
+   "type": "contains",
+   "direction": "forward",
+   "description": "feed.ts defines runFeedCommand",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/feed.ts",
+   "target": "function:packages/cli/src/feed.ts:runFeedCommand",
+   "type": "exports",
+   "direction": "forward",
+   "description": "feed.ts exports runFeedCommand",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/feed.ts",
+   "target": "function:packages/cli/src/feed.ts:closeActiveFeedWatch",
+   "type": "contains",
+   "direction": "forward",
+   "description": "feed.ts defines closeActiveFeedWatch",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/feed.ts",
+   "target": "function:packages/cli/src/feed.ts:closeActiveFeedWatch",
+   "type": "exports",
+   "direction": "forward",
+   "description": "feed.ts exports closeActiveFeedWatch",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/feed.ts",
+   "target": "function:packages/cli/src/feed.ts:parseFeedArgs",
+   "type": "contains",
+   "direction": "forward",
+   "description": "feed.ts defines parseFeedArgs",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/feed.ts",
+   "target": "function:packages/cli/src/feed.ts:defaultLedgerPath",
+   "type": "contains",
+   "direction": "forward",
+   "description": "feed.ts defines defaultLedgerPath",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/feed.ts",
+   "target": "function:packages/cli/src/feed.ts:printPage",
+   "type": "contains",
+   "direction": "forward",
+   "description": "feed.ts defines printPage",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/cli/src/feed.ts:runFeedCommand",
+   "target": "function:packages/cli/src/feed.ts:parseFeedArgs",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runFeedCommand calls parseFeedArgs",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/feed.ts:runFeedCommand",
+   "target": "function:packages/cli/src/feed.ts:printPage",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runFeedCommand calls printPage",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/feed.ts:parseFeedArgs",
+   "target": "function:packages/cli/src/feed.ts:defaultLedgerPath",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parseFeedArgs calls defaultLedgerPath",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/cli/src/init.test.ts",
+   "target": "function:packages/cli/src/init.test.ts:collect",
+   "type": "contains",
+   "direction": "forward",
+   "description": "init.test.ts defines collect",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/init.test.ts",
+   "target": "function:packages/cli/src/init.test.ts:seedSignedLedger",
+   "type": "contains",
+   "direction": "forward",
+   "description": "init.test.ts defines seedSignedLedger",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/init.ts",
+   "target": "function:packages/cli/src/init.ts:message",
+   "type": "contains",
+   "direction": "forward",
+   "description": "init.ts defines message",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/init.ts",
+   "target": "function:packages/cli/src/init.ts:resolveInitOptions",
+   "type": "contains",
+   "direction": "forward",
+   "description": "init.ts defines resolveInitOptions",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/init.ts",
+   "target": "function:packages/cli/src/init.ts:resolveInitOptions",
+   "type": "exports",
+   "direction": "forward",
+   "description": "init.ts exports resolveInitOptions",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/init.ts",
+   "target": "function:packages/cli/src/init.ts:retainedKeyId",
+   "type": "contains",
+   "direction": "forward",
+   "description": "init.ts defines retainedKeyId",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/init.ts",
+   "target": "function:packages/cli/src/init.ts:signingReport",
+   "type": "contains",
+   "direction": "forward",
+   "description": "init.ts defines signingReport",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/init.ts",
+   "target": "function:packages/cli/src/init.ts:divergentKeyNote",
+   "type": "contains",
+   "direction": "forward",
+   "description": "init.ts defines divergentKeyNote",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/init.ts",
+   "target": "function:packages/cli/src/init.ts:pinVerifyKey",
+   "type": "contains",
+   "direction": "forward",
+   "description": "init.ts defines pinVerifyKey",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/init.ts",
+   "target": "function:packages/cli/src/init.ts:runInitCommand",
+   "type": "contains",
+   "direction": "forward",
+   "description": "init.ts defines runInitCommand",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/init.ts",
+   "target": "function:packages/cli/src/init.ts:runInitCommand",
+   "type": "exports",
+   "direction": "forward",
+   "description": "init.ts exports runInitCommand",
+   "weight": 0.7
+  },
+  {
+   "source": "function:packages/cli/src/init.ts:divergentKeyNote",
+   "target": "function:packages/cli/src/init.ts:retainedKeyId",
+   "type": "calls",
+   "direction": "forward",
+   "description": "divergentKeyNote calls retainedKeyId",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/init.ts:pinVerifyKey",
+   "target": "function:packages/cli/src/init.ts:signingReport",
+   "type": "calls",
+   "direction": "forward",
+   "description": "pinVerifyKey calls signingReport",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/init.ts:pinVerifyKey",
+   "target": "function:packages/cli/src/init.ts:divergentKeyNote",
+   "type": "calls",
+   "direction": "forward",
+   "description": "pinVerifyKey calls divergentKeyNote",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/init.ts:runInitCommand",
+   "target": "function:packages/cli/src/init.ts:resolveInitOptions",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runInitCommand calls resolveInitOptions",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/init.ts:runInitCommand",
+   "target": "function:packages/cli/src/init.ts:message",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runInitCommand calls message",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/init.ts:runInitCommand",
+   "target": "function:packages/cli/src/init.ts:pinVerifyKey",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runInitCommand calls pinVerifyKey",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/cli/src/ledger-target.test.ts",
+   "target": "function:packages/cli/src/ledger-target.test.ts:scratch",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ledger-target.test.ts defines scratch",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/ledger-target.test.ts",
+   "target": "function:packages/cli/src/ledger-target.test.ts:canDenyAccess",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ledger-target.test.ts defines canDenyAccess",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/ledger-target.test.ts",
+   "target": "function:packages/cli/src/ledger-target.test.ts:run",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ledger-target.test.ts defines run",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/ledger-target.test.ts",
+   "target": "function:packages/cli/src/ledger-target.test.ts:metrics",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ledger-target.test.ts defines metrics",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/ledger-target.ts",
+   "target": "function:packages/cli/src/ledger-target.ts:code",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ledger-target.ts defines code",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/ledger-target.ts",
+   "target": "function:packages/cli/src/ledger-target.ts:fail",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ledger-target.ts defines fail",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/ledger-target.ts",
+   "target": "function:packages/cli/src/ledger-target.ts:resolveLedgerTarget",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ledger-target.ts defines resolveLedgerTarget",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/ledger-target.ts",
+   "target": "function:packages/cli/src/ledger-target.ts:resolveLedgerTarget",
+   "type": "exports",
+   "direction": "forward",
+   "description": "ledger-target.ts exports resolveLedgerTarget",
+   "weight": 0.7
+  },
+  {
+   "source": "function:packages/cli/src/ledger-target.ts:resolveLedgerTarget",
+   "target": "function:packages/cli/src/ledger-target.ts:code",
+   "type": "calls",
+   "direction": "forward",
+   "description": "resolveLedgerTarget calls code",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/ledger-target.ts:resolveLedgerTarget",
+   "target": "function:packages/cli/src/ledger-target.ts:fail",
+   "type": "calls",
+   "direction": "forward",
+   "description": "resolveLedgerTarget calls fail",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/cli/src/mcp-reverse-exercise.ts",
+   "target": "function:packages/cli/src/mcp-reverse-exercise.ts:payload",
+   "type": "contains",
+   "direction": "forward",
+   "description": "mcp-reverse-exercise.ts defines payload",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/mcp-reverse-exercise.ts",
+   "target": "function:packages/cli/src/mcp-reverse-exercise.ts:bin",
+   "type": "contains",
+   "direction": "forward",
+   "description": "mcp-reverse-exercise.ts defines bin",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/mcp-reverse-exercise.ts",
+   "target": "function:packages/cli/src/mcp-reverse-exercise.ts:policy",
+   "type": "contains",
+   "direction": "forward",
+   "description": "mcp-reverse-exercise.ts defines policy",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/mcp-reverse-exercise.ts",
+   "target": "function:packages/cli/src/mcp-reverse-exercise.ts:runMcpReverseExercise",
+   "type": "contains",
+   "direction": "forward",
+   "description": "mcp-reverse-exercise.ts defines runMcpReverseExercise",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/mcp-reverse-exercise.ts",
+   "target": "function:packages/cli/src/mcp-reverse-exercise.ts:runMcpReverseExercise",
+   "type": "exports",
+   "direction": "forward",
+   "description": "mcp-reverse-exercise.ts exports runMcpReverseExercise",
+   "weight": 0.7
+  },
+  {
+   "source": "function:packages/cli/src/mcp-reverse-exercise.ts:runMcpReverseExercise",
+   "target": "function:packages/cli/src/mcp-reverse-exercise.ts:policy",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runMcpReverseExercise calls policy",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/mcp-reverse-exercise.ts:runMcpReverseExercise",
+   "target": "function:packages/cli/src/mcp-reverse-exercise.ts:bin",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runMcpReverseExercise calls bin",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/mcp-reverse-exercise.ts:runMcpReverseExercise",
+   "target": "function:packages/cli/src/mcp-reverse-exercise.ts:payload",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runMcpReverseExercise calls payload",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/cli/src/metrics.ts",
+   "target": "function:packages/cli/src/metrics.ts:decisionOf",
+   "type": "contains",
+   "direction": "forward",
+   "description": "metrics.ts defines decisionOf",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/metrics.ts",
+   "target": "function:packages/cli/src/metrics.ts:collectMetrics",
+   "type": "contains",
+   "direction": "forward",
+   "description": "metrics.ts defines collectMetrics",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/metrics.ts",
+   "target": "function:packages/cli/src/metrics.ts:collectMetrics",
+   "type": "exports",
+   "direction": "forward",
+   "description": "metrics.ts exports collectMetrics",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/metrics.ts",
+   "target": "function:packages/cli/src/metrics.ts:journalSamples",
+   "type": "contains",
+   "direction": "forward",
+   "description": "metrics.ts defines journalSamples",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/metrics.ts",
+   "target": "function:packages/cli/src/metrics.ts:scanLedgerFile",
+   "type": "contains",
+   "direction": "forward",
+   "description": "metrics.ts defines scanLedgerFile",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/metrics.ts",
+   "target": "function:packages/cli/src/metrics.ts:scanLedgerDirectory",
+   "type": "contains",
+   "direction": "forward",
+   "description": "metrics.ts defines scanLedgerDirectory",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/metrics.ts",
+   "target": "function:packages/cli/src/metrics.ts:countDecisions",
+   "type": "contains",
+   "direction": "forward",
+   "description": "metrics.ts defines countDecisions",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/metrics.ts",
+   "target": "function:packages/cli/src/metrics.ts:renderMetricsText",
+   "type": "contains",
+   "direction": "forward",
+   "description": "metrics.ts defines renderMetricsText",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/metrics.ts",
+   "target": "function:packages/cli/src/metrics.ts:renderMetricsText",
+   "type": "exports",
+   "direction": "forward",
+   "description": "metrics.ts exports renderMetricsText",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/metrics.ts",
+   "target": "function:packages/cli/src/metrics.ts:renderMetricsJson",
+   "type": "contains",
+   "direction": "forward",
+   "description": "metrics.ts defines renderMetricsJson",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/metrics.ts",
+   "target": "function:packages/cli/src/metrics.ts:renderMetricsJson",
+   "type": "exports",
+   "direction": "forward",
+   "description": "metrics.ts exports renderMetricsJson",
+   "weight": 0.7
+  },
+  {
+   "source": "function:packages/cli/src/metrics.ts:collectMetrics",
+   "target": "function:packages/cli/src/metrics.ts:scanLedgerDirectory",
+   "type": "calls",
+   "direction": "forward",
+   "description": "collectMetrics calls scanLedgerDirectory",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/metrics.ts:collectMetrics",
+   "target": "function:packages/cli/src/metrics.ts:scanLedgerFile",
+   "type": "calls",
+   "direction": "forward",
+   "description": "collectMetrics calls scanLedgerFile",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/metrics.ts:collectMetrics",
+   "target": "function:packages/cli/src/metrics.ts:journalSamples",
+   "type": "calls",
+   "direction": "forward",
+   "description": "collectMetrics calls journalSamples",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/metrics.ts:scanLedgerFile",
+   "target": "function:packages/cli/src/metrics.ts:countDecisions",
+   "type": "calls",
+   "direction": "forward",
+   "description": "scanLedgerFile calls countDecisions",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/metrics.ts:scanLedgerDirectory",
+   "target": "function:packages/cli/src/metrics.ts:countDecisions",
+   "type": "calls",
+   "direction": "forward",
+   "description": "scanLedgerDirectory calls countDecisions",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/metrics.ts:countDecisions",
+   "target": "function:packages/cli/src/metrics.ts:decisionOf",
+   "type": "calls",
+   "direction": "forward",
+   "description": "countDecisions calls decisionOf",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/cli/src/migrate-state.test.ts",
+   "target": "function:packages/cli/src/migrate-state.test.ts:withHome",
+   "type": "contains",
+   "direction": "forward",
+   "description": "migrate-state.test.ts defines withHome",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/migrate-state.test.ts",
+   "target": "function:packages/cli/src/migrate-state.test.ts:seedLegacy",
+   "type": "contains",
+   "direction": "forward",
+   "description": "migrate-state.test.ts defines seedLegacy",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/migrate-state.test.ts",
+   "target": "function:packages/cli/src/migrate-state.test.ts:hashTree",
+   "type": "contains",
+   "direction": "forward",
+   "description": "migrate-state.test.ts defines hashTree",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/migrate-state.test.ts",
+   "target": "function:packages/cli/src/migrate-state.test.ts:current",
+   "type": "contains",
+   "direction": "forward",
+   "description": "migrate-state.test.ts defines current",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/migrate-state.ts",
+   "target": "function:packages/cli/src/migrate-state.ts:manifest",
+   "type": "contains",
+   "direction": "forward",
+   "description": "migrate-state.ts defines manifest",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/migrate-state.ts",
+   "target": "function:packages/cli/src/migrate-state.ts:sameManifest",
+   "type": "contains",
+   "direction": "forward",
+   "description": "migrate-state.ts defines sameManifest",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/migrate-state.ts",
+   "target": "function:packages/cli/src/migrate-state.ts:migrateState",
+   "type": "contains",
+   "direction": "forward",
+   "description": "migrate-state.ts defines migrateState",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/migrate-state.ts",
+   "target": "function:packages/cli/src/migrate-state.ts:migrateState",
+   "type": "exports",
+   "direction": "forward",
+   "description": "migrate-state.ts exports migrateState",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/migrate-state.ts",
+   "target": "function:packages/cli/src/migrate-state.ts:exists",
+   "type": "contains",
+   "direction": "forward",
+   "description": "migrate-state.ts defines exists",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/migrate-state.ts",
+   "target": "function:packages/cli/src/migrate-state.ts:runMigrateStateCommand",
+   "type": "contains",
+   "direction": "forward",
+   "description": "migrate-state.ts defines runMigrateStateCommand",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/migrate-state.ts",
+   "target": "function:packages/cli/src/migrate-state.ts:runMigrateStateCommand",
+   "type": "exports",
+   "direction": "forward",
+   "description": "migrate-state.ts exports runMigrateStateCommand",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/migrate-state.ts",
+   "target": "function:packages/cli/src/migrate-state.ts:stateSummary",
+   "type": "contains",
+   "direction": "forward",
+   "description": "migrate-state.ts defines stateSummary",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/migrate-state.ts",
+   "target": "function:packages/cli/src/migrate-state.ts:stateSummary",
+   "type": "exports",
+   "direction": "forward",
+   "description": "migrate-state.ts exports stateSummary",
+   "weight": 0.7
+  },
+  {
+   "source": "function:packages/cli/src/migrate-state.ts:migrateState",
+   "target": "function:packages/cli/src/migrate-state.ts:manifest",
+   "type": "calls",
+   "direction": "forward",
+   "description": "migrateState calls manifest",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/migrate-state.ts:migrateState",
+   "target": "function:packages/cli/src/migrate-state.ts:sameManifest",
+   "type": "calls",
+   "direction": "forward",
+   "description": "migrateState calls sameManifest",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/migrate-state.ts:runMigrateStateCommand",
+   "target": "function:packages/cli/src/migrate-state.ts:migrateState",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runMigrateStateCommand calls migrateState",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/cli/src/operations.ts",
+   "target": "function:packages/cli/src/operations.ts:parse",
+   "type": "contains",
+   "direction": "forward",
+   "description": "operations.ts defines parse",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/operations.ts",
+   "target": "function:packages/cli/src/operations.ts:requestedWorkspace",
+   "type": "contains",
+   "direction": "forward",
+   "description": "operations.ts defines requestedWorkspace",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/operations.ts",
+   "target": "function:packages/cli/src/operations.ts:ledgerPath",
+   "type": "contains",
+   "direction": "forward",
+   "description": "operations.ts defines ledgerPath",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/operations.ts",
+   "target": "function:packages/cli/src/operations.ts:runOperation",
+   "type": "contains",
+   "direction": "forward",
+   "description": "operations.ts defines runOperation",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/operations.ts",
+   "target": "function:packages/cli/src/operations.ts:runOperation",
+   "type": "exports",
+   "direction": "forward",
+   "description": "operations.ts exports runOperation",
+   "weight": 0.7
+  },
+  {
+   "source": "function:packages/cli/src/operations.ts:ledgerPath",
+   "target": "function:packages/cli/src/operations.ts:requestedWorkspace",
+   "type": "calls",
+   "direction": "forward",
+   "description": "ledgerPath calls requestedWorkspace",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/operations.ts:runOperation",
+   "target": "function:packages/cli/src/operations.ts:parse",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runOperation calls parse",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/operations.ts:runOperation",
+   "target": "function:packages/cli/src/operations.ts:requestedWorkspace",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runOperation calls requestedWorkspace",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/operations.ts:runOperation",
+   "target": "function:packages/cli/src/operations.ts:ledgerPath",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runOperation calls ledgerPath",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/cli/src/recovery-filesystem.test.ts",
+   "target": "function:packages/cli/src/recovery-filesystem.test.ts:toolJson",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery-filesystem.test.ts defines toolJson",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/recovery-filesystem.test.ts",
+   "target": "function:packages/cli/src/recovery-filesystem.test.ts:runBackupTool",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery-filesystem.test.ts defines runBackupTool",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/recovery-filesystem.test.ts",
+   "target": "function:packages/cli/src/recovery-filesystem.test.ts:backupToolFailure",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery-filesystem.test.ts defines backupToolFailure",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/recovery-filesystem.test.ts",
+   "target": "function:packages/cli/src/recovery-filesystem.test.ts:copyBackup",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery-filesystem.test.ts defines copyBackup",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/recovery-filesystem.test.ts",
+   "target": "function:packages/cli/src/recovery-filesystem.test.ts:planFailureCategory",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery-filesystem.test.ts defines planFailureCategory",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/cli/src/recovery-filesystem.test.ts:runBackupTool",
+   "target": "function:packages/cli/src/recovery-filesystem.test.ts:toolJson",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runBackupTool calls toolJson",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/recovery-filesystem.test.ts:backupToolFailure",
+   "target": "function:packages/cli/src/recovery-filesystem.test.ts:toolJson",
+   "type": "calls",
+   "direction": "forward",
+   "description": "backupToolFailure calls toolJson",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/cli/src/recovery-health.test.ts",
+   "target": "function:packages/cli/src/recovery-health.test.ts:fixture",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery-health.test.ts defines fixture",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/recovery-health.ts",
+   "target": "function:packages/cli/src/recovery-health.ts:recoveryHealthExitCode",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery-health.ts defines recoveryHealthExitCode",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/recovery-health.ts",
+   "target": "function:packages/cli/src/recovery-health.ts:recoveryHealthExitCode",
+   "type": "exports",
+   "direction": "forward",
+   "description": "recovery-health.ts exports recoveryHealthExitCode",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/recovery-health.ts",
+   "target": "function:packages/cli/src/recovery-health.ts:isMissing",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery-health.ts defines isMissing",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/recovery-health.ts",
+   "target": "function:packages/cli/src/recovery-health.ts:numberField",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery-health.ts defines numberField",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/recovery-health.ts",
+   "target": "function:packages/cli/src/recovery-health.ts:addRepair",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery-health.ts defines addRepair",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/recovery-health.ts",
+   "target": "function:packages/cli/src/recovery-health.ts:markUnavailable",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery-health.ts defines markUnavailable",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/recovery-health.ts",
+   "target": "function:packages/cli/src/recovery-health.ts:legacyBytes",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery-health.ts defines legacyBytes",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/recovery-health.ts",
+   "target": "function:packages/cli/src/recovery-health.ts:readJournal",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery-health.ts defines readJournal",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/recovery-health.ts",
+   "target": "function:packages/cli/src/recovery-health.ts:readVault",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery-health.ts defines readVault",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/recovery-health.ts",
+   "target": "function:packages/cli/src/recovery-health.ts:inspectRecoveryHealth",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery-health.ts defines inspectRecoveryHealth",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/recovery-health.ts",
+   "target": "function:packages/cli/src/recovery-health.ts:inspectRecoveryHealth",
+   "type": "exports",
+   "direction": "forward",
+   "description": "recovery-health.ts exports inspectRecoveryHealth",
+   "weight": 0.7
+  },
+  {
+   "source": "function:packages/cli/src/recovery-health.ts:readJournal",
+   "target": "function:packages/cli/src/recovery-health.ts:isMissing",
+   "type": "calls",
+   "direction": "forward",
+   "description": "readJournal calls isMissing",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/recovery-health.ts:readVault",
+   "target": "function:packages/cli/src/recovery-health.ts:isMissing",
+   "type": "calls",
+   "direction": "forward",
+   "description": "readVault calls isMissing",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/recovery-health.ts:readVault",
+   "target": "function:packages/cli/src/recovery-health.ts:numberField",
+   "type": "calls",
+   "direction": "forward",
+   "description": "readVault calls numberField",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/recovery-health.ts:readVault",
+   "target": "function:packages/cli/src/recovery-health.ts:legacyBytes",
+   "type": "calls",
+   "direction": "forward",
+   "description": "readVault calls legacyBytes",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/recovery-health.ts:inspectRecoveryHealth",
+   "target": "function:packages/cli/src/recovery-health.ts:isMissing",
+   "type": "calls",
+   "direction": "forward",
+   "description": "inspectRecoveryHealth calls isMissing",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/recovery-health.ts:inspectRecoveryHealth",
+   "target": "function:packages/cli/src/recovery-health.ts:addRepair",
+   "type": "calls",
+   "direction": "forward",
+   "description": "inspectRecoveryHealth calls addRepair",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/recovery-health.ts:inspectRecoveryHealth",
+   "target": "function:packages/cli/src/recovery-health.ts:markUnavailable",
+   "type": "calls",
+   "direction": "forward",
+   "description": "inspectRecoveryHealth calls markUnavailable",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/recovery-health.ts:inspectRecoveryHealth",
+   "target": "function:packages/cli/src/recovery-health.ts:readJournal",
+   "type": "calls",
+   "direction": "forward",
+   "description": "inspectRecoveryHealth calls readJournal",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/recovery-health.ts:inspectRecoveryHealth",
+   "target": "function:packages/cli/src/recovery-health.ts:readVault",
+   "type": "calls",
+   "direction": "forward",
+   "description": "inspectRecoveryHealth calls readVault",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/cli/src/replay.ts",
+   "target": "function:packages/cli/src/replay.ts:runReplayCommand",
+   "type": "contains",
+   "direction": "forward",
+   "description": "replay.ts defines runReplayCommand",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/replay.ts",
+   "target": "function:packages/cli/src/replay.ts:runReplayCommand",
+   "type": "exports",
+   "direction": "forward",
+   "description": "replay.ts exports runReplayCommand",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/replay.ts",
+   "target": "function:packages/cli/src/replay.ts:reversalSigner",
+   "type": "contains",
+   "direction": "forward",
+   "description": "replay.ts defines reversalSigner",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/replay.ts",
+   "target": "function:packages/cli/src/replay.ts:appendReversal",
+   "type": "contains",
+   "direction": "forward",
+   "description": "replay.ts defines appendReversal",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/replay.ts",
+   "target": "function:packages/cli/src/replay.ts:printConnectors",
+   "type": "contains",
+   "direction": "forward",
+   "description": "replay.ts defines printConnectors",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/replay.ts",
+   "target": "function:packages/cli/src/replay.ts:configuredConnector",
+   "type": "contains",
+   "direction": "forward",
+   "description": "replay.ts defines configuredConnector",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/replay.ts",
+   "target": "function:packages/cli/src/replay.ts:parseReplayArgs",
+   "type": "contains",
+   "direction": "forward",
+   "description": "replay.ts defines parseReplayArgs",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/replay.ts",
+   "target": "function:packages/cli/src/replay.ts:needValue",
+   "type": "contains",
+   "direction": "forward",
+   "description": "replay.ts defines needValue",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/replay.ts",
+   "target": "function:packages/cli/src/replay.ts:resolveLedgerPath",
+   "type": "contains",
+   "direction": "forward",
+   "description": "replay.ts defines resolveLedgerPath",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/replay.ts",
+   "target": "function:packages/cli/src/replay.ts:findRecord",
+   "type": "contains",
+   "direction": "forward",
+   "description": "replay.ts defines findRecord",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/replay.ts",
+   "target": "function:packages/cli/src/replay.ts:readSnapshotManifest",
+   "type": "contains",
+   "direction": "forward",
+   "description": "replay.ts defines readSnapshotManifest",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/replay.ts",
+   "target": "function:packages/cli/src/replay.ts:asManifestRecord",
+   "type": "contains",
+   "direction": "forward",
+   "description": "replay.ts defines asManifestRecord",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/replay.ts",
+   "target": "function:packages/cli/src/replay.ts:findSnapshot",
+   "type": "contains",
+   "direction": "forward",
+   "description": "replay.ts defines findSnapshot",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/replay.ts",
+   "target": "function:packages/cli/src/replay.ts:findConnector",
+   "type": "contains",
+   "direction": "forward",
+   "description": "replay.ts defines findConnector",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/replay.ts",
+   "target": "function:packages/cli/src/replay.ts:toolVendor",
+   "type": "contains",
+   "direction": "forward",
+   "description": "replay.ts defines toolVendor",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/replay.ts",
+   "target": "function:packages/cli/src/replay.ts:printReplayHeader",
+   "type": "contains",
+   "direction": "forward",
+   "description": "replay.ts defines printReplayHeader",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/replay.ts",
+   "target": "function:packages/cli/src/replay.ts:printPlan",
+   "type": "contains",
+   "direction": "forward",
+   "description": "replay.ts defines printPlan",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/replay.ts",
+   "target": "function:packages/cli/src/replay.ts:printApplyReport",
+   "type": "contains",
+   "direction": "forward",
+   "description": "replay.ts defines printApplyReport",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/replay.ts",
+   "target": "class:packages/cli/src/replay.ts:ReplayConfigurationError",
+   "type": "contains",
+   "direction": "forward",
+   "description": "replay.ts defines class ReplayConfigurationError",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/cli/src/replay.ts:runReplayCommand",
+   "target": "function:packages/cli/src/replay.ts:printConnectors",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runReplayCommand calls printConnectors",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/replay.ts:runReplayCommand",
+   "target": "function:packages/cli/src/replay.ts:parseReplayArgs",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runReplayCommand calls parseReplayArgs",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/replay.ts:runReplayCommand",
+   "target": "function:packages/cli/src/replay.ts:findRecord",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runReplayCommand calls findRecord",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/replay.ts:runReplayCommand",
+   "target": "function:packages/cli/src/replay.ts:findSnapshot",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runReplayCommand calls findSnapshot",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/replay.ts:runReplayCommand",
+   "target": "function:packages/cli/src/replay.ts:configuredConnector",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runReplayCommand calls configuredConnector",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/replay.ts:runReplayCommand",
+   "target": "function:packages/cli/src/replay.ts:findConnector",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runReplayCommand calls findConnector",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/replay.ts:runReplayCommand",
+   "target": "function:packages/cli/src/replay.ts:printReplayHeader",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runReplayCommand calls printReplayHeader",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/replay.ts:runReplayCommand",
+   "target": "function:packages/cli/src/replay.ts:printPlan",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runReplayCommand calls printPlan",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/replay.ts:runReplayCommand",
+   "target": "function:packages/cli/src/replay.ts:reversalSigner",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runReplayCommand calls reversalSigner",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/replay.ts:runReplayCommand",
+   "target": "function:packages/cli/src/replay.ts:printApplyReport",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runReplayCommand calls printApplyReport",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/replay.ts:runReplayCommand",
+   "target": "function:packages/cli/src/replay.ts:appendReversal",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runReplayCommand calls appendReversal",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/replay.ts:configuredConnector",
+   "target": "function:packages/cli/src/replay.ts:toolVendor",
+   "type": "calls",
+   "direction": "forward",
+   "description": "configuredConnector calls toolVendor",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/replay.ts:parseReplayArgs",
+   "target": "function:packages/cli/src/replay.ts:needValue",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parseReplayArgs calls needValue",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/replay.ts:parseReplayArgs",
+   "target": "function:packages/cli/src/replay.ts:resolveLedgerPath",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parseReplayArgs calls resolveLedgerPath",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/replay.ts:readSnapshotManifest",
+   "target": "function:packages/cli/src/replay.ts:asManifestRecord",
+   "type": "calls",
+   "direction": "forward",
+   "description": "readSnapshotManifest calls asManifestRecord",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/replay.ts:findConnector",
+   "target": "function:packages/cli/src/replay.ts:toolVendor",
+   "type": "calls",
+   "direction": "forward",
+   "description": "findConnector calls toolVendor",
+   "weight": 0.6
+  },
+  {
+   "source": "file:apps/control-plane/api/server.test.ts",
+   "target": "file:apps/control-plane/api/server.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "server.test.ts imports server.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/server.test.ts",
+   "target": "file:packages/ledger/src/canonical.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "server.test.ts imports canonical.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/server.test.ts",
+   "target": "file:packages/ledger/src/sign.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "server.test.ts imports sign.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/server.test.ts",
+   "target": "file:packages/ledger/src/store.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "server.test.ts imports store.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/server.test.ts",
+   "target": "file:packages/workbench/src/agent-runners/agent-runner.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "server.test.ts imports agent-runner.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/server.test.ts",
+   "target": "file:packages/workbench/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "server.test.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/server.test.ts",
+   "target": "file:packages/workbench/src/project-workspace.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "server.test.ts imports project-workspace.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/server.test.ts",
+   "target": "file:packages/workbench/src/provider-adapters/types.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "server.test.ts imports types.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/server.test.ts",
+   "target": "file:packages/workbench/src/provider-catalog.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "server.test.ts imports provider-catalog.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/verify-key.test.ts",
+   "target": "file:apps/control-plane/api/server.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "verify-key.test.ts imports server.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/verify-key.test.ts",
+   "target": "file:packages/ledger/src/sign.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "verify-key.test.ts imports sign.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/verify-key.test.ts",
+   "target": "file:packages/ledger/src/store.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "verify-key.test.ts imports store.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/verify-key.test.ts",
+   "target": "file:packages/ledger/src/verify-key.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "verify-key.test.ts imports verify-key.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/verify-key.test.ts",
+   "target": "file:packages/ledger/src/verify.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "verify-key.test.ts imports verify.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/verify-key.test.ts",
+   "target": "file:packages/workbench/src/storage.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "verify-key.test.ts imports storage.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/verify-key.test.ts",
+   "target": "file:packages/workbench/src/workspace.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "verify-key.test.ts imports workspace.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/web/app.test.mjs",
+   "target": "file:apps/control-plane/api/server.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "app.test.mjs imports server.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/web/app.test.mjs",
+   "target": "file:apps/control-plane/web/app.js",
+   "type": "imports",
+   "direction": "forward",
+   "description": "app.test.mjs imports app.js",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/web/app.test.mjs",
+   "target": "file:packages/ledger/src/sign.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "app.test.mjs imports sign.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/web/app.test.mjs",
+   "target": "file:packages/ledger/src/store.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "app.test.mjs imports store.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/desktop/runtime.test.mjs",
+   "target": "file:packages/ledger/src/sign.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "runtime.test.mjs imports sign.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/desktop/runtime.test.mjs",
+   "target": "file:packages/ledger/src/store.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "runtime.test.mjs imports store.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/gui.test.mjs",
+   "target": "file:cloud/owner.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "gui.test.mjs imports owner.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/gui.test.mjs",
+   "target": "file:cloud/store.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "gui.test.mjs imports store.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/gui.test.mjs",
+   "target": "file:packages/ledger/src/canonical.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "gui.test.mjs imports canonical.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/gui.test.mjs",
+   "target": "file:packages/ledger/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "gui.test.mjs imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/gui.test.mjs",
+   "target": "file:packages/ledger/src/sign.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "gui.test.mjs imports sign.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/gui.test.mjs",
+   "target": "file:packages/workbench/src/workspace.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "gui.test.mjs imports workspace.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/gui.test.mjs",
+   "target": "file:scripts/src/cloud-test-config.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "gui.test.mjs imports cloud-test-config.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/config.test.ts",
+   "target": "file:packages/cli/src/config.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "config.test.ts imports config.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/config.ts",
+   "target": "file:packages/ledger/src/env-compat.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "config.ts imports env-compat.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/config.ts",
+   "target": "file:packages/ledger/src/paths.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "config.ts imports paths.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/dispatch.ts",
+   "target": "file:packages/cli/src/agent.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "dispatch.ts imports agent.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/dispatch.ts",
+   "target": "file:packages/cli/src/approve.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "dispatch.ts imports approve.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/dispatch.ts",
+   "target": "file:packages/cli/src/argv.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "dispatch.ts imports argv.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/dispatch.ts",
+   "target": "file:packages/cli/src/config.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "dispatch.ts imports config.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/dispatch.ts",
+   "target": "file:packages/cli/src/doctor.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "dispatch.ts imports doctor.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/dispatch.ts",
+   "target": "file:packages/cli/src/harness.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "dispatch.ts imports harness.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/dispatch.ts",
+   "target": "file:packages/cli/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "dispatch.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/dispatch.ts",
+   "target": "file:packages/cli/src/init.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "dispatch.ts imports init.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/dispatch.ts",
+   "target": "file:packages/cli/src/migrate-state.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "dispatch.ts imports migrate-state.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/dispatch.ts",
+   "target": "file:packages/cli/src/operations.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "dispatch.ts imports operations.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/dispatch.ts",
+   "target": "file:packages/cli/src/package-version.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "dispatch.ts imports package-version.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/dispatch.ts",
+   "target": "file:packages/cli/src/recovery.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "dispatch.ts imports recovery.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/dispatch.ts",
+   "target": "file:packages/cli/src/update.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "dispatch.ts imports update.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/dispatch.ts",
+   "target": "file:packages/cli/src/watch.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "dispatch.ts imports watch.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/dispatch.ts",
+   "target": "file:packages/ledger/src/paths.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "dispatch.ts imports paths.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/doctor.test.ts",
+   "target": "file:packages/cli/src/doctor.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "doctor.test.ts imports doctor.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/doctor.test.ts",
+   "target": "file:packages/ledger/src/sign.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "doctor.test.ts imports sign.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/doctor.test.ts",
+   "target": "file:packages/ledger/src/verify-key.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "doctor.test.ts imports verify-key.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/doctor.ts",
+   "target": "file:packages/ledger/src/hardening.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "doctor.ts imports hardening.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/doctor.ts",
+   "target": "file:packages/ledger/src/paths.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "doctor.ts imports paths.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/doctor.ts",
+   "target": "file:packages/ledger/src/sign.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "doctor.ts imports sign.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/doctor.ts",
+   "target": "file:packages/ledger/src/verify-key.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "doctor.ts imports verify-key.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/evidence-integrity.test.ts",
+   "target": "file:packages/cli/src/operations.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "evidence-integrity.test.ts imports operations.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/evidence-integrity.test.ts",
+   "target": "file:packages/cli/src/verify.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "evidence-integrity.test.ts imports verify.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/evidence-integrity.test.ts",
+   "target": "file:packages/ledger/src/anchor.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "evidence-integrity.test.ts imports anchor.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/evidence-integrity.test.ts",
+   "target": "file:packages/ledger/src/sign.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "evidence-integrity.test.ts imports sign.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/evidence-integrity.test.ts",
+   "target": "file:packages/ledger/src/store.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "evidence-integrity.test.ts imports store.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/evidence-integrity.test.ts",
+   "target": "file:packages/ledger/src/verify.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "evidence-integrity.test.ts imports verify.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/export-bundle.test.ts",
+   "target": "file:packages/cli/src/export-bundle.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "export-bundle.test.ts imports export-bundle.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/export-bundle.test.ts",
+   "target": "file:packages/cli/src/metrics.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "export-bundle.test.ts imports metrics.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/export-bundle.test.ts",
+   "target": "file:packages/cli/src/operations.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "export-bundle.test.ts imports operations.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/export-bundle.test.ts",
+   "target": "file:packages/ledger/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "export-bundle.test.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/export-bundle.test.ts",
+   "target": "file:packages/ledger/src/sign.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "export-bundle.test.ts imports sign.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/export-bundle.test.ts",
+   "target": "file:packages/ledger/src/store.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "export-bundle.test.ts imports store.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/export-bundle.test.ts",
+   "target": "file:packages/runtime/src/reserved-vault.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "export-bundle.test.ts imports reserved-vault.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/export-bundle.ts",
+   "target": "file:packages/ledger/src/attest.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "export-bundle.ts imports attest.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/export-bundle.ts",
+   "target": "file:packages/ledger/src/hardening.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "export-bundle.ts imports hardening.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/export-bundle.ts",
+   "target": "file:packages/ledger/src/store.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "export-bundle.ts imports store.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/export-bundle.ts",
+   "target": "file:packages/ledger/src/verify.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "export-bundle.ts imports verify.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/export-bundle.ts",
+   "target": "file:packages/runtime/src/journal.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "export-bundle.ts imports journal.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/feed.test.ts",
+   "target": "file:packages/cli/src/feed.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "feed.test.ts imports feed.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/feed.test.ts",
+   "target": "file:packages/ledger/src/feed.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "feed.test.ts imports feed.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/feed.ts",
+   "target": "file:packages/ledger/src/feed.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "feed.ts imports feed.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/feed.ts",
+   "target": "file:packages/ledger/src/paths.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "feed.ts imports paths.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/index.test.ts",
+   "target": "file:packages/cli/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "index.test.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/init.test.ts",
+   "target": "file:packages/cli/src/init.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "init.test.ts imports init.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/init.test.ts",
+   "target": "file:packages/ledger/src/sign.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "init.test.ts imports sign.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/init.test.ts",
+   "target": "file:packages/ledger/src/store.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "init.test.ts imports store.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/init.test.ts",
+   "target": "file:packages/ledger/src/verify-key.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "init.test.ts imports verify-key.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/init.ts",
+   "target": "file:packages/ledger/src/paths.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "init.ts imports paths.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/init.ts",
+   "target": "file:packages/ledger/src/sign.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "init.ts imports sign.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/init.ts",
+   "target": "file:packages/ledger/src/verify-key.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "init.ts imports verify-key.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/init.ts",
+   "target": "file:packages/workbench/src/storage.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "init.ts imports storage.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/ledger-target.test.ts",
+   "target": "file:packages/cli/src/ledger-target.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "ledger-target.test.ts imports ledger-target.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/ledger-target.test.ts",
+   "target": "file:packages/cli/src/operations.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "ledger-target.test.ts imports operations.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/ledger-target.test.ts",
+   "target": "file:packages/cli/src/verify.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "ledger-target.test.ts imports verify.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/ledger-target.ts",
+   "target": "file:packages/ledger/src/paths.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "ledger-target.ts imports paths.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/mcp-reverse-exercise.ts",
+   "target": "file:packages/ledger/src/sign.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "mcp-reverse-exercise.ts imports sign.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/mcp-reverse-exercise.ts",
+   "target": "file:packages/ledger/src/verify.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "mcp-reverse-exercise.ts imports verify.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/metrics.ts",
+   "target": "file:packages/cli/src/export-bundle.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "metrics.ts imports export-bundle.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/metrics.ts",
+   "target": "file:packages/ledger/src/verify.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "metrics.ts imports verify.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/metrics.ts",
+   "target": "file:packages/policy/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "metrics.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/metrics.ts",
+   "target": "file:packages/runtime/src/journal.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "metrics.ts imports journal.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/migrate-state.test.ts",
+   "target": "file:packages/cli/src/migrate-state.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "migrate-state.test.ts imports migrate-state.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/migrate-state.test.ts",
+   "target": "file:packages/ledger/src/paths.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "migrate-state.test.ts imports paths.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/migrate-state.test.ts",
+   "target": "file:packages/ledger/src/sign.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "migrate-state.test.ts imports sign.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/migrate-state.test.ts",
+   "target": "file:packages/ledger/src/store.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "migrate-state.test.ts imports store.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/migrate-state.test.ts",
+   "target": "file:packages/ledger/src/verify.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "migrate-state.test.ts imports verify.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/migrate-state.test.ts",
+   "target": "file:packages/workbench/src/storage.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "migrate-state.test.ts imports storage.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/migrate-state.ts",
+   "target": "file:packages/ledger/src/paths.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "migrate-state.ts imports paths.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/operations.test.ts",
+   "target": "file:packages/cli/src/operations.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "operations.test.ts imports operations.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/operations.test.ts",
+   "target": "file:packages/ledger/src/attest.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "operations.test.ts imports attest.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/operations.test.ts",
+   "target": "file:packages/ledger/src/sign.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "operations.test.ts imports sign.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/operations.test.ts",
+   "target": "file:packages/ledger/src/store.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "operations.test.ts imports store.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/operations.test.ts",
+   "target": "file:packages/ledger/src/verify.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "operations.test.ts imports verify.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/operations.ts",
+   "target": "file:packages/cli/src/export-bundle.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "operations.ts imports export-bundle.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/operations.ts",
+   "target": "file:packages/cli/src/ledger-target.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "operations.ts imports ledger-target.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/operations.ts",
+   "target": "file:packages/cli/src/metrics.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "operations.ts imports metrics.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/operations.ts",
+   "target": "file:packages/ledger/src/anchor.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "operations.ts imports anchor.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/operations.ts",
+   "target": "file:packages/ledger/src/attest.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "operations.ts imports attest.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/operations.ts",
+   "target": "file:packages/ledger/src/sign.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "operations.ts imports sign.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/operations.ts",
+   "target": "file:packages/ledger/src/verify-key.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "operations.ts imports verify-key.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/operations.ts",
+   "target": "file:packages/ledger/src/verify.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "operations.ts imports verify.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/operations.ts",
+   "target": "file:packages/policy/src/packs.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "operations.ts imports packs.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/operations.ts",
+   "target": "file:packages/policy/src/rules.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "operations.ts imports rules.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/recovery-filesystem.test.ts",
+   "target": "file:packages/cli/src/recovery-mcp.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery-filesystem.test.ts imports recovery-mcp.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/recovery-filesystem.test.ts",
+   "target": "file:packages/cli/src/recovery.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery-filesystem.test.ts imports recovery.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/recovery-filesystem.test.ts",
+   "target": "file:packages/connectors/src/filesystem/managed.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery-filesystem.test.ts imports managed.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/recovery-filesystem.test.ts",
+   "target": "file:packages/ledger/src/hardening.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery-filesystem.test.ts imports hardening.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/recovery-filesystem.test.ts",
+   "target": "file:packages/ledger/src/sign.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery-filesystem.test.ts imports sign.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/recovery-filesystem.test.ts",
+   "target": "file:packages/runtime/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery-filesystem.test.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/recovery-health.test.ts",
+   "target": "file:packages/cli/src/recovery-health.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery-health.test.ts imports recovery-health.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/recovery-health.test.ts",
+   "target": "file:packages/cli/src/recovery.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery-health.test.ts imports recovery.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/recovery-health.test.ts",
+   "target": "file:packages/ledger/src/sign.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery-health.test.ts imports sign.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/recovery-health.test.ts",
+   "target": "file:packages/ledger/src/store.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery-health.test.ts imports store.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/recovery-health.test.ts",
+   "target": "file:packages/runtime/src/reserved-vault.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery-health.test.ts imports reserved-vault.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/recovery-health.ts",
+   "target": "file:packages/ledger/src/hardening.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery-health.ts imports hardening.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/recovery-health.ts",
+   "target": "file:packages/ledger/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery-health.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/recovery-health.ts",
+   "target": "file:packages/ledger/src/sign.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery-health.ts imports sign.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/recovery-health.ts",
+   "target": "file:packages/ledger/src/store.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery-health.ts imports store.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/recovery-health.ts",
+   "target": "file:packages/runtime/src/file-retention.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery-health.ts imports file-retention.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/recovery-health.ts",
+   "target": "file:packages/runtime/src/reserved-vault.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery-health.ts imports reserved-vault.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/replay.ts",
+   "target": "file:packages/cli/src/postgres.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "replay.ts imports postgres.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/replay.ts",
+   "target": "file:packages/cli/src/s3.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "replay.ts imports s3.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/replay.ts",
+   "target": "file:packages/connectors/src/registry.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "replay.ts imports registry.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/replay.ts",
+   "target": "file:packages/connectors/src/snapshot/local.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "replay.ts imports local.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/replay.ts",
+   "target": "file:packages/ledger/src/canonical.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "replay.ts imports canonical.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/replay.ts",
+   "target": "file:packages/ledger/src/feed.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "replay.ts imports feed.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/replay.ts",
+   "target": "file:packages/ledger/src/hardening.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "replay.ts imports hardening.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/replay.ts",
+   "target": "file:packages/ledger/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "replay.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/replay.ts",
+   "target": "file:packages/ledger/src/paths.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "replay.ts imports paths.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/replay.ts",
+   "target": "file:packages/ledger/src/reversal.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "replay.ts imports reversal.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/replay.ts",
+   "target": "file:packages/ledger/src/sign.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "replay.ts imports sign.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/replay.ts",
+   "target": "file:packages/ledger/src/store.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "replay.ts imports store.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/replay.ts",
+   "target": "file:packages/ledger/src/verify.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "replay.ts imports verify.ts",
+   "weight": 0.8
+  }
+ ]
+}

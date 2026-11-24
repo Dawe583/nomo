@@ -54,3 +54,68 @@ test("workspace terminal routes bracketed paste as one payload and restores term
   assert.match(written, /\x1b\[\?2004l/);
   assert.match(written, /frame/);
 });
+
+test("a resize storm during a draft keeps the frame in bounds and the terminal live", async () => {
+  const input = new PassThrough() as unknown as NodeJS.ReadStream;
+  let raw = false;
+  input.isRaw = raw;
+  input.isTTY = true;
+  input.setRawMode = (enabled: boolean) => {
+    raw = enabled;
+    input.isRaw = enabled;
+    return input;
+  };
+  const output = new PassThrough() as unknown as NodeJS.WriteStream;
+  output.isTTY = true;
+  output.columns = 40;
+  output.rows = 12;
+  let written = "";
+  output.on("data", (chunk: Buffer) => { written += chunk.toString(); });
+  let resized = 0;
+  const terminal = createWorkspaceTerminal(input, output);
+  terminal.start(() => {}, () => {}, () => { resized++; });
+  terminal.render("draft survives the storm");
+
+  for (let event = 0; event < 10; event += 1) {
+    output.columns = event % 2 === 0 ? 120 : 40;
+    output.rows = event % 2 === 0 ? 40 : 12;
+    output.emit("resize");
+  }
+  assert.equal(resized, 10, "every SIGWINCH reaches the layout");
+  assert.equal(raw, true, "a resize never drops the terminal out of raw mode");
+  terminal.render("draft survives the storm");
+  assert.match(written, /draft survives the storm/);
+
+  terminal.destroy();
+  assert.equal(raw, false);
+  assert.match(written, /\x1b\[\?1049l/);
+  assert.match(written, /\x1b\[\?2004l/);
+});
+
+test("render and write after destroy write nothing and keep the terminal restored", async () => {
+  const input = new PassThrough() as unknown as NodeJS.ReadStream;
+  let raw = false;
+  input.isRaw = raw;
+  input.isTTY = true;
+  input.setRawMode = (enabled: boolean) => {
+    raw = enabled;
+    input.isRaw = enabled;
+    return input;
+  };
+  const output = new PassThrough() as unknown as NodeJS.WriteStream;
+  output.isTTY = true;
+  output.columns = 80;
+  output.rows = 24;
+  let written = "";
+  output.on("data", (chunk: Buffer) => { written += chunk.toString(); });
+  const terminal = createWorkspaceTerminal(input, output);
+  terminal.start(() => {}, () => {});
+  terminal.destroy();
+  const restored = written;
+
+  terminal.render("late frame");
+  assert.equal(terminal.writeGraphics("\x1b_Glate"), false);
+  assert.equal(written, restored, "a destroyed terminal is inert");
+  assert.doesNotMatch(written, /late frame/);
+  assert.equal(raw, false);
+});

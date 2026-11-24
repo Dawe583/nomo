@@ -1,0 +1,848 @@
+{
+ "nodes": [
+  {
+   "id": "file:rollup.config.mjs",
+   "type": "file",
+   "name": "rollup.config.mjs",
+   "filePath": "rollup.config.mjs",
+   "summary": "rollup.config.mjs \u2014 javascript code, 177 lines, 6 functions, 0 classes, 5 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:rollup.config.mjs:isExternal",
+   "type": "function",
+   "name": "isExternal",
+   "filePath": "rollup.config.mjs",
+   "lineRange": [
+    39,
+    47
+   ],
+   "summary": "isExternal(id) \u2014 function in rollup.config.mjs, lines 39-47.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:rollup.config.mjs:stripTypes",
+   "type": "function",
+   "name": "stripTypes",
+   "filePath": "rollup.config.mjs",
+   "lineRange": [
+    67,
+    80
+   ],
+   "summary": "stripTypes(sourceRoot) \u2014 function in rollup.config.mjs, lines 67-80.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:rollup.config.mjs:readPackageVersion",
+   "type": "function",
+   "name": "readPackageVersion",
+   "filePath": "rollup.config.mjs",
+   "lineRange": [
+    92,
+    98
+   ],
+   "summary": "readPackageVersion(base) \u2014 function in rollup.config.mjs, lines 92-98.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:rollup.config.mjs:bundleVersion",
+   "type": "function",
+   "name": "bundleVersion",
+   "filePath": "rollup.config.mjs",
+   "lineRange": [
+    108,
+    124
+   ],
+   "summary": "bundleVersion(version) \u2014 function in rollup.config.mjs, lines 108-124.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:rollup.config.mjs:bundleOptions",
+   "type": "function",
+   "name": "bundleOptions",
+   "filePath": "rollup.config.mjs",
+   "lineRange": [
+    130,
+    148
+   ],
+   "summary": "bundleOptions() \u2014 function in rollup.config.mjs, lines 130-148.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:rollup.config.mjs:bundleOutput",
+   "type": "function",
+   "name": "bundleOutput",
+   "filePath": "rollup.config.mjs",
+   "lineRange": [
+    164,
+    175
+   ],
+   "summary": "bundleOutput(outDir) \u2014 function in rollup.config.mjs, lines 164-175.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/src/bundle-cli.mjs",
+   "type": "file",
+   "name": "bundle-cli.mjs",
+   "filePath": "scripts/src/bundle-cli.mjs",
+   "summary": "bundle-cli.mjs \u2014 javascript code, 171 lines, 2 functions, 0 classes, 3 exports, 1 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:scripts/src/bundle-cli.mjs:parseArgs",
+   "type": "function",
+   "name": "parseArgs",
+   "filePath": "scripts/src/bundle-cli.mjs",
+   "lineRange": [
+    42,
+    58
+   ],
+   "summary": "parseArgs(argv) \u2014 function in bundle-cli.mjs, lines 42-58.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/bundle-cli.mjs:buildBundle",
+   "type": "function",
+   "name": "buildBundle",
+   "filePath": "scripts/src/bundle-cli.mjs",
+   "lineRange": [
+    71,
+    152
+   ],
+   "summary": "buildBundle() \u2014 function in bundle-cli.mjs, lines 71-152.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/src/bundle-cli.test.mjs",
+   "type": "file",
+   "name": "bundle-cli.test.mjs",
+   "filePath": "scripts/src/bundle-cli.test.mjs",
+   "summary": "bundle-cli.test.mjs \u2014 javascript code, 597 lines, 3 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "javascript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:scripts/src/bundle-cli.test.mjs:read",
+   "type": "function",
+   "name": "read",
+   "filePath": "scripts/src/bundle-cli.test.mjs",
+   "lineRange": [
+    25,
+    25
+   ],
+   "summary": "read(path) \u2014 function in bundle-cli.test.mjs, lines 25-25.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/bundle-cli.test.mjs:bareSpecifiers",
+   "type": "function",
+   "name": "bareSpecifiers",
+   "filePath": "scripts/src/bundle-cli.test.mjs",
+   "lineRange": [
+    65,
+    76
+   ],
+   "summary": "bareSpecifiers(code) \u2014 function in bundle-cli.test.mjs, lines 65-76.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/bundle-cli.test.mjs:mcpSession",
+   "type": "function",
+   "name": "mcpSession",
+   "filePath": "scripts/src/bundle-cli.test.mjs",
+   "lineRange": [
+    88,
+    147
+   ],
+   "summary": "mcpSession(bin, args, env) \u2014 function in bundle-cli.test.mjs, lines 88-147.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/src/npm-cli.mjs",
+   "type": "file",
+   "name": "npm-cli.mjs",
+   "filePath": "scripts/src/npm-cli.mjs",
+   "summary": "npm-cli.mjs \u2014 javascript code, 27 lines, 1 functions, 0 classes, 1 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/npm-cli.mjs:npmInvocation",
+   "type": "function",
+   "name": "npmInvocation",
+   "filePath": "scripts/src/npm-cli.mjs",
+   "lineRange": [
+    9,
+    27
+   ],
+   "summary": "npmInvocation(args) \u2014 function in npm-cli.mjs, lines 9-27.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/src/release-packaging.test.mjs",
+   "type": "file",
+   "name": "release-packaging.test.mjs",
+   "filePath": "scripts/src/release-packaging.test.mjs",
+   "summary": "release-packaging.test.mjs \u2014 javascript code, 646 lines, 3 functions, 0 classes, 0 exports, 3 imports.",
+   "tags": [
+    "javascript",
+    "code",
+    "test"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "function:scripts/src/release-packaging.test.mjs:read",
+   "type": "function",
+   "name": "read",
+   "filePath": "scripts/src/release-packaging.test.mjs",
+   "lineRange": [
+    22,
+    22
+   ],
+   "summary": "read(path) \u2014 function in release-packaging.test.mjs, lines 22-22.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/release-packaging.test.mjs:manifest",
+   "type": "function",
+   "name": "manifest",
+   "filePath": "scripts/src/release-packaging.test.mjs",
+   "lineRange": [
+    23,
+    23
+   ],
+   "summary": "manifest(path) \u2014 function in release-packaging.test.mjs, lines 23-23.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/release-packaging.test.mjs:readPath",
+   "type": "function",
+   "name": "readPath",
+   "filePath": "scripts/src/release-packaging.test.mjs",
+   "lineRange": [
+    568,
+    572
+   ],
+   "summary": "readPath(source, path) \u2014 function in release-packaging.test.mjs, lines 568-572.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/src/set-version.mjs",
+   "type": "file",
+   "name": "set-version.mjs",
+   "filePath": "scripts/src/set-version.mjs",
+   "summary": "set-version.mjs \u2014 javascript code, 172 lines, 7 functions, 0 classes, 4 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:scripts/src/set-version.mjs:versionedManifests",
+   "type": "function",
+   "name": "versionedManifests",
+   "filePath": "scripts/src/set-version.mjs",
+   "lineRange": [
+    50,
+    62
+   ],
+   "summary": "versionedManifests(root) \u2014 function in set-version.mjs, lines 50-62.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/set-version.mjs:manifestPath",
+   "type": "function",
+   "name": "manifestPath",
+   "filePath": "scripts/src/set-version.mjs",
+   "lineRange": [
+    65,
+    66
+   ],
+   "summary": "manifestPath(root, directory) \u2014 function in set-version.mjs, lines 65-66.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/set-version.mjs:displayPath",
+   "type": "function",
+   "name": "displayPath",
+   "filePath": "scripts/src/set-version.mjs",
+   "lineRange": [
+    68,
+    69
+   ],
+   "summary": "displayPath(directory) \u2014 function in set-version.mjs, lines 68-69.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/set-version.mjs:rewriteVersion",
+   "type": "function",
+   "name": "rewriteVersion",
+   "filePath": "scripts/src/set-version.mjs",
+   "lineRange": [
+    81,
+    99
+   ],
+   "summary": "rewriteVersion(text, version, path) \u2014 function in set-version.mjs, lines 81-99.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/set-version.mjs:disagreeingManifests",
+   "type": "function",
+   "name": "disagreeingManifests",
+   "filePath": "scripts/src/set-version.mjs",
+   "lineRange": [
+    102,
+    109
+   ],
+   "summary": "disagreeingManifests(root, expected) \u2014 function in set-version.mjs, lines 102-109.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/set-version.mjs:setVersion",
+   "type": "function",
+   "name": "setVersion",
+   "filePath": "scripts/src/set-version.mjs",
+   "lineRange": [
+    112,
+    133
+   ],
+   "summary": "setVersion(root, version) \u2014 function in set-version.mjs, lines 112-133.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/set-version.mjs:main",
+   "type": "function",
+   "name": "main",
+   "filePath": "scripts/src/set-version.mjs",
+   "lineRange": [
+    135,
+    165
+   ],
+   "summary": "main(argv) \u2014 function in set-version.mjs, lines 135-165.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  }
+ ],
+ "edges": [
+  {
+   "source": "file:rollup.config.mjs",
+   "target": "function:rollup.config.mjs:isExternal",
+   "type": "contains",
+   "direction": "forward",
+   "description": "rollup.config.mjs defines isExternal",
+   "weight": 1.0
+  },
+  {
+   "source": "file:rollup.config.mjs",
+   "target": "function:rollup.config.mjs:isExternal",
+   "type": "exports",
+   "direction": "forward",
+   "description": "rollup.config.mjs exports isExternal",
+   "weight": 0.7
+  },
+  {
+   "source": "file:rollup.config.mjs",
+   "target": "function:rollup.config.mjs:stripTypes",
+   "type": "contains",
+   "direction": "forward",
+   "description": "rollup.config.mjs defines stripTypes",
+   "weight": 1.0
+  },
+  {
+   "source": "file:rollup.config.mjs",
+   "target": "function:rollup.config.mjs:readPackageVersion",
+   "type": "contains",
+   "direction": "forward",
+   "description": "rollup.config.mjs defines readPackageVersion",
+   "weight": 1.0
+  },
+  {
+   "source": "file:rollup.config.mjs",
+   "target": "function:rollup.config.mjs:readPackageVersion",
+   "type": "exports",
+   "direction": "forward",
+   "description": "rollup.config.mjs exports readPackageVersion",
+   "weight": 0.7
+  },
+  {
+   "source": "file:rollup.config.mjs",
+   "target": "function:rollup.config.mjs:bundleVersion",
+   "type": "contains",
+   "direction": "forward",
+   "description": "rollup.config.mjs defines bundleVersion",
+   "weight": 1.0
+  },
+  {
+   "source": "file:rollup.config.mjs",
+   "target": "function:rollup.config.mjs:bundleOptions",
+   "type": "contains",
+   "direction": "forward",
+   "description": "rollup.config.mjs defines bundleOptions",
+   "weight": 1.0
+  },
+  {
+   "source": "file:rollup.config.mjs",
+   "target": "function:rollup.config.mjs:bundleOptions",
+   "type": "exports",
+   "direction": "forward",
+   "description": "rollup.config.mjs exports bundleOptions",
+   "weight": 0.7
+  },
+  {
+   "source": "file:rollup.config.mjs",
+   "target": "function:rollup.config.mjs:bundleOutput",
+   "type": "contains",
+   "direction": "forward",
+   "description": "rollup.config.mjs defines bundleOutput",
+   "weight": 1.0
+  },
+  {
+   "source": "file:rollup.config.mjs",
+   "target": "function:rollup.config.mjs:bundleOutput",
+   "type": "exports",
+   "direction": "forward",
+   "description": "rollup.config.mjs exports bundleOutput",
+   "weight": 0.7
+  },
+  {
+   "source": "function:rollup.config.mjs:bundleOptions",
+   "target": "function:rollup.config.mjs:bundleVersion",
+   "type": "calls",
+   "direction": "forward",
+   "description": "bundleOptions calls bundleVersion",
+   "weight": 0.6
+  },
+  {
+   "source": "function:rollup.config.mjs:bundleOptions",
+   "target": "function:rollup.config.mjs:readPackageVersion",
+   "type": "calls",
+   "direction": "forward",
+   "description": "bundleOptions calls readPackageVersion",
+   "weight": 0.6
+  },
+  {
+   "source": "function:rollup.config.mjs:bundleOptions",
+   "target": "function:rollup.config.mjs:stripTypes",
+   "type": "calls",
+   "direction": "forward",
+   "description": "bundleOptions calls stripTypes",
+   "weight": 0.6
+  },
+  {
+   "source": "file:scripts/src/bundle-cli.mjs",
+   "target": "function:scripts/src/bundle-cli.mjs:parseArgs",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bundle-cli.mjs defines parseArgs",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/bundle-cli.mjs",
+   "target": "function:scripts/src/bundle-cli.mjs:buildBundle",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bundle-cli.mjs defines buildBundle",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/bundle-cli.mjs",
+   "target": "function:scripts/src/bundle-cli.mjs:buildBundle",
+   "type": "exports",
+   "direction": "forward",
+   "description": "bundle-cli.mjs exports buildBundle",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/src/bundle-cli.test.mjs",
+   "target": "function:scripts/src/bundle-cli.test.mjs:read",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bundle-cli.test.mjs defines read",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/bundle-cli.test.mjs",
+   "target": "function:scripts/src/bundle-cli.test.mjs:bareSpecifiers",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bundle-cli.test.mjs defines bareSpecifiers",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/bundle-cli.test.mjs",
+   "target": "function:scripts/src/bundle-cli.test.mjs:mcpSession",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bundle-cli.test.mjs defines mcpSession",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/npm-cli.mjs",
+   "target": "function:scripts/src/npm-cli.mjs:npmInvocation",
+   "type": "contains",
+   "direction": "forward",
+   "description": "npm-cli.mjs defines npmInvocation",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/npm-cli.mjs",
+   "target": "function:scripts/src/npm-cli.mjs:npmInvocation",
+   "type": "exports",
+   "direction": "forward",
+   "description": "npm-cli.mjs exports npmInvocation",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/src/release-packaging.test.mjs",
+   "target": "function:scripts/src/release-packaging.test.mjs:read",
+   "type": "contains",
+   "direction": "forward",
+   "description": "release-packaging.test.mjs defines read",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/release-packaging.test.mjs",
+   "target": "function:scripts/src/release-packaging.test.mjs:manifest",
+   "type": "contains",
+   "direction": "forward",
+   "description": "release-packaging.test.mjs defines manifest",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/release-packaging.test.mjs",
+   "target": "function:scripts/src/release-packaging.test.mjs:readPath",
+   "type": "contains",
+   "direction": "forward",
+   "description": "release-packaging.test.mjs defines readPath",
+   "weight": 1.0
+  },
+  {
+   "source": "function:scripts/src/release-packaging.test.mjs:manifest",
+   "target": "function:scripts/src/release-packaging.test.mjs:read",
+   "type": "calls",
+   "direction": "forward",
+   "description": "manifest calls read",
+   "weight": 0.6
+  },
+  {
+   "source": "file:scripts/src/set-version.mjs",
+   "target": "function:scripts/src/set-version.mjs:versionedManifests",
+   "type": "contains",
+   "direction": "forward",
+   "description": "set-version.mjs defines versionedManifests",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/set-version.mjs",
+   "target": "function:scripts/src/set-version.mjs:versionedManifests",
+   "type": "exports",
+   "direction": "forward",
+   "description": "set-version.mjs exports versionedManifests",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/src/set-version.mjs",
+   "target": "function:scripts/src/set-version.mjs:manifestPath",
+   "type": "contains",
+   "direction": "forward",
+   "description": "set-version.mjs defines manifestPath",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/set-version.mjs",
+   "target": "function:scripts/src/set-version.mjs:displayPath",
+   "type": "contains",
+   "direction": "forward",
+   "description": "set-version.mjs defines displayPath",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/set-version.mjs",
+   "target": "function:scripts/src/set-version.mjs:rewriteVersion",
+   "type": "contains",
+   "direction": "forward",
+   "description": "set-version.mjs defines rewriteVersion",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/set-version.mjs",
+   "target": "function:scripts/src/set-version.mjs:rewriteVersion",
+   "type": "exports",
+   "direction": "forward",
+   "description": "set-version.mjs exports rewriteVersion",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/src/set-version.mjs",
+   "target": "function:scripts/src/set-version.mjs:disagreeingManifests",
+   "type": "contains",
+   "direction": "forward",
+   "description": "set-version.mjs defines disagreeingManifests",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/set-version.mjs",
+   "target": "function:scripts/src/set-version.mjs:disagreeingManifests",
+   "type": "exports",
+   "direction": "forward",
+   "description": "set-version.mjs exports disagreeingManifests",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/src/set-version.mjs",
+   "target": "function:scripts/src/set-version.mjs:setVersion",
+   "type": "contains",
+   "direction": "forward",
+   "description": "set-version.mjs defines setVersion",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/set-version.mjs",
+   "target": "function:scripts/src/set-version.mjs:setVersion",
+   "type": "exports",
+   "direction": "forward",
+   "description": "set-version.mjs exports setVersion",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/src/set-version.mjs",
+   "target": "function:scripts/src/set-version.mjs:main",
+   "type": "contains",
+   "direction": "forward",
+   "description": "set-version.mjs defines main",
+   "weight": 1.0
+  },
+  {
+   "source": "function:scripts/src/set-version.mjs:disagreeingManifests",
+   "target": "function:scripts/src/set-version.mjs:versionedManifests",
+   "type": "calls",
+   "direction": "forward",
+   "description": "disagreeingManifests calls versionedManifests",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/set-version.mjs:disagreeingManifests",
+   "target": "function:scripts/src/set-version.mjs:manifestPath",
+   "type": "calls",
+   "direction": "forward",
+   "description": "disagreeingManifests calls manifestPath",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/set-version.mjs:disagreeingManifests",
+   "target": "function:scripts/src/set-version.mjs:displayPath",
+   "type": "calls",
+   "direction": "forward",
+   "description": "disagreeingManifests calls displayPath",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/set-version.mjs:setVersion",
+   "target": "function:scripts/src/set-version.mjs:versionedManifests",
+   "type": "calls",
+   "direction": "forward",
+   "description": "setVersion calls versionedManifests",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/set-version.mjs:setVersion",
+   "target": "function:scripts/src/set-version.mjs:manifestPath",
+   "type": "calls",
+   "direction": "forward",
+   "description": "setVersion calls manifestPath",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/set-version.mjs:setVersion",
+   "target": "function:scripts/src/set-version.mjs:rewriteVersion",
+   "type": "calls",
+   "direction": "forward",
+   "description": "setVersion calls rewriteVersion",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/set-version.mjs:setVersion",
+   "target": "function:scripts/src/set-version.mjs:displayPath",
+   "type": "calls",
+   "direction": "forward",
+   "description": "setVersion calls displayPath",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/set-version.mjs:main",
+   "target": "function:scripts/src/set-version.mjs:disagreeingManifests",
+   "type": "calls",
+   "direction": "forward",
+   "description": "main calls disagreeingManifests",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/set-version.mjs:main",
+   "target": "function:scripts/src/set-version.mjs:setVersion",
+   "type": "calls",
+   "direction": "forward",
+   "description": "main calls setVersion",
+   "weight": 0.6
+  },
+  {
+   "source": "file:scripts/src/bundle-cli.mjs",
+   "target": "file:rollup.config.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "bundle-cli.mjs imports rollup.config.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:scripts/src/bundle-cli.test.mjs",
+   "target": "file:scripts/src/bundle-cli.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "bundle-cli.test.mjs imports bundle-cli.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:scripts/src/release-packaging.test.mjs",
+   "target": "file:scripts/src/bundle-cli.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "release-packaging.test.mjs imports bundle-cli.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:scripts/src/release-packaging.test.mjs",
+   "target": "file:scripts/src/npm-cli.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "release-packaging.test.mjs imports npm-cli.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:scripts/src/release-packaging.test.mjs",
+   "target": "file:scripts/src/set-version.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "release-packaging.test.mjs imports set-version.mjs",
+   "weight": 0.8
+  }
+ ]
+}

@@ -1,0 +1,379 @@
+{
+ "nodes": [
+  {
+   "id": "file:packages/cli/src/batch3.test.ts",
+   "type": "file",
+   "name": "batch3.test.ts",
+   "filePath": "packages/cli/src/batch3.test.ts",
+   "summary": "batch3.test.ts \u2014 typescript code, 28 lines, 0 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/classify.test.ts",
+   "type": "file",
+   "name": "classify.test.ts",
+   "filePath": "packages/cli/src/classify.test.ts",
+   "summary": "classify.test.ts \u2014 typescript code, 324 lines, 0 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/cli/src/classify.ts",
+   "type": "file",
+   "name": "classify.ts",
+   "filePath": "packages/cli/src/classify.ts",
+   "summary": "classify.ts \u2014 typescript code, 333 lines, 8 functions, 0 classes, 8 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/cli/src/classify.ts:classifyCall",
+   "type": "function",
+   "name": "classifyCall",
+   "filePath": "packages/cli/src/classify.ts",
+   "lineRange": [
+    49,
+    62
+   ],
+   "summary": "classifyCall(call) \u2014 function in classify.ts, lines 49-62.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/classify.ts:classifyTranscript",
+   "type": "function",
+   "name": "classifyTranscript",
+   "filePath": "packages/cli/src/classify.ts",
+   "lineRange": [
+    69,
+    96
+   ],
+   "summary": "classifyTranscript(calls, declaredFacts) \u2014 function in classify.ts, lines 69-96.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/classify.ts:formatClassifyReport",
+   "type": "function",
+   "name": "formatClassifyReport",
+   "filePath": "packages/cli/src/classify.ts",
+   "lineRange": [
+    98,
+    108
+   ],
+   "summary": "formatClassifyReport(report) \u2014 function in classify.ts, lines 98-108.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/classify.ts:parseTranscript",
+   "type": "function",
+   "name": "parseTranscript",
+   "filePath": "packages/cli/src/classify.ts",
+   "lineRange": [
+    115,
+    152
+   ],
+   "summary": "parseTranscript(text) \u2014 function in classify.ts, lines 115-152.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/classify.ts:parseJsonRecord",
+   "type": "function",
+   "name": "parseJsonRecord",
+   "filePath": "packages/cli/src/classify.ts",
+   "lineRange": [
+    168,
+    178
+   ],
+   "summary": "parseJsonRecord(text, label) \u2014 function in classify.ts, lines 168-178.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/classify.ts:formatSingleOutcome",
+   "type": "function",
+   "name": "formatSingleOutcome",
+   "filePath": "packages/cli/src/classify.ts",
+   "lineRange": [
+    191,
+    212
+   ],
+   "summary": "formatSingleOutcome(tool, outcome, suppliedFacts) \u2014 function in classify.ts, lines 191-212.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/classify.ts:parseClassifyFlags",
+   "type": "function",
+   "name": "parseClassifyFlags",
+   "filePath": "packages/cli/src/classify.ts",
+   "lineRange": [
+    229,
+    276
+   ],
+   "summary": "parseClassifyFlags(argv) \u2014 function in classify.ts, lines 229-276.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/classify.ts:runClassifyCommand",
+   "type": "function",
+   "name": "runClassifyCommand",
+   "filePath": "packages/cli/src/classify.ts",
+   "lineRange": [
+    290,
+    333
+   ],
+   "summary": "runClassifyCommand(argv, readFile, stdout) \u2014 function in classify.ts, lines 290-333.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  }
+ ],
+ "edges": [
+  {
+   "source": "file:packages/cli/src/classify.ts",
+   "target": "function:packages/cli/src/classify.ts:classifyCall",
+   "type": "contains",
+   "direction": "forward",
+   "description": "classify.ts defines classifyCall",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/classify.ts",
+   "target": "function:packages/cli/src/classify.ts:classifyCall",
+   "type": "exports",
+   "direction": "forward",
+   "description": "classify.ts exports classifyCall",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/classify.ts",
+   "target": "function:packages/cli/src/classify.ts:classifyTranscript",
+   "type": "contains",
+   "direction": "forward",
+   "description": "classify.ts defines classifyTranscript",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/classify.ts",
+   "target": "function:packages/cli/src/classify.ts:classifyTranscript",
+   "type": "exports",
+   "direction": "forward",
+   "description": "classify.ts exports classifyTranscript",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/classify.ts",
+   "target": "function:packages/cli/src/classify.ts:formatClassifyReport",
+   "type": "contains",
+   "direction": "forward",
+   "description": "classify.ts defines formatClassifyReport",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/classify.ts",
+   "target": "function:packages/cli/src/classify.ts:formatClassifyReport",
+   "type": "exports",
+   "direction": "forward",
+   "description": "classify.ts exports formatClassifyReport",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/classify.ts",
+   "target": "function:packages/cli/src/classify.ts:parseTranscript",
+   "type": "contains",
+   "direction": "forward",
+   "description": "classify.ts defines parseTranscript",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/classify.ts",
+   "target": "function:packages/cli/src/classify.ts:parseTranscript",
+   "type": "exports",
+   "direction": "forward",
+   "description": "classify.ts exports parseTranscript",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/classify.ts",
+   "target": "function:packages/cli/src/classify.ts:parseJsonRecord",
+   "type": "contains",
+   "direction": "forward",
+   "description": "classify.ts defines parseJsonRecord",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/classify.ts",
+   "target": "function:packages/cli/src/classify.ts:parseJsonRecord",
+   "type": "exports",
+   "direction": "forward",
+   "description": "classify.ts exports parseJsonRecord",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/classify.ts",
+   "target": "function:packages/cli/src/classify.ts:formatSingleOutcome",
+   "type": "contains",
+   "direction": "forward",
+   "description": "classify.ts defines formatSingleOutcome",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/classify.ts",
+   "target": "function:packages/cli/src/classify.ts:formatSingleOutcome",
+   "type": "exports",
+   "direction": "forward",
+   "description": "classify.ts exports formatSingleOutcome",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/classify.ts",
+   "target": "function:packages/cli/src/classify.ts:parseClassifyFlags",
+   "type": "contains",
+   "direction": "forward",
+   "description": "classify.ts defines parseClassifyFlags",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/classify.ts",
+   "target": "function:packages/cli/src/classify.ts:runClassifyCommand",
+   "type": "contains",
+   "direction": "forward",
+   "description": "classify.ts defines runClassifyCommand",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/classify.ts",
+   "target": "function:packages/cli/src/classify.ts:runClassifyCommand",
+   "type": "exports",
+   "direction": "forward",
+   "description": "classify.ts exports runClassifyCommand",
+   "weight": 0.7
+  },
+  {
+   "source": "function:packages/cli/src/classify.ts:classifyTranscript",
+   "target": "function:packages/cli/src/classify.ts:classifyCall",
+   "type": "calls",
+   "direction": "forward",
+   "description": "classifyTranscript calls classifyCall",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/classify.ts:runClassifyCommand",
+   "target": "function:packages/cli/src/classify.ts:parseClassifyFlags",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runClassifyCommand calls parseClassifyFlags",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/classify.ts:runClassifyCommand",
+   "target": "function:packages/cli/src/classify.ts:parseJsonRecord",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runClassifyCommand calls parseJsonRecord",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/classify.ts:runClassifyCommand",
+   "target": "function:packages/cli/src/classify.ts:classifyCall",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runClassifyCommand calls classifyCall",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/classify.ts:runClassifyCommand",
+   "target": "function:packages/cli/src/classify.ts:formatSingleOutcome",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runClassifyCommand calls formatSingleOutcome",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/classify.ts:runClassifyCommand",
+   "target": "function:packages/cli/src/classify.ts:parseTranscript",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runClassifyCommand calls parseTranscript",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/classify.ts:runClassifyCommand",
+   "target": "function:packages/cli/src/classify.ts:classifyTranscript",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runClassifyCommand calls classifyTranscript",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/classify.ts:runClassifyCommand",
+   "target": "function:packages/cli/src/classify.ts:formatClassifyReport",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runClassifyCommand calls formatClassifyReport",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/cli/src/batch3.test.ts",
+   "target": "file:packages/cli/src/classify.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "batch3.test.ts imports classify.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/classify.test.ts",
+   "target": "file:packages/cli/src/classify.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "classify.test.ts imports classify.ts",
+   "weight": 0.8
+  }
+ ]
+}

@@ -1,0 +1,3329 @@
+{
+ "nodes": [
+  {
+   "id": "file:packages/cli/bin/nomo.mjs",
+   "type": "file",
+   "name": "nomo.mjs",
+   "filePath": "packages/cli/bin/nomo.mjs",
+   "summary": "nomo.mjs \u2014 javascript code, 68 lines, 0 functions, 0 classes, 0 exports, 2 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/bin/silence-experimental-warning.mjs",
+   "type": "file",
+   "name": "silence-experimental-warning.mjs",
+   "filePath": "packages/cli/bin/silence-experimental-warning.mjs",
+   "summary": "silence-experimental-warning.mjs \u2014 javascript code, 9 lines, 0 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/argv.ts",
+   "type": "file",
+   "name": "argv.ts",
+   "filePath": "packages/cli/src/argv.ts",
+   "summary": "argv.ts \u2014 typescript code, 76 lines, 2 functions, 0 classes, 3 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/argv.ts:withDefaultTui",
+   "type": "function",
+   "name": "withDefaultTui",
+   "filePath": "packages/cli/src/argv.ts",
+   "lineRange": [
+    47,
+    55
+   ],
+   "summary": "withDefaultTui(argv) \u2014 function in argv.ts, lines 47-55.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/argv.ts:parseInvocation",
+   "type": "function",
+   "name": "parseInvocation",
+   "filePath": "packages/cli/src/argv.ts",
+   "lineRange": [
+    61,
+    76
+   ],
+   "summary": "parseInvocation(argv) \u2014 function in argv.ts, lines 61-76.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/replay.test.ts",
+   "type": "file",
+   "name": "replay.test.ts",
+   "filePath": "packages/cli/src/replay.test.ts",
+   "summary": "replay.test.ts \u2014 typescript code, 532 lines, 4 functions, 0 classes, 0 exports, 10 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/cli/src/replay.test.ts:manifestDir",
+   "type": "function",
+   "name": "manifestDir",
+   "filePath": "packages/cli/src/replay.test.ts",
+   "lineRange": [
+    268,
+    272
+   ],
+   "summary": "manifestDir(records) \u2014 function in replay.test.ts, lines 268-272.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/replay.test.ts:fakeConnector",
+   "type": "function",
+   "name": "fakeConnector",
+   "filePath": "packages/cli/src/replay.test.ts",
+   "lineRange": [
+    274,
+    282
+   ],
+   "summary": "fakeConnector(overrides) \u2014 function in replay.test.ts, lines 274-282.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/replay.test.ts:persistedFixture",
+   "type": "function",
+   "name": "persistedFixture",
+   "filePath": "packages/cli/src/replay.test.ts",
+   "lineRange": [
+    461,
+    485
+   ],
+   "summary": "persistedFixture(tool, snapshotBytes) \u2014 function in replay.test.ts, lines 461-485.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/replay.test.ts:binaryReplay",
+   "type": "function",
+   "name": "binaryReplay",
+   "filePath": "packages/cli/src/replay.test.ts",
+   "lineRange": [
+    487,
+    496
+   ],
+   "summary": "binaryReplay(argv, env) \u2014 function in replay.test.ts, lines 487-496.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/s3.ts",
+   "type": "file",
+   "name": "s3.ts",
+   "filePath": "packages/cli/src/s3.ts",
+   "summary": "s3.ts \u2014 typescript code, 25 lines, 1 functions, 0 classes, 1 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/s3.ts:s3Executor",
+   "type": "function",
+   "name": "s3Executor",
+   "filePath": "packages/cli/src/s3.ts",
+   "lineRange": [
+    4,
+    25
+   ],
+   "summary": "s3Executor(env) \u2014 function in s3.ts, lines 4-25.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/connectors/src/manifest.test.ts",
+   "type": "file",
+   "name": "manifest.test.ts",
+   "filePath": "packages/connectors/src/manifest.test.ts",
+   "summary": "manifest.test.ts \u2014 typescript code, 195 lines, 1 functions, 0 classes, 0 exports, 3 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/connectors/src/manifest.test.ts:tempDir",
+   "type": "function",
+   "name": "tempDir",
+   "filePath": "packages/connectors/src/manifest.test.ts",
+   "lineRange": [
+    189,
+    195
+   ],
+   "summary": "tempDir() \u2014 function in manifest.test.ts, lines 189-195.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/connectors/src/manifest.ts",
+   "type": "file",
+   "name": "manifest.ts",
+   "filePath": "packages/connectors/src/manifest.ts",
+   "summary": "manifest.ts \u2014 typescript code, 213 lines, 10 functions, 0 classes, 5 exports, 3 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/connectors/src/manifest.ts:manifestWriter",
+   "type": "function",
+   "name": "manifestWriter",
+   "filePath": "packages/connectors/src/manifest.ts",
+   "lineRange": [
+    36,
+    54
+   ],
+   "summary": "manifestWriter(snapshotDir) \u2014 function in manifest.ts, lines 36-54.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/manifest.ts:manifestReader",
+   "type": "function",
+   "name": "manifestReader",
+   "filePath": "packages/connectors/src/manifest.ts",
+   "lineRange": [
+    56,
+    79
+   ],
+   "summary": "manifestReader(snapshotDir) \u2014 function in manifest.ts, lines 56-79.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/manifest.ts:findEntry",
+   "type": "function",
+   "name": "findEntry",
+   "filePath": "packages/connectors/src/manifest.ts",
+   "lineRange": [
+    81,
+    84
+   ],
+   "summary": "findEntry(snapshotDir, digest, tool) \u2014 function in manifest.ts, lines 81-84.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/manifest.ts:writeManifest",
+   "type": "function",
+   "name": "writeManifest",
+   "filePath": "packages/connectors/src/manifest.ts",
+   "lineRange": [
+    86,
+    105
+   ],
+   "summary": "writeManifest(snapshotDir, records) \u2014 function in manifest.ts, lines 86-105.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/manifest.ts:validateEntry",
+   "type": "function",
+   "name": "validateEntry",
+   "filePath": "packages/connectors/src/manifest.ts",
+   "lineRange": [
+    107,
+    130
+   ],
+   "summary": "validateEntry(value, line) \u2014 function in manifest.ts, lines 107-130.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/manifest.ts:optionalString",
+   "type": "function",
+   "name": "optionalString",
+   "filePath": "packages/connectors/src/manifest.ts",
+   "lineRange": [
+    132,
+    134
+   ],
+   "summary": "optionalString(value) \u2014 function in manifest.ts, lines 132-134.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/manifest.ts:resolveRecoveryReadiness",
+   "type": "function",
+   "name": "resolveRecoveryReadiness",
+   "filePath": "packages/connectors/src/manifest.ts",
+   "lineRange": [
+    138,
+    170
+   ],
+   "summary": "resolveRecoveryReadiness(snapshotDir, store, digest, tool) \u2014 function in manifest.ts, lines 138-170.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/manifest.ts:collectManifestGarbage",
+   "type": "function",
+   "name": "collectManifestGarbage",
+   "filePath": "packages/connectors/src/manifest.ts",
+   "lineRange": [
+    174,
+    198
+   ],
+   "summary": "collectManifestGarbage(snapshotDir, store) \u2014 function in manifest.ts, lines 174-198.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/manifest.ts:isSnapshotReference",
+   "type": "function",
+   "name": "isSnapshotReference",
+   "filePath": "packages/connectors/src/manifest.ts",
+   "lineRange": [
+    200,
+    209
+   ],
+   "summary": "isSnapshotReference(value) \u2014 function in manifest.ts, lines 200-209.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/manifest.ts:isMissingFile",
+   "type": "function",
+   "name": "isMissingFile",
+   "filePath": "packages/connectors/src/manifest.ts",
+   "lineRange": [
+    211,
+    213
+   ],
+   "summary": "isMissingFile(error) \u2014 function in manifest.ts, lines 211-213.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/connectors/src/postgres/capture.test.ts",
+   "type": "file",
+   "name": "capture.test.ts",
+   "filePath": "packages/connectors/src/postgres/capture.test.ts",
+   "summary": "capture.test.ts \u2014 typescript code, 56 lines, 0 functions, 1 classes, 0 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:packages/connectors/src/postgres/capture.test.ts:FakeExecutor",
+   "type": "class",
+   "name": "FakeExecutor",
+   "filePath": "packages/connectors/src/postgres/capture.test.ts",
+   "lineRange": [
+    8,
+    22
+   ],
+   "summary": "FakeExecutor \u2014 class in capture.test.ts, lines 8-22, methods: query.",
+   "tags": [
+    "typescript",
+    "class"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/connectors/src/postgres/capture.ts",
+   "type": "file",
+   "name": "capture.ts",
+   "filePath": "packages/connectors/src/postgres/capture.ts",
+   "summary": "capture.ts \u2014 typescript code, 144 lines, 9 functions, 0 classes, 2 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/postgres/capture.ts:captureBeforeImage",
+   "type": "function",
+   "name": "captureBeforeImage",
+   "filePath": "packages/connectors/src/postgres/capture.ts",
+   "lineRange": [
+    34,
+    80
+   ],
+   "summary": "captureBeforeImage(exec, statement, schema) \u2014 function in capture.ts, lines 34-80.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/postgres/capture.ts:cascadeEdges",
+   "type": "function",
+   "name": "cascadeEdges",
+   "filePath": "packages/connectors/src/postgres/capture.ts",
+   "lineRange": [
+    84,
+    100
+   ],
+   "summary": "cascadeEdges(exec, table) \u2014 function in capture.ts, lines 84-100.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/postgres/capture.ts:listCascadeTables",
+   "type": "function",
+   "name": "listCascadeTables",
+   "filePath": "packages/connectors/src/postgres/capture.ts",
+   "lineRange": [
+    102,
+    104
+   ],
+   "summary": "listCascadeTables(exec, table) \u2014 function in capture.ts, lines 102-104.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/postgres/capture.ts:selectRows",
+   "type": "function",
+   "name": "selectRows",
+   "filePath": "packages/connectors/src/postgres/capture.ts",
+   "lineRange": [
+    106,
+    117
+   ],
+   "summary": "selectRows(exec, statement, tableSchema, dependencies) \u2014 function in capture.ts, lines 106-117.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/postgres/capture.ts:findSchema",
+   "type": "function",
+   "name": "findSchema",
+   "filePath": "packages/connectors/src/postgres/capture.ts",
+   "lineRange": [
+    119,
+    124
+   ],
+   "summary": "findSchema(schema, table) \u2014 function in capture.ts, lines 119-124.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/postgres/capture.ts:rowKey",
+   "type": "function",
+   "name": "rowKey",
+   "filePath": "packages/connectors/src/postgres/capture.ts",
+   "lineRange": [
+    126,
+    134
+   ],
+   "summary": "rowKey(row, primaryKey) \u2014 function in capture.ts, lines 126-134.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/postgres/capture.ts:quoteIdentifierPath",
+   "type": "function",
+   "name": "quoteIdentifierPath",
+   "filePath": "packages/connectors/src/postgres/capture.ts",
+   "lineRange": [
+    136,
+    138
+   ],
+   "summary": "quoteIdentifierPath(path) \u2014 function in capture.ts, lines 136-138.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/postgres/capture.ts:unqualified",
+   "type": "function",
+   "name": "unqualified",
+   "filePath": "packages/connectors/src/postgres/capture.ts",
+   "lineRange": [
+    140,
+    142
+   ],
+   "summary": "unqualified(table) \u2014 function in capture.ts, lines 140-142.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/postgres/capture.ts:quoteIdentifier",
+   "type": "function",
+   "name": "quoteIdentifier",
+   "filePath": "packages/connectors/src/postgres/capture.ts",
+   "lineRange": [
+    144,
+    144
+   ],
+   "summary": "quoteIdentifier(value) \u2014 function in capture.ts, lines 144-144.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/connectors/src/postgres/classify.test.ts",
+   "type": "file",
+   "name": "classify.test.ts",
+   "filePath": "packages/connectors/src/postgres/classify.test.ts",
+   "summary": "classify.test.ts \u2014 typescript code, 23 lines, 0 functions, 0 classes, 0 exports, 3 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/connectors/src/postgres/classify.ts",
+   "type": "file",
+   "name": "classify.ts",
+   "filePath": "packages/connectors/src/postgres/classify.ts",
+   "summary": "classify.ts \u2014 typescript code, 10 lines, 1 functions, 0 classes, 1 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/postgres/classify.ts:connectorFacts",
+   "type": "function",
+   "name": "connectorFacts",
+   "filePath": "packages/connectors/src/postgres/classify.ts",
+   "lineRange": [
+    5,
+    10
+   ],
+   "summary": "connectorFacts(statement, capture) \u2014 function in classify.ts, lines 5-10.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/connectors/src/postgres/inverse.test.ts",
+   "type": "file",
+   "name": "inverse.test.ts",
+   "filePath": "packages/connectors/src/postgres/inverse.test.ts",
+   "summary": "inverse.test.ts \u2014 typescript code, 107 lines, 3 functions, 1 classes, 0 exports, 4 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/postgres/inverse.test.ts:beforeImage",
+   "type": "function",
+   "name": "beforeImage",
+   "filePath": "packages/connectors/src/postgres/inverse.test.ts",
+   "lineRange": [
+    94,
+    96
+   ],
+   "summary": "beforeImage(sql, rows) \u2014 function in inverse.test.ts, lines 94-96.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/postgres/inverse.test.ts:row",
+   "type": "function",
+   "name": "row",
+   "filePath": "packages/connectors/src/postgres/inverse.test.ts",
+   "lineRange": [
+    98,
+    101
+   ],
+   "summary": "row(table, key, data, dependencies) \u2014 function in inverse.test.ts, lines 98-101.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/postgres/inverse.test.ts:tableFromSql",
+   "type": "function",
+   "name": "tableFromSql",
+   "filePath": "packages/connectors/src/postgres/inverse.test.ts",
+   "lineRange": [
+    103,
+    107
+   ],
+   "summary": "tableFromSql(sql) \u2014 function in inverse.test.ts, lines 103-107.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:packages/connectors/src/postgres/inverse.test.ts:MemoryExecutor",
+   "type": "class",
+   "name": "MemoryExecutor",
+   "filePath": "packages/connectors/src/postgres/inverse.test.ts",
+   "lineRange": [
+    10,
+    51
+   ],
+   "summary": "MemoryExecutor \u2014 class in inverse.test.ts, lines 10-51, methods: begin, commit, rollback, query.",
+   "tags": [
+    "typescript",
+    "class"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/connectors/src/postgres/inverse.ts",
+   "type": "file",
+   "name": "inverse.ts",
+   "filePath": "packages/connectors/src/postgres/inverse.ts",
+   "summary": "inverse.ts \u2014 typescript code, 113 lines, 10 functions, 0 classes, 5 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/postgres/inverse.ts:buildInverse",
+   "type": "function",
+   "name": "buildInverse",
+   "filePath": "packages/connectors/src/postgres/inverse.ts",
+   "lineRange": [
+    23,
+    40
+   ],
+   "summary": "buildInverse(statement, image) \u2014 function in inverse.ts, lines 23-40.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/postgres/inverse.ts:buildDriftReport",
+   "type": "function",
+   "name": "buildDriftReport",
+   "filePath": "packages/connectors/src/postgres/inverse.ts",
+   "lineRange": [
+    42,
+    63
+   ],
+   "summary": "buildDriftReport(image, currentRows) \u2014 function in inverse.ts, lines 42-63.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/postgres/inverse.ts:currentRowsForImage",
+   "type": "function",
+   "name": "currentRowsForImage",
+   "filePath": "packages/connectors/src/postgres/inverse.ts",
+   "lineRange": [
+    65,
+    74
+   ],
+   "summary": "currentRowsForImage(exec, image) \u2014 function in inverse.ts, lines 65-74.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/postgres/inverse.ts:updateSql",
+   "type": "function",
+   "name": "updateSql",
+   "filePath": "packages/connectors/src/postgres/inverse.ts",
+   "lineRange": [
+    76,
+    84
+   ],
+   "summary": "updateSql(step) \u2014 function in inverse.ts, lines 76-84.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/postgres/inverse.ts:insertSql",
+   "type": "function",
+   "name": "insertSql",
+   "filePath": "packages/connectors/src/postgres/inverse.ts",
+   "lineRange": [
+    86,
+    93
+   ],
+   "summary": "insertSql(step) \u2014 function in inverse.ts, lines 86-93.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/postgres/inverse.ts:rowIdentity",
+   "type": "function",
+   "name": "rowIdentity",
+   "filePath": "packages/connectors/src/postgres/inverse.ts",
+   "lineRange": [
+    95,
+    97
+   ],
+   "summary": "rowIdentity(row) \u2014 function in inverse.ts, lines 95-97.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/postgres/inverse.ts:formatKey",
+   "type": "function",
+   "name": "formatKey",
+   "filePath": "packages/connectors/src/postgres/inverse.ts",
+   "lineRange": [
+    99,
+    101
+   ],
+   "summary": "formatKey(key) \u2014 function in inverse.ts, lines 99-101.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/postgres/inverse.ts:digestJson",
+   "type": "function",
+   "name": "digestJson",
+   "filePath": "packages/connectors/src/postgres/inverse.ts",
+   "lineRange": [
+    103,
+    105
+   ],
+   "summary": "digestJson(value) \u2014 function in inverse.ts, lines 103-105.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/postgres/inverse.ts:quoteIdentifier",
+   "type": "function",
+   "name": "quoteIdentifier",
+   "filePath": "packages/connectors/src/postgres/inverse.ts",
+   "lineRange": [
+    107,
+    109
+   ],
+   "summary": "quoteIdentifier(value) \u2014 function in inverse.ts, lines 107-109.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/postgres/inverse.ts:quoteIdentifierPath",
+   "type": "function",
+   "name": "quoteIdentifierPath",
+   "filePath": "packages/connectors/src/postgres/inverse.ts",
+   "lineRange": [
+    111,
+    113
+   ],
+   "summary": "quoteIdentifierPath(path) \u2014 function in inverse.ts, lines 111-113.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/connectors/src/postgres/parse.test.ts",
+   "type": "file",
+   "name": "parse.test.ts",
+   "filePath": "packages/connectors/src/postgres/parse.test.ts",
+   "summary": "parse.test.ts \u2014 typescript code, 50 lines, 0 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/connectors/src/postgres/parse.ts",
+   "type": "file",
+   "name": "parse.ts",
+   "filePath": "packages/connectors/src/postgres/parse.ts",
+   "summary": "parse.ts \u2014 typescript code, 124 lines, 10 functions, 1 classes, 2 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/postgres/parse.ts:parseStatement",
+   "type": "function",
+   "name": "parseStatement",
+   "filePath": "packages/connectors/src/postgres/parse.ts",
+   "lineRange": [
+    33,
+    56
+   ],
+   "summary": "parseStatement(sql) \u2014 function in parse.ts, lines 33-56.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/postgres/parse.ts:statementKind",
+   "type": "function",
+   "name": "statementKind",
+   "filePath": "packages/connectors/src/postgres/parse.ts",
+   "lineRange": [
+    58,
+    61
+   ],
+   "summary": "statementKind(type) \u2014 function in parse.ts, lines 58-61.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/postgres/parse.ts:extractTables",
+   "type": "function",
+   "name": "extractTables",
+   "filePath": "packages/connectors/src/postgres/parse.ts",
+   "lineRange": [
+    63,
+    73
+   ],
+   "summary": "extractTables(sql, type, node) \u2014 function in parse.ts, lines 63-73.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/postgres/parse.ts:parseTableListEntry",
+   "type": "function",
+   "name": "parseTableListEntry",
+   "filePath": "packages/connectors/src/postgres/parse.ts",
+   "lineRange": [
+    77,
+    80
+   ],
+   "summary": "parseTableListEntry(entry) \u2014 function in parse.ts, lines 77-80.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/postgres/parse.ts:tablesFromAstValue",
+   "type": "function",
+   "name": "tablesFromAstValue",
+   "filePath": "packages/connectors/src/postgres/parse.ts",
+   "lineRange": [
+    82,
+    88
+   ],
+   "summary": "tablesFromAstValue(value) \u2014 function in parse.ts, lines 82-88.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/postgres/parse.ts:expressionSql",
+   "type": "function",
+   "name": "expressionSql",
+   "filePath": "packages/connectors/src/postgres/parse.ts",
+   "lineRange": [
+    90,
+    97
+   ],
+   "summary": "expressionSql(value) \u2014 function in parse.ts, lines 90-97.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/postgres/parse.ts:isRecord",
+   "type": "function",
+   "name": "isRecord",
+   "filePath": "packages/connectors/src/postgres/parse.ts",
+   "lineRange": [
+    99,
+    101
+   ],
+   "summary": "isRecord(value) \u2014 function in parse.ts, lines 99-101.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/postgres/parse.ts:extractUpdatedValues",
+   "type": "function",
+   "name": "extractUpdatedValues",
+   "filePath": "packages/connectors/src/postgres/parse.ts",
+   "lineRange": [
+    104,
+    113
+   ],
+   "summary": "extractUpdatedValues(node) \u2014 function in parse.ts, lines 104-113.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/postgres/parse.ts:columnValue",
+   "type": "function",
+   "name": "columnValue",
+   "filePath": "packages/connectors/src/postgres/parse.ts",
+   "lineRange": [
+    115,
+    119
+   ],
+   "summary": "columnValue(value) \u2014 function in parse.ts, lines 115-119.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/postgres/parse.ts:literalValue",
+   "type": "function",
+   "name": "literalValue",
+   "filePath": "packages/connectors/src/postgres/parse.ts",
+   "lineRange": [
+    121,
+    124
+   ],
+   "summary": "literalValue(value) \u2014 function in parse.ts, lines 121-124.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:packages/connectors/src/postgres/parse.ts:ParseError",
+   "type": "class",
+   "name": "ParseError",
+   "filePath": "packages/connectors/src/postgres/parse.ts",
+   "lineRange": [
+    17,
+    29
+   ],
+   "summary": "ParseError \u2014 class in parse.ts, lines 17-29.",
+   "tags": [
+    "typescript",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/connectors/src/postgres/replay.ts",
+   "type": "file",
+   "name": "replay.ts",
+   "filePath": "packages/connectors/src/postgres/replay.ts",
+   "summary": "replay.ts \u2014 typescript code, 57 lines, 3 functions, 0 classes, 1 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/postgres/replay.ts:applyInverse",
+   "type": "function",
+   "name": "applyInverse",
+   "filePath": "packages/connectors/src/postgres/replay.ts",
+   "lineRange": [
+    18,
+    23
+   ],
+   "summary": "applyInverse(exec, steps, image) \u2014 function in replay.ts, lines 18-23.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/postgres/replay.ts:applyTransaction",
+   "type": "function",
+   "name": "applyTransaction",
+   "filePath": "packages/connectors/src/postgres/replay.ts",
+   "lineRange": [
+    25,
+    49
+   ],
+   "summary": "applyTransaction(exec, steps, image) \u2014 function in replay.ts, lines 25-49.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/postgres/replay.ts:buildReplayDriftReport",
+   "type": "function",
+   "name": "buildReplayDriftReport",
+   "filePath": "packages/connectors/src/postgres/replay.ts",
+   "lineRange": [
+    52,
+    57
+   ],
+   "summary": "buildReplayDriftReport(image, currentRows) \u2014 function in replay.ts, lines 52-57.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/connectors/src/postgres/sql-engine.test.ts",
+   "type": "file",
+   "name": "sql-engine.test.ts",
+   "filePath": "packages/connectors/src/postgres/sql-engine.test.ts",
+   "summary": "sql-engine.test.ts \u2014 typescript code, 33 lines, 0 functions, 0 classes, 0 exports, 4 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/connectors/src/registry.test.ts",
+   "type": "file",
+   "name": "registry.test.ts",
+   "filePath": "packages/connectors/src/registry.test.ts",
+   "summary": "registry.test.ts \u2014 typescript code, 217 lines, 1 functions, 3 classes, 0 exports, 3 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/connectors/src/registry.test.ts:fact",
+   "type": "function",
+   "name": "fact",
+   "filePath": "packages/connectors/src/registry.test.ts",
+   "lineRange": [
+    211,
+    213
+   ],
+   "summary": "fact(facts, name) \u2014 function in registry.test.ts, lines 211-213.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:packages/connectors/src/registry.test.ts:MemorySnapshotStore",
+   "type": "class",
+   "name": "MemorySnapshotStore",
+   "filePath": "packages/connectors/src/registry.test.ts",
+   "lineRange": [
+    144,
+    164
+   ],
+   "summary": "MemorySnapshotStore \u2014 class in registry.test.ts, lines 144-164, methods: put, get, retention.",
+   "tags": [
+    "typescript",
+    "class"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:packages/connectors/src/registry.test.ts:FakeQueryExecutor",
+   "type": "class",
+   "name": "FakeQueryExecutor",
+   "filePath": "packages/connectors/src/registry.test.ts",
+   "lineRange": [
+    166,
+    178
+   ],
+   "summary": "FakeQueryExecutor \u2014 class in registry.test.ts, lines 166-178, methods: query.",
+   "tags": [
+    "typescript",
+    "class"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:packages/connectors/src/registry.test.ts:FakeS3Client",
+   "type": "class",
+   "name": "FakeS3Client",
+   "filePath": "packages/connectors/src/registry.test.ts",
+   "lineRange": [
+    182,
+    209
+   ],
+   "summary": "FakeS3Client \u2014 class in registry.test.ts, lines 182-209, methods: getBucketVersioning, getObject, putObject, deleteObject.",
+   "tags": [
+    "typescript",
+    "class"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/connectors/src/registry.ts",
+   "type": "file",
+   "name": "registry.ts",
+   "filePath": "packages/connectors/src/registry.ts",
+   "summary": "registry.ts \u2014 typescript code, 402 lines, 21 functions, 0 classes, 9 exports, 10 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/connectors/src/registry.ts:connectorRegistry",
+   "type": "function",
+   "name": "connectorRegistry",
+   "filePath": "packages/connectors/src/registry.ts",
+   "lineRange": [
+    118,
+    120
+   ],
+   "summary": "connectorRegistry() \u2014 function in registry.ts, lines 118-120.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/registry.ts:makeConnector",
+   "type": "function",
+   "name": "makeConnector",
+   "filePath": "packages/connectors/src/registry.ts",
+   "lineRange": [
+    131,
+    136
+   ],
+   "summary": "makeConnector(deps) \u2014 function in registry.ts, lines 131-136.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/registry.ts:connectorFor",
+   "type": "function",
+   "name": "connectorFor",
+   "filePath": "packages/connectors/src/registry.ts",
+   "lineRange": [
+    138,
+    146
+   ],
+   "summary": "connectorFor(tool) \u2014 function in registry.ts, lines 138-146.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/registry.ts:makePostgresConnector",
+   "type": "function",
+   "name": "makePostgresConnector",
+   "filePath": "packages/connectors/src/registry.ts",
+   "lineRange": [
+    148,
+    213
+   ],
+   "summary": "makePostgresConnector(deps) \u2014 function in registry.ts, lines 148-213.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/registry.ts:makeS3Connector",
+   "type": "function",
+   "name": "makeS3Connector",
+   "filePath": "packages/connectors/src/registry.ts",
+   "lineRange": [
+    215,
+    281
+   ],
+   "summary": "makeS3Connector(deps) \u2014 function in registry.ts, lines 215-281.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/registry.ts:readS3Capture",
+   "type": "function",
+   "name": "readS3Capture",
+   "filePath": "packages/connectors/src/registry.ts",
+   "lineRange": [
+    283,
+    291
+   ],
+   "summary": "readS3Capture(store, reference) \u2014 function in registry.ts, lines 283-291.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/registry.ts:readPostgresCapture",
+   "type": "function",
+   "name": "readPostgresCapture",
+   "filePath": "packages/connectors/src/registry.ts",
+   "lineRange": [
+    293,
+    305
+   ],
+   "summary": "readPostgresCapture(store, reference) \u2014 function in registry.ts, lines 293-305.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/registry.ts:sqlArgument",
+   "type": "function",
+   "name": "sqlArgument",
+   "filePath": "packages/connectors/src/registry.ts",
+   "lineRange": [
+    307,
+    311
+   ],
+   "summary": "sqlArgument(call) \u2014 function in registry.ts, lines 307-311.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/registry.ts:schemaArgument",
+   "type": "function",
+   "name": "schemaArgument",
+   "filePath": "packages/connectors/src/registry.ts",
+   "lineRange": [
+    313,
+    317
+   ],
+   "summary": "schemaArgument(call) \u2014 function in registry.ts, lines 313-317.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/registry.ts:s3Call",
+   "type": "function",
+   "name": "s3Call",
+   "filePath": "packages/connectors/src/registry.ts",
+   "lineRange": [
+    319,
+    327
+   ],
+   "summary": "s3Call(call) \u2014 function in registry.ts, lines 319-327.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/registry.ts:snapshotNamespace",
+   "type": "function",
+   "name": "snapshotNamespace",
+   "filePath": "packages/connectors/src/registry.ts",
+   "lineRange": [
+    329,
+    331
+   ],
+   "summary": "snapshotNamespace(call, fallback) \u2014 function in registry.ts, lines 329-331.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/registry.ts:factsFromRecord",
+   "type": "function",
+   "name": "factsFromRecord",
+   "filePath": "packages/connectors/src/registry.ts",
+   "lineRange": [
+    333,
+    335
+   ],
+   "summary": "factsFromRecord(record, verifiedAt) \u2014 function in registry.ts, lines 333-335.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/registry.ts:postgresStepToPlanStep",
+   "type": "function",
+   "name": "postgresStepToPlanStep",
+   "filePath": "packages/connectors/src/registry.ts",
+   "lineRange": [
+    337,
+    345
+   ],
+   "summary": "postgresStepToPlanStep(step) \u2014 function in registry.ts, lines 337-345.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/registry.ts:postgresApplyReport",
+   "type": "function",
+   "name": "postgresApplyReport",
+   "filePath": "packages/connectors/src/registry.ts",
+   "lineRange": [
+    347,
+    357
+   ],
+   "summary": "postgresApplyReport(report) \u2014 function in registry.ts, lines 347-357.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/registry.ts:s3ApplyReport",
+   "type": "function",
+   "name": "s3ApplyReport",
+   "filePath": "packages/connectors/src/registry.ts",
+   "lineRange": [
+    359,
+    361
+   ],
+   "summary": "s3ApplyReport(report) \u2014 function in registry.ts, lines 359-361.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/registry.ts:postgresPlan",
+   "type": "function",
+   "name": "postgresPlan",
+   "filePath": "packages/connectors/src/registry.ts",
+   "lineRange": [
+    363,
+    366
+   ],
+   "summary": "postgresPlan(plan) \u2014 function in registry.ts, lines 363-366.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/registry.ts:s3Plan",
+   "type": "function",
+   "name": "s3Plan",
+   "filePath": "packages/connectors/src/registry.ts",
+   "lineRange": [
+    368,
+    371
+   ],
+   "summary": "s3Plan(plan) \u2014 function in registry.ts, lines 368-371.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/registry.ts:requireDependency",
+   "type": "function",
+   "name": "requireDependency",
+   "filePath": "packages/connectors/src/registry.ts",
+   "lineRange": [
+    373,
+    376
+   ],
+   "summary": "requireDependency(value, name) \u2014 function in registry.ts, lines 373-376.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/registry.ts:encodeJson",
+   "type": "function",
+   "name": "encodeJson",
+   "filePath": "packages/connectors/src/registry.ts",
+   "lineRange": [
+    378,
+    380
+   ],
+   "summary": "encodeJson(value) \u2014 function in registry.ts, lines 378-380.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/registry.ts:isCaptureSchema",
+   "type": "function",
+   "name": "isCaptureSchema",
+   "filePath": "packages/connectors/src/registry.ts",
+   "lineRange": [
+    382,
+    386
+   ],
+   "summary": "isCaptureSchema(value) \u2014 function in registry.ts, lines 382-386.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/registry.ts:missingSnapshotStore",
+   "type": "function",
+   "name": "missingSnapshotStore",
+   "filePath": "packages/connectors/src/registry.ts",
+   "lineRange": [
+    388,
+    402
+   ],
+   "summary": "missingSnapshotStore() \u2014 function in registry.ts, lines 388-402.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  }
+ ],
+ "edges": [
+  {
+   "source": "file:packages/cli/src/argv.ts",
+   "target": "function:packages/cli/src/argv.ts:withDefaultTui",
+   "type": "contains",
+   "direction": "forward",
+   "description": "argv.ts defines withDefaultTui",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/argv.ts",
+   "target": "function:packages/cli/src/argv.ts:withDefaultTui",
+   "type": "exports",
+   "direction": "forward",
+   "description": "argv.ts exports withDefaultTui",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/argv.ts",
+   "target": "function:packages/cli/src/argv.ts:parseInvocation",
+   "type": "contains",
+   "direction": "forward",
+   "description": "argv.ts defines parseInvocation",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/argv.ts",
+   "target": "function:packages/cli/src/argv.ts:parseInvocation",
+   "type": "exports",
+   "direction": "forward",
+   "description": "argv.ts exports parseInvocation",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/replay.test.ts",
+   "target": "function:packages/cli/src/replay.test.ts:manifestDir",
+   "type": "contains",
+   "direction": "forward",
+   "description": "replay.test.ts defines manifestDir",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/replay.test.ts",
+   "target": "function:packages/cli/src/replay.test.ts:fakeConnector",
+   "type": "contains",
+   "direction": "forward",
+   "description": "replay.test.ts defines fakeConnector",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/replay.test.ts",
+   "target": "function:packages/cli/src/replay.test.ts:persistedFixture",
+   "type": "contains",
+   "direction": "forward",
+   "description": "replay.test.ts defines persistedFixture",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/replay.test.ts",
+   "target": "function:packages/cli/src/replay.test.ts:binaryReplay",
+   "type": "contains",
+   "direction": "forward",
+   "description": "replay.test.ts defines binaryReplay",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/s3.ts",
+   "target": "function:packages/cli/src/s3.ts:s3Executor",
+   "type": "contains",
+   "direction": "forward",
+   "description": "s3.ts defines s3Executor",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/s3.ts",
+   "target": "function:packages/cli/src/s3.ts:s3Executor",
+   "type": "exports",
+   "direction": "forward",
+   "description": "s3.ts exports s3Executor",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/connectors/src/manifest.test.ts",
+   "target": "function:packages/connectors/src/manifest.test.ts:tempDir",
+   "type": "contains",
+   "direction": "forward",
+   "description": "manifest.test.ts defines tempDir",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/manifest.ts",
+   "target": "function:packages/connectors/src/manifest.ts:manifestWriter",
+   "type": "contains",
+   "direction": "forward",
+   "description": "manifest.ts defines manifestWriter",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/manifest.ts",
+   "target": "function:packages/connectors/src/manifest.ts:manifestWriter",
+   "type": "exports",
+   "direction": "forward",
+   "description": "manifest.ts exports manifestWriter",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/connectors/src/manifest.ts",
+   "target": "function:packages/connectors/src/manifest.ts:manifestReader",
+   "type": "contains",
+   "direction": "forward",
+   "description": "manifest.ts defines manifestReader",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/manifest.ts",
+   "target": "function:packages/connectors/src/manifest.ts:manifestReader",
+   "type": "exports",
+   "direction": "forward",
+   "description": "manifest.ts exports manifestReader",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/connectors/src/manifest.ts",
+   "target": "function:packages/connectors/src/manifest.ts:findEntry",
+   "type": "contains",
+   "direction": "forward",
+   "description": "manifest.ts defines findEntry",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/manifest.ts",
+   "target": "function:packages/connectors/src/manifest.ts:findEntry",
+   "type": "exports",
+   "direction": "forward",
+   "description": "manifest.ts exports findEntry",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/connectors/src/manifest.ts",
+   "target": "function:packages/connectors/src/manifest.ts:writeManifest",
+   "type": "contains",
+   "direction": "forward",
+   "description": "manifest.ts defines writeManifest",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/manifest.ts",
+   "target": "function:packages/connectors/src/manifest.ts:validateEntry",
+   "type": "contains",
+   "direction": "forward",
+   "description": "manifest.ts defines validateEntry",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/manifest.ts",
+   "target": "function:packages/connectors/src/manifest.ts:optionalString",
+   "type": "contains",
+   "direction": "forward",
+   "description": "manifest.ts defines optionalString",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/manifest.ts",
+   "target": "function:packages/connectors/src/manifest.ts:resolveRecoveryReadiness",
+   "type": "contains",
+   "direction": "forward",
+   "description": "manifest.ts defines resolveRecoveryReadiness",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/manifest.ts",
+   "target": "function:packages/connectors/src/manifest.ts:resolveRecoveryReadiness",
+   "type": "exports",
+   "direction": "forward",
+   "description": "manifest.ts exports resolveRecoveryReadiness",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/connectors/src/manifest.ts",
+   "target": "function:packages/connectors/src/manifest.ts:collectManifestGarbage",
+   "type": "contains",
+   "direction": "forward",
+   "description": "manifest.ts defines collectManifestGarbage",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/manifest.ts",
+   "target": "function:packages/connectors/src/manifest.ts:collectManifestGarbage",
+   "type": "exports",
+   "direction": "forward",
+   "description": "manifest.ts exports collectManifestGarbage",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/connectors/src/manifest.ts",
+   "target": "function:packages/connectors/src/manifest.ts:isSnapshotReference",
+   "type": "contains",
+   "direction": "forward",
+   "description": "manifest.ts defines isSnapshotReference",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/manifest.ts",
+   "target": "function:packages/connectors/src/manifest.ts:isMissingFile",
+   "type": "contains",
+   "direction": "forward",
+   "description": "manifest.ts defines isMissingFile",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/connectors/src/manifest.ts:manifestWriter",
+   "target": "function:packages/connectors/src/manifest.ts:manifestReader",
+   "type": "calls",
+   "direction": "forward",
+   "description": "manifestWriter calls manifestReader",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/manifest.ts:manifestWriter",
+   "target": "function:packages/connectors/src/manifest.ts:writeManifest",
+   "type": "calls",
+   "direction": "forward",
+   "description": "manifestWriter calls writeManifest",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/manifest.ts:manifestWriter",
+   "target": "function:packages/connectors/src/manifest.ts:validateEntry",
+   "type": "calls",
+   "direction": "forward",
+   "description": "manifestWriter calls validateEntry",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/manifest.ts:manifestReader",
+   "target": "function:packages/connectors/src/manifest.ts:isMissingFile",
+   "type": "calls",
+   "direction": "forward",
+   "description": "manifestReader calls isMissingFile",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/manifest.ts:manifestReader",
+   "target": "function:packages/connectors/src/manifest.ts:validateEntry",
+   "type": "calls",
+   "direction": "forward",
+   "description": "manifestReader calls validateEntry",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/manifest.ts:findEntry",
+   "target": "function:packages/connectors/src/manifest.ts:manifestReader",
+   "type": "calls",
+   "direction": "forward",
+   "description": "findEntry calls manifestReader",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/manifest.ts:writeManifest",
+   "target": "function:packages/connectors/src/manifest.ts:isMissingFile",
+   "type": "calls",
+   "direction": "forward",
+   "description": "writeManifest calls isMissingFile",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/manifest.ts:validateEntry",
+   "target": "function:packages/connectors/src/manifest.ts:isSnapshotReference",
+   "type": "calls",
+   "direction": "forward",
+   "description": "validateEntry calls isSnapshotReference",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/manifest.ts:validateEntry",
+   "target": "function:packages/connectors/src/manifest.ts:optionalString",
+   "type": "calls",
+   "direction": "forward",
+   "description": "validateEntry calls optionalString",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/manifest.ts:resolveRecoveryReadiness",
+   "target": "function:packages/connectors/src/manifest.ts:findEntry",
+   "type": "calls",
+   "direction": "forward",
+   "description": "resolveRecoveryReadiness calls findEntry",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/manifest.ts:collectManifestGarbage",
+   "target": "function:packages/connectors/src/manifest.ts:manifestReader",
+   "type": "calls",
+   "direction": "forward",
+   "description": "collectManifestGarbage calls manifestReader",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/capture.test.ts",
+   "target": "class:packages/connectors/src/postgres/capture.test.ts:FakeExecutor",
+   "type": "contains",
+   "direction": "forward",
+   "description": "capture.test.ts defines class FakeExecutor",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/capture.ts",
+   "target": "function:packages/connectors/src/postgres/capture.ts:captureBeforeImage",
+   "type": "contains",
+   "direction": "forward",
+   "description": "capture.ts defines captureBeforeImage",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/capture.ts",
+   "target": "function:packages/connectors/src/postgres/capture.ts:captureBeforeImage",
+   "type": "exports",
+   "direction": "forward",
+   "description": "capture.ts exports captureBeforeImage",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/capture.ts",
+   "target": "function:packages/connectors/src/postgres/capture.ts:cascadeEdges",
+   "type": "contains",
+   "direction": "forward",
+   "description": "capture.ts defines cascadeEdges",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/capture.ts",
+   "target": "function:packages/connectors/src/postgres/capture.ts:listCascadeTables",
+   "type": "contains",
+   "direction": "forward",
+   "description": "capture.ts defines listCascadeTables",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/capture.ts",
+   "target": "function:packages/connectors/src/postgres/capture.ts:listCascadeTables",
+   "type": "exports",
+   "direction": "forward",
+   "description": "capture.ts exports listCascadeTables",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/capture.ts",
+   "target": "function:packages/connectors/src/postgres/capture.ts:selectRows",
+   "type": "contains",
+   "direction": "forward",
+   "description": "capture.ts defines selectRows",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/capture.ts",
+   "target": "function:packages/connectors/src/postgres/capture.ts:findSchema",
+   "type": "contains",
+   "direction": "forward",
+   "description": "capture.ts defines findSchema",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/capture.ts",
+   "target": "function:packages/connectors/src/postgres/capture.ts:rowKey",
+   "type": "contains",
+   "direction": "forward",
+   "description": "capture.ts defines rowKey",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/capture.ts",
+   "target": "function:packages/connectors/src/postgres/capture.ts:quoteIdentifierPath",
+   "type": "contains",
+   "direction": "forward",
+   "description": "capture.ts defines quoteIdentifierPath",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/capture.ts",
+   "target": "function:packages/connectors/src/postgres/capture.ts:unqualified",
+   "type": "contains",
+   "direction": "forward",
+   "description": "capture.ts defines unqualified",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/capture.ts",
+   "target": "function:packages/connectors/src/postgres/capture.ts:quoteIdentifier",
+   "type": "contains",
+   "direction": "forward",
+   "description": "capture.ts defines quoteIdentifier",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/connectors/src/postgres/capture.ts:captureBeforeImage",
+   "target": "function:packages/connectors/src/postgres/capture.ts:findSchema",
+   "type": "calls",
+   "direction": "forward",
+   "description": "captureBeforeImage calls findSchema",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/postgres/capture.ts:captureBeforeImage",
+   "target": "function:packages/connectors/src/postgres/capture.ts:selectRows",
+   "type": "calls",
+   "direction": "forward",
+   "description": "captureBeforeImage calls selectRows",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/postgres/capture.ts:captureBeforeImage",
+   "target": "function:packages/connectors/src/postgres/capture.ts:cascadeEdges",
+   "type": "calls",
+   "direction": "forward",
+   "description": "captureBeforeImage calls cascadeEdges",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/postgres/capture.ts:captureBeforeImage",
+   "target": "function:packages/connectors/src/postgres/capture.ts:quoteIdentifier",
+   "type": "calls",
+   "direction": "forward",
+   "description": "captureBeforeImage calls quoteIdentifier",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/postgres/capture.ts:captureBeforeImage",
+   "target": "function:packages/connectors/src/postgres/capture.ts:quoteIdentifierPath",
+   "type": "calls",
+   "direction": "forward",
+   "description": "captureBeforeImage calls quoteIdentifierPath",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/postgres/capture.ts:captureBeforeImage",
+   "target": "function:packages/connectors/src/postgres/capture.ts:rowKey",
+   "type": "calls",
+   "direction": "forward",
+   "description": "captureBeforeImage calls rowKey",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/postgres/capture.ts:listCascadeTables",
+   "target": "function:packages/connectors/src/postgres/capture.ts:cascadeEdges",
+   "type": "calls",
+   "direction": "forward",
+   "description": "listCascadeTables calls cascadeEdges",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/postgres/capture.ts:selectRows",
+   "target": "function:packages/connectors/src/postgres/capture.ts:quoteIdentifierPath",
+   "type": "calls",
+   "direction": "forward",
+   "description": "selectRows calls quoteIdentifierPath",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/postgres/capture.ts:selectRows",
+   "target": "function:packages/connectors/src/postgres/capture.ts:rowKey",
+   "type": "calls",
+   "direction": "forward",
+   "description": "selectRows calls rowKey",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/classify.ts",
+   "target": "function:packages/connectors/src/postgres/classify.ts:connectorFacts",
+   "type": "contains",
+   "direction": "forward",
+   "description": "classify.ts defines connectorFacts",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/classify.ts",
+   "target": "function:packages/connectors/src/postgres/classify.ts:connectorFacts",
+   "type": "exports",
+   "direction": "forward",
+   "description": "classify.ts exports connectorFacts",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/inverse.test.ts",
+   "target": "function:packages/connectors/src/postgres/inverse.test.ts:beforeImage",
+   "type": "contains",
+   "direction": "forward",
+   "description": "inverse.test.ts defines beforeImage",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/inverse.test.ts",
+   "target": "function:packages/connectors/src/postgres/inverse.test.ts:row",
+   "type": "contains",
+   "direction": "forward",
+   "description": "inverse.test.ts defines row",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/inverse.test.ts",
+   "target": "function:packages/connectors/src/postgres/inverse.test.ts:tableFromSql",
+   "type": "contains",
+   "direction": "forward",
+   "description": "inverse.test.ts defines tableFromSql",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/inverse.test.ts",
+   "target": "class:packages/connectors/src/postgres/inverse.test.ts:MemoryExecutor",
+   "type": "contains",
+   "direction": "forward",
+   "description": "inverse.test.ts defines class MemoryExecutor",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/inverse.ts",
+   "target": "function:packages/connectors/src/postgres/inverse.ts:buildInverse",
+   "type": "contains",
+   "direction": "forward",
+   "description": "inverse.ts defines buildInverse",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/inverse.ts",
+   "target": "function:packages/connectors/src/postgres/inverse.ts:buildInverse",
+   "type": "exports",
+   "direction": "forward",
+   "description": "inverse.ts exports buildInverse",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/inverse.ts",
+   "target": "function:packages/connectors/src/postgres/inverse.ts:buildDriftReport",
+   "type": "contains",
+   "direction": "forward",
+   "description": "inverse.ts defines buildDriftReport",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/inverse.ts",
+   "target": "function:packages/connectors/src/postgres/inverse.ts:buildDriftReport",
+   "type": "exports",
+   "direction": "forward",
+   "description": "inverse.ts exports buildDriftReport",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/inverse.ts",
+   "target": "function:packages/connectors/src/postgres/inverse.ts:currentRowsForImage",
+   "type": "contains",
+   "direction": "forward",
+   "description": "inverse.ts defines currentRowsForImage",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/inverse.ts",
+   "target": "function:packages/connectors/src/postgres/inverse.ts:currentRowsForImage",
+   "type": "exports",
+   "direction": "forward",
+   "description": "inverse.ts exports currentRowsForImage",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/inverse.ts",
+   "target": "function:packages/connectors/src/postgres/inverse.ts:updateSql",
+   "type": "contains",
+   "direction": "forward",
+   "description": "inverse.ts defines updateSql",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/inverse.ts",
+   "target": "function:packages/connectors/src/postgres/inverse.ts:updateSql",
+   "type": "exports",
+   "direction": "forward",
+   "description": "inverse.ts exports updateSql",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/inverse.ts",
+   "target": "function:packages/connectors/src/postgres/inverse.ts:insertSql",
+   "type": "contains",
+   "direction": "forward",
+   "description": "inverse.ts defines insertSql",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/inverse.ts",
+   "target": "function:packages/connectors/src/postgres/inverse.ts:insertSql",
+   "type": "exports",
+   "direction": "forward",
+   "description": "inverse.ts exports insertSql",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/inverse.ts",
+   "target": "function:packages/connectors/src/postgres/inverse.ts:rowIdentity",
+   "type": "contains",
+   "direction": "forward",
+   "description": "inverse.ts defines rowIdentity",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/inverse.ts",
+   "target": "function:packages/connectors/src/postgres/inverse.ts:formatKey",
+   "type": "contains",
+   "direction": "forward",
+   "description": "inverse.ts defines formatKey",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/inverse.ts",
+   "target": "function:packages/connectors/src/postgres/inverse.ts:digestJson",
+   "type": "contains",
+   "direction": "forward",
+   "description": "inverse.ts defines digestJson",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/inverse.ts",
+   "target": "function:packages/connectors/src/postgres/inverse.ts:quoteIdentifier",
+   "type": "contains",
+   "direction": "forward",
+   "description": "inverse.ts defines quoteIdentifier",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/inverse.ts",
+   "target": "function:packages/connectors/src/postgres/inverse.ts:quoteIdentifierPath",
+   "type": "contains",
+   "direction": "forward",
+   "description": "inverse.ts defines quoteIdentifierPath",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/connectors/src/postgres/inverse.ts:buildInverse",
+   "target": "function:packages/connectors/src/postgres/inverse.ts:digestJson",
+   "type": "calls",
+   "direction": "forward",
+   "description": "buildInverse calls digestJson",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/postgres/inverse.ts:buildDriftReport",
+   "target": "function:packages/connectors/src/postgres/inverse.ts:rowIdentity",
+   "type": "calls",
+   "direction": "forward",
+   "description": "buildDriftReport calls rowIdentity",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/postgres/inverse.ts:buildDriftReport",
+   "target": "function:packages/connectors/src/postgres/inverse.ts:formatKey",
+   "type": "calls",
+   "direction": "forward",
+   "description": "buildDriftReport calls formatKey",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/postgres/inverse.ts:buildDriftReport",
+   "target": "function:packages/connectors/src/postgres/inverse.ts:digestJson",
+   "type": "calls",
+   "direction": "forward",
+   "description": "buildDriftReport calls digestJson",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/postgres/inverse.ts:currentRowsForImage",
+   "target": "function:packages/connectors/src/postgres/inverse.ts:quoteIdentifier",
+   "type": "calls",
+   "direction": "forward",
+   "description": "currentRowsForImage calls quoteIdentifier",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/postgres/inverse.ts:currentRowsForImage",
+   "target": "function:packages/connectors/src/postgres/inverse.ts:quoteIdentifierPath",
+   "type": "calls",
+   "direction": "forward",
+   "description": "currentRowsForImage calls quoteIdentifierPath",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/postgres/inverse.ts:updateSql",
+   "target": "function:packages/connectors/src/postgres/inverse.ts:quoteIdentifier",
+   "type": "calls",
+   "direction": "forward",
+   "description": "updateSql calls quoteIdentifier",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/postgres/inverse.ts:updateSql",
+   "target": "function:packages/connectors/src/postgres/inverse.ts:quoteIdentifierPath",
+   "type": "calls",
+   "direction": "forward",
+   "description": "updateSql calls quoteIdentifierPath",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/postgres/inverse.ts:insertSql",
+   "target": "function:packages/connectors/src/postgres/inverse.ts:quoteIdentifierPath",
+   "type": "calls",
+   "direction": "forward",
+   "description": "insertSql calls quoteIdentifierPath",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/parse.ts",
+   "target": "function:packages/connectors/src/postgres/parse.ts:parseStatement",
+   "type": "contains",
+   "direction": "forward",
+   "description": "parse.ts defines parseStatement",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/parse.ts",
+   "target": "function:packages/connectors/src/postgres/parse.ts:parseStatement",
+   "type": "exports",
+   "direction": "forward",
+   "description": "parse.ts exports parseStatement",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/parse.ts",
+   "target": "function:packages/connectors/src/postgres/parse.ts:statementKind",
+   "type": "contains",
+   "direction": "forward",
+   "description": "parse.ts defines statementKind",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/parse.ts",
+   "target": "function:packages/connectors/src/postgres/parse.ts:extractTables",
+   "type": "contains",
+   "direction": "forward",
+   "description": "parse.ts defines extractTables",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/parse.ts",
+   "target": "function:packages/connectors/src/postgres/parse.ts:parseTableListEntry",
+   "type": "contains",
+   "direction": "forward",
+   "description": "parse.ts defines parseTableListEntry",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/parse.ts",
+   "target": "function:packages/connectors/src/postgres/parse.ts:tablesFromAstValue",
+   "type": "contains",
+   "direction": "forward",
+   "description": "parse.ts defines tablesFromAstValue",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/parse.ts",
+   "target": "function:packages/connectors/src/postgres/parse.ts:expressionSql",
+   "type": "contains",
+   "direction": "forward",
+   "description": "parse.ts defines expressionSql",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/parse.ts",
+   "target": "function:packages/connectors/src/postgres/parse.ts:isRecord",
+   "type": "contains",
+   "direction": "forward",
+   "description": "parse.ts defines isRecord",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/parse.ts",
+   "target": "function:packages/connectors/src/postgres/parse.ts:extractUpdatedValues",
+   "type": "contains",
+   "direction": "forward",
+   "description": "parse.ts defines extractUpdatedValues",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/parse.ts",
+   "target": "function:packages/connectors/src/postgres/parse.ts:columnValue",
+   "type": "contains",
+   "direction": "forward",
+   "description": "parse.ts defines columnValue",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/parse.ts",
+   "target": "function:packages/connectors/src/postgres/parse.ts:literalValue",
+   "type": "contains",
+   "direction": "forward",
+   "description": "parse.ts defines literalValue",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/parse.ts",
+   "target": "class:packages/connectors/src/postgres/parse.ts:ParseError",
+   "type": "contains",
+   "direction": "forward",
+   "description": "parse.ts defines class ParseError",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/connectors/src/postgres/parse.ts:parseStatement",
+   "target": "function:packages/connectors/src/postgres/parse.ts:isRecord",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parseStatement calls isRecord",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/postgres/parse.ts:parseStatement",
+   "target": "function:packages/connectors/src/postgres/parse.ts:statementKind",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parseStatement calls statementKind",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/postgres/parse.ts:parseStatement",
+   "target": "function:packages/connectors/src/postgres/parse.ts:extractTables",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parseStatement calls extractTables",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/postgres/parse.ts:parseStatement",
+   "target": "function:packages/connectors/src/postgres/parse.ts:expressionSql",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parseStatement calls expressionSql",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/postgres/parse.ts:parseStatement",
+   "target": "function:packages/connectors/src/postgres/parse.ts:extractUpdatedValues",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parseStatement calls extractUpdatedValues",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/postgres/parse.ts:extractTables",
+   "target": "function:packages/connectors/src/postgres/parse.ts:parseTableListEntry",
+   "type": "calls",
+   "direction": "forward",
+   "description": "extractTables calls parseTableListEntry",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/postgres/parse.ts:extractTables",
+   "target": "function:packages/connectors/src/postgres/parse.ts:tablesFromAstValue",
+   "type": "calls",
+   "direction": "forward",
+   "description": "extractTables calls tablesFromAstValue",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/postgres/parse.ts:tablesFromAstValue",
+   "target": "function:packages/connectors/src/postgres/parse.ts:isRecord",
+   "type": "calls",
+   "direction": "forward",
+   "description": "tablesFromAstValue calls isRecord",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/postgres/parse.ts:extractUpdatedValues",
+   "target": "function:packages/connectors/src/postgres/parse.ts:isRecord",
+   "type": "calls",
+   "direction": "forward",
+   "description": "extractUpdatedValues calls isRecord",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/postgres/parse.ts:extractUpdatedValues",
+   "target": "function:packages/connectors/src/postgres/parse.ts:columnValue",
+   "type": "calls",
+   "direction": "forward",
+   "description": "extractUpdatedValues calls columnValue",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/postgres/parse.ts:extractUpdatedValues",
+   "target": "function:packages/connectors/src/postgres/parse.ts:literalValue",
+   "type": "calls",
+   "direction": "forward",
+   "description": "extractUpdatedValues calls literalValue",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/postgres/parse.ts:columnValue",
+   "target": "function:packages/connectors/src/postgres/parse.ts:isRecord",
+   "type": "calls",
+   "direction": "forward",
+   "description": "columnValue calls isRecord",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/replay.ts",
+   "target": "function:packages/connectors/src/postgres/replay.ts:applyInverse",
+   "type": "contains",
+   "direction": "forward",
+   "description": "replay.ts defines applyInverse",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/replay.ts",
+   "target": "function:packages/connectors/src/postgres/replay.ts:applyInverse",
+   "type": "exports",
+   "direction": "forward",
+   "description": "replay.ts exports applyInverse",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/replay.ts",
+   "target": "function:packages/connectors/src/postgres/replay.ts:applyTransaction",
+   "type": "contains",
+   "direction": "forward",
+   "description": "replay.ts defines applyTransaction",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/replay.ts",
+   "target": "function:packages/connectors/src/postgres/replay.ts:buildReplayDriftReport",
+   "type": "contains",
+   "direction": "forward",
+   "description": "replay.ts defines buildReplayDriftReport",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/connectors/src/postgres/replay.ts:applyInverse",
+   "target": "function:packages/connectors/src/postgres/replay.ts:applyTransaction",
+   "type": "calls",
+   "direction": "forward",
+   "description": "applyInverse calls applyTransaction",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/postgres/replay.ts:applyTransaction",
+   "target": "function:packages/connectors/src/postgres/replay.ts:buildReplayDriftReport",
+   "type": "calls",
+   "direction": "forward",
+   "description": "applyTransaction calls buildReplayDriftReport",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/connectors/src/registry.test.ts",
+   "target": "function:packages/connectors/src/registry.test.ts:fact",
+   "type": "contains",
+   "direction": "forward",
+   "description": "registry.test.ts defines fact",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/registry.test.ts",
+   "target": "class:packages/connectors/src/registry.test.ts:MemorySnapshotStore",
+   "type": "contains",
+   "direction": "forward",
+   "description": "registry.test.ts defines class MemorySnapshotStore",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/registry.test.ts",
+   "target": "class:packages/connectors/src/registry.test.ts:FakeQueryExecutor",
+   "type": "contains",
+   "direction": "forward",
+   "description": "registry.test.ts defines class FakeQueryExecutor",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/registry.test.ts",
+   "target": "class:packages/connectors/src/registry.test.ts:FakeS3Client",
+   "type": "contains",
+   "direction": "forward",
+   "description": "registry.test.ts defines class FakeS3Client",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/registry.ts",
+   "target": "function:packages/connectors/src/registry.ts:connectorRegistry",
+   "type": "contains",
+   "direction": "forward",
+   "description": "registry.ts defines connectorRegistry",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/registry.ts",
+   "target": "function:packages/connectors/src/registry.ts:connectorRegistry",
+   "type": "exports",
+   "direction": "forward",
+   "description": "registry.ts exports connectorRegistry",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/connectors/src/registry.ts",
+   "target": "function:packages/connectors/src/registry.ts:makeConnector",
+   "type": "contains",
+   "direction": "forward",
+   "description": "registry.ts defines makeConnector",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/registry.ts",
+   "target": "function:packages/connectors/src/registry.ts:makeConnector",
+   "type": "exports",
+   "direction": "forward",
+   "description": "registry.ts exports makeConnector",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/connectors/src/registry.ts",
+   "target": "function:packages/connectors/src/registry.ts:connectorFor",
+   "type": "contains",
+   "direction": "forward",
+   "description": "registry.ts defines connectorFor",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/registry.ts",
+   "target": "function:packages/connectors/src/registry.ts:connectorFor",
+   "type": "exports",
+   "direction": "forward",
+   "description": "registry.ts exports connectorFor",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/connectors/src/registry.ts",
+   "target": "function:packages/connectors/src/registry.ts:makePostgresConnector",
+   "type": "contains",
+   "direction": "forward",
+   "description": "registry.ts defines makePostgresConnector",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/registry.ts",
+   "target": "function:packages/connectors/src/registry.ts:makeS3Connector",
+   "type": "contains",
+   "direction": "forward",
+   "description": "registry.ts defines makeS3Connector",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/registry.ts",
+   "target": "function:packages/connectors/src/registry.ts:readS3Capture",
+   "type": "contains",
+   "direction": "forward",
+   "description": "registry.ts defines readS3Capture",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/registry.ts",
+   "target": "function:packages/connectors/src/registry.ts:readPostgresCapture",
+   "type": "contains",
+   "direction": "forward",
+   "description": "registry.ts defines readPostgresCapture",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/registry.ts",
+   "target": "function:packages/connectors/src/registry.ts:sqlArgument",
+   "type": "contains",
+   "direction": "forward",
+   "description": "registry.ts defines sqlArgument",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/registry.ts",
+   "target": "function:packages/connectors/src/registry.ts:schemaArgument",
+   "type": "contains",
+   "direction": "forward",
+   "description": "registry.ts defines schemaArgument",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/registry.ts",
+   "target": "function:packages/connectors/src/registry.ts:s3Call",
+   "type": "contains",
+   "direction": "forward",
+   "description": "registry.ts defines s3Call",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/registry.ts",
+   "target": "function:packages/connectors/src/registry.ts:snapshotNamespace",
+   "type": "contains",
+   "direction": "forward",
+   "description": "registry.ts defines snapshotNamespace",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/registry.ts",
+   "target": "function:packages/connectors/src/registry.ts:factsFromRecord",
+   "type": "contains",
+   "direction": "forward",
+   "description": "registry.ts defines factsFromRecord",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/registry.ts",
+   "target": "function:packages/connectors/src/registry.ts:postgresStepToPlanStep",
+   "type": "contains",
+   "direction": "forward",
+   "description": "registry.ts defines postgresStepToPlanStep",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/registry.ts",
+   "target": "function:packages/connectors/src/registry.ts:postgresApplyReport",
+   "type": "contains",
+   "direction": "forward",
+   "description": "registry.ts defines postgresApplyReport",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/registry.ts",
+   "target": "function:packages/connectors/src/registry.ts:s3ApplyReport",
+   "type": "contains",
+   "direction": "forward",
+   "description": "registry.ts defines s3ApplyReport",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/registry.ts",
+   "target": "function:packages/connectors/src/registry.ts:postgresPlan",
+   "type": "contains",
+   "direction": "forward",
+   "description": "registry.ts defines postgresPlan",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/registry.ts",
+   "target": "function:packages/connectors/src/registry.ts:s3Plan",
+   "type": "contains",
+   "direction": "forward",
+   "description": "registry.ts defines s3Plan",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/registry.ts",
+   "target": "function:packages/connectors/src/registry.ts:requireDependency",
+   "type": "contains",
+   "direction": "forward",
+   "description": "registry.ts defines requireDependency",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/registry.ts",
+   "target": "function:packages/connectors/src/registry.ts:encodeJson",
+   "type": "contains",
+   "direction": "forward",
+   "description": "registry.ts defines encodeJson",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/registry.ts",
+   "target": "function:packages/connectors/src/registry.ts:isCaptureSchema",
+   "type": "contains",
+   "direction": "forward",
+   "description": "registry.ts defines isCaptureSchema",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/registry.ts",
+   "target": "function:packages/connectors/src/registry.ts:missingSnapshotStore",
+   "type": "contains",
+   "direction": "forward",
+   "description": "registry.ts defines missingSnapshotStore",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/connectors/src/registry.ts:connectorRegistry",
+   "target": "function:packages/connectors/src/registry.ts:makeConnector",
+   "type": "calls",
+   "direction": "forward",
+   "description": "connectorRegistry calls makeConnector",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/registry.ts:connectorRegistry",
+   "target": "function:packages/connectors/src/registry.ts:missingSnapshotStore",
+   "type": "calls",
+   "direction": "forward",
+   "description": "connectorRegistry calls missingSnapshotStore",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/registry.ts:makeConnector",
+   "target": "function:packages/connectors/src/registry.ts:makePostgresConnector",
+   "type": "calls",
+   "direction": "forward",
+   "description": "makeConnector calls makePostgresConnector",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/registry.ts:makeConnector",
+   "target": "function:packages/connectors/src/registry.ts:makeS3Connector",
+   "type": "calls",
+   "direction": "forward",
+   "description": "makeConnector calls makeS3Connector",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/registry.ts:connectorFor",
+   "target": "function:packages/connectors/src/registry.ts:connectorRegistry",
+   "type": "calls",
+   "direction": "forward",
+   "description": "connectorFor calls connectorRegistry",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/registry.ts:makePostgresConnector",
+   "target": "function:packages/connectors/src/registry.ts:sqlArgument",
+   "type": "calls",
+   "direction": "forward",
+   "description": "makePostgresConnector calls sqlArgument",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/registry.ts:makePostgresConnector",
+   "target": "function:packages/connectors/src/registry.ts:requireDependency",
+   "type": "calls",
+   "direction": "forward",
+   "description": "makePostgresConnector calls requireDependency",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/registry.ts:makePostgresConnector",
+   "target": "function:packages/connectors/src/registry.ts:schemaArgument",
+   "type": "calls",
+   "direction": "forward",
+   "description": "makePostgresConnector calls schemaArgument",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/registry.ts:makePostgresConnector",
+   "target": "function:packages/connectors/src/registry.ts:encodeJson",
+   "type": "calls",
+   "direction": "forward",
+   "description": "makePostgresConnector calls encodeJson",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/registry.ts:makePostgresConnector",
+   "target": "function:packages/connectors/src/registry.ts:snapshotNamespace",
+   "type": "calls",
+   "direction": "forward",
+   "description": "makePostgresConnector calls snapshotNamespace",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/registry.ts:makePostgresConnector",
+   "target": "function:packages/connectors/src/registry.ts:factsFromRecord",
+   "type": "calls",
+   "direction": "forward",
+   "description": "makePostgresConnector calls factsFromRecord",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/registry.ts:makePostgresConnector",
+   "target": "function:packages/connectors/src/registry.ts:readPostgresCapture",
+   "type": "calls",
+   "direction": "forward",
+   "description": "makePostgresConnector calls readPostgresCapture",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/registry.ts:makePostgresConnector",
+   "target": "function:packages/connectors/src/registry.ts:postgresPlan",
+   "type": "calls",
+   "direction": "forward",
+   "description": "makePostgresConnector calls postgresPlan",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/registry.ts:makePostgresConnector",
+   "target": "function:packages/connectors/src/registry.ts:postgresApplyReport",
+   "type": "calls",
+   "direction": "forward",
+   "description": "makePostgresConnector calls postgresApplyReport",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/registry.ts:makeS3Connector",
+   "target": "function:packages/connectors/src/registry.ts:requireDependency",
+   "type": "calls",
+   "direction": "forward",
+   "description": "makeS3Connector calls requireDependency",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/registry.ts:makeS3Connector",
+   "target": "function:packages/connectors/src/registry.ts:s3Call",
+   "type": "calls",
+   "direction": "forward",
+   "description": "makeS3Connector calls s3Call",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/registry.ts:makeS3Connector",
+   "target": "function:packages/connectors/src/registry.ts:snapshotNamespace",
+   "type": "calls",
+   "direction": "forward",
+   "description": "makeS3Connector calls snapshotNamespace",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/registry.ts:makeS3Connector",
+   "target": "function:packages/connectors/src/registry.ts:encodeJson",
+   "type": "calls",
+   "direction": "forward",
+   "description": "makeS3Connector calls encodeJson",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/registry.ts:makeS3Connector",
+   "target": "function:packages/connectors/src/registry.ts:readS3Capture",
+   "type": "calls",
+   "direction": "forward",
+   "description": "makeS3Connector calls readS3Capture",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/registry.ts:makeS3Connector",
+   "target": "function:packages/connectors/src/registry.ts:s3Plan",
+   "type": "calls",
+   "direction": "forward",
+   "description": "makeS3Connector calls s3Plan",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/registry.ts:makeS3Connector",
+   "target": "function:packages/connectors/src/registry.ts:s3ApplyReport",
+   "type": "calls",
+   "direction": "forward",
+   "description": "makeS3Connector calls s3ApplyReport",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/registry.ts:schemaArgument",
+   "target": "function:packages/connectors/src/registry.ts:isCaptureSchema",
+   "type": "calls",
+   "direction": "forward",
+   "description": "schemaArgument calls isCaptureSchema",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/cli/bin/nomo.mjs",
+   "target": "file:packages/cli/bin/silence-experimental-warning.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "nomo.mjs imports silence-experimental-warning.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/bin/nomo.mjs",
+   "target": "file:packages/cli/src/argv.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "nomo.mjs imports argv.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/replay.test.ts",
+   "target": "file:packages/cli/src/replay.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "replay.test.ts imports replay.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/replay.test.ts",
+   "target": "file:packages/connectors/src/postgres/capture.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "replay.test.ts imports capture.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/replay.test.ts",
+   "target": "file:packages/connectors/src/postgres/parse.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "replay.test.ts imports parse.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/replay.test.ts",
+   "target": "file:packages/connectors/src/postgres/replay.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "replay.test.ts imports replay.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/replay.test.ts",
+   "target": "file:packages/connectors/src/snapshot/local.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "replay.test.ts imports local.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/replay.test.ts",
+   "target": "file:packages/ledger/src/canonical.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "replay.test.ts imports canonical.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/replay.test.ts",
+   "target": "file:packages/ledger/src/feed.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "replay.test.ts imports feed.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/replay.test.ts",
+   "target": "file:packages/ledger/src/sign.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "replay.test.ts imports sign.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/replay.test.ts",
+   "target": "file:packages/ledger/src/store.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "replay.test.ts imports store.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/s3.ts",
+   "target": "file:packages/connectors/src/s3/classify.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "s3.ts imports classify.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/manifest.test.ts",
+   "target": "file:packages/connectors/src/manifest.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "manifest.test.ts imports manifest.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/manifest.test.ts",
+   "target": "file:packages/connectors/src/snapshot/local.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "manifest.test.ts imports local.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/manifest.test.ts",
+   "target": "file:packages/connectors/src/snapshot/store.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "manifest.test.ts imports store.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/manifest.ts",
+   "target": "file:packages/connectors/src/snapshot/local.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "manifest.ts imports local.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/manifest.ts",
+   "target": "file:packages/connectors/src/snapshot/store.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "manifest.ts imports store.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/capture.test.ts",
+   "target": "file:packages/connectors/src/postgres/capture.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "capture.test.ts imports capture.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/capture.test.ts",
+   "target": "file:packages/connectors/src/postgres/parse.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "capture.test.ts imports parse.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/capture.ts",
+   "target": "file:packages/connectors/src/postgres/parse.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "capture.ts imports parse.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/classify.test.ts",
+   "target": "file:packages/connectors/src/postgres/capture.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "classify.test.ts imports capture.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/classify.test.ts",
+   "target": "file:packages/connectors/src/postgres/classify.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "classify.test.ts imports classify.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/classify.test.ts",
+   "target": "file:packages/connectors/src/postgres/parse.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "classify.test.ts imports parse.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/classify.ts",
+   "target": "file:packages/connectors/src/postgres/capture.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "classify.ts imports capture.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/classify.ts",
+   "target": "file:packages/connectors/src/postgres/parse.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "classify.ts imports parse.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/inverse.test.ts",
+   "target": "file:packages/connectors/src/postgres/capture.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "inverse.test.ts imports capture.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/inverse.test.ts",
+   "target": "file:packages/connectors/src/postgres/inverse.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "inverse.test.ts imports inverse.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/inverse.test.ts",
+   "target": "file:packages/connectors/src/postgres/parse.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "inverse.test.ts imports parse.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/inverse.test.ts",
+   "target": "file:packages/connectors/src/postgres/replay.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "inverse.test.ts imports replay.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/inverse.ts",
+   "target": "file:packages/connectors/src/postgres/capture.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "inverse.ts imports capture.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/parse.test.ts",
+   "target": "file:packages/connectors/src/postgres/parse.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "parse.test.ts imports parse.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/replay.ts",
+   "target": "file:packages/connectors/src/postgres/capture.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "replay.ts imports capture.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/replay.ts",
+   "target": "file:packages/connectors/src/postgres/inverse.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "replay.ts imports inverse.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/sql-engine.test.ts",
+   "target": "file:packages/connectors/src/postgres/capture.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "sql-engine.test.ts imports capture.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/sql-engine.test.ts",
+   "target": "file:packages/connectors/src/postgres/inverse.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "sql-engine.test.ts imports inverse.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/sql-engine.test.ts",
+   "target": "file:packages/connectors/src/postgres/parse.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "sql-engine.test.ts imports parse.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/postgres/sql-engine.test.ts",
+   "target": "file:packages/connectors/src/postgres/replay.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "sql-engine.test.ts imports replay.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/registry.test.ts",
+   "target": "file:packages/connectors/src/postgres/capture.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "registry.test.ts imports capture.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/registry.test.ts",
+   "target": "file:packages/connectors/src/registry.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "registry.test.ts imports registry.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/registry.test.ts",
+   "target": "file:packages/connectors/src/snapshot/store.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "registry.test.ts imports store.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/registry.ts",
+   "target": "file:packages/connectors/src/postgres/capture.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "registry.ts imports capture.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/registry.ts",
+   "target": "file:packages/connectors/src/postgres/classify.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "registry.ts imports classify.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/registry.ts",
+   "target": "file:packages/connectors/src/postgres/inverse.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "registry.ts imports inverse.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/registry.ts",
+   "target": "file:packages/connectors/src/postgres/parse.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "registry.ts imports parse.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/registry.ts",
+   "target": "file:packages/connectors/src/postgres/replay.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "registry.ts imports replay.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/registry.ts",
+   "target": "file:packages/connectors/src/probes/registry.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "registry.ts imports registry.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/registry.ts",
+   "target": "file:packages/connectors/src/s3/apply.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "registry.ts imports apply.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/registry.ts",
+   "target": "file:packages/connectors/src/s3/capture.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "registry.ts imports capture.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/registry.ts",
+   "target": "file:packages/connectors/src/s3/classify.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "registry.ts imports classify.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/registry.ts",
+   "target": "file:packages/connectors/src/snapshot/store.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "registry.ts imports store.ts",
+   "weight": 0.8
+  }
+ ]
+}

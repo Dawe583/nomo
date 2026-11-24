@@ -63,6 +63,12 @@ export type HarnessRuntimeDeps = {
   readonly entries: () => Promise<readonly HarnessEntry[]>;
   /** Refusal rules currently in force, reported to the reviewer as context. */
   readonly rules: () => number;
+  /**
+   * What happened to the reviewer's earlier proposals, rendered for the
+   * request. A reviewer that cannot see that its last idea was rejected or
+   * rolled back proposes it again, once per paid round.
+   */
+  readonly outcomes?: () => string;
   /** The one model call. Never reached unless the gate proceeds. */
   readonly ask: (request: string) => Promise<string>;
   /** Validate-and-apply, which is the only path into the signed chain. */
@@ -245,6 +251,40 @@ export async function serviceHarnessBoundary(
   state: TriggerState,
   deps: HarnessRuntimeDeps,
 ): Promise<ServiceResult> {
+  // The gate is free; the evidence is not. Every check before the candidate
+  // test is a pure function of the trigger and the settings, so a boundary
+  // that cannot proceed refuses without verifying the chain. Only "nothing
+  // new" needs the mined entries, so only that one pays for them.
+  const early = cheapGate({
+    gates: deps.gates,
+    pending: state.pending,
+    hasPendingReview: state.pendingReview !== null,
+    inFlight: state.inFlight,
+    manual: state.manualReviewRequested,
+    settledTurns: state.settledTurnsSinceReview,
+    msSinceLastReview:
+      state.lastReviewAt === null ? null : deps.now() - state.lastReviewAt,
+    candidates: [],
+    harnessStateAvailable: deps.harnessStateAvailable ?? true,
+    surface: deps.surface,
+  });
+  if (!early.proceed && early.reason !== "nothing-new")
+    return {
+      // Same state rule serviceTrigger applies to a refusal: a non-held
+      // refusal means the gate can never open for this trigger, so the armed
+      // flag and any manual request are cleared with it.
+      state: early.held
+        ? state
+        : {
+            ...state,
+            pending: false,
+            pendingReview: null,
+            manualReviewRequested: false,
+          },
+      outcome: { kind: "not-run", reason: gateReason(early) },
+      startedAtBranchVersion: null,
+    };
+
   const entries = await deps.entries();
 
   const review = async (): Promise<ReviewVerdict> => {
@@ -256,7 +296,10 @@ export async function serviceHarnessBoundary(
     // forms, so neither can be budgeted alone and added afterwards.
     // Built once per round, so every lens sends the byte-identical request.
     const tail = deps.conversationTail?.() ?? "";
-    const fixed = `${REFINEMENT_INSTRUCTIONS}\n${VERDICT_PROTOCOL}\n\n\n\n`.length;
+    const outcomes = deps.outcomes?.() ?? "";
+    const fixed =
+      `${REFINEMENT_INSTRUCTIONS}\n${VERDICT_PROTOCOL}\n\n\n\n`.length +
+      outcomes.length;
     // The tail is charged to the operator's ceiling before the two halves
     // share what is left, because the ceiling governs the whole request and
     // not the evidence part of it.
@@ -279,9 +322,12 @@ export async function serviceHarnessBoundary(
     // Built once: every lens sends the byte-identical request, which is what
     // makes K=1 literally today's call and the lenses independent samples of
     // one question rather than variations of it.
+    const body = outcomes
+      ? `${question}\n\n${outcomes}\n\n${evidence}`
+      : `${question}\n\n${evidence}`;
     const request = tail
-      ? `${REFINEMENT_INSTRUCTIONS}\n${VERDICT_PROTOCOL}\n\n${question}\n\n${evidence}\n\n${CONVERSATION_BLOCK}\n${tail}`
-      : `${REFINEMENT_INSTRUCTIONS}\n${VERDICT_PROTOCOL}\n\n${question}\n\n${evidence}`;
+      ? `${REFINEMENT_INSTRUCTIONS}\n${VERDICT_PROTOCOL}\n\n${body}\n\n${CONVERSATION_BLOCK}\n${tail}`
+      : `${REFINEMENT_INSTRUCTIONS}\n${VERDICT_PROTOCOL}\n\n${body}`;
     const lensCount = resolveLensCount(deps.reviewLensCount);
     if (lensCount === 1) return parseReviewVerdict(await deps.ask(request));
     const branchNow = deps.currentBranchVersion;

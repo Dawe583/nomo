@@ -1,0 +1,4592 @@
+{
+ "nodes": [
+  {
+   "id": "file:packages/verifier/verify-ledger.mjs",
+   "type": "file",
+   "name": "verify-ledger.mjs",
+   "filePath": "packages/verifier/verify-ledger.mjs",
+   "summary": "verify-ledger.mjs \u2014 javascript code, 656 lines, 16 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "function:packages/verifier/verify-ledger.mjs:canonicalJson",
+   "type": "function",
+   "name": "canonicalJson",
+   "filePath": "packages/verifier/verify-ledger.mjs",
+   "lineRange": [
+    62,
+    64
+   ],
+   "summary": "canonicalJson(value) \u2014 function in verify-ledger.mjs, lines 62-64.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/verifier/verify-ledger.mjs:canonicalize",
+   "type": "function",
+   "name": "canonicalize",
+   "filePath": "packages/verifier/verify-ledger.mjs",
+   "lineRange": [
+    66,
+    102
+   ],
+   "summary": "canonicalize(value, seen, depth) \u2014 function in verify-ledger.mjs, lines 66-102.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/verifier/verify-ledger.mjs:sha256Hex",
+   "type": "function",
+   "name": "sha256Hex",
+   "filePath": "packages/verifier/verify-ledger.mjs",
+   "lineRange": [
+    104,
+    106
+   ],
+   "summary": "sha256Hex(input) \u2014 function in verify-ledger.mjs, lines 104-106.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/verifier/verify-ledger.mjs:entryHash",
+   "type": "function",
+   "name": "entryHash",
+   "filePath": "packages/verifier/verify-ledger.mjs",
+   "lineRange": [
+    108,
+    112
+   ],
+   "summary": "entryHash(body, prevHash) \u2014 function in verify-ledger.mjs, lines 108-112.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/verifier/verify-ledger.mjs:signingPreimage",
+   "type": "function",
+   "name": "signingPreimage",
+   "filePath": "packages/verifier/verify-ledger.mjs",
+   "lineRange": [
+    114,
+    121
+   ],
+   "summary": "signingPreimage(keyId, hash) \u2014 function in verify-ledger.mjs, lines 114-121.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/verifier/verify-ledger.mjs:merkleDigest",
+   "type": "function",
+   "name": "merkleDigest",
+   "filePath": "packages/verifier/verify-ledger.mjs",
+   "lineRange": [
+    123,
+    139
+   ],
+   "summary": "merkleDigest(hashes) \u2014 function in verify-ledger.mjs, lines 123-139.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/verifier/verify-ledger.mjs:attestationPreimage",
+   "type": "function",
+   "name": "attestationPreimage",
+   "filePath": "packages/verifier/verify-ledger.mjs",
+   "lineRange": [
+    141,
+    145
+   ],
+   "summary": "attestationPreimage(unsigned) \u2014 function in verify-ledger.mjs, lines 141-145.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/verifier/verify-ledger.mjs:parseAttestation",
+   "type": "function",
+   "name": "parseAttestation",
+   "filePath": "packages/verifier/verify-ledger.mjs",
+   "lineRange": [
+    147,
+    178
+   ],
+   "summary": "parseAttestation(value) \u2014 function in verify-ledger.mjs, lines 147-178.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/verifier/verify-ledger.mjs:verifyAttestation",
+   "type": "function",
+   "name": "verifyAttestation",
+   "filePath": "packages/verifier/verify-ledger.mjs",
+   "lineRange": [
+    180,
+    259
+   ],
+   "summary": "verifyAttestation(doc, entries, publicKey) \u2014 function in verify-ledger.mjs, lines 180-259.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/verifier/verify-ledger.mjs:parseEntry",
+   "type": "function",
+   "name": "parseEntry",
+   "filePath": "packages/verifier/verify-ledger.mjs",
+   "lineRange": [
+    261,
+    289
+   ],
+   "summary": "parseEntry(value, line) \u2014 function in verify-ledger.mjs, lines 261-289.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/verifier/verify-ledger.mjs:verifyEntries",
+   "type": "function",
+   "name": "verifyEntries",
+   "filePath": "packages/verifier/verify-ledger.mjs",
+   "lineRange": [
+    291,
+    348
+   ],
+   "summary": "verifyEntries(entries, publicKey) \u2014 function in verify-ledger.mjs, lines 291-348.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/verifier/verify-ledger.mjs:resolveBundlePath",
+   "type": "function",
+   "name": "resolveBundlePath",
+   "filePath": "packages/verifier/verify-ledger.mjs",
+   "lineRange": [
+    364,
+    394
+   ],
+   "summary": "resolveBundlePath(input) \u2014 function in verify-ledger.mjs, lines 364-394.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/verifier/verify-ledger.mjs:readBundle",
+   "type": "function",
+   "name": "readBundle",
+   "filePath": "packages/verifier/verify-ledger.mjs",
+   "lineRange": [
+    396,
+    418
+   ],
+   "summary": "readBundle(path) \u2014 function in verify-ledger.mjs, lines 396-418.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/verifier/verify-ledger.mjs:readBundleText",
+   "type": "function",
+   "name": "readBundleText",
+   "filePath": "packages/verifier/verify-ledger.mjs",
+   "lineRange": [
+    420,
+    459
+   ],
+   "summary": "readBundleText(path) \u2014 function in verify-ledger.mjs, lines 420-459.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/verifier/verify-ledger.mjs:selftest",
+   "type": "function",
+   "name": "selftest",
+   "filePath": "packages/verifier/verify-ledger.mjs",
+   "lineRange": [
+    461,
+    564
+   ],
+   "summary": "selftest() \u2014 function in verify-ledger.mjs, lines 461-564.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/verifier/verify-ledger.mjs:main",
+   "type": "function",
+   "name": "main",
+   "filePath": "packages/verifier/verify-ledger.mjs",
+   "lineRange": [
+    566,
+    654
+   ],
+   "summary": "main(argv) \u2014 function in verify-ledger.mjs, lines 566-654.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/verifier/verify-ledger.test.mjs",
+   "type": "file",
+   "name": "verify-ledger.test.mjs",
+   "filePath": "packages/verifier/verify-ledger.test.mjs",
+   "summary": "verify-ledger.test.mjs \u2014 javascript code, 191 lines, 2 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/verifier/verify-ledger.test.mjs:invoke",
+   "type": "function",
+   "name": "invoke",
+   "filePath": "packages/verifier/verify-ledger.test.mjs",
+   "lineRange": [
+    78,
+    94
+   ],
+   "summary": "invoke(args) \u2014 function in verify-ledger.test.mjs, lines 78-94.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/verifier/verify-ledger.test.mjs:scratchDir",
+   "type": "function",
+   "name": "scratchDir",
+   "filePath": "packages/verifier/verify-ledger.test.mjs",
+   "lineRange": [
+    96,
+    97
+   ],
+   "summary": "scratchDir() \u2014 function in verify-ledger.test.mjs, lines 96-97.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/agent-runners/cursor-sdk-fixture.test.ts",
+   "type": "file",
+   "name": "cursor-sdk-fixture.test.ts",
+   "filePath": "packages/workbench/src/agent-runners/cursor-sdk-fixture.test.ts",
+   "summary": "cursor-sdk-fixture.test.ts \u2014 typescript code, 164 lines, 0 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/workbench/src/goals.test.ts",
+   "type": "file",
+   "name": "goals.test.ts",
+   "filePath": "packages/workbench/src/goals.test.ts",
+   "summary": "goals.test.ts \u2014 typescript code, 601 lines, 2 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "function:packages/workbench/src/goals.test.ts:goal",
+   "type": "function",
+   "name": "goal",
+   "filePath": "packages/workbench/src/goals.test.ts",
+   "lineRange": [
+    36,
+    45
+   ],
+   "summary": "goal(overrides) \u2014 function in goals.test.ts, lines 36-45.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/goals.test.ts:refuses",
+   "type": "function",
+   "name": "refuses",
+   "filePath": "packages/workbench/src/goals.test.ts",
+   "lineRange": [
+    47,
+    48
+   ],
+   "summary": "refuses(run, pattern) \u2014 function in goals.test.ts, lines 47-48.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/goals.ts",
+   "type": "file",
+   "name": "goals.ts",
+   "filePath": "packages/workbench/src/goals.ts",
+   "summary": "goals.ts \u2014 typescript code, 331 lines, 11 functions, 0 classes, 7 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/workbench/src/goals.ts:goalLimits",
+   "type": "function",
+   "name": "goalLimits",
+   "filePath": "packages/workbench/src/goals.ts",
+   "lineRange": [
+    31,
+    37
+   ],
+   "summary": "goalLimits(maxPromptCharacters) \u2014 function in goals.ts, lines 31-37.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/goals.ts:parseGoalInput",
+   "type": "function",
+   "name": "parseGoalInput",
+   "filePath": "packages/workbench/src/goals.ts",
+   "lineRange": [
+    77,
+    89
+   ],
+   "summary": "parseGoalInput(input, hookAllowlist, maxPromptCharacters) \u2014 function in goals.ts, lines 77-89.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/goals.ts:evaluateGoal",
+   "type": "function",
+   "name": "evaluateGoal",
+   "filePath": "packages/workbench/src/goals.ts",
+   "lineRange": [
+    120,
+    151
+   ],
+   "summary": "evaluateGoal(goal, input) \u2014 function in goals.ts, lines 120-151.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/goals.ts:goalStartPrompt",
+   "type": "function",
+   "name": "goalStartPrompt",
+   "filePath": "packages/workbench/src/goals.ts",
+   "lineRange": [
+    170,
+    183
+   ],
+   "summary": "goalStartPrompt(goal) \u2014 function in goals.ts, lines 170-183.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/goals.ts:goalContinuationPrompt",
+   "type": "function",
+   "name": "goalContinuationPrompt",
+   "filePath": "packages/workbench/src/goals.ts",
+   "lineRange": [
+    193,
+    224
+   ],
+   "summary": "goalContinuationPrompt(goal, failure) \u2014 function in goals.ts, lines 193-224.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/goals.ts:goalFields",
+   "type": "function",
+   "name": "goalFields",
+   "filePath": "packages/workbench/src/goals.ts",
+   "lineRange": [
+    226,
+    238
+   ],
+   "summary": "goalFields(input) \u2014 function in goals.ts, lines 226-238.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/goals.ts:objectiveField",
+   "type": "function",
+   "name": "objectiveField",
+   "filePath": "packages/workbench/src/goals.ts",
+   "lineRange": [
+    240,
+    253
+   ],
+   "summary": "objectiveField(value, maxLength) \u2014 function in goals.ts, lines 240-253.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/goals.ts:budgetField",
+   "type": "function",
+   "name": "budgetField",
+   "filePath": "packages/workbench/src/goals.ts",
+   "lineRange": [
+    255,
+    269
+   ],
+   "summary": "budgetField(value) \u2014 function in goals.ts, lines 255-269.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/goals.ts:gateFields",
+   "type": "function",
+   "name": "gateFields",
+   "filePath": "packages/workbench/src/goals.ts",
+   "lineRange": [
+    271,
+    303
+   ],
+   "summary": "gateFields(value, allowlist) \u2014 function in goals.ts, lines 271-303.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/goals.ts:digestField",
+   "type": "function",
+   "name": "digestField",
+   "filePath": "packages/workbench/src/goals.ts",
+   "lineRange": [
+    305,
+    322
+   ],
+   "summary": "digestField(value) \u2014 function in goals.ts, lines 305-322.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/goals.ts:continuationField",
+   "type": "function",
+   "name": "continuationField",
+   "filePath": "packages/workbench/src/goals.ts",
+   "lineRange": [
+    324,
+    331
+   ],
+   "summary": "continuationField(value) \u2014 function in goals.ts, lines 324-331.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/plan.test.ts",
+   "type": "file",
+   "name": "plan.test.ts",
+   "filePath": "packages/workbench/src/plan.test.ts",
+   "summary": "plan.test.ts \u2014 typescript code, 182 lines, 1 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/workbench/src/plan.test.ts:item",
+   "type": "function",
+   "name": "item",
+   "filePath": "packages/workbench/src/plan.test.ts",
+   "lineRange": [
+    13,
+    17
+   ],
+   "summary": "item(id, text, status) \u2014 function in plan.test.ts, lines 13-17.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/plan.ts",
+   "type": "file",
+   "name": "plan.ts",
+   "filePath": "packages/workbench/src/plan.ts",
+   "summary": "plan.ts \u2014 typescript code, 115 lines, 2 functions, 0 classes, 3 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/plan.ts:parsePlanUpdate",
+   "type": "function",
+   "name": "parsePlanUpdate",
+   "filePath": "packages/workbench/src/plan.ts",
+   "lineRange": [
+    54,
+    96
+   ],
+   "summary": "parsePlanUpdate(input) \u2014 function in plan.ts, lines 54-96.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/plan.ts:field",
+   "type": "function",
+   "name": "field",
+   "filePath": "packages/workbench/src/plan.ts",
+   "lineRange": [
+    98,
+    115
+   ],
+   "summary": "field(where, name, value, maxLength) \u2014 function in plan.ts, lines 98-115.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/provider-manifest.json",
+   "type": "config",
+   "name": "provider-manifest.json",
+   "filePath": "packages/workbench/src/provider-manifest.json",
+   "summary": "provider-manifest.json \u2014 json config, 1 lines.",
+   "tags": [
+    "json",
+    "config"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/skill-promotion.test.ts",
+   "type": "file",
+   "name": "skill-promotion.test.ts",
+   "filePath": "packages/workbench/src/skill-promotion.test.ts",
+   "summary": "skill-promotion.test.ts \u2014 typescript code, 709 lines, 10 functions, 0 classes, 0 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "function:packages/workbench/src/skill-promotion.test.ts:digest",
+   "type": "function",
+   "name": "digest",
+   "filePath": "packages/workbench/src/skill-promotion.test.ts",
+   "lineRange": [
+    31,
+    31
+   ],
+   "summary": "digest(letter) \u2014 function in skill-promotion.test.ts, lines 31-31.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/skill-promotion.test.ts:skill",
+   "type": "function",
+   "name": "skill",
+   "filePath": "packages/workbench/src/skill-promotion.test.ts",
+   "lineRange": [
+    33,
+    39
+   ],
+   "summary": "skill(overrides) \u2014 function in skill-promotion.test.ts, lines 33-39.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/skill-promotion.test.ts:raw",
+   "type": "function",
+   "name": "raw",
+   "filePath": "packages/workbench/src/skill-promotion.test.ts",
+   "lineRange": [
+    42,
+    49
+   ],
+   "summary": "raw(overrides) \u2014 function in skill-promotion.test.ts, lines 42-49.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/skill-promotion.test.ts:create",
+   "type": "function",
+   "name": "create",
+   "filePath": "packages/workbench/src/skill-promotion.test.ts",
+   "lineRange": [
+    51,
+    54
+   ],
+   "summary": "create(overrides) \u2014 function in skill-promotion.test.ts, lines 51-54.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/skill-promotion.test.ts:update",
+   "type": "function",
+   "name": "update",
+   "filePath": "packages/workbench/src/skill-promotion.test.ts",
+   "lineRange": [
+    56,
+    59
+   ],
+   "summary": "update(overrides) \u2014 function in skill-promotion.test.ts, lines 56-59.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/skill-promotion.test.ts:remove",
+   "type": "function",
+   "name": "remove",
+   "filePath": "packages/workbench/src/skill-promotion.test.ts",
+   "lineRange": [
+    61,
+    61
+   ],
+   "summary": "remove(id) \u2014 function in skill-promotion.test.ts, lines 61-61.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/skill-promotion.test.ts:request",
+   "type": "function",
+   "name": "request",
+   "filePath": "packages/workbench/src/skill-promotion.test.ts",
+   "lineRange": [
+    63,
+    72
+   ],
+   "summary": "request(overrides) \u2014 function in skill-promotion.test.ts, lines 63-72.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/skill-promotion.test.ts:manySkills",
+   "type": "function",
+   "name": "manySkills",
+   "filePath": "packages/workbench/src/skill-promotion.test.ts",
+   "lineRange": [
+    74,
+    75
+   ],
+   "summary": "manySkills(count) \u2014 function in skill-promotion.test.ts, lines 74-75.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/skill-promotion.test.ts:promotedEntry",
+   "type": "function",
+   "name": "promotedEntry",
+   "filePath": "packages/workbench/src/skill-promotion.test.ts",
+   "lineRange": [
+    77,
+    87
+   ],
+   "summary": "promotedEntry(seq, promotion) \u2014 function in skill-promotion.test.ts, lines 77-87.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/skill-promotion.test.ts:rolledBackEntry",
+   "type": "function",
+   "name": "rolledBackEntry",
+   "filePath": "packages/workbench/src/skill-promotion.test.ts",
+   "lineRange": [
+    89,
+    99
+   ],
+   "summary": "rolledBackEntry(seq, rollback) \u2014 function in skill-promotion.test.ts, lines 89-99.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/skill-promotion.ts",
+   "type": "file",
+   "name": "skill-promotion.ts",
+   "filePath": "packages/workbench/src/skill-promotion.ts",
+   "summary": "skill-promotion.ts \u2014 typescript code, 648 lines, 22 functions, 0 classes, 9 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "function:packages/workbench/src/skill-promotion.ts:object",
+   "type": "function",
+   "name": "object",
+   "filePath": "packages/workbench/src/skill-promotion.ts",
+   "lineRange": [
+    106,
+    110
+   ],
+   "summary": "object(value) \u2014 function in skill-promotion.ts, lines 106-110.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/skill-promotion.ts:text",
+   "type": "function",
+   "name": "text",
+   "filePath": "packages/workbench/src/skill-promotion.ts",
+   "lineRange": [
+    112,
+    114
+   ],
+   "summary": "text(value) \u2014 function in skill-promotion.ts, lines 112-114.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/skill-promotion.ts:malformed",
+   "type": "function",
+   "name": "malformed",
+   "filePath": "packages/workbench/src/skill-promotion.ts",
+   "lineRange": [
+    116,
+    118
+   ],
+   "summary": "malformed() \u2014 function in skill-promotion.ts, lines 116-118.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/skill-promotion.ts:checkUtf8",
+   "type": "function",
+   "name": "checkUtf8",
+   "filePath": "packages/workbench/src/skill-promotion.ts",
+   "lineRange": [
+    122,
+    125
+   ],
+   "summary": "checkUtf8(value, field) \u2014 function in skill-promotion.ts, lines 122-125.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/skill-promotion.ts:checkSkillId",
+   "type": "function",
+   "name": "checkSkillId",
+   "filePath": "packages/workbench/src/skill-promotion.ts",
+   "lineRange": [
+    127,
+    132
+   ],
+   "summary": "checkSkillId(id) \u2014 function in skill-promotion.ts, lines 127-132.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/skill-promotion.ts:checkLine",
+   "type": "function",
+   "name": "checkLine",
+   "filePath": "packages/workbench/src/skill-promotion.ts",
+   "lineRange": [
+    134,
+    140
+   ],
+   "summary": "checkLine(value, field, limit) \u2014 function in skill-promotion.ts, lines 134-140.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/skill-promotion.ts:checkSkill",
+   "type": "function",
+   "name": "checkSkill",
+   "filePath": "packages/workbench/src/skill-promotion.ts",
+   "lineRange": [
+    144,
+    155
+   ],
+   "summary": "checkSkill(skill) \u2014 function in skill-promotion.ts, lines 144-155.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/skill-promotion.ts:looksSecret",
+   "type": "function",
+   "name": "looksSecret",
+   "filePath": "packages/workbench/src/skill-promotion.ts",
+   "lineRange": [
+    157,
+    162
+   ],
+   "summary": "looksSecret(value, knownSecrets) \u2014 function in skill-promotion.ts, lines 157-162.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/skill-promotion.ts:scanSkill",
+   "type": "function",
+   "name": "scanSkill",
+   "filePath": "packages/workbench/src/skill-promotion.ts",
+   "lineRange": [
+    170,
+    174
+   ],
+   "summary": "scanSkill(skill, knownSecrets) \u2014 function in skill-promotion.ts, lines 170-174.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/skill-promotion.ts:sameSkill",
+   "type": "function",
+   "name": "sameSkill",
+   "filePath": "packages/workbench/src/skill-promotion.ts",
+   "lineRange": [
+    176,
+    183
+   ],
+   "summary": "sameSkill(a, b) \u2014 function in skill-promotion.ts, lines 176-183.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/skill-promotion.ts:sameSnapshot",
+   "type": "function",
+   "name": "sameSnapshot",
+   "filePath": "packages/workbench/src/skill-promotion.ts",
+   "lineRange": [
+    185,
+    188
+   ],
+   "summary": "sameSnapshot(a, b) \u2014 function in skill-promotion.ts, lines 185-188.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/skill-promotion.ts:bySkillId",
+   "type": "function",
+   "name": "bySkillId",
+   "filePath": "packages/workbench/src/skill-promotion.ts",
+   "lineRange": [
+    190,
+    192
+   ],
+   "summary": "bySkillId(a, b) \u2014 function in skill-promotion.ts, lines 190-192.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/skill-promotion.ts:parseSkillProposalChange",
+   "type": "function",
+   "name": "parseSkillProposalChange",
+   "filePath": "packages/workbench/src/skill-promotion.ts",
+   "lineRange": [
+    201,
+    220
+   ],
+   "summary": "parseSkillProposalChange(value) \u2014 function in skill-promotion.ts, lines 201-220.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/skill-promotion.ts:prepareSkillPromotion",
+   "type": "function",
+   "name": "prepareSkillPromotion",
+   "filePath": "packages/workbench/src/skill-promotion.ts",
+   "lineRange": [
+    257,
+    324
+   ],
+   "summary": "prepareSkillPromotion(request) \u2014 function in skill-promotion.ts, lines 257-324.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/skill-promotion.ts:prepareSkillRollback",
+   "type": "function",
+   "name": "prepareSkillRollback",
+   "filePath": "packages/workbench/src/skill-promotion.ts",
+   "lineRange": [
+    357,
+    397
+   ],
+   "summary": "prepareSkillRollback(request) \u2014 function in skill-promotion.ts, lines 357-397.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/skill-promotion.ts:promotedSkill",
+   "type": "function",
+   "name": "promotedSkill",
+   "filePath": "packages/workbench/src/skill-promotion.ts",
+   "lineRange": [
+    409,
+    420
+   ],
+   "summary": "promotedSkill(raw) \u2014 function in skill-promotion.ts, lines 409-420.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/skill-promotion.ts:signedChange",
+   "type": "function",
+   "name": "signedChange",
+   "filePath": "packages/workbench/src/skill-promotion.ts",
+   "lineRange": [
+    422,
+    433
+   ],
+   "summary": "signedChange(raw) \u2014 function in skill-promotion.ts, lines 422-433.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/skill-promotion.ts:replayPromotedSkills",
+   "type": "function",
+   "name": "replayPromotedSkills",
+   "filePath": "packages/workbench/src/skill-promotion.ts",
+   "lineRange": [
+    448,
+    506
+   ],
+   "summary": "replayPromotedSkills(chain) \u2014 function in skill-promotion.ts, lines 448-506.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/skill-promotion.ts:formatPromotedSkillsForPrompt",
+   "type": "function",
+   "name": "formatPromotedSkillsForPrompt",
+   "filePath": "packages/workbench/src/skill-promotion.ts",
+   "lineRange": [
+    528,
+    559
+   ],
+   "summary": "formatPromotedSkillsForPrompt(skills, maxCharacters) \u2014 function in skill-promotion.ts, lines 528-559.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/skill-promotion.ts:snapshotLine",
+   "type": "function",
+   "name": "snapshotLine",
+   "filePath": "packages/workbench/src/skill-promotion.ts",
+   "lineRange": [
+    565,
+    571
+   ],
+   "summary": "snapshotLine(item) \u2014 function in skill-promotion.ts, lines 565-571.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/skill-promotion.ts:previewLines",
+   "type": "function",
+   "name": "previewLines",
+   "filePath": "packages/workbench/src/skill-promotion.ts",
+   "lineRange": [
+    573,
+    580
+   ],
+   "summary": "previewLines(label, value, limit) \u2014 function in skill-promotion.ts, lines 573-580.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/skill-promotion.ts:describeSkillPromotionReview",
+   "type": "function",
+   "name": "describeSkillPromotionReview",
+   "filePath": "packages/workbench/src/skill-promotion.ts",
+   "lineRange": [
+    591,
+    648
+   ],
+   "summary": "describeSkillPromotionReview(record, maxCharacters) \u2014 function in skill-promotion.ts, lines 591-648.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/web-tools.test.ts",
+   "type": "file",
+   "name": "web-tools.test.ts",
+   "filePath": "packages/workbench/src/web-tools.test.ts",
+   "summary": "web-tools.test.ts \u2014 typescript code, 1065 lines, 9 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "function:packages/workbench/src/web-tools.test.ts:publicHost",
+   "type": "function",
+   "name": "publicHost",
+   "filePath": "packages/workbench/src/web-tools.test.ts",
+   "lineRange": [
+    38,
+    40
+   ],
+   "summary": "publicHost(_hostname) \u2014 function in web-tools.test.ts, lines 38-40.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/web-tools.test.ts:resolveTo",
+   "type": "function",
+   "name": "resolveTo",
+   "filePath": "packages/workbench/src/web-tools.test.ts",
+   "lineRange": [
+    42,
+    45
+   ],
+   "summary": "resolveTo(addresses) \u2014 function in web-tools.test.ts, lines 42-45.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/web-tools.test.ts:resolveMap",
+   "type": "function",
+   "name": "resolveMap",
+   "filePath": "packages/workbench/src/web-tools.test.ts",
+   "lineRange": [
+    47,
+    53
+   ],
+   "summary": "resolveMap(table) \u2014 function in web-tools.test.ts, lines 47-53.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/web-tools.test.ts:page",
+   "type": "function",
+   "name": "page",
+   "filePath": "packages/workbench/src/web-tools.test.ts",
+   "lineRange": [
+    55,
+    64
+   ],
+   "summary": "page(body, contentType, status) \u2014 function in web-tools.test.ts, lines 55-64.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/web-tools.test.ts:jsonPage",
+   "type": "function",
+   "name": "jsonPage",
+   "filePath": "packages/workbench/src/web-tools.test.ts",
+   "lineRange": [
+    66,
+    68
+   ],
+   "summary": "jsonPage(body, status) \u2014 function in web-tools.test.ts, lines 66-68.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/web-tools.test.ts:redirect",
+   "type": "function",
+   "name": "redirect",
+   "filePath": "packages/workbench/src/web-tools.test.ts",
+   "lineRange": [
+    70,
+    75
+   ],
+   "summary": "redirect(location, status) \u2014 function in web-tools.test.ts, lines 70-75.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/web-tools.test.ts:recorder",
+   "type": "function",
+   "name": "recorder",
+   "filePath": "packages/workbench/src/web-tools.test.ts",
+   "lineRange": [
+    79,
+    97
+   ],
+   "summary": "recorder(answer) \u2014 function in web-tools.test.ts, lines 79-97.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/web-tools.test.ts:header",
+   "type": "function",
+   "name": "header",
+   "filePath": "packages/workbench/src/web-tools.test.ts",
+   "lineRange": [
+    99,
+    101
+   ],
+   "summary": "header(call, name) \u2014 function in web-tools.test.ts, lines 99-101.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/web-tools.test.ts:loneSurrogate",
+   "type": "function",
+   "name": "loneSurrogate",
+   "filePath": "packages/workbench/src/web-tools.test.ts",
+   "lineRange": [
+    499,
+    513
+   ],
+   "summary": "loneSurrogate(text) \u2014 function in web-tools.test.ts, lines 499-513.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/web-tools.ts",
+   "type": "file",
+   "name": "web-tools.ts",
+   "filePath": "packages/workbench/src/web-tools.ts",
+   "summary": "web-tools.ts \u2014 typescript code, 974 lines, 37 functions, 0 classes, 11 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "function:packages/workbench/src/web-tools.ts:untrustedWebContentLabel",
+   "type": "function",
+   "name": "untrustedWebContentLabel",
+   "filePath": "packages/workbench/src/web-tools.ts",
+   "lineRange": [
+    153,
+    155
+   ],
+   "summary": "untrustedWebContentLabel(url) \u2014 function in web-tools.ts, lines 153-155.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/web-tools.ts:redactWebSecrets",
+   "type": "function",
+   "name": "redactWebSecrets",
+   "filePath": "packages/workbench/src/web-tools.ts",
+   "lineRange": [
+    192,
+    196
+   ],
+   "summary": "redactWebSecrets(text) \u2014 function in web-tools.ts, lines 192-196.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/web-tools.ts:defaultResolveHost",
+   "type": "function",
+   "name": "defaultResolveHost",
+   "filePath": "packages/workbench/src/web-tools.ts",
+   "lineRange": [
+    198,
+    201
+   ],
+   "summary": "defaultResolveHost(hostname) \u2014 function in web-tools.ts, lines 198-201.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/web-tools.ts:isBlockedWebIp",
+   "type": "function",
+   "name": "isBlockedWebIp",
+   "filePath": "packages/workbench/src/web-tools.ts",
+   "lineRange": [
+    213,
+    222
+   ],
+   "summary": "isBlockedWebIp(ip) \u2014 function in web-tools.ts, lines 213-222.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/web-tools.ts:parseIpv4",
+   "type": "function",
+   "name": "parseIpv4",
+   "filePath": "packages/workbench/src/web-tools.ts",
+   "lineRange": [
+    224,
+    238
+   ],
+   "summary": "parseIpv4(text) \u2014 function in web-tools.ts, lines 224-238.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/web-tools.ts:parseIpv6",
+   "type": "function",
+   "name": "parseIpv6",
+   "filePath": "packages/workbench/src/web-tools.ts",
+   "lineRange": [
+    240,
+    263
+   ],
+   "summary": "parseIpv6(text) \u2014 function in web-tools.ts, lines 240-263.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/web-tools.ts:readHextets",
+   "type": "function",
+   "name": "readHextets",
+   "filePath": "packages/workbench/src/web-tools.ts",
+   "lineRange": [
+    265,
+    279
+   ],
+   "summary": "readHextets(parts, into) \u2014 function in web-tools.ts, lines 265-279.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/web-tools.ts:blockedIpv4",
+   "type": "function",
+   "name": "blockedIpv4",
+   "filePath": "packages/workbench/src/web-tools.ts",
+   "lineRange": [
+    281,
+    292
+   ],
+   "summary": "blockedIpv4(octets) \u2014 function in web-tools.ts, lines 281-292.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/web-tools.ts:blockedIpv6",
+   "type": "function",
+   "name": "blockedIpv6",
+   "filePath": "packages/workbench/src/web-tools.ts",
+   "lineRange": [
+    294,
+    314
+   ],
+   "summary": "blockedIpv6(words) \u2014 function in web-tools.ts, lines 294-314.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/web-tools.ts:privateHostname",
+   "type": "function",
+   "name": "privateHostname",
+   "filePath": "packages/workbench/src/web-tools.ts",
+   "lineRange": [
+    316,
+    324
+   ],
+   "summary": "privateHostname(hostname) \u2014 function in web-tools.ts, lines 316-324.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/web-tools.ts:literalAddress",
+   "type": "function",
+   "name": "literalAddress",
+   "filePath": "packages/workbench/src/web-tools.ts",
+   "lineRange": [
+    326,
+    333
+   ],
+   "summary": "literalAddress(hostname) \u2014 function in web-tools.ts, lines 326-333.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/web-tools.ts:validatePublicHttpsUrl",
+   "type": "function",
+   "name": "validatePublicHttpsUrl",
+   "filePath": "packages/workbench/src/web-tools.ts",
+   "lineRange": [
+    349,
+    406
+   ],
+   "summary": "validatePublicHttpsUrl(rawUrl, resolveHost) \u2014 function in web-tools.ts, lines 349-406.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/web-tools.ts:extractReadableWebText",
+   "type": "function",
+   "name": "extractReadableWebText",
+   "filePath": "packages/workbench/src/web-tools.ts",
+   "lineRange": [
+    421,
+    429
+   ],
+   "summary": "extractReadableWebText(body, contentType) \u2014 function in web-tools.ts, lines 421-429.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/web-tools.ts:extractDocument",
+   "type": "function",
+   "name": "extractDocument",
+   "filePath": "packages/workbench/src/web-tools.ts",
+   "lineRange": [
+    433,
+    449
+   ],
+   "summary": "extractDocument(body, contentType) \u2014 function in web-tools.ts, lines 433-449.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/web-tools.ts:documentKind",
+   "type": "function",
+   "name": "documentKind",
+   "filePath": "packages/workbench/src/web-tools.ts",
+   "lineRange": [
+    451,
+    462
+   ],
+   "summary": "documentKind(contentType) \u2014 function in web-tools.ts, lines 451-462.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/web-tools.ts:plainText",
+   "type": "function",
+   "name": "plainText",
+   "filePath": "packages/workbench/src/web-tools.ts",
+   "lineRange": [
+    464,
+    470
+   ],
+   "summary": "plainText(body) \u2014 function in web-tools.ts, lines 464-470.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/web-tools.ts:prettyJson",
+   "type": "function",
+   "name": "prettyJson",
+   "filePath": "packages/workbench/src/web-tools.ts",
+   "lineRange": [
+    472,
+    480
+   ],
+   "summary": "prettyJson(body) \u2014 function in web-tools.ts, lines 472-480.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/web-tools.ts:htmlToText",
+   "type": "function",
+   "name": "htmlToText",
+   "filePath": "packages/workbench/src/web-tools.ts",
+   "lineRange": [
+    488,
+    513
+   ],
+   "summary": "htmlToText(html) \u2014 function in web-tools.ts, lines 488-513.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/web-tools.ts:titleOf",
+   "type": "function",
+   "name": "titleOf",
+   "filePath": "packages/workbench/src/web-tools.ts",
+   "lineRange": [
+    515,
+    523
+   ],
+   "summary": "titleOf(html) \u2014 function in web-tools.ts, lines 515-523.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/web-tools.ts:decodeEntities",
+   "type": "function",
+   "name": "decodeEntities",
+   "filePath": "packages/workbench/src/web-tools.ts",
+   "lineRange": [
+    551,
+    561
+   ],
+   "summary": "decodeEntities(text) \u2014 function in web-tools.ts, lines 551-561.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/web-tools.ts:fromCodePoint",
+   "type": "function",
+   "name": "fromCodePoint",
+   "filePath": "packages/workbench/src/web-tools.ts",
+   "lineRange": [
+    563,
+    569
+   ],
+   "summary": "fromCodePoint(value) \u2014 function in web-tools.ts, lines 563-569.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/web-tools.ts:flatten",
+   "type": "function",
+   "name": "flatten",
+   "filePath": "packages/workbench/src/web-tools.ts",
+   "lineRange": [
+    571,
+    573
+   ],
+   "summary": "flatten(text) \u2014 function in web-tools.ts, lines 571-573.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/web-tools.ts:boundText",
+   "type": "function",
+   "name": "boundText",
+   "filePath": "packages/workbench/src/web-tools.ts",
+   "lineRange": [
+    575,
+    587
+   ],
+   "summary": "boundText(text) \u2014 function in web-tools.ts, lines 575-587.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/web-tools.ts:cutText",
+   "type": "function",
+   "name": "cutText",
+   "filePath": "packages/workbench/src/web-tools.ts",
+   "lineRange": [
+    589,
+    592
+   ],
+   "summary": "cutText(text, limit) \u2014 function in web-tools.ts, lines 589-592.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/web-tools.ts:requestTimeout",
+   "type": "function",
+   "name": "requestTimeout",
+   "filePath": "packages/workbench/src/web-tools.ts",
+   "lineRange": [
+    594,
+    599
+   ],
+   "summary": "requestTimeout(deps) \u2014 function in web-tools.ts, lines 594-599.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/web-tools.ts:request",
+   "type": "function",
+   "name": "request",
+   "filePath": "packages/workbench/src/web-tools.ts",
+   "lineRange": [
+    601,
+    620
+   ],
+   "summary": "request(fetcher, url, init, refusal) \u2014 function in web-tools.ts, lines 601-620.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/web-tools.ts:readBoundedBody",
+   "type": "function",
+   "name": "readBoundedBody",
+   "filePath": "packages/workbench/src/web-tools.ts",
+   "lineRange": [
+    622,
+    660
+   ],
+   "summary": "readBoundedBody(response, limit) \u2014 function in web-tools.ts, lines 622-660.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/web-tools.ts:decodeBody",
+   "type": "function",
+   "name": "decodeBody",
+   "filePath": "packages/workbench/src/web-tools.ts",
+   "lineRange": [
+    662,
+    665
+   ],
+   "summary": "decodeBody(bytes) \u2014 function in web-tools.ts, lines 662-665.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/web-tools.ts:toolArguments",
+   "type": "function",
+   "name": "toolArguments",
+   "filePath": "packages/workbench/src/web-tools.ts",
+   "lineRange": [
+    667,
+    671
+   ],
+   "summary": "toolArguments(name, input) \u2014 function in web-tools.ts, lines 667-671.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/web-tools.ts:readFetchArguments",
+   "type": "function",
+   "name": "readFetchArguments",
+   "filePath": "packages/workbench/src/web-tools.ts",
+   "lineRange": [
+    673,
+    687
+   ],
+   "summary": "readFetchArguments(input) \u2014 function in web-tools.ts, lines 673-687.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/web-tools.ts:readSearchArguments",
+   "type": "function",
+   "name": "readSearchArguments",
+   "filePath": "packages/workbench/src/web-tools.ts",
+   "lineRange": [
+    689,
+    718
+   ],
+   "summary": "readSearchArguments(input) \u2014 function in web-tools.ts, lines 689-718.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/web-tools.ts:frameContent",
+   "type": "function",
+   "name": "frameContent",
+   "filePath": "packages/workbench/src/web-tools.ts",
+   "lineRange": [
+    720,
+    730
+   ],
+   "summary": "frameContent(url, title, text) \u2014 function in web-tools.ts, lines 720-730.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/web-tools.ts:executeWebFetch",
+   "type": "function",
+   "name": "executeWebFetch",
+   "filePath": "packages/workbench/src/web-tools.ts",
+   "lineRange": [
+    741,
+    807
+   ],
+   "summary": "executeWebFetch(args, deps) \u2014 function in web-tools.ts, lines 741-807.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/web-tools.ts:readSearchPayload",
+   "type": "function",
+   "name": "readSearchPayload",
+   "filePath": "packages/workbench/src/web-tools.ts",
+   "lineRange": [
+    809,
+    830
+   ],
+   "summary": "readSearchPayload(body, limit) \u2014 function in web-tools.ts, lines 809-830.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/web-tools.ts:searchHit",
+   "type": "function",
+   "name": "searchHit",
+   "filePath": "packages/workbench/src/web-tools.ts",
+   "lineRange": [
+    832,
+    867
+   ],
+   "summary": "searchHit(item) \u2014 function in web-tools.ts, lines 832-867.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/web-tools.ts:formatSearchResults",
+   "type": "function",
+   "name": "formatSearchResults",
+   "filePath": "packages/workbench/src/web-tools.ts",
+   "lineRange": [
+    869,
+    882
+   ],
+   "summary": "formatSearchResults(hits, truncated) \u2014 function in web-tools.ts, lines 869-882.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/web-tools.ts:executeWebSearch",
+   "type": "function",
+   "name": "executeWebSearch",
+   "filePath": "packages/workbench/src/web-tools.ts",
+   "lineRange": [
+    895,
+    974
+   ],
+   "summary": "executeWebSearch(args, deps) \u2014 function in web-tools.ts, lines 895-974.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:paid/README.md",
+   "type": "document",
+   "name": "README.md",
+   "filePath": "paid/README.md",
+   "summary": "README.md \u2014 markdown document, 22 lines, 1 sections: paid/.",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:paid/tsconfig.json",
+   "type": "config",
+   "name": "tsconfig.json",
+   "filePath": "paid/tsconfig.json",
+   "summary": "tsconfig.json \u2014 json config, 18 lines.",
+   "tags": [
+    "json",
+    "config"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:policy/agents.yaml",
+   "type": "config",
+   "name": "agents.yaml",
+   "filePath": "policy/agents.yaml",
+   "summary": "agents.yaml \u2014 yaml config, 47 lines.",
+   "tags": [
+    "yaml",
+    "config"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:policy/default.yaml",
+   "type": "config",
+   "name": "default.yaml",
+   "filePath": "policy/default.yaml",
+   "summary": "default.yaml \u2014 yaml config, 30 lines.",
+   "tags": [
+    "yaml",
+    "config"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:python/nomo-transport/README.md",
+   "type": "document",
+   "name": "README.md",
+   "filePath": "python/nomo-transport/README.md",
+   "summary": "README.md \u2014 markdown document, 127 lines, 6 sections: nomo-transport, What it does, The refusals, and why, How it differs from the Swift counterpart (+2 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:python/nomo-transport/pyproject.toml",
+   "type": "config",
+   "name": "pyproject.toml",
+   "filePath": "python/nomo-transport/pyproject.toml",
+   "summary": "pyproject.toml \u2014 toml config, 22 lines.",
+   "tags": [
+    "toml",
+    "config"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:python/nomo-transport/tests/fixtures/canonical_samples.json",
+   "type": "config",
+   "name": "canonical_samples.json",
+   "filePath": "python/nomo-transport/tests/fixtures/canonical_samples.json",
+   "summary": "canonical_samples.json \u2014 json config, 15 lines.",
+   "tags": [
+    "json",
+    "config"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:python/nomo-transport/tests/support_http.py",
+   "type": "file",
+   "name": "support_http.py",
+   "filePath": "python/nomo-transport/tests/support_http.py",
+   "summary": "support_http.py \u2014 python code, 141 lines, 2 functions, 3 classes, 5 exports, 0 imports.",
+   "tags": [
+    "python",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:python/nomo-transport/tests/support_http.py:json_reply",
+   "type": "function",
+   "name": "json_reply",
+   "filePath": "python/nomo-transport/tests/support_http.py",
+   "lineRange": [
+    123,
+    133
+   ],
+   "summary": "json_reply(payload, status) \u2014 function in support_http.py, lines 123-133.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:python/nomo-transport/tests/support_http.py:sse_reply",
+   "type": "function",
+   "name": "sse_reply",
+   "filePath": "python/nomo-transport/tests/support_http.py",
+   "lineRange": [
+    136,
+    141
+   ],
+   "summary": "sse_reply(frames, status) \u2014 function in support_http.py, lines 136-141.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:python/nomo-transport/tests/support_http.py:ScriptedReply",
+   "type": "class",
+   "name": "ScriptedReply",
+   "filePath": "python/nomo-transport/tests/support_http.py",
+   "lineRange": [
+    19,
+    22
+   ],
+   "summary": "ScriptedReply \u2014 class in support_http.py, lines 19-22.",
+   "tags": [
+    "python",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:python/nomo-transport/tests/support_http.py:RecordedRequest",
+   "type": "class",
+   "name": "RecordedRequest",
+   "filePath": "python/nomo-transport/tests/support_http.py",
+   "lineRange": [
+    26,
+    35
+   ],
+   "summary": "RecordedRequest \u2014 class in support_http.py, lines 26-35, methods: json.",
+   "tags": [
+    "python",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:python/nomo-transport/tests/support_http.py:ScriptedServer",
+   "type": "class",
+   "name": "ScriptedServer",
+   "filePath": "python/nomo-transport/tests/support_http.py",
+   "lineRange": [
+    41,
+    120
+   ],
+   "summary": "ScriptedServer \u2014 class in support_http.py, lines 41-120, methods: __init__, __enter__, __exit__, host, port.",
+   "tags": [
+    "python",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:python/nomo-transport/tests/support_proxy.py",
+   "type": "file",
+   "name": "support_proxy.py",
+   "filePath": "python/nomo-transport/tests/support_proxy.py",
+   "summary": "support_proxy.py \u2014 python code, 144 lines, 0 functions, 1 classes, 1 exports, 0 imports.",
+   "tags": [
+    "python",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:python/nomo-transport/tests/support_proxy.py:ProxyEndpoint",
+   "type": "class",
+   "name": "ProxyEndpoint",
+   "filePath": "python/nomo-transport/tests/support_proxy.py",
+   "lineRange": [
+    57,
+    144
+   ],
+   "summary": "ProxyEndpoint \u2014 class in support_proxy.py, lines 57-144, methods: __init__, __enter__, _await_port, __exit__.",
+   "tags": [
+    "python",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:python/nomo-transport/tests/test_client.py",
+   "type": "file",
+   "name": "test_client.py",
+   "filePath": "python/nomo-transport/tests/test_client.py",
+   "summary": "test_client.py \u2014 python code, 559 lines, 1 functions, 1 classes, 2 exports, 0 imports.",
+   "tags": [
+    "python",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:python/nomo-transport/tests/test_client.py:echo_method",
+   "type": "function",
+   "name": "echo_method",
+   "filePath": "python/nomo-transport/tests/test_client.py",
+   "lineRange": [
+    23,
+    24
+   ],
+   "summary": "echo_method(request_body) \u2014 function in test_client.py, lines 23-24.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:python/nomo-transport/tests/test_client.py:ClientContractTest",
+   "type": "class",
+   "name": "ClientContractTest",
+   "filePath": "python/nomo-transport/tests/test_client.py",
+   "lineRange": [
+    27,
+    555
+   ],
+   "summary": "ClientContractTest \u2014 class in test_client.py, lines 27-555, methods: setUp, tearDown, serve, test_response_for_another_request_is_refused, test_string_id_is_not_coerced_to_the_numeric_one, test_boolean_id_is_not_an_integer.",
+   "tags": [
+    "python",
+    "class",
+    "exported"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:python/nomo-transport/tests/test_errors.py",
+   "type": "file",
+   "name": "test_errors.py",
+   "filePath": "python/nomo-transport/tests/test_errors.py",
+   "summary": "test_errors.py \u2014 python code, 117 lines, 0 functions, 2 classes, 2 exports, 0 imports.",
+   "tags": [
+    "python",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:python/nomo-transport/tests/test_errors.py:ErrorCodeTest",
+   "type": "class",
+   "name": "ErrorCodeTest",
+   "filePath": "python/nomo-transport/tests/test_errors.py",
+   "lineRange": [
+    21,
+    64
+   ],
+   "summary": "ErrorCodeTest \u2014 class in test_errors.py, lines 21-64, methods: test_codes_match_the_typescript_sdk, test_every_type_descends_from_the_base, test_transport_code_is_distinct_from_the_wire_codes, test_code_reads_from_the_class_and_the_instance, test_ledger_verify_carries_reason_and_count.",
+   "tags": [
+    "python",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:python/nomo-transport/tests/test_errors.py:RefusedErrorTest",
+   "type": "class",
+   "name": "RefusedErrorTest",
+   "filePath": "python/nomo-transport/tests/test_errors.py",
+   "lineRange": [
+    67,
+    113
+   ],
+   "summary": "RefusedErrorTest \u2014 class in test_errors.py, lines 67-113, methods: refusal, test_message_names_the_step_and_the_reason, test_from_report_takes_the_first_refusal, test_from_report_returns_none_when_nothing_was_refused, test_from_report_refuses_a_non_object, test_unknown_reason_is_refused.",
+   "tags": [
+    "python",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:python/nomo-transport/tests/test_integration.py",
+   "type": "file",
+   "name": "test_integration.py",
+   "filePath": "python/nomo-transport/tests/test_integration.py",
+   "summary": "test_integration.py \u2014 python code, 202 lines, 1 functions, 2 classes, 3 exports, 0 imports.",
+   "tags": [
+    "python",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:python/nomo-transport/tests/test_integration.py:payload_text",
+   "type": "function",
+   "name": "payload_text",
+   "filePath": "python/nomo-transport/tests/test_integration.py",
+   "lineRange": [
+    31,
+    38
+   ],
+   "summary": "payload_text(result) \u2014 function in test_integration.py, lines 31-38.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:python/nomo-transport/tests/test_integration.py:RealProxyTest",
+   "type": "class",
+   "name": "RealProxyTest",
+   "filePath": "python/nomo-transport/tests/test_integration.py",
+   "lineRange": [
+    41,
+    155
+   ],
+   "summary": "RealProxyTest \u2014 class in test_integration.py, lines 41-155, methods: setUpClass, tearDownClass, client, test_initialize_against_the_real_relay, test_list_tools_returns_the_real_tool_catalogue, test_call_tool_against_a_policy_that_allows.",
+   "tags": [
+    "python",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:python/nomo-transport/tests/test_integration.py:RealProxyDenyTest",
+   "type": "class",
+   "name": "RealProxyDenyTest",
+   "filePath": "python/nomo-transport/tests/test_integration.py",
+   "lineRange": [
+    158,
+    198
+   ],
+   "summary": "RealProxyDenyTest \u2014 class in test_integration.py, lines 158-198, methods: test_denial_arrives_as_structured_refusal_content, test_denial_under_a_concurrent_call_does_not_cross_answers.",
+   "tags": [
+    "python",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/ledger-verify.mjs",
+   "type": "file",
+   "name": "ledger-verify.mjs",
+   "filePath": "scripts/ledger-verify.mjs",
+   "summary": "ledger-verify.mjs \u2014 javascript code, 142 lines, 2 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/ledger-verify.mjs:store",
+   "type": "function",
+   "name": "store",
+   "filePath": "scripts/ledger-verify.mjs",
+   "lineRange": [
+    31,
+    33
+   ],
+   "summary": "store(sub) \u2014 function in ledger-verify.mjs, lines 31-33.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/ledger-verify.mjs:fmt",
+   "type": "function",
+   "name": "fmt",
+   "filePath": "scripts/ledger-verify.mjs",
+   "lineRange": [
+    119,
+    120
+   ],
+   "summary": "fmt(r) \u2014 function in ledger-verify.mjs, lines 119-120.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  }
+ ],
+ "edges": [
+  {
+   "source": "file:packages/verifier/verify-ledger.mjs",
+   "target": "function:packages/verifier/verify-ledger.mjs:canonicalJson",
+   "type": "contains",
+   "direction": "forward",
+   "description": "verify-ledger.mjs defines canonicalJson",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/verifier/verify-ledger.mjs",
+   "target": "function:packages/verifier/verify-ledger.mjs:canonicalize",
+   "type": "contains",
+   "direction": "forward",
+   "description": "verify-ledger.mjs defines canonicalize",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/verifier/verify-ledger.mjs",
+   "target": "function:packages/verifier/verify-ledger.mjs:sha256Hex",
+   "type": "contains",
+   "direction": "forward",
+   "description": "verify-ledger.mjs defines sha256Hex",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/verifier/verify-ledger.mjs",
+   "target": "function:packages/verifier/verify-ledger.mjs:entryHash",
+   "type": "contains",
+   "direction": "forward",
+   "description": "verify-ledger.mjs defines entryHash",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/verifier/verify-ledger.mjs",
+   "target": "function:packages/verifier/verify-ledger.mjs:signingPreimage",
+   "type": "contains",
+   "direction": "forward",
+   "description": "verify-ledger.mjs defines signingPreimage",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/verifier/verify-ledger.mjs",
+   "target": "function:packages/verifier/verify-ledger.mjs:merkleDigest",
+   "type": "contains",
+   "direction": "forward",
+   "description": "verify-ledger.mjs defines merkleDigest",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/verifier/verify-ledger.mjs",
+   "target": "function:packages/verifier/verify-ledger.mjs:attestationPreimage",
+   "type": "contains",
+   "direction": "forward",
+   "description": "verify-ledger.mjs defines attestationPreimage",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/verifier/verify-ledger.mjs",
+   "target": "function:packages/verifier/verify-ledger.mjs:parseAttestation",
+   "type": "contains",
+   "direction": "forward",
+   "description": "verify-ledger.mjs defines parseAttestation",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/verifier/verify-ledger.mjs",
+   "target": "function:packages/verifier/verify-ledger.mjs:verifyAttestation",
+   "type": "contains",
+   "direction": "forward",
+   "description": "verify-ledger.mjs defines verifyAttestation",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/verifier/verify-ledger.mjs",
+   "target": "function:packages/verifier/verify-ledger.mjs:parseEntry",
+   "type": "contains",
+   "direction": "forward",
+   "description": "verify-ledger.mjs defines parseEntry",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/verifier/verify-ledger.mjs",
+   "target": "function:packages/verifier/verify-ledger.mjs:verifyEntries",
+   "type": "contains",
+   "direction": "forward",
+   "description": "verify-ledger.mjs defines verifyEntries",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/verifier/verify-ledger.mjs",
+   "target": "function:packages/verifier/verify-ledger.mjs:resolveBundlePath",
+   "type": "contains",
+   "direction": "forward",
+   "description": "verify-ledger.mjs defines resolveBundlePath",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/verifier/verify-ledger.mjs",
+   "target": "function:packages/verifier/verify-ledger.mjs:readBundle",
+   "type": "contains",
+   "direction": "forward",
+   "description": "verify-ledger.mjs defines readBundle",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/verifier/verify-ledger.mjs",
+   "target": "function:packages/verifier/verify-ledger.mjs:readBundleText",
+   "type": "contains",
+   "direction": "forward",
+   "description": "verify-ledger.mjs defines readBundleText",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/verifier/verify-ledger.mjs",
+   "target": "function:packages/verifier/verify-ledger.mjs:selftest",
+   "type": "contains",
+   "direction": "forward",
+   "description": "verify-ledger.mjs defines selftest",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/verifier/verify-ledger.mjs",
+   "target": "function:packages/verifier/verify-ledger.mjs:main",
+   "type": "contains",
+   "direction": "forward",
+   "description": "verify-ledger.mjs defines main",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/verifier/verify-ledger.mjs:canonicalJson",
+   "target": "function:packages/verifier/verify-ledger.mjs:canonicalize",
+   "type": "calls",
+   "direction": "forward",
+   "description": "canonicalJson calls canonicalize",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/verifier/verify-ledger.mjs:entryHash",
+   "target": "function:packages/verifier/verify-ledger.mjs:sha256Hex",
+   "type": "calls",
+   "direction": "forward",
+   "description": "entryHash calls sha256Hex",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/verifier/verify-ledger.mjs:entryHash",
+   "target": "function:packages/verifier/verify-ledger.mjs:canonicalJson",
+   "type": "calls",
+   "direction": "forward",
+   "description": "entryHash calls canonicalJson",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/verifier/verify-ledger.mjs:merkleDigest",
+   "target": "function:packages/verifier/verify-ledger.mjs:sha256Hex",
+   "type": "calls",
+   "direction": "forward",
+   "description": "merkleDigest calls sha256Hex",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/verifier/verify-ledger.mjs:attestationPreimage",
+   "target": "function:packages/verifier/verify-ledger.mjs:canonicalJson",
+   "type": "calls",
+   "direction": "forward",
+   "description": "attestationPreimage calls canonicalJson",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/verifier/verify-ledger.mjs:verifyAttestation",
+   "target": "function:packages/verifier/verify-ledger.mjs:verifyEntries",
+   "type": "calls",
+   "direction": "forward",
+   "description": "verifyAttestation calls verifyEntries",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/verifier/verify-ledger.mjs:verifyAttestation",
+   "target": "function:packages/verifier/verify-ledger.mjs:merkleDigest",
+   "type": "calls",
+   "direction": "forward",
+   "description": "verifyAttestation calls merkleDigest",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/verifier/verify-ledger.mjs:verifyAttestation",
+   "target": "function:packages/verifier/verify-ledger.mjs:attestationPreimage",
+   "type": "calls",
+   "direction": "forward",
+   "description": "verifyAttestation calls attestationPreimage",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/verifier/verify-ledger.mjs:verifyEntries",
+   "target": "function:packages/verifier/verify-ledger.mjs:entryHash",
+   "type": "calls",
+   "direction": "forward",
+   "description": "verifyEntries calls entryHash",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/verifier/verify-ledger.mjs:verifyEntries",
+   "target": "function:packages/verifier/verify-ledger.mjs:signingPreimage",
+   "type": "calls",
+   "direction": "forward",
+   "description": "verifyEntries calls signingPreimage",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/verifier/verify-ledger.mjs:readBundle",
+   "target": "function:packages/verifier/verify-ledger.mjs:resolveBundlePath",
+   "type": "calls",
+   "direction": "forward",
+   "description": "readBundle calls resolveBundlePath",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/verifier/verify-ledger.mjs:readBundle",
+   "target": "function:packages/verifier/verify-ledger.mjs:readBundleText",
+   "type": "calls",
+   "direction": "forward",
+   "description": "readBundle calls readBundleText",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/verifier/verify-ledger.mjs:readBundle",
+   "target": "function:packages/verifier/verify-ledger.mjs:parseEntry",
+   "type": "calls",
+   "direction": "forward",
+   "description": "readBundle calls parseEntry",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/verifier/verify-ledger.mjs:selftest",
+   "target": "function:packages/verifier/verify-ledger.mjs:sha256Hex",
+   "type": "calls",
+   "direction": "forward",
+   "description": "selftest calls sha256Hex",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/verifier/verify-ledger.mjs:selftest",
+   "target": "function:packages/verifier/verify-ledger.mjs:entryHash",
+   "type": "calls",
+   "direction": "forward",
+   "description": "selftest calls entryHash",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/verifier/verify-ledger.mjs:selftest",
+   "target": "function:packages/verifier/verify-ledger.mjs:signingPreimage",
+   "type": "calls",
+   "direction": "forward",
+   "description": "selftest calls signingPreimage",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/verifier/verify-ledger.mjs:selftest",
+   "target": "function:packages/verifier/verify-ledger.mjs:verifyEntries",
+   "type": "calls",
+   "direction": "forward",
+   "description": "selftest calls verifyEntries",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/verifier/verify-ledger.mjs:selftest",
+   "target": "function:packages/verifier/verify-ledger.mjs:readBundle",
+   "type": "calls",
+   "direction": "forward",
+   "description": "selftest calls readBundle",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/verifier/verify-ledger.mjs:selftest",
+   "target": "function:packages/verifier/verify-ledger.mjs:merkleDigest",
+   "type": "calls",
+   "direction": "forward",
+   "description": "selftest calls merkleDigest",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/verifier/verify-ledger.mjs:selftest",
+   "target": "function:packages/verifier/verify-ledger.mjs:attestationPreimage",
+   "type": "calls",
+   "direction": "forward",
+   "description": "selftest calls attestationPreimage",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/verifier/verify-ledger.mjs:selftest",
+   "target": "function:packages/verifier/verify-ledger.mjs:verifyAttestation",
+   "type": "calls",
+   "direction": "forward",
+   "description": "selftest calls verifyAttestation",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/verifier/verify-ledger.mjs:main",
+   "target": "function:packages/verifier/verify-ledger.mjs:selftest",
+   "type": "calls",
+   "direction": "forward",
+   "description": "main calls selftest",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/verifier/verify-ledger.mjs:main",
+   "target": "function:packages/verifier/verify-ledger.mjs:resolveBundlePath",
+   "type": "calls",
+   "direction": "forward",
+   "description": "main calls resolveBundlePath",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/verifier/verify-ledger.mjs:main",
+   "target": "function:packages/verifier/verify-ledger.mjs:readBundle",
+   "type": "calls",
+   "direction": "forward",
+   "description": "main calls readBundle",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/verifier/verify-ledger.mjs:main",
+   "target": "function:packages/verifier/verify-ledger.mjs:verifyEntries",
+   "type": "calls",
+   "direction": "forward",
+   "description": "main calls verifyEntries",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/verifier/verify-ledger.mjs:main",
+   "target": "function:packages/verifier/verify-ledger.mjs:parseAttestation",
+   "type": "calls",
+   "direction": "forward",
+   "description": "main calls parseAttestation",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/verifier/verify-ledger.mjs:main",
+   "target": "function:packages/verifier/verify-ledger.mjs:verifyAttestation",
+   "type": "calls",
+   "direction": "forward",
+   "description": "main calls verifyAttestation",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/verifier/verify-ledger.test.mjs",
+   "target": "function:packages/verifier/verify-ledger.test.mjs:invoke",
+   "type": "contains",
+   "direction": "forward",
+   "description": "verify-ledger.test.mjs defines invoke",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/verifier/verify-ledger.test.mjs",
+   "target": "function:packages/verifier/verify-ledger.test.mjs:scratchDir",
+   "type": "contains",
+   "direction": "forward",
+   "description": "verify-ledger.test.mjs defines scratchDir",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/goals.test.ts",
+   "target": "function:packages/workbench/src/goals.test.ts:goal",
+   "type": "contains",
+   "direction": "forward",
+   "description": "goals.test.ts defines goal",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/goals.test.ts",
+   "target": "function:packages/workbench/src/goals.test.ts:refuses",
+   "type": "contains",
+   "direction": "forward",
+   "description": "goals.test.ts defines refuses",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/goals.ts",
+   "target": "function:packages/workbench/src/goals.ts:goalLimits",
+   "type": "contains",
+   "direction": "forward",
+   "description": "goals.ts defines goalLimits",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/goals.ts",
+   "target": "function:packages/workbench/src/goals.ts:goalLimits",
+   "type": "exports",
+   "direction": "forward",
+   "description": "goals.ts exports goalLimits",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/goals.ts",
+   "target": "function:packages/workbench/src/goals.ts:parseGoalInput",
+   "type": "contains",
+   "direction": "forward",
+   "description": "goals.ts defines parseGoalInput",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/goals.ts",
+   "target": "function:packages/workbench/src/goals.ts:parseGoalInput",
+   "type": "exports",
+   "direction": "forward",
+   "description": "goals.ts exports parseGoalInput",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/goals.ts",
+   "target": "function:packages/workbench/src/goals.ts:evaluateGoal",
+   "type": "contains",
+   "direction": "forward",
+   "description": "goals.ts defines evaluateGoal",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/goals.ts",
+   "target": "function:packages/workbench/src/goals.ts:evaluateGoal",
+   "type": "exports",
+   "direction": "forward",
+   "description": "goals.ts exports evaluateGoal",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/goals.ts",
+   "target": "function:packages/workbench/src/goals.ts:goalStartPrompt",
+   "type": "contains",
+   "direction": "forward",
+   "description": "goals.ts defines goalStartPrompt",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/goals.ts",
+   "target": "function:packages/workbench/src/goals.ts:goalStartPrompt",
+   "type": "exports",
+   "direction": "forward",
+   "description": "goals.ts exports goalStartPrompt",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/goals.ts",
+   "target": "function:packages/workbench/src/goals.ts:goalContinuationPrompt",
+   "type": "contains",
+   "direction": "forward",
+   "description": "goals.ts defines goalContinuationPrompt",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/goals.ts",
+   "target": "function:packages/workbench/src/goals.ts:goalContinuationPrompt",
+   "type": "exports",
+   "direction": "forward",
+   "description": "goals.ts exports goalContinuationPrompt",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/goals.ts",
+   "target": "function:packages/workbench/src/goals.ts:goalFields",
+   "type": "contains",
+   "direction": "forward",
+   "description": "goals.ts defines goalFields",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/goals.ts",
+   "target": "function:packages/workbench/src/goals.ts:objectiveField",
+   "type": "contains",
+   "direction": "forward",
+   "description": "goals.ts defines objectiveField",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/goals.ts",
+   "target": "function:packages/workbench/src/goals.ts:budgetField",
+   "type": "contains",
+   "direction": "forward",
+   "description": "goals.ts defines budgetField",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/goals.ts",
+   "target": "function:packages/workbench/src/goals.ts:gateFields",
+   "type": "contains",
+   "direction": "forward",
+   "description": "goals.ts defines gateFields",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/goals.ts",
+   "target": "function:packages/workbench/src/goals.ts:digestField",
+   "type": "contains",
+   "direction": "forward",
+   "description": "goals.ts defines digestField",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/goals.ts",
+   "target": "function:packages/workbench/src/goals.ts:continuationField",
+   "type": "contains",
+   "direction": "forward",
+   "description": "goals.ts defines continuationField",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/workbench/src/goals.ts:parseGoalInput",
+   "target": "function:packages/workbench/src/goals.ts:goalFields",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parseGoalInput calls goalFields",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/goals.ts:parseGoalInput",
+   "target": "function:packages/workbench/src/goals.ts:goalLimits",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parseGoalInput calls goalLimits",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/goals.ts:parseGoalInput",
+   "target": "function:packages/workbench/src/goals.ts:objectiveField",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parseGoalInput calls objectiveField",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/goals.ts:parseGoalInput",
+   "target": "function:packages/workbench/src/goals.ts:budgetField",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parseGoalInput calls budgetField",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/goals.ts:parseGoalInput",
+   "target": "function:packages/workbench/src/goals.ts:gateFields",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parseGoalInput calls gateFields",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/goals.ts:evaluateGoal",
+   "target": "function:packages/workbench/src/goals.ts:digestField",
+   "type": "calls",
+   "direction": "forward",
+   "description": "evaluateGoal calls digestField",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/goals.ts:evaluateGoal",
+   "target": "function:packages/workbench/src/goals.ts:continuationField",
+   "type": "calls",
+   "direction": "forward",
+   "description": "evaluateGoal calls continuationField",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/workbench/src/plan.test.ts",
+   "target": "function:packages/workbench/src/plan.test.ts:item",
+   "type": "contains",
+   "direction": "forward",
+   "description": "plan.test.ts defines item",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/plan.ts",
+   "target": "function:packages/workbench/src/plan.ts:parsePlanUpdate",
+   "type": "contains",
+   "direction": "forward",
+   "description": "plan.ts defines parsePlanUpdate",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/plan.ts",
+   "target": "function:packages/workbench/src/plan.ts:parsePlanUpdate",
+   "type": "exports",
+   "direction": "forward",
+   "description": "plan.ts exports parsePlanUpdate",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/plan.ts",
+   "target": "function:packages/workbench/src/plan.ts:field",
+   "type": "contains",
+   "direction": "forward",
+   "description": "plan.ts defines field",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/workbench/src/plan.ts:parsePlanUpdate",
+   "target": "function:packages/workbench/src/plan.ts:field",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parsePlanUpdate calls field",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/workbench/src/skill-promotion.test.ts",
+   "target": "function:packages/workbench/src/skill-promotion.test.ts:digest",
+   "type": "contains",
+   "direction": "forward",
+   "description": "skill-promotion.test.ts defines digest",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/skill-promotion.test.ts",
+   "target": "function:packages/workbench/src/skill-promotion.test.ts:skill",
+   "type": "contains",
+   "direction": "forward",
+   "description": "skill-promotion.test.ts defines skill",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/skill-promotion.test.ts",
+   "target": "function:packages/workbench/src/skill-promotion.test.ts:raw",
+   "type": "contains",
+   "direction": "forward",
+   "description": "skill-promotion.test.ts defines raw",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/skill-promotion.test.ts",
+   "target": "function:packages/workbench/src/skill-promotion.test.ts:create",
+   "type": "contains",
+   "direction": "forward",
+   "description": "skill-promotion.test.ts defines create",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/skill-promotion.test.ts",
+   "target": "function:packages/workbench/src/skill-promotion.test.ts:update",
+   "type": "contains",
+   "direction": "forward",
+   "description": "skill-promotion.test.ts defines update",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/skill-promotion.test.ts",
+   "target": "function:packages/workbench/src/skill-promotion.test.ts:remove",
+   "type": "contains",
+   "direction": "forward",
+   "description": "skill-promotion.test.ts defines remove",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/skill-promotion.test.ts",
+   "target": "function:packages/workbench/src/skill-promotion.test.ts:request",
+   "type": "contains",
+   "direction": "forward",
+   "description": "skill-promotion.test.ts defines request",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/skill-promotion.test.ts",
+   "target": "function:packages/workbench/src/skill-promotion.test.ts:manySkills",
+   "type": "contains",
+   "direction": "forward",
+   "description": "skill-promotion.test.ts defines manySkills",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/skill-promotion.test.ts",
+   "target": "function:packages/workbench/src/skill-promotion.test.ts:promotedEntry",
+   "type": "contains",
+   "direction": "forward",
+   "description": "skill-promotion.test.ts defines promotedEntry",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/skill-promotion.test.ts",
+   "target": "function:packages/workbench/src/skill-promotion.test.ts:rolledBackEntry",
+   "type": "contains",
+   "direction": "forward",
+   "description": "skill-promotion.test.ts defines rolledBackEntry",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/workbench/src/skill-promotion.test.ts:create",
+   "target": "function:packages/workbench/src/skill-promotion.test.ts:skill",
+   "type": "calls",
+   "direction": "forward",
+   "description": "create calls skill",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/skill-promotion.test.ts:update",
+   "target": "function:packages/workbench/src/skill-promotion.test.ts:skill",
+   "type": "calls",
+   "direction": "forward",
+   "description": "update calls skill",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/skill-promotion.test.ts:request",
+   "target": "function:packages/workbench/src/skill-promotion.test.ts:digest",
+   "type": "calls",
+   "direction": "forward",
+   "description": "request calls digest",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/skill-promotion.test.ts:request",
+   "target": "function:packages/workbench/src/skill-promotion.test.ts:create",
+   "type": "calls",
+   "direction": "forward",
+   "description": "request calls create",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/skill-promotion.test.ts:manySkills",
+   "target": "function:packages/workbench/src/skill-promotion.test.ts:skill",
+   "type": "calls",
+   "direction": "forward",
+   "description": "manySkills calls skill",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/workbench/src/skill-promotion.ts",
+   "target": "function:packages/workbench/src/skill-promotion.ts:object",
+   "type": "contains",
+   "direction": "forward",
+   "description": "skill-promotion.ts defines object",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/skill-promotion.ts",
+   "target": "function:packages/workbench/src/skill-promotion.ts:text",
+   "type": "contains",
+   "direction": "forward",
+   "description": "skill-promotion.ts defines text",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/skill-promotion.ts",
+   "target": "function:packages/workbench/src/skill-promotion.ts:malformed",
+   "type": "contains",
+   "direction": "forward",
+   "description": "skill-promotion.ts defines malformed",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/skill-promotion.ts",
+   "target": "function:packages/workbench/src/skill-promotion.ts:checkUtf8",
+   "type": "contains",
+   "direction": "forward",
+   "description": "skill-promotion.ts defines checkUtf8",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/skill-promotion.ts",
+   "target": "function:packages/workbench/src/skill-promotion.ts:checkSkillId",
+   "type": "contains",
+   "direction": "forward",
+   "description": "skill-promotion.ts defines checkSkillId",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/skill-promotion.ts",
+   "target": "function:packages/workbench/src/skill-promotion.ts:checkLine",
+   "type": "contains",
+   "direction": "forward",
+   "description": "skill-promotion.ts defines checkLine",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/skill-promotion.ts",
+   "target": "function:packages/workbench/src/skill-promotion.ts:checkSkill",
+   "type": "contains",
+   "direction": "forward",
+   "description": "skill-promotion.ts defines checkSkill",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/skill-promotion.ts",
+   "target": "function:packages/workbench/src/skill-promotion.ts:looksSecret",
+   "type": "contains",
+   "direction": "forward",
+   "description": "skill-promotion.ts defines looksSecret",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/skill-promotion.ts",
+   "target": "function:packages/workbench/src/skill-promotion.ts:scanSkill",
+   "type": "contains",
+   "direction": "forward",
+   "description": "skill-promotion.ts defines scanSkill",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/skill-promotion.ts",
+   "target": "function:packages/workbench/src/skill-promotion.ts:sameSkill",
+   "type": "contains",
+   "direction": "forward",
+   "description": "skill-promotion.ts defines sameSkill",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/skill-promotion.ts",
+   "target": "function:packages/workbench/src/skill-promotion.ts:sameSnapshot",
+   "type": "contains",
+   "direction": "forward",
+   "description": "skill-promotion.ts defines sameSnapshot",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/skill-promotion.ts",
+   "target": "function:packages/workbench/src/skill-promotion.ts:bySkillId",
+   "type": "contains",
+   "direction": "forward",
+   "description": "skill-promotion.ts defines bySkillId",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/skill-promotion.ts",
+   "target": "function:packages/workbench/src/skill-promotion.ts:parseSkillProposalChange",
+   "type": "contains",
+   "direction": "forward",
+   "description": "skill-promotion.ts defines parseSkillProposalChange",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/skill-promotion.ts",
+   "target": "function:packages/workbench/src/skill-promotion.ts:parseSkillProposalChange",
+   "type": "exports",
+   "direction": "forward",
+   "description": "skill-promotion.ts exports parseSkillProposalChange",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/skill-promotion.ts",
+   "target": "function:packages/workbench/src/skill-promotion.ts:prepareSkillPromotion",
+   "type": "contains",
+   "direction": "forward",
+   "description": "skill-promotion.ts defines prepareSkillPromotion",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/skill-promotion.ts",
+   "target": "function:packages/workbench/src/skill-promotion.ts:prepareSkillPromotion",
+   "type": "exports",
+   "direction": "forward",
+   "description": "skill-promotion.ts exports prepareSkillPromotion",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/skill-promotion.ts",
+   "target": "function:packages/workbench/src/skill-promotion.ts:prepareSkillRollback",
+   "type": "contains",
+   "direction": "forward",
+   "description": "skill-promotion.ts defines prepareSkillRollback",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/skill-promotion.ts",
+   "target": "function:packages/workbench/src/skill-promotion.ts:prepareSkillRollback",
+   "type": "exports",
+   "direction": "forward",
+   "description": "skill-promotion.ts exports prepareSkillRollback",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/skill-promotion.ts",
+   "target": "function:packages/workbench/src/skill-promotion.ts:promotedSkill",
+   "type": "contains",
+   "direction": "forward",
+   "description": "skill-promotion.ts defines promotedSkill",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/skill-promotion.ts",
+   "target": "function:packages/workbench/src/skill-promotion.ts:signedChange",
+   "type": "contains",
+   "direction": "forward",
+   "description": "skill-promotion.ts defines signedChange",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/skill-promotion.ts",
+   "target": "function:packages/workbench/src/skill-promotion.ts:replayPromotedSkills",
+   "type": "contains",
+   "direction": "forward",
+   "description": "skill-promotion.ts defines replayPromotedSkills",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/skill-promotion.ts",
+   "target": "function:packages/workbench/src/skill-promotion.ts:replayPromotedSkills",
+   "type": "exports",
+   "direction": "forward",
+   "description": "skill-promotion.ts exports replayPromotedSkills",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/skill-promotion.ts",
+   "target": "function:packages/workbench/src/skill-promotion.ts:formatPromotedSkillsForPrompt",
+   "type": "contains",
+   "direction": "forward",
+   "description": "skill-promotion.ts defines formatPromotedSkillsForPrompt",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/skill-promotion.ts",
+   "target": "function:packages/workbench/src/skill-promotion.ts:formatPromotedSkillsForPrompt",
+   "type": "exports",
+   "direction": "forward",
+   "description": "skill-promotion.ts exports formatPromotedSkillsForPrompt",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/skill-promotion.ts",
+   "target": "function:packages/workbench/src/skill-promotion.ts:snapshotLine",
+   "type": "contains",
+   "direction": "forward",
+   "description": "skill-promotion.ts defines snapshotLine",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/skill-promotion.ts",
+   "target": "function:packages/workbench/src/skill-promotion.ts:previewLines",
+   "type": "contains",
+   "direction": "forward",
+   "description": "skill-promotion.ts defines previewLines",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/skill-promotion.ts",
+   "target": "function:packages/workbench/src/skill-promotion.ts:describeSkillPromotionReview",
+   "type": "contains",
+   "direction": "forward",
+   "description": "skill-promotion.ts defines describeSkillPromotionReview",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/skill-promotion.ts",
+   "target": "function:packages/workbench/src/skill-promotion.ts:describeSkillPromotionReview",
+   "type": "exports",
+   "direction": "forward",
+   "description": "skill-promotion.ts exports describeSkillPromotionReview",
+   "weight": 0.7
+  },
+  {
+   "source": "function:packages/workbench/src/skill-promotion.ts:checkLine",
+   "target": "function:packages/workbench/src/skill-promotion.ts:checkUtf8",
+   "type": "calls",
+   "direction": "forward",
+   "description": "checkLine calls checkUtf8",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/skill-promotion.ts:checkSkill",
+   "target": "function:packages/workbench/src/skill-promotion.ts:checkSkillId",
+   "type": "calls",
+   "direction": "forward",
+   "description": "checkSkill calls checkSkillId",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/skill-promotion.ts:checkSkill",
+   "target": "function:packages/workbench/src/skill-promotion.ts:checkLine",
+   "type": "calls",
+   "direction": "forward",
+   "description": "checkSkill calls checkLine",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/skill-promotion.ts:checkSkill",
+   "target": "function:packages/workbench/src/skill-promotion.ts:checkUtf8",
+   "type": "calls",
+   "direction": "forward",
+   "description": "checkSkill calls checkUtf8",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/skill-promotion.ts:scanSkill",
+   "target": "function:packages/workbench/src/skill-promotion.ts:looksSecret",
+   "type": "calls",
+   "direction": "forward",
+   "description": "scanSkill calls looksSecret",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/skill-promotion.ts:sameSnapshot",
+   "target": "function:packages/workbench/src/skill-promotion.ts:sameSkill",
+   "type": "calls",
+   "direction": "forward",
+   "description": "sameSnapshot calls sameSkill",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/skill-promotion.ts:parseSkillProposalChange",
+   "target": "function:packages/workbench/src/skill-promotion.ts:object",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parseSkillProposalChange calls object",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/skill-promotion.ts:parseSkillProposalChange",
+   "target": "function:packages/workbench/src/skill-promotion.ts:text",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parseSkillProposalChange calls text",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/skill-promotion.ts:parseSkillProposalChange",
+   "target": "function:packages/workbench/src/skill-promotion.ts:checkSkillId",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parseSkillProposalChange calls checkSkillId",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/skill-promotion.ts:parseSkillProposalChange",
+   "target": "function:packages/workbench/src/skill-promotion.ts:checkSkill",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parseSkillProposalChange calls checkSkill",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/skill-promotion.ts:prepareSkillPromotion",
+   "target": "function:packages/workbench/src/skill-promotion.ts:checkSkillId",
+   "type": "calls",
+   "direction": "forward",
+   "description": "prepareSkillPromotion calls checkSkillId",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/skill-promotion.ts:prepareSkillPromotion",
+   "target": "function:packages/workbench/src/skill-promotion.ts:scanSkill",
+   "type": "calls",
+   "direction": "forward",
+   "description": "prepareSkillPromotion calls scanSkill",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/skill-promotion.ts:prepareSkillPromotion",
+   "target": "function:packages/workbench/src/skill-promotion.ts:checkSkill",
+   "type": "calls",
+   "direction": "forward",
+   "description": "prepareSkillPromotion calls checkSkill",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/skill-promotion.ts:prepareSkillPromotion",
+   "target": "function:packages/workbench/src/skill-promotion.ts:sameSkill",
+   "type": "calls",
+   "direction": "forward",
+   "description": "prepareSkillPromotion calls sameSkill",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/skill-promotion.ts:prepareSkillRollback",
+   "target": "function:packages/workbench/src/skill-promotion.ts:checkSkillId",
+   "type": "calls",
+   "direction": "forward",
+   "description": "prepareSkillRollback calls checkSkillId",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/skill-promotion.ts:prepareSkillRollback",
+   "target": "function:packages/workbench/src/skill-promotion.ts:malformed",
+   "type": "calls",
+   "direction": "forward",
+   "description": "prepareSkillRollback calls malformed",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/skill-promotion.ts:prepareSkillRollback",
+   "target": "function:packages/workbench/src/skill-promotion.ts:sameSkill",
+   "type": "calls",
+   "direction": "forward",
+   "description": "prepareSkillRollback calls sameSkill",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/skill-promotion.ts:promotedSkill",
+   "target": "function:packages/workbench/src/skill-promotion.ts:object",
+   "type": "calls",
+   "direction": "forward",
+   "description": "promotedSkill calls object",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/skill-promotion.ts:promotedSkill",
+   "target": "function:packages/workbench/src/skill-promotion.ts:malformed",
+   "type": "calls",
+   "direction": "forward",
+   "description": "promotedSkill calls malformed",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/skill-promotion.ts:promotedSkill",
+   "target": "function:packages/workbench/src/skill-promotion.ts:text",
+   "type": "calls",
+   "direction": "forward",
+   "description": "promotedSkill calls text",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/skill-promotion.ts:promotedSkill",
+   "target": "function:packages/workbench/src/skill-promotion.ts:checkSkill",
+   "type": "calls",
+   "direction": "forward",
+   "description": "promotedSkill calls checkSkill",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/skill-promotion.ts:signedChange",
+   "target": "function:packages/workbench/src/skill-promotion.ts:object",
+   "type": "calls",
+   "direction": "forward",
+   "description": "signedChange calls object",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/skill-promotion.ts:signedChange",
+   "target": "function:packages/workbench/src/skill-promotion.ts:malformed",
+   "type": "calls",
+   "direction": "forward",
+   "description": "signedChange calls malformed",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/skill-promotion.ts:signedChange",
+   "target": "function:packages/workbench/src/skill-promotion.ts:checkSkillId",
+   "type": "calls",
+   "direction": "forward",
+   "description": "signedChange calls checkSkillId",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/skill-promotion.ts:signedChange",
+   "target": "function:packages/workbench/src/skill-promotion.ts:promotedSkill",
+   "type": "calls",
+   "direction": "forward",
+   "description": "signedChange calls promotedSkill",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/skill-promotion.ts:replayPromotedSkills",
+   "target": "function:packages/workbench/src/skill-promotion.ts:object",
+   "type": "calls",
+   "direction": "forward",
+   "description": "replayPromotedSkills calls object",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/skill-promotion.ts:replayPromotedSkills",
+   "target": "function:packages/workbench/src/skill-promotion.ts:malformed",
+   "type": "calls",
+   "direction": "forward",
+   "description": "replayPromotedSkills calls malformed",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/skill-promotion.ts:replayPromotedSkills",
+   "target": "function:packages/workbench/src/skill-promotion.ts:text",
+   "type": "calls",
+   "direction": "forward",
+   "description": "replayPromotedSkills calls text",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/skill-promotion.ts:replayPromotedSkills",
+   "target": "function:packages/workbench/src/skill-promotion.ts:sameSnapshot",
+   "type": "calls",
+   "direction": "forward",
+   "description": "replayPromotedSkills calls sameSnapshot",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/skill-promotion.ts:describeSkillPromotionReview",
+   "target": "function:packages/workbench/src/skill-promotion.ts:snapshotLine",
+   "type": "calls",
+   "direction": "forward",
+   "description": "describeSkillPromotionReview calls snapshotLine",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/skill-promotion.ts:describeSkillPromotionReview",
+   "target": "function:packages/workbench/src/skill-promotion.ts:previewLines",
+   "type": "calls",
+   "direction": "forward",
+   "description": "describeSkillPromotionReview calls previewLines",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/workbench/src/web-tools.test.ts",
+   "target": "function:packages/workbench/src/web-tools.test.ts:publicHost",
+   "type": "contains",
+   "direction": "forward",
+   "description": "web-tools.test.ts defines publicHost",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/web-tools.test.ts",
+   "target": "function:packages/workbench/src/web-tools.test.ts:resolveTo",
+   "type": "contains",
+   "direction": "forward",
+   "description": "web-tools.test.ts defines resolveTo",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/web-tools.test.ts",
+   "target": "function:packages/workbench/src/web-tools.test.ts:resolveMap",
+   "type": "contains",
+   "direction": "forward",
+   "description": "web-tools.test.ts defines resolveMap",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/web-tools.test.ts",
+   "target": "function:packages/workbench/src/web-tools.test.ts:page",
+   "type": "contains",
+   "direction": "forward",
+   "description": "web-tools.test.ts defines page",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/web-tools.test.ts",
+   "target": "function:packages/workbench/src/web-tools.test.ts:jsonPage",
+   "type": "contains",
+   "direction": "forward",
+   "description": "web-tools.test.ts defines jsonPage",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/web-tools.test.ts",
+   "target": "function:packages/workbench/src/web-tools.test.ts:redirect",
+   "type": "contains",
+   "direction": "forward",
+   "description": "web-tools.test.ts defines redirect",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/web-tools.test.ts",
+   "target": "function:packages/workbench/src/web-tools.test.ts:recorder",
+   "type": "contains",
+   "direction": "forward",
+   "description": "web-tools.test.ts defines recorder",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/web-tools.test.ts",
+   "target": "function:packages/workbench/src/web-tools.test.ts:header",
+   "type": "contains",
+   "direction": "forward",
+   "description": "web-tools.test.ts defines header",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/web-tools.test.ts",
+   "target": "function:packages/workbench/src/web-tools.test.ts:loneSurrogate",
+   "type": "contains",
+   "direction": "forward",
+   "description": "web-tools.test.ts defines loneSurrogate",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/workbench/src/web-tools.test.ts:jsonPage",
+   "target": "function:packages/workbench/src/web-tools.test.ts:page",
+   "type": "calls",
+   "direction": "forward",
+   "description": "jsonPage calls page",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/workbench/src/web-tools.ts",
+   "target": "function:packages/workbench/src/web-tools.ts:untrustedWebContentLabel",
+   "type": "contains",
+   "direction": "forward",
+   "description": "web-tools.ts defines untrustedWebContentLabel",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/web-tools.ts",
+   "target": "function:packages/workbench/src/web-tools.ts:untrustedWebContentLabel",
+   "type": "exports",
+   "direction": "forward",
+   "description": "web-tools.ts exports untrustedWebContentLabel",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/web-tools.ts",
+   "target": "function:packages/workbench/src/web-tools.ts:redactWebSecrets",
+   "type": "contains",
+   "direction": "forward",
+   "description": "web-tools.ts defines redactWebSecrets",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/web-tools.ts",
+   "target": "function:packages/workbench/src/web-tools.ts:redactWebSecrets",
+   "type": "exports",
+   "direction": "forward",
+   "description": "web-tools.ts exports redactWebSecrets",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/web-tools.ts",
+   "target": "function:packages/workbench/src/web-tools.ts:defaultResolveHost",
+   "type": "contains",
+   "direction": "forward",
+   "description": "web-tools.ts defines defaultResolveHost",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/web-tools.ts",
+   "target": "function:packages/workbench/src/web-tools.ts:isBlockedWebIp",
+   "type": "contains",
+   "direction": "forward",
+   "description": "web-tools.ts defines isBlockedWebIp",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/web-tools.ts",
+   "target": "function:packages/workbench/src/web-tools.ts:isBlockedWebIp",
+   "type": "exports",
+   "direction": "forward",
+   "description": "web-tools.ts exports isBlockedWebIp",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/web-tools.ts",
+   "target": "function:packages/workbench/src/web-tools.ts:parseIpv4",
+   "type": "contains",
+   "direction": "forward",
+   "description": "web-tools.ts defines parseIpv4",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/web-tools.ts",
+   "target": "function:packages/workbench/src/web-tools.ts:parseIpv6",
+   "type": "contains",
+   "direction": "forward",
+   "description": "web-tools.ts defines parseIpv6",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/web-tools.ts",
+   "target": "function:packages/workbench/src/web-tools.ts:readHextets",
+   "type": "contains",
+   "direction": "forward",
+   "description": "web-tools.ts defines readHextets",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/web-tools.ts",
+   "target": "function:packages/workbench/src/web-tools.ts:blockedIpv4",
+   "type": "contains",
+   "direction": "forward",
+   "description": "web-tools.ts defines blockedIpv4",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/web-tools.ts",
+   "target": "function:packages/workbench/src/web-tools.ts:blockedIpv6",
+   "type": "contains",
+   "direction": "forward",
+   "description": "web-tools.ts defines blockedIpv6",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/web-tools.ts",
+   "target": "function:packages/workbench/src/web-tools.ts:privateHostname",
+   "type": "contains",
+   "direction": "forward",
+   "description": "web-tools.ts defines privateHostname",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/web-tools.ts",
+   "target": "function:packages/workbench/src/web-tools.ts:literalAddress",
+   "type": "contains",
+   "direction": "forward",
+   "description": "web-tools.ts defines literalAddress",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/web-tools.ts",
+   "target": "function:packages/workbench/src/web-tools.ts:validatePublicHttpsUrl",
+   "type": "contains",
+   "direction": "forward",
+   "description": "web-tools.ts defines validatePublicHttpsUrl",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/web-tools.ts",
+   "target": "function:packages/workbench/src/web-tools.ts:validatePublicHttpsUrl",
+   "type": "exports",
+   "direction": "forward",
+   "description": "web-tools.ts exports validatePublicHttpsUrl",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/web-tools.ts",
+   "target": "function:packages/workbench/src/web-tools.ts:extractReadableWebText",
+   "type": "contains",
+   "direction": "forward",
+   "description": "web-tools.ts defines extractReadableWebText",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/web-tools.ts",
+   "target": "function:packages/workbench/src/web-tools.ts:extractReadableWebText",
+   "type": "exports",
+   "direction": "forward",
+   "description": "web-tools.ts exports extractReadableWebText",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/web-tools.ts",
+   "target": "function:packages/workbench/src/web-tools.ts:extractDocument",
+   "type": "contains",
+   "direction": "forward",
+   "description": "web-tools.ts defines extractDocument",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/web-tools.ts",
+   "target": "function:packages/workbench/src/web-tools.ts:documentKind",
+   "type": "contains",
+   "direction": "forward",
+   "description": "web-tools.ts defines documentKind",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/web-tools.ts",
+   "target": "function:packages/workbench/src/web-tools.ts:plainText",
+   "type": "contains",
+   "direction": "forward",
+   "description": "web-tools.ts defines plainText",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/web-tools.ts",
+   "target": "function:packages/workbench/src/web-tools.ts:prettyJson",
+   "type": "contains",
+   "direction": "forward",
+   "description": "web-tools.ts defines prettyJson",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/web-tools.ts",
+   "target": "function:packages/workbench/src/web-tools.ts:htmlToText",
+   "type": "contains",
+   "direction": "forward",
+   "description": "web-tools.ts defines htmlToText",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/web-tools.ts",
+   "target": "function:packages/workbench/src/web-tools.ts:titleOf",
+   "type": "contains",
+   "direction": "forward",
+   "description": "web-tools.ts defines titleOf",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/web-tools.ts",
+   "target": "function:packages/workbench/src/web-tools.ts:decodeEntities",
+   "type": "contains",
+   "direction": "forward",
+   "description": "web-tools.ts defines decodeEntities",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/web-tools.ts",
+   "target": "function:packages/workbench/src/web-tools.ts:fromCodePoint",
+   "type": "contains",
+   "direction": "forward",
+   "description": "web-tools.ts defines fromCodePoint",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/web-tools.ts",
+   "target": "function:packages/workbench/src/web-tools.ts:flatten",
+   "type": "contains",
+   "direction": "forward",
+   "description": "web-tools.ts defines flatten",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/web-tools.ts",
+   "target": "function:packages/workbench/src/web-tools.ts:boundText",
+   "type": "contains",
+   "direction": "forward",
+   "description": "web-tools.ts defines boundText",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/web-tools.ts",
+   "target": "function:packages/workbench/src/web-tools.ts:cutText",
+   "type": "contains",
+   "direction": "forward",
+   "description": "web-tools.ts defines cutText",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/web-tools.ts",
+   "target": "function:packages/workbench/src/web-tools.ts:requestTimeout",
+   "type": "contains",
+   "direction": "forward",
+   "description": "web-tools.ts defines requestTimeout",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/web-tools.ts",
+   "target": "function:packages/workbench/src/web-tools.ts:request",
+   "type": "contains",
+   "direction": "forward",
+   "description": "web-tools.ts defines request",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/web-tools.ts",
+   "target": "function:packages/workbench/src/web-tools.ts:readBoundedBody",
+   "type": "contains",
+   "direction": "forward",
+   "description": "web-tools.ts defines readBoundedBody",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/web-tools.ts",
+   "target": "function:packages/workbench/src/web-tools.ts:decodeBody",
+   "type": "contains",
+   "direction": "forward",
+   "description": "web-tools.ts defines decodeBody",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/web-tools.ts",
+   "target": "function:packages/workbench/src/web-tools.ts:toolArguments",
+   "type": "contains",
+   "direction": "forward",
+   "description": "web-tools.ts defines toolArguments",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/web-tools.ts",
+   "target": "function:packages/workbench/src/web-tools.ts:readFetchArguments",
+   "type": "contains",
+   "direction": "forward",
+   "description": "web-tools.ts defines readFetchArguments",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/web-tools.ts",
+   "target": "function:packages/workbench/src/web-tools.ts:readSearchArguments",
+   "type": "contains",
+   "direction": "forward",
+   "description": "web-tools.ts defines readSearchArguments",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/web-tools.ts",
+   "target": "function:packages/workbench/src/web-tools.ts:frameContent",
+   "type": "contains",
+   "direction": "forward",
+   "description": "web-tools.ts defines frameContent",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/web-tools.ts",
+   "target": "function:packages/workbench/src/web-tools.ts:executeWebFetch",
+   "type": "contains",
+   "direction": "forward",
+   "description": "web-tools.ts defines executeWebFetch",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/web-tools.ts",
+   "target": "function:packages/workbench/src/web-tools.ts:executeWebFetch",
+   "type": "exports",
+   "direction": "forward",
+   "description": "web-tools.ts exports executeWebFetch",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/web-tools.ts",
+   "target": "function:packages/workbench/src/web-tools.ts:readSearchPayload",
+   "type": "contains",
+   "direction": "forward",
+   "description": "web-tools.ts defines readSearchPayload",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/web-tools.ts",
+   "target": "function:packages/workbench/src/web-tools.ts:searchHit",
+   "type": "contains",
+   "direction": "forward",
+   "description": "web-tools.ts defines searchHit",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/web-tools.ts",
+   "target": "function:packages/workbench/src/web-tools.ts:formatSearchResults",
+   "type": "contains",
+   "direction": "forward",
+   "description": "web-tools.ts defines formatSearchResults",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/web-tools.ts",
+   "target": "function:packages/workbench/src/web-tools.ts:executeWebSearch",
+   "type": "contains",
+   "direction": "forward",
+   "description": "web-tools.ts defines executeWebSearch",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/web-tools.ts",
+   "target": "function:packages/workbench/src/web-tools.ts:executeWebSearch",
+   "type": "exports",
+   "direction": "forward",
+   "description": "web-tools.ts exports executeWebSearch",
+   "weight": 0.7
+  },
+  {
+   "source": "function:packages/workbench/src/web-tools.ts:isBlockedWebIp",
+   "target": "function:packages/workbench/src/web-tools.ts:parseIpv4",
+   "type": "calls",
+   "direction": "forward",
+   "description": "isBlockedWebIp calls parseIpv4",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/web-tools.ts:isBlockedWebIp",
+   "target": "function:packages/workbench/src/web-tools.ts:blockedIpv4",
+   "type": "calls",
+   "direction": "forward",
+   "description": "isBlockedWebIp calls blockedIpv4",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/web-tools.ts:isBlockedWebIp",
+   "target": "function:packages/workbench/src/web-tools.ts:parseIpv6",
+   "type": "calls",
+   "direction": "forward",
+   "description": "isBlockedWebIp calls parseIpv6",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/web-tools.ts:isBlockedWebIp",
+   "target": "function:packages/workbench/src/web-tools.ts:blockedIpv6",
+   "type": "calls",
+   "direction": "forward",
+   "description": "isBlockedWebIp calls blockedIpv6",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/web-tools.ts:parseIpv6",
+   "target": "function:packages/workbench/src/web-tools.ts:readHextets",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parseIpv6 calls readHextets",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/web-tools.ts:readHextets",
+   "target": "function:packages/workbench/src/web-tools.ts:parseIpv4",
+   "type": "calls",
+   "direction": "forward",
+   "description": "readHextets calls parseIpv4",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/web-tools.ts:blockedIpv6",
+   "target": "function:packages/workbench/src/web-tools.ts:blockedIpv4",
+   "type": "calls",
+   "direction": "forward",
+   "description": "blockedIpv6 calls blockedIpv4",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/web-tools.ts:literalAddress",
+   "target": "function:packages/workbench/src/web-tools.ts:parseIpv4",
+   "type": "calls",
+   "direction": "forward",
+   "description": "literalAddress calls parseIpv4",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/web-tools.ts:validatePublicHttpsUrl",
+   "target": "function:packages/workbench/src/web-tools.ts:literalAddress",
+   "type": "calls",
+   "direction": "forward",
+   "description": "validatePublicHttpsUrl calls literalAddress",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/web-tools.ts:validatePublicHttpsUrl",
+   "target": "function:packages/workbench/src/web-tools.ts:isBlockedWebIp",
+   "type": "calls",
+   "direction": "forward",
+   "description": "validatePublicHttpsUrl calls isBlockedWebIp",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/web-tools.ts:validatePublicHttpsUrl",
+   "target": "function:packages/workbench/src/web-tools.ts:privateHostname",
+   "type": "calls",
+   "direction": "forward",
+   "description": "validatePublicHttpsUrl calls privateHostname",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/web-tools.ts:extractReadableWebText",
+   "target": "function:packages/workbench/src/web-tools.ts:extractDocument",
+   "type": "calls",
+   "direction": "forward",
+   "description": "extractReadableWebText calls extractDocument",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/web-tools.ts:extractDocument",
+   "target": "function:packages/workbench/src/web-tools.ts:documentKind",
+   "type": "calls",
+   "direction": "forward",
+   "description": "extractDocument calls documentKind",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/web-tools.ts:extractDocument",
+   "target": "function:packages/workbench/src/web-tools.ts:titleOf",
+   "type": "calls",
+   "direction": "forward",
+   "description": "extractDocument calls titleOf",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/web-tools.ts:extractDocument",
+   "target": "function:packages/workbench/src/web-tools.ts:htmlToText",
+   "type": "calls",
+   "direction": "forward",
+   "description": "extractDocument calls htmlToText",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/web-tools.ts:extractDocument",
+   "target": "function:packages/workbench/src/web-tools.ts:prettyJson",
+   "type": "calls",
+   "direction": "forward",
+   "description": "extractDocument calls prettyJson",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/web-tools.ts:extractDocument",
+   "target": "function:packages/workbench/src/web-tools.ts:plainText",
+   "type": "calls",
+   "direction": "forward",
+   "description": "extractDocument calls plainText",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/web-tools.ts:extractDocument",
+   "target": "function:packages/workbench/src/web-tools.ts:boundText",
+   "type": "calls",
+   "direction": "forward",
+   "description": "extractDocument calls boundText",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/web-tools.ts:htmlToText",
+   "target": "function:packages/workbench/src/web-tools.ts:decodeEntities",
+   "type": "calls",
+   "direction": "forward",
+   "description": "htmlToText calls decodeEntities",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/web-tools.ts:titleOf",
+   "target": "function:packages/workbench/src/web-tools.ts:flatten",
+   "type": "calls",
+   "direction": "forward",
+   "description": "titleOf calls flatten",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/web-tools.ts:titleOf",
+   "target": "function:packages/workbench/src/web-tools.ts:decodeEntities",
+   "type": "calls",
+   "direction": "forward",
+   "description": "titleOf calls decodeEntities",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/web-tools.ts:decodeEntities",
+   "target": "function:packages/workbench/src/web-tools.ts:fromCodePoint",
+   "type": "calls",
+   "direction": "forward",
+   "description": "decodeEntities calls fromCodePoint",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/web-tools.ts:readFetchArguments",
+   "target": "function:packages/workbench/src/web-tools.ts:toolArguments",
+   "type": "calls",
+   "direction": "forward",
+   "description": "readFetchArguments calls toolArguments",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/web-tools.ts:readSearchArguments",
+   "target": "function:packages/workbench/src/web-tools.ts:toolArguments",
+   "type": "calls",
+   "direction": "forward",
+   "description": "readSearchArguments calls toolArguments",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/web-tools.ts:frameContent",
+   "target": "function:packages/workbench/src/web-tools.ts:untrustedWebContentLabel",
+   "type": "calls",
+   "direction": "forward",
+   "description": "frameContent calls untrustedWebContentLabel",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/web-tools.ts:executeWebFetch",
+   "target": "function:packages/workbench/src/web-tools.ts:readFetchArguments",
+   "type": "calls",
+   "direction": "forward",
+   "description": "executeWebFetch calls readFetchArguments",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/web-tools.ts:executeWebFetch",
+   "target": "function:packages/workbench/src/web-tools.ts:validatePublicHttpsUrl",
+   "type": "calls",
+   "direction": "forward",
+   "description": "executeWebFetch calls validatePublicHttpsUrl",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/web-tools.ts:executeWebFetch",
+   "target": "function:packages/workbench/src/web-tools.ts:requestTimeout",
+   "type": "calls",
+   "direction": "forward",
+   "description": "executeWebFetch calls requestTimeout",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/web-tools.ts:executeWebFetch",
+   "target": "function:packages/workbench/src/web-tools.ts:request",
+   "type": "calls",
+   "direction": "forward",
+   "description": "executeWebFetch calls request",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/web-tools.ts:executeWebFetch",
+   "target": "function:packages/workbench/src/web-tools.ts:readBoundedBody",
+   "type": "calls",
+   "direction": "forward",
+   "description": "executeWebFetch calls readBoundedBody",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/web-tools.ts:executeWebFetch",
+   "target": "function:packages/workbench/src/web-tools.ts:extractDocument",
+   "type": "calls",
+   "direction": "forward",
+   "description": "executeWebFetch calls extractDocument",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/web-tools.ts:executeWebFetch",
+   "target": "function:packages/workbench/src/web-tools.ts:decodeBody",
+   "type": "calls",
+   "direction": "forward",
+   "description": "executeWebFetch calls decodeBody",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/web-tools.ts:executeWebFetch",
+   "target": "function:packages/workbench/src/web-tools.ts:redactWebSecrets",
+   "type": "calls",
+   "direction": "forward",
+   "description": "executeWebFetch calls redactWebSecrets",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/web-tools.ts:executeWebFetch",
+   "target": "function:packages/workbench/src/web-tools.ts:frameContent",
+   "type": "calls",
+   "direction": "forward",
+   "description": "executeWebFetch calls frameContent",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/web-tools.ts:readSearchPayload",
+   "target": "function:packages/workbench/src/web-tools.ts:searchHit",
+   "type": "calls",
+   "direction": "forward",
+   "description": "readSearchPayload calls searchHit",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/web-tools.ts:searchHit",
+   "target": "function:packages/workbench/src/web-tools.ts:cutText",
+   "type": "calls",
+   "direction": "forward",
+   "description": "searchHit calls cutText",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/web-tools.ts:searchHit",
+   "target": "function:packages/workbench/src/web-tools.ts:flatten",
+   "type": "calls",
+   "direction": "forward",
+   "description": "searchHit calls flatten",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/web-tools.ts:executeWebSearch",
+   "target": "function:packages/workbench/src/web-tools.ts:readSearchArguments",
+   "type": "calls",
+   "direction": "forward",
+   "description": "executeWebSearch calls readSearchArguments",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/web-tools.ts:executeWebSearch",
+   "target": "function:packages/workbench/src/web-tools.ts:validatePublicHttpsUrl",
+   "type": "calls",
+   "direction": "forward",
+   "description": "executeWebSearch calls validatePublicHttpsUrl",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/web-tools.ts:executeWebSearch",
+   "target": "function:packages/workbench/src/web-tools.ts:requestTimeout",
+   "type": "calls",
+   "direction": "forward",
+   "description": "executeWebSearch calls requestTimeout",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/web-tools.ts:executeWebSearch",
+   "target": "function:packages/workbench/src/web-tools.ts:request",
+   "type": "calls",
+   "direction": "forward",
+   "description": "executeWebSearch calls request",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/web-tools.ts:executeWebSearch",
+   "target": "function:packages/workbench/src/web-tools.ts:readBoundedBody",
+   "type": "calls",
+   "direction": "forward",
+   "description": "executeWebSearch calls readBoundedBody",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/web-tools.ts:executeWebSearch",
+   "target": "function:packages/workbench/src/web-tools.ts:readSearchPayload",
+   "type": "calls",
+   "direction": "forward",
+   "description": "executeWebSearch calls readSearchPayload",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/web-tools.ts:executeWebSearch",
+   "target": "function:packages/workbench/src/web-tools.ts:decodeBody",
+   "type": "calls",
+   "direction": "forward",
+   "description": "executeWebSearch calls decodeBody",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/web-tools.ts:executeWebSearch",
+   "target": "function:packages/workbench/src/web-tools.ts:redactWebSecrets",
+   "type": "calls",
+   "direction": "forward",
+   "description": "executeWebSearch calls redactWebSecrets",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/web-tools.ts:executeWebSearch",
+   "target": "function:packages/workbench/src/web-tools.ts:formatSearchResults",
+   "type": "calls",
+   "direction": "forward",
+   "description": "executeWebSearch calls formatSearchResults",
+   "weight": 0.6
+  },
+  {
+   "source": "file:python/nomo-transport/tests/support_http.py",
+   "target": "function:python/nomo-transport/tests/support_http.py:json_reply",
+   "type": "contains",
+   "direction": "forward",
+   "description": "support_http.py defines json_reply",
+   "weight": 1.0
+  },
+  {
+   "source": "file:python/nomo-transport/tests/support_http.py",
+   "target": "function:python/nomo-transport/tests/support_http.py:json_reply",
+   "type": "exports",
+   "direction": "forward",
+   "description": "support_http.py exports json_reply",
+   "weight": 0.7
+  },
+  {
+   "source": "file:python/nomo-transport/tests/support_http.py",
+   "target": "function:python/nomo-transport/tests/support_http.py:sse_reply",
+   "type": "contains",
+   "direction": "forward",
+   "description": "support_http.py defines sse_reply",
+   "weight": 1.0
+  },
+  {
+   "source": "file:python/nomo-transport/tests/support_http.py",
+   "target": "function:python/nomo-transport/tests/support_http.py:sse_reply",
+   "type": "exports",
+   "direction": "forward",
+   "description": "support_http.py exports sse_reply",
+   "weight": 0.7
+  },
+  {
+   "source": "file:python/nomo-transport/tests/support_http.py",
+   "target": "class:python/nomo-transport/tests/support_http.py:ScriptedReply",
+   "type": "contains",
+   "direction": "forward",
+   "description": "support_http.py defines class ScriptedReply",
+   "weight": 1.0
+  },
+  {
+   "source": "file:python/nomo-transport/tests/support_http.py",
+   "target": "class:python/nomo-transport/tests/support_http.py:RecordedRequest",
+   "type": "contains",
+   "direction": "forward",
+   "description": "support_http.py defines class RecordedRequest",
+   "weight": 1.0
+  },
+  {
+   "source": "file:python/nomo-transport/tests/support_http.py",
+   "target": "class:python/nomo-transport/tests/support_http.py:ScriptedServer",
+   "type": "contains",
+   "direction": "forward",
+   "description": "support_http.py defines class ScriptedServer",
+   "weight": 1.0
+  },
+  {
+   "source": "file:python/nomo-transport/tests/support_proxy.py",
+   "target": "class:python/nomo-transport/tests/support_proxy.py:ProxyEndpoint",
+   "type": "contains",
+   "direction": "forward",
+   "description": "support_proxy.py defines class ProxyEndpoint",
+   "weight": 1.0
+  },
+  {
+   "source": "file:python/nomo-transport/tests/test_client.py",
+   "target": "function:python/nomo-transport/tests/test_client.py:echo_method",
+   "type": "contains",
+   "direction": "forward",
+   "description": "test_client.py defines echo_method",
+   "weight": 1.0
+  },
+  {
+   "source": "file:python/nomo-transport/tests/test_client.py",
+   "target": "function:python/nomo-transport/tests/test_client.py:echo_method",
+   "type": "exports",
+   "direction": "forward",
+   "description": "test_client.py exports echo_method",
+   "weight": 0.7
+  },
+  {
+   "source": "file:python/nomo-transport/tests/test_client.py",
+   "target": "class:python/nomo-transport/tests/test_client.py:ClientContractTest",
+   "type": "contains",
+   "direction": "forward",
+   "description": "test_client.py defines class ClientContractTest",
+   "weight": 1.0
+  },
+  {
+   "source": "file:python/nomo-transport/tests/test_errors.py",
+   "target": "class:python/nomo-transport/tests/test_errors.py:ErrorCodeTest",
+   "type": "contains",
+   "direction": "forward",
+   "description": "test_errors.py defines class ErrorCodeTest",
+   "weight": 1.0
+  },
+  {
+   "source": "file:python/nomo-transport/tests/test_errors.py",
+   "target": "class:python/nomo-transport/tests/test_errors.py:RefusedErrorTest",
+   "type": "contains",
+   "direction": "forward",
+   "description": "test_errors.py defines class RefusedErrorTest",
+   "weight": 1.0
+  },
+  {
+   "source": "file:python/nomo-transport/tests/test_integration.py",
+   "target": "function:python/nomo-transport/tests/test_integration.py:payload_text",
+   "type": "contains",
+   "direction": "forward",
+   "description": "test_integration.py defines payload_text",
+   "weight": 1.0
+  },
+  {
+   "source": "file:python/nomo-transport/tests/test_integration.py",
+   "target": "function:python/nomo-transport/tests/test_integration.py:payload_text",
+   "type": "exports",
+   "direction": "forward",
+   "description": "test_integration.py exports payload_text",
+   "weight": 0.7
+  },
+  {
+   "source": "file:python/nomo-transport/tests/test_integration.py",
+   "target": "class:python/nomo-transport/tests/test_integration.py:RealProxyTest",
+   "type": "contains",
+   "direction": "forward",
+   "description": "test_integration.py defines class RealProxyTest",
+   "weight": 1.0
+  },
+  {
+   "source": "file:python/nomo-transport/tests/test_integration.py",
+   "target": "class:python/nomo-transport/tests/test_integration.py:RealProxyDenyTest",
+   "type": "contains",
+   "direction": "forward",
+   "description": "test_integration.py defines class RealProxyDenyTest",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/ledger-verify.mjs",
+   "target": "function:scripts/ledger-verify.mjs:store",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ledger-verify.mjs defines store",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/ledger-verify.mjs",
+   "target": "function:scripts/ledger-verify.mjs:fmt",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ledger-verify.mjs defines fmt",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/goals.test.ts",
+   "target": "file:packages/workbench/src/goals.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "goals.test.ts imports goals.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/plan.test.ts",
+   "target": "file:packages/workbench/src/plan.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "plan.test.ts imports plan.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/skill-promotion.test.ts",
+   "target": "file:packages/workbench/src/skill-promotion.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "skill-promotion.test.ts imports skill-promotion.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/web-tools.test.ts",
+   "target": "file:packages/workbench/src/web-tools.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "web-tools.test.ts imports web-tools.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:python/nomo-transport/tests/test_client.py",
+   "target": "file:python/nomo-transport/tests/support_http.py",
+   "type": "imports",
+   "direction": "forward",
+   "description": "test_client.py imports support_http.py",
+   "weight": 0.8
+  },
+  {
+   "source": "file:python/nomo-transport/tests/test_integration.py",
+   "target": "file:python/nomo-transport/tests/support_proxy.py",
+   "type": "imports",
+   "direction": "forward",
+   "description": "test_integration.py imports support_proxy.py",
+   "weight": 0.8
+  }
+ ]
+}

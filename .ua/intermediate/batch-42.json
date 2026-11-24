@@ -1,0 +1,209 @@
+{
+ "nodes": [
+  {
+   "id": "file:.prime-coordination-note.md",
+   "type": "document",
+   "name": ".prime-coordination-note.md",
+   "filePath": ".prime-coordination-note.md",
+   "summary": ".prime-coordination-note.md \u2014 markdown document, 586 lines, 29 sections: Koordinace: stav po slou\u010den\u00ed do main, Kde jsme, Test slot, Co pot\u0159ebujete ud\u011blat (+25 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:AGENTS.local.md",
+   "type": "document",
+   "name": "AGENTS.local.md",
+   "filePath": "AGENTS.local.md",
+   "summary": "AGENTS.local.md \u2014 markdown document, 77 lines, 4 sections: NOMO project guidance, Current shared operating contract, NOMO memory source, TUI continuation authority.",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:AGENTS.md",
+   "type": "document",
+   "name": "AGENTS.md",
+   "filePath": "AGENTS.md",
+   "summary": "AGENTS.md \u2014 markdown document, 7 lines, 1 sections: NOMO agent guidance.",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:CHANGELOG.md",
+   "type": "document",
+   "name": "CHANGELOG.md",
+   "filePath": "CHANGELOG.md",
+   "summary": "CHANGELOG.md \u2014 markdown document, 1379 lines, 8 sections: Changelog, Unreleased, Security fixes, Added (+4 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "file:CLAUDE.md",
+   "type": "document",
+   "name": "CLAUDE.md",
+   "filePath": "CLAUDE.md",
+   "summary": "CLAUDE.md \u2014 markdown document, 11 lines, 1 sections: NOMO Claude Code instructions.",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:CONTRIBUTING.md",
+   "type": "document",
+   "name": "CONTRIBUTING.md",
+   "filePath": "CONTRIBUTING.md",
+   "summary": "CONTRIBUTING.md \u2014 markdown document, 103 lines, 6 sections: Contributing to NOMO, Sign off, do not sign a CLA, What gets a fast review, What will be declined (+2 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:README.md",
+   "type": "document",
+   "name": "README.md",
+   "filePath": "README.md",
+   "summary": "README.md \u2014 markdown document, 256 lines, 12 sections: NOMO, Existing local recovery evidence, Current write-path behavior, Reversibility classes (+8 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:SECURITY.md",
+   "type": "document",
+   "name": "SECURITY.md",
+   "filePath": "SECURITY.md",
+   "summary": "SECURITY.md \u2014 markdown document, 62 lines, 4 sections: Security policy, Reporting a vulnerability privately, What lives outside this repository, Local verification.",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:nomo.cmd",
+   "type": "file",
+   "name": "nomo.cmd",
+   "filePath": "nomo.cmd",
+   "summary": "nomo.cmd \u2014 batch script, 4 lines.",
+   "tags": [
+    "batch",
+    "script"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:opencode.json",
+   "type": "config",
+   "name": "opencode.json",
+   "filePath": "opencode.json",
+   "summary": "opencode.json \u2014 json config, 63 lines.",
+   "tags": [
+    "json",
+    "config"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:package.json",
+   "type": "config",
+   "name": "package.json",
+   "filePath": "package.json",
+   "summary": "package.json \u2014 json config, 61 lines.",
+   "tags": [
+    "json",
+    "config"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:pnpm-workspace.yaml",
+   "type": "config",
+   "name": "pnpm-workspace.yaml",
+   "filePath": "pnpm-workspace.yaml",
+   "summary": "pnpm-workspace.yaml \u2014 yaml config, 157 lines.",
+   "tags": [
+    "yaml",
+    "config"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:server.json",
+   "type": "config",
+   "name": "server.json",
+   "filePath": "server.json",
+   "summary": "server.json \u2014 json config, 12 lines.",
+   "tags": [
+    "json",
+    "config"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:skills-lock.json",
+   "type": "config",
+   "name": "skills-lock.json",
+   "filePath": "skills-lock.json",
+   "summary": "skills-lock.json \u2014 json config, 17 lines.",
+   "tags": [
+    "json",
+    "config"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:tsconfig.base.json",
+   "type": "config",
+   "name": "tsconfig.base.json",
+   "filePath": "tsconfig.base.json",
+   "summary": "tsconfig.base.json \u2014 json config, 26 lines.",
+   "tags": [
+    "json",
+    "config"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:tsconfig.json",
+   "type": "config",
+   "name": "tsconfig.json",
+   "filePath": "tsconfig.json",
+   "summary": "tsconfig.json \u2014 json config, 5 lines.",
+   "tags": [
+    "json",
+    "config"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:vercel.json",
+   "type": "config",
+   "name": "vercel.json",
+   "filePath": "vercel.json",
+   "summary": "vercel.json \u2014 json config, 108 lines.",
+   "tags": [
+    "json",
+    "config"
+   ],
+   "complexity": "simple"
+  }
+ ],
+ "edges": []
+}

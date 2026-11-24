@@ -1,0 +1,3175 @@
+{
+ "nodes": [
+  {
+   "id": "file:packages/workbench/src/provider-adapters/google-generative-ai.ts",
+   "type": "file",
+   "name": "google-generative-ai.ts",
+   "filePath": "packages/workbench/src/provider-adapters/google-generative-ai.ts",
+   "summary": "google-generative-ai.ts \u2014 typescript code, 298 lines, 0 functions, 1 classes, 1 exports, 6 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "class:packages/workbench/src/provider-adapters/google-generative-ai.ts:GoogleGenerativeAIAdapter",
+   "type": "class",
+   "name": "GoogleGenerativeAIAdapter",
+   "filePath": "packages/workbench/src/provider-adapters/google-generative-ai.ts",
+   "lineRange": [
+    18,
+    298
+   ],
+   "summary": "GoogleGenerativeAIAdapter \u2014 class in google-generative-ai.ts, lines 18-298, methods: models, complete, redact, fetch, consume.",
+   "tags": [
+    "typescript",
+    "class",
+    "exported"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/workbench/src/provider-adapters/google-vertex-config.ts",
+   "type": "file",
+   "name": "google-vertex-config.ts",
+   "filePath": "packages/workbench/src/provider-adapters/google-vertex-config.ts",
+   "summary": "google-vertex-config.ts \u2014 typescript code, 26 lines, 2 functions, 0 classes, 2 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-adapters/google-vertex-config.ts:standardVertexBaseUrl",
+   "type": "function",
+   "name": "standardVertexBaseUrl",
+   "filePath": "packages/workbench/src/provider-adapters/google-vertex-config.ts",
+   "lineRange": [
+    6,
+    10
+   ],
+   "summary": "standardVertexBaseUrl(location) \u2014 function in google-vertex-config.ts, lines 6-10.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-adapters/google-vertex-config.ts:isStandardVertexOptions",
+   "type": "function",
+   "name": "isStandardVertexOptions",
+   "filePath": "packages/workbench/src/provider-adapters/google-vertex-config.ts",
+   "lineRange": [
+    12,
+    26
+   ],
+   "summary": "isStandardVertexOptions(value) \u2014 function in google-vertex-config.ts, lines 12-26.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/provider-adapters/google-vertex.test.ts",
+   "type": "file",
+   "name": "google-vertex.test.ts",
+   "filePath": "packages/workbench/src/provider-adapters/google-vertex.test.ts",
+   "summary": "google-vertex.test.ts \u2014 typescript code, 163 lines, 0 functions, 0 classes, 0 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/workbench/src/provider-adapters/guards.ts",
+   "type": "file",
+   "name": "guards.ts",
+   "filePath": "packages/workbench/src/provider-adapters/guards.ts",
+   "summary": "guards.ts \u2014 typescript code, 10 lines, 2 functions, 0 classes, 2 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-adapters/guards.ts:isRecord",
+   "type": "function",
+   "name": "isRecord",
+   "filePath": "packages/workbench/src/provider-adapters/guards.ts",
+   "lineRange": [
+    1,
+    3
+   ],
+   "summary": "isRecord(value) \u2014 function in guards.ts, lines 1-3.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-adapters/guards.ts:isLoopbackHostname",
+   "type": "function",
+   "name": "isLoopbackHostname",
+   "filePath": "packages/workbench/src/provider-adapters/guards.ts",
+   "lineRange": [
+    5,
+    10
+   ],
+   "summary": "isLoopbackHostname(hostname) \u2014 function in guards.ts, lines 5-10.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/provider-adapters/mistral-conversations-timeout.test.ts",
+   "type": "file",
+   "name": "mistral-conversations-timeout.test.ts",
+   "filePath": "packages/workbench/src/provider-adapters/mistral-conversations-timeout.test.ts",
+   "summary": "mistral-conversations-timeout.test.ts \u2014 typescript code, 35 lines, 0 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/provider-adapters/mistral-conversations.test.ts",
+   "type": "file",
+   "name": "mistral-conversations.test.ts",
+   "filePath": "packages/workbench/src/provider-adapters/mistral-conversations.test.ts",
+   "summary": "mistral-conversations.test.ts \u2014 typescript code, 345 lines, 2 functions, 0 classes, 0 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-adapters/mistral-conversations.test.ts:listen",
+   "type": "function",
+   "name": "listen",
+   "filePath": "packages/workbench/src/provider-adapters/mistral-conversations.test.ts",
+   "lineRange": [
+    47,
+    57
+   ],
+   "summary": "listen(handler) \u2014 function in mistral-conversations.test.ts, lines 47-57.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-adapters/mistral-conversations.test.ts:readBody",
+   "type": "function",
+   "name": "readBody",
+   "filePath": "packages/workbench/src/provider-adapters/mistral-conversations.test.ts",
+   "lineRange": [
+    59,
+    63
+   ],
+   "summary": "readBody(request) \u2014 function in mistral-conversations.test.ts, lines 59-63.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/provider-adapters/mistral-conversations.ts",
+   "type": "file",
+   "name": "mistral-conversations.ts",
+   "filePath": "packages/workbench/src/provider-adapters/mistral-conversations.ts",
+   "summary": "mistral-conversations.ts \u2014 typescript code, 257 lines, 3 functions, 1 classes, 1 exports, 5 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-adapters/mistral-conversations.ts:inputsFrom",
+   "type": "function",
+   "name": "inputsFrom",
+   "filePath": "packages/workbench/src/provider-adapters/mistral-conversations.ts",
+   "lineRange": [
+    230,
+    249
+   ],
+   "summary": "inputsFrom(messages) \u2014 function in mistral-conversations.ts, lines 230-249.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-adapters/mistral-conversations.ts:ensureSlash",
+   "type": "function",
+   "name": "ensureSlash",
+   "filePath": "packages/workbench/src/provider-adapters/mistral-conversations.ts",
+   "lineRange": [
+    251,
+    251
+   ],
+   "summary": "ensureSlash(url) \u2014 function in mistral-conversations.ts, lines 251-251.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-adapters/mistral-conversations.ts:usageFrom",
+   "type": "function",
+   "name": "usageFrom",
+   "filePath": "packages/workbench/src/provider-adapters/mistral-conversations.ts",
+   "lineRange": [
+    252,
+    257
+   ],
+   "summary": "usageFrom(value) \u2014 function in mistral-conversations.ts, lines 252-257.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:packages/workbench/src/provider-adapters/mistral-conversations.ts:MistralConversationsAdapter",
+   "type": "class",
+   "name": "MistralConversationsAdapter",
+   "filePath": "packages/workbench/src/provider-adapters/mistral-conversations.ts",
+   "lineRange": [
+    15,
+    228
+   ],
+   "summary": "MistralConversationsAdapter \u2014 class in mistral-conversations.ts, lines 15-228, methods: models, complete, redact, json, fetch.",
+   "tags": [
+    "typescript",
+    "class",
+    "exported"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/workbench/src/provider-adapters/ollama-chat-timeout.test.ts",
+   "type": "file",
+   "name": "ollama-chat-timeout.test.ts",
+   "filePath": "packages/workbench/src/provider-adapters/ollama-chat-timeout.test.ts",
+   "summary": "ollama-chat-timeout.test.ts \u2014 typescript code, 34 lines, 0 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/provider-adapters/ollama-chat.test.ts",
+   "type": "file",
+   "name": "ollama-chat.test.ts",
+   "filePath": "packages/workbench/src/provider-adapters/ollama-chat.test.ts",
+   "summary": "ollama-chat.test.ts \u2014 typescript code, 397 lines, 3 functions, 0 classes, 0 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-adapters/ollama-chat.test.ts:listen",
+   "type": "function",
+   "name": "listen",
+   "filePath": "packages/workbench/src/provider-adapters/ollama-chat.test.ts",
+   "lineRange": [
+    8,
+    17
+   ],
+   "summary": "listen(handler) \u2014 function in ollama-chat.test.ts, lines 8-17.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-adapters/ollama-chat.test.ts:close",
+   "type": "function",
+   "name": "close",
+   "filePath": "packages/workbench/src/provider-adapters/ollama-chat.test.ts",
+   "lineRange": [
+    19,
+    23
+   ],
+   "summary": "close(server) \u2014 function in ollama-chat.test.ts, lines 19-23.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-adapters/ollama-chat.test.ts:readBody",
+   "type": "function",
+   "name": "readBody",
+   "filePath": "packages/workbench/src/provider-adapters/ollama-chat.test.ts",
+   "lineRange": [
+    25,
+    29
+   ],
+   "summary": "readBody(request) \u2014 function in ollama-chat.test.ts, lines 25-29.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/provider-adapters/ollama-chat.ts",
+   "type": "file",
+   "name": "ollama-chat.ts",
+   "filePath": "packages/workbench/src/provider-adapters/ollama-chat.ts",
+   "summary": "ollama-chat.ts \u2014 typescript code, 286 lines, 3 functions, 1 classes, 1 exports, 5 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-adapters/ollama-chat.ts:toOllamaMessages",
+   "type": "function",
+   "name": "toOllamaMessages",
+   "filePath": "packages/workbench/src/provider-adapters/ollama-chat.ts",
+   "lineRange": [
+    256,
+    265
+   ],
+   "summary": "toOllamaMessages(messages) \u2014 function in ollama-chat.ts, lines 256-265.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-adapters/ollama-chat.ts:toOllamaMessage",
+   "type": "function",
+   "name": "toOllamaMessage",
+   "filePath": "packages/workbench/src/provider-adapters/ollama-chat.ts",
+   "lineRange": [
+    267,
+    282
+   ],
+   "summary": "toOllamaMessage(message, toolNames) \u2014 function in ollama-chat.ts, lines 267-282.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-adapters/ollama-chat.ts:tokenCount",
+   "type": "function",
+   "name": "tokenCount",
+   "filePath": "packages/workbench/src/provider-adapters/ollama-chat.ts",
+   "lineRange": [
+    283,
+    286
+   ],
+   "summary": "tokenCount(value) \u2014 function in ollama-chat.ts, lines 283-286.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:packages/workbench/src/provider-adapters/ollama-chat.ts:OllamaChatAdapter",
+   "type": "class",
+   "name": "OllamaChatAdapter",
+   "filePath": "packages/workbench/src/provider-adapters/ollama-chat.ts",
+   "lineRange": [
+    11,
+    254
+   ],
+   "summary": "OllamaChatAdapter \u2014 class in ollama-chat.ts, lines 11-254, methods: models, complete, redact, json, fetch.",
+   "tags": [
+    "typescript",
+    "class",
+    "exported"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/workbench/src/provider-adapters/openai-responses-reasoning.test.ts",
+   "type": "file",
+   "name": "openai-responses-reasoning.test.ts",
+   "filePath": "packages/workbench/src/provider-adapters/openai-responses-reasoning.test.ts",
+   "summary": "openai-responses-reasoning.test.ts \u2014 typescript code, 120 lines, 3 functions, 0 classes, 0 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-adapters/openai-responses-reasoning.test.ts:sse",
+   "type": "function",
+   "name": "sse",
+   "filePath": "packages/workbench/src/provider-adapters/openai-responses-reasoning.test.ts",
+   "lineRange": [
+    22,
+    26
+   ],
+   "summary": "sse(events) \u2014 function in openai-responses-reasoning.test.ts, lines 22-26.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-adapters/openai-responses-reasoning.test.ts:completed",
+   "type": "function",
+   "name": "completed",
+   "filePath": "packages/workbench/src/provider-adapters/openai-responses-reasoning.test.ts",
+   "lineRange": [
+    28,
+    38
+   ],
+   "summary": "completed(text) \u2014 function in openai-responses-reasoning.test.ts, lines 28-38.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-adapters/openai-responses-reasoning.test.ts:adapterFor",
+   "type": "function",
+   "name": "adapterFor",
+   "filePath": "packages/workbench/src/provider-adapters/openai-responses-reasoning.test.ts",
+   "lineRange": [
+    40,
+    41
+   ],
+   "summary": "adapterFor(events) \u2014 function in openai-responses-reasoning.test.ts, lines 40-41.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/provider-adapters/openai-responses-timeout.test.ts",
+   "type": "file",
+   "name": "openai-responses-timeout.test.ts",
+   "filePath": "packages/workbench/src/provider-adapters/openai-responses-timeout.test.ts",
+   "summary": "openai-responses-timeout.test.ts \u2014 typescript code, 51 lines, 0 functions, 0 classes, 0 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/provider-adapters/openai-responses.test.ts",
+   "type": "file",
+   "name": "openai-responses.test.ts",
+   "filePath": "packages/workbench/src/provider-adapters/openai-responses.test.ts",
+   "summary": "openai-responses.test.ts \u2014 typescript code, 416 lines, 0 functions, 0 classes, 0 exports, 3 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/workbench/src/provider-adapters/openai-responses.ts",
+   "type": "file",
+   "name": "openai-responses.ts",
+   "filePath": "packages/workbench/src/provider-adapters/openai-responses.ts",
+   "summary": "openai-responses.ts \u2014 typescript code, 384 lines, 0 functions, 3 classes, 2 exports, 5 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "class:packages/workbench/src/provider-adapters/openai-responses.ts:ResponsesAdapter",
+   "type": "class",
+   "name": "ResponsesAdapter",
+   "filePath": "packages/workbench/src/provider-adapters/openai-responses.ts",
+   "lineRange": [
+    24,
+    365
+   ],
+   "summary": "ResponsesAdapter \u2014 class in openai-responses.ts, lines 24-365, methods: models, complete, redact, post, json, decode.",
+   "tags": [
+    "typescript",
+    "class"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "class:packages/workbench/src/provider-adapters/openai-responses.ts:OpenAIResponsesAdapter",
+   "type": "class",
+   "name": "OpenAIResponsesAdapter",
+   "filePath": "packages/workbench/src/provider-adapters/openai-responses.ts",
+   "lineRange": [
+    366,
+    374
+   ],
+   "summary": "OpenAIResponsesAdapter \u2014 class in openai-responses.ts, lines 366-374.",
+   "tags": [
+    "typescript",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:packages/workbench/src/provider-adapters/openai-responses.ts:AzureOpenAIResponsesAdapter",
+   "type": "class",
+   "name": "AzureOpenAIResponsesAdapter",
+   "filePath": "packages/workbench/src/provider-adapters/openai-responses.ts",
+   "lineRange": [
+    376,
+    384
+   ],
+   "summary": "AzureOpenAIResponsesAdapter \u2014 class in openai-responses.ts, lines 376-384.",
+   "tags": [
+    "typescript",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/provider-adapters/prime-inference.test.ts",
+   "type": "file",
+   "name": "prime-inference.test.ts",
+   "filePath": "packages/workbench/src/provider-adapters/prime-inference.test.ts",
+   "summary": "prime-inference.test.ts \u2014 typescript code, 216 lines, 0 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/workbench/src/provider-adapters/prime-inference.ts",
+   "type": "file",
+   "name": "prime-inference.ts",
+   "filePath": "packages/workbench/src/provider-adapters/prime-inference.ts",
+   "summary": "prime-inference.ts \u2014 typescript code, 266 lines, 6 functions, 1 classes, 1 exports, 4 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-adapters/prime-inference.ts:validateStaticContract",
+   "type": "function",
+   "name": "validateStaticContract",
+   "filePath": "packages/workbench/src/provider-adapters/prime-inference.ts",
+   "lineRange": [
+    16,
+    37
+   ],
+   "summary": "validateStaticContract() \u2014 function in prime-inference.ts, lines 16-37.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-adapters/prime-inference.ts:validateEndpoint",
+   "type": "function",
+   "name": "validateEndpoint",
+   "filePath": "packages/workbench/src/provider-adapters/prime-inference.ts",
+   "lineRange": [
+    39,
+    59
+   ],
+   "summary": "validateEndpoint(config) \u2014 function in prime-inference.ts, lines 39-59.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-adapters/prime-inference.ts:sanitizeCatalogName",
+   "type": "function",
+   "name": "sanitizeCatalogName",
+   "filePath": "packages/workbench/src/provider-adapters/prime-inference.ts",
+   "lineRange": [
+    61,
+    65
+   ],
+   "summary": "sanitizeCatalogName(value) \u2014 function in prime-inference.ts, lines 61-65.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-adapters/prime-inference.ts:isValidPrimeModelId",
+   "type": "function",
+   "name": "isValidPrimeModelId",
+   "filePath": "packages/workbench/src/provider-adapters/prime-inference.ts",
+   "lineRange": [
+    67,
+    80
+   ],
+   "summary": "isValidPrimeModelId(id) \u2014 function in prime-inference.ts, lines 67-80.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-adapters/prime-inference.ts:isUnsupportedPrimeChatOutput",
+   "type": "function",
+   "name": "isUnsupportedPrimeChatOutput",
+   "filePath": "packages/workbench/src/provider-adapters/prime-inference.ts",
+   "lineRange": [
+    83,
+    101
+   ],
+   "summary": "isUnsupportedPrimeChatOutput(specs) \u2014 function in prime-inference.ts, lines 83-101.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-adapters/prime-inference.ts:primeModelMetadata",
+   "type": "function",
+   "name": "primeModelMetadata",
+   "filePath": "packages/workbench/src/provider-adapters/prime-inference.ts",
+   "lineRange": [
+    103,
+    143
+   ],
+   "summary": "primeModelMetadata(specs, supportsTools) \u2014 function in prime-inference.ts, lines 103-143.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:packages/workbench/src/provider-adapters/prime-inference.ts:PrimeInferenceProvider",
+   "type": "class",
+   "name": "PrimeInferenceProvider",
+   "filePath": "packages/workbench/src/provider-adapters/prime-inference.ts",
+   "lineRange": [
+    148,
+    266
+   ],
+   "summary": "PrimeInferenceProvider \u2014 class in prime-inference.ts, lines 148-266, methods: models, complete, redact.",
+   "tags": [
+    "typescript",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/provider-adapters/types.ts",
+   "type": "file",
+   "name": "types.ts",
+   "filePath": "packages/workbench/src/provider-adapters/types.ts",
+   "summary": "types.ts \u2014 typescript code, 212 lines, 0 functions, 0 classes, 4 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/workbench/src/provider-catalog.ts",
+   "type": "file",
+   "name": "provider-catalog.ts",
+   "filePath": "packages/workbench/src/provider-catalog.ts",
+   "summary": "provider-catalog.ts \u2014 typescript code, 802 lines, 13 functions, 0 classes, 12 exports, 6 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-catalog.ts:authKindForTransport",
+   "type": "function",
+   "name": "authKindForTransport",
+   "filePath": "packages/workbench/src/provider-catalog.ts",
+   "lineRange": [
+    209,
+    217
+   ],
+   "summary": "authKindForTransport(providerId, transport) \u2014 function in provider-catalog.ts, lines 209-217.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-catalog.ts:supportsManifestAuth",
+   "type": "function",
+   "name": "supportsManifestAuth",
+   "filePath": "packages/workbench/src/provider-catalog.ts",
+   "lineRange": [
+    218,
+    244
+   ],
+   "summary": "supportsManifestAuth(provider, transport, authKind) \u2014 function in provider-catalog.ts, lines 218-244.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-catalog.ts:isCloudflareAiGatewayManifestEndpoint",
+   "type": "function",
+   "name": "isCloudflareAiGatewayManifestEndpoint",
+   "filePath": "packages/workbench/src/provider-catalog.ts",
+   "lineRange": [
+    253,
+    264
+   ],
+   "summary": "isCloudflareAiGatewayManifestEndpoint(providerId, endpoint, transport) \u2014 function in provider-catalog.ts, lines 253-264.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-catalog.ts:isCloudflareWorkersAiManifestEndpoint",
+   "type": "function",
+   "name": "isCloudflareWorkersAiManifestEndpoint",
+   "filePath": "packages/workbench/src/provider-catalog.ts",
+   "lineRange": [
+    265,
+    275
+   ],
+   "summary": "isCloudflareWorkersAiManifestEndpoint(providerId, endpoint, transport) \u2014 function in provider-catalog.ts, lines 265-275.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-catalog.ts:transportRank",
+   "type": "function",
+   "name": "transportRank",
+   "filePath": "packages/workbench/src/provider-catalog.ts",
+   "lineRange": [
+    417,
+    420
+   ],
+   "summary": "transportRank(transport) \u2014 function in provider-catalog.ts, lines 417-420.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-catalog.ts:adapterAcceptsApiKeyDescriptor",
+   "type": "function",
+   "name": "adapterAcceptsApiKeyDescriptor",
+   "filePath": "packages/workbench/src/provider-catalog.ts",
+   "lineRange": [
+    427,
+    452
+   ],
+   "summary": "adapterAcceptsApiKeyDescriptor(descriptor) \u2014 function in provider-catalog.ts, lines 427-452.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-catalog.ts:providerImportRoute",
+   "type": "function",
+   "name": "providerImportRoute",
+   "filePath": "packages/workbench/src/provider-catalog.ts",
+   "lineRange": [
+    462,
+    511
+   ],
+   "summary": "providerImportRoute(providerId) \u2014 function in provider-catalog.ts, lines 462-511.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-catalog.ts:isKnownProviderId",
+   "type": "function",
+   "name": "isKnownProviderId",
+   "filePath": "packages/workbench/src/provider-catalog.ts",
+   "lineRange": [
+    514,
+    524
+   ],
+   "summary": "isKnownProviderId(providerId) \u2014 function in provider-catalog.ts, lines 514-524.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-catalog.ts:sameCapabilities",
+   "type": "function",
+   "name": "sameCapabilities",
+   "filePath": "packages/workbench/src/provider-catalog.ts",
+   "lineRange": [
+    588,
+    607
+   ],
+   "summary": "sameCapabilities(left, right) \u2014 function in provider-catalog.ts, lines 588-607.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-catalog.ts:modelCapabilityDisclosure",
+   "type": "function",
+   "name": "modelCapabilityDisclosure",
+   "filePath": "packages/workbench/src/provider-catalog.ts",
+   "lineRange": [
+    609,
+    650
+   ],
+   "summary": "modelCapabilityDisclosure(descriptorId, modelId) \u2014 function in provider-catalog.ts, lines 609-650.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-catalog.ts:matchesDynamicEndpointRule",
+   "type": "function",
+   "name": "matchesDynamicEndpointRule",
+   "filePath": "packages/workbench/src/provider-catalog.ts",
+   "lineRange": [
+    652,
+    705
+   ],
+   "summary": "matchesDynamicEndpointRule(model, transport, baseUrl) \u2014 function in provider-catalog.ts, lines 652-705.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-catalog.ts:matchesManifestEndpoint",
+   "type": "function",
+   "name": "matchesManifestEndpoint",
+   "filePath": "packages/workbench/src/provider-catalog.ts",
+   "lineRange": [
+    708,
+    722
+   ],
+   "summary": "matchesManifestEndpoint(model, transport, baseUrl, vertexOptions) \u2014 function in provider-catalog.ts, lines 708-722.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-catalog.ts:assertProviderDescriptorInManifest",
+   "type": "function",
+   "name": "assertProviderDescriptorInManifest",
+   "filePath": "packages/workbench/src/provider-catalog.ts",
+   "lineRange": [
+    724,
+    802
+   ],
+   "summary": "assertProviderDescriptorInManifest(config) \u2014 function in provider-catalog.ts, lines 724-802.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/provider-json-timeout.test.ts",
+   "type": "file",
+   "name": "provider-json-timeout.test.ts",
+   "filePath": "packages/workbench/src/provider-json-timeout.test.ts",
+   "summary": "provider-json-timeout.test.ts \u2014 typescript code, 24 lines, 0 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/provider-native.test.ts",
+   "type": "file",
+   "name": "provider-native.test.ts",
+   "filePath": "packages/workbench/src/provider-native.test.ts",
+   "summary": "provider-native.test.ts \u2014 typescript code, 270 lines, 0 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/workbench/src/provider-reasoning.test.ts",
+   "type": "file",
+   "name": "provider-reasoning.test.ts",
+   "filePath": "packages/workbench/src/provider-reasoning.test.ts",
+   "summary": "provider-reasoning.test.ts \u2014 typescript code, 252 lines, 5 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-reasoning.test.ts:frame",
+   "type": "function",
+   "name": "frame",
+   "filePath": "packages/workbench/src/provider-reasoning.test.ts",
+   "lineRange": [
+    19,
+    19
+   ],
+   "summary": "frame(value) \u2014 function in provider-reasoning.test.ts, lines 19-19.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-reasoning.test.ts:stream",
+   "type": "function",
+   "name": "stream",
+   "filePath": "packages/workbench/src/provider-reasoning.test.ts",
+   "lineRange": [
+    21,
+    33
+   ],
+   "summary": "stream(text) \u2014 function in provider-reasoning.test.ts, lines 21-33.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-reasoning.test.ts:providerFor",
+   "type": "function",
+   "name": "providerFor",
+   "filePath": "packages/workbench/src/provider-reasoning.test.ts",
+   "lineRange": [
+    34,
+    35
+   ],
+   "summary": "providerFor(text) \u2014 function in provider-reasoning.test.ts, lines 34-35.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-reasoning.test.ts:anthropicSse",
+   "type": "function",
+   "name": "anthropicSse",
+   "filePath": "packages/workbench/src/provider-reasoning.test.ts",
+   "lineRange": [
+    37,
+    46
+   ],
+   "summary": "anthropicSse(events) \u2014 function in provider-reasoning.test.ts, lines 37-46.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-reasoning.test.ts:anthropicProviderFor",
+   "type": "function",
+   "name": "anthropicProviderFor",
+   "filePath": "packages/workbench/src/provider-reasoning.test.ts",
+   "lineRange": [
+    47,
+    51
+   ],
+   "summary": "anthropicProviderFor(events) \u2014 function in provider-reasoning.test.ts, lines 47-51.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/provider-stream-timeout.test.ts",
+   "type": "file",
+   "name": "provider-stream-timeout.test.ts",
+   "filePath": "packages/workbench/src/provider-stream-timeout.test.ts",
+   "summary": "provider-stream-timeout.test.ts \u2014 typescript code, 33 lines, 0 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/provider-stream.test.ts",
+   "type": "file",
+   "name": "provider-stream.test.ts",
+   "filePath": "packages/workbench/src/provider-stream.test.ts",
+   "summary": "provider-stream.test.ts \u2014 typescript code, 396 lines, 2 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-stream.test.ts:frame",
+   "type": "function",
+   "name": "frame",
+   "filePath": "packages/workbench/src/provider-stream.test.ts",
+   "lineRange": [
+    9,
+    9
+   ],
+   "summary": "frame(value) \u2014 function in provider-stream.test.ts, lines 9-9.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-stream.test.ts:stream",
+   "type": "function",
+   "name": "stream",
+   "filePath": "packages/workbench/src/provider-stream.test.ts",
+   "lineRange": [
+    10,
+    22
+   ],
+   "summary": "stream(text) \u2014 function in provider-stream.test.ts, lines 10-22.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/provider.ts",
+   "type": "file",
+   "name": "provider.ts",
+   "filePath": "packages/workbench/src/provider.ts",
+   "summary": "provider.ts \u2014 typescript code, 708 lines, 5 functions, 2 classes, 5 exports, 5 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "function:packages/workbench/src/provider.ts:parseRetryAfter",
+   "type": "function",
+   "name": "parseRetryAfter",
+   "filePath": "packages/workbench/src/provider.ts",
+   "lineRange": [
+    33,
+    48
+   ],
+   "summary": "parseRetryAfter(value, now) \u2014 function in provider.ts, lines 33-48.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider.ts:isRepeatedUsageAccountingFrame",
+   "type": "function",
+   "name": "isRepeatedUsageAccountingFrame",
+   "filePath": "packages/workbench/src/provider.ts",
+   "lineRange": [
+    55,
+    85
+   ],
+   "summary": "isRepeatedUsageAccountingFrame(value, finishReason) \u2014 function in provider.ts, lines 55-85.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider.ts:normalizeProviderConfig",
+   "type": "function",
+   "name": "normalizeProviderConfig",
+   "filePath": "packages/workbench/src/provider.ts",
+   "lineRange": [
+    102,
+    118
+   ],
+   "summary": "normalizeProviderConfig(config) \u2014 function in provider.ts, lines 102-118.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider.ts:hasOpenRouterCatalogMetadata",
+   "type": "function",
+   "name": "hasOpenRouterCatalogMetadata",
+   "filePath": "packages/workbench/src/provider.ts",
+   "lineRange": [
+    120,
+    137
+   ],
+   "summary": "hasOpenRouterCatalogMetadata(config) \u2014 function in provider.ts, lines 120-137.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider.ts:catalogFor",
+   "type": "function",
+   "name": "catalogFor",
+   "filePath": "packages/workbench/src/provider.ts",
+   "lineRange": [
+    162,
+    176
+   ],
+   "summary": "catalogFor(provider, config) \u2014 function in provider.ts, lines 162-176.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:packages/workbench/src/provider.ts:ProviderRequestError",
+   "type": "class",
+   "name": "ProviderRequestError",
+   "filePath": "packages/workbench/src/provider.ts",
+   "lineRange": [
+    13,
+    31
+   ],
+   "summary": "ProviderRequestError \u2014 class in provider.ts, lines 13-31.",
+   "tags": [
+    "typescript",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:packages/workbench/src/provider.ts:CompatibleProvider",
+   "type": "class",
+   "name": "CompatibleProvider",
+   "filePath": "packages/workbench/src/provider.ts",
+   "lineRange": [
+    217,
+    708
+   ],
+   "summary": "CompatibleProvider \u2014 class in provider.ts, lines 217-708, methods: models, modelsFrom, complete, redact, streamReply, response.",
+   "tags": [
+    "typescript",
+    "class",
+    "exported"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/workbench/src/session-search.test.ts",
+   "type": "file",
+   "name": "session-search.test.ts",
+   "filePath": "packages/workbench/src/session-search.test.ts",
+   "summary": "session-search.test.ts \u2014 typescript code, 369 lines, 2 functions, 0 classes, 0 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/workbench/src/session-search.test.ts:say",
+   "type": "function",
+   "name": "say",
+   "filePath": "packages/workbench/src/session-search.test.ts",
+   "lineRange": [
+    14,
+    16
+   ],
+   "summary": "say(role, content) \u2014 function in session-search.test.ts, lines 14-16.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/session-search.test.ts:candidate",
+   "type": "function",
+   "name": "candidate",
+   "filePath": "packages/workbench/src/session-search.test.ts",
+   "lineRange": [
+    18,
+    24
+   ],
+   "summary": "candidate(id, messages, title) \u2014 function in session-search.test.ts, lines 18-24.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/session-search.ts",
+   "type": "file",
+   "name": "session-search.ts",
+   "filePath": "packages/workbench/src/session-search.ts",
+   "summary": "session-search.ts \u2014 typescript code, 274 lines, 9 functions, 0 classes, 3 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/workbench/src/session-search.ts:searchSessions",
+   "type": "function",
+   "name": "searchSessions",
+   "filePath": "packages/workbench/src/session-search.ts",
+   "lineRange": [
+    104,
+    148
+   ],
+   "summary": "searchSessions(candidates, input) \u2014 function in session-search.ts, lines 104-148.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/session-search.ts:hit",
+   "type": "function",
+   "name": "hit",
+   "filePath": "packages/workbench/src/session-search.ts",
+   "lineRange": [
+    150,
+    159
+   ],
+   "summary": "hit(sessionId, title, role, excerpt) \u2014 function in session-search.ts, lines 150-159.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/session-search.ts:readInput",
+   "type": "function",
+   "name": "readInput",
+   "filePath": "packages/workbench/src/session-search.ts",
+   "lineRange": [
+    161,
+    188
+   ],
+   "summary": "readInput(input) \u2014 function in session-search.ts, lines 161-188.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/session-search.ts:storedTitle",
+   "type": "function",
+   "name": "storedTitle",
+   "filePath": "packages/workbench/src/session-search.ts",
+   "lineRange": [
+    193,
+    196
+   ],
+   "summary": "storedTitle(item) \u2014 function in session-search.ts, lines 193-196.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/session-search.ts:firstText",
+   "type": "function",
+   "name": "firstText",
+   "filePath": "packages/workbench/src/session-search.ts",
+   "lineRange": [
+    202,
+    209
+   ],
+   "summary": "firstText(messages) \u2014 function in session-search.ts, lines 202-209.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/session-search.ts:flatten",
+   "type": "function",
+   "name": "flatten",
+   "filePath": "packages/workbench/src/session-search.ts",
+   "lineRange": [
+    213,
+    215
+   ],
+   "summary": "flatten(text) \u2014 function in session-search.ts, lines 213-215.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/session-search.ts:foldedIndex",
+   "type": "function",
+   "name": "foldedIndex",
+   "filePath": "packages/workbench/src/session-search.ts",
+   "lineRange": [
+    226,
+    238
+   ],
+   "summary": "foldedIndex(text, foldedNeedle) \u2014 function in session-search.ts, lines 226-238.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/session-search.ts:headExcerpt",
+   "type": "function",
+   "name": "headExcerpt",
+   "filePath": "packages/workbench/src/session-search.ts",
+   "lineRange": [
+    242,
+    246
+   ],
+   "summary": "headExcerpt(text) \u2014 function in session-search.ts, lines 242-246.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/session-search.ts:excerptOf",
+   "type": "function",
+   "name": "excerptOf",
+   "filePath": "packages/workbench/src/session-search.ts",
+   "lineRange": [
+    256,
+    274
+   ],
+   "summary": "excerptOf(text, query) \u2014 function in session-search.ts, lines 256-274.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/workbench-reasoning.test.ts",
+   "type": "file",
+   "name": "workbench-reasoning.test.ts",
+   "filePath": "packages/workbench/src/workbench-reasoning.test.ts",
+   "summary": "workbench-reasoning.test.ts \u2014 typescript code, 133 lines, 4 functions, 0 classes, 0 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/workbench-reasoning.test.ts:sse",
+   "type": "function",
+   "name": "sse",
+   "filePath": "packages/workbench/src/workbench-reasoning.test.ts",
+   "lineRange": [
+    24,
+    27
+   ],
+   "summary": "sse(events) \u2014 function in workbench-reasoning.test.ts, lines 24-27.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/workbench-reasoning.test.ts:completed",
+   "type": "function",
+   "name": "completed",
+   "filePath": "packages/workbench/src/workbench-reasoning.test.ts",
+   "lineRange": [
+    29,
+    39
+   ],
+   "summary": "completed(text) \u2014 function in workbench-reasoning.test.ts, lines 29-39.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/workbench-reasoning.test.ts:settle",
+   "type": "function",
+   "name": "settle",
+   "filePath": "packages/workbench/src/workbench-reasoning.test.ts",
+   "lineRange": [
+    41,
+    45
+   ],
+   "summary": "settle(fixture, id) \u2014 function in workbench-reasoning.test.ts, lines 41-45.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/workbench-reasoning.test.ts:configure",
+   "type": "function",
+   "name": "configure",
+   "filePath": "packages/workbench/src/workbench-reasoning.test.ts",
+   "lineRange": [
+    47,
+    49
+   ],
+   "summary": "configure(fixture) \u2014 function in workbench-reasoning.test.ts, lines 47-49.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/generate-provider-manifest.mjs",
+   "type": "file",
+   "name": "generate-provider-manifest.mjs",
+   "filePath": "scripts/generate-provider-manifest.mjs",
+   "summary": "generate-provider-manifest.mjs \u2014 javascript code, 482 lines, 10 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:scripts/generate-provider-manifest.mjs:read",
+   "type": "function",
+   "name": "read",
+   "filePath": "scripts/generate-provider-manifest.mjs",
+   "lineRange": [
+    20,
+    20
+   ],
+   "summary": "read(path) \u2014 function in generate-provider-manifest.mjs, lines 20-20.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/generate-provider-manifest.mjs:json",
+   "type": "function",
+   "name": "json",
+   "filePath": "scripts/generate-provider-manifest.mjs",
+   "lineRange": [
+    21,
+    21
+   ],
+   "summary": "json(path) \u2014 function in generate-provider-manifest.mjs, lines 21-21.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/generate-provider-manifest.mjs:decodeRustString",
+   "type": "function",
+   "name": "decodeRustString",
+   "filePath": "scripts/generate-provider-manifest.mjs",
+   "lineRange": [
+    22,
+    22
+   ],
+   "summary": "decodeRustString(value) \u2014 function in generate-provider-manifest.mjs, lines 22-22.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/generate-provider-manifest.mjs:sort",
+   "type": "function",
+   "name": "sort",
+   "filePath": "scripts/generate-provider-manifest.mjs",
+   "lineRange": [
+    23,
+    23
+   ],
+   "summary": "sort(values) \u2014 function in generate-provider-manifest.mjs, lines 23-23.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/generate-provider-manifest.mjs:modelKind",
+   "type": "function",
+   "name": "modelKind",
+   "filePath": "scripts/generate-provider-manifest.mjs",
+   "lineRange": [
+    88,
+    96
+   ],
+   "summary": "modelKind(providerId, row) \u2014 function in generate-provider-manifest.mjs, lines 88-96.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/generate-provider-manifest.mjs:addOmpModel",
+   "type": "function",
+   "name": "addOmpModel",
+   "filePath": "scripts/generate-provider-manifest.mjs",
+   "lineRange": [
+    97,
+    120
+   ],
+   "summary": "addOmpModel(providerId, row, origin) \u2014 function in generate-provider-manifest.mjs, lines 97-120.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/generate-provider-manifest.mjs:ompAuthMethod",
+   "type": "function",
+   "name": "ompAuthMethod",
+   "filePath": "scripts/generate-provider-manifest.mjs",
+   "lineRange": [
+    194,
+    212
+   ],
+   "summary": "ompAuthMethod(providerId, descriptor, auth) \u2014 function in generate-provider-manifest.mjs, lines 194-212.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/generate-provider-manifest.mjs:primeAuth",
+   "type": "function",
+   "name": "primeAuth",
+   "filePath": "scripts/generate-provider-manifest.mjs",
+   "lineRange": [
+    233,
+    251
+   ],
+   "summary": "primeAuth(providerId) \u2014 function in generate-provider-manifest.mjs, lines 233-251.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/generate-provider-manifest.mjs:endpointRuleFor",
+   "type": "function",
+   "name": "endpointRuleFor",
+   "filePath": "scripts/generate-provider-manifest.mjs",
+   "lineRange": [
+    253,
+    261
+   ],
+   "summary": "endpointRuleFor(api) \u2014 function in generate-provider-manifest.mjs, lines 253-261.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/generate-provider-manifest.mjs:modelRecord",
+   "type": "function",
+   "name": "modelRecord",
+   "filePath": "scripts/generate-provider-manifest.mjs",
+   "lineRange": [
+    262,
+    284
+   ],
+   "summary": "modelRecord(row, origin) \u2014 function in generate-provider-manifest.mjs, lines 262-284.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  }
+ ],
+ "edges": [
+  {
+   "source": "file:packages/workbench/src/provider-adapters/google-generative-ai.ts",
+   "target": "class:packages/workbench/src/provider-adapters/google-generative-ai.ts:GoogleGenerativeAIAdapter",
+   "type": "contains",
+   "direction": "forward",
+   "description": "google-generative-ai.ts defines class GoogleGenerativeAIAdapter",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/google-vertex-config.ts",
+   "target": "function:packages/workbench/src/provider-adapters/google-vertex-config.ts:standardVertexBaseUrl",
+   "type": "contains",
+   "direction": "forward",
+   "description": "google-vertex-config.ts defines standardVertexBaseUrl",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/google-vertex-config.ts",
+   "target": "function:packages/workbench/src/provider-adapters/google-vertex-config.ts:standardVertexBaseUrl",
+   "type": "exports",
+   "direction": "forward",
+   "description": "google-vertex-config.ts exports standardVertexBaseUrl",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/google-vertex-config.ts",
+   "target": "function:packages/workbench/src/provider-adapters/google-vertex-config.ts:isStandardVertexOptions",
+   "type": "contains",
+   "direction": "forward",
+   "description": "google-vertex-config.ts defines isStandardVertexOptions",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/google-vertex-config.ts",
+   "target": "function:packages/workbench/src/provider-adapters/google-vertex-config.ts:isStandardVertexOptions",
+   "type": "exports",
+   "direction": "forward",
+   "description": "google-vertex-config.ts exports isStandardVertexOptions",
+   "weight": 0.7
+  },
+  {
+   "source": "function:packages/workbench/src/provider-adapters/google-vertex-config.ts:isStandardVertexOptions",
+   "target": "function:packages/workbench/src/provider-adapters/google-vertex-config.ts:standardVertexBaseUrl",
+   "type": "calls",
+   "direction": "forward",
+   "description": "isStandardVertexOptions calls standardVertexBaseUrl",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/guards.ts",
+   "target": "function:packages/workbench/src/provider-adapters/guards.ts:isRecord",
+   "type": "contains",
+   "direction": "forward",
+   "description": "guards.ts defines isRecord",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/guards.ts",
+   "target": "function:packages/workbench/src/provider-adapters/guards.ts:isRecord",
+   "type": "exports",
+   "direction": "forward",
+   "description": "guards.ts exports isRecord",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/guards.ts",
+   "target": "function:packages/workbench/src/provider-adapters/guards.ts:isLoopbackHostname",
+   "type": "contains",
+   "direction": "forward",
+   "description": "guards.ts defines isLoopbackHostname",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/guards.ts",
+   "target": "function:packages/workbench/src/provider-adapters/guards.ts:isLoopbackHostname",
+   "type": "exports",
+   "direction": "forward",
+   "description": "guards.ts exports isLoopbackHostname",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/mistral-conversations.test.ts",
+   "target": "function:packages/workbench/src/provider-adapters/mistral-conversations.test.ts:listen",
+   "type": "contains",
+   "direction": "forward",
+   "description": "mistral-conversations.test.ts defines listen",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/mistral-conversations.test.ts",
+   "target": "function:packages/workbench/src/provider-adapters/mistral-conversations.test.ts:readBody",
+   "type": "contains",
+   "direction": "forward",
+   "description": "mistral-conversations.test.ts defines readBody",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/mistral-conversations.ts",
+   "target": "function:packages/workbench/src/provider-adapters/mistral-conversations.ts:inputsFrom",
+   "type": "contains",
+   "direction": "forward",
+   "description": "mistral-conversations.ts defines inputsFrom",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/mistral-conversations.ts",
+   "target": "function:packages/workbench/src/provider-adapters/mistral-conversations.ts:ensureSlash",
+   "type": "contains",
+   "direction": "forward",
+   "description": "mistral-conversations.ts defines ensureSlash",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/mistral-conversations.ts",
+   "target": "function:packages/workbench/src/provider-adapters/mistral-conversations.ts:usageFrom",
+   "type": "contains",
+   "direction": "forward",
+   "description": "mistral-conversations.ts defines usageFrom",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/mistral-conversations.ts",
+   "target": "class:packages/workbench/src/provider-adapters/mistral-conversations.ts:MistralConversationsAdapter",
+   "type": "contains",
+   "direction": "forward",
+   "description": "mistral-conversations.ts defines class MistralConversationsAdapter",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/ollama-chat.test.ts",
+   "target": "function:packages/workbench/src/provider-adapters/ollama-chat.test.ts:listen",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ollama-chat.test.ts defines listen",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/ollama-chat.test.ts",
+   "target": "function:packages/workbench/src/provider-adapters/ollama-chat.test.ts:close",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ollama-chat.test.ts defines close",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/ollama-chat.test.ts",
+   "target": "function:packages/workbench/src/provider-adapters/ollama-chat.test.ts:readBody",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ollama-chat.test.ts defines readBody",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/ollama-chat.ts",
+   "target": "function:packages/workbench/src/provider-adapters/ollama-chat.ts:toOllamaMessages",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ollama-chat.ts defines toOllamaMessages",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/ollama-chat.ts",
+   "target": "function:packages/workbench/src/provider-adapters/ollama-chat.ts:toOllamaMessage",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ollama-chat.ts defines toOllamaMessage",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/ollama-chat.ts",
+   "target": "function:packages/workbench/src/provider-adapters/ollama-chat.ts:tokenCount",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ollama-chat.ts defines tokenCount",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/ollama-chat.ts",
+   "target": "class:packages/workbench/src/provider-adapters/ollama-chat.ts:OllamaChatAdapter",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ollama-chat.ts defines class OllamaChatAdapter",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/workbench/src/provider-adapters/ollama-chat.ts:toOllamaMessages",
+   "target": "function:packages/workbench/src/provider-adapters/ollama-chat.ts:toOllamaMessage",
+   "type": "calls",
+   "direction": "forward",
+   "description": "toOllamaMessages calls toOllamaMessage",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/openai-responses-reasoning.test.ts",
+   "target": "function:packages/workbench/src/provider-adapters/openai-responses-reasoning.test.ts:sse",
+   "type": "contains",
+   "direction": "forward",
+   "description": "openai-responses-reasoning.test.ts defines sse",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/openai-responses-reasoning.test.ts",
+   "target": "function:packages/workbench/src/provider-adapters/openai-responses-reasoning.test.ts:completed",
+   "type": "contains",
+   "direction": "forward",
+   "description": "openai-responses-reasoning.test.ts defines completed",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/openai-responses-reasoning.test.ts",
+   "target": "function:packages/workbench/src/provider-adapters/openai-responses-reasoning.test.ts:adapterFor",
+   "type": "contains",
+   "direction": "forward",
+   "description": "openai-responses-reasoning.test.ts defines adapterFor",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/workbench/src/provider-adapters/openai-responses-reasoning.test.ts:adapterFor",
+   "target": "function:packages/workbench/src/provider-adapters/openai-responses-reasoning.test.ts:sse",
+   "type": "calls",
+   "direction": "forward",
+   "description": "adapterFor calls sse",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/openai-responses.ts",
+   "target": "class:packages/workbench/src/provider-adapters/openai-responses.ts:ResponsesAdapter",
+   "type": "contains",
+   "direction": "forward",
+   "description": "openai-responses.ts defines class ResponsesAdapter",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/openai-responses.ts",
+   "target": "class:packages/workbench/src/provider-adapters/openai-responses.ts:OpenAIResponsesAdapter",
+   "type": "contains",
+   "direction": "forward",
+   "description": "openai-responses.ts defines class OpenAIResponsesAdapter",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/openai-responses.ts",
+   "target": "class:packages/workbench/src/provider-adapters/openai-responses.ts:AzureOpenAIResponsesAdapter",
+   "type": "contains",
+   "direction": "forward",
+   "description": "openai-responses.ts defines class AzureOpenAIResponsesAdapter",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/prime-inference.ts",
+   "target": "function:packages/workbench/src/provider-adapters/prime-inference.ts:validateStaticContract",
+   "type": "contains",
+   "direction": "forward",
+   "description": "prime-inference.ts defines validateStaticContract",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/prime-inference.ts",
+   "target": "function:packages/workbench/src/provider-adapters/prime-inference.ts:validateEndpoint",
+   "type": "contains",
+   "direction": "forward",
+   "description": "prime-inference.ts defines validateEndpoint",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/prime-inference.ts",
+   "target": "function:packages/workbench/src/provider-adapters/prime-inference.ts:sanitizeCatalogName",
+   "type": "contains",
+   "direction": "forward",
+   "description": "prime-inference.ts defines sanitizeCatalogName",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/prime-inference.ts",
+   "target": "function:packages/workbench/src/provider-adapters/prime-inference.ts:isValidPrimeModelId",
+   "type": "contains",
+   "direction": "forward",
+   "description": "prime-inference.ts defines isValidPrimeModelId",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/prime-inference.ts",
+   "target": "function:packages/workbench/src/provider-adapters/prime-inference.ts:isUnsupportedPrimeChatOutput",
+   "type": "contains",
+   "direction": "forward",
+   "description": "prime-inference.ts defines isUnsupportedPrimeChatOutput",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/prime-inference.ts",
+   "target": "function:packages/workbench/src/provider-adapters/prime-inference.ts:primeModelMetadata",
+   "type": "contains",
+   "direction": "forward",
+   "description": "prime-inference.ts defines primeModelMetadata",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/prime-inference.ts",
+   "target": "class:packages/workbench/src/provider-adapters/prime-inference.ts:PrimeInferenceProvider",
+   "type": "contains",
+   "direction": "forward",
+   "description": "prime-inference.ts defines class PrimeInferenceProvider",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-catalog.ts",
+   "target": "function:packages/workbench/src/provider-catalog.ts:authKindForTransport",
+   "type": "contains",
+   "direction": "forward",
+   "description": "provider-catalog.ts defines authKindForTransport",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-catalog.ts",
+   "target": "function:packages/workbench/src/provider-catalog.ts:supportsManifestAuth",
+   "type": "contains",
+   "direction": "forward",
+   "description": "provider-catalog.ts defines supportsManifestAuth",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-catalog.ts",
+   "target": "function:packages/workbench/src/provider-catalog.ts:isCloudflareAiGatewayManifestEndpoint",
+   "type": "contains",
+   "direction": "forward",
+   "description": "provider-catalog.ts defines isCloudflareAiGatewayManifestEndpoint",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-catalog.ts",
+   "target": "function:packages/workbench/src/provider-catalog.ts:isCloudflareWorkersAiManifestEndpoint",
+   "type": "contains",
+   "direction": "forward",
+   "description": "provider-catalog.ts defines isCloudflareWorkersAiManifestEndpoint",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-catalog.ts",
+   "target": "function:packages/workbench/src/provider-catalog.ts:transportRank",
+   "type": "contains",
+   "direction": "forward",
+   "description": "provider-catalog.ts defines transportRank",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-catalog.ts",
+   "target": "function:packages/workbench/src/provider-catalog.ts:adapterAcceptsApiKeyDescriptor",
+   "type": "contains",
+   "direction": "forward",
+   "description": "provider-catalog.ts defines adapterAcceptsApiKeyDescriptor",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-catalog.ts",
+   "target": "function:packages/workbench/src/provider-catalog.ts:providerImportRoute",
+   "type": "contains",
+   "direction": "forward",
+   "description": "provider-catalog.ts defines providerImportRoute",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-catalog.ts",
+   "target": "function:packages/workbench/src/provider-catalog.ts:providerImportRoute",
+   "type": "exports",
+   "direction": "forward",
+   "description": "provider-catalog.ts exports providerImportRoute",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/provider-catalog.ts",
+   "target": "function:packages/workbench/src/provider-catalog.ts:isKnownProviderId",
+   "type": "contains",
+   "direction": "forward",
+   "description": "provider-catalog.ts defines isKnownProviderId",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-catalog.ts",
+   "target": "function:packages/workbench/src/provider-catalog.ts:isKnownProviderId",
+   "type": "exports",
+   "direction": "forward",
+   "description": "provider-catalog.ts exports isKnownProviderId",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/provider-catalog.ts",
+   "target": "function:packages/workbench/src/provider-catalog.ts:sameCapabilities",
+   "type": "contains",
+   "direction": "forward",
+   "description": "provider-catalog.ts defines sameCapabilities",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-catalog.ts",
+   "target": "function:packages/workbench/src/provider-catalog.ts:modelCapabilityDisclosure",
+   "type": "contains",
+   "direction": "forward",
+   "description": "provider-catalog.ts defines modelCapabilityDisclosure",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-catalog.ts",
+   "target": "function:packages/workbench/src/provider-catalog.ts:modelCapabilityDisclosure",
+   "type": "exports",
+   "direction": "forward",
+   "description": "provider-catalog.ts exports modelCapabilityDisclosure",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/provider-catalog.ts",
+   "target": "function:packages/workbench/src/provider-catalog.ts:matchesDynamicEndpointRule",
+   "type": "contains",
+   "direction": "forward",
+   "description": "provider-catalog.ts defines matchesDynamicEndpointRule",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-catalog.ts",
+   "target": "function:packages/workbench/src/provider-catalog.ts:matchesManifestEndpoint",
+   "type": "contains",
+   "direction": "forward",
+   "description": "provider-catalog.ts defines matchesManifestEndpoint",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-catalog.ts",
+   "target": "function:packages/workbench/src/provider-catalog.ts:assertProviderDescriptorInManifest",
+   "type": "contains",
+   "direction": "forward",
+   "description": "provider-catalog.ts defines assertProviderDescriptorInManifest",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-catalog.ts",
+   "target": "function:packages/workbench/src/provider-catalog.ts:assertProviderDescriptorInManifest",
+   "type": "exports",
+   "direction": "forward",
+   "description": "provider-catalog.ts exports assertProviderDescriptorInManifest",
+   "weight": 0.7
+  },
+  {
+   "source": "function:packages/workbench/src/provider-catalog.ts:providerImportRoute",
+   "target": "function:packages/workbench/src/provider-catalog.ts:adapterAcceptsApiKeyDescriptor",
+   "type": "calls",
+   "direction": "forward",
+   "description": "providerImportRoute calls adapterAcceptsApiKeyDescriptor",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/provider-catalog.ts:providerImportRoute",
+   "target": "function:packages/workbench/src/provider-catalog.ts:transportRank",
+   "type": "calls",
+   "direction": "forward",
+   "description": "providerImportRoute calls transportRank",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/provider-catalog.ts:modelCapabilityDisclosure",
+   "target": "function:packages/workbench/src/provider-catalog.ts:sameCapabilities",
+   "type": "calls",
+   "direction": "forward",
+   "description": "modelCapabilityDisclosure calls sameCapabilities",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/provider-catalog.ts:matchesDynamicEndpointRule",
+   "target": "function:packages/workbench/src/provider-catalog.ts:isCloudflareAiGatewayManifestEndpoint",
+   "type": "calls",
+   "direction": "forward",
+   "description": "matchesDynamicEndpointRule calls isCloudflareAiGatewayManifestEndpoint",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/provider-catalog.ts:matchesManifestEndpoint",
+   "target": "function:packages/workbench/src/provider-catalog.ts:matchesDynamicEndpointRule",
+   "type": "calls",
+   "direction": "forward",
+   "description": "matchesManifestEndpoint calls matchesDynamicEndpointRule",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/provider-catalog.ts:assertProviderDescriptorInManifest",
+   "target": "function:packages/workbench/src/provider-catalog.ts:authKindForTransport",
+   "type": "calls",
+   "direction": "forward",
+   "description": "assertProviderDescriptorInManifest calls authKindForTransport",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/provider-catalog.ts:assertProviderDescriptorInManifest",
+   "target": "function:packages/workbench/src/provider-catalog.ts:supportsManifestAuth",
+   "type": "calls",
+   "direction": "forward",
+   "description": "assertProviderDescriptorInManifest calls supportsManifestAuth",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/provider-catalog.ts:assertProviderDescriptorInManifest",
+   "target": "function:packages/workbench/src/provider-catalog.ts:matchesManifestEndpoint",
+   "type": "calls",
+   "direction": "forward",
+   "description": "assertProviderDescriptorInManifest calls matchesManifestEndpoint",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/workbench/src/provider-reasoning.test.ts",
+   "target": "function:packages/workbench/src/provider-reasoning.test.ts:frame",
+   "type": "contains",
+   "direction": "forward",
+   "description": "provider-reasoning.test.ts defines frame",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-reasoning.test.ts",
+   "target": "function:packages/workbench/src/provider-reasoning.test.ts:stream",
+   "type": "contains",
+   "direction": "forward",
+   "description": "provider-reasoning.test.ts defines stream",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-reasoning.test.ts",
+   "target": "function:packages/workbench/src/provider-reasoning.test.ts:providerFor",
+   "type": "contains",
+   "direction": "forward",
+   "description": "provider-reasoning.test.ts defines providerFor",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-reasoning.test.ts",
+   "target": "function:packages/workbench/src/provider-reasoning.test.ts:anthropicSse",
+   "type": "contains",
+   "direction": "forward",
+   "description": "provider-reasoning.test.ts defines anthropicSse",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-reasoning.test.ts",
+   "target": "function:packages/workbench/src/provider-reasoning.test.ts:anthropicProviderFor",
+   "type": "contains",
+   "direction": "forward",
+   "description": "provider-reasoning.test.ts defines anthropicProviderFor",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/workbench/src/provider-reasoning.test.ts:providerFor",
+   "target": "function:packages/workbench/src/provider-reasoning.test.ts:stream",
+   "type": "calls",
+   "direction": "forward",
+   "description": "providerFor calls stream",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/provider-reasoning.test.ts:anthropicProviderFor",
+   "target": "function:packages/workbench/src/provider-reasoning.test.ts:anthropicSse",
+   "type": "calls",
+   "direction": "forward",
+   "description": "anthropicProviderFor calls anthropicSse",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/workbench/src/provider-stream.test.ts",
+   "target": "function:packages/workbench/src/provider-stream.test.ts:frame",
+   "type": "contains",
+   "direction": "forward",
+   "description": "provider-stream.test.ts defines frame",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-stream.test.ts",
+   "target": "function:packages/workbench/src/provider-stream.test.ts:stream",
+   "type": "contains",
+   "direction": "forward",
+   "description": "provider-stream.test.ts defines stream",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider.ts",
+   "target": "function:packages/workbench/src/provider.ts:parseRetryAfter",
+   "type": "contains",
+   "direction": "forward",
+   "description": "provider.ts defines parseRetryAfter",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider.ts",
+   "target": "function:packages/workbench/src/provider.ts:parseRetryAfter",
+   "type": "exports",
+   "direction": "forward",
+   "description": "provider.ts exports parseRetryAfter",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/provider.ts",
+   "target": "function:packages/workbench/src/provider.ts:isRepeatedUsageAccountingFrame",
+   "type": "contains",
+   "direction": "forward",
+   "description": "provider.ts defines isRepeatedUsageAccountingFrame",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider.ts",
+   "target": "function:packages/workbench/src/provider.ts:normalizeProviderConfig",
+   "type": "contains",
+   "direction": "forward",
+   "description": "provider.ts defines normalizeProviderConfig",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider.ts",
+   "target": "function:packages/workbench/src/provider.ts:normalizeProviderConfig",
+   "type": "exports",
+   "direction": "forward",
+   "description": "provider.ts exports normalizeProviderConfig",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/provider.ts",
+   "target": "function:packages/workbench/src/provider.ts:hasOpenRouterCatalogMetadata",
+   "type": "contains",
+   "direction": "forward",
+   "description": "provider.ts defines hasOpenRouterCatalogMetadata",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider.ts",
+   "target": "function:packages/workbench/src/provider.ts:catalogFor",
+   "type": "contains",
+   "direction": "forward",
+   "description": "provider.ts defines catalogFor",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider.ts",
+   "target": "function:packages/workbench/src/provider.ts:catalogFor",
+   "type": "exports",
+   "direction": "forward",
+   "description": "provider.ts exports catalogFor",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/provider.ts",
+   "target": "class:packages/workbench/src/provider.ts:ProviderRequestError",
+   "type": "contains",
+   "direction": "forward",
+   "description": "provider.ts defines class ProviderRequestError",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider.ts",
+   "target": "class:packages/workbench/src/provider.ts:CompatibleProvider",
+   "type": "contains",
+   "direction": "forward",
+   "description": "provider.ts defines class CompatibleProvider",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/session-search.test.ts",
+   "target": "function:packages/workbench/src/session-search.test.ts:say",
+   "type": "contains",
+   "direction": "forward",
+   "description": "session-search.test.ts defines say",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/session-search.test.ts",
+   "target": "function:packages/workbench/src/session-search.test.ts:candidate",
+   "type": "contains",
+   "direction": "forward",
+   "description": "session-search.test.ts defines candidate",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/session-search.ts",
+   "target": "function:packages/workbench/src/session-search.ts:searchSessions",
+   "type": "contains",
+   "direction": "forward",
+   "description": "session-search.ts defines searchSessions",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/session-search.ts",
+   "target": "function:packages/workbench/src/session-search.ts:searchSessions",
+   "type": "exports",
+   "direction": "forward",
+   "description": "session-search.ts exports searchSessions",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/session-search.ts",
+   "target": "function:packages/workbench/src/session-search.ts:hit",
+   "type": "contains",
+   "direction": "forward",
+   "description": "session-search.ts defines hit",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/session-search.ts",
+   "target": "function:packages/workbench/src/session-search.ts:readInput",
+   "type": "contains",
+   "direction": "forward",
+   "description": "session-search.ts defines readInput",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/session-search.ts",
+   "target": "function:packages/workbench/src/session-search.ts:storedTitle",
+   "type": "contains",
+   "direction": "forward",
+   "description": "session-search.ts defines storedTitle",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/session-search.ts",
+   "target": "function:packages/workbench/src/session-search.ts:firstText",
+   "type": "contains",
+   "direction": "forward",
+   "description": "session-search.ts defines firstText",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/session-search.ts",
+   "target": "function:packages/workbench/src/session-search.ts:flatten",
+   "type": "contains",
+   "direction": "forward",
+   "description": "session-search.ts defines flatten",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/session-search.ts",
+   "target": "function:packages/workbench/src/session-search.ts:foldedIndex",
+   "type": "contains",
+   "direction": "forward",
+   "description": "session-search.ts defines foldedIndex",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/session-search.ts",
+   "target": "function:packages/workbench/src/session-search.ts:headExcerpt",
+   "type": "contains",
+   "direction": "forward",
+   "description": "session-search.ts defines headExcerpt",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/session-search.ts",
+   "target": "function:packages/workbench/src/session-search.ts:excerptOf",
+   "type": "contains",
+   "direction": "forward",
+   "description": "session-search.ts defines excerptOf",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/workbench/src/session-search.ts:searchSessions",
+   "target": "function:packages/workbench/src/session-search.ts:readInput",
+   "type": "calls",
+   "direction": "forward",
+   "description": "searchSessions calls readInput",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/session-search.ts:searchSessions",
+   "target": "function:packages/workbench/src/session-search.ts:storedTitle",
+   "type": "calls",
+   "direction": "forward",
+   "description": "searchSessions calls storedTitle",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/session-search.ts:searchSessions",
+   "target": "function:packages/workbench/src/session-search.ts:firstText",
+   "type": "calls",
+   "direction": "forward",
+   "description": "searchSessions calls firstText",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/session-search.ts:searchSessions",
+   "target": "function:packages/workbench/src/session-search.ts:headExcerpt",
+   "type": "calls",
+   "direction": "forward",
+   "description": "searchSessions calls headExcerpt",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/session-search.ts:searchSessions",
+   "target": "function:packages/workbench/src/session-search.ts:foldedIndex",
+   "type": "calls",
+   "direction": "forward",
+   "description": "searchSessions calls foldedIndex",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/session-search.ts:searchSessions",
+   "target": "function:packages/workbench/src/session-search.ts:hit",
+   "type": "calls",
+   "direction": "forward",
+   "description": "searchSessions calls hit",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/session-search.ts:searchSessions",
+   "target": "function:packages/workbench/src/session-search.ts:excerptOf",
+   "type": "calls",
+   "direction": "forward",
+   "description": "searchSessions calls excerptOf",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/session-search.ts:headExcerpt",
+   "target": "function:packages/workbench/src/session-search.ts:flatten",
+   "type": "calls",
+   "direction": "forward",
+   "description": "headExcerpt calls flatten",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/session-search.ts:excerptOf",
+   "target": "function:packages/workbench/src/session-search.ts:flatten",
+   "type": "calls",
+   "direction": "forward",
+   "description": "excerptOf calls flatten",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/session-search.ts:excerptOf",
+   "target": "function:packages/workbench/src/session-search.ts:foldedIndex",
+   "type": "calls",
+   "direction": "forward",
+   "description": "excerptOf calls foldedIndex",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/workbench/src/workbench-reasoning.test.ts",
+   "target": "function:packages/workbench/src/workbench-reasoning.test.ts:sse",
+   "type": "contains",
+   "direction": "forward",
+   "description": "workbench-reasoning.test.ts defines sse",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/workbench-reasoning.test.ts",
+   "target": "function:packages/workbench/src/workbench-reasoning.test.ts:completed",
+   "type": "contains",
+   "direction": "forward",
+   "description": "workbench-reasoning.test.ts defines completed",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/workbench-reasoning.test.ts",
+   "target": "function:packages/workbench/src/workbench-reasoning.test.ts:settle",
+   "type": "contains",
+   "direction": "forward",
+   "description": "workbench-reasoning.test.ts defines settle",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/workbench-reasoning.test.ts",
+   "target": "function:packages/workbench/src/workbench-reasoning.test.ts:configure",
+   "type": "contains",
+   "direction": "forward",
+   "description": "workbench-reasoning.test.ts defines configure",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/generate-provider-manifest.mjs",
+   "target": "function:scripts/generate-provider-manifest.mjs:read",
+   "type": "contains",
+   "direction": "forward",
+   "description": "generate-provider-manifest.mjs defines read",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/generate-provider-manifest.mjs",
+   "target": "function:scripts/generate-provider-manifest.mjs:json",
+   "type": "contains",
+   "direction": "forward",
+   "description": "generate-provider-manifest.mjs defines json",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/generate-provider-manifest.mjs",
+   "target": "function:scripts/generate-provider-manifest.mjs:decodeRustString",
+   "type": "contains",
+   "direction": "forward",
+   "description": "generate-provider-manifest.mjs defines decodeRustString",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/generate-provider-manifest.mjs",
+   "target": "function:scripts/generate-provider-manifest.mjs:sort",
+   "type": "contains",
+   "direction": "forward",
+   "description": "generate-provider-manifest.mjs defines sort",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/generate-provider-manifest.mjs",
+   "target": "function:scripts/generate-provider-manifest.mjs:modelKind",
+   "type": "contains",
+   "direction": "forward",
+   "description": "generate-provider-manifest.mjs defines modelKind",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/generate-provider-manifest.mjs",
+   "target": "function:scripts/generate-provider-manifest.mjs:addOmpModel",
+   "type": "contains",
+   "direction": "forward",
+   "description": "generate-provider-manifest.mjs defines addOmpModel",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/generate-provider-manifest.mjs",
+   "target": "function:scripts/generate-provider-manifest.mjs:ompAuthMethod",
+   "type": "contains",
+   "direction": "forward",
+   "description": "generate-provider-manifest.mjs defines ompAuthMethod",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/generate-provider-manifest.mjs",
+   "target": "function:scripts/generate-provider-manifest.mjs:primeAuth",
+   "type": "contains",
+   "direction": "forward",
+   "description": "generate-provider-manifest.mjs defines primeAuth",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/generate-provider-manifest.mjs",
+   "target": "function:scripts/generate-provider-manifest.mjs:endpointRuleFor",
+   "type": "contains",
+   "direction": "forward",
+   "description": "generate-provider-manifest.mjs defines endpointRuleFor",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/generate-provider-manifest.mjs",
+   "target": "function:scripts/generate-provider-manifest.mjs:modelRecord",
+   "type": "contains",
+   "direction": "forward",
+   "description": "generate-provider-manifest.mjs defines modelRecord",
+   "weight": 1.0
+  },
+  {
+   "source": "function:scripts/generate-provider-manifest.mjs:json",
+   "target": "function:scripts/generate-provider-manifest.mjs:read",
+   "type": "calls",
+   "direction": "forward",
+   "description": "json calls read",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/generate-provider-manifest.mjs:addOmpModel",
+   "target": "function:scripts/generate-provider-manifest.mjs:modelKind",
+   "type": "calls",
+   "direction": "forward",
+   "description": "addOmpModel calls modelKind",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/generate-provider-manifest.mjs:modelRecord",
+   "target": "function:scripts/generate-provider-manifest.mjs:endpointRuleFor",
+   "type": "calls",
+   "direction": "forward",
+   "description": "modelRecord calls endpointRuleFor",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/google-generative-ai.ts",
+   "target": "file:packages/workbench/src/harness-settings.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "google-generative-ai.ts imports harness-settings.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/google-generative-ai.ts",
+   "target": "file:packages/workbench/src/provider-adapters/google-vertex-config.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "google-generative-ai.ts imports google-vertex-config.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/google-generative-ai.ts",
+   "target": "file:packages/workbench/src/provider-adapters/types.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "google-generative-ai.ts imports types.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/google-generative-ai.ts",
+   "target": "file:packages/workbench/src/provider-catalog.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "google-generative-ai.ts imports provider-catalog.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/google-generative-ai.ts",
+   "target": "file:packages/workbench/src/provider.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "google-generative-ai.ts imports provider.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/google-vertex-config.ts",
+   "target": "file:packages/workbench/src/provider-adapters/types.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "google-vertex-config.ts imports types.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/google-vertex.test.ts",
+   "target": "file:packages/workbench/src/provider-adapters/factory.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "google-vertex.test.ts imports factory.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/google-vertex.test.ts",
+   "target": "file:packages/workbench/src/provider-catalog.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "google-vertex.test.ts imports provider-catalog.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/mistral-conversations-timeout.test.ts",
+   "target": "file:packages/workbench/src/provider-adapters/factory.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "mistral-conversations-timeout.test.ts imports factory.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/mistral-conversations.test.ts",
+   "target": "file:packages/workbench/src/provider-adapters/factory.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "mistral-conversations.test.ts imports factory.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/mistral-conversations.test.ts",
+   "target": "file:packages/workbench/src/provider.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "mistral-conversations.test.ts imports provider.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/mistral-conversations.ts",
+   "target": "file:packages/workbench/src/harness-settings.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "mistral-conversations.ts imports harness-settings.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/mistral-conversations.ts",
+   "target": "file:packages/workbench/src/provider-adapters/guards.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "mistral-conversations.ts imports guards.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/mistral-conversations.ts",
+   "target": "file:packages/workbench/src/provider-adapters/types.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "mistral-conversations.ts imports types.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/mistral-conversations.ts",
+   "target": "file:packages/workbench/src/provider.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "mistral-conversations.ts imports provider.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/ollama-chat-timeout.test.ts",
+   "target": "file:packages/workbench/src/provider-adapters/factory.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "ollama-chat-timeout.test.ts imports factory.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/ollama-chat.test.ts",
+   "target": "file:packages/workbench/src/provider-adapters/factory.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "ollama-chat.test.ts imports factory.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/ollama-chat.test.ts",
+   "target": "file:packages/workbench/src/provider.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "ollama-chat.test.ts imports provider.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/ollama-chat.ts",
+   "target": "file:packages/workbench/src/harness-settings.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "ollama-chat.ts imports harness-settings.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/ollama-chat.ts",
+   "target": "file:packages/workbench/src/provider-adapters/guards.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "ollama-chat.ts imports guards.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/ollama-chat.ts",
+   "target": "file:packages/workbench/src/provider-adapters/types.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "ollama-chat.ts imports types.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/ollama-chat.ts",
+   "target": "file:packages/workbench/src/provider.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "ollama-chat.ts imports provider.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/openai-responses-reasoning.test.ts",
+   "target": "file:packages/workbench/src/provider-adapters/openai-responses.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "openai-responses-reasoning.test.ts imports openai-responses.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/openai-responses-reasoning.test.ts",
+   "target": "file:packages/workbench/src/provider-adapters/types.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "openai-responses-reasoning.test.ts imports types.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/openai-responses-timeout.test.ts",
+   "target": "file:packages/workbench/src/provider-adapters/factory.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "openai-responses-timeout.test.ts imports factory.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/openai-responses-timeout.test.ts",
+   "target": "file:packages/workbench/src/provider-adapters/types.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "openai-responses-timeout.test.ts imports types.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/openai-responses.test.ts",
+   "target": "file:packages/workbench/src/provider-adapters/factory.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "openai-responses.test.ts imports factory.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/openai-responses.test.ts",
+   "target": "file:packages/workbench/src/provider-adapters/types.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "openai-responses.test.ts imports types.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/openai-responses.test.ts",
+   "target": "file:packages/workbench/src/provider.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "openai-responses.test.ts imports provider.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/openai-responses.ts",
+   "target": "file:packages/workbench/src/harness-settings.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "openai-responses.ts imports harness-settings.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/openai-responses.ts",
+   "target": "file:packages/workbench/src/provider-adapters/bedrock-mantle-config.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "openai-responses.ts imports bedrock-mantle-config.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/openai-responses.ts",
+   "target": "file:packages/workbench/src/provider-adapters/types.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "openai-responses.ts imports types.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/openai-responses.ts",
+   "target": "file:packages/workbench/src/provider.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "openai-responses.ts imports provider.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/prime-inference.test.ts",
+   "target": "file:packages/workbench/src/provider-adapters/prime-inference.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "prime-inference.test.ts imports prime-inference.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/prime-inference.ts",
+   "target": "file:packages/workbench/src/harness-settings.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "prime-inference.ts imports harness-settings.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/prime-inference.ts",
+   "target": "file:packages/workbench/src/provider-adapters/types.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "prime-inference.ts imports types.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/prime-inference.ts",
+   "target": "file:packages/workbench/src/provider-catalog.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "prime-inference.ts imports provider-catalog.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/prime-inference.ts",
+   "target": "file:packages/workbench/src/provider.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "prime-inference.ts imports provider.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/types.ts",
+   "target": "file:packages/workbench/src/provider.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "types.ts imports provider.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-catalog.ts",
+   "target": "file:packages/workbench/src/provider-adapters/bedrock-mantle-config.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "provider-catalog.ts imports bedrock-mantle-config.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-catalog.ts",
+   "target": "file:packages/workbench/src/provider-adapters/cloudflare-ai-gateway-config.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "provider-catalog.ts imports cloudflare-ai-gateway-config.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-catalog.ts",
+   "target": "file:packages/workbench/src/provider-adapters/cloudflare-workers-ai-config.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "provider-catalog.ts imports cloudflare-workers-ai-config.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-catalog.ts",
+   "target": "file:packages/workbench/src/provider-adapters/google-vertex-config.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "provider-catalog.ts imports google-vertex-config.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-catalog.ts",
+   "target": "file:packages/workbench/src/provider-adapters/types.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "provider-catalog.ts imports types.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-json-timeout.test.ts",
+   "target": "file:packages/workbench/src/provider.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "provider-json-timeout.test.ts imports provider.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-native.test.ts",
+   "target": "file:packages/workbench/src/provider.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "provider-native.test.ts imports provider.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-reasoning.test.ts",
+   "target": "file:packages/workbench/src/provider.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "provider-reasoning.test.ts imports provider.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-stream-timeout.test.ts",
+   "target": "file:packages/workbench/src/provider.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "provider-stream-timeout.test.ts imports provider.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-stream.test.ts",
+   "target": "file:packages/workbench/src/provider.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "provider-stream.test.ts imports provider.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider.ts",
+   "target": "file:packages/workbench/src/harness-settings.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "provider.ts imports harness-settings.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider.ts",
+   "target": "file:packages/workbench/src/provider-adapters/anthropic-messages.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "provider.ts imports anthropic-messages.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider.ts",
+   "target": "file:packages/workbench/src/provider-adapters/guards.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "provider.ts imports guards.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider.ts",
+   "target": "file:packages/workbench/src/provider-adapters/openai-completions.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "provider.ts imports openai-completions.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider.ts",
+   "target": "file:packages/workbench/src/provider-adapters/types.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "provider.ts imports types.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/session-search.test.ts",
+   "target": "file:packages/workbench/src/provider.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "session-search.test.ts imports provider.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/session-search.test.ts",
+   "target": "file:packages/workbench/src/session-search.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "session-search.test.ts imports session-search.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/session-search.ts",
+   "target": "file:packages/workbench/src/provider.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "session-search.ts imports provider.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/workbench-reasoning.test.ts",
+   "target": "file:packages/workbench/src/provider-adapters/types.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "workbench-reasoning.test.ts imports types.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/workbench-reasoning.test.ts",
+   "target": "file:packages/workbench/src/test-fixture.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "workbench-reasoning.test.ts imports test-fixture.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:scripts/generate-provider-manifest.mjs",
+   "target": "file:packages/workbench/src/provider-adapters/types.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "generate-provider-manifest.mjs imports types.ts",
+   "weight": 0.8
+  }
+ ]
+}

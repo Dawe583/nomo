@@ -1,0 +1,957 @@
+{
+ "nodes": [
+  {
+   "id": "file:apps/desktop/src-tauri/src/diagnostics.rs",
+   "type": "file",
+   "name": "diagnostics.rs",
+   "filePath": "apps/desktop/src-tauri/src/diagnostics.rs",
+   "summary": "diagnostics.rs \u2014 rust code, 187 lines, 4 functions, 0 classes, 3 exports, 0 imports.",
+   "tags": [
+    "rust",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:apps/desktop/src-tauri/src/diagnostics.rs:classify",
+   "type": "function",
+   "name": "classify",
+   "filePath": "apps/desktop/src-tauri/src/diagnostics.rs",
+   "lineRange": [
+    11,
+    34
+   ],
+   "summary": "classify(error) \u2014 function in diagnostics.rs, lines 11-34.",
+   "tags": [
+    "rust",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/desktop/src-tauri/src/diagnostics.rs:allowlisted_code",
+   "type": "function",
+   "name": "allowlisted_code",
+   "filePath": "apps/desktop/src-tauri/src/diagnostics.rs",
+   "lineRange": [
+    36,
+    46
+   ],
+   "summary": "allowlisted_code(code) \u2014 function in diagnostics.rs, lines 36-46.",
+   "tags": [
+    "rust",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/desktop/src-tauri/src/diagnostics.rs:clear_startup",
+   "type": "function",
+   "name": "clear_startup",
+   "filePath": "apps/desktop/src-tauri/src/diagnostics.rs",
+   "lineRange": [
+    48,
+    54
+   ],
+   "summary": "clear_startup(data) \u2014 function in diagnostics.rs, lines 48-54.",
+   "tags": [
+    "rust",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/desktop/src-tauri/src/diagnostics.rs:write_startup",
+   "type": "function",
+   "name": "write_startup",
+   "filePath": "apps/desktop/src-tauri/src/diagnostics.rs",
+   "lineRange": [
+    56,
+    69
+   ],
+   "summary": "write_startup(data, code) \u2014 function in diagnostics.rs, lines 56-69.",
+   "tags": [
+    "rust",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/desktop/src-tauri/src/downloads.rs",
+   "type": "file",
+   "name": "downloads.rs",
+   "filePath": "apps/desktop/src-tauri/src/downloads.rs",
+   "summary": "downloads.rs \u2014 rust code, 48 lines, 1 functions, 0 classes, 1 exports, 0 imports.",
+   "tags": [
+    "rust",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/desktop/src-tauri/src/downloads.rs:allowed",
+   "type": "function",
+   "name": "allowed",
+   "filePath": "apps/desktop/src-tauri/src/downloads.rs",
+   "lineRange": [
+    3,
+    10
+   ],
+   "summary": "allowed(url, origin) \u2014 function in downloads.rs, lines 3-10.",
+   "tags": [
+    "rust",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/desktop/src-tauri/src/keychain.rs",
+   "type": "file",
+   "name": "keychain.rs",
+   "filePath": "apps/desktop/src-tauri/src/keychain.rs",
+   "summary": "keychain.rs \u2014 rust code, 461 lines, 11 functions, 5 classes, 11 exports, 0 imports.",
+   "tags": [
+    "rust",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:apps/desktop/src-tauri/src/keychain.rs:finish_migration",
+   "type": "function",
+   "name": "finish_migration",
+   "filePath": "apps/desktop/src-tauri/src/keychain.rs",
+   "lineRange": [
+    15,
+    23
+   ],
+   "summary": "finish_migration() \u2014 function in keychain.rs, lines 15-23.",
+   "tags": [
+    "rust",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/desktop/src-tauri/src/keychain.rs:random_key",
+   "type": "function",
+   "name": "random_key",
+   "filePath": "apps/desktop/src-tauri/src/keychain.rs",
+   "lineRange": [
+    26,
+    30
+   ],
+   "summary": "random_key() \u2014 function in keychain.rs, lines 26-30.",
+   "tags": [
+    "rust",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/desktop/src-tauri/src/keychain.rs:load_or_create",
+   "type": "function",
+   "name": "load_or_create",
+   "filePath": "apps/desktop/src-tauri/src/keychain.rs",
+   "lineRange": [
+    32,
+    63
+   ],
+   "summary": "load_or_create(data, store) \u2014 function in keychain.rs, lines 32-63.",
+   "tags": [
+    "rust",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/desktop/src-tauri/src/keychain.rs:ephemeral",
+   "type": "function",
+   "name": "ephemeral",
+   "filePath": "apps/desktop/src-tauri/src/keychain.rs",
+   "lineRange": [
+    65,
+    70
+   ],
+   "summary": "ephemeral() \u2014 function in keychain.rs, lines 65-70.",
+   "tags": [
+    "rust",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/desktop/src-tauri/src/keychain.rs:windows_credential_target",
+   "type": "function",
+   "name": "windows_credential_target",
+   "filePath": "apps/desktop/src-tauri/src/keychain.rs",
+   "lineRange": [
+    79,
+    84
+   ],
+   "summary": "windows_credential_target(account) \u2014 function in keychain.rs, lines 79-84.",
+   "tags": [
+    "rust",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/desktop/src-tauri/src/keychain.rs:classify_mac_read",
+   "type": "function",
+   "name": "classify_mac_read",
+   "filePath": "apps/desktop/src-tauri/src/keychain.rs",
+   "lineRange": [
+    119,
+    127
+   ],
+   "summary": "classify_mac_read(code) \u2014 function in keychain.rs, lines 119-127.",
+   "tags": [
+    "rust",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/desktop/src-tauri/src/keychain.rs:get",
+   "type": "function",
+   "name": "get",
+   "filePath": "apps/desktop/src-tauri/src/keychain.rs",
+   "lineRange": [
+    135,
+    207
+   ],
+   "summary": "get() \u2014 function in keychain.rs, lines 135-207.",
+   "tags": [
+    "rust",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/desktop/src-tauri/src/keychain.rs:put",
+   "type": "function",
+   "name": "put",
+   "filePath": "apps/desktop/src-tauri/src/keychain.rs",
+   "lineRange": [
+    155,
+    231
+   ],
+   "summary": "put(key) \u2014 function in keychain.rs, lines 155-231.",
+   "tags": [
+    "rust",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/desktop/src-tauri/src/keychain.rs:target",
+   "type": "function",
+   "name": "target",
+   "filePath": "apps/desktop/src-tauri/src/keychain.rs",
+   "lineRange": [
+    171,
+    173
+   ],
+   "summary": "target() \u2014 function in keychain.rs, lines 171-173.",
+   "tags": [
+    "rust",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/desktop/src-tauri/src/keychain.rs:SecretStore",
+   "type": "class",
+   "name": "SecretStore",
+   "filePath": "apps/desktop/src-tauri/src/keychain.rs",
+   "lineRange": [
+    4,
+    7
+   ],
+   "summary": "SecretStore \u2014 class in keychain.rs, lines 4-7, methods: get, put.",
+   "tags": [
+    "rust",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/desktop/src-tauri/src/keychain.rs:WorkspaceKey",
+   "type": "class",
+   "name": "WorkspaceKey",
+   "filePath": "apps/desktop/src-tauri/src/keychain.rs",
+   "lineRange": [
+    9,
+    12
+   ],
+   "summary": "WorkspaceKey \u2014 class in keychain.rs, lines 9-12, methods: finish_migration.",
+   "tags": [
+    "rust",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/desktop/src-tauri/src/keychain.rs:MacKeychainRead",
+   "type": "class",
+   "name": "MacKeychainRead",
+   "filePath": "apps/desktop/src-tauri/src/keychain.rs",
+   "lineRange": [
+    100,
+    104
+   ],
+   "summary": "MacKeychainRead \u2014 class in keychain.rs, lines 100-104.",
+   "tags": [
+    "rust",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/desktop/src-tauri/src/keychain.rs:MacKeychain",
+   "type": "class",
+   "name": "MacKeychain",
+   "filePath": "apps/desktop/src-tauri/src/keychain.rs",
+   "lineRange": [
+    130,
+    132
+   ],
+   "summary": "MacKeychain \u2014 class in keychain.rs, lines 130-132, methods: get, put.",
+   "tags": [
+    "rust",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/desktop/src-tauri/src/keychain.rs:WindowsCredentials",
+   "type": "class",
+   "name": "WindowsCredentials",
+   "filePath": "apps/desktop/src-tauri/src/keychain.rs",
+   "lineRange": [
+    166,
+    168
+   ],
+   "summary": "WindowsCredentials \u2014 class in keychain.rs, lines 166-168, methods: target, get, put.",
+   "tags": [
+    "rust",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/desktop/src-tauri/src/main.rs",
+   "type": "file",
+   "name": "main.rs",
+   "filePath": "apps/desktop/src-tauri/src/main.rs",
+   "summary": "main.rs \u2014 rust code, 579 lines, 9 functions, 2 classes, 0 exports, 0 imports.",
+   "tags": [
+    "rust",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:apps/desktop/src-tauri/src/main.rs:stop",
+   "type": "function",
+   "name": "stop",
+   "filePath": "apps/desktop/src-tauri/src/main.rs",
+   "lineRange": [
+    26,
+    41
+   ],
+   "summary": "stop() \u2014 function in main.rs, lines 26-41.",
+   "tags": [
+    "rust",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/desktop/src-tauri/src/main.rs:wait_for_exit",
+   "type": "function",
+   "name": "wait_for_exit",
+   "filePath": "apps/desktop/src-tauri/src/main.rs",
+   "lineRange": [
+    43,
+    49
+   ],
+   "summary": "wait_for_exit() \u2014 function in main.rs, lines 43-49.",
+   "tags": [
+    "rust",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/desktop/src-tauri/src/main.rs:kill",
+   "type": "function",
+   "name": "kill",
+   "filePath": "apps/desktop/src-tauri/src/main.rs",
+   "lineRange": [
+    51,
+    55
+   ],
+   "summary": "kill() \u2014 function in main.rs, lines 51-55.",
+   "tags": [
+    "rust",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/desktop/src-tauri/src/main.rs:drop",
+   "type": "function",
+   "name": "drop",
+   "filePath": "apps/desktop/src-tauri/src/main.rs",
+   "lineRange": [
+    59,
+    61
+   ],
+   "summary": "drop() \u2014 function in main.rs, lines 59-61.",
+   "tags": [
+    "rust",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/desktop/src-tauri/src/main.rs:resolve_env",
+   "type": "function",
+   "name": "resolve_env",
+   "filePath": "apps/desktop/src-tauri/src/main.rs",
+   "lineRange": [
+    64,
+    69
+   ],
+   "summary": "resolve_env(nomo_key, void_key) \u2014 function in main.rs, lines 64-69.",
+   "tags": [
+    "rust",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/desktop/src-tauri/src/main.rs:forward_runtime_stdout",
+   "type": "function",
+   "name": "forward_runtime_stdout",
+   "filePath": "apps/desktop/src-tauri/src/main.rs",
+   "lineRange": [
+    76,
+    89
+   ],
+   "summary": "forward_runtime_stdout(stdout, sender, exit_sender) \u2014 function in main.rs, lines 76-89.",
+   "tags": [
+    "rust",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/desktop/src-tauri/src/main.rs:launch_runtime",
+   "type": "function",
+   "name": "launch_runtime",
+   "filePath": "apps/desktop/src-tauri/src/main.rs",
+   "lineRange": [
+    91,
+    181
+   ],
+   "summary": "launch_runtime(resources, data, smoke) \u2014 function in main.rs, lines 91-181.",
+   "tags": [
+    "rust",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/desktop/src-tauri/src/main.rs:main",
+   "type": "function",
+   "name": "main",
+   "filePath": "apps/desktop/src-tauri/src/main.rs",
+   "lineRange": [
+    183,
+    468
+   ],
+   "summary": "main() \u2014 function in main.rs, lines 183-468.",
+   "tags": [
+    "rust",
+    "function"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:apps/desktop/src-tauri/src/main.rs:startup_guidance",
+   "type": "function",
+   "name": "startup_guidance",
+   "filePath": "apps/desktop/src-tauri/src/main.rs",
+   "lineRange": [
+    471,
+    508
+   ],
+   "summary": "startup_guidance(code) \u2014 function in main.rs, lines 471-508.",
+   "tags": [
+    "rust",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/desktop/src-tauri/src/main.rs:Runtime",
+   "type": "class",
+   "name": "Runtime",
+   "filePath": "apps/desktop/src-tauri/src/main.rs",
+   "lineRange": [
+    19,
+    23
+   ],
+   "summary": "Runtime \u2014 class in main.rs, lines 19-23, methods: stop, wait_for_exit, kill, drop.",
+   "tags": [
+    "rust",
+    "class"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/desktop/src-tauri/src/main.rs:Ready",
+   "type": "class",
+   "name": "Ready",
+   "filePath": "apps/desktop/src-tauri/src/main.rs",
+   "lineRange": [
+    72,
+    74
+   ],
+   "summary": "Ready \u2014 class in main.rs, lines 72-74.",
+   "tags": [
+    "rust",
+    "class"
+   ],
+   "complexity": "simple"
+  }
+ ],
+ "edges": [
+  {
+   "source": "file:apps/desktop/src-tauri/src/diagnostics.rs",
+   "target": "function:apps/desktop/src-tauri/src/diagnostics.rs:classify",
+   "type": "contains",
+   "direction": "forward",
+   "description": "diagnostics.rs defines classify",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/desktop/src-tauri/src/diagnostics.rs",
+   "target": "function:apps/desktop/src-tauri/src/diagnostics.rs:classify",
+   "type": "exports",
+   "direction": "forward",
+   "description": "diagnostics.rs exports classify",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/desktop/src-tauri/src/diagnostics.rs",
+   "target": "function:apps/desktop/src-tauri/src/diagnostics.rs:allowlisted_code",
+   "type": "contains",
+   "direction": "forward",
+   "description": "diagnostics.rs defines allowlisted_code",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/desktop/src-tauri/src/diagnostics.rs",
+   "target": "function:apps/desktop/src-tauri/src/diagnostics.rs:clear_startup",
+   "type": "contains",
+   "direction": "forward",
+   "description": "diagnostics.rs defines clear_startup",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/desktop/src-tauri/src/diagnostics.rs",
+   "target": "function:apps/desktop/src-tauri/src/diagnostics.rs:clear_startup",
+   "type": "exports",
+   "direction": "forward",
+   "description": "diagnostics.rs exports clear_startup",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/desktop/src-tauri/src/diagnostics.rs",
+   "target": "function:apps/desktop/src-tauri/src/diagnostics.rs:write_startup",
+   "type": "contains",
+   "direction": "forward",
+   "description": "diagnostics.rs defines write_startup",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/desktop/src-tauri/src/diagnostics.rs",
+   "target": "function:apps/desktop/src-tauri/src/diagnostics.rs:write_startup",
+   "type": "exports",
+   "direction": "forward",
+   "description": "diagnostics.rs exports write_startup",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/desktop/src-tauri/src/downloads.rs",
+   "target": "function:apps/desktop/src-tauri/src/downloads.rs:allowed",
+   "type": "contains",
+   "direction": "forward",
+   "description": "downloads.rs defines allowed",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/desktop/src-tauri/src/downloads.rs",
+   "target": "function:apps/desktop/src-tauri/src/downloads.rs:allowed",
+   "type": "exports",
+   "direction": "forward",
+   "description": "downloads.rs exports allowed",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/desktop/src-tauri/src/keychain.rs",
+   "target": "function:apps/desktop/src-tauri/src/keychain.rs:finish_migration",
+   "type": "contains",
+   "direction": "forward",
+   "description": "keychain.rs defines finish_migration",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/desktop/src-tauri/src/keychain.rs",
+   "target": "function:apps/desktop/src-tauri/src/keychain.rs:finish_migration",
+   "type": "exports",
+   "direction": "forward",
+   "description": "keychain.rs exports finish_migration",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/desktop/src-tauri/src/keychain.rs",
+   "target": "function:apps/desktop/src-tauri/src/keychain.rs:random_key",
+   "type": "contains",
+   "direction": "forward",
+   "description": "keychain.rs defines random_key",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/desktop/src-tauri/src/keychain.rs",
+   "target": "function:apps/desktop/src-tauri/src/keychain.rs:random_key",
+   "type": "exports",
+   "direction": "forward",
+   "description": "keychain.rs exports random_key",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/desktop/src-tauri/src/keychain.rs",
+   "target": "function:apps/desktop/src-tauri/src/keychain.rs:load_or_create",
+   "type": "contains",
+   "direction": "forward",
+   "description": "keychain.rs defines load_or_create",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/desktop/src-tauri/src/keychain.rs",
+   "target": "function:apps/desktop/src-tauri/src/keychain.rs:load_or_create",
+   "type": "exports",
+   "direction": "forward",
+   "description": "keychain.rs exports load_or_create",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/desktop/src-tauri/src/keychain.rs",
+   "target": "function:apps/desktop/src-tauri/src/keychain.rs:ephemeral",
+   "type": "contains",
+   "direction": "forward",
+   "description": "keychain.rs defines ephemeral",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/desktop/src-tauri/src/keychain.rs",
+   "target": "function:apps/desktop/src-tauri/src/keychain.rs:ephemeral",
+   "type": "exports",
+   "direction": "forward",
+   "description": "keychain.rs exports ephemeral",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/desktop/src-tauri/src/keychain.rs",
+   "target": "function:apps/desktop/src-tauri/src/keychain.rs:windows_credential_target",
+   "type": "contains",
+   "direction": "forward",
+   "description": "keychain.rs defines windows_credential_target",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/desktop/src-tauri/src/keychain.rs",
+   "target": "function:apps/desktop/src-tauri/src/keychain.rs:windows_credential_target",
+   "type": "exports",
+   "direction": "forward",
+   "description": "keychain.rs exports windows_credential_target",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/desktop/src-tauri/src/keychain.rs",
+   "target": "function:apps/desktop/src-tauri/src/keychain.rs:classify_mac_read",
+   "type": "contains",
+   "direction": "forward",
+   "description": "keychain.rs defines classify_mac_read",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/desktop/src-tauri/src/keychain.rs",
+   "target": "function:apps/desktop/src-tauri/src/keychain.rs:classify_mac_read",
+   "type": "exports",
+   "direction": "forward",
+   "description": "keychain.rs exports classify_mac_read",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/desktop/src-tauri/src/keychain.rs",
+   "target": "function:apps/desktop/src-tauri/src/keychain.rs:get",
+   "type": "contains",
+   "direction": "forward",
+   "description": "keychain.rs defines get",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/desktop/src-tauri/src/keychain.rs",
+   "target": "function:apps/desktop/src-tauri/src/keychain.rs:put",
+   "type": "contains",
+   "direction": "forward",
+   "description": "keychain.rs defines put",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/desktop/src-tauri/src/keychain.rs",
+   "target": "function:apps/desktop/src-tauri/src/keychain.rs:target",
+   "type": "contains",
+   "direction": "forward",
+   "description": "keychain.rs defines target",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/desktop/src-tauri/src/keychain.rs",
+   "target": "class:apps/desktop/src-tauri/src/keychain.rs:SecretStore",
+   "type": "contains",
+   "direction": "forward",
+   "description": "keychain.rs defines class SecretStore",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/desktop/src-tauri/src/keychain.rs",
+   "target": "class:apps/desktop/src-tauri/src/keychain.rs:WorkspaceKey",
+   "type": "contains",
+   "direction": "forward",
+   "description": "keychain.rs defines class WorkspaceKey",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/desktop/src-tauri/src/keychain.rs",
+   "target": "class:apps/desktop/src-tauri/src/keychain.rs:MacKeychainRead",
+   "type": "contains",
+   "direction": "forward",
+   "description": "keychain.rs defines class MacKeychainRead",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/desktop/src-tauri/src/keychain.rs",
+   "target": "class:apps/desktop/src-tauri/src/keychain.rs:MacKeychain",
+   "type": "contains",
+   "direction": "forward",
+   "description": "keychain.rs defines class MacKeychain",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/desktop/src-tauri/src/keychain.rs",
+   "target": "class:apps/desktop/src-tauri/src/keychain.rs:WindowsCredentials",
+   "type": "contains",
+   "direction": "forward",
+   "description": "keychain.rs defines class WindowsCredentials",
+   "weight": 1.0
+  },
+  {
+   "source": "function:apps/desktop/src-tauri/src/keychain.rs:load_or_create",
+   "target": "function:apps/desktop/src-tauri/src/keychain.rs:random_key",
+   "type": "calls",
+   "direction": "forward",
+   "description": "load_or_create calls random_key",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/desktop/src-tauri/src/keychain.rs:ephemeral",
+   "target": "function:apps/desktop/src-tauri/src/keychain.rs:random_key",
+   "type": "calls",
+   "direction": "forward",
+   "description": "ephemeral calls random_key",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/desktop/src-tauri/src/keychain.rs:get",
+   "target": "function:apps/desktop/src-tauri/src/keychain.rs:classify_mac_read",
+   "type": "calls",
+   "direction": "forward",
+   "description": "get calls classify_mac_read",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/desktop/src-tauri/src/keychain.rs:target",
+   "target": "function:apps/desktop/src-tauri/src/keychain.rs:windows_credential_target",
+   "type": "calls",
+   "direction": "forward",
+   "description": "target calls windows_credential_target",
+   "weight": 0.6
+  },
+  {
+   "source": "file:apps/desktop/src-tauri/src/main.rs",
+   "target": "function:apps/desktop/src-tauri/src/main.rs:stop",
+   "type": "contains",
+   "direction": "forward",
+   "description": "main.rs defines stop",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/desktop/src-tauri/src/main.rs",
+   "target": "function:apps/desktop/src-tauri/src/main.rs:wait_for_exit",
+   "type": "contains",
+   "direction": "forward",
+   "description": "main.rs defines wait_for_exit",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/desktop/src-tauri/src/main.rs",
+   "target": "function:apps/desktop/src-tauri/src/main.rs:kill",
+   "type": "contains",
+   "direction": "forward",
+   "description": "main.rs defines kill",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/desktop/src-tauri/src/main.rs",
+   "target": "function:apps/desktop/src-tauri/src/main.rs:drop",
+   "type": "contains",
+   "direction": "forward",
+   "description": "main.rs defines drop",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/desktop/src-tauri/src/main.rs",
+   "target": "function:apps/desktop/src-tauri/src/main.rs:resolve_env",
+   "type": "contains",
+   "direction": "forward",
+   "description": "main.rs defines resolve_env",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/desktop/src-tauri/src/main.rs",
+   "target": "function:apps/desktop/src-tauri/src/main.rs:forward_runtime_stdout",
+   "type": "contains",
+   "direction": "forward",
+   "description": "main.rs defines forward_runtime_stdout",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/desktop/src-tauri/src/main.rs",
+   "target": "function:apps/desktop/src-tauri/src/main.rs:launch_runtime",
+   "type": "contains",
+   "direction": "forward",
+   "description": "main.rs defines launch_runtime",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/desktop/src-tauri/src/main.rs",
+   "target": "function:apps/desktop/src-tauri/src/main.rs:main",
+   "type": "contains",
+   "direction": "forward",
+   "description": "main.rs defines main",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/desktop/src-tauri/src/main.rs",
+   "target": "function:apps/desktop/src-tauri/src/main.rs:startup_guidance",
+   "type": "contains",
+   "direction": "forward",
+   "description": "main.rs defines startup_guidance",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/desktop/src-tauri/src/main.rs",
+   "target": "class:apps/desktop/src-tauri/src/main.rs:Runtime",
+   "type": "contains",
+   "direction": "forward",
+   "description": "main.rs defines class Runtime",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/desktop/src-tauri/src/main.rs",
+   "target": "class:apps/desktop/src-tauri/src/main.rs:Ready",
+   "type": "contains",
+   "direction": "forward",
+   "description": "main.rs defines class Ready",
+   "weight": 1.0
+  },
+  {
+   "source": "function:apps/desktop/src-tauri/src/main.rs:stop",
+   "target": "function:apps/desktop/src-tauri/src/main.rs:drop",
+   "type": "calls",
+   "direction": "forward",
+   "description": "stop calls drop",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/desktop/src-tauri/src/main.rs:launch_runtime",
+   "target": "function:apps/desktop/src-tauri/src/main.rs:forward_runtime_stdout",
+   "type": "calls",
+   "direction": "forward",
+   "description": "launch_runtime calls forward_runtime_stdout",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/desktop/src-tauri/src/main.rs:main",
+   "target": "function:apps/desktop/src-tauri/src/main.rs:launch_runtime",
+   "type": "calls",
+   "direction": "forward",
+   "description": "main calls launch_runtime",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/desktop/src-tauri/src/main.rs:main",
+   "target": "function:apps/desktop/src-tauri/src/main.rs:startup_guidance",
+   "type": "calls",
+   "direction": "forward",
+   "description": "main calls startup_guidance",
+   "weight": 0.6
+  },
+  {
+   "source": "file:apps/desktop/src-tauri/src/main.rs",
+   "target": "file:apps/desktop/src-tauri/src/diagnostics.rs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "main.rs imports diagnostics.rs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/desktop/src-tauri/src/main.rs",
+   "target": "file:apps/desktop/src-tauri/src/downloads.rs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "main.rs imports downloads.rs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/desktop/src-tauri/src/main.rs",
+   "target": "file:apps/desktop/src-tauri/src/keychain.rs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "main.rs imports keychain.rs",
+   "weight": 0.8
+  }
+ ]
+}

@@ -1,0 +1,245 @@
+{
+ "nodes": [
+  {
+   "id": "file:docs/ACCOUNT-OWNERSHIP.md",
+   "type": "document",
+   "name": "ACCOUNT-OWNERSHIP.md",
+   "filePath": "docs/ACCOUNT-OWNERSHIP.md",
+   "summary": "ACCOUNT-OWNERSHIP.md \u2014 markdown document, 307 lines, 11 sections: Account ownership for the cloud, Supabase migration checkpoint, What the data looks like, Where the owner comes from (+7 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:docs/ADAPTER-CONFORMANCE.md",
+   "type": "document",
+   "name": "ADAPTER-CONFORMANCE.md",
+   "filePath": "docs/ADAPTER-CONFORMANCE.md",
+   "summary": "ADAPTER-CONFORMANCE.md \u2014 markdown document, 189 lines, 9 sections: Adapter conformance, Evidence and scope, Capability profile, The shared runtime is a binding, not a constant (+5 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:docs/AGENT-BINARIES.md",
+   "type": "document",
+   "name": "AGENT-BINARIES.md",
+   "filePath": "docs/AGENT-BINARIES.md",
+   "summary": "AGENT-BINARIES.md \u2014 markdown document, 123 lines, 8 sections: External agent binaries, oh-my-pi (`omp`), prime-agent (`prime`), Local clones (+4 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/APPLE-DESIGN-SYSTEM.md",
+   "type": "document",
+   "name": "APPLE-DESIGN-SYSTEM.md",
+   "filePath": "docs/APPLE-DESIGN-SYSTEM.md",
+   "summary": "APPLE-DESIGN-SYSTEM.md \u2014 markdown document, 321 lines, 19 sections: Apple-aligned design system for NOMO, Scope, Where the numbers come from, Foundations (+15 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:docs/BETA.md",
+   "type": "document",
+   "name": "BETA.md",
+   "filePath": "docs/BETA.md",
+   "summary": "BETA.md \u2014 markdown document, 415 lines, 2 sections: NOMO 0.1 beta, Installing and updating on a machine.",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:docs/CHAT-WEB-REVIEW.md",
+   "type": "document",
+   "name": "CHAT-WEB-REVIEW.md",
+   "filePath": "docs/CHAT-WEB-REVIEW.md",
+   "summary": "CHAT-WEB-REVIEW.md \u2014 markdown document, 540 lines, 23 sections: Adversarial review, `apps/control-plane/ui` chat surface, 0. The restored hunk, `now` and `edited` (the reason this review exists), 1. Must fix before merge, 1.1 A stopped or failed run leaves the last answer permanently marked \"arriving\", with no way to copy, branch or retry it (+19 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:docs/CLOUD-INTEGRATION.md",
+   "type": "document",
+   "name": "CLOUD-INTEGRATION.md",
+   "filePath": "docs/CLOUD-INTEGRATION.md",
+   "summary": "CLOUD-INTEGRATION.md \u2014 markdown document, 38 lines, 1 sections: Cloud integration gate.",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/CODING-TOOLS-MAP.md",
+   "type": "document",
+   "name": "CODING-TOOLS-MAP.md",
+   "filePath": "docs/CODING-TOOLS-MAP.md",
+   "summary": "CODING-TOOLS-MAP.md \u2014 markdown document, 917 lines, 39 sections: Coding tools map, evidence for \"add coding tools (read, write, search, run)\", 1. The tool catalogue, The type, The three sources of tools (+35 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "file:docs/COLLABORATOR-AGENT-BRIEF.md",
+   "type": "document",
+   "name": "COLLABORATOR-AGENT-BRIEF.md",
+   "filePath": "docs/COLLABORATOR-AGENT-BRIEF.md",
+   "summary": "COLLABORATOR-AGENT-BRIEF.md \u2014 markdown document, 141 lines, 10 sections: Collaborator agent brief, NOMO, 1. The repository, 2. Branch policy (changed 2026-10-05, this supersedes older guidance), 3. State as of this brief (+6 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/CONNECTOR-GUIDE.md",
+   "type": "document",
+   "name": "CONNECTOR-GUIDE.md",
+   "filePath": "docs/CONNECTOR-GUIDE.md",
+   "summary": "CONNECTOR-GUIDE.md \u2014 markdown document, 446 lines, 9 sections: NOMO Connector Guide: Adding a Third Connector, 0. The two shapes you mirror, 1. Files to create, 2. The exact Connector interface to implement (+5 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:docs/CONTEXT.md",
+   "type": "document",
+   "name": "CONTEXT.md",
+   "filePath": "docs/CONTEXT.md",
+   "summary": "CONTEXT.md \u2014 markdown document, 169 lines, 7 sections: NOMO: context, Product direction, Current demo boundary, Trust and enforcement model (+3 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:docs/DECISIONS.md",
+   "type": "document",
+   "name": "DECISIONS.md",
+   "filePath": "docs/DECISIONS.md",
+   "summary": "DECISIONS.md \u2014 markdown document, 1617 lines, 27 sections: NOMO: decision log, 1. The wedge: one agent host, one tool surface, 2. Storage: where the ledger lives and what append only means, 3. The signing key path (+23 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "file:docs/DESIGN-TOKEN-MIGRATION.md",
+   "type": "document",
+   "name": "DESIGN-TOKEN-MIGRATION.md",
+   "filePath": "docs/DESIGN-TOKEN-MIGRATION.md",
+   "summary": "DESIGN-TOKEN-MIGRATION.md \u2014 markdown document, 146 lines, 9 sections: Design-source gate: closed, The rule the whole thing rests on, Hit targets, 52, Corner radii, 59, and the document grew seven roles (+5 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/DISTRIBUTION-PATH.md",
+   "type": "document",
+   "name": "DISTRIBUTION-PATH.md",
+   "filePath": "docs/DISTRIBUTION-PATH.md",
+   "summary": "DISTRIBUTION-PATH.md \u2014 markdown document, 657 lines, 24 sections: Historical distribution path for VOID, 1. The finding that reorders every other finding, 2. What the CLI and the MCP server actually are today, 3. Every channel, with what it really costs (+20 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "file:docs/EVIDENCE-FIXES-VERIFICATION.md",
+   "type": "document",
+   "name": "EVIDENCE-FIXES-VERIFICATION.md",
+   "filePath": "docs/EVIDENCE-FIXES-VERIFICATION.md",
+   "summary": "EVIDENCE-FIXES-VERIFICATION.md \u2014 markdown document, 87 lines, 5 sections: Independent verification: are the evidence-integrity fixes actually resolved?, Suites run, Findings, Findings whose fix is present but has no test (+1 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/EVIDENCE-INTEGRITY-REVIEW.md",
+   "type": "document",
+   "name": "EVIDENCE-INTEGRITY-REVIEW.md",
+   "filePath": "docs/EVIDENCE-INTEGRITY-REVIEW.md",
+   "summary": "EVIDENCE-INTEGRITY-REVIEW.md \u2014 markdown document, 604 lines, 38 sections: Independent hostile review: evidence-integrity change, Summary of what the change actually achieves, F1, CRITICAL. The \"pinned\" trust file is not out of band, and it reports itself as the safe path, Attack (+34 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "file:docs/GLM-5.3-MASTER-PROMPT.md",
+   "type": "document",
+   "name": "GLM-5.3-MASTER-PROMPT.md",
+   "filePath": "docs/GLM-5.3-MASTER-PROMPT.md",
+   "summary": "GLM-5.3-MASTER-PROMPT.md \u2014 markdown document, 890 lines, 49 sections: Archived Prompt: VOID 2.0 Master Prompt for GLM-5.3, Role, Mission, Non-negotiable repository rules (+45 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "file:docs/GUI-ALLINONE-PLAN.md",
+   "type": "document",
+   "name": "GUI-ALLINONE-PLAN.md",
+   "filePath": "docs/GUI-ALLINONE-PLAN.md",
+   "summary": "GUI-ALLINONE-PLAN.md \u2014 markdown document, 168 lines, 14 sections: NOMO all-in-one GUI plan, 1. Baseline this plan builds on, 2. Hermes feature map to NOMO equivalents, 3. Default preconfigured tools (+10 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:docs/GUI-COMMANDS.md",
+   "type": "document",
+   "name": "GUI-COMMANDS.md",
+   "filePath": "docs/GUI-COMMANDS.md",
+   "summary": "GUI-COMMANDS.md \u2014 markdown document, 38 lines, 1 sections: GUI commands and tools.",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/GUI-COMPACT-VERIFICATION.md",
+   "type": "document",
+   "name": "GUI-COMPACT-VERIFICATION.md",
+   "filePath": "docs/GUI-COMPACT-VERIFICATION.md",
+   "summary": "GUI-COMPACT-VERIFICATION.md \u2014 markdown document, 97 lines, 7 sections: Compact GUI verification, 2026-09-23, Implemented, Browser evidence, Automated and native evidence (+3 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  }
+ ],
+ "edges": []
+}

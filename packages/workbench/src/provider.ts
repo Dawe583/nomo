@@ -211,6 +211,9 @@ export type ModelReply = {
     prompt_tokens?: number;
     completion_tokens?: number;
     total_tokens?: number;
+    /** What the provider says the call cost, when it reports it. Absent on
+     * most endpoints, so a cost metric is unmeasured rather than zero. */
+    cost_usd?: number;
   };
 };
 
@@ -452,7 +455,16 @@ export class CompatibleProvider implements ProviderClient {
         throw new Error("Provider returned malformed stream data.");
       }
       if (chunk.error) throw new Error("Provider reported a streaming error.");
-      if (chunk.usage) usage = chunk.usage;
+      // The streamed usage frame carries the same cost field the buffered one
+      // does, and the harness always streams, so mapping it only in the
+      // buffered path would leave the metric unmeasured where it matters.
+      if (chunk.usage)
+        usage = {
+          ...chunk.usage,
+          ...(Number.isFinite((chunk.usage as { cost?: unknown }).cost)
+            ? { cost_usd: (chunk.usage as { cost: number }).cost }
+            : {}),
+        };
       const choice = chunk.choices?.find(
         (item: { index?: number }) => (item.index ?? 0) === 0,
       );

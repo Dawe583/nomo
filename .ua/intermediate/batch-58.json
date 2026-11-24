@@ -1,0 +1,149 @@
+{
+ "nodes": [
+  {
+   "id": "file:docs/superpowers/plans/2026-09-15-managed-git-recovery.md",
+   "type": "document",
+   "name": "2026-09-15-managed-git-recovery.md",
+   "filePath": "docs/superpowers/plans/2026-09-15-managed-git-recovery.md",
+   "summary": "2026-09-15-managed-git-recovery.md \u2014 markdown document, 120 lines, 8 sections: Managed Git Recovery Implementation Plan, Global Constraints, Task 1: Git state reader and input boundary, Task 2: Worktree mutation lifecycle (+4 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/superpowers/plans/2026-09-21-nvidia-product-parity.md",
+   "type": "document",
+   "name": "2026-09-21-nvidia-product-parity.md",
+   "filePath": "docs/superpowers/plans/2026-09-21-nvidia-product-parity.md",
+   "summary": "2026-09-21-nvidia-product-parity.md \u2014 markdown document, 204 lines, 11 sections: NVIDIA model and product parity Implementation Plan, Integration status and claim boundary, Global Constraints, Task 1: NVIDIA provider default (+7 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:docs/superpowers/plans/2026-09-23-compact-gui.md",
+   "type": "document",
+   "name": "2026-09-23-compact-gui.md",
+   "filePath": "docs/superpowers/plans/2026-09-23-compact-gui.md",
+   "summary": "2026-09-23-compact-gui.md \u2014 markdown document, 64 lines, 5 sections: Compact GUI implementation plan, Goal, Ordered delivery, Acceptance (+1 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/superpowers/plans/2026-09-23-nomo-1.0.1-apple-release.md",
+   "type": "document",
+   "name": "2026-09-23-nomo-1.0.1-apple-release.md",
+   "filePath": "docs/superpowers/plans/2026-09-23-nomo-1.0.1-apple-release.md",
+   "summary": "2026-09-23-nomo-1.0.1-apple-release.md \u2014 markdown document, 384 lines, 28 sections: NOMO 1.0.1 Apple Release Implementation Plan, 1. Confirmed decisions and explicit proposals, 2. Product scope and non-goals, 3. Safety and protocol contract (+24 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:docs/superpowers/plans/2026-09-23-r02-legacy-proxy-binding.md",
+   "type": "document",
+   "name": "2026-09-23-r02-legacy-proxy-binding.md",
+   "filePath": "docs/superpowers/plans/2026-09-23-r02-legacy-proxy-binding.md",
+   "summary": "2026-09-23-r02-legacy-proxy-binding.md \u2014 markdown document, 303 lines, 7 sections: R02 Legacy Proxy Binding Implementation Plan, Global Constraints, Task 1: Freeze the generic binding evidence contract, Task 2: Bind proxy dispatch and terminal outcomes (+3 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:docs/superpowers/plans/2026-10-08-nomo-agent-harness.md",
+   "type": "document",
+   "name": "2026-10-08-nomo-agent-harness.md",
+   "filePath": "docs/superpowers/plans/2026-10-08-nomo-agent-harness.md",
+   "summary": "2026-10-08-nomo-agent-harness.md \u2014 markdown document, 285 lines, 29 sections: NOMO Agent Harness and Compatibility Implementation Plan, Global Constraints, Repository Facts, File Map (+25 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:docs/superpowers/plans/2026-10-08-nomo-agent-identity-fleet-mvp-and-roadmap.md",
+   "type": "document",
+   "name": "2026-10-08-nomo-agent-identity-fleet-mvp-and-roadmap.md",
+   "filePath": "docs/superpowers/plans/2026-10-08-nomo-agent-identity-fleet-mvp-and-roadmap.md",
+   "summary": "2026-10-08-nomo-agent-identity-fleet-mvp-and-roadmap.md \u2014 markdown document, 605 lines, 29 sections: NOMO Agent Identity and Fleet Control Plane Implementation Plan, Global Constraints, Current Baseline, Dependency Order (+25 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "file:docs/superpowers/plans/2026-10-23-nomo-harness-beta-and-provider-compatibility.md",
+   "type": "document",
+   "name": "2026-10-23-nomo-harness-beta-and-provider-compatibility.md",
+   "filePath": "docs/superpowers/plans/2026-10-23-nomo-harness-beta-and-provider-compatibility.md",
+   "summary": "2026-10-23-nomo-harness-beta-and-provider-compatibility.md \u2014 markdown document, 333 lines, 42 sections: Pl\u00e1n implementace: beta instalace a kompatibilita provider\u016f NOMO, Glob\u00e1ln\u00ed omezen\u00ed, V\u00fdchoz\u00ed stav a hranice, Souborov\u00e1 mapa (+38 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:docs/superpowers/plans/2026-10-24-nomo-project-workspace-boundary.md",
+   "type": "document",
+   "name": "2026-10-24-nomo-project-workspace-boundary.md",
+   "filePath": "docs/superpowers/plans/2026-10-24-nomo-project-workspace-boundary.md",
+   "summary": "2026-10-24-nomo-project-workspace-boundary.md \u2014 markdown document, 159 lines, 9 sections: Izolovan\u00fd projektov\u00fd pracovn\u00ed prostor: implementa\u010dn\u00ed pl\u00e1n, Glob\u00e1ln\u00ed omezen\u00ed, \u00dakol 1: Filtrovan\u00e1 pracovn\u00ed kopie a manifest, \u00dakol 2: Status/diff, bezpe\u010dn\u00e1 aplikace a Workbench napojen\u00ed (+5 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:docs/superpowers/plans/2026-10-25-nomo-agent-runner-implementation.md",
+   "type": "document",
+   "name": "2026-10-25-nomo-agent-runner-implementation.md",
+   "filePath": "docs/superpowers/plans/2026-10-25-nomo-agent-runner-implementation.md",
+   "summary": "2026-10-25-nomo-agent-runner-implementation.md \u2014 markdown document, 168 lines, 20 sections: Implementa\u010dn\u00ed pl\u00e1n: NOMO AgentRunner, Glob\u00e1ln\u00ed omezen\u00ed, V\u00fdchoz\u00ed zdroje a hranice, F\u00e1ze 0: d\u016fkaz zp\u016fsobilosti jednoho vendor adapt\u00e9ru (+16 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:docs/superpowers/plans/2026-10-29-nomo-work-continuation-plan.md",
+   "type": "document",
+   "name": "2026-10-29-nomo-work-continuation-plan.md",
+   "filePath": "docs/superpowers/plans/2026-10-29-nomo-work-continuation-plan.md",
+   "summary": "2026-10-29-nomo-work-continuation-plan.md \u2014 markdown document, 173 lines, 9 sections: Plan: NOMO work continuation wave 1 (2026-10-29), 1. Measured state at 2026-10-29, 2. Goal of wave 1, 3. Crew: lanes, ownership and stop rules (+5 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:docs/superpowers/plans/2026-10-30-nomo-tui-ownership-and-continuation.md",
+   "type": "document",
+   "name": "2026-10-30-nomo-tui-ownership-and-continuation.md",
+   "filePath": "docs/superpowers/plans/2026-10-30-nomo-tui-ownership-and-continuation.md",
+   "summary": "2026-10-30-nomo-tui-ownership-and-continuation.md \u2014 markdown document, 584 lines, 82 sections: NOMO TUI ownership and continuation plan, Purpose, User outcome, Authority and ownership (+78 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  }
+ ],
+ "edges": []
+}

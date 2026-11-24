@@ -1,0 +1,41 @@
+{
+ "nodes": [
+  {
+   "id": "file:packages/workbench/README.md",
+   "type": "document",
+   "name": "README.md",
+   "filePath": "packages/workbench/README.md",
+   "summary": "README.md \u2014 markdown document, 667 lines, 11 sections: NOMO agent workbench, Filtered project workspace, AgentRunner broker, Google Vertex AI Standard (+7 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "file:packages/workbench/package.json",
+   "type": "config",
+   "name": "package.json",
+   "filePath": "packages/workbench/package.json",
+   "summary": "package.json \u2014 json config, 42 lines.",
+   "tags": [
+    "json",
+    "config"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/tsconfig.json",
+   "type": "config",
+   "name": "tsconfig.json",
+   "filePath": "packages/workbench/tsconfig.json",
+   "summary": "tsconfig.json \u2014 json config, 1 lines.",
+   "tags": [
+    "json",
+    "config"
+   ],
+   "complexity": "simple"
+  }
+ ],
+ "edges": []
+}

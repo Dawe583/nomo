@@ -1,0 +1,53 @@
+{
+ "nodes": [
+  {
+   "id": "file:gui-web/README.md",
+   "type": "document",
+   "name": "README.md",
+   "filePath": "gui-web/README.md",
+   "summary": "README.md \u2014 markdown document, 126 lines, 9 sections: NOMO Workbench, web preview, Run, Deployment, Structure (+5 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:gui-web/index.html",
+   "type": "file",
+   "name": "index.html",
+   "filePath": "gui-web/index.html",
+   "summary": "index.html \u2014 html markup, 87 lines.",
+   "tags": [
+    "html",
+    "markup"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:gui-web/manifest.json",
+   "type": "config",
+   "name": "manifest.json",
+   "filePath": "gui-web/manifest.json",
+   "summary": "manifest.json \u2014 json config, 11 lines.",
+   "tags": [
+    "json",
+    "config"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:gui-web/styles.css",
+   "type": "file",
+   "name": "styles.css",
+   "filePath": "gui-web/styles.css",
+   "summary": "styles.css \u2014 css markup, 540 lines.",
+   "tags": [
+    "css",
+    "markup"
+   ],
+   "complexity": "moderate"
+  }
+ ],
+ "edges": []
+}

@@ -1,0 +1,3443 @@
+{
+ "nodes": [
+  {
+   "id": "file:.gitattributes",
+   "type": "file",
+   "name": ".gitattributes",
+   "filePath": ".gitattributes",
+   "summary": ".gitattributes \u2014 unknown code, 59 lines.",
+   "tags": [
+    "unknown",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:.gitlab/issue_templates/bug.md",
+   "type": "document",
+   "name": "bug.md",
+   "filePath": ".gitlab/issue_templates/bug.md",
+   "summary": "bug.md \u2014 markdown document, 36 lines, 5 sections: What happened, Where, What CI did not catch, Reproduction (+1 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:.gitlab/issue_templates/change.md",
+   "type": "document",
+   "name": "change.md",
+   "filePath": ".gitlab/issue_templates/change.md",
+   "summary": "change.md \u2014 markdown document, 33 lines, 4 sections: What should change, Why, How it will be verified, Scope.",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:.gitlab/merge_request_templates/Default.md",
+   "type": "document",
+   "name": "Default.md",
+   "filePath": ".gitlab/merge_request_templates/Default.md",
+   "summary": "Default.md \u2014 markdown document, 29 lines, 4 sections: What changed, Why, How it was verified, What CI cannot check here.",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:.npmrc",
+   "type": "file",
+   "name": ".npmrc",
+   "filePath": ".npmrc",
+   "summary": ".npmrc \u2014 unknown code, 2 lines.",
+   "tags": [
+    "unknown",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:.prime/agent/memories/prime-tokenrouter-config.md",
+   "type": "document",
+   "name": "prime-tokenrouter-config.md",
+   "filePath": ".prime/agent/memories/prime-tokenrouter-config.md",
+   "summary": "prime-tokenrouter-config.md \u2014 markdown document, 28 lines, 8 sections: NOMO Prime TokenRouter Configuration Fix, Problem, Root Cause, Solution (+4 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:.prime/agent/models.json",
+   "type": "config",
+   "name": "models.json",
+   "filePath": ".prime/agent/models.json",
+   "summary": "models.json \u2014 json config, 9 lines.",
+   "tags": [
+    "json",
+    "config"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:.prime/agent/skills/nomo-contracts/SKILL.md",
+   "type": "document",
+   "name": "SKILL.md",
+   "filePath": ".prime/agent/skills/nomo-contracts/SKILL.md",
+   "summary": "SKILL.md \u2014 markdown document, 28 lines, 1 sections: NOMO contracts.",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:.vercelignore",
+   "type": "file",
+   "name": ".vercelignore",
+   "filePath": ".vercelignore",
+   "summary": ".vercelignore \u2014 unknown code, 16 lines.",
+   "tags": [
+    "unknown",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:CODEOWNERS",
+   "type": "file",
+   "name": "CODEOWNERS",
+   "filePath": "CODEOWNERS",
+   "summary": "CODEOWNERS \u2014 unknown code, 38 lines.",
+   "tags": [
+    "unknown",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:NOMO.command",
+   "type": "file",
+   "name": "NOMO.command",
+   "filePath": "NOMO.command",
+   "summary": "NOMO.command \u2014 command code, 4 lines.",
+   "tags": [
+    "command",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:NOTICE",
+   "type": "file",
+   "name": "NOTICE",
+   "filePath": "NOTICE",
+   "summary": "NOTICE \u2014 unknown code, 17 lines.",
+   "tags": [
+    "unknown",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/apple/CompanionProtocolKit/Package.swift",
+   "type": "file",
+   "name": "Package.swift",
+   "filePath": "apps/apple/CompanionProtocolKit/Package.swift",
+   "summary": "Package.swift \u2014 swift code, 17 lines, 0 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "swift",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/apple/NOMO.xcodeproj/project.pbxproj",
+   "type": "file",
+   "name": "project.pbxproj",
+   "filePath": "apps/apple/NOMO.xcodeproj/project.pbxproj",
+   "summary": "project.pbxproj \u2014 pbxproj code, 615 lines.",
+   "tags": [
+    "pbxproj",
+    "code"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "file:apps/apple/NOMO.xcodeproj/project.xcworkspace/contents.xcworkspacedata",
+   "type": "file",
+   "name": "contents.xcworkspacedata",
+   "filePath": "apps/apple/NOMO.xcodeproj/project.xcworkspace/contents.xcworkspacedata",
+   "summary": "contents.xcworkspacedata \u2014 xcworkspacedata code, 7 lines.",
+   "tags": [
+    "xcworkspacedata",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/apple/NOMOApp/AppCopy.swift",
+   "type": "file",
+   "name": "AppCopy.swift",
+   "filePath": "apps/apple/NOMOApp/AppCopy.swift",
+   "summary": "AppCopy.swift \u2014 swift code, 286 lines, 8 functions, 1 classes, 68 exports, 0 imports.",
+   "tags": [
+    "swift",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:apps/apple/NOMOApp/AppCopy.swift:AppCopy.init",
+   "type": "function",
+   "name": "AppCopy.init",
+   "filePath": "apps/apple/NOMOApp/AppCopy.swift",
+   "lineRange": [
+    72,
+    192
+   ],
+   "summary": "AppCopy.init(language) \u2014 function in AppCopy.swift, lines 72-192.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOApp/AppCopy.swift:outcomeTitle",
+   "type": "function",
+   "name": "outcomeTitle",
+   "filePath": "apps/apple/NOMOApp/AppCopy.swift",
+   "lineRange": [
+    194,
+    215
+   ],
+   "summary": "outcomeTitle(outcome) \u2014 function in AppCopy.swift, lines 194-215.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOApp/AppCopy.swift:outcomeExplanation",
+   "type": "function",
+   "name": "outcomeExplanation",
+   "filePath": "apps/apple/NOMOApp/AppCopy.swift",
+   "lineRange": [
+    217,
+    238
+   ],
+   "summary": "outcomeExplanation(outcome) \u2014 function in AppCopy.swift, lines 217-238.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOApp/AppCopy.swift:removalNotice",
+   "type": "function",
+   "name": "removalNotice",
+   "filePath": "apps/apple/NOMOApp/AppCopy.swift",
+   "lineRange": [
+    244,
+    251
+   ],
+   "summary": "removalNotice(outcome) \u2014 function in AppCopy.swift, lines 244-251.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOApp/AppCopy.swift:connectionTitle",
+   "type": "function",
+   "name": "connectionTitle",
+   "filePath": "apps/apple/NOMOApp/AppCopy.swift",
+   "lineRange": [
+    253,
+    262
+   ],
+   "summary": "connectionTitle(state) \u2014 function in AppCopy.swift, lines 253-262.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOApp/AppCopy.swift:sessionTitle",
+   "type": "function",
+   "name": "sessionTitle",
+   "filePath": "apps/apple/NOMOApp/AppCopy.swift",
+   "lineRange": [
+    264,
+    268
+   ],
+   "summary": "sessionTitle(session) \u2014 function in AppCopy.swift, lines 264-268.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOApp/AppCopy.swift:sessionDetail",
+   "type": "function",
+   "name": "sessionDetail",
+   "filePath": "apps/apple/NOMOApp/AppCopy.swift",
+   "lineRange": [
+    270,
+    274
+   ],
+   "summary": "sessionDetail(session) \u2014 function in AppCopy.swift, lines 270-274.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOApp/AppCopy.swift:connectionDetail",
+   "type": "function",
+   "name": "connectionDetail",
+   "filePath": "apps/apple/NOMOApp/AppCopy.swift",
+   "lineRange": [
+    276,
+    285
+   ],
+   "summary": "connectionDetail(state) \u2014 function in AppCopy.swift, lines 276-285.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NOMOApp/AppCopy.swift:AppCopy",
+   "type": "class",
+   "name": "AppCopy",
+   "filePath": "apps/apple/NOMOApp/AppCopy.swift",
+   "lineRange": [
+    6,
+    286
+   ],
+   "summary": "AppCopy \u2014 class in AppCopy.swift, lines 6-286, methods: init, outcomeTitle, outcomeExplanation, removalNotice, connectionTitle, sessionTitle.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:apps/apple/NOMOApp/ChatCopy.swift",
+   "type": "file",
+   "name": "ChatCopy.swift",
+   "filePath": "apps/apple/NOMOApp/ChatCopy.swift",
+   "summary": "ChatCopy.swift \u2014 swift code, 176 lines, 7 functions, 1 classes, 37 exports, 0 imports.",
+   "tags": [
+    "swift",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:apps/apple/NOMOApp/ChatCopy.swift:stoppedDetail",
+   "type": "function",
+   "name": "stoppedDetail",
+   "filePath": "apps/apple/NOMOApp/ChatCopy.swift",
+   "lineRange": [
+    27,
+    34
+   ],
+   "summary": "stoppedDetail(pendingToolWork) \u2014 function in ChatCopy.swift, lines 27-34.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOApp/ChatCopy.swift:composerStatus",
+   "type": "function",
+   "name": "composerStatus",
+   "filePath": "apps/apple/NOMOApp/ChatCopy.swift",
+   "lineRange": [
+    38,
+    47
+   ],
+   "summary": "composerStatus(reason) \u2014 function in ChatCopy.swift, lines 38-47.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOApp/ChatCopy.swift:unavailableDetail",
+   "type": "function",
+   "name": "unavailableDetail",
+   "filePath": "apps/apple/NOMOApp/ChatCopy.swift",
+   "lineRange": [
+    68,
+    77
+   ],
+   "summary": "unavailableDetail(reason) \u2014 function in ChatCopy.swift, lines 68-77.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOApp/ChatCopy.swift:roleLabel",
+   "type": "function",
+   "name": "roleLabel",
+   "filePath": "apps/apple/NOMOApp/ChatCopy.swift",
+   "lineRange": [
+    97,
+    106
+   ],
+   "summary": "roleLabel(role) \u2014 function in ChatCopy.swift, lines 97-106.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOApp/ChatCopy.swift:toolStateLabel",
+   "type": "function",
+   "name": "toolStateLabel",
+   "filePath": "apps/apple/NOMOApp/ChatCopy.swift",
+   "lineRange": [
+    132,
+    151
+   ],
+   "summary": "toolStateLabel(state) \u2014 function in ChatCopy.swift, lines 132-151.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOApp/ChatCopy.swift:toolTone",
+   "type": "function",
+   "name": "toolTone",
+   "filePath": "apps/apple/NOMOApp/ChatCopy.swift",
+   "lineRange": [
+    153,
+    161
+   ],
+   "summary": "toolTone(state) \u2014 function in ChatCopy.swift, lines 153-161.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOApp/ChatCopy.swift:toolCardSummary",
+   "type": "function",
+   "name": "toolCardSummary",
+   "filePath": "apps/apple/NOMOApp/ChatCopy.swift",
+   "lineRange": [
+    166,
+    175
+   ],
+   "summary": "toolCardSummary(call) \u2014 function in ChatCopy.swift, lines 166-175.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NOMOApp/ChatCopy.swift:ChatCopy",
+   "type": "class",
+   "name": "ChatCopy",
+   "filePath": "apps/apple/NOMOApp/ChatCopy.swift",
+   "lineRange": [
+    9,
+    176
+   ],
+   "summary": "ChatCopy \u2014 class in ChatCopy.swift, lines 9-176, methods: stoppedDetail, composerStatus, unavailableDetail, roleLabel, toolStateLabel, toolTone.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:apps/apple/NOMOApp/ChatMessageRow.swift",
+   "type": "file",
+   "name": "ChatMessageRow.swift",
+   "filePath": "apps/apple/NOMOApp/ChatMessageRow.swift",
+   "summary": "ChatMessageRow.swift \u2014 swift code, 271 lines, 3 functions, 5 classes, 24 exports, 0 imports.",
+   "tags": [
+    "swift",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:apps/apple/NOMOApp/ChatMessageRow.swift:roleLabel",
+   "type": "function",
+   "name": "roleLabel",
+   "filePath": "apps/apple/NOMOApp/ChatMessageRow.swift",
+   "lineRange": [
+    42,
+    51
+   ],
+   "summary": "roleLabel(identifier) \u2014 function in ChatMessageRow.swift, lines 42-51.",
+   "tags": [
+    "swift",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOApp/ChatMessageRow.swift:body",
+   "type": "function",
+   "name": "body",
+   "filePath": "apps/apple/NOMOApp/ChatMessageRow.swift",
+   "lineRange": [
+    105,
+    111
+   ],
+   "summary": "body(content) \u2014 function in ChatMessageRow.swift, lines 105-111.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOApp/ChatMessageRow.swift:symbol",
+   "type": "function",
+   "name": "symbol",
+   "filePath": "apps/apple/NOMOApp/ChatMessageRow.swift",
+   "lineRange": [
+    230,
+    241
+   ],
+   "summary": "symbol(state) \u2014 function in ChatMessageRow.swift, lines 230-241.",
+   "tags": [
+    "swift",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NOMOApp/ChatMessageRow.swift:ChatMessageRow",
+   "type": "class",
+   "name": "ChatMessageRow",
+   "filePath": "apps/apple/NOMOApp/ChatMessageRow.swift",
+   "lineRange": [
+    11,
+    98
+   ],
+   "summary": "ChatMessageRow \u2014 class in ChatMessageRow.swift, lines 11-98, methods: roleLabel.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NOMOApp/ChatMessageRow.swift:OptionalIdentifier",
+   "type": "class",
+   "name": "OptionalIdentifier",
+   "filePath": "apps/apple/NOMOApp/ChatMessageRow.swift",
+   "lineRange": [
+    102,
+    112
+   ],
+   "summary": "OptionalIdentifier \u2014 class in ChatMessageRow.swift, lines 102-112, methods: body.",
+   "tags": [
+    "swift",
+    "class"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NOMOApp/ChatMessageRow.swift:StreamingIndicator",
+   "type": "class",
+   "name": "StreamingIndicator",
+   "filePath": "apps/apple/NOMOApp/ChatMessageRow.swift",
+   "lineRange": [
+    116,
+    142
+   ],
+   "summary": "StreamingIndicator \u2014 class in ChatMessageRow.swift, lines 116-142.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NOMOApp/ChatMessageRow.swift:ToolCallCard",
+   "type": "class",
+   "name": "ToolCallCard",
+   "filePath": "apps/apple/NOMOApp/ChatMessageRow.swift",
+   "lineRange": [
+    147,
+    242
+   ],
+   "summary": "ToolCallCard \u2014 class in ChatMessageRow.swift, lines 147-242, methods: symbol.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NOMOApp/ChatMessageRow.swift:ToolCallDisclosure",
+   "type": "class",
+   "name": "ToolCallDisclosure",
+   "filePath": "apps/apple/NOMOApp/ChatMessageRow.swift",
+   "lineRange": [
+    247,
+    271
+   ],
+   "summary": "ToolCallDisclosure \u2014 class in ChatMessageRow.swift, lines 247-271.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/apple/NOMOApp/ChatModel.swift",
+   "type": "file",
+   "name": "ChatModel.swift",
+   "filePath": "apps/apple/NOMOApp/ChatModel.swift",
+   "summary": "ChatModel.swift \u2014 swift code, 376 lines, 16 functions, 18 classes, 71 exports, 0 imports.",
+   "tags": [
+    "swift",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:apps/apple/NOMOApp/ChatModel.swift:transcript",
+   "type": "function",
+   "name": "transcript",
+   "filePath": "apps/apple/NOMOApp/ChatModel.swift",
+   "lineRange": [
+    140,
+    151
+   ],
+   "summary": "transcript(sessionID) \u2014 function in ChatModel.swift, lines 140-151.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOApp/ChatModel.swift:run",
+   "type": "function",
+   "name": "run",
+   "filePath": "apps/apple/NOMOApp/ChatModel.swift",
+   "lineRange": [
+    141,
+    157
+   ],
+   "summary": "run(request) \u2014 function in ChatModel.swift, lines 141-157.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOApp/ChatModel.swift:ChatSessionModel.init",
+   "type": "function",
+   "name": "ChatSessionModel.init",
+   "filePath": "apps/apple/NOMOApp/ChatModel.swift",
+   "lineRange": [
+    185,
+    188
+   ],
+   "summary": "ChatSessionModel.init(sessionID, transport) \u2014 function in ChatModel.swift, lines 185-188.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOApp/ChatModel.swift:load",
+   "type": "function",
+   "name": "load",
+   "filePath": "apps/apple/NOMOApp/ChatModel.swift",
+   "lineRange": [
+    217,
+    232
+   ],
+   "summary": "load() \u2014 function in ChatModel.swift, lines 217-232.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOApp/ChatModel.swift:send",
+   "type": "function",
+   "name": "send",
+   "filePath": "apps/apple/NOMOApp/ChatModel.swift",
+   "lineRange": [
+    238,
+    254
+   ],
+   "summary": "send() \u2014 function in ChatModel.swift, lines 238-254.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOApp/ChatModel.swift:stop",
+   "type": "function",
+   "name": "stop",
+   "filePath": "apps/apple/NOMOApp/ChatModel.swift",
+   "lineRange": [
+    256,
+    263
+   ],
+   "summary": "stop() \u2014 function in ChatModel.swift, lines 256-263.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOApp/ChatModel.swift:toggleToolCall",
+   "type": "function",
+   "name": "toggleToolCall",
+   "filePath": "apps/apple/NOMOApp/ChatModel.swift",
+   "lineRange": [
+    265,
+    267
+   ],
+   "summary": "toggleToolCall(id) \u2014 function in ChatModel.swift, lines 265-267.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOApp/ChatModel.swift:noteTranscriptPosition",
+   "type": "function",
+   "name": "noteTranscriptPosition",
+   "filePath": "apps/apple/NOMOApp/ChatModel.swift",
+   "lineRange": [
+    269,
+    272
+   ],
+   "summary": "noteTranscriptPosition(isAtLatest) \u2014 function in ChatModel.swift, lines 269-272.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOApp/ChatModel.swift:jumpToLatest",
+   "type": "function",
+   "name": "jumpToLatest",
+   "filePath": "apps/apple/NOMOApp/ChatModel.swift",
+   "lineRange": [
+    274,
+    276
+   ],
+   "summary": "jumpToLatest() \u2014 function in ChatModel.swift, lines 274-276.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOApp/ChatModel.swift:startRun",
+   "type": "function",
+   "name": "startRun",
+   "filePath": "apps/apple/NOMOApp/ChatModel.swift",
+   "lineRange": [
+    280,
+    299
+   ],
+   "summary": "startRun(request) \u2014 function in ChatModel.swift, lines 280-299.",
+   "tags": [
+    "swift",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOApp/ChatModel.swift:apply",
+   "type": "function",
+   "name": "apply",
+   "filePath": "apps/apple/NOMOApp/ChatModel.swift",
+   "lineRange": [
+    301,
+    337
+   ],
+   "summary": "apply(event) \u2014 function in ChatModel.swift, lines 301-337.",
+   "tags": [
+    "swift",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOApp/ChatModel.swift:finishRun",
+   "type": "function",
+   "name": "finishRun",
+   "filePath": "apps/apple/NOMOApp/ChatModel.swift",
+   "lineRange": [
+    339,
+    348
+   ],
+   "summary": "finishRun() \u2014 function in ChatModel.swift, lines 339-348.",
+   "tags": [
+    "swift",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOApp/ChatModel.swift:reason",
+   "type": "function",
+   "name": "reason",
+   "filePath": "apps/apple/NOMOApp/ChatModel.swift",
+   "lineRange": [
+    350,
+    355
+   ],
+   "summary": "reason(error) \u2014 function in ChatModel.swift, lines 350-355.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOApp/ChatModel.swift:make",
+   "type": "function",
+   "name": "make",
+   "filePath": "apps/apple/NOMOApp/ChatModel.swift",
+   "lineRange": [
+    365,
+    375
+   ],
+   "summary": "make() \u2014 function in ChatModel.swift, lines 365-375.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NOMOApp/ChatModel.swift:ChatRole",
+   "type": "class",
+   "name": "ChatRole",
+   "filePath": "apps/apple/NOMOApp/ChatModel.swift",
+   "lineRange": [
+    5,
+    9
+   ],
+   "summary": "ChatRole \u2014 class in ChatModel.swift, lines 5-9.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NOMOApp/ChatModel.swift:ChatMessageState",
+   "type": "class",
+   "name": "ChatMessageState",
+   "filePath": "apps/apple/NOMOApp/ChatModel.swift",
+   "lineRange": [
+    11,
+    17
+   ],
+   "summary": "ChatMessageState \u2014 class in ChatModel.swift, lines 11-17.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NOMOApp/ChatModel.swift:ToolCall",
+   "type": "class",
+   "name": "ToolCall",
+   "filePath": "apps/apple/NOMOApp/ChatModel.swift",
+   "lineRange": [
+    19,
+    51
+   ],
+   "summary": "ToolCall \u2014 class in ChatModel.swift, lines 19-51.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NOMOApp/ChatModel.swift:State",
+   "type": "class",
+   "name": "State",
+   "filePath": "apps/apple/NOMOApp/ChatModel.swift",
+   "lineRange": [
+    20,
+    38
+   ],
+   "summary": "State \u2014 class in ChatModel.swift, lines 20-38.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NOMOApp/ChatModel.swift:ChatMessage",
+   "type": "class",
+   "name": "ChatMessage",
+   "filePath": "apps/apple/NOMOApp/ChatModel.swift",
+   "lineRange": [
+    53,
+    59
+   ],
+   "summary": "ChatMessage \u2014 class in ChatModel.swift, lines 53-59.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NOMOApp/ChatModel.swift:ChatBlockReason",
+   "type": "class",
+   "name": "ChatBlockReason",
+   "filePath": "apps/apple/NOMOApp/ChatModel.swift",
+   "lineRange": [
+    65,
+    69
+   ],
+   "summary": "ChatBlockReason \u2014 class in ChatModel.swift, lines 65-69.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NOMOApp/ChatModel.swift:ChatTransportAvailability",
+   "type": "class",
+   "name": "ChatTransportAvailability",
+   "filePath": "apps/apple/NOMOApp/ChatModel.swift",
+   "lineRange": [
+    71,
+    79
+   ],
+   "summary": "ChatTransportAvailability \u2014 class in ChatModel.swift, lines 71-79.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NOMOApp/ChatModel.swift:ChatRunState",
+   "type": "class",
+   "name": "ChatRunState",
+   "filePath": "apps/apple/NOMOApp/ChatModel.swift",
+   "lineRange": [
+    81,
+    87
+   ],
+   "summary": "ChatRunState \u2014 class in ChatModel.swift, lines 81-87.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NOMOApp/ChatModel.swift:ChatLoadState",
+   "type": "class",
+   "name": "ChatLoadState",
+   "filePath": "apps/apple/NOMOApp/ChatModel.swift",
+   "lineRange": [
+    89,
+    96
+   ],
+   "summary": "ChatLoadState \u2014 class in ChatModel.swift, lines 89-96.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NOMOApp/ChatModel.swift:ChatTranscriptSource",
+   "type": "class",
+   "name": "ChatTranscriptSource",
+   "filePath": "apps/apple/NOMOApp/ChatModel.swift",
+   "lineRange": [
+    102,
+    105
+   ],
+   "summary": "ChatTranscriptSource \u2014 class in ChatModel.swift, lines 102-105.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NOMOApp/ChatModel.swift:ChatTranscriptPage",
+   "type": "class",
+   "name": "ChatTranscriptPage",
+   "filePath": "apps/apple/NOMOApp/ChatModel.swift",
+   "lineRange": [
+    107,
+    111
+   ],
+   "summary": "ChatTranscriptPage \u2014 class in ChatModel.swift, lines 107-111.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NOMOApp/ChatModel.swift:ChatRunRequest",
+   "type": "class",
+   "name": "ChatRunRequest",
+   "filePath": "apps/apple/NOMOApp/ChatModel.swift",
+   "lineRange": [
+    113,
+    118
+   ],
+   "summary": "ChatRunRequest \u2014 class in ChatModel.swift, lines 113-118.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NOMOApp/ChatModel.swift:ChatRunEvent",
+   "type": "class",
+   "name": "ChatRunEvent",
+   "filePath": "apps/apple/NOMOApp/ChatModel.swift",
+   "lineRange": [
+    120,
+    129
+   ],
+   "summary": "ChatRunEvent \u2014 class in ChatModel.swift, lines 120-129.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NOMOApp/ChatModel.swift:ChatTransportError",
+   "type": "class",
+   "name": "ChatTransportError",
+   "filePath": "apps/apple/NOMOApp/ChatModel.swift",
+   "lineRange": [
+    133,
+    136
+   ],
+   "summary": "ChatTransportError \u2014 class in ChatModel.swift, lines 133-136.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NOMOApp/ChatModel.swift:ChatTransport",
+   "type": "class",
+   "name": "ChatTransport",
+   "filePath": "apps/apple/NOMOApp/ChatModel.swift",
+   "lineRange": [
+    138,
+    142
+   ],
+   "summary": "ChatTransport \u2014 class in ChatModel.swift, lines 138-142, methods: transcript, run.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NOMOApp/ChatModel.swift:OfflineChatTransport",
+   "type": "class",
+   "name": "OfflineChatTransport",
+   "filePath": "apps/apple/NOMOApp/ChatModel.swift",
+   "lineRange": [
+    146,
+    158
+   ],
+   "summary": "OfflineChatTransport \u2014 class in ChatModel.swift, lines 146-158, methods: transcript, run.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NOMOApp/ChatModel.swift:ChatSessionModel",
+   "type": "class",
+   "name": "ChatSessionModel",
+   "filePath": "apps/apple/NOMOApp/ChatModel.swift",
+   "lineRange": [
+    162,
+    356
+   ],
+   "summary": "ChatSessionModel \u2014 class in ChatModel.swift, lines 162-356, methods: init, load, send, stop, toggleToolCall, noteTranscriptPosition.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "class:apps/apple/NOMOApp/ChatModel.swift:ChatTransportFactory",
+   "type": "class",
+   "name": "ChatTransportFactory",
+   "filePath": "apps/apple/NOMOApp/ChatModel.swift",
+   "lineRange": [
+    360,
+    376
+   ],
+   "summary": "ChatTransportFactory \u2014 class in ChatModel.swift, lines 360-376, methods: make.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/apple/NOMOApp/ChatTheme.swift",
+   "type": "file",
+   "name": "ChatTheme.swift",
+   "filePath": "apps/apple/NOMOApp/ChatTheme.swift",
+   "summary": "ChatTheme.swift \u2014 swift code, 217 lines, 3 functions, 9 classes, 43 exports, 0 imports.",
+   "tags": [
+    "swift",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:apps/apple/NOMOApp/ChatTheme.swift:dynamic",
+   "type": "function",
+   "name": "dynamic",
+   "filePath": "apps/apple/NOMOApp/ChatTheme.swift",
+   "lineRange": [
+    35,
+    39
+   ],
+   "summary": "dynamic(light, dark) \u2014 function in ChatTheme.swift, lines 35-39.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOApp/ChatTheme.swift:UIColor.init",
+   "type": "function",
+   "name": "UIColor.init",
+   "filePath": "apps/apple/NOMOApp/ChatTheme.swift",
+   "lineRange": [
+    182,
+    189
+   ],
+   "summary": "UIColor.init(value) \u2014 function in ChatTheme.swift, lines 182-189.",
+   "tags": [
+    "swift",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOApp/ChatTheme.swift:makeBody",
+   "type": "function",
+   "name": "makeBody",
+   "filePath": "apps/apple/NOMOApp/ChatTheme.swift",
+   "lineRange": [
+    201,
+    215
+   ],
+   "summary": "makeBody(configuration) \u2014 function in ChatTheme.swift, lines 201-215.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NOMOApp/ChatTheme.swift:NomoColor",
+   "type": "class",
+   "name": "NomoColor",
+   "filePath": "apps/apple/NOMOApp/ChatTheme.swift",
+   "lineRange": [
+    12,
+    40
+   ],
+   "summary": "NomoColor \u2014 class in ChatTheme.swift, lines 12-40, methods: dynamic.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NOMOApp/ChatTheme.swift:NomoTone",
+   "type": "class",
+   "name": "NomoTone",
+   "filePath": "apps/apple/NOMOApp/ChatTheme.swift",
+   "lineRange": [
+    45,
+    63
+   ],
+   "summary": "NomoTone \u2014 class in ChatTheme.swift, lines 45-63.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NOMOApp/ChatTheme.swift:NomoMetrics",
+   "type": "class",
+   "name": "NomoMetrics",
+   "filePath": "apps/apple/NOMOApp/ChatTheme.swift",
+   "lineRange": [
+    65,
+    80
+   ],
+   "summary": "NomoMetrics \u2014 class in ChatTheme.swift, lines 65-80.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NOMOApp/ChatTheme.swift:NomoFont",
+   "type": "class",
+   "name": "NomoFont",
+   "filePath": "apps/apple/NOMOApp/ChatTheme.swift",
+   "lineRange": [
+    84,
+    90
+   ],
+   "summary": "NomoFont \u2014 class in ChatTheme.swift, lines 84-90.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NOMOApp/ChatTheme.swift:NomoStatePill",
+   "type": "class",
+   "name": "NomoStatePill",
+   "filePath": "apps/apple/NOMOApp/ChatTheme.swift",
+   "lineRange": [
+    94,
+    116
+   ],
+   "summary": "NomoStatePill \u2014 class in ChatTheme.swift, lines 94-116.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NOMOApp/ChatTheme.swift:NomoNotice",
+   "type": "class",
+   "name": "NomoNotice",
+   "filePath": "apps/apple/NOMOApp/ChatTheme.swift",
+   "lineRange": [
+    124,
+    179
+   ],
+   "summary": "NomoNotice \u2014 class in ChatTheme.swift, lines 124-179.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NOMOApp/ChatTheme.swift:Kind",
+   "type": "class",
+   "name": "Kind",
+   "filePath": "apps/apple/NOMOApp/ChatTheme.swift",
+   "lineRange": [
+    125,
+    148
+   ],
+   "summary": "Kind \u2014 class in ChatTheme.swift, lines 125-148.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NOMOApp/ChatTheme.swift:extension UIColor",
+   "type": "class",
+   "name": "extension UIColor",
+   "filePath": "apps/apple/NOMOApp/ChatTheme.swift",
+   "lineRange": [
+    181,
+    190
+   ],
+   "summary": "extension UIColor \u2014 class in ChatTheme.swift, lines 181-190, methods: init.",
+   "tags": [
+    "swift",
+    "class"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NOMOApp/ChatTheme.swift:NomoPrimaryButtonStyle",
+   "type": "class",
+   "name": "NomoPrimaryButtonStyle",
+   "filePath": "apps/apple/NOMOApp/ChatTheme.swift",
+   "lineRange": [
+    198,
+    216
+   ],
+   "summary": "NomoPrimaryButtonStyle \u2014 class in ChatTheme.swift, lines 198-216, methods: makeBody.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/apple/NOMOApp/ChatView.swift",
+   "type": "file",
+   "name": "ChatView.swift",
+   "filePath": "apps/apple/NOMOApp/ChatView.swift",
+   "summary": "ChatView.swift \u2014 swift code, 480 lines, 6 functions, 5 classes, 13 exports, 0 imports.",
+   "tags": [
+    "swift",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:apps/apple/NOMOApp/ChatView.swift:ChatView.init",
+   "type": "function",
+   "name": "ChatView.init",
+   "filePath": "apps/apple/NOMOApp/ChatView.swift",
+   "lineRange": [
+    22,
+    28
+   ],
+   "summary": "ChatView.init(session) \u2014 function in ChatView.swift, lines 22-28.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOApp/ChatView.swift:transcript",
+   "type": "function",
+   "name": "transcript",
+   "filePath": "apps/apple/NOMOApp/ChatView.swift",
+   "lineRange": [
+    104,
+    155
+   ],
+   "summary": "transcript(proxy) \u2014 function in ChatView.swift, lines 104-155.",
+   "tags": [
+    "swift",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOApp/ChatView.swift:newMessagesBadge",
+   "type": "function",
+   "name": "newMessagesBadge",
+   "filePath": "apps/apple/NOMOApp/ChatView.swift",
+   "lineRange": [
+    204,
+    227
+   ],
+   "summary": "newMessagesBadge(proxy) \u2014 function in ChatView.swift, lines 204-227.",
+   "tags": [
+    "swift",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOApp/ChatView.swift:detail",
+   "type": "function",
+   "name": "detail",
+   "filePath": "apps/apple/NOMOApp/ChatView.swift",
+   "lineRange": [
+    447,
+    461
+   ],
+   "summary": "detail(label, value, code) \u2014 function in ChatView.swift, lines 447-461.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOApp/ChatView.swift:reduce",
+   "type": "function",
+   "name": "reduce",
+   "filePath": "apps/apple/NOMOApp/ChatView.swift",
+   "lineRange": [
+    469,
+    479
+   ],
+   "summary": "reduce(value, nextValue) \u2014 function in ChatView.swift, lines 469-479.",
+   "tags": [
+    "swift",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NOMOApp/ChatView.swift:ChatView",
+   "type": "class",
+   "name": "ChatView",
+   "filePath": "apps/apple/NOMOApp/ChatView.swift",
+   "lineRange": [
+    10,
+    386
+   ],
+   "summary": "ChatView \u2014 class in ChatView.swift, lines 10-386, methods: init, transcript, newMessagesBadge.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "class:apps/apple/NOMOApp/ChatView.swift:NomoCard",
+   "type": "class",
+   "name": "NomoCard",
+   "filePath": "apps/apple/NOMOApp/ChatView.swift",
+   "lineRange": [
+    390,
+    414
+   ],
+   "summary": "NomoCard \u2014 class in ChatView.swift, lines 390-414.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NOMOApp/ChatView.swift:ExpandedToolDetails",
+   "type": "class",
+   "name": "ExpandedToolDetails",
+   "filePath": "apps/apple/NOMOApp/ChatView.swift",
+   "lineRange": [
+    418,
+    462
+   ],
+   "summary": "ExpandedToolDetails \u2014 class in ChatView.swift, lines 418-462, methods: detail.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NOMOApp/ChatView.swift:TranscriptBottomKey",
+   "type": "class",
+   "name": "TranscriptBottomKey",
+   "filePath": "apps/apple/NOMOApp/ChatView.swift",
+   "lineRange": [
+    466,
+    472
+   ],
+   "summary": "TranscriptBottomKey \u2014 class in ChatView.swift, lines 466-472, methods: reduce.",
+   "tags": [
+    "swift",
+    "class"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NOMOApp/ChatView.swift:TranscriptViewportKey",
+   "type": "class",
+   "name": "TranscriptViewportKey",
+   "filePath": "apps/apple/NOMOApp/ChatView.swift",
+   "lineRange": [
+    474,
+    480
+   ],
+   "summary": "TranscriptViewportKey \u2014 class in ChatView.swift, lines 474-480, methods: reduce.",
+   "tags": [
+    "swift",
+    "class"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/apple/NOMOApp/Info.plist",
+   "type": "config",
+   "name": "Info.plist",
+   "filePath": "apps/apple/NOMOApp/Info.plist",
+   "summary": "Info.plist \u2014 xml config, 29 lines.",
+   "tags": [
+    "xml",
+    "config"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/apple/NOMOApp/MarkdownText.swift",
+   "type": "file",
+   "name": "MarkdownText.swift",
+   "filePath": "apps/apple/NOMOApp/MarkdownText.swift",
+   "summary": "MarkdownText.swift \u2014 swift code, 523 lines, 11 functions, 11 classes, 25 exports, 0 imports.",
+   "tags": [
+    "swift",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:apps/apple/NOMOApp/MarkdownText.swift:parse",
+   "type": "function",
+   "name": "parse",
+   "filePath": "apps/apple/NOMOApp/MarkdownText.swift",
+   "lineRange": [
+    25,
+    116
+   ],
+   "summary": "parse(source) \u2014 function in MarkdownText.swift, lines 25-116.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOApp/MarkdownText.swift:fenceMarker",
+   "type": "function",
+   "name": "fenceMarker",
+   "filePath": "apps/apple/NOMOApp/MarkdownText.swift",
+   "lineRange": [
+    118,
+    123
+   ],
+   "summary": "fenceMarker(line) \u2014 function in MarkdownText.swift, lines 118-123.",
+   "tags": [
+    "swift",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOApp/MarkdownText.swift:listItem",
+   "type": "function",
+   "name": "listItem",
+   "filePath": "apps/apple/NOMOApp/MarkdownText.swift",
+   "lineRange": [
+    125,
+    137
+   ],
+   "summary": "listItem(line) \u2014 function in MarkdownText.swift, lines 125-137.",
+   "tags": [
+    "swift",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOApp/MarkdownText.swift:parseTable",
+   "type": "function",
+   "name": "parseTable",
+   "filePath": "apps/apple/NOMOApp/MarkdownText.swift",
+   "lineRange": [
+    139,
+    163
+   ],
+   "summary": "parseTable(lines, start) \u2014 function in MarkdownText.swift, lines 139-163.",
+   "tags": [
+    "swift",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOApp/MarkdownText.swift:splitRow",
+   "type": "function",
+   "name": "splitRow",
+   "filePath": "apps/apple/NOMOApp/MarkdownText.swift",
+   "lineRange": [
+    165,
+    172
+   ],
+   "summary": "splitRow(line) \u2014 function in MarkdownText.swift, lines 165-172.",
+   "tags": [
+    "swift",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOApp/MarkdownText.swift:attributed",
+   "type": "function",
+   "name": "attributed",
+   "filePath": "apps/apple/NOMOApp/MarkdownText.swift",
+   "lineRange": [
+    184,
+    207
+   ],
+   "summary": "attributed(source, body, code, accent) \u2014 function in MarkdownText.swift, lines 184-207.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOApp/MarkdownText.swift:plain",
+   "type": "function",
+   "name": "plain",
+   "filePath": "apps/apple/NOMOApp/MarkdownText.swift",
+   "lineRange": [
+    209,
+    213
+   ],
+   "summary": "plain(text, font) \u2014 function in MarkdownText.swift, lines 209-213.",
+   "tags": [
+    "swift",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOApp/MarkdownText.swift:styled",
+   "type": "function",
+   "name": "styled",
+   "filePath": "apps/apple/NOMOApp/MarkdownText.swift",
+   "lineRange": [
+    215,
+    256
+   ],
+   "summary": "styled(token, body, code, accent) \u2014 function in MarkdownText.swift, lines 215-256.",
+   "tags": [
+    "swift",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOApp/MarkdownText.swift:MarkdownText.init",
+   "type": "function",
+   "name": "MarkdownText.init",
+   "filePath": "apps/apple/NOMOApp/MarkdownText.swift",
+   "lineRange": [
+    270,
+    273
+   ],
+   "summary": "MarkdownText.init(source) \u2014 function in MarkdownText.swift, lines 270-273.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOApp/MarkdownText.swift:block",
+   "type": "function",
+   "name": "block",
+   "filePath": "apps/apple/NOMOApp/MarkdownText.swift",
+   "lineRange": [
+    287,
+    329
+   ],
+   "summary": "block(block) \u2014 function in MarkdownText.swift, lines 287-329.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NOMOApp/MarkdownText.swift:headingFont",
+   "type": "function",
+   "name": "headingFont",
+   "filePath": "apps/apple/NOMOApp/MarkdownText.swift",
+   "lineRange": [
+    331,
+    338
+   ],
+   "summary": "headingFont(level) \u2014 function in MarkdownText.swift, lines 331-338.",
+   "tags": [
+    "swift",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NOMOApp/MarkdownText.swift:MarkdownElement",
+   "type": "class",
+   "name": "MarkdownElement",
+   "filePath": "apps/apple/NOMOApp/MarkdownText.swift",
+   "lineRange": [
+    6,
+    9
+   ],
+   "summary": "MarkdownElement \u2014 class in MarkdownText.swift, lines 6-9.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NOMOApp/MarkdownText.swift:MarkdownBlock",
+   "type": "class",
+   "name": "MarkdownBlock",
+   "filePath": "apps/apple/NOMOApp/MarkdownText.swift",
+   "lineRange": [
+    11,
+    19
+   ],
+   "summary": "MarkdownBlock \u2014 class in MarkdownText.swift, lines 11-19.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NOMOApp/MarkdownText.swift:MarkdownParser",
+   "type": "class",
+   "name": "MarkdownParser",
+   "filePath": "apps/apple/NOMOApp/MarkdownText.swift",
+   "lineRange": [
+    24,
+    173
+   ],
+   "summary": "MarkdownParser \u2014 class in MarkdownText.swift, lines 24-173, methods: parse, fenceMarker, listItem, parseTable, splitRow.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "class:apps/apple/NOMOApp/MarkdownText.swift:MarkdownInline",
+   "type": "class",
+   "name": "MarkdownInline",
+   "filePath": "apps/apple/NOMOApp/MarkdownText.swift",
+   "lineRange": [
+    179,
+    257
+   ],
+   "summary": "MarkdownInline \u2014 class in MarkdownText.swift, lines 179-257, methods: attributed, plain, styled.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NOMOApp/MarkdownText.swift:MarkdownText",
+   "type": "class",
+   "name": "MarkdownText",
+   "filePath": "apps/apple/NOMOApp/MarkdownText.swift",
+   "lineRange": [
+    261,
+    339
+   ],
+   "summary": "MarkdownText \u2014 class in MarkdownText.swift, lines 261-339, methods: init, block, headingFont.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NOMOApp/MarkdownText.swift:extension MarkdownText",
+   "type": "class",
+   "name": "extension MarkdownText",
+   "filePath": "apps/apple/NOMOApp/MarkdownText.swift",
+   "lineRange": [
+    341,
+    357
+   ],
+   "summary": "extension MarkdownText \u2014 class in MarkdownText.swift, lines 341-357.",
+   "tags": [
+    "swift",
+    "class"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NOMOApp/MarkdownText.swift:Row",
+   "type": "class",
+   "name": "Row",
+   "filePath": "apps/apple/NOMOApp/MarkdownText.swift",
+   "lineRange": [
+    342,
+    356
+   ],
+   "summary": "Row \u2014 class in MarkdownText.swift, lines 342-356.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NOMOApp/MarkdownText.swift:CodeBlock",
+   "type": "class",
+   "name": "CodeBlock",
+   "filePath": "apps/apple/NOMOApp/MarkdownText.swift",
+   "lineRange": [
+    362,
+    436
+   ],
+   "summary": "CodeBlock \u2014 class in MarkdownText.swift, lines 362-436.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NOMOApp/MarkdownText.swift:MarkdownTable",
+   "type": "class",
+   "name": "MarkdownTable",
+   "filePath": "apps/apple/NOMOApp/MarkdownText.swift",
+   "lineRange": [
+    441,
+    492
+   ],
+   "summary": "MarkdownTable \u2014 class in MarkdownText.swift, lines 441-492.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NOMOApp/MarkdownText.swift:MarkdownTableRow",
+   "type": "class",
+   "name": "MarkdownTableRow",
+   "filePath": "apps/apple/NOMOApp/MarkdownText.swift",
+   "lineRange": [
+    496,
+    510
+   ],
+   "summary": "MarkdownTableRow \u2014 class in MarkdownText.swift, lines 496-510.",
+   "tags": [
+    "swift",
+    "class"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NOMOApp/MarkdownText.swift:ScrollViewContainer",
+   "type": "class",
+   "name": "ScrollViewContainer",
+   "filePath": "apps/apple/NOMOApp/MarkdownText.swift",
+   "lineRange": [
+    515,
+    523
+   ],
+   "summary": "ScrollViewContainer \u2014 class in MarkdownText.swift, lines 515-523.",
+   "tags": [
+    "swift",
+    "class"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/apple/NOMOApp/NOMOApp.swift",
+   "type": "file",
+   "name": "NOMOApp.swift",
+   "filePath": "apps/apple/NOMOApp/NOMOApp.swift",
+   "summary": "NOMOApp.swift \u2014 swift code, 13 lines, 0 functions, 1 classes, 2 exports, 0 imports.",
+   "tags": [
+    "swift",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NOMOApp/NOMOApp.swift:NOMOApp",
+   "type": "class",
+   "name": "NOMOApp",
+   "filePath": "apps/apple/NOMOApp/NOMOApp.swift",
+   "lineRange": [
+    3,
+    13
+   ],
+   "summary": "NOMOApp \u2014 class in NOMOApp.swift, lines 3-13.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/apple/NOMOApp/OnboardingView.swift",
+   "type": "file",
+   "name": "OnboardingView.swift",
+   "filePath": "apps/apple/NOMOApp/OnboardingView.swift",
+   "summary": "OnboardingView.swift \u2014 swift code, 333 lines, 0 functions, 9 classes, 4 exports, 0 imports.",
+   "tags": [
+    "swift",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "class:apps/apple/NOMOApp/OnboardingView.swift:OnboardingView",
+   "type": "class",
+   "name": "OnboardingView",
+   "filePath": "apps/apple/NOMOApp/OnboardingView.swift",
+   "lineRange": [
+    3,
+    43
+   ],
+   "summary": "OnboardingView \u2014 class in OnboardingView.swift, lines 3-43.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NOMOApp/OnboardingView.swift:EntrySidebar",
+   "type": "class",
+   "name": "EntrySidebar",
+   "filePath": "apps/apple/NOMOApp/OnboardingView.swift",
+   "lineRange": [
+    45,
+    70
+   ],
+   "summary": "EntrySidebar \u2014 class in OnboardingView.swift, lines 45-70.",
+   "tags": [
+    "swift",
+    "class"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NOMOApp/OnboardingView.swift:EntryConnectionView",
+   "type": "class",
+   "name": "EntryConnectionView",
+   "filePath": "apps/apple/NOMOApp/OnboardingView.swift",
+   "lineRange": [
+    72,
+    175
+   ],
+   "summary": "EntryConnectionView \u2014 class in OnboardingView.swift, lines 72-175.",
+   "tags": [
+    "swift",
+    "class"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NOMOApp/OnboardingView.swift:EntryLanguagePicker",
+   "type": "class",
+   "name": "EntryLanguagePicker",
+   "filePath": "apps/apple/NOMOApp/OnboardingView.swift",
+   "lineRange": [
+    177,
+    195
+   ],
+   "summary": "EntryLanguagePicker \u2014 class in OnboardingView.swift, lines 177-195.",
+   "tags": [
+    "swift",
+    "class"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NOMOApp/OnboardingView.swift:EntryThemePicker",
+   "type": "class",
+   "name": "EntryThemePicker",
+   "filePath": "apps/apple/NOMOApp/OnboardingView.swift",
+   "lineRange": [
+    197,
+    218
+   ],
+   "summary": "EntryThemePicker \u2014 class in OnboardingView.swift, lines 197-218.",
+   "tags": [
+    "swift",
+    "class"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NOMOApp/OnboardingView.swift:EntryCard",
+   "type": "class",
+   "name": "EntryCard",
+   "filePath": "apps/apple/NOMOApp/OnboardingView.swift",
+   "lineRange": [
+    220,
+    238
+   ],
+   "summary": "EntryCard \u2014 class in OnboardingView.swift, lines 220-238.",
+   "tags": [
+    "swift",
+    "class"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NOMOApp/OnboardingView.swift:SessionsView",
+   "type": "class",
+   "name": "SessionsView",
+   "filePath": "apps/apple/NOMOApp/OnboardingView.swift",
+   "lineRange": [
+    240,
+    288
+   ],
+   "summary": "SessionsView \u2014 class in OnboardingView.swift, lines 240-288.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NOMOApp/OnboardingView.swift:StatusCard",
+   "type": "class",
+   "name": "StatusCard",
+   "filePath": "apps/apple/NOMOApp/OnboardingView.swift",
+   "lineRange": [
+    290,
+    313
+   ],
+   "summary": "StatusCard \u2014 class in OnboardingView.swift, lines 290-313.",
+   "tags": [
+    "swift",
+    "class"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NOMOApp/OnboardingView.swift:SessionRow",
+   "type": "class",
+   "name": "SessionRow",
+   "filePath": "apps/apple/NOMOApp/OnboardingView.swift",
+   "lineRange": [
+    315,
+    333
+   ],
+   "summary": "SessionRow \u2014 class in OnboardingView.swift, lines 315-333.",
+   "tags": [
+    "swift",
+    "class"
+   ],
+   "complexity": "simple"
+  }
+ ],
+ "edges": [
+  {
+   "source": "file:apps/apple/NOMOApp/AppCopy.swift",
+   "target": "function:apps/apple/NOMOApp/AppCopy.swift:AppCopy.init",
+   "type": "contains",
+   "direction": "forward",
+   "description": "AppCopy.swift defines AppCopy.init",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/AppCopy.swift",
+   "target": "function:apps/apple/NOMOApp/AppCopy.swift:AppCopy.init",
+   "type": "exports",
+   "direction": "forward",
+   "description": "AppCopy.swift exports AppCopy.init",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/AppCopy.swift",
+   "target": "function:apps/apple/NOMOApp/AppCopy.swift:outcomeTitle",
+   "type": "contains",
+   "direction": "forward",
+   "description": "AppCopy.swift defines outcomeTitle",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/AppCopy.swift",
+   "target": "function:apps/apple/NOMOApp/AppCopy.swift:outcomeTitle",
+   "type": "exports",
+   "direction": "forward",
+   "description": "AppCopy.swift exports outcomeTitle",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/AppCopy.swift",
+   "target": "function:apps/apple/NOMOApp/AppCopy.swift:outcomeExplanation",
+   "type": "contains",
+   "direction": "forward",
+   "description": "AppCopy.swift defines outcomeExplanation",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/AppCopy.swift",
+   "target": "function:apps/apple/NOMOApp/AppCopy.swift:outcomeExplanation",
+   "type": "exports",
+   "direction": "forward",
+   "description": "AppCopy.swift exports outcomeExplanation",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/AppCopy.swift",
+   "target": "function:apps/apple/NOMOApp/AppCopy.swift:removalNotice",
+   "type": "contains",
+   "direction": "forward",
+   "description": "AppCopy.swift defines removalNotice",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/AppCopy.swift",
+   "target": "function:apps/apple/NOMOApp/AppCopy.swift:removalNotice",
+   "type": "exports",
+   "direction": "forward",
+   "description": "AppCopy.swift exports removalNotice",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/AppCopy.swift",
+   "target": "function:apps/apple/NOMOApp/AppCopy.swift:connectionTitle",
+   "type": "contains",
+   "direction": "forward",
+   "description": "AppCopy.swift defines connectionTitle",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/AppCopy.swift",
+   "target": "function:apps/apple/NOMOApp/AppCopy.swift:connectionTitle",
+   "type": "exports",
+   "direction": "forward",
+   "description": "AppCopy.swift exports connectionTitle",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/AppCopy.swift",
+   "target": "function:apps/apple/NOMOApp/AppCopy.swift:sessionTitle",
+   "type": "contains",
+   "direction": "forward",
+   "description": "AppCopy.swift defines sessionTitle",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/AppCopy.swift",
+   "target": "function:apps/apple/NOMOApp/AppCopy.swift:sessionTitle",
+   "type": "exports",
+   "direction": "forward",
+   "description": "AppCopy.swift exports sessionTitle",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/AppCopy.swift",
+   "target": "function:apps/apple/NOMOApp/AppCopy.swift:sessionDetail",
+   "type": "contains",
+   "direction": "forward",
+   "description": "AppCopy.swift defines sessionDetail",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/AppCopy.swift",
+   "target": "function:apps/apple/NOMOApp/AppCopy.swift:sessionDetail",
+   "type": "exports",
+   "direction": "forward",
+   "description": "AppCopy.swift exports sessionDetail",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/AppCopy.swift",
+   "target": "function:apps/apple/NOMOApp/AppCopy.swift:connectionDetail",
+   "type": "contains",
+   "direction": "forward",
+   "description": "AppCopy.swift defines connectionDetail",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/AppCopy.swift",
+   "target": "function:apps/apple/NOMOApp/AppCopy.swift:connectionDetail",
+   "type": "exports",
+   "direction": "forward",
+   "description": "AppCopy.swift exports connectionDetail",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/AppCopy.swift",
+   "target": "class:apps/apple/NOMOApp/AppCopy.swift:AppCopy",
+   "type": "contains",
+   "direction": "forward",
+   "description": "AppCopy.swift defines class AppCopy",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatCopy.swift",
+   "target": "function:apps/apple/NOMOApp/ChatCopy.swift:stoppedDetail",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatCopy.swift defines stoppedDetail",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatCopy.swift",
+   "target": "function:apps/apple/NOMOApp/ChatCopy.swift:stoppedDetail",
+   "type": "exports",
+   "direction": "forward",
+   "description": "ChatCopy.swift exports stoppedDetail",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatCopy.swift",
+   "target": "function:apps/apple/NOMOApp/ChatCopy.swift:composerStatus",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatCopy.swift defines composerStatus",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatCopy.swift",
+   "target": "function:apps/apple/NOMOApp/ChatCopy.swift:composerStatus",
+   "type": "exports",
+   "direction": "forward",
+   "description": "ChatCopy.swift exports composerStatus",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatCopy.swift",
+   "target": "function:apps/apple/NOMOApp/ChatCopy.swift:unavailableDetail",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatCopy.swift defines unavailableDetail",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatCopy.swift",
+   "target": "function:apps/apple/NOMOApp/ChatCopy.swift:unavailableDetail",
+   "type": "exports",
+   "direction": "forward",
+   "description": "ChatCopy.swift exports unavailableDetail",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatCopy.swift",
+   "target": "function:apps/apple/NOMOApp/ChatCopy.swift:roleLabel",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatCopy.swift defines roleLabel",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatCopy.swift",
+   "target": "function:apps/apple/NOMOApp/ChatCopy.swift:roleLabel",
+   "type": "exports",
+   "direction": "forward",
+   "description": "ChatCopy.swift exports roleLabel",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatCopy.swift",
+   "target": "function:apps/apple/NOMOApp/ChatCopy.swift:toolStateLabel",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatCopy.swift defines toolStateLabel",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatCopy.swift",
+   "target": "function:apps/apple/NOMOApp/ChatCopy.swift:toolStateLabel",
+   "type": "exports",
+   "direction": "forward",
+   "description": "ChatCopy.swift exports toolStateLabel",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatCopy.swift",
+   "target": "function:apps/apple/NOMOApp/ChatCopy.swift:toolTone",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatCopy.swift defines toolTone",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatCopy.swift",
+   "target": "function:apps/apple/NOMOApp/ChatCopy.swift:toolTone",
+   "type": "exports",
+   "direction": "forward",
+   "description": "ChatCopy.swift exports toolTone",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatCopy.swift",
+   "target": "function:apps/apple/NOMOApp/ChatCopy.swift:toolCardSummary",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatCopy.swift defines toolCardSummary",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatCopy.swift",
+   "target": "function:apps/apple/NOMOApp/ChatCopy.swift:toolCardSummary",
+   "type": "exports",
+   "direction": "forward",
+   "description": "ChatCopy.swift exports toolCardSummary",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatCopy.swift",
+   "target": "class:apps/apple/NOMOApp/ChatCopy.swift:ChatCopy",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatCopy.swift defines class ChatCopy",
+   "weight": 1.0
+  },
+  {
+   "source": "function:apps/apple/NOMOApp/ChatCopy.swift:toolCardSummary",
+   "target": "function:apps/apple/NOMOApp/ChatCopy.swift:toolStateLabel",
+   "type": "calls",
+   "direction": "forward",
+   "description": "toolCardSummary calls toolStateLabel",
+   "weight": 0.6
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatMessageRow.swift",
+   "target": "function:apps/apple/NOMOApp/ChatMessageRow.swift:roleLabel",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatMessageRow.swift defines roleLabel",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatMessageRow.swift",
+   "target": "function:apps/apple/NOMOApp/ChatMessageRow.swift:body",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatMessageRow.swift defines body",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatMessageRow.swift",
+   "target": "function:apps/apple/NOMOApp/ChatMessageRow.swift:body",
+   "type": "exports",
+   "direction": "forward",
+   "description": "ChatMessageRow.swift exports body",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatMessageRow.swift",
+   "target": "function:apps/apple/NOMOApp/ChatMessageRow.swift:symbol",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatMessageRow.swift defines symbol",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatMessageRow.swift",
+   "target": "class:apps/apple/NOMOApp/ChatMessageRow.swift:ChatMessageRow",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatMessageRow.swift defines class ChatMessageRow",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatMessageRow.swift",
+   "target": "class:apps/apple/NOMOApp/ChatMessageRow.swift:OptionalIdentifier",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatMessageRow.swift defines class OptionalIdentifier",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatMessageRow.swift",
+   "target": "class:apps/apple/NOMOApp/ChatMessageRow.swift:StreamingIndicator",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatMessageRow.swift defines class StreamingIndicator",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatMessageRow.swift",
+   "target": "class:apps/apple/NOMOApp/ChatMessageRow.swift:ToolCallCard",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatMessageRow.swift defines class ToolCallCard",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatMessageRow.swift",
+   "target": "class:apps/apple/NOMOApp/ChatMessageRow.swift:ToolCallDisclosure",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatMessageRow.swift defines class ToolCallDisclosure",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatModel.swift",
+   "target": "function:apps/apple/NOMOApp/ChatModel.swift:transcript",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatModel.swift defines transcript",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatModel.swift",
+   "target": "function:apps/apple/NOMOApp/ChatModel.swift:transcript",
+   "type": "exports",
+   "direction": "forward",
+   "description": "ChatModel.swift exports transcript",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatModel.swift",
+   "target": "function:apps/apple/NOMOApp/ChatModel.swift:run",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatModel.swift defines run",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatModel.swift",
+   "target": "function:apps/apple/NOMOApp/ChatModel.swift:run",
+   "type": "exports",
+   "direction": "forward",
+   "description": "ChatModel.swift exports run",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatModel.swift",
+   "target": "function:apps/apple/NOMOApp/ChatModel.swift:ChatSessionModel.init",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatModel.swift defines ChatSessionModel.init",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatModel.swift",
+   "target": "function:apps/apple/NOMOApp/ChatModel.swift:ChatSessionModel.init",
+   "type": "exports",
+   "direction": "forward",
+   "description": "ChatModel.swift exports ChatSessionModel.init",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatModel.swift",
+   "target": "function:apps/apple/NOMOApp/ChatModel.swift:load",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatModel.swift defines load",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatModel.swift",
+   "target": "function:apps/apple/NOMOApp/ChatModel.swift:load",
+   "type": "exports",
+   "direction": "forward",
+   "description": "ChatModel.swift exports load",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatModel.swift",
+   "target": "function:apps/apple/NOMOApp/ChatModel.swift:send",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatModel.swift defines send",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatModel.swift",
+   "target": "function:apps/apple/NOMOApp/ChatModel.swift:send",
+   "type": "exports",
+   "direction": "forward",
+   "description": "ChatModel.swift exports send",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatModel.swift",
+   "target": "function:apps/apple/NOMOApp/ChatModel.swift:stop",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatModel.swift defines stop",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatModel.swift",
+   "target": "function:apps/apple/NOMOApp/ChatModel.swift:stop",
+   "type": "exports",
+   "direction": "forward",
+   "description": "ChatModel.swift exports stop",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatModel.swift",
+   "target": "function:apps/apple/NOMOApp/ChatModel.swift:toggleToolCall",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatModel.swift defines toggleToolCall",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatModel.swift",
+   "target": "function:apps/apple/NOMOApp/ChatModel.swift:toggleToolCall",
+   "type": "exports",
+   "direction": "forward",
+   "description": "ChatModel.swift exports toggleToolCall",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatModel.swift",
+   "target": "function:apps/apple/NOMOApp/ChatModel.swift:noteTranscriptPosition",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatModel.swift defines noteTranscriptPosition",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatModel.swift",
+   "target": "function:apps/apple/NOMOApp/ChatModel.swift:noteTranscriptPosition",
+   "type": "exports",
+   "direction": "forward",
+   "description": "ChatModel.swift exports noteTranscriptPosition",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatModel.swift",
+   "target": "function:apps/apple/NOMOApp/ChatModel.swift:jumpToLatest",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatModel.swift defines jumpToLatest",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatModel.swift",
+   "target": "function:apps/apple/NOMOApp/ChatModel.swift:jumpToLatest",
+   "type": "exports",
+   "direction": "forward",
+   "description": "ChatModel.swift exports jumpToLatest",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatModel.swift",
+   "target": "function:apps/apple/NOMOApp/ChatModel.swift:startRun",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatModel.swift defines startRun",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatModel.swift",
+   "target": "function:apps/apple/NOMOApp/ChatModel.swift:apply",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatModel.swift defines apply",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatModel.swift",
+   "target": "function:apps/apple/NOMOApp/ChatModel.swift:finishRun",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatModel.swift defines finishRun",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatModel.swift",
+   "target": "function:apps/apple/NOMOApp/ChatModel.swift:reason",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatModel.swift defines reason",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatModel.swift",
+   "target": "function:apps/apple/NOMOApp/ChatModel.swift:reason",
+   "type": "exports",
+   "direction": "forward",
+   "description": "ChatModel.swift exports reason",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatModel.swift",
+   "target": "function:apps/apple/NOMOApp/ChatModel.swift:make",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatModel.swift defines make",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatModel.swift",
+   "target": "function:apps/apple/NOMOApp/ChatModel.swift:make",
+   "type": "exports",
+   "direction": "forward",
+   "description": "ChatModel.swift exports make",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatModel.swift",
+   "target": "class:apps/apple/NOMOApp/ChatModel.swift:ChatRole",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatModel.swift defines class ChatRole",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatModel.swift",
+   "target": "class:apps/apple/NOMOApp/ChatModel.swift:ChatMessageState",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatModel.swift defines class ChatMessageState",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatModel.swift",
+   "target": "class:apps/apple/NOMOApp/ChatModel.swift:ToolCall",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatModel.swift defines class ToolCall",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatModel.swift",
+   "target": "class:apps/apple/NOMOApp/ChatModel.swift:State",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatModel.swift defines class State",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatModel.swift",
+   "target": "class:apps/apple/NOMOApp/ChatModel.swift:ChatMessage",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatModel.swift defines class ChatMessage",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatModel.swift",
+   "target": "class:apps/apple/NOMOApp/ChatModel.swift:ChatBlockReason",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatModel.swift defines class ChatBlockReason",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatModel.swift",
+   "target": "class:apps/apple/NOMOApp/ChatModel.swift:ChatTransportAvailability",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatModel.swift defines class ChatTransportAvailability",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatModel.swift",
+   "target": "class:apps/apple/NOMOApp/ChatModel.swift:ChatRunState",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatModel.swift defines class ChatRunState",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatModel.swift",
+   "target": "class:apps/apple/NOMOApp/ChatModel.swift:ChatLoadState",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatModel.swift defines class ChatLoadState",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatModel.swift",
+   "target": "class:apps/apple/NOMOApp/ChatModel.swift:ChatTranscriptSource",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatModel.swift defines class ChatTranscriptSource",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatModel.swift",
+   "target": "class:apps/apple/NOMOApp/ChatModel.swift:ChatTranscriptPage",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatModel.swift defines class ChatTranscriptPage",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatModel.swift",
+   "target": "class:apps/apple/NOMOApp/ChatModel.swift:ChatRunRequest",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatModel.swift defines class ChatRunRequest",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatModel.swift",
+   "target": "class:apps/apple/NOMOApp/ChatModel.swift:ChatRunEvent",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatModel.swift defines class ChatRunEvent",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatModel.swift",
+   "target": "class:apps/apple/NOMOApp/ChatModel.swift:ChatTransportError",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatModel.swift defines class ChatTransportError",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatModel.swift",
+   "target": "class:apps/apple/NOMOApp/ChatModel.swift:ChatTransport",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatModel.swift defines class ChatTransport",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatModel.swift",
+   "target": "class:apps/apple/NOMOApp/ChatModel.swift:OfflineChatTransport",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatModel.swift defines class OfflineChatTransport",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatModel.swift",
+   "target": "class:apps/apple/NOMOApp/ChatModel.swift:ChatSessionModel",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatModel.swift defines class ChatSessionModel",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatModel.swift",
+   "target": "class:apps/apple/NOMOApp/ChatModel.swift:ChatTransportFactory",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatModel.swift defines class ChatTransportFactory",
+   "weight": 1.0
+  },
+  {
+   "source": "function:apps/apple/NOMOApp/ChatModel.swift:load",
+   "target": "function:apps/apple/NOMOApp/ChatModel.swift:transcript",
+   "type": "calls",
+   "direction": "forward",
+   "description": "load calls transcript",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/apple/NOMOApp/ChatModel.swift:send",
+   "target": "function:apps/apple/NOMOApp/ChatModel.swift:startRun",
+   "type": "calls",
+   "direction": "forward",
+   "description": "send calls startRun",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/apple/NOMOApp/ChatModel.swift:startRun",
+   "target": "function:apps/apple/NOMOApp/ChatModel.swift:run",
+   "type": "calls",
+   "direction": "forward",
+   "description": "startRun calls run",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/apple/NOMOApp/ChatModel.swift:startRun",
+   "target": "function:apps/apple/NOMOApp/ChatModel.swift:apply",
+   "type": "calls",
+   "direction": "forward",
+   "description": "startRun calls apply",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/apple/NOMOApp/ChatModel.swift:startRun",
+   "target": "function:apps/apple/NOMOApp/ChatModel.swift:finishRun",
+   "type": "calls",
+   "direction": "forward",
+   "description": "startRun calls finishRun",
+   "weight": 0.6
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatTheme.swift",
+   "target": "function:apps/apple/NOMOApp/ChatTheme.swift:dynamic",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatTheme.swift defines dynamic",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatTheme.swift",
+   "target": "function:apps/apple/NOMOApp/ChatTheme.swift:dynamic",
+   "type": "exports",
+   "direction": "forward",
+   "description": "ChatTheme.swift exports dynamic",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatTheme.swift",
+   "target": "function:apps/apple/NOMOApp/ChatTheme.swift:UIColor.init",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatTheme.swift defines UIColor.init",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatTheme.swift",
+   "target": "function:apps/apple/NOMOApp/ChatTheme.swift:makeBody",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatTheme.swift defines makeBody",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatTheme.swift",
+   "target": "function:apps/apple/NOMOApp/ChatTheme.swift:makeBody",
+   "type": "exports",
+   "direction": "forward",
+   "description": "ChatTheme.swift exports makeBody",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatTheme.swift",
+   "target": "class:apps/apple/NOMOApp/ChatTheme.swift:NomoColor",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatTheme.swift defines class NomoColor",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatTheme.swift",
+   "target": "class:apps/apple/NOMOApp/ChatTheme.swift:NomoTone",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatTheme.swift defines class NomoTone",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatTheme.swift",
+   "target": "class:apps/apple/NOMOApp/ChatTheme.swift:NomoMetrics",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatTheme.swift defines class NomoMetrics",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatTheme.swift",
+   "target": "class:apps/apple/NOMOApp/ChatTheme.swift:NomoFont",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatTheme.swift defines class NomoFont",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatTheme.swift",
+   "target": "class:apps/apple/NOMOApp/ChatTheme.swift:NomoStatePill",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatTheme.swift defines class NomoStatePill",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatTheme.swift",
+   "target": "class:apps/apple/NOMOApp/ChatTheme.swift:NomoNotice",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatTheme.swift defines class NomoNotice",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatTheme.swift",
+   "target": "class:apps/apple/NOMOApp/ChatTheme.swift:Kind",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatTheme.swift defines class Kind",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatTheme.swift",
+   "target": "class:apps/apple/NOMOApp/ChatTheme.swift:extension UIColor",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatTheme.swift defines class extension UIColor",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatTheme.swift",
+   "target": "class:apps/apple/NOMOApp/ChatTheme.swift:NomoPrimaryButtonStyle",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatTheme.swift defines class NomoPrimaryButtonStyle",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatView.swift",
+   "target": "function:apps/apple/NOMOApp/ChatView.swift:ChatView.init",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatView.swift defines ChatView.init",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatView.swift",
+   "target": "function:apps/apple/NOMOApp/ChatView.swift:ChatView.init",
+   "type": "exports",
+   "direction": "forward",
+   "description": "ChatView.swift exports ChatView.init",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatView.swift",
+   "target": "function:apps/apple/NOMOApp/ChatView.swift:transcript",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatView.swift defines transcript",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatView.swift",
+   "target": "function:apps/apple/NOMOApp/ChatView.swift:newMessagesBadge",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatView.swift defines newMessagesBadge",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatView.swift",
+   "target": "function:apps/apple/NOMOApp/ChatView.swift:detail",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatView.swift defines detail",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatView.swift",
+   "target": "function:apps/apple/NOMOApp/ChatView.swift:detail",
+   "type": "exports",
+   "direction": "forward",
+   "description": "ChatView.swift exports detail",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatView.swift",
+   "target": "function:apps/apple/NOMOApp/ChatView.swift:reduce",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatView.swift defines reduce",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatView.swift",
+   "target": "class:apps/apple/NOMOApp/ChatView.swift:ChatView",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatView.swift defines class ChatView",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatView.swift",
+   "target": "class:apps/apple/NOMOApp/ChatView.swift:NomoCard",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatView.swift defines class NomoCard",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatView.swift",
+   "target": "class:apps/apple/NOMOApp/ChatView.swift:ExpandedToolDetails",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatView.swift defines class ExpandedToolDetails",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatView.swift",
+   "target": "class:apps/apple/NOMOApp/ChatView.swift:TranscriptBottomKey",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatView.swift defines class TranscriptBottomKey",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/ChatView.swift",
+   "target": "class:apps/apple/NOMOApp/ChatView.swift:TranscriptViewportKey",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ChatView.swift defines class TranscriptViewportKey",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/MarkdownText.swift",
+   "target": "function:apps/apple/NOMOApp/MarkdownText.swift:parse",
+   "type": "contains",
+   "direction": "forward",
+   "description": "MarkdownText.swift defines parse",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/MarkdownText.swift",
+   "target": "function:apps/apple/NOMOApp/MarkdownText.swift:parse",
+   "type": "exports",
+   "direction": "forward",
+   "description": "MarkdownText.swift exports parse",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/MarkdownText.swift",
+   "target": "function:apps/apple/NOMOApp/MarkdownText.swift:fenceMarker",
+   "type": "contains",
+   "direction": "forward",
+   "description": "MarkdownText.swift defines fenceMarker",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/MarkdownText.swift",
+   "target": "function:apps/apple/NOMOApp/MarkdownText.swift:listItem",
+   "type": "contains",
+   "direction": "forward",
+   "description": "MarkdownText.swift defines listItem",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/MarkdownText.swift",
+   "target": "function:apps/apple/NOMOApp/MarkdownText.swift:parseTable",
+   "type": "contains",
+   "direction": "forward",
+   "description": "MarkdownText.swift defines parseTable",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/MarkdownText.swift",
+   "target": "function:apps/apple/NOMOApp/MarkdownText.swift:splitRow",
+   "type": "contains",
+   "direction": "forward",
+   "description": "MarkdownText.swift defines splitRow",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/MarkdownText.swift",
+   "target": "function:apps/apple/NOMOApp/MarkdownText.swift:attributed",
+   "type": "contains",
+   "direction": "forward",
+   "description": "MarkdownText.swift defines attributed",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/MarkdownText.swift",
+   "target": "function:apps/apple/NOMOApp/MarkdownText.swift:attributed",
+   "type": "exports",
+   "direction": "forward",
+   "description": "MarkdownText.swift exports attributed",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/MarkdownText.swift",
+   "target": "function:apps/apple/NOMOApp/MarkdownText.swift:plain",
+   "type": "contains",
+   "direction": "forward",
+   "description": "MarkdownText.swift defines plain",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/MarkdownText.swift",
+   "target": "function:apps/apple/NOMOApp/MarkdownText.swift:styled",
+   "type": "contains",
+   "direction": "forward",
+   "description": "MarkdownText.swift defines styled",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/MarkdownText.swift",
+   "target": "function:apps/apple/NOMOApp/MarkdownText.swift:MarkdownText.init",
+   "type": "contains",
+   "direction": "forward",
+   "description": "MarkdownText.swift defines MarkdownText.init",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/MarkdownText.swift",
+   "target": "function:apps/apple/NOMOApp/MarkdownText.swift:MarkdownText.init",
+   "type": "exports",
+   "direction": "forward",
+   "description": "MarkdownText.swift exports MarkdownText.init",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/MarkdownText.swift",
+   "target": "function:apps/apple/NOMOApp/MarkdownText.swift:block",
+   "type": "contains",
+   "direction": "forward",
+   "description": "MarkdownText.swift defines block",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/MarkdownText.swift",
+   "target": "function:apps/apple/NOMOApp/MarkdownText.swift:block",
+   "type": "exports",
+   "direction": "forward",
+   "description": "MarkdownText.swift exports block",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/MarkdownText.swift",
+   "target": "function:apps/apple/NOMOApp/MarkdownText.swift:headingFont",
+   "type": "contains",
+   "direction": "forward",
+   "description": "MarkdownText.swift defines headingFont",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/MarkdownText.swift",
+   "target": "class:apps/apple/NOMOApp/MarkdownText.swift:MarkdownElement",
+   "type": "contains",
+   "direction": "forward",
+   "description": "MarkdownText.swift defines class MarkdownElement",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/MarkdownText.swift",
+   "target": "class:apps/apple/NOMOApp/MarkdownText.swift:MarkdownBlock",
+   "type": "contains",
+   "direction": "forward",
+   "description": "MarkdownText.swift defines class MarkdownBlock",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/MarkdownText.swift",
+   "target": "class:apps/apple/NOMOApp/MarkdownText.swift:MarkdownParser",
+   "type": "contains",
+   "direction": "forward",
+   "description": "MarkdownText.swift defines class MarkdownParser",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/MarkdownText.swift",
+   "target": "class:apps/apple/NOMOApp/MarkdownText.swift:MarkdownInline",
+   "type": "contains",
+   "direction": "forward",
+   "description": "MarkdownText.swift defines class MarkdownInline",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/MarkdownText.swift",
+   "target": "class:apps/apple/NOMOApp/MarkdownText.swift:MarkdownText",
+   "type": "contains",
+   "direction": "forward",
+   "description": "MarkdownText.swift defines class MarkdownText",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/MarkdownText.swift",
+   "target": "class:apps/apple/NOMOApp/MarkdownText.swift:extension MarkdownText",
+   "type": "contains",
+   "direction": "forward",
+   "description": "MarkdownText.swift defines class extension MarkdownText",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/MarkdownText.swift",
+   "target": "class:apps/apple/NOMOApp/MarkdownText.swift:Row",
+   "type": "contains",
+   "direction": "forward",
+   "description": "MarkdownText.swift defines class Row",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/MarkdownText.swift",
+   "target": "class:apps/apple/NOMOApp/MarkdownText.swift:CodeBlock",
+   "type": "contains",
+   "direction": "forward",
+   "description": "MarkdownText.swift defines class CodeBlock",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/MarkdownText.swift",
+   "target": "class:apps/apple/NOMOApp/MarkdownText.swift:MarkdownTable",
+   "type": "contains",
+   "direction": "forward",
+   "description": "MarkdownText.swift defines class MarkdownTable",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/MarkdownText.swift",
+   "target": "class:apps/apple/NOMOApp/MarkdownText.swift:MarkdownTableRow",
+   "type": "contains",
+   "direction": "forward",
+   "description": "MarkdownText.swift defines class MarkdownTableRow",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/MarkdownText.swift",
+   "target": "class:apps/apple/NOMOApp/MarkdownText.swift:ScrollViewContainer",
+   "type": "contains",
+   "direction": "forward",
+   "description": "MarkdownText.swift defines class ScrollViewContainer",
+   "weight": 1.0
+  },
+  {
+   "source": "function:apps/apple/NOMOApp/MarkdownText.swift:parse",
+   "target": "function:apps/apple/NOMOApp/MarkdownText.swift:fenceMarker",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parse calls fenceMarker",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/apple/NOMOApp/MarkdownText.swift:parse",
+   "target": "function:apps/apple/NOMOApp/MarkdownText.swift:parseTable",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parse calls parseTable",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/apple/NOMOApp/MarkdownText.swift:parse",
+   "target": "function:apps/apple/NOMOApp/MarkdownText.swift:listItem",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parse calls listItem",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/apple/NOMOApp/MarkdownText.swift:parseTable",
+   "target": "function:apps/apple/NOMOApp/MarkdownText.swift:splitRow",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parseTable calls splitRow",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/apple/NOMOApp/MarkdownText.swift:attributed",
+   "target": "function:apps/apple/NOMOApp/MarkdownText.swift:plain",
+   "type": "calls",
+   "direction": "forward",
+   "description": "attributed calls plain",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/apple/NOMOApp/MarkdownText.swift:attributed",
+   "target": "function:apps/apple/NOMOApp/MarkdownText.swift:styled",
+   "type": "calls",
+   "direction": "forward",
+   "description": "attributed calls styled",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/apple/NOMOApp/MarkdownText.swift:styled",
+   "target": "function:apps/apple/NOMOApp/MarkdownText.swift:plain",
+   "type": "calls",
+   "direction": "forward",
+   "description": "styled calls plain",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/apple/NOMOApp/MarkdownText.swift:block",
+   "target": "function:apps/apple/NOMOApp/MarkdownText.swift:headingFont",
+   "type": "calls",
+   "direction": "forward",
+   "description": "block calls headingFont",
+   "weight": 0.6
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/NOMOApp.swift",
+   "target": "class:apps/apple/NOMOApp/NOMOApp.swift:NOMOApp",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NOMOApp.swift defines class NOMOApp",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/OnboardingView.swift",
+   "target": "class:apps/apple/NOMOApp/OnboardingView.swift:OnboardingView",
+   "type": "contains",
+   "direction": "forward",
+   "description": "OnboardingView.swift defines class OnboardingView",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/OnboardingView.swift",
+   "target": "class:apps/apple/NOMOApp/OnboardingView.swift:EntrySidebar",
+   "type": "contains",
+   "direction": "forward",
+   "description": "OnboardingView.swift defines class EntrySidebar",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/OnboardingView.swift",
+   "target": "class:apps/apple/NOMOApp/OnboardingView.swift:EntryConnectionView",
+   "type": "contains",
+   "direction": "forward",
+   "description": "OnboardingView.swift defines class EntryConnectionView",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/OnboardingView.swift",
+   "target": "class:apps/apple/NOMOApp/OnboardingView.swift:EntryLanguagePicker",
+   "type": "contains",
+   "direction": "forward",
+   "description": "OnboardingView.swift defines class EntryLanguagePicker",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/OnboardingView.swift",
+   "target": "class:apps/apple/NOMOApp/OnboardingView.swift:EntryThemePicker",
+   "type": "contains",
+   "direction": "forward",
+   "description": "OnboardingView.swift defines class EntryThemePicker",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/OnboardingView.swift",
+   "target": "class:apps/apple/NOMOApp/OnboardingView.swift:EntryCard",
+   "type": "contains",
+   "direction": "forward",
+   "description": "OnboardingView.swift defines class EntryCard",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/OnboardingView.swift",
+   "target": "class:apps/apple/NOMOApp/OnboardingView.swift:SessionsView",
+   "type": "contains",
+   "direction": "forward",
+   "description": "OnboardingView.swift defines class SessionsView",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/OnboardingView.swift",
+   "target": "class:apps/apple/NOMOApp/OnboardingView.swift:StatusCard",
+   "type": "contains",
+   "direction": "forward",
+   "description": "OnboardingView.swift defines class StatusCard",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NOMOApp/OnboardingView.swift",
+   "target": "class:apps/apple/NOMOApp/OnboardingView.swift:SessionRow",
+   "type": "contains",
+   "direction": "forward",
+   "description": "OnboardingView.swift defines class SessionRow",
+   "weight": 1.0
+  }
+ ]
+}

@@ -1,0 +1,185 @@
+{
+ "nodes": [
+  {
+   "id": "file:docs/superpowers/specs/2026-09-15-managed-git-recovery-design.md",
+   "type": "document",
+   "name": "2026-09-15-managed-git-recovery-design.md",
+   "filePath": "docs/superpowers/specs/2026-09-15-managed-git-recovery-design.md",
+   "summary": "2026-09-15-managed-git-recovery-design.md \u2014 markdown document, 148 lines, 11 sections: Managed Git Recovery Design, Status, Goal, Trust boundary (+7 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/superpowers/specs/2026-09-21-nvidia-product-parity-design.md",
+   "type": "document",
+   "name": "2026-09-21-nvidia-product-parity-design.md",
+   "filePath": "docs/superpowers/specs/2026-09-21-nvidia-product-parity-design.md",
+   "summary": "2026-09-21-nvidia-product-parity-design.md \u2014 markdown document, 75 lines, 10 sections: NVIDIA model and product parity design, Goal, Current facts, Decisions (+6 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/superpowers/specs/2026-09-22-parity-contracts.md",
+   "type": "document",
+   "name": "2026-09-22-parity-contracts.md",
+   "filePath": "docs/superpowers/specs/2026-09-22-parity-contracts.md",
+   "summary": "2026-09-22-parity-contracts.md \u2014 markdown document, 213 lines, 9 sections: NOMO parity contracts, frozen 2026-09-22, Lane ownership, disjoint by path, 1. ProviderState, 2. Shared view vocabulary (+5 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:docs/superpowers/specs/2026-09-23-r02-legacy-proxy-binding-design.md",
+   "type": "document",
+   "name": "2026-09-23-r02-legacy-proxy-binding-design.md",
+   "filePath": "docs/superpowers/specs/2026-09-23-r02-legacy-proxy-binding-design.md",
+   "summary": "2026-09-23-r02-legacy-proxy-binding-design.md \u2014 markdown document, 223 lines, 17 sections: R02 legacy proxy binding design, Objective, Current gap, Decision (+13 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:docs/superpowers/specs/2026-09-28-tui-mcp-manager-v1.md",
+   "type": "document",
+   "name": "2026-09-28-tui-mcp-manager-v1.md",
+   "filePath": "docs/superpowers/specs/2026-09-28-tui-mcp-manager-v1.md",
+   "summary": "2026-09-28-tui-mcp-manager-v1.md \u2014 markdown document, 27 lines, 5 sections: Specification: TUI MCP Server Manager & Developer-First Local Provider Workflow (V1), 1. Objective, 2. Architecture & Contracts, 3. Commands (+1 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/superpowers/specs/2026-10-08-nomo-agent-identity-fleet-capability-map.md",
+   "type": "document",
+   "name": "2026-10-08-nomo-agent-identity-fleet-capability-map.md",
+   "filePath": "docs/superpowers/specs/2026-10-08-nomo-agent-identity-fleet-capability-map.md",
+   "summary": "2026-10-08-nomo-agent-identity-fleet-capability-map.md \u2014 markdown document, 79 lines, 8 sections: Capability Map: NOMO Agent Identity and Fleet Control Plane, C\u00edl a doporu\u010den\u00fd p\u0159\u00edstup, Moduly, hranice a z\u00e1vislosti, V\u00fdchoz\u00ed implementa\u010dn\u00ed stav (+4 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/superpowers/specs/2026-10-08-nomo-agent-identity-fleet-mvp-spec.md",
+   "type": "document",
+   "name": "2026-10-08-nomo-agent-identity-fleet-mvp-spec.md",
+   "filePath": "docs/superpowers/specs/2026-10-08-nomo-agent-identity-fleet-mvp-spec.md",
+   "summary": "2026-10-08-nomo-agent-identity-fleet-mvp-spec.md \u2014 markdown document, 300 lines, 18 sections: Spec: NOMO Agent Identity and Fleet Control Plane, Objective, User and business outcomes, Technology and commands (+14 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:docs/superpowers/specs/2026-10-23-nomo-harness-beta-and-provider-compatibility.md",
+   "type": "document",
+   "name": "2026-10-23-nomo-harness-beta-and-provider-compatibility.md",
+   "filePath": "docs/superpowers/specs/2026-10-23-nomo-harness-beta-and-provider-compatibility.md",
+   "summary": "2026-10-23-nomo-harness-beta-and-provider-compatibility.md \u2014 markdown document, 124 lines, 14 sections: NOMO harness: instalace pro testery a kompatibilita provider\u016f, C\u00edl, Potvrzen\u00e9 volby, V\u00fdchoz\u00ed stav a d\u016fkazy (+10 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/superpowers/specs/2026-10-24-nomo-project-workspace-boundary.md",
+   "type": "document",
+   "name": "2026-10-24-nomo-project-workspace-boundary.md",
+   "filePath": "docs/superpowers/specs/2026-10-24-nomo-project-workspace-boundary.md",
+   "summary": "2026-10-24-nomo-project-workspace-boundary.md \u2014 markdown document, 56 lines, 8 sections: NOMO izolovan\u00fd projektov\u00fd pracovn\u00ed prostor, Stav, Probl\u00e9m a c\u00edl, Rozhodnut\u00ed (+4 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/superpowers/specs/2026-10-25-nomo-agent-runner-design.md",
+   "type": "document",
+   "name": "2026-10-25-nomo-agent-runner-design.md",
+   "filePath": "docs/superpowers/specs/2026-10-25-nomo-agent-runner-design.md",
+   "summary": "2026-10-25-nomo-agent-runner-design.md \u2014 markdown document, 100 lines, 15 sections: N\u00e1vrh: odd\u011blen\u00e1 hranice pro coding-agent runtime, Stav, Probl\u00e9m a c\u00edl, Ov\u011b\u0159en\u00fd z\u00e1klad (+11 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/superpowers/specs/2026-11-07-h75-storage-cutover-operator-gate.md",
+   "type": "document",
+   "name": "2026-11-07-h75-storage-cutover-operator-gate.md",
+   "filePath": "docs/superpowers/specs/2026-11-07-h75-storage-cutover-operator-gate.md",
+   "summary": "2026-11-07-h75-storage-cutover-operator-gate.md \u2014 markdown document, 111 lines, 8 sections: H75 local storage cutover gate, Work lanes and current disposition, Deployment-owner handoff: exact evidence and decisions required, Local implementation evidence (+4 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/superpowers/specs/2026-11-07-nomo-inbound-openai-chat-completions.md",
+   "type": "document",
+   "name": "2026-11-07-nomo-inbound-openai-chat-completions.md",
+   "filePath": "docs/superpowers/specs/2026-11-07-nomo-inbound-openai-chat-completions.md",
+   "summary": "2026-11-07-nomo-inbound-openai-chat-completions.md \u2014 markdown document, 43 lines, 8 sections: Spec: Inbound OpenAI-Compatible Chat Completions, Objective, Contract, Tech Stack and Structure (+4 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/superpowers/specs/companion-protocol-v1.md",
+   "type": "document",
+   "name": "companion-protocol-v1.md",
+   "filePath": "docs/superpowers/specs/companion-protocol-v1.md",
+   "summary": "companion-protocol-v1.md \u2014 markdown document, 626 lines, 25 sections: NOMO companion protocol v1, 1. Scope and non-goals, 2. Existing route inventory, 3. Protocol envelope and exact identity (+21 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "file:docs/superpowers/specs/nomo-1.0.1-product.md",
+   "type": "document",
+   "name": "nomo-1.0.1-product.md",
+   "filePath": "docs/superpowers/specs/nomo-1.0.1-product.md",
+   "summary": "nomo-1.0.1-product.md \u2014 markdown document, 26 lines, 5 sections: NOMO 1.0.1 product contract, Platforms and execution, First-release journey, Version and compatibility boundary (+1 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/superpowers/specs/nomo-design-system-v1.md",
+   "type": "document",
+   "name": "nomo-design-system-v1.md",
+   "filePath": "docs/superpowers/specs/nomo-design-system-v1.md",
+   "summary": "nomo-design-system-v1.md \u2014 markdown document, 354 lines, 29 sections: NOMO design system v1, 1. Audit basis and boundaries, 2. Current route inventory, 3. Current shell and shared state inventory (+25 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  }
+ ],
+ "edges": []
+}

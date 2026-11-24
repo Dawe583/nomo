@@ -2263,6 +2263,85 @@ test("streaming code remains visible in a one-row chat viewport", async (t) => {
   assert.ok(frame.split("\n").every((line) => visibleLength(line) <= 40));
 });
 
+test("running 40x12 chat keeps the last row, the closed composer and the stop hint", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-compact-run-"));
+  const encoder = new TextEncoder();
+  let streamController: ReadableStreamDefaultController<Uint8Array> | undefined;
+  const deltaFrame = (content: string) =>
+    `data: ${JSON.stringify({ choices: [{ delta: { content } }] })}\n\n`;
+  const app = new Workbench({ NOMO_DATA_DIR: root }, async (url) => {
+    const target = String(url);
+    if (target.endsWith("/models"))
+      return Response.json({ data: [{ id: "fixture-model" }] });
+    if (target.endsWith("/chat/completions")) {
+      // The stream stays open, so the frame below is rendered while the run
+      // is genuinely in flight rather than after it settled.
+      const stream = new ReadableStream<Uint8Array>({
+        start(controller) {
+          streamController = controller;
+          controller.enqueue(encoder.encode(deltaFrame("LAST-VISIBLE-ROW")));
+        },
+      });
+      return new Response(stream, {
+        headers: { "content-type": "text/event-stream" },
+      });
+    }
+    return new Response("{}", { status: 404 });
+  });
+  t.after(async () => {
+    try {
+      streamController?.close();
+    } catch {
+      // The stream is already closed when the run settled on its own.
+    }
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  await app.configure({
+    baseUrl: "https://fixture.invalid/v1",
+    apiKey: "local-fixture-only",
+  });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
+  ui.model = "fixture-model";
+  await ui.command("Compact run fixture");
+  const sessionId = ui.sessionId;
+  assert.ok(sessionId);
+  const deadline = Date.now() + 5000;
+  while (Date.now() < deadline) {
+    const events = app.get(sessionId)?.events ?? [];
+    if (events.some((event) => event.type === "message.delta")) break;
+    await new Promise((resolve) => setTimeout(resolve, 25));
+  }
+  assert.ok(
+    (app.get(sessionId)?.events ?? []).some(
+      (event) => event.type === "message.delta",
+    ),
+    "the fixture recorded a real delta",
+  );
+  const rows = stripAnsi(
+    renderWorkspace(ui, 40, 12, "", false, false, {
+      color: false,
+      motion: false,
+      capabilities: colorCaps(40, 12),
+    }),
+  ).split("\n");
+  const text = rows.join("\n");
+  assert.equal(rows.length, 12);
+  assert.ok(rows.every((row) => visibleLength(row) <= 40));
+  assert.ok(
+    text.includes("LAST-VISIBLE-ROW"),
+    "the last transcript row stays on screen",
+  );
+  assert.ok(text.includes("╭─ Draft"), "the composer keeps its top rail");
+  assert.ok(
+    rows.some((row) => row.includes("╰") && row.includes("╯")),
+    "the composer keeps its closed bottom rail",
+  );
+  assert.ok(
+    text.includes("Esc stop"),
+    "the stop hint stays visible while the run is in flight",
+  );
+});
 test("search and paging use real conversation data and return to live follow", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "nomo-tui-reading-"));
   const app = new Workbench({ NOMO_DATA_DIR: root }, async (url) =>
@@ -4914,14 +4993,16 @@ test("the composer names one contextual hint at a time", () => {
   assert.equal(at(80, { running: true }), "Esc stop · Ctrl+O detail");
   assert.equal(
     at(80, { approval: true }),
-    "y allow · n deny · Enter review",
+    "/approvals to review",
   );
   assert.equal(at(80, { focused: false }), "Tab to write");
   // The blocking state wins over the draft and the focus, because it is what
-  // the operator has to answer before the composer can act again.
+  // the operator has to answer before the composer can act again. In Chat the
+  // decision keys belong to the review overlay, so the hint names the path
+  // that actually works here.
   assert.equal(
     at(80, { approval: true, running: true, focused: false, draft: "/x" }),
-    "y allow · n deny · Enter review",
+    "/approvals to review",
   );
   // At 56 columns and below only the first clause survives.
   for (const width of [20, 40, 56])
@@ -4929,6 +5010,42 @@ test("the composer names one contextual hint at a time", () => {
   assert.equal(at(56, { running: true }), "Esc stop");
   assert.equal(at(40, { focused: false }), "Tab to write");
   assert.equal(at(40, { draft: "/mo" }), "Tab complete");
+});
+
+test("a long slot does not cost the composer rail a short one behind it", () => {
+  const rail = (input: Partial<Parameters<typeof composerTopRail>[0]>) =>
+    composerTopRail({
+      label: "Draft",
+      hint: "Enter send",
+      width: 56,
+      tl: "╭",
+      h: "─",
+      tr: "╮",
+      ...input,
+    });
+  // The model name does not fit; the context meter behind it still does, so
+  // it must appear. Dropping the whole tail would hide a real measurement
+  // because of a name.
+  const narrow = rail({
+    width: 40,
+    model: "◐ a-very-long-provider-model-name",
+    context: "▤ 12k",
+  });
+  assert.match(narrow, /12k/);
+  assert.doesNotMatch(narrow, /a-very-long-provider-model-name/);
+  assert.equal(narrow.length, 40, "the rail stays exactly its width");
+});
+
+test("the queue chip only uses spare composer rail cells", () => {
+  const input = { label: "Draft", hint: "Enter send", tl: "+", h: "-", tr: "+" };
+  const idle = composerTopRail({ ...input, width: 40 });
+  const queued = composerTopRail({ ...input, width: 40, queue: "# 1 queued" });
+  const narrow = composerTopRail({ ...input, width: 22, queue: "# 1 queued" });
+  assert.doesNotMatch(idle, /queued/);
+  assert.match(queued, /Enter send # 1 queued/);
+  assert.equal(narrow, composerTopRail({ ...input, width: 22 }));
+  assert.equal(queued.length, 40);
+  assert.equal(narrow.length, 22);
 });
 
 test("the composer rails keep their width and freeze under reduced motion", () => {

@@ -72,6 +72,11 @@ export type HarnessSurface = {
       readonly digest: string;
       readonly at: string;
       readonly summary: string;
+      /** The workbench's own review text for a subagent or skill edit. Printed
+       * beside the proposal so the terminal shows the same before/after and
+       * parent bound the web panel does. */
+      readonly profileReviewText?: string;
+      readonly skillReviewText?: string;
       readonly proposal: {
         readonly edits: readonly {
           readonly action: string;
@@ -122,6 +127,7 @@ const USAGE = [
   "  nomo harness rollback --session <id> <digest>",
   "  nomo harness entries --session <id> show what the harness holds",
   "  nomo harness ratchet --session <id> measure the guardrails before and after the last refinement",
+  "  nomo harness trend --session <id> show measured effects by activation",
   "  nomo harness model                 show the reviewer model",
   "  nomo harness model <model-id>      set the reviewer model",
   "  nomo harness model --clear         use the conversation's own model",
@@ -224,7 +230,7 @@ export async function runHarnessCommand(
     io.stdout(USAGE);
     return action ? 0 : 1;
   }
-  if (!["list", "entries", "approve", "reject", "rollback", "model", "ratchet"].includes(action)) {
+  if (!["list", "entries", "approve", "reject", "rollback", "model", "ratchet", "trend"].includes(action)) {
     io.stderr(`Unknown harness action ${action}.`);
     io.stderr(USAGE);
     return 1;
@@ -279,7 +285,7 @@ export async function runHarnessCommand(
     io.stderr(USAGE);
     return 1;
   }
-  if (!["list", "entries", "model", "ratchet"].includes(action) && !flags.digest) {
+  if (!["list", "entries", "model", "ratchet", "trend"].includes(action) && !flags.digest) {
     io.stderr(`The ${action} action needs the digest of the proposal.`);
     io.stderr(USAGE);
     return 1;
@@ -303,6 +309,26 @@ export async function runHarnessCommand(
     ? await deps.workbench()
     : new Workbench(env);
   try {
+    if (action === "trend") {
+      const session = workbench.get?.(flags.session);
+      if (!session) {
+        io.stderr("Session not found.");
+        return 1;
+      }
+      const proof = await workbench.ledger?.(session.workspace);
+      const { formatEffectsForReview, mineRefinementEffects } = await import(
+        "../../workbench/src/refinement-outcomes.ts"
+      );
+      const effects = mineRefinementEffects(proof?.entries ?? []);
+      const report = formatEffectsForReview(effects, 16_384);
+      io.stdout(
+        report ||
+          (effects.length
+            ? "No activation fits the report limit."
+            : "No signed refinement activation to measure."),
+      );
+      return 0;
+    }
     if (action === "ratchet") {
       // The workbench owns the sessions; a test double may not, so the
       // session lookup falls back to a pending-proposals probe.
@@ -434,6 +460,9 @@ export async function runHarnessCommand(
       for (const proposal of proposals) {
         io.stdout(`${proposal.digest}  ${proposal.summary}  ${proposal.at}`);
         for (const edit of proposal.proposal.edits) io.stdout(describeEdit(edit));
+        for (const text of [proposal.profileReviewText, proposal.skillReviewText])
+          if (text)
+            for (const line of text.split("\n")) io.stdout(`    ${line}`);
       }
       return 0;
     }

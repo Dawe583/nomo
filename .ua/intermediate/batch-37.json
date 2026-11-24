@@ -1,0 +1,576 @@
+{
+ "nodes": [
+  {
+   "id": "file:scripts/src/build-web.mjs",
+   "type": "file",
+   "name": "build-web.mjs",
+   "filePath": "scripts/src/build-web.mjs",
+   "summary": "build-web.mjs \u2014 javascript code, 302 lines, 7 functions, 0 classes, 4 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:scripts/src/build-web.mjs:declare",
+   "type": "function",
+   "name": "declare",
+   "filePath": "scripts/src/build-web.mjs",
+   "lineRange": [
+    63,
+    64
+   ],
+   "summary": "declare(name, value) \u2014 function in build-web.mjs, lines 63-64.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/build-web.mjs:roleDeclarations",
+   "type": "function",
+   "name": "roleDeclarations",
+   "filePath": "scripts/src/build-web.mjs",
+   "lineRange": [
+    73,
+    85
+   ],
+   "summary": "roleDeclarations(roles, appearance) \u2014 function in build-web.mjs, lines 73-85.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/build-web.mjs:shadowDeclarations",
+   "type": "function",
+   "name": "shadowDeclarations",
+   "filePath": "scripts/src/build-web.mjs",
+   "lineRange": [
+    88,
+    98
+   ],
+   "summary": "shadowDeclarations(shadows, appearance) \u2014 function in build-web.mjs, lines 88-98.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/build-web.mjs:scrimDeclarations",
+   "type": "function",
+   "name": "scrimDeclarations",
+   "filePath": "scripts/src/build-web.mjs",
+   "lineRange": [
+    107,
+    117
+   ],
+   "summary": "scrimDeclarations(scrims, appearance) \u2014 function in build-web.mjs, lines 107-117.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/build-web.mjs:renderWebTokens",
+   "type": "function",
+   "name": "renderWebTokens",
+   "filePath": "scripts/src/build-web.mjs",
+   "lineRange": [
+    120,
+    242
+   ],
+   "summary": "renderWebTokens(tokens) \u2014 function in build-web.mjs, lines 120-242.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/build-web.mjs:generateWebTokens",
+   "type": "function",
+   "name": "generateWebTokens",
+   "filePath": "scripts/src/build-web.mjs",
+   "lineRange": [
+    248,
+    267
+   ],
+   "summary": "generateWebTokens() \u2014 function in build-web.mjs, lines 248-267.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/build-web.mjs:build",
+   "type": "function",
+   "name": "build",
+   "filePath": "scripts/src/build-web.mjs",
+   "lineRange": [
+    270,
+    297
+   ],
+   "summary": "build() \u2014 function in build-web.mjs, lines 270-297.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/src/css-budget.test.mjs",
+   "type": "file",
+   "name": "css-budget.test.mjs",
+   "filePath": "scripts/src/css-budget.test.mjs",
+   "summary": "css-budget.test.mjs \u2014 javascript code, 278 lines, 6 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "javascript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:scripts/src/css-budget.test.mjs:read",
+   "type": "function",
+   "name": "read",
+   "filePath": "scripts/src/css-budget.test.mjs",
+   "lineRange": [
+    39,
+    39
+   ],
+   "summary": "read(file) \u2014 function in css-budget.test.mjs, lines 39-39.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/css-budget.test.mjs:surface",
+   "type": "function",
+   "name": "surface",
+   "filePath": "scripts/src/css-budget.test.mjs",
+   "lineRange": [
+    41,
+    41
+   ],
+   "summary": "surface(file) \u2014 function in css-budget.test.mjs, lines 41-41.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/css-budget.test.mjs:outsideTokens",
+   "type": "function",
+   "name": "outsideTokens",
+   "filePath": "scripts/src/css-budget.test.mjs",
+   "lineRange": [
+    60,
+    75
+   ],
+   "summary": "outsideTokens(file) \u2014 function in css-budget.test.mjs, lines 60-75.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/css-budget.test.mjs:count",
+   "type": "function",
+   "name": "count",
+   "filePath": "scripts/src/css-budget.test.mjs",
+   "lineRange": [
+    77,
+    77
+   ],
+   "summary": "count(source, pattern) \u2014 function in css-budget.test.mjs, lines 77-77.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/css-budget.test.mjs:rootRules",
+   "type": "function",
+   "name": "rootRules",
+   "filePath": "scripts/src/css-budget.test.mjs",
+   "lineRange": [
+    97,
+    130
+   ],
+   "summary": "rootRules(source) \u2014 function in css-budget.test.mjs, lines 97-130.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/css-budget.test.mjs:typeDeclarations",
+   "type": "function",
+   "name": "typeDeclarations",
+   "filePath": "scripts/src/css-budget.test.mjs",
+   "lineRange": [
+    133,
+    137
+   ],
+   "summary": "typeDeclarations(body) \u2014 function in css-budget.test.mjs, lines 133-137.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/src/design-source.test.mjs",
+   "type": "file",
+   "name": "design-source.test.mjs",
+   "filePath": "scripts/src/design-source.test.mjs",
+   "summary": "design-source.test.mjs \u2014 javascript code, 421 lines, 4 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "javascript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:scripts/src/design-source.test.mjs:leaves",
+   "type": "function",
+   "name": "leaves",
+   "filePath": "scripts/src/design-source.test.mjs",
+   "lineRange": [
+    46,
+    53
+   ],
+   "summary": "leaves(node) \u2014 function in design-source.test.mjs, lines 46-53.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/design-source.test.mjs:luminance",
+   "type": "function",
+   "name": "luminance",
+   "filePath": "scripts/src/design-source.test.mjs",
+   "lineRange": [
+    151,
+    167
+   ],
+   "summary": "luminance(hex) \u2014 function in design-source.test.mjs, lines 151-167.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/design-source.test.mjs:contrast",
+   "type": "function",
+   "name": "contrast",
+   "filePath": "scripts/src/design-source.test.mjs",
+   "lineRange": [
+    170,
+    175
+   ],
+   "summary": "contrast(foreground, background) \u2014 function in design-source.test.mjs, lines 170-175.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/design-source.test.mjs:componentRules",
+   "type": "function",
+   "name": "componentRules",
+   "filePath": "scripts/src/design-source.test.mjs",
+   "lineRange": [
+    311,
+    320
+   ],
+   "summary": "componentRules(file) \u2014 function in design-source.test.mjs, lines 311-320.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  }
+ ],
+ "edges": [
+  {
+   "source": "file:scripts/src/build-web.mjs",
+   "target": "function:scripts/src/build-web.mjs:declare",
+   "type": "contains",
+   "direction": "forward",
+   "description": "build-web.mjs defines declare",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/build-web.mjs",
+   "target": "function:scripts/src/build-web.mjs:roleDeclarations",
+   "type": "contains",
+   "direction": "forward",
+   "description": "build-web.mjs defines roleDeclarations",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/build-web.mjs",
+   "target": "function:scripts/src/build-web.mjs:shadowDeclarations",
+   "type": "contains",
+   "direction": "forward",
+   "description": "build-web.mjs defines shadowDeclarations",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/build-web.mjs",
+   "target": "function:scripts/src/build-web.mjs:scrimDeclarations",
+   "type": "contains",
+   "direction": "forward",
+   "description": "build-web.mjs defines scrimDeclarations",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/build-web.mjs",
+   "target": "function:scripts/src/build-web.mjs:renderWebTokens",
+   "type": "contains",
+   "direction": "forward",
+   "description": "build-web.mjs defines renderWebTokens",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/build-web.mjs",
+   "target": "function:scripts/src/build-web.mjs:renderWebTokens",
+   "type": "exports",
+   "direction": "forward",
+   "description": "build-web.mjs exports renderWebTokens",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/src/build-web.mjs",
+   "target": "function:scripts/src/build-web.mjs:generateWebTokens",
+   "type": "contains",
+   "direction": "forward",
+   "description": "build-web.mjs defines generateWebTokens",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/build-web.mjs",
+   "target": "function:scripts/src/build-web.mjs:generateWebTokens",
+   "type": "exports",
+   "direction": "forward",
+   "description": "build-web.mjs exports generateWebTokens",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/src/build-web.mjs",
+   "target": "function:scripts/src/build-web.mjs:build",
+   "type": "contains",
+   "direction": "forward",
+   "description": "build-web.mjs defines build",
+   "weight": 1.0
+  },
+  {
+   "source": "function:scripts/src/build-web.mjs:roleDeclarations",
+   "target": "function:scripts/src/build-web.mjs:declare",
+   "type": "calls",
+   "direction": "forward",
+   "description": "roleDeclarations calls declare",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/build-web.mjs:shadowDeclarations",
+   "target": "function:scripts/src/build-web.mjs:declare",
+   "type": "calls",
+   "direction": "forward",
+   "description": "shadowDeclarations calls declare",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/build-web.mjs:scrimDeclarations",
+   "target": "function:scripts/src/build-web.mjs:declare",
+   "type": "calls",
+   "direction": "forward",
+   "description": "scrimDeclarations calls declare",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/build-web.mjs:renderWebTokens",
+   "target": "function:scripts/src/build-web.mjs:roleDeclarations",
+   "type": "calls",
+   "direction": "forward",
+   "description": "renderWebTokens calls roleDeclarations",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/build-web.mjs:renderWebTokens",
+   "target": "function:scripts/src/build-web.mjs:shadowDeclarations",
+   "type": "calls",
+   "direction": "forward",
+   "description": "renderWebTokens calls shadowDeclarations",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/build-web.mjs:renderWebTokens",
+   "target": "function:scripts/src/build-web.mjs:scrimDeclarations",
+   "type": "calls",
+   "direction": "forward",
+   "description": "renderWebTokens calls scrimDeclarations",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/build-web.mjs:renderWebTokens",
+   "target": "function:scripts/src/build-web.mjs:declare",
+   "type": "calls",
+   "direction": "forward",
+   "description": "renderWebTokens calls declare",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/build-web.mjs:generateWebTokens",
+   "target": "function:scripts/src/build-web.mjs:renderWebTokens",
+   "type": "calls",
+   "direction": "forward",
+   "description": "generateWebTokens calls renderWebTokens",
+   "weight": 0.6
+  },
+  {
+   "source": "file:scripts/src/css-budget.test.mjs",
+   "target": "function:scripts/src/css-budget.test.mjs:read",
+   "type": "contains",
+   "direction": "forward",
+   "description": "css-budget.test.mjs defines read",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/css-budget.test.mjs",
+   "target": "function:scripts/src/css-budget.test.mjs:surface",
+   "type": "contains",
+   "direction": "forward",
+   "description": "css-budget.test.mjs defines surface",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/css-budget.test.mjs",
+   "target": "function:scripts/src/css-budget.test.mjs:outsideTokens",
+   "type": "contains",
+   "direction": "forward",
+   "description": "css-budget.test.mjs defines outsideTokens",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/css-budget.test.mjs",
+   "target": "function:scripts/src/css-budget.test.mjs:count",
+   "type": "contains",
+   "direction": "forward",
+   "description": "css-budget.test.mjs defines count",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/css-budget.test.mjs",
+   "target": "function:scripts/src/css-budget.test.mjs:rootRules",
+   "type": "contains",
+   "direction": "forward",
+   "description": "css-budget.test.mjs defines rootRules",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/css-budget.test.mjs",
+   "target": "function:scripts/src/css-budget.test.mjs:typeDeclarations",
+   "type": "contains",
+   "direction": "forward",
+   "description": "css-budget.test.mjs defines typeDeclarations",
+   "weight": 1.0
+  },
+  {
+   "source": "function:scripts/src/css-budget.test.mjs:outsideTokens",
+   "target": "function:scripts/src/css-budget.test.mjs:read",
+   "type": "calls",
+   "direction": "forward",
+   "description": "outsideTokens calls read",
+   "weight": 0.6
+  },
+  {
+   "source": "file:scripts/src/design-source.test.mjs",
+   "target": "function:scripts/src/design-source.test.mjs:leaves",
+   "type": "contains",
+   "direction": "forward",
+   "description": "design-source.test.mjs defines leaves",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/design-source.test.mjs",
+   "target": "function:scripts/src/design-source.test.mjs:luminance",
+   "type": "contains",
+   "direction": "forward",
+   "description": "design-source.test.mjs defines luminance",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/design-source.test.mjs",
+   "target": "function:scripts/src/design-source.test.mjs:contrast",
+   "type": "contains",
+   "direction": "forward",
+   "description": "design-source.test.mjs defines contrast",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/design-source.test.mjs",
+   "target": "function:scripts/src/design-source.test.mjs:componentRules",
+   "type": "contains",
+   "direction": "forward",
+   "description": "design-source.test.mjs defines componentRules",
+   "weight": 1.0
+  },
+  {
+   "source": "function:scripts/src/design-source.test.mjs:contrast",
+   "target": "function:scripts/src/design-source.test.mjs:luminance",
+   "type": "calls",
+   "direction": "forward",
+   "description": "contrast calls luminance",
+   "weight": 0.6
+  },
+  {
+   "source": "file:scripts/src/css-budget.test.mjs",
+   "target": "file:scripts/src/build-web.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "css-budget.test.mjs imports build-web.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:scripts/src/design-source.test.mjs",
+   "target": "file:scripts/src/build-web.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "design-source.test.mjs imports build-web.mjs",
+   "weight": 0.8
+  }
+ ]
+}

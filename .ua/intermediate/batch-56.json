@@ -1,0 +1,197 @@
+{
+ "nodes": [
+  {
+   "id": "file:docs/superpowers/designs/2026-10-16-wp-lenses-judge.md",
+   "type": "document",
+   "name": "2026-10-16-wp-lenses-judge.md",
+   "filePath": "docs/superpowers/designs/2026-10-16-wp-lenses-judge.md",
+   "summary": "2026-10-16-wp-lenses-judge.md \u2014 markdown document, 142 lines, 16 sections: WP-LENSES judge ruling (2026-10-16), Scorecard, Mandatory answers, Decision (+12 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/superpowers/designs/2026-10-16-wp-lenses-proposal-a.md",
+   "type": "document",
+   "name": "2026-10-16-wp-lenses-proposal-a.md",
+   "filePath": "docs/superpowers/designs/2026-10-16-wp-lenses-proposal-a.md",
+   "summary": "2026-10-16-wp-lenses-proposal-a.md \u2014 markdown document, 181 lines, 14 sections: WP-LENSES proposal A: minimal blast radius (2026-10-16), Value case, Design, 1. What a lens is: K identical samples (+10 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:docs/superpowers/designs/2026-10-16-wp-lenses-proposal-b.md",
+   "type": "document",
+   "name": "2026-10-16-wp-lenses-proposal-b.md",
+   "filePath": "docs/superpowers/designs/2026-10-16-wp-lenses-proposal-b.md",
+   "summary": "2026-10-16-wp-lenses-proposal-b.md \u2014 markdown document, 262 lines, 14 sections: WP-LENSES Proposal B: different fixed angles, any-approve with first-approval tiebreak, 1. Value case, 2. Design, Decision 1. What a lens is: K different fixed angles (+10 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:docs/superpowers/designs/2026-10-16-wp-spawn-judge.md",
+   "type": "document",
+   "name": "2026-10-16-wp-spawn-judge.md",
+   "filePath": "docs/superpowers/designs/2026-10-16-wp-spawn-judge.md",
+   "summary": "2026-10-16-wp-spawn-judge.md \u2014 markdown document, 65 lines, 7 sections: WP-SPAWN judge (2026-10-16), Scorecard, Ruling (all 10 brief questions), Frozen contract (+3 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/superpowers/designs/2026-10-16-wp-spawn-proposal-a.md",
+   "type": "document",
+   "name": "2026-10-16-wp-spawn-proposal-a.md",
+   "filePath": "docs/superpowers/designs/2026-10-16-wp-spawn-proposal-a.md",
+   "summary": "2026-10-16-wp-spawn-proposal-a.md \u2014 markdown document, 83 lines, 7 sections: WP-SPAWN proposal A: minimal blast radius (2026-10-16), 1. The contract, 2. Decision per open question, 3. Test list (+3 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/superpowers/designs/2026-10-16-wp-spawn-proposal-b.md",
+   "type": "document",
+   "name": "2026-10-16-wp-spawn-proposal-b.md",
+   "filePath": "docs/superpowers/designs/2026-10-16-wp-spawn-proposal-b.md",
+   "summary": "2026-10-16-wp-spawn-proposal-b.md \u2014 markdown document, 170 lines, 8 sections: WP-SPAWN proposal B: spawn-and-track (value first), 1. The contract, 2. Decision per open question, 3. Boundary moves (+4 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:docs/superpowers/designs/2026-10-29-h4-profile-a.md",
+   "type": "document",
+   "name": "2026-10-29-h4-profile-a.md",
+   "filePath": "docs/superpowers/designs/2026-10-29-h4-profile-a.md",
+   "summary": "2026-10-29-h4-profile-a.md \u2014 markdown document, 114 lines, 9 sections: H4 design proposal A: profile store joins the evidence chain, 1. Expected behavior, 2. Contract, 3. Additive migration (+5 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/superpowers/designs/2026-10-29-h4-profile-b.md",
+   "type": "document",
+   "name": "2026-10-29-h4-profile-b.md",
+   "filePath": "docs/superpowers/designs/2026-10-29-h4-profile-b.md",
+   "summary": "2026-10-29-h4-profile-b.md \u2014 markdown document, 120 lines, 9 sections: H4 design proposal B: profile store joins the evidence chain, 1. Expected behavior, 2. Operator surface, 3. Contract (+5 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/superpowers/designs/2026-10-29-h4-profile-judge.md",
+   "type": "document",
+   "name": "2026-10-29-h4-profile-judge.md",
+   "filePath": "docs/superpowers/designs/2026-10-29-h4-profile-judge.md",
+   "summary": "2026-10-29-h4-profile-judge.md \u2014 markdown document, 85 lines, 8 sections: H4 judge ruling: profile store joins the evidence chain, Selected, Rejected, Tradeoffs recorded (+4 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/superpowers/designs/2026-11-21-h10-refinement-outcome-feedback.md",
+   "type": "document",
+   "name": "2026-11-21-h10-refinement-outcome-feedback.md",
+   "filePath": "docs/superpowers/designs/2026-11-21-h10-refinement-outcome-feedback.md",
+   "summary": "2026-11-21-h10-refinement-outcome-feedback.md \u2014 markdown document, 99 lines, 7 sections: H10 design record: the refiner reads the fate of its own proposals, The gap, Options considered, Selected: A (+3 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/superpowers/designs/2026-11-21-h11-refinement-effect.md",
+   "type": "document",
+   "name": "2026-11-21-h11-refinement-effect.md",
+   "filePath": "docs/superpowers/designs/2026-11-21-h11-refinement-effect.md",
+   "summary": "2026-11-21-h11-refinement-effect.md \u2014 markdown document, 152 lines, 7 sections: H11 design record: measure the effect of an activated refinement, The gap, Options considered, Selected: A (+3 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:docs/superpowers/designs/2026-11-21-h4b-skill-promotion.md",
+   "type": "document",
+   "name": "2026-11-21-h4b-skill-promotion.md",
+   "filePath": "docs/superpowers/designs/2026-11-21-h4b-skill-promotion.md",
+   "summary": "2026-11-21-h4b-skill-promotion.md \u2014 markdown document, 185 lines, 11 sections: H4b design record: skill promotion gets its own signed record, The question, Decision, Record shape (+7 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:docs/superpowers/designs/2026-11-21-hp0-harness-parity.md",
+   "type": "document",
+   "name": "2026-11-21-hp0-harness-parity.md",
+   "filePath": "docs/superpowers/designs/2026-11-21-hp0-harness-parity.md",
+   "summary": "2026-11-21-hp0-harness-parity.md \u2014 markdown document, 174 lines, 16 sections: HP0 design record: harness parity with Hermes Agent and Prime Agent, Sources, What NOMO already does better, Gap matrix (+12 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:docs/superpowers/designs/2026-11-21-hp10-web-tools.md",
+   "type": "document",
+   "name": "2026-11-21-hp10-web-tools.md",
+   "filePath": "docs/superpowers/designs/2026-11-21-hp10-web-tools.md",
+   "summary": "2026-11-21-hp10-web-tools.md \u2014 markdown document, 429 lines, 13 sections: HP10 design record: governed web fetch and web search, The gap, The decision, Options considered (+9 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:docs/superpowers/designs/2026-11-21-hp11-agent-messaging.md",
+   "type": "document",
+   "name": "2026-11-21-hp11-agent-messaging.md",
+   "filePath": "docs/superpowers/designs/2026-11-21-hp11-agent-messaging.md",
+   "summary": "2026-11-21-hp11-agent-messaging.md \u2014 markdown document, 245 lines, 10 sections: HP11 design record: messages between agent sessions, The gap, Options considered, Selected: A (+6 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:docs/superpowers/designs/2026-11-21-hp9-scheduled-prompts.md",
+   "type": "document",
+   "name": "2026-11-21-hp9-scheduled-prompts.md",
+   "filePath": "docs/superpowers/designs/2026-11-21-hp9-scheduled-prompts.md",
+   "summary": "2026-11-21-hp9-scheduled-prompts.md \u2014 markdown document, 304 lines, 15 sections: HP9 design record: operator-owned scheduled prompts, The gap, Constraints the context pack already fixes, Options considered (+11 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  }
+ ],
+ "edges": []
+}

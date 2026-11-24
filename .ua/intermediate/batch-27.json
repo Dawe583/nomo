@@ -1,0 +1,2557 @@
+{
+ "nodes": [
+  {
+   "id": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoAppearance.swift",
+   "type": "file",
+   "name": "NomoAppearance.swift",
+   "filePath": "apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoAppearance.swift",
+   "summary": "NomoAppearance.swift \u2014 swift code, 34 lines, 2 functions, 2 classes, 8 exports, 0 imports.",
+   "tags": [
+    "swift",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoAppearance.swift:NomoAppearance.init",
+   "type": "function",
+   "name": "NomoAppearance.init",
+   "filePath": "apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoAppearance.swift",
+   "lineRange": [
+    12,
+    14
+   ],
+   "summary": "NomoAppearance.init(scheme) \u2014 function in NomoAppearance.swift, lines 12-14.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoAppearance.swift:NomoColorComponents.init",
+   "type": "function",
+   "name": "NomoColorComponents.init",
+   "filePath": "apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoAppearance.swift",
+   "lineRange": [
+    28,
+    33
+   ],
+   "summary": "NomoColorComponents.init(red, green, blue, alpha) \u2014 function in NomoAppearance.swift, lines 28-33.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoAppearance.swift:NomoAppearance",
+   "type": "class",
+   "name": "NomoAppearance",
+   "filePath": "apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoAppearance.swift",
+   "lineRange": [
+    8,
+    15
+   ],
+   "summary": "NomoAppearance \u2014 class in NomoAppearance.swift, lines 8-15, methods: init.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoAppearance.swift:NomoColorComponents",
+   "type": "class",
+   "name": "NomoColorComponents",
+   "filePath": "apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoAppearance.swift",
+   "lineRange": [
+    22,
+    34
+   ],
+   "summary": "NomoColorComponents \u2014 class in NomoAppearance.swift, lines 22-34, methods: init.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoContrast.swift",
+   "type": "file",
+   "name": "NomoContrast.swift",
+   "filePath": "apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoContrast.swift",
+   "summary": "NomoContrast.swift \u2014 swift code, 67 lines, 7 functions, 1 classes, 7 exports, 0 imports.",
+   "tags": [
+    "swift",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoContrast.swift:relativeLuminance",
+   "type": "function",
+   "name": "relativeLuminance",
+   "filePath": "apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoContrast.swift",
+   "lineRange": [
+    15,
+    34
+   ],
+   "summary": "relativeLuminance(red, green, blue) \u2014 function in NomoContrast.swift, lines 15-34.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoContrast.swift:ratio",
+   "type": "function",
+   "name": "ratio",
+   "filePath": "apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoContrast.swift",
+   "lineRange": [
+    38,
+    58
+   ],
+   "summary": "ratio(foreground, background) \u2014 function in NomoContrast.swift, lines 38-58.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoContrast.swift:linear",
+   "type": "function",
+   "name": "linear",
+   "filePath": "apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoContrast.swift",
+   "lineRange": [
+    62,
+    66
+   ],
+   "summary": "linear(channel) \u2014 function in NomoContrast.swift, lines 62-66.",
+   "tags": [
+    "swift",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoContrast.swift:NomoContrast",
+   "type": "class",
+   "name": "NomoContrast",
+   "filePath": "apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoContrast.swift",
+   "lineRange": [
+    9,
+    67
+   ],
+   "summary": "NomoContrast \u2014 class in NomoContrast.swift, lines 9-67, methods: relativeLuminance, relativeLuminance, relativeLuminance, ratio, ratio, ratio.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoControlSize.swift",
+   "type": "file",
+   "name": "NomoControlSize.swift",
+   "filePath": "apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoControlSize.swift",
+   "summary": "NomoControlSize.swift \u2014 swift code, 36 lines, 1 functions, 1 classes, 4 exports, 0 imports.",
+   "tags": [
+    "swift",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoControlSize.swift:isValidHitTarget",
+   "type": "function",
+   "name": "isValidHitTarget",
+   "filePath": "apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoControlSize.swift",
+   "lineRange": [
+    33,
+    35
+   ],
+   "summary": "isValidHitTarget(points) \u2014 function in NomoControlSize.swift, lines 33-35.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoControlSize.swift:NomoControlSize",
+   "type": "class",
+   "name": "NomoControlSize",
+   "filePath": "apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoControlSize.swift",
+   "lineRange": [
+    8,
+    36
+   ],
+   "summary": "NomoControlSize \u2014 class in NomoControlSize.swift, lines 8-36, methods: isValidHitTarget.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoPalette.swift",
+   "type": "file",
+   "name": "NomoPalette.swift",
+   "filePath": "apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoPalette.swift",
+   "summary": "NomoPalette.swift \u2014 swift code, 86 lines, 3 functions, 1 classes, 3 exports, 0 imports.",
+   "tags": [
+    "swift",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoPalette.swift:platformColor",
+   "type": "function",
+   "name": "platformColor",
+   "filePath": "apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoPalette.swift",
+   "lineRange": [
+    23,
+    43
+   ],
+   "summary": "platformColor(role) \u2014 function in NomoPalette.swift, lines 23-43.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoPalette.swift:color",
+   "type": "function",
+   "name": "color",
+   "filePath": "apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoPalette.swift",
+   "lineRange": [
+    47,
+    58
+   ],
+   "summary": "color(role, appearance) \u2014 function in NomoPalette.swift, lines 47-58.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoPalette.swift:systemBackground",
+   "type": "function",
+   "name": "systemBackground",
+   "filePath": "apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoPalette.swift",
+   "lineRange": [
+    65,
+    85
+   ],
+   "summary": "systemBackground(role) \u2014 function in NomoPalette.swift, lines 65-85.",
+   "tags": [
+    "swift",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoPalette.swift:NomoPalette",
+   "type": "class",
+   "name": "NomoPalette",
+   "filePath": "apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoPalette.swift",
+   "lineRange": [
+    20,
+    86
+   ],
+   "summary": "NomoPalette \u2014 class in NomoPalette.swift, lines 20-86, methods: platformColor, color, systemBackground.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoRadii.swift",
+   "type": "file",
+   "name": "NomoRadii.swift",
+   "filePath": "apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoRadii.swift",
+   "summary": "NomoRadii.swift \u2014 swift code, 22 lines, 2 functions, 1 classes, 2 exports, 0 imports.",
+   "tags": [
+    "swift",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoRadii.swift:nests",
+   "type": "function",
+   "name": "nests",
+   "filePath": "apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoRadii.swift",
+   "lineRange": [
+    11,
+    13
+   ],
+   "summary": "nests(inner, outer) \u2014 function in NomoRadii.swift, lines 11-13.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoRadii.swift:largestNesting",
+   "type": "function",
+   "name": "largestNesting",
+   "filePath": "apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoRadii.swift",
+   "lineRange": [
+    17,
+    21
+   ],
+   "summary": "largestNesting(outer) \u2014 function in NomoRadii.swift, lines 17-21.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoRadii.swift:extension NomoRadii",
+   "type": "class",
+   "name": "extension NomoRadii",
+   "filePath": "apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoRadii.swift",
+   "lineRange": [
+    8,
+    22
+   ],
+   "summary": "extension NomoRadii \u2014 class in NomoRadii.swift, lines 8-22, methods: nests, largestNesting.",
+   "tags": [
+    "swift",
+    "class"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoSpacing.swift",
+   "type": "file",
+   "name": "NomoSpacing.swift",
+   "filePath": "apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoSpacing.swift",
+   "summary": "NomoSpacing.swift \u2014 swift code, 29 lines, 3 functions, 1 classes, 3 exports, 0 imports.",
+   "tags": [
+    "swift",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoSpacing.swift:isOnRhythm",
+   "type": "function",
+   "name": "isOnRhythm",
+   "filePath": "apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoSpacing.swift",
+   "lineRange": [
+    11,
+    13
+   ],
+   "summary": "isOnRhythm(value) \u2014 function in NomoSpacing.swift, lines 11-13.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoSpacing.swift:steps",
+   "type": "function",
+   "name": "steps",
+   "filePath": "apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoSpacing.swift",
+   "lineRange": [
+    18,
+    22
+   ],
+   "summary": "steps(value) \u2014 function in NomoSpacing.swift, lines 18-22.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoSpacing.swift:measure",
+   "type": "function",
+   "name": "measure",
+   "filePath": "apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoSpacing.swift",
+   "lineRange": [
+    26,
+    28
+   ],
+   "summary": "measure(width) \u2014 function in NomoSpacing.swift, lines 26-28.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoSpacing.swift:extension NomoSpacing",
+   "type": "class",
+   "name": "extension NomoSpacing",
+   "filePath": "apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoSpacing.swift",
+   "lineRange": [
+    8,
+    29
+   ],
+   "summary": "extension NomoSpacing \u2014 class in NomoSpacing.swift, lines 8-29, methods: isOnRhythm, steps, measure.",
+   "tags": [
+    "swift",
+    "class"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoType.swift",
+   "type": "file",
+   "name": "NomoType.swift",
+   "filePath": "apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoType.swift",
+   "summary": "NomoType.swift \u2014 swift code, 93 lines, 3 functions, 3 classes, 8 exports, 0 imports.",
+   "tags": [
+    "swift",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoType.swift:font",
+   "type": "function",
+   "name": "font",
+   "filePath": "apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoType.swift",
+   "lineRange": [
+    57,
+    63
+   ],
+   "summary": "font(role, emphasised) \u2014 function in NomoType.swift, lines 57-63.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoType.swift:metrics",
+   "type": "function",
+   "name": "metrics",
+   "filePath": "apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoType.swift",
+   "lineRange": [
+    67,
+    69
+   ],
+   "summary": "metrics(role, platform) \u2014 function in NomoType.swift, lines 67-69.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoType.swift:builtInFont",
+   "type": "function",
+   "name": "builtInFont",
+   "filePath": "apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoType.swift",
+   "lineRange": [
+    78,
+    92
+   ],
+   "summary": "builtInFont(role) \u2014 function in NomoType.swift, lines 78-92.",
+   "tags": [
+    "swift",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoType.swift:NomoPlatform",
+   "type": "class",
+   "name": "NomoPlatform",
+   "filePath": "apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoType.swift",
+   "lineRange": [
+    8,
+    20
+   ],
+   "summary": "NomoPlatform \u2014 class in NomoType.swift, lines 8-20.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoType.swift:extension NomoTypeWeight",
+   "type": "class",
+   "name": "extension NomoTypeWeight",
+   "filePath": "apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoType.swift",
+   "lineRange": [
+    22,
+    47
+   ],
+   "summary": "extension NomoTypeWeight \u2014 class in NomoType.swift, lines 22-47.",
+   "tags": [
+    "swift",
+    "class"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoType.swift:NomoType",
+   "type": "class",
+   "name": "NomoType",
+   "filePath": "apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoType.swift",
+   "lineRange": [
+    55,
+    93
+   ],
+   "summary": "NomoType \u2014 class in NomoType.swift, lines 55-93, methods: font, metrics, builtInFont.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoContrastTests.swift",
+   "type": "file",
+   "name": "NomoContrastTests.swift",
+   "filePath": "apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoContrastTests.swift",
+   "summary": "NomoContrastTests.swift \u2014 swift code, 72 lines, 6 functions, 1 classes, 7 exports, 0 imports.",
+   "tags": [
+    "swift",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoContrastTests.swift:everyContrastPairMeetsItsMinimumInBothAppearances",
+   "type": "function",
+   "name": "everyContrastPairMeetsItsMinimumInBothAppearances",
+   "filePath": "apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoContrastTests.swift",
+   "lineRange": [
+    13,
+    23
+   ],
+   "summary": "everyContrastPairMeetsItsMinimumInBothAppearances() \u2014 function in NomoContrastTests.swift, lines 13-23.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoContrastTests.swift:relativeLuminanceIsZeroForBlackAndOneForWhite",
+   "type": "function",
+   "name": "relativeLuminanceIsZeroForBlackAndOneForWhite",
+   "filePath": "apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoContrastTests.swift",
+   "lineRange": [
+    25,
+    30
+   ],
+   "summary": "relativeLuminanceIsZeroForBlackAndOneForWhite() \u2014 function in NomoContrastTests.swift, lines 25-30.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoContrastTests.swift:theCanvasIsTheLightestRoleInLightAndTheDarkestInDark",
+   "type": "function",
+   "name": "theCanvasIsTheLightestRoleInLightAndTheDarkestInDark",
+   "filePath": "apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoContrastTests.swift",
+   "lineRange": [
+    32,
+    44
+   ],
+   "summary": "theCanvasIsTheLightestRoleInLightAndTheDarkestInDark() \u2014 function in NomoContrastTests.swift, lines 32-44.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoContrastTests.swift:theContrastRatioIsSymmetricInItsTwoColours",
+   "type": "function",
+   "name": "theContrastRatioIsSymmetricInItsTwoColours",
+   "filePath": "apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoContrastTests.swift",
+   "lineRange": [
+    46,
+    52
+   ],
+   "summary": "theContrastRatioIsSymmetricInItsTwoColours() \u2014 function in NomoContrastTests.swift, lines 46-52.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoContrastTests.swift:theContrastRatioOfBlackOnWhiteIsTheSpecificationMaximum",
+   "type": "function",
+   "name": "theContrastRatioOfBlackOnWhiteIsTheSpecificationMaximum",
+   "filePath": "apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoContrastTests.swift",
+   "lineRange": [
+    54,
+    58
+   ],
+   "summary": "theContrastRatioOfBlackOnWhiteIsTheSpecificationMaximum() \u2014 function in NomoContrastTests.swift, lines 54-58.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoContrastTests.swift:noContrastPairMeasuresAgainstADecorativeRole",
+   "type": "function",
+   "name": "noContrastPairMeasuresAgainstADecorativeRole",
+   "filePath": "apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoContrastTests.swift",
+   "lineRange": [
+    60,
+    71
+   ],
+   "summary": "noContrastPairMeasuresAgainstADecorativeRole() \u2014 function in NomoContrastTests.swift, lines 60-71.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoContrastTests.swift:NomoContrastTests",
+   "type": "class",
+   "name": "NomoContrastTests",
+   "filePath": "apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoContrastTests.swift",
+   "lineRange": [
+    12,
+    72
+   ],
+   "summary": "NomoContrastTests \u2014 class in NomoContrastTests.swift, lines 12-72, methods: everyContrastPairMeetsItsMinimumInBothAppearances, relativeLuminanceIsZeroForBlackAndOneForWhite, theCanvasIsTheLightestRoleInLightAndTheDarkestInDark, theContrastRatioIsSymmetricInItsTwoColours, theContrastRatioOfBlackOnWhiteIsTheSpecificationMaximum, noContrastPairMeasuresAgainstADecorativeRole.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoControlSizeTests.swift",
+   "type": "file",
+   "name": "NomoControlSizeTests.swift",
+   "filePath": "apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoControlSizeTests.swift",
+   "summary": "NomoControlSizeTests.swift \u2014 swift code, 42 lines, 5 functions, 1 classes, 6 exports, 0 imports.",
+   "tags": [
+    "swift",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoControlSizeTests.swift:everyControlSizeClearsTheAbsoluteFloor",
+   "type": "function",
+   "name": "everyControlSizeClearsTheAbsoluteFloor",
+   "filePath": "apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoControlSizeTests.swift",
+   "lineRange": [
+    10,
+    17
+   ],
+   "summary": "everyControlSizeClearsTheAbsoluteFloor() \u2014 function in NomoControlSizeTests.swift, lines 10-17.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoControlSizeTests.swift:theTouchSizeClearsTheTouchFloor",
+   "type": "function",
+   "name": "theTouchSizeClearsTheTouchFloor",
+   "filePath": "apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoControlSizeTests.swift",
+   "lineRange": [
+    19,
+    21
+   ],
+   "summary": "theTouchSizeClearsTheTouchFloor() \u2014 function in NomoControlSizeTests.swift, lines 19-21.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoControlSizeTests.swift:theMacOSSizeClearsTheMacOSPointerTarget",
+   "type": "function",
+   "name": "theMacOSSizeClearsTheMacOSPointerTarget",
+   "filePath": "apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoControlSizeTests.swift",
+   "lineRange": [
+    23,
+    26
+   ],
+   "summary": "theMacOSSizeClearsTheMacOSPointerTarget() \u2014 function in NomoControlSizeTests.swift, lines 23-26.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoControlSizeTests.swift:aTargetAtTheHostFloorIsAcceptedAndOnePointBelowItIsNot",
+   "type": "function",
+   "name": "aTargetAtTheHostFloorIsAcceptedAndOnePointBelowItIsNot",
+   "filePath": "apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoControlSizeTests.swift",
+   "lineRange": [
+    28,
+    33
+   ],
+   "summary": "aTargetAtTheHostFloorIsAcceptedAndOnePointBelowItIsNot() \u2014 function in NomoControlSizeTests.swift, lines 28-33.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoControlSizeTests.swift:theHostFloorIsThePlatformTheBuildIsFor",
+   "type": "function",
+   "name": "theHostFloorIsThePlatformTheBuildIsFor",
+   "filePath": "apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoControlSizeTests.swift",
+   "lineRange": [
+    35,
+    41
+   ],
+   "summary": "theHostFloorIsThePlatformTheBuildIsFor() \u2014 function in NomoControlSizeTests.swift, lines 35-41.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoControlSizeTests.swift:NomoControlSizeTests",
+   "type": "class",
+   "name": "NomoControlSizeTests",
+   "filePath": "apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoControlSizeTests.swift",
+   "lineRange": [
+    9,
+    42
+   ],
+   "summary": "NomoControlSizeTests \u2014 class in NomoControlSizeTests.swift, lines 9-42, methods: everyControlSizeClearsTheAbsoluteFloor, theTouchSizeClearsTheTouchFloor, theMacOSSizeClearsTheMacOSPointerTarget, aTargetAtTheHostFloorIsAcceptedAndOnePointBelowItIsNot, theHostFloorIsThePlatformTheBuildIsFor.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift",
+   "type": "file",
+   "name": "NomoPaletteTests.swift",
+   "filePath": "apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift",
+   "summary": "NomoPaletteTests.swift \u2014 swift code, 87 lines, 9 functions, 2 classes, 11 exports, 0 imports.",
+   "tags": [
+    "swift",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift:thePlatformRolesAreTheOnesWithAPlatformSemanticColour",
+   "type": "function",
+   "name": "thePlatformRolesAreTheOnesWithAPlatformSemanticColour",
+   "filePath": "apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift",
+   "lineRange": [
+    12,
+    22
+   ],
+   "summary": "thePlatformRolesAreTheOnesWithAPlatformSemanticColour() \u2014 function in NomoPaletteTests.swift, lines 12-22.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift:theFocusRingUsesTheAccentRole",
+   "type": "function",
+   "name": "theFocusRingUsesTheAccentRole",
+   "filePath": "apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift",
+   "lineRange": [
+    24,
+    32
+   ],
+   "summary": "theFocusRingUsesTheAccentRole() \u2014 function in NomoPaletteTests.swift, lines 24-32.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift:everyRoleCarriesBothAppearances",
+   "type": "function",
+   "name": "everyRoleCarriesBothAppearances",
+   "filePath": "apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift",
+   "lineRange": [
+    34,
+    40
+   ],
+   "summary": "everyRoleCarriesBothAppearances() \u2014 function in NomoPaletteTests.swift, lines 34-40.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift:everyRecordedColourIsOpaque",
+   "type": "function",
+   "name": "everyRecordedColourIsOpaque",
+   "filePath": "apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift",
+   "lineRange": [
+    42,
+    48
+   ],
+   "summary": "everyRecordedColourIsOpaque() \u2014 function in NomoPaletteTests.swift, lines 42-48.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift:aControlInsideACardTakesTheSmallerRole",
+   "type": "function",
+   "name": "aControlInsideACardTakesTheSmallerRole",
+   "filePath": "apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift",
+   "lineRange": [
+    54,
+    57
+   ],
+   "summary": "aControlInsideACardTakesTheSmallerRole() \u2014 function in NomoPaletteTests.swift, lines 54-57.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift:aCardInsideASheetTakesTheSmallerRole",
+   "type": "function",
+   "name": "aCardInsideASheetTakesTheSmallerRole",
+   "filePath": "apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift",
+   "lineRange": [
+    59,
+    62
+   ],
+   "summary": "aCardInsideASheetTakesTheSmallerRole() \u2014 function in NomoPaletteTests.swift, lines 59-62.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift:aCapsuleRoundsPastEveryOtherRole",
+   "type": "function",
+   "name": "aCapsuleRoundsPastEveryOtherRole",
+   "filePath": "apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift",
+   "lineRange": [
+    64,
+    68
+   ],
+   "summary": "aCapsuleRoundsPastEveryOtherRole() \u2014 function in NomoPaletteTests.swift, lines 64-68.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift:theRolesAreOrderedFromSmallestToLargest",
+   "type": "function",
+   "name": "theRolesAreOrderedFromSmallestToLargest",
+   "filePath": "apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift",
+   "lineRange": [
+    70,
+    73
+   ],
+   "summary": "theRolesAreOrderedFromSmallestToLargest() \u2014 function in NomoPaletteTests.swift, lines 70-73.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift:theLargestNestingRoleIsTheBiggestThatFits",
+   "type": "function",
+   "name": "theLargestNestingRoleIsTheBiggestThatFits",
+   "filePath": "apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift",
+   "lineRange": [
+    75,
+    86
+   ],
+   "summary": "theLargestNestingRoleIsTheBiggestThatFits() \u2014 function in NomoPaletteTests.swift, lines 75-86.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift:NomoPaletteTests",
+   "type": "class",
+   "name": "NomoPaletteTests",
+   "filePath": "apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift",
+   "lineRange": [
+    11,
+    49
+   ],
+   "summary": "NomoPaletteTests \u2014 class in NomoPaletteTests.swift, lines 11-49, methods: thePlatformRolesAreTheOnesWithAPlatformSemanticColour, theFocusRingUsesTheAccentRole, everyRoleCarriesBothAppearances, everyRecordedColourIsOpaque.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift:NomoRadiiTests",
+   "type": "class",
+   "name": "NomoRadiiTests",
+   "filePath": "apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift",
+   "lineRange": [
+    53,
+    87
+   ],
+   "summary": "NomoRadiiTests \u2014 class in NomoPaletteTests.swift, lines 53-87, methods: aControlInsideACardTakesTheSmallerRole, aCardInsideASheetTakesTheSmallerRole, aCapsuleRoundsPastEveryOtherRole, theRolesAreOrderedFromSmallestToLargest, theLargestNestingRoleIsTheBiggestThatFits.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoShadowTests.swift",
+   "type": "file",
+   "name": "NomoShadowTests.swift",
+   "filePath": "apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoShadowTests.swift",
+   "summary": "NomoShadowTests.swift \u2014 swift code, 24 lines, 2 functions, 1 classes, 2 exports, 0 imports.",
+   "tags": [
+    "swift",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoShadowTests.swift:aShadowIsDeeperInTheDarkAppearanceThanInTheLightOne",
+   "type": "function",
+   "name": "aShadowIsDeeperInTheDarkAppearanceThanInTheLightOne",
+   "filePath": "apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoShadowTests.swift",
+   "lineRange": [
+    10,
+    16
+   ],
+   "summary": "aShadowIsDeeperInTheDarkAppearanceThanInTheLightOne() \u2014 function in NomoShadowTests.swift, lines 10-16.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoShadowTests.swift:opacity",
+   "type": "function",
+   "name": "opacity",
+   "filePath": "apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoShadowTests.swift",
+   "lineRange": [
+    20,
+    23
+   ],
+   "summary": "opacity(value) \u2014 function in NomoShadowTests.swift, lines 20-23.",
+   "tags": [
+    "swift",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoShadowTests.swift:NomoShadowTests",
+   "type": "class",
+   "name": "NomoShadowTests",
+   "filePath": "apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoShadowTests.swift",
+   "lineRange": [
+    9,
+    24
+   ],
+   "summary": "NomoShadowTests \u2014 class in NomoShadowTests.swift, lines 9-24, methods: aShadowIsDeeperInTheDarkAppearanceThanInTheLightOne, opacity.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoSpacingTests.swift",
+   "type": "file",
+   "name": "NomoSpacingTests.swift",
+   "filePath": "apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoSpacingTests.swift",
+   "summary": "NomoSpacingTests.swift \u2014 swift code, 57 lines, 6 functions, 1 classes, 7 exports, 0 imports.",
+   "tags": [
+    "swift",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoSpacingTests.swift:everyNamedSpacingStepIsAMemberOfTheRhythm",
+   "type": "function",
+   "name": "everyNamedSpacingStepIsAMemberOfTheRhythm",
+   "filePath": "apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoSpacingTests.swift",
+   "lineRange": [
+    8,
+    15
+   ],
+   "summary": "everyNamedSpacingStepIsAMemberOfTheRhythm() \u2014 function in NomoSpacingTests.swift, lines 8-15.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoSpacingTests.swift:theNamedStepsAndTheRhythmAreTheSameSet",
+   "type": "function",
+   "name": "theNamedStepsAndTheRhythmAreTheSameSet",
+   "filePath": "apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoSpacingTests.swift",
+   "lineRange": [
+    17,
+    22
+   ],
+   "summary": "theNamedStepsAndTheRhythmAreTheSameSet() \u2014 function in NomoSpacingTests.swift, lines 17-22.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoSpacingTests.swift:theRhythmRises",
+   "type": "function",
+   "name": "theRhythmRises",
+   "filePath": "apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoSpacingTests.swift",
+   "lineRange": [
+    24,
+    27
+   ],
+   "summary": "theRhythmRises() \u2014 function in NomoSpacingTests.swift, lines 24-27.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoSpacingTests.swift:theGuidelineConstantsSitOutsideTheRhythmOnPurpose",
+   "type": "function",
+   "name": "theGuidelineConstantsSitOutsideTheRhythmOnPurpose",
+   "filePath": "apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoSpacingTests.swift",
+   "lineRange": [
+    29,
+    32
+   ],
+   "summary": "theGuidelineConstantsSitOutsideTheRhythmOnPurpose() \u2014 function in NomoSpacingTests.swift, lines 29-32.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoSpacingTests.swift:theStepsAroundAValueBracketIt",
+   "type": "function",
+   "name": "theStepsAroundAValueBracketIt",
+   "filePath": "apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoSpacingTests.swift",
+   "lineRange": [
+    34,
+    42
+   ],
+   "summary": "theStepsAroundAValueBracketIt() \u2014 function in NomoSpacingTests.swift, lines 34-42.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoSpacingTests.swift:theMeasureNeverExceedsTheWidthItWasGiven",
+   "type": "function",
+   "name": "theMeasureNeverExceedsTheWidthItWasGiven",
+   "filePath": "apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoSpacingTests.swift",
+   "lineRange": [
+    44,
+    56
+   ],
+   "summary": "theMeasureNeverExceedsTheWidthItWasGiven() \u2014 function in NomoSpacingTests.swift, lines 44-56.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoSpacingTests.swift:NomoSpacingTests",
+   "type": "class",
+   "name": "NomoSpacingTests",
+   "filePath": "apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoSpacingTests.swift",
+   "lineRange": [
+    7,
+    57
+   ],
+   "summary": "NomoSpacingTests \u2014 class in NomoSpacingTests.swift, lines 7-57, methods: everyNamedSpacingStepIsAMemberOfTheRhythm, theNamedStepsAndTheRhythmAreTheSameSet, theRhythmRises, theGuidelineConstantsSitOutsideTheRhythmOnPurpose, theStepsAroundAValueBracketIt, theMeasureNeverExceedsTheWidthItWasGiven.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoTypeTests.swift",
+   "type": "file",
+   "name": "NomoTypeTests.swift",
+   "filePath": "apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoTypeTests.swift",
+   "summary": "NomoTypeTests.swift \u2014 swift code, 54 lines, 4 functions, 1 classes, 5 exports, 0 imports.",
+   "tags": [
+    "swift",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoTypeTests.swift:everyTypeRoleIsAtLeastTheDocumentMinimumOnItsPlatform",
+   "type": "function",
+   "name": "everyTypeRoleIsAtLeastTheDocumentMinimumOnItsPlatform",
+   "filePath": "apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoTypeTests.swift",
+   "lineRange": [
+    8,
+    21
+   ],
+   "summary": "everyTypeRoleIsAtLeastTheDocumentMinimumOnItsPlatform() \u2014 function in NomoTypeTests.swift, lines 8-21.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoTypeTests.swift:theRampIsOrderedFromLargestToSmallestOnBothPlatforms",
+   "type": "function",
+   "name": "theRampIsOrderedFromLargestToSmallestOnBothPlatforms",
+   "filePath": "apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoTypeTests.swift",
+   "lineRange": [
+    23,
+    28
+   ],
+   "summary": "theRampIsOrderedFromLargestToSmallestOnBothPlatforms() \u2014 function in NomoTypeTests.swift, lines 23-28.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoTypeTests.swift:theLeadingNeverFallsBelowTheSizeItCarries",
+   "type": "function",
+   "name": "theLeadingNeverFallsBelowTheSizeItCarries",
+   "filePath": "apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoTypeTests.swift",
+   "lineRange": [
+    30,
+    40
+   ],
+   "summary": "theLeadingNeverFallsBelowTheSizeItCarries() \u2014 function in NomoTypeTests.swift, lines 30-40.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoTypeTests.swift:theEmphasisedWeightIsNeverLighterThanTheRoleItEmphasises",
+   "type": "function",
+   "name": "theEmphasisedWeightIsNeverLighterThanTheRoleItEmphasises",
+   "filePath": "apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoTypeTests.swift",
+   "lineRange": [
+    42,
+    53
+   ],
+   "summary": "theEmphasisedWeightIsNeverLighterThanTheRoleItEmphasises() \u2014 function in NomoTypeTests.swift, lines 42-53.",
+   "tags": [
+    "swift",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoTypeTests.swift:NomoTypeTests",
+   "type": "class",
+   "name": "NomoTypeTests",
+   "filePath": "apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoTypeTests.swift",
+   "lineRange": [
+    7,
+    54
+   ],
+   "summary": "NomoTypeTests \u2014 class in NomoTypeTests.swift, lines 7-54, methods: everyTypeRoleIsAtLeastTheDocumentMinimumOnItsPlatform, theRampIsOrderedFromLargestToSmallestOnBothPlatforms, theLeadingNeverFallsBelowTheSizeItCarries, theEmphasisedWeightIsNeverLighterThanTheRoleItEmphasises.",
+   "tags": [
+    "swift",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  }
+ ],
+ "edges": [
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoAppearance.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoAppearance.swift:NomoAppearance.init",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NomoAppearance.swift defines NomoAppearance.init",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoAppearance.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoAppearance.swift:NomoAppearance.init",
+   "type": "exports",
+   "direction": "forward",
+   "description": "NomoAppearance.swift exports NomoAppearance.init",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoAppearance.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoAppearance.swift:NomoColorComponents.init",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NomoAppearance.swift defines NomoColorComponents.init",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoAppearance.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoAppearance.swift:NomoColorComponents.init",
+   "type": "exports",
+   "direction": "forward",
+   "description": "NomoAppearance.swift exports NomoColorComponents.init",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoAppearance.swift",
+   "target": "class:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoAppearance.swift:NomoAppearance",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NomoAppearance.swift defines class NomoAppearance",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoAppearance.swift",
+   "target": "class:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoAppearance.swift:NomoColorComponents",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NomoAppearance.swift defines class NomoColorComponents",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoContrast.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoContrast.swift:relativeLuminance",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NomoContrast.swift defines relativeLuminance",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoContrast.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoContrast.swift:relativeLuminance",
+   "type": "exports",
+   "direction": "forward",
+   "description": "NomoContrast.swift exports relativeLuminance",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoContrast.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoContrast.swift:ratio",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NomoContrast.swift defines ratio",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoContrast.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoContrast.swift:ratio",
+   "type": "exports",
+   "direction": "forward",
+   "description": "NomoContrast.swift exports ratio",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoContrast.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoContrast.swift:linear",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NomoContrast.swift defines linear",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoContrast.swift",
+   "target": "class:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoContrast.swift:NomoContrast",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NomoContrast.swift defines class NomoContrast",
+   "weight": 1.0
+  },
+  {
+   "source": "function:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoContrast.swift:ratio",
+   "target": "function:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoContrast.swift:relativeLuminance",
+   "type": "calls",
+   "direction": "forward",
+   "description": "ratio calls relativeLuminance",
+   "weight": 0.6
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoControlSize.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoControlSize.swift:isValidHitTarget",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NomoControlSize.swift defines isValidHitTarget",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoControlSize.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoControlSize.swift:isValidHitTarget",
+   "type": "exports",
+   "direction": "forward",
+   "description": "NomoControlSize.swift exports isValidHitTarget",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoControlSize.swift",
+   "target": "class:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoControlSize.swift:NomoControlSize",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NomoControlSize.swift defines class NomoControlSize",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoPalette.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoPalette.swift:platformColor",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NomoPalette.swift defines platformColor",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoPalette.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoPalette.swift:platformColor",
+   "type": "exports",
+   "direction": "forward",
+   "description": "NomoPalette.swift exports platformColor",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoPalette.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoPalette.swift:color",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NomoPalette.swift defines color",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoPalette.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoPalette.swift:color",
+   "type": "exports",
+   "direction": "forward",
+   "description": "NomoPalette.swift exports color",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoPalette.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoPalette.swift:systemBackground",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NomoPalette.swift defines systemBackground",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoPalette.swift",
+   "target": "class:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoPalette.swift:NomoPalette",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NomoPalette.swift defines class NomoPalette",
+   "weight": 1.0
+  },
+  {
+   "source": "function:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoPalette.swift:platformColor",
+   "target": "function:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoPalette.swift:systemBackground",
+   "type": "calls",
+   "direction": "forward",
+   "description": "platformColor calls systemBackground",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoPalette.swift:color",
+   "target": "function:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoPalette.swift:platformColor",
+   "type": "calls",
+   "direction": "forward",
+   "description": "color calls platformColor",
+   "weight": 0.6
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoRadii.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoRadii.swift:nests",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NomoRadii.swift defines nests",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoRadii.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoRadii.swift:nests",
+   "type": "exports",
+   "direction": "forward",
+   "description": "NomoRadii.swift exports nests",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoRadii.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoRadii.swift:largestNesting",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NomoRadii.swift defines largestNesting",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoRadii.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoRadii.swift:largestNesting",
+   "type": "exports",
+   "direction": "forward",
+   "description": "NomoRadii.swift exports largestNesting",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoRadii.swift",
+   "target": "class:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoRadii.swift:extension NomoRadii",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NomoRadii.swift defines class extension NomoRadii",
+   "weight": 1.0
+  },
+  {
+   "source": "function:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoRadii.swift:largestNesting",
+   "target": "function:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoRadii.swift:nests",
+   "type": "calls",
+   "direction": "forward",
+   "description": "largestNesting calls nests",
+   "weight": 0.6
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoSpacing.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoSpacing.swift:isOnRhythm",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NomoSpacing.swift defines isOnRhythm",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoSpacing.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoSpacing.swift:isOnRhythm",
+   "type": "exports",
+   "direction": "forward",
+   "description": "NomoSpacing.swift exports isOnRhythm",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoSpacing.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoSpacing.swift:steps",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NomoSpacing.swift defines steps",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoSpacing.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoSpacing.swift:steps",
+   "type": "exports",
+   "direction": "forward",
+   "description": "NomoSpacing.swift exports steps",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoSpacing.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoSpacing.swift:measure",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NomoSpacing.swift defines measure",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoSpacing.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoSpacing.swift:measure",
+   "type": "exports",
+   "direction": "forward",
+   "description": "NomoSpacing.swift exports measure",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoSpacing.swift",
+   "target": "class:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoSpacing.swift:extension NomoSpacing",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NomoSpacing.swift defines class extension NomoSpacing",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoType.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoType.swift:font",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NomoType.swift defines font",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoType.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoType.swift:font",
+   "type": "exports",
+   "direction": "forward",
+   "description": "NomoType.swift exports font",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoType.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoType.swift:metrics",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NomoType.swift defines metrics",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoType.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoType.swift:metrics",
+   "type": "exports",
+   "direction": "forward",
+   "description": "NomoType.swift exports metrics",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoType.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoType.swift:builtInFont",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NomoType.swift defines builtInFont",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoType.swift",
+   "target": "class:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoType.swift:NomoPlatform",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NomoType.swift defines class NomoPlatform",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoType.swift",
+   "target": "class:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoType.swift:extension NomoTypeWeight",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NomoType.swift defines class extension NomoTypeWeight",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoType.swift",
+   "target": "class:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoType.swift:NomoType",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NomoType.swift defines class NomoType",
+   "weight": 1.0
+  },
+  {
+   "source": "function:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoType.swift:font",
+   "target": "function:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoType.swift:builtInFont",
+   "type": "calls",
+   "direction": "forward",
+   "description": "font calls builtInFont",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoType.swift:font",
+   "target": "function:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoType.swift:metrics",
+   "type": "calls",
+   "direction": "forward",
+   "description": "font calls metrics",
+   "weight": 0.6
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoContrastTests.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoContrastTests.swift:everyContrastPairMeetsItsMinimumInBothAppearances",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NomoContrastTests.swift defines everyContrastPairMeetsItsMinimumInBothAppearances",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoContrastTests.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoContrastTests.swift:everyContrastPairMeetsItsMinimumInBothAppearances",
+   "type": "exports",
+   "direction": "forward",
+   "description": "NomoContrastTests.swift exports everyContrastPairMeetsItsMinimumInBothAppearances",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoContrastTests.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoContrastTests.swift:relativeLuminanceIsZeroForBlackAndOneForWhite",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NomoContrastTests.swift defines relativeLuminanceIsZeroForBlackAndOneForWhite",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoContrastTests.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoContrastTests.swift:relativeLuminanceIsZeroForBlackAndOneForWhite",
+   "type": "exports",
+   "direction": "forward",
+   "description": "NomoContrastTests.swift exports relativeLuminanceIsZeroForBlackAndOneForWhite",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoContrastTests.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoContrastTests.swift:theCanvasIsTheLightestRoleInLightAndTheDarkestInDark",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NomoContrastTests.swift defines theCanvasIsTheLightestRoleInLightAndTheDarkestInDark",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoContrastTests.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoContrastTests.swift:theCanvasIsTheLightestRoleInLightAndTheDarkestInDark",
+   "type": "exports",
+   "direction": "forward",
+   "description": "NomoContrastTests.swift exports theCanvasIsTheLightestRoleInLightAndTheDarkestInDark",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoContrastTests.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoContrastTests.swift:theContrastRatioIsSymmetricInItsTwoColours",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NomoContrastTests.swift defines theContrastRatioIsSymmetricInItsTwoColours",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoContrastTests.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoContrastTests.swift:theContrastRatioIsSymmetricInItsTwoColours",
+   "type": "exports",
+   "direction": "forward",
+   "description": "NomoContrastTests.swift exports theContrastRatioIsSymmetricInItsTwoColours",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoContrastTests.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoContrastTests.swift:theContrastRatioOfBlackOnWhiteIsTheSpecificationMaximum",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NomoContrastTests.swift defines theContrastRatioOfBlackOnWhiteIsTheSpecificationMaximum",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoContrastTests.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoContrastTests.swift:theContrastRatioOfBlackOnWhiteIsTheSpecificationMaximum",
+   "type": "exports",
+   "direction": "forward",
+   "description": "NomoContrastTests.swift exports theContrastRatioOfBlackOnWhiteIsTheSpecificationMaximum",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoContrastTests.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoContrastTests.swift:noContrastPairMeasuresAgainstADecorativeRole",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NomoContrastTests.swift defines noContrastPairMeasuresAgainstADecorativeRole",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoContrastTests.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoContrastTests.swift:noContrastPairMeasuresAgainstADecorativeRole",
+   "type": "exports",
+   "direction": "forward",
+   "description": "NomoContrastTests.swift exports noContrastPairMeasuresAgainstADecorativeRole",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoContrastTests.swift",
+   "target": "class:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoContrastTests.swift:NomoContrastTests",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NomoContrastTests.swift defines class NomoContrastTests",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoControlSizeTests.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoControlSizeTests.swift:everyControlSizeClearsTheAbsoluteFloor",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NomoControlSizeTests.swift defines everyControlSizeClearsTheAbsoluteFloor",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoControlSizeTests.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoControlSizeTests.swift:everyControlSizeClearsTheAbsoluteFloor",
+   "type": "exports",
+   "direction": "forward",
+   "description": "NomoControlSizeTests.swift exports everyControlSizeClearsTheAbsoluteFloor",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoControlSizeTests.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoControlSizeTests.swift:theTouchSizeClearsTheTouchFloor",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NomoControlSizeTests.swift defines theTouchSizeClearsTheTouchFloor",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoControlSizeTests.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoControlSizeTests.swift:theTouchSizeClearsTheTouchFloor",
+   "type": "exports",
+   "direction": "forward",
+   "description": "NomoControlSizeTests.swift exports theTouchSizeClearsTheTouchFloor",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoControlSizeTests.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoControlSizeTests.swift:theMacOSSizeClearsTheMacOSPointerTarget",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NomoControlSizeTests.swift defines theMacOSSizeClearsTheMacOSPointerTarget",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoControlSizeTests.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoControlSizeTests.swift:theMacOSSizeClearsTheMacOSPointerTarget",
+   "type": "exports",
+   "direction": "forward",
+   "description": "NomoControlSizeTests.swift exports theMacOSSizeClearsTheMacOSPointerTarget",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoControlSizeTests.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoControlSizeTests.swift:aTargetAtTheHostFloorIsAcceptedAndOnePointBelowItIsNot",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NomoControlSizeTests.swift defines aTargetAtTheHostFloorIsAcceptedAndOnePointBelowItIsNot",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoControlSizeTests.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoControlSizeTests.swift:aTargetAtTheHostFloorIsAcceptedAndOnePointBelowItIsNot",
+   "type": "exports",
+   "direction": "forward",
+   "description": "NomoControlSizeTests.swift exports aTargetAtTheHostFloorIsAcceptedAndOnePointBelowItIsNot",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoControlSizeTests.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoControlSizeTests.swift:theHostFloorIsThePlatformTheBuildIsFor",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NomoControlSizeTests.swift defines theHostFloorIsThePlatformTheBuildIsFor",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoControlSizeTests.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoControlSizeTests.swift:theHostFloorIsThePlatformTheBuildIsFor",
+   "type": "exports",
+   "direction": "forward",
+   "description": "NomoControlSizeTests.swift exports theHostFloorIsThePlatformTheBuildIsFor",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoControlSizeTests.swift",
+   "target": "class:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoControlSizeTests.swift:NomoControlSizeTests",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NomoControlSizeTests.swift defines class NomoControlSizeTests",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift:thePlatformRolesAreTheOnesWithAPlatformSemanticColour",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NomoPaletteTests.swift defines thePlatformRolesAreTheOnesWithAPlatformSemanticColour",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift:thePlatformRolesAreTheOnesWithAPlatformSemanticColour",
+   "type": "exports",
+   "direction": "forward",
+   "description": "NomoPaletteTests.swift exports thePlatformRolesAreTheOnesWithAPlatformSemanticColour",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift:theFocusRingUsesTheAccentRole",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NomoPaletteTests.swift defines theFocusRingUsesTheAccentRole",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift:theFocusRingUsesTheAccentRole",
+   "type": "exports",
+   "direction": "forward",
+   "description": "NomoPaletteTests.swift exports theFocusRingUsesTheAccentRole",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift:everyRoleCarriesBothAppearances",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NomoPaletteTests.swift defines everyRoleCarriesBothAppearances",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift:everyRoleCarriesBothAppearances",
+   "type": "exports",
+   "direction": "forward",
+   "description": "NomoPaletteTests.swift exports everyRoleCarriesBothAppearances",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift:everyRecordedColourIsOpaque",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NomoPaletteTests.swift defines everyRecordedColourIsOpaque",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift:everyRecordedColourIsOpaque",
+   "type": "exports",
+   "direction": "forward",
+   "description": "NomoPaletteTests.swift exports everyRecordedColourIsOpaque",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift:aControlInsideACardTakesTheSmallerRole",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NomoPaletteTests.swift defines aControlInsideACardTakesTheSmallerRole",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift:aControlInsideACardTakesTheSmallerRole",
+   "type": "exports",
+   "direction": "forward",
+   "description": "NomoPaletteTests.swift exports aControlInsideACardTakesTheSmallerRole",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift:aCardInsideASheetTakesTheSmallerRole",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NomoPaletteTests.swift defines aCardInsideASheetTakesTheSmallerRole",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift:aCardInsideASheetTakesTheSmallerRole",
+   "type": "exports",
+   "direction": "forward",
+   "description": "NomoPaletteTests.swift exports aCardInsideASheetTakesTheSmallerRole",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift:aCapsuleRoundsPastEveryOtherRole",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NomoPaletteTests.swift defines aCapsuleRoundsPastEveryOtherRole",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift:aCapsuleRoundsPastEveryOtherRole",
+   "type": "exports",
+   "direction": "forward",
+   "description": "NomoPaletteTests.swift exports aCapsuleRoundsPastEveryOtherRole",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift:theRolesAreOrderedFromSmallestToLargest",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NomoPaletteTests.swift defines theRolesAreOrderedFromSmallestToLargest",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift:theRolesAreOrderedFromSmallestToLargest",
+   "type": "exports",
+   "direction": "forward",
+   "description": "NomoPaletteTests.swift exports theRolesAreOrderedFromSmallestToLargest",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift:theLargestNestingRoleIsTheBiggestThatFits",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NomoPaletteTests.swift defines theLargestNestingRoleIsTheBiggestThatFits",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift:theLargestNestingRoleIsTheBiggestThatFits",
+   "type": "exports",
+   "direction": "forward",
+   "description": "NomoPaletteTests.swift exports theLargestNestingRoleIsTheBiggestThatFits",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift",
+   "target": "class:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift:NomoPaletteTests",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NomoPaletteTests.swift defines class NomoPaletteTests",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift",
+   "target": "class:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift:NomoRadiiTests",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NomoPaletteTests.swift defines class NomoRadiiTests",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoShadowTests.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoShadowTests.swift:aShadowIsDeeperInTheDarkAppearanceThanInTheLightOne",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NomoShadowTests.swift defines aShadowIsDeeperInTheDarkAppearanceThanInTheLightOne",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoShadowTests.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoShadowTests.swift:aShadowIsDeeperInTheDarkAppearanceThanInTheLightOne",
+   "type": "exports",
+   "direction": "forward",
+   "description": "NomoShadowTests.swift exports aShadowIsDeeperInTheDarkAppearanceThanInTheLightOne",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoShadowTests.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoShadowTests.swift:opacity",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NomoShadowTests.swift defines opacity",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoShadowTests.swift",
+   "target": "class:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoShadowTests.swift:NomoShadowTests",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NomoShadowTests.swift defines class NomoShadowTests",
+   "weight": 1.0
+  },
+  {
+   "source": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoShadowTests.swift:aShadowIsDeeperInTheDarkAppearanceThanInTheLightOne",
+   "target": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoShadowTests.swift:opacity",
+   "type": "calls",
+   "direction": "forward",
+   "description": "aShadowIsDeeperInTheDarkAppearanceThanInTheLightOne calls opacity",
+   "weight": 0.6
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoSpacingTests.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoSpacingTests.swift:everyNamedSpacingStepIsAMemberOfTheRhythm",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NomoSpacingTests.swift defines everyNamedSpacingStepIsAMemberOfTheRhythm",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoSpacingTests.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoSpacingTests.swift:everyNamedSpacingStepIsAMemberOfTheRhythm",
+   "type": "exports",
+   "direction": "forward",
+   "description": "NomoSpacingTests.swift exports everyNamedSpacingStepIsAMemberOfTheRhythm",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoSpacingTests.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoSpacingTests.swift:theNamedStepsAndTheRhythmAreTheSameSet",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NomoSpacingTests.swift defines theNamedStepsAndTheRhythmAreTheSameSet",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoSpacingTests.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoSpacingTests.swift:theNamedStepsAndTheRhythmAreTheSameSet",
+   "type": "exports",
+   "direction": "forward",
+   "description": "NomoSpacingTests.swift exports theNamedStepsAndTheRhythmAreTheSameSet",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoSpacingTests.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoSpacingTests.swift:theRhythmRises",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NomoSpacingTests.swift defines theRhythmRises",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoSpacingTests.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoSpacingTests.swift:theRhythmRises",
+   "type": "exports",
+   "direction": "forward",
+   "description": "NomoSpacingTests.swift exports theRhythmRises",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoSpacingTests.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoSpacingTests.swift:theGuidelineConstantsSitOutsideTheRhythmOnPurpose",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NomoSpacingTests.swift defines theGuidelineConstantsSitOutsideTheRhythmOnPurpose",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoSpacingTests.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoSpacingTests.swift:theGuidelineConstantsSitOutsideTheRhythmOnPurpose",
+   "type": "exports",
+   "direction": "forward",
+   "description": "NomoSpacingTests.swift exports theGuidelineConstantsSitOutsideTheRhythmOnPurpose",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoSpacingTests.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoSpacingTests.swift:theStepsAroundAValueBracketIt",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NomoSpacingTests.swift defines theStepsAroundAValueBracketIt",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoSpacingTests.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoSpacingTests.swift:theStepsAroundAValueBracketIt",
+   "type": "exports",
+   "direction": "forward",
+   "description": "NomoSpacingTests.swift exports theStepsAroundAValueBracketIt",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoSpacingTests.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoSpacingTests.swift:theMeasureNeverExceedsTheWidthItWasGiven",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NomoSpacingTests.swift defines theMeasureNeverExceedsTheWidthItWasGiven",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoSpacingTests.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoSpacingTests.swift:theMeasureNeverExceedsTheWidthItWasGiven",
+   "type": "exports",
+   "direction": "forward",
+   "description": "NomoSpacingTests.swift exports theMeasureNeverExceedsTheWidthItWasGiven",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoSpacingTests.swift",
+   "target": "class:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoSpacingTests.swift:NomoSpacingTests",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NomoSpacingTests.swift defines class NomoSpacingTests",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoTypeTests.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoTypeTests.swift:everyTypeRoleIsAtLeastTheDocumentMinimumOnItsPlatform",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NomoTypeTests.swift defines everyTypeRoleIsAtLeastTheDocumentMinimumOnItsPlatform",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoTypeTests.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoTypeTests.swift:everyTypeRoleIsAtLeastTheDocumentMinimumOnItsPlatform",
+   "type": "exports",
+   "direction": "forward",
+   "description": "NomoTypeTests.swift exports everyTypeRoleIsAtLeastTheDocumentMinimumOnItsPlatform",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoTypeTests.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoTypeTests.swift:theRampIsOrderedFromLargestToSmallestOnBothPlatforms",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NomoTypeTests.swift defines theRampIsOrderedFromLargestToSmallestOnBothPlatforms",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoTypeTests.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoTypeTests.swift:theRampIsOrderedFromLargestToSmallestOnBothPlatforms",
+   "type": "exports",
+   "direction": "forward",
+   "description": "NomoTypeTests.swift exports theRampIsOrderedFromLargestToSmallestOnBothPlatforms",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoTypeTests.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoTypeTests.swift:theLeadingNeverFallsBelowTheSizeItCarries",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NomoTypeTests.swift defines theLeadingNeverFallsBelowTheSizeItCarries",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoTypeTests.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoTypeTests.swift:theLeadingNeverFallsBelowTheSizeItCarries",
+   "type": "exports",
+   "direction": "forward",
+   "description": "NomoTypeTests.swift exports theLeadingNeverFallsBelowTheSizeItCarries",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoTypeTests.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoTypeTests.swift:theEmphasisedWeightIsNeverLighterThanTheRoleItEmphasises",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NomoTypeTests.swift defines theEmphasisedWeightIsNeverLighterThanTheRoleItEmphasises",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoTypeTests.swift",
+   "target": "function:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoTypeTests.swift:theEmphasisedWeightIsNeverLighterThanTheRoleItEmphasises",
+   "type": "exports",
+   "direction": "forward",
+   "description": "NomoTypeTests.swift exports theEmphasisedWeightIsNeverLighterThanTheRoleItEmphasises",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoTypeTests.swift",
+   "target": "class:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoTypeTests.swift:NomoTypeTests",
+   "type": "contains",
+   "direction": "forward",
+   "description": "NomoTypeTests.swift defines class NomoTypeTests",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoContrastTests.swift",
+   "target": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoAppearance.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "NomoContrastTests.swift imports NomoAppearance.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoContrastTests.swift",
+   "target": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoContrast.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "NomoContrastTests.swift imports NomoContrast.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoContrastTests.swift",
+   "target": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoControlSize.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "NomoContrastTests.swift imports NomoControlSize.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoContrastTests.swift",
+   "target": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoPalette.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "NomoContrastTests.swift imports NomoPalette.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoContrastTests.swift",
+   "target": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoRadii.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "NomoContrastTests.swift imports NomoRadii.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoContrastTests.swift",
+   "target": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoSpacing.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "NomoContrastTests.swift imports NomoSpacing.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoContrastTests.swift",
+   "target": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoType.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "NomoContrastTests.swift imports NomoType.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoControlSizeTests.swift",
+   "target": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoAppearance.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "NomoControlSizeTests.swift imports NomoAppearance.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoControlSizeTests.swift",
+   "target": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoContrast.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "NomoControlSizeTests.swift imports NomoContrast.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoControlSizeTests.swift",
+   "target": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoControlSize.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "NomoControlSizeTests.swift imports NomoControlSize.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoControlSizeTests.swift",
+   "target": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoPalette.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "NomoControlSizeTests.swift imports NomoPalette.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoControlSizeTests.swift",
+   "target": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoRadii.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "NomoControlSizeTests.swift imports NomoRadii.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoControlSizeTests.swift",
+   "target": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoSpacing.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "NomoControlSizeTests.swift imports NomoSpacing.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoControlSizeTests.swift",
+   "target": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoType.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "NomoControlSizeTests.swift imports NomoType.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift",
+   "target": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoAppearance.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "NomoPaletteTests.swift imports NomoAppearance.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift",
+   "target": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoContrast.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "NomoPaletteTests.swift imports NomoContrast.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift",
+   "target": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoControlSize.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "NomoPaletteTests.swift imports NomoControlSize.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift",
+   "target": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoPalette.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "NomoPaletteTests.swift imports NomoPalette.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift",
+   "target": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoRadii.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "NomoPaletteTests.swift imports NomoRadii.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift",
+   "target": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoSpacing.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "NomoPaletteTests.swift imports NomoSpacing.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoPaletteTests.swift",
+   "target": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoType.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "NomoPaletteTests.swift imports NomoType.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoShadowTests.swift",
+   "target": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoAppearance.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "NomoShadowTests.swift imports NomoAppearance.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoShadowTests.swift",
+   "target": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoContrast.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "NomoShadowTests.swift imports NomoContrast.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoShadowTests.swift",
+   "target": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoControlSize.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "NomoShadowTests.swift imports NomoControlSize.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoShadowTests.swift",
+   "target": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoPalette.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "NomoShadowTests.swift imports NomoPalette.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoShadowTests.swift",
+   "target": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoRadii.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "NomoShadowTests.swift imports NomoRadii.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoShadowTests.swift",
+   "target": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoSpacing.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "NomoShadowTests.swift imports NomoSpacing.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoShadowTests.swift",
+   "target": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoType.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "NomoShadowTests.swift imports NomoType.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoSpacingTests.swift",
+   "target": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoAppearance.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "NomoSpacingTests.swift imports NomoAppearance.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoSpacingTests.swift",
+   "target": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoContrast.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "NomoSpacingTests.swift imports NomoContrast.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoSpacingTests.swift",
+   "target": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoControlSize.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "NomoSpacingTests.swift imports NomoControlSize.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoSpacingTests.swift",
+   "target": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoPalette.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "NomoSpacingTests.swift imports NomoPalette.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoSpacingTests.swift",
+   "target": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoRadii.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "NomoSpacingTests.swift imports NomoRadii.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoSpacingTests.swift",
+   "target": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoSpacing.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "NomoSpacingTests.swift imports NomoSpacing.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoSpacingTests.swift",
+   "target": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoType.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "NomoSpacingTests.swift imports NomoType.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoTypeTests.swift",
+   "target": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoAppearance.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "NomoTypeTests.swift imports NomoAppearance.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoTypeTests.swift",
+   "target": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoContrast.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "NomoTypeTests.swift imports NomoContrast.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoTypeTests.swift",
+   "target": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoControlSize.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "NomoTypeTests.swift imports NomoControlSize.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoTypeTests.swift",
+   "target": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoPalette.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "NomoTypeTests.swift imports NomoPalette.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoTypeTests.swift",
+   "target": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoRadii.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "NomoTypeTests.swift imports NomoRadii.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoTypeTests.swift",
+   "target": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoSpacing.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "NomoTypeTests.swift imports NomoSpacing.swift",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/apple/NomoDesignSystem/Tests/NomoDesignSystemTests/NomoTypeTests.swift",
+   "target": "file:apps/apple/NomoDesignSystem/Sources/NomoDesignSystem/NomoType.swift",
+   "type": "imports",
+   "direction": "forward",
+   "description": "NomoTypeTests.swift imports NomoType.swift",
+   "weight": 0.8
+  }
+ ]
+}

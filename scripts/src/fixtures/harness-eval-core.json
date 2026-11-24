@@ -1,0 +1,23 @@
+{
+  "id": "nomo-document-tools-v1",
+  "tasks": [
+    {
+      "id": "list-workspace",
+      "prompt": "List the existing NOMO managed documents. Do not open or modify a document.",
+      "expectedTool": "void_workspace_list",
+      "expectedClass": "r0"
+    },
+    {
+      "id": "read-document",
+      "prompt": "Read the NOMO managed document fixture.md. Do not modify it.",
+      "expectedTool": "void_workspace_read",
+      "expectedClass": "r0"
+    },
+    {
+      "id": "write-document",
+      "prompt": "Propose writing the text 'fixture' to the NOMO managed document fixture.md. Stop at the tool decision; do not execute the write.",
+      "expectedTool": "void_workspace_write",
+      "expectedClass": "r1"
+    }
+  ]
+}

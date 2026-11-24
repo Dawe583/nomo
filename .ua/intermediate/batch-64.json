@@ -1,0 +1,41 @@
+{
+ "nodes": [
+  {
+   "id": "file:packages/policy/README.md",
+   "type": "document",
+   "name": "README.md",
+   "filePath": "packages/policy/README.md",
+   "summary": "README.md \u2014 markdown document, 125 lines, 10 sections: @nomo/policy, Responsible for, Defaults, which are not interchangeable, Must never import (+6 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/policy/package.json",
+   "type": "config",
+   "name": "package.json",
+   "filePath": "packages/policy/package.json",
+   "summary": "package.json \u2014 json config, 36 lines.",
+   "tags": [
+    "json",
+    "config"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/policy/tsconfig.json",
+   "type": "config",
+   "name": "tsconfig.json",
+   "filePath": "packages/policy/tsconfig.json",
+   "summary": "tsconfig.json \u2014 json config, 18 lines.",
+   "tags": [
+    "json",
+    "config"
+   ],
+   "complexity": "simple"
+  }
+ ],
+ "edges": []
+}

@@ -397,6 +397,16 @@ test("a profile-less session's nomo_agent_send is held by default and a denied h
     "the record binds the delivered text by digest",
   );
   assert.ok(record.signature.length > 0, "the record is signed");
+  const chain = await app.ledger(parent.workspace);
+  const decision = chain!.entries
+    .map((entry) => entry.body as Record<string, unknown>)
+    .find((body) => body.decision === "hold:approved");
+  assert.ok(decision, "the approval writes its own signed decision record");
+  assert.equal(
+    decision.approvedBy,
+    "test-operator",
+    "the decision names the operator who approved the hold",
+  );
 
   app.send(child.id, "Read my inbox");
   await app.settled();

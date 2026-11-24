@@ -31,7 +31,11 @@ import { getSymbolSet, type SymbolPreset } from "./theme-config.ts";
 // The life layer follows the same rules as the silhouette. An ear twitch, a
 // tail wag, an idle sleep mark and the work bounce are all pure functions of
 // the frame counter and only ever write into a content row, so the pose and
-// its outline stay put and reduced motion freezes a clean base frame. The
+// its outline stay put and reduced motion freezes a clean base frame. Two
+// gestures read as posture rather than as a second blink: a waiting pet cocks
+// its head to listen, and a finished pet sparkles once and then holds the
+// settled frame. Both start from the frame zero pose, so a frozen frame and a
+// snapshot taken after the gesture are the same bytes the pet always drew. The
 // reaction and bubble read the state plus a real tool or provider name, never
 // a clock, so the pet cannot narrate activity the run did not report.
 
@@ -111,12 +115,16 @@ const PET_SHORT: Record<PetState, string> = {
   cancelled: "stop",
 };
 
-/** States whose outcome is final. They render one frame and never animate. */
-const SETTLED: ReadonlySet<PetState> = new Set<PetState>([
-  "done",
-  "error",
-  "cancelled",
-]);
+/**
+ * States whose outcome is final and whose frame never changes again. They
+ * render one frame and never animate.
+ *
+ * `done` is deliberately not here. It is final too, but it says so with one
+ * short sparkle and then holds the settled frame, which is the only way a
+ * completion can be marked without a row and without a colour. `error` and
+ * `cancelled` stay still: a refusal that keeps moving reads as an alarm.
+ */
+const STATIC: ReadonlySet<PetState> = new Set<PetState>(["error", "cancelled"]);
 
 /**
  * The three silhouettes. Each pose is a separate shape on the same 9x5 grid,
@@ -335,6 +343,14 @@ function fillSlot(row: string, content: string): string {
 
 /** The idle blink: open, open, closed, open. Four steps at the idle cadence. */
 const BLINK = [" o o ", " o o ", " - - ", " o o "] as const;
+/**
+ * Idle blink rhythm over 24 frames: a single blink at 3 and 9, then a double
+ * blink at 15 and 16, so the pet does not look like a metronome. The closed
+ * frame is the same one the old cycle printed, so the pose is unchanged and
+ * only its timing differs.
+ */
+const IDLE_RHYTHM = 24;
+const IDLE_CLOSED = new Set([3, 9, 15, 16]);
 
 /** The four border weights of the approval breathe. */
 const BREATHE = ["light", "heavy", "heavy", "light"] as const;
@@ -376,6 +392,28 @@ function idleSleeping(state: PetState, step: number): boolean {
   return phase >= IDLE_SLEEP_FIRST && phase <= IDLE_SLEEP_LAST;
 }
 
+/**
+ * The listening window: four steps in every twenty of the waiting cycle.
+ *
+ * A waiting pet already swaps its eyes every five ticks, and on its own that
+ * is only a slow blink. The listening window is a second, slower beat: the pet
+ * cocks its head - the near ear lifts and the mouth slides one cell off centre
+ * - and it holds its tail still, because a pet that is listening to you stops
+ * wagging. Twenty steps is two eye beats, so the two rhythms drift against
+ * each other instead of locking into one gesture, and twenty is a multiple of
+ * the ear and tail periods, so the seated atlas period stays forty.
+ */
+const LISTEN_CYCLE = 20;
+const LISTEN_FIRST = 12;
+const LISTEN_LAST = 15;
+
+/** True while a waiting pet is holding the listening posture. */
+function listening(state: PetState, step: number): boolean {
+  if (state !== "waiting") return false;
+  const phase = ((step % LISTEN_CYCLE) + LISTEN_CYCLE) % LISTEN_CYCLE;
+  return phase >= LISTEN_FIRST && phase <= LISTEN_LAST;
+}
+
 /** Ear twitch: one step in eight, at the left edge of a seated body. */
 function earTwitch(step: number): boolean {
   return step % 8 === 3;
@@ -384,6 +422,28 @@ function earTwitch(step: number): boolean {
 /** Tail wag: every other step, starting still so frame zero is the base. */
 function tailWag(step: number): boolean {
   return Math.floor(step / 2) % 2 === 1;
+}
+
+/**
+ * The done flourish: three frames of a sparkle that settles back onto the
+ * mouth, then the held final pose for the rest of the cycle.
+ *
+ * Frame zero is the settled pose on purpose. That is the frame reduced motion
+ * freezes, the frame a snapshot already contains and the frame the atlas
+ * starts on, so the flourish can only ever add life: it never changes the
+ * result the run reported. The cycle is forty steps, four seconds at the
+ * motion tick, because a finished run has to read as finished. The pet
+ * sparkles once and then holds still until the sparkle comes round again,
+ * rather than looping a celebration over a result that is already final.
+ */
+const DONE_CYCLE = 40;
+const DONE_FLOURISH: readonly string[] = [" *_* ", "  *  ", "  .  "];
+
+/** The sparkle frame of the done flourish, or null for the held final pose. */
+function doneFlourish(step: number): string | null {
+  const phase = ((step % DONE_CYCLE) + DONE_CYCLE) % DONE_CYCLE;
+  if (phase === 0) return null;
+  return DONE_FLOURISH[phase - 1] ?? null;
 }
 
 /**
@@ -425,12 +485,26 @@ function slotWidth(template: string): number {
 }
 
 /**
+ * The listening posture, drawn in the body row of a seated pet.
+ *
+ * The near ear lifts at the left edge and the mouth moves one cell off centre,
+ * so the head reads as cocked rather than as blinking: the eyes above it keep
+ * their own o/O beat and are not touched. The tail is deliberately absent -
+ * an attentive pet stops wagging - which is what separates this held posture
+ * from the one-step ear twitch that shares the same ear.
+ */
+function listeningBody(width: number): string {
+  return pad(fit("^  _", width), width);
+}
+
+/**
  * The seated body row. The mouth stays where it was; an ear twitches at the
  * left edge and the tail wags at the right edge. Sleep replaces both with a
  * single z, so a sleeping pet never looks busy.
  */
 function sitBody(state: PetState, step: number, width: number): string {
   if (idleSleeping(state, step)) return centered("z", width);
+  if (listening(state, step)) return listeningBody(width);
   let row = pad(fit(bodyRow(state, step), width), width);
   if (earTwitch(step)) row = withCell(row, 0, "^");
   if (tailWag(step)) row = withCell(row, width - 1, "~");
@@ -463,7 +537,9 @@ function eyesRow(
     case "idle":
       // A sleeping pet holds the same closed-eye frame the blink already
       // prints, so the body mark carries the sleep rather than a new face.
-      return sleeping ? " - - " : (BLINK[step % BLINK.length] ?? BLINK[0]);
+      if (sleeping) return " - - ";
+      if (IDLE_CLOSED.has(step % IDLE_RHYTHM)) return " - - ";
+      return BLINK[0];
     case "waiting":
       // Two steps, held for five ticks each so waiting reads as calm.
       return Math.floor(step / WAITING_HOLD_TICKS) % 2 === 0 ? " o o " : " O O ";
@@ -508,7 +584,9 @@ function bodyRow(state: PetState, step: number): string {
     case "approval":
       return "   !   ";
     case "done":
-      return "  _  ";
+      // The sparkle of the completion flourish, or the settled smile. The
+      // held frame is the one the pet drew before the flourish existed.
+      return doneFlourish(step) ?? "  _  ";
     case "error":
       return "  !  ";
     case "cancelled":
@@ -593,8 +671,10 @@ export interface PetPose {
  * The sprite for one state at one frame.
  *
  * A frozen or reduced motion context returns step zero for every frame, so the
- * bytes are identical whatever the counter says. Settled states are static even
- * with motion on: a finished run that keeps moving reads as unfinished.
+ * bytes are identical whatever the counter says. `error` and `cancelled` are
+ * static even with motion on: a refusal that keeps moving reads as an alarm.
+ * `done` moves, but only through its one flourish, and then holds the same
+ * frame it started from, so the outcome still reads as finished.
  *
  * `pose` defaults to the state's own pose. The override exists so a caller can
  * preview any state in any silhouette; every combination keeps the same frame
@@ -607,7 +687,7 @@ export function petPose(
   preset: SymbolPreset = "unicode",
   pose: PetPoseKind = petPoseKind(state),
 ): PetPose {
-  const moving = motion.enabled && !motion.reduced && !SETTLED.has(state);
+  const moving = motion.enabled && !motion.reduced && !STATIC.has(state);
   const base = Number.isFinite(frame) ? Math.max(0, Math.floor(frame)) : 0;
   const step = moving ? stepFor(state, base) : 0;
   return {
@@ -633,8 +713,12 @@ function rightAlign(text: string, width: number): string {
  * so the combined period is the least common multiple of the two rather than
  * either one, and some individual steps repeat by coincidence. Measuring it
  * from the same renderer the text path uses means the atlas cannot drift from
- * the ASCII frames, and a settled state reports one frame because it never
- * animates.
+ * the ASCII frames, and a state that never moves reports one frame.
+ *
+ * `done` reports its flourish cycle rather than one frame: the flourish is
+ * part of what the text path draws, so an atlas that held a single frame would
+ * be the one place the two disagree. Its cycle is measured like any other, and
+ * its first frame is still the settled pose the text path holds afterwards.
  *
  * The scan is bounded, and the bound is a guard on work rather than a second
  * cadence: every animating state in this module repeats well inside it.
@@ -644,7 +728,7 @@ export function petAtlasFrameCount(
   pose: PetPoseKind = petPoseKind(state),
   preset: SymbolPreset = "unicode",
 ): number {
-  if (SETTLED.has(state)) return 1;
+  if (STATIC.has(state)) return 1;
   const frames = Array.from({ length: PET_ATLAS_MAX_STEPS }, (_, step) =>
     poseRows(state, step, preset, pose).join("\n"),
   );

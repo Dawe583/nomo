@@ -268,3 +268,30 @@ test('Anthropic rejects missing or unrecognized terminal stop reasons', async ()
     );
   }
 });
+
+test('an OpenAI-compatible stream keeps the cost the provider reports', async () => {
+  // The harness always streams, so a cost mapped only in the buffered path
+  // would leave the score board unmeasured on the path it actually uses.
+  const frames = [
+    { choices: [{ index: 0, delta: { content: 'ready' }, finish_reason: null }] },
+    { choices: [{ index: 0, delta: {}, finish_reason: 'stop' }] },
+    { choices: [], usage: { prompt_tokens: 4, completion_tokens: 2, total_tokens: 6, cost: 0.0011 } },
+  ];
+  const payload = frames.map((frame) => `data: ${JSON.stringify(frame)}\n\n`).join('') + 'data: [DONE]\n\n';
+  const provider = new CompatibleProvider(
+    { baseUrl: 'https://zen.test/v1', apiKey: 'fixture-secret', kind: 'compatible' },
+    async () => new Response(payload, { headers: { 'content-type': 'text/event-stream' } }),
+  );
+  const deltas: string[] = [];
+  const result = await provider.complete(
+    'muse-spark-1.3-contributor-free',
+    [{ role: 'user', content: 'say ready' }],
+    [],
+    new AbortController().signal,
+    (text) => { deltas.push(text); },
+  );
+
+  assert.equal(deltas.join(''), 'ready');
+  assert.equal(result.usage?.total_tokens, 6);
+  assert.equal(result.usage?.cost_usd, 0.0011);
+});

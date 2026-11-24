@@ -126,6 +126,58 @@ test("a follow-up turn carries the retrieved lesson, the mining turn does not", 
   );
 });
 
+// Later-session retrieval is opt-in: an operator names the chains a session may
+// read through NOMO_SHARED_LEARNING_WORKSPACES. Without that list the session
+// sees only its own chain, which is the isolation default.
+test("a later session retrieves a learning scope only when the operator names it", async (t) => {
+  const { app, session, bodies } = await fixture(t);
+  const created = await app.refineHarness(session.id, lessonProposal());
+  assert.equal(created.awaitingApproval.length, 1);
+  const pending = await app.pendingApprovalsFor(session.id);
+  await app.approveHarnessProposal(session.id, pending[0]!.digest);
+  (
+    app as unknown as { env: Record<string, string | undefined> }
+  ).env.NOMO_SHARED_LEARNING_WORKSPACES = session.workspace;
+
+  bodies.length = 0;
+  await app.start("What did we learn about postgres migrations?", "fixture");
+  await app.settled();
+
+  const firstTurn = bodies.map(systemTexts).join("\n");
+  assert.ok(
+    firstTurn.includes("learned-entry digest"),
+    "a new session's first turn must retrieve what an earlier session mined",
+  );
+  assert.ok(
+    firstTurn.includes(LESSON),
+    "the digest must carry the approved lesson text",
+  );
+  assert.match(
+    firstTurn,
+    /\[[^\]\s;]+; seq \d/,
+    "the digest must name the entry and the chain sequence it came from",
+  );
+});
+
+test("without a named scope a later session sees no earlier entry", async (t) => {
+  const { app, session, bodies } = await fixture(t);
+  const created = await app.refineHarness(session.id, lessonProposal());
+  assert.equal(created.awaitingApproval.length, 1);
+  const pending = await app.pendingApprovalsFor(session.id);
+  await app.approveHarnessProposal(session.id, pending[0]!.digest);
+
+  bodies.length = 0;
+  await app.start("What did we learn about postgres migrations?", "fixture");
+  await app.settled();
+
+  const firstTurn = bodies.map(systemTexts).join("\n");
+  assert.equal(
+    firstTurn.includes("learned-entry digest"),
+    false,
+    "isolation is the default; sharing is an explicit operator choice",
+  );
+});
+
 test("an entry limit of zero keeps the harness out of the prompt entirely", async (t) => {
   const { app, session, bodies } = await fixture(t);
   await app.refineHarness(session.id, lessonProposal());
