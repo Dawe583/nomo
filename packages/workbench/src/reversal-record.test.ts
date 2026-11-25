@@ -9,6 +9,7 @@ import { loadPolicy } from "../../policy/src/rules.ts";
 import { policyDigest } from "../../policy/src/digest.ts";
 import type { JsonlEntry } from "../../ledger/src/store.ts";
 import type { LedgerAttribution } from "../../ledger/src/attribution.ts";
+import { EVAL_TOOL_EXECUTION } from "./harness-eval-tools.ts";
 
 const MODEL = "fixture-model";
 const PROFILE = "attribution-fixture";
@@ -152,6 +153,44 @@ test("eval attribution survives restart for later chain entries", async (t) => {
     .at(-1);
   assert.ok(reward, "the restarted session must write the reward");
   assert.deepEqual(reward.harnessEval, EVAL_CASE);
+});
+
+
+test("mismatched eval reward and tool identities are refused before chain writes", async (t) => {
+  const f = await governedSession(t);
+  const before = await f.app.ledger(f.session.workspace);
+  const beforeCount = before?.entries.length ?? 0;
+
+  await assert.rejects(
+    f.app.recordHarnessReward(f.session.id, {
+      caseId: "wrong-case",
+      variantId: EVAL_CASE.variantId,
+      baselineVariantId: null,
+      changedAxis: null,
+      passed: true,
+      guardrails: { deny_rate: 0 },
+      costUsd: 0.001,
+      latencyMs: 400,
+      approvalMs: "unmeasured",
+      weights: { breach: 0.5, cost: 1, latency: 0.001 },
+    }),
+    /Reward case identity does not match/,
+  );
+  await assert.rejects(
+    f.app.recordHarnessEvalTool(f.session.id, {
+      caseId: EVAL_CASE.caseId,
+      variantId: EVAL_CASE.variantId,
+      run: EVAL_CASE.run + 1,
+      toolName: "void_workspace_read",
+      toolClass: "r0",
+      ok: true,
+      execution: EVAL_TOOL_EXECUTION,
+    }),
+    /Eval tool case identity does not match/,
+  );
+
+  const after = await f.app.ledger(f.session.workspace);
+  assert.equal(after?.entries.length, beforeCount);
 });
 
 test("an undo names the record it inverts, and the chain still verifies", async (t) => {

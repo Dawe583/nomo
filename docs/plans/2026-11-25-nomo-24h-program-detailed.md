@@ -1118,7 +1118,11 @@ These are real, scoped follow-ups, not wishes. ~40 h.
     retry reuses the same run and a different request under that key is
     refused before another provider run starts. H20c5 exposes the same bounded
     identity on session views and API reads after restart, without widening it
-    to prompt or tool content.
+    to prompt or tool content. H20c6 makes export attribution exact per run:
+    repeated runs of one case and variant no longer merge, ambiguous legacy
+    rewards are refused, mismatched reward attribution is refused, and
+    Workbench rejects mismatched reward or eval-tool writes before they enter
+    the chain.
 
 ## 12. Program checklist
 

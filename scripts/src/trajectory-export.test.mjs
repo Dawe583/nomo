@@ -121,6 +121,86 @@ describe("trajectory-export", () => {
     assert.equal(report.refused, 0);
   });
 
+
+  test("production eval attribution separates repeated runs of the same case and variant", () => {
+    const evalOne = { caseId: "read-before-write", variantId: "sha256:fixture", run: 1 };
+    const evalTwo = { caseId: "read-before-write", variantId: "sha256:fixture", run: 2 };
+    const rewardOne = { ...record(), harnessEval: evalOne };
+    const rewardTwo = { ...record({ passed: false }), harnessEval: evalTwo };
+    const chain = [
+      entry(1, { tool: "read", klass: "r0", decision: "execute:completed", harnessEval: evalOne }),
+      entry(2, { tool: "write", klass: "r1", decision: "execute:refused", harnessEval: evalTwo }),
+      entry(3, { tool: "edit", klass: "r1", decision: "execute:completed", harnessEval: evalOne }),
+      entry(4, rewardTwo),
+      entry(5, rewardOne),
+    ].map((line) => JSON.stringify(line)).join("\n");
+    const report = exportTrajectories(chain);
+    assert.equal(report.trajectories.length, 2);
+    assert.deepEqual(report.trajectories[0].toolCalls, [
+      { name: "write", klass: "r1", ok: false },
+    ]);
+    assert.equal(report.trajectories[0].reward, rewardTwo.reward);
+    assert.deepEqual(report.trajectories[1].toolCalls, [
+      { name: "read", klass: "r0", ok: true },
+      { name: "edit", klass: "r1", ok: true },
+    ]);
+    assert.equal(report.trajectories[1].reward, rewardOne.reward);
+    assert.equal(report.unattributed, 0);
+    assert.equal(report.refused, 0);
+  });
+
+
+  test("an exact eval reward never adopts unrelated positional tool entries", () => {
+    const evalOne = { caseId: "read-before-write", variantId: "sha256:fixture", run: 1 };
+    const chain = [
+      entry(1, { tool: "legacy", klass: "r1", decision: "execute:completed" }),
+      entry(2, { ...record(), harnessEval: evalOne }),
+    ].map((line) => JSON.stringify(line)).join("\n");
+    const report = exportTrajectories(chain);
+    assert.equal(report.trajectories.length, 1);
+    assert.deepEqual(report.trajectories[0].toolCalls, []);
+    assert.equal(report.unattributed, 1);
+  });
+
+  test("a reward without run metadata does not merge repeated pending runs", () => {
+    const evalOne = { caseId: "read-before-write", variantId: "sha256:fixture", run: 1 };
+    const evalTwo = { caseId: "read-before-write", variantId: "sha256:fixture", run: 2 };
+    const chain = [
+      entry(1, { tool: "read", klass: "r0", decision: "execute:completed", harnessEval: evalOne }),
+      entry(2, { tool: "write", klass: "r1", decision: "execute:completed", harnessEval: evalTwo }),
+      entry(3, record()),
+    ].map((line) => JSON.stringify(line)).join("\n");
+    const report = exportTrajectories(chain);
+    assert.equal(report.trajectories.length, 0);
+    assert.equal(report.refused, 1);
+    assert.equal(report.unattributed, 2);
+  });
+
+  test("malformed reward harnessEval refuses the reward instead of guessing a run", () => {
+    const evalOne = { caseId: "read-before-write", variantId: "sha256:fixture", run: 1 };
+    const chain = [
+      entry(1, { tool: "read", klass: "r0", decision: "execute:completed", harnessEval: evalOne }),
+      entry(2, { ...record(), harnessEval: { ...evalOne, run: 0 } }),
+    ].map((line) => JSON.stringify(line)).join("\n");
+    const report = exportTrajectories(chain);
+    assert.equal(report.trajectories.length, 0);
+    assert.equal(report.refused, 1);
+    assert.equal(report.unattributed, 1);
+  });
+
+
+  test("mismatched reward harnessEval identity refuses the reward instead of importing another case", () => {
+    const evalOne = { caseId: "read-before-write", variantId: "sha256:fixture", run: 1 };
+    const chain = [
+      entry(1, { tool: "read", klass: "r0", decision: "execute:completed", harnessEval: evalOne }),
+      entry(2, { ...record({ caseId: "approval-hold", passed: false }), harnessEval: evalOne }),
+    ].map((line) => JSON.stringify(line)).join("\n");
+    const report = exportTrajectories(chain);
+    assert.equal(report.trajectories.length, 0);
+    assert.equal(report.refused, 1);
+    assert.equal(report.unattributed, 1);
+  });
+
   test("malformed production eval attribution refuses the affected case", () => {
     const chain = [
       entry(1, { tool: "read", klass: "r0", decision: "execute:completed", harnessEval: { caseId: "bad", variantId: "sha256:fixture", run: 0 } }),
