@@ -9462,3 +9462,9 @@ Commit 3280db90942408dbc286a70f42124b4a3a33b277, subject Polish shared TUI motio
   exact-width rail assertions and PTY hint checks. Observed: workspace tests 128/128, CLI typecheck exit 0,
   full TUI suite 529/529, PTY matrix exit 0 with every scenario passing. No composer mode chip was added.
   [[NOMO TUI Control Center]]
+- 2026-11-25 · H4, H7, H8, R1 and R2 completed by builder subagents and integrated by Devin Cloud.
+  H4 adds reward replay, H7 held-out split enforcement, H8 guardrail regression detection, R1 digest-verified bandit
+  arms and R2 append-only Thompson sampling. R2 is a contextual bandit, not RL. Observed after integration:
+  targeted Workbench tests 56/56, harness script tests 36/36, Workbench typecheck exit 0, wider Workbench suite
+  1176 tests, 1174 pass, 0 fail, 2 skipped. R3 reward mapping, R4 exploration guard and H5 rollback consumer remain open.
+  [[NOMO TUI Control Center]]

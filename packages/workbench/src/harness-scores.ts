@@ -602,6 +602,49 @@ export function measureRefinementEffect(
   };
 }
 
+export type GuardrailCheck = {
+  readonly key: ScoreMetric["key"];
+  readonly before: number | "unmeasured";
+  readonly after: number | "unmeasured";
+  readonly status: "held" | "regressed" | "unmeasured";
+};
+
+export type GuardrailGate = {
+  readonly pass: boolean;
+  readonly checks: readonly GuardrailCheck[];
+  /** Never empty: a gate without a reason is indistinguishable from unrun. */
+  readonly reasons: readonly string[];
+};
+
+/**
+ * Guardrail regression detector (H8): compare each guardrail's mean with the
+ * previous activation's. Unlike `compareBoards`, no noise band is allowed: any
+ * worse value blocks, because this gate decides whether a variant may stand,
+ * not whether a trend is real. A guardrail unmeasured on either side blocks
+ * too; absence of evidence is never a pass.
+ */
+export function guardrailRegressionGate(
+  previous: Readonly<Record<string, SplitSummary | undefined>>,
+  current: Readonly<Record<string, SplitSummary | undefined>>,
+): GuardrailGate {
+  const reasons: string[] = [];
+  const checks = SCORE_GUARDRAILS.map((key): GuardrailCheck => {
+    const before = previous[key]?.mean ?? "unmeasured";
+    const after = current[key]?.mean ?? "unmeasured";
+    if (before === "unmeasured" || after === "unmeasured") {
+      const side = before === "unmeasured" ? "previous" : "current";
+      reasons.push(`${key} unmeasured on the ${side} activation`);
+      return { key, before, after, status: "unmeasured" };
+    }
+    const worse = SCORE_METRICS[key].direction === "lower" ? after > before : after < before;
+    if (worse) reasons.push(`${key} regressed: ${before} -> ${after}`);
+    return { key, before, after, status: worse ? "regressed" : "held" };
+  });
+  const pass = reasons.length === 0;
+  if (pass) reasons.push("every guardrail measured and none worse than the previous activation");
+  return { pass, checks, reasons };
+}
+
 /**
  * One reward per evaluated case: the number a policy search may optimise.
  *

@@ -525,6 +525,12 @@ names the tampered one.
 
 **Verifier.** `node --test scripts/src/harness-replay.test.mjs`.
 
+**As built.** Reads a ledger chain (`body` per entry) or bare eval record
+lines, recomputes with `computeReward`, prints `OK`/`MISMATCH`/`INVALID`/
+`UNREADABLE` per record with ids only. An unmeasured reward must stay
+unmeasured. Exit 1 on any non-match or when no reward record exists. Replay
+checks rewards only; hashes and signatures stay with the ledger verifier.
+
 ### H5. Activation and rollback (1.5 h)
 
 **Files.** `refine-trigger.ts`, `workspace.ts`, `refine-trigger.test.ts`.
@@ -556,6 +562,12 @@ delta from the previous activation. Insufficient data prints
 
 **Verifier.** unit test that mixes the lists and expects a refusal.
 
+**As built.** `heldOutSplit` refuses a task without a split, an empty side,
+or an eval task sharing an id or prompt with a train task, before anything
+runs. `trainResults` is the only selection input and refuses eval or unknown
+ids. The report prints `train:` and `eval (held-out):` from `splitTotals`;
+`--split train|eval` runs one side. v2 splits 7/7.
+
 ### H8. Guardrail regression detector (1 h)
 
 **Files.** `harness-scores.ts`.
@@ -564,6 +576,12 @@ delta from the previous activation. Insufficient data prints
 worse value blocks; `unmeasured` is never a pass.
 
 **Verifier.** fixture regression fails the gate.
+
+**As built.** `guardrailRegressionGate(previous, current)` takes two boards'
+guardrail summaries and checks `deny_rate`, `rollback_count` and
+`unknown_tool_rate` by mean with no noise band: any worse value is
+`regressed`, a missing mean on either side is `unmeasured`, and either blocks.
+It is a pure report; H5 rollback is the planned consumer and is not wired.
 
 ### H9. Trajectory export (1.5 h)
 

@@ -8,9 +8,11 @@ import {
   compareRewardRecords,
   compareSplit,
   computeReward,
+  guardrailRegressionGate,
   measureBoard,
   parseRewardWeights,
   rewardRecord,
+  scoreCases,
   summariseCases,
   unmeasuredMetrics,
   type SplitSummary,
@@ -487,4 +489,66 @@ test("records that do not name each other, differ in weights or were tampered ar
   const tampered = { ...base, variantId: "sha256:b", baselineVariantId: "sha256:a", changedAxis: "model", reward: 1 };
   assert.equal(compareRewardRecords(base, tampered).comparable, false);
   assert.throws(() => rewardRecord(rewardInput({ changedAxis: "model" })), /needs a baselineVariantId/);
+});
+
+const call = (tool: string, decision: string, classification = "classified") =>
+  entry({ tool, klass: "r1", decision, classification });
+const activation = (...entries: ReturnType<typeof entry>[]) => measureBoard(scoreCases(entries), "");
+const steady = () =>
+  activation(
+    call("fs.write", "execute:completed"),
+    call("fs.write", "execute:completed"),
+    call("fs.read", "execute:completed"),
+  );
+
+test("a fixture guardrail regression against the previous activation fails the gate", () => {
+  const previous = steady();
+  // One refusal in four calls of one shape: inside any noise band, still worse.
+  const regressed = activation(
+    call("fs.write", "execute:completed"),
+    call("fs.write", "execute:completed"),
+    call("fs.write", "execute:completed"),
+    call("fs.write", "deny:policy"),
+    call("fs.read", "execute:completed"),
+  );
+  const gate = guardrailRegressionGate(previous.guardrails, regressed.guardrails);
+  assert.equal(gate.pass, false);
+  const deny = gate.checks.find((check) => check.key === "deny_rate");
+  assert.deepEqual(deny, { key: "deny_rate", before: 0, after: 0.125, status: "regressed" });
+  assert.match(gate.reasons.join("\n"), /deny_rate regressed: 0 -> 0\.125/);
+});
+
+test("unmeasured on either activation is never a pass", () => {
+  const previous = steady();
+  const unclassified = activation(
+    entry({ tool: "fs.write", klass: "r1", decision: "execute:completed" }),
+    entry({ tool: "fs.read", klass: "r1", decision: "execute:completed" }),
+  );
+  const forward = guardrailRegressionGate(previous.guardrails, unclassified.guardrails);
+  assert.equal(forward.pass, false);
+  assert.equal(forward.checks.find((check) => check.key === "unknown_tool_rate")?.status, "unmeasured");
+  assert.match(forward.reasons.join("\n"), /unknown_tool_rate unmeasured on the current activation/);
+  const backward = guardrailRegressionGate(unclassified.guardrails, previous.guardrails);
+  assert.equal(backward.pass, false);
+  assert.match(backward.reasons.join("\n"), /unknown_tool_rate unmeasured on the previous activation/);
+  const empty = guardrailRegressionGate({}, {});
+  assert.equal(empty.pass, false);
+  assert.ok(empty.checks.every((check) => check.status === "unmeasured"));
+});
+
+test("every guardrail measured and none worse passes the gate", () => {
+  const previous = activation(
+    call("fs.write", "execute:completed"),
+    call("fs.write", "deny:policy"),
+    call("fs.read", "execute:completed"),
+  );
+  const same = guardrailRegressionGate(previous.guardrails, previous.guardrails);
+  assert.equal(same.pass, true);
+  const improved = guardrailRegressionGate(previous.guardrails, steady().guardrails);
+  assert.equal(improved.pass, true);
+  assert.deepEqual(
+    improved.checks.map((check) => check.key),
+    [...SCORE_GUARDRAILS],
+  );
+  assert.ok(improved.checks.every((check) => check.status === "held"));
 });
