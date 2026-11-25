@@ -983,6 +983,14 @@ These are real, scoped follow-ups, not wishes. ~40 h.
    bounds, while per-hunk staging changes the reported scope.
 3. **T15 Model picker**: provider groups, capability disclosure, refusal when a
    session is running. 2 h.
+
+   As built: provider grouping already existed as configured provider sections
+   plus the picker's provider pane. The missing disclosure path is now fixed:
+   compatible provider catalogs preserve direct `contextWindow`, `maxTokens`,
+   `capabilities`, `inputPrice` and `outputPrice` fields, and the Workbench
+   projection no longer strips them before the picker renders them. Session
+   model changes were already guarded by Workbench; a test now proves a running
+   conversation refuses the change and keeps its model.
 4. **T16 Ledger view**: signed/derived split, chain status, filter by class.
    3 h.
 5. **T17 Command palette**: fuzzy ranking, recent commands, no hidden action.
