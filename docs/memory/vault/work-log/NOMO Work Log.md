@@ -9523,3 +9523,9 @@ Commit 3280db90942408dbc286a70f42124b4a3a33b277, subject Polish shared TUI motio
   measurements still stay unmeasured, and breach weight remains explicit at the reward call site. Observed: settings
   23/23, inventory 2/2 with empty gaps, focused settings wiring 40/40, Workbench typecheck exit 0.
   [[NOMO TUI Control Center]]
+- 2026-11-25 · H14 operator commands completed in the free parent session.
+  `nomo harness reward --session <id> <caseId>` now reads matching reward records from the verified workspace chain,
+  recomputes each one before printing, refuses a mismatch, and prints measured fields or unmeasured. It also rescores
+  under the operator's current cost and latency weights. `nomo harness trend` remains covered for signed activation
+  effects. Observed: CLI harness tests 21/21, CLI plus TUI proposal tests 28/28, CLI typecheck exit 0.
+  [[NOMO TUI Control Center]]

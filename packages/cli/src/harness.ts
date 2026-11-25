@@ -16,6 +16,7 @@ import { existsSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { Workbench } from "../../workbench/src/index.ts";
+import type { HarnessSettings } from "../../workbench/src/harness-settings.ts";
 import { dataDir } from "../../ledger/src/paths.ts";
 
 export type HarnessIo = {
@@ -60,6 +61,8 @@ export type HarnessSurface = {
       readonly policyText?: readonly string[];
     }[]
   >;
+  /** The resolved harness settings, when the surface owns them. */
+  harnessSettings?(): HarnessSettings;
   /** The reviewer model selection, as resolved. */
   harnessTextSettings(): { readonly refinementModel: string };
   patchHarnessTextSettings(
@@ -125,6 +128,7 @@ const USAGE = [
   "  nomo harness approve --session <id> <digest>",
   "  nomo harness reject --session <id> <digest> --reason <text>",
   "  nomo harness rollback --session <id> <digest>",
+  "  nomo harness reward --session <id> <caseId> show measured reward records",
   "  nomo harness entries --session <id> show what the harness holds",
   "  nomo harness ratchet --session <id> measure the guardrails before and after the last refinement",
   "  nomo harness trend --session <id> show measured effects by activation",
@@ -217,7 +221,7 @@ export async function runHarnessCommand(
     io.stdout(USAGE);
     return action ? 0 : 1;
   }
-  if (!["list", "entries", "approve", "reject", "rollback", "model", "ratchet", "trend"].includes(action)) {
+  if (!["list", "entries", "approve", "reject", "rollback", "reward", "model", "ratchet", "trend"].includes(action)) {
     io.stderr(`Unknown harness action ${action}.`);
     io.stderr(USAGE);
     return 1;
@@ -273,7 +277,7 @@ export async function runHarnessCommand(
     return 1;
   }
   if (!["list", "entries", "model", "ratchet", "trend"].includes(action) && !flags.digest) {
-    io.stderr(`The ${action} action needs the digest of the proposal.`);
+    io.stderr(`The ${action} action needs ${action === "reward" ? "a case id" : "the digest of the proposal"}.`);
     io.stderr(USAGE);
     return 1;
   }
@@ -296,6 +300,61 @@ export async function runHarnessCommand(
     ? await deps.workbench()
     : new Workbench(env);
   try {
+    if (action === "reward") {
+      const session = workbench.get?.(flags.session);
+      if (!session) {
+        io.stderr("Session not found.");
+        return 1;
+      }
+      const proof = await workbench.ledger?.(session.workspace);
+      const entries = proof?.entries ?? [];
+      const matches = entries.filter((entry) => {
+        const body = entry.body as Record<string, unknown> | null;
+        return body?.schema === "nomo.reward.v1" && body.caseId === flags.digest;
+      });
+      if (!matches.length) {
+        io.stdout(`No reward record for case ${JSON.stringify(flags.digest)}.`);
+        return 0;
+      }
+      const { computeReward } = await import("../../workbench/src/harness-scores.ts");
+      const { rewardCostLatencyWeights } = await import("../../workbench/src/harness-settings.ts");
+      const settings = workbench.harnessSettings?.();
+      for (const entry of matches) {
+        const record = entry.body as Parameters<typeof computeReward>[0] & {
+          readonly reward: number | "unmeasured";
+          readonly weights: { readonly breach: number };
+        };
+        let recomputed;
+        try {
+          recomputed = computeReward(record);
+        } catch (error) {
+          io.stderr(
+            `Invalid reward record at seq ${entry.seq}: ${error instanceof Error ? error.message : String(error)}`,
+          );
+          return 1;
+        }
+        if (recomputed !== record.reward) {
+          io.stderr(
+            `Invalid reward record at seq ${entry.seq}: stored ${String(record.reward)} recomputes to ${String(recomputed)}.`,
+          );
+          return 1;
+        }
+        let current = "not-read";
+        if (settings) {
+          const weights = {
+            breach: record.weights.breach,
+            ...rewardCostLatencyWeights(settings),
+          };
+          current = String(computeReward({ ...record, weights }));
+        }
+        io.stdout(
+          `seq ${entry.seq} case=${JSON.stringify(record.caseId)} variant=${JSON.stringify(record.variantId)} ` +
+            `reward=${String(record.reward)} recompute=match currentWeightsReward=${current} ` +
+            `costUsd=${String(record.costUsd)} latencyMs=${String(record.latencyMs)} approvalMs=${String(record.approvalMs)}`,
+        );
+      }
+      return 0;
+    }
     if (action === "trend") {
       const session = workbench.get?.(flags.session);
       if (!session) {

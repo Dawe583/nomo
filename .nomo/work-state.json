@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-25T11:49:12Z",
+  "updatedAt": "2026-11-25T11:51:47Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -848,6 +848,42 @@
         "git diff --check observed exit 0."
       ],
       "stopCondition": "Stop if making weights configurable would hide an unmeasured cost or latency as zero."
+    },
+    {
+      "id": "h14-operator-commands",
+      "status": "done",
+      "owner": "devin-6293643153014f56bb088c9a71fde97a",
+      "dependsOn": [
+        "h1-reward-record",
+        "h10-cost-latency-weights",
+        "h13-reward-schema-versioning"
+      ],
+      "scope": [
+        "packages/cli/src/harness.ts",
+        "packages/cli/src/harness.test.ts",
+        "docs/plans/2026-11-25-nomo-24h-program-detailed.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "nomo harness reward prints measured or unmeasured reward evidence, never a guess.",
+        "nomo harness trend prints signed activation effects.",
+        "A reward that does not recompute is refused."
+      ],
+      "verifier": [
+        "node --test packages/cli/src/harness.test.ts",
+        "pnpm --filter @nomo/cli typecheck"
+      ],
+      "evidence": [
+        "Implemented in the parent free-for-teams session. Added nomo harness reward --session <id> <caseId>; trend already existed and remains covered by CLI tests.",
+        "NO_COLOR=1 node --test packages/cli/src/harness.test.ts observed exit 0: tests 21, pass 21, fail 0, duration_ms 224.099792.",
+        "pnpm --filter @nomo/cli typecheck observed exit 0 after the H14 changes.",
+        "NO_COLOR=1 node --test --test-concurrency=1 packages/cli/src/harness.test.ts packages/cli/src/tui/workspace-harness-proposals.test.ts observed exit 0: tests 28, pass 28, fail 0, duration_ms 1997.564583.",
+        "git diff --check observed exit 0."
+      ],
+      "stopCondition": "Stop if reporting a reward would require guessing a missing measurement or trusting a reward that does not recompute."
     }
   ]
 }
