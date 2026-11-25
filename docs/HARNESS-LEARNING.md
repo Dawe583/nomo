@@ -167,12 +167,17 @@ legacy holds without a decision timestamp remain `unmeasured`.
 
 Reward guardrails use the existing board guardrails `deny_rate`,
 `rollback_count` and `unknown_tool_rate`, measured only from chain entries that
-carry the exact eval attribution. Governed tool decisions carry the bounded
-classification outcome `classified` or `unclassified`; the chain does not need
-registry facts or classifier internals for that measurement. If a direct
-attributed child workspace is unreadable, all guardrails are `unmeasured`
-because the evidence is partial. Guardrail measurement is descriptive chain
-evidence, not a model capability proof.
+carry the exact eval attribution. Decision rates reconstruct logical governed
+calls from their initial `allow`, `hold` or `deny` anchor: hold resolution and
+execution records are stages of that same call, not additional attempts. A
+denied hold is both one hold and one refusal. Internal subagent-spawn lifecycle
+records are not counted as a second delegated tool call. Governed tool
+decisions carry the bounded classification outcome `classified` or
+`unclassified`; the chain does not need registry facts or classifier internals
+for that measurement. If a direct attributed child workspace is unreadable, all guardrails are
+`unmeasured`. Internally incomplete evidence makes the affected measurement
+`unmeasured` rather than partial truth. Guardrail measurement is
+descriptive chain evidence, not a model capability proof.
 
 ## Boundaries
 

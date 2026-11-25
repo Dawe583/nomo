@@ -552,7 +552,11 @@ function measuredEvalGuardrails(
   for (const key of SCORE_GUARDRAILS) {
     const summary = board.guardrails[key];
     guardrails[key] =
-      summary.n > 0 && typeof summary.mean === "number" && Number.isFinite(summary.mean) && summary.mean >= 0
+      summary.n > 0 &&
+        summary.unmeasured === 0 &&
+        typeof summary.mean === "number" &&
+        Number.isFinite(summary.mean) &&
+        summary.mean >= 0
         ? summary.mean
         : "unmeasured";
   }

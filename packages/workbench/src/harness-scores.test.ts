@@ -126,6 +126,39 @@ test("an expired hold costs a human but is not a refusal", () => {
   assert.equal(board.metrics.first_pass_rate.unmeasured, 3);
 });
 
+test("authorization lifecycle records do not multiply one logical call", () => {
+  const lifecycle = (decision: string) => entry({ tool: "fs.write", klass: "r1", decision });
+  const board = measureBoard(
+    [[
+      lifecycle("allow"),
+      lifecycle("execute:completed"),
+      lifecycle("hold"),
+      lifecycle("hold:approved"),
+      lifecycle("execute:completed"),
+      lifecycle("deny"),
+    ]],
+    "t0",
+  );
+  assert.equal(board.caseCount, 1);
+  assert.equal(board.metrics.hold_rate.mean, 1 / 3);
+  assert.equal(board.metrics.deny_rate.mean, 1 / 3);
+});
+
+test("a denied hold is both a human wait and a refusal of one logical call", () => {
+  const lifecycle = (decision: string) => entry({ tool: "fs.write", klass: "r1", decision });
+  const board = measureBoard([[lifecycle("hold"), lifecycle("hold:denied")]], "t0");
+  assert.equal(board.metrics.hold_rate.mean, 1);
+  assert.equal(board.metrics.deny_rate.mean, 1);
+  assert.equal(board.metrics.hold_rate.unmeasured, 0);
+});
+
+test("a hold without lifecycle resolution is incomplete measurement evidence", () => {
+  const board = measureBoard([[decided("hold")]], "t0");
+  assert.equal(board.metrics.hold_rate.mean, 1);
+  assert.equal(board.metrics.hold_rate.unmeasured, 1);
+  assert.equal(board.metrics.deny_rate.unmeasured, 1);
+});
+
 test("entries that are not records are skipped rather than crashing the board", () => {
   const board = measureBoard(
     [[entry({ decision: "execute:completed" }), { body: null }, { body: [1] }, { body: 7 }]],
