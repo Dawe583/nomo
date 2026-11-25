@@ -72,6 +72,24 @@ const TEST_FILE = /\.(test|spec)\.(ts|tsx|mts|cts|mjs|cjs|js)$/;
  */
 const ORPHANS = new Map([
   [
+    "harness-factorial-bandit.ts",
+    // Restoration debt, not dead code: H18 added the factorial policy-search
+    // primitive and tests, but no operator command consumes it yet. Wiring it
+    // to activation is a separate product decision because exploration changes
+    // which variants are measured.
+    "H18 factorial policy-search primitive awaiting a separately designed operator surface; " +
+      "until then tests exercise it but production cannot activate exploration",
+  ],
+  [
+    "offline-policy.ts",
+    // Restoration debt, not dead code: R8 added inverse-propensity evaluation
+    // as a measurement library, but no command imports logged bandit rounds
+    // yet. Wiring it needs a defined input contract rather than a speculative
+    // file format.
+    "R8 offline evaluation library awaiting a separately designed input contract; " +
+      "until then tests exercise it but production exposes no estimator command",
+  ],
+  [
     "test-fixture.ts",
     // Not the same case as the six above: a fixture is test scaffolding, not a
     // capability, so it needs no production importer. If a non-test file ever

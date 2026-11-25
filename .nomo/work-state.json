@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-25T19:47:31.248857Z",
+  "updatedAt": "2026-11-25T19:50:01.897846Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -2276,6 +2276,36 @@
       ],
       "stopCondition": "Stop if execution would touch host files, network, provider or model, if prompts/args/results enter measurement output, if attribution is invented for unexecuted tools, or if validation writes partial invalid input.",
       "completedAt": "2026-11-25T19:47:31.248718Z"
+    },
+    {
+      "id": "q16-module-inventory-debt",
+      "status": "done",
+      "owner": "devin-6293643153014f56bb088c9a71fde97a",
+      "dependsOn": [
+        "h18-multi-axis-bandit",
+        "r8-offline-policy-eval",
+        "h20b-tool-using-eval-attribution"
+      ],
+      "scope": [
+        "scripts/src/module-inventory.test.mjs",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "unwired H18 and R8 library modules are named as restoration debt rather than hidden orphans",
+        "allowlist remains checked in both directions"
+      ],
+      "verifier": [
+        "node --test scripts/src/module-inventory.test.mjs"
+      ],
+      "evidence": [
+        "NO_COLOR=1 node --test scripts/src/module-inventory.test.mjs => exit 0; tests 2, pass 2, fail 0, duration_ms 101.86775",
+        "inventory observed 49 modules and exactly the 3 allowlisted orphans; allowlist 3 entries, 0 with importer, 0 missing"
+      ],
+      "stopCondition": "Stop if hiding the debt would require weakening the inventory gate.",
+      "completedAt": "2026-11-25T19:50:01.897676Z"
     }
   ]
 }
