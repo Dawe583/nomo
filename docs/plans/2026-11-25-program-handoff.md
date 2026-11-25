@@ -65,11 +65,7 @@ Last full local dry run was recorded in Q8 and merged to `main` as `96675914`.
 
 ## Next ready node
 
-T10 is complete. Next inspect T11 and T12 in
-`docs/plans/2026-11-25-nomo-24h-program-detailed.md`; both are optional or
-gated program work. Do not adopt Ink or another component library unless the
-byte-for-byte parity gate is explicitly satisfied. Otherwise continue with the
-next ready non-T program node and owner-approved gates only.
+T13 is complete as verification of existing behavior. Next ready expansion node: T14 diff panel, per-hunk staging, split/unified and side-by-side at 160+ columns. T11 remains owner-gated; Q5, G3 and G4 remain approval-gated.
 
 After T2.5, continue T4 panel navigation, then T4, T5.x, T6, T7, T8,
 T9 and T10 as the detailed program orders them. Do not start T11 unless the

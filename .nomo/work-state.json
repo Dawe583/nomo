@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-25T14:37:04Z",
+  "updatedAt": "2026-11-25T14:38:20Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -1692,6 +1692,40 @@
         "Reason recorded: the verifier belonged to the deleted additive @opentui adapter, had no caller, and keeping it invited confidence in a renderer path that no longer exists."
       ],
       "stopCondition": "Stop if any live package, script, CI or operator doc still calls the verifier."
+    },
+    {
+      "id": "t13-session-browser",
+      "status": "done",
+      "owner": "devin-6293643153014f56bb088c9a71fde97a",
+      "dependsOn": [
+        "t12-opentui-verifier-retirement"
+      ],
+      "scope": [
+        "packages/cli/src/tui/workspace.ts",
+        "packages/cli/src/tui/workspace.test.ts",
+        "docs/plans/2026-11-25-nomo-24h-program-detailed.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "fold sections",
+        "keyboard-only navigation",
+        "inspector at 120+ columns",
+        "empty state"
+      ],
+      "verifier": [
+        "node --test packages/cli/src/tui/workspace.test.ts",
+        "pnpm --filter @nomo/cli typecheck"
+      ],
+      "evidence": [
+        "NO_COLOR=1 node --test packages/cli/src/tui/workspace.test.ts observed exit 0: tests 128, pass 128, fail 0, duration_ms 5277.949083. The suite covers collapsible section headings, keyboard movement and paging, the 120-column inspector threshold, narrow inspector replacement and Escape return, empty state and filter state.",
+        "pnpm --filter @nomo/cli typecheck observed exit 0.",
+        "Source review found T13 already implemented; no duplicate implementation was added.",
+        "git diff --check observed exit 0."
+      ],
+      "stopCondition": "Stop if folding, keyboard navigation, the 120-column inspector threshold or the empty/filter states regress."
     }
   ]
 }
