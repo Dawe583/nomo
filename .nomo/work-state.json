@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-25T14:54:39Z",
+  "updatedAt": "2026-11-25T14:58:37Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -1905,6 +1905,39 @@
         "git diff --check observed exit 0."
       ],
       "stopCondition": "Stop if theme tokens fork into a second source, decorative border/rule tokens are treated as text, or monochrome/ASCII output loses words."
+    },
+    {
+      "id": "r8-offline-policy-eval",
+      "status": "done",
+      "owner": "devin-6293643153014f56bb088c9a71fde97a",
+      "dependsOn": [
+        "r6-simulation-report"
+      ],
+      "scope": [
+        "packages/workbench/src/offline-policy.ts",
+        "packages/workbench/src/offline-policy.test.ts",
+        "docs/plans/2026-11-25-nomo-24h-program-detailed.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "importance weighting for a new arm without deploying it",
+        "unsupported candidate is unmeasured rather than zero"
+      ],
+      "verifier": [
+        "node --test packages/workbench/src/offline-policy.test.ts",
+        "pnpm --filter @nomo/workbench typecheck",
+        "node --test --test-concurrency=1 packages/workbench/src/*.test.ts"
+      ],
+      "evidence": [
+        "NO_COLOR=1 node --test packages/workbench/src/offline-policy.test.ts observed exit 0: tests 3, pass 3, fail 0, duration_ms 67.625125. Candidate estimate 0.5, matchedRounds 2, coverage 0.5, effectiveSamples 1.8; unsupported new-arm estimate null and unmeasured [new-arm].",
+        "pnpm --filter @nomo/workbench typecheck observed exit 0.",
+        "NO_COLOR=1 node --test --test-concurrency=1 packages/workbench/src/*.test.ts observed exit 0: tests 1191, pass 1189, fail 0, skipped 2, duration_ms 86284.343167.",
+        "git diff --check observed exit 0."
+      ],
+      "stopCondition": "Stop if an unsupported candidate receives numeric reward, propensity is not logged, or offline evaluation changes deployment state."
     }
   ]
 }

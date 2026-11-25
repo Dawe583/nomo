@@ -1022,6 +1022,12 @@ These are real, scoped follow-ups, not wishes. ~40 h.
 9. **H18 Multi-axis bandit**: two axes at once with interaction terms. 4 h.
 10. **R8 Offline policy evaluation**: importance weighting for a new arm without
     deploying it. 3 h.
+
+    As built: `offline-policy.ts` evaluates deterministic candidate arms from
+    logged rounds with inverse propensity scoring, coverage and effective
+    sample size. A candidate outside logging-policy support is explicitly
+    `unmeasured`, never zero, so absence of support cannot be read as failure
+    or success. No arm is deployed and no model is trained.
 11. **Q11 Packaging**: install from a tarball, run the TUI, verify the launcher.
     2 h.
 12. **Q12 Docs**: operator handbook refresh for the new commands. 2 h.
