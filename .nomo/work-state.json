@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-25T21:26:19.025295Z",
+  "updatedAt": "2026-11-25T21:27:16.208093Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -2657,6 +2657,36 @@
       ],
       "stopCondition": "Stop if the only proof is process memory rather than restored durable session state.",
       "completedAt": "2026-11-25T21:26:19.025295Z"
+    },
+    {
+      "id": "h20c2-threat-model-attribution-truth",
+      "status": "done",
+      "owner": "devin-6293643153014f56bb088c9a71fde97a",
+      "dependsOn": [
+        "h20c1-eval-attribution-restart-proof"
+      ],
+      "scope": [
+        "docs/THREAT-MODEL.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "threat model no longer names direct production-chain positional grouping as universal after H20c",
+        "legacy positional boundary remains explicit"
+      ],
+      "verifier": [
+        "node --test scripts/src/doc-truth.test.mjs",
+        "git diff --check"
+      ],
+      "evidence": [
+        "node --test scripts/src/doc-truth.test.mjs: 9 tests, 9 pass, 0 fail, duration_ms 190.17625",
+        "git diff --check: exit 0",
+        "manual read: threat model now scopes positional misattribution to legacy entries without harnessEval and names startHarnessEval as the attributed production path"
+      ],
+      "stopCondition": "Stop if a remaining docs claim contradicts the implemented attribution boundary.",
+      "completedAt": "2026-11-25T21:27:16.208093Z"
     }
   ]
 }
