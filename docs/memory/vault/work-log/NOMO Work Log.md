@@ -9542,3 +9542,6 @@ Commit 3280db90942408dbc286a70f42124b4a3a33b277, subject Polish shared TUI motio
   Dist was newer than source. Offline frozen lockfile install exited 0 across 14 workspace projects with no lockfile drift and no dependency changes. [[NOMO TUI Control Center]]
 - 2026-11-25 · Q8 local CI dry run completed in the free parent session.
   Typecheck exit 0, TUI 529/529 plus the PTY matrix, Workbench 1188 tests with 1186 pass, 0 fail and 2 skipped. H10's intentional settings inventory growth had left visual snapshots stale; the rendered settings frames were reviewed and 40 hashes refreshed. Scripts remain red only in six named pre-existing areas: control-plane colour literals, test env-var scanner findings, hidden-directory licence coverage, historical/generated em-dash files, and the existing CLI 1.0.1 versus root 0.1.0 version mismatch. [[NOMO TUI Control Center]]
+- 2026-11-25 · Q9 and Q10 completed in the free parent session.
+  Manual contract review found no contradiction requiring CONTEXT or STANDARDS edits. The program handoff page now records verified gates, shipped slices,
+  limits, blocked provider work, forbidden actions, and the exact next ready node T2.1. Doc truth remains 9/9 after removing the stale planned-handoff inventory entry. [[NOMO TUI Control Center]]

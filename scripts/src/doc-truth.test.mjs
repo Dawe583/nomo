@@ -324,8 +324,6 @@ const INVENTORY = {
     "historical imported plan cited by memory; not present in this checkout",
   "docs/35-data-authority.md":
     "historical imported data-authority note cited by memory; not present in this checkout",
-  "docs/plans/2026-11-25-program-handoff.md":
-    "planned Q10 handoff deliverable; the program names it before it is written",
 
   // Removed on 2026-11-21 by owner decision. The decision log and the plans
   // still name them, because a record that described only the present tree
