@@ -28,7 +28,10 @@ import {
 } from "../../workbench/src/harness-eval-tools.ts";
 import {
   REWARD_SCHEMA,
+  SCORE_GUARDRAILS,
+  measureBoard,
   rewardRecord,
+  scoreCases,
   type RewardInput,
   type RewardRecord,
   type RewardIngestionProvenance,
@@ -508,6 +511,29 @@ async function evalUsageEvidence(
   return { entries, complete, workspaceCount: 1 + childWorkspaces.size };
 }
 
+function measuredEvalGuardrails(
+  entries: readonly { readonly body: unknown }[],
+  attribution: ReturnType<typeof evalCaseAttribution>,
+  complete: boolean,
+): RewardInput["guardrails"] {
+  if (!complete)
+    return Object.fromEntries(SCORE_GUARDRAILS.map((key) => [key, "unmeasured"]));
+  const attributed = entries.filter((entry) => {
+    const body = objectRecord(entry.body);
+    return body !== null && matchesEvalAttribution(body, attribution);
+  });
+  const board = measureBoard(scoreCases(attributed), new Date().toISOString());
+  const guardrails: Record<string, number | "unmeasured"> = {};
+  for (const key of SCORE_GUARDRAILS) {
+    const summary = board.guardrails[key];
+    guardrails[key] =
+      summary.n > 0 && typeof summary.mean === "number" && Number.isFinite(summary.mean) && summary.mean >= 0
+        ? summary.mean
+        : "unmeasured";
+  }
+  return guardrails;
+}
+
 function existingEvalGates(
   entries: readonly { readonly body: unknown }[],
   attribution: ReturnType<typeof evalCaseAttribution>,
@@ -811,7 +837,7 @@ export async function runHarnessCommand(
         baselineVariantId: null,
         changedAxis: null,
         passed: gate.passed,
-        guardrails: {},
+        guardrails: measuredEvalGuardrails(usageEvidence.entries, attribution, usageEvidence.complete),
         costUsd: usageEvidence.complete
           ? measuredUsageCost(usageEvidence.entries, attribution, usageEvidence.workspaceCount)
           : "unmeasured",

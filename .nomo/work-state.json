@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-25T22:47:26.814148Z",
+  "updatedAt": "2026-11-25T22:51:07.281077Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -3052,6 +3052,54 @@
       ],
       "stopCondition": "Stop if cost or latency measurement would require estimates, provider output content, child prompt or tool content, or treating missing producers as zero.",
       "completedAt": "2026-11-25T22:47:26.814148Z"
+    },
+    {
+      "id": "h23-eval-guardrail-measurement",
+      "status": "done",
+      "owner": "devin-6293643153014f56bb088c9a71fde97a",
+      "dependsOn": [
+        "h22-eval-usage-cost-latency-measurement"
+      ],
+      "scope": [
+        "packages/workbench/src/index.ts",
+        "packages/cli/src/harness.ts",
+        "packages/cli/src/harness.test.ts",
+        "docs/HARNESS-LEARNING.md",
+        "docs/THREAT-MODEL.md",
+        "docs/plans/2026-11-25-nomo-24h-program-detailed.md",
+        "docs/plans/2026-11-25-program-handoff.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "governed tool decisions carry only the bounded classification outcome classified or unclassified for measurement",
+        "run-eval reward guardrails use exact-attributed chain evidence for deny_rate, rollback_count and unknown_tool_rate",
+        "unreadable direct child evidence makes every guardrail unmeasured rather than partially measured",
+        "guardrail measurement remains descriptive chain evidence and never becomes model capability proof"
+      ],
+      "verifier": [
+        "node --test packages/cli/src/harness-run-eval.test.ts packages/cli/src/harness.test.ts",
+        "node --test packages/workbench/src/workbench.test.ts packages/workbench/src/reversal-record.test.ts packages/workbench/src/harness-scores.test.ts",
+        "node --test scripts/src/doc-truth.test.mjs scripts/src/no-dash.test.mjs",
+        "pnpm --filter @nomo/cli typecheck",
+        "pnpm --filter @nomo/workbench typecheck",
+        "node --test scripts/src/*.test.mjs",
+        "git diff --check"
+      ],
+      "evidence": [
+        "CLI verifier: 30 tests, 30 pass, 0 fail, duration_ms 1440.888959",
+        "Workbench verifier: 93 tests, 93 pass, 0 fail, duration_ms 8088.838417",
+        "docs verifier: 10 tests, 10 pass, 0 fail, duration_ms 109.136458",
+        "pnpm --filter @nomo/cli typecheck: exit 0",
+        "pnpm --filter @nomo/workbench typecheck: exit 0",
+        "wider scripts suite: 427 tests, 394 pass, 0 fail, cancelled 0, skipped 32, todo 1, duration_ms 9759.571417",
+        "git diff --check: exit 0",
+        "focused fixture evidence: one allowed and one denied attributed call produced deny_rate 0.5, rollback_count 0 and unknown_tool_rate 0; making the direct child ledger unreadable produced unmeasured cost and all three guardrails unmeasured"
+      ],
+      "stopCondition": "Stop if guardrail measurement would require classifier internals, registry facts, prompts, arguments, tool results or treating partial child evidence as complete.",
+      "completedAt": "2026-11-25T22:51:07.281077Z"
     }
   ]
 }

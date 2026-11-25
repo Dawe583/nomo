@@ -155,6 +155,15 @@ idempotent replay cannot recover the original run's wall clock, so latency is
 `unmeasured` for that replay. `approvalMs` remains `unmeasured` until explicit
 approval timing evidence is aggregated.
 
+Reward guardrails use the existing board guardrails `deny_rate`,
+`rollback_count` and `unknown_tool_rate`, measured only from chain entries that
+carry the exact eval attribution. Governed tool decisions carry the bounded
+classification outcome `classified` or `unclassified`; the chain does not need
+registry facts or classifier internals for that measurement. If a direct
+attributed child workspace is unreadable, all guardrails are `unmeasured`
+because the evidence is partial. Guardrail measurement is descriptive chain
+evidence, not a model capability proof.
+
 ## Boundaries
 
 Activation never happens from a score alone. The operator types the full digest

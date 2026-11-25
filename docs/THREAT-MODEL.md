@@ -733,9 +733,11 @@ cost, runs only after settlement, and its signed chain evidence carries outcome,
 code, duration and a digest of the command rather than stdout or stderr. A
 timeout or spawn failure is verifier failure, not evidence that the evaluated
 case failed. Usage receipts distinguish missing cost producers from zero cost,
-and an idempotent replay does not invent the original run's latency. The hook
-still executes with local operator authority, so the allowlist remains the trust
-boundary.
+and an idempotent replay does not invent the original run's latency. Guardrail
+measurement reads only bounded decision and classification outcomes from exact
+attributed chain evidence; missing child evidence makes the measurement
+unmeasured rather than partial truth. The hook still executes with local
+operator authority, so the allowlist remains the trust boundary.
 Trailing unattributed tool calls are reported and not silently attached to a
 later case.
 
