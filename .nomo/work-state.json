@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-25T14:09:33Z",
+  "updatedAt": "2026-11-25T14:14:47Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -1455,6 +1455,42 @@
         "git diff --check observed exit 0."
       ],
       "stopCondition": "Stop if motion exceeds one frame per 100 ms, reduced motion changes words, or a runner/pet timer uses an independent animation cadence."
+    },
+    {
+      "id": "t6-mouse-parity",
+      "status": "done",
+      "owner": "devin-6293643153014f56bb088c9a71fde97a",
+      "dependsOn": [
+        "t4-narrow-terminals"
+      ],
+      "scope": [
+        "packages/cli/src/tui/mouse-selection.ts",
+        "packages/cli/src/tui/workspace-runner.ts",
+        "packages/cli/src/tui/workspace-terminal.test.ts",
+        "docs/plans/2026-11-25-nomo-24h-program-detailed.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "wheel reaches every panel through the runner shared handler",
+        "click hit targets exist on every tab and rebuild after resize",
+        "hit resolution covers every row kind",
+        "selection behavior stays covered"
+      ],
+      "verifier": [
+        "node --test packages/cli/src/tui/workspace-terminal.test.ts",
+        "pnpm --filter @nomo/cli typecheck",
+        "node --test --test-concurrency=1 packages/cli/src/tui/*.test.ts"
+      ],
+      "evidence": [
+        "NO_COLOR=1 node --test packages/cli/src/tui/workspace-terminal.test.ts observed exit 0: tests 11, pass 11, fail 0, duration_ms 2204.876583. Coverage includes SGR decoding for wheel 64/65, click press, drag motion and release; hit targets on all 13 workspace tabs at 80x24 then 40x12; hit resolution for item/tree/provider/model/setting/chip/toast; and shared wheel movement on list, detail, chat, settings and picker surfaces.",
+        "pnpm --filter @nomo/cli typecheck observed exit 0.",
+        "NO_COLOR=1 node --test --test-concurrency=1 packages/cli/src/tui/*.test.ts observed exit 0: tests 540, pass 540, fail 0, duration_ms 34976.421.",
+        "git diff --check observed exit 0."
+      ],
+      "stopCondition": "Stop if a mouse event is decoded wrongly, wheel behavior diverges between runner and tests, hit targets survive a resize outside the frame, or a row kind cannot be resolved."
     }
   ]
 }

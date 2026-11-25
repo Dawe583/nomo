@@ -65,11 +65,11 @@ Last full local dry run was recorded in Q8 and merged to `main` as `96675914`.
 
 ## Next ready node
 
-Start T6, mouse parity. Exact first action: open
-`docs/plans/2026-11-25-nomo-24h-program-detailed.md` section T6, inspect
-`packages/cli/src/tui/mouse-selection.ts`, `workspace-runner.ts` and
-`workspace-terminal.test.ts`, then implement or verify wheel, click, selection
-and resize hit-target parity on every panel.
+Start T7, keyboard focus parity. Exact first action: open
+`docs/plans/2026-11-25-nomo-24h-program-detailed.md` section T7, inspect
+`packages/cli/src/tui/workspace-runner.ts` and
+`workspace-input-parity.test.ts`, then implement or verify tab order, Escape
+return and no stale focus after Escape, mouse or command-result close paths.
 
 After T2.5, continue T4 panel navigation, then T4, T5.x, T6, T7, T8,
 T9 and T10 as the detailed program orders them. Do not start T11 unless the
