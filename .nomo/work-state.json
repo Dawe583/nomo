@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-25T20:22:17.496845Z",
+  "updatedAt": "2026-11-25T20:24:05.619694Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -2520,6 +2520,33 @@
       ],
       "stopCondition": "Stop if execution would expose secrets, invent missing credentials or perform an unclear irreversible release.",
       "completedAt": "2026-11-25T20:22:17.496845Z"
+    },
+    {
+      "id": "q19-bootstrap-handoff-refresh",
+      "status": "done",
+      "owner": "devin-6293643153014f56bb088c9a71fde97a",
+      "dependsOn": [
+        "q18-gated-work-evaluation"
+      ],
+      "scope": [
+        "docs/SESSION-HANDOFF.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "canonical bootstrap names current verified state and does not overstate provider release readiness"
+      ],
+      "verifier": [
+        "manual read of docs/SESSION-HANDOFF.md",
+        "node --test scripts/src/doc-truth.test.mjs"
+      ],
+      "evidence": [
+        "Manual read after update: bootstrap now names the 657c8d77 line, Q17 scripts result 417 tests / 384 pass / 0 fail / 32 skipped / 1 todo, and F4 as blocked by absent NOMO_SMOKE_API_KEY with Q5 only SKIP."
+      ],
+      "stopCondition": "Stop if a newer verifier result contradicts the recorded state.",
+      "completedAt": "2026-11-25T20:24:05.619694Z"
     }
   ]
 }
