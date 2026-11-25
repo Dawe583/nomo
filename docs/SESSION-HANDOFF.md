@@ -20,13 +20,13 @@
 - `.agents/skills/`, `.devin/skills/` - the full local skill set, copied for cloud parity
 - `docs/CONTEXT.md`, `docs/DECISIONS.md`, `docs/STANDARDS.md` - authoritative repository contracts
 
-## Verified state at push (commit e2ad7ac5 line, 2026-11-25)
+## Verified state at push (commit 657c8d77 line, 2026-11-25)
 
-- workbench: `node --test --test-concurrency=1 packages/workbench/src/*.test.ts` → 1188 tests, 1186 pass, 0 fail, 2 skipped after Q8
-- ledger: `node --test --test-concurrency=1 packages/ledger/src/*.test.ts` → 142 tests, 142 pass, 0 fail after H13 integration
-- `pnpm --filter @nomo/workbench typecheck` → exit 0
+- scripts: `node --test scripts/src/*.test.mjs` → 417 tests, 384 pass, 0 fail, 32 skipped, 1 todo after Q17
+- `pnpm --filter @nomo/cli typecheck` → exit 0 after Q17
+- `pnpm --filter @nomo/workbench typecheck` → exit 0 after Q17
 - agent-identity: 11/11 including revocation surviving restart without local session evidence
-- H1-H4, H7, H8, H9, R1, R2, R3, R4, Q1-Q4, Q6-Q10, R5, R6, R7, H5 and H10 through H15 are done; oracle eval 14/14 proves plumbing only, not model capability; R2 is a contextual bandit, not RL
+- H1-H15, H18-H20b, R1-R8, T1-T10 and T12-T18 are done; Q1-Q17 are done. Oracle eval proves plumbing only, not model capability; R2 is a contextual bandit, not RL
 - Do not trust these numbers without re-running the gate you depend on.
 
 ## Product gates status (Track F)
@@ -34,7 +34,7 @@
 - F1 later-session retrieval: DONE - opt-in `NOMO_SHARED_LEARNING_WORKSPACES` read-only union, digest names entry id + chain seqs
 - F2 approval end-to-end: DONE - hold writes signed hold:approved with approvedBy; verified in agent-messages-tool tests
 - F3 identity/fleet truth: DONE as the local-truth slice. TUI status shows the binding, `/revoke-agent` is confirmed and local, durable restart is tested including revocation without local session evidence; fleet-wide revoke remains honestly documented as unavailable until registry, node inventory, ack barrier and reconcile exist
-- F4 provider release path: PENDING - needs explicit authorization for a real provider call
+- F4 provider release path: BLOCKED - owner approval exists, but `NOMO_SMOKE_API_KEY` is absent. Q5 completed only as SKIP: no provider capability is proven
 
 ## Rules that are not negotiable
 
