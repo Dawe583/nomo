@@ -51,9 +51,12 @@ Last full local dry run was recorded in Q8 and merged to `main` as `96675914`.
   Q11 fixed the CLI 1.0.1 versus root 0.1.0 version mismatch. The full scripts
   suite has not been re-run after H19, so no smaller current failure count is
   claimed here.
-- H9 trajectory grouping is positional for direct chain rewards until tool entries carry case ids.
-  Bare-eval ingested rewards export with empty tool calls rather than adopting
-  unrelated positional entries. Full attribution redesign remains discovery.
+- H9 trajectory grouping is positional for direct production-chain rewards until
+  production tool entries carry case ids. The offline managed-workspace eval
+  fixture can now produce explicit `nomo.eval-tool.v1` attribution and
+  `ingest-eval` can carry it into the signed chain. Bare-eval ingested rewards
+  without those measurements still export empty tool calls rather than adopting
+  unrelated positional entries.
 
 ## Blocked or gated
 
@@ -74,10 +77,11 @@ closed the reward-ingestion production gap. H16 remains blocked on operator
 opt-in/review of a real-run corpus before freezing; H17 depends on H16 plus
 human labels. T11 remains owner-gated; Q5, G3 and G4 remain approval-gated.
 
-A possible H20 case-attribution redesign is discovery work, not a ready
-implementation node: current eval records do not execute tools, so simply
-adding a case id field to chain entries would not create truthful attribution.
-Do not start T11 unless the owner explicitly chooses the optional parity spike.
+H20b implemented the first truthful attribution path: an explicit offline
+managed-workspace execution fixture, signed ingestion of attributed measurement
+records, and export matching by ingestion provenance. Direct production-chain
+positional attribution remains a separate redesign. Do not start T11 unless the
+owner explicitly chooses the optional parity spike.
 
 ## Do not do
 

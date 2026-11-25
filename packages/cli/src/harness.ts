@@ -20,6 +20,12 @@ import { join } from "node:path";
 import { Workbench } from "../../workbench/src/index.ts";
 import type { HarnessSettings } from "../../workbench/src/harness-settings.ts";
 import {
+  EVAL_TOOL_SCHEMA,
+  evalToolRecord,
+  type EvalToolInput,
+  type EvalToolRecord,
+} from "../../workbench/src/harness-eval-tools.ts";
+import {
   REWARD_SCHEMA,
   rewardRecord,
   type RewardInput,
@@ -83,6 +89,12 @@ export type HarnessSurface = {
     input: RewardInput,
     provenance?: RewardIngestionProvenance,
   ): Promise<RewardRecord>;
+  /** Append one governed eval tool measurement, when the surface owns the chain. */
+  recordHarnessEvalTool?(
+    sessionId: string,
+    input: EvalToolInput,
+    provenance?: RewardIngestionProvenance,
+  ): Promise<EvalToolRecord>;
   pendingApprovalsFor(
     sessionId: string,
   ): Promise<
@@ -145,6 +157,7 @@ const USAGE = [
   "  nomo harness rollback --session <id> <digest>",
   "  nomo harness reward --session <id> <caseId> show measured reward records",
   "  nomo harness ingest-rewards --session <id> <records.jsonl> append measured eval rewards",
+  "  nomo harness ingest-eval --session <id> <measurements.jsonl> append rewards and attributed tool measurements",
   "  nomo harness entries --session <id> show what the harness holds",
   "  nomo harness ratchet --session <id> measure the guardrails before and after the last refinement",
   "  nomo harness trend --session <id> show measured effects by activation",
@@ -213,8 +226,16 @@ const rewardIdentifier = (value: unknown): value is string =>
   typeof value === "string" && REWARD_IDENTIFIER.test(value);
 
 type ValidatedReward = {
+  readonly kind: "reward";
   readonly input: RewardInput;
 };
+
+type ValidatedEvalTool = {
+  readonly kind: "eval-tool";
+  readonly input: EvalToolInput;
+};
+
+type ValidatedMeasurement = ValidatedReward | ValidatedEvalTool;
 
 /**
  * Validate one exported reward without printing its content. `rewardRecord`
@@ -261,7 +282,25 @@ function validateExportedReward(value: unknown, where: string): ValidatedReward 
   }
   if (record.reward !== body.reward)
     throw new Error(`${where}: stored reward does not recompute`);
-  return { input: body as unknown as RewardInput };
+  return { kind: "reward", input: body as unknown as RewardInput };
+}
+
+/** Validate one exported eval tool measurement without printing its content. */
+function validateExportedEvalTool(value: unknown, where: string): ValidatedEvalTool {
+  if (value === null || typeof value !== "object" || Array.isArray(value))
+    throw new Error(`${where}: expected an eval tool object`);
+  const body = value as Record<string, unknown>;
+  if (body.schema !== EVAL_TOOL_SCHEMA)
+    throw new Error(`${where}: expected schema ${EVAL_TOOL_SCHEMA}`);
+  try {
+    const record = evalToolRecord(body as unknown as EvalToolInput);
+    const { schema: _schema, ...input } = record;
+    return { kind: "eval-tool", input };
+  } catch (error) {
+    throw new Error(
+      `${where}: invalid eval tool record: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
 }
 
 /** The ingestion position carried by one chain body when it belongs to the
@@ -328,7 +367,7 @@ export async function runHarnessCommand(
     io.stdout(USAGE);
     return action ? 0 : 1;
   }
-  if (!["list", "entries", "approve", "reject", "rollback", "reward", "ingest-rewards", "model", "ratchet", "trend"].includes(action)) {
+  if (!["list", "entries", "approve", "reject", "rollback", "reward", "ingest-rewards", "ingest-eval", "model", "ratchet", "trend"].includes(action)) {
     io.stderr(`Unknown harness action ${action}.`);
     io.stderr(USAGE);
     return 1;
@@ -388,7 +427,7 @@ export async function runHarnessCommand(
       `The ${action} action needs ${
         action === "reward"
           ? "a case id"
-          : action === "ingest-rewards"
+          : action === "ingest-rewards" || action === "ingest-eval"
             ? "a records JSONL file"
             : "the digest of the proposal"
       }.`,
@@ -415,9 +454,9 @@ export async function runHarnessCommand(
     ? await deps.workbench()
     : new Workbench(env);
   try {
-    if (action === "ingest-rewards") {
-      if (!workbench.recordHarnessReward) {
-        io.stderr("This harness surface cannot record measured rewards.");
+    if (action === "ingest-rewards" || action === "ingest-eval") {
+      if (!workbench.recordHarnessReward || (action === "ingest-eval" && !workbench.recordHarnessEvalTool)) {
+        io.stderr("This harness surface cannot record measured eval evidence.");
         return 1;
       }
       const session = workbench.get?.(flags.session);
@@ -438,7 +477,7 @@ export async function runHarnessCommand(
         return 1;
       }
       const lines = raw.split(/\r?\n/);
-      const validated: ValidatedReward[] = [];
+      const validated: ValidatedMeasurement[] = [];
       for (const [index, line] of lines.entries()) {
         if (!line.trim()) continue;
         let value: unknown;
@@ -449,7 +488,14 @@ export async function runHarnessCommand(
           return 1;
         }
         try {
-          validated.push(validateExportedReward(value, `line ${index + 1}`));
+          const schema = value !== null && typeof value === "object" && !Array.isArray(value)
+            ? (value as Record<string, unknown>).schema
+            : undefined;
+          validated.push(
+            action === "ingest-eval" && schema === EVAL_TOOL_SCHEMA
+              ? validateExportedEvalTool(value, `line ${index + 1}`)
+              : validateExportedReward(value, `line ${index + 1}`),
+          );
         } catch (error) {
           io.stderr(
             `Invalid reward file: ${error instanceof Error ? error.message : String(error)}. Nothing was written.`,
@@ -477,10 +523,18 @@ export async function runHarnessCommand(
         }))
         .filter(({ provenance }) => !ingested.has(provenance.index));
       const duplicates = validated.length - toWrite.length;
-      for (const { record, provenance } of toWrite)
-        await workbench.recordHarnessReward(flags.session, record.input, provenance);
+      for (const { record, provenance } of toWrite) {
+        if (record.kind === "reward")
+          await workbench.recordHarnessReward(flags.session, record.input, provenance);
+        else
+          await workbench.recordHarnessEvalTool!(flags.session, record.input, provenance);
+      }
+      const rewardCount = validated.filter((record) => record.kind === "reward").length;
+      const toolCount = validated.length - rewardCount;
+      const noun = action === "ingest-eval" ? "ingest-eval" : "ingest-rewards";
       io.stdout(
-        `ingest-rewards: ${toWrite.length} written, ${duplicates} duplicates skipped, ${validated.length} validated`,
+        `${noun}: ${toWrite.length} written, ${duplicates} duplicates skipped, ${validated.length} validated` +
+          (action === "ingest-eval" ? `, ${rewardCount} rewards, ${toolCount} tool-records` : ""),
       );
       return 0;
     }

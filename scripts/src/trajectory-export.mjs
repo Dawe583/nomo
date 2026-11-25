@@ -9,9 +9,10 @@
  * entries are the harness's own bookkeeping and are skipped. The tool entries
  * since the previous reward record belong to the case that record names.
  * shortcut: segmentation is by position, so interleaved cases in one chain are
- * misattributed. A reward ingested from a bare eval file carries no tool
- * attribution evidence, so it exports with empty toolCalls rather than
- * adopting whatever positional tool entries happen to precede it.
+ * misattributed. A reward ingested from a bare eval file carries no positional
+ * tool attribution evidence, so it exports empty toolCalls unless explicit
+ * `nomo.eval-tool.v1` measurements for the same case and ingestion file are
+ * present. Direct bare files can match only by case, a documented limit.
  *
  * Each record is built field by field from an allowlist: the tool name, its
  * reversibility class (`klass`) and whether it completed. Arguments, results,
@@ -40,6 +41,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import { REWARD_SCHEMA, computeReward } from "../../packages/workbench/src/harness-scores.ts";
+import { EVAL_TOOL_SCHEMA, evalToolRecord } from "../../packages/workbench/src/harness-eval-tools.ts";
 
 export const TRAJECTORY_SCHEMA = "nomo.trajectory.v1";
 
@@ -59,12 +61,34 @@ const terminal = (decision) =>
   typeof decision === "string" &&
   ((decision.startsWith("execute:") && decision !== "execute:dispatched") || decision.startsWith("deny"));
 
+function attributionKey(record, caseId) {
+  const ingestion = isObject(record.rewardIngestion) ? record.rewardIngestion : null;
+  return typeof ingestion?.fileDigest === "string" && /^[a-f0-9]{64}$/.test(ingestion.fileDigest)
+    ? `file:${ingestion.fileDigest}:${caseId}`
+    : `case:${caseId}`;
+}
+
+function exportedEvalTool(record) {
+  const extracted = {
+    schema: record.schema,
+    caseId: record.caseId,
+    variantId: record.variantId,
+    run: record.run,
+    toolName: record.toolName,
+    toolClass: record.toolClass,
+    ok: record.ok,
+    execution: record.execution,
+  };
+  return evalToolRecord(extracted);
+}
+
 /** Exports every trajectory in JSONL text. Pure; never throws on content. */
 export function exportTrajectories(raw) {
   const trajectories = [];
   const counts = { refused: 0, unreadable: 0, skipped: 0, unattributed: 0 };
   let pending = [];
   let pendingRefused = false;
+  const attributed = new Map();
   for (const line of String(raw).split(/\r?\n/)) {
     if (!line.trim()) continue;
     let value;
@@ -77,6 +101,18 @@ export function exportTrajectories(raw) {
     const record = isObject(value) && isObject(value.body) ? value.body : value;
     if (!isObject(record)) {
       counts.skipped += 1;
+      continue;
+    }
+    if (record.schema === EVAL_TOOL_SCHEMA) {
+      try {
+        const measurement = exportedEvalTool(record);
+        const key = attributionKey(record, measurement.caseId);
+        const list = attributed.get(key) ?? [];
+        list.push({ name: measurement.toolName, klass: measurement.toolClass, ok: measurement.ok });
+        attributed.set(key, list);
+      } catch {
+        counts.refused += 1;
+      }
       continue;
     }
     if (record.schema === REWARD_SCHEMA) {
@@ -97,12 +133,15 @@ export function exportTrajectories(raw) {
         counts.refused += 1;
       } else {
         const ingestedBareEval = isObject(record.rewardIngestion);
-        if (ingestedBareEval) counts.unattributed += pending.length;
+        const key = attributionKey(record, record.caseId);
+        const explicit = attributed.get(key);
+        if (explicit !== undefined) attributed.delete(key);
+        if (explicit !== undefined || ingestedBareEval) counts.unattributed += pending.length;
         trajectories.push({
           schema: TRAJECTORY_SCHEMA,
           caseId: record.caseId,
           variantId: record.variantId,
-          toolCalls: ingestedBareEval ? [] : pending,
+          toolCalls: explicit !== undefined ? explicit : ingestedBareEval ? [] : pending,
           verifier: { passed: record.passed, source: "harness-eval" },
           reward: record.reward,
         });
@@ -127,6 +166,7 @@ export function exportTrajectories(raw) {
     });
   }
   counts.unattributed += pending.length;
+  for (const calls of attributed.values()) counts.unattributed += calls.length;
   return { trajectories, ...counts };
 }
 

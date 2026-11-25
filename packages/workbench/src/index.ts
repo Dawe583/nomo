@@ -231,6 +231,7 @@ import {
   resolvePolicyProfile,
 } from "./policy-profile.ts";
 import { mineLearnedRules } from "./learned-rules.ts";
+import { evalToolRecord, type EvalToolInput, type EvalToolRecord } from "./harness-eval-tools.ts";
 import {
   rewardIngestionProvenance,
   rewardRecord,
@@ -4745,6 +4746,34 @@ export class Workbench {
       "harness.reward",
       { caseId: record.caseId, variantId: record.variantId },
       "reward:recorded",
+      undefined,
+      undefined,
+      {
+        ...record,
+        ...(provenance === undefined
+          ? {}
+          : { rewardIngestion: rewardIngestionProvenance(provenance) }),
+      },
+    );
+    return record;
+  }
+
+  /** Append one offline eval tool execution measurement. The record carries
+   * case attribution but never arguments, results, prompts or document text. */
+  async recordHarnessEvalTool(
+    sessionId: string,
+    input: EvalToolInput,
+    provenance?: RewardIngestionProvenance,
+  ): Promise<EvalToolRecord> {
+    const session = this.sessions.get(sessionId);
+    if (!session) throw new Error("Session not found.");
+    const record = evalToolRecord(input);
+    await this.commitWorkspace(
+      session,
+      this.workspace(sessionId),
+      "harness.eval-tool",
+      { caseId: record.caseId, variantId: record.variantId, run: record.run },
+      "eval-tool:recorded",
       undefined,
       undefined,
       {

@@ -10,6 +10,7 @@ import { fileURLToPath } from "node:url";
 import { isolatedWorkbench } from "../../packages/workbench/src/test-fixture.ts";
 import { runHarnessCommand } from "../../packages/cli/src/harness.ts";
 import { rewardRecord } from "../../packages/workbench/src/harness-scores.ts";
+import { exportTrajectories } from "./trajectory-export.mjs";
 
 const evalScript = fileURLToPath(new URL("./harness-eval.mjs", import.meta.url));
 const runner = fileURLToPath(new URL("./harness-eval-runner.mjs", import.meta.url));
@@ -228,4 +229,84 @@ test("ingest-rewards validates a bare eval file, writes it once, and refuses tam
     ["case-four", "case-five"],
   );
   assert.equal((await rewardEntries()).length, 6);
+});
+
+
+test("ingest-eval writes attributed tool measurements and rewards once after whole-file validation", async (t) => {
+  const fixture = await isolatedWorkbench(t, fetcher, {}, { prefix: "nomo-h20b-" });
+  const { app } = fixture;
+  const session = await app.start("Measure attributed tools", "fixture");
+  await app.settled();
+  const dir = mkdtempSync(join(tmpdir(), "nomo-h20b-ingest-"));
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  const variantId = "sha256:" + "b".repeat(64);
+  const reward = rewardRecord({
+    caseId: "read-existing-document",
+    variantId,
+    baselineVariantId: null,
+    changedAxis: null,
+    passed: true,
+    guardrails: {},
+    costUsd: "unmeasured",
+    latencyMs: 10,
+    approvalMs: "unmeasured",
+    weights: { breach: 0, cost: 0, latency: 0 },
+  });
+  const tool = {
+    schema: "nomo.eval-tool.v1",
+    caseId: "read-existing-document",
+    variantId,
+    run: 1,
+    toolName: "void_workspace_read",
+    toolClass: "r0",
+    ok: true,
+    execution: "managed-workspace-fixture",
+  };
+  const path = join(dir, "measurements.jsonl");
+  writeFileSync(path, [tool, reward].map((record) => JSON.stringify(record)).join("\n") + "\n");
+  const run = async (inputPath) => {
+    const out = [];
+    const err = [];
+    const code = await runHarnessCommand(
+      ["ingest-eval", "--session", session.id, inputPath],
+      { stdout: (line) => out.push(line), stderr: (line) => err.push(line) },
+      { workbench: async () => app },
+    );
+    return { code, out, err };
+  };
+  const measurementEntries = async () =>
+    (await app.ledger(session.workspace)).entries.filter((entry) =>
+      ["nomo.reward.v1", "nomo.eval-tool.v1"].includes(entry.body?.schema),
+    );
+
+  const first = await run(path);
+  assert.equal(first.code, 0, first.err.join(" "));
+  assert.deepEqual(first.out, ["ingest-eval: 2 written, 0 duplicates skipped, 2 validated, 1 rewards, 1 tool-records"]);
+  const entries = await measurementEntries();
+  assert.deepEqual(entries.map((entry) => entry.body.schema), ["nomo.eval-tool.v1", "nomo.reward.v1"]);
+  const digest = createHash("sha256").update(readFileSync(path, "utf8")).digest("hex");
+  assert.deepEqual(entries.map((entry) => entry.body.rewardIngestion), [
+    { fileDigest: digest, index: 0, count: 2 },
+    { fileDigest: digest, index: 1, count: 2 },
+  ]);
+
+  const rerun = await run(path);
+  assert.equal(rerun.code, 0, rerun.err.join(" "));
+  assert.deepEqual(rerun.out, ["ingest-eval: 0 written, 2 duplicates skipped, 2 validated, 1 rewards, 1 tool-records"]);
+  assert.equal((await measurementEntries()).length, 2);
+
+  const hostilePath = join(dir, "hostile.jsonl");
+  writeFileSync(hostilePath, JSON.stringify({ ...tool, arguments: { path: "SECRET-PATH-CANARY" } }) + "\n" + JSON.stringify(reward) + "\n");
+  const hostile = await run(hostilePath);
+  assert.equal(hostile.code, 1);
+  assert.match(hostile.err.join("\n"), /unknown field/);
+  assert.doesNotMatch(hostile.err.join("\n"), /SECRET-PATH-CANARY/);
+  assert.equal((await measurementEntries()).length, 2);
+
+  const proof = await app.ledger(session.workspace);
+  const exported = exportTrajectories(proof.entries.map((entry) => JSON.stringify(entry)).join("\n"));
+  assert.equal(exported.trajectories.length, 1);
+  assert.deepEqual(exported.trajectories[0].toolCalls, [
+    { name: "void_workspace_read", klass: "r0", ok: true },
+  ]);
 });
