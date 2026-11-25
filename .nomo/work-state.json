@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-25T12:32:21Z",
+  "updatedAt": "2026-11-25T12:38:06Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -1183,6 +1183,47 @@
         "git diff --check observed exit 0."
       ],
       "stopCondition": "Stop if a connector is marked connected without a measured successful probe, error details or catalog data are persisted after a failed probe, colour becomes the only state signal, or rows exceed width."
+    },
+    {
+      "id": "t2-3-status-panel-parity",
+      "status": "done",
+      "owner": "devin-6293643153014f56bb088c9a71fde97a",
+      "dependsOn": [
+        "t1-design-contract"
+      ],
+      "scope": [
+        "packages/cli/src/tui/health.ts",
+        "packages/cli/src/tui/workspace.ts",
+        "packages/cli/src/tui/workspace-controls.test.ts",
+        "packages/cli/src/tui/workspace-parity.test.ts",
+        "packages/cli/src/tui/visual-snapshots.test.ts",
+        "packages/cli/src/tui/test/visual-snapshots.json",
+        "docs/plans/2026-11-25-nomo-24h-program-detailed.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "service health and ledger head render as measured rows",
+        "a probe that has not run prints unmeasured",
+        "no unmeasured probe is invented green",
+        "status frames render at five sizes without width overflow"
+      ],
+      "verifier": [
+        "node --test packages/cli/src/tui/workspace-controls.test.ts packages/cli/src/tui/workspace-parity.test.ts packages/cli/src/tui/visual-snapshots.test.ts",
+        "pnpm --filter @nomo/cli typecheck",
+        "node --test --test-concurrency=1 packages/cli/src/tui/*.test.ts"
+      ],
+      "evidence": [
+        "Reviewed rendered status-empty@80x24 and status-one@80x24 before accepting snapshots: empty state names missing checks, measured frame shows UNMEASURED provider and OK ledger head, and the count line includes unmeasured rather than hiding it.",
+        "NO_COLOR=1 node --test packages/cli/src/tui/workspace-controls.test.ts packages/cli/src/tui/workspace-parity.test.ts packages/cli/src/tui/visual-snapshots.test.ts observed exit 0: tests 131, pass 131, fail 0, duration_ms 13653.781708.",
+        "pnpm --filter @nomo/cli typecheck observed exit 0.",
+        "NOMO_UPDATE_SNAPSHOTS=1 visual snapshot update observed exit 0 and wrote 70 frame hashes.",
+        "NO_COLOR=1 node --test --test-concurrency=1 packages/cli/src/tui/*.test.ts observed exit 0: tests 532, pass 532, fail 0, duration_ms 32045.476875.",
+        "git diff --check observed exit 0."
+      ],
+      "stopCondition": "Stop if an unrun probe renders ok or green, unknown and unmeasured are conflated, ledger head invents a hash or sequence, or any status row exceeds width."
     }
   ]
 }

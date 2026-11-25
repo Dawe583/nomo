@@ -431,25 +431,29 @@ test("/health never calls a check it could not run healthy", async (t) => {
   // Every state carries a word, never only a colour or a glyph. A state shown
   // as a shape alone is unreadable to anyone who cannot see it.
   const rendered = ui.healthLines().join("\n");
-  for (const word of ["ok", "warn", "fail", "unknown", "skipped"])
+  for (const word of ["ok", "warn", "fail", "unknown", "unmeasured", "skipped"])
     assert.match(healthWord(word as never), /\w/);
 
-  // A provider that was never read is unknown, not ok. This is the single
+  // A provider that was never read is unmeasured, not ok. This is the single
   // rule that makes the panel worth opening: reporting a subsystem it could
   // not reach as healthy turns an absence of information into an assurance.
   ui.provider = undefined;
   const blind = ui.healthChecks().find((c) => c.name === "provider");
-  assert.equal(blind?.state, "unknown", "an unread provider is unknown");
+  assert.equal(blind?.state, "unmeasured", "an unread provider is unmeasured");
   assert.notEqual(blind?.state, "ok", "never reported as a pass");
-  assert.ok(blind?.remedy, "an unknown names what to do about it");
+  assert.ok(blind?.remedy, "an unmeasured check names what to do about it");
 
-  // A ledger with no verification yet is unknown too, not a pass.
+  // A ledger with no verification or loaded head yet is unmeasured too, not a
+  // pass. The head and the verification result are separate measured rows.
   ui.provider = await app.providerState();
   const unverified = ui.healthChecks().find((c) => c.name === "ledger");
   assert.ok(
-    unverified?.state === "unknown" || unverified?.state === "ok",
-    "the ledger is either verified or unverified, never assumed",
+    unverified?.state === "unmeasured" || unverified?.state === "ok",
+    "the ledger is either verified or unmeasured, never assumed",
   );
+  const head = ui.healthChecks().find((c) => c.name === "ledger head");
+  assert.equal(head?.state, "unmeasured");
+  assert.match(head?.detail ?? "", /unmeasured/);
 
   // A run needing reconciliation is a warn and says so.
   assert.ok(

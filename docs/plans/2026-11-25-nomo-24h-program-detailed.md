@@ -315,6 +315,13 @@ has not run prints `unmeasured`; no invented green. Test the unmeasured path.
 
 **Verifier.** `node --test packages/cli/src/tui/*.test.ts` (concurrency 1).
 
+**As built.** Health now distinguishes `unmeasured` from `unknown`: a probe
+that has not run is never green, while unknown remains a failed or incomplete
+measurement. Provider, model catalog, ledger verification, ledger head and
+agent revocation all use the distinction. Ledger head is its own measured row
+with chain count, sequence and hash prefix. Empty and measured status visual
+fixtures render at five sizes as `status-empty@*` and `status-one@*`.
+
 ### T2.4. `documents` panel parity (1.5 h)
 
 **Files.** `workspace.ts`, snapshots.

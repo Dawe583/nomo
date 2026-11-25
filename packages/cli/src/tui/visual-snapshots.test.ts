@@ -36,6 +36,7 @@ import type { SessionEvent, SessionView } from "../../../workbench/src/index.ts"
 import type { JsonlEntry } from "../../../ledger/src/store.ts";
 import { WorkspaceTui, renderWorkspace } from "./workspace.ts";
 import { stripAnsi, visibleLength } from "./layout.ts";
+import type { Check } from "./health.ts";
 import { primeGitStatus, resetGitStatusCache } from "./git-status.ts";
 
 const SNAPSHOT_PATH = join(
@@ -55,6 +56,7 @@ const CHILD_RUN_ID = "run-child";
 
 let visibleViews: readonly SessionView[] = [];
 let visibleConnectors: readonly Record<string, unknown>[] = [];
+let visibleChecks: readonly Check[] | null = null;
 
 const TERMINAL_SIZES = [
   [40, 12],
@@ -77,6 +79,8 @@ const SCENARIOS = [
   "runs-one",
   "mcp-empty",
   "mcp-one",
+  "status-empty",
+  "status-one",
 ] as const;
 
 type Scenario = (typeof SCENARIOS)[number];
@@ -333,6 +337,23 @@ const DEFAULT_CONNECTORS: readonly Record<string, unknown>[] = [
   EXTERNAL_CONNECTOR,
 ];
 
+
+const STATUS_CHECKS: readonly Check[] = [
+  {
+    name: "provider",
+    area: "runtime",
+    state: "unmeasured",
+    detail: "Provider state has not been read yet; provider health is unmeasured.",
+    remedy: "Run /connect, or r to retry.",
+  },
+  {
+    name: "ledger head",
+    area: "records",
+    state: "ok",
+    detail: "1 chain(s); latest head seq 2, hash sha256:a2.",
+  },
+];
+
 /**
  * Two held calls with no deadline. A deadline would be printed as a countdown
  * that moves every second, which is the one clock the approvals panel reads
@@ -512,6 +533,7 @@ function resetPanel(ui: WorkspaceTui): void {
   ui.sessionId = PARENT_SESSION_ID;
   visibleViews = DEFAULT_VIEWS;
   visibleConnectors = DEFAULT_CONNECTORS;
+  visibleChecks = null;
 }
 
 function applyScenario(ui: WorkspaceTui, scenario: Scenario): void {
@@ -563,6 +585,14 @@ function applyScenario(ui: WorkspaceTui, scenario: Scenario): void {
     case "mcp-one":
       visibleConnectors = [EXTERNAL_CONNECTOR];
       ui.choose("mcp");
+      return;
+    case "status-empty":
+      visibleChecks = [];
+      ui.choose("status");
+      return;
+    case "status-one":
+      visibleChecks = STATUS_CHECKS;
+      ui.choose("status");
       return;
   }
 }
@@ -637,6 +667,7 @@ test("visual snapshots match the committed frame hashes", async (t) => {
   const views: readonly SessionView[] = [PARENT_VIEW, CHILD_VIEW];
   visibleViews = DEFAULT_VIEWS;
   visibleConnectors = DEFAULT_CONNECTORS;
+  visibleChecks = null;
   // The builtin tool registry is the real list; only the session lookup is
   // pinned, because no live session exists for these fixtures.
   const builtinTools = app.availableTools(undefined);
@@ -660,6 +691,10 @@ test("visual snapshots match the committed frame hashes", async (t) => {
 
   const ui = new WorkspaceTui(app, env);
   ui.proofs.set(`ws-${PARENT_SESSION_ID}`, [...FIXTURE_LEDGER]);
+  const realHealthChecks = ui.healthChecks.bind(ui);
+  t.mock.method(ui, "healthChecks", () =>
+    visibleChecks === null ? realHealthChecks() : [...visibleChecks],
+  );
 
   const captured: Record<string, FrameSnapshot> = {};
   const mismatches: string[] = [];
