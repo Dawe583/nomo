@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-25T14:46:30Z",
+  "updatedAt": "2026-11-25T14:49:47Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -1799,6 +1799,45 @@
         "git diff --check observed exit 0."
       ],
       "stopCondition": "Stop if provider metadata is stripped before rendering, capabilities become decorative-only, or a running conversation accepts a model change."
+    },
+    {
+      "id": "t16-ledger-view",
+      "status": "done",
+      "owner": "devin-6293643153014f56bb088c9a71fde97a",
+      "dependsOn": [
+        "t15-model-picker"
+      ],
+      "scope": [
+        "packages/cli/src/tui/workspace.ts",
+        "packages/cli/src/tui/workspace-ledger-chain-status.test.ts",
+        "packages/cli/src/tui/test/visual-snapshots.json",
+        "docs/plans/2026-11-25-nomo-24h-program-detailed.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "signed/derived split",
+        "chain status",
+        "filter by class"
+      ],
+      "verifier": [
+        "node --test packages/cli/src/tui/workspace-ledger-chain-status.test.ts",
+        "pnpm --filter @nomo/cli typecheck",
+        "node --test packages/cli/src/tui/workspace-parity.test.ts packages/cli/src/tui/workspace-ledger-chain-status.test.ts packages/cli/src/tui/workspace-narrow.test.ts",
+        "NOMO_UPDATE_SNAPSHOTS=1 node --test packages/cli/src/tui/visual-snapshots.test.ts",
+        "node --test --test-concurrency=1 packages/cli/src/tui/*.test.ts"
+      ],
+      "evidence": [
+        "NO_COLOR=1 node --test packages/cli/src/tui/workspace-ledger-chain-status.test.ts observed exit 0: tests 1, pass 1, fail 0, duration_ms 305.074625. The row is allow:resolved \u00b7 [R1] postgres.row.update \u00b7 chain000 #1; filter r1 keeps one entry and filter r2 keeps zero.",
+        "pnpm --filter @nomo/cli typecheck observed exit 0.",
+        "NO_COLOR=1 node --test packages/cli/src/tui/workspace-parity.test.ts packages/cli/src/tui/workspace-ledger-chain-status.test.ts packages/cli/src/tui/workspace-narrow.test.ts observed exit 0: tests 105, pass 105, fail 0, duration_ms 12418.632833.",
+        "NOMO_UPDATE_SNAPSHOTS=1 NO_COLOR=1 node --test packages/cli/src/tui/visual-snapshots.test.ts observed exit 0: wrote 120 frame hashes, tests 2, pass 2, fail 0; only four intentional ledger hashes changed.",
+        "NO_COLOR=1 node --test --test-concurrency=1 packages/cli/src/tui/*.test.ts observed exit 0: tests 546, pass 546, fail 0, skipped 0, duration_ms 39601.911417.",
+        "git diff --check observed exit 0."
+      ],
+      "stopCondition": "Stop if derived rows are presented as signed evidence, failed chains lose their degraded reason, or class filtering depends only on hidden detail."
     }
   ]
 }

@@ -6893,7 +6893,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
               : {}),
             kind: "entry",
             ledgerEntry: e,
-            label: `${text(b.decision) || "recorded"} · ${text(b.tool) || "unknown tool"} · ${id.slice(0, 8)} #${e.seq}`,
+            label: `${text(b.decision) || "recorded"} · [${text(b.klass).toUpperCase() || "UNKNOWN"}] ${text(b.tool) || "unknown tool"} · ${id.slice(0, 8)} #${e.seq}`,
             lines: [
               this.managedVerificationStatus ?? "Managed verification status unavailable",
               ...(this.managedVerificationNote === undefined
@@ -6910,7 +6910,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
             id: `proxy:${workspace}:${e.seq}`,
             kind: "proxy",
             ledgerEntry: e,
-            label: `${text(b.decision) || "recorded"} · ${text(b.tool) || "unknown tool"} · ${workspace} #${e.seq}`,
+            label: `${text(b.decision) || "recorded"} · [${text(b.klass).toUpperCase() || "UNKNOWN"}] ${text(b.tool) || "unknown tool"} · ${workspace} #${e.seq}`,
             lines: [
               this.proxy.signed
                 ? this.proxy.verificationStatus
