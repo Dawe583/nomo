@@ -36,6 +36,7 @@ import {
   unmeasuredMetrics,
 } from "../../../workbench/src/harness-scores.ts";
 import { mineRefinementEffects } from "../../../workbench/src/refinement-outcomes.ts";
+import { LOCAL_AGENT_PRINCIPAL_ID } from "../../../workbench/src/agent-identity.ts";
 
 import {
   HARNESS_SETTINGS,
@@ -4589,6 +4590,39 @@ export class WorkspaceTui {
         : "No workspace view has been created.",
       storage ? undefined : "Run /init to set up workspace storage.",
     );
+
+    // Agent identity and revocation. The only implemented authority is this
+    // local Workbench and its signed workspace evidence. Fleet-wide revoke is
+    // always named unavailable rather than inferred from a local success.
+    const boundViews = this.workbench
+      .allViews()
+      .filter((view) => view.agent !== undefined && view.runId !== undefined);
+    if (boundViews.length === 0) {
+      add(
+        "agent revocation",
+        "identity",
+        "unknown",
+        "No run-scoped agent identity has been observed; local and fleet revocation are unmeasured.",
+        "Start a local Workbench run before evaluating revocation.",
+      );
+    } else {
+      const current = this.session();
+      const view =
+        current?.agent !== undefined && current.runId !== undefined
+          ? current
+          : boundViews.at(-1)!;
+      const agentId = view.agent!;
+      const revoked = this.workbench.isAgentRevoked(agentId);
+      add(
+        "agent revocation",
+        "identity",
+        "warn",
+        `principal ${LOCAL_AGENT_PRINCIPAL_ID} · workspace ${view.workspace} · agent ${agentId} · run ${view.runId} · agent ${revoked ? "revoked" : "active"}; local agent revoke ${revoked ? "applied" : "available"}; fleet-wide revoke unavailable because no node inventory or acknowledgement barrier exists.`,
+        revoked
+          ? "Fleet acknowledgement remains unavailable; disconnected nodes cannot be proven revoked."
+          : `/revoke-agent ${agentId} reviews local revocation.`,
+      );
+    }
 
     return checks;
   }
@@ -9417,6 +9451,44 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       }
       throw Error("/subagent cancel|review");
     }
+    if (cmd === "revoke-agent") {
+      if (!arg) throw Error("/revoke-agent agent-id");
+      const sessions = this.workbench
+        .allViews()
+        .filter((view) => view.agent === arg);
+      if (!sessions.length)
+        throw Error("No local Workbench session uses that agent identity.");
+      if (this.workbench.isAgentRevoked(arg))
+        throw Error(`Agent ${arg} is already revoked locally.`);
+      const latest = sessions.at(-1)!;
+      const workspaceCount = new Set(sessions.map((view) => view.workspace)).size;
+      this.confirmation = {
+        title: `LOCAL AGENT REVOKE ${arg}?`,
+        lines: [
+          `Agent: ${arg}`,
+          `Principal: ${LOCAL_AGENT_PRINCIPAL_ID}`,
+          `Workspace: ${latest.workspace}`,
+          `Run: ${latest.runId ?? "none"}`,
+          `Known local sessions: ${sessions.length} in ${workspaceCount} workspace(s).`,
+          "",
+          "This local Workbench will stop its sessions for the agent, drop every local grant,",
+          "refuse new grants and new runs for it, and append signed agent_revoke evidence.",
+          "This does not revoke the agent on any other node. Fleet-wide revoke is unavailable",
+          "because NOMO has no node inventory or acknowledgement barrier.",
+        ],
+        apply: async () => {
+          const result = await this.workbench.revokeAgent(arg, "tui-operator");
+          this.notice = `Local agent ${arg} revoked: ${result.stoppedSessions.length} session(s) stopped, ${result.droppedGrants} grant(s) dropped.`;
+          this.detail = [
+            `LOCAL AGENT ${arg} REVOKED`,
+            "Scope: this Workbench and the signed workspace evidence it wrote.",
+            "Fleet-wide revoke remains unavailable: no node inventory or acknowledgement barrier exists.",
+          ];
+        },
+      };
+      this.scroll = 0;
+      return;
+    }
     if (cmd === "stop") {
       if (!this.sessionId) throw Error("Select a running conversation.");
       // A host session stops through Workbench like any other run, so the
@@ -12266,6 +12338,7 @@ export const TUI_COMMANDS = [
   ["/agents", "Runtime profiles, conversations and connectors"],
   ["/agent", "Select a profile for new conversations"],
   ["/agent-file", "Review and save a custom profile from path.json"],
+  ["/revoke-agent", "Review local agent revocation"],
   ["/hooks", "Runtime hook support and operator allowlist"],
   ["/hook-file", "Review a hook if the host supports execution"],
   ["/hook", "Enable or disable a saved hook by id"],
@@ -12589,6 +12662,7 @@ const COMMAND_ARGUMENTS: Record<string, string> = {
   "/policy-file": "connector-ID path.yaml",
   "/connector-file": "path.json",
   "/agent-file": "path.json",
+  "/revoke-agent": "agent-id",
   "/hook-file": "path.json",
   "/conformance": "adapter",
   "/compact": "",

@@ -70,6 +70,13 @@ or proof of customer demand.
 - A stop blocks later calls after acknowledgement. It does not cancel a request
   already dispatched and does not reverse side effects. A timeout remains
   unresolved until reconciled.
+- Local agent revoke means only the Workbench process that applies it plus the
+  signed workspace evidence that process can write. Fleet-wide revoke does not
+  exist until the identity registry durably records the revocation, active
+  enforcement nodes are inventoried, every required node acknowledges before
+  success is returned, disconnected or unacknowledged nodes fail closed and
+  carry an explicit reconcile state, and reconciliation can prove or repair the
+  revocation. A local revoke must never be presented as fleet success.
 - Token, prompt and secret values never enter logs, events, ledger payloads,
   screenshots or durable workspace state.
 - No autonomous test or demo touches a production account.

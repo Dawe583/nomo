@@ -31,7 +31,7 @@
 
 - F1 later-session retrieval: DONE — opt-in `NOMO_SHARED_LEARNING_WORKSPACES` read-only union, digest names entry id + chain seqs
 - F2 approval end-to-end: DONE — hold writes signed hold:approved with approvedBy; verified in agent-messages-tool tests
-- F3 identity/fleet truth: IN PROGRESS — issuer+workbench revokeAgent done, durable across restart; MISSING: TUI revocation row, fleet-wide revoke with ack
+- F3 identity/fleet truth: DONE as the local-truth slice. TUI status shows the binding, `/revoke-agent` is confirmed and local, durable restart is tested; fleet-wide revoke remains honestly documented as unavailable until registry, node inventory, ack barrier and reconcile exist
 - F4 provider release path: PENDING — needs explicit authorization for a real provider call
 
 ## Rules that are not negotiable
@@ -47,6 +47,6 @@
 ## Honest limits a cloud session must know
 
 - The harness is NOT RL. It is measurement, frozen evaluation and (planned) contextual bandit/policy search. Gradient RL requires a trainable local model + GPU and does not exist.
-- Fleet-wide revocation does not exist; only local single-process agent revoke.
+- Fleet-wide revocation does not exist; only local single-process agent revoke. `docs/CONTEXT.md` names the registry, node inventory, acknowledgement, fail-closed disconnected-node and reconciliation requirements.
 - GUI plans exist but are undecided (v1 vs post-v1) — do not build GUI work without a user decision.
 - The vault memory in docs/memory/ is a snapshot from 2026-11-25; it does not update itself.
