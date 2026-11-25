@@ -1490,6 +1490,7 @@ export class Workbench {
       /** Validated by `restoreTriggerStates`, not trusted because it was
        * written by an earlier process. */
       harnessTriggers?: unknown;
+      revokedAgents?: unknown;
     }>();
     if (saved) {
       let migrated = false;
@@ -1593,6 +1594,17 @@ export class Workbench {
       });
       this.documents = saved.documents;
       this.evidence = saved.evidence;
+      for (const agentId of Array.isArray(saved.revokedAgents) ? saved.revokedAgents : []) {
+        if (typeof agentId !== "string") {
+          migrated = true;
+          continue;
+        }
+        try {
+          this.localIdentityIssuer.revokeAgent(agentId);
+        } catch {
+          migrated = true;
+        }
+      }
       // Revocations restore from signed evidence, not from process state: the
       // issuer is in-memory, so without this an agent revoked before a
       // restart could receive a fresh grant after it. The store is the app's
@@ -1765,12 +1777,14 @@ export class Workbench {
     }
   }
   private persist(): void {
+    const revokedAgents = this.localIdentityIssuer.revokedAgents();
     if (
       !this.hasState &&
       !this.config &&
       !this.sessions.size &&
       !this.connectors.length &&
-      !this.ignoreEnvironment
+      !this.ignoreEnvironment &&
+      revokedAgents.length === 0
     )
       return;
     this.storage.save({
@@ -1799,6 +1813,7 @@ export class Workbench {
           .filter(([id]) => this.sessions.has(id))
           .map(([id, state]) => [id, persistTriggerState(state)]),
       ),
+      revokedAgents,
       sessions: [...this.sessions.values()].map(
         ({
           view,
@@ -7373,6 +7388,7 @@ export class Workbench {
     by: string,
   ): Promise<{ droppedGrants: number; stoppedSessions: string[] }> {
     const droppedGrants = this.localIdentityIssuer.revokeAgent(agentId);
+    this.persist();
     const stopped: string[] = [];
     const writes: Promise<unknown>[] = [];
     for (const session of this.sessions.values()) {

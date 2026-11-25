@@ -207,6 +207,10 @@ export class LocalAgentIdentityIssuer {
     return this.#revokedAgents.has(agentId);
   }
 
+  revokedAgents(): string[] {
+    return [...this.#revokedAgents].sort();
+  }
+
   #readNow(): ClockReading | null {
     let monotonic: number;
     let wall: number;

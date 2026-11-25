@@ -371,6 +371,30 @@ test("revoking an agent stops its sessions, signs evidence and blocks new starts
   assert.ok(result, "revokeAgent reports what it did");
 });
 
+test("revoking an agent without local sessions still survives a restart", async (t) => {
+  const fetcher: typeof fetch = async (input) =>
+    String(input).endsWith("/models")
+      ? Response.json({ data: [{ id: "fixture" }] })
+      : Response.json({
+          choices: [
+            { message: { role: "assistant", content: "done" }, finish_reason: "stop" },
+          ],
+        });
+  const fixture = await isolatedWorkbench(t, fetcher, {}, {
+    prefix: "nomo-agent-revoke-empty-restart-",
+  });
+  const agentId = "agent-without-local-sessions";
+  const result = await fixture.app.revokeAgent(agentId, "test-operator");
+  assert.deepEqual(result, { droppedGrants: 0, stoppedSessions: [] });
+
+  const reopened = fixture.restart();
+  assert.equal(
+    reopened.isAgentRevoked(agentId),
+    true,
+    "local revocation must not depend on finding a session evidence chain",
+  );
+});
+
 test("a revoked agent stays revoked across a restart", async (t) => {
   const fetcher: typeof fetch = async (input) =>
     String(input).endsWith("/models")
