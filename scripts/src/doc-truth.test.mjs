@@ -78,6 +78,7 @@ const OPERATIONAL = [
 // when the inventory is checked. They are not source files.
 const GENERATED_PATHS = new Set([
   "apps/desktop/src-tauri/resources/runtime/backend.mjs",
+  "packages/cli/dist/nomo.mjs",
 ]);
 
 const INVENTORY = {
@@ -277,6 +278,55 @@ const INVENTORY = {
   "apps/control-plane/ui/src/project-workspace.test.ts":
     "planned UI test from the historical Project Workspace spec; web UI was excluded from current Harness scope",
 
+
+  // Historical harness proposals and pre-split operational files. The work log
+  // is a record, so these citations stay truthful by being named here rather
+  // than by rewriting the past.
+  "packages/workbench/src/operator-harness.ts":
+    "historical harness proposal module; never built under this name",
+  "packages/workbench/src/project-read.ts":
+    "historical harness proposal module; project reads live in project workspace modules instead",
+  "packages/workbench/src/project-read.test.ts":
+    "historical harness proposal test for the unbuilt project-read module",
+  "packages/workbench/src/harness-outcome-feedback.test.ts":
+    "planned refinement-effect test cited by the design record; not built with that module split",
+  "packages/catalog/src/models.json":
+    "historical catalog layout cited by the work log; current catalog data lives under a different shape",
+  "packages/catalog/src/wire/codex.ts":
+    "historical catalog wire adapter cited by the work log; not present in the current provider catalog",
+  "scripts/build.mjs":
+    "historical build script cited by the work log; current release build uses scripts/src/bundle-cli.mjs",
+  "scripts/prepare.mjs":
+    "historical prepare script cited by the work log; current repository setup does not use this entrypoint",
+  "api/beta.test.ts":
+    "pre-split site tree, a beta API test cited by the work log before the site split",
+  "packages/cli/dist/nomo.mjs":
+    "generated CLI bundle cited by the work log; absence only means the bundle has not been built in this checkout",
+  "packages/cli/src/tui/workspace-ink.ts":
+    "historical Ink adapter proposal; the component-library surface was not adopted",
+  "apps/appwrite-mcp/src/appwrite_mcp/nomo_snapshot.json":
+    "generated snapshot inside the removed hosted Appwrite function directory; cited by the work log as history",
+  "scripts/nomo-pydantic.sh":
+    "historical local helper cited by the work log; not part of the current repository tooling",
+  "docs/agent-contract.md":
+    "historical contract document cited by the work log; superseded by the current agent work system",
+  "packages/cli/src/tui/workspace-runner-controls.test.ts":
+    "historical TUI test split cited by the work log; coverage moved into current workspace control tests",
+  "scripts/src/work-state-graph.test.mjs":
+    "historical graph test name cited by the work log; current validation is scripts/src/work-graph-check.mjs",
+  "docs/NOMO-PERSISTED-KEY-COMPATIBILITY-DESIGN.md":
+    "historical compatibility design cited by imported memory; not present in this checkout",
+  "docs/NOMO-TOOL-ID-COMPATIBILITY-DESIGN.md":
+    "historical compatibility design cited by imported memory; not present in this checkout",
+  "docs/NOMO-VERIFY-KEY-COMPATIBILITY-DESIGN.md":
+    "historical compatibility design cited by imported memory; not present in this checkout",
+  "docs/34-massive-evolution-plan.md":
+    "historical imported plan cited by memory; not present in this checkout",
+  "docs/35-data-authority.md":
+    "historical imported data-authority note cited by memory; not present in this checkout",
+  "docs/plans/2026-11-25-program-handoff.md":
+    "planned Q10 handoff deliverable; the program names it before it is written",
+
   // Removed on 2026-11-21 by owner decision. The decision log and the plans
   // still name them, because a record that described only the present tree
   // would be falsifying its own history.
@@ -287,8 +337,6 @@ const INVENTORY = {
   "cloud/appwrite.mjs":
     "removed 2026-11-21 by owner decision; the Appwrite provisioner nothing imported, recorded in DECISIONS",
   "docs/APPLE-APPS-PLAN.md":
-    "deleted 2026-11-21: Apple app work removed from plans by owner decision",
-  "docs/superpowers/plans/2026-09-23-nomo-1.0.1-apple-release.md":
     "deleted 2026-11-21: Apple app work removed from plans by owner decision",
 };
 
@@ -600,7 +648,7 @@ const INTERFACE_WORDS = [
 
 /** The newest decision in the pack. Renaming that heading renames this. */
 const NEWEST_DECISION =
-  "## Terminal component library: not adopted, 2026-11-25";
+  "## Composer slot ladder and no mode chip, 2026-11-25";
 
 const MONO_FOR_INTERFACE = /\bmono\w*/i;
 const NAMES_INTERFACE_WORD = new RegExp(

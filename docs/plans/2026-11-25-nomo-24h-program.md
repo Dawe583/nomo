@@ -138,7 +138,7 @@ Gradient RL is G1 and stays gated.
 | Q1 | Graph hygiene: no duplicate ids, no dangling deps, every done node has evidence | `.nomo/work-state.json` | node script | 0 duplicates, 0 dangling | 0.5 |
 | Q2 | Fix the two doc-truth failures: dead-path inventory and stale inventory | `docs/`, `scripts/src/doc-truth.test.mjs` | `node --test scripts/src/doc-truth.test.mjs` | 9/9 | 1.0 |
 | Q3 | Module inventory: settle the last orphan `test-fixture.ts` (wire or allowlist with a reason) | `scripts/src/module-inventory.test.mjs` | `node --test scripts/src/module-inventory.test.mjs` | 2/2 with a reason | 0.5 |
-| Q4 | Harness inventory: regenerate and confirm the gap list is empty | `scripts/src/harness-inventory.test.mjs` | same | 20/20 | 0.5 |
+| Q4 | Harness inventory: regenerate and confirm the gap list is empty | `scripts/src/harness-inventory.test.mjs` | same | every documented key present, empty gap list | 0.5 |
 | Q5 | Provider smoke re-run against the local Zen provider; record latency and tokens, never the key | `scripts/src/provider-smoke.mjs` | `node scripts/src/provider-smoke.mjs` | PASS or SKIP with a reason | 0.5 |
 | Q6 | Release readiness checklist: version, changelog, dist freshness, launcher | `packages/cli/dist/`, `CHANGELOG.md` | `node scripts/src/bundle-cli.mjs`; `nomo --version` | dist is newer than source | 1.0 |
 | Q7 | Dependency audit: no new dependency without a recorded reason; lockfile clean | `package.json`, `pnpm-lock.yaml` | `pnpm install --frozen-lockfile --offline` | no drift | 0.5 |
