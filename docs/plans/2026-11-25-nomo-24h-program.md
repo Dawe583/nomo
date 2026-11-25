@@ -65,7 +65,7 @@ That is 34 hours of wall-clock blocks with ~4 hours of slack for failures and
 re-verification. Cut from the bottom (E, then T11/T12, then R6/R7) if time is
 short; never cut a verifier.
 
-## Track A — TUI visual and interaction (15.5 h)
+## Track A - TUI visual and interaction (15.5 h)
 
 Baseline: 49 production files, 32,207 lines; 40 snapshots at five sizes; 54 PTY
 assertions; p95 2.98 ms at 200x48. `renderWorkspace` returns exactly
@@ -92,7 +92,7 @@ assertions; p95 2.98 ms at 200x48. `renderWorkspace` returns exactly
 | T11 | Optional: one-screen Ink parity spike behind an adapter, byte-diffed at 5 sizes | new spike file, not wired | diff vs snapshots | empty diff or the spike is removed | 2.0 |
 | T12 | Optional: retire the orphan `scripts/src/verify-opentui-terminal.py` with a recorded reason | that file | `git diff --check` | no caller remains and the reason is in the graph | 0.5 |
 
-## Track B — Harness measurement and learning (14.5 h)
+## Track B - Harness measurement and learning (14.5 h)
 
 Baseline: frozen taskset with paired runs and exact-match scoring; score board
 with `unmeasured`; refinement outcomes and measured effects; persisted cooldown;
@@ -116,7 +116,7 @@ metric producers for `approvalMs`, `costUsd`, `recovery`; signed chain.
 | H14 | Operator command: `nomo harness reward <case>` and `nomo harness trend` | `packages/cli/src/harness.ts` | CLI test | prints measured or unmeasured, never a guess | 1.5 |
 | H15 | End-to-end dry run of the loop with fixture rewards, no model call | scripts + fixture | `node --test scripts/src/harness-*.test.mjs` | a fixture proposal activates and rolls back | 1.0 |
 
-## Track C — RL policy search, achievable now (8 h)
+## Track C - RL policy search, achievable now (8 h)
 
 Honest scope: a contextual bandit over harness variants, not gradient RL.
 Gradient RL is G1 and stays gated.
@@ -131,7 +131,7 @@ Gradient RL is G1 and stays gated.
 | R6 | Simulation report: regret, samples per arm, stop reason | `scripts/src/harness-bandit-sim.mjs` | run prints a table | no model call | 1.0 |
 | R7 | Document the difference between bandit, policy search and gradient RL in the operator doc | `docs/HARNESS-LEARNING.md` | manual read | no claim of RL training | 0.5 |
 
-## Track D — Quality, release readiness, docs (6 h)
+## Track D - Quality, release readiness, docs (6 h)
 
 | id | goal | scope | verifier | stop | h |
 |---|---|---|---|---|---|
@@ -146,7 +146,7 @@ Gradient RL is G1 and stays gated.
 | Q9 | Update `docs/CONTEXT.md` / `docs/STANDARDS.md` only if this program changed a contract | those docs | manual read | no contradiction | 0.5 |
 | Q10 | Final handoff: one page with what shipped, what is blocked, and the next ready node | new `docs/plans/2026-11-25-program-handoff.md` | manual read | a new session can start from it | 0.5 |
 
-## Track E — Gated / optional (6 h, needs a decision)
+## Track E - Gated / optional (6 h, needs a decision)
 
 | id | gate | work | h |
 |---|---|---|---|

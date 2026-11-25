@@ -102,7 +102,7 @@ Stop: the diff is empty, or the attempt is recorded as failed and removed.
 
 ```
 T1 design contract
-   └─> T2 panel parity (runs, mcp, status, documents, usage — one node each)
+   └─> T2 panel parity (runs, mcp, status, documents, usage - one node each)
    └─> T3 composer density ──> T4 narrow terminals
    └─> T5 motion and pet
    └─> T6 library parity gate (only on request)

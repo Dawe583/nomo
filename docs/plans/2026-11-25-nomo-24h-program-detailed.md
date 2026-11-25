@@ -183,7 +183,7 @@ Existing schema in `.nomo/work-state.json`: `id`, `status`, `owner`,
 
 ## 4. Three-day schedule
 
-### Day 1 — design, panels, reward foundation (11 h)
+### Day 1 - design, panels, reward foundation (11 h)
 
 | Slot | Hours | Node | Checkpoint |
 |---|---|---|---|
@@ -199,7 +199,7 @@ Existing schema in `.nomo/work-state.json`: `id`, `status`, `owner`,
 Day 1 end: M1 passed, three panels at parity, reward and variant schemas in
 place, graph clean.
 
-### Day 2 — composer, narrow widths, eval set, replay (11 h)
+### Day 2 - composer, narrow widths, eval set, replay (11 h)
 
 | Slot | Hours | Node | Checkpoint |
 |---|---|---|---|
@@ -214,7 +214,7 @@ place, graph clean.
 
 Day 2 end: M2 visual parity, M3 measurable reward, M4 eval set.
 
-### Day 3 — pet, parity, bandit, release readiness (12 h)
+### Day 3 - pet, parity, bandit, release readiness (12 h)
 
 | Slot | Hours | Node | Checkpoint |
 |---|---|---|---|
@@ -234,7 +234,7 @@ Day 2 end: M2 visual parity, M3 measurable reward, M4 eval set.
 Day 3 end: M5 learning loop closed, M6 policy search proven in simulation, M7
 release ready except explicit release actions.
 
-## 5. Track A — TUI work packages
+## 5. Track A - TUI work packages
 
 ### T1. Design contract (1 h)
 
@@ -558,7 +558,7 @@ package scripts, docs instructions, CI or other scripts; remaining mentions are
 historical memory and decision records. The decision log now records that T12
 retired the orphan instead of claiming it is still in the tree.
 
-## 6. Track B — harness work packages
+## 6. Track B - harness work packages
 
 ### H1. Reward record (2 h)
 
@@ -826,7 +826,7 @@ the first measured reward into the workspace chain through
 `recordHarnessReward`, reads it back with `nomo harness reward`, and rolls the
 activation back. There is no live model, provider or network call.
 
-## 7. Track C — RL policy search work packages
+## 7. Track C - RL policy search work packages
 
 Honest scope: a contextual bandit over harness variants. Not gradient RL.
 
@@ -925,7 +925,7 @@ no claim of RL training.
 and gradient RL. It states that this repository has no trainable local model,
 GPU budget or training path, so no NOMO surface may claim RL training.
 
-## 8. Track D — quality work packages
+## 8. Track D - quality work packages
 
 | id | steps | verifier | acceptance |
 |---|---|---|---|
@@ -942,7 +942,7 @@ Q1 as built: `scripts/src/work-graph-check.mjs` checks duplicate ids, dangling d
 | Q9 | Update CONTEXT/STANDARDS only if a contract changed | manual read | no contradiction |
 | Q10 | Handoff page: shipped, blocked, next ready node | manual read | new session can start |
 
-## 9. Track E — gated work
+## 9. Track E - gated work
 
 | id | gate | steps | verifier |
 |---|---|---|---|

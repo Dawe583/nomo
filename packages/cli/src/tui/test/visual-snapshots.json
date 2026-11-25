@@ -2,32 +2,32 @@
   "version": 1,
   "frames": {
     "chat-idle@40x12": {
-      "sha256": "2c7f908bf4195f343ed875378b79954a8c22ac0da303bc6bb44d5d14ad85bd5b",
+      "sha256": "07f9eeec720cebc7faaaf98aadc0b60bcd8ac6db83b127129434d8af097e2a99",
       "rows": 12,
       "maxVisibleLength": 40
     },
     "chat-idle@52x16": {
-      "sha256": "36b2edaaf2b86da2b61eefcf8ccb0531e7acf7364d7cc3e240ae4bcea9a875e6",
+      "sha256": "7ecb2eac7f89e18df7c723d0db45c40cb76516fdc605d5da0a908e67edb641af",
       "rows": 16,
       "maxVisibleLength": 52
     },
     "chat-idle@80x24": {
-      "sha256": "8299e389fcf03a441b5eb1dd8d5e210f610593f049d154b9ffd21df5ef7707c7",
+      "sha256": "401982b9cd6b1f610e4d67c802f60e75cbfad1b541a8bed6f18c69fb99b6f839",
       "rows": 24,
       "maxVisibleLength": 80
     },
     "chat-idle@120x40": {
-      "sha256": "e46570d3d6598405945d4ac8b8451ebf29fc894f884025bfb5f669e531110747",
+      "sha256": "8d0adb3f9c54650262c3a63ea4713d77798d01972b27fed1d0963419a2e10785",
       "rows": 40,
       "maxVisibleLength": 120
     },
     "chat-idle@160x45": {
-      "sha256": "7d35f52a07d37942532c55a6bb18c1f909b621a4c8648d137f7c75ed1b934100",
+      "sha256": "f63037f0f820099b795aceb2547a167b4e7d759be0039348e9a598ec440e42cf",
       "rows": 45,
       "maxVisibleLength": 160
     },
     "chat-idle@200x48": {
-      "sha256": "fb641ae94886be91de22ad48fa6db9296ff77749bec8cedb86071d813c80d192",
+      "sha256": "cb86ab6556c12603a5ac892fb102062fd710c6cd13efaf158f1c095f3ac5ebae",
       "rows": 48,
       "maxVisibleLength": 200
     },
@@ -37,27 +37,27 @@
       "maxVisibleLength": 40
     },
     "chat-busy@52x16": {
-      "sha256": "c1936b8f85a192d7d8b4f1f72ce9000a5a8593f70e1426a968e2531ee2c5c271",
+      "sha256": "975b3105db227f08f2209b9eb9705146c63754327aacf35be3a9a98ed16567af",
       "rows": 16,
       "maxVisibleLength": 52
     },
     "chat-busy@80x24": {
-      "sha256": "8a4b5b0900e047864252c1261f8660d06f153961ecfda19bd28b0ceb1bc1751c",
+      "sha256": "fa28fc5dafcd78dbb534180f19daab09a9a85f9bbdf4f274c81a8204d1a5b1d5",
       "rows": 24,
       "maxVisibleLength": 80
     },
     "chat-busy@120x40": {
-      "sha256": "602032068af44b8ba284459a56f2233a57345a465e9d6a4eef4b828eb97c0e4d",
+      "sha256": "fd0b10b502599a2a2589978c1aa73eed3e177478e7f6a5ce3bd0701cf5c83330",
       "rows": 40,
       "maxVisibleLength": 120
     },
     "chat-busy@160x45": {
-      "sha256": "5164039565db2ef696bcd952e335893f92c39fe84256afbebdf6e1cca4e029c7",
+      "sha256": "32b8be6b664fb3de6ce6a9829a58f9c706a343aacc4066e4a7287f4a67ea37b9",
       "rows": 45,
       "maxVisibleLength": 160
     },
     "chat-busy@200x48": {
-      "sha256": "8cd2ea37252010ecb422f22e8c0367fa9ba8ad4239134c3f4fcd8856377924b8",
+      "sha256": "99c99e47240ddd528363899c79f7d6d9d8664f4a8ddfe1c9586670d27234fc10",
       "rows": 48,
       "maxVisibleLength": 200
     },

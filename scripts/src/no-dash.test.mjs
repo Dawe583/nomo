@@ -17,6 +17,9 @@ const EXCLUDE_DIRS = new Set([
   "prime-src",
   ".build",
   ".cache",
+  // Machine-generated repository understanding indexes. They are scanned
+  // artifacts, not authored interface or documentation text.
+  ".ua",
 ]);
 // Generated desktop artifacts are not authored text: prepare.mjs bundles the
 // API server into src-tauri/resources/runtime/backend.mjs with esbuild, and a
@@ -26,6 +29,7 @@ const EXCLUDE_DIRS = new Set([
 const GENERATED_PREFIXES = [
   "apps/desktop/src-tauri/resources",
   "apps/desktop/src-tauri/gen",
+  "packages/cli/.nomo-composer-build.gPvVla",
 ];
 const EXCLUDE_NAMES = new Set(["STANDARDS.md", "pnpm-lock.yaml"]);
 // These source documents are integrity-pinned by the encrypted strategy

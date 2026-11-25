@@ -1,4 +1,4 @@
-> **Historical document — non-operative.** This 2026-10-21 Harness product plan
+> **Historical document - non-operative.** This 2026-10-21 Harness product plan
 > is retained for decision history only. It is not an active permission, release,
 > worktree, graph, CI, or workflow source. Use `.opencode/prompts/nomo-system.md`,
 > `AGENTS.local.md`, and `docs/agent-work-system.md` for current project rules.

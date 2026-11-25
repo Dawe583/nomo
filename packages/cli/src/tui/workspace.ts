@@ -5239,7 +5239,7 @@ export class WorkspaceTui {
         const doc = this.workbench.document(sessionId, path);
         const isBinary = hasBinary(path);
         if (isBinary) {
-          return `${path} [binary file — capability check required]`;
+          return `${path} [binary file - capability check required]`;
         }
         return `${path} (quoted context):
 ${(doc.content ?? "").slice(0, 2000)}`;
@@ -6087,7 +6087,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
     const selectedDescription = selected
       ? `${iconoir("help", icons.help)} ${selected.description}${
           selected.number !== undefined
-            ? ` Range: ${selected.min}–${selected.max}; use ←/→ or Enter to edit.`
+            ? ` Range: ${selected.min}-${selected.max}; use ←/→ or Enter to edit.`
             : selected.text
               ? selected.key === "terminal.keybindings"
                 ? ` Maximum ${selected.maxLength} characters; Enter saves valid JSON, or leave empty for built-in shortcuts.`
@@ -10282,7 +10282,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
           ? []
           : [
               "y confirm · n reject · Esc cancel",
-              `PgUp/Dn scroll${this.confirmation.hunks?.chunks.length ? " · 1–9 scope" : ""}`,
+              `PgUp/Dn scroll${this.confirmation.hunks?.chunks.length ? " · 1-9 scope" : ""}`,
             ]),
         ...(viewportHeight < 12 ? [] : [""]),
         ...this.confirmation.lines.flatMap((l) => l.split("\n")),
@@ -15151,7 +15151,7 @@ export function renderWorkspace(
       Number.isFinite(promptTokens) &&
       promptTokens >= 0
         ? `${Math.min(100, Math.round((promptTokens / contextWindow) * 100))}%`
-        : "—";
+        : "-";
     const contextCapacity =
       typeof contextWindow === "number" &&
       Number.isFinite(contextWindow) &&
