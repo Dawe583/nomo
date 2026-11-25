@@ -1728,3 +1728,32 @@ Models) through the candidate library behind an adapter and diff its bytes
 against the existing snapshot at the five sizes. No production switch, no
 re-baseline, no dependency added to `packages/cli/package.json` until that diff
 is empty. If it is not empty, this decision stands.
+
+## Composer slot ladder and no mode chip, 2026-11-25
+
+**Decision.** Whether the Chat composer rail gets a mode chip, and which
+optional rail slot is dropped first when cells run out.
+
+**Choice.** Keep the mode in its status-row pill and do not add a composer
+mode chip. The rail has about one spare slot at 40 columns, and a second copy
+of the mode would spend it on a claim the status row already makes. The
+optional slots follow one ladder, highest first: queue > attachment > model >
+context > pet dock (`COMPOSER_SLOT_LADDER` in
+`packages/cli/src/tui/workspace.ts`, documented in
+`packages/cli/src/tui/DESIGN.md`). The label and the action hint are required;
+a long label gives up whole trailing words before the hint is lost. A slot that
+does not fit is dropped whole, never clipped, and a shorter lower slot may still
+use the cells a longer higher one could not.
+
+**Why this order.** A queued prompt will send on its own, so it is the fact the
+operator most needs to see; an attachment is part of the draft being written;
+model and context are repeated in the status row; the pet dock is reaction, not
+state, so it goes first.
+
+**Proven by.** `workspace.test.ts` rail-cell assertions at 40, 80, 120, 160 and
+200 columns, and the composer-hint check in
+`scripts/src/verify-tui-terminal.py` at 40x12 through 200x48.
+
+**Rollback.** Revert the ladder constant and the label rule; this decision
+stays unless a mode chip is wanted, in which case remove the status-row pill
+first.

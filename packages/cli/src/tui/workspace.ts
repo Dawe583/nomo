@@ -2469,7 +2469,7 @@ export function composerHint(input: ComposerHintInput): string {
   const full = Math.floor(input.width) > COMPOSER_HINT_FULL_WIDTH;
   const clauses = (first: string, rest: readonly string[] = []): string =>
     full ? [first, ...rest].join(" · ") : first;
-  if (input.approval) return "/approvals to review";
+  if (input.approval) return full ? "/approvals to review" : "/approvals";
   if (input.failed) return clauses("Esc dismiss");
   if (input.running) return clauses("Esc stop", ["Ctrl+O detail"]);
   if (!input.focused) return clauses("Tab to write");
@@ -2502,10 +2502,24 @@ export type ComposerRailInput = {
 };
 
 /**
- * The top rail: `╭─ <label> <hint> <dock> <chips> ───╮`, exactly `width` cells.
+ * The optional composer rail slots, highest priority first (DESIGN.md, slot
+ * ladder). There is no mode slot: the mode keeps its status-row pill.
+ */
+export const COMPOSER_SLOT_LADDER = [
+  "queue",
+  "attachment",
+  "model",
+  "context",
+  "dock",
+] as const;
+
+/**
+ * The top rail: `╭─ <label> <hint> <slots> ───╮`, exactly `width` cells.
  *
- * Optional slots are added whole, in priority order. The queue can use
- * remaining space, but cannot displace the action hint or a review key.
+ * The label and the hint are required. When both do not fit, the label gives
+ * up trailing words, keeping its first, so the action hint survives at forty
+ * columns. Optional slots follow `COMPOSER_SLOT_LADDER` and are added whole;
+ * none can displace the action hint or a review key.
  *
  * The focus sweep lights one fill cell for six frames and then settles; it
  * changes a glyph, not only a colour, so it survives a monochrome terminal.
@@ -2514,14 +2528,19 @@ export function composerTopRail(input: ComposerRailInput): string {
   const width = Math.max(1, Math.floor(input.width));
   const gap = input.gap ?? " ";
   const lit = input.h === "-" ? "=" : "━";
-  let left = `${input.tl}${input.h} ${input.label}`;
+  const head = `${input.tl}${input.h} `;
+  const words = input.label.split(" ");
+  // Whole trailing label words go before the hint does; the first word stays.
+  while (
+    input.hint !== "" &&
+    words.length > 1 &&
+    visibleLength(`${head}${words.join(" ")}${gap}${input.hint}`) + 1 > width
+  )
+    words.pop();
+  let left = `${head}${words.join(" ")}`;
   for (const extra of [
     input.hint,
-    input.dock ?? "",
-    input.attachment ?? "",
-    input.model ?? "",
-    input.context ?? "",
-    input.queue ?? "",
+    ...COMPOSER_SLOT_LADDER.map((slot) => input[slot] ?? ""),
   ]) {
     if (extra === "") continue;
     const candidate = `${left}${gap}${extra}`;

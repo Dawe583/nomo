@@ -9457,3 +9457,8 @@ Commit 3280db90942408dbc286a70f42124b4a3a33b277, subject Polish shared TUI motio
   harness-eval tests 23/23, eval fixture 14/14, Workbench typecheck exit 0, wider Workbench suite 1162 tests,
   1160 pass, 0 fail, 2 skipped. The wider scripts suite still has 8 pre-existing failures also present on f4b429d5.
   [[NOMO TUI Control Center]]
+- 2026-11-25 · T1 and T3 completed by builder subagent and integrated by Devin Cloud.
+  T1 adds the TUI design contract and README link. T3 adds the whole-slot composer ladder, narrow approval hint,
+  exact-width rail assertions and PTY hint checks. Observed: workspace tests 128/128, CLI typecheck exit 0,
+  full TUI suite 529/529, PTY matrix exit 0 with every scenario passing. No composer mode chip was added.
+  [[NOMO TUI Control Center]]
