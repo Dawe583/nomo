@@ -670,6 +670,14 @@ delta from the previous activation. Insufficient data prints
 
 **Verifier.** fixture chain with two activations prints a measured delta.
 
+**As built.** `nomo harness trend` now prints per activation: pass rate, mean
+recomputable reward, measured reward sample count, numeric delta from the
+previous activation, guardrail state and `insufficient-data` when either side
+cannot be measured. Reward records count only when their stored reward
+recomputes; malformed or mismatched records are counted as unmeasured, never
+zero. Activation reward windows end before the next activation or rollback so
+one activation cannot borrow another activation's measurement.
+
 ### H7. Held-out split (1 h)
 
 **Files.** `harness-eval.mjs`.

@@ -28,8 +28,11 @@
 
 import type { RefinementProposal } from "./refine-pass.ts";
 import {
+  computeReward,
   measureRefinementEffect,
+  REWARD_SCHEMA,
   type RefinementEffect,
+  type RewardRecord,
   type SplitSummary,
 } from "./harness-scores.ts";
 
@@ -361,6 +364,15 @@ export function formatOutcomesForReview(
   return "";
 }
 
+export type RewardTrendWindow = {
+  /** Reward records in this activation window whose stored value recomputes. */
+  readonly samples: number;
+  /** Records that name the reward schema but cannot be used as measurement. */
+  readonly unmeasured: number;
+  readonly passRate: number | null;
+  readonly meanReward: number | null;
+};
+
 export type MeasuredRefinementEffect = {
   /** 64-hex proposal digest when the signed activation carries one; null on
    * minimal or legacy activation records that record only the decision. */
@@ -370,6 +382,11 @@ export type MeasuredRefinementEffect = {
   readonly activationSeq: number;
   readonly rolledBackSeq: number | null;
   readonly effect: RefinementEffect;
+  /** Reward measurement in this activation's own window, never borrowed from
+   * an earlier activation. */
+  readonly rewardWindow: RewardTrendWindow;
+  /** The previous activation window used for the printed delta. */
+  readonly previousRewardWindow: RewardTrendWindow | null;
 };
 
 function recordDigest(body: Record<string, unknown>): string | null {
@@ -382,6 +399,61 @@ function recordDigest(body: Record<string, unknown>): string | null {
     text(refinement?.digest) ||
     text(refinement?.rolledBackDigest);
   return DIGEST.test(digest) ? digest : null;
+}
+
+
+const EMPTY_REWARD_WINDOW: RewardTrendWindow = {
+  samples: 0,
+  unmeasured: 0,
+  passRate: null,
+  meanReward: null,
+};
+
+/**
+ * Recomputable reward records in one inclusive activation window.
+ *
+ * The command prints only measurements that can be checked from the record
+ * itself. A malformed record, a nonnumeric reward and a reward whose stored
+ * value does not recompute are counted as unmeasured, never as zero.
+ */
+function rewardTrendWindow(
+  entries: readonly Entry[],
+  startSeq: number,
+  endSeq: number,
+): RewardTrendWindow {
+  let samples = 0;
+  let unmeasured = 0;
+  let passes = 0;
+  let rewardTotal = 0;
+  for (const entry of entries) {
+    if (typeof entry.seq !== "number" || entry.seq <= startSeq || entry.seq > endSeq)
+      continue;
+    const body = object(entry.body);
+    if (body === null || body.schema !== REWARD_SCHEMA) continue;
+    try {
+      const record = body as unknown as RewardRecord;
+      if (
+        computeReward(record) === record.reward &&
+        typeof record.reward === "number" &&
+        typeof record.passed === "boolean"
+      ) {
+        samples += 1;
+        rewardTotal += record.reward;
+        if (record.passed) passes += 1;
+      } else {
+        unmeasured += 1;
+      }
+    } catch {
+      unmeasured += 1;
+    }
+  }
+  if (samples === 0) return { ...EMPTY_REWARD_WINDOW, unmeasured };
+  return {
+    samples,
+    unmeasured,
+    passRate: passes / samples,
+    meanReward: rewardTotal / samples,
+  };
 }
 
 /**
@@ -433,11 +505,24 @@ export function mineRefinementEffects(
     }
   }
 
-  return activations.map((activation) => {
+  const windows = activations.map((activation, index) => {
     const rollbackSeqs = activation.digest ? rollbacks.get(activation.digest) ?? [] : [];
     const rolledBackSeq = rollbackSeqs.find((seq) => seq > activation.seq) ?? null;
+    const nextActivationSeq = activations[index + 1]?.seq ?? null;
+    const endSeq = Math.min(
+      rolledBackSeq ?? Number.POSITIVE_INFINITY,
+      nextActivationSeq === null ? Number.POSITIVE_INFINITY : nextActivationSeq - 1,
+    );
+    return {
+      activation,
+      rolledBackSeq,
+      endSeq,
+      rewardWindow: rewardTrendWindow(ordered, activation.seq, endSeq),
+    };
+  });
+  return windows.map(({ activation, rolledBackSeq, endSeq, rewardWindow }, index) => {
     const effect = measureRefinementEffect(ordered, activation.seq, {
-      untilSeq: rolledBackSeq,
+      untilSeq: Number.isFinite(endSeq) ? endSeq : rolledBackSeq,
       generatedAt,
     });
     return {
@@ -447,12 +532,45 @@ export function mineRefinementEffects(
       activationSeq: activation.seq,
       rolledBackSeq,
       effect,
+      rewardWindow,
+      previousRewardWindow: index === 0 ? null : windows[index - 1]!.rewardWindow,
     };
   });
 }
 
 function splitNumber(summary: SplitSummary): string {
   return summary.mean === null ? "unmeasured" : summary.mean.toFixed(3);
+}
+
+
+function signedDelta(before: number, after: number): string {
+  const delta = after - before;
+  return `${delta >= 0 ? "+" : ""}${delta.toFixed(3)}`;
+}
+
+function rewardTrendText(item: MeasuredRefinementEffect): string {
+  const current = item.rewardWindow;
+  const previous = item.previousRewardWindow;
+  const samples = `${previous?.samples ?? 0}->${current.samples}`;
+  if (
+    previous === null ||
+    previous.samples === 0 ||
+    current.samples === 0 ||
+    previous.passRate === null ||
+    current.passRate === null ||
+    previous.meanReward === null ||
+    current.meanReward === null
+  ) {
+    const gap = current.unmeasured ? `, ${current.unmeasured} unmeasured` : "";
+    return `pass_rate insufficient-data | reward insufficient-data | reward_samples ${samples}${gap}`;
+  }
+  return (
+    `pass_rate ${previous.passRate.toFixed(3)}->${current.passRate.toFixed(3)} ` +
+    `delta ${signedDelta(previous.passRate, current.passRate)} | ` +
+    `reward ${previous.meanReward.toFixed(3)}->${current.meanReward.toFixed(3)} ` +
+    `delta ${signedDelta(previous.meanReward, current.meanReward)} | ` +
+    `reward_samples ${samples}`
+  );
 }
 
 function effectLine(item: MeasuredRefinementEffect): string {
@@ -478,6 +596,7 @@ function effectLine(item: MeasuredRefinementEffect): string {
     `- activated at seq ${item.activationSeq} (${state})${label} | ` +
     `verdict ${item.effect.verdict} | ` +
     `cases ${item.effect.before.caseCount}->${item.effect.after.caseCount} | ` +
+    `${rewardTrendText(item)} | ` +
     `hold_rate ${hold} | ${guardrails} | ${unmeasured}`
   );
 }

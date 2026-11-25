@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-25T14:29:49Z",
+  "updatedAt": "2026-11-25T14:36:05Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -1622,6 +1622,44 @@
         "git diff --check observed exit 0."
       ],
       "stopCondition": "Stop and profile before changing anything if either p95 exceeds 50 ms or transcript growth becomes quadratic."
+    },
+    {
+      "id": "h6-trend-report",
+      "status": "done",
+      "owner": "devin-6293643153014f56bb088c9a71fde97a",
+      "dependsOn": [
+        "h5-activation-rollback",
+        "h1-reward-record"
+      ],
+      "scope": [
+        "packages/workbench/src/refinement-outcomes.ts",
+        "packages/cli/src/harness.test.ts",
+        "docs/plans/2026-11-25-nomo-24h-program-detailed.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "per activation pass rate, reward, guardrail state and sample count",
+        "delta from previous activation",
+        "insufficient-data when evidence is absent",
+        "fixture chain with two activations prints measured delta"
+      ],
+      "verifier": [
+        "node --test packages/cli/src/harness.test.ts",
+        "pnpm --filter @nomo/cli typecheck",
+        "pnpm --filter @nomo/workbench typecheck",
+        "node --test --test-concurrency=1 packages/workbench/src/*.test.ts"
+      ],
+      "evidence": [
+        "NO_COLOR=1 node --test packages/cli/src/harness.test.ts observed exit 0: tests 22, pass 22, fail 0, duration_ms 230.556083. The two-activation fixture prints pass_rate 1.000->0.500 delta -0.500, reward 1.000->0.500 delta -0.500 and reward_samples 1->2; the first activation prints insufficient-data.",
+        "pnpm --filter @nomo/cli typecheck observed exit 0.",
+        "pnpm --filter @nomo/workbench typecheck observed exit 0.",
+        "NO_COLOR=1 node --test --test-concurrency=1 packages/workbench/src/*.test.ts observed exit 0: tests 1188, pass 1186, fail 0, skipped 2, duration_ms 95415.078209.",
+        "git diff --check observed exit 0."
+      ],
+      "stopCondition": "Stop if a reward that does not recompute is averaged, an activation borrows a later activation window, or missing evidence is rendered as zero or pass."
     }
   ]
 }
