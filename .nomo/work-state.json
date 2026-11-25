@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-25T14:58:37Z",
+  "updatedAt": "2026-11-25T15:07:09Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -1938,6 +1938,45 @@
         "git diff --check observed exit 0."
       ],
       "stopCondition": "Stop if an unsupported candidate receives numeric reward, propensity is not logged, or offline evaluation changes deployment state."
+    },
+    {
+      "id": "h18-multi-axis-bandit",
+      "status": "done",
+      "owner": "devin-6293643153014f56bb088c9a71fde97a",
+      "dependsOn": [
+        "r4-exploration-guard",
+        "r8-offline-policy-eval"
+      ],
+      "scope": [
+        "packages/workbench/src/harness-factorial-bandit.ts",
+        "packages/workbench/src/harness-factorial-bandit.test.ts",
+        "packages/workbench/src/harness-bandit.ts",
+        "docs/plans/2026-11-25-nomo-24h-program-detailed.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "two axes at once with interaction terms",
+        "complete 2x2 treatment digest verification",
+        "empty cells unmeasured rather than zero",
+        "guardrail approval bound to exact treatment set"
+      ],
+      "verifier": [
+        "node --test packages/workbench/src/harness-factorial-bandit.test.ts",
+        "node --test packages/workbench/src/harness-factorial-bandit.test.ts packages/workbench/src/harness-bandit.test.ts",
+        "pnpm --filter @nomo/workbench typecheck",
+        "node --test --test-concurrency=1 packages/workbench/src/*.test.ts"
+      ],
+      "evidence": [
+        "NO_COLOR=1 node --test packages/workbench/src/harness-factorial-bandit.test.ts observed final exit 0: tests 6, pass 6, fail 0, duration_ms 83.343417. Measured fixture main effects are 0.4 and 0.3 with interaction 0.2; an empty cell makes effects null/unmeasured; guardrail records contain no prompt text.",
+        "NO_COLOR=1 node --test packages/workbench/src/harness-factorial-bandit.test.ts packages/workbench/src/harness-bandit.test.ts observed exit 0 before the final test-only assertion addition: tests 15, pass 15, fail 0, duration_ms 178.6985.",
+        "pnpm --filter @nomo/workbench typecheck observed final exit 0.",
+        "NO_COLOR=1 node --test --test-concurrency=1 packages/workbench/src/*.test.ts observed exit 0 after the production implementation: tests 1197, pass 1195, fail 0, skipped 2, duration_ms 82535.431459. The later change was test-only construction of an incomplete-design rejection case.",
+        "git diff --check observed final exit 0."
+      ],
+      "stopCondition": "Stop if a reward is attributed to one axis rather than the joint treatment, incomplete cells receive numeric effects, prompt text enters the record, or guardrail exploration runs without exact-digest approval."
     }
   ]
 }
