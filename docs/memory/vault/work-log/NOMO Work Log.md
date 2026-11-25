@@ -9517,3 +9517,9 @@ Commit 3280db90942408dbc286a70f42124b4a3a33b277, subject Polish shared TUI motio
   plumbing and governance evidence only, not model capability evidence. Observed eval run: 14/14 total, train 7/7,
   held-out eval 7/7. Narrow tests 3/3; harness eval, replay, bandit simulation and runner set 39/39.
   [[NOMO TUI Control Center]]
+- 2026-11-25 · H10 cost and latency weights completed in the free parent session.
+  Harness settings now include decimal `rewardCostWeight` and `rewardLatencyWeight`, clamped to six places and exposed
+  through `rewardCostLatencyWeights`; both axes enter variant identity. Zero means the measured term is ignored, missing
+  measurements still stay unmeasured, and breach weight remains explicit at the reward call site. Observed: settings
+  23/23, inventory 2/2 with empty gaps, focused settings wiring 40/40, Workbench typecheck exit 0.
+  [[NOMO TUI Control Center]]

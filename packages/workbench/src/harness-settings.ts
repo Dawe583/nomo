@@ -58,7 +58,9 @@ export type HarnessSettingKey =
   | "sessionSearchEnabled"
   | "toolRequestTimeoutMs"
   | "maxToolResultCharacters"
-  | "autoCompactMessages";
+  | "autoCompactMessages"
+  | "rewardCostWeight"
+  | "rewardLatencyWeight";
 
 export type HarnessSettingSpec = {
   /** Operator-facing name, shown by /settings and the web settings panel. */
@@ -66,7 +68,7 @@ export type HarnessSettingSpec = {
   /** What the limit governs, in one sentence an operator can check. */
   description: string;
   /** The file in this package that defines the consuming symbols. */
-  consumerFile: "index.ts" | "provider.ts" | "gui.ts" | "agents.ts";
+  consumerFile: "index.ts" | "provider.ts" | "gui.ts" | "agents.ts" | "harness-settings.ts";
   /** The symbols in `consumerFile` that read this value. Required, and
    * asserted to exist, so the table cannot drift into naming nothing. */
   consumers: readonly string[];
@@ -75,6 +77,8 @@ export type HarnessSettingSpec = {
   default: number;
   min: number;
   max: number;
+  /** Decimal places preserved for weight settings. Undefined means integer. */
+  precision?: number;
 };
 
 export const HARNESS_SETTINGS: {
@@ -370,6 +374,30 @@ export const HARNESS_SETTINGS: {
     max: 200000,
     icon: "◧",
   },
+  rewardCostWeight: {
+    label: "Reward cost weight",
+    description:
+      "Penalty per measured provider dollar in a reward record. Zero ignores measured cost; the value is a weight, not a cost estimate.",
+    consumerFile: "harness-settings.ts",
+    consumers: ["rewardCostLatencyWeights", "variantIdentity"],
+    default: 1,
+    min: 0,
+    max: 1000,
+    precision: 6,
+    icon: "◍",
+  },
+  rewardLatencyWeight: {
+    label: "Reward latency weight",
+    description:
+      "Penalty per measured millisecond in a reward record. Zero ignores measured latency; the value is a weight, not a latency estimate.",
+    consumerFile: "harness-settings.ts",
+    consumers: ["rewardCostLatencyWeights", "variantIdentity"],
+    default: 0.001,
+    min: 0,
+    max: 1,
+    precision: 6,
+    icon: "◎",
+  },
   autoCompactMessages: {
     label: "Automatic compaction",
     description:
@@ -400,15 +428,19 @@ export function defaultHarnessSettings(): HarnessSettings {
 }
 
 /** Coerce one stored or supplied value into range. A value that is not a
- * finite integer is not a limit an operator chose, so it falls back to the
- * default rather than to a neighbour. */
+ * finite number is not a limit an operator chose, so it falls back to the
+ * default rather than to a neighbour. Integer settings are rounded; weight
+ * settings keep their documented precision. */
 export function clampHarnessSetting(
   key: HarnessSettingKey,
   value: unknown,
 ): number {
   const spec = HARNESS_SETTINGS[key];
   if (typeof value !== "number" || !Number.isFinite(value)) return spec.default;
-  return Math.min(spec.max, Math.max(spec.min, Math.round(value)));
+  const clamped = Math.min(spec.max, Math.max(spec.min, value));
+  if (spec.precision === undefined) return Math.round(clamped);
+  const factor = 10 ** spec.precision;
+  return Math.round(clamped * factor) / factor;
 }
 
 /** Merge stored values over the defaults, clamping each one. Used on load so
@@ -457,6 +489,19 @@ export function harnessSettingsPatch(
 /** One row per setting, for /settings and the web panel. The consumer is
  * included so a reader can see what a value actually governs instead of
  * having to take the label's word for it. */
+/** The cost and latency penalty weights an operator chose. The breach weight
+ * stays with the caller because it is part of the objective being measured,
+ * while these two settings govern how measured cost and latency are charged. */
+export function rewardCostLatencyWeights(settings: HarnessSettings): {
+  readonly cost: number;
+  readonly latency: number;
+} {
+  return {
+    cost: settings.rewardCostWeight,
+    latency: settings.rewardLatencyWeight,
+  };
+}
+
 export function harnessSettingsView(settings: HarnessSettings) {
   return (Object.keys(HARNESS_SETTINGS) as HarnessSettingKey[]).map((key) => ({
     key,

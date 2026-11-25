@@ -65,11 +65,22 @@ operator as applied while changing nothing.
 | `toolRequestTimeoutMs` | 180000 | 1000 to 600000   | per-request timeout for MCP tool calls over the stdio proxy  |
 | `maxToolResultCharacters` | 64000 | 256 to 200000  | characters of a tool result retained in the model conversation |
 | `autoCompactMessages` | 150 | 0 to 199 | messages at which a run compacts the conversation with a model summary (0 = off) |
+| `rewardCostWeight` | 1 | 0 to 1000 | penalty per measured provider dollar in a reward record (0 = cost ignored) |
+| `rewardLatencyWeight` | 0.001 | 0 to 1 | penalty per measured millisecond in a reward record (0 = latency ignored) |
 | `sessionSearchEnabled` | 0 | 0 to 1 | whether the model may search bounded, redacted excerpts from other conversations (0 = isolated) |
 | `webToolsEnabled` | 0 | 0 to 1 | whether the run offers `nomo_web_fetch` and `nomo_web_search`, both held at r1 (0 = no web tools) |
 
 An agent profile's own `maxTurns` still wins over the harness setting, because
 a profile is a deliberate per-agent choice and `AGENT_LIMITS` already caps it.
+
+`rewardCostWeight` and `rewardLatencyWeight` (H10) are numeric weights, not
+cost or latency estimates. `rewardCostLatencyWeights` reads the resolved values
+for reward consumers, and `variantIdentity` includes both axes, so two reward
+comparisons cannot silently mix different penalties. Both accept decimal values
+to six places and clamp into range. Zero is meaningful: it ignores that measured
+term. Missing measurements still stay `unmeasured`; these settings never turn an
+absent producer into zero. The breach weight remains explicit at the reward
+call site because it defines the objective being measured.
 
 `autoCompactMessages` (HP2) is read by `autoCompact` at the top of every turn
 in `run`. When the conversation holds that many messages, or an agent profile's

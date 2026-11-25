@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-25T11:46:57Z",
+  "updatedAt": "2026-11-25T11:49:12Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -811,6 +811,43 @@
         "git diff --check observed exit 0."
       ],
       "stopCondition": "After one targeted repair, record the blocker and continue independent work."
+    },
+    {
+      "id": "h10-cost-latency-weights",
+      "status": "done",
+      "owner": "devin-6293643153014f56bb088c9a71fde97a",
+      "dependsOn": [
+        "h1-reward-record",
+        "h2-variant-identity"
+      ],
+      "scope": [
+        "packages/workbench/src/harness-settings.ts",
+        "packages/workbench/src/harness-settings.test.ts",
+        "docs/HARNESS-SETTINGS.md",
+        "docs/plans/2026-11-25-nomo-24h-program-detailed.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "Cost and latency weights are documented settings with real consumers.",
+        "Harness inventory has no undocumented gap.",
+        "Missing measurements stay unmeasured."
+      ],
+      "verifier": [
+        "node --test scripts/src/harness-inventory.test.mjs",
+        "pnpm --filter @nomo/workbench typecheck"
+      ],
+      "evidence": [
+        "Implemented in the parent free-for-teams session. rewardCostWeight and rewardLatencyWeight are documented decimal harness settings read by rewardCostLatencyWeights and included in variantIdentity; breach weight remains explicit at the reward call site.",
+        "node --test packages/workbench/src/harness-settings.test.ts observed exit 0: tests 23, pass 23, fail 0, duration_ms 84.755959.",
+        "pnpm --filter @nomo/workbench typecheck observed exit 0.",
+        "node --test scripts/src/harness-inventory.test.mjs observed exit 0: tests 2, pass 2, fail 0, duration_ms 37.709125; known-gap list remains empty.",
+        "NO_COLOR=1 node --test --test-concurrency=1 packages/workbench/src/harness-settings.test.ts packages/workbench/src/gui-harness-settings.test.ts packages/workbench/src/harness-wiring.test.ts observed exit 0: tests 40, pass 40, fail 0, duration_ms 2020.564667.",
+        "git diff --check observed exit 0."
+      ],
+      "stopCondition": "Stop if making weights configurable would hide an unmeasured cost or latency as zero."
     }
   ]
 }
