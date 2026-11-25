@@ -53,6 +53,39 @@ export type JsonlEntry = {
 
 export type JsonlReceipt = JsonlEntry;
 
+/** The only reward ledger schema this binary can interpret. */
+export const REWARD_RECORD_SCHEMA_V1 = "nomo.reward.v1";
+export type RewardRecordSchema = typeof REWARD_RECORD_SCHEMA_V1;
+
+export type RewardRecordSchemaRead =
+  | { readonly kind: "legacy" }
+  | { readonly kind: "supported"; readonly schema: RewardRecordSchema }
+  | { readonly kind: "unknown-version"; readonly detail: string };
+
+/**
+ * Read the reward schema marker without making schema-less history invalid.
+ * Legacy chain bodies predate the marker and are not reward records at this
+ * layer. Once a body does name `nomo.reward`, only the exact supported version
+ * may pass: a later version is evidence this binary cannot interpret, not a
+ * v1 record to guess at. The detail is JSON quoted and bounded because the
+ * stored field is hostile terminal input.
+ */
+export function readRewardRecordSchema(body: unknown, seq: number): RewardRecordSchemaRead {
+  if (typeof body !== "object" || body === null) return { kind: "legacy" };
+  const schema = (body as Record<string, unknown>).schema;
+  if (
+    typeof schema !== "string" ||
+    (schema !== "nomo.reward" && !schema.startsWith("nomo.reward."))
+  )
+    return { kind: "legacy" };
+  if (schema === REWARD_RECORD_SCHEMA_V1) return { kind: "supported", schema };
+  const bounded = schema.length > 96 ? `${schema.slice(0, 93)}...` : schema;
+  return {
+    kind: "unknown-version",
+    detail: `entry ${seq} carries unknown reward schema version ${JSON.stringify(bounded)}`,
+  };
+}
+
 export interface JsonlStoreOptions {
   /** Directory holding <workspace>.jsonl. Defaults to ~/.nomo/ledger. */
   readonly dir?: string;
@@ -325,6 +358,9 @@ export function jsonlStore(
         // A record that claims a reason must carry a reason this reader can
         // vouch for. An entry with no attribution at all is not this failure:
         // that is a pre-attribution entry, and it still verifies.
+        const rewardSchema = readRewardRecordSchema(entry.body, entry.seq);
+        if (rewardSchema.kind === "unknown-version")
+          return { ok: false, checked, reason: `schema: ${rewardSchema.detail}` };
         const reason = readLedgerReason(entry.body, entry.seq);
         if (reason.kind === "malformed")
           return { ok: false, checked, reason: `attribution: ${reason.detail}` };

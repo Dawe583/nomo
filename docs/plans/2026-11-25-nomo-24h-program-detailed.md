@@ -650,6 +650,13 @@ an unknown version reports it instead of guessing.
 
 **Verifier.** `node --test packages/ledger/src/*.test.ts`.
 
+**As built.** `REWARD_RECORD_SCHEMA_V1` is the only reward schema this binary
+interprets. `readRewardRecordSchema` treats schema-less chain history as legacy,
+accepts exact `nomo.reward.v1`, and makes the store, strict verifier and per-record
+verifier report an unknown reward version instead of guessing. The finding is
+bounded and terminal escaped. Other schema families remain outside this reward
+reader.
+
 ### H14. Operator commands (1.5 h)
 
 **Files.** `packages/cli/src/harness.ts`, CLI test.

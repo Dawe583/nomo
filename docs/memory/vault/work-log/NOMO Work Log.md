@@ -9488,3 +9488,8 @@ Commit 3280db90942408dbc286a70f42124b4a3a33b277, subject Polish shared TUI motio
   exact digest gate. Observed: CLI harness 19/19, TUI proposal tests 7/7, refine-trigger 32/32, both typechecks exit 0,
   full TUI 529/529, wider Workbench 1187 tests, 1185 pass, 0 fail, 2 skipped. Contextual bandit only, not RL.
   [[NOMO TUI Control Center]]
+- 2026-11-25 · H13 reward schema versioning completed in the free parent session.
+  The ledger now treats schema-less history as legacy, accepts exact `nomo.reward.v1`, and reports an unknown reward
+  schema version in the store, strict verifier and per-record verifier instead of guessing. Other schema families stay
+  outside this reward reader. Observed: verify tests 6/6, ledger typecheck exit 0, full ledger suite 142/142.
+  [[NOMO TUI Control Center]]
