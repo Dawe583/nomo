@@ -618,6 +618,17 @@ def run(name, body, mode="chat", sizes=SIZES):
 # --------------------------------------------------------------------------
 # Scenarios
 # --------------------------------------------------------------------------
+def assert_rail_hint(tui):
+    """The composer rail keeps its action hint at every size (DESIGN.md)."""
+    rail = next(
+        (line for line in tui.screen.lines() if "╭─ Draft" in line), ""
+    )
+    if not any(hint in rail for hint in ("Enter send", "Tab to write")):
+        tui.fail("composer rail lost its action hint: %r" % rail)
+    if "…" in rail:
+        tui.fail("composer rail clipped a slot: %r" % rail)
+
+
 def scenario_chat(tui):
     """Grid header, draft, streamed answer, code block, progress, resize."""
     if tui.columns >= 64:
@@ -627,6 +638,7 @@ def scenario_chat(tui):
     else:
         tui.expect("▦  NOMO  Chat")
     tui.expect("╭─ Draft")
+    assert_rail_hint(tui)
     if tui.transcript_visible:
         tui.expect("Selected conversation")  # the seeded conversation is on screen
 
@@ -671,6 +683,7 @@ def scenario_chat(tui):
     tui.resize(*original)
     tui.expect("draft survives resize")
     tui.assert_frame_fits()
+    assert_rail_hint(tui)
     # The surviving draft is still sendable, which is the point of keeping it.
     answers = tui.answer_count()
     tui.enter()
