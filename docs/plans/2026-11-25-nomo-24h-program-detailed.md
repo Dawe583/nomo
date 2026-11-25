@@ -817,7 +817,7 @@ GPU budget or training path, so no NOMO surface may claim RL training.
 Q1 as built: `scripts/src/work-graph-check.mjs` checks duplicate ids, dangling dependencies and done nodes without evidence. It prints only counts and exits nonzero when any count is nonzero.
 | Q2 | Fix dead-path inventory and stale inventory named by doc-truth | `node --test scripts/src/doc-truth.test.mjs` | 9/9 |
 | Q3 | `test-fixture.ts`: wire it or allowlist with a reason | `node --test scripts/src/module-inventory.test.mjs` | 2/2 |
-| Q4 | Regenerate harness inventory | `node --test scripts/src/harness-inventory.test.mjs` | 20/20, empty gap list |
+| Q4 | Regenerate harness inventory | `node --test scripts/src/harness-inventory.test.mjs` | every documented key present, empty gap list |
 | Q5 | Provider smoke against local Zen; never print the key | `node scripts/src/provider-smoke.mjs` | PASS or SKIP with a reason |
 | Q6 | Rebuild dist; check `nomo --version` and that dist is newer than source | `node scripts/src/bundle-cli.mjs` | version matches package |
 | Q7 | Dependency audit; lockfile clean; no new dep without a reason | `pnpm install --frozen-lockfile --offline` | no drift |

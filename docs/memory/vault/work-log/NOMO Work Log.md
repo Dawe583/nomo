@@ -9534,3 +9534,6 @@ Commit 3280db90942408dbc286a70f42124b4a3a33b277, subject Polish shared TUI motio
   runner, writes the first measured reward into the workspace chain through `recordHarnessReward`, reads it back with
   `nomo harness reward`, and rolls the activation back. No live model, provider or network call. Observed: H15 test 1/1,
   all `scripts/src/harness-*.test.mjs` 42/42, Workbench typecheck exit 0. [[NOMO TUI Control Center]]
+- 2026-11-25 · Q2, Q3 and Q4 quality inventory completed in the free parent session.
+  Doc truth is green 9/9 after inventorying real historical dead paths, removing the stale Apple-release entry, and correcting the newest-decision pin.
+  `test-fixture.ts` remains an explicitly reasoned test-only orphan, module inventory 2/2. Harness inventory is green 2/2 with 28 documented keys and an empty gap list. [[NOMO TUI Control Center]]
