@@ -632,6 +632,13 @@ no model grading; no network without approval; prints one JSON decision line.
 
 **Verifier.** eval run prints per-task results.
 
+**As built.** `scripts/src/harness-eval-runner.mjs` is a deterministic offline
+adapter. It proposes one first action from the prompt, validates the tool
+against the governed catalog, classifies it with `workspaceToolClass`, and
+fails closed for unknown tools and unsafe web requests. It prints one JSON
+decision line. It is plumbing and governance evidence only, not model
+capability evidence; no provider or network is called.
+
 ### H12. Learning-loop documentation (0.5 h)
 
 **Files.** New `docs/HARNESS-LEARNING.md`.
