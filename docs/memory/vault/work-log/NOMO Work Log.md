@@ -9493,3 +9493,8 @@ Commit 3280db90942408dbc286a70f42124b4a3a33b277, subject Polish shared TUI motio
   schema version in the store, strict verifier and per-record verifier instead of guessing. Other schema families stay
   outside this reward reader. Observed: verify tests 6/6, ledger typecheck exit 0, full ledger suite 142/142.
   [[NOMO TUI Control Center]]
+- 2026-11-25 · H12 learning-loop documentation completed in the free parent session.
+  `docs/HARNESS-LEARNING.md` now gives the operator one page for proposal, approval, activation, measurement, replay,
+  trend and rollback, with record names and commands. It states exactly that the loop is a contextual bandit and policy
+  search, not reinforcement learning. Manual read completed; command usage checked; no em dash or en dash; diff check clean.
+  [[NOMO TUI Control Center]]

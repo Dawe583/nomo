@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-25T11:36:16Z",
+  "updatedAt": "2026-11-25T11:39:44Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -683,12 +683,14 @@
     },
     {
       "id": "h12-learning-loop-docs",
-      "status": "pending",
-      "owner": "child-ae870e11b6de42c4a8c7dcd794009e18",
+      "status": "done",
+      "owner": "devin-6293643153014f56bb088c9a71fde97a",
       "dependsOn": [
         "h5-activation-rollback"
       ],
       "scope": [
+        "docs/HARNESS-LEARNING.md",
+        "docs/plans/2026-11-25-nomo-24h-program-detailed.md",
         ".nomo/work-state.json"
       ],
       "protectedPaths": [
@@ -701,7 +703,10 @@
         "see plan package verifier"
       ],
       "evidence": [
-        "Delegated to child session ae870e11b6de42c4a8c7dcd794009e18; parent retains integration and graph recording ownership."
+        "Implemented in the parent free-for-teams session after the delegated child was terminated before progress. docs/HARNESS-LEARNING.md now documents proposal -> approval -> activation -> measurement -> replay -> trend -> rollback, exact digest activation, one-command rollback, signed record names and commands.",
+        "Manual read verifier: docs/HARNESS-LEARNING.md read end to end after writing; command usage checked against harness-replay and trajectory-export usage lines; exact reward, bandit, trajectory and rollback record names included; document states contextual bandit and policy search, not reinforcement learning.",
+        "rg -n \"[\u2014\u2013]\" docs/HARNESS-LEARNING.md observed exit 1 with no matches, so the file uses no em dash or en dash.",
+        "git diff --check observed exit 0."
       ],
       "stopCondition": "After one targeted repair, record the blocker and continue independent work."
     },

@@ -641,6 +641,11 @@ rollback, with the record names and the commands.
 
 **Verifier.** manual read.
 
+**As built.** `docs/HARNESS-LEARNING.md` is the one-page operator contract. It
+names proposal, approval, activation, measurement, replay, trend and rollback;
+lists the signed record names and commands; and states that the loop is a
+contextual bandit and policy search, not reinforcement learning.
+
 ### H13. Reward record schema versioning (1 h)
 
 **Files.** `packages/ledger/src/store.ts`, ledger tests.
