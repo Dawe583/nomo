@@ -65,6 +65,14 @@
  * more than one axis is refused before anything runs. The script cannot prove
  * the runner honoured the variant: the file is the operator's declaration.
  *
+ * Held-out split (H7): when tasks carry `split`, every task must carry one,
+ * both splits must be non-empty, and no eval task may share an id or a prompt
+ * with a train task; otherwise the taskset is refused before anything runs.
+ * The report prints `train` and `eval (held-out)` pass counts separately, each
+ * scored only from its own tasks. `--split train|eval` runs one split alone.
+ * Selection (any code that picks a variant from results) must read results
+ * through `trainResults`, which refuses an eval or unknown task.
+ *
  * Exit codes: 0 = every task passed, or skipped; 1 = a task failed, produced no
  * decision, or the runner did not start; 2 = usage or taskset error.
  */
@@ -86,7 +94,7 @@ import {
 const usage =
   "usage: node scripts/src/harness-eval.mjs <taskset.json> [--runs <n>] " +
   "[--timeout <ms>] [--records <path> --weights breach=<n>,cost=<n>,latency=<n> " +
-  "--variant <variant.json> [--baseline <variant.json>]] " +
+  "--variant <variant.json> [--baseline <variant.json>]] [--split train|eval] " +
   "-- <runner argv...>";
 
 const DEFAULT_RUNS = 2;
@@ -235,6 +243,59 @@ export function scoreTask(task, attempts) {
   return { id: task.id, status: "pass", run: attempts.length, decision: last };
 }
 
+/**
+ * Splits tasks into `train` and held-out `eval` by their declared split. A
+ * task without a split, an empty side, or an eval task that shares an id or a
+ * prompt with a train task is refused: any of them would let a training task
+ * score the held-out set.
+ */
+export function heldOutSplit(tasks) {
+  const train = [];
+  const held = [];
+  for (const task of tasks) {
+    if (task.split === "train") train.push(task);
+    else if (task.split === "eval") held.push(task);
+    else throw new TypeError(`split: task "${task.id}" names no split`);
+  }
+  if (train.length === 0 || held.length === 0)
+    throw new TypeError("split: train and eval each need at least one task");
+  const trainIds = new Set(train.map((task) => task.id));
+  const trainPrompts = new Set(train.map((task) => task.prompt));
+  for (const task of held) {
+    if (trainIds.has(task.id)) throw new TypeError(`split: task "${task.id}" is in both train and eval`);
+    if (trainPrompts.has(task.prompt))
+      throw new TypeError(`split: eval task "${task.id}" repeats a train prompt`);
+  }
+  return { train, eval: held };
+}
+
+/** The only results selection may read: train tasks. An eval or unknown task
+ * is refused, not filtered, so a caller that mixed the lists finds out. */
+export function trainResults(split, results) {
+  const trainIds = new Set(split.train.map((task) => task.id));
+  const evalIds = new Set(split.eval.map((task) => task.id));
+  for (const result of results) {
+    if (evalIds.has(result.id))
+      throw new TypeError(`selection refused: "${result.id}" is a held-out eval task`);
+    if (!trainIds.has(result.id))
+      throw new TypeError(`selection refused: "${result.id}" is not a train task`);
+  }
+  return results;
+}
+
+/** Pass counts per split, each scored only from results of its own tasks. */
+export function splitTotals(split, results) {
+  const byId = new Map(results.map((result) => [result.id, result]));
+  const side = (tasks) => {
+    const scored = tasks.map((task) => byId.get(task.id)).filter(Boolean);
+    return {
+      passed: scored.filter((result) => result.status === "pass").length,
+      total: scored.length,
+    };
+  };
+  return { train: side(split.train), eval: side(split.eval) };
+}
+
 /** Runs one task once. Never throws, never returns stdout. */
 export function runAttempt(task, runner, timeoutMs) {
   const [command, ...args] = runner;
@@ -347,6 +408,7 @@ function parseArgs(argv) {
     weights: "",
     variant: "",
     baseline: "",
+    split: "",
     help: false,
     unknown: [],
   };
@@ -376,7 +438,13 @@ function parseArgs(argv) {
       else options.timeout = Number(raw);
       continue;
     }
-    if (arg === "--records" || arg === "--weights" || arg === "--variant" || arg === "--baseline") {
+    if (
+      arg === "--records" ||
+      arg === "--weights" ||
+      arg === "--variant" ||
+      arg === "--baseline" ||
+      arg === "--split"
+    ) {
       const raw = argv[index + 1];
       index += 1;
       if (!raw) {
@@ -424,6 +492,10 @@ export function main(argv) {
     console.error("harness-eval: --records and --variant are required together.");
     return 2;
   }
+  if (options.split && options.split !== "train" && options.split !== "eval") {
+    console.error('harness-eval: --split must be "train" or "eval".');
+    return 2;
+  }
   if (options.baseline && !options.variant) {
     console.error("harness-eval: --baseline needs --variant.");
     return 2;
@@ -468,18 +540,30 @@ export function main(argv) {
     for (const error of taskset.errors) console.error(`  ${error}`);
     return 2;
   }
+  let split = null;
+  if (options.split || taskset.tasks.some((task) => task.split !== undefined)) {
+    try {
+      split = heldOutSplit(taskset.tasks);
+    } catch (error) {
+      console.error(`harness-eval: taskset rejected: ${options.tasksetPath}`);
+      console.error(`  ${error.message}`);
+      return 2;
+    }
+  }
+  const tasks = options.split ? split[options.split] : taskset.tasks;
 
   const runnerName = basename(options.runner[0]) || options.runner[0];
   const label = taskset.id ? ` (${taskset.id})` : "";
   console.log(
-    `harness-eval: ${taskset.tasks.length} tasks from ${options.tasksetPath}${label}, ` +
-      `${options.runs} run(s) each, runner=${runnerName}`,
+    `harness-eval: ${tasks.length} tasks from ${options.tasksetPath}${label}, ` +
+      `${options.runs} run(s) each, runner=${runnerName}` +
+      (options.split ? `, split=${options.split}` : ""),
   );
 
-  const width = Math.max(...taskset.tasks.map((task) => task.id.length));
+  const width = Math.max(...tasks.map((task) => task.id.length));
   const results = [];
   const records = [];
-  for (const task of taskset.tasks) {
+  for (const task of tasks) {
     const attempts = [];
     for (let run = 0; run < options.runs; run += 1) {
       attempts.push(runAttempt(task, options.runner, options.timeout));
@@ -518,6 +602,13 @@ export function main(argv) {
     `total: ${passed}/${results.length} passed, ${failed} failed, ` +
       `${noDecision} no-decision, ${runnerError} runner-error`,
   );
+  if (split) {
+    const totals = splitTotals(split, results);
+    if (options.split !== "eval")
+      console.log(`train: ${totals.train.passed}/${totals.train.total} passed`);
+    if (options.split !== "train")
+      console.log(`eval (held-out): ${totals.eval.passed}/${totals.eval.total} passed`);
+  }
   return failed + noDecision + runnerError === 0 ? 0 : 1;
 }
 

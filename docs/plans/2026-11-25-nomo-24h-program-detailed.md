@@ -562,6 +562,12 @@ delta from the previous activation. Insufficient data prints
 
 **Verifier.** unit test that mixes the lists and expects a refusal.
 
+**As built.** `heldOutSplit` refuses a task without a split, an empty side,
+or an eval task sharing an id or prompt with a train task, before anything
+runs. `trainResults` is the only selection input and refuses eval or unknown
+ids. The report prints `train:` and `eval (held-out):` from `splitTotals`;
+`--split train|eval` runs one side. v2 splits 7/7.
+
 ### H8. Guardrail regression detector (1 h)
 
 **Files.** `harness-scores.ts`.
