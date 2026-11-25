@@ -1,6 +1,6 @@
 {
   "name": "@nomo/verifier",
-  "version": "0.1.0",
+  "version": "1.0.1",
   "description": "Offline verifier for a NOMO ledger export. Node built-ins only, no NOMO dependency, no runtime dependencies at all.",
   "license": "Apache-2.0",
   "keywords": [

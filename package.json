@@ -1,6 +1,6 @@
 {
   "name": "@nomo/workspace",
-  "version": "0.1.0",
+  "version": "1.0.1",
   "license": "Apache-2.0",
   "scripts": {
     "test:tui": "node --test --test-concurrency=1 packages/cli/src/tui/*.test.ts && python3 scripts/src/verify-tui-terminal.py",

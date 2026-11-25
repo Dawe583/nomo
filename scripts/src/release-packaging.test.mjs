@@ -477,7 +477,13 @@ test(
           !relativeInstall.startsWith(".." + sep),
         "the CLI install resolved outside its sandbox",
       );
-      const ran = spawnSync(process.execPath, [installedTarget, "--version"], {
+      const versionExecutable =
+        process.platform === "win32" ? process.execPath : installedBin;
+      const versionArgs =
+        process.platform === "win32"
+          ? [installedTarget, "--version"]
+          : ["--version"];
+      const ran = spawnSync(versionExecutable, versionArgs, {
         cwd: sandbox,
         encoding: "utf8",
         timeout: 120_000,
@@ -486,6 +492,27 @@ test(
       assert.equal(ran.status, 0, "installed CLI failed: " + ran.stderr);
       assert.equal(ran.stdout, "nomo " + data.version + "\n");
       assert.equal(ran.stderr, "");
+
+      if (process.platform !== "win32") {
+        const verifier = fileURLToPath(
+          new URL("./verify-installed-tui.py", import.meta.url),
+        );
+        const tui = spawnSync("python3", [verifier, installedBin], {
+          cwd: sandbox,
+          encoding: "utf8",
+          timeout: 60_000,
+        });
+        assert.ifError(tui.error);
+        assert.equal(
+          tui.status,
+          0,
+          `installed TUI launcher verification failed: ${tui.stderr || tui.stdout}`,
+        );
+        assert.match(
+          tui.stdout,
+          /PASS: installed launcher renders the TUI and restores the terminal/,
+        );
+      }
     } finally {
       rmSync(sandbox, { recursive: true, force: true });
     }

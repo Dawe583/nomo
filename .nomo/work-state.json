@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-25T15:07:09Z",
+  "updatedAt": "2026-11-25T15:11:11Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -1977,6 +1977,49 @@
         "git diff --check observed final exit 0."
       ],
       "stopCondition": "Stop if a reward is attributed to one axis rather than the joint treatment, incomplete cells receive numeric effects, prompt text enters the record, or guardrail exploration runs without exact-digest approval."
+    },
+    {
+      "id": "q11-packaging",
+      "status": "done",
+      "owner": "devin-6293643153014f56bb088c9a71fde97a",
+      "dependsOn": [
+        "q10-program-handoff-page"
+      ],
+      "scope": [
+        "package.json",
+        "packages/*/package.json",
+        "apps/control-plane/package.json",
+        "scripts/package.json",
+        "scripts/src/release-packaging.test.mjs",
+        "scripts/src/verify-installed-tui.py",
+        "docs/plans/2026-11-25-nomo-24h-program-detailed.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "install from a tarball",
+        "run the TUI",
+        "verify the launcher"
+      ],
+      "verifier": [
+        "node scripts/src/set-version.mjs 1.0.1",
+        "node scripts/src/set-version.mjs --check",
+        "NOMO_NETWORK_PACKAGING_TEST=1 node --test scripts/src/release-packaging.test.mjs",
+        "node scripts/src/bundle-cli.mjs --quiet",
+        "node packages/cli/dist/nomo.mjs --version",
+        "pnpm --filter @nomo/cli typecheck"
+      ],
+      "evidence": [
+        "node scripts/src/set-version.mjs 1.0.1 observed: set 13 manifests to 1.0.1. node scripts/src/set-version.mjs --check observed exit 0: every manifest is at 1.0.1.",
+        "NOMO_NETWORK_PACKAGING_TEST=1 NO_COLOR=1 node --test scripts/src/release-packaging.test.mjs observed exit 0: tests 30, pass 30, fail 0, skipped 0, duration_ms 7083.46925. The CLI integration packed and installed a tarball outside the workspace, ran .bin/nomo --version as nomo 1.0.1, and the embedded PTY verifier asserted PASS: installed launcher renders the TUI and restores the terminal. This verifier used the npm registry for dependency resolution; no provider or paid model API was called.",
+        "node scripts/src/bundle-cli.mjs --quiet observed exit 0. node packages/cli/dist/nomo.mjs --version observed exit 0 with exact output nomo 1.0.1.",
+        "pnpm --filter @nomo/cli typecheck observed exit 0.",
+        "python3 -m py_compile scripts/src/verify-installed-tui.py observed exit 0 and node --check scripts/src/release-packaging.test.mjs observed exit 0.",
+        "git diff --check observed exit 0."
+      ],
+      "stopCondition": "Stop if the packed install resolves back to the source tree, the launcher is bypassed, terminal modes survive exit, or versioned manifests drift again."
     }
   ]
 }
