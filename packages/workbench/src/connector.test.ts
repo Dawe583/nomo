@@ -130,7 +130,7 @@ test("a connector is inert until the operator probes and confirms it", async (t)
   );
 });
 
-test("a failed probe leaves the staged connector exactly as it was", async (t) => {
+test("a failed probe keeps consent and catalog empty while recording error", async (t) => {
   const server = await catalogServer([], 503);
   t.after(() => server.close());
   const f = await isolatedWorkbench(t, undefined, {}, { configure: false, prefix: "nomo-probe-fail-" });
@@ -141,11 +141,21 @@ test("a failed probe leaves the staged connector exactly as it was", async (t) =
   await assert.rejects(app.probeConnector(id), /HTTP 503/);
   assert.equal(connectorState(app, id).consentState, "staged");
   assert.deepEqual(connectorState(app, id).tools, []);
+  const failed = connectorState(app, id);
+  assert.equal(
+    "lastProbeOutcome" in failed ? failed.lastProbeOutcome : undefined,
+    "error",
+  );
   await app.shutdown();
 
   const reopened = f.restart({ keepOpen: true });
   assert.equal(connectorState(reopened, id).consentState, "staged");
   assert.deepEqual(connectorState(reopened, id).tools, []);
+  const persisted = connectorState(reopened, id);
+  assert.equal(
+    "lastProbeOutcome" in persisted ? persisted.lastProbeOutcome : undefined,
+    "error",
+  );
 });
 
 test("a snapshot written before the consent gate loads as staged with no catalog", async (t) => {

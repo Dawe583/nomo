@@ -153,6 +153,46 @@ test("/mcp lists every connector with its consent state and next step", async (t
     assert.ok(visibleLength(line) <= 80, line);
 });
 
+test("/mcp rows carry contact state as a word plus a tool count and footer hint", async (t) => {
+  const { ui, last } = await workspace(t, "mcp-state-words");
+  const server = await upstream(t);
+  await ui.command(`/mcp add ${server.url} counter`);
+  const id = last().id;
+  await ui.command("/mcp");
+  let row = ui.items().find((item) => item.connector?.id === id)!;
+  assert.match(row.label, /unknown · counter · 0 tools/);
+  assert.match(row.lines.join("\n"), /state unknown/);
+  assert.match(row.lines.join("\n"), /consent staged/);
+  assert.match(ui.lines().join("\n"), /Esc returns to Chat/);
+
+  await ui.command(`/mcp probe ${id}`);
+  await ui.confirm();
+  await ui.command("/mcp");
+  row = ui.items().find((item) => item.connector?.id === id)!;
+  assert.match(row.label, /connected · counter · 1 tools/);
+  assert.match(row.lines.join("\n"), /state connected/);
+
+  server.refuse();
+  await ui.command(`/mcp probe ${id}`);
+  await ui.confirm();
+  await ui.command("/mcp");
+  row = ui.items().find((item) => item.connector?.id === id)!;
+  assert.match(row.label, /error · counter · 1 tools/);
+  assert.match(row.lines.join("\n"), /state error/);
+});
+
+test("/mcp empty state is explicit when no connector records exist", async (t) => {
+  const { app, ui } = await workspace(t, "mcp-empty");
+  t.mock.method(app, "connectionState", () => ({
+    connectors: [],
+  }) as ReturnType<Workbench["connectionState"]>);
+  await ui.command("/mcp");
+  const text = ui.lines().join("\n");
+  assert.match(text, /MCP CONNECTORS · 0/);
+  assert.match(text, /No connector records are available\./);
+  assert.match(text, /Use \/mcp add URL \[name\] to stage one locally/);
+});
+
 test("/mcp probe names the host and sends nothing until it is confirmed", async (t) => {
   const { ui, last } = await workspace(t, "mcp-probe");
   const server = await upstream(t);

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-25T12:25:11Z",
+  "updatedAt": "2026-11-25T12:32:21Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -1136,6 +1136,53 @@
         "git diff --check observed exit 0."
       ],
       "stopCondition": "Stop if rows invent missing tokens or elapsed time, exceed terminal width, or snapshot changes affect non-runs frames."
+    },
+    {
+      "id": "t2-2-mcp-panel-parity",
+      "status": "done",
+      "owner": "devin-6293643153014f56bb088c9a71fde97a",
+      "dependsOn": [
+        "t1-design-contract"
+      ],
+      "scope": [
+        "packages/cli/src/tui/workspace.ts",
+        "packages/cli/src/tui/workspace-mcp.test.ts",
+        "packages/cli/src/tui/visual-snapshots.test.ts",
+        "packages/cli/src/tui/test/visual-snapshots.json",
+        "packages/workbench/src/index.ts",
+        "packages/workbench/src/gui.ts",
+        "packages/workbench/src/connector.test.ts",
+        "docs/plans/2026-11-25-nomo-24h-program-detailed.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "empty state and one-server frame render at five sizes",
+        "rows carry connected, error or unknown as a word plus tool count",
+        "state is not carried by colour alone",
+        "failed probe outcome survives restart without storing error text or catalog data"
+      ],
+      "verifier": [
+        "node --test packages/cli/src/tui/workspace-mcp.test.ts",
+        "node --test packages/workbench/src/connector.test.ts",
+        "pnpm --filter @nomo/cli typecheck",
+        "pnpm --filter @nomo/workbench typecheck",
+        "node --test --test-concurrency=1 packages/cli/src/tui/*.test.ts",
+        "node --test --test-concurrency=1 packages/workbench/src/*.test.ts"
+      ],
+      "evidence": [
+        "Reviewed rendered mcp-empty@80x24 and mcp-one@80x24 before accepting snapshots: explicit empty state, one connected long-name server with 1 tools, consent chart, state wording and Esc returns to Chat were visible; frame shape checks bound every row to terminal width.",
+        "NO_COLOR=1 node --test packages/cli/src/tui/workspace-mcp.test.ts observed exit 0: tests 11, pass 11, fail 0, duration_ms 475.6185.",
+        "NO_COLOR=1 node --test packages/workbench/src/connector.test.ts observed exit 0: tests 13, pass 13, fail 0, duration_ms 577.716458. The failed-probe restart test now asserts lastProbeOutcome error while consent stays staged and tools stay empty.",
+        "pnpm --filter @nomo/cli typecheck observed exit 0; pnpm --filter @nomo/workbench typecheck observed exit 0.",
+        "NOMO_UPDATE_SNAPSHOTS=1 visual snapshot update observed exit 0 and wrote 60 frame hashes; focused mcp plus visual check then observed tests 13, pass 13, fail 0, duration_ms 512.910958.",
+        "NO_COLOR=1 node --test --test-concurrency=1 packages/cli/src/tui/*.test.ts observed exit 0: tests 532, pass 532, fail 0, duration_ms 35642.351458.",
+        "NO_COLOR=1 node --test --test-concurrency=1 packages/workbench/src/*.test.ts observed exit 0: tests 1188, pass 1186, fail 0, skipped 2, duration_ms 79088.071834.",
+        "git diff --check observed exit 0."
+      ],
+      "stopCondition": "Stop if a connector is marked connected without a measured successful probe, error details or catalog data are persisted after a failed probe, colour becomes the only state signal, or rows exceed width."
     }
   ]
 }

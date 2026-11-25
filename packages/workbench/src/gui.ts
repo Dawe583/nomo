@@ -531,6 +531,7 @@ export function publicConnector(config: {
   mapping?: Record<string, string>;
   tools: readonly McpTool[];
   consentState: "staged" | "probed" | "confirmed";
+  lastProbeOutcome?: "success" | "error";
 }) {
   const result = {
     id: config.id,
@@ -543,6 +544,7 @@ export function publicConnector(config: {
     toolDetails: config.tools,
     undo: false,
     consentState: config.consentState,
+    lastProbeOutcome: config.lastProbeOutcome,
   };
   return config.token
     ? (JSON.parse(

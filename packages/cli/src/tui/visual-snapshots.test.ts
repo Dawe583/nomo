@@ -54,6 +54,7 @@ const PARENT_RUN_ID = "run-1";
 const CHILD_RUN_ID = "run-child";
 
 let visibleViews: readonly SessionView[] = [];
+let visibleConnectors: readonly Record<string, unknown>[] = [];
 
 const TERMINAL_SIZES = [
   [40, 12],
@@ -74,6 +75,8 @@ const SCENARIOS = [
   "settings",
   "runs-empty",
   "runs-one",
+  "mcp-empty",
+  "mcp-one",
 ] as const;
 
 type Scenario = (typeof SCENARIOS)[number];
@@ -303,6 +306,33 @@ const CHILD_VIEW: SessionView = {
   provider: "fixture",
 };
 
+
+const BUILTIN_CONNECTOR = {
+  id: "workspace",
+  name: "NOMO documents",
+  builtin: true,
+  tools: ["void_workspace_read"],
+  toolDetails: [],
+  undo: true,
+  consentState: "confirmed",
+};
+
+const EXTERNAL_CONNECTOR = {
+  id: "conn-visual",
+  name: "fixture connector with a deliberately long name",
+  url: "https://connector.fixture.invalid/mcp",
+  tools: ["fixture_send"],
+  toolDetails: [],
+  undo: false,
+  consentState: "confirmed",
+  lastProbeOutcome: "success",
+};
+
+const DEFAULT_CONNECTORS: readonly Record<string, unknown>[] = [
+  BUILTIN_CONNECTOR,
+  EXTERNAL_CONNECTOR,
+];
+
 /**
  * Two held calls with no deadline. A deadline would be printed as a countdown
  * that moves every second, which is the one clock the approvals panel reads
@@ -481,6 +511,7 @@ function resetPanel(ui: WorkspaceTui): void {
   ui.petSplashUntil = 0;
   ui.sessionId = PARENT_SESSION_ID;
   visibleViews = DEFAULT_VIEWS;
+  visibleConnectors = DEFAULT_CONNECTORS;
 }
 
 function applyScenario(ui: WorkspaceTui, scenario: Scenario): void {
@@ -524,6 +555,14 @@ function applyScenario(ui: WorkspaceTui, scenario: Scenario): void {
     case "runs-one":
       visibleViews = [PARENT_VIEW];
       ui.choose("runs");
+      return;
+    case "mcp-empty":
+      visibleConnectors = [];
+      ui.choose("mcp");
+      return;
+    case "mcp-one":
+      visibleConnectors = [EXTERNAL_CONNECTOR];
+      ui.choose("mcp");
       return;
   }
 }
@@ -597,6 +636,7 @@ test("visual snapshots match the committed frame hashes", async (t) => {
 
   const views: readonly SessionView[] = [PARENT_VIEW, CHILD_VIEW];
   visibleViews = DEFAULT_VIEWS;
+  visibleConnectors = DEFAULT_CONNECTORS;
   // The builtin tool registry is the real list; only the session lookup is
   // pinned, because no live session exists for these fixtures.
   const builtinTools = app.availableTools(undefined);
@@ -612,6 +652,11 @@ test("visual snapshots match the committed frame hashes", async (t) => {
     () => FIXTURE_HOLDS as unknown as ReturnType<Workbench["approvals"]>,
   );
   t.mock.method(app, "pending", () => []);
+  t.mock.method(
+    app,
+    "connectionState",
+    () => ({ connectors: [...visibleConnectors] }) as ReturnType<Workbench["connectionState"]>,
+  );
 
   const ui = new WorkspaceTui(app, env);
   ui.proofs.set(`ws-${PARENT_SESSION_ID}`, [...FIXTURE_LEDGER]);

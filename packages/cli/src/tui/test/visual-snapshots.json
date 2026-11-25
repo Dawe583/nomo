@@ -250,6 +250,56 @@
       "sha256": "9a0e31e7ebf2594cdab4d46f0451211a38ce7210fcf5f0c8803a16d6793f3265",
       "rows": 48,
       "maxVisibleLength": 200
+    },
+    "mcp-empty@40x12": {
+      "sha256": "36faced8a7f067801ba93bb5e05d2e423b0d6ba28b1cbb69ee2cb95ba755fbbf",
+      "rows": 12,
+      "maxVisibleLength": 40
+    },
+    "mcp-empty@80x24": {
+      "sha256": "373413dbe6f486e63f8a4164c751910f6ed63bf190f45b0056218ccd425c16b0",
+      "rows": 24,
+      "maxVisibleLength": 80
+    },
+    "mcp-empty@120x40": {
+      "sha256": "18861379d83ba157cc32ccf23b99e7fe5e91d3201d5bdec6cd6a3fed2bc6d0a9",
+      "rows": 40,
+      "maxVisibleLength": 120
+    },
+    "mcp-empty@160x45": {
+      "sha256": "17cb34aeae7bbbf077935cbf2092365c1c64d0f534089cd8e2b11af93d91c31e",
+      "rows": 45,
+      "maxVisibleLength": 160
+    },
+    "mcp-empty@200x48": {
+      "sha256": "b343ee22d8667606f478db0edeb038a7120104f2b16f7cd3f278f9fa6ffb7a45",
+      "rows": 48,
+      "maxVisibleLength": 200
+    },
+    "mcp-one@40x12": {
+      "sha256": "4a09ec5e2276ea7e780e9e29f3012016baf9a4621b5f96d363a429cc45929c10",
+      "rows": 12,
+      "maxVisibleLength": 40
+    },
+    "mcp-one@80x24": {
+      "sha256": "1dee40717206c6a3358bcc5105dfdfdeb2632e2c62cb78ca2adc76bfb402d346",
+      "rows": 24,
+      "maxVisibleLength": 80
+    },
+    "mcp-one@120x40": {
+      "sha256": "f09bf99d8c82a8462b5442a3030e28566248dc95fcb0cb71dc1762d258953024",
+      "rows": 40,
+      "maxVisibleLength": 120
+    },
+    "mcp-one@160x45": {
+      "sha256": "f78a868ec1a10b872a074dd0841b19002c68e10bf065ff935f917122205cfcab",
+      "rows": 45,
+      "maxVisibleLength": 160
+    },
+    "mcp-one@200x48": {
+      "sha256": "01421fe223aa1cc54d30300828ddb0629aedc48296dbe498ea3d037a0f765378",
+      "rows": 48,
+      "maxVisibleLength": 200
     }
   }
 }
