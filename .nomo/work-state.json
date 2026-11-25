@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-25T03:05:00+01:00",
+  "updatedAt": "2026-11-25T03:25:00+01:00",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -215,7 +215,7 @@
     },
     {
       "id": "t1-design-contract",
-      "status": "in-progress",
+      "status": "done",
       "owner": "child-9fbfb67febc24b3fb89ec4ea8ed87a44",
       "dependsOn": [
         "h3-eval-set-v2"
@@ -232,13 +232,18 @@
         "grep -c DESIGN.md packages/cli/src/tui/README.md"
       ],
       "evidence": [
-        "Delegated to child session 9fbfb67febc24b3fb89ec4ea8ed87a44 after f4b429d5; parent retains integration and graph recording ownership."
+        "T1 added packages/cli/src/tui/DESIGN.md and linked it from README.",
+        "Integration review: branch devin/20261125-t1-t3-tui head 6fc34021, commits d360bbdf T1 and 6fc34021 T3; credential scan clean; no forbidden paths.",
+        "node --test --test-concurrency=1 packages/cli/src/tui/workspace.test.ts observed exit 0; tests 128, pass 128, fail 0, skipped 0, duration_ms 4802.45475.",
+        "pnpm --filter @nomo/cli typecheck observed exit 0.",
+        "node --test --test-concurrency=1 packages/cli/src/tui/*.test.ts observed exit 0; tests 529, pass 529, fail 0, skipped 0, duration_ms 36821.876209.",
+        "python3 scripts/src/verify-tui-terminal.py observed exit 0 and PASS: every scenario at every size."
       ],
       "stopCondition": "After one targeted repair, record the blocker and continue independent work."
     },
     {
       "id": "t3-composer-density",
-      "status": "pending",
+      "status": "done",
       "owner": "child-9fbfb67febc24b3fb89ec4ea8ed87a44",
       "dependsOn": [
         "t1-design-contract"
@@ -257,7 +262,12 @@
         "python3 scripts/src/verify-tui-terminal.py"
       ],
       "evidence": [
-        "Delegated to child session 9fbfb67febc24b3fb89ec4ea8ed87a44 after f4b429d5; parent retains integration and graph recording ownership."
+        "T3 added whole-slot composer ladder queue > attachment > model > context > dock, narrow approval hint, no composer mode chip, exact-width and PTY assertions.",
+        "Integration review: branch devin/20261125-t1-t3-tui head 6fc34021, commits d360bbdf T1 and 6fc34021 T3; credential scan clean; no forbidden paths.",
+        "node --test --test-concurrency=1 packages/cli/src/tui/workspace.test.ts observed exit 0; tests 128, pass 128, fail 0, skipped 0, duration_ms 4802.45475.",
+        "pnpm --filter @nomo/cli typecheck observed exit 0.",
+        "node --test --test-concurrency=1 packages/cli/src/tui/*.test.ts observed exit 0; tests 529, pass 529, fail 0, skipped 0, duration_ms 36821.876209.",
+        "python3 scripts/src/verify-tui-terminal.py observed exit 0 and PASS: every scenario at every size."
       ],
       "stopCondition": "After one targeted repair, record the blocker and continue independent work."
     },
