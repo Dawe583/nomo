@@ -9468,3 +9468,9 @@ Commit 3280db90942408dbc286a70f42124b4a3a33b277, subject Polish shared TUI motio
   targeted Workbench tests 56/56, harness script tests 36/36, Workbench typecheck exit 0, wider Workbench suite
   1176 tests, 1174 pass, 0 fail, 2 skipped. R3 reward mapping, R4 exploration guard and H5 rollback consumer remain open.
   [[NOMO TUI Control Center]]
+- 2026-11-25 · H9 trajectory export completed by builder subagent and integrated by Devin Cloud.
+  The exporter emits nomo.trajectory.v1 records from reward-linked terminal tool entries with names, classes and
+  outcomes only. Sentinel tests prove prompt text and tool output do not reach the export or CLI output. Observed:
+  node check exit 0, trajectory tests 5/5, harness plus trajectory script tests 41/41. Positional grouping is a
+  documented limit until tool entries carry case ids. Export is data only and makes no RL claim.
+  [[NOMO TUI Control Center]]

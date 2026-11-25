@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-25T04:05:00+01:00",
+  "updatedAt": "2026-11-25T04:20:00+01:00",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -522,7 +522,7 @@
     },
     {
       "id": "h9-trajectory-export",
-      "status": "in-progress",
+      "status": "done",
       "owner": "child-39c3a5fda2eb458da694208223411700",
       "dependsOn": [
         "h1-reward-record"
@@ -540,7 +540,11 @@
         "see plan package verifier"
       ],
       "evidence": [
-        "Delegated to child session 39c3a5fda2eb458da694208223411700; parent retains integration and graph recording ownership."
+        "H9 merged from branch head 884489af. trajectory-export emits nomo.trajectory.v1 with tool names, classes and outcomes only; prompt/output sentinel tests prove no content export. Known limit: positional grouping until tool entries carry case ids.",
+        "node --check scripts/src/trajectory-export.mjs and node --check scripts/src/trajectory-export.test.mjs observed exit 0.",
+        "node --test scripts/src/trajectory-export.test.mjs observed exit 0; tests 5, pass 5, fail 0, skipped 0, duration_ms 351.256459.",
+        "node --test --test-concurrency=1 scripts/src/harness-*.test.mjs scripts/src/trajectory-export.test.mjs observed exit 0; tests 41, pass 41, fail 0, skipped 0, duration_ms 4017.214125.",
+        "Child-reported full scripts suite has 10 failures also present on base 2339c5e; not a regression, not a green gate."
       ],
       "stopCondition": "After one targeted repair, record the blocker and continue independent work."
     }
