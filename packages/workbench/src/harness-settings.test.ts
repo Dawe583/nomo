@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import {
   HARNESS_SETTINGS,
+  rewardCostLatencyWeights,
   HARNESS_TEXT_SETTINGS,
   clampHarnessSetting,
   defaultHarnessSettings,
@@ -33,6 +34,7 @@ const CONSUMER_FILES = [
   "provider.ts",
   "gui.ts",
   "agents.ts",
+  "harness-settings.ts",
 ] as const;
 
 const consumerSource = (file: (typeof CONSUMER_FILES)[number]) =>
@@ -62,7 +64,9 @@ test("every setting names a consumer, so no knob is decorative", () => {
       "webToolsEnabled",
     ,
   "sessionSearchEnabled",,
-  "autoCompactMessages",];
+  "autoCompactMessages",
+  "rewardCostWeight",
+  "rewardLatencyWeight",];
     if (!zeroMeansUnlimited.includes(key)) {
       assert.ok(spec.min > 0, `${key} allows zero or negative`);
     }
@@ -200,6 +204,15 @@ test("a value that is not a limit falls back to the default", () => {
 test("a fractional value is rounded, because a turn count cannot be 20.5", () => {
   assert.equal(clampHarnessSetting("maxTurns", 20.4), 20);
   assert.equal(clampHarnessSetting("maxTurns", 7.6), 8);
+});
+
+test("reward weights keep decimal precision, clamp and reach the reward helper", () => {
+  assert.equal(clampHarnessSetting("rewardCostWeight", 1.23456789), 1.234568);
+  assert.equal(clampHarnessSetting("rewardLatencyWeight", 0.0000004), 0);
+  assert.equal(clampHarnessSetting("rewardCostWeight", -1), 0);
+  assert.equal(clampHarnessSetting("rewardLatencyWeight", 2), 1);
+  const settings = resolveHarnessSettings({ rewardCostWeight: 2.5, rewardLatencyWeight: 0.002 });
+  assert.deepEqual(rewardCostLatencyWeights(settings), { cost: 2.5, latency: 0.002 });
 });
 
 test("a stored state file cannot widen a limit past its bound", () => {

@@ -623,6 +623,13 @@ empty.
 
 **Verifier.** `node --test scripts/src/harness-inventory.test.mjs`.
 
+**As built.** `rewardCostWeight` and `rewardLatencyWeight` are documented
+numeric harness settings. They clamp as decimal weights to six places, zero
+means that measured term is ignored, and `rewardCostLatencyWeights` exposes the
+resolved pair to reward consumers. `variantIdentity` includes both axes. The
+breach weight stays explicit at the reward call site. Missing measurements
+remain `unmeasured`; the settings never turn an absent producer into zero.
+
 ### H11. Eval runner adapter (1.5 h)
 
 **Files.** New `scripts/src/harness-eval-runner.mjs`.
