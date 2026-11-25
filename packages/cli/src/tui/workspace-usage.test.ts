@@ -61,5 +61,5 @@ test("Usage charts only reported totals and selects records without a total as g
 
   await ui.openSelected();
   assert.match(ui.detail?.join("\n") ?? "", /total.*unknown/i);
-  assert.match(ui.detail?.join("\n") ?? "", /cost.*unknown/i);
+  assert.match(ui.detail?.join("\n") ?? "", /cost.*unmeasured, no producer reported cost/i);
 });

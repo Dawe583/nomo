@@ -349,6 +349,13 @@ chart keeps a text fallback. Test the unmeasured line.
 
 **Verifier.** `node --test packages/cli/src/tui/*.test.ts`.
 
+**As built.** Usage rows now carry tokens, measured cost or exact
+`cost unmeasured`, model, run and conversation. The activity projection reads
+provider-reported `cost` instead of discarding it, while a missing producer
+stays unmeasured rather than free. Cost detail names the missing producer.
+Visual coverage includes the measured/missing mixed `usage@*` frames and the
+explicit `usage-empty@*` empty state at five sizes.
+
 ### T3. Composer slot ladder (1.5 h)
 
 **Why.** The rail has one spare row at 40 columns and a mode chip would

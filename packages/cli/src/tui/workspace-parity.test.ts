@@ -72,7 +72,7 @@ import {
 import { primeGitStatus, resetGitStatusCache } from "./git-status.ts";
 import { moveHunk, setSide, toggleHunk } from "./diff-panel.ts";
 
-const assistantFetcher = (content: string, totalTokens?: number) => async (url: unknown) => {
+const assistantFetcher = (content: string, totalTokens?: number, costUsd?: number) => async (url: unknown) => {
   if (String(url).endsWith("/models"))
     return Response.json({ data: [{ id: "fixture" }] });
   return Response.json({
@@ -80,7 +80,12 @@ const assistantFetcher = (content: string, totalTokens?: number) => async (url: 
       { message: { role: "assistant", content }, finish_reason: "stop" },
     ],
     ...(totalTokens === undefined ? {} : {
-      usage: { prompt_tokens: totalTokens - 1, completion_tokens: 1, total_tokens: totalTokens },
+      usage: {
+        prompt_tokens: totalTokens - 1,
+        completion_tokens: 1,
+        total_tokens: totalTokens,
+        ...(costUsd === undefined ? {} : { cost_usd: costUsd }),
+      },
     }),
   });
 };
@@ -90,9 +95,10 @@ async function fixtureApp(
   content = "ok",
   env: Record<string, string> = {},
   totalTokens?: number,
+  costUsd?: number,
 ) {
   const full = { NOMO_DATA_DIR: root, ...env };
-  const app = new Workbench(full, assistantFetcher(content, totalTokens));
+  const app = new Workbench(full, assistantFetcher(content, totalTokens, costUsd));
   await app.configure({
     baseUrl: "https://fixture.test/v1",
     apiKey: "fixture-key",
@@ -1022,7 +1028,30 @@ test("each tab builds only its own rows, and the usage tab leads with a summary"
   assert.match(usage, /fixture\s+73\s+[█░]+/);
   await ui.openSelected();
   assert.match(ui.detail!.join("\n"), /total:\s+73/i);
-  assert.match(ui.detail!.join("\n"), /unknown, this build does not price/);
+  assert.match(ui.detail!.join("\n"), /unmeasured, no producer reported cost/);
+});
+
+test("the usage tab shows a measured per-run cost without estimating missing cost", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-usage-cost-"));
+  const { app, env } = await fixtureApp(root, "ok", {}, 73, 0.125);
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, env);
+  await ui.initialize();
+  await ui.command("start here");
+  await app.settled();
+  ui.choose("usage");
+  const row = ui.items()[0]!;
+  assert.match(row.label, /73 tokens/);
+  assert.match(row.label, /cost 0\.125/);
+  assert.match(row.label, /run [0-9a-f]{8}/);
+  await ui.openSelected();
+  const detail = ui.detail!.join("\n");
+  assert.match(detail, /cost\s*:\s+0\.125/i);
+  assert.match(detail, /run\s*:\s+[0-9a-f-]{36}/i);
+  assert.doesNotMatch(detail, /unmeasured, no producer reported cost/);
 });
 
 test("the Chat draft centers its caret in short and tall terminals", async (t) => {
@@ -3851,9 +3880,9 @@ test("usage charts measure reported totals and print n/a for what nobody reporte
     /input\/output n\/a/,
   );
 
-  // Cost is never estimated: the activity layer reports none today, so the
-  // line says n/a. A cost the provider does report is summed exactly.
-  assert.match(usageCostLine(records, 60), /cost n\/a · no record reported a cost/);
+  // Cost is never estimated: a missing producer is unmeasured, never free.
+  // A cost the provider does report is summed exactly.
+  assert.match(usageCostLine(records, 60), /cost unmeasured · no producer reported a cost/);
   assert.match(
     usageCostLine([{ cost: 0.5 }, { cost: 0.25 }], 60),
     /cost 0\.75 · 2\/2 records/,
@@ -4049,7 +4078,7 @@ test("an empty usage panel reports n/a and never a measured zero", async (t) => 
   ui.choose("usage");
   const text = panelFrame(ui, 80, 24).join("\n");
   assert.match(text, /No usage records yet\./);
-  assert.match(text, /no usage reported · tokens n\/a · cost n\/a/);
+  assert.match(text, /no usage reported · tokens unmeasured · cost unmeasured/);
   assert.doesNotMatch(text, /0 reported tokens/);
   assert.doesNotMatch(text, /0 tokens ·/);
 });

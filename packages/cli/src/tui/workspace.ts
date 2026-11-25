@@ -159,7 +159,7 @@ import {
 export type { PetPlacement } from "./pet.ts";
 import { trueColor, type ColorPalette } from "./theme-config.ts";
 import { barChart, deltaLabel, gauge, sparkline } from "./charts.ts";
-import { usageSummaryLines } from "./usage-visual.ts";
+import { usageCostText, usageSummaryLines } from "./usage-visual.ts";
 import { ledgerChainLines, ledgerGroupHeading } from "./ledger-visual.ts";
 import {
   buildDiffView,
@@ -409,6 +409,7 @@ type Item = {
     inputTokens?: unknown;
     outputTokens?: unknown;
     cost?: unknown;
+    runId?: string;
     source?: string;
   };
   run?: ReturnType<Workbench["runs"]>[number];
@@ -7322,7 +7323,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         .map((r) => ({
           id: r.id,
           sessionId: r.sessionId,
-          label: `${typeof r.totalTokens === "number" && r.totalTokens >= 0 ? numberOr(r.totalTokens, "unknown") : "unknown"} tokens · ${r.model} · ${r.sessionId.slice(0, 8)}`,
+          label: `${typeof r.totalTokens === "number" && r.totalTokens >= 0 ? numberOr(r.totalTokens, "unknown") : "unknown"} tokens · cost ${usageCostText(r.cost)} · ${r.model} · run ${r.runId?.slice(0, 8) ?? "unassigned"} · ${r.sessionId.slice(0, 8)}`,
           usage: r,
           lines: json(r),
         }));
@@ -7724,11 +7725,11 @@ ${(doc.content ?? "").slice(0, 2000)}`;
                   { label: "out", value: output },
                   {
                     label: "cost",
-                    // Not computed anywhere. Printing a currency figure from
-                    // a price this software does not hold would be a number
-                    // with no source behind it.
-                    value: "unknown, this build does not price",
-                    tone: "muted",
+                    value:
+                      usageCostText(u.cost) === "unmeasured"
+                        ? "unmeasured, no producer reported cost"
+                        : usageCostText(u.cost),
+                    tone: usageCostText(u.cost) === "unmeasured" ? "muted" : undefined,
                   },
                 ],
               },
@@ -7736,6 +7737,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
                 title: "where it came from",
                 fields: [
                   { label: "provider", value: u.provider ?? "unknown" },
+                  { label: "run", value: u.runId ?? "unassigned" },
                   { label: "source", value: u.source ?? "unknown" },
                   { label: "at", value: u.at ?? "not stamped" },
                 ],
@@ -10787,7 +10789,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
           : [
               "TOKEN ACTIVITY",
               "No usage records yet.",
-              "no usage reported · tokens n/a · cost n/a",
+              "no usage reported · tokens unmeasured · cost unmeasured",
               "Provider-reported usage appears after a conversation run.",
             ];
       const records = rows.flatMap((row) => (row.usage ? [row.usage] : []));

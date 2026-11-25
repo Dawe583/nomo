@@ -73,6 +73,7 @@ const SCENARIOS = [
   "sessions",
   "tools",
   "usage",
+  "usage-empty",
   "ledger",
   "approvals",
   "settings",
@@ -272,6 +273,7 @@ const CHILD_EVENTS: readonly SessionEvent[] = [
       prompt_tokens: 300,
       completion_tokens: 180,
       total_tokens: 480,
+      cost: 0.0025,
       source: "provider",
     },
     CHILD_RUN_ID,
@@ -574,6 +576,10 @@ function applyScenario(ui: WorkspaceTui, scenario: Scenario): void {
       ui.choose("tools");
       return;
     case "usage":
+      ui.choose("usage");
+      return;
+    case "usage-empty":
+      visibleViews = [];
       ui.choose("usage");
       return;
     case "ledger":

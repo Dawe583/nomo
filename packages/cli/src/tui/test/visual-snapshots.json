@@ -102,27 +102,52 @@
       "maxVisibleLength": 200
     },
     "usage@40x12": {
-      "sha256": "bb3125447302bcd9a83854c14e5a7d4b51a14df32281fd870ae410c2e70ef562",
+      "sha256": "5eff462805ff8d4869fbcf780634b0bcacd564b959bb794051b10ceaa773e327",
       "rows": 12,
       "maxVisibleLength": 40
     },
     "usage@80x24": {
-      "sha256": "607791852649cab4ebe281765a07c51f1dc1cd18c2f04e57af8437db2763be2a",
+      "sha256": "ba411ebae0bfe7dcac08a4e8c2ea65efe85a1aab0d5f2c02f5c4c4a9a3bf226a",
       "rows": 24,
       "maxVisibleLength": 80
     },
     "usage@120x40": {
-      "sha256": "bd01c4c90d24d97cd33d5a02151eb9bd29f21b517e341ec80d0ffba8522cdac0",
+      "sha256": "04b828d5d78a330bd4eec013c0c6ca1d46fa5c933328fafe89057e00ae44f943",
       "rows": 40,
       "maxVisibleLength": 120
     },
     "usage@160x45": {
-      "sha256": "64b12e00a1b4525a8f709e7128e19706bd80860a5a8126ae9640d691af144fa1",
+      "sha256": "3f8fad662bc61098409d41b7c28cad1ba20b272b9b67ff1198bc4aa6465d2cd8",
       "rows": 45,
       "maxVisibleLength": 160
     },
     "usage@200x48": {
-      "sha256": "1dbac64e28c9f86caf748ae047128dc0bf20468512eb4bbd711a9766dfddaef6",
+      "sha256": "71d0bbe2880d03af2c75353eab9fd2d87c60cd2b97b9b9987e511d2f929111ca",
+      "rows": 48,
+      "maxVisibleLength": 200
+    },
+    "usage-empty@40x12": {
+      "sha256": "68746b704a0d586446085900979c163034091a78fa49dc574818338a65f968fd",
+      "rows": 12,
+      "maxVisibleLength": 40
+    },
+    "usage-empty@80x24": {
+      "sha256": "2c38f47ad92f5435054fd97449d843b279f18cbcc3ce8f110b02bc5ccd49bf76",
+      "rows": 24,
+      "maxVisibleLength": 80
+    },
+    "usage-empty@120x40": {
+      "sha256": "7240fbde8692ffe17743299367a09a267f75e1e5334c64991fc290df4f78870d",
+      "rows": 40,
+      "maxVisibleLength": 120
+    },
+    "usage-empty@160x45": {
+      "sha256": "0de1b12b6eb5950d852cdeb05b117f69a6c4e0f3241c1d6d91e21ee76c8b8c03",
+      "rows": 45,
+      "maxVisibleLength": 160
+    },
+    "usage-empty@200x48": {
+      "sha256": "d3754298ffa474ae40defa758189364e48384a2801237aa8f6b6f63dfa52c708",
       "rows": 48,
       "maxVisibleLength": 200
     },

@@ -365,7 +365,7 @@ export function activity(
         outputTokens:
           e.payload?.completion_tokens ?? e.payload?.output_tokens ?? null,
         totalTokens: e.payload?.total_tokens ?? null,
-        cost: null,
+        cost: e.payload?.cost ?? null,
         // Read the source the caller recorded rather than inferring it from the
         // presence of a payload. Both the turn path and the harness reviewer
         // write one, and an operator asking "what did this cost me" needs the
@@ -394,7 +394,12 @@ export function activity(
             0,
           )
         : null,
-      cost: null,
+      cost: usage.some((u) => typeof u.cost === "number")
+        ? usage.reduce(
+            (sum, u) => sum + (typeof u.cost === "number" ? u.cost : 0),
+            0,
+          )
+        : null,
       scope: "retained-history",
       asOf: new Date().toISOString(),
     },
