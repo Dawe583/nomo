@@ -9568,3 +9568,5 @@ Commit 3280db90942408dbc286a70f42124b4a3a33b277, subject Polish shared TUI motio
   Mouse decoding now has explicit wheel/click/release/drag tests. Runner wheel state transitions and hit resolution are shared testable helpers; every workspace tab proves click targets survive resize inside bounds, and every row kind resolves. Verified: terminal tests 11/11, CLI typecheck 0, wider TUI 540/540. [[NOMO TUI Control Center]]
 - 2026-11-25 · T7 keyboard focus parity completed in the free parent session.
   Chat focus is now an exported visible-surface invariant used by the runner, so close path does not matter. Model picker Tab order is one exported providers/models transition preserving query, cursor and selection. Verified: input parity 29/29, CLI typecheck 0, wider TUI 542/542. [[NOMO TUI Control Center]]
+- 2026-11-25 · T8 snapshot and PTY refresh completed in the free parent session.
+  Snapshot refresh rewrote the same 120 hashes with zero diff, so no unowned visual drift was accepted. The real PTY matrix exited 0 with every scenario at every size. Verified: snapshot tests 2/2, PTY 54 PASS lines. [[NOMO TUI Control Center]]

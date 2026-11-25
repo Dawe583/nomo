@@ -494,6 +494,12 @@ only frames a T node names; run the PTY matrix at all five sizes; record counts.
 
 **Verifier.** `node --test packages/cli/src/tui/visual-snapshots.test.ts`; PTY.
 
+**As built.** The snapshot refresh was run with `NOMO_UPDATE_SNAPSHOTS=1`; it
+rewrote the same 120 frame hashes and produced zero diff lines, so no frame was
+accepted without a named T-node change. The real PTY matrix passed all eight
+interactive scenarios at all five terminal sizes, plus the termination and
+Ctrl+D restore cases.
+
 ### T9. Accessibility pass (1.0 h)
 
 **Files.** `a11y.test.ts`.
