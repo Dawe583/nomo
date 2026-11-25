@@ -41,7 +41,11 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import { REWARD_SCHEMA, computeReward } from "../../packages/workbench/src/harness-scores.ts";
-import { EVAL_TOOL_SCHEMA, evalToolRecord } from "../../packages/workbench/src/harness-eval-tools.ts";
+import {
+  EVAL_TOOL_SCHEMA,
+  evalCaseAttribution,
+  evalToolRecord,
+} from "../../packages/workbench/src/harness-eval-tools.ts";
 
 export const TRAJECTORY_SCHEMA = "nomo.trajectory.v1";
 
@@ -86,9 +90,20 @@ function exportedEvalTool(record) {
 export function exportTrajectories(raw) {
   const trajectories = [];
   const counts = { refused: 0, unreadable: 0, skipped: 0, unattributed: 0 };
-  let pending = [];
+  let positionalPending = [];
   let pendingRefused = false;
+  const evalPending = new Map();
   const attributed = new Map();
+  const evalKey = (caseId, variantId) => `${caseId}\u0000${variantId}`;
+  const readEvalAttribution = (value) => {
+    if (value === undefined) return { key: null };
+    try {
+      const parsed = evalCaseAttribution(value);
+      return { key: evalKey(parsed.caseId, parsed.variantId) };
+    } catch {
+      return { malformed: true };
+    }
+  };
   for (const line of String(raw).split(/\r?\n/)) {
     if (!line.trim()) continue;
     let value;
@@ -136,17 +151,27 @@ export function exportTrajectories(raw) {
         const key = attributionKey(record, record.caseId);
         const explicit = attributed.get(key);
         if (explicit !== undefined) attributed.delete(key);
-        if (explicit !== undefined || ingestedBareEval) counts.unattributed += pending.length;
+        const caseKey = evalKey(record.caseId, record.variantId);
+        const direct = evalPending.get(caseKey);
+        if (direct !== undefined) evalPending.delete(caseKey);
+        if (explicit !== undefined || ingestedBareEval) counts.unattributed += positionalPending.length;
         trajectories.push({
           schema: TRAJECTORY_SCHEMA,
           caseId: record.caseId,
           variantId: record.variantId,
-          toolCalls: explicit !== undefined ? explicit : ingestedBareEval ? [] : pending,
+          toolCalls:
+            explicit !== undefined
+              ? explicit
+              : ingestedBareEval
+                ? []
+                : direct !== undefined
+                  ? direct
+                  : positionalPending,
           verifier: { passed: record.passed, source: "harness-eval" },
           reward: record.reward,
         });
       }
-      pending = [];
+      positionalPending = [];
       pendingRefused = false;
       continue;
     }
@@ -159,13 +184,27 @@ export function exportTrajectories(raw) {
       pendingRefused = true;
       continue;
     }
-    pending.push({
+    const evalContext = readEvalAttribution(record.harnessEval);
+    if (evalContext.malformed) {
+      counts.refused += 1;
+      pendingRefused = true;
+      continue;
+    }
+    const call = {
       name: record.tool,
       klass: record.klass === undefined ? "unmeasured" : record.klass,
       ok: outcome(record.decision),
-    });
+    };
+    if (evalContext.key === null) {
+      positionalPending.push(call);
+      continue;
+    }
+    const list = evalPending.get(evalContext.key) ?? [];
+    list.push(call);
+    evalPending.set(evalContext.key, list);
   }
-  counts.unattributed += pending.length;
+  counts.unattributed += positionalPending.length;
+  for (const calls of evalPending.values()) counts.unattributed += calls.length;
   for (const calls of attributed.values()) counts.unattributed += calls.length;
   return { trajectories, ...counts };
 }

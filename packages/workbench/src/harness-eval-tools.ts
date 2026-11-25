@@ -31,8 +31,37 @@ export type EvalToolRecord = {
 
 export type EvalToolInput = Omit<EvalToolRecord, "schema">;
 
+/** Case identity a production eval run binds into every ledger entry it
+ * causes. It is metadata only, never prompt or tool content. */
+export type EvalCaseAttribution = {
+  readonly caseId: string;
+  readonly variantId: string;
+  readonly run: number;
+};
+
+const CASE_FIELDS = ["caseId", "variantId", "run"] as const;
+
 const identifier = (value: unknown): value is string =>
   typeof value === "string" && IDENTIFIER.test(value);
+
+
+/** Validate eval case identity without copying hostile values into errors. */
+export function evalCaseAttribution(input: unknown): EvalCaseAttribution {
+  if (input === null || typeof input !== "object" || Array.isArray(input))
+    throw new TypeError("eval case attribution: expected an object");
+  const body = input as Record<string, unknown>;
+  if (Object.keys(body).some((key) => !(CASE_FIELDS as readonly string[]).includes(key)))
+    throw new TypeError("eval case attribution: unknown field");
+  if (!identifier(body.caseId) || !identifier(body.variantId))
+    throw new TypeError("eval case attribution: caseId and variantId must be bounded identifiers");
+  if (!Number.isSafeInteger(body.run) || (body.run as number) < 1 || (body.run as number) > 100)
+    throw new TypeError("eval case attribution: run must be a whole number from 1 to 100");
+  return {
+    caseId: body.caseId,
+    variantId: body.variantId,
+    run: body.run as number,
+  };
+}
 
 /** Build one validated record. Error messages name fields, never values. */
 export function evalToolRecord(input: EvalToolInput): EvalToolRecord {

@@ -231,7 +231,13 @@ import {
   resolvePolicyProfile,
 } from "./policy-profile.ts";
 import { mineLearnedRules } from "./learned-rules.ts";
-import { evalToolRecord, type EvalToolInput, type EvalToolRecord } from "./harness-eval-tools.ts";
+import {
+  evalCaseAttribution,
+  evalToolRecord,
+  type EvalCaseAttribution,
+  type EvalToolInput,
+  type EvalToolRecord,
+} from "./harness-eval-tools.ts";
 import {
   rewardIngestionProvenance,
   rewardRecord,
@@ -807,6 +813,7 @@ type Session = {
   provider?: ProviderClient;
   agentRunnerGrantId?: string;
   agentRunConsentDigest?: string;
+  evalAttribution?: EvalCaseAttribution;
 };
 type AgentRunnerOptions = {
   readonly agentRunners?: readonly AgentRunner[];
@@ -1488,6 +1495,7 @@ export class Workbench {
         projectAccessRequired?: boolean;
         projectRootDigest?: string;
         projectSkillDigests?: readonly { readonly id: string; readonly digest: string }[];
+        evalAttribution?: EvalCaseAttribution;
       }>;
       projects?: Array<{
         id: string;
@@ -1749,6 +1757,9 @@ export class Workbench {
             : undefined;
         this.sessions.set(item.view.id, {
           ...item,
+          ...(item.evalAttribution === undefined
+            ? {}
+            : { evalAttribution: evalCaseAttribution(item.evalAttribution) }),
           tools,
           connections,
           projectAccessRequired:
@@ -1839,6 +1850,7 @@ export class Workbench {
           projectAccessRequired,
           projectRootDigest,
           projectSkillDigests,
+          evalAttribution,
         }) => ({
           view,
           messages,
@@ -1860,6 +1872,7 @@ export class Workbench {
           projectAccessRequired,
           projectRootDigest,
           projectSkillDigests,
+          evalAttribution,
         }),
       ),
     });
@@ -3989,6 +4002,7 @@ export class Workbench {
     agent?: string,
     background = false,
     images?: readonly ModelImageInput[],
+    evalAttribution?: unknown,
   ): Promise<SessionView> {
     return this.locked(async () => {
       const selected = model ?? this.preferences.defaultModel;
@@ -4018,6 +4032,7 @@ export class Workbench {
         agent,
         background,
         images,
+        evalAttribution,
       );
       this.remember(
         key,
@@ -4039,6 +4054,7 @@ export class Workbench {
     agent?: string,
     background = false,
     images?: readonly ModelImageInput[],
+    evalAttributionInput?: unknown,
   ): Promise<SessionView> {
     if (!this.provider)
       throw new Error("Connect and validate a provider first.");
@@ -4203,6 +4219,9 @@ export class Workbench {
       (this.jobs.size > 0 ||
         [...this.sessions.values()].some((s) => s.view.status === "running"));
     this.assertAgentNotRevoked(selectedProfile?.id ?? selectedAgent?.id);
+    const evalAttribution = evalAttributionInput === undefined
+      ? undefined
+      : evalCaseAttribution(evalAttributionInput);
     const session: Session = {
       view: {
         id,
@@ -4242,6 +4261,7 @@ export class Workbench {
       projectSkillDigests: projectBinding?.skillDigests,
       projectBinding,
       provider: selectedProvider,
+      ...(evalAttribution ? { evalAttribution } : {}),
     };
     this.sessions.set(id, session);
     if (queued) {
@@ -4259,6 +4279,27 @@ export class Workbench {
     } else this.sendTurn(id, prompt, undefined, imageParts);
     return session.view;
   }
+  /** Start one production run explicitly bound to an evaluated case. The
+   * attribution is evidence metadata only and is written into every chain
+   * entry the run causes; it never carries prompt or tool content. */
+  async startHarnessEval(
+    prompt: string,
+    model: string,
+    attribution: unknown,
+    agent?: string,
+  ): Promise<SessionView> {
+    return this.start(
+      prompt,
+      model,
+      undefined,
+      undefined,
+      agent,
+      false,
+      undefined,
+      evalCaseAttribution(attribution),
+    );
+  }
+
   send(
     id: string,
     prompt: string,
@@ -5563,6 +5604,9 @@ export class Workbench {
         projectSkillDigests: projectBinding?.skillDigests,
         projectBinding,
         provider: selectedProvider,
+        ...(parent.evalAttribution
+          ? { evalAttribution: { ...parent.evalAttribution } }
+          : {}),
       };
 
       // ---- ledger-before-wire: commit on the parent chain first ----
@@ -8141,6 +8185,12 @@ export class Workbench {
     attribution?: LedgerAttribution,
   ) {
     const workspace = session.view.workspace;
+    const metadataWithEval = session.evalAttribution
+      ? {
+          ...(metadata ?? {}),
+          harnessEval: { ...session.evalAttribution },
+        }
+      : metadata;
     const queued = (
       this.commitTails.get(workspace) ?? Promise.resolve()
     ).then(() =>
@@ -8152,7 +8202,7 @@ export class Workbench {
         decision,
         operation,
         approval,
-        metadata,
+        metadataWithEval,
         attribution,
       ),
     );

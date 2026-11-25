@@ -89,6 +89,18 @@ node scripts/src/trajectory-export.mjs <chain.jsonl> [--out <path>]
   algorithm. This repository has no trainable local model, GPU budget or such
   training path, so no NOMO surface may claim RL training.
 
+## Production eval attribution
+
+`startHarnessEval` starts a real Workbench run bound to one validated case id,
+variant id and run number. Every ledger entry caused by that session carries
+only this bounded `harnessEval` identity; prompts, arguments, results and
+document contents never enter the attribution. Delegated subagent sessions
+inherit the same case identity because their work is part of the same run.
+Trajectory export groups those entries by case and variant, so interleaved
+production cases no longer depend on position. Entries without the field keep
+legacy positional treatment, malformed attribution refuses the affected
+export, and unrelated entries are counted as unattributed rather than guessed.
+
 ## Boundaries
 
 Activation never happens from a score alone. The operator types the full digest

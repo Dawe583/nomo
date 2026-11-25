@@ -86,7 +86,8 @@ renderer trims line endings and wraps width-padded rows.
 H20b implemented the first truthful attribution path: an explicit offline
 managed-workspace execution fixture, signed ingestion of attributed measurement
 records, and export matching by ingestion provenance. Direct production-chain
-positional attribution remains a separate redesign.
+attribution is now implemented for explicitly started eval runs; legacy
+entries without `harnessEval` keep positional treatment.
 
 ## Do not do
 

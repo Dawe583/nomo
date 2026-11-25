@@ -92,6 +92,45 @@ describe("trajectory-export", () => {
 
 
 
+
+  test("production eval attribution groups interleaved cases without position", () => {
+    const evalA = { caseId: "read-before-write", variantId: "sha256:fixture", run: 1 };
+    const evalB = { caseId: "approval-hold", variantId: "sha256:fixture", run: 1 };
+    const rewardB = record({ caseId: "approval-hold", passed: false });
+    const chain = [
+      entry(1, { tool: "read", klass: "r0", decision: "execute:completed", harnessEval: evalA }),
+      entry(2, { tool: "edit", klass: "r1", decision: "execute:refused", harnessEval: evalB }),
+      entry(3, { tool: "write", klass: "r1", decision: "execute:completed", harnessEval: evalA }),
+      entry(4, rewardB),
+      entry(5, record()),
+    ].map((line) => JSON.stringify(line)).join("\n");
+    const report = exportTrajectories(chain);
+    assert.deepEqual(report.trajectories[0], {
+      schema: TRAJECTORY_SCHEMA,
+      caseId: "approval-hold",
+      variantId: "sha256:fixture",
+      toolCalls: [{ name: "edit", klass: "r1", ok: false }],
+      verifier: { passed: false, source: "harness-eval" },
+      reward: rewardB.reward,
+    });
+    assert.deepEqual(report.trajectories[1].toolCalls, [
+      { name: "read", klass: "r0", ok: true },
+      { name: "write", klass: "r1", ok: true },
+    ]);
+    assert.equal(report.unattributed, 0);
+    assert.equal(report.refused, 0);
+  });
+
+  test("malformed production eval attribution refuses the affected case", () => {
+    const chain = [
+      entry(1, { tool: "read", klass: "r0", decision: "execute:completed", harnessEval: { caseId: "bad", variantId: "sha256:fixture", run: 0 } }),
+      entry(2, record()),
+    ].map((line) => JSON.stringify(line)).join("\n");
+    const report = exportTrajectories(chain);
+    assert.equal(report.trajectories.length, 0);
+    assert.equal(report.refused, 2);
+  });
+
   test("explicit eval-tool measurements beat positional grouping and match ingestion provenance", () => {
     const digest = "b".repeat(64);
     const ingestion = { fileDigest: digest, index: 0, count: 2 };
