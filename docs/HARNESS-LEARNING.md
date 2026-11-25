@@ -195,6 +195,8 @@ verified chain and whose edits created or updated lesson entries. It writes
 `nomo-operator-harness`. `demoteHarnessPromotion` appends
 `promotion:demoted`; a second demotion is refused.
 
+CLI/API surface: `nomo harness promote --session <id> <digest>`, `nomo harness demote <digest>`, and `nomo harness global`; HTTP exposes `POST /api/sessions/:id/harness/promotions/:digest/promote`, `POST /api/sessions/:id/harness/promotions/:digest/demote`, and `GET /api/harness/global`.
+
 `operatorHarnessEntries()` replays only active promotions. Retrieval merges
 those entries into every conversation, while the conversation's own entry
 with the same id wins. The prompt labels promoted entries as operator

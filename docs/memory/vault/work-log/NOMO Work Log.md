@@ -9629,3 +9629,8 @@ Commit 3280db90942408dbc286a70f42124b4a3a33b277, subject Polish shared TUI motio
 ## 2026-11-26 HP1 operator-scope core
 
 Implemented the HP1 core operator chain in the workbench. Exact-digest activated operator-approved lessons can be promoted into `nomo-operator-harness`, replayed into every conversation, and demoted without repeating. Focused verifier: 84 tests, 84 pass, 0 fail. Workbench typecheck exit 0. CLI and HTTP operator surfaces remain a follow-up slice.
+
+
+## 2026-11-26 HP1 operator surfaces
+
+Added CLI commands `promote`, `demote` and `global` plus matching control-plane HTTP routes for HP1. Focused CLI/API verifier: 75 tests, 75 pass, 0 fail. CLI typecheck and control-plane typecheck both exit 0.
