@@ -9574,3 +9574,5 @@ Commit 3280db90942408dbc286a70f42124b4a3a33b277, subject Polish shared TUI motio
   Every workspace tab now compares monochrome, truecolour and ASCII frames; colour changes no text and ASCII keeps the same word multiset. T2 through T5 panel facts have explicit assertions. Verified: a11y 14/14, CLI typecheck 0, wider TUI 543/543. [[NOMO TUI Control Center]]
 - 2026-11-25 · T10 performance re-measure completed in the free parent session.
   No regression and no source change: 200x48 p50 1.70 ms, p95 2.06 ms; 80x24 p50 1.36 ms, p95 1.71 ms. Scaling was 2.09x time for 2.00x rows. Verified: perf budget 2/2, CLI typecheck 0. [[NOMO TUI Control Center]]
+- 2026-11-25 · H6 trend report completed in the free parent session.
+  `nomo harness trend` now reports per-activation pass rate, recomputable mean reward, sample count, guardrail state and numeric delta from the previous activation. Missing evidence says `insufficient-data`; mismatched rewards are unmeasured, never zero. Verified: harness 22/22, CLI and Workbench typecheck 0, Workbench 1186 pass, 0 fail, 2 skipped. [[NOMO Harness Learning Loop]]

@@ -533,3 +533,25 @@ test("reward keeps a missing case empty and refuses a reward that does not recom
   assert.match(tampered.err.join("\n"), /stored 1 recomputes to 0\.89/);
   assert.equal(tampered.out.length, 0);
 });
+
+test("the trend prints pass rate, reward, samples and delta between two activations", async () => {
+  const terminal = io();
+  const entries = [
+    activated(1),
+    { seq: 2, body: { ...rewardBody({ caseId: "first-a", costUsd: 0, latencyMs: 0, reward: 1 }) } },
+    activated(3),
+    { seq: 4, body: { ...rewardBody({ caseId: "second-a", passed: false, costUsd: 0, latencyMs: 0, reward: 0 }) } },
+    { seq: 5, body: { ...rewardBody({ caseId: "second-b", costUsd: 0, latencyMs: 0, reward: 1 }) } },
+  ];
+  const code = await runHarnessCommand(
+    ["trend", "--session", "s1"],
+    terminal,
+    { workbench: async () => chain(entries) },
+  );
+  assert.equal(code, 0, terminal.err.join(" "));
+  const text = terminal.out.join("\n");
+  assert.match(text, /pass_rate 1\.000->0\.500 delta -0\.500/);
+  assert.match(text, /reward 1\.000->0\.500 delta -0\.500/);
+  assert.match(text, /reward_samples 1->2/);
+  assert.match(text, /activated at seq 1[^\n]*pass_rate insufficient-data/);
+});
