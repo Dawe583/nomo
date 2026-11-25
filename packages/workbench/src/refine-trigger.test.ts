@@ -1,7 +1,13 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+
 import {
+  activateSampledArm,
+  activationGate,
   arm,
   initialTriggerState,
   onBranchMove,
@@ -10,6 +16,8 @@ import {
   requestManualReview,
   restoreTriggerState,
   restoreTriggerStates,
+  rollbackOnGuardrailRegression,
+  rolledBackDigests,
   serviceTrigger,
   type RoundOutcome,
   type TriggerState,
@@ -17,6 +25,10 @@ import {
 import { cheapGate, type GateDecision } from "./refine-gate.ts";
 import type { HarnessEntry } from "./learned-harness.ts";
 import { isolatedWorkbench } from "./test-fixture.ts";
+import { defineArms } from "./harness-arms.ts";
+import { openBandit, recordReward, sampleArm } from "./harness-bandit.ts";
+import type { SplitSummary } from "./harness-scores.ts";
+import type { RefinementProposal } from "./refine-pass.ts";
 
 /** A gate that always proceeds, so the trigger is tested on its own. */
 const GO = { proceed: true as const, instructions: "" };
@@ -622,4 +634,151 @@ test("a restart after a crash mid-round neither wedges the gate nor buys a revie
   assert.match(result.note, /cooldown/);
   assert.doesNotMatch(result.note, /in flight/, "nothing is in flight after a restart");
   assert.equal(calls(), spentBefore, "the crashed round's review was paid for twice");
+});
+
+/* ------------------------------------------------------------------------- *
+ * H5 activation and rollback, R5 activation from a sampled arm.
+ * ------------------------------------------------------------------------- */
+
+const DIGEST = "a".repeat(64);
+const none: ReadonlySet<string> = new Set();
+
+const summary = (mean: number | null): SplitSummary => ({ n: mean === null ? 0 : 3, mean, half: null, unmeasured: 0 });
+const guardrails = (deny: number | null, rollbacks: number | null, unknown: number | null) => ({
+  deny_rate: summary(deny),
+  rollback_count: summary(rollbacks),
+  unknown_tool_rate: summary(unknown),
+});
+
+test("activation requires the exact digest typed, nothing near it", () => {
+  assert.deepEqual(activationGate(DIGEST, DIGEST, none), { activate: true, digest: DIGEST });
+  for (const typed of [undefined, "", DIGEST.slice(0, 8), ` ${DIGEST}`, DIGEST.toUpperCase(), `${DIGEST}0`]) {
+    const decision = activationGate(DIGEST, typed, none);
+    assert.equal(decision.activate, false, `activated on ${JSON.stringify(typed)}`);
+  }
+  assert.equal(activationGate("not-a-digest", "not-a-digest", none).activate, false);
+});
+
+test("a rolled-back digest cannot be re-activated, a new digest can", () => {
+  const rolledBack = rolledBackDigests([
+    { body: { harnessRefinement: { digest: "x", rolledBackDigest: DIGEST } } },
+    { body: { decision: "proposal:activated" } },
+    { body: null },
+  ]);
+  assert.deepEqual([...rolledBack], [DIGEST]);
+  const refused = activationGate(DIGEST, DIGEST, rolledBack);
+  assert.equal(refused.activate, false);
+  assert.match(refused.activate ? "" : refused.reason, /new digest/);
+  const fresh = "b".repeat(64);
+  assert.equal(activationGate(fresh, fresh, rolledBack).activate, true);
+});
+
+test("a measured guardrail regression runs the rollback, once, by digest", async () => {
+  const calls: string[] = [];
+  const rollback = async (digest: string) => void calls.push(digest);
+  const regressed = await rollbackOnGuardrailRegression(DIGEST, guardrails(0.1, 0, 0), guardrails(0.2, 0, 0), rollback);
+  assert.equal(regressed.action, "rolled-back");
+  assert.deepEqual(calls, [DIGEST]);
+
+  const held = await rollbackOnGuardrailRegression(DIGEST, guardrails(0.2, 1, 0), guardrails(0.1, 1, 0), rollback);
+  assert.equal(held.action, "kept");
+  const missing = await rollbackOnGuardrailRegression(DIGEST, guardrails(0.1, 0, null), guardrails(0.1, 0, 0), rollback);
+  assert.equal(missing.action, "insufficient-data", "unmeasured is neither a pass nor a measured regression");
+  assert.equal(missing.gate.pass, false);
+  assert.deepEqual(calls, [DIGEST], "only the measured regression rolled back");
+
+  await assert.rejects(
+    rollbackOnGuardrailRegression(DIGEST, guardrails(0, 0, 0), guardrails(0, 1, 0), async () => {
+      throw new Error("rollback refused");
+    }),
+    /rollback refused/,
+  );
+});
+
+const refinement = (title: string, derivedFromSeq = [1]): RefinementProposal => ({
+  summary: "repeated lesson",
+  rationale: "supported by signed records",
+  expectedOutcome: "fewer repeated approvals",
+  edits: [{
+    action: "create",
+    kind: "memory",
+    title,
+    content: "The operator repeatedly approved the same action.",
+    derivedFromSeq,
+    reason: "the pattern repeats",
+  }],
+} as RefinementProposal);
+
+test("a workbench activation rolls back on regression and needs a new digest to return", async (t) => {
+  const { app } = await isolatedWorkbench(t, countingFetcher().fetcher, {}, { prefix: "nomo-activation-" });
+  const session = await app.start("Review the workspace", "fixture");
+  await app.settled();
+  await app.editDocument(session.id, { path: "source.md", content: "signed source record", expectedRevision: null });
+  const rolledBackNow = async () => rolledBackDigests((await app.ledger(session.workspace))!.entries);
+
+  const created = await app.refineHarness(session.id, refinement("approval pattern"));
+  const digest = created.proposalDigest!;
+  assert.equal(activationGate(digest, digest.slice(0, 8), await rolledBackNow()).activate, false);
+  const gate = activationGate(digest, digest, await rolledBackNow());
+  assert.ok(gate.activate);
+  await app.approveHarnessProposal(session.id, gate.digest);
+  assert.equal((await app.harnessEntries(session.workspace)).length, 1);
+
+  const result = await rollbackOnGuardrailRegression(
+    digest,
+    guardrails(0, 0, 0),
+    guardrails(0.5, 0, 0),
+    (target) => app.rollbackHarnessProposal(session.id, target),
+  );
+  assert.equal(result.action, "rolled-back");
+  assert.deepEqual(await app.harnessEntries(session.workspace), []);
+  assert.equal(activationGate(digest, digest, await rolledBackNow()).activate, false);
+  await assert.rejects(app.approveHarnessProposal(session.id, digest), /No pending refinement/);
+
+  // The workbench refuses to re-propose a rolled-back refinement on the same
+  // evidence, so the new proposal cites a record written after the rollback.
+  await app.editDocument(session.id, { path: "later.md", content: "newer signed record", expectedRevision: null });
+  const newest = (await app.ledger(session.workspace))!.entries.at(-1)!.seq;
+  const again = await app.refineHarness(session.id, refinement("approval pattern", [newest]));
+  assert.notEqual(again.proposalDigest, digest);
+  const reopened = activationGate(again.proposalDigest!, again.proposalDigest!, await rolledBackNow());
+  assert.ok(reopened.activate);
+  await app.approveHarnessProposal(session.id, reopened.digest);
+  assert.equal((await app.harnessEntries(session.workspace)).length, 1);
+});
+
+test("activation from a sampled arm names the arm and digest through the same gate", (t) => {
+  const dir = mkdtempSync(join(tmpdir(), "nomo-arm-activation-"));
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  const arms = defineArms("autoCompactMessages", [
+    { armId: "compaction-75", value: 75 },
+    { armId: "compaction-150", value: 150 },
+  ]);
+  const path = join(dir, "bandit.jsonl");
+  openBandit(path, { arms, budgetTokens: 1_000 });
+  const state = recordReward(path, { armId: "compaction-150", reward: 1, tokens: 10 });
+  const sampled = sampleArm(state, () => 0.5);
+  assert.ok(sampled);
+  const chosen = arms.find((candidate) => candidate.armId === sampled)!;
+
+  assert.equal(activateSampledArm(arms, sampled, chosen.digest.slice(0, 15), none).activate, false);
+  const other = arms.find((candidate) => candidate.armId !== sampled)!;
+  assert.equal(activateSampledArm(arms, sampled, other.digest, none).activate, false, "another arm's digest");
+  assert.deepEqual(activateSampledArm(arms, sampled, chosen.digest, none), {
+    activate: true,
+    armId: chosen.armId,
+    axis: "autoCompactMessages",
+    value: chosen.value,
+    digest: chosen.digest,
+  });
+
+  assert.equal(activateSampledArm(arms, null, chosen.digest, none).activate, false);
+  assert.equal(activateSampledArm(arms, "missing", chosen.digest, none).activate, false);
+  const tampered = arms.map((candidate) => (candidate.armId === sampled ? { ...candidate, value: 999 } : candidate));
+  assert.match(
+    (activateSampledArm(tampered, sampled, chosen.digest, none) as { reason: string }).reason,
+    /does not verify/,
+  );
+  const rolled = activateSampledArm(arms, sampled, chosen.digest, new Set([chosen.digest]));
+  assert.match((rolled as { reason: string }).reason, /new digest/);
 });

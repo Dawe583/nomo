@@ -36,6 +36,13 @@
  * again" a way to buy a free review.
  */
 
+import { verifyArm, type ArmAxis, type HarnessArm } from "./harness-arms.ts";
+import {
+  guardrailRegressionGate,
+  type GuardrailGate,
+  type SplitSummary,
+} from "./harness-scores.ts";
+
 /** What one round did. `not-run` means nothing was spent.
  *
  * There is deliberately no `deferred` variant. One existed and nothing ever
@@ -466,4 +473,121 @@ export function restoreTriggerStates(
       changed = true;
   }
   return { states, changed };
+}
+
+/* ------------------------------------------------------------------------- *
+ * Activation and rollback (H5), and activation from a sampled arm (R5).
+ *
+ * Pure decisions, like the trigger above: nothing here writes the chain. The
+ * caller carries out an approval or a rollback through the workbench, which
+ * records it signed. A bandit arm is a contextual-bandit choice, not trained
+ * policy; nothing here is reinforcement learning.
+ * ------------------------------------------------------------------------- */
+
+/** A proposal digest (64 hex) or an arm digest (`sha256:` + 64 hex). */
+const ACTIVATION_DIGEST = /^(?:sha256:)?[a-f0-9]{64}$/;
+
+export type ActivationDecision =
+  | { readonly activate: true; readonly digest: string }
+  | { readonly activate: false; readonly reason: string };
+
+/**
+ * Activation requires the operator to type the exact digest: no prefix, no
+ * trimming, no case folding, because a near match is an approval of something
+ * nobody read. A digest already rolled back is refused by name, so a variant
+ * that regressed returns only as a new proposal with a new digest.
+ */
+export function activationGate(
+  digest: string,
+  typed: unknown,
+  rolledBack: ReadonlySet<string>,
+): ActivationDecision {
+  if (!ACTIVATION_DIGEST.test(digest))
+    return { activate: false, reason: "The activation target has no well-formed digest." };
+  if (typeof typed !== "string" || typed.length === 0)
+    return { activate: false, reason: "Type the full digest to activate." };
+  if (typed !== digest)
+    return { activate: false, reason: "The typed digest does not match exactly. Type the full digest." };
+  if (rolledBack.has(digest))
+    return {
+      activate: false,
+      reason: `${digest} was rolled back. Re-activation needs a new proposal with a new digest.`,
+    };
+  return { activate: true, digest };
+}
+
+/** Every digest a signed rollback record names, read from ledger bodies. */
+export function rolledBackDigests(
+  entries: readonly { readonly body: unknown }[],
+): ReadonlySet<string> {
+  const digests = new Set<string>();
+  for (const entry of entries) {
+    const body = entry.body as Record<string, unknown> | null;
+    const refinement = body?.harnessRefinement as Record<string, unknown> | null | undefined;
+    if (typeof refinement?.rolledBackDigest === "string") digests.add(refinement.rolledBackDigest);
+  }
+  return digests;
+}
+
+export type GuardrailRollback = {
+  /** `rolled-back`: a measured guardrail got worse and the rollback ran.
+   * `kept`: every guardrail measured and none worse. `insufficient-data`: no
+   * measured regression, but a guardrail is unmeasured; nothing is rolled back
+   * on missing evidence, and nothing is called a pass either. */
+  readonly action: "rolled-back" | "kept" | "insufficient-data";
+  readonly digest: string;
+  readonly gate: GuardrailGate;
+};
+
+/**
+ * Roll an activation back when any measured guardrail regressed against the
+ * previous activation (H8's gate, no noise band). `rollback` is the one
+ * command, injected so the workbench writes the signed record; a failure
+ * propagates rather than reporting a rollback that did not happen.
+ */
+export async function rollbackOnGuardrailRegression(
+  digest: string,
+  previous: Readonly<Record<string, SplitSummary | undefined>>,
+  current: Readonly<Record<string, SplitSummary | undefined>>,
+  rollback: (digest: string) => Promise<unknown>,
+): Promise<GuardrailRollback> {
+  const gate = guardrailRegressionGate(previous, current);
+  if (gate.checks.some((check) => check.status === "regressed")) {
+    await rollback(digest);
+    return { action: "rolled-back", digest, gate };
+  }
+  return { action: gate.pass ? "kept" : "insufficient-data", digest, gate };
+}
+
+export type ArmActivationDecision =
+  | {
+      readonly activate: true;
+      readonly armId: string;
+      readonly axis: ArmAxis;
+      readonly value: number | string;
+      readonly digest: string;
+    }
+  | { readonly activate: false; readonly reason: string };
+
+/**
+ * Activate the arm a bandit sampled (R5). The activation names the arm and its
+ * digest, the arm must recompute its own digest, and the typed digest goes
+ * through `activationGate` like any other activation, so a rolled-back arm
+ * needs a new digest too.
+ */
+export function activateSampledArm(
+  arms: readonly HarnessArm[],
+  sampledArmId: string | null,
+  typed: unknown,
+  rolledBack: ReadonlySet<string>,
+): ArmActivationDecision {
+  if (sampledArmId === null)
+    return { activate: false, reason: "No arm was sampled; the search has stopped or never started." };
+  const arm = arms.find((candidate) => candidate.armId === sampledArmId);
+  if (!arm) return { activate: false, reason: `Unknown arm ${sampledArmId}.` };
+  if (!verifyArm(arm))
+    return { activate: false, reason: `Arm ${arm.armId} does not verify against its digest.` };
+  const gate = activationGate(arm.digest, typed, rolledBack);
+  if (!gate.activate) return gate;
+  return { activate: true, armId: arm.armId, axis: arm.axis, value: arm.value, digest: arm.digest };
 }

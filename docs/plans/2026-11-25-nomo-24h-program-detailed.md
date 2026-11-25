@@ -543,6 +543,19 @@ without a new digest. Test both paths.
 
 **Verifier.** `node --test packages/workbench/src/refine-trigger.test.ts`.
 
+**As built.** Pure decisions in `refine-trigger.ts`; the workbench still writes
+every signed record. `activationGate(digest, typed, rolledBack)` activates only
+on a byte-exact typed digest (no prefix, trim or case fold) and refuses a digest
+in `rolledBackDigests(entries)`, the set read from signed
+`harnessRefinement.rolledBackDigest` records. `rollbackOnGuardrailRegression`
+runs H8's gate and calls the injected rollback (`rollbackHarnessProposal`) only
+when a measured guardrail regressed; an unmeasured guardrail returns
+`insufficient-data` and rolls nothing back. The integration test activates a
+real proposal, rolls it back on a regression, refuses the old digest and
+accepts a new proposal's digest. `workspace.ts` and the CLI are unchanged: the
+TUI still resolves a prefix to one proposal and confirms the full digest, and
+`nomo harness approve` still accepts a unique prefix.
+
 ### H6. Trend report (1 h)
 
 **Files.** `packages/cli/src/harness.ts` (or a workbench view).
@@ -581,7 +594,7 @@ worse value blocks; `unmeasured` is never a pass.
 guardrail summaries and checks `deny_rate`, `rollback_count` and
 `unknown_tool_rate` by mean with no noise band: any worse value is
 `regressed`, a missing mean on either side is `unmeasured`, and either blocks.
-It is a pure report; H5 rollback is the planned consumer and is not wired.
+It is a pure report; H5 `rollbackOnGuardrailRegression` consumes it.
 
 ### H9. Trajectory export (1.5 h)
 
@@ -719,6 +732,13 @@ approval needs a new history.
 **Steps.** Activation names the arm and digest; goes through the existing gate.
 
 **Verifier.** integration test.
+
+**As built.** `activateSampledArm(arms, sampledArmId, typed, rolledBack)` takes
+the id `sampleArm` returned, requires the arm to verify against its own digest,
+and passes the typed digest through `activationGate`; the result names `armId`,
+`axis`, `value` and `digest`. The integration test runs a real bandit file
+through `sampleArm`. Nothing applies the arm's value to settings yet, and R4's
+approval guard for guardrail axes is not part of this gate. A bandit, not RL.
 
 ### R6. Simulation report (1 h)
 
