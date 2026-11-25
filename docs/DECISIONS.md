@@ -1731,6 +1731,19 @@ against the existing snapshot at the five sizes. No production switch, no
 re-baseline, no dependency added to `packages/cli/package.json` until that diff
 is empty. If it is not empty, this decision stands.
 
+**T11 experiment result, 2026-11-25.** The bounded experiment failed at the
+renderer boundary before any layout porting was needed. A temporary spike,
+since removed, fed the exact current Help frame through Ink 8.0.0 with React
+19.3.1 and ink-testing-library 4.0.0. Even with the correct frame as input,
+Ink did not preserve the bytes: at 40x12, 52x16, 80x24, 120x40 and 160x45
+every snapshot hash differed, every line differed, and 246, 461, 1,114, 2,856
+and 4,894 trailing cells were missing. The 120x40 and 160x45 outputs also
+doubled their row counts to 80/40 and 90/45 because width-padded input was
+wrapped before padding was discarded. Ink's own `output.js` ends each line
+with `trimEnd()`, so this is structural rather than a spike tuning mistake.
+No dependency or production file was added, and the spike directory was
+removed as the experiment requires. This decision stands.
+
 ## Composer slot ladder and no mode chip, 2026-11-25
 
 **Decision.** Whether the Chat composer rail gets a mode chip, and which
