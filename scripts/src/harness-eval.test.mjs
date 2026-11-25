@@ -7,7 +7,14 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { parseDecision, parseTaskset, scoreTask } from "./harness-eval.mjs";
+import {
+  heldOutSplit,
+  parseDecision,
+  parseTaskset,
+  scoreTask,
+  splitTotals,
+  trainResults,
+} from "./harness-eval.mjs";
 import {
   compareRewardRecords,
   computeReward,
@@ -491,5 +498,78 @@ describe("harness-eval v2 taskset", () => {
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
+  });
+});
+
+describe("harness-eval held-out split", () => {
+  const split = (id, prompt, which) => ({ ...task(id, prompt, "read", "inspect"), split: which });
+  const tasks = [split("t1", "p1", "train"), split("t2", "p2", "train"), split("e1", "p3", "eval")];
+
+  test("selection that mixes train and eval results is refused", () => {
+    const sets = heldOutSplit(tasks);
+    const results = tasks.map((entry) => ({ id: entry.id, status: "pass" }));
+    assert.throws(() => trainResults(sets, results), /selection refused: "e1" is a held-out eval task/);
+    assert.throws(() => trainResults(sets, [{ id: "zz", status: "pass" }]), /"zz" is not a train task/);
+    assert.deepEqual(trainResults(sets, results.slice(0, 2)), results.slice(0, 2));
+  });
+
+  test("mixed lists that let a train task score eval are refused", () => {
+    assert.throws(() => heldOutSplit([...tasks, split("t1", "p9", "eval")]), /"t1" is in both train and eval/);
+    assert.throws(() => heldOutSplit([...tasks, split("e2", "p1", "eval")]), /eval task "e2" repeats a train prompt/);
+    assert.throws(() => heldOutSplit([...tasks, task("x", "p8", "read", "inspect")]), /"x" names no split/);
+    assert.throws(() => heldOutSplit(tasks.slice(0, 2)), /train and eval each need at least one task/);
+  });
+
+  test("each split is scored only from its own tasks", () => {
+    const totals = splitTotals(heldOutSplit(tasks), [
+      { id: "t1", status: "pass" },
+      { id: "t2", status: "fail" },
+      { id: "e1", status: "pass" },
+    ]);
+    assert.deepEqual(totals, { train: { passed: 1, total: 2 }, eval: { passed: 1, total: 1 } });
+  });
+
+  test("the CLI prints eval separately, runs one split alone and refuses a leaking taskset", () => {
+    const decisions = Object.fromEntries(["p1", "p2", "p3"].map((prompt) => [prompt, [{ tool: "read", class: "inspect" }]]));
+    const dir = workspace({ tasks }, decisions);
+    try {
+      const all = run(dir, ["--runs", "1"]);
+      assert.equal(all.status, 0, all.stdout + all.stderr);
+      assert.match(all.stdout, /^train: 2\/2 passed$/m);
+      assert.match(all.stdout, /^eval \(held-out\): 1\/1 passed$/m);
+      const held = run(dir, ["--runs", "1", "--split", "eval"]);
+      assert.equal(held.status, 0, held.stdout + held.stderr);
+      assert.match(held.stdout, /1 tasks .*split=eval/);
+      assert.match(held.stdout, /PASS {2}e1/);
+      assert.doesNotMatch(held.stdout, /PASS {2}t1|^train:/m);
+      const badSplit = run(dir, ["--split", "test"]);
+      assert.equal(badSplit.status, 2);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+    const leak = workspace({ tasks: [...tasks, split("e2", "p1", "eval")] }, decisions);
+    try {
+      const result = run(leak, ["--runs", "1"]);
+      assert.equal(result.status, 2);
+      assert.match(result.stderr, /eval task "e2" repeats a train prompt/);
+      assert.doesNotMatch(result.stdout, /PASS|FAIL/);
+    } finally {
+      rmSync(leak, { recursive: true, force: true });
+    }
+    const unsplit = workspace({ tasks: [task("u1", "p1", "read", "inspect")] }, decisions);
+    try {
+      const result = run(unsplit, ["--split", "train"]);
+      assert.equal(result.status, 2);
+      assert.match(result.stderr, /"u1" names no split/);
+    } finally {
+      rmSync(unsplit, { recursive: true, force: true });
+    }
+  });
+
+  test("v2 splits cleanly into 7 train and 7 held-out eval tasks", () => {
+    const v2 = fileURLToPath(new URL("./fixtures/harness-eval-v2.json", import.meta.url));
+    const sets = heldOutSplit(parseTaskset(readFileSync(v2, "utf8")).tasks);
+    assert.equal(sets.train.length, 7);
+    assert.equal(sets.eval.length, 7);
   });
 });
