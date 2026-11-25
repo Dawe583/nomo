@@ -92,9 +92,12 @@ test("runs navigation keeps unknown outcomes and missing progress explicit", asy
   // The unconfirmed outcome stays marked for reconciliation in the panel.
   assert.match(ui.lines().join("\n"), /1 need reconciliation/);
   await ui.command("/status");
-  // The status panel counts the unproven outcome instead of dropping it.
+  // The status panel counts the unproven outcome instead of dropping it, and
+  // unrun probes stay unmeasured rather than becoming green.
   assert.match(ui.lines().join("\n"), /⚙ STATUS/);
-  assert.match(ui.lines().join("\n"), /1 unknown/);
+  const runsCheck = ui.items().find((row) => row.check?.name === "runs");
+  assert.match(runsCheck?.lines.join("\n") ?? "", /1 run\(s\) need reconciliation/);
+  assert.match(ui.lines().join("\n"), /unmeasured/);
   for (const width of [40, 80, 120, 200]) {
     const lines = stripAnsi(renderWorkspace(ui, width, 24)).split("\n");
     assert.ok(lines.length <= 24);

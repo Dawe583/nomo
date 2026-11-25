@@ -10,7 +10,13 @@ import { renderInspector } from "./inspector.ts";
 import type { Field, InspectorSpec } from "./inspector.ts";
 import type { Tone } from "./theme.ts";
 
-export type HealthState = "ok" | "warn" | "fail" | "unknown" | "skipped";
+export type HealthState =
+  | "ok"
+  | "warn"
+  | "fail"
+  | "unknown"
+  | "unmeasured"
+  | "skipped";
 
 export interface Check {
   /** What was checked, named so an operator can search for it. */
@@ -32,6 +38,7 @@ const HEALTH_ICONS: Record<HealthState, string> = {
   warn: "◔",
   fail: "×",
   unknown: "?",
+  unmeasured: "▫",
   skipped: "▪",
 };
 
@@ -42,6 +49,7 @@ const HEALTH_WORDS: Record<HealthState, string> = {
   warn: "warn",
   fail: "fail",
   unknown: "unknown",
+  unmeasured: "unmeasured",
   skipped: "skipped",
 };
 
@@ -57,6 +65,7 @@ const HEALTH_TONES: Record<
   warn: "warning",
   fail: "error",
   unknown: "muted",
+  unmeasured: "muted",
   skipped: "default",
 };
 
@@ -85,12 +94,14 @@ function severityRank(state: HealthState): number {
       return 0;
     case "unknown":
       return 1;
-    case "warn":
+    case "unmeasured":
       return 2;
-    case "skipped":
+    case "warn":
       return 3;
-    case "ok":
+    case "skipped":
       return 4;
+    case "ok":
+      return 5;
   }
 }
 
@@ -253,6 +264,12 @@ export function healthSummary(checks: readonly Check[]): string {
   if (unknowns > 0) {
     const extra: string = unknowns > 1 ? ` (${unknowns - 1} more unknown)` : "";
     return `Unknown: ${nameWorst(worst)}${extra}`;
+  }
+  const unmeasured: number = countBy(checks, "unmeasured");
+  if (unmeasured > 0) {
+    const extra: string =
+      unmeasured > 1 ? ` (${unmeasured - 1} more unmeasured)` : "";
+    return `Unmeasured: ${nameWorst(worst)}${extra}`;
   }
   const warns: number = countBy(checks, "warn");
   if (warns > 0) {

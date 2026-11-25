@@ -4503,8 +4503,8 @@ export class WorkspaceTui {
       add(
         "provider",
         "runtime",
-        "unknown",
-        "Provider state has not been read yet.",
+        "unmeasured",
+        "Provider state has not been read yet; provider health is unmeasured.",
         "Run /connect, or r to retry.",
       );
     } else {
@@ -4539,17 +4539,33 @@ export class WorkspaceTui {
       add(
         "models",
         "runtime",
-        connected && models === 0 ? "warn" : "ok",
+        connected ? (models === 0 ? "warn" : "ok") : "unmeasured",
         connected
           ? models === 0
             ? "Connected, but no model is listed."
             : `${models} model(s) available.`
-          : "Not listed until a provider is connected.",
+          : "Model health is unmeasured until a provider is connected.",
         connected && models === 0
           ? "Reconnect to refresh the model list."
           : undefined,
       );
     }
+
+    // Ledger head. The head is a measured fact about the signed chains already
+    // loaded; it is separate from whether those chains have been verified.
+    const ledgerHeads = [...this.proofs.entries()].flatMap(([workspace, entries]) => {
+      const head = entries.at(-1);
+      return head ? [{ workspace, head }] : [];
+    });
+    add(
+      "ledger head",
+      "records",
+      ledgerHeads.length ? "ok" : "unmeasured",
+      ledgerHeads.length
+        ? `${ledgerHeads.length} chain(s); loaded head seq ${ledgerHeads.at(-1)!.head.seq}, hash ${ledgerHeads.at(-1)!.head.hash.slice(0, 18)}.`
+        : "No signed ledger head has been read yet; ledger head is unmeasured.",
+      ledgerHeads.length ? undefined : "Run a workspace write or /verify before relying on ledger state.",
+    );
 
     // Ledger. A proof error is the one failure that invalidates recovery and
     // export, so it is a fail and not a warn.
@@ -4577,8 +4593,8 @@ export class WorkspaceTui {
       add(
         "ledger",
         "records",
-        "unknown",
-        "No managed workspace has been verified yet.",
+        "unmeasured",
+        "No managed workspace has been verified yet; ledger verification is unmeasured.",
         "Run /verify.",
       );
     }
@@ -4634,7 +4650,7 @@ export class WorkspaceTui {
       add(
         "agent revocation",
         "identity",
-        "unknown",
+        "unmeasured",
         "No run-scoped agent identity has been observed; local and fleet revocation are unmeasured.",
         "Start a local Workbench run before evaluating revocation.",
       );
@@ -10414,7 +10430,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       const checks = statusRows.flatMap((row) =>
         row.check ? [row.check] : [],
       );
-      const states = ["fail", "unknown", "warn", "skipped", "ok"] as const;
+      const states = ["fail", "unknown", "unmeasured", "warn", "skipped", "ok"] as const;
       const counts = states
         .map((state) => ({
           state,
@@ -10424,6 +10440,9 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       const failures = checks.filter((check) => check.state === "fail").length;
       const unknown = checks.filter(
         (check) => check.state === "unknown",
+      ).length;
+      const unmeasured = checks.filter(
+        (check) => check.state === "unmeasured",
       ).length;
       const warnings = checks.filter((check) => check.state === "warn").length;
       if (!checks.length)
@@ -10447,7 +10466,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         typeof usage?.cost === "number" ? `$${usage.cost.toFixed(4)}` : "?";
       return [
         `${getSymbols(this.themeConfig.symbolPreset).icons.settings} STATUS · ${healthSummary(checks)}`,
-        `${failures} fail · ${unknown} unknown · ${warnings} warn · ${checks.length} checks`,
+        `${failures} fail · ${unknown} unknown · ${unmeasured} unmeasured · ${warnings} warn · ${checks.length} checks`,
         "",
         "SUBSYSTEM STATES",
         ...barChart(
