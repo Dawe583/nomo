@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-25T14:28:57Z",
+  "updatedAt": "2026-11-25T14:29:49Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -1592,6 +1592,36 @@
         "git diff --check observed exit 0."
       ],
       "stopCondition": "Stop if colour, ASCII symbols or motion become the only carrier of a fact, or a T2-T5 fact disappears from any variant."
+    },
+    {
+      "id": "t10-performance-remeasure",
+      "status": "done",
+      "owner": "devin-6293643153014f56bb088c9a71fde97a",
+      "dependsOn": [
+        "t9-accessibility-pass"
+      ],
+      "scope": [
+        "packages/cli/src/tui/perf-budget.test.ts",
+        "docs/plans/2026-11-25-nomo-24h-program-detailed.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "record p50 and p95 at 200x48 and 80x24",
+        "profile row builder before changes if p95 exceeds 50 ms"
+      ],
+      "verifier": [
+        "node --test packages/cli/src/tui/perf-budget.test.ts",
+        "pnpm --filter @nomo/cli typecheck"
+      ],
+      "evidence": [
+        "NO_COLOR=1 node --test packages/cli/src/tui/perf-budget.test.ts observed exit 0: tests 2, pass 2, fail 0, duration_ms 1532.316041. Exact measurements: 200x48 cold 166.13 ms, p50 1.70 ms, p95 2.06 ms, max 3.37 ms over 40 frames; 12799 transcript rows, 31 visible (412.87x window). 80x24 cold 130.61 ms, p50 1.36 ms, p95 1.71 ms, max 2.55 ms over 40 frames; 14399 transcript rows, 6 visible (2399.83x window). Cold build: 200 turns 59.58 ms / 6398 rows, 400 turns 124.70 ms / 12799 rows (rows 2.00x, time 2.09x).",
+        "pnpm --filter @nomo/cli typecheck observed exit 0.",
+        "git diff --check observed exit 0."
+      ],
+      "stopCondition": "Stop and profile before changing anything if either p95 exceeds 50 ms or transcript growth becomes quadratic."
     }
   ]
 }

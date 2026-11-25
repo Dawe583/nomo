@@ -525,6 +525,12 @@ row builder before changing anything.
 
 **Verifier.** `node --test packages/cli/src/tui/perf-budget.test.ts`.
 
+**As built.** The budget did not regress, so the test file stayed read-only.
+Measured 200x48 cold 166.13 ms, p50 1.70 ms, p95 2.06 ms, max 3.37 ms over 40
+frames with 12,799 transcript rows and 31 visible. Measured 80x24 cold 130.61
+ms, p50 1.36 ms, p95 1.71 ms, max 2.55 ms over 40 frames with 14,399 transcript
+rows and 6 visible. Cold build scaling was 2.09x time for 2.00x rows.
+
 ### T11. Optional Ink parity spike (2 h)
 
 **Gate.** Owner asks for it after T1-T10.
