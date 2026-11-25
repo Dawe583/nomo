@@ -720,13 +720,14 @@ exporter groups those entries by exact case, variant and run when the reward
 carries `harnessEval`; a reward without run metadata cannot merge repeated
 pending runs, and mismatched or malformed reward attribution is refused.
 Explicit
-`nomo.eval-tool.v1` measurements are matched by case id and, after ingestion,
-by the signed ingestion file digest. They therefore override positional
+`nomo.eval-tool.v1` measurements are matched inside their case, variant and
+ingestion-file family. One unambiguous pending run is adopted; repeated
+pending runs are refused rather than merged. They therefore override positional
 grouping for their own measurement. Rewards ingested from bare eval files
 without those explicit measurements export with empty tool calls rather than
-adopting unrelated positional entries. Bare uningested measurement files can
-match repeated measurements only by case id; ingestion provenance is the precise
-link. This affects measurement correctness, not secrecy.
+adopting unrelated positional entries. Bare uningested measurement files have
+only the weaker case/variant family; ingestion provenance is the precise link.
+This affects measurement correctness, not secrecy.
 Trailing unattributed tool calls are reported and not silently attached to a
 later case.
 

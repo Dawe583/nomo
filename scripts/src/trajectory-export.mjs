@@ -15,8 +15,10 @@
  * present. Production chain attribution matches the exact case, variant and
  * run when the reward carries `harnessEval`. A reward without that metadata can
  * adopt only one unambiguous pending run for the case and variant; repeated
- * runs are refused rather than merged. Direct bare files can match only by
- * case, a documented limit.
+ * runs are refused rather than merged. Explicit eval-tool measurements use the
+ * same unambiguous-run rule inside their case, variant and ingestion file
+ * family; bare files without provenance have only that case/variant family, a
+ * documented limit.
  *
  * Each record is built field by field from an allowlist: the tool name, its
  * reversibility class (`klass`) and whether it completed. Arguments, results,
@@ -69,11 +71,12 @@ const terminal = (decision) =>
   typeof decision === "string" &&
   ((decision.startsWith("execute:") && decision !== "execute:dispatched") || decision.startsWith("deny"));
 
-function attributionKey(record, caseId) {
+function attributionFamily(record, caseId, variantId) {
   const ingestion = isObject(record.rewardIngestion) ? record.rewardIngestion : null;
-  return typeof ingestion?.fileDigest === "string" && /^[a-f0-9]{64}$/.test(ingestion.fileDigest)
-    ? `file:${ingestion.fileDigest}:${caseId}`
-    : `case:${caseId}`;
+  const prefix = typeof ingestion?.fileDigest === "string" && /^[a-f0-9]{64}$/.test(ingestion.fileDigest)
+    ? `file:${ingestion.fileDigest}`
+    : "case";
+  return `${prefix}\u0000${caseId}\u0000${variantId}`;
 }
 
 function exportedEvalTool(record) {
@@ -99,6 +102,24 @@ export function exportTrajectories(raw) {
   const evalPending = new Map();
   const evalRuns = new Map();
   const attributed = new Map();
+  const attributedRuns = new Map();
+  const addAttributed = (key, family, call) => {
+    const list = attributed.get(key) ?? [];
+    list.push(call);
+    attributed.set(key, list);
+    const runs = attributedRuns.get(family) ?? new Set();
+    runs.add(key);
+    attributedRuns.set(family, runs);
+  };
+  const takeAttributed = (key, family) => {
+    const list = attributed.get(key);
+    if (list === undefined) return undefined;
+    attributed.delete(key);
+    const runs = attributedRuns.get(family);
+    runs?.delete(key);
+    if (runs?.size === 0) attributedRuns.delete(family);
+    return list;
+  };
   const evalPairKey = (caseId, variantId) => `${caseId}\u0000${variantId}`;
   const evalRunKey = (caseId, variantId, run) => `${evalPairKey(caseId, variantId)}\u0000${run}`;
   const addEvalPending = (key, pairKey, call) => {
@@ -147,10 +168,9 @@ export function exportTrajectories(raw) {
     if (record.schema === EVAL_TOOL_SCHEMA) {
       try {
         const measurement = exportedEvalTool(record);
-        const key = attributionKey(record, measurement.caseId);
-        const list = attributed.get(key) ?? [];
-        list.push({ name: measurement.toolName, klass: measurement.toolClass, ok: measurement.ok });
-        attributed.set(key, list);
+        const family = attributionFamily(record, measurement.caseId, measurement.variantId);
+        const key = `${family}\u0000${measurement.run}`;
+        addAttributed(key, family, { name: measurement.toolName, klass: measurement.toolClass, ok: measurement.ok });
       } catch {
         counts.refused += 1;
       }
@@ -174,12 +194,17 @@ export function exportTrajectories(raw) {
         counts.refused += 1;
       } else {
         const ingestedBareEval = isObject(record.rewardIngestion);
-        const key = attributionKey(record, record.caseId);
-        const explicit = attributed.get(key);
-        if (explicit !== undefined) attributed.delete(key);
+        const family = attributionFamily(record, record.caseId, record.variantId);
+        const explicitCandidates = attributedRuns.get(family);
+        let explicit;
+        let explicitAmbiguous = false;
+        if (explicitCandidates?.size === 1)
+          explicit = takeAttributed([...explicitCandidates][0], family);
+        else if (explicitCandidates && explicitCandidates.size > 1)
+          explicitAmbiguous = true;
         const rewardEval = readEvalAttribution(record.harnessEval);
         let direct;
-        let attributionRefused = rewardEval.malformed === true;
+        let attributionRefused = rewardEval.malformed === true || explicitAmbiguous;
         if (
           !attributionRefused &&
           rewardEval.key &&

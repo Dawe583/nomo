@@ -247,6 +247,90 @@ describe("trajectory-export", () => {
     assert.ok(!JSON.stringify(report.trajectories).includes("SECRET"));
   });
 
+
+  test("explicit eval-tool measurements separate repeated runs and variants", () => {
+    const digest = "e".repeat(64);
+    const tool = (run, variantId, toolName, index) => ({
+      schema: "nomo.eval-tool.v1",
+      caseId: "read-before-write",
+      variantId,
+      run,
+      toolName,
+      toolClass: "r0",
+      ok: true,
+      execution: "managed-workspace-fixture",
+      rewardIngestion: { fileDigest: digest, index, count: 6 },
+    });
+    const reward = (variantId, index, passed = true) => ({
+      ...record({ variantId, passed }),
+      rewardIngestion: { fileDigest: digest, index, count: 6 },
+    });
+    const variantB = "sha256:othervariant";
+    const chain = [
+      tool(1, "sha256:fixture", "read-one", 0),
+      reward("sha256:fixture", 1),
+      tool(2, "sha256:fixture", "read-two", 2),
+      reward("sha256:fixture", 3, false),
+      tool(1, variantB, "read-other-variant", 4),
+      reward(variantB, 5),
+    ].map((line) => JSON.stringify(line)).join("\n");
+    const report = exportTrajectories(chain);
+    assert.equal(report.refused, 0);
+    assert.equal(report.unattributed, 0);
+    assert.deepEqual(report.trajectories.map((trajectory) => trajectory.toolCalls), [
+      [{ name: "read-one", klass: "r0", ok: true }],
+      [{ name: "read-two", klass: "r0", ok: true }],
+      [{ name: "read-other-variant", klass: "r0", ok: true }],
+    ]);
+  });
+
+  test("ambiguous repeated explicit measurements are refused instead of merged", () => {
+    const digest = "f".repeat(64);
+    const tool = (run, index) => ({
+      schema: "nomo.eval-tool.v1",
+      caseId: "read-before-write",
+      variantId: "sha256:fixture",
+      run,
+      toolName: `read-${run}`,
+      toolClass: "r0",
+      ok: true,
+      execution: "managed-workspace-fixture",
+      rewardIngestion: { fileDigest: digest, index, count: 3 },
+    });
+    const chain = [
+      tool(1, 0),
+      tool(2, 1),
+      { ...record(), rewardIngestion: { fileDigest: digest, index: 2, count: 3 } },
+    ].map((line) => JSON.stringify(line)).join("\n");
+    const report = exportTrajectories(chain);
+    assert.equal(report.trajectories.length, 0);
+    assert.equal(report.refused, 1);
+    assert.equal(report.unattributed, 2);
+  });
+
+
+  test("bare explicit measurements match one unambiguous run and refuse repeated runs", () => {
+    const tool = (run) => ({
+      schema: "nomo.eval-tool.v1",
+      caseId: "read-before-write",
+      variantId: "sha256:fixture",
+      run,
+      toolName: `bare-${run}`,
+      toolClass: "r0",
+      ok: true,
+      execution: "managed-workspace-fixture",
+    });
+    const single = exportTrajectories(`${JSON.stringify(tool(1))}\n${JSON.stringify(record())}\n`);
+    assert.deepEqual(single.trajectories[0].toolCalls, [
+      { name: "bare-1", klass: "r0", ok: true },
+    ]);
+
+    const repeated = exportTrajectories(`${JSON.stringify(tool(1))}\n${JSON.stringify(tool(2))}\n${JSON.stringify(record())}\n`);
+    assert.equal(repeated.trajectories.length, 0);
+    assert.equal(repeated.refused, 1);
+    assert.equal(repeated.unattributed, 2);
+  });
+
   test("an eval-tool measurement with the wrong ingestion file is not adopted", () => {
     const tool = {
       schema: "nomo.eval-tool.v1",

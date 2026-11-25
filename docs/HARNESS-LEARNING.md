@@ -105,7 +105,10 @@ A reward without run metadata can adopt only one unambiguous pending run, and
 an exact eval reward never adopts unrelated positional entries. Entries
 without the field keep legacy positional treatment, malformed or mismatched
 attribution refuses the affected export, and unrelated entries are counted as
-unattributed rather than guessed.
+unattributed rather than guessed. Explicit offline eval-tool measurements use
+the same unambiguous-run rule inside their case, variant and ingestion-file
+family; repeated pending runs are refused rather than merged. Bare measurement
+records without ingestion provenance have only the weaker case/variant family.
 
 Two operator surfaces expose the same path. `POST /api/sessions` accepts an
 optional `harnessEval` object with exactly `caseId`, `variantId` and `run`;
