@@ -9511,3 +9511,9 @@ Commit 3280db90942408dbc286a70f42124b4a3a33b277, subject Polish shared TUI motio
   `scripts/src/work-graph-check.mjs` now checks duplicate node ids, dangling dependencies and done nodes without
   evidence. Observed verifier: `graph-check: duplicate ids 0 / dangling deps 0 / done without evidence 0`, exit 0.
   [[NOMO TUI Control Center]]
+- 2026-11-25 · H11 eval runner adapter completed in the free parent session.
+  `scripts/src/harness-eval-runner.mjs` now reads one prompt and prints one JSON decision through the governed tool
+  catalog and class boundary. It is deterministic and offline: no provider, model or network call. The result is
+  plumbing and governance evidence only, not model capability evidence. Observed eval run: 14/14 total, train 7/7,
+  held-out eval 7/7. Narrow tests 3/3; harness eval, replay, bandit simulation and runner set 39/39.
+  [[NOMO TUI Control Center]]
