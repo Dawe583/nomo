@@ -420,7 +420,11 @@ test("a destructive model call waits for an operator in its own workspace", asyn
     await delay(20);
   assert.equal(workbench.get(session.id)?.status, "idle");
   const feed = await readLedgerFeed(join(dir, `${session.workspace}.jsonl`));
-  assert.ok(feed.records.some((record) => record.decision === "hold:denied"));
+  const denied = feed.records.find((record) => record.decision === "hold:denied");
+  assert.ok(denied);
+  if (typeof denied.approvalMs !== "number")
+    assert.fail("the operator-decided proxy hold keeps its measured latency");
+  assert.ok(Number.isFinite(denied.approvalMs) && denied.approvalMs >= 0);
 });
 
 test("denial text names the rule id, the class and the approval path", async (t) => {

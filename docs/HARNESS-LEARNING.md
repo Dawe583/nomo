@@ -161,9 +161,12 @@ leaves cost `unmeasured`, never zero.
 start call until observed settlement, including queue and orchestration time. An
 idempotent replay cannot recover the original run's wall clock, so latency is
 `unmeasured` for that replay. `approvalMs` is the sum of exact operator-decided
-hold latencies in the attributed evidence. No held call is measured zero because
-complete chain evidence proves no approval wait occurred; expired, cancelled or
-legacy holds without a decision timestamp remain `unmeasured`.
+hold latencies in the attributed evidence. Both internal Workbench holds and
+proxy holds write the measured latency when an operator decision timestamp
+exists, and the public ledger feed projects that bounded number without
+exposing arguments or payloads. No held call is measured zero because complete
+chain evidence proves no approval wait occurred; expired, cancelled or legacy
+holds without a decision timestamp remain `unmeasured`.
 
 Reward guardrails use the existing board guardrails `deny_rate`,
 `rollback_count` and `unknown_tool_rate`, measured only from chain entries that

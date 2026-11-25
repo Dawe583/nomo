@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-25T23:16:42.098746Z",
+  "updatedAt": "2026-11-25T23:19:29.564806Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -3251,6 +3251,57 @@
       ],
       "stopCondition": "Stop if exact logical-call identity cannot be represented without inventing correlation, if legacy chain compatibility is broken, or if fixing the measurement requires hiding incomplete evidence.",
       "completedAt": "2026-11-25T23:16:42.098746Z"
+    },
+    {
+      "id": "h26-approval-latency-evidence-provenance",
+      "status": "done",
+      "owner": "devin-6293643153014f56bb088c9a71fde97a",
+      "dependsOn": [
+        "h24-eval-approval-latency-measurement"
+      ],
+      "scope": [
+        "packages/ledger/src/feed.ts",
+        "packages/ledger/src/feed.test.ts",
+        "packages/workbench/src/workbench.test.ts",
+        "packages/workbench/src/agent-messages-tool.test.ts",
+        "docs/HARNESS-LEARNING.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "the public ledger feed projects approvalMs when the signed record carries a finite nonnegative measurement",
+        "the feed projection does not expose arguments or payloads",
+        "the proxy destructive-hold integration proves operator-decided latency reaches the signed proxy ledger feed",
+        "an internal operator-approved Workbench hold proves approvalMs reaches the raw signed chain",
+        "expired, cancelled or legacy holds still do not fabricate operator latency"
+      ],
+      "verifier": [
+        "node --test packages/workbench/src/workbench.test.ts packages/workbench/src/agent-messages-tool.test.ts packages/ledger/src/feed.test.ts packages/proxy/src/forward/tools.test.ts",
+        "node --test packages/ledger/src/*.test.ts",
+        "node --test packages/workbench/src/*.test.ts",
+        "node --test scripts/src/*.test.mjs",
+        "node --test scripts/src/doc-truth.test.mjs scripts/src/no-dash.test.mjs",
+        "pnpm --filter @nomo/ledger typecheck",
+        "pnpm --filter @nomo/workbench typecheck",
+        "pnpm --filter @nomo/cli typecheck",
+        "git diff --check"
+      ],
+      "evidence": [
+        "focused approval evidence verifier: 67 tests, 67 pass, 0 fail, duration_ms 8471.703708",
+        "ledger suite: 143 tests, 143 pass, 0 fail, duration_ms 1476.056667",
+        "wider Workbench suite: 1204 tests, 1202 pass, 0 fail, cancelled 0, skipped 2, todo 0, duration_ms 23119.667458",
+        "wider scripts suite: 431 tests, 398 pass, 0 fail, cancelled 0, skipped 32, todo 1, duration_ms 8413.556833",
+        "docs verifier: 10 tests, 10 pass, 0 fail, duration_ms 94.648167",
+        "pnpm --filter @nomo/ledger typecheck: exit 0",
+        "pnpm --filter @nomo/workbench typecheck: exit 0",
+        "pnpm --filter @nomo/cli typecheck: exit 0",
+        "git diff --check: exit 0",
+        "diagnosis evidence: the proxy already wrote approvalMs, but readLedgerFeed projected only a fixed metadata shape and dropped the field; the failed earlier assertion inspected that projection, not the signed record absence"
+      ],
+      "stopCondition": "Stop if exposing approvalMs would expose arguments or payloads, if the proxy record truly lacks operator time, or if legacy records need fabricated latency.",
+      "completedAt": "2026-11-25T23:19:29.564806Z"
     }
   ]
 }

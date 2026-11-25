@@ -17,6 +17,7 @@ type FeedBody = {
   readonly klass: string;
   readonly decision: string;
   readonly argsDigest: string;
+  readonly approvalMs?: number;
   readonly args?: Readonly<Record<string, unknown>>;
   readonly payload?: string;
 };
@@ -65,6 +66,25 @@ describe("readLedgerFeed", () => {
     assert.equal("args" in page.records[0]!, false);
     assert.equal("payload" in page.records[0]!, false);
     assert.equal(page.head, page.records[1]!.digest);
+  });
+
+  test("projects measured operator latency without opening the payload boundary", async () => {
+    const { file, dir } = await seedLedger(1);
+    const signer = await devKeyProvider({ dir: join(dir, "keys"), env: {} });
+    await jsonlStore(signer, { dir }).append({
+      workspace,
+      at: "2026-09-03T00:00:00.000Z",
+      tool: "postgres.row.update.3",
+      klass: "r3",
+      decision: "hold:approved",
+      argsDigest: "3".repeat(64),
+      approvalMs: 42,
+      args: { secret: "not for feed" },
+    });
+    const page = await readLedgerFeed(file);
+    const held = page.records.find((record) => record.decision === "hold:approved");
+    assert.equal(held?.approvalMs, 42);
+    assert.equal("args" in held!, false);
   });
 
   test("filters after seq only after verifying the full chain", async () => {
