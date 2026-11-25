@@ -4007,6 +4007,9 @@ export class Workbench {
     return this.locked(async () => {
       const selected = model ?? this.preferences.defaultModel;
       const imageFingerprint = imageRequestFingerprint(images);
+      const validatedEvalAttribution = evalAttribution === undefined
+        ? undefined
+        : evalCaseAttribution(evalAttribution);
       const prior = selected
         ? this.request(key, [
             "start",
@@ -4016,6 +4019,7 @@ export class Workbench {
             agent,
             background,
             imageFingerprint,
+            validatedEvalAttribution,
           ])
         : undefined;
       if (prior) return this.get(prior)!;
@@ -4032,11 +4036,20 @@ export class Workbench {
         agent,
         background,
         images,
-        evalAttribution,
+        validatedEvalAttribution,
       );
       this.remember(
         key,
-        ["start", prompt, selectedModel, project, agent, background, imageFingerprint],
+        [
+          "start",
+          prompt,
+          selectedModel,
+          project,
+          agent,
+          background,
+          imageFingerprint,
+          validatedEvalAttribution,
+        ],
         result.id,
       );
       return result;
@@ -4284,7 +4297,7 @@ export class Workbench {
    * entry the run causes; it never carries prompt or tool content. */
   async startHarnessEval(
     prompt: string,
-    model: string,
+    model: string | undefined,
     attribution: unknown,
     agent?: string,
   ): Promise<SessionView> {

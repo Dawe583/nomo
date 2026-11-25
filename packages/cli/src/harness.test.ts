@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { existsSync } from "node:fs";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { runHarnessCommand, type HarnessSurface } from "./harness.ts";
@@ -157,6 +158,146 @@ test("a rollback undoes the digest it was given", async () => {
   ]);
 });
 
+
+test("run-eval starts one attributed production run and waits for its terminal state", async () => {
+  let seen:
+    | {
+        prompt: string;
+        model: string | undefined;
+        attribution: unknown;
+        agent: string | undefined;
+      }
+    | undefined;
+  let waited = "";
+  const surface = fake({
+    async startHarnessEval(prompt, model, attribution, agent) {
+      seen = { prompt, model, attribution, agent };
+      return { id: "eval-session-1", status: "running" };
+    },
+    async waitForRun(id) {
+      waited = id;
+      return { status: "idle" };
+    },
+  }).surface;
+  const terminal = io();
+  const code = await runHarnessCommand(
+    [
+      "run-eval",
+      "--case", "case-api",
+      "--variant", "sha256:" + "a".repeat(64),
+      "--run", "2",
+      "--model", "fixture-model",
+      "--agent", "fixture-agent",
+      "--prompt", "Write the managed note.",
+    ],
+    terminal,
+    { workbench: async () => surface },
+  );
+  assert.equal(code, 0, terminal.err.join(" "));
+  assert.deepEqual(seen, {
+    prompt: "Write the managed note.",
+    model: "fixture-model",
+    agent: "fixture-agent",
+    attribution: {
+      caseId: "case-api",
+      variantId: "sha256:" + "a".repeat(64),
+      run: 2,
+    },
+  });
+  assert.equal(waited, "eval-session-1");
+  assert.match(terminal.out.join("\n"), /run-eval: session eval-session-1 status idle/);
+});
+
+test("run-eval reads a prompt file and refuses malformed attribution before starting", async (t) => {
+  const dir = await mkdtemp(join(tmpdir(), "nomo-run-eval-"));
+  t.after(() => rm(dir, { recursive: true, force: true }));
+  const promptFile = join(dir, "prompt.txt");
+  await writeFile(promptFile, "Prompt from a file.\n");
+  let starts = 0;
+  const surface = fake({
+    async startHarnessEval() {
+      starts += 1;
+      return { id: "eval-session-1" };
+    },
+    async waitForRun() {
+      return { status: "idle" };
+    },
+  }).surface;
+
+  const valid = io();
+  const validCode = await runHarnessCommand(
+    [
+      "run-eval",
+      "--case", "case-file",
+      "--variant", "variant-a",
+      "--run", "1",
+      "--prompt-file", promptFile,
+    ],
+    valid,
+    { workbench: async () => surface },
+  );
+  assert.equal(validCode, 0, valid.err.join(" "));
+  assert.equal(starts, 1);
+
+  const invalid = io();
+  const invalidCode = await runHarnessCommand(
+    [
+      "run-eval",
+      "--case", "case-file",
+      "--variant", "variant-a",
+      "--run", "0",
+      "--prompt-file", promptFile,
+    ],
+    invalid,
+    { workbench: async () => surface },
+  );
+  assert.equal(invalidCode, 1);
+  assert.equal(starts, 1, "invalid attribution never starts a run");
+  assert.match(invalid.err.join("\n"), /run must be a whole number/);
+
+  const both = io();
+  const bothCode = await runHarnessCommand(
+    [
+      "run-eval",
+      "--case", "case-file",
+      "--variant", "variant-a",
+      "--run", "1",
+      "--prompt", "inline",
+      "--prompt-file", promptFile,
+    ],
+    both,
+    { workbench: async () => surface },
+  );
+  assert.equal(bothCode, 1);
+  assert.equal(starts, 1, "ambiguous prompt input never starts a run");
+  assert.match(both.err.join("\n"), /exactly one prompt source/);
+});
+
+test("run-eval returns nonzero for a non-idle terminal state without hiding it", async () => {
+  const surface = fake({
+    async startHarnessEval() {
+      return { id: "eval-session-1" };
+    },
+    async waitForRun() {
+      return { status: "failed" };
+    },
+  }).surface;
+  const terminal = io();
+  const code = await runHarnessCommand(
+    [
+      "run-eval",
+      "--case", "case-api",
+      "--variant", "variant-a",
+      "--run", "1",
+      "--prompt", "Write the note.",
+    ],
+    terminal,
+    { workbench: async () => surface },
+  );
+  assert.equal(code, 1);
+  assert.match(terminal.out.join("\n"), /status failed/);
+});
+
 test("a refusal from the workbench is printed as its own sentence", async () => {
   const { surface } = fake({
     async approveHarnessProposal() {
@@ -196,6 +337,13 @@ test("an unknown action, an unknown option and a missing session are refused by 
     workbench: async () => surface,
   });
   assert.equal(noSession, 1);
+
+  const misplaced = await runHarnessCommand(
+    ["list", "--session", "s1", "--case", "case-1"],
+    io(),
+    { workbench: async () => surface },
+  );
+  assert.equal(misplaced, 1);
   assert.deepEqual(calls, []);
 });
 
