@@ -48,9 +48,8 @@ Last full local dry run was recorded in Q8 and merged to `main` as `96675914`.
   refuses side-channel fields without printing them and resumes exact or
   partial ingestion by file digest plus record position.
 - The Q8 script-suite failure list is historical evidence, not current state.
-  Q11 fixed the CLI 1.0.1 versus root 0.1.0 version mismatch. The full scripts
-  suite has not been re-run after H19, so no smaller current failure count is
-  claimed here.
+  Q17 repaired the four remaining groups without weakening the tests. The full
+  scripts suite now reports 417 tests, 384 pass, 0 fail, 32 skipped and 1 todo.
 - H9 trajectory grouping is positional for direct production-chain rewards until
   production tool entries carry case ids. The offline managed-workspace eval
   fixture can now produce explicit `nomo.eval-tool.v1` attribution and
@@ -60,28 +59,33 @@ Last full local dry run was recorded in Q8 and merged to `main` as `96675914`.
 
 ## Blocked or gated
 
-- Q5 provider smoke: blocked by missing explicit in-session approval for a live
-  provider call.
-- F4 provider release path: same missing authority.
+- Q5 provider smoke: the gate is satisfied only as SKIP. Observed output:
+  `SKIP provider-smoke: NOMO_SMOKE_API_KEY is not set, so nothing was sent.`
+  No provider response is proven.
+- F4 provider release path: still missing a provider credential. Approval does
+  not create a key.
 - G1 gradient training: gated on a trainable local model and GPU budget. Do not
   claim it exists.
 - G2 component-library parity: optional owner decision only, never default
   without byte-for-byte parity.
-- G3 paid benchmark: explicit owner approval required.
-- G4 release: explicit owner approval required.
+- G3 paid benchmark: owner approval is present in-session, but no hosted model
+  credential or concrete cost cap exists in this environment.
+- G4 release: owner approval is present in-session. A release still needs a
+  concrete version target, changelog, tag decision and deploy path checked
+  immediately before use.
 
 ## Next ready node
 
-The original autonomous expansion backlog through Q13 is complete, and H19
-closed the reward-ingestion production gap. H16 remains blocked on operator
-opt-in/review of a real-run corpus before freezing; H17 depends on H16 plus
-human labels. T11 remains owner-gated; Q5, G3 and G4 remain approval-gated.
+The original autonomous expansion backlog through Q13 is complete, H19 closed
+the reward-ingestion production gap, and Q17 repaired the scripts quality suite.
+H16 remains blocked on operator opt-in/review of a real-run corpus before
+freezing; H17 depends on H16 plus human labels. T11 is owner-approved as an
+optional spike but still must be removed unless the byte diff is empty.
 
 H20b implemented the first truthful attribution path: an explicit offline
 managed-workspace execution fixture, signed ingestion of attributed measurement
 records, and export matching by ingestion provenance. Direct production-chain
-positional attribution remains a separate redesign. Do not start T11 unless the
-owner explicitly chooses the optional parity spike.
+positional attribution remains a separate redesign.
 
 ## Do not do
 

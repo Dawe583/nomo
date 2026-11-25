@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-25T20:20:36.104889Z",
+  "updatedAt": "2026-11-25T20:22:17.496845Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -2468,6 +2468,58 @@
       ],
       "stopCondition": "Stop if a repair requires weakening a test, hiding an authored artifact, or changing protected nomo-web content.",
       "completedAt": "2026-11-25T20:20:36.104653Z"
+    },
+    {
+      "id": "q5-provider-smoke",
+      "status": "done",
+      "owner": "devin-6293643153014f56bb088c9a71fde97a",
+      "dependsOn": [
+        "q17-script-suite-repair"
+      ],
+      "scope": [
+        "scripts/src/provider-smoke.mjs",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "provider smoke reports PASS or SKIP with a reason without printing a key"
+      ],
+      "verifier": [
+        "node scripts/src/provider-smoke.mjs"
+      ],
+      "evidence": [
+        "node scripts/src/provider-smoke.mjs => exit 0; stdout: SKIP provider-smoke: NOMO_SMOKE_API_KEY is not set, so nothing was sent. No provider capability is proven."
+      ],
+      "stopCondition": "Stop if a live smoke would require exposing or inventing a missing credential.",
+      "completedAt": "2026-11-25T20:22:17.496845Z"
+    },
+    {
+      "id": "q18-gated-work-evaluation",
+      "status": "done",
+      "owner": "devin-6293643153014f56bb088c9a71fde97a",
+      "dependsOn": [
+        "q5-provider-smoke"
+      ],
+      "scope": [
+        "docs/plans/2026-11-25-program-handoff.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "approved gated nodes are evaluated against concrete prerequisites without pretending approval creates credentials, labels, hardware or a release target"
+      ],
+      "verifier": [
+        "manual read of docs/plans/2026-11-25-program-handoff.md"
+      ],
+      "evidence": [
+        "Manual read after update: Q5 is SKIP because NOMO_SMOKE_API_KEY is absent; H16 still requires operator opt-in and human review of a real-run corpus; H17 depends on H16 plus human labels; G3 has owner approval but no hosted-model credential or concrete cost cap; G4 has owner approval but still requires concrete version target, changelog, tag decision and deploy path; T11 is owner-approved only as a removable byte-parity spike."
+      ],
+      "stopCondition": "Stop if execution would expose secrets, invent missing credentials or perform an unclear irreversible release.",
+      "completedAt": "2026-11-25T20:22:17.496845Z"
     }
   ]
 }
