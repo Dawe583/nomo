@@ -592,6 +592,14 @@ only; assert no prompt text or tool output reaches the file.
 
 **Verifier.** `node --test scripts/src/trajectory-export.test.mjs`.
 
+**As built.** `exportTrajectories` reads a ledger chain or bare JSONL; the
+terminal tool entries since the previous `nomo.reward.v1` record form that
+case's `toolCalls`, built from an allowlist (`name`, `klass`, `ok`). A name or
+class that is not an identifier refuses the case; a reward that does not
+recompute is refused. `ok` is `"unmeasured"` for `execute:unknown`. Grouping is
+positional until tool entries carry a case id. It exports data; it trains
+nothing.
+
 ### H10. Cost and latency weights (1 h)
 
 **Files.** `harness-settings.ts`, `harness-settings.test.ts`,
