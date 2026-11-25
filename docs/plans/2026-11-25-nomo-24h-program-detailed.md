@@ -969,6 +969,11 @@ These are real, scoped follow-ups, not wishes. ~40 h.
 
 1. **T13 Session browser**: fold sections, keyboard-only navigation, inspector
    at 120+ columns, empty state. 3 h.
+
+   As built: already present and verified. Enter folds section headings, arrow
+   keys and paging keys navigate without a mouse, the inspector is side by side
+   at 120 or more columns and replaces the list below that threshold until Esc,
+   and empty plus filtered states are explicit.
 2. **T14 Diff panel**: per-hunk staging, split/unified, side-by-side at 160+.
    3 h.
 3. **T15 Model picker**: provider groups, capability disclosure, refusal when a
