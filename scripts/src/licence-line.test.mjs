@@ -80,7 +80,11 @@ const LICENCE_LINE = new Map([
     },
   ],
   [".agents", { status: "open", why: "repository tooling, covered by the root licence" }],
+  [".devin", { status: "open", why: "agent instructions and repository tooling, covered by the root licence" }],
+  [".github", { status: "open", why: "disabled workflow definitions, covered by the root licence" }],
   [".gitlab", { status: "open", why: "issue templates, covered by the root licence" }],
+  [".nomo", { status: "open", why: "the tracked work graph, covered by the root licence" }],
+  [".ua", { status: "open", why: "generated repository understanding indexes, covered by the root licence" }],
   [".omp", { status: "open", why: "agent tooling, covered by the root licence" }],
   [".opencode", { status: "open", why: "agent definitions, covered by the root licence" }],
   [

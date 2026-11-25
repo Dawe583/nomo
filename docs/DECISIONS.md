@@ -1258,7 +1258,9 @@ it with a status. `apps/apple`, `apps/desktop`, `apps/appwrite-mcp`,
 `fixtures`, `policy`, `marketing`, `site` and the tool directories are open,
 each with the reason it is not closed. They were open before this amendment
 under the root licence; naming them narrows nothing and makes it impossible for
-a reader to guess.
+a reader to guess. The same status applies to `.devin`, `.github`, `.nomo` and
+`.ua`: agent tooling, disabled workflow definitions, the tracked work graph and
+generated repository indexes. None makes a paid entitlement decision.
 
 **Undecided now fails instead of passing.** The classification in
 `scripts/src/licence-line.test.mjs` is a partition, not a list. A top-level
