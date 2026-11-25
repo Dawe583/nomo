@@ -138,6 +138,15 @@ export function usageInputOutputLines(
   ];
 }
 
+
+/** Cost text for one record. Missing, negative and non-finite values are all
+ * unmeasured rather than zero or unknown-but-possibly-free. */
+export function usageCostText(value: unknown): string {
+  const cost = usageReportedNumber(value);
+  if (cost === undefined) return "unmeasured";
+  return Number.isInteger(cost) ? String(cost) : String(Math.round(cost * 1e6) / 1e6);
+}
+
 /** Cost as reported, or n/a. No record in the activity layer carries a cost
  * today, so this line exists to name that absence rather than print a zero. */
 export function usageCostLine(
@@ -153,10 +162,8 @@ export function usageCostLine(
     reported += 1;
   }
   if (reported === 0)
-    return fit(sanitizeText("cost n/a · no record reported a cost"), width);
-  const text = Number.isInteger(total)
-    ? String(total)
-    : String(Math.round(total * 1e6) / 1e6);
+    return fit(sanitizeText("cost unmeasured · no producer reported a cost"), width);
+  const text = usageCostText(total);
   return fit(
     sanitizeText(`cost ${text} · ${reported}/${records.length} records`),
     width,
