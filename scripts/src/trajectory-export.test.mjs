@@ -78,6 +78,18 @@ describe("trajectory-export", () => {
     assert.equal(report.refused, 0);
   });
 
+  test("a reward ingested from a bare eval file does not adopt positional tools", () => {
+    const ingested = { ...record(), rewardIngestion: { fileDigest: "a".repeat(64), index: 0, count: 1 } };
+    const chain = [
+      entry(1, { tool: "read", klass: "r0", decision: "execute:completed" }),
+      entry(2, ingested),
+    ].map((line) => JSON.stringify(line)).join("\n");
+    const report = exportTrajectories(chain);
+    assert.equal(report.trajectories.length, 1);
+    assert.deepEqual(report.trajectories[0].toolCalls, []);
+    assert.equal(report.unattributed, 1);
+  });
+
   test("no prompt text or tool output reaches the export", () => {
     const text = JSON.stringify(exportTrajectories(fixtureChain()).trajectories);
     for (const secret of [PROMPT, OUTPUT, "SECRET", "/etc/passwd", "root:x"]) assert.ok(!text.includes(secret), secret);

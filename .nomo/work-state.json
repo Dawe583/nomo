@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-25T19:22:11.863038Z",
+  "updatedAt": "2026-11-25T19:23:21.413320Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -2187,6 +2187,41 @@
         "git diff --check observed exit 0."
       ],
       "stopCondition": "Stop if documentation claims a current verifier count that was not run, hides blocked/gated nodes, or presents H20 attribution as already designed."
+    },
+    {
+      "id": "h20-bare-eval-attribution-boundary",
+      "status": "done",
+      "owner": "devin-6293643153014f56bb088c9a71fde97a",
+      "dependsOn": [
+        "h19-reward-ingestion-path",
+        "q15-program-doc-consistency"
+      ],
+      "scope": [
+        "scripts/src/trajectory-export.mjs",
+        "scripts/src/trajectory-export.test.mjs",
+        "docs/THREAT-MODEL.md",
+        "docs/plans/2026-11-25-program-handoff.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "bare-eval ingested rewards never adopt unrelated positional tool entries",
+        "direct chain reward behavior remains unchanged",
+        "unattributed positional calls are counted"
+      ],
+      "verifier": [
+        "node --test scripts/src/trajectory-export.test.mjs",
+        "node --check scripts/src/trajectory-export.mjs",
+        "git diff --check"
+      ],
+      "evidence": [
+        "Discovery verdict: current eval records do not execute tools, so adding case ids to tool entries cannot yet create truthful attribution. The truthful boundary is to export bare-eval ingested rewards with empty toolCalls.",
+        "NO_COLOR=1 node --test scripts/src/trajectory-export.test.mjs observed exit 0: tests 6, pass 6, fail 0, duration_ms 386.477459. The new test proves an ingested bare-eval reward exports empty toolCalls and counts the positional call unattributed.",
+        "node --check scripts/src/trajectory-export.mjs observed exit 0. git diff --check observed exit 0."
+      ],
+      "stopCondition": "Stop if direct chain rewards lose existing positional behavior, if bare-eval ingestion is falsely presented as tool attribution, or if prompt/tool output reaches export."
     }
   ]
 }

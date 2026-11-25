@@ -9,7 +9,9 @@
  * entries are the harness's own bookkeeping and are skipped. The tool entries
  * since the previous reward record belong to the case that record names.
  * shortcut: segmentation is by position, so interleaved cases in one chain are
- * misattributed; upgrade when tool entries carry a case id.
+ * misattributed. A reward ingested from a bare eval file carries no tool
+ * attribution evidence, so it exports with empty toolCalls rather than
+ * adopting whatever positional tool entries happen to precede it.
  *
  * Each record is built field by field from an allowlist: the tool name, its
  * reversibility class (`klass`) and whether it completed. Arguments, results,
@@ -94,11 +96,13 @@ export function exportTrajectories(raw) {
       ) {
         counts.refused += 1;
       } else {
+        const ingestedBareEval = isObject(record.rewardIngestion);
+        if (ingestedBareEval) counts.unattributed += pending.length;
         trajectories.push({
           schema: TRAJECTORY_SCHEMA,
           caseId: record.caseId,
           variantId: record.variantId,
-          toolCalls: pending,
+          toolCalls: ingestedBareEval ? [] : pending,
           verifier: { passed: record.passed, source: "harness-eval" },
           reward: record.reward,
         });
@@ -122,7 +126,7 @@ export function exportTrajectories(raw) {
       ok: outcome(record.decision),
     });
   }
-  counts.unattributed = pending.length;
+  counts.unattributed += pending.length;
   return { trajectories, ...counts };
 }
 

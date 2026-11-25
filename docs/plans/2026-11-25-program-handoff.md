@@ -51,8 +51,9 @@ Last full local dry run was recorded in Q8 and merged to `main` as `96675914`.
   Q11 fixed the CLI 1.0.1 versus root 0.1.0 version mismatch. The full scripts
   suite has not been re-run after H19, so no smaller current failure count is
   claimed here.
-- H9 trajectory grouping is positional until tool entries carry case ids.
-  No attribution redesign is claimed.
+- H9 trajectory grouping is positional for direct chain rewards until tool entries carry case ids.
+  Bare-eval ingested rewards export with empty tool calls rather than adopting
+  unrelated positional entries. Full attribution redesign remains discovery.
 
 ## Blocked or gated
 
