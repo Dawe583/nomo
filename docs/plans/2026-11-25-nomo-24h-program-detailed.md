@@ -769,6 +769,10 @@ no claim of RL training.
 
 **Verifier.** manual read.
 
+**As built.** `docs/HARNESS-LEARNING.md` now separates bandit, policy search
+and gradient RL. It states that this repository has no trainable local model,
+GPU budget or training path, so no NOMO surface may claim RL training.
+
 ## 8. Track D — quality work packages
 
 | id | steps | verifier | acceptance |
