@@ -9482,3 +9482,9 @@ Commit 3280db90942408dbc286a70f42124b4a3a33b277, subject Polish shared TUI motio
   41/41, Workbench typecheck exit 0, wider Workbench suite 1182 tests, 1180 pass, 0 fail, 2 skipped. This remains a
   contextual bandit, not RL.
   [[NOMO TUI Control Center]]
+- 2026-11-25 · H5 and R5 completed in the free parent session after child delegation proved mode-limited.
+  CLI and TUI activation now require the full exact 64 hexadecimal digest; prefixes are display text only and are
+  refused before pending proposals are read. Rollback remains one command and sampled-arm activation uses the same
+  exact digest gate. Observed: CLI harness 19/19, TUI proposal tests 7/7, refine-trigger 32/32, both typechecks exit 0,
+  full TUI 529/529, wider Workbench 1187 tests, 1185 pass, 0 fail, 2 skipped. Contextual bandit only, not RL.
+  [[NOMO TUI Control Center]]

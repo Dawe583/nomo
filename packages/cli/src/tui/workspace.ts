@@ -5365,25 +5365,20 @@ ${(doc.content ?? "").slice(0, 2000)}`;
    * so it is the one path that never acts on a list row or a bare command.
    */
   async prepareHarnessDecision(
-    digestPrefix: string,
+    digest: string,
     decision: "approve" | "reject",
   ) {
     if (!this.sessionId) throw Error("Select a conversation.");
-    if (!/^[a-f0-9]{8,64}$/.test(digestPrefix))
-      throw Error("Enter at least 8 hexadecimal digest characters.");
+    if (!/^[a-f0-9]{64}$/.test(digest))
+      throw Error("Enter the full 64 hexadecimal digest characters.");
     const pending = await this.workbench.pendingApprovalsFor(this.sessionId);
-    const matches = pending.filter((proposal) =>
-      proposal.digest.startsWith(digestPrefix),
-    );
-    if (matches.length !== 1)
+    const match = pending.find((proposal) => proposal.digest === digest);
+    if (!match)
       throw Error(
-        matches.length > 1
-          ? `Digest prefix ${digestPrefix} is ambiguous. Enter more characters.`
-          : pending.length
-            ? `No pending proposal starts with ${digestPrefix}. /harness lists them.`
-            : "No Harness proposal is awaiting an operator decision.",
+        pending.length
+          ? `No pending proposal exactly matches that digest. /harness lists them.`
+          : "No Harness proposal is awaiting an operator decision.",
       );
-    const match = matches[0]!;
     const sessionId = this.sessionId;
     // Proposal text is operator- and model-authored and lands in terminal
     // rows, so control characters are escaped before paint, not after.
@@ -9823,10 +9818,10 @@ ${(doc.content ?? "").slice(0, 2000)}`;
           (item) => `${item.id}: ${item.path ?? "not detected on PATH"}`,
         ),
         "",
-        ...pending.map(
-          (approval) =>
-            `${approval.digest.slice(0, 8)}… ${escapeTerminalText(approval.summary)} (${approval.proposal.edits.length} edits)`,
-        ),
+        ...pending.flatMap((approval) => [
+          approval.digest,
+          `  ${escapeTerminalText(approval.summary)} (${approval.proposal.edits.length} edits)`,
+        ]),
         pending.length
           ? "/harness approve DIGEST or /harness reject DIGEST opens the exact proposal for confirmation."
           : `No Harness proposal is awaiting a decision in this conversation (${this.sessionId ?? "none selected"}).`,

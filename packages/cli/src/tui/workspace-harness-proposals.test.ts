@@ -55,7 +55,7 @@ test("TUI shows the exact proposal before approving it", async (t) => {
   await ui.command("/harness");
   assert.match(ui.detail!.join("\n"), /remember the verified approval pattern/);
 
-  await ui.command(`/harness approve ${created.proposalDigest!.slice(0, 8)}`);
+  await ui.command(`/harness approve ${created.proposalDigest!}`);
   assert.match(ui.confirmation!.title, /APPROVE HARNESS PROPOSAL/);
   assert.match(ui.confirmation!.lines.join("\n"), /The operator repeatedly approved/);
   assert.equal((await app.harnessEntries(app.get(sessionId)!.workspace)).length, 0);
@@ -102,7 +102,7 @@ test("TUI confirms a served review and reports the reviewer's decline", async (t
 test("TUI rejection records the decision without activating the proposal", async (t) => {
   const { app, ui, sessionId } = await fixture(t);
   const created = await app.refineHarness(sessionId, proposal());
-  await ui.command(`/harness reject ${created.proposalDigest!.slice(0, 8)}`);
+  await ui.command(`/harness reject ${created.proposalDigest!}`);
   assert.match(ui.confirmation!.title, /REJECT HARNESS PROPOSAL/);
   await ui.confirm();
 
@@ -119,8 +119,9 @@ test("TUI requires an explicit digest before showing an approval", async (t) => 
   const { app, ui, sessionId } = await fixture(t);
   await app.refineHarness(sessionId, proposal());
 
-  await assert.rejects(ui.command("/harness approve"), /at least 8 hexadecimal/);
-  await assert.rejects(ui.command("/harness approve abc"), /at least 8 hexadecimal/);
+  await assert.rejects(ui.command("/harness approve"), /full 64 hexadecimal/);
+  await assert.rejects(ui.command("/harness approve abc"), /full 64 hexadecimal/);
+  await assert.rejects(ui.command(`/harness approve ${"a".repeat(8)}`), /full 64 hexadecimal/);
   assert.equal(ui.confirmation, undefined);
   assert.equal((await app.pendingApprovalsFor(sessionId)).length, 1);
 });
@@ -153,7 +154,7 @@ test("TUI confirmation includes every field from each exact edit", async (t) => 
     ],
   };
   const created = await app.refineHarness(sessionId, complete);
-  await ui.command(`/harness approve ${created.proposalDigest!.slice(0, 8)}`);
+  await ui.command(`/harness approve ${created.proposalDigest!}`);
   const shown = ui.confirmation!.lines.join("\n");
   assert.match(shown, /"rollbackId": "restore-old-entry"/);
   assert.match(shown, /"content": "content field remains visible too"/);
@@ -183,7 +184,7 @@ test("proposal free text is escaped in the pending list and confirmation", async
   assert.ok(!pending.includes("\u202e"));
   assert.ok(!pending.includes("\u001b"));
 
-  await ui.command(`/harness approve ${created.proposalDigest!.slice(0, 8)}`);
+  await ui.command(`/harness approve ${created.proposalDigest!}`);
   const confirmation = ui.confirmation!.lines.join("\n");
   assert.ok(confirmation.includes("Summary: summary \\u202e reversed \\u001b[31mred\\u001b[0m"));
   assert.ok(confirmation.includes("Rationale: rationale \\u202e reversed \\u001b[2J"));

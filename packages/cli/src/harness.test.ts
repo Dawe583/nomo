@@ -213,44 +213,21 @@ test("a machine with no workspace is refused, and none is created", async () => 
   );
 });
 
-test("a digest prefix names the proposal, and an ambiguous one is refused", async () => {
+test("a digest prefix is refused even when it names exactly one proposal", async () => {
   const { surface, calls } = fake();
   const terminal = io();
   const code = await runHarnessCommand(
-    ["approve", "--session", "s1", "aaaaaaa"],
+    ["approve", "--session", "s1", proposal.digest.slice(0, 8)],
     terminal,
     { workbench: async () => surface },
   );
-  assert.equal(code, 0);
-  // The prefix is resolved against the pending proposals, so the list is
-  // read before the decision is made.
-  assert.deepEqual(calls, [
-    { method: "list", args: ["s1"] },
-    { method: "approve", args: ["s1", proposal.digest] },
-  ]);
-
-  const ambiguous = io();
-  const refused = await runHarnessCommand(
-    ["approve", "--session", "s1", "z"],
-    ambiguous,
-    {
-      workbench: async () => ({
-        ...surface,
-        async pendingApprovalsFor() {
-          return [
-            { ...proposal, digest: "z1".repeat(32) },
-            { ...proposal, digest: "z2".repeat(32) },
-          ];
-        },
-      }),
-    },
-  );
-  assert.equal(refused, 1);
-  assert.match(ambiguous.err.join("\n"), /names 2 pending proposals/);
+  assert.equal(code, 1);
+  assert.match(terminal.err.join("\n"), /full 64 hexadecimal digest/);
+  assert.deepEqual(calls, []);
 });
 
-test("a digest prefix that names nothing is refused", async () => {
-  const { surface } = fake();
+test("a malformed digest is refused before any pending list is read", async () => {
+  const { surface, calls } = fake();
   const terminal = io();
   const code = await runHarnessCommand(
     ["approve", "--session", "s1", "fffffff"],
@@ -258,7 +235,8 @@ test("a digest prefix that names nothing is refused", async () => {
     { workbench: async () => surface },
   );
   assert.equal(code, 1);
-  assert.match(terminal.err.join("\n"), /No pending proposal matches the digest prefix/);
+  assert.match(terminal.err.join("\n"), /full 64 hexadecimal digest/);
+  assert.deepEqual(calls, []);
 });
 
 test("entries shows what the harness holds", async () => {
