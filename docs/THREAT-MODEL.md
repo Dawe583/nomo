@@ -710,9 +710,12 @@ deputy to smuggle prompt or tool-output content into a training artifact.
 semantics; it is not a privilege boundary and does not protect against malware
 already running as the operator.
 
-The exporter has one integrity limitation by design: direct production-chain
-cases are still segmented by position, so interleaved cases in one chain can be
-misattributed until production tool entries carry a case id. Explicit
+The exporter has one integrity limitation by design: legacy direct
+production-chain entries without `harnessEval` are still segmented by position,
+so interleaved legacy cases in one chain can be misattributed. New production
+eval runs started through `startHarnessEval` bind validated case, variant and
+run identity into the signed entries they cause, and the exporter groups those
+entries without position. Explicit
 `nomo.eval-tool.v1` measurements are matched by case id and, after ingestion,
 by the signed ingestion file digest. They therefore override positional
 grouping for their own measurement. Rewards ingested from bare eval files
@@ -727,7 +730,7 @@ later case.
 
 | Risk | Current control | Residual truth |
 | --- | --- | --- |
-| Prompt or output leaks into trajectory export | Field allowlist plus sentinel tests | No leak observed; direct-chain positional misattribution remains |
+| Prompt or output leaks into trajectory export | Field allowlist plus sentinel tests | No leak observed; positional misattribution remains only for legacy entries without `harnessEval` |
 | Tampered reward is analyzed as valid | Exact recomputation, invalid case refused | Same-user chain/key compromise remains outside signature proof |
 | Eval fixture is mistaken for capability evidence | Runner and docs call it plumbing only | Human misuse of the number cannot be prevented mechanically |
 | Future model runner gains network or provider access | Not present; requires explicit approval | Must be reviewed as a new trust boundary before activation |
