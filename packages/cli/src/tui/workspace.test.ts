@@ -42,6 +42,7 @@ import {
   chatRows,
   commandSuggestions,
   compactTaskHeaderLabel,
+  COMPOSER_SLOT_LADDER,
   composerAttachmentChip,
   composerBottomRail,
   composerContextChip,
@@ -5048,6 +5049,130 @@ test("the queue chip only uses spare composer rail cells", () => {
   assert.equal(narrow.length, 22);
 });
 
+test("the composer slot ladder drops the lowest rung whole at five widths", () => {
+  // DESIGN.md slot ladder: the label and the hint are required, then
+  // queue > attachment > model > context > pet dock. There is no mode slot:
+  // the mode keeps its status-row pill (docs/DECISIONS.md, 2026-11-25).
+  assert.deepEqual(
+    [...COMPOSER_SLOT_LADDER],
+    ["queue", "attachment", "model", "context", "dock"],
+  );
+  const slots = {
+    queue: "≡ 1 queued",
+    attachment: "@plan.md",
+    model: "◐ fixture-model",
+    context: "ctx ▰▰▰▱▱ 62%",
+    dock: "▦ writing...",
+  } as const;
+  const glyphs = { tl: "╭", h: "─", tr: "╮" };
+  const seen: Record<number, string[]> = {};
+  for (const width of [40, 80, 120, 160, 200]) {
+    const hint = composerHint({
+      draft: "",
+      focused: true,
+      running: false,
+      approval: false,
+      width,
+    });
+    const rail = composerTopRail({
+      label: "Draft",
+      hint,
+      ...slots,
+      width,
+      ...glyphs,
+    });
+    assert.equal(visibleLength(rail), width, `rail ${width} is not ${width} cells`);
+    assert.ok(rail.startsWith(`╭─ Draft ${hint}`), `${width} loses the hint`);
+    assert.ok(rail.endsWith("╮"), `${width} loses the corner`);
+    assert.ok(!rail.includes("…"), `${width} clips a slot instead of dropping it`);
+    // Every slot is either whole or absent, and they appear in ladder order.
+    const present = COMPOSER_SLOT_LADDER.filter((slot) =>
+      rail.includes(slots[slot]),
+    );
+    const positions = present.map((slot) => rail.indexOf(slots[slot]));
+    assert.deepEqual(
+      positions,
+      [...positions].sort((a, b) => a - b),
+      `${width} slots out of ladder order`,
+    );
+    seen[width] = present;
+  }
+  // Narrow rails keep the top rungs and drop the rest whole.
+  assert.deepEqual(seen[40], ["queue", "attachment"]);
+  assert.deepEqual(seen[80], ["queue", "attachment", "model"]);
+  for (const width of [120, 160, 200])
+    assert.deepEqual(seen[width], [...COMPOSER_SLOT_LADDER], `${width}`);
+});
+
+test("a long rail label gives up whole words before the action hint", () => {
+  const glyphs = { tl: "╭", h: "─", tr: "╮" };
+  const review = composerTopRail({
+    label: "Draft Review required",
+    hint: "/approvals to review",
+    queue: "≡ 1 queued",
+    width: 40,
+    ...glyphs,
+  });
+  assert.equal(visibleLength(review), 40);
+  assert.ok(review.includes("/approvals to review"), "40 loses the hint");
+  assert.ok(review.startsWith("╭─ Draft Review /approvals"), review);
+  assert.ok(!review.includes("…"), "a word was clipped");
+  // A wide rail keeps the whole label.
+  const wide = composerTopRail({
+    label: "Draft Review required",
+    hint: "/approvals to review",
+    width: 80,
+    ...glyphs,
+  });
+  assert.ok(wide.startsWith("╭─ Draft Review required /approvals to review"));
+  // The first label word always stays, so the rail still names itself.
+  const tiny = composerTopRail({
+    label: "Draft Review required",
+    hint: "/approvals to review",
+    width: 24,
+    ...glyphs,
+  });
+  assert.equal(visibleLength(tiny), 24);
+  assert.ok(tiny.startsWith("╭─ Draft"), tiny);
+});
+
+test("the Chat composer rail is width exact at five widths with no mode chip", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-tui-slot-ladder-"));
+  const app = new Workbench({ NOMO_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
+  ui.choose("chat");
+  ui.model = "fixture-model";
+  ui.queuedPrompt = "next step";
+  for (const [width, height] of [
+    [40, 12],
+    [80, 24],
+    [120, 40],
+    [160, 45],
+    [200, 48],
+  ] as const) {
+    const rows = stripAnsi(
+      renderWorkspace(ui, width, height, "", true, false, {
+        color: false,
+        motion: false,
+      }),
+    ).split("\n");
+    assert.equal(rows.length, height, `${width}x${height} rows`);
+    const index = rows.findIndex((row) => row.includes("╭─ Draft"));
+    assert.ok(index >= 0, `${width}x${height} loses the rail`);
+    const row = rows[index]!;
+    assert.equal(visibleLength(row), width, `${width}x${height} frame row`);
+    const rail = row.slice(row.indexOf("╭"), row.indexOf("╮") + 1);
+    assert.ok(rail.includes("Enter send"), `${width}x${height} loses the hint`);
+    assert.ok(rail.includes("1 queued"), `${width}x${height} loses the queue`);
+    assert.ok(!/mode:|\bnormal\b/i.test(rail), `${width}x${height} mode chip`);
+    assert.ok(!rail.includes("…"), `${width}x${height} clips a slot`);
+  }
+});
+
 test("the composer rails keep their width and freeze under reduced motion", () => {
   const glyphs = { tl: "╭", h: "─", tr: "╮", bl: "╰", br: "╯" };
   for (const width of [20, 40, 56, 80, 200]) {
@@ -5228,9 +5353,8 @@ test("the rail drops a status chip before the hint or a review key", () => {
     "ctx ▰▰▰▱▱ 62%",
   ])
     assert.ok(full.includes(slot), `120 loses ${slot}`);
-  // A narrower rail drops whole slots from the lowest priority up: the
-  // context meter and the model go before the attachment, and the hint and
-  // the dock always survive.
+  // A narrower rail drops whole slots from the lowest priority up; a short
+  // lower slot (the dock) may still use cells a longer higher one could not.
   const medium = composerTopRail({
     label: "Draft",
     hint: "Enter send · Ctrl+J new line",
@@ -5257,8 +5381,10 @@ test("the rail drops a status chip before the hint or a review key", () => {
   });
   assert.equal(visibleLength(narrow), 48);
   assert.ok(narrow.includes("Enter send"), "the hint still survives");
-  assert.ok(narrow.includes("▦ idle"), "the dock still survives");
-  assert.ok(!narrow.includes("@plan.md"), "the attachment is dropped last");
+  // The pet dock is the lowest rung of the slot ladder (DESIGN.md), so it
+  // goes before the attachment the draft really references.
+  assert.ok(narrow.includes("@plan.md"), "the attachment outranks the dock");
+  assert.ok(!narrow.includes("▦ idle"), "the dock is dropped first");
   // The compact review rail keeps both decision keys at forty columns.
   const review = composerTopRail({
     label: "Review",

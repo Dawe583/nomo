@@ -36,8 +36,11 @@ action hint are required; every other slot is optional and is added whole, in
 priority order, only when it fits. A slot that does not fit is dropped whole and
 the next, shorter slot is still considered. No slot is clipped mid-word, and no
 optional slot may displace the hint or a review key. Empty slots spend no cells.
-The current order in `composerTopRail` is pet dock, attachment, model, context,
-queue.
+The order is `COMPOSER_SLOT_LADDER` in `workspace.ts`: queue > attachment >
+model > context > pet dock. When the label and the hint do not fit together,
+the label gives up whole trailing words (keeping its first) before the hint is
+lost. There is no composer mode chip: the mode keeps its status-row pill
+(`docs/DECISIONS.md`, "Composer slot ladder and no mode chip, 2026-11-25").
 
 ## Drop order
 
@@ -55,8 +58,10 @@ and below.
 ## The 40-column rule
 
 At 40 x 12 every screen still shows its title, its primary fact and its
-escape or action hint (`Enter send`, `Esc stop`, `Esc dismiss`, `/approvals to
-review`, `y allow · n deny`). The composer adds no row at 40 columns. The PTY
+escape or action hint (`Enter send`, `Esc stop`, `Esc dismiss`, `/approvals`,
+`y allow · n deny`). At 56 columns and below a hint keeps only its first clause
+(`/approvals to review` becomes `/approvals`), so the review rail still reads
+`Draft Review required /approvals`. The composer adds no row at 40 columns. The PTY
 matrix in `scripts/src/verify-tui-terminal.py` covers 40x12, 80x24, 120x40,
 160x45 and 200x48.
 
