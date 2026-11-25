@@ -6,7 +6,7 @@ import { readLedgerReason } from "./attribution.ts";
 import { readLedgerReversal, reversalFinding } from "./reversal.ts";
 import { sha256Hex, verifySignature } from "./sign.ts";
 import { signingPreimage } from "./index.ts";
-import type { JsonlEntry } from "./store.ts";
+import { readRewardRecordSchema, type JsonlEntry } from "./store.ts";
 
 export type PublicKeyLookup =
   | Uint8Array
@@ -142,6 +142,9 @@ export async function verifyChain(
     if (typeof entry.body !== "object" || entry.body === null ||
         !("workspace" in entry.body) || entry.body.workspace !== entry.workspace)
       return fail(`entry ${entry.seq} workspace does not match its signed body`);
+    const rewardSchema = readRewardRecordSchema(entry.body, entry.seq);
+    if (rewardSchema.kind === "unknown-version")
+      return fail(`schema: ${rewardSchema.detail}`);
     const reason = readLedgerReason(entry.body, entry.seq);
     if (reason.kind === "malformed")
       return fail(`attribution: ${reason.detail}`);
@@ -285,8 +288,11 @@ export async function verifyChainRecords(
     ) {
       corrupt = `workspace: entry ${entry.seq} does not match its signed body`;
     } else {
+      const rewardSchema = readRewardRecordSchema(entry.body, entry.seq);
+      if (rewardSchema.kind === "unknown-version")
+        corrupt = `schema: ${rewardSchema.detail}`;
       const attribution = readLedgerReason(entry.body, entry.seq);
-      if (attribution.kind === "malformed")
+      if (corrupt === undefined && attribution.kind === "malformed")
         corrupt = `attribution: ${attribution.detail}`;
       if (corrupt === undefined) {
         const reversal = readLedgerReversal(entry.body, entry.seq);

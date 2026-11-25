@@ -6,7 +6,7 @@ import { join } from "node:path";
 
 import { devKeyProvider } from "./sign.ts";
 import { jsonlStore } from "./store.ts";
-import { verifyLedgerFile } from "./verify.ts";
+import { readLedgerEntries, verifyChainRecords, verifyLedgerFile } from "./verify.ts";
 
 const workspace = "verify-ws";
 
@@ -108,6 +108,53 @@ describe("verifyLedgerFile", () => {
     assert.equal(result.lines.length, 2);
     assert.equal(result.lines.some((line) => line.seq === 3), false);
     assert.equal(result.lines.filter((line) => line.ok).length, 1);
+  });
+
+
+  test("reward schema v1 verifies beside schema-less legacy records", async () => {
+    const { dir, file, key } = await seedLedger(1);
+    const store = jsonlStore(key, { dir });
+    await store.append({
+      workspace,
+      schema: "nomo.reward.v1",
+      caseId: "case-1",
+      variantId: "variant-1",
+    });
+    const keyId = await key.currentKeyId();
+    const publicKey = await key.publicKey(keyId);
+    assert.ok(publicKey !== null);
+
+    const result = await verifyLedgerFile(file, { publicKey });
+    assert.equal(result.ok, true);
+    assert.equal(result.checked, 2);
+  });
+
+  test("an unknown reward schema version is reported by every ledger reader", async () => {
+    const { dir, file, key } = await seedLedger(1);
+    const store = jsonlStore(key, { dir });
+    await store.append({
+      workspace,
+      schema: "nomo.reward.v2",
+      caseId: "case-1",
+      variantId: "variant-1",
+    });
+    const keyId = await key.currentKeyId();
+    const publicKey = await key.publicKey(keyId);
+    assert.ok(publicKey !== null);
+
+    const strict = await verifyLedgerFile(file, { publicKey });
+    assert.equal(strict.ok, false);
+    assert.equal(strict.checked, 2);
+    assert.match(strict.reason!, /schema: entry 2 carries unknown reward schema version "nomo\.reward\.v2"/);
+
+    const local = await store.verify(workspace);
+    assert.equal(local.ok, false);
+    assert.match(local.reason!, /unknown reward schema version/);
+
+    const records = await verifyChainRecords(await readLedgerEntries(file), { publicKey });
+    assert.equal(records.ok, false);
+    assert.equal(records.records[1]!.status, "corrupt");
+    assert.match(records.records[1]!.reason!, /unknown reward schema version/);
   });
 
   test("the wrong public key fails signature verification", async () => {
