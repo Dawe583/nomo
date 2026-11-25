@@ -9580,3 +9580,5 @@ Commit 3280db90942408dbc286a70f42124b4a3a33b277, subject Polish shared TUI motio
   Deleted `scripts/src/verify-opentui-terminal.py` because the additive OpenTUI adapter is gone and no package, script, CI or operator doc calls the verifier. Historical mentions remain only as history. Verified: caller scan empty, git diff check 0. [[NOMO TUI Control Center]]
 - 2026-11-25 · T13 session browser verified in the free parent session.
   Required behavior already existed, so no duplicate implementation was added: folding sections, keyboard-only navigation, 120+ side-by-side inspector, narrow inspector/Escape path, empty and filter states. Verified: workspace tests 128/128, CLI typecheck 0. [[NOMO TUI Control Center]]
+- 2026-11-25 · T14 diff panel completed in the free parent session.
+  Existing immutable hunk staging state was kept; the missing acceptance proof now covers unified/split rendering, side-by-side columns at 160 and per-hunk staged scope. Verified: workspace parity 103/103, CLI typecheck 0, wider TUI 544/544. [[NOMO TUI Control Center]]
