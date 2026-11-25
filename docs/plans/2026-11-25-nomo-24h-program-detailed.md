@@ -1038,6 +1038,15 @@ These are real, scoped follow-ups, not wishes. ~40 h.
     or success. No arm is deployed and no model is trained.
 11. **Q11 Packaging**: install from a tarball, run the TUI, verify the launcher.
     2 h.
+
+    As built: every versioned manifest now moves together at 1.0.1, closing
+    the previously named release packaging mismatch. The CLI clean-install
+    integration packs the built tarball, installs it outside the workspace,
+    executes the installed `.bin/nomo` launcher for `--version`, then smoke
+    tests that same launcher in a real PTY: the TUI renders the NOMO composer,
+    double Ctrl+D exits cleanly, and alternate screen, bracketed paste and
+    termios are restored. The npm-registry integration remains explicitly
+    opt-in through `NOMO_NETWORK_PACKAGING_TEST=1`.
 12. **Q12 Docs**: operator handbook refresh for the new commands. 2 h.
 13. **Q13 Security review**: threat model for the eval runner and trajectory
     export. 3 h.
