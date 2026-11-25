@@ -9529,3 +9529,8 @@ Commit 3280db90942408dbc286a70f42124b4a3a33b277, subject Polish shared TUI motio
   under the operator's current cost and latency weights. `nomo harness trend` remains covered for signed activation
   effects. Observed: CLI harness tests 21/21, CLI plus TUI proposal tests 28/28, CLI typecheck exit 0.
   [[NOMO TUI Control Center]]
+- 2026-11-25 · H15 end-to-end fixture dry run completed in the free parent session.
+  The fixture now activates one exact-digest proposal in an isolated Workbench, runs frozen eval v2 through the offline
+  runner, writes the first measured reward into the workspace chain through `recordHarnessReward`, reads it back with
+  `nomo harness reward`, and rolls the activation back. No live model, provider or network call. Observed: H15 test 1/1,
+  all `scripts/src/harness-*.test.mjs` 42/42, Workbench typecheck exit 0. [[NOMO TUI Control Center]]
