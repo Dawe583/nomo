@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-25T20:18:10.532304Z",
+  "updatedAt": "2026-11-25T20:19:50.772507Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -2395,6 +2395,41 @@
       ],
       "stopCondition": "Stop if any directory actually makes a paid entitlement decision or carries third-party content needing separate licence review.",
       "completedAt": "2026-11-25T20:18:10.532186Z"
+    },
+    {
+      "id": "q17d-no-dash-scope-repair",
+      "status": "done",
+      "owner": "devin-6293643153014f56bb088c9a71fde97a",
+      "dependsOn": [
+        "q17c-licence-partition-repair"
+      ],
+      "scope": [
+        "scripts/src/no-dash.test.mjs",
+        "docs/**",
+        "packages/cli/src/tui/workspace.ts",
+        "packages/cli/src/tui/workspace.test.ts",
+        "packages/cli/src/tui/test/visual-snapshots.json",
+        "scripts/src/module-inventory.test.mjs",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "authored active source and docs contain no em or en dash",
+        "generated scan artifacts are explicitly scoped out as non-authored text",
+        "intentional TUI glyph change is reviewed and snapshot hashes refreshed"
+      ],
+      "verifier": [
+        "node --test scripts/src/no-dash.test.mjs",
+        "node --test packages/cli/src/tui/visual-snapshots.test.ts"
+      ],
+      "evidence": [
+        "NO_COLOR=1 node --test scripts/src/no-dash.test.mjs => exit 0; tests 1, pass 1, fail 0, duration_ms 68.103667",
+        "NOMO_UPDATE_SNAPSHOTS=1 NO_COLOR=1 node --test packages/cli/src/tui/visual-snapshots.test.ts => exit 0, refreshing 11 intentional hash entries after the em dash was removed from authored TUI copy; immediate rerun NO_COLOR=1 node --test packages/cli/src/tui/visual-snapshots.test.ts => exit 0; tests 2, pass 2, fail 0, duration_ms 359.641083"
+      ],
+      "stopCondition": "Stop if dash replacement changes a protocol literal, external quotation, or integrity-pinned document.",
+      "completedAt": "2026-11-25T20:19:50.772395Z"
     }
   ]
 }

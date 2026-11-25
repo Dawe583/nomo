@@ -405,7 +405,7 @@ Use the installed `understand` skill and its already-built local plugin. The cur
 
 ### 2026-11-10 Composer geometry and Settings activation
 
-- Fixed the framed Chat composer geometry: text wrapping now reserves the frame sides and prompt/caret cells, each input row stays inside the vertical rails, and a separate full-width bottom rule closes the frame symmetrically. Below 12 columns it falls back to the filled composer. Framed input text now uses foreground-only styling, so it inherits the terminal surface without the gray block. When context capacity or usage is unavailable, the composer omits the missing metric instead of showing `— · —%`; an empty status rail becomes a continuous border. Available context metrics use the existing semantic context icon. The terminal canvas and composer editing behavior remain unchanged.
+- Fixed the framed Chat composer geometry: text wrapping now reserves the frame sides and prompt/caret cells, each input row stays inside the vertical rails, and a separate full-width bottom rule closes the frame symmetrically. Below 12 columns it falls back to the filled composer. Framed input text now uses foreground-only styling, so it inherits the terminal surface without the gray block. When context capacity or usage is unavailable, the composer omits the missing metric instead of showing `- · -%`; an empty status rail becomes a continuous border. Available context metrics use the existing semantic context icon. The terminal canvas and composer editing behavior remain unchanged.
 - Settings mouse behavior now follows the OMP focus/activate pattern: clicking another row selects it; clicking the selected row again activates it. Moving away from an active inline editor cancels that unsaved edit and reports the outcome. The Settings README documents this behavior.
 - Verification after the final source edit: Prettier check, CLI typecheck, local bundle build, `node --check packages/cli/dist/nomo.mjs`, `/Users/dawe/.local/bin/nomo --version` (`1.0.1`), and scoped `git diff --check` passed. No TUI tests or PTY ran. The screenshot's broken bottom protrusion, gray composer fill, and placeholder metrics are addressed in source; the user's live-terminal visual review remains the final appearance check.
 
@@ -487,7 +487,7 @@ Verification: CLI typecheck, focused Prettier check, scoped `git diff --check`, 
 
 ## 2026-11-10 Settings narrow group hint and terminal canvas audit
 
-At 32–47 columns, Settings now exposes the already-supported Ctrl+Left/Right group navigation in its concise help row. Source review confirmed `palette.bg` is not painted onto the terminal canvas and the framed composer uses foreground-only paint, so the terminal's background remains inherited.
+At 32-47 columns, Settings now exposes the already-supported Ctrl+Left/Right group navigation in its concise help row. Source review confirmed `palette.bg` is not painted onto the terminal canvas and the framed composer uses foreground-only paint, so the terminal's background remains inherited.
 
 Verification: CLI typecheck, focused Prettier check, scoped `git diff --check`, CLI bundle, bundle syntax checks, and local `/Users/dawe/.local/bin/nomo --version` (`nomo 1.0.1`) passed. No TUI suite or PTY ran. Rendered narrow layout and live visual acceptance remain open.
 

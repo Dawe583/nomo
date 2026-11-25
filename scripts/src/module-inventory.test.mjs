@@ -12,7 +12,7 @@
  *
  * So this gate asks one question per module: does any non-test file outside the
  * module itself import it? The importer roots are the places that can legitimately
- * reach a workbench module — the workbench itself (including its subdirectories,
+ * reach a workbench module - the workbench itself (including its subdirectories,
  * which is where the provider adapters live), the CLI, the control plane and the
  * scripts. Test files are excluded from both sides: a module that only its own
  * test imports has no production caller, which is exactly the defect.

@@ -69,7 +69,7 @@ status: append-only
 - Complete the remaining local demo gates: full test suite, build and disposable fixture verification. Use the implementation plan as the source of truth.
 - The 639 uncommitted entries on `harness/settled-review-race` and review worktree `nomo-settled-review` were audited, verified, and committed in two steps:
   1. `6e513aa`: Full repository rename sweep from Void to Nomo across 645 files (packages, CLI binaries, Swift app targets, Python transport, docs, agents, marketing assets). Includes the TUI status layout fix (`packages/cli/src/tui/workspace.ts`, verified 34/34), `env-keys.ts` required by HEAD's `agent-config.test.ts`, and theme-config. Untracked compiled binary `test_env` and personal harness config `WATCHDOG.yml` were excluded and added to `.gitignore`.
-  2. `632078c`: Incomplete branch snapshot retry fix in `packages/workbench/src/index.ts` and `harness-refinement-ledger.test.ts` (15/15 pass) — prevents child workspace inconsistency when parent workspace changes between failed attempt and retry.
+  2. `632078c`: Incomplete branch snapshot retry fix in `packages/workbench/src/index.ts` and `harness-refinement-ledger.test.ts` (15/15 pass) - prevents child workspace inconsistency when parent workspace changes between failed attempt and retry.
 - Full typecheck passed cleanly across all 11 workspace packages + UI. Release packaging passed 26/26, doc-truth passed 9/9, TUI workspace tests passed 34/34.
 - Both `harness/settled-review-race-reviewed` and `harness/settled-review-race` pushed to GitHub `Dawe583/void` at `632078c`. Root checkout clean except 2 untracked OpenCode/Graphify tool configs. Note: this branch diverged from the feature branch `docs/nomo-agent-identity-fleet-2026-10-08` at `b39a7b0`; merging the two later is a planned integration task.
 
@@ -94,7 +94,7 @@ status: append-only
 - `origin/main` is at `953f6ba` (TUI live document preview); the shared `.prime-coordination-note.md` was refreshed with this state. The main checkout's dirty TUI files were left untouched.
 - Merger completed on a new branch `merge/origin-main-into-lane` and pushed at
   `947a7b3`: merge commit `53f8bef` (49 conflicted files, git merge chosen
-  over rebase — the same surface would have repeated 51 times; the superseded
+  over rebase - the same surface would have repeated 51 times; the superseded
   score/proposal/pass/runtime/gate/trigger modules are byte-identical on
   `origin/main` to the `harness/settled-review-race` cut, so the lane's
   contracts win there, per `docs/OMPHARNESS-SUPERSEDED-KUS7.md`) plus
@@ -110,7 +110,7 @@ documents`; the NOMO env convention retained, `LOCAL_AGENT_GRANT_*` from
   workbench 484/484, `npx tsc` clean for both workbench and cli, TUI 229/230
   (the single failure is the pre-existing node SQLite ExperimentalWarning on
   the spawned binary's stderr, reproduced unchanged on a clean `aff5ee6`
-  throwaway worktree — not a regression, in `workspace-terminal.test.ts`).
+  throwaway worktree - not a regression, in `workspace-terminal.test.ts`).
   The env-var-truth guard passes 11/11; legacy `VOID_*` spellings fall back via
   `envValue` in `packages/ledger/src/env-compat.ts`.
 - Landing on `main` is still paused at the HUMAN edge: `origin/main` is on
@@ -126,7 +126,7 @@ documents`; the NOMO env convention retained, `LOCAL_AGENT_GRANT_*` from
   `merge/origin-main-into-lane` (pushed at `aea765f`; coordination note
   refresh `e04fcc6`). Four parallel review lenses ran over
   `git diff origin/main..HEAD`: correctness 0 findings, security 0,
-  truthfulness 7, skeptic 2, plus one found during FIX — the merge
+  truthfulness 7, skeptic 2, plus one found during FIX - the merge
   resolution had silently dropped the lane's four score-row tests from
   `workspace-harness-rows.test.ts`, leaving the `harness:scores` row and
   the `/harness scores` command with no coverage at all.
@@ -134,11 +134,11 @@ documents`; the NOMO env convention retained, `LOCAL_AGENT_GRANT_*` from
   two model calls for one operator intent; a second request now joins the
   running round's outcome (reproduced first: 2 calls, then 1);
   (2) a manual request refused for a missing provider stayed armed and
-  spent a model call on the next settled turn — the provider check now
+  spent a model call on the next settled turn - the provider check now
   runs before the flag is set; (3) the boundary write-back merges a manual
   arm or settled count recorded during the round instead of overwriting it
   (D-2026-10-16-8); (4) the `/refine` legend advertised a command with no
-  dispatch — removed, `/harness` legend and cheat sheet now name all verbs;
+  dispatch - removed, `/harness` legend and cheat sheet now name all verbs;
   (5) two CHANGELOG sentences the rename sweep had flipped
   (`VOID_LEDGER_DIR`, `VOID_HOME`) restored; (6) the superseded ruling
   doc's line pointers re-pointed to HEAD, the "no status/proposal"
@@ -152,7 +152,7 @@ documents`; the NOMO env convention retained, `LOCAL_AGENT_GRANT_*` from
   pre-existing node SQLite stderr warning), the control-plane CI set
   42/42, env-var-truth guard 12/12, `npx tsc` clean for workbench and cli.
 - Landing on `main` stays at the HUMAN edge (`origin/main` still
-  `953f6ba`, main checkout dirty, prime session). Next node: WP-LENSES —
+  `953f6ba`, main checkout dirty, prime session). Next node: WP-LENSES -
   parallel review lenses in the product, the last candidate in the
   workstream's product table (one reviewer today; needs the cost
   decision).
@@ -1356,7 +1356,7 @@ Commit a3aea51 pushed. ink-testing-library tests for approvals + ledger: 4/4 pas
 
 ## [opencode] 2026-10-23 TUI design rounds 4-6 complete (feat/tui-ink-rework)
 
-Commits: round 4 (per-hunk review + permission modes + context/cost), round 5 (palette overlay + todos + queue), round 6 (rewind + sessions + ledger-quick + keybinds). All 13 TUI items (A1-A13) from UPGRADE-PLAN-NEXT now have a designed, verified surface. Previews captured: hunks 1051 B, context 1203 B, permissions 669 B, todos 670 B, queue 717 B, rewind 309 B, sessions 210 B, keybinds 676 B — all zero errors. Mono verified (0 colour escapes). Size verified (77/117/157 within 80/120/160). Tests: 19/19 green + 4 ink-testing-library. Work graph: TUI-INK-8 done, TUI-INK-9 ready (integration, blocked on Workbench.list() events + OMP ownership).
+Commits: round 4 (per-hunk review + permission modes + context/cost), round 5 (palette overlay + todos + queue), round 6 (rewind + sessions + ledger-quick + keybinds). All 13 TUI items (A1-A13) from UPGRADE-PLAN-NEXT now have a designed, verified surface. Previews captured: hunks 1051 B, context 1203 B, permissions 669 B, todos 670 B, queue 717 B, rewind 309 B, sessions 210 B, keybinds 676 B - all zero errors. Mono verified (0 colour escapes). Size verified (77/117/157 within 80/120/160). Tests: 19/19 green + 4 ink-testing-library. Work graph: TUI-INK-8 done, TUI-INK-9 ready (integration, blocked on Workbench.list() events + OMP ownership).
 
 ## [opencode] 2026-10-23 Integration pass (feat/tui-ink-rework)
 
@@ -2036,12 +2036,12 @@ Next safe action: keep the current visual node active until the Prime reference 
 V testu harness-retrieval-wiring.test.ts jsem doplnil assertion, že seznam zpráv z prvního provider requestu zůstává byte-for-byte prefixem requestu s learned contextem; digest je poslední system suffix a po běhu chybí v uložených session events. Stávající kód splnil kontrakt bez změny runtime.
 
 Ověření: harness-retrieval-wiring.test.ts 6/6, Workbench typecheck prošel. Aktualizovaná specifikace rozlišuje mechanicky stabilní suffix od neprokázaného provider-specific cache výkonu. Žádné TUI změny ani externí provider.
-## H18 – ověření coding sandboxu
+## H18 - ověření coding sandboxu
 
 Workbench již umí bezpečně spouštět projektové příkazy přes nomo_project_exec: explicitně potvrzený projekt, vlastní profil a policy allowlist, pinned lokální image, síť vypnutá, kořen kontejneru jen pro čtení, schválený projekt zapisovatelný, limity CPU/paměti/PID/času/výstupu a digesty v ledgeru.
 
 Ověření bez Dockeru: project-sandbox.test.ts + project-access.test.ts: 6 prošlo, 2 docker-dependent testy přeskočeny po unset NOMO_PROJECT_SANDBOX_RUNTIME/IMAGE. Docker nebyl spuštěn. Zjištěný otevřený návrh H19: schválený projekt se celý mountuje read-write a příkazy mohou vypsat obsah souborů do modelového kontextu; režim přístupu k citlivým souborům vyžaduje rozhodnutí před změnou chování.
-## [OMP] TUI TODO resumption — 2026-10-23
+## [OMP] TUI TODO resumption - 2026-10-23
 
 - User broadened the active TUI work from visual-only to the existing TUI TODOs. Main checkout remains at 953f6bac; preserved unrelated dirty paths, active NOMO sessions, Prime reference, OpenCode worktree and harness worktree. No user TUI was attached to or stopped.
 - Focused verification passed: A5/A6 ▶ A5 context breakdown
@@ -2079,7 +2079,7 @@ Ověření bez Dockeru: project-sandbox.test.ts + project-access.test.ts: 6 pro�
 ℹ duration_ms 1586.997292 (3/3); A9 rewind existing path (2/2); keybinding table (1/1). No full suite, typecheck, or live user PTY.
 - Source review confirms remaining gaps: A8 parses Markdown checkbox text from completed assistant/user messages rather than structured todo events; A9 reads parenthesized display text as a dependency signal and  carries no dependency/R-class; A12 has no last  timestamp in the TUI; A13 has no configurable keymap and documents Vim as unsupported. These are not marked complete.
 - A1/A4/A8 require shared Workbench/Proxy contract ownership; OpenCode still owns its live Ink worktree. No changes made to either. Current A9/R2/R3 evidence is insufficient to invent safety states; verify timestamp will not be fabricated. Full findings and next steps are recorded in .
-## [OMP] TUI TODO resumption correction — 2026-10-23
+## [OMP] TUI TODO resumption correction - 2026-10-23
 
 The preceding entry was appended, but shell command substitution stripped text enclosed in backticks. This entry supersedes its damaged command fragments and is the reliable record.
 
@@ -2177,7 +2177,7 @@ node --experimental-strip-types --test --test-name-pattern="checkout launcher ex
 The production Ink launch node is done in .nomo/work-state.json. No global launcher, user process, branch, or protected worktree changed. Shared Workbench/Proxy contracts, OpenCode tui-v2 files, and authenticated Prime parity remain separate blocked work.
 
 
-## 2026-10-02 — Provider/install scope selected
+## 2026-10-02 - Provider/install scope selected
 
 - User selected full OMP/Prime model-inference provider compatibility (not non-model services), macOS + Windows, and a private GitHub Release for invited testers.
 - No provider credentials, external provider calls, public repo/release, telemetry, TUI changes, commit or merge.
@@ -2186,11 +2186,11 @@ The production Ink launch node is done in .nomo/work-state.json. No global launc
 - H21/H22 remain blocked until user approves the detailed spec; H19 security boundary also remains blocked. No implementation started.
 
 
-## Oprava časového razítka H20/H21/H22 — 2026-10-23
+## Oprava časového razítka H20/H21/H22 - 2026-10-23
 
 Předchozí dvě položky H20 byly chybně označeny 2026-10-02; příkaz `date +%F` potvrdil aktuální datum 2026-10-23. Zápis i související práce proběhly 2026-10-23.
 
-## 2026-10-23 — H23 provider/install specification draft
+## 2026-10-23 - H23 provider/install specification draft
 
 - User selected: všechny OMP/Prime model-inference providers (bez ne-modelových služeb), macOS + Windows a soukromý GitHub Release pro pozvané testery. Schválil pouze sepsání úplné specifikace, ne implementaci.
 - Vytvořeny návrhy `docs/superpowers/specs/2026-10-23-nomo-harness-beta-and-provider-compatibility.md` a `docs/superpowers/plans/2026-10-23-nomo-harness-beta-and-provider-compatibility.md`. Rozsah je odchozí provider klient; bez TUI, bez veřejné distribuce, telemetrie, credentials nebo reálných provider requestů.
@@ -2217,7 +2217,7 @@ The single .nomo/work-state.json graph marks A13 done. Safe verification is comp
 - Graphify index points at the separate nomo-agent-identity-fleet worktree, so it is stale for feat/wp-regress. Understand Anything graph is absent in the active worktree. Source/tests remain authority; no graph rebuild before a safe code milestone.
 A4 server permission status completed. Files: packages/cli/src/tui/workspace.ts and workspace.test.ts. Server-authoritative permissionModeState is separate from the local TUI mode. At 20 columns the status prioritizes server read-only; at 40 it shows compact local mode and server mode; at 80/160 it shows full permission read-only (server) beside the local-only label. Focused command: node --test --test-concurrency=1 --test-name-pattern="A4 status distinguishes|short confirmation preserves|short detail compacts|short usage view shows|Claude style management aliases" packages/cli/src/tui/workspace.test.ts; 5/5 passed. Typecheck: pnpm --filter @void/cli typecheck; passed. Visual runtime: isolated NOMO_PERMISSION_MODE=read-only, 40x12, command node packages/cli/bin/nomo.mjs tui --once --view help; rendered status showed local-only mode and server read-only. Temp HOME/data removed. Graphify source remains stale versus this worktree; source and tests were authoritative. Next: reevaluate blocked TODO nodes only where ownership and current contracts permit.
 
-## 2026-10-23 — Landing animation performance
+## 2026-10-23 - Landing animation performance
 
 - Reduced visual work on low-power and mobile devices: the Three.js hero wave caps pixel ratio at 1.5, lowers point count for small/low-memory/save-data devices, and schedules no more than 60 frames per second. It pauses off-screen and when the document is hidden; reduced-motion preference renders one static frame.
 - Decorative sphere and orbit animations pause outside the viewport; the CSS fallback wave is static.
@@ -2225,7 +2225,7 @@ A4 server permission status completed. Files: packages/cli/src/tui/workspace.ts 
 A4 capture correction: The earlier non-TTY `nomo tui --once` command did not honor COLUMNS, so it is not width-specific evidence. Exact real PTY capture at 40x12: `script -q /dev/null sh -c "stty cols 40 rows 12; env -i PATH=... NOMO_PERMISSION_MODE=read-only ... node packages/cli/bin/nomo.mjs tui --once --view help"`; rendered status showed `mode normal (local) · server read-only`. Explicit renderer regression frames at 20, 40, 80, and 160 columns remain the width-specific evidence. No COLUMNS-only output is claimed as a sized capture.
 Graph review after A4: all primary-owned visual nodes are complete. No additional safe, unblocked visual node remains. Remaining blocked nodes: `nomo-tui-ink-component-integration` and `nomo-tui-live-workbench-integration` require OpenCode owner handoff for the protected tui-v2 worktree; `prime-agent-authenticated-reference-capture` still waits for the user trace-sharing choice and OAuth; `prime-agent-tui-interaction-parity` is functional work deferred by visual priority; `nomo-storage-safety-inventory` is unrelated destructive cleanup; `repo-wide-nomo-identifiers` needs versioned migration coverage for signed receipts, cloud schemas, and installed identities. No protected path or external account was touched. Next action must wait for the relevant owner handoff, user consent, or migration prerequisite.
 
-## 2026-10-23 — Header grid and site rendering budget
+## 2026-10-23 - Header grid and site rendering budget
 
 - Matched the reference header grid at 15/35/35/15 and positioned the CONTACT US cell at 35% width. Measured reference block: 437.5px / 1280px; local block: 712.6px / 2036px. The prior local block consumed 69%.
 - Removed 1,100 individual transformed DOM nodes from the rotating sphere. Browser DOM count fell from 1,527 to 426. Reduced the WebGL wave from 2,400 to 864 desktop points and capped its pixel ratio at 0.85 while keeping a 60fps scheduling target and pause behavior. Removed fixed-header backdrop blur.
@@ -2238,7 +2238,7 @@ Graph review after A4: all primary-owned visual nodes are complete. No additiona
 - Changed only `packages/cli/src/tui/workspace-runner.ts`, `workspace.ts`, `workspace.test.ts`, and `README.md`.
 - Test-first regression was red before implementation. Final workspace TUI tests passed 35/35; `pnpm typecheck` passed in `packages/cli`. Interactive PTY smoke confirmed the first press kept the TUI open and draft visible, then the second press exited with code 0.
 - H26 is done; provider node H21 resumes active. H22 remains ready and H19 remains independently blocked. No provider calls, credential access, release publication, branch switch, commit, push, or merge.
-## 2026-10-23 — H21 provider inventory source check
+## 2026-10-23 - H21 provider inventory source check
 
 - Read-only OMP 18.6.2 `packages/catalog/src/models.json` confirms runtime model rows and API families; absent `kind` means `chat` per OMP `types.ts`. Aggregation found 5,418 OMP chat/tiny rows across 15 API families and 72 provider IDs; exact provider/API/model IDs still need to enter the checked-in manifest.
 - Non-chat rows are explicit: image, embedding, speech, transcription, judge, rerank, video, and search; exclude rather than route through chat.
@@ -2246,7 +2246,7 @@ Graph review after A4: all primary-owned visual nodes are complete. No additiona
 A9 review: no safe TUI-only implementation can expose authoritative R2/R3 recovery blockers. Workbench recoveryPreview strips runtime step reversibility; residuals carry status only; managed recovery tools classify only r0/r1. No class was inferred from residuals. Appended a contract handoff request to `.nomo/collab-opencode-tui.md`; the A9 node is blocked pending explicit Workbench/Proxy ownership and authoritative class/residual fields. Also recorded A1 and A8 as blocked: current product TUI hunk scope remains client-side while Workbench applies full calls and has no per-hunk API; SessionEvent kinds exclude TODO and the TUI only parses message markdown. Their exact source findings and ownership requests are in the single task graph and collab record. The earlier 40x12 status row fix remains verified by focused 3/3 tests and isolated PTY; its first Work Log attempt failed because Obsidian was closed. Continuing only within safe TUI ownership; no foreign tree or shared contract edited.
 A4 enforcement gap confirmed separately from the completed A4 status display: Workbench loads NOMO_PERMISSION_MODE at construction and enforces that server permission, while the TUI cycles local normal/accept/plan and explicitly labels it local-only. Workbench has a permissionModeState getter but no mutation API. No mapping from accept/plan to permission semantics is approved in the current source; I did not infer one. Added a blocked A4 enforcement node to the existing graph and requested the approved mapping and Workbench ownership handoff in `.nomo/collab-opencode-tui.md`.
 
-## 2026-10-23 — H21 pinned provider source roster
+## 2026-10-23 - H21 pinned provider source roster
 
 - Added `packages/workbench/src/provider-catalog.ts` with exact OMP 18.6.2 provider/API enums and Prime Agent 0.10.1 compiled-provider/API enums. Kept OMP and Prime rosters distinct.
 - Added pinned roster assertions to `packages/workbench/src/provider-catalog.test.ts`; red-before implementation (missing module), then 9/9 passed with `node --experimental-strip-types --test src/provider-catalog.test.ts` from `packages/workbench`.
@@ -2254,7 +2254,7 @@ A4 enforcement gap confirmed separately from the completed A4 status display: Wo
 Prime interaction parity cycle: verified the current Prime 0.10.1 editor binding `Alt+Y` and kill-ring rotation in read-only source. Added `WorkspaceInput` kill-ring storage and yank-pop replacement, gated to immediately after Ctrl+Y and preserving the one-step undo snapshot and 32,000-character input cap. Regression was RED before implementation (`second` remained instead of rotating to `first`), then focused `node --test --test-concurrency=1 --test-name-pattern="Alt\\+Y rotates the kill ring only after a yank|kill ring and input undo cover the editing keys" packages/cli/src/tui/workspace-parity.test.ts` passed 2/2. Scoped `git diff --check` passed. Changes are isolated in `.worktrees/nomo-tui-prime-integration` at detached HEAD 953f6ba; no root or foreign tree changed. Actual full PTY keyboard smoke and typecheck are deferred until the editor slice stabilizes.
 Prime interaction parity cycle 2: current Prime 0.10.1 defines Ctrl+B/Ctrl+F as single-character motion and Alt+Backspace/Alt+Delete as word deletion. Added those aliases to WorkspaceInput, including line-join behavior when deleting the adjacent newline. Test-first RED failed at Ctrl+B; focused GREEN command with yank-pop and prior kill/undo regression passed 3/3. Scoped diff check passed. Implementation is in the isolated parity worktree only. Next source slice: context-sensitive Alt+Enter follow-up queue behavior; verify its mapping to NOMO existing queue before changing anything.
 
-## 2026-10-23 — H21 provider model coverage manifest
+## 2026-10-23 - H21 provider model coverage manifest
 
 - Added `scripts/generate-provider-manifest.mjs` and checked-in `packages/workbench/src/provider-manifest.json`. The generator pins OMP 18.6.2 and Prime 0.10.1, emits exact source/API rosters and classifies all chat/tiny model rows, endpoints/rules, discovery, auth, defaults, and capabilities.
 - Classified 84 OMP KnownProvider IDs plus the real `minimax-cn` model-catalog descriptor (8 chat rows, absent from KnownProvider), 32 Prime providers, 5,480 OMP chat/tiny rows, 152 Prime rows, and 200 excluded non-chat rows. `minimax-cn` uses a manual API-key profile without an inferred env alias.
@@ -2262,7 +2262,7 @@ Prime interaction parity cycle 2: current Prime 0.10.1 defines Ctrl+B/Ctrl+F as 
 - H21 remains active: provider adapters, auth lifecycle, and fixture coverage remain. No real provider calls/credentials, TUI changes, publication, commit, or merge.
 Prime interaction parity loop: current reference is clean Prime 0.10.1 at 71beca9478f552dc6fc898bba9685f9ce00515cf. Added Ctrl+Shift+Z single-step redo in the isolated worktree .worktrees/nomo-tui-prime-integration, with regression test in packages/cli/src/tui/workspace-parity.test.ts. RED: node --test --test-concurrency=1 --test-name-pattern='Ctrl\+Shift\+Z redoes the latest prompt edit' packages/cli/src/tui/workspace-parity.test.ts failed as expected (abc remained after redo). GREEN: node --test --test-concurrency=1 --test-name-pattern='Ctrl\+Shift\+Z redoes the latest prompt edit|kill ring and input undo cover the editing keys|Prime editor aliases move by character and delete adjacent words|Alt\+Y rotates the kill ring only after a yank' packages/cli/src/tui/workspace-parity.test.ts passed 4/4. git diff --check -- packages/cli/src/tui/workspace-runner.ts packages/cli/src/tui/workspace-parity.test.ts passed. Prime Alt+Enter maps to daemon FollowUp with queue_if_busy; NOMO only has one local queuedPrompt dispatched after run idle, so no key mapping was added. No permission, provider, data contract, or other tree changed. Interactive PTY and broader feature parity remain unverified.
 
-## 2026-10-23 — H21 typed provider client boundary
+## 2026-10-23 - H21 typed provider client boundary
 
 - Added `provider-adapters/types.ts` with the `ProviderClient` contract, typed transport IDs, `ProviderAdapterConfig` provider identity, and discriminated API-key profile.
 - Added a rejecting factory for OpenAI-compatible Chat Completions and Anthropic Messages; Workbench provider creation now routes through it. Legacy generic and Anthropic configurations remain usable.
@@ -2316,7 +2316,7 @@ VISUAL EVIDENCE: Safe Workbench full-frame captures at 120x40 and 200x48, color 
 
 REFERENCE: Installed Prime Agent reports 0.10.0; official release source 0.10.1 was reviewed. No same-size live Prime UI capture was obtained, so parity is not claimed. `git diff --check -- packages/cli/src/tui/run-timeline.ts packages/cli/src/tui/run-timeline.test.ts` passed. No full suite, typecheck, PTY audit, Prime launch or user process restart. Next: inspect remaining all-view captures at narrow and wide sizes, compare the shared visual hierarchy to Prime source, and continue the next evidence-backed visual cycle.
 
-## 2026-10-24 — H21 OpenAI Chat Completions extraction
+## 2026-10-24 - H21 OpenAI Chat Completions extraction
 
 - Moved Chat Completions request construction, bounded free-model retry, JSON response validation, stream dispatch, usage and tool validation into `packages/workbench/src/provider-adapters/openai-completions.ts`.
 - Kept URL validation, redirect prohibition, credential headers/redaction and shared SSE parser in `provider.ts`; Anthropic continues through its current path until its separate extraction task.
@@ -2336,19 +2336,19 @@ REVIEW: Two read-only subagents completed sequentially, as the project/tool limi
 
 NEXT: Inspect the new color and monochrome captures fully, continue small evidence-backed visual cycles across remaining views, and review the final scoped diff. Headless Prime frames cover AgentView, not its full top-level chrome; a true signed-in Prime app screenshot was not used. Exact 1:1 parity is not yet claimed. Other dirty root files and active user processes remain untouched.
 
-## 2026-10-24 — H21 OpenAI Responses adapter
+## 2026-10-24 - H21 OpenAI Responses adapter
 
 - Added a separate `openai-responses.ts` adapter selected only by the typed `openai`/`openai-responses` descriptor. It rejects custom hosts, uses bearer auth only on `api.openai.com`, maps chat/tool history and function schemas, and parses JSON/SSE completions with usage and cancellation.
 - Added local request/response and CRLF SSE fixtures, including incomplete-stream refusal and credential-host boundary. Focused tests passed 3/3; Workbench typecheck passed.
 - Azure Responses and Codex Responses remain separate open work; no real provider call or credential was used.
 - 2026-10-24: Updated NOMO Company profiles with the three published co-founders, official portraits, roles, specialties, and social links. The web build passed; local Company layout checked at 320, 768, and 1440 pixels. Production was not redeployed.
 
-## 2026-10-24 — H21 Anthropic Messages extraction
+## 2026-10-24 - H21 Anthropic Messages extraction
 
 - Moved Anthropic Messages role/tool conversion and usage normalization into `provider-adapters/anthropic-messages.ts`; the existing secure HTTP helper still owns `x-api-key`, redirect rejection and error redaction.
 - Existing Anthropic native, stream, factory and Responses fixture suites passed 15/15 after extraction; Workbench typecheck passed.
 - OpenAI Responses tool-stream completion details and Azure/Codex variants remain open. No external requests or credentials.
-## 2026-10-24 — NOMO web CORE CAPABILITIES layout
+## 2026-10-24 - NOMO web CORE CAPABILITIES layout
 
 - Replaced the separated category rail and staggered capability lists with aligned Identity, Policy, and Control panels. Each retains its three numbered checks, icons, labels, and concise supporting copy.
 - Added responsive stacking and light hover feedback within the existing grid and color system. Desktop preview shows three balanced columns; at 390px the groups stack into one column.
@@ -2367,7 +2367,7 @@ dist/assets/index-Bp0nwzPs.css     86.03 kB │ gzip:  16.25 kB
 dist/assets/index-CgtMbSxq.js     359.89 kB │ gzip: 100.98 kB
 ✓ built in 888ms passed (TypeScript + Vite, 30 modules). Local preview remains open at CORE CAPABILITIES. No commit, push, or deployment.
 
-## 2026-10-24 — H21 Google Generative AI adapter
+## 2026-10-24 - H21 Google Generative AI adapter
 
 - Added a dedicated `google-generative-ai.ts` REST/SSE transport with model discovery filtering, system/chat/function-call mapping, function-result replay, usage conversion, bounded stream parsing and truncation refusal.
 - API key is sent only as `x-goog-api-key` to the official HTTPS Generative Language host; custom hosts fail before fetch.
@@ -2390,7 +2390,7 @@ Correction, 2026-10-23 23:17 UTC: inspected raw error-row escape sequences in th
 
 
 Correction, 2026-10-23 23:19 UTC: CHANGELOG.md Unreleased now contains the user-facing visual refinement entry; it is included in the active graph scope. After the latest safe capture, read all 17 narrow monochrome view frames from /tmp/nomo-main-surface-20261023-review-cycle. This adds text layout review coverage, not color contrast review.
-## 2026-10-24 — NOMO Company full-bleed team portraits
+## 2026-10-24 - NOMO Company full-bleed team portraits
 
 - Replaced the circular 264px portraits in the Company profile cards with clean vertical studio versions based on the three supplied co-founder photos. New JPEG assets are 3072×3840px (about 1.2MB each).
 - Portraits now fill each complete vertical card; names, roles, bios, specialty tags, and LinkedIn/Instagram links remain overlaid at the bottom with contrast for readability. The image files are lazy-loaded.
@@ -2409,7 +2409,7 @@ dist/assets/index-s1RY_f_c.css     87.71 kB │ gzip:  16.56 kB
 dist/assets/index-HHkGmmRG.js     359.90 kB │ gzip: 100.98 kB
 ✓ built in 736ms passed. No commit, push, or deployment.
 
-## 2026-10-24 — David Sak CTO profile
+## 2026-10-24 - David Sak CTO profile
 
 - Updated David’s Company role to Co-founder · CTO and focused his bio on NOMO’s technical direction, software architecture, and engineering. Specialties now read Engineering, Architecture, and AI Systems; LinkedIn and Instagram links remain.
 - Local Company preview confirms the updated copy. 
@@ -2427,18 +2427,18 @@ dist/assets/index-s1RY_f_c.css     87.71 kB │ gzip:  16.56 kB
 dist/assets/index-DQAWkqbl.js     359.94 kB │ gzip: 100.99 kB
 ✓ built in 1.45s passed. No commit, push, or deployment.
 
-## 2026-10-24 — H21 Bedrock ConverseStream fixture record
+## 2026-10-24 - H21 Bedrock ConverseStream fixture record
 
 - Added local fixture evidence for the typed `aws-credentials` direct-config Bedrock adapter: SigV4 request plus ConverseStream text and tool-use events. The independently calculated expected Authorization signature is `63e9b7c347b14fe7c0c3d5c77af87f972920d995052aafb6925c22d9656cc208`.
 - AWS reference vector: [S3 GET Object SigV4 example](https://docs.aws.amazon.com/AmazonS3/latest/developerguide/sig-v4-header-based-auth.html#example-signature-GET-object); published signature `f0e8bdb87c964420e857bd35b5d6ed310bd44f0170aba48dd91039c6036bdb41`.
-- Verified: `node --test packages/workbench/src/provider-adapters/bedrock-converse-stream.test.ts` — 5/5; `pnpm exec tsc --noEmit -p packages/workbench/tsconfig.json` — green.
+- Verified: `node --test packages/workbench/src/provider-adapters/bedrock-converse-stream.test.ts` - 5/5; `pnpm exec tsc --noEmit -p packages/workbench/tsconfig.json` - green.
 - No real AWS requests or credentials. Direct typed credentials still lack AWS credential-chain support, GUI setup, and a model catalog. H21 remains active; full provider parity is not claimed.
 
-### Follow-up — Bedrock ConverseStream hardening
+### Follow-up - Bedrock ConverseStream hardening
 
 - Modeled ConverseStream exception events now retain the mapped statuses: validationException 400, throttlingException 429, serviceUnavailableException 503, modelStreamErrorException 424, and internalServerException 500. Unsupported content-block delta variants fail closed. ToolSpecification tool names and descriptions are validated against AWS constraints.
 - References: [ConverseStreamOutput](https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_ConverseStreamOutput.html), [ContentBlockDelta](https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_ContentBlockDelta.html), [ToolSpecification](https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_ToolSpecification.html), and [Smithy modeled errors in event streams](https://smithy.io/2.0/spec/streaming.html).
-- Verified: `node --test packages/workbench/src/provider-adapters/bedrock-converse-stream.test.ts` — 8/8; `pnpm exec tsc --noEmit -p packages/workbench/tsconfig.json` — green.
+- Verified: `node --test packages/workbench/src/provider-adapters/bedrock-converse-stream.test.ts` - 8/8; `pnpm exec tsc --noEmit -p packages/workbench/tsconfig.json` - green.
 - No real AWS requests or credentials. AWS credential-chain support, GUI setup, and model discovery remain absent; H21 remains active and full provider parity is not claimed.
 
 
@@ -2450,7 +2450,7 @@ dist/assets/index-DQAWkqbl.js     359.94 kB │ gzip: 100.99 kB
 - Removed the captured-site JSON from the runtime bundle. Production JS fell from 359.94 kB to 286.68 kB, gzip from 100.99 kB to 87.38 kB. Archived 33 MB of unused scraped media outside `public`; retained original source files and 3072px team portraits, added 1440px responsive renditions. Production `dist` is 7.9 MB.
 - Verified all 11 public and negative routes in the local browser, main-menu keyboard open and Escape close, note category and body search, and 404 behavior. `npm run build` passed, 29 modules. No commit, push or deployment.
 
-## 2026-10-24 — H21 Mistral and Ollama typed adapters
+## 2026-10-24 - H21 Mistral and Ollama typed adapters
 
 - Added dedicated typed `mistral-conversations` and `ollama-chat` adapters. Mistral uses Prime's stateless `/v1/chat/completions` SSE contract with tool/history replay, usage-only events and `[DONE]`/finish-reason validation; it is not the stateful Beta Conversations API.
 - Ollama uses native `/api/tags` and `/api/chat` NDJSON over HTTP loopback with explicit `auth: none`, no Authorization header, native assistant/tool history mapping and done/usage/tool validation. Tags return raw identifiers only, with no inferred chat capability for embedding models.
@@ -2461,9 +2461,9 @@ dist/assets/index-DQAWkqbl.js     359.94 kB │ gzip: 100.99 kB
 
 - Security follow-up: Mistral delta callbacks redact API-key occurrences across chunk boundaries. Both adapters cap stream frames and cumulative text at 2,000,000 characters and cumulative tool arguments at 1,000,000; readers are cancelled on parser exit.
 - Ollama role=tool history now includes `tool_name` by matching prior assistant tool-call IDs to their function names. Tool argument chunks merge with object spread (keeping prototype-like keys as safe own properties), and both adapters reject empty completed answers without text or tool calls.
-- Re-verified actual loopback HTTP fixtures: `node --test packages/workbench/src/provider-adapters/mistral-conversations.test.ts packages/workbench/src/provider-adapters/ollama-chat.test.ts` — 22/22; `pnpm --filter @void/workbench typecheck` — passed; `pnpm --filter @void/workbench test` — 669 passed, 2 skipped, 0 failed. No cloud/provider calls or real credentials.
+- Re-verified actual loopback HTTP fixtures: `node --test packages/workbench/src/provider-adapters/mistral-conversations.test.ts packages/workbench/src/provider-adapters/ollama-chat.test.ts` - 22/22; `pnpm --filter @void/workbench typecheck` - passed; `pnpm --filter @void/workbench test` - 669 passed, 2 skipped, 0 failed. No cloud/provider calls or real credentials.
 
-## 2026-10-24 — H21 provider gateway adapters
+## 2026-10-24 - H21 provider gateway adapters
 
 - Added host-bound OpenRouter routing metadata for both OMP `openrouter` and Prime `openai-completions`, Cloudflare AI Gateway Anthropic/compat/Responses routes, and Vercel Anthropic attribution. Catalog entries retain manifest capabilities, context window and max output tokens.
 - Cloudflare's single API-key profile is treated only as the gateway token (`cf-aig-authorization`); no upstream `Authorization` or `x-api-key` is forwarded. BYOK/provider keys remain configured at Cloudflare. Separate gateway/upstream credentials are not modeled.
@@ -2472,7 +2472,7 @@ dist/assets/index-DQAWkqbl.js     359.94 kB │ gzip: 100.99 kB
 - RED/GREEN: gateway fixtures initially failed on unsupported transport, request paths and model-list route guard; final `node --test packages/workbench/src/provider-adapters/gateway.test.ts` passed 6/6. `pnpm --filter @void/workbench typecheck` passed. Full `pnpm --filter @void/workbench test` passed 675, skipped 2, failed 0.
 - README correction: OpenRouter and Vercel validate via GET `/models`; Cloudflare returns its pinned manifest catalog without discovery. OpenRouter preferences also retain Prime's string sort/partition fields, scalar or percentile thresholds, and string-or-number max-price fields. H21 remains active; no commit or merge.
 
-## 2026-10-24 — H21 task 10 API availability and fail-closed boundaries
+## 2026-10-24 - H21 task 10 API availability and fail-closed boundaries
 
 - Audited the pinned OMP 18.6.2 and Prime 0.10.1 API rosters independently from model rows. Typed `cursor-agent`, `factory-droid-agent`, `gitlab-duo-agent`, `devin-agent`, and `apple-foundation-models` transport IDs now fail closed with specific factory errors; no generic chat fallback or local CLI credential reads.
 - Their exact blockers are Cursor Connect/protobuf plus OAuth lifecycle; Factory's WorkOS device flow/identity headers (API keys rejected); GitLab's workflow REST/WebSocket protocol and setup; Devin Cascade Connect/protobuf plus OAuth session-token exchange; and Apple's unlinked `pi-natives` bridge with upstream macOS 27+ and Apple Intelligence device gates. The API roster remains unchanged; these are not claimed as implemented adapters.
@@ -2482,7 +2482,7 @@ dist/assets/index-DQAWkqbl.js     359.94 kB │ gzip: 100.99 kB
 - RED/GREEN: agent blocker and availability-surface tests failed before implementation; the original focused Workbench/catalog/API/UI run passed 50/50. Review follow-up removed the regex-only JSX source assertion because no DOM-render test stack is present; the real `/api/provider` integration now compares every disabled response row exactly to the manifest and checks all five Task 10 IDs. Final API suite passed 23/23, full UI suite 134/134, full Workbench suite 680 passed, 2 skipped, 0 failed; both Workbench and UI typechecks passed.
 - No provider/cloud requests, credentials, or CLI credential reads; no TUI edits. H21 remains active because the five API transports are explicitly blocked rather than implemented and broader provider parity remains incomplete. No commit or merge.
 
-## 2026-10-24 — H21 task 11 Prime Inference
+## 2026-10-24 - H21 task 11 Prime Inference
 
 - Source review confirmed Prime Inference is not a separate transport: official Prime docs specify the existing OpenAI Chat Completions `POST /v1/chat/completions`, authenticated live `GET /v1/models`, Bearer API key, and Prime usage extension `{ "usage": { "include": true } }`. Pinned Prime 0.10.1 manifest uses `openai-completions`, `https://api.pinference.ai/api/v1`, and `max_tokens`. Optional `X-Prime-Team-ID` remains out of scope because there is no explicit typed team config.
 - Prime-only behavior is selected by explicit `providerId`; the factory enforces API-key auth and the exact official HTTPS endpoint. Catalog parsing rejects malformed/duplicate/empty rows and 404, while completion requires a model ID returned by that key's last successful live catalog. Entitled additional IDs remain runtime-only and no private model ID was invented or added to the shared manifest. Prime usage extension does not affect generic custom compatible endpoints.
@@ -2494,7 +2494,7 @@ dist/assets/index-DQAWkqbl.js     359.94 kB │ gzip: 100.99 kB
 - Review follow-up: confirmed README now contains `## Prime Inference` (lines 33-51) with full `/models` and `/chat/completions` URLs, `Authorization: Bearer <API key>`, Prime usage shape, live-entitlement gating, 404/empty/malformed/stale fail-closed behavior, and the explicit-providerId-only boundary. Official chat/models links are present.
 - Post-documentation verification: `node --test packages/workbench/src/provider-adapters/factory.test.ts` passed 11/11; `pnpm --filter @void/workbench typecheck` passed. Full suite was not rerun because no code changed.
 
-## 2026-10-24 — H21 OpenAI Responses streaming coverage
+## 2026-10-24 - H21 OpenAI Responses streaming coverage
 
 - Reviewed the official OpenAI Responses create, streaming, and function-call streaming docs plus pinned OMP 18.6.2 and Prime 0.10.1 sources. The wire is `POST /v1/responses` with Bearer auth; tool calls arrive through output-item and argument delta/done events, and the completed response carries ordered output and usage.
 - Added a typed `providerId: "openai"` descriptor fixture asserting the exact `https://api.openai.com/v1/responses` URL, POST, Bearer auth, and redirect rejection. Multi-call fixtures interleave `response.output_item.added`, function-argument delta/done, and output-item-done events; assert calls/order/usage/response_id from `response.completed`. An interrupted call-event sequence rejects without resolving a reply or invoking the text-only delta callback.
@@ -2503,14 +2503,14 @@ dist/assets/index-DQAWkqbl.js     359.94 kB │ gzip: 100.99 kB
 - TDD RED reproduced absent `response_id` mapping and hanging after terminal completion. Final `node --test packages/workbench/src/provider-adapters/openai-responses.test.ts` passed 9/9; `pnpm --filter @void/workbench typecheck` passed; `pnpm --filter @void/workbench test` passed 691, skipped 2, failed 0.
 - No OpenAI/provider requests, credentials, TUI, Azure/Codex changes, commit, or merge. H21 remains active.
 
-### Review follow-up — Responses stream API-key redaction
+### Review follow-up - Responses stream API-key redaction
 
 - Confirmed a real secret-disclosure regression: Responses forwarded raw `response.output_text.delta` values to `onDelta`; `CompatibleProvider.streamReply` redacts keys and holds possible partial key prefixes across chunks (`packages/workbench/src/provider.ts:245-253`).
 - Added a RED fixture splitting `fixture-secret` across separate SSE deltas; it observed the raw key in callbacks before the fix. Responses now uses the same redaction/partial-prefix withholding for text `onDelta` only. The fixture confirms tool arguments and usage are unchanged.
 - Kept `ModelReply.response_id`: no other Workbench consumer was found, but approved Task 4 explicitly requires response-ID mapping and both JSON/SSE fixtures assert it.
 - Final `node --test packages/workbench/src/provider-adapters/openai-responses.test.ts` passed 10/10; `pnpm --filter @void/workbench typecheck` passed; full `pnpm --filter @void/workbench test` passed 692, skipped 2, failed 0. H21 remains active. No provider requests, credentials, TUI, commit, or merge.
 
-## 2026-10-24 — H21 Azure OpenAI Responses
+## 2026-10-24 - H21 Azure OpenAI Responses
 
 - Source audit: pinned OMP 18.6.2 registers API `azure-openai-responses` under provider ID `azure` (`packages/catalog/src/provider-models/openai-compat.ts:7230-7241`) and its Azure adapter posts `/responses?api-version=...` with `api-key` (`packages/ai/src/providers/azure-openai-responses.ts:283-360`). Prime 0.10.1 uses provider ID `azure-openai-responses`, defaults API version to `v1`, normalizes Azure resource URLs, and emits `api-key`, but builds `/deployments/{name}/responses?api-version=...` (`crates/pa-ai/src/providers/azure_openai_responses.rs:100-165,331-345`).
 - Official Microsoft current v1 docs instead specify `POST https://{resource}.openai.azure.com/openai/v1/responses`, the deployment name in body `model`, API-key auth via `api-key`, and API-version values `v1`/`preview` (optional in the REST reference; `v1` default). The adapter follows that documented route and accepts both pinned provider identities; Entra/OAuth and environment credential reads remain unsupported. Prime's deployment-scoped path divergence is called out in README.
@@ -2521,13 +2521,13 @@ dist/assets/index-DQAWkqbl.js     359.94 kB │ gzip: 100.99 kB
 
 
 
-## 2026-10-24 — NOMO web keyboard accessibility follow-up
+## 2026-10-24 - NOMO web keyboard accessibility follow-up
 
 - Added programmatic focus targets to all page `main` landmarks so the existing skip link reliably moves keyboard focus to page content.
 - Marked the closed navigation panel `inert` while keeping its existing `aria-hidden` state. Browser accessibility inspection confirmed menu links are exposed only while open; Escape closes it and restores focus to the menu button.
 - `npm run build` passed: TypeScript and Vite, 29 modules. No commit, push, or deployment.
 
-## 2026-10-24 — H21 OpenAI Codex Responses (blocked)
+## 2026-10-24 - H21 OpenAI Codex Responses (blocked)
 
 - Source audit facts: pinned OMP 18.6.2 implements ChatGPT browser/device-code OAuth (`packages/ai/src/registry/oauth/openai-codex.ts:130-151,207-297`) and Codex Responses against `https://chatgpt.com/backend-api/codex/responses` with Bearer/account metadata (`packages/catalog/src/wire/codex.ts:5`; `packages/ai/src/providers/openai-codex-responses.ts:1431-1439,4813-4820,4915-4921`). Prime 0.10.1 implements browser callback OAuth (`crates/pa-ai/src/oauth/openai_codex.rs:19-24,69-95`) and the same private route/headers (`crates/pa-ai/src/providers/openai_codex_responses/request.rs:11-27,66-91`).
 - Official [Codex authentication docs](https://developers.openai.com/codex/auth/) describe ChatGPT sign-in for the desktop app, CLI, and IDE extension, with browser credentials returned to Codex and cached for CLI/IDE use. The official [app-server docs](https://learn.chatgpt.com/docs/app-server) identify app-server as the rich-client integration. Neither pinned source nor these docs establish a generic provider OAuth contract for Workbench.
@@ -2535,20 +2535,20 @@ dist/assets/index-DQAWkqbl.js     359.94 kB │ gzip: 100.99 kB
 - Added exact `openai-codex` → `openai-codex-responses` fail-closed mapping and specific typed blocker. Generic Chat Completions/Responses targeting `chatgpt.com/backend-api` or `/codex` are refused before requests. Generated manifest classifies both pinned OMP and Prime API roster rows as blocked, with reason/evidence. Existing non-TUI Settings UI displays disabled entries and manifest reasons (`settings.tsx:275-301`); the `/api/provider` integration test covers the actual response. README documents source facts separately from blocker inference.
 - TDD RED first showed unsupported Codex transport, provider-ID fallback, and generic backend-host routing; local factory/catalog tests then passed 26/26 and API server tests 23/23. Workbench typecheck passed. Full Workbench suite reported 699 passed, 2 skipped, 1 failed: unrelated `agent-identity.test.ts:237` observed `undefined` instead of `exited`; no retries. No login, provider calls, local CLI/token/cache reads, or credential access. No TUI, Docker, SWE-bench, commit, or merge; H21 remains active and H31 is blocked.
 
-### Triage — full-suite-only agent identity failure
+### Triage - full-suite-only agent identity failure
 
 - Preserved the original Workbench suite result (699 passed, 2 skipped, 1 failure); no full-suite rerun. The reported test passed alone with `node --test --test-name-pattern='Workbench issues grants from stored active session identity and revokes at run end' packages/workbench/src/agent-identity.test.ts` (1/1). The smallest broader scope, the entire identity test file with `--test-concurrency=1`, passed 7/7; no within-file order pollution reproduced.
 - Source evidence: the test's before-run fixture sleeps 750ms and asserts `hook.result` after a fixed 2s delay (`agent-identity.test.ts:180-183,231-240`). `runHook` emits a result only after child close (`agents.ts:234-296`), then `fireHooks` records it (`index.ts:1415-1443`). The preserved full-suite failure snapshot had only user and `run.status=running` events and no `hook.result`, so the assertion observed a still-pending hook rather than an `outcome` mismatch.
 - **Inference, not proven root cause:** suite-level scheduling/process delay could exceed the test's fixed wait. The failure is non-reproducible in isolation and in the same-file sequence; no causal link to the Codex blocker changes was found. No unrelated hook/test code was changed and no next graph task was started.
 
-## 2026-10-24 — H21 Gemini CLI / Cloud Code Assist (blocked)
+## 2026-10-24 - H21 Gemini CLI / Cloud Code Assist (blocked)
 
 - Source audit: pinned OMP 18.6.2's `google-gemini-cli` sends Bearer OAuth requests to Cloud Code Assist `POST /v1internal:streamGenerateContent?alt=sse` (`packages/ai/src/providers/google-gemini-cli.ts:315,507-515,584-595,934-944`). OMP's login/project setup uses first-party OAuth and `loadCodeAssist`/`onboardUser` Cloud Code calls (`packages/ai/src/registry/oauth/google-gemini-cli.ts:12,61-79,101-130,181-230,234-263`). This is source evidence of OMP behavior, not a public third-party contract. Prime 0.10.1 has no `google-gemini-cli` API ID; its Google provider uses the separate Generative Language API path (`crates/pa-ai/src/providers/google.rs:1-3,240-263`).
 - Official [Gemini CLI auth docs](https://geminicli.com/docs/get-started/authentication/) describe first-party Google sign-in with credentials cached locally and distinguish Gemini API-key and Vertex options. Google's [transition announcement](https://developers.googleblog.com/an-important-update-transitioning-gemini-cli-to-antigravity-cli/) says free/AI Pro/Ultra consumer Gemini CLI service stopped June 18, 2026, while enterprise access and paid Gemini/Enterprise Agent Platform API-key access remain first-party CLI support. This is not a global sunset and does not document a third-party Cloud Code SSE/OAuth contract. Workbench has no OAuth lifecycle; it never reads or reuses Gemini CLI/gcloud credentials. `google-generative-ai` remains separate and API-key based.
 - TDD RED: factory fallback and blocker/availability tests failed before the explicit blocker. GREEN: generated OMP `google-gemini-cli` row is `blocked`; typed transport and provider-identity fallback both throw the specific reason before requests; state exposes the disabled reason. `node --test packages/workbench/src/provider-adapters/factory.test.ts packages/workbench/src/provider-adapters/google-generative-ai.test.ts packages/workbench/src/provider-catalog.test.ts apps/control-plane/api/server.test.ts` passed **55/55**; `pnpm --filter @void/workbench typecheck` passed; `pnpm --filter @void/workbench test` passed **701**, skipped **2**, failed **0**. No login, credential-file/env reads, or provider calls.
 - README insertion was deferred after `edit` reported current hash `#EA8A` while repeated exact reads/searches still exposed snapshot `#AB1D`; left README untouched to avoid overwriting concurrent changes. Manifest/API state and this Work Log contain the source-backed reason. H32 is blocked, H21 remains active. No TUI, Docker, SWE-bench, commit, or merge.
 
-## 2026-10-24 — H21 Google Vertex GenerateContent (blocked)
+## 2026-10-24 - H21 Google Vertex GenerateContent (blocked)
 
 - Source facts: OMP 18.6.2 supports Vertex API-key and ADC paths with project/location (`packages/ai/src/providers/google-vertex.ts:14-17,66-98`; auth modes in `packages/catalog/src/compat/rules/auth/google-vertex.kdl:1-5`). Prime 0.10.1 also has API-key and ADC paths and a project/location request (`crates/pa-ai/src/providers/google_vertex.rs:37-45,59-93,296-337`). No credential files, environment tokens, gcloud commands, or provider requests were read or used.
 - Official [Express-mode API](https://docs.cloud.google.com/gemini-enterprise-agent-platform/reference/express-mode/api-reference) specifies a global-only, no-project/location API-key route using `x-goog-api-key`; the [standard streamGenerateContent API](https://docs.cloud.google.com/gemini-enterprise-agent-platform/reference/rest/v1/projects.locations.endpoints/streamGenerateContent) binds project and location in the resource path. The [publisher model resource](https://docs.cloud.google.com/gemini-enterprise-agent-platform/reference/rest/v1/projects.locations.publishers.models) has no list method, so there is no verified live model discovery route in this slice.
@@ -2556,7 +2556,7 @@ dist/assets/index-DQAWkqbl.js     359.94 kB │ gzip: 100.99 kB
 - TDD first showed the unsupported transport; fail-closed tests then verified provider-ID no-fallback and explicit blocker behavior, and manifest coverage. Focused Vertex/factory/catalog/API tests passed **53/53**; Workbench typecheck passed; full Workbench suite passed **704**, skipped **2**, failed **0**. The API test confirms availability reasons on the real route response.
 - Safe config and README edits were withheld after live hash conflicts: `provider.ts` read as `#3F2E`, while the edit tool reported `#3F40`; README read as `#AB1D`, while the edit tool reported `#EA8A`. No conflicting file was overwritten. H33 is blocked; H21 remains active. No TUI, Docker, SWE-bench, commit, or merge.
 
-## 2026-10-24 — H34 desktop beta clean-install smoke (blocked)
+## 2026-10-24 - H34 desktop beta clean-install smoke (blocked)
 
 - Reviewed `apps/desktop/README.md`, `package.json`, `scripts/build.mjs`, `scripts/prepare.mjs`, `src-tauri/src/main.rs`, `runtime.test.mjs`, and `.github/workflows/desktop-windows.yml`. Existing README already documents local macOS packaging and the provider-free `--smoke-test`; no installer/onboarding change was warranted by this read.
 - macOS host is Darwin 27.0.0 arm64 with Node v24.14.1, pnpm 10.33.0, Rust/Cargo 1.98.0. `xcodebuild -version` fails because the active developer path is `/Library/Developer/CommandLineTools`, not Xcode. `apps/desktop/node_modules` is absent, including the Tauri CLI required by `scripts/build.mjs`; dependency installs are disallowed. `apps/desktop/.cache` and the packaged Node runtime are also absent. No build or app bundle smoke was attempted.
@@ -2564,7 +2564,7 @@ dist/assets/index-DQAWkqbl.js     359.94 kB │ gzip: 100.99 kB
 - Windows is unavailable locally on this Darwin arm64 host; `rustup` and a Windows/MSVC target are absent. `.github/workflows/desktop-windows.yml` is a manual `workflow_dispatch` Windows runner, but it cannot test this uncommitted worktree without an external branch/run, so it was not dispatched.
 - `node --test apps/desktop/runtime.test.mjs apps/desktop/release.test.mjs` passed **13/13**. This covers local runtime/API isolation and release-policy fixtures only. No bundle, installer, stable signing or notarization was produced; no provider requests, credentials, user app data, release, tag, publish, TUI, Docker, SWE-bench, commit or merge were touched. H34 remains blocked; H21 remains active.
 
-## 2026-10-24 — H35 private beta onboarding and feedback
+## 2026-10-24 - H35 private beta onboarding and feedback
 
 - Added a manual desktop tester guide to `docs/BETA.md`, linked it from `apps/desktop/README.md`, and added `.github/ISSUE_TEMPLATE/feedback.yml`. The guide states package prerequisites, first-run checks, safe profile isolation, what to report, and the H34 limitation: this worktree has no verified clean-install artifact and the `1.0.1` value is not a tested release. It distinguishes the CLI install scripts from desktop packaging.
 - Privacy source: `docs/CONTEXT.md:73-75` excludes tokens, prompts and secrets from logs, events, screenshots and durable state; `docs/STANDARDS.md:378-395` requires data minimization and consent. The manual flow adds no telemetry, auto upload, diagnostic collection or feedback server. It points only to the private repository issue form, warns that issues and the reporter's GitHub account are visible to repository collaborators, asks no name/email, and invents no alternate contact channel.
@@ -2572,7 +2572,7 @@ dist/assets/index-DQAWkqbl.js     359.94 kB │ gzip: 100.99 kB
 - `ruby -e 'require "yaml"; form = YAML.safe_load(File.read(ARGV.fetch(0))); ...' .github/ISSUE_TEMPLATE/feedback.yml` parsed all 8 form elements after quoting the error-code placeholder. `node --test scripts/src/doc-truth.test.mjs` reported 7 pass and 2 unrelated failures: missing model catalog paths in the untracked 2026-10-23 spec and stale provider-path inventory entries. Its operational-document dead-path check passed. No GitHub preview or issue was submitted, so remote form availability/schema remains unverified until branch integration.
 - H35 is done as a docs-only slice. H34 stays blocked; H21 remains active. No install, provider request, credential capture, issue submission, release, publish, TUI, Docker, SWE-bench, commit or merge.
 
-## 2026-10-24 — H36 harness acceptance audit and handoff
+## 2026-10-24 - H36 harness acceptance audit and handoff
 
 - Added `docs/HARNESS-ACCEPTANCE-HANDOFF.md` with a nine-criterion evidence/gap matrix, the eight blocked graph nodes, manifest-versus-runtime distinction, status reconciliation, and exact H34 limitation. This is a completed audit artifact, not a declaration that full beta acceptance passed.
 - Current source checks: `provider-catalog.test.ts:235-261,316-375` asserts full pinned roster coverage; checked-in inventory has 25 source/API rows: 15 implemented, 9 blocked, 1 platform-unavailable. `server.test.ts:116-137` verifies real `GET /api/provider` disabled entries and reasons; `settings.tsx:275-303` renders them, but no rendered-browser UI proof is claimed. H21 remains active because API/runtime and packaged acceptance are incomplete.
@@ -2581,7 +2581,7 @@ dist/assets/index-DQAWkqbl.js     359.94 kB │ gzip: 100.99 kB
 - Existing full Workbench results were not rerun: H32 701 passed/2 skipped/0 failed; later H33 704/2/0. H35 docs verification remains 7 pass/2 unrelated baseline failures; no GitHub preview or issue submission. This audit made no TUI, provider, credential, release, Docker, SWE-bench, commit or merge changes and makes no OMP/Prime parity or fresh-install claim.
 - Targeted `node --test --test-name-pattern='every dead path in a record document is inventoried with a reason' scripts/src/doc-truth.test.mjs` ran 1 test and failed 1/1 on the same two missing catalog paths already recorded in H35's docs-truth result (`2026-10-23` approved spec, line 43); it reported no dead path in the new handoff. No full suite was run.
 
-## 2026-10-24 — H22 private desktop CI artifacts and gated release
+## 2026-10-24 - H22 private desktop CI artifacts and gated release
 
 - Added manual `workflow_dispatch` macOS builds for matching arm64 (`macos-14`) and Intel x64 (`macos-15-intel`) runners, and kept Windows x64 installation on `windows-latest`. The manual artifact workflows run desktop tests/build plus packaged runtime smoke, generate SHA-256 checksums, and retain private Actions artifacts for seven days. Windows config remains current-user NSIS; runner smoke installs under `$RUNNER_TEMP`, opens `--smoke-test`, runs the generated uninstaller, and checks an unrelated temp sentinel.
 - Added a separate manual prerelease workflow restricted to private `main`, exact user confirmation and matching version. It builds the three platform artifacts, then requires GitHub `private-release` environment reviewer protection with self-review disabled, validates repository privacy/version, and creates a private prerelease with checksums, signing/platform warnings, and the existing private feedback issue form. The workflow was not dispatched; no artifacts, tag, release, reviewer grant, secret, or repository setting was created.
@@ -2589,7 +2589,7 @@ dist/assets/index-DQAWkqbl.js     359.94 kB │ gzip: 100.99 kB
 - GitHub's official runner reference documents the selected private-repository labels. Its environment docs state that required-reviewer protections for private repositories depend on the repository plan; the release job fails closed if the configured environment does not expose required reviewers with self-review disabled. This configuration and any remote runner execution remain unverified.
 - H22 implementation is done. No Mac/Windows build, installed-app smoke, remote CI run, credential/provider call, TUI, Docker, SWE-bench, commit, merge or publish occurred. H34 remains blocked until an actual current-worktree build and installed smoke; H21 remains active.
 
-### Review follow-up — Windows NSIS install smoke
+### Review follow-up - Windows NSIS install smoke
 
 - Verified the review against [NSIS installer usage](https://nsis.sourceforge.io/Docs/Chapter3.html#3.2.3): `/D` must be final and contain no quotes, including when its path has spaces. Microsoft [`Start-Process -ArgumentList`](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.management/start-process?view=powershell-7.5) joins array elements and strips PowerShell outer quotes.
 - Added test-first assertions for both Windows workflow copies. RED failed on the existing spaced install directory. Both now use `$RUNNER_TEMP/NOMO-installed`, fail before installer invocation if the resolved path contains spaces, preserve `/D` as the final unquoted argument, and require zero exit for install, smoke, and uninstall; the unrelated sentinel must remain.
@@ -2600,34 +2600,34 @@ dist/assets/index-DQAWkqbl.js     359.94 kB │ gzip: 100.99 kB
 - Re-read the live graph: total remains 37; current counts are 28 done, 8 blocked, 1 active (H21), 0 ready. H22 is done as workflow implementation, with no remote build, artifact, installed smoke, release, or tag. H34 remains blocked, and H19 remains a separate blocked node.
 - Updated the handoff to distinguish this current graph from the H36-time historical snapshot (27 done, 8 blocked, H21 active, H22 ready). H36 graph evidence remains unchanged because it records that historical audit-time state; no graph node was reopened or edited.
 
-## 2026-10-24 — Task 12/13 provider setup/auth integration blocked
+## 2026-10-24 - Task 12/13 provider setup/auth integration blocked
 
-- Read approved plan Tasks 12–13 and audited the current backend Workbench config, encrypted `LocalStorage`, provider API route, Settings surface, manifest auth methods, and official OpenRouter, Anthropic, OpenAI and Vercel auth contracts. The existing `/api/provider` route accepts base URL/API key and relies on Workbench encrypted persistence; current Settings exposes the existing presets/API-key connect and local disconnect. The OpenRouter PKCE exchange is the only reviewed OAuth flow suitable for this local app; Anthropic subscription OAuth is explicitly not a third-party API credential. OpenRouter issues a long-lived API key with no refresh flow; its management-key-only delete route does not authorize remote revocation with that user key, so remote revoke must remain manual.
+- Read approved plan Tasks 12-13 and audited the current backend Workbench config, encrypted `LocalStorage`, provider API route, Settings surface, manifest auth methods, and official OpenRouter, Anthropic, OpenAI and Vercel auth contracts. The existing `/api/provider` route accepts base URL/API key and relies on Workbench encrypted persistence; current Settings exposes the existing presets/API-key connect and local disconnect. The OpenRouter PKCE exchange is the only reviewed OAuth flow suitable for this local app; Anthropic subscription OAuth is explicitly not a third-party API credential. OpenRouter issues a long-lived API key with no refresh flow; its management-key-only delete route does not authorize remote revocation with that user key, so remote revoke must remain manual.
 - The API lifecycle cannot be integrated safely while the source edit guard and reader disagree: `server.ts` read snapshot `#108E` was rejected because the edit guard reports current `#39F9`; `provider-defaults.ts` read snapshot `#FE3D` was rejected against current `#504F`. No bypass was attempted. `server.ts` is required to expose lifecycle routes and inject its server-only Workbench persistence callback. At that point the task 12/13 setup sub-slice was blocked on a fresh, consistent source snapshot while umbrella H21 remained active for other work; the later umbrella status correction below supersedes that graph state.
 - Local TDD probes confirmed the gap before cleanup: auth-route integration tests failed (2/2) because `/api/provider-auth/openrouter/start` returned 404 and `/api/provider` accepted a mismatched `openrouter` identity/host with 200. A temporary isolated lifecycle fixture passed 5/5, but was removed with its tests rather than left as unintegrated scaffold. No OAuth login, provider call, credential/CLI cache read, or TUI edit occurred; test-only network paths were injected local fixtures.
 
-## 2026-10-24 — H21 umbrella status correction
+## 2026-10-24 - H21 umbrella status correction
 
-- Reconciled the current graph after the provider setup/auth lifecycle TODO was blocked on the documented source/edit-snapshot conflict and the remaining H31–H33 provider blockers. H21 is now **blocked**, not done; no graph node is active or ready. Task 12/13 remains a nested blocked sub-slice; the umbrella retains the full-scope non-parity status.
+- Reconciled the current graph after the provider setup/auth lifecycle TODO was blocked on the documented source/edit-snapshot conflict and the remaining H31-H33 provider blockers. H21 is now **blocked**, not done; no graph node is active or ready. Task 12/13 remains a nested blocked sub-slice; the umbrella retains the full-scope non-parity status.
 - Current counts: **37 nodes, 28 done, 9 blocked, 0 active, 0 ready**. H19 remains a separate blocked node. The manifest independently has **15 implemented API rows, 9 blocked rows and 1 platform-unavailable row**. H22 workflow implementation is done; H34 actual current-worktree installed smoke remains blocked.
 - Updated `docs/HARNESS-ACCEPTANCE-HANDOFF.md` current graph status and added H21's current blocker; preserved the H36-time historical snapshot (37 nodes, 27 done, 8 blocked, H21 active, H22 ready) as historical. No provider/TUI/credential/release action, commit or merge occurred.
 
 
-## 2026-10-24 — Standalone NOMO website repository
+## 2026-10-24 - Standalone NOMO website repository
 
 - Created private GitHub repository [Dawe583/nomo-web](https://github.com/Dawe583/nomo-web), staged only the website source and required assets, and pushed `main` at `7fc15e2f4acba573df841ec3df7cda5795d4ef09`. Excluded Firecrawl captures/source assets, Vercel local config, NOMO task state, task notes, and unused `src/content.json`.
 - GitHub confirms the repository is private and `main` resolves to the pushed commit.
 - Historical Vercel access attempt returned 403. The later entry below records that the website project was linked and deployed successfully. The active graph node at the time was `standalone-web-repo-vercel-link`.
 
 
-## NOMO web: GitHub and Vercel deployment — 2026-10-24
+## NOMO web: GitHub and Vercel deployment - 2026-10-24
 
 - Confirmed Vercel project `nomo-web` is linked to private GitHub repo `Dawe583/nomo-web`; production branch is `main`.
 - Verified remote `main` points to `7fc15e2f4acba573df841ec3df7cda5795d4ef09` and local working tree is clean.
 - Deployed that commit to Vercel production as `dpl_9gNiaeahRytSrRE6RgHeagVihDNv` (`READY`).
 - Production alias `https://nomo-web.vercel.app` returned HTTP 200.
 
-## 2026-10-24 — NOMO privacy and terms draft
+## 2026-10-24 - NOMO privacy and terms draft
 
 - Added Czech and English Privacy Policy and Terms pages for the public NOMO marketing site, with language-aware hero labels, document navigation, page language metadata and section numbering.
 - Verified Leadora Technologies s.r.o. identity, IČO 24624136, DIČ CZ24624136 and address against the official ARES REST API. Corroborated public contact email and phone on the Leadora contact page.
@@ -2635,14 +2635,14 @@ dist/assets/index-DQAWkqbl.js     359.94 kB │ gzip: 100.99 kB
 - `npm run build` passed; `git diff --check` passed. Browser inspection rendered both legal routes and Czech/English content. A Vercel MCP read request returned 403, so no access scope was expanded.
 - Publication remains blocked. Prior project inspection recorded Hobby; Vercel's current Fair Use Guidelines restrict Hobby to non-commercial personal use, while NOMO is a commercial product website. Actual email provider and retention workflow also need operator confirmation. No plan change, push, or deployment occurred.
 
-## 2026-10-24 — NOMO web navigation and motion
+## 2026-10-24 - NOMO web navigation and motion
 
 - Removed stale organization assumptions and scope defaults from the NOMO deployment notes and scripts. The scripts now use the authenticated project context.
 - Centered the NOMO logo in the navigation bar and raised it slightly.
 - Added one-time, visibility-aware section reveals across landing, article and policy pages. Expanded restrained hover and pressed feedback across cards and controls; reduced-motion disables nonessential motion.
 - Source changes are in the standalone `nomo-web` checkout. `npm run build` passed (`tsc -b` and Vite production build); `git diff --check` passed. Search of NOMO docs, the Obsidian project vault, and Codex memory found no remaining matching organization references.
 
-## 2026-10-24 — H37 Harness-only branch publication
+## 2026-10-24 - H37 Harness-only branch publication
 
 - User-approved Harness-only commits 92d66fd, 7c341d2 and evidence update e388821 were pushed to origin/feat/wp-regress. Final remote SHA and local HEAD both resolved to e3888210ac84f4242f09f259979911169a2011b7.
 - Verification: Workbench 704 passed/2 skipped/0 failed; API 23/23; UI 134/134; desktop runtime/release 12/12; docs-truth 9/9; workspace typecheck; Bedrock 8/8; desktop workflow YAML parsed; staged Gitleaks found no secrets.
@@ -2650,7 +2650,7 @@ dist/assets/index-DQAWkqbl.js     359.94 kB │ gzip: 100.99 kB
 - Four pre-existing TUI changes remain unstaged and excluded. No provider credentials/calls, merge, release, Docker or SWE-bench. Graphify indexes pointing to other worktrees were left unchanged.
 - Next: test-first H38 implementation, with no real provider requests and no TUI edits.
 
-## 2026-10-24 — H38 Harness typed provider setup
+## 2026-10-24 - H38 Harness typed provider setup
 
 - Added manifest-validated `providerId`/transport/endpoint/model/auth setup to Settings and `/api/provider`. Workbench persists typed configuration through its existing encrypted storage, validates before saving, rolls back on failed configuration, and redacts provider secrets.
 - The manifest-backed form exposes 91 descriptors. Typed Bedrock static AWS credentials are rejected: the source manifest lists only `native-auth`, `host-credential` and `aws-credential-chain`. Kimi Code, Muse Code and Ollama Cloud remain excluded for incompatible auth. Full Task 13 is still open.
@@ -2659,7 +2659,7 @@ dist/assets/index-DQAWkqbl.js     359.94 kB │ gzip: 100.99 kB
 - Local H38 implementation commit `f60ff53a5a80d6c1c911f2632330eb26e83fa834` and evidence commit `6758e4f` are on `feat/wp-regress`; neither is published. Push failed over HTTPS (invalid username/token) and SSH (public key denied); `origin/feat/wp-regress` remains at `e3888210ac84f4242f09f259979911169a2011b7`. No credentials were read.
 - Four pre-existing TUI changes remain unstaged and untouched. No provider request, Docker, SWE-bench, merge or release. Graphify still points to another worktree; `.ua/` is absent here, so neither source graph was rebuilt. H21 and provider-auth blockers remain; no OMP/Prime parity claim.
 
-## 2026-10-24 — H39 manifest-backed model capability disclosure
+## 2026-10-24 - H39 manifest-backed model capability disclosure
 
 - Added a read-only `/api/provider/model-capabilities` endpoint and Settings disclosure for tools, reasoning, text/image input, input modalities, context window and output limit. Claims come only from exact in-scope manifest entries; source conflicts and unavailable metadata fail closed. The endpoint does not call providers.
 - Local Harness commit `81b2cd8` (`Expose manifest-backed model capabilities`). TUI files stayed unstaged and untouched; no push was attempted after the previously observed HTTPS and SSH authentication failures.
@@ -2908,7 +2908,7 @@ Implementovat H49: typovaný AgentRunner kontrakt a lifecycle invarianty v agent
 - H49 hotový. H50 aktivní: Workbench broker, souhlas, autorizace, záznam v ledgeru. Žádný provider request, žádné credentials, žádná TUI změna ani commit/push.
 
 
-## 2026-10-25 — H50 Workbench AgentRunner broker
+## 2026-10-25 - H50 Workbench AgentRunner broker
 
 - Implementoval jsem Workbench-owned consent preview/digest, Workbench run/grant identity, event mediation, per-request grant/workspace/profile/runner/allowlist/current-policy checks, cancellation a bounded digest-only broker records. Preview nyní deklaruje možné kategorie přenosu: task, system prompt, tool arguments a výsledky; jde o tvrzení trusted adapteru, ne o ověřenou síťovou hranici.
 - Review našlo stale-policy race během approval hold a sdílený mutable runner description. Obě cesty jsou nyní fail-closed a mají regresní testy.
@@ -2920,7 +2920,7 @@ Implementovat H49: typovaný AgentRunner kontrakt a lifecycle invarianty v agent
 
 Dokončit H51: ověřit neprůhlednou hranici mezi AgentRunner a schválenou filtrovanou kopií; nepředávat host path ani surové vyloučené soubory. Bez instalace sandbox runtime.
 
-## 2026-10-25 — H51 AgentRunner workspace boundary
+## 2026-10-25 - H51 AgentRunner workspace boundary
 
 - Ověřil jsem, že synthetic runner dostává pouze task, system prompt, profil, `AbortSignal`, Workbench grant (`rootDigest` a tools) a vybrané mediované tool schemas; host root path ani obsah vyloučeného `.env.local` se nepředává.
 - Schválený `nomo_project_exec` bez nastaveného sandbox runtime odmítne Workbench před dispatch; temp host marker nevznikl. Žádný Docker/Podman runtime se neinstaloval ani neměnil.
@@ -2931,7 +2931,7 @@ Dokončit H51: ověřit neprůhlednou hranici mezi AgentRunner a schválenou fil
 
 H52: zjistit, zda veřejný Cursor SDK dovolí implementovat AgentRunner adapter a transport fixture výhradně lokálně, bez provider requestu a bez čtení credentials. Pokud ne, zaznamenat přesnou blokaci a pokračovat v neblokovaných harness částech.
 
-## 2026-10-25 — H52 Cursor SDK endpoint gate
+## 2026-10-25 - H52 Cursor SDK endpoint gate
 
 - Zkontroloval jsem instalovaný `@cursor/sdk@1.0.40`, oficiální Cursor Cookbook quickstart a veřejné deklarace `AgentOptions`, `CursorAgentPlatformOptions`, `configureCursorSdk`, `Run` a `SDKMessage`.
 - Oficiální quickstart dokumentuje `Agent.create`, `run.stream()` a `run.wait()`; veřejné typy popisují `cancel`, tool/status/request/usage messages a omezení vestavěných tools. Veřejná konfigurace však nenabízí API base URL/endpoint. H48 executor override není test síťového protokolu.
@@ -2942,7 +2942,7 @@ H52: zjistit, zda veřejný Cursor SDK dovolí implementovat AgentRunner adapter
 
 H53: najít existující Control Plane API/UI surface a testovací seam pro consent a review; nejprve zdrojová mapa a contracts, bez editace naslepo.
 
-## 2026-10-25 — H53 Control Plane surface map
+## 2026-10-25 - H53 Control Plane surface map
 
 - Mapped existing non-TUI surfaces: `apps/control-plane/api/server.ts` owns `/api/sessions`, `/api/runs/:id/stop`, and `/api/project-workspace/*`; `apps/control-plane/ui/src/project-workspace.tsx` and the lazy page entry in `main.tsx` provide workspace setup, manifest/digest diff review, and explicit per-file apply.
 - Existing `/api/sessions` uses provider `Workbench.start`; no AgentRunner catalog/preview/start route exists. Workbench supports runner injection and `prepareAgentRun`/`startAgentRun`/`cancelAgentRun`; Control Plane's default instance doesn't register runners. Existing stop route delegates to Workbench and returns process receipt, not confirmed cancellation.
@@ -2953,7 +2953,7 @@ H53: najít existující Control Plane API/UI surface a testovací seam pro cons
 
 H54: implementovat Workbench-backed Control Plane consent path a non-TUI browser UI podle zapsaného kontraktu; nejdřív behaviorální API testy.
 
-## 2026-10-25 — H54 Control Plane consent flow
+## 2026-10-25 - H54 Control Plane consent flow
 
 - Přidal jsem opt-in `ControlPlaneOptions.agentRunners`; výchozí katalog zůstává prázdný. Workbench validuje runner metadata přes allowlist description polí a vrací credential-free kopii.
 - API routes pro katalog, preview a start používají Workbench broker. Chybný digest, opakovaný consent i neplatný request fail-closed. Test pokrývá trusted runner injection, prázdný default, přesný jednorázový souhlas i start se skutečným Workbenchem.
@@ -2965,7 +2965,7 @@ H54: implementovat Workbench-backed Control Plane consent path a non-TUI browser
 
 H54 je hotový. Ve harness grafu nezůstává žádný ready uzel; zbývající H6/H12/H13/H21/H34 jsou blokované. Další work package má navázat na bezpečný neblokovaný harness cíl, bez TUI, provider credentials nebo benchmark/dataset práce.
 
-## 2026-10-25 — H55 AgentRunner chat output
+## 2026-10-25 - H55 AgentRunner chat output
 
 - Přidal jsem `assistant-message` do AgentRunner kontraktu. Workbench ukládá bezpečný výstup jako assistant event v existující session; provider zprávy ani podepsaný workspace ledger jej nepřebírají.
 - Limity: 16 KiB UTF-8 na zprávu a 64 KiB na běh; zkrácení respektuje hranici znaku a je označené. Známý secret nebo shoda s detekcí citlivého obsahu skryje celou zprávu. Heuristika nezaručuje odhalení všech secretů.
@@ -2973,7 +2973,7 @@ H54 je hotový. Ve harness grafu nezůstává žádný ready uzel; zbývající 
 - Ověřeno: Workbench 754 pass / 2 nakonfigurované sandbox testy skip; Control Plane API 261/261, UI 134/134, typecheck a build prošly. Browser smoke na sestaveném Control Plane s lokálním syntetickým runnerem ověřil 201 preview/start, viditelnost běžné i terminální zprávy a prázdnou konzoli.
 - Test ověřil šifrovaný stav session, absenci výstupu v podepsaném ledgeru, známý secret withholding, limity a terminal failure/cancel. Bez provider requestu, externí sítě, TUI změn, commitu, push nebo merge.
 
-## 2026-10-25 — H56 continuation: backlog committed and pushed
+## 2026-10-25 - H56 continuation: backlog committed and pushed
 
 - Found the omp session stopped after H55 with a 39-file uncommitted backlog (3064 insertions, 216 deletions) covering H26, H44-H55. Verified the whole tree first, then committed in 8 slices and pushed the lane.
 - Slices: `911331f` pin @cursor/sdk fixture; `213ac66` cancellation during JSON decoding; `85672bc` Google Vertex Standard; `07ffe85` workbench runner broker + project workspace; `b0889c0` control-plane consent routes; `123b1ea` consent/project-workspace browser surfaces; `75d90c5` TUI double Ctrl+C (H26, user-authorized); `c7c8cb3` docs closure. Lane now 12 commits ahead -> pushed to origin/feat/wp-regress (e388821..c7c8cb3).
@@ -2986,7 +2986,7 @@ H54 je hotový. Ve harness grafu nezůstává žádný ready uzel; zbývající 
 
 H56 zaznamenán. Graf nemá žádný ready uzel; zbývající H6/H12/H13/H21/H34 jsou blokované externími předpoklady. Pokračování vyžaduje buď credentials/tooling, nebo explicitní uživatelské schválení nového podúkolu (např. OpenAI Responses streamed tool-call coverage).
 
-## 2026-10-25 — H57 continuation: tool-only streamed Responses coverage
+## 2026-10-25 - H57 continuation: tool-only streamed Responses coverage
 
 - Added a fixture covering a streamed OpenAI Responses run with function-call events and no text deltas, asserting tool calls, null content, usage and response id. Passed 11/11 (was 10/10). Committed `5d9a892` and pushed (`c7c8cb3..5d9a892`).
 - Tree clean again. Remaining blocked nodes unchanged: H6, H12, H13, H21 (Azure/Codex Responses + AWS credential chain still open), H34.
@@ -2995,7 +2995,7 @@ H56 zaznamenán. Graf nemá žádný ready uzel; zbývající H6/H12/H13/H21/H34
 
 Žádný ready uzel. Další pokračování vyžaduje explicitní schválení většího podúkolu (Azure/Codex Responses adapter, AWS credential chain) nebo externí vstupy (credentials/tooling).
 
-## 2026-10-25 — H56: Viditelné upozornění na zkrácení AgentRunneru
+## 2026-10-25 - H56: Viditelné upozornění na zkrácení AgentRunneru
 
 - Chat zobrazuje přístupný `role="status"` indikátor jen pro assistant event s `textTruncated === true`. Text je lokalizovaný pro češtinu i angličtinu; ostatní zprávy i tool eventy zůstanou beze změny.
 - Regresní test přímo ověřuje true, false a chybný řetězcový příznak. UI testy: 135/135; UI typecheck, root `pnpm run typecheck` a UI build prošly.
@@ -3003,7 +3003,7 @@ H56 zaznamenán. Graf nemá žádný ready uzel; zbývající H6/H12/H13/H21/H34
 - Build vypsal varování Vite k upstream `use client` direktivám a velikosti bundle nad 500 kB. Bez externího requestu, providera, TUI, Dockeru, commitu, push nebo merge.
 - `node scripts/src/doc-truth.test.mjs` prošel 9/9; `git diff --check` byl čistý.
 
-## 2026-10-26 — H59: přehodnocení otevřených uzlů Harnessu
+## 2026-10-26 - H59: přehodnocení otevřených uzlů Harnessu
 
 - Zkontroloval jsem H56 diff: jen přímý import regresního helperu a test true/false/nebooleovské hodnoty; doplněná dokumentace H56. Implementace upozornění je už v HEAD. Mistral Conversations adapter, testy, factory i manifest také už existují, takže novou implementaci jsem nezačal.
 - Prošel jsem HEAD commit `d7be488` `Resolve Bedrock AWS credentials from the environment`. Přidává čtení `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` a `AWS_SESSION_TOKEN` přímo z `process.env`, ale nedodává plný AWS credential chain ani přístupný Workbench setup. Workbench factory nepředává svůj injektovaný `env` ani `ignoreEnvironment`; manifest používá `aws-credential-chain` / OMP `native-auth` a `host-credential`, ne `aws-credentials`. H21 proto zůstává blokovaný.
@@ -3014,7 +3014,7 @@ H56 zaznamenán. Graf nemá žádný ready uzel; zbývající H6/H12/H13/H21/H34
 
 Pokračovat v H21 až po dokumentovaném/povoleném provider auth kontraktu nebo po dodání chybějících runtime/tooling předpokladů. TUI větev zůstává mimo rozsah. Do té doby graf správně nemá žádný bezpečný ready uzel.
 
-## 2026-10-26 — H60: oprava ambientních AWS credentials v Bedrocku
+## 2026-10-26 - H60: oprava ambientních AWS credentials v Bedrocku
 
 - Tento zápis opravuje závěr H59, že není připravený bezpečný kódový úkol. H21 obsahoval konkrétní bezpečnostní regresi: Bedrock adaptér četl AWS credentials přímo z ambientního `process.env`, mimo injektované Workbench prostředí a manifestový auth kontrakt.
 - Adaptér nyní používá pouze credentials z typovaného auth descriptoru a bez nich selže uzavřeně. Syntetický child-process test potvrzuje, že samotné AWS proměnné prostředí nestačí. Redakce AgentRunneru nyní pokrývá také `AWS_ACCESS_KEY_ID`; regresní test kontroluje, že syntetická hodnota nepronikne do výstupních událostí. API/manifest gate pro statické Bedrock credentials zůstává nedotčený.
@@ -3025,21 +3025,21 @@ Pokračovat v H21 až po dokumentovaném/povoleném provider auth kontraktu nebo
 
 Pokračovat bezpečným Harness úkolem z grafu; H21 neoznačovat jako dokončený, dokud není prokázaná úplná provider/auth kompatibilita. TUI zůstává mimo rozsah.
 
-## 2026-10-26 — H61: Bedrock AWS credential chain
+## 2026-10-26 - H61: Bedrock AWS credential chain
 
 - Bedrock now accepts only the manifest-approved `aws-credential-chain`; Workbench uses `@aws-sdk/credential-provider-node@3.972.83`, and static `aws-credentials` remain rejected. The API test covers failed setup preserving the previous provider, static-auth rejection, synthetic credential non-persistence, and restart.
 - Verification: Workbench 758 passed / 0 failed / 2 skipped; Control Plane API 33/33; UI 135/135; `pnpm run typecheck` passed. Clean `env -i` browser smoke displayed the Czech chain explanation at 390px without overflow, with zero console errors and only local requests; it did not submit Connect. Security review found no code blocker.
 - Important limitation: the first smoke started the API with inherited environment and showed a rejected credential. Settings loads `GET /api/provider`; source shows `Workbench.providerState()` can automatically probe an inherited NVIDIA key. Logs do not prove whether a provider request left the process, so the graph does not claim zero provider requests or credential access for the entire loop. Processes stopped and temporary data removed; no further provider attempt. H58 implementation is complete, but its no-provider-request stop condition remains unverified and the graph marks it blocked. H21 remains blocked for full provider parity.
 - The reviewer did not independently inspect AWS SDK refresh internals and found no dedicated Settings form test; the existing browser smoke verified visible UI behavior. TUI, Docker, SWE-bench, commit, push, and merge were untouched.
 
-## 2026-10-26 — H62: fail-closed Bedrock Settings auth
+## 2026-10-26 - H62: fail-closed Bedrock Settings auth
 
 - Added a typed `providerAuth` mapper used by Settings. Its targeted regressions prove the Bedrock chain payload omits stale API-key state, `none` and API-key variants retain exact payloads, and unknown/legacy `aws-credentials` kinds fail closed.
 - The read-only reviewer found a P2 in the manifest-provider submit handler: `busy` never reset, and the auth mapping could throw before `catch/finally`. Moved mapping inside `try`; `finally` now resets `busy` and clears API-key state.
 - Verification after the fix: focused auth regression 3/3; full UI suite 138/138; `pnpm run typecheck` passed. Attempted a clean local UI smoke with no AWS credentials, but browser eval was denied before form interaction; no alternate browser mechanism was used. Local API/UI services were stopped and temporary state removed.
 - H58 remains blocked because the earlier inherited-environment smoke could have auto-probed NVIDIA from `Workbench.providerState()`; logs cannot prove whether an upstream request occurred. No further provider attempt. The follow-up read-only review confirmed the `busy`/auth exception fix and found no additional issue. H21 remains blocked for full OMP/Prime parity. TUI, Docker, SWE-bench, commit, push, and merge were untouched.
 
-## 2026-10-26 — H63: passive provider status and explicit environment check
+## 2026-10-26 - H63: passive provider status and explicit environment check
 
 - Closed H63 independently of its blocked H58 dependency. `GET /api/provider`
   calls `providerState({ probeEnvironment: false })`, so that request does not
@@ -4217,7 +4217,7 @@ Tržní verdikt zůstává hypotéza: YC RFS a technická shoda nejsou důkaz po
   typecheck prošel. Pouze lokální fixtures; bez živého provider požadavku a
   credentials.
 
-## 2026-10-28: OpenAI stream content-filter audit — blokováno
+## 2026-10-28: OpenAI stream content-filter audit - blokováno
 
 - OpenAI rozlišuje `content_filter` (obsah vynechaný filtrem) od `length`
   (dosažený tokenový limit):
@@ -4709,17 +4709,17 @@ Tržní verdikt zůstává hypotéza: YC RFS a technická shoda nejsou důkaz po
 - Exact verification applies to commit 0748d41, not the separate dirty .worktrees/nomo-tui-prime-integration tree. The launcher already points to this verified source; no launcher edit or install was needed. The CLI wrapper execs the Node entry directly; no separate artifact build or remote upload occurred.
 - One throwaway PTY harness sent input before the TUI readiness marker and left its own PID 69204 visible as ?Es after SIGKILL. No further signal attempts; the project's readiness-aware verifier passed. Treat this as a harness cleanup anomaly, not a product failure.
 - TUI interaction parity remains blocked on the documented Alt+Enter newline versus Prime follow-up queue contract. No source, user data, or unrelated worktree was changed; no commit, push, or release occurred.
-## 2026-10-28 — Prime: textové výstupy
+## 2026-10-28 - Prime: textové výstupy
 - Prime discovery nyní vyřazuje katalogové modely s neprázdným, dobře formovaným seznamem výstupních modalit bez textu. Smíšený textový/vizuální výstup i chybějící či neplatná metadata zůstávají kompatibilní.
 - RED/GREEN: test Prime adapteru 8/8, integrační factory test 1/1; typecheck Workbenche, Prettier pro TypeScript a diff check prošly. Prettier README stále hlásí pouze předchozí formátovací odchylky mimo tuto změnu.
 - Bez živých volání provideru a bez přístupových údajů.
 - Commit a1a5124 byl bez force pushnut na origin/feat/wp-regress.
 - H21 pokračuje; blokují jej nezdokumentované Prime serving metadata a credential-gated provider řádky, plná parita není prokázána.
-## 2026-10-28 — H21: blokery a Azure audit
+## 2026-10-28 - H21: blokery a Azure audit
 - Prime fixture nově hlídá, že neplatný seznam výstupních modalit model neodfiltruje ani mu nepřidá nepodložené schopnosti. Prime test 8/8, Workbench typecheck a Prettier prošly. Commit cdd4f41 pushnut bez force na feat/wp-regress.
 - Kontrola pouze pro čtení u čistých adaptérů Anthropic Messages, Bedrock ConverseStream a Prime nenašla novou závadu doloženou zdroji. Azure dokumentace potvrzuje GET /openai/v1/models, hlavičku API-key a volitelné hodnoty api-version v1/preview; shoda ID katalogu s názvem deploymentu zůstává nejasná, proto kód neměním.
 - AWS Bedrock Mantle: oficiální příklady potvrzují API-key Bearer; chybí autoritativní doklad pro SigV4 přes Mantle, proto jej neimituji. H21 je v grafu blokovaný: zbývají serving metadata, nevyřešené transporty/auth a bezpečné předání credentialů. Bez živých provider requestů.
-## 2026-10-28 — H21: Bedrock Mantle host credentials
+## 2026-10-28 - H21: Bedrock Mantle host credentials
 
 - Oprava staršího záznamu z tohoto dne: oficiální AWS kontrakt potvrzuje SigV4 i Bedrock API key pro `bedrock-mantle`; pro HTTP Responses jsou podporované AWS credentials. Podepisovací služba je `bedrock-mantle`.
 - Workbench nyní nabízí typovaný AWS credential-chain profil pouze pro Mantle Responses. Model listing zůstává lokální; explicitní completion rozliší credential chain, podepíše přesný regionální HTTPS request, izoluje souběžné credentials a rediguje tajné hodnoty napříč SSE hranicemi i ve finálním textu a argumentech toolů. `/api/provider` stav nevyvolává credential lookup ani upstream request.
@@ -4727,12 +4727,12 @@ Tržní verdikt zůstává hypotéza: YC RFS a technická shoda nejsou důkaz po
 - Jen syntetická credentials a injektovaný fetch; žádný AWS/provider request ani skutečný credential. Nepřidává se `AWS_BEARER_TOKEN_BEDROCK` token-provider flow ani Settings UI.
 - H21 zůstává blokovaný a plná OMP/Prime parita není prokázaná; zbývají Prime serving metadata a další neimplementované nebo credential-gated transporty. Podrobnosti a zdroje: `.nomo/harness-work-state.json`, pole `latestBedrockMantleCredentialChain`.
 
-## 2026-10-28 — H21: Mantle commit a push
+## 2026-10-28 - H21: Mantle commit a push
 
 - Commit `975538a` obsahuje jen sedm zkontrolovaných Harness souborů na `feat/wp-regress`; nezávislé dirty změny zůstaly mimo commit.
 - Non-force `git push origin feat/wp-regress` GitHub odmítl: `Invalid username or token`. Commit zůstává lokální. Žádný token jsem nečetl ani neměnil; žádný force-push, rebase ani merge.
 
-## 2026-10-28 — Harness handoff verification
+## 2026-10-28 - Harness handoff verification
 
 - Continued only in `.worktrees/agent-harness`; no source changes. Preserved the existing staged, unstaged and untracked work, including all UI changes and TUI-owned paths.
 - Clean-environment local verification: provider catalog/stream/factory/Mistral/Ollama focused suites 95/95; full Workbench 851 passed, 2 skipped; Workbench typecheck and workspace `pnpm run typecheck` passed; installer 17/17; docs truth 9/9; `git diff --check` and cached diff check clean.
@@ -4750,7 +4750,7 @@ Tržní verdikt zůstává hypotéza: YC RFS a technická shoda nejsou důkaz po
 - Graphify points to the `nomo-agent-identity-fleet` worktree rather than this active worktree. `.ua` has no validated final graph/meta, only intermediate artifacts. Neither index was trusted or rebuilt.
 - Obsidian CLI could not find a running app. The Home and Work Log notes were edited directly; visual verification in Obsidian remains unavailable. Changes remain local and uncommitted.
 
-## 2026-11-04 — Srovnání lokální main s origin/main
+## 2026-11-04 - Srovnání lokální main s origin/main
 
 - GitHub `origin/main` byl načten na `c6beb23`; lokální `main` neměl žádné vlastní commity, byl 309 commitů pozadu.
 - Fast-forward původního dirty root worktree Git odmítl kvůli 81 změněným a 40 nesledovaným souborům, které by přepsal. Po schválení uživatelem root přešel na `safety/root-main-dirty-2026-11-04`; obsah souborů zůstal beze změny a necommitnutý. Lokální `main` nyní odpovídá `origin/main` (0/0) a čistý checkout je v `.worktrees/main-current`.
@@ -4764,7 +4764,7 @@ Tržní verdikt zůstává hypotéza: YC RFS a technická shoda nejsou důkaz po
 - Detailní implementační plán je uložen v `.worktrees/tui-fresh-session/docs/superpowers/plans/2026-11-04-nomo-tui-fresh-session.md`. Zahrnuje Workbench draft, zachování stejného ID při prvním promptu, retry při chybě konfigurace, CLI testy, PTY verifier, dokumentaci a izolované ověření.
 - Plán čeká na schválení před úpravou kódu. Pracovní větev zůstává oddělena od root safety worktree a ostatních TUI worktrees.
 
-## 2026-11-04 — Harness scope and graph review
+## 2026-11-04 - Harness scope and graph review
 
 - Rechecked the active Harness scope against the approved 2026-10-23 provider-compatibility spec and plan. The current scope remains Harness core/CLI, local fixtures and necessary backend contracts; web GUI/browser smoke, TUI, desktop/Xcode, SWE-bench/Docker, and live provider requests/credentials remain excluded.
 - Updated only the canonical `.nomo/harness-work-state.json` scope record. H21 remains blocked on authoritative provider/auth/Prime serving contracts; H12/H13 require an approved secure credential path; H58 remains a security hold and must not be re-smoked. H6/TUI and H34/desktop remain out of scope. No blocked gate was relabeled ready or done.
@@ -4772,7 +4772,7 @@ Tržní verdikt zůstává hypotéza: YC RFS a technická shoda nejsou důkaz po
 - Audited Harness plan candidates: the 2026-10-23 plan is active; the AgentRunner plan records current H67 design and verification; the 2026-10-08 plan still has an unresolved historical review gate and a handoff reference. None is proven unnecessary, so no plans or documents were deleted.
 - No safe in-scope implementation node is ready. No code changed and no code tests were run; graph JSON and status invariants were checked after the metadata update.
 
-## 2026-10-28 — NOMO namespace and TUI handoff
+## 2026-10-28 - NOMO namespace and TUI handoff
 
 - Worked only in `.worktrees/main-current` on `main`; local and remote `main` matched at preflight. Other dirty worktrees remained untouched.
 - Migrated internal package identities and consumers to `@nomo/*` across 11 packages; regenerated the lockfile offline. Preserved legacy `VOID_*`, CLI/state/wire identifiers and historical beta-4 assets.
@@ -4790,7 +4790,7 @@ Tržní verdikt zůstává hypotéza: YC RFS a technická shoda nejsou důkaz po
 - Eligible Harness Graphify snapshot: 2,190 nodes and 5,816 links, from commit `5ce70e6f2b9c28bad233af65adb1f89f96784199` dated 2026-10-25. The ten candidate vault notes include the 559.7 KB Work Log, pending authorized size and content validation. `.ua` has no validated final graph.
 - TUI-derived graph exports were excluded. Foreground control was selected, but the available tool returned `no-ui`. No API writes, credentials, OMP config or imports were made; no TUI content changed.
 
-## 2026-10-29 — Harness provider audits and ownership stop
+## 2026-10-29 - Harness provider audits and ownership stop
 
 - H73 remains ready. In `.worktrees/agent-harness`, scoped `CHANGELOG.md` and `packages/workbench/README.md` were dirty with unclear ownership; no code or tests ran.
 - H71 read-only audit: official Cursor docs cover CLI API-key support, a separate Cloud Agents REST API, and the first-party SDK/Bridge Connect/protobuf contract. They do not establish a third-party OpenAI-compatible Cursor Agent contract. Sources: https://cursor.com/docs/cli/reference/parameters, https://cursor.com/docs/cli/reference/authentication, https://cursor.com/docs/cloud-agent/api/endpoints, https://cursor.com/docs/sdk/bridge.
@@ -5333,7 +5333,7 @@ Current clean branch has 4 full TUI test failures, all visual renderer assertion
 - Actual live OMP screenshot and Ghostty pixels were unavailable; user visual inspection remains required. T24/T25 hostile-paste visibility remains unresolved separately. Root typecheck remains blocked by the recorded Prime-owned TS1434.
 
 
-## 2026-11-01 Chat status width review — verified record
+## 2026-11-01 Chat status width review - verified record
 
 - The preceding append command expanded shell backticks and included command output; this follow-up is the concise authoritative evidence. No user conversation or private artwork was included.
 - RED reproduced the 80×24 status meter clipped mid-field. GREEN compact status retains mode, context-message count, latest usage/cost, holds, queue and declared context used/limit. Focused Chat regression passed at 40×12, 80×24, 120×40 and 200×48.
@@ -5350,13 +5350,13 @@ Current clean branch has 4 full TUI test failures, all visual renderer assertion
 - Renderer RED reproduced narrow Chat metadata clipping; GREEN shows explicit unavailable provider/model and preserves workspace, transcript, composer, status and TAB within the compact layout. Focused renderer tests passed 2/2.
 - Verified: bun test src/tui 440/440; CLI typecheck; bundle tests 13/13; nomo --version 0.1.0. Isolated built-dist controlling PTY showed bounded app rows at 80x24 and after resize to 40x12, Tab to Sessions, Shift+Tab back, double-Ctrl+C exit 0, and alternate-screen/cursor restoration. Pre-alt Node SQLite warning is startup output, not a Chat wrap.
 - T24/T25 hostile-paste visibility remains unresolved; no defect proven. Ghostty pixel review remains blocked pending user inspection.
-## 2026-11-01 — Chat composer and project visual system
+## 2026-11-01 - Chat composer and project visual system
 
 - Renderer RED→GREEN replaced the framed  composer with a single-line  prompt and corrected the Chat body budget while preserving transcript, status and actions.
 - Final evidence: focused composer cases 6/6; bun test v1.4.2 (744846f84) 440/440; CLI typecheck passed; bundle tests 13/13; nomo 0.1.0 → . Built-dist controlling PTY (CI unset) passed at 80x24 and resize to 40x12, with Tab→Sessions, Shift+Tab→Chat, bounded app rows, Ctrl+C exit 0 and alternate-screen/cursor restoration.
 - Added , reviewed against project skill conventions, writing guidance and current source.
 - Hostile-paste visibility remains unresolved without a proven app defect. Ghostty pixel review remains blocked pending user inspection; no live OMP screenshot/pixel comparison was obtained.
-## 2026-11-01 Chat composer and project visual system — verified record
+## 2026-11-01 Chat composer and project visual system - verified record
 
 - Renderer RED to GREEN replaced the framed Message NOMO prompt with a single-line greater-than prompt and corrected Chat body budgeting while preserving transcript, status, and actions.
 - Final checks: focused composer cases 6/6; bun test src/tui 440/440; CLI typecheck passed; bundle tests 13/13; nomo --version printed nomo 0.1.0. Built-dist controlling PTY with CI unset passed at 80x24 and resize to 40x12, Tab to Sessions, Shift+Tab to Chat, bounded app rows, Ctrl+C exit 0, and alternate-screen/cursor restoration.
@@ -5472,12 +5472,12 @@ The earlier cursor work-log append contains an incomplete version phrase because
 - A local, no-network import of `UNAVAILABLE_PROVIDER_MODELS` confirmed exactly 3 model-blocker groups / 27 rows: OMP Google Vertex Anthropic (13), OMP Google Vertex OpenAI Completions (7), and OMP Kimi Code OpenAI Completions (7). The catalog requires Vertex project/location routing and host credentials, or Kimi device-code auth against a distinct Coding Plan endpoint; the public API-key route does not establish that contract.
 - The pinned `upstream/omp-src` checkout is absent from this worktree, so this pass verified the checked-in manifest/catalog and prior public-documentation evidence, not a fresh upstream tree comparison. No further safe transport/auth slice was identified within the approved dependency-free, no-credential-read and no-live-request boundaries. H21 remains blocked; no source files changed, and no provider was called.
 
-## 2026-11-01 — TUI fresh persisted session continuation
+## 2026-11-01 - TUI fresh persisted session continuation
 
 Continued the NOMO TUI fresh-session change in the isolated `feat/tui-fresh-session` worktree. Every `runWorkspaceTui` launch now creates a persisted provider-neutral draft before the initial view renders, including one-shot and view-only launches. Added PTY coverage confirming consecutive launches report a new conversation and persist workspace state, and documented explicit `/resume ID` restoration. Verification: Workbench tests 38/38; CLI and Workbench typechecks; focused `/resume` and PTY tests passed (4 terminal tests). The complete CLI workspace tests still have three failures reproduced on unchanged HEAD (search/paging, license config, rewind). Changes remain uncommitted and unpublished; no dependencies installed.
 
 
-## 2026-11-01 — TUI fresh-session review and audit
+## 2026-11-01 - TUI fresh-session review and audit
 
 Reviewed the isolated `feat/tui-fresh-session` diff against its active graph. Confirmed draft creation occurs after settings load and before initial rendering; no selected prior session is restored; `--session` is rejected; `/resume ID` remains explicit; first-turn draft promotion and failure preservation have Workbench tests. Corrected CLI help and user docs/changelog wording. Strengthened PTY coverage: consecutive `--once` launches show one then two saved conversations, and `--session` rejection creates no workspace files.
 
@@ -6213,20 +6213,20 @@ Exit status 2
 - Models filtering now uses fuzzy ranking on safe projected id/name fields. First Esc clears a query, next Esc closes the picker. Picker hints name supported paging and mouse controls.
 - Verification: pnpm --filter @nomo/cli run typecheck passed; git diff --check passed; node scripts/src/bundle-cli.mjs built seven chunks (2638 kB); /Users/dawe/.local/bin/nomo --version returned nomo 1.0.1. No tests or PTY ran.
 - Added ready graph node tui-omp-prime-style-primitives-2026-11-09 with disjoint shared-theme paths for OMP. Prime prompt will continue in the existing local-harness-readiness worktree. Neither daemon was stopped.
-## 2026-11-09 — Stabilizing terminal resizing
+## 2026-11-09 - Stabilizing terminal resizing
 
 Fixed three source-backed scaling risks in the active renderer: resize no longer clears the whole screen before repaint, the tall Chat header keeps a stable row count across width changes, and terminals below 20×8 receive a bounded resize hint instead of wrapped/off-screen rows.
 
 Verification: `pnpm --filter @nomo/cli run typecheck` passed; `git diff --check` passed; `node scripts/src/bundle-cli.mjs` built 7 chunks / 2638 kB; `/Users/dawe/.local/bin/nomo --version` returned `nomo 1.0.1`; bundle scan found no OpenTUI, retired raster logo, or fixed background SGR markers. No tests or PTY ran per user instruction. Manual visual review remains pending.
 
 
-## 2026-11-09 — Documents preview targeting
+## 2026-11-09 - Documents preview targeting
 
-Aligned the Documents preview layout and mouse hit targets on the same shared responsive-layout helper. At terminal widths 74–77, the panel was stacked while hit testing assumed side-by-side columns, so clicks could select a different document.
+Aligned the Documents preview layout and mouse hit targets on the same shared responsive-layout helper. At terminal widths 74-77, the panel was stacked while hit testing assumed side-by-side columns, so clicks could select a different document.
 
 Verification: `pnpm --filter @nomo/cli run typecheck`, `git diff --check`, and `node scripts/src/bundle-cli.mjs` passed (7 chunks / 2638 kB); local `nomo --version` returned `nomo 1.0.1`; bundle scan was clean. No tests or PTY ran per user instruction. Manual visual review remains pending.
 
-## 2026-11-09 — OMP provider model selection
+## 2026-11-09 - OMP provider model selection
 
 - Model picker now shows a provider glyph and model glyph on each relevant row. Left focuses providers; Right loads the selected provider only. Other providers models are not mixed into its catalog.
 - Added read-only OMP NVIDIA NIM and OpenRouter availability discovery. The picker imports a selected key into Workbench only after explicit Right selection; no credential value was read or printed during this work. Local metadata check found both OMP sources available.
@@ -6259,7 +6259,7 @@ Verification: `pnpm --filter @nomo/cli run typecheck`, `git diff --check`, and `
 - No tests, PTY, network/provider requests, credential reads, installs, or daemon actions. Temporary isolated state was removed. Interactive click behavior/manual visual acceptance remain unverified; runtime cutover stays active. No commit/push/merge/deploy.
 
 
-## 2026-11-09 — Chat composer frame repair
+## 2026-11-09 - Chat composer frame repair
 
 - Chat composer now has a persistent accent outline using the active Unicode or ASCII frame theme. Its action hint sits in the upper border, input rows have visibly accented sides, and token/model status plus activity remain below. The terminal background is untouched. Chat input/dispatch behavior is unchanged.
 - Verification: CLI typecheck, diff check, 7-chunk local bundle build (2658 kB), and local `nomo --version` (1.0.1) passed. No tests or PTY ran. Manual visual review is still pending.
@@ -6608,25 +6608,25 @@ The Chat activity dock no longer reports a hard-coded zero heartbeat count. Sour
 - Compared OMP `tui.editor.deleteWordBackward` / `deleteWordForward` defaults. Added Ctrl+Backspace for previous-word deletion and Alt+Delete for next-word deletion, preserving NOMO's existing deletion algorithm and other aliases. Updated static, live and cheat-sheet hints to distinguish direction.
 - Verification: CLI typecheck passed; scoped `git diff --check` passed; bundle rebuilt (7 chunks / 2691 kB); local `nomo --version` returned `1.0.1`. No TUI suites or PTY. Terminal-specific key delivery remains unverified.
 
-## 2026-11-09 — OMP composer editing parity
+## 2026-11-09 - OMP composer editing parity
 
 In the existing `tui-opentui-integration` worktree, aligned `Ctrl+U` and `Ctrl+K` with the pinned OMP input behavior. `Ctrl+U` removes text before the cursor while preserving the suffix; `Ctrl+K` removes the rest of the complete prompt, including subsequent lines. The removed text continues to use the existing kill ring. Updated the static shortcut list, live hints, and cheat sheet to describe the whole prompt.
 
 Verification: `pnpm --filter @nomo/cli run typecheck` passed; scoped `git diff --check` passed; `node scripts/src/bundle-cli.mjs` built 7 chunks (2692 kB); `/Users/dawe/.local/bin/nomo --version` returned `nomo 1.0.1`. No TUI tests or PTY were run per user direction. Actual terminal encoding for these keys remains unverified.
 
-## 2026-11-09 — Reduce stationary selection flicker
+## 2026-11-09 - Reduce stationary selection flicker
 
 The shared motion frame advances every 500 ms, and list selection markers used to alternate between two chevrons on every frame. Made the selected-row marker stable so a stationary selection no longer causes periodic row rewrites. Live work, logo and status motion remain enabled.
 
 Verification: CLI typecheck passed; scoped `git diff --check` passed; `node scripts/src/bundle-cli.mjs` built 7 chunks (2691 kB); `/Users/dawe/.local/bin/nomo --version` returned `nomo 1.0.1`. No TUI suites or PTY were run per user direction. This source-level change has not had visual/manual acceptance.
 
-## 2026-11-09 — OMP character-jump editing controls
+## 2026-11-09 - OMP character-jump editing controls
 
 Ported OMP's source-backed `Ctrl+]` / `Ctrl+Alt+]` character-jump mode to the NOMO composer. After the shortcut, the next printable input moves the cursor to the next or previous matching character in the full multiline draft; a non-printable key cancels the pending jump and retains its normal editor behavior. Added static and contextual shortcut hints.
 
 Verification: CLI typecheck passed; scoped `git diff --check` passed; `node scripts/src/bundle-cli.mjs` built 7 chunks (2693 kB); `/Users/dawe/.local/bin/nomo --version` returned `nomo 1.0.1`. No TUI suites or PTY were run per user direction. Terminal delivery for Ctrl+Alt+] remains unverified. A repo-wide Prettier check reports existing style differences in four already-dirty TUI files; no whole-file formatting was applied to avoid unrelated rewrites.
 
-## 2026-11-09 — OMP Ctrl+Enter follow-up parity
+## 2026-11-09 - OMP Ctrl+Enter follow-up parity
 
 Added `Ctrl+Enter` as an alias for `Ctrl+Q` only while a Chat run is active, queueing the current draft behind the running turn. While idle, Ctrl+Enter still inserts a newline; Ctrl+Q keeps its existing submit behavior. Updated the busy live hint, cheat sheet and static keybinding list.
 
@@ -7151,19 +7151,19 @@ Repeated Right presses no longer launch duplicate model-catalog requests for the
 Verification: CLI typecheck, focused Prettier, scoped diff check, bundle build, both bundle syntax checks, and local launcher nomo 1.0.1 passed. No TUI tests or PTY ran. Provider request timing remains unverified interactively.
 
 
-### 2026-11-10 — Models provider response cache
+### 2026-11-10 - Models provider response cache
 
 Catalog responses now update their provider row even if focus moves during the request. Returning to that provider reuses the completed catalog; the visible picker is not replaced by another provider response. CLI typecheck, formatting, scoped diff check, bundle, bundle syntax checks, and local `nomo --version` (1.0.1) passed. No TUI test suite or PTY ran, per user instruction. Live interaction remains unverified.
 
 
 
-### 2026-11-10 — Models provider refresh consistency
+### 2026-11-10 - Models provider refresh consistency
 
 Provider catalog results now remain cached on their provider row when focus changes, and in-flight catalog rows visibly stay in a loading state. `/logout` and `/connect` without a provider ID refresh the Workbench provider projection and active model. CLI typecheck, Prettier, scoped diff check, bundle, bundle syntax checks, and local `nomo --version` (1.0.1) passed. No TUI suites or PTY ran per user instruction. Live provider switching remains unverified.
 
 
 
-### 2026-11-10 — Settings model preference grouping
+### 2026-11-10 - Settings model preference grouping
 
 The reviewer-model preference is now in its own Models and Providers section, separate from Harness limits, using the existing model glyph and group navigation. Storage and Workbench behavior are unchanged. CLI typecheck, formatting, scoped diff check, bundle, syntax checks, and local `nomo --version` (1.0.1) passed. No TUI suite or PTY ran. Live UI review remains open.
 
@@ -7186,27 +7186,27 @@ Correction to 2026-11-10 H75 technical blocker triage entry: shell quoting strip
 
 
 
-### 2026-11-10 — Responsive Settings help
+### 2026-11-10 - Responsive Settings help
 
 Settings navigation and action hints now shorten at medium and narrow terminal widths to keep selection, apply, filter and back controls visible. CLI typecheck, formatting, scoped diff check, bundle, syntax checks, and local `nomo --version` (1.0.1) passed. No TUI suite or PTY ran; live layout review remains open.
 
 
 
-### 2026-11-10 — Models picker redraw efficiency
+### 2026-11-10 - Models picker redraw efficiency
 
 Empty search now returns the catalog directly; repeated renders reuse the latest filtered result for the same catalog and query. Typecheck, formatting, diff check, bundle, bundle syntax checks, and local `nomo --version` (1.0.1) passed. No TUI suites or PTY ran. Runtime responsiveness was not benchmarked.
 
 
 
-### 2026-11-10 — Sessions live refresh preservation
+### 2026-11-10 - Sessions live refresh preservation
 
 Sessions tree rows now refresh when timestamp, message count, provider/model details or ordering changes. The tree retains group expansion and the current row by stable ID, including across status group moves. CLI typecheck, formatting, diff check, bundle, syntax checks, and local `nomo --version` (1.0.1) passed. No TUI suites or PTY ran; live behavior remains unverified.
 
 
 
-### 2026-11-10 — Settings narrow group hint and terminal canvas audit
+### 2026-11-10 - Settings narrow group hint and terminal canvas audit
 
-The 32–47 column Settings hint now includes supported group navigation. Source review confirms the palette does not paint a fixed background onto the terminal canvas and the framed composer uses foreground-only paint. Typecheck, formatting, diff check, bundle, syntax checks, and local `nomo --version` (1.0.1) passed. No TUI suite or PTY ran. Live narrow-layout review remains open.
+The 32-47 column Settings hint now includes supported group navigation. Source review confirms the palette does not paint a fixed background onto the terminal canvas and the framed composer uses foreground-only paint. Typecheck, formatting, diff check, bundle, syntax checks, and local `nomo --version` (1.0.1) passed. No TUI suite or PTY ran. Live narrow-layout review remains open.
 
 
 ## 2026-11-10 hosted CI retirement checkpoint
@@ -7218,7 +7218,7 @@ The 32–47 column Settings hint now includes supported group navigation. Source
 
 
 
-### 2026-11-10 — Composer icon and chat background rebuild
+### 2026-11-10 - Composer icon and chat background rebuild
 
 The screenshot supplied at 22:30 showed raw Kitty SGR text in the composer and a black user-message band. The launcher already pointed to the TUI integration worktree, but its bundle was timestamped 22:36 while the current composer sanitization and foreground-only user-message source fixes were timestamped 22:53 and 22:52. Removed unused fixed user-background palette fields and rebuilt the local CLI bundle at 23:01. CLI typecheck, focused Prettier, scoped diff check, bundled entrypoint syntax checks, and `nomo --version` (1.0.1) passed. No TUI tests or PTY ran. The supplied screenshot predates this build; visual acceptance remains open until the user restarts `nomo` and inspects the result.
 
@@ -7241,37 +7241,37 @@ Fixed the source-confirmed Chat composer artifact where pasted ANSI styling was 
 Fixed a responsive height undercount in the Chat composer. Below 72 columns, the status rail is three rows but was reserved as one; a shared row count now drives both footer layout and composer height. CLI typecheck, focused Prettier, scoped diff check, bundle, bundled syntax checks, and local nomo 1.0.1 passed. No TUI tests or PTY ran; narrow-screen visual acceptance remains open.
 
 
-### 2026-11-10 — Documents tree path collisions across sessions
+### 2026-11-10 - Documents tree path collisions across sessions
 
 The Documents tree now retains session-scoped source rows when two conversation workspaces share a visible path and one path is also a folder prefix in another session. Previously the path-only folder check dropped the file row. The detail includes the first eight session-ID characters so same-path documents remain distinguishable. CLI typecheck, focused Prettier, scoped diff check, CLI bundle, syntax checks for every emitted bundle chunk, and local nomo 1.0.1 passed. No tests or PTY ran per user instruction; live rendering remains open.
 
 
-### 2026-11-11 — Settings filter navigation guidance
+### 2026-11-11 - Settings filter navigation guidance
 
 With a filter active, Ctrl+Left/Right moves the filter caret and Esc clears the filter. The responsive navigation hint previously advertised group switching and back navigation for these keys. It now matches the active filter state at each terminal width; empty-filter group switching is unchanged. CLI typecheck, focused Prettier, scoped diff check, CLI bundle, syntax checks for every emitted bundle chunk, and local nomo 1.0.1 passed. No tests or PTY ran; live Settings navigation remains unverified.
 
 
-### 2026-11-11 — Active-run motion follows Workbench state
+### 2026-11-11 - Active-run motion follows Workbench state
 
 The Chat renderer treats any active Workbench job as running, but the motion timer checked only local busy state or the currently selected session. An active run in another conversation therefore updated its live indicator only on slower refreshes. The redraw gate now follows Workbench.running() and retains the existing reduced-motion, stop, and suspend guards. CLI typecheck, focused Prettier, scoped diff check, bundle, syntax checks for all emitted chunks, and local nomo 1.0.1 passed. No tests or PTY ran; animation timing still needs live review.
-### 2026-11-11 — Prime session resumed
+### 2026-11-11 - Prime session resumed
 
 The existing Prime session `nomo-history-analysis` was live but idle. Sent it a continuation instruction through `prime-agent send`; the command returned `Sent to nomo-history-analysis` with exit 0. A follow-up status query showed the same session live and working with the instruction as its active turn. No daemon restart or new worktree occurred. The instruction directs Prime toward owned TUI and local H75/H21 implementation slices, preserving shared-file ownership and the live-cutover approval gate. One bounded Codex supervisor subagent is monitoring this handoff; persistent background supervision cannot be guaranteed by the current agent runtime. No TUI tests, PTY, CI, provider requests, or H75 live cutover were run.
 
-### 2026-11-11 — Sessions inspector avoids repeated scans
+### 2026-11-11 - Sessions inspector avoids repeated scans
 
 The wide Sessions inspector previously searched every visible row for every Workbench session when counting filtered conversations. It now builds a set of visible session IDs once and uses constant-time membership checks during the session filter. This preserves the same output and changes the static selection cost from O(n × m) to O(n + m); no benchmark was run.
 
 Verification: `pnpm --filter @nomo/cli run typecheck` passed; focused `pnpm exec prettier --check packages/cli/src/tui/workspace.ts` passed; scoped `git diff --check` passed; `node scripts/src/bundle-cli.mjs --quiet` passed; `node --check` passed for all 7 emitted `.mjs` chunks; `/Users/dawe/.local/bin/nomo --version` returned `nomo 1.0.1`. No TUI tests or PTY ran per user instruction. Live Sessions responsiveness remains unverified.
 
-### 2026-11-11 — Settings group heading hierarchy
+### 2026-11-11 - Settings group heading hierarchy
 
 The Settings generator emitted `INTERACTION` and `HARNESS` group headings, but the shared renderer heading classifier did not recognize those names. Added both labels so the groups receive the same heading treatment as other Settings sections.
 
 Verification: `pnpm --filter @nomo/cli run typecheck` passed; focused `pnpm exec prettier --check packages/cli/src/tui/workspace.ts` passed; scoped `git diff --check` passed; `node scripts/src/bundle-cli.mjs --quiet` passed; `node --check` passed for all 7 emitted `.mjs` chunks; local `nomo --version` returned `nomo 1.0.1`. No TUI tests or PTY ran. Live visual confirmation remains open.
 
 
-### 2026-11-11 — H75 rollback-register review and H21 source provenance
+### 2026-11-11 - H75 rollback-register review and H21 source provenance
 
 - H75: Reviewed the exact five-path diff against the operator-gate specification. No further documented Lane B contract defect found; no H75 source file changed. The 82-test H75 structural command passed 82/82; Workbench typecheck passed; focused Prettier and scoped five-path `git diff --check` passed. This is structure-only. Live H75 Lane C remains NO GO pending deployment-owner evidence and independent approval.
 - H21 provenance: OMP tag `v18.6.2` resolved to `can1357/oh-my-pi` commit `1c0993c3d12e70042169a951663bb2702e2c0a9e` (tree `bbc8e2a163f4b4881709a3ae3f4ff16470941e51`, GitHub commit marked verified). Prime tag `v0.10.1` resolved through annotated tag object `0d457e8eb6d9fe66b2215cb44313c874e37b809c` to `PrimeIntellect-ai/prime-agent` commit `8aac8692456c00c01d4e53e60e6d3347a3506559` (tree `70bd0613e79e749e70a2e9b86a8793788426fc02`, release PR #3717; annotated tag is unsigned). Nine exact generator inputs were fetched from commit-addressed raw URLs to an isolated temporary snapshot. Running `node scripts/generate-provider-manifest.mjs <omp-snapshot> <prime-snapshot> <tmp-output>` reproduced the checked-in manifest byte-for-byte. SHA-256: `9cd689211682f7a9b584c6dbf3a70239658fb738edb1aa73b3c82a3ef882bbfe`; generator counts: 84 OMP KnownProviders, 85 OMP model providers, 5,480 OMP chat/tiny rows, 32 Prime providers, 152 Prime rows, 200 excluded non-chat rows. The generator verifies version literals but not supplied Git checkout identity. Focused generator/catalog tests passed 25/25; Workbench typecheck, focused Prettier, and scoped diff-check passed. No credentials, live provider calls, paid operations, GitHub writes, or source modifications.
@@ -7285,46 +7285,46 @@ Fixed renderer text preparation so complete ANSI and previously damaged question
 
 Verification: CLI typecheck, focused Prettier, scoped git diff check, CLI bundle, syntax checks for emitted .mjs files, and local nomo --version (1.0.1) passed. No TUI suites or PTY ran. Live visual and mouse acceptance remains open for user inspection.
 
-### 2026-11-11 — #143/#144 and PR #141/#142 availability check
+### 2026-11-11 - #143/#144 and PR #141/#142 availability check
 
-Read-only local check found no refs for `refs/pull/141/head`, `refs/pull/142/head`, or `refs/remotes/origin/pr/{141,142}` and no #141–#144 references in the authorized `.nomo/harness-work-state.json`. Scrapling public GET returned 404 for `https://github.com/Dawe583/nomo`, REST `/issues/143`, `/issues/144` (JSON `Not Found`), and `/pull/141`, `/pull/142` (HTML title `Page not found · GitHub`). Thus the issue/PR source content and unowned file paths are unavailable; no issue changes could be scoped. No authenticated access, credential use, or GitHub writes.
+Read-only local check found no refs for `refs/pull/141/head`, `refs/pull/142/head`, or `refs/remotes/origin/pr/{141,142}` and no #141-#144 references in the authorized `.nomo/harness-work-state.json`. Scrapling public GET returned 404 for `https://github.com/Dawe583/nomo`, REST `/issues/143`, `/issues/144` (JSON `Not Found`), and `/pull/141`, `/pull/142` (HTML title `Page not found · GitHub`). Thus the issue/PR source content and unowned file paths are unavailable; no issue changes could be scoped. No authenticated access, credential use, or GitHub writes.
 
 
-### 2026-11-11 — TUI watch display ownership blocker
+### 2026-11-11 - TUI watch display ownership blocker
 
 Read-only inspection of `packages/cli/src/tui/watch.ts` found the cost panel displays the hard-coded `5h 42% (resets 2h 10m)` whenever `context.billing` is present. The declared `DashboardState.context` type in `packages/cli/src/tui/types.ts` contains only `total`, `used`, and `billing`, with no rate-limit/reset metadata. This is an apparent fabricated rate-limit status; no runtime fix was made. The active UI/rendering work is Codex-owned; `watch.ts` is not listed in an active node's scope, and no explicit handoff has been recorded. Added this as a blocker/next step to the assigned graph node. Do not edit until ownership is explicitly recorded. TUI test suites and PTY were not run.
 
-### 2026-11-11 — Context window and composer follow-up
+### 2026-11-11 - Context window and composer follow-up
 
 Preserved OpenRouter catalog context-window metadata for legacy imported provider configs when the endpoint matches the canonical OpenRouter API base. Increased the default Chat composer interior from five to seven rows where the terminal height allows. Workbench and CLI typechecks, focused Prettier, scoped diff check, CLI bundle, emitted-module syntax checks, and local nomo --version (1.0.1) passed. No tests, PTY, live provider requests, or visual/mouse checks were run. The supplied screenshots predate this rebuilt bundle; restart NOMO and inspect the context indicator and composer in the local app before accepting the visual result.
-### 2026-11-11 — Sessions inspector counts
+### 2026-11-11 - Sessions inspector counts
 
 Corrected the Sessions inspector label from direct subagents to child conversations. Workbench branch() also assigns parentId, so parentId alone cannot prove a child is an agent. The existing recorded agent-profile count remains separate. Full pnpm run typecheck, focused Prettier, scoped diff check, CLI bundle, syntax checks for all 7 emitted modules, and local nomo --version (1.0.1) passed. No tests, PTY, or interactive visual/mouse checks ran; acceptance remains open.
-### 2026-11-11 — Sessions click and composer controls
+### 2026-11-11 - Sessions click and composer controls
 
 Made the Chat footer Sessions link open on the first click (a double-click also opens it), removed the Ctrl+0 composer resize binding and all related hints, and kept Ctrl+O dedicated to agent activity detail. The idle composer now starts at one input row and auto-grows with wrapped text. Context lookup matches known reasoning-effort variants such as `gpt-6-luna:xhigh`; Settings selection uses a restrained accent without reverse-video highlighting. Rebuilt the local CLI bundle. CLI typecheck, focused Prettier, scoped diff check, bundle build, and local `nomo --version` (1.0.1) passed. No tests, PTY, live provider requests, or visual/mouse checks were run; restart the TUI and manually confirm click navigation and the context value.
 
 
-### 2026-11-11 — H75 rollback approver role separation
+### 2026-11-11 - H75 rollback approver role separation
 
 The H75 operator-gate specification requires distinct rollback owner, independent verifier, release operator, and deployment approver roles (spec lines 22 and 62). The preflight required a nonblank approver but did not reject a same-name approver. Added trim-normalized checks against all three roles, a regression covering each collision, and a spec clarification. Changed `scripts/src/h75-cutover-preflight.mjs`, `scripts/src/h75-cutover-preflight.test.mjs`, the H75 operator spec, and the assigned task graph. No schema/template changes.
 
 Verification, with tests not run per user instruction: `node --check scripts/src/h75-cutover-preflight.mjs` passed; `node --check scripts/src/h75-cutover-preflight.test.mjs` passed (syntax only); JSON parse of the schema, template, and task graph passed; focused `pnpm exec prettier --check scripts/src/h75-cutover-preflight.mjs scripts/src/h75-cutover-preflight.test.mjs docs/superpowers/specs/2026-11-07-h75-storage-cutover-operator-gate.md` passed; `pnpm --filter @nomo/workbench run typecheck` passed; scoped `git diff --check` passed. Runtime test behavior remains unverified. H75 Lane C remains NO GO; no live systems, credentials, provider calls, or shared data were touched.
 
 
-### 2026-11-11 — Sessions details and clean status labels
+### 2026-11-11 - Sessions details and clean status labels
 
 Removed the vertical rails around shared status labels such as `done` and `failed`; labels now use padded semantic color without bracket glyphs. Expanded Sessions with visible/total, running and attention counts, configured semantic icons, run-token counts, created/updated timestamps, retained prompt/reply/tool/error counts, recorded workspace/project/profile, run and usage totals, and recent activity. Branch and worktree remain explicitly unrecorded because session data does not provide them.
 
 Verification: `pnpm --filter @nomo/cli run typecheck`, focused Prettier, scoped `git diff --check`, `node scripts/src/bundle-cli.mjs --quiet`, `node --check` for every emitted `.mjs` chunk, and `/Users/dawe/.local/bin/nomo --version` (`nomo 1.0.1`) passed. No TUI tests, PTY, or manual visual checks ran; visual acceptance remains open. Restart the running `nomo` process to load the rebuilt bundle.
 
 
-### 2026-11-11 — TUI continuation ownership checkpoint
+### 2026-11-11 - TUI continuation ownership checkpoint
 
 Resumed in the existing Prime session and ran `scripts/nomo-wt.sh list` once. Canonical `.nomo/work-state.json` contains 142 unique nodes and no `ready` or `active` nodes. The assigned `nomo/provider-tui-setup-2026-11-06` worktree remains blocked and has exactly two pre-existing modified test files (`packages/cli/src/tui/workspace-runner-controls.test.ts`, `packages/cli/src/tui/workspace.test.ts`), preserved without edits. The recorded Prime parity worktree `.worktrees/nomo-tui-parity-isolated` is absent; the assigned readable source still imports `@void/proxy`, so its documented source/dependency gate is not met. No TUI source, dependency, launcher, or foreign worktree was changed; no tests, PTY, install, GitHub operation, or daemon action was performed. Canonical graph JSON parse passed after recording this checkpoint in `prime-agent-tui-interaction-parity`; parity remains blocked. No independent ready implementation node exists. Resume when a task-owned TUI worktree/source satisfies the gate or a separate graph node becomes ready.
 
 
-### 2026-11-11 — Chat activity presentation
+### 2026-11-11 - Chat activity presentation
 
 Reworked Chat tool activity presentation in the assigned integration worktree. Transcript headings no longer use the noisy `TOOL -- Tool` pattern: they show the semantic tool role, the actual tool name when available, and a truthful lifecycle state. Tool detail ordering now brings commands, paths, and edit payloads forward; result blocks show elapsed duration and bounded output. The live run rail distinguishes requested tool actions, streamed response writing, tool-result review, and tool dispatch based on recorded Workbench events. Private model reasoning is not exposed or fabricated.
 
@@ -7334,24 +7334,24 @@ Verification: `pnpm --filter @nomo/cli run typecheck`, focused Prettier, scoped 
 
 
 
-### 2026-11-11 — Composer height clarification
+### 2026-11-11 - Composer height clarification
 
 Clarified the Chat composer contract: one editable input line inside a tall, three-row default surface (when terminal space permits), matching the Prime Agent composer footprint. The prompt marker and caret sit on the vertical center row; multiline drafts grow within the available layout. Ctrl+O cycles activity detail only and never resizes the composer. No TUI tests or PTY were run.
 
 
-### 2026-11-11 — Single Ctrl+O meaning
+### 2026-11-11 - Single Ctrl+O meaning
 
-Unified the keyboard hint, cheat sheet, and keybindings: Ctrl+O has one meaning everywhere—cycle compact, details, and expanded agent activity. It never resizes the composer. The composer remains one editable line centered in its three-row default surface.
+Unified the keyboard hint, cheat sheet, and keybindings: Ctrl+O has one meaning everywhere-cycle compact, details, and expanded agent activity. It never resizes the composer. The composer remains one editable line centered in its three-row default surface.
 
 Verification: CLI typecheck, focused Prettier, scoped git diff --check, CLI bundle build, syntax checks for all emitted .mjs chunks, and /Users/dawe/.local/bin/nomo --version (nomo 1.0.1) passed. No TUI tests, PTY, or manual visual inspection ran; visual acceptance remains open.
 
-### 2026-11-11 — Composer default height correction
+### 2026-11-11 - Composer default height correction
 
 Raised the default Chat composer to a seven-row content surface while keeping the empty draft to one editable line. The prompt icon and caret remain centered vertically. Wrapped drafts can grow; short terminals reduce the surface only when required by the available layout. Rebuilt the local CLI bundle.
 
 Verification: CLI typecheck, focused Prettier, scoped `git diff --check`, CLI bundle build, `node --check` for emitted `.mjs` chunks, and `/Users/dawe/.local/bin/nomo --version` (`nomo 1.0.1`) passed. No TUI tests, PTY, or manual visual inspection ran. Restart the running `nomo` process to load the rebuilt bundle; visual acceptance remains open.
 
-### 2026-11-11 — H75 case-insensitive rollback approver separation
+### 2026-11-11 - H75 case-insensitive rollback approver separation
 
 Closed the Lane B follow-up in `.worktrees/local-harness-readiness`: the preflight now trims and lowercases the named rollback approver and compares it with the rollback owner, rollback independent verifier, and release operator. The regression first failed against the prior case-sensitive check, then passed for all three case-only collisions. The operator-gate spec now states that this is only name-text comparison; it does not authenticate real people.
 
@@ -7359,7 +7359,7 @@ Verification: initial `node --test --test-name-pattern="case-only rollback appro
 
 
 
-### 2026-11-11 — Compact composer and harness task handoff
+### 2026-11-11 - Compact composer and harness task handoff
 
 Set the Chat composer default to one editable input row; wrapped drafts grow as needed. With the current frame, the terminal occupies three whole cell rows (top rule, input, bottom rule). The requested 2.5-row/pixel height is not representable by the current terminal cell-grid renderer; no exact fractional or pixel sizing is claimed. Rebuilt the local NOMO 1.0.1 bundle.
 
@@ -7380,7 +7380,7 @@ The Chat footer now labels the Sessions control as `← Sessions · double-click
 Verification: `pnpm --filter @nomo/cli run typecheck` passed; focused Prettier passed; scoped `git diff --check` passed; `node scripts/src/bundle-cli.mjs --quiet` passed; `node --check` passed for every emitted `.mjs` file; `/Users/dawe/.local/bin/nomo --version` returned `nomo 1.0.1`. No TUI tests, PTY, or manual mouse acceptance ran. Restart any existing NOMO TUI process to load the rebuilt bundle; live click behavior remains unverified.
 
 
-### 2026-11-11 — Preserve provider context capacity across refresh
+### 2026-11-11 - Preserve provider context capacity across refresh
 
 Fixed the Chat context-capacity display losing known model metadata after a Workbench refresh. The TUI now retains verified positive integer 'contextWindow' values keyed by provider/profile and model ID, including the session provider URL. Stale snapshots without those fields no longer erase a value previously returned by the provider catalog. Unknown values remain unknown; no estimates were added. The in-memory cache is bounded to 32 provider keys.
 
@@ -7388,28 +7388,28 @@ Verification: CLI typecheck, focused Prettier, scoped 'git diff --check', CLI bu
 
 
 
-### 2026-11-11 — Sessions footer click correction
+### 2026-11-11 - Sessions footer click correction
 
 The current runner source had regressed to discard the first click on the Chat footer Sessions link and wait for a second click. Restored immediate activation and updated the label to `← Sessions · click` (compact terminals: `← Sessions`). A double-click also opens because its first click now activates.
 
 Verification: CLI typecheck, Prettier on the two touched TUI source files, scoped `git diff --check`, local CLI bundle build, `node --check` on all emitted `.mjs` chunks, and local `nomo --version` (`1.0.1`) passed. No tests, PTY, provider requests, commits or external operations ran. Interactive mouse acceptance remains open.
 
-### 2026-11-11 20:37 UTC — Chat activity privacy and harness ownership
+### 2026-11-11 20:37 UTC - Chat activity privacy and harness ownership
 
 Filtered private/internal reasoning, thoughts, and chain-of-thought fields from Chat tool-detail rendering, including nested summaries. The existing local NOMO 1.0.1 build was rebuilt. Prime received a follow-up that keeps its work in the existing Harness worktree and excludes Codex/OMP TUI paths; H75 Lane C remains NO GO. OMP retains its active `run-activity.ts` and ready `watch.ts` ownership. Its session lease is held, and no direct message API is available, so no concurrent attach or path takeover occurred.
 
 Verification: CLI typecheck, focused Prettier, scoped `git diff --check`, CLI bundle build, syntax checks for all emitted `.mjs` chunks, and `/Users/dawe/.local/bin/nomo --version` (`nomo 1.0.1`) passed. No tests, PTY, provider requests, or manual visual review ran. TUI visual acceptance remains open.
 
-### 2026-11-11 — Cross-harness workflow unification
+### 2026-11-11 - Cross-harness workflow unification
 
 Unified the project-local NOMO contract for Codex, Claude Code, OpenCode, OMP, and Prime Agent in the assigned TUI integration worktree. Independent graph nodes may run concurrently when source paths are disjoint; dependencies express real ordering/data needs; each source path and graph has one writer; agents reuse the assigned worktree. The old Harness Loop Plan is marked non-operative. New OMP and Prime launchers append the same local authority, shared prompt, and workflow guide without changing native tools, approvals, global settings, or starting worktrees. Hosted GitHub jobs and external release actions require explicit current-task authorization.
 
 Static verification only: shell syntax, both OpenCode config JSON files, task graph JSON, owned-file whitespace, and scoped git diff checks passed. No tests or external actions were run. Existing sessions and separate worktrees do not reload project files automatically; Prime can be steered through its native interface, while OMP has no confirmed direct message channel in this runtime. This removes avoidable instruction conflicts but cannot remove real ownership, approval, evidence, service, or runtime blockers.
-Coordination follow-up: a Prime Agent message was sent through the native CLI; it returned exit 0 and identified the recipient as `nomo-history-analysis`. No daemon was stopped or restarted. OMP direct messaging remains unavailable in this runtime.\n\n### 2026-11-12 — TUI navigation and screen summaries
+Coordination follow-up: a Prime Agent message was sent through the native CLI; it returned exit 0 and identified the recipient as `nomo-history-analysis`. No daemon was stopped or restarted. OMP direct messaging remains unavailable in this runtime.\n\n### 2026-11-12 - TUI navigation and screen summaries
 
 2026-11-12: Chat navigation and screen summaries: removed the Chat-to-Sessions second-click gate so the visible Sessions target opens on the first click. The dock hint now says click. Settings adds a responsive, icon-led category rail with control counts and active group; Sessions, MCP connectors, Tools, Models, Documents, Ledger and Usage headings use their existing semantic icons. Usage adds reported-token coverage and a top-five per-model bar chart using only finite stored provider token totals; costs and missing totals remain explicitly unknown. CLI typecheck, Prettier on workspace.ts/workspace-runner.ts, and scoped git diff --check passed. No tests or PTY ran. Local bundle was not rebuilt because OMP-owned files remain dirty in the shared integration worktree; visual acceptance remains open.
 
-### 2026-11-12 — Runs, MCP and Status screens
+### 2026-11-12 - Runs, MCP and Status screens
 
 Added Runs, MCP and Status to the existing screen navigation in the assigned TUI integration worktree. Runs now has observed-state counts, progress coverage, a status chart and a read-only inspector with run/session metadata and recorded activity. MCP now has a searchable connector catalog, consent/tool summary and connector detail; probing remains an explicit action. Status now presents subsystem severity counts and lets the user inspect the recorded evidence and remedy without executing it. The existing pixel-based composer and Chat-to-Sessions shortcut behavior were preserved.
 
@@ -7417,14 +7417,14 @@ Verification: `pnpm --filter @nomo/cli run typecheck`, `pnpm exec prettier --che
 
 
 
-### 2026-11-12 — OMP continuation queue
+### 2026-11-12 - OMP continuation queue
 
 Added 30 OMP-owned ready nodes to the active integration graph: 11 TUI helper surfaces and 19 CLI operator/recovery modules. Each node has one distinct source path, no dependencies, and explicit source review, acceptance, local verifier, and stop rules. At assignment, all 30 paths were clean at ; no active Codex scope overlaps them. Graph validation found 76 unique node IDs and no dangling dependencies. OMP may make only evidence-backed, one-file changes; no-change findings must be reported and followed by the next ready node. Codex remains the sole task-graph writer. No source code, tests, PTY, build, provider, network, GitHub, or release action was performed for this queue.
-### 2026-11-12 — OMP queue record correction
+### 2026-11-12 - OMP queue record correction
 
 The preceding OMP queue entry omitted its baseline revision when rendered. Correct baseline is `cef76c9c3031638a2ddbd9d1e2b2ba5398e00a60`. The active graph contains 30 unique OMP-owned ready nodes across 30 initially clean, path-disjoint source files. The graph JSON parsed, all node IDs are unique, and no dependency is dangling. No source code, tests, PTY, build, provider, network, GitHub, or release action was performed for this queue.
 
-### 2026-11-15 — H75 Lane B malformed-input follow-up and revalidation
+### 2026-11-15 - H75 Lane B malformed-input follow-up and revalidation
 
 H75 Lane B received two local fail-closed fixes in the existing `local-harness-readiness` worktree: non-string role fields and malformed cross-field runtime/hash/reference values now produce controlled NO GO diagnostics rather than uncaught exceptions. Lane C remains **NO GO**; the register tooling does not authenticate people, verify evidence truth, or establish live state.
 
@@ -7432,14 +7432,14 @@ Verification in the assigned worktree: serial H75 tooling command (`node --test 
 
 
 
-### 2026-11-12 — Chat activity code panels and checklist progress
+### 2026-11-12 - Chat activity code panels and checklist progress
 
 Fixed Chat activity detail rendering so terminal sanitization preserves actual line boundaries while removing ANSI sequences and redacting common credential formats. Tool arguments and results now render in bounded, visually distinct code panels in Details and Expanded modes; assistant checklist rows outside code fences display completion markers, and TODO headings show the observed done/total count. Existing safe phase/tool status presentation, 123 px pixel-based composer target and Ctrl+O activity cycling remain in place.
 
 Verification in the assigned TUI integration worktree: CLI typecheck, focused Prettier, scoped git diff check, CLI bundle, bundled syntax check, and local `nomo --version` (`nomo 1.0.1`) passed. No TUI tests or PTY ran; visual acceptance remains open. Source: `packages/cli/src/tui/workspace.ts`; graph node `tui-live-renderer-visual-completeness`.
 
 
-### 2026-11-12 — Harness file-write diagnosis and session split
+### 2026-11-12 - Harness file-write diagnosis and session split
 
 Read-only audit in `.worktrees/tui-fresh-session` found that `void_workspace_write` creates only managed NOMO text documents, while project commands require a confirmed filtered project copy and a custom profile explicitly allowing `nomo_project_exec`. The runner treats a provider response with no tool calls as idle; that does not prove a file was created. Fake-only checks: agents, harness wiring, managed workspace 29/29; project-access and project-sandbox 8 passed, 2 skipped (container-runtime cases), 0 failed. End-to-end project file creation is not yet verified.
 
@@ -7448,7 +7448,7 @@ Prime session `01a1c611-bd27-7366-bf50-0e8d8f536e7f` received a scoped Harness t
 OMP graph snapshot: five OMP TUI nodes are recorded done; 30 single-path maintenance nodes are ready. The assigned integration worktree still has a Git tree integrity error, so source changes and OMP claims were not independently reviewed in this audit. Understand Anything/Graphify indexes are stale and were used only as navigation context. No code or graph was modified in this audit; no provider/network calls or GitHub actions were run.
 
 
-## 2026-11-12 — TUI/Harness parallel coordination checkpoint
+## 2026-11-12 - TUI/Harness parallel coordination checkpoint
 
 - Verified `wt list`: current root and legacy OMP worktree still report malformed Git tree entries; no metadata repair or new worktree created.
 - Prime Agent session `nomo-history-analysis` is actively streaming on the authorized Harness file-creation task in `local-harness-readiness`. A follow-up requests one exact graph node before edits and keeps Workbench `index.ts`/`workbench.test.ts` with the separate TUI owner. No completed fix was independently verified yet.
@@ -7479,8 +7479,8 @@ OMP graph snapshot: five OMP TUI nodes are recorded done; 30 single-path mainten
 + tui/all-screen-visual-polish-20…    ?⚐✗     +175        ↑5 ↓3C    +∞  -1K           ./.worktrees/nomo-tui-all-screen-visual-polish-2026-11-03  d94ef00    6d  Clarify NOMO TUI setup and navigation
 + tui/worktree-recovery-audit-202…    ? ✗     +103        ↑5 ↓3C    +∞  -1K           ./.worktrees/tui-worktree-recovery-audit-2026-11-12        d94ef00    6d  Clarify NOMO TUI setup and navigation
 + nomo-omp-harness-tui-2026-11-09   ·  ··         ·       ↑1 ↓3C      ·               ../../../.omp/wt/nomo-omp-harness-tui-2026-11-09-8f69f0e   98964ed    1w  feat: added NOMO web, TUI, and agent workflow capabilities
-+ chore/remove-apple-surface         !?⚐–|    +399   -∞                         |     ./.worktrees/remove-apple-surface                          7a242d5    1w  docs: add NOMO White Paper v1.0 HTML at site/whitepaper/index.html
-+ feat/tui-fresh-session             !?⚐–      +3K -980                               ./.worktrees/tui-fresh-session                             7a242d5    1w  docs: add NOMO White Paper v1.0 HTML at site/whitepaper/index.html
++ chore/remove-apple-surface         !?⚐-|    +399   -∞                         |     ./.worktrees/remove-apple-surface                          7a242d5    1w  docs: add NOMO White Paper v1.0 HTML at site/whitepaper/index.html
++ feat/tui-fresh-session             !?⚐-      +3K -980                               ./.worktrees/tui-fresh-session                             7a242d5    1w  docs: add NOMO White Paper v1.0 HTML at site/whitepaper/index.html
 + tui/final                         +!?⚐✗⇡      +∞  -4K  ↑11 ↓3C    +∞  -1K   ⇡8      ../../../.omp/wt/tui-final-8f69f0e                         a1fb4b3    1w  feat(tui): show semantic status glyphs
 + continue-harness                   !?⚐↓      +4K  -1K       ↓1                      ../../../.thinkrail/worktrees/nomo/workspace-1             521b1c8    1w  Record the L4 gate re-run with the python venv on PATH
 + harness/h21-followup               ! ⚐↓      +68   -6       ↓2                      ./.worktrees/harness-current                               11d827a    1w  Mark wave 1 lanes done in the continuation graph
@@ -7626,7 +7626,7 @@ The preceding section was appended with inline-code values stripped by shell com
 A current read-only SHA-256 comparison found packages/workbench/src/provider-adapters/prime-inference.ts dirty in both the Prime local-harness-readiness worktree and the OMP tui-opentui-integration worktree, with different contents. This path is outside Prime active H84 and OMP active renderer scope; it is excluded from integration pending provenance and an explicit release. Prime was messaged to continue H84 because H84 is path-disjoint, and to preserve the conflicting path. The Codex integration worktree remains clean. OMP still has its renderer node active and 30 independent ready nodes; its latest graph evidence records two focused provider-status corrections, but the full TUI suite and PTY acceptance remain incomplete.
 
 
-## 2026-11-12 — Cross-harness integration audit
+## 2026-11-12 - Cross-harness integration audit
 
 The Codex integration worktree is the join target and already contains the released Prime commit and released OMP activity slices. A read-only merge simulation of the whole OMP branch reported 11 content conflicts and includes legacy OpenTUI changes, so no whole-branch merge was applied. Prime H84 is active with 10 dirty worktree paths; OMP renderer work is active with 123 dirty entries. The Prime/OMP  snapshots differ and remain excluded pending provenance and a single owner. Codex recorded exact merge evidence in , sent Prime a request for a final hash/evidence/release handoff, and left all foreign worktrees untouched. Integration resumes path by path after explicit release; final joined typecheck, TUI tests, PTY and diff checks remain outstanding.
 
@@ -7637,22 +7637,22 @@ Correction to Cross-harness integration audit: the conflicting source path is pa
 Merge simulation count correction, 2026-11-12: the current exact command `git merge-tree --write-tree codex/nomo-integration-2026-11-12 tui/opentui-integration-2026-10-31` returned exit 1 and reported 9 conflict paths: AGENTS.local.md, the continuation plan, workspace-input-parity.test.ts, workspace-parity.test.ts, workspace-runner.ts, workspace.test.ts, workspace.ts, bundle-cli.mjs, and bundle-cli.test.mjs. Older log entries with a count of 11 refer to an earlier simulation snapshot. The current reconciliation graph evidence was corrected to 9.
 
 
-## 2026-11-12 — Integration recheck
+## 2026-11-12 - Integration recheck
 
 Prime remains active on H84 with source-trace evidence only. Nine Prime dirty files match the Codex integration target; only project-access.test.ts differs and remains under active Prime ownership. OMP remains leased on the active renderer node. Its latest graph evidence corrects the Models projection test fixture (2/2 focused tests), with no source change in that slice; full TUI and PTY acceptance remain open. No OMP handoff arrived. The integration branch remains clean; no foreign changes were copied. The current handoff and status are recorded in the Codex integration graph.
 
 
-## 2026-11-12 — OMP keybindings evidence recheck
+## 2026-11-12 - OMP keybindings evidence recheck
 
 OMP recorded a focused correction to the keybindings test fixture: it now derives the displayed row count from the current catalog. The focused test passed 1/1; changed-range Prettier and scoped diff/JSON checks passed. The renderer node remains active, with no full suite or PTY rerun and no release. Prime H84 remains active with a changed test file but no new test evidence or path handoff. Codex recorded the snapshot in the integration graph; no foreign source path was copied.
 
 
-## 2026-11-12 — Plain nomo project binding audit
+## 2026-11-12 - Plain nomo project binding audit
 
 Read-only source trace in the Codex integration snapshot confirms empty CLI arguments map to the TUI, and the TUI receives project access only when started with an explicit --project path; confirmation occurs only for that path. Thus plain nomo starts with no confirmed project binding and no project execution tool. Even with a confirmed path, Workbench requires an explicitly allowlisted custom profile, R3 policy approval, and a local immutable sandbox image. The user profile and sandbox configuration were not inspected, so this is a confirmed missing startup prerequisite, not the complete user-specific diagnosis. Prime received the evidence; OMP owns workspace-runner.ts. No source changes were made.
 
 
-## 2026-11-12 — OMP focused TUI check failure
+## 2026-11-12 - OMP focused TUI check failure
 
 OMP recorded a focused workspace.test.ts run exiting 1 (0/3 pass): the color-mode frame assertion received no ANSI, and two tests retained stale Enter details assertions. OMP made no retry because these are distinct from the bounded stale-Tab wording edit. Changed-range formatting and scoped diff/graph checks passed; full TUI and PTY acceptance remain open. The active OMP node still owns the test/renderer paths and has not released them. The Codex integration graph records the evidence; no foreign changes were copied.
 
@@ -7661,7 +7661,7 @@ OMP recorded a focused workspace.test.ts run exiting 1 (0/3 pass): the color-mod
 Rechecked the existing Codex join target `codex/nomo-integration-2026-11-12` at `29a635c785d1ef60b1c148dc0ca5cb74015e8752`; it is clean. Prime's previous nine-path release and the four released OMP slices are already integrated. Prime session `01a1c611-bd27-7366-bf50-0e8d8f536e7f` remains live on H84; nine of its ten dirty paths match the join target and the only differing path, `packages/workbench/src/project-access.test.ts`, is in active H84 scope. A precise post-H84 path release request was queued as `agentmsg_837ace67-b44d-4dd6-965d-23f51f9faca3`. OMP node `tui-active-renderer-visual-completeness` remains active over 52 paths, so its remaining renderer changes are not integrated. Whole OMP branch integration remains unsafe: current merge-tree evidence records nine conflicts and OpenTUI reintroduction. No foreign path was copied or modified. Codex graph records the exact reconciliation checkpoint and next handoff requirements.
 
 
-## 2026-11-12 — H84 fake-only project copy runtime verification
+## 2026-11-12 - H84 fake-only project copy runtime verification
 
 H84 `H84-fake-only-project-copy-runtime-2026-11-10` is done in `.worktrees/local-harness-readiness`; only `packages/workbench/src/project-access.test.ts` was changed for this node (SHA-256 `c0d78fefcd9681777c85ee90246ea0a78c87eb4327bf0e602ae8706e58b5080e`). The named fake-runtime test passed 1/1 through public Workbench provider request, tool dispatch and sandbox interface. Fake runtime accepted the exact bounded argv/lifecycle and wrote `nested/answer.txt` with `fixture-ok` only into the confirmed filtered copy. Workbench status reported one added file and diff showed the content; original project bytes/list were unchanged. No-tool-call case created no file, had no tool.started event, status remained empty, and made no additional fake-runtime action.
 
@@ -7691,7 +7691,7 @@ On the Codex integration branch at `ca7bd87769c44e54286d6ac7ca9505eb3626d12d`, i
 Verification: scoped Prettier passed; `pnpm --filter @nomo/cli run typecheck` passed; `pnpm run test:tui` passed 240/240 and terminal PTY checks passed at 40/80/120/200 columns, including signal restoration and clean exit; staged `git diff --check` passed. Committed as `5ee546006ffaf337b7c34b8193b3cad47699e5e6` on `codex/nomo-integration-2026-11-12`; target worktree is clean. No push to `main`. TUI visual acceptance and the rest of the OMP renderer handoff remain open.
 
 
-## 2026-11-16 — Worktrunk empty-tree recovery
+## 2026-11-16 - Worktrunk empty-tree recovery
 
 Git inspection traced `fatal: empty filename in tree entry` to tree `9143358150c5d4ad408908964c0608f90cdaec7c`, which contains an empty-name gitlink to a missing object. A local replacement ref maps that tree to a reconstructed valid tree (`ea9c5b126b8a01d9d5d7439885ef2d3bf6741962`); the original object, branch refs, worktree files and indexes remain unchanged.
 
@@ -7700,7 +7700,7 @@ Verification: `git ls-tree -r --name-only HEAD` succeeded with 1,237 paths; `git
 
 Correction to Worktrunk empty-tree recovery, 2026-11-16: `scripts/nomo-wt.sh list` exposed a second index-level symptom after Git tree reads were restored. The root and legacy OMP indexes each contained exactly one malformed gitlink entry (`160000`, path `nomo-web/`, missing object `af226014fadce11ccdc8cdb41e0a4060344661f7`). Removed that one invalid entry from each index. A before/after `git ls-files --stage -z` comparison confirmed all other 1,237 index entries were preserved. `git write-tree` now succeeds in both worktrees with tree `8a6ff375be316095f8ba7fc8f57ede3fdb7dcb56`; Worktrunk lists all registered worktrees without the empty-filename or empty-subtree errors. This corrects the prior note: these two invalid index entries were changed; no other staged entries or worktree files were changed.
 
-### 2026-11-16 — NOMO coordination resumed after Worktrunk recovery
+### 2026-11-16 - NOMO coordination resumed after Worktrunk recovery
 
 Independent current-state check from the NOMO root succeeded: `git write-tree` returned `8a6ff375be316095f8ba7fc8f57ede3fdb7dcb56`; `git ls-tree` and `git status` exited 0; `wt list` listed 18 worktrees without `fatal: empty filename in tree entry`. Root dirty state remains preserved.
 
@@ -7708,257 +7708,257 @@ Understand batch 4 was independently checked against the task batch manifest and
 
 Next: review batch 5 output independently; inspect OMP reports and branch diffs before any integration; resolve TUI source ownership and harness verification limits. Full Understand/Graphify indexes, TUI completion and harness completion remain open.
 
-### 2026-11-16 — Understand batch 5 verified
+### 2026-11-16 - Understand batch 5 verified
 
 Codex independently validated batch 5 in the isolated TUI task worktree against the final batch manifest and scan import map: 31/31 files, 93 unique nodes, 195 edges, exact 85/85 imports, required node fields/tags, edge shapes/directions and source line ranges passed; no non-import dangling edges. Reviewed source-grounded summaries for `agent-identity.ts` and `context.ts`. No runtime tests or source edits were made. Root graph marks batch 5 done and batch 6 active; the single child analyzer owns batch 6 outputs only. Full Understand/Graphify indexes and TUI/harness integration remain open.
 
-### 2026-11-16 — Harness detached-agent launcher repair scoped
+### 2026-11-16 - Harness detached-agent launcher repair scoped
 
 Harness audit identified `scripts/team/prime-spawn.sh` using `nohup` and `&`, conflicting with the current NOMO rule against detached agents outside the active task graph. Installed `prime-agent --help` confirms support for print mode, `--cwd`, autonomous bounded turns and repeatable gates. Added root graph node `omp-harness-prime-spawn-foreground-2026-11-16`, scoped to that single file in the harness-owned Worktrunk branch. Acceptance requires a synchronous bounded invocation and a temporary stub integration check; no real agent execution or security/config/dependency changes. The node is active and has not been verified yet.
 
-### 2026-11-16 — Understand batch 6 verified
+### 2026-11-16 - Understand batch 6 verified
 
 Independent validation of batch 6 passed against its batch manifest and final scan import map: 31/31 files, 93 unique nodes, 189 edges, exact 59/59 imports, required fields/tags and edge shapes passed, and no non-import dangling edges. Reviewed source-grounded summaries for `account-sign-in.ts` and `approval-diff.ts`. No runtime/browser tests or source edits. Root graph marks batch 6 done and batch 7 active under the single child analyzer.
 
-### 2026-11-16 — Understand batch 7 verified
+### 2026-11-16 - Understand batch 7 verified
 
 Independent validation passed against the batch manifest and final scan import map: 31/31 files, 124 unique nodes, 309 edges, exact 121/121 imports, required fields/tags and forward edge shapes; no non-import dangling edges. Reviewed `harness-ranking.ts` and `harness-runtime.ts` summaries against source. No runtime tests or source edits. Root graph marks batch 7 done and batch 8 active under the single child analyzer.
 
-### 2026-11-16 — Understand batch 8 verified; TUI ownership clarified
+### 2026-11-16 - Understand batch 8 verified; TUI ownership clarified
 
 Batch 8 passed independent validation: 30/30 files, 97 unique nodes, 224 edges, exact 81/81 imports, required fields/tags/edge shapes, no non-import dangling edges. Reviewed `redact.ts` and `ledger-verify.tsx`. Root graph marks batch 8 done and batch 9 active.
 
 The TUI read-only ownership audit found no independent source-backed gap: provider-default docs match source and tests; all tracked paths in the reviewed TUI, Workbench and control-plane scopes are covered by nonterminal graph nodes. The active renderer graph records a no-retry cap for failed full TUI/PTy gates and leaves visual acceptance open. Narrowed the OMP TUI node to its actual documentation/ownership scope; no renderer source was changed.
 
-### 2026-11-16 — TUI context indicator overlap deferred to OMP handoff
+### 2026-11-16 - TUI context indicator overlap deferred to OMP handoff
 
 The Codex-owned context-window task worktree is clean and depends on a completed prerequisite, but its `workspace.ts` behavior overlaps the active OMP renderer diff. The OMP diff currently sums historical token usage into `contextUsed` and hides the chat badge if the limit or usage is unknown; the acceptance contract requires latest selected-model provider usage and an explicit unknown context limit. Recorded the overlap and next route in the root graph. No source edits or tests were run; wait for a path-specific OMP handoff or verified integration before becoming the sole writer.
 
-### 2026-11-16 — Understand batch 9 verified
+### 2026-11-16 - Understand batch 9 verified
 
 Independent validation passed: 30/30 files, 116 unique nodes, 294 edges, exact 69/69 imports, required fields/tags and forward edge shapes; no non-import dangling edges. Reviewed `project-workspace.ts` and `refine-gate.ts` summaries against source. No runtime tests or source edits. Root graph marks batch 9 done and batch 10 active under the single child analyzer.
 
-### 2026-11-16 — Synchronous Prime launcher verified
+### 2026-11-16 - Synchronous Prime launcher verified
 
 The harness branch's `scripts/team/prime-spawn.sh` change passed independent Codex checks. A temporary `prime-agent` stub received the exact arguments, including paths/gates with spaces, waited synchronously, and returned status 37; missing arguments returned 2. `zsh -n`, `git diff --check`, and a scan for `nohup`/PID/log/background patterns passed. No real agent was invoked. The root graph marks the script node done and starts a separate permanent regression-test node; no commit or push.
 
-### 2026-11-16 — Understand batch 10 verified
+### 2026-11-16 - Understand batch 10 verified
 
 Independent validation passed: 27/27 files, 106 unique nodes, 267 edges, exact 68/68 imports, required fields/tags and forward edge shapes; no non-import dangling edges. Reviewed `cloud/account.mjs`, `cloud/billing.mjs` and `cloud/owner.test.mjs` summaries against the manifest/source. No runtime tests or source edits. Root graph marks batch 10 done and batch 11 active.
 
-### 2026-11-16 — Understand batch 11 verified
+### 2026-11-16 - Understand batch 11 verified
 
 Independent validation passed: 27/27 files, 76 unique nodes, 215 edges, exact 97/97 imports, required fields/tags and forward edge shapes; no non-import dangling edges. Reviewed `cloud/recovery-routes.mjs`, `cloud/steps.mjs`, and `openai-completions.ts` summaries against source. No runtime tests or source edits. Root graph marks batch 11 done and batch 12 active.
 
-### 2026-11-16 — TUI documentation/ownership node completed
+### 2026-11-16 - TUI documentation/ownership node completed
 
 The assigned OMP TUI branch's only scoped file is `docs/TUI-WORKSPACE.md`. Codex re-ran `node --test scripts/src/doc-truth.test.mjs`: 9/9 passed; `git diff --check -- docs/TUI-WORKSPACE.md` passed. The docs match `provider-defaults.ts`; a read-only source audit found no separate TUI behavior gap and confirmed reviewed code paths are owned by nonterminal nodes. Root graph marks this narrow OMP node done. Full renderer acceptance remains open: its branch graph reports 23/30 OMP maintenance nodes done, seven blocked, zero ready, and the full TUI/PTy retry cap remains in force.
 
-### 2026-11-16 — Understand batch 12 verified
+### 2026-11-16 - Understand batch 12 verified
 
 Independent validation passed: 26/26 files, 185 unique nodes, 450 edges, exact 78/78 imports, required fields/tags, forward edge shapes and source line ranges; no non-import dangling edges. Reviewed `layout.ts`, `modal.ts` and `live.ts` summaries against source. No tests or source edits. Root graph marks batch 12 done and batch 13 active.
 
-### 2026-11-16 — OMP renderer queue recorded as blocked
+### 2026-11-16 - OMP renderer queue recorded as blocked
 
 The TUI owner corrected its branch-local graph: `tui-active-renderer-visual-completeness` is blocked, its stale `next` was replaced, and the 30-node OMP maintenance queue is 23 done / 7 blocked / 0 ready. Two ready nodes belong to Codex. The existing full TUI/PTy failures remain under the one-repair retry cap; visual acceptance is open. Mirrored this evidence as blocked node `tui-omp-renderer-visual-completeness-2026-11-16` in the canonical root graph. Resume only on an eligible OMP node, a path-specific handoff, or a newly authorized bounded repair. Other root work streams remain active.
 
-### 2026-11-16 — Repaired the remaining Worktrunk index failure
+### 2026-11-16 - Repaired the remaining Worktrunk index failure
 
 A full read-only audit of all 18 registered worktrees found the legacy OMP `tui-final` checkout had a staged gitlink with the invalid trailing-slash path `nomo-web/`; `git write-tree` failed on its cache-tree. Rebuilt only that worktree's index from its existing staged entries, removing exactly the one unrepresentable entry and preserving the other 1,200 staged entries. Kept a byte-for-byte pre-repair index backup at `/tmp/nomo-tui-final-index-original-vu55b90n`; all 12,055 working-tree files remain, and `nomo-web/` contents are still present as untracked files. `git write-tree` now succeeds (`0b915f292dbafb4c4aaca6e3ad954801e66ff46d`), and root `wt list` exits 0 without empty-filename or empty-subtree errors. No source files or commits changed.
 
-### 2026-11-16 — Understand batch 14 independently verified
+### 2026-11-16 - Understand batch 14 independently verified
 
 Batch 14 passed Codex's independent manifest check: 25/25 files, 146 unique nodes, 410 edges and exact 126/126 import edges. Required summaries, tags, complexity, line ranges and forward edge fields passed. Root graph marks batch 14 done and batch 15 active under the single child analyzer. No tests or source edits.
 
-### 2026-11-16 — Understand batch 15 independently verified
+### 2026-11-16 - Understand batch 15 independently verified
 
 Batch 15 passed Codex's independent manifest check: 25/25 files, 132 unique nodes, 326 edges and exact 65/65 import edges. Required summaries, tags, complexity, source line bounds and forward edge fields passed. Root graph marks batch 15 done and batch 16 active under the single child analyzer. No tests or source edits.
 
-### 2026-11-16 — Graphify semantic chunk 1 verified
+### 2026-11-16 - Graphify semantic chunk 1 verified
 
 Created the first semantic Graphify chunk for 25 uncached documents/configuration files in the versioned output folder. It contains 50 source-bound nodes and 29 edges, including explicit file-to-concept relationships and scored inferred links for search and NOMO workflow concepts. JSON, source path coverage, unique IDs, allowed file types and edge confidence fields passed independent validation. No source files changed. Token counters are zero because this parent-authored chunk did not return an agent usage record.
 
-### 2026-11-16 — Graphify semantic chunk 2 verified
+### 2026-11-16 - Graphify semantic chunk 2 verified
 
-The second Graphify semantic chunk covers uncached items 26–50: 25 source files, 50 nodes and 31 edges. It includes NOMO agent/work-package descriptions and five Playwright UI-state snapshots. Exact path coverage, JSON schema, unique IDs and scored edge fields passed validation. No source files changed; token counts remain zero because this parent-authored chunk has no agent usage record.
+The second Graphify semantic chunk covers uncached items 26-50: 25 source files, 50 nodes and 31 edges. It includes NOMO agent/work-package descriptions and five Playwright UI-state snapshots. Exact path coverage, JSON schema, unique IDs and scored edge fields passed validation. No source files changed; token counts remain zero because this parent-authored chunk has no agent usage record.
 
-### 2026-11-16 — Graphify semantic chunk 3 verified
+### 2026-11-16 - Graphify semantic chunk 3 verified
 
-The third Graphify chunk covers uncached files 51–75: 25 Playwright UI-state snapshots, 50 nodes and 31 edges. It captures chat/navigation states, managed write/delete/undo examples, protection state and Papayai account views. Exact path coverage, unique IDs, allowed node types and confidence fields passed corrected validation. An initial checker incorrectly required every node to have `file_type=document`; concept nodes are also valid. No source edits; token counts remain zero.
+The third Graphify chunk covers uncached files 51-75: 25 Playwright UI-state snapshots, 50 nodes and 31 edges. It captures chat/navigation states, managed write/delete/undo examples, protection state and Papayai account views. Exact path coverage, unique IDs, allowed node types and confidence fields passed corrected validation. An initial checker incorrectly required every node to have `file_type=document`; concept nodes are also valid. No source edits; token counts remain zero.
 
-### 2026-11-16 — Graphify semantic chunk 4 verified
+### 2026-11-16 - Graphify semantic chunk 4 verified
 
-Chunk 4 covers uncached files 76–100: 25 guidance, configuration, web and project documents, represented by 50 nodes and 29 edges. Exact file coverage, JSON schema, unique IDs, allowed types and confidence fields passed. No source changes; token counters remain zero for this parent-authored chunk.
+Chunk 4 covers uncached files 76-100: 25 guidance, configuration, web and project documents, represented by 50 nodes and 29 edges. Exact file coverage, JSON schema, unique IDs, allowed types and confidence fields passed. No source changes; token counters remain zero for this parent-authored chunk.
 
-### 2026-11-16 — Understand batch 16 independently verified
+### 2026-11-16 - Understand batch 16 independently verified
 
 Batch 16 passed independent validation across its three required output parts: 24/24 files, 98 unique nodes, 232 edges and exact 76/76 imports. Source ranges, required fields/tags/complexity and the 60-node/120-edge part limits passed. Root graph marks batch 16 done and batch 17 active. No tests or source edits.
 
-### 2026-11-16 — Graphify semantic chunk 5 verified
+### 2026-11-16 - Graphify semantic chunk 5 verified
 
-Chunk 5 covers uncached files 101–125: Appwrite/auth, connector/security evidence and GUI design or delivery documents. It contains 50 nodes and 30 edges. Exact path coverage, IDs, allowed types and edge schema passed. No source changes; token counters are zero for this parent-authored chunk.
+Chunk 5 covers uncached files 101-125: Appwrite/auth, connector/security evidence and GUI design or delivery documents. It contains 50 nodes and 30 edges. Exact path coverage, IDs, allowed types and edge schema passed. No source changes; token counters are zero for this parent-authored chunk.
 
-### 2026-11-16 — Graphify semantic chunk 6 verified
+### 2026-11-16 - Graphify semantic chunk 6 verified
 
-Chunk 6 covers uncached files 126–150: GUI, mobile, managed-recovery and harness documentation. It contains 50 nodes and 33 edges. Exact path coverage, IDs, node types, endpoints and confidence fields passed validation. No source edits; token counters remain zero for this parent-authored chunk.
+Chunk 6 covers uncached files 126-150: GUI, mobile, managed-recovery and harness documentation. It contains 50 nodes and 33 edges. Exact path coverage, IDs, node types, endpoints and confidence fields passed validation. No source edits; token counters remain zero for this parent-authored chunk.
 
-### 2026-11-16 — Graphify semantic chunk 7 verified
+### 2026-11-16 - Graphify semantic chunk 7 verified
 
-Chunk 7 covers uncached files 151–175: recovery, operations, policy, release, testing, security and TUI/harness documentation. It contains 50 nodes and 33 edges. Exact path coverage, IDs, node types and confidence fields passed. No source edits; token counters remain zero.
+Chunk 7 covers uncached files 151-175: recovery, operations, policy, release, testing, security and TUI/harness documentation. It contains 50 nodes and 33 edges. Exact path coverage, IDs, node types and confidence fields passed. No source edits; token counters remain zero.
 
-### 2026-11-16 — Understand batch 17 and Graphify chunk 8 verified
+### 2026-11-16 - Understand batch 17 and Graphify chunk 8 verified
 
 Understand batch 17 passed independent validation: 22 files, 105 unique nodes, 209 edges, exact 68 imports, and valid two-part size bounds. Graphify chunk 8 passed exact 25-file coverage with 50 nodes and 32 edges across strategy documents. Root graph advances Understand to batch 18 and Graphify to chunk 9. No source edits; chunk token counters remain zero.
 
-### 2026-11-16 — Graphify semantic chunk 9 verified
+### 2026-11-16 - Graphify semantic chunk 9 verified
 
-Chunk 9 covers uncached files 201–225: 25 strategy, graph-engineering, workstream and implementation-plan documents. It contains 50 nodes and 36 edges. Exact file coverage, IDs, allowed types and edge fields passed validation. No source edits; token counters remain zero.
+Chunk 9 covers uncached files 201-225: 25 strategy, graph-engineering, workstream and implementation-plan documents. It contains 50 nodes and 36 edges. Exact file coverage, IDs, allowed types and edge fields passed validation. No source edits; token counters remain zero.
 
-### 2026-11-16 — Understand batch 18 and Graphify chunk 10 verified
+### 2026-11-16 - Understand batch 18 and Graphify chunk 10 verified
 
 Understand batch 18 passed independent validation: 22 files, 50 nodes, 117 edges and exact 63 imports. Graphify chunk 10 passed 25-file coverage with 50 nodes and 31 edges across specifications and plans. Root graph advances Understand to batch 19 and Graphify to chunk 11. No source edits; Graphify token counters remain zero.
 
-### 2026-11-16 — Graphify semantic chunk 11 verified
+### 2026-11-16 - Graphify semantic chunk 11 verified
 
-Chunk 11 covers uncached files 251–275: project package documentation, policy packs and protocol/registry references. It contains 50 nodes and 32 edges. Exact source paths, IDs, node types and edge confidence fields passed validation. No source edits; token counters remain zero.
+Chunk 11 covers uncached files 251-275: project package documentation, policy packs and protocol/registry references. It contains 50 nodes and 32 edges. Exact source paths, IDs, node types and edge confidence fields passed validation. No source edits; token counters remain zero.
 
-### 2026-11-16 — Prime launcher regression test repaired and verified
+### 2026-11-16 - Prime launcher regression test repaired and verified
 
 The harness regression test initially failed because the test fixture ended with LF while shell command substitution strips trailing LFs from the prompt. The OMP session did not modify the fixture after one bounded repair request, so Codex changed only that fixture. `node --test scripts/src/prime-spawn.test.mjs` now passes 4/4. The launcher was not changed for this failure; wider harness acceptance remains open.
 
-### 2026-11-16 — Graphify document chunks complete; image isolation started
+### 2026-11-16 - Graphify document chunks complete; image isolation started
 
-Graphify document chunks 1–12 cover all 283 uncached documents, 275 source files were previously covered and chunk 12 covers the remaining 8. The remaining 98 images will each receive their own semantic chunk, as required by Graphify. The first SVG icon was converted only to a temporary PNG for visual inspection; the source was not changed.
+Graphify document chunks 1-12 cover all 283 uncached documents, 275 source files were previously covered and chunk 12 covers the remaining 8. The remaining 98 images will each receive their own semantic chunk, as required by Graphify. The first SVG icon was converted only to a temporary PNG for visual inspection; the source was not changed.
 
-### 2026-11-16 — Graphify image chunk 13 verified
+### 2026-11-16 - Graphify image chunk 13 verified
 
 Visually inspected `apps/control-plane/web/icon.svg` through a temporary PNG preview because the viewer does not support SVG directly. It depicts a black corner frame around an orange square center. The original asset is unchanged; one-image chunk schema and source coverage passed.
 
-### 2026-11-16 — Graphify image chunks 14–15 verified
+### 2026-11-16 - Graphify image chunks 14-15 verified
 
 Visually inspected the execution-flow and MRR-funnel diagrams as separate image chunks. The flow shows Align → Activate → Prove demand → Collect money → Repeat → Retain with evidence gates. The funnel depicts 240 ICP accounts → 120 contacts → 48 conversations → 24 qualified opportunities → 12 evaluations → 8 paid partners → €10k collected MRR; these are figures shown in the image, not independently verified outcomes. Both one-image JSON chunks passed schema and source-path checks.
 
-### 2026-11-16 — Graphify image chunk 16 verified
+### 2026-11-16 - Graphify image chunk 16 verified
 
 Visually inspected the MRR operating timeline. It depicts dated milestones from offer/ICP alignment to a Dec 31 €10k upside target or reforecast. The one-image graph has 10 nodes and 9 edges and passed schema checks. Dates and amounts are recorded as depicted planning targets, not verified results.
 
-### 2026-11-16 — Graphify image chunk 17 verified
+### 2026-11-16 - Graphify image chunk 17 verified
 
 Visually inspected the Slack architecture diagram. It shows GitHub as source of truth, Monday weekly planning, daily planning, Wednesday operations/projects and team channels, then Friday review/security/releases before decisions return to GitHub. The one-image graph contains nine nodes and eight edges and passed schema/source checks.
 
-### 2026-11-16 — Graphify image chunks 17–18 verified
+### 2026-11-16 - Graphify image chunks 17-18 verified
 
 The Slack diagram chunk was corrected after an initial edge-index script error; its final graph represents the visible GitHub-to-weekly/daily operating cadence and validates. The desktop reference screenshot was visually inspected and represented as a dark Czech chat interface with session/provider status and a managed write/update/undo sequence. Both remain one-image chunks; no source assets were changed.
 
-### 2026-11-16 — Graphify image chunk 19 verified
+### 2026-11-16 - Graphify image chunk 19 verified
 
 Visually inspected the mobile reference screenshot using a resized temporary preview. It depicts a dark mobile chat view, managed document write/update tool results, Czech composer and navigation, and bottom tabs for chat, overview, approvals and more. The one-image chunk contains five nodes and four scored references; exact source path and schema checks pass. Original asset unchanged.
 
-### 2026-11-16 — Graphify image chunk 20 verified
+### 2026-11-16 - Graphify image chunk 20 verified
 
 Visually inspected the refined desktop GUI screenshot using a temporary resized preview. It shows a light VOID workspace with feature navigation, three starter cards for planning/tools/documents, and a contextual composer. The one-image chunk contains five nodes and four scored references; exact source path and schema checks pass. Original asset unchanged.
 
-### 2026-11-16 — Graphify image chunk 21 verified
+### 2026-11-16 - Graphify image chunk 21 verified
 
 Visually inspected the refined mobile GUI screenshot via a temporary resized preview. It shows a light new-conversation workspace, stacked starter cards, a contextual composer and bottom navigation. The one-image chunk has five nodes and four scored references; source path and schema checks pass. Original asset unchanged.
 
-### 2026-11-16 — Understand batch 19 independently verified
+### 2026-11-16 - Understand batch 19 independently verified
 
 The six generated parts cover all 21 manifest files and 259 class/function declarations exactly, excluding XCTest methods by the batch policy. All 104 import edges match the pinned import map, all 563 edges resolve, IDs are unique, and every part stays within 54 nodes/109 edges. Source checkout remains pinned to `a051e80f12f5360e75511a247051c6236c852a0e`. Batch 20 is now assigned.
 
-### 2026-11-16 — Graphify image chunk 22 verified
+### 2026-11-16 - Graphify image chunk 22 verified
 
 Inspected a temporary PNG conversion of `gui-web/icon.svg`: the square VOID mark has an orange center tile and dark open-corner frame. The one-image chunk has three nodes and two scored references; path and schema checks pass. SVG unchanged.
 
-### 2026-11-16 — Graphify image chunk 23 verified
+### 2026-11-16 - Graphify image chunk 23 verified
 
 Inspected a resized temporary preview of the vertical NOMO teaser artwork. It shows the VOID emblem within glowing concentric rings, cream/orange geometric branding, and visible “COMING SOON” text. The one-image graph validates with four nodes and three scored references; this records poster content, not launch status. Source image unchanged.
 
-### 2026-11-16 — Graphify image chunk 24 verified
+### 2026-11-16 - Graphify image chunk 24 verified
 
 Inspected a resized preview of the vertical teaser cover. It shows a glowing VOID emblem, “COMING SOON”, the visible positioning text “AGENT ACCOUNTABILITY / REDEFINED”, and a “SIGNAL: LIVE” footer. The graph has five nodes and four scored references; poster text is not treated as verified product status. Source image unchanged.
 
-### 2026-11-16 — Graphify image chunk 25 verified
+### 2026-11-16 - Graphify image chunk 25 verified
 
 Inspected the 48×48 dark-theme TUI activity asset: a white zigzag pulse glyph. The one-image graph has three nodes and two scored references, with exact path/schema checks passing. Source unchanged.
 
-### 2026-11-16 — Graphify image chunk 26 verified
+### 2026-11-16 - Graphify image chunk 26 verified
 
 Inspected the 48×48 light-theme TUI activity asset: a dark blue-gray zigzag pulse glyph. The one-image graph has three nodes/two scored references and passes exact source path/schema checks. Source unchanged.
 
-### 2026-11-16 — Graphify image chunk 27 verified
+### 2026-11-16 - Graphify image chunk 27 verified
 
 Inspected the dark-theme app-window icon: a pale window outline with a title bar and menu marks. The one-image graph has three nodes/two scored references and passes exact source path/schema checks. Source unchanged.
 
-### 2026-11-16 — Graphify image chunk 28 verified
+### 2026-11-16 - Graphify image chunk 28 verified
 
 Inspected the light-theme app-window icon: a dark blue-gray window outline with a title bar and menu marks. The one-image graph has three nodes/two scored references and passes exact source path/schema checks. Source unchanged.
 
-### 2026-11-16 — Graphify image chunk 29 verified
+### 2026-11-16 - Graphify image chunk 29 verified
 
 Inspected the dark-theme TUI brain icon: a light brain outline divided at the center with circuit-like internal marks. Its one-image graph contains three nodes/two scored references and passes source/schema checks. Source unchanged.
 
-### 2026-11-16 — Graphify image chunk 30 verified
+### 2026-11-16 - Graphify image chunk 30 verified
 
 Inspected the light-theme TUI brain icon: a dark blue-gray brain outline divided at the center with circuit-like marks. The one-image graph has three nodes/two scored references and passes path/schema checks. Source unchanged.
 
-### 2026-11-16 — Graphify image chunk 31 verified
+### 2026-11-16 - Graphify image chunk 31 verified
 
 Inspected the dark-theme chat-bubble icon: a light outlined speech bubble with three dots. The one-image graph has three nodes/two scored references and passes source/schema checks. Source unchanged.
 
-### 2026-11-16 — Understand batch 20 independently verified
+### 2026-11-16 - Understand batch 20 independently verified
 
 Verified all 21 files, 33 significant class/function declarations, and 37 exact imports against both the batch manifest and scan result. All 99 edges resolve locally or to known corpus files (19 cross-batch references); IDs, tags, ranges and edge fields pass. Output: 54 nodes/99 edges. Batch 21 is now assigned.
 
-### 2026-11-16 — Graphify image chunk 32 verified
+### 2026-11-16 - Graphify image chunk 32 verified
 
 Inspected the light-theme TUI chat icon: a dark blue-gray outlined speech bubble with three dots. Its one-image graph has three nodes/two scored references and passes source/schema checks. Source unchanged.
 
-### 2026-11-16 — Understand batch 21 independently verified
+### 2026-11-16 - Understand batch 21 independently verified
 
 Verified all 21 manifest files, 39 significant declarations, and 45 exact imports against the batch manifest and scan. All 115 edges resolve locally or to known corpus files (19 cross-batch references); IDs, tags, source ranges and edge fields pass. Output is 60 nodes/115 edges. Batch 22 is now assigned.
 
-### 2026-11-16 — Understand batch 22 independently verified
+### 2026-11-16 - Understand batch 22 independently verified
 
 Verified all 20 manifest files and 58 significant declarations in two bounded parts. All 53 imports match the manifest and scan result; 188 edges resolve locally or to known corpus files (23 cross-batch references). IDs, ranges, summaries/tags and edge fields pass; part maximum is 47 nodes/106 edges. Batch 23 is assigned.
 
-### 2026-11-16 — Understand batch 23 independently verified
+### 2026-11-16 - Understand batch 23 independently verified
 
 Verified 19/19 files and 42 significant declarations across two parts, 50 exact imports, and 155 edges. All 17 external references target files in the source corpus; IDs, summaries/tags and source ranges pass. Maximum part size is 33 nodes/86 edges. Batch 24 is now assigned.
 
-### 2026-11-16 — Authorized bounded TUI compile repair
+### 2026-11-16 - Authorized bounded TUI compile repair
 
 A read-only audit confirmed `live.ts` calls `visibleLength` without importing it, while `layout.ts` already exports it. Added a distinct graph node scoped to that one import. It authorizes one CLI typecheck after the edit but does not allow rerunning the capped formatter, TUI suite or PTY matrix; visual acceptance remains blocked separately.
 
-### 2026-11-16 — Understand batch 24 independently verified
+### 2026-11-16 - Understand batch 24 independently verified
 
 Verified 19/19 files and 42 significant declarations across two parts, with 39 exact imports and 138 edges. All 18 external refs target files in the corpus; IDs, summaries/tags and ranges pass. Maximum part size is 35 nodes/80 edges. Batch 25 is assigned.
 
-### 2026-11-16 — Understand batch 25 independently verified
+### 2026-11-16 - Understand batch 25 independently verified
 
 Verified all 18 files and 54 significant declarations across two parts, 67 exact imports, and 190 edges. All 31 cross-batch references target files in the corpus; IDs, tags, source ranges, and edge fields pass. Maximum part size is 38 nodes/98 edges. Batch 26 is assigned.
 
-### 2026-11-16 — Harness regression independently verified
+### 2026-11-16 - Harness regression independently verified
 
 The launcher now rejects a readable directory as a brief. Codex reran the focused harness test (4/4 pass), the docs truth test (9/9 pass), shell syntax and scoped diff checks. `pnpm run typecheck` remains blocked by missing `yaml` (TS2307); no install or retry. `prime-poll.sh` has no in-tree callsites beyond its usage comment and remains an orphan.
 
-### 2026-11-16 — TUI missing import repair entered verification
+### 2026-11-16 - TUI missing import repair entered verification
 
 The OMP-owned dirty `live.ts` gained the existing `visibleLength` export in its layout import. One CLI typecheck is pending; formatter, full TUI suite, and PTY matrix remain capped.
 
-### 2026-11-16 — Understand batch 26 independently verified
+### 2026-11-16 - Understand batch 26 independently verified
 
 Verified all 13 files and 68 significant declarations across two parts, 42 exact imports, and 220 edges with no dangling references. Source ranges and graph fields pass; maximum part size is 44 nodes/118 edges. Batch 27 is assigned.
 
-### 2026-11-16 — Understand batch 27 independently verified
+### 2026-11-16 - Understand batch 27 independently verified
 
 Verified 13/13 files and 68 significant declarations across two parts, 42 exact imports, and 220 edges with no dangling references. IDs, summaries/tags, source ranges, and edge fields pass. Part maximum is 44 nodes/118 edges. Batch 28 is assigned.
 
-### 2026-11-16 — TUI compile repair verified
+### 2026-11-16 - TUI compile repair verified
 
 Added the existing `visibleLength` export to the OMP-owned `live.ts` layout import. `pnpm exec tsc -p tsconfig.json` from `packages/cli` passed with exit 0, and `git diff --check -- packages/cli/src/tui/live.ts` passed. No formatter, TUI suite or PTY matrix was rerun. The import repair node is done; visual acceptance remains open pending review of existing captures.
 
-### 2026-11-16 — Understand batch 28 independently verified
+### 2026-11-16 - Understand batch 28 independently verified
 
 Verified all eight files and 54 significant declarations across two parts, all eight imports, and 174 edges with no dangling references. IDs, summaries/tags, line ranges and edge fields pass. Maximum part size is 35 nodes/102 edges. Batch 29 is assigned.
 
@@ -7972,16 +7972,16 @@ Uncommitted owner work in preview/ui/entry.jsx, shell.css, apple-components.css 
 
 
 
-### 2026-11-16 — OMP orchestration checkpoint
+### 2026-11-16 - OMP orchestration checkpoint
 Verified both OMP hosts are connected but idle. TUI source work remains blocked by non-done graph path ownership; the composer and all-screen UX request is not complete. Harness review found no confirmed shell-logic defect; two concurrent children require reconciliation with the single-active-node graph rule, and a task-scoped exception question is pending. Created GitHub issue #145 after searches found no matching open issue. Set coder, implementer and sonic to openai-codex/gpt-6.1-terra in both worktree-local OMP configs; YAML validation passed. No source edits, tests, commits or pushes in this checkpoint.
 
 
 
-### 2026-11-16 — Graph concurrency and worktree ownership audit
+### 2026-11-16 - Graph concurrency and worktree ownership audit
 Correction: the previous task-generated append expanded markdown markup in the shell and included an unintended file-list excerpt. I removed only that malformed tail and replaced it with this corrected summary. Created GitHub issue #146 to track task-scoped child assignments while preserving bounded concurrency, one canonical graph and single-writer paths. A root-graph query found no non-done scope under the assigned TUI worktree source directory; sibling TUI scopes target other worktrees or the installed copy. Root tree listing, index listing and wt list succeeded. The authorization question about concurrent child nodes remains unanswered; no child agents started.
 
 
-### 2026-11-16 — OMP agent model overrides verified
+### 2026-11-16 - OMP agent model overrides verified
 Updated the project OMP config and both assigned worktree-local configs so coder, implementer and sonic use openai-codex/gpt-6.1-terra. Exact YAML assertions passed for all three files. Other agent overrides, model roles and approval settings were preserved. Existing child processes retain their launch model; Terra applies on the next spawn.
 
 ### 2026-11-17 - Papayai Apple HIG rebuild, decision and plan round 2
@@ -8441,7 +8441,7 @@ Swarm count: 50 read-only quality audits (245) + 10 patch-preparation nodes (247
 
 
 
-### 2026-11-18 14:48 UTC — OMP Harness post-repair handoff and test robustness
+### 2026-11-18 14:48 UTC - OMP Harness post-repair handoff and test robustness
 - OMP read-only handoff reviewer  (gpt-6-luna:high) confirmed exact candidates on  at unchanged HEAD : validator source/test untracked and  modified; five unrelated dirty paths were listed but not read. Prior focused gates remain 27/27 and 15/15; audit made no changes.
 - Codex independently checked current branch, HEAD, status and the scoped doc-truth diff. The reviewer found owner and same-identity assertion fixtures still depend on exact document prose/line breaks. Added canonical node  and dispatched existing worker  (gpt-6.1-terra:medium), running on the single test file. Integration preflight remains after this repair. H21 remains blocked and owned by main.
 
@@ -8449,7 +8449,7 @@ Swarm count: 50 read-only quality audits (245) + 10 patch-preparation nodes (247
 Correction to the previous entry: OMP reviewer harness-validator-scope-review-t5 (openai-codex/gpt-6-luna:high) audited branch omp/harness-completion-2026-11-16 at unchanged HEAD 66b4ce998b552af9d4253beab63f347c48a57185. Candidate files: scripts/src/work-state-graph.mjs and scripts/src/work-state-graph.test.mjs (untracked), plus scripts/src/doc-truth.test.mjs (modified). New node harness-doc-truth-fixture-robustness-fix-2026-11-18 is assigned to existing worker harness-doctruth-fix-t13 (openai-codex/gpt-6.1-terra:medium), running. The previous entry omitted these identifiers because shell quoting removed backtick-delimited text.
 
 
-2026-11-18 15:06 UTC — OMP checkpoint reconciliation blocked
+2026-11-18 15:06 UTC - OMP checkpoint reconciliation blocked
 - Local commit d0e4450c6f07f63526da0c76c69a4ad59fec3c4d contains exactly the validator source/test and doc-truth test. Codex verified the commit paths and current worktree: doc-truth is clean; each validator file retains one added blank line; index is empty.
 - OMP parent has no shell/Git. Existing worker workflow disallows direct git add/commit; its native selector proposed duplicate implementation/tests, so the final attempt stopped before staging. No commit amendment, push or merge occurred. Reconciliation node is blocked at its retry limit; parent waits for a compatible Git path. H21 remains blocked/owned by main.
 ### 2026-11-18 - Papayai final manifest run 1 red on projdi, targeted repair launched
@@ -8462,7 +8462,7 @@ Patch-prep swarm: 12 of 50 nodes returned with precise unified diff proposals (a
 
 
 
-2026-11-18 17:50 UTC — OMP Harness checkpoint reconciled
+2026-11-18 17:50 UTC - OMP Harness checkpoint reconciled
 - User explicitly authorized one local Codex amend of the two verified whitespace-only hunks. Staged exactly scripts/src/work-state-graph.mjs and scripts/src/work-state-graph.test.mjs; staged diff contained only the two blank lines and diff-check passed.
 - Amended commit is 16f802aceaac4b832e307fe624adce20d72e2961, message unchanged, exact paths: scripts/src/doc-truth.test.mjs, scripts/src/work-state-graph.mjs, scripts/src/work-state-graph.test.mjs. Those paths are clean; index empty. Excluded dirty paths remain untouched. No push or merge. Harness graph still has 70 done, 3 blocked, 0 READY; H21 remains main-owned and H75/H76 out of scope.
 ### 2026-11-18 - Papayai swarm 50 audits + 16 patch-prep, projdi repair in analysis
@@ -8541,7 +8541,7 @@ Owner asked explicitly that EVERY commit count as a GitHub contribution. Verifie
 
 Verification state: direkt batch B green (hit 146.3s, role 173.4s, ikony, d61), batch C green (shoda 132.6s, material 146.1s, prominence 145.7s, stul 346.9s). vzhled stale assertion (liquid:0 vs owner-approved liquid:1) repair node running under lock. Remaining gates after that: mezery, kompozice, pretek, SEO family, contract families. Two full manifest runs on one unchanged build required before merge, per AGENTS.md.
 
-### 2026-11-18 — OMP Harness reconciliation batch dispatched
+### 2026-11-18 - OMP Harness reconciliation batch dispatched
 
 Two OMP read-only reconciliation workers completed in parallel on `openai-codex/gpt-6.1-terra:medium`: `harness-readscope-review-t3` and `harness-doctruth-review-t6`. Codex checked their source-backed findings. Later validator code and focused fixtures now cover malformed delegation objects, exact active child membership, cross-parent write collisions, `by`/`owner` separation, and safe-integer caps. The historical live-graph compatibility claim remains open: an in-memory validation of the current canonical graph returned 55 diagnostics, including multiple active parent nodes and incomplete active records. No foreign/TUI graph record was changed.
 
@@ -8729,20 +8729,20 @@ Owner "pokracuj". Synced clean-clone with main (0bf63e60), created feature/D92-c
 REMAINING: Supabase credentials missing (personal data no-data mode). All market/sentiment/indicator features work from public APIs.
 
 
-### 2026-11-20 — NOMO local TUI welcome restored
+### 2026-11-20 - NOMO local TUI welcome restored
 
 Kept the installed nomo launcher on the main checkout. Restored the prior compact NEW CONVERSATION welcome and top alignment in packages/cli/src/tui/workspace.ts; preserved unrelated dirty changes. Verified one isolated 100x32 launch: help opened and closed, q exited with status 0. No tests, build, install, network, or real profile data used; temporary state stayed under /tmp.
 
 
-### 2026-11-20 — correction: restore the polished NOMO TUI worktree
+### 2026-11-20 - correction: restore the polished NOMO TUI worktree
 
 The user clarified that the preferred visual TUI ran from a worktree. This supersedes the immediately previous main-checkout welcome-screen milestone. /Users/dawe/.local/bin/nomo now launches .worktrees/tui-opentui-integration/packages/cli/dist/nomo.mjs (nomo 1.0.1). Verified a sanitized 100x32 launch, ? help, Esc return, and /quit exit 0. No source in the dirty integration worktree was changed; the temporary main-checkout welcome edit was reverted.
 
-### 2026-11-20 — OMP audit reconciliation
+### 2026-11-20 - OMP audit reconciliation
 
 Codex reconciled the two OMP parents' last reported rosters: no workers running. Four bounded nodes were accepted after inspecting the current release, beta and handbook diffs and the static packaging route; two TUI audit nodes were blocked because their historical evidence is incomplete or superseded. The restored worktree TUI has its own separately recorded 100×32 PTY evidence. The Harness graph validator reports pre-existing graph and delegation inconsistencies; follow-up investigation is pending. No build or installation was performed for this reconciliation.
 
-### 2026-11-20 — Existing roadmap continuation
+### 2026-11-20 - Existing roadmap continuation
 
 User directed both OMP teams to continue toward existing non-YC NOMO plans and roadmaps, excluding new RFCs and ideas. Registered three independent read-only TUI screen investigations in the canonical graph and requested concurrent dispatch; worktree source and existing screen matrix supply evidence. The Harness parent is identifying bounded work from existing commitments. Native worker dispatch and job IDs remain to be confirmed before marking nodes active.
 
@@ -8775,33 +8775,33 @@ Harness recovery-job checkpoint test added and verified: `node --test packages/r
 A follow-up run of the assigned TUI workspace suite became possible after the exact cached provider link was restored. `workspace.test.ts` executed 59 tests (55 pass, 4 fail): the Documents selection assertion, a Workbench `savedTools` ReferenceError, and two narrow-layout control assertions. Recorded the exact failures and created three TUI follow-ups plus three existing R01/R02 Harness follow-ups in the canonical graph. All six are READY pending native OMP job and roster confirmation; no source changes were made for these findings.
 
 
-2026-11-20 21:39 UTC — Harness started three registered workers after exact parent scope expansion. Fresh `vibe_list` at 21:39:32Z confirms `harness-token-auditor-fix-t5`, `harness-graph-regression-review-t6`, and `harness-web-identity-review-t16` running on the R01/R02 test and audit nodes. Canonical graph marks those three active and Harness parent waiting; TUI dispatch is still pending.
+2026-11-20 21:39 UTC - Harness started three registered workers after exact parent scope expansion. Fresh `vibe_list` at 21:39:32Z confirms `harness-token-auditor-fix-t5`, `harness-graph-regression-review-t6`, and `harness-web-identity-review-t16` running on the R01/R02 test and audit nodes. Canonical graph marks those three active and Harness parent waiting; TUI dispatch is still pending.
 
 
-2026-11-20 21:41 UTC — TUI started three registered workers after exact scope expansion. Fresh `vibe_list` at 21:41:37Z confirms `TUI-doc-tree-fix-t1`, `TUI-saved-tools-audit-t1`, and `TUI-stream-control-audit-t1` running. Canonical graph marks the three nodes active and TUI parent waiting.
+2026-11-20 21:41 UTC - TUI started three registered workers after exact scope expansion. Fresh `vibe_list` at 21:41:37Z confirms `TUI-doc-tree-fix-t1`, `TUI-saved-tools-audit-t1`, and `TUI-stream-control-audit-t1` running. Canonical graph marks the three nodes active and TUI parent waiting.
 
 
-2026-11-20 21:44 UTC — Reconciled the next Harness wave. The operation-ID test setup was denied before its target assertion because the terminal fixture lacks its required temporary irreversibility budget; scoped diff-check passed and the single test-file change is preserved. Cloud caller parity remains unproven because the callsite was outside the first audit scope. R02 audit correctly stopped on unmet R01 exit evidence. Registered one targeted test-fixture repair and one bounded cloud caller search; both await native dispatch. TUI saved-tools and compact streaming-control read-only audits completed; document selection repair remains active.
+2026-11-20 21:44 UTC - Reconciled the next Harness wave. The operation-ID test setup was denied before its target assertion because the terminal fixture lacks its required temporary irreversibility budget; scoped diff-check passed and the single test-file change is preserved. Cloud caller parity remains unproven because the callsite was outside the first audit scope. R02 audit correctly stopped on unmet R01 exit evidence. Registered one targeted test-fixture repair and one bounded cloud caller search; both await native dispatch. TUI saved-tools and compact streaming-control read-only audits completed; document selection repair remains active.
 
 
-2026-11-20 21:50 UTC — TUI document-selection repair reached its one-repair cap: the targeted test still fails because the target document is absent from the visible tree. Scoped diff-check passes; no further retry is authorized on that node. Independent audits identified two separate actionable TUI defects: undefined savedTools during Workbench restore, and compact running-chat legend truncation of Enter open/details. Registered two disjoint implementation nodes; dispatch is pending. Harness has two READY follow-ups (budget-fixture repair and cloud caller search); latest roster still showed its workers idle, so dispatch is pending.
+2026-11-20 21:50 UTC - TUI document-selection repair reached its one-repair cap: the targeted test still fails because the target document is absent from the visible tree. Scoped diff-check passes; no further retry is authorized on that node. Independent audits identified two separate actionable TUI defects: undefined savedTools during Workbench restore, and compact running-chat legend truncation of Enter open/details. Registered two disjoint implementation nodes; dispatch is pending. Harness has two READY follow-ups (budget-fixture repair and cloud caller search); latest roster still showed its workers idle, so dispatch is pending.
 
 
-2026-11-20 21:51 UTC — Fresh OMP rosters confirmed two Harness and two TUI follow-up workers running. Harness: `harness-token-auditor-fix-t6` fixture repair and `harness-graph-regression-review-t7` cloud caller search. TUI: `TUI-saved-tools-audit-t2` restore fix and `TUI-stream-control-audit-t2` compact legend fix. Canonical graph records all four active and both parents waiting; tests are serialized within the TUI workstream.
+2026-11-20 21:51 UTC - Fresh OMP rosters confirmed two Harness and two TUI follow-up workers running. Harness: `harness-token-auditor-fix-t6` fixture repair and `harness-graph-regression-review-t7` cloud caller search. TUI: `TUI-saved-tools-audit-t2` restore fix and `TUI-stream-control-audit-t2` compact legend fix. Canonical graph records all four active and both parents waiting; tests are serialized within the TUI workstream.
 
 
-2026-11-20 21:52 UTC — Added a third independent READY assignment to each OMP parent. TUI now has a source-backed status/activity bottom-rail fix from the explicit size-matrix failure; Harness has a read-only R01 audit for signed legacy replay/inspect-only behavior. Both await fresh native dispatch confirmation; existing active assignments continue.
+2026-11-20 21:52 UTC - Added a third independent READY assignment to each OMP parent. TUI now has a source-backed status/activity bottom-rail fix from the explicit size-matrix failure; Harness has a read-only R01 audit for signed legacy replay/inspect-only behavior. Both await fresh native dispatch confirmation; existing active assignments continue.
 
-2026-11-21 — User-provided Codex/Harness ownership coordination: Codex is on branch `codex/tui-visual-system` from `origin/main` `4b5a738`; Codex owns `motion.ts`, visual-effects tests, and shared presentation components in its separate worktree. The main workspace renderer, `savedTools`, navigation fixes, and Harness remain with their existing owners. Keep worktrees and files disjoint; Harness must not edit the TUI-owned/shared paths. Integrate only after API/path handoff, then verify relevant visual-effect tests on the merged candidate. No concrete collision observed; only ownership boundaries and coordination dependencies.
-
-
-
-2026-11-21 23:40 UTC — OMP TUI handoff: assigned worktree is . Codex reports separate branch  from  ; it owns , visual-effect tests, and shared presentation components. Codex leaves the main workspace renderer, , navigation and Harness to existing owners. Avoid those owned paths pending exact path-level ownership review; record integration conflicts before touching them. OMP's observed attempt changed only  in the assigned worktree: completed the  ternary and added the  fallback; direct source read verified those hunks. The named  regression failed at line 93:  The node is blocked; no further edits or retry. Next: resolve path-level ownership and valid provider fixture contract, then continue only a disjoint existing TUI graph node. No tests passed are claimed.
+2026-11-21 - User-provided Codex/Harness ownership coordination: Codex is on branch `codex/tui-visual-system` from `origin/main` `4b5a738`; Codex owns `motion.ts`, visual-effects tests, and shared presentation components in its separate worktree. The main workspace renderer, `savedTools`, navigation fixes, and Harness remain with their existing owners. Keep worktrees and files disjoint; Harness must not edit the TUI-owned/shared paths. Integrate only after API/path handoff, then verify relevant visual-effect tests on the merged candidate. No concrete collision observed; only ownership boundaries and coordination dependencies.
 
 
-2026-11-21 23:41 UTC — OMP TUI handoff: assigned worktree is /Users/dawe/Developer/Claude-Projects/NOMO/.worktrees/omp-tui-completion-2026-11-16. Codex reports separate branch codex/tui-visual-system from origin/main 4b5a738; it owns motion.ts, visual-effect tests, and shared presentation components. Codex leaves the main workspace renderer, savedTools, navigation and Harness to existing owners. Avoid those owned paths pending exact path-level ownership review; record integration conflicts before touching them. OMP's observed attempt changed only packages/workbench/src/index.ts in the assigned worktree: completed the item.connections ternary and added the savedTools fallback; direct source read verified those hunks. The named workspace.test.ts regression failed at line 93: Provider returned an invalid model catalog. The node is blocked; no further edits or retry. Next: resolve path-level ownership and valid provider fixture contract, then continue only a disjoint existing TUI graph node. No tests passed are claimed.
 
-2026-11-21 — Reported base difference: canonical Harness parent `worktreeHead` is `a051e80f12f5360e75511a247051c6236c852a0e`; user reports TUI work starts from `origin/main` `4b5a738`. This does not establish a collision or ancestry conflict. Before integration, compare commit ancestry and choose rebase or merge accordingly; then run affected tests on the integration candidate.
+2026-11-21 23:40 UTC - OMP TUI handoff: assigned worktree is . Codex reports separate branch  from  ; it owns , visual-effect tests, and shared presentation components. Codex leaves the main workspace renderer, , navigation and Harness to existing owners. Avoid those owned paths pending exact path-level ownership review; record integration conflicts before touching them. OMP's observed attempt changed only  in the assigned worktree: completed the  ternary and added the  fallback; direct source read verified those hunks. The named  regression failed at line 93:  The node is blocked; no further edits or retry. Next: resolve path-level ownership and valid provider fixture contract, then continue only a disjoint existing TUI graph node. No tests passed are claimed.
+
+
+2026-11-21 23:41 UTC - OMP TUI handoff: assigned worktree is /Users/dawe/Developer/Claude-Projects/NOMO/.worktrees/omp-tui-completion-2026-11-16. Codex reports separate branch codex/tui-visual-system from origin/main 4b5a738; it owns motion.ts, visual-effect tests, and shared presentation components. Codex leaves the main workspace renderer, savedTools, navigation and Harness to existing owners. Avoid those owned paths pending exact path-level ownership review; record integration conflicts before touching them. OMP's observed attempt changed only packages/workbench/src/index.ts in the assigned worktree: completed the item.connections ternary and added the savedTools fallback; direct source read verified those hunks. The named workspace.test.ts regression failed at line 93: Provider returned an invalid model catalog. The node is blocked; no further edits or retry. Next: resolve path-level ownership and valid provider fixture contract, then continue only a disjoint existing TUI graph node. No tests passed are claimed.
+
+2026-11-21 - Reported base difference: canonical Harness parent `worktreeHead` is `a051e80f12f5360e75511a247051c6236c852a0e`; user reports TUI work starts from `origin/main` `4b5a738`. This does not establish a collision or ancestry conflict. Before integration, compare commit ancestry and choose rebase or merge accordingly; then run affected tests on the integration candidate.
 
 ### 2026-11-21 00:46 CET · Codex TUI visual handoff
 
@@ -8814,10 +8814,10 @@ Worktree: `/Users/dawe/.codex/worktrees/tui-visual-system/NOMO`. Verified local 
 
 
 
-2026-11-20 23:51 UTC — OMP TUI ownership and integration booking: .nomo/collab-opencode-tui.md:107-118 assigns packages/cli/src/tui/** to OMP and states packages/workbench/** is not unilaterally owned by either party; lines 120-124 require integration bookings to be visible in the channel. The latest canonical graph query for tui-composer-screen-ux-2026-11-16 showed 0 READY child nodes and 0 activeAssignments; the icon bridge is not an active assigned node. Codex request to bridge brand.ts Iconoir Kitty symbols through workspace.ts and workspace-runner.ts remains unassigned; those paths are OMP-owned, and Codex should not edit them absent explicit path-level transfer booking and graph authorization. Codex reports commit 3280db9 visually integrates cleanly; this session has not reviewed that commit. Workbench savedTools remains blocked pending bilateral ownership and path booking; the named fixture failed because it returns choices for the models endpoint, whose provider contract requires a data array. No source or graph edits; final integration is not claimed.
+2026-11-20 23:51 UTC - OMP TUI ownership and integration booking: .nomo/collab-opencode-tui.md:107-118 assigns packages/cli/src/tui/** to OMP and states packages/workbench/** is not unilaterally owned by either party; lines 120-124 require integration bookings to be visible in the channel. The latest canonical graph query for tui-composer-screen-ux-2026-11-16 showed 0 READY child nodes and 0 activeAssignments; the icon bridge is not an active assigned node. Codex request to bridge brand.ts Iconoir Kitty symbols through workspace.ts and workspace-runner.ts remains unassigned; those paths are OMP-owned, and Codex should not edit them absent explicit path-level transfer booking and graph authorization. Codex reports commit 3280db9 visually integrates cleanly; this session has not reviewed that commit. Workbench savedTools remains blocked pending bilateral ownership and path booking; the named fixture failed because it returns choices for the models endpoint, whose provider contract requires a data array. No source or graph edits; final integration is not claimed.
 - 2026-11-21 00:52 CET · Codex commit `2dee1e5` corrects diff counts for changed content resembling file headers. Two focused regressions, full project typecheck and diff check passed. [[NOMO TUI Control Center]]
 
-2026-11-21 — Harness handoff: canonical parent `omp-harness-completion-2026-11-16` is blocked; its scope excludes `packages/ledger/src/verify.test.ts` and `packages/runtime/src/recovery-crash.test.ts`. Child `harness-r01-legacy-inspect-only-test-coverage-2026-11-20` is active, owned by `harness-r01-legacy-inspect-only-test-coverage`, and permits test-only writes to exactly those two paths; parent `taskScopedDelegation.assignments` omits it, so active assignment authorization is unresolved and requires parent scope/assignment reconciliation. Harness worktree: `omp/harness-completion-2026-11-16` at `16f802aceaac4b832e307fe624adce20d72e2961`. Dirty path names: `.omp/config.yml`, `.opencode/agent/aw-token-auditor.md`, `.opencode/command/prime-team.md`, `.opencode/command/wp-status.md`, `.opencode/skill/nomo-team.md`, `.opencode/skill/nomo-work-package.md`, `AGENTS.local.md`, `apps/control-plane/package.json`, `apps/control-plane/ui/package.json`, `apps/desktop/package.json`, `docs/BETA.md`, `docs/RELEASE.md`, `package.json`, `packages/agent-policy/package.json`, `packages/cli/package.json`, `packages/connectors/package.json`, `packages/ledger/package.json`, `packages/policy/package.json`, `packages/proxy/package.json`, `packages/registry/package.json`, `packages/runtime/package.json`, `packages/runtime/src/crash.test.ts`, `packages/runtime/src/recovery-job.test.ts`, `packages/sdk/package.json`, `packages/verifier/package.json`, `packages/workbench/package.json`, `scripts/install-nomo.sh`, `scripts/package.json`, `scripts/src/build-web.mjs`, `scripts/src/doc-truth.test.mjs`, `scripts/src/release-packaging.test.mjs`, `scripts/src/work-state-graph.test.mjs`, `docs/NOMO-PERSISTED-KEY-COMPATIBILITY-DESIGN.md`, `docs/NOMO-TOOL-ID-COMPATIBILITY-DESIGN.md`, `docs/NOMO-VERIFY-KEY-COMPATIBILITY-DESIGN.md`, `scripts/src/build-web-identity.test.mjs`. Codex reports TUI branch HEAD `2dee1e5` and a clean merge-tree with `16f802a`; combined gates remain pending. No Harness/TUI merge or integration readiness is claimed.
+2026-11-21 - Harness handoff: canonical parent `omp-harness-completion-2026-11-16` is blocked; its scope excludes `packages/ledger/src/verify.test.ts` and `packages/runtime/src/recovery-crash.test.ts`. Child `harness-r01-legacy-inspect-only-test-coverage-2026-11-20` is active, owned by `harness-r01-legacy-inspect-only-test-coverage`, and permits test-only writes to exactly those two paths; parent `taskScopedDelegation.assignments` omits it, so active assignment authorization is unresolved and requires parent scope/assignment reconciliation. Harness worktree: `omp/harness-completion-2026-11-16` at `16f802aceaac4b832e307fe624adce20d72e2961`. Dirty path names: `.omp/config.yml`, `.opencode/agent/aw-token-auditor.md`, `.opencode/command/prime-team.md`, `.opencode/command/wp-status.md`, `.opencode/skill/nomo-team.md`, `.opencode/skill/nomo-work-package.md`, `AGENTS.local.md`, `apps/control-plane/package.json`, `apps/control-plane/ui/package.json`, `apps/desktop/package.json`, `docs/BETA.md`, `docs/RELEASE.md`, `package.json`, `packages/agent-policy/package.json`, `packages/cli/package.json`, `packages/connectors/package.json`, `packages/ledger/package.json`, `packages/policy/package.json`, `packages/proxy/package.json`, `packages/registry/package.json`, `packages/runtime/package.json`, `packages/runtime/src/crash.test.ts`, `packages/runtime/src/recovery-job.test.ts`, `packages/sdk/package.json`, `packages/verifier/package.json`, `packages/workbench/package.json`, `scripts/install-nomo.sh`, `scripts/package.json`, `scripts/src/build-web.mjs`, `scripts/src/doc-truth.test.mjs`, `scripts/src/release-packaging.test.mjs`, `scripts/src/work-state-graph.test.mjs`, `docs/NOMO-PERSISTED-KEY-COMPATIBILITY-DESIGN.md`, `docs/NOMO-TOOL-ID-COMPATIBILITY-DESIGN.md`, `docs/NOMO-VERIFY-KEY-COMPATIBILITY-DESIGN.md`, `scripts/src/build-web-identity.test.mjs`. Codex reports TUI branch HEAD `2dee1e5` and a clean merge-tree with `16f802a`; combined gates remain pending. No Harness/TUI merge or integration readiness is claimed.
 
 - 2026-11-21 00:57 CET · Codex integration rehearsal combined commits `2dee1e5`, `4d278cc` and `16f802a` into tree `54f60d0dec60185eed7fef8b08eee92f1d8b2626`. Isolated candidate passed 330/330 TUI tests and full `pnpm run typecheck`. OMP worktrees contain additional uncommitted changes, so final integration remains pending their reviewed handoffs. [[NOMO TUI Control Center]]
 
@@ -8829,11 +8829,11 @@ Worktree: `/Users/dawe/.codex/worktrees/tui-visual-system/NOMO`. Verified local 
 
 - 2026-11-21 01:04 CET · Codex combined-tree fixture audit used a local fake model, chat exchange and managed document. All 110 frames across 11 tabs, 40/48/80/100/120 columns and color/mono met width and height bounds. Approval and usage states remained empty and require populated coverage. Ledger false-verification summary reproduced. [[NOMO TUI Control Center]]
 
-2026-11-21 — Graph-authority correction (user-provided read-only evidence from canonical `.nomo/work-state.json`): parent `omp-harness-completion-2026-11-16` lists `harness-r01-legacy-inspect-only-test-coverage-2026-11-20` in top-level `activeAssignments` (lines 7517–7519), but omits it from `taskScopedDelegation.assignments` (lines 7305–7455), the task-scoped authorization source. The active child’s scope includes `packages/ledger/src/verify.test.ts` and `packages/runtime/src/recovery-crash.test.ts` (child record line 30545 onward); both are absent from the parent writable scope (lines 7165–7173). The graph is internally inconsistent; reconcile parent scope/assignment before treating the child as authorized. Candidate `16f802a` is not integration-ready. TUI HEAD `2dee1e5` and a clean merge-tree with `16f802a` are Codex-reported; combined gates remain pending.
+2026-11-21 - Graph-authority correction (user-provided read-only evidence from canonical `.nomo/work-state.json`): parent `omp-harness-completion-2026-11-16` lists `harness-r01-legacy-inspect-only-test-coverage-2026-11-20` in top-level `activeAssignments` (lines 7517-7519), but omits it from `taskScopedDelegation.assignments` (lines 7305-7455), the task-scoped authorization source. The active child’s scope includes `packages/ledger/src/verify.test.ts` and `packages/runtime/src/recovery-crash.test.ts` (child record line 30545 onward); both are absent from the parent writable scope (lines 7165-7173). The graph is internally inconsistent; reconcile parent scope/assignment before treating the child as authorized. Candidate `16f802a` is not integration-ready. TUI HEAD `2dee1e5` and a clean merge-tree with `16f802a` are Codex-reported; combined gates remain pending.
 
 - 2026-11-21 01:05 CET · Codex combined-tree audit rendered 110 frames with a synthetic pending proxy approval expiring in 60 seconds and 4200 reported model tokens. Frame dimensions passed at 40/48/80/100/120 columns in color and mono; approval banner appeared on all 11 tabs from 48 columns. Approvals incorrectly reported no deadline despite the proxy hold expiry. Reproduction was sent to OMP TUI owner. [[NOMO TUI Control Center]]
 
-2026-11-21 — Graph-authority addendum (user-provided evidence from the same canonical snapshot): LegacyInspectCoverage appears in parent top-level `activeAssignments` (line 7518), is absent from nested `taskScopedDelegation.activeAssignments`, which lists only `harness-r01-cloud-caller-search-2026-11-20` and `harness-r01-operation-id-conflict-fixture-repair-2026-11-20` (lines 7295–7298), and is also omitted from `taskScopedDelegation.assignments`. This confirms a three-way assignment-state mismatch.
+2026-11-21 - Graph-authority addendum (user-provided evidence from the same canonical snapshot): LegacyInspectCoverage appears in parent top-level `activeAssignments` (line 7518), is absent from nested `taskScopedDelegation.activeAssignments`, which lists only `harness-r01-cloud-caller-search-2026-11-20` and `harness-r01-operation-id-conflict-fixture-repair-2026-11-20` (lines 7295-7298), and is also omitted from `taskScopedDelegation.assignments`. This confirms a three-way assignment-state mismatch.
 
 - 2026-11-21 01:05 CET · Codex reviewed populated combined-candidate frames at 40x16. Pending proxy approval row is outside the visible approvals body because count and no-deadline summary take its space; the sticky banner truncates the tool and action keys. Sent exact reproduction to OMP renderer owner for fix and 40x16 regression. [[NOMO TUI Control Center]]
 
@@ -8852,9 +8852,9 @@ Commit 3280db90942408dbc286a70f42124b4a3a33b277, subject Polish shared TUI motio
 
 - 2026-11-21 01:16 CET · Codex updated the combined committed candidate to tree `700c795cba20dd901375c926e5c0a183c0993f87`, adding `0bd1bec` to the same OMP heads. Only inspector source and its focused test differ from the previous candidate. Seven focused tests and 264-frame workspace matrix passed. OMP uncommitted work remains outside this candidate. [[NOMO TUI Control Center]]
 
-2026-11-21 — Harness delegation status (user-provided verified canonical-graph evidence): blocked parent `omp-harness-completion-2026-11-16` omits three READY child nodes from `taskScopedDelegation.assignments`; each has empty evidence and only its initial READY transition: `harness-r01-legacy-replay-test-evidence-audit-2026-11-20` (read-only five ledger/runtime/plan files), `harness-r01-operation-id-test-independent-review-2026-11-20` (read-only `crash.test.ts`, `execute.ts`, `budget.test.ts`), and `harness-r01-cloud-recovery-test-evidence-audit-2026-11-20` (read-only five cloud/plan files). Prerequisite reports do not authorize these distinct nodes; no dispatch is authorized until Codex reconciles delegation. Existing `harness-r01-legacy-inspect-only-test-coverage-2026-11-20` has a separate scope/assignment mismatch recorded above.
+2026-11-21 - Harness delegation status (user-provided verified canonical-graph evidence): blocked parent `omp-harness-completion-2026-11-16` omits three READY child nodes from `taskScopedDelegation.assignments`; each has empty evidence and only its initial READY transition: `harness-r01-legacy-replay-test-evidence-audit-2026-11-20` (read-only five ledger/runtime/plan files), `harness-r01-operation-id-test-independent-review-2026-11-20` (read-only `crash.test.ts`, `execute.ts`, `budget.test.ts`), and `harness-r01-cloud-recovery-test-evidence-audit-2026-11-20` (read-only five cloud/plan files). Prerequisite reports do not authorize these distinct nodes; no dispatch is authorized until Codex reconciles delegation. Existing `harness-r01-legacy-inspect-only-test-coverage-2026-11-20` has a separate scope/assignment mismatch recorded above.
 
-2026-11-21 — Harness graph-ownership handoff (user-provided evidence; Work Log only): blocked parent `omp-harness-completion-2026-11-16` is owned by `OMP harness session`, with nested `canonicalGraphWriter: Codex orchestrator`. Active child `harness-r01-legacy-inspect-only-test-coverage-2026-11-20` appears in parent top-level `activeAssignments`, is omitted from nested `taskScopedDelegation.assignments`, and is absent from nested `taskScopedDelegation.activeAssignments` (which lists two other children); parent writable scope excludes the child's `packages/ledger/src/verify.test.ts` and `packages/runtime/src/recovery-crash.test.ts`. Only the existing graph writer may reconcile: explicitly authorize the exact child paths and synchronize delegation fields, or block the child/remove its active assignment if unauthorized. Do not dispatch the three READY-but-unassigned nodes until explicitly assigned. Separate Codex TUI visual session: user reports branch `codex/tui-visual-system`, commit `0bd1bec`; it does not own the Harness graph and must not take over the OMP node. User consent is for this Work Log handoff only. Combined-candidate test/gate results remain Work Log-recorded (lines 8822, 8853), not newly verified here.
+2026-11-21 - Harness graph-ownership handoff (user-provided evidence; Work Log only): blocked parent `omp-harness-completion-2026-11-16` is owned by `OMP harness session`, with nested `canonicalGraphWriter: Codex orchestrator`. Active child `harness-r01-legacy-inspect-only-test-coverage-2026-11-20` appears in parent top-level `activeAssignments`, is omitted from nested `taskScopedDelegation.assignments`, and is absent from nested `taskScopedDelegation.activeAssignments` (which lists two other children); parent writable scope excludes the child's `packages/ledger/src/verify.test.ts` and `packages/runtime/src/recovery-crash.test.ts`. Only the existing graph writer may reconcile: explicitly authorize the exact child paths and synchronize delegation fields, or block the child/remove its active assignment if unauthorized. Do not dispatch the three READY-but-unassigned nodes until explicitly assigned. Separate Codex TUI visual session: user reports branch `codex/tui-visual-system`, commit `0bd1bec`; it does not own the Harness graph and must not take over the OMP node. User consent is for this Work Log handoff only. Combined-candidate test/gate results remain Work Log-recorded (lines 8822, 8853), not newly verified here.
 
 - 2026-11-21 18:56 CET · At user request, Codex bundled branch `0bd1bec` and pointed `~/.local/bin/nomo` to its task-worktree bundle. Preserved prior launcher as `nomo.before-tui-visual-0bd1bec`. Bare `nomo` entered the TUI in a disposable PTY and double Ctrl+C exited 0 and restored the alternate screen. `--help` and `--version` passed. OMP work remains separate. [[NOMO TUI Control Center]]
 
@@ -8871,7 +8871,7 @@ Commit 3280db90942408dbc286a70f42124b4a3a33b277, subject Polish shared TUI motio
 - 2026-11-21 19:34 CET · Read-only source comparison tied the 19:07 screenshot regression to the wrong build generation: the task branch at 0.1.0 explicitly avoids Markdown rendering, while the original dirty tui-opentui-integration workspace.ts contains inlineMarkdownParts(), paintMarkdownLine() and markdown-tagged chat rows. The screenshot visibly shows raw **...** markers. workspace.ts and workspace-runner.ts differ from 4b5a738 by 7,930 and 1,914 changed lines. Exact original dist provenance remains unverified. The local launcher remains restored to the original 1.0.1 artifact; Codex visual commits remain unintegrated pending OMP handoff. No source edits or tests this turn. [[NOMO TUI Control Center]]
 - 2026-11-21 19:39 CET · Current shared graph has the active TUI composer task and proxy-hold task both claiming workspace.ts/workspace.test.ts. Asked the TUI owner to serialize or split those scopes and preserve the original Markdown chat renderer. The TUI has one active implementation child and Harness has one active child, within the user’s maximum of two per session. Codex made no changes to OMP files; integration remains pending a reviewed handoff. [[NOMO TUI Control Center]]
 
-## 2026-11-21 19:50 CET — TUI screenshot triage
+## 2026-11-21 19:50 CET - TUI screenshot triage
 - Confirmed the local nomo launcher still targets the preserved tui-opentui-integration dist and reports 1.0.1. The screenshot regression matches the newer branch renderer, whose chat rows omit the prior safe Markdown presentation.
 - Sent the active OMP TUI owner the source-level evidence and requested a serialized handoff for workspace.ts. The owner is still busy; no conflicting source edits were made.
 - Current next step: integrate the renderer fix and visual modules after handoff, then verify the combined build before changing the launcher.

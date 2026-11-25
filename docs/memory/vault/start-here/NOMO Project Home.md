@@ -86,7 +86,7 @@ Start with [[NOMO Start Here]] for task routing and [[NOMO Knowledge Map.canvas]
   nejistotu, zda předchozí inherited-environment smoke četl credential nebo
   zda upstream request opustil proces. Ověření používalo syntetické
   credentials a stubbed provider fetch; bez live requestu, browser/visual
-  smoke nebo kliknutí. Podrobnosti: [[NOMO Work Log#2026-10-26 — H63: passive provider status and explicit environment check]].
+  smoke nebo kliknutí. Podrobnosti: [[NOMO Work Log#2026-10-26 - H63: passive provider status and explicit environment check]].
 - H21 has fixture coverage for OpenAI/Azure Responses refusals, OpenAI Chat
   Completions `function_call` and post-terminal stream rejection, Anthropic
   terminal/tool/SSE behavior, Cloudflare Anthropic SSE header passthrough,
@@ -231,13 +231,13 @@ Start with [[NOMO Start Here]] for task routing and [[NOMO Knowledge Map.canvas]
   Webové rozhraní a `pnpm gui` nejsou součástí testovací acceptance.
 
 
-## NOMO x YC Winter 2027 — 2026-10-27
+## NOMO x YC Winter 2027 - 2026-10-27
 - Aktuální dokumentační index: [NOMO x YC index](file:///Users/dawe/Developer/Claude-Projects/NOMO/docs/strategy/2026-10-27-nomoyc-index.md).
 - Česko první; obecná firemní platforma zůstává dlouhodobou vizí. První konkrétní workflow, uživatel, data i poptávka nejsou potvrzené.
 - Privátní stránka: https://www.dsak.tech/nomoyc. Webový kód obsahuje šifrovaný plán a dokumenty; API je vydá po přihlášení.
 - Detailní stav a důkazy jsou v [[NOMO Work Log]].
 
-## Bezpečná migrace názvů NOMO — 2026-10-28
+## Bezpečná migrace názvů NOMO - 2026-10-28
 
 - H66 byl při zahájení aktivní a nyní je dokončený; záznam důkazů je v
   `.nomo/harness-work-state.json` a podrobný souhrn níže i v [[NOMO Work Log]].
@@ -257,7 +257,7 @@ Start with [[NOMO Start Here]] for task routing and [[NOMO Knowledge Map.canvas]
   environment aliases, externí metadata, historie a chráněné control-plane,
   UI/TUI/desktop/Apple cesty. Doslovná nula by porušila syntaxe či kompatibilitu.
 
-## Harness package namespace slice — 2026-10-28
+## Harness package namespace slice - 2026-10-28
 
 - Devět soukromých Harness balíčků nyní používá `@nomo/*`; závislosti,
   importy CLI, lockfile a aktuální release guards byly ověřeny.
@@ -273,12 +273,12 @@ Start with [[NOMO Start Here]] for task routing and [[NOMO Knowledge Map.canvas]
   kompatibilitě.
 
 
-## Aktuální stav H66 — 2026-10-28
+## Aktuální stav H66 - 2026-10-28
 
 - Bezpečná migrace názvů Harnessu je dokončená v commit 6bddf22. Bezpečné dočasné prefixy jsou nomo- a MCP metadata nomo-cloud; v prověřených Workbench, proxy a přímých CLI cestách už nezůstaly staré dočasné prefixy.
 - Ověření: Workbench 843 prošlo, 2 přeskočené; proxy 35/35; CLI Harness 18/18; typecheck prošel. Commit je pushnutý na origin/feat/wp-regress.
 - Záměrně zůstávají jazyková syntaxe, kompatibilní MCP/protocol ID, env aliasy, persistentní a externí identity, historie a chráněné stromy. Tyto výskyty nelze bezpečně hromadně přejmenovat.
 
-- H21 aktualizace 2026-10-28: Bedrock Mantle nyní podporuje typovaný AWS credential-chain profil s per-call SigV4, lokálním model listingem a redakcí finálních/streamovaných výstupů. Ověření: Mantle 7/7, Workbench 851 prošlo / 2 přeskočeny, API 41/41, oba typechecky. Bez skutečných credentials či provider requestu. H21 zůstává blokovaný na Prime metadata a ostatní mezery; plná parita není prokázaná. [[NOMO Work Log#2026-10-28 — H21 Bedrock Mantle host credentials]].
+- H21 aktualizace 2026-10-28: Bedrock Mantle nyní podporuje typovaný AWS credential-chain profil s per-call SigV4, lokálním model listingem a redakcí finálních/streamovaných výstupů. Ověření: Mantle 7/7, Workbench 851 prošlo / 2 přeskočeny, API 41/41, oba typechecky. Bez skutečných credentials či provider requestu. H21 zůstává blokovaný na Prime metadata a ostatní mezery; plná parita není prokázaná. [[NOMO Work Log#2026-10-28 - H21 Bedrock Mantle host credentials]].
 
 - Commit `975538a` obsahuje pouze Bedrock Mantle Harness změnu; non-force push GitHub odmítl jako `Invalid username or token`. Commit je lokální na `feat/wp-regress`; žádné tokeny, force-push ani merge. Podrobnosti: [[NOMO Work Log#2026-10-28 H21 Mantle commit a push status]].

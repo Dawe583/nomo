@@ -37,7 +37,7 @@ a backlog of product work, it is choosing what to do next.
 
 Recent history is TUI-heavy (`1620bbe0`, `d3252367`, `c4ef0e3f`, `ef945c8a`,
 `b5a6c6b8`, `14a77b36`), plus control-plane provider matrix and ledger
-verification. That explains why a TUI-heavy plan feels natural — and why it can
+verification. That explains why a TUI-heavy plan feels natural - and why it can
 quietly avoid the product gates.
 
 94 `TODO`/`FIXME` markers exist across `packages/*/src`. The program does not

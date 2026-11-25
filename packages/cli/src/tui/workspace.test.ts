@@ -1261,7 +1261,7 @@ test("status dock keeps full authority and context at narrow sizes", async (t) =
   const missing: string[] = [];
   for (const [width, height, required] of [
     [40, 12, "◐ offline"],
-    [80, 24, "▤ unknown —"],
+    [80, 24, "▤ unknown -"],
   ] as const) {
     for (const color of [true, false]) {
       const frame = renderWorkspace(ui, width, height, "", false, false, {
@@ -4978,7 +4978,7 @@ test("the footer never invents a token rate and shortens the home path", async (
   assert.ok(footerRow, "the footer carries the token rate");
   assert.match(footerRow!, /tok\/s n\/a/, "no rate was reported, so none is shown");
   assert.match(footerRow!, /fixture/, "the model stays named");
-  assert.match(footerRow!, /unknown|—/, "the context share names what it knows");
+  assert.match(footerRow!, /unknown|-/, "the context share names what it knows");
   if (process.env.HOME) assert.match(footerRow!, /~\//, "the working directory is home shortened");
 });
 
