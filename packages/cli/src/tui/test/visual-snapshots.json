@@ -182,22 +182,22 @@
       "maxVisibleLength": 40
     },
     "settings@80x24": {
-      "sha256": "ccececd90f31c93c19860f9b540d1bd2bf780c5e8fe2e3107024141b70670b20",
+      "sha256": "edcff2c6d8e4a8dc744b269164378e586aae409104aa8645c3c5c65b36afd9fa",
       "rows": 24,
       "maxVisibleLength": 80
     },
     "settings@120x40": {
-      "sha256": "374e50c42484cd8f418796d4b045a660a822d6404528960f8d2498a0aa70c354",
+      "sha256": "d8d6192261e07e747b217c6eb892c9c25f9eb482d96408cb927f196e4c68ee0d",
       "rows": 40,
       "maxVisibleLength": 120
     },
     "settings@160x45": {
-      "sha256": "b7184a09ff8df2edd25c036dceb249727fdb74009c26ac91ca97279250d15ec8",
+      "sha256": "44eb32e3d464697b4f4ef5f9afc7c223f4105f8e33becd622e62697eab1461df",
       "rows": 45,
       "maxVisibleLength": 160
     },
     "settings@200x48": {
-      "sha256": "4e8693ca92fc60b56825a3ef3179f1ceb3c49c9d2bb0bbafd7ecadb0a3573520",
+      "sha256": "08fad3675480e73e9fab889e99ce05f40d0469fa23c2269f3c75bac4f360c9f7",
       "rows": 48,
       "maxVisibleLength": 200
     }

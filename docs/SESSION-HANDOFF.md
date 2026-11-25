@@ -22,11 +22,11 @@
 
 ## Verified state at push (commit e2ad7ac5 line, 2026-11-25)
 
-- workbench: `node --test --test-concurrency=1 packages/workbench/src/*.test.ts` → 1187 tests, 1185 pass, 0 fail, 2 skipped after H5/R5 integration
+- workbench: `node --test --test-concurrency=1 packages/workbench/src/*.test.ts` → 1188 tests, 1186 pass, 0 fail, 2 skipped after Q8
 - ledger: `node --test --test-concurrency=1 packages/ledger/src/*.test.ts` → 142 tests, 142 pass, 0 fail after H13 integration
 - `pnpm --filter @nomo/workbench typecheck` → exit 0
 - agent-identity: 11/11 including revocation surviving restart without local session evidence
-- H1-H4, H7, H8, H9, R1, R2, R3, R4, Q1-Q4, Q6-Q7, R5, R6, R7, H5 and H10 through H15 are done; oracle eval 14/14 proves plumbing only, not model capability; R2 is a contextual bandit, not RL
+- H1-H4, H7, H8, H9, R1, R2, R3, R4, Q1-Q4, Q6-Q8, R5, R6, R7, H5 and H10 through H15 are done; oracle eval 14/14 proves plumbing only, not model capability; R2 is a contextual bandit, not RL
 - Do not trust these numbers without re-running the gate you depend on.
 
 ## Product gates status (Track F)
