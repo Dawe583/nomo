@@ -1059,6 +1059,15 @@ These are real, scoped follow-ups, not wishes. ~40 h.
 13. **Q13 Security review**: threat model for the eval runner and trajectory
     export. 3 h.
 
+    As built: `docs/THREAT-MODEL.md` section 9 reviews both artifacts as
+    hostile-input offline measurement plumbing. The eval runner proposes and
+    classifies but never executes, networks or calls a provider. Trajectory
+    export copies only an allowlisted schema, bounds identifiers, refuses
+    non-recomputing rewards and reports unattributed positional evidence. The
+    review names the remaining same-user signature ceiling, positional
+    misattribution, future provider-adapter gate and the explicit absence of
+    training or gradient RL.
+
 ## 12. Program checklist
 
 - [ ] T1 design contract linked from README

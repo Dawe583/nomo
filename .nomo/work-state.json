@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-25T15:13:42Z",
+  "updatedAt": "2026-11-25T15:14:40Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -2056,6 +2056,37 @@
         "git diff --check observed exit 0."
       ],
       "stopCondition": "Stop if either handbook edition drops a registry command, documents fleet-wide revoke as available, or doc truth treats retirement history as an operational live path."
+    },
+    {
+      "id": "q13-harness-security-review",
+      "status": "done",
+      "owner": "devin-6293643153014f56bb088c9a71fde97a",
+      "dependsOn": [
+        "q12-operator-docs"
+      ],
+      "scope": [
+        "docs/THREAT-MODEL.md",
+        "docs/plans/2026-11-25-nomo-24h-program-detailed.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "threat model for the eval runner and trajectory export"
+      ],
+      "verifier": [
+        "node --test scripts/src/harness-eval-runner.test.mjs scripts/src/trajectory-export.test.mjs",
+        "git diff --check",
+        "manual review of docs/THREAT-MODEL.md section 9"
+      ],
+      "evidence": [
+        "Manual review: docs/THREAT-MODEL.md section 9 states eval runner stdin prompts are adversarial but cannot execute tools, use network, call a model or provider, or read expected answers; future model/provider adapters are a new approval-gated trust boundary.",
+        "Manual review: section 9 states trajectory export treats chain JSONL as hostile, copies only allowlisted fields, bounds identifiers, recomputes rewards exactly, prints counts only, preserves positional misattribution as a measurement limitation and trains nothing.",
+        "NO_COLOR=1 node --test scripts/src/harness-eval-runner.test.mjs scripts/src/trajectory-export.test.mjs observed exit 0: tests 8, pass 8, fail 0, duration_ms 1404.457625.",
+        "git diff --check observed exit 0."
+      ],
+      "stopCondition": "Stop if eval output becomes execution authority, trajectory export copies unallowlisted content, rewards are accepted without recomputation, or the docs claim model capability or RL."
     }
   ]
 }

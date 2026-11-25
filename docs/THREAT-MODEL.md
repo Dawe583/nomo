@@ -651,3 +651,69 @@ Stated plainly rather than guessed.
    suite, no runtime exercise. Every code claim is from reading the working
    tree; every architectural claim should be re-confirmed by the owner before it
    is published.
+
+---
+
+## 9. Harness eval runner and trajectory export, 2026-11-25
+
+This section covers two offline harness artifacts added after the original
+signature analysis: `scripts/src/harness-eval-runner.mjs` and
+`scripts/src/trajectory-export.mjs`. It does not widen the signature ceiling in
+sections 1 to 8.
+
+### 9.1 Eval runner trust boundary
+
+The eval runner is a deterministic fixture, not an agent runtime. It reads one
+untrusted prompt on stdin, proposes a first action by fixed rules, validates the
+tool name against the governed catalog, prints one JSON decision and exits. It
+does not execute the proposed tool, call a model, open a socket, read the
+taskset's expected answer, or use a provider credential. Unknown tools, unsafe
+URL shapes and known destructive patterns fail closed as `refused`.
+
+Security consequence: prompt text is adversarial input to a parser, but the
+worst output it can select is a governed tool name plus class. It cannot cause
+execution by itself. The important residual risk is future misuse: if a real
+model adapter is added, the eval decision must remain a measurement artifact
+and must not become automatic authority to execute the action. The current
+runner has no execution path to abuse.
+
+The deterministic pass rate is plumbing and governance evidence only. It is not
+model capability evidence and it is not reinforcement learning.
+
+### 9.2 Trajectory export trust boundary
+
+The trajectory exporter reads local JSONL chain records as hostile content.
+Its output schema is `nomo.trajectory.v1` and its field selection is an
+allowlist: case id, variant id, tool name, class, completion outcome, verifier
+result and reward. Prompt text, tool arguments, tool results, arbitrary chain
+fields and digest-bearing internals are never copied. Tool names and classes
+must match a bounded identifier shape, so whitespace or prompt text smuggled
+into those fields is refused rather than exported. Reward records must
+recompute exactly; a tampered or malformed reward drops the affected case.
+Summary output prints counts only.
+
+Security consequence: an untrusted chain cannot use the exporter as a confused
+deputy to smuggle prompt or tool-output content into a training artifact.
+`--out` writes the operator-selected path with ordinary same-user filesystem
+semantics; it is not a privilege boundary and does not protect against malware
+already running as the operator.
+
+The exporter has one integrity limitation by design: cases are segmented by
+position, so interleaved cases in one chain can be misattributed until tool
+entries carry a case id. This affects measurement correctness, not secrecy.
+Trailing unattributed tool calls are reported and not silently attached to a
+later case.
+
+### 9.3 Remaining harness-specific risks
+
+| Risk | Current control | Residual truth |
+| --- | --- | --- |
+| Prompt or output leaks into trajectory export | Field allowlist plus sentinel tests | No leak observed; positional misattribution remains |
+| Tampered reward is analyzed as valid | Exact recomputation, invalid case refused | Same-user chain/key compromise remains outside signature proof |
+| Eval fixture is mistaken for capability evidence | Runner and docs call it plumbing only | Human misuse of the number cannot be prevented mechanically |
+| Future model runner gains network or provider access | Not present; requires explicit approval | Must be reviewed as a new trust boundary before activation |
+| Offline analysis becomes training authority | Export only, no training path | No gradient RL, model training or GPU path exists |
+
+Conclusion: the two artifacts are safe as offline measurement plumbing under
+the repository's existing same-user threat model. They do not create a fleet
+boundary, execution authority, model capability evidence, or an RL system.
