@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-25T20:16:44.864822Z",
+  "updatedAt": "2026-11-25T20:17:23.072109Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -2340,6 +2340,33 @@
       ],
       "stopCondition": "Stop if removing literals would alter fixed brand artwork or weaken token ownership.",
       "completedAt": "2026-11-25T20:16:44.864653Z"
+    },
+    {
+      "id": "q17b-env-var-truth-repair",
+      "status": "done",
+      "owner": "devin-6293643153014f56bb088c9a71fde97a",
+      "dependsOn": [
+        "q17a-design-token-colour-repair"
+      ],
+      "scope": [
+        "scripts/src/env-var-truth.test.mjs",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "test-only environment controls are individually named with truthful reasons",
+        "allowlist remains usage-checked and cannot become a dumping ground"
+      ],
+      "verifier": [
+        "node --test scripts/src/env-var-truth.test.mjs"
+      ],
+      "evidence": [
+        "NO_COLOR=1 node --test scripts/src/env-var-truth.test.mjs => exit 0; tests 12, pass 12, fail 0, duration_ms 321.88025"
+      ],
+      "stopCondition": "Stop if a name is actually product configuration rather than a test-only control or hostile sentinel.",
+      "completedAt": "2026-11-25T20:17:23.071988Z"
     }
   ]
 }
