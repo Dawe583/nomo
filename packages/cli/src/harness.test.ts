@@ -259,15 +259,38 @@ test("run-eval aggregates provider cost across attributed child workspaces", asy
       },
       seq: 2,
     },
+    {
+      body: {
+        workspace: "agent-root",
+        tool: "fs_read",
+        klass: "r1",
+        decision: "execute:completed",
+        classification: "classified",
+        harnessEval,
+      },
+      seq: 3,
+    },
+    {
+      body: {
+        workspace: "agent-root",
+        tool: "fs_write",
+        klass: "r3",
+        decision: "deny:policy",
+        classification: "classified",
+        harnessEval,
+      },
+      seq: 4,
+    },
   ];
   const childEntries = [{ ...usage("agent-child", 0.5), seq: 1 }];
+  let childMissing = false;
   const surface = fake({
     get(id) {
       return id === "eval-session" ? { workspace: "agent-root" } : undefined;
     },
     async ledger(workspace) {
       if (workspace === "agent-root") return { entries: rootEntries, result: {}, verification: {} };
-      if (workspace === "agent-child") return { entries: childEntries, result: {}, verification: {} };
+      if (workspace === "agent-child" && !childMissing) return { entries: childEntries, result: {}, verification: {} };
       return undefined;
     },
     async startHarnessEval() {
@@ -304,7 +327,33 @@ test("run-eval aggregates provider cost across attributed child workspaces", asy
   assert.equal(code, 0, terminal.err.join(" "));
   assert.equal(rewardInput?.costUsd, 0.75);
   assert.equal(rewardInput?.weights.cost, 1, "a different-weight prior reward must not block this measurement");
+  assert.equal(rewardInput?.guardrails.deny_rate, 0.5);
+  assert.equal(rewardInput?.guardrails.rollback_count, 0);
+  assert.equal(rewardInput?.guardrails.unknown_tool_rate, 0);
   assert.equal(rewardInput ? rewardRecord(rewardInput).reward : undefined, 0.25);
+
+  rewardInput = undefined;
+  childMissing = true;
+  const missingChild = io();
+  const missingCode = await runHarnessCommand(
+    [
+      "run-eval",
+      "--case", attribution.caseId,
+      "--variant", attribution.variantId,
+      "--run", String(attribution.run),
+      "--prompt", "Measure.",
+      "--gate", "verify",
+      "--weights", "breach=0,cost=3,latency=0",
+    ],
+    missingChild,
+    { workbench: async () => surface },
+  );
+  assert.equal(missingCode, 0, missingChild.err.join(" "));
+  const missingRewardInput = rewardInput as RewardInput | undefined;
+  assert.equal(missingRewardInput?.costUsd, "unmeasured");
+  assert.equal(missingRewardInput?.guardrails.deny_rate, "unmeasured");
+  assert.equal(missingRewardInput?.guardrails.rollback_count, "unmeasured");
+  assert.equal(missingRewardInput?.guardrails.unknown_tool_rate, "unmeasured");
 });
 
 test("run-eval reads a prompt file and refuses malformed attribution before starting", async (t) => {

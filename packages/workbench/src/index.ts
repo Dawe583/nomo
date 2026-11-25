@@ -8505,7 +8505,7 @@ export class Workbench {
         undefined,
         {
           klass: call.klass,
-          ...(call.unclassified ? { classification: "unclassified" } : {}),
+          classification: call.unclassified ? "unclassified" : "classified",
         },
         this.sessionAttribution(session, policy, decision),
       ),
