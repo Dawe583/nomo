@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-25T20:38:50.664072Z",
+  "updatedAt": "2026-11-25T21:26:19.025295Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -2626,6 +2626,37 @@
       ],
       "stopCondition": "Stop if production execution cannot truthfully prove the case identity or if attribution would require prompt, argument, result or document content.",
       "completedAt": "2026-11-25T20:38:50.664072Z"
+    },
+    {
+      "id": "h20c1-eval-attribution-restart-proof",
+      "status": "done",
+      "owner": "devin-6293643153014f56bb088c9a71fde97a",
+      "dependsOn": [
+        "h20c-production-chain-attribution"
+      ],
+      "scope": [
+        "packages/workbench/src/reversal-record.test.ts",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "eval attribution persisted in a session survives restart and is written into later chain entries"
+      ],
+      "verifier": [
+        "node --test packages/workbench/src/reversal-record.test.ts",
+        "pnpm --filter @nomo/workbench typecheck",
+        "git diff --check"
+      ],
+      "evidence": [
+        "node --test packages/workbench/src/reversal-record.test.ts: 4 tests, 4 pass, 0 fail, duration_ms 2412.036375",
+        "pnpm --filter @nomo/workbench typecheck: exit 0",
+        "git diff --check: exit 0",
+        "the new restart test records harness.reward after restart and finds harnessEval exactly equal to the original fixture case identity"
+      ],
+      "stopCondition": "Stop if the only proof is process memory rather than restored durable session state.",
+      "completedAt": "2026-11-25T21:26:19.025295Z"
     }
   ]
 }

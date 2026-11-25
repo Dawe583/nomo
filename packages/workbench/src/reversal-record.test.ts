@@ -125,6 +125,34 @@ test("a governed workbench record names the policy, the rule, the model and the 
   for (const body of toolRecords) assert.deepEqual(body.harnessEval, EVAL_CASE);
 });
 
+
+test("eval attribution survives restart for later chain entries", async (t) => {
+  const f = await governedSession(t);
+  await f.app.shutdown();
+  const restarted = f.restart();
+
+  await restarted.recordHarnessReward(f.session.id, {
+    caseId: EVAL_CASE.caseId,
+    variantId: EVAL_CASE.variantId,
+    baselineVariantId: null,
+    changedAxis: null,
+    passed: true,
+    guardrails: { deny_rate: 0 },
+    costUsd: 0.001,
+    latencyMs: 400,
+    approvalMs: "unmeasured",
+    weights: { breach: 0.5, cost: 1, latency: 0.001 },
+  });
+
+  const evidence = await restarted.ledger(f.session.workspace);
+  const reward = (evidence!.entries as JsonlEntry[])
+    .map((entry) => entry.body as Body)
+    .filter((body) => body.tool === "harness.reward")
+    .at(-1);
+  assert.ok(reward, "the restarted session must write the reward");
+  assert.deepEqual(reward.harnessEval, EVAL_CASE);
+});
+
 test("an undo names the record it inverts, and the chain still verifies", async (t) => {
   const f = await governedSession(t);
   const operation = f.app.workspace(f.session.id).operations[0]!;
