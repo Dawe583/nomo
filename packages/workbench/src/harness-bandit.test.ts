@@ -1,11 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { appendFileSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { appendFileSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { defineArms } from "./harness-arms.ts";
 import {
   BANDIT_SCHEMA,
+  armsDigest,
   openBandit,
   readBandit,
   recordReward,
@@ -141,5 +142,70 @@ test("the boundary refuses bad arms, rewards, tokens and tampered history", () =
     assert.throws(() => recordReward(path, { armId: "compaction-75", reward: 1, tokens: -1 }), /tokens/);
     appendFileSync(path, "{not json\n");
     assert.throws(() => readBandit(path), /line 2/);
+  });
+});
+
+const preambles = defineArms("promptPreamble", [
+  { armId: "terse", value: "Be terse." },
+  { armId: "careful", value: "Be careful." },
+]);
+
+test("a guardrail axis is refused without an approval and the refusal is in the record", () => {
+  withFile((path) => {
+    const state = openBandit(path, { arms: preambles, budgetTokens: 10_000 });
+    assert.equal(state.stopReason, "unapproved-guardrail");
+    assert.equal(sampleArm(state, seeded(1)), null);
+    assert.throws(() => recordReward(path, { armId: "terse", reward: 1, tokens: 1 }), /stopped: unapproved-guardrail/);
+    const lines = readFileSync(path, "utf8").trim().split("\n").map((line) => JSON.parse(line));
+    assert.deepEqual(lines[1], {
+      type: "refusal",
+      axis: "promptPreamble",
+      reason: "promptPreamble changes a guardrail and no approval was given",
+    });
+    assert.ok(!readFileSync(path, "utf8").includes("Be terse."), "the preamble text never enters the record");
+    // A reset cannot lift the refusal, and neither can deleting the refusal line.
+    assert.equal(resetBandit(path, "try again").stopReason, "unapproved-guardrail");
+    const approval = { approvedBy: "operator", armsDigest: armsDigest(preambles) };
+    assert.throws(() => openBandit(path, { arms: preambles, budgetTokens: 10_000, approval }), /different approval/);
+  });
+  withFile((path) => {
+    openBandit(path, { arms: preambles, budgetTokens: 10_000 });
+    const [start] = readFileSync(path, "utf8").trim().split("\n");
+    writeFileSync(path, `${start}\n`);
+    assert.equal(readBandit(path).stopReason, "unapproved-guardrail");
+  });
+});
+
+test("an approval bound to other arms is refused; one bound to these arms allows exploration", () => {
+  withFile((path) => {
+    const other = { approvedBy: "operator", armsDigest: armsDigest(preambles.slice(0, 1)) };
+    const state = openBandit(path, { arms: preambles, budgetTokens: 10_000, approval: other });
+    assert.equal(state.stopReason, "unapproved-guardrail");
+    assert.match(JSON.parse(readFileSync(path, "utf8").trim().split("\n")[1]!).reason, /approval names sha256:/);
+  });
+  withFile((path) => {
+    const approval = { approvedBy: "operator", armsDigest: armsDigest(preambles) };
+    const state = openBandit(path, { arms: preambles, budgetTokens: 10_000, approval });
+    assert.equal(state.stopReason, null);
+    assert.ok(sampleArm(state, seeded(1)));
+    assert.equal(recordReward(path, { armId: "careful", reward: 1, tokens: 10 }).arms[1]!.samples, 1);
+    assert.equal(readFileSync(path, "utf8").trim().split("\n").length, 2, "no refusal line");
+    assert.throws(() => openBandit(path, { arms: preambles, budgetTokens: 10_000 }), /different approval/);
+  });
+  withFile((path) => {
+    assert.throws(
+      () => openBandit(path, { arms: preambles, budgetTokens: 1, approval: { approvedBy: " ", armsDigest: armsDigest(preambles) } }),
+      /approvedBy/,
+    );
+    assert.throws(
+      () => openBandit(path, { arms: preambles, budgetTokens: 1, approval: { approvedBy: "op", armsDigest: "x" } }),
+      /sha256/,
+    );
+  });
+});
+
+test("a non-guardrail axis explores without an approval", () => {
+  withFile((path) => {
+    assert.equal(openBandit(path, { arms, budgetTokens: 1_000 }).stopReason, null);
   });
 });
