@@ -8,6 +8,7 @@ import {
   NVIDIA_URL,
   PROVIDER_PRESETS,
 } from "../../packages/workbench/src/provider-defaults.ts";
+import { TUI_COMMANDS } from "../../packages/cli/src/tui/workspace.ts";
 
 /**
  * The handbook is a gate, not prose.
@@ -149,6 +150,19 @@ test("every command the binary accepts is documented", () => {
     cs,
     /Dvacet pět příkazů\./,
     "the Czech edition must state how many commands there are",
+  );
+});
+
+test("every TUI registry command is documented in both editions", () => {
+  const missing = [];
+  for (const [invocation] of TUI_COMMANDS) {
+    const command = invocation.split(/\s+/)[0];
+    if (!en.includes(command) || !cs.includes(command)) missing.push(command);
+  }
+  assert.deepEqual(
+    [...new Set(missing)],
+    [],
+    "TUI registry commands missing from a handbook edition",
   );
 });
 

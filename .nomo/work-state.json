@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-25T15:11:11Z",
+  "updatedAt": "2026-11-25T15:13:42Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -2020,6 +2020,42 @@
         "git diff --check observed exit 0."
       ],
       "stopCondition": "Stop if the packed install resolves back to the source tree, the launcher is bypassed, terminal modes survive exit, or versioned manifests drift again."
+    },
+    {
+      "id": "q12-operator-docs",
+      "status": "done",
+      "owner": "devin-6293643153014f56bb088c9a71fde97a",
+      "dependsOn": [
+        "q11-packaging"
+      ],
+      "scope": [
+        "docs/HANDBOOK.md",
+        "docs/HANDBOOK.cs.md",
+        "scripts/src/handbook.test.mjs",
+        "scripts/src/doc-truth.test.mjs",
+        "docs/plans/2026-11-25-nomo-24h-program-detailed.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "operator handbook refresh for the new commands"
+      ],
+      "verifier": [
+        "node --test scripts/src/handbook.test.mjs",
+        "node --test scripts/src/doc-truth.test.mjs",
+        "pnpm --filter @nomo/cli typecheck",
+        "git diff --check"
+      ],
+      "evidence": [
+        "Initial extraction from TUI_COMMANDS observed 75 registry entries and exactly six undocumented command names: /health, /discover, /revoke-agent, /diff-next, /pet, /usage. After the refresh the same extraction observed missing [].",
+        "NO_COLOR=1 node --test scripts/src/handbook.test.mjs observed exit 0: tests 14, pass 14, fail 0, duration_ms 277.195375. The new registry coverage test passed as every TUI registry command is documented in both editions.",
+        "NO_COLOR=1 node --test scripts/src/doc-truth.test.mjs initially observed exit 1 with six unresolved references to the retired scripts/src/verify-opentui-terminal.py. The references were legitimate retirement history, so the file was inventoried with that reason. Re-run observed exit 0: tests 9, pass 9, fail 0, duration_ms 91.026917.",
+        "pnpm --filter @nomo/cli typecheck observed exit 0.",
+        "git diff --check observed exit 0."
+      ],
+      "stopCondition": "Stop if either handbook edition drops a registry command, documents fleet-wide revoke as available, or doc truth treats retirement history as an operational live path."
     }
   ]
 }

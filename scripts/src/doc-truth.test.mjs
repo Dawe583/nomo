@@ -156,6 +156,9 @@ const INVENTORY = {
   "packages/policy/src/channels/slack.test.ts":
     "moved to paid/channels/slack.test.ts on 2026-10-03 with the implementation; DECISIONS 5 records the old path",
 
+  "scripts/src/verify-opentui-terminal.py":
+    "orphaned OpenTUI terminal verifier retired on 2026-11-25 after the adapter it tested was removed; remaining references are retirement history",
+
   // Two responsive stylesheets that were merged into `styles.css` and are named
   // by documents that predate the merge. `PLATFORM-REDESIGN-PLAN` and
   // `VOID-DESIGN-SYSTEM-V1` describe a surface that existed, and `MOBILE-LAYOUT-QA`
