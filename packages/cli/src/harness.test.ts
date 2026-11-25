@@ -254,6 +254,7 @@ test("run-eval aggregates provider cost across attributed child workspaces", asy
       body: {
         workspace: "agent-root",
         tool: "void_subagent_spawn",
+        decision: "subagent-result",
         childWorkspace: "agent-child",
         harnessEval,
       },
@@ -264,7 +265,7 @@ test("run-eval aggregates provider cost across attributed child workspaces", asy
         workspace: "agent-root",
         tool: "fs_read",
         klass: "r1",
-        decision: "execute:completed",
+        decision: "allow",
         classification: "classified",
         harnessEval,
       },
@@ -273,10 +274,9 @@ test("run-eval aggregates provider cost across attributed child workspaces", asy
     {
       body: {
         workspace: "agent-root",
-        tool: "fs_write",
-        klass: "r3",
-        decision: "deny:policy",
-        classification: "classified",
+        tool: "fs_read",
+        klass: "r1",
+        decision: "execute:completed",
         harnessEval,
       },
       seq: 4,
@@ -286,12 +286,43 @@ test("run-eval aggregates provider cost across attributed child workspaces", asy
         workspace: "agent-root",
         tool: "fs_write",
         klass: "r3",
-        decision: "hold:approved",
-        approvalMs: 120,
+        decision: "deny",
         classification: "classified",
         harnessEval,
       },
       seq: 5,
+    },
+    {
+      body: {
+        workspace: "agent-root",
+        tool: "fs_write",
+        klass: "r3",
+        decision: "hold",
+        classification: "classified",
+        harnessEval,
+      },
+      seq: 6,
+    },
+    {
+      body: {
+        workspace: "agent-root",
+        tool: "fs_write",
+        klass: "r3",
+        decision: "hold:approved",
+        approvalMs: 120,
+        harnessEval,
+      },
+      seq: 7,
+    },
+    {
+      body: {
+        workspace: "agent-root",
+        tool: "fs_write",
+        klass: "r3",
+        decision: "execute:completed",
+        harnessEval,
+      },
+      seq: 8,
     },
   ];
   const childEntries = [{ ...usage("agent-child", 0.5), seq: 1 }];

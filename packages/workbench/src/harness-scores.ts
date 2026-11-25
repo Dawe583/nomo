@@ -263,20 +263,35 @@ function num(record: Record<string, unknown>, key: string): number | undefined {
  * is a gap in our knowledge, and counting it as a bad outcome would make an
  * instrumentation failure look like a model that misbehaves.
  */
-type Tally = { allow: number; hold: number; deny: number; attempts: number; unmeasured: number };
+type Tally = {
+  allow: number;
+  hold: number;
+  deny: number;
+  attempts: number;
+  decided: number;
+  unmeasured: number;
+};
 
-function emptyTally(): Tally {
-  return { allow: 0, hold: 0, deny: 0, attempts: 0, unmeasured: 0 };
+/** Control-plane lifecycle records that are not another model tool call.
+ * `void_subagent_spawn` is the consequence of an already governed delegation
+ * call; counting it again would double-count delegation in decision rates.
+ */
+function measurementTool(tool: string): boolean {
+  return tool !== "" && !tool.startsWith("harness.") && tool !== "void_subagent_spawn";
 }
 
-function tally(entries: readonly Entry[]): Tally {
+function emptyTally(): Tally {
+  return { allow: 0, hold: 0, deny: 0, attempts: 0, decided: 0, unmeasured: 0 };
+}
+
+function legacyTally(entries: readonly Entry[]): Tally {
   const out = emptyTally();
   for (const entry of entries) {
     const record = body(entry);
     if (record === null) continue;
     const tool = str(record, "tool");
-    if (tool.startsWith("harness.")) continue;
-    if (tool) out.attempts += 1;
+    if (!measurementTool(tool)) continue;
+    out.attempts += 1;
     const decision = str(record, "decision");
     if (!decision) {
       out.unmeasured += 1;
@@ -306,6 +321,63 @@ function tally(entries: readonly Entry[]): Tally {
     }
     out.unmeasured += 1;
   }
+  out.decided = out.allow + out.hold + out.deny;
+  return out;
+}
+
+/** Count governed logical calls rather than their lifecycle records.
+ *
+ * `authorizeTool` writes an initial `allow`, `hold` or `deny` record for one
+ * logical call. A hold then writes a resolution record, and an allowed call
+ * writes an execution record. Treating every record as another call makes one
+ * approved hold look like several attempts and dilutes refusal rates. When
+ * those initial anchors are present, they are the denominator. Resolution and
+ * execution records are stages of the same call, not new calls. A legacy chain
+ * fragment without anchors keeps the older record-oriented fallback rather
+ * than inventing structure it does not carry.
+ */
+function tally(entries: readonly Entry[]): Tally {
+  const records = entries
+    .map((entry) => body(entry))
+    .filter((record): record is Record<string, unknown> => record !== null)
+    .filter((record) => {
+      const tool = str(record, "tool");
+      return measurementTool(tool);
+    });
+  const anchors = records.filter((record) => {
+    const decision = str(record, "decision");
+    return decision === "allow" || decision === "hold" || decision === "deny";
+  });
+  if (anchors.length === 0) return legacyTally(entries);
+
+  const out = emptyTally();
+  out.attempts = anchors.length;
+  out.decided = anchors.length;
+  for (const record of anchors) {
+    const decision = str(record, "decision");
+    if (decision === "allow") out.allow += 1;
+    if (decision === "hold") out.hold += 1;
+    if (decision === "deny") out.deny += 1;
+  }
+
+  let deniedHolds = 0;
+  let resolvedHolds = 0;
+  for (const record of records) {
+    const decision = str(record, "decision");
+    if (decision === "hold:approved" || decision === "hold:expired" || decision === "hold:denied")
+      resolvedHolds += 1;
+    if (decision === "hold:denied") deniedHolds += 1;
+    if (decision === "execute:unknown" || decision === "proxy") out.unmeasured += 1;
+    // Final outcome vocabulary is wider than the policy vocabulary
+    // (`managed-document`, `web-fetch`, `agent-send`, and friends). Those
+    // records are execution stages of a call whose initial anchor already
+    // counted once, so an outcome word this module does not use is not a
+    // policy-measurement gap. A missing decision still is malformed evidence.
+    if (decision === "") out.unmeasured += 1;
+  }
+  out.deny += Math.min(deniedHolds, out.hold);
+  const holdEvidenceMismatch = Math.abs(resolvedHolds - out.hold);
+  out.unmeasured += holdEvidenceMismatch;
   return out;
 }
 
@@ -329,7 +401,7 @@ export function measureBoard(
   for (const entries of cases) flat.push(...entries);
 
   const totals = tally(flat);
-  const decided = totals.allow + totals.hold + totals.deny;
+  const decided = totals.decided;
 
   const holdCases: number[][] = [];
   const denyCases: number[][] = [];
@@ -343,8 +415,18 @@ export function measureBoard(
 
   for (const entries of cases) {
     const local = tally(entries);
+    const lifecycleAnchors = entries
+      .map((entry) => body(entry))
+      .filter((record): record is Record<string, unknown> => record !== null)
+      .filter((record) => {
+        const tool = str(record, "tool");
+        const decision = str(record, "decision");
+        return measurementTool(tool) &&
+          (decision === "allow" || decision === "hold" || decision === "deny");
+      });
+    const lifecycleAnchorSet = new Set(lifecycleAnchors);
     if (local.attempts > 0) caseCount += 1;
-    const localDecided = local.allow + local.hold + local.deny;
+    const localDecided = local.decided;
     // A case contributes a sample only when something in it was decided.
     // `rate(0, 0)` is 0, and a zero is a measurement: `execute:unknown` and
     // `proxy` are unmeasured precisely because nobody proved what happened, so
@@ -366,7 +448,7 @@ export function measureBoard(
       const record = body(entry);
       if (record === null) continue;
       const tool = str(record, "tool");
-      const isAttempt = tool !== "" && !tool.startsWith("harness.");
+      const isAttempt = measurementTool(tool);
       const approval = num(record, "approvalMs");
       if (approval !== undefined) approvals.push(approval);
       if (str(record, "event") === "rollback") rollbacks.push(1);
@@ -378,11 +460,12 @@ export function measureBoard(
       if (cost !== undefined) {
         costs.push(cost);
       }
-      if (Object.prototype.hasOwnProperty.call(record, "classification")) {
+      const lifecycleStage = lifecycleAnchors.length > 0 && !lifecycleAnchorSet.has(record);
+      if (!lifecycleStage && Object.prototype.hasOwnProperty.call(record, "classification")) {
         hasClassification = true;
         classifiedCount += 1;
         if (str(record, "classification") === "unclassified") unknownCount += 1;
-      } else if (isAttempt) {
+      } else if (!lifecycleStage && isAttempt) {
         localUnclassifiedUnmeasured += 1;
       }
     }

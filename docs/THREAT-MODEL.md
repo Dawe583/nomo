@@ -735,9 +735,11 @@ timeout or spawn failure is verifier failure, not evidence that the evaluated
 case failed. Usage receipts distinguish missing cost producers from zero cost,
 and an idempotent replay does not invent the original run's latency. Guardrail
 measurement reads only bounded decision and classification outcomes from exact
-attributed chain evidence; missing child evidence makes the measurement
-unmeasured rather than partial truth. The hook still executes with local
-operator authority, so the allowlist remains the trust boundary.
+attributed chain evidence. Initial authorization anchors reconstruct logical
+calls, so hold resolution and execution stages do not multiply one call;
+internally incomplete or missing evidence makes the affected measurement
+unmeasured rather than partial truth. The hook still executes with local operator
+authority, so the allowlist remains the trust boundary.
 Trailing unattributed tool calls are reported and not silently attached to a
 later case.
 

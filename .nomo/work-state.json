@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-25T23:07:37.372916Z",
+  "updatedAt": "2026-11-25T23:16:42.098746Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -3198,6 +3198,59 @@
       ],
       "stopCondition": "Stop if supporting a candidate would require deploying it, training a model, inferring propensity from a history that did not record it, or treating unsupported arms as zero.",
       "completedAt": "2026-11-25T23:07:37.372916Z"
+    },
+    {
+      "id": "h25-logical-guardrail-measurement",
+      "status": "done",
+      "owner": "devin-6293643153014f56bb088c9a71fde97a",
+      "dependsOn": [
+        "h23-eval-guardrail-measurement",
+        "h24-eval-approval-latency-measurement"
+      ],
+      "scope": [
+        "packages/workbench/src/harness-scores.ts",
+        "packages/workbench/src/harness-scores.test.ts",
+        "packages/cli/src/harness.ts",
+        "packages/cli/src/harness.test.ts",
+        "docs/HARNESS-LEARNING.md",
+        "docs/THREAT-MODEL.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "decision rates reconstruct logical governed calls from initial allow, hold or deny anchors",
+        "hold resolution and execution records are stages, not additional attempts",
+        "a denied hold counts as both one human wait and one refusal of one logical call",
+        "unresolved or mismatched hold evidence is reported unmeasured rather than treated as complete",
+        "run-eval reward guardrails become unmeasured when their summary carries incomplete evidence",
+        "internal subagent-spawn lifecycle records are not counted as a second delegated tool call",
+        "legacy fragments without lifecycle anchors keep the previous record-oriented fallback"
+      ],
+      "verifier": [
+        "node --test packages/workbench/src/harness-scores.test.ts packages/cli/src/harness.test.ts",
+        "node --test packages/workbench/src/workbench.test.ts packages/workbench/src/harness-eval-tools.test.ts packages/workbench/src/subagents.test.ts",
+        "node --test packages/workbench/src/*.test.ts",
+        "node --test scripts/src/*.test.mjs",
+        "node --test scripts/src/doc-truth.test.mjs scripts/src/no-dash.test.mjs",
+        "pnpm --filter @nomo/workbench typecheck",
+        "pnpm --filter @nomo/cli typecheck",
+        "git diff --check"
+      ],
+      "evidence": [
+        "focused harness-scores plus CLI verifier: 77 tests, 77 pass, 0 fail, duration_ms 216.3995",
+        "focused Workbench integration verifier: 68 tests, 68 pass, 0 fail, duration_ms 8032.713",
+        "wider Workbench suite: 1204 tests, 1202 pass, 0 fail, cancelled 0, skipped 2, todo 0, duration_ms 24686.92525",
+        "wider scripts suite: 431 tests, 398 pass, 0 fail, cancelled 0, skipped 32, todo 1, duration_ms 8937.59",
+        "docs verifier: 10 tests, 10 pass, 0 fail, duration_ms 115.834292",
+        "pnpm --filter @nomo/workbench typecheck: exit 0",
+        "pnpm --filter @nomo/cli typecheck: exit 0",
+        "git diff --check: exit 0",
+        "unit evidence: one logical lifecycle allow+execute, hold+resolution+execute, deny measures hold_rate 1/3 and deny_rate 1/3; hold+hold:denied measures both rates as 1; unresolved hold leaves unmeasured evidence"
+      ],
+      "stopCondition": "Stop if exact logical-call identity cannot be represented without inventing correlation, if legacy chain compatibility is broken, or if fixing the measurement requires hiding incomplete evidence.",
+      "completedAt": "2026-11-25T23:16:42.098746Z"
     }
   ]
 }
