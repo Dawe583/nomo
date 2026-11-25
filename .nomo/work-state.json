@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-25T11:40:37Z",
+  "updatedAt": "2026-11-25T11:41:57Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -659,12 +659,15 @@
     },
     {
       "id": "r6-simulation-report",
-      "status": "in-progress",
-      "owner": "child-ae870e11b6de42c4a8c7dcd794009e18",
+      "status": "done",
+      "owner": "devin-6293643153014f56bb088c9a71fde97a",
       "dependsOn": [
         "r2-thompson-sampler"
       ],
       "scope": [
+        "scripts/src/harness-bandit-sim.mjs",
+        "scripts/src/harness-bandit-sim.test.mjs",
+        "docs/plans/2026-11-25-nomo-24h-program-detailed.md",
         ".nomo/work-state.json"
       ],
       "protectedPaths": [
@@ -677,7 +680,11 @@
         "see plan package verifier"
       ],
       "evidence": [
-        "Delegated to child session ae870e11b6de42c4a8c7dcd794009e18; parent retains integration and graph recording ownership."
+        "Implemented in the parent free-for-teams session after the delegated child was terminated before progress. New deterministic simulation script uses fixture reward rates, no model call and no network.",
+        "NO_COLOR=1 node --test scripts/src/harness-bandit-sim.test.mjs observed exit 0: tests 2, pass 2, fail 0, duration_ms 320.437167.",
+        "NO_COLOR=1 node scripts/src/harness-bandit-sim.mjs observed exit 0 and printed: compaction-75 170 samples rate 0.80; compaction-150 8 samples rate 0.30; regret=4.00 spentTokens=178000 budgetTokens=200000 stop=separated.",
+        "node --test --test-concurrency=1 scripts/src/harness-eval.test.mjs scripts/src/harness-replay.test.mjs scripts/src/harness-bandit-sim.test.mjs observed exit 0: tests 36, pass 36, fail 0, duration_ms 3889.6495.",
+        "git diff --check observed exit 0."
       ],
       "stopCondition": "After one targeted repair, record the blocker and continue independent work."
     },

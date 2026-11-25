@@ -760,6 +760,12 @@ approval guard for guardrail axes is not part of this gate. A bandit, not RL.
 
 **Verifier.** run prints a table.
 
+**As built.** `scripts/src/harness-bandit-sim.mjs` runs a deterministic
+two-arm compaction simulation with no model or network. It prints cumulative
+simple regret, samples per arm, spent and budgeted tokens, and the stop reason;
+`harness-bandit-sim.test.mjs` proves the better arm receives more samples and
+the command prints the table.
+
 ### R7. Wording guard (0.5 h)
 
 **Files.** `docs/HARNESS-LEARNING.md`.
