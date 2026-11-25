@@ -1701,10 +1701,11 @@ test("stdio delegation ignores learned rules", async (t) => {
   assert.ok(added.length > 0, "the second call left entries");
   for (const entry of added) {
     const body = entry.body as Record<string, unknown>;
+    if (body.tool === "harness.usage") continue;
     assert.equal(
       body.source,
       "stdio-proxy",
-      "the only new entries are the proxy re-commits",
+      "apart from usage receipts, the only new entries are the proxy re-commits",
     );
   }
   assert.ok(

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-25T22:29:19.536313Z",
+  "updatedAt": "2026-11-25T22:47:26.814148Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -2997,6 +2997,61 @@
       ],
       "stopCondition": "Stop if verifier execution would require provider output, hook stdout or command text in measurement records, or if non-allowlisted commands must run.",
       "completedAt": "2026-11-25T22:29:19.536313Z"
+    },
+    {
+      "id": "h22-eval-usage-cost-latency-measurement",
+      "status": "done",
+      "owner": "devin-6293643153014f56bb088c9a71fde97a",
+      "dependsOn": [
+        "h21-production-eval-reward-closure"
+      ],
+      "scope": [
+        "packages/workbench/src/index.ts",
+        "packages/workbench/src/workbench.test.ts",
+        "packages/cli/src/harness.ts",
+        "packages/cli/src/harness.test.ts",
+        "packages/cli/src/harness-run-eval.test.ts",
+        "docs/HARNESS-LEARNING.md",
+        "docs/THREAT-MODEL.md",
+        "docs/plans/2026-11-25-nomo-24h-program-detailed.md",
+        "docs/plans/2026-11-25-program-handoff.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "every attributed eval provider turn writes a bounded signed usage receipt even when usage or cost is absent",
+        "cost is measured only when every receipt in the root and direct attributed child workspaces carries provider-reported numeric cost",
+        "missing, null, partial or unreadable cost producers remain unmeasured rather than zero",
+        "latency is the documented operator-visible wall clock only for a newly started run and remains unmeasured for idempotent replay",
+        "approval time remains unmeasured",
+        "exact measurement retries reuse matching verifier or reward evidence instead of duplicating them",
+        "different reward weights form a different scoring measurement"
+      ],
+      "verifier": [
+        "node --test packages/cli/src/harness-run-eval.test.ts packages/cli/src/harness.test.ts",
+        "node --test packages/workbench/src/workbench.test.ts packages/workbench/src/reversal-record.test.ts packages/workbench/src/harness-scores.test.ts",
+        "node --test scripts/src/doc-truth.test.mjs scripts/src/no-dash.test.mjs",
+        "pnpm --filter @nomo/cli typecheck",
+        "pnpm --filter @nomo/workbench typecheck",
+        "pnpm exec tsc -p apps/control-plane/tsconfig.json",
+        "node --test scripts/src/*.test.mjs",
+        "git diff --check"
+      ],
+      "evidence": [
+        "CLI verifier: 30 tests, 30 pass, 0 fail, duration_ms 1428.737875",
+        "Workbench verifier: 93 tests, 93 pass, 0 fail, duration_ms 8171.079959",
+        "docs verifier: 10 tests, 10 pass, 0 fail, duration_ms 105.781667",
+        "pnpm --filter @nomo/cli typecheck: exit 0",
+        "pnpm --filter @nomo/workbench typecheck: exit 0",
+        "pnpm exec tsc -p apps/control-plane/tsconfig.json: exit 0",
+        "wider scripts suite: 427 tests, 394 pass, 0 fail, cancelled 0, skipped 32, todo 1, duration_ms 8480.191125",
+        "git diff --check: exit 0",
+        "integration evidence: two eval usage receipts are signed with costUsd null and 0.002, so reward costUsd is unmeasured; a complete child-workspace fixture aggregates 0.25 plus 0.5 to 0.75; an idempotent replay records latencyMs unmeasured and does not duplicate verifier or reward evidence; verifier timeout leaves zero reward records"
+      ],
+      "stopCondition": "Stop if cost or latency measurement would require estimates, provider output content, child prompt or tool content, or treating missing producers as zero.",
+      "completedAt": "2026-11-25T22:47:26.814148Z"
     }
   ]
 }

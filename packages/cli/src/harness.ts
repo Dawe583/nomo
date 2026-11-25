@@ -106,7 +106,7 @@ export type HarnessSurface = {
     attribution: unknown,
     agent?: string,
     idempotencyKey?: string,
-  ): Promise<{ readonly id: string; readonly status?: string }>;
+  ): Promise<{ readonly id: string; readonly status?: string; readonly idempotentReplay?: boolean }>;
   /** Wait for one run, when the surface owns runs. */
   waitForRun?(id: string): Promise<{ readonly status?: string }>;
   /** Validate one eval verifier before any provider run starts. */
@@ -440,6 +440,115 @@ function describeEdit(edit: {
   } | records ${edit.derivedFromSeq.join(", ")}`;
 }
 
+const objectRecord = (value: unknown): Record<string, unknown> | null =>
+  value !== null && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+
+function matchesEvalAttribution(body: Record<string, unknown>, attribution: ReturnType<typeof evalCaseAttribution>): boolean {
+  const evalIdentity = objectRecord(body.harnessEval);
+  return (
+    evalIdentity?.caseId === attribution.caseId &&
+    evalIdentity.variantId === attribution.variantId &&
+    evalIdentity.run === attribution.run
+  );
+}
+
+function measuredUsageCost(
+  entries: readonly { readonly body: unknown }[],
+  attribution: ReturnType<typeof evalCaseAttribution>,
+  requiredWorkspaces: number,
+): RewardInput["costUsd"] {
+  const receipts = entries
+    .map((entry) => objectRecord(entry.body))
+    .filter((body): body is Record<string, unknown> =>
+      body !== null && body.tool === "harness.usage" && matchesEvalAttribution(body, attribution),
+    );
+  const measuredWorkspaces = new Set(receipts.map((receipt) => receipt.workspace));
+  if (receipts.length === 0 || measuredWorkspaces.size < requiredWorkspaces) return "unmeasured";
+  let total = 0;
+  for (const receipt of receipts) {
+    const cost = receipt.costUsd;
+    if (typeof cost !== "number" || !Number.isFinite(cost) || cost < 0)
+      return "unmeasured";
+    total += cost;
+  }
+  return total;
+}
+
+async function evalUsageEvidence(
+  workbench: HarnessSurface,
+  workspace: string,
+  attribution: ReturnType<typeof evalCaseAttribution>,
+): Promise<{
+  readonly entries: readonly { readonly body: unknown }[];
+  readonly complete: boolean;
+  readonly workspaceCount: number;
+}> {
+  const rootEntries = (await workbench.ledger!(workspace))?.entries ?? [];
+  const childWorkspaces = new Set<string>();
+  for (const entry of rootEntries) {
+    const body = objectRecord(entry.body);
+    if (
+      body?.tool === "void_subagent_spawn" &&
+      matchesEvalAttribution(body, attribution) &&
+      typeof body.childWorkspace === "string" &&
+      body.childWorkspace.length > 0 &&
+      body.childWorkspace.length <= 160
+    )
+      childWorkspaces.add(body.childWorkspace);
+  }
+  const entries: { readonly body: unknown }[] = [...rootEntries];
+  let complete = true;
+  for (const childWorkspace of childWorkspaces) {
+    const child = await workbench.ledger!(childWorkspace);
+    if (!child) complete = false;
+    else entries.push(...child.entries);
+  }
+  return { entries, complete, workspaceCount: 1 + childWorkspaces.size };
+}
+
+function existingEvalGates(
+  entries: readonly { readonly body: unknown }[],
+  attribution: ReturnType<typeof evalCaseAttribution>,
+): Record<string, unknown>[] {
+  return entries
+    .map((entry) => objectRecord(entry.body))
+    .filter((body): body is Record<string, unknown> =>
+      body !== null && body.tool === "harness.eval-gate" && matchesEvalAttribution(body, attribution),
+    );
+}
+
+function existingEvalRewards(
+  entries: readonly { readonly body: unknown }[],
+  attribution: ReturnType<typeof evalCaseAttribution>,
+): RewardRecord[] {
+  return entries
+    .map((entry) => objectRecord(entry.body))
+    .filter((body): body is Record<string, unknown> =>
+      body !== null && body.schema === REWARD_SCHEMA && matchesEvalAttribution(body, attribution),
+    )
+    .map((body) => body as unknown as RewardRecord);
+}
+
+function rewardRecomputes(record: RewardRecord): boolean {
+  try {
+    return rewardRecord(record as unknown as RewardInput).reward === record.reward;
+  } catch {
+    return false;
+  }
+}
+
+function sameMeasurementWeights(record: RewardRecord, weights: RewardInput["weights"]): boolean {
+  return (
+    record.weights.breach === weights.breach &&
+    record.weights.cost === weights.cost &&
+    record.weights.latency === weights.latency &&
+    record.baselineVariantId === null &&
+    record.changedAxis === null
+  );
+}
+
 function parseWeightsArg(text: string): RewardInput["weights"] {
   const weights: Record<string, number> = {};
   for (const part of text.split(",")) {
@@ -604,9 +713,10 @@ export async function runHarnessCommand(
         io.stderr("run-eval needs exactly one prompt source: --prompt <text> or --prompt-file <path>.");
         return 1;
       }
+      let gateCommand = flags.gate;
       if (flags.gate) {
         try {
-          workbench.validateHarnessEvalGate!(flags.gate);
+          gateCommand = workbench.validateHarnessEvalGate!(flags.gate);
         } catch (error) {
           io.stderr(error instanceof Error ? error.message : String(error));
           return 1;
@@ -637,6 +747,7 @@ export async function runHarnessCommand(
           return 1;
         }
       }
+      const runStartedAt = Date.now();
       const started = await workbench.startHarnessEval(
         prompt,
         flags.model || undefined,
@@ -645,10 +756,51 @@ export async function runHarnessCommand(
         flags.idempotencyKey || undefined,
       );
       const settled = await workbench.waitForRun(started.id);
+      const latencyMs = Math.max(0, Date.now() - runStartedAt);
       io.stdout(`run-eval: session ${started.id} status ${settled.status ?? "unknown"}`);
       if (settled.status !== "idle") return 1;
       if (!flags.gate) return 0;
-      const gate = await workbench.runHarnessEvalGate!(started.id, flags.gate);
+      const session = workbench.get?.(started.id);
+      if (!session || !workbench.ledger) {
+        io.stderr("This harness surface cannot read signed eval measurement evidence.");
+        return 1;
+      }
+      const proof = await workbench.ledger(session.workspace);
+      const entries = proof?.entries ?? [];
+      const usageEvidence = await evalUsageEvidence(workbench, session.workspace, attribution);
+      const existing = existingEvalRewards(entries, attribution)
+        .filter((record) => sameMeasurementWeights(record, weights!));
+      if (existing.length > 1 || existing.some((record) => !rewardRecomputes(record))) {
+        io.stderr("Existing eval reward evidence is ambiguous or invalid, so no new reward was recorded.");
+        return 1;
+      }
+      if (existing.length === 1) {
+        const record = existing[0]!;
+        io.stdout(`run-eval: verifier ${record.passed ? "passed" : "failed"} reward ${String(record.reward)} reused`);
+        return 0;
+      }
+      const priorGates = existingEvalGates(entries, attribution).filter((body) => body.outcome === "exited");
+      if (priorGates.length > 1) {
+        io.stderr("Existing eval verifier evidence is ambiguous, so no new reward was recorded.");
+        return 1;
+      }
+      let gate: { readonly outcome: string; readonly passed: boolean };
+      if (priorGates.length === 1) {
+        const prior = priorGates[0]!;
+        const passed = prior.decision === "eval-gate:passed";
+        const expectedDigest = `sha256:${createHash("sha256").update(gateCommand).digest("hex")}`;
+        if (
+          prior.commandDigest !== expectedDigest ||
+          prior.passed !== passed ||
+          (prior.decision !== "eval-gate:passed" && prior.decision !== "eval-gate:failed")
+        ) {
+          io.stderr("Existing eval verifier evidence is inconsistent, so no new reward was recorded.");
+          return 1;
+        }
+        gate = { outcome: "exited", passed };
+      } else {
+        gate = await workbench.runHarnessEvalGate!(started.id, gateCommand);
+      }
       if (gate.outcome !== "exited") {
         io.stderr("The eval verifier did not produce a pass or fail outcome, so no reward was recorded.");
         return 1;
@@ -660,8 +812,10 @@ export async function runHarnessCommand(
         changedAxis: null,
         passed: gate.passed,
         guardrails: {},
-        costUsd: "unmeasured",
-        latencyMs: "unmeasured",
+        costUsd: usageEvidence.complete
+          ? measuredUsageCost(usageEvidence.entries, attribution, usageEvidence.workspaceCount)
+          : "unmeasured",
+        latencyMs: started.idempotentReplay === true ? "unmeasured" : latencyMs,
         approvalMs: "unmeasured",
         weights: weights!,
       });
