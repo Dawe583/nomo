@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-25T04:20:00+01:00",
+  "updatedAt": "2026-11-25T01:11:58Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -472,7 +472,7 @@
     },
     {
       "id": "r3-reward-aggregation",
-      "status": "in-progress",
+      "status": "done",
       "owner": "child-a4e6cc91240448198c4e309a97401357",
       "dependsOn": [
         "h1-reward-record",
@@ -491,13 +491,17 @@
         "see plan package verifier"
       ],
       "evidence": [
-        "Delegated to child session a4e6cc91240448198c4e309a97401357; parent retains integration and graph recording ownership."
+        "R3 merged from child branch head d2493c6. aggregateArmRewards recomputes stored rewards, refuses mismatches, rescues no invalid history, and reports measured, unmeasured and floored counts per arm.",
+        "Local integration verification: node --test packages/workbench/src/harness-bandit.test.ts packages/workbench/src/harness-scores.test.ts observed exit 0; tests 57, pass 57, fail 0, duration_ms 142.262625.",
+        "pnpm --filter @nomo/workbench typecheck observed exit 0.",
+        "node --test --test-concurrency=1 scripts/src/harness-*.test.mjs scripts/src/trajectory-export.test.mjs observed exit 0; tests 41, pass 41, fail 0, duration_ms 3794.665708.",
+        "Wider gate: node --test --test-concurrency=1 packages/workbench/src/*.test.ts observed exit 0; tests 1182, pass 1180, fail 0, skipped 2, duration_ms 85731.992666."
       ],
       "stopCondition": "After one targeted repair, record the blocker and continue independent work."
     },
     {
       "id": "r4-exploration-guard",
-      "status": "pending",
+      "status": "done",
       "owner": "child-a4e6cc91240448198c4e309a97401357",
       "dependsOn": [
         "r1-arm-definition",
@@ -516,7 +520,12 @@
         "see plan package verifier"
       ],
       "evidence": [
-        "Delegated to child session a4e6cc91240448198c4e309a97401357; parent retains integration and graph recording ownership."
+        "R4 merged from child branch head d2493c6. Guardrail-axis bandits start stopped as unapproved-guardrail unless approval approvedBy and exact armsDigest match; replay derives refusal so deletion or reset cannot lift it.",
+        "Negative control from child with the guard disabled: bandit tests 9 total, 7 pass, 2 fail, proving the new assertions bite.",
+        "Local integration verification: node --test packages/workbench/src/harness-bandit.test.ts packages/workbench/src/harness-scores.test.ts observed exit 0; tests 57, pass 57, fail 0, duration_ms 142.262625.",
+        "pnpm --filter @nomo/workbench typecheck observed exit 0.",
+        "node --test --test-concurrency=1 scripts/src/harness-*.test.mjs scripts/src/trajectory-export.test.mjs observed exit 0; tests 41, pass 41, fail 0, duration_ms 3794.665708.",
+        "Wider gate: node --test --test-concurrency=1 packages/workbench/src/*.test.ts observed exit 0; tests 1182, pass 1180, fail 0, skipped 2, duration_ms 85731.992666."
       ],
       "stopCondition": "After one targeted repair, record the blocker and continue independent work."
     },
@@ -545,6 +554,218 @@
         "node --test scripts/src/trajectory-export.test.mjs observed exit 0; tests 5, pass 5, fail 0, skipped 0, duration_ms 351.256459.",
         "node --test --test-concurrency=1 scripts/src/harness-*.test.mjs scripts/src/trajectory-export.test.mjs observed exit 0; tests 41, pass 41, fail 0, skipped 0, duration_ms 4017.214125.",
         "Child-reported full scripts suite has 10 failures also present on base 2339c5e; not a regression, not a green gate."
+      ],
+      "stopCondition": "After one targeted repair, record the blocker and continue independent work."
+    },
+    {
+      "id": "q1-graph-validation",
+      "status": "in-progress",
+      "owner": "child-1a6da1f6c12d492681747b8418e560b3",
+      "dependsOn": [],
+      "scope": [
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "Implemented as specified in docs/plans/2026-11-25-nomo-24h-program-detailed.md."
+      ],
+      "verifier": [
+        "see plan package verifier"
+      ],
+      "evidence": [
+        "Delegated to child session 1a6da1f6c12d492681747b8418e560b3; parent retains integration and graph recording ownership."
+      ],
+      "stopCondition": "After one targeted repair, record the blocker and continue independent work."
+    },
+    {
+      "id": "q2-doc-truth-inventory",
+      "status": "pending",
+      "owner": "child-1a6da1f6c12d492681747b8418e560b3",
+      "dependsOn": [],
+      "scope": [
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "Implemented as specified in docs/plans/2026-11-25-nomo-24h-program-detailed.md."
+      ],
+      "verifier": [
+        "see plan package verifier"
+      ],
+      "evidence": [
+        "Delegated to child session 1a6da1f6c12d492681747b8418e560b3; parent retains integration and graph recording ownership."
+      ],
+      "stopCondition": "After one targeted repair, record the blocker and continue independent work."
+    },
+    {
+      "id": "q3-test-fixture-inventory",
+      "status": "pending",
+      "owner": "child-1a6da1f6c12d492681747b8418e560b3",
+      "dependsOn": [],
+      "scope": [
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "Implemented as specified in docs/plans/2026-11-25-nomo-24h-program-detailed.md."
+      ],
+      "verifier": [
+        "see plan package verifier"
+      ],
+      "evidence": [
+        "Delegated to child session 1a6da1f6c12d492681747b8418e560b3; parent retains integration and graph recording ownership."
+      ],
+      "stopCondition": "After one targeted repair, record the blocker and continue independent work."
+    },
+    {
+      "id": "q4-harness-inventory",
+      "status": "pending",
+      "owner": "child-1a6da1f6c12d492681747b8418e560b3",
+      "dependsOn": [],
+      "scope": [
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "Implemented as specified in docs/plans/2026-11-25-nomo-24h-program-detailed.md."
+      ],
+      "verifier": [
+        "see plan package verifier"
+      ],
+      "evidence": [
+        "Delegated to child session 1a6da1f6c12d492681747b8418e560b3; parent retains integration and graph recording ownership."
+      ],
+      "stopCondition": "After one targeted repair, record the blocker and continue independent work."
+    },
+    {
+      "id": "r6-simulation-report",
+      "status": "in-progress",
+      "owner": "child-ae870e11b6de42c4a8c7dcd794009e18",
+      "dependsOn": [
+        "r2-thompson-sampler"
+      ],
+      "scope": [
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "Implemented as specified in docs/plans/2026-11-25-nomo-24h-program-detailed.md."
+      ],
+      "verifier": [
+        "see plan package verifier"
+      ],
+      "evidence": [
+        "Delegated to child session ae870e11b6de42c4a8c7dcd794009e18; parent retains integration and graph recording ownership."
+      ],
+      "stopCondition": "After one targeted repair, record the blocker and continue independent work."
+    },
+    {
+      "id": "h12-learning-loop-docs",
+      "status": "pending",
+      "owner": "child-ae870e11b6de42c4a8c7dcd794009e18",
+      "dependsOn": [
+        "h5-activation-rollback"
+      ],
+      "scope": [
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "Implemented as specified in docs/plans/2026-11-25-nomo-24h-program-detailed.md."
+      ],
+      "verifier": [
+        "see plan package verifier"
+      ],
+      "evidence": [
+        "Delegated to child session ae870e11b6de42c4a8c7dcd794009e18; parent retains integration and graph recording ownership."
+      ],
+      "stopCondition": "After one targeted repair, record the blocker and continue independent work."
+    },
+    {
+      "id": "r7-wording-guard",
+      "status": "pending",
+      "owner": "child-ae870e11b6de42c4a8c7dcd794009e18",
+      "dependsOn": [
+        "h12-learning-loop-docs"
+      ],
+      "scope": [
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "Implemented as specified in docs/plans/2026-11-25-nomo-24h-program-detailed.md."
+      ],
+      "verifier": [
+        "see plan package verifier"
+      ],
+      "evidence": [
+        "Delegated to child session ae870e11b6de42c4a8c7dcd794009e18; parent retains integration and graph recording ownership."
+      ],
+      "stopCondition": "After one targeted repair, record the blocker and continue independent work."
+    },
+    {
+      "id": "h13-reward-schema-versioning",
+      "status": "pending",
+      "owner": "child-4ff94f9a0f4042e581a137f0c3f6c574",
+      "dependsOn": [
+        "h1-reward-record"
+      ],
+      "scope": [
+        "packages/workbench/src/",
+        "packages/runtime/src/",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "Implemented as specified in docs/plans/2026-11-25-nomo-24h-program-detailed.md."
+      ],
+      "verifier": [
+        "see plan package verifier"
+      ],
+      "evidence": [
+        "Delegated in Lite mode, then suspended before progress because the user required an all-free orchestration path. Do not count as started or done."
+      ],
+      "stopCondition": "After one targeted repair, record the blocker and continue independent work."
+    },
+    {
+      "id": "h11-eval-runner-adapter",
+      "status": "pending",
+      "owner": "child-1701d0f0ba9641a4a33dc87de4a08689",
+      "dependsOn": [
+        "h3-eval-set-v2"
+      ],
+      "scope": [
+        "scripts/src/harness-eval-runner.mjs",
+        "scripts/src/harness-eval-runner.test.mjs",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "Implemented as specified in docs/plans/2026-11-25-nomo-24h-program-detailed.md."
+      ],
+      "verifier": [
+        "see plan package verifier"
+      ],
+      "evidence": [
+        "Delegated in Lite mode, then suspended before progress because the user required an all-free orchestration path. Do not count as started or done."
       ],
       "stopCondition": "After one targeted repair, record the blocker and continue independent work."
     }

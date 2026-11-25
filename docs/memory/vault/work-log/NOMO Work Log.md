@@ -9474,3 +9474,11 @@ Commit 3280db90942408dbc286a70f42124b4a3a33b277, subject Polish shared TUI motio
   node check exit 0, trajectory tests 5/5, harness plus trajectory script tests 41/41. Positional grouping is a
   documented limit until tool entries carry case ids. Export is data only and makes no RL claim.
   [[NOMO TUI Control Center]]
+- 2026-11-25 · R3 and R4 completed by builder subagent and integrated by Devin Cloud.
+  R3 adds measured reward aggregation per arm: mismatched stored rewards are refused, operator weights rescore
+  records, unmeasured rewards stay out of bandit input and averages, and negative rewards are floored only for the
+  bandit input. R4 makes promptPreamble exploration fail closed without an exact approved arms digest and keeps that
+  refusal durable under replay. Observed after integration: targeted Workbench tests 57/57, scripts plus trajectory
+  41/41, Workbench typecheck exit 0, wider Workbench suite 1182 tests, 1180 pass, 0 fail, 2 skipped. This remains a
+  contextual bandit, not RL.
+  [[NOMO TUI Control Center]]

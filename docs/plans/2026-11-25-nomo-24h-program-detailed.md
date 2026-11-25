@@ -688,6 +688,14 @@ settings.
 
 **Verifier.** unit test.
 
+As built (R3): `aggregateArmRewards(armIds, observations, weights)` refuses a
+record whose stored reward does not recompute, rescores each record under the
+operator's weights, and reports per arm the measured/unmeasured counts, mean
+reward and mean cost and latency penalties. `toBanditReward` floors a reward
+below 0 to 0 (a reward is never above 1) and the aggregate counts each floored
+record; an unmeasured reward stays `"unmeasured"` and is never fed to the
+bandit or averaged as zero.
+
 ### R4. Exploration guard (1 h)
 
 **Files.** `harness-bandit.ts`.
@@ -696,6 +704,13 @@ settings.
 approval; the refusal is explicit in the record.
 
 **Verifier.** test refuses that axis.
+
+As built (R4): `openBandit` on an axis marked `guardrail` (today
+`promptPreamble`) without an approval whose `armsDigest` equals
+`armsDigest(arms)` writes a `refusal` line after the start and returns a state
+stopped with `unapproved-guardrail`. Replay derives the refusal from the start
+event, so neither a reset nor deleting the refusal line lifts it; a later
+approval needs a new history.
 
 ### R5. Activation from a sampled arm (1.5 h)
 
