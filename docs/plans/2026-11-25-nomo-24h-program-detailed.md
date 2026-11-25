@@ -577,6 +577,12 @@ worse value blocks; `unmeasured` is never a pass.
 
 **Verifier.** fixture regression fails the gate.
 
+**As built.** `guardrailRegressionGate(previous, current)` takes two boards'
+guardrail summaries and checks `deny_rate`, `rollback_count` and
+`unknown_tool_rate` by mean with no noise band: any worse value is
+`regressed`, a missing mean on either side is `unmeasured`, and either blocks.
+It is a pure report; H5 rollback is the planned consumer and is not wired.
+
 ### H9. Trajectory export (1.5 h)
 
 **Files.** New `scripts/src/trajectory-export.mjs` + test.
