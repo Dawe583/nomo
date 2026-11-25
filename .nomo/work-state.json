@@ -1,0 +1,208 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-11-25T02:20:00+01:00",
+  "authority": [
+    "docs/CONTEXT.md",
+    "docs/DECISIONS.md",
+    "docs/STANDARDS.md",
+    "docs/SESSION-HANDOFF.md",
+    "docs/plans/2026-11-25-nomo-24h-program-detailed.md",
+    "docs/superpowers/specs/2026-10-08-nomo-agent-identity-fleet-capability-map.md"
+  ],
+  "activeGraph": "devin-cloud-tui-merge-main-2026-11-25",
+  "provenance": [
+    "Branch tui-merge-main at a85ed6d0 had no tracked .nomo/work-state.json because .gitignore excluded .nomo/.",
+    "A stale committed graph exists only on origin/tui/final and was not imported as truth.",
+    "This graph was reconstructed by the executing Devin session as the current work record.",
+    "The g0-work-graph-durability node makes this canonical graph tracked while other .nomo files remain ignored."
+  ],
+  "nodes": [
+    {
+      "id": "g0-work-graph-durability",
+      "status": "done",
+      "owner": "devin-6293643153014f56bb088c9a71fde97a",
+      "dependsOn": [],
+      "scope": [
+        ".gitignore",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "The canonical graph is tracked so a fresh cloud session can bootstrap it.",
+        "Other .nomo checkout state remains ignored."
+      ],
+      "verifier": [
+        "python3 -m json.tool .nomo/work-state.json",
+        "git check-ignore -q .nomo/work-state.json"
+      ],
+      "evidence": [
+        "python3 -m json.tool .nomo/work-state.json observed exit 0.",
+        "git check-ignore -q .nomo/work-state.json observed no match after the .gitignore exception; shell probe printed not-ignored.",
+        "git status --short .gitignore .nomo/work-state.json observed M .gitignore and ?? .nomo/work-state.json before commit."
+      ],
+      "stopCondition": "If tracking the graph conflicts with a newer explicit repository rule, stop and report rather than hiding the conflict."
+    },
+    {
+      "id": "f3-identity-fleet-truth",
+      "status": "done",
+      "owner": "devin-6293643153014f56bb088c9a71fde97a",
+      "dependsOn": [],
+      "scope": [
+        "packages/cli/src/tui/workspace.ts",
+        "packages/cli/src/tui/workspace-controls.test.ts",
+        "docs/CONTEXT.md",
+        "docs/DECISIONS.md",
+        "docs/SESSION-HANDOFF.md",
+        "docs/memory/vault/work-log/NOMO Work Log.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "TUI status panel shows the local principal, workspace, agent and run binding when one exists.",
+        "TUI status panel distinguishes local agent revoke from unavailable fleet-wide revoke and never claims acknowledgement.",
+        "TUI exposes an explicit confirmed local agent revocation path or clearly records why none exists.",
+        "Documentation states exactly what fleet-wide revoke requires: node inventory, durable registry state, acknowledgement barrier, disconnected-node reconcile state, and fail-closed behavior."
+      ],
+      "verifier": [
+        "node --test packages/cli/src/tui/workspace-controls.test.ts",
+        "node --test packages/workbench/src/agent-identity.test.ts",
+        "pnpm --filter @nomo/cli typecheck",
+        "pnpm --filter @nomo/workbench typecheck"
+      ],
+      "evidence": [
+        "Bootstrap baseline before edits: node --test packages/workbench/src/agent-identity.test.ts observed exit 0; tests 10, pass 10, fail 0, skipped 0, duration_ms 1357.810292.",
+        "Initial baseline before dependency setup failed with ERR_MODULE_NOT_FOUND for package yaml because node_modules was absent. Lockfile dependencies were then installed locally with pnpm install --frozen-lockfile --ignore-scripts; no install scripts ran.",
+        "RED before implementation: node --test packages/cli/src/tui/workspace-controls.test.ts observed exit 1; tests 27, pass 25, fail 2. Failures were missing status row and missing /revoke-agent discovery.",
+        "GREEN: node --test packages/cli/src/tui/workspace-controls.test.ts observed exit 0; tests 27, pass 27, fail 0, skipped 0, duration_ms 7231.76775.",
+        "node --test packages/workbench/src/agent-identity.test.ts observed exit 0; tests 10, pass 10, fail 0, skipped 0, duration_ms 1593.680625.",
+        "pnpm --filter @nomo/cli typecheck observed exit 0.",
+        "pnpm --filter @nomo/workbench typecheck observed exit 0.",
+        "Wider gate: node --test --test-concurrency=1 packages/cli/src/tui/*.test.ts observed exit 0; tests 526, pass 526, fail 0, skipped 0, duration_ms 37745.121167.",
+        "Not verified: PTY matrix was not run for this slice. Fleet-wide revocation remains absent by design; docs/CONTEXT.md records its requirements."
+      ],
+      "stopCondition": "After one targeted repair, if a verifier still fails, record the exact failure and continue an independent ready node."
+    },
+    {
+      "id": "h1-reward-record",
+      "status": "in-progress",
+      "owner": "child-689dad234260403c856e2aa677f71ab1",
+      "dependsOn": [
+        "f3-identity-fleet-truth"
+      ],
+      "scope": [
+        "packages/workbench/src/harness-scores.ts",
+        "packages/workbench/src/harness-scores.test.ts",
+        "scripts/src/harness-eval.mjs",
+        ".nomo/work-state.json"
+      ],
+      "acceptance": [
+        "Reward is reproducible from the record and its weights."
+      ],
+      "verifier": [
+        "node --test packages/workbench/src/harness-scores.test.ts"
+      ],
+      "evidence": [
+        "Delegated to child session 689dad234260403c856e2aa677f71ab1 after f4b429d5; parent retains integration and graph recording ownership."
+      ],
+      "stopCondition": "After one targeted repair, record the blocker and continue independent work."
+    },
+    {
+      "id": "h2-variant-identity",
+      "status": "pending",
+      "owner": "child-689dad234260403c856e2aa677f71ab1",
+      "dependsOn": [
+        "h1-reward-record"
+      ],
+      "scope": [
+        "packages/workbench/src/harness-settings.ts",
+        "scripts/src/harness-eval.mjs",
+        ".nomo/work-state.json"
+      ],
+      "acceptance": [
+        "Two variants are comparable only when exactly one axis differs."
+      ],
+      "verifier": [
+        "node --test packages/workbench/src/*.test.ts"
+      ],
+      "evidence": [
+        "Delegated to child session 689dad234260403c856e2aa677f71ab1 after f4b429d5; parent retains integration and graph recording ownership."
+      ],
+      "stopCondition": "After one targeted repair, record the blocker and continue independent work."
+    },
+    {
+      "id": "h3-eval-set-v2",
+      "status": "pending",
+      "owner": "child-689dad234260403c856e2aa677f71ab1",
+      "dependsOn": [
+        "h2-variant-identity"
+      ],
+      "scope": [
+        "scripts/src/fixtures/harness-eval-v2.json",
+        "scripts/src/harness-eval.mjs",
+        ".nomo/work-state.json"
+      ],
+      "acceptance": [
+        "At least 12 frozen tasks with train and eval splits named."
+      ],
+      "verifier": [
+        "node scripts/src/harness-eval.mjs scripts/src/fixtures/harness-eval-v2.json -- <fixture runner>"
+      ],
+      "evidence": [
+        "Delegated to child session 689dad234260403c856e2aa677f71ab1 after f4b429d5; parent retains integration and graph recording ownership."
+      ],
+      "stopCondition": "After one targeted repair, record the blocker and continue independent work."
+    },
+    {
+      "id": "t1-design-contract",
+      "status": "in-progress",
+      "owner": "child-9fbfb67febc24b3fb89ec4ea8ed87a44",
+      "dependsOn": [
+        "h3-eval-set-v2"
+      ],
+      "scope": [
+        "packages/cli/src/tui/DESIGN.md",
+        "packages/cli/src/tui/README.md",
+        ".nomo/work-state.json"
+      ],
+      "acceptance": [
+        "The contract exists, is under two pages, and README links it."
+      ],
+      "verifier": [
+        "grep -c DESIGN.md packages/cli/src/tui/README.md"
+      ],
+      "evidence": [
+        "Delegated to child session 9fbfb67febc24b3fb89ec4ea8ed87a44 after f4b429d5; parent retains integration and graph recording ownership."
+      ],
+      "stopCondition": "After one targeted repair, record the blocker and continue independent work."
+    },
+    {
+      "id": "t3-composer-density",
+      "status": "pending",
+      "owner": "child-9fbfb67febc24b3fb89ec4ea8ed87a44",
+      "dependsOn": [
+        "t1-design-contract"
+      ],
+      "scope": [
+        "packages/cli/src/tui/workspace.ts",
+        "packages/cli/src/tui/workspace.test.ts",
+        "docs/DECISIONS.md",
+        ".nomo/work-state.json"
+      ],
+      "acceptance": [
+        "Composer rail is exactly columns cells at 40, 80, 120, 160 and 200; action hint survives 40x12."
+      ],
+      "verifier": [
+        "node --test packages/cli/src/tui/workspace.test.ts",
+        "python3 scripts/src/verify-tui-terminal.py"
+      ],
+      "evidence": [
+        "Delegated to child session 9fbfb67febc24b3fb89ec4ea8ed87a44 after f4b429d5; parent retains integration and graph recording ownership."
+      ],
+      "stopCondition": "After one targeted repair, record the blocker and continue independent work."
+    }
+  ]
+}
