@@ -9582,3 +9582,5 @@ Commit 3280db90942408dbc286a70f42124b4a3a33b277, subject Polish shared TUI motio
   Required behavior already existed, so no duplicate implementation was added: folding sections, keyboard-only navigation, 120+ side-by-side inspector, narrow inspector/Escape path, empty and filter states. Verified: workspace tests 128/128, CLI typecheck 0. [[NOMO TUI Control Center]]
 - 2026-11-25 · T14 diff panel completed in the free parent session.
   Existing immutable hunk staging state was kept; the missing acceptance proof now covers unified/split rendering, side-by-side columns at 160 and per-hunk staged scope. Verified: workspace parity 103/103, CLI typecheck 0, wider TUI 544/544. [[NOMO TUI Control Center]]
+- 2026-11-25 · T15 model picker completed in the free parent session.
+  Provider grouping already existed; catalog parsing and projection now preserve direct context, max output, capabilities and prices instead of stripping them. Running conversations refuse session model changes and keep their model. Verified: model tests 9/9, provider/index tests 79/79, CLI+Workbench typecheck 0, Workbench 1186 pass, 0 fail, 2 skipped. [[NOMO TUI Control Center]]

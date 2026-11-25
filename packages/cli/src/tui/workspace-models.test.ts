@@ -287,3 +287,68 @@ test("picker selection persists the future model default and leaves active sessi
   assert.equal((await app.providerState()).defaultModel, "fresh-two");
   assert.equal(ui.modelPicker, undefined);
 });
+
+test("model picker discloses capabilities beside context and price", async (t) => {
+  const { ui } = await configuredUi(t, async (input) =>
+    String(input).endsWith("/models")
+      ? Response.json({
+          data: [
+            {
+              id: "capable-model",
+              name: "Capable Model",
+              contextWindow: 128_000,
+              maxTokens: 8_192,
+              inputPrice: "$1",
+              outputPrice: "$2",
+              capabilities: ["vision", "tool use"],
+            },
+          ],
+        })
+      : Response.json({
+          choices: [{ message: { role: "assistant", content: "ok" } }],
+        }),
+  );
+
+  await ui.command("/models");
+  const frame = stripAnsi(
+    renderWorkspace(ui, 120, 40, "", false, false, {
+      color: false,
+      motion: false,
+    }),
+  );
+
+  assert.match(frame, /PROVIDERS · 1/);
+  assert.match(frame, /MODELS · .*1\/1/);
+  assert.match(frame, /Capable Model · 128k · max output 8192 · vision · tool use · input \$1 · output \$2/);
+});
+
+test("session model selection is refused while the conversation is running", async (t) => {
+  let releaseChat: ((response: Response) => void) | undefined;
+  const chatResponse = new Promise<Response>((resolve) => {
+    releaseChat = resolve;
+  });
+  const { app, ui } = await configuredUi(t, async (input) =>
+    String(input).endsWith("/models")
+      ? catalog([
+          { id: "fresh-one", name: "Fresh One" },
+          { id: "fresh-two", name: "Fresh Two" },
+        ])
+      : chatResponse,
+  );
+  const session = await app.start("keep running", "fresh-one");
+  ui.sessionId = session.id;
+  assert.equal(app.get(session.id)?.status, "running");
+
+  await ui.openModelPicker("session");
+  await assert.rejects(
+    ui.selectModel("fresh-two"),
+    /Wait for this conversation to settle/,
+  );
+  assert.equal(app.get(session.id)?.model, "fresh-one");
+  assert.ok(ui.modelPicker?.open, "a refused selection does not close the picker");
+
+  releaseChat?.(Response.json({
+    choices: [{ message: { role: "assistant", content: "ok" } }],
+  }));
+  await app.settled();
+});

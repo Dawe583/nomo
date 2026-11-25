@@ -2049,7 +2049,7 @@ export class Workbench {
           models: attached
             ? this.catalog
               .filter((model, index, models) => models.findIndex((candidate) => candidate.id === model.id) === index)
-              .map(({ id: modelId, name }) => ({ id: modelId, name }))
+              .map((model) => ({ ...model }))
             : [],
         };
       }),

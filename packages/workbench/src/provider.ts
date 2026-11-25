@@ -328,6 +328,11 @@ export class CompatibleProvider implements ProviderClient {
           name?: string;
           display_name?: string;
           context_length?: unknown;
+          contextWindow?: unknown;
+          maxTokens?: unknown;
+          capabilities?: unknown;
+          inputPrice?: unknown;
+          outputPrice?: unknown;
           top_provider?: { context_length?: unknown };
         } =>
           typeof model === "object" &&
@@ -349,12 +354,44 @@ export class CompatibleProvider implements ProviderClient {
           reportedContextWindow > 0
             ? reportedContextWindow
             : undefined;
+        const directContextWindow =
+          typeof model.contextWindow === "number" &&
+          Number.isSafeInteger(model.contextWindow) &&
+          model.contextWindow > 0
+            ? model.contextWindow
+            : undefined;
+        const maxTokens =
+          typeof model.maxTokens === "number" &&
+          Number.isSafeInteger(model.maxTokens) &&
+          model.maxTokens > 0
+            ? model.maxTokens
+            : undefined;
+        const capabilities = Array.isArray(model.capabilities)
+          ? model.capabilities.filter(
+              (capability): capability is string =>
+                typeof capability === "string" && capability.trim().length > 0,
+            )
+          : [];
+        const inputPrice =
+          typeof model.inputPrice === "string" && model.inputPrice.trim()
+            ? model.inputPrice
+            : undefined;
+        const outputPrice =
+          typeof model.outputPrice === "string" && model.outputPrice.trim()
+            ? model.outputPrice
+            : undefined;
         return {
           id: model.id,
           name:
             model.display_name ??
             (typeof model.name === "string" ? model.name : model.id),
-          ...(contextWindow === undefined ? {} : { contextWindow }),
+          ...(contextWindow === undefined && directContextWindow === undefined
+            ? {}
+            : { contextWindow: contextWindow ?? directContextWindow }),
+          ...(maxTokens === undefined ? {} : { maxTokens }),
+          ...(capabilities.length ? { capabilities } : {}),
+          ...(inputPrice === undefined ? {} : { inputPrice }),
+          ...(outputPrice === undefined ? {} : { outputPrice }),
         };
       });
   }
