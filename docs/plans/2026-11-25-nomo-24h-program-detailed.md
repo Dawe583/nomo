@@ -476,6 +476,15 @@ Escape, mouse or a command result. Test each close path.
 
 **Verifier.** `node --test packages/cli/src/tui/workspace-input-parity.test.ts`.
 
+**As built.** Chat composer focus is derived from the visible surface through
+one exported invariant instead of being remembered by individual close paths.
+The runner uses that invariant on every redraw and after command results, so
+Escape, Tab, mouse and command-result closes cannot leave stale focus. The
+model picker pane cycle is one exported transition; Tab alternates providers
+and models while preserving query, cursor and selection, and a closed picker
+has no focus owner. Tests cover panel return plus detail, confirmation,
+settings, palette, diff, keybinding and cheat-sheet overlays.
+
 ### T8. Snapshot and PTY refresh (1.0 h)
 
 **Files.** `test/visual-snapshots.json`, `scripts/src/verify-tui-terminal.py`.

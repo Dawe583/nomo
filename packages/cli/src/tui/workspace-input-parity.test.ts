@@ -1,6 +1,17 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { WorkspaceInput, nextModelId, workspaceShortcut } from "./workspace-runner.ts";
+import {
+  WorkspaceInput,
+  cycleModelPickerPane,
+  nextModelId,
+  workspaceChatComposerOwnsFocus,
+  workspaceShortcut,
+} from "./workspace-runner.ts";
+import { Workbench } from "../../../workbench/src/index.ts";
+import { WorkspaceTui } from "./workspace.ts";
+import { mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { parseWorkspaceKeybindings } from "./workspace-keybindings.ts";
 
 test("Alt+Backspace deletes the previous word and leaves an insertable cursor", () => {
@@ -371,4 +382,70 @@ test("workspace keybinding configuration rejects reserved or duplicate keys atom
     assert.equal(result.bindings.redraw.label, "Ctrl+L");
     assert.equal(result.bindings["toggle-tools"].label, "Ctrl+O");
   }
+});
+
+
+test("chat focus is derived from the visible surface across close paths", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-input-focus-"));
+  const app = new Workbench({ NOMO_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
+  assert.equal(workspaceChatComposerOwnsFocus(ui), true);
+
+  ui.choose("runs");
+  assert.equal(workspaceChatComposerOwnsFocus(ui), false);
+  ui.choose("chat");
+  assert.equal(workspaceChatComposerOwnsFocus(ui), true, "Escape/Tab panel return restores Chat focus");
+
+  const overlays: Array<[string, () => void, () => void]> = [
+    ["detail", () => { ui.detail = ["detail"]; }, () => { ui.detail = undefined; }],
+    ["confirmation", () => { ui.confirmation = { prompt: "confirm" } as never; }, () => { ui.confirmation = undefined; }],
+    ["settings", () => { ui.settingsOpen = true; }, () => { ui.settingsOpen = false; }],
+    ["palette", () => { ui.palette = { query: "", selected: 0, recent: [] } as never; }, () => { ui.palette = undefined; }],
+    ["diff", () => { ui.diffView = { lines: [] } as never; }, () => { ui.diffView = undefined; }],
+    ["keybindings", () => { ui.keybindingDetail = true; ui.refreshKeybindings(); }, () => { ui.keybindingDetail = false; ui.detail = undefined; }],
+    ["cheat sheet", () => { ui.openCheatSheet(); }, () => { ui.closeCheatSheet(); ui.notice = undefined as never; }],
+  ];
+  for (const [name, open, close] of overlays) {
+    open();
+    assert.equal(workspaceChatComposerOwnsFocus(ui), false, `${name} leaves stale Chat focus`);
+    close();
+    assert.equal(workspaceChatComposerOwnsFocus(ui), true, `${name} close does not restore Chat focus`);
+  }
+});
+
+test("model picker tab order alternates providers and models without losing state", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "nomo-picker-tab-order-"));
+  const app = new Workbench({ NOMO_DATA_DIR: root });
+  t.after(async () => {
+    await app.shutdown();
+    await rm(root, { recursive: true, force: true });
+  });
+  const ui = new WorkspaceTui(app, { NOMO_DATA_DIR: root });
+  ui.modelPicker = {
+    open: true,
+    origin: "chat",
+    selection: "default",
+    providers: [{ id: "p1", name: "p1", attached: true, catalogStatus: "ready" }],
+    query: "gpt",
+    cursor: 3,
+    selected: 2,
+    providerIndex: 0,
+    providerId: "p1",
+    focusedPane: "providers",
+    catalogStatus: "ready",
+    models: [{ id: "m1", name: "m1" }],
+  };
+  cycleModelPickerPane(ui);
+  assert.equal(ui.modelPicker.focusedPane, "models");
+  assert.equal(ui.modelPicker.query, "gpt");
+  assert.equal(ui.modelPicker.selected, 2);
+  cycleModelPickerPane(ui);
+  assert.equal(ui.modelPicker.focusedPane, "providers");
+  ui.closeModelPicker();
+  cycleModelPickerPane(ui);
+  assert.equal(ui.modelPicker, undefined, "a closed picker has no stale focus");
 });
