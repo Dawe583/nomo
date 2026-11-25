@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-25T02:55:00+01:00",
+  "updatedAt": "2026-11-25T03:05:00+01:00",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -258,6 +258,136 @@
       ],
       "evidence": [
         "Delegated to child session 9fbfb67febc24b3fb89ec4ea8ed87a44 after f4b429d5; parent retains integration and graph recording ownership."
+      ],
+      "stopCondition": "After one targeted repair, record the blocker and continue independent work."
+    },
+    {
+      "id": "h4-reward-replay",
+      "status": "in-progress",
+      "owner": "child-fb04669d52874f739b2dd62dcf64a693",
+      "dependsOn": [
+        "h1-reward-record"
+      ],
+      "scope": [
+        "scripts/src/harness-replay.mjs",
+        "scripts/src/harness-replay.test.mjs",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "Implemented as specified in docs/plans/2026-11-25-nomo-24h-program-detailed.md."
+      ],
+      "verifier": [
+        "node --test scripts/src/harness-replay.test.mjs"
+      ],
+      "evidence": [
+        "Delegated to child session fb04669d52874f739b2dd62dcf64a693 after H1-H3 integration; parent retains integration and graph recording ownership."
+      ],
+      "stopCondition": "After one targeted repair, record the blocker and continue independent work."
+    },
+    {
+      "id": "h7-held-out-split",
+      "status": "pending",
+      "owner": "child-fb04669d52874f739b2dd62dcf64a693",
+      "dependsOn": [
+        "h3-eval-set-v2"
+      ],
+      "scope": [
+        "scripts/src/harness-eval.mjs",
+        "scripts/src/harness-eval.test.mjs",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "Implemented as specified in docs/plans/2026-11-25-nomo-24h-program-detailed.md."
+      ],
+      "verifier": [
+        "node --test scripts/src/harness-eval.test.mjs"
+      ],
+      "evidence": [
+        "Delegated to child session fb04669d52874f739b2dd62dcf64a693 after H1-H3 integration; parent retains integration and graph recording ownership."
+      ],
+      "stopCondition": "After one targeted repair, record the blocker and continue independent work."
+    },
+    {
+      "id": "h8-guardrail-regression-detector",
+      "status": "pending",
+      "owner": "child-fb04669d52874f739b2dd62dcf64a693",
+      "dependsOn": [
+        "h1-reward-record"
+      ],
+      "scope": [
+        "packages/workbench/src/harness-scores.ts",
+        "packages/workbench/src/harness-scores.test.ts",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "Implemented as specified in docs/plans/2026-11-25-nomo-24h-program-detailed.md."
+      ],
+      "verifier": [
+        "node --test packages/workbench/src/harness-scores.test.ts"
+      ],
+      "evidence": [
+        "Delegated to child session fb04669d52874f739b2dd62dcf64a693 after H1-H3 integration; parent retains integration and graph recording ownership."
+      ],
+      "stopCondition": "After one targeted repair, record the blocker and continue independent work."
+    },
+    {
+      "id": "r1-arm-definition",
+      "status": "in-progress",
+      "owner": "child-5db2fd6df8a742f38dd6822091537c0c",
+      "dependsOn": [
+        "h2-variant-identity"
+      ],
+      "scope": [
+        "packages/workbench/src/harness-arms.ts",
+        "packages/workbench/src/harness-arms.test.ts",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "Implemented as specified in docs/plans/2026-11-25-nomo-24h-program-detailed.md."
+      ],
+      "verifier": [
+        "node --test packages/workbench/src/harness-arms.test.ts"
+      ],
+      "evidence": [
+        "Delegated to child session 5db2fd6df8a742f38dd6822091537c0c after H1-H3 integration; parent retains integration and graph recording ownership."
+      ],
+      "stopCondition": "After one targeted repair, record the blocker and continue independent work."
+    },
+    {
+      "id": "r2-thompson-sampler",
+      "status": "pending",
+      "owner": "child-5db2fd6df8a742f38dd6822091537c0c",
+      "dependsOn": [
+        "r1-arm-definition"
+      ],
+      "scope": [
+        "packages/workbench/src/harness-bandit.ts",
+        "packages/workbench/src/harness-bandit.test.ts",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "Implemented as specified in docs/plans/2026-11-25-nomo-24h-program-detailed.md."
+      ],
+      "verifier": [
+        "node --test packages/workbench/src/harness-bandit.test.ts"
+      ],
+      "evidence": [
+        "Delegated to child session 5db2fd6df8a742f38dd6822091537c0c after H1-H3 integration; parent retains integration and graph recording ownership."
       ],
       "stopCondition": "After one targeted repair, record the blocker and continue independent work."
     }
