@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-25T14:36:05Z",
+  "updatedAt": "2026-11-25T14:37:04Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -1660,6 +1660,38 @@
         "git diff --check observed exit 0."
       ],
       "stopCondition": "Stop if a reward that does not recompute is averaged, an activation borrows a later activation window, or missing evidence is rendered as zero or pass."
+    },
+    {
+      "id": "t12-opentui-verifier-retirement",
+      "status": "done",
+      "owner": "devin-6293643153014f56bb088c9a71fde97a",
+      "dependsOn": [
+        "t10-performance-remeasure"
+      ],
+      "scope": [
+        "scripts/src/verify-opentui-terminal.py",
+        "docs/DECISIONS.md",
+        "docs/plans/2026-11-25-nomo-24h-program-detailed.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "confirm no caller",
+        "delete orphan or record reason",
+        "git diff --check passes"
+      ],
+      "verifier": [
+        "rg -n verify-opentui-terminal.py package.json packages scripts .github docs/CONTEXT.md docs/STANDARDS.md docs/SESSION-HANDOFF.md",
+        "git diff --check"
+      ],
+      "evidence": [
+        "The caller scan across package.json, packages, scripts, .github, CONTEXT, STANDARDS and SESSION-HANDOFF printed no matches after deletion. Remaining mentions are historical memory, the decision record and the program plan.",
+        "git diff --check observed exit 0.",
+        "Reason recorded: the verifier belonged to the deleted additive @opentui adapter, had no caller, and keeping it invited confidence in a renderer path that no longer exists."
+      ],
+      "stopCondition": "Stop if any live package, script, CI or operator doc still calls the verifier."
     }
   ]
 }
