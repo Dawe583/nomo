@@ -553,6 +553,11 @@ it with the reason in the graph, or keep it with a recorded reason.
 
 **Verifier.** `git diff --check`; no caller remains.
 
+**As built.** The orphaned OpenTUI verifier was deleted. It had no caller in
+package scripts, docs instructions, CI or other scripts; remaining mentions are
+historical memory and decision records. The decision log now records that T12
+retired the orphan instead of claiming it is still in the tree.
+
 ## 6. Track B — harness work packages
 
 ### H1. Reward record (2 h)

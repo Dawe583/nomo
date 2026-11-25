@@ -1694,8 +1694,8 @@ files, so a migration has to extract it before it can repaint it.
 - It was deleted whole in `d3252367` (2026-11-23): -2,286 lines across four
   files, with `react`, `@types/react`, `@opentui/core` and `@opentui/react`
   removed from `packages/cli/package.json`, and no replacement capability kept.
-  `scripts/src/verify-opentui-terminal.py` (322 lines) is still in the tree
-  with no caller.
+  `scripts/src/verify-opentui-terminal.py` remained orphaned until T12 retired
+  it with no caller.
 - A real replacement is therefore not "port `workspace.ts`". It is 32,207
   production lines and 20,191 test lines, with all 40 snapshot hashes and all
   54 PTY assertions re-derived against a different wrapping, width and paint
