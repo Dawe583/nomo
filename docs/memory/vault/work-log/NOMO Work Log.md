@@ -9590,3 +9590,5 @@ Commit 3280db90942408dbc286a70f42124b4a3a33b277, subject Polish shared TUI motio
   The palette already derives from the real command registry, so there is no hidden action. Tests now pin exact/prefix/substring/subsequence ranking plus frecency reordering without hiding commands. Verified: focused 131/131, typecheck 0, TUI 548/548. [[NOMO TUI Control Center]]
 - 2026-11-25 · T18 theme system completed in the free parent session.
   `theme-config.ts` stays the single token source. Paper and solarized text tokens were adjusted in-hue so every text token/background pair passes 4.5:1; border/rule remain decorative. Verified: theme tests 4/4, typecheck 0, TUI 549/549. [[NOMO TUI Control Center]]
+- 2026-11-25 · R8 offline policy evaluation completed in the free parent session.
+  Deterministic candidate arms can be inverse-propensity scored from logged rounds without deployment, with coverage and effective sample size. Unsupported candidates are unmeasured, never zero. Verified: offline-policy 3/3, typecheck 0, Workbench 1189 pass, 0 fail, 2 skipped. H16 still requires operator review of real runs before freezing. [[NOMO Harness and Learning]]
