@@ -26,8 +26,7 @@ no model weights are updated by reward in this repository.
    records carry case, variant, run, tool name, class and completion only; no
    host file, network, provider, model, prompt, argument, result or document
    content is part of the measurement.
-5. **Ingestion.** `nomo harness ingest-rewards --session <id> <records.jsonl>
-nomo harness ingest-eval --session <id> <measurements.jsonl>`
+5. **Ingestion.** `nomo harness ingest-rewards --session <id> <records.jsonl>`
    validates a reward-only file. `nomo harness ingest-eval --session <id>
    <measurements.jsonl>` validates a mixed reward and eval-tool measurement
    file. Both validate the whole file before writing anything: schema, bounded
@@ -49,6 +48,14 @@ nomo harness ingest-eval --session <id> <measurements.jsonl>`
 9. **Exploration.** `nomo.bandit.v1` history records Thompson-sampling state.
    Guardrail-axis exploration, currently `promptPreamble`, starts stopped as
    `unapproved-guardrail` unless the exact arm-set digest was approved.
+10. **Offline policy evaluation.** `node scripts/src/harness-offline-policy.mjs
+   <rounds.jsonl> --arm <id> [--arm <id>...]` evaluates deterministic candidate
+   arms with inverse propensity scoring. The input contract is one bounded
+   JSON object per line with exactly `armId`, `reward` and `propensity`;
+   propensity is the probability the logging policy gave the arm it actually
+   chose. It is never inferred when the logging policy failed to record it.
+   The report is measurement only: unsupported arms are `unmeasured`, no model
+   is trained and no arm is deployed.
 
 ## Records
 
@@ -77,6 +84,7 @@ nomo harness run-eval --case <id> --variant <id> --run <n> --prompt <text> [--id
 node scripts/src/harness-eval.mjs <taskset.json> -- <runner argv...>
 node scripts/src/harness-replay.mjs <chain.jsonl>
 node scripts/src/trajectory-export.mjs <chain.jsonl> [--out <path>]
+node scripts/src/harness-offline-policy.mjs <rounds.jsonl> --arm <id> [--arm <id>...]
 ```
 
 ## Names that must not be confused

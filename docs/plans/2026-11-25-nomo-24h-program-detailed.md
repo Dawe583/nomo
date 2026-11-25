@@ -1043,7 +1043,11 @@ These are real, scoped follow-ups, not wishes. ~40 h.
     logged rounds with inverse propensity scoring, coverage and effective
     sample size. A candidate outside logging-policy support is explicitly
     `unmeasured`, never zero, so absence of support cannot be read as failure
-    or success. No arm is deployed and no model is trained.
+    or success. No arm is deployed and no model is trained. R8 wiring now
+    exposes the measurement through `scripts/src/harness-offline-policy.mjs`:
+    a bounded JSONL contract requires exactly `armId`, `reward` and recorded
+    `propensity` per round, plus explicit repeated `--arm` candidates. The
+    command never infers a propensity the logging policy failed to record.
 11. **Q11 Packaging**: install from a tarball, run the TUI, verify the launcher.
     2 h.
 
@@ -1124,7 +1128,7 @@ These are real, scoped follow-ups, not wishes. ~40 h.
     Workbench rejects mismatched reward or eval-tool writes before they enter
     the chain. H20c7 applies the same unambiguous-run rule to explicit offline
     eval-tool measurements inside their case, variant and ingestion-file
-    family; repeated pending runs are refused rather than merged. H21 closes the production eval loop with an allowlisted verifier gate and signed reward recording. H22 adds signed usage receipts, truthful cost aggregation, bounded wall-clock latency and idempotent verifier or reward reuse. H23 measures exact-attributed reward guardrails from bounded decision and classification outcomes, with partial child evidence unmeasured. H24 records operator-decided hold latency and aggregates exact approval evidence.
+    family; repeated pending runs are refused rather than merged. H21 closes the production eval loop with an allowlisted verifier gate and signed reward recording. H22 adds signed usage receipts, truthful cost aggregation, bounded wall-clock latency and idempotent verifier or reward reuse. H23 measures exact-attributed reward guardrails from bounded decision and classification outcomes, with partial child evidence unmeasured. H24 records operator-decided hold latency and aggregates exact approval evidence. R8 is now wired through a bounded offline-policy measurement command.
 
 ## 12. Program checklist
 

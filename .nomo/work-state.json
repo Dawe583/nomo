@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-25T22:55:11.186815Z",
+  "updatedAt": "2026-11-25T23:07:37.372916Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -3148,6 +3148,56 @@
       ],
       "stopCondition": "Stop if approval timing would require estimating operator action time, counting expiry or cancellation as an operator decision, or treating partial child evidence as complete.",
       "completedAt": "2026-11-25T22:55:11.186815Z"
+    },
+    {
+      "id": "r8-offline-policy-wiring",
+      "status": "done",
+      "owner": "devin-6293643153014f56bb088c9a71fde97a",
+      "dependsOn": [
+        "r8-offline-policy-eval"
+      ],
+      "scope": [
+        "scripts/src/harness-offline-policy.mjs",
+        "scripts/src/harness-offline-policy.test.mjs",
+        "scripts/src/module-inventory.test.mjs",
+        "docs/HARNESS-LEARNING.md",
+        "docs/plans/2026-11-25-nomo-24h-program-detailed.md",
+        "docs/plans/2026-11-25-program-handoff.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "offline-policy.ts has a production importer through an operator measurement command",
+        "rounds JSONL is bounded and requires exactly armId, reward and recorded propensity on every line",
+        "candidate arms are explicit repeated --arm values",
+        "unsupported arms are reported unmeasured rather than zero",
+        "the command trains nothing, deploys nothing and never infers a missing propensity",
+        "the stale module-inventory orphan entry is removed"
+      ],
+      "verifier": [
+        "node --test scripts/src/harness-offline-policy.test.mjs scripts/src/module-inventory.test.mjs scripts/src/harness-bandit-sim.test.mjs",
+        "node --test packages/workbench/src/offline-policy.test.ts packages/workbench/src/harness-bandit.test.ts",
+        "node --test scripts/src/doc-truth.test.mjs scripts/src/no-dash.test.mjs",
+        "node --test scripts/src/*.test.mjs",
+        "pnpm --filter @nomo/workbench typecheck",
+        "pnpm --filter @nomo/cli typecheck",
+        "git diff --check"
+      ],
+      "evidence": [
+        "focused scripts verifier: 8 tests, 8 pass, 0 fail, duration_ms 310.580417",
+        "offline-policy and bandit verifier: 12 tests, 12 pass, 0 fail, duration_ms 144.396",
+        "module inventory after wiring: scanned 280 non-test files, resolved 180 workbench import edges, found 49 modules and 2 with no importer; allowlist 2 entries, 0 entries with an importer; tests 2 pass, 0 fail",
+        "docs verifier: 10 tests, 10 pass, 0 fail, duration_ms 110.721917",
+        "wider scripts suite: 431 tests, 398 pass, 0 fail, cancelled 0, skipped 32, todo 1, duration_ms 8602.004042",
+        "pnpm --filter @nomo/workbench typecheck: exit 0",
+        "pnpm --filter @nomo/cli typecheck: exit 0",
+        "git diff --check: exit 0",
+        "CLI fixture evidence: candidate and incumbent both measured estimate 0.5 over 4 rounds; new-arm reported estimate unmeasured; malformed extra field and zero propensity were refused before any report"
+      ],
+      "stopCondition": "Stop if supporting a candidate would require deploying it, training a model, inferring propensity from a history that did not record it, or treating unsupported arms as zero.",
+      "completedAt": "2026-11-25T23:07:37.372916Z"
     }
   ]
 }

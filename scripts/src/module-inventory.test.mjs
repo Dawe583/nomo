@@ -81,17 +81,8 @@ const ORPHANS = new Map([
       "until then tests exercise it but production cannot activate exploration",
   ],
   [
-    "offline-policy.ts",
-    // Restoration debt, not dead code: R8 added inverse-propensity evaluation
-    // as a measurement library, but no command imports logged bandit rounds
-    // yet. Wiring it needs a defined input contract rather than a speculative
-    // file format.
-    "R8 offline evaluation library awaiting a separately designed input contract; " +
-      "until then tests exercise it but production exposes no estimator command",
-  ],
-  [
     "test-fixture.ts",
-    // Not the same case as the six above: a fixture is test scaffolding, not a
+    // Not the same case as restoration-debt modules: a fixture is test scaffolding, not a
     // capability, so it needs no production importer. If a non-test file ever
     // imports it, the stale-entry test fires and the remedy is to stop the
     // fixture leaking into production, not to delete this reason.
