@@ -65,10 +65,10 @@ Last full local dry run was recorded in Q8 and merged to `main` as `96675914`.
 
 ## Next ready node
 
-Start T5.1, pet completed-run reaction. Exact first action: open
-`docs/plans/2026-11-25-nomo-24h-program-detailed.md` section T5.1, inspect
-`packages/cli/src/tui/pet.ts` and `pet.test.ts`, then implement the settled-run
-pose as a pure counter/outcome function inside the existing 9x5 budget.
+Start T5.2, second blink and listening pose. Exact first action: open
+`docs/plans/2026-11-25-nomo-24h-program-detailed.md` section T5.2, inspect
+`packages/cli/src/tui/pet.ts` and `pet.test.ts`, then verify or implement the
+second blink rhythm, distinct listening silhouette and pure atlas cycle.
 
 After T2.5, continue T4 panel navigation, then T4, T5.x, T6, T7, T8,
 T9 and T10 as the detailed program orders them. Do not start T11 unless the
