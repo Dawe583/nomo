@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-25T11:58:50Z",
+  "updatedAt": "2026-11-25T12:00:04Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -935,6 +935,68 @@
         "git diff --check observed exit 0."
       ],
       "stopCondition": "Stop if the dry run requires a live provider, network access or an unverified reward record."
+    },
+    {
+      "id": "q6-bundle-dist",
+      "status": "done",
+      "owner": "devin-6293643153014f56bb088c9a71fde97a",
+      "dependsOn": [
+        "q1-graph-validation"
+      ],
+      "scope": [
+        "packages/cli/dist",
+        "scripts/src/bundle-cli.mjs",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "dist rebuild succeeds",
+        "nomo --version matches package version",
+        "dist is newer than source"
+      ],
+      "verifier": [
+        "node scripts/src/bundle-cli.mjs",
+        "node packages/cli/dist/nomo.mjs --version"
+      ],
+      "evidence": [
+        "node scripts/src/bundle-cli.mjs observed exit 0: built /Users/devin/repos/nomo/packages/cli/dist/nomo.mjs (7 chunks, 3584 kB total).",
+        "node packages/cli/dist/nomo.mjs --version observed exit 0 and printed \"nomo 1.0.1\", matching packages/cli/package.json version 1.0.1.",
+        "Freshness check observed newest_src:1795607753 dist:1795607968, so dist is newer than source.",
+        "packages/cli/dist is intentionally gitignored as generated output; this node verifies the local artifact rather than committing build output."
+      ],
+      "stopCondition": "Stop if the bundle is empty, the placeholder survives, or version output mismatches the package manifest."
+    },
+    {
+      "id": "q7-dependency-audit",
+      "status": "done",
+      "owner": "devin-6293643153014f56bb088c9a71fde97a",
+      "dependsOn": [
+        "q1-graph-validation"
+      ],
+      "scope": [
+        "package.json",
+        "pnpm-lock.yaml",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "offline frozen lockfile install succeeds",
+        "no dependency drift"
+      ],
+      "verifier": [
+        "pnpm install --frozen-lockfile --offline",
+        "git status --short"
+      ],
+      "evidence": [
+        "pnpm install --frozen-lockfile --offline observed exit 0: Scope: all 14 workspace projects; Lockfile is up to date, resolution step is skipped; Already up to date; Done in 366ms using pnpm v10.33.0.",
+        "git status --short after the offline install printed no dependency or lockfile changes.",
+        "No dependency was added or removed in this node."
+      ],
+      "stopCondition": "Stop if frozen offline install resolves new packages, changes the lockfile, or requires network access."
     }
   ]
 }

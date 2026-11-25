@@ -9537,3 +9537,6 @@ Commit 3280db90942408dbc286a70f42124b4a3a33b277, subject Polish shared TUI motio
 - 2026-11-25 · Q2, Q3 and Q4 quality inventory completed in the free parent session.
   Doc truth is green 9/9 after inventorying real historical dead paths, removing the stale Apple-release entry, and correcting the newest-decision pin.
   `test-fixture.ts` remains an explicitly reasoned test-only orphan, module inventory 2/2. Harness inventory is green 2/2 with 28 documented keys and an empty gap list. [[NOMO TUI Control Center]]
+- 2026-11-25 · Q6 and Q7 release-readiness checks completed in the free parent session.
+  Local CLI bundle rebuilt successfully as 7 chunks, 3584 kB total, and `nomo --version` printed `nomo 1.0.1`, matching the package manifest.
+  Dist was newer than source. Offline frozen lockfile install exited 0 across 14 workspace projects with no lockfile drift and no dependency changes. [[NOMO TUI Control Center]]
