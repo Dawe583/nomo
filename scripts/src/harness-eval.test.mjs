@@ -7,7 +7,10 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { parseDecision, parseTaskset, scoreTask } from "./harness-eval.mjs";
-import { computeReward } from "../../packages/workbench/src/harness-scores.ts";
+import {
+  compareRewardRecords,
+  computeReward,
+} from "../../packages/workbench/src/harness-scores.ts";
 
 const script = fileURLToPath(new URL("./harness-eval.mjs", import.meta.url));
 
@@ -297,6 +300,11 @@ describe("harness-eval CLI", () => {
 });
 
 describe("harness-eval reward records", () => {
+  const variantFile = (dir, name, settings = {}) => {
+    const path = join(dir, name);
+    writeFileSync(path, JSON.stringify({ model: "provider/model", promptPreamble: "PREAMBLE-CANARY", settings }));
+    return path;
+  };
   const weights = ["--weights", "breach=0,cost=0,latency=0.001"];
 
   test("a case with two runs writes one recomputable record and no prompt", () => {
@@ -306,7 +314,8 @@ describe("harness-eval reward records", () => {
     );
     try {
       const records = join(dir, "records.jsonl");
-      const result = run(dir, ["--runs", "2", "--records", records, ...weights]);
+      const variant = variantFile(dir, "variant.json");
+      const result = run(dir, ["--runs", "2", "--records", records, ...weights, "--variant", variant]);
       assert.equal(result.status, 0);
       assert.match(result.stdout, /records: 1 written to /);
       const raw = readFileSync(records, "utf8");
@@ -316,6 +325,9 @@ describe("harness-eval reward records", () => {
       const record = JSON.parse(lines[0]);
       assert.equal(record.schema, "nomo.reward.v1");
       assert.equal(record.caseId, "t1");
+      assert.match(record.variantId, /^sha256:[0-9a-f]{64}$/);
+      assert.equal(record.baselineVariantId, null);
+      assert.equal(record.changedAxis, null);
       assert.equal(record.passed, true);
       assert.equal(record.costUsd, "unmeasured");
       assert.equal(record.approvalMs, "unmeasured");
@@ -334,7 +346,11 @@ describe("harness-eval reward records", () => {
     );
     try {
       const records = join(dir, "records.jsonl");
-      const result = run(dir, ["--records", records, "--weights", "breach=0.5,cost=1,latency=0.001"]);
+      const result = run(dir, [
+        "--records", records,
+        "--weights", "breach=0.5,cost=1,latency=0.001",
+        "--variant", variantFile(dir, "variant.json"),
+      ]);
       assert.equal(result.status, 0);
       const record = JSON.parse(readFileSync(records, "utf8").trim());
       assert.equal(record.reward, "unmeasured");
@@ -353,9 +369,65 @@ describe("harness-eval reward records", () => {
       const missing = run(dir, ["--records", records]);
       assert.equal(missing.status, 2);
       assert.match(missing.stderr, /--records and --weights are required together/);
-      const bad = run(dir, ["--records", records, "--weights", "breach=0.5,cost=1"]);
+      const noVariant = run(dir, ["--records", records, ...weights]);
+      assert.equal(noVariant.status, 2);
+      assert.match(noVariant.stderr, /--records and --variant are required together/);
+      const bad = run(dir, [
+        "--records", records,
+        "--weights", "breach=0.5,cost=1",
+        "--variant", variantFile(dir, "variant.json"),
+      ]);
       assert.equal(bad.status, 2);
       assert.match(bad.stderr, /weights\.latency/);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test("two variants one axis apart produce records that compare per case", () => {
+    const dir = workspace(
+      { tasks: [task("t1", "p1", "read", "inspect"), task("t2", "p2", "edit", "mutate")] },
+      { p1: [{ tool: "read", class: "inspect" }], p2: [{ tool: "edit", class: "mutate" }] },
+    );
+    try {
+      const base = variantFile(dir, "base.json");
+      const next = variantFile(dir, "next.json", { autoCompactMessages: 75 });
+      const a = join(dir, "a.jsonl");
+      const b = join(dir, "b.jsonl");
+      assert.equal(run(dir, ["--records", a, ...weights, "--variant", base]).status, 0);
+      const second = run(dir, ["--records", b, ...weights, "--variant", next, "--baseline", base]);
+      assert.equal(second.status, 0);
+      assert.match(second.stdout, /changedAxis=autoCompactMessages/);
+      const read = (path) => readFileSync(path, "utf8").trim().split("\n").map((line) => JSON.parse(line));
+      const before = read(a);
+      const after = read(b);
+      assert.doesNotMatch(readFileSync(b, "utf8"), /PREAMBLE-CANARY/);
+      for (const [index, record] of after.entries()) {
+        assert.equal(record.baselineVariantId, before[index].variantId);
+        assert.equal(record.changedAxis, "autoCompactMessages");
+        const comparison = compareRewardRecords(before[index], record);
+        assert.ok(comparison.comparable, comparison.reason);
+        assert.equal(comparison.changedAxis, "autoCompactMessages");
+        assert.equal(typeof comparison.delta, "number");
+      }
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test("a baseline two axes away is refused before anything runs", () => {
+    const dir = workspace(
+      { tasks: [task("t1", "p1", "read", "inspect")] },
+      { p1: [{ tool: "read", class: "inspect" }] },
+    );
+    try {
+      const base = variantFile(dir, "base.json");
+      const next = variantFile(dir, "next.json", { autoCompactMessages: 75, maxToolResultCharacters: 32000 });
+      const records = join(dir, "records.jsonl");
+      const result = run(dir, ["--records", records, ...weights, "--variant", next, "--baseline", base]);
+      assert.equal(result.status, 2);
+      assert.match(result.stderr, /baseline refused: variants differ in 2 axes \(autoCompactMessages, maxToolResultCharacters\)/);
+      assert.doesNotMatch(result.stdout, /PASS|FAIL/);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

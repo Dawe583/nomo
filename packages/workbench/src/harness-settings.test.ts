@@ -13,6 +13,8 @@ import {
   harnessTextSettingsView,
   resolveHarnessSettings,
   resolveHarnessTextSettings,
+  compareVariants,
+  variantIdentity,
   type HarnessSettingKey,
 } from "./harness-settings.ts";
 import { HOOK_TIMEOUT_BOUNDS, HOOK_TIMEOUT_MS } from "./agents.ts";
@@ -271,4 +273,42 @@ test("the view names the consumer and marks a value that is not the default", ()
   assert.match(queued.consumer, /startSession/);
   const turns = view.find((row) => row.key === "maxTurns");
   assert.equal(turns?.changed, false);
+});
+
+const variant = (settings: Record<string, unknown> = {}, overrides: Record<string, string> = {}) =>
+  variantIdentity({ settings, promptPreamble: "preamble", model: "provider/model", ...overrides });
+
+test("a variant id is a digest over every axis and never holds the preamble text", () => {
+  const identity = variant();
+  assert.match(identity.variantId, /^sha256:[0-9a-f]{64}$/);
+  assert.equal(identity.variantId, variant().variantId);
+  assert.equal(identity.axes.autoCompactMessages, HARNESS_SETTINGS.autoCompactMessages.default);
+  assert.equal(identity.axes.model, "provider/model");
+  assert.match(String(identity.axes.promptPreamble), /^sha256:/);
+  assert.doesNotMatch(JSON.stringify(identity), /"preamble"/);
+  assert.notEqual(variant({}, { model: "provider/other" }).variantId, identity.variantId);
+});
+
+test("variants differing only in autoCompactMessages are comparable on that axis", () => {
+  const result = compareVariants(variant(), variant({ autoCompactMessages: 75 }));
+  assert.deepEqual(result, { comparable: true, changedAxis: "autoCompactMessages" });
+  assert.deepEqual(compareVariants(variant(), variant()), { comparable: true, changedAxis: null });
+});
+
+test("variants differing in two axes are refused", () => {
+  const result = compareVariants(
+    variant(),
+    variant({ autoCompactMessages: 75, maxToolResultCharacters: 32000 }),
+  );
+  assert.equal(result.comparable, false);
+  assert.ok(!result.comparable);
+  assert.deepEqual(result.changedAxes, ["autoCompactMessages", "maxToolResultCharacters"]);
+  assert.equal(compareVariants(variant(), variant({}, { promptPreamble: "other", model: "a/b" })).comparable, false);
+});
+
+test("a hand-edited identity and unknown settings are refused", () => {
+  const edited = { ...variant(), axes: { ...variant().axes, maxTurns: 1 } };
+  assert.equal(compareVariants(variant(), edited).comparable, false);
+  assert.throws(() => variant({ notASetting: 1 }), /Unknown harness setting notASetting/);
+  assert.throws(() => variant({}, { model: "bad model" }), /model/);
 });

@@ -52,6 +52,15 @@
  * reward "unmeasured". The weights are required: there is no built-in default.
  * Records carry ids and numbers only, never a prompt or runner output.
  *
+ * Variant identity: records also need `--variant <variant.json>`, a file of
+ * `{"model": "...", "promptPreamble": "...", "settings": {...}}` describing the
+ * harness the runner was configured with. Its sha256 identity (see
+ * `variantIdentity` in `packages/workbench/src/harness-settings.ts`) is written
+ * as `variantId`. With `--baseline <variant.json>` the record also names the
+ * baseline and the one axis that separates them; a baseline that differs in
+ * more than one axis is refused before anything runs. The script cannot prove
+ * the runner honoured the variant: the file is the operator's declaration.
+ *
  * Exit codes: 0 = every task passed, or skipped; 1 = a task failed, produced no
  * decision, or the runner did not start; 2 = usage or taskset error.
  */
@@ -65,10 +74,15 @@ import {
   parseRewardWeights,
   rewardRecord,
 } from "../../packages/workbench/src/harness-scores.ts";
+import {
+  compareVariants,
+  variantIdentity,
+} from "../../packages/workbench/src/harness-settings.ts";
 
 const usage =
   "usage: node scripts/src/harness-eval.mjs <taskset.json> [--runs <n>] " +
-  "[--timeout <ms>] [--records <path> --weights breach=<n>,cost=<n>,latency=<n>] " +
+  "[--timeout <ms>] [--records <path> --weights breach=<n>,cost=<n>,latency=<n> " +
+  "--variant <variant.json> [--baseline <variant.json>]] " +
   "-- <runner argv...>";
 
 const DEFAULT_RUNS = 2;
@@ -245,11 +259,44 @@ export function parseWeightsArg(raw) {
   return parseRewardWeights(weights);
 }
 
+/** Reads a variant file into its identity. Errors name the file, not content. */
+export function loadVariant(path) {
+  let value;
+  try {
+    value = JSON.parse(readFileSync(path, "utf8"));
+  } catch {
+    throw new TypeError(`variant could not be read as JSON: ${path}`);
+  }
+  if (!value || typeof value !== "object" || Array.isArray(value))
+    throw new TypeError(`variant must be an object: ${path}`);
+  return variantIdentity({
+    settings: value.settings ?? {},
+    promptPreamble: value.promptPreamble,
+    model: value.model,
+  });
+}
+
+/** The variant fields every record carries, or a refusal when the baseline
+ * differs in more than one axis. */
+export function resolveVariant(variantPath, baselinePath) {
+  const identity = loadVariant(variantPath);
+  if (!baselinePath)
+    return { variantId: identity.variantId, baselineVariantId: null, changedAxis: null };
+  const baseline = loadVariant(baselinePath);
+  const comparison = compareVariants(baseline, identity);
+  if (!comparison.comparable) throw new TypeError(`baseline refused: ${comparison.reason}`);
+  return {
+    variantId: identity.variantId,
+    baselineVariantId: baseline.variantId,
+    changedAxis: comparison.changedAxis,
+  };
+}
+
 /**
  * One reward record for one task, built from its paired attempts. A runner
  * that did not start has no latency, so the case latency is then unmeasured.
  */
-export function caseRewardRecord(task, attempts, result, weights, variantId) {
+export function caseRewardRecord(task, attempts, result, weights, variant) {
   const timed = attempts.every((attempt) => typeof attempt?.elapsedMs === "number");
   const latencyMs =
     timed && attempts.length > 0
@@ -259,7 +306,9 @@ export function caseRewardRecord(task, attempts, result, weights, variantId) {
       : "unmeasured";
   return rewardRecord({
     caseId: task.id,
-    variantId,
+    variantId: variant.variantId,
+    baselineVariantId: variant.baselineVariantId,
+    changedAxis: variant.changedAxis,
     passed: result.status === "pass",
     guardrails: {},
     costUsd: "unmeasured",
@@ -285,6 +334,8 @@ function parseArgs(argv) {
     runner: [],
     records: "",
     weights: "",
+    variant: "",
+    baseline: "",
     help: false,
     unknown: [],
   };
@@ -314,7 +365,7 @@ function parseArgs(argv) {
       else options.timeout = Number(raw);
       continue;
     }
-    if (arg === "--records" || arg === "--weights") {
+    if (arg === "--records" || arg === "--weights" || arg === "--variant" || arg === "--baseline") {
       const raw = argv[index + 1];
       index += 1;
       if (!raw) {
@@ -358,10 +409,20 @@ export function main(argv) {
     console.error("harness-eval: --records and --weights are required together.");
     return 2;
   }
+  if (Boolean(options.records) !== Boolean(options.variant)) {
+    console.error("harness-eval: --records and --variant are required together.");
+    return 2;
+  }
+  if (options.baseline && !options.variant) {
+    console.error("harness-eval: --baseline needs --variant.");
+    return 2;
+  }
   let weights = null;
+  let variant = null;
   if (options.weights) {
     try {
       weights = parseWeightsArg(options.weights);
+      variant = resolveVariant(options.variant, options.baseline);
     } catch (error) {
       console.error(`harness-eval: ${error.message}`);
       return 2;
@@ -414,7 +475,7 @@ export function main(argv) {
     }
     const result = scoreTask(task, attempts);
     results.push(result);
-    if (weights) records.push(caseRewardRecord(task, attempts, result, weights, "unmeasured"));
+    if (weights) records.push(caseRewardRecord(task, attempts, result, weights, variant));
   }
   for (const result of results) console.log(row(result, width));
   if (weights) {
@@ -428,6 +489,12 @@ export function main(argv) {
       return 1;
     }
     console.log(`records: ${records.length} written to ${options.records}`);
+    console.log(
+      `variant: ${variant.variantId}` +
+        (variant.baselineVariantId
+          ? ` baseline=${variant.baselineVariantId} changedAxis=${variant.changedAxis ?? "none"}`
+          : ""),
+    );
   }
 
   const count = (status) =>

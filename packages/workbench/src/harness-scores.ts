@@ -627,6 +627,10 @@ export type RewardRecord = {
   readonly schema: typeof REWARD_SCHEMA;
   readonly caseId: string;
   readonly variantId: string;
+  /** The variant this one was measured against, and the one axis that
+   * separates them (H2). Both null when no baseline was named. */
+  readonly baselineVariantId: string | null;
+  readonly changedAxis: string | null;
   readonly passed: boolean;
   readonly guardrails: Readonly<Record<string, Measured>>;
   readonly costUsd: Measured;
@@ -693,10 +697,21 @@ export function rewardRecord(input: RewardInput): RewardRecord {
   if (typeof input.variantId !== "string" || !input.variantId.trim())
     throw new TypeError("variantId: required");
   if (typeof input.passed !== "boolean") throw new TypeError("passed: expected a boolean");
+  const nullableText = (name: string, value: unknown): string | null => {
+    if (value === null) return null;
+    if (typeof value !== "string" || !value.trim()) throw new TypeError(`${name}: expected a string or null`);
+    return value;
+  };
+  const baselineVariantId = nullableText("baselineVariantId", input.baselineVariantId);
+  const changedAxis = nullableText("changedAxis", input.changedAxis);
+  if (changedAxis !== null && baselineVariantId === null)
+    throw new TypeError("changedAxis: needs a baselineVariantId");
   return {
     schema: REWARD_SCHEMA,
     caseId: input.caseId,
     variantId: input.variantId,
+    baselineVariantId,
+    changedAxis,
     passed: input.passed,
     guardrails: { ...input.guardrails },
     costUsd: measured("costUsd", input.costUsd),
@@ -704,5 +719,52 @@ export function rewardRecord(input: RewardInput): RewardRecord {
     approvalMs: measured("approvalMs", input.approvalMs),
     weights: parseRewardWeights(input.weights),
     reward: computeReward(input),
+  };
+}
+
+export type RewardComparison =
+  | {
+      readonly comparable: true;
+      readonly caseId: string;
+      readonly changedAxis: string | null;
+      /** candidate minus baseline; unmeasured when either reward is. */
+      readonly delta: Measured;
+    }
+  | { readonly comparable: false; readonly reason: string };
+
+/**
+ * Whether "candidate beat baseline on this case" is checkable from the two
+ * records alone. The candidate must name the baseline it was measured against
+ * (which the eval only writes when the two variants differ in at most one
+ * axis), both must use the same weights, and both stored rewards must
+ * recompute from their own fields.
+ */
+export function compareRewardRecords(
+  baseline: RewardRecord,
+  candidate: RewardRecord,
+): RewardComparison {
+  if (baseline.caseId !== candidate.caseId)
+    return { comparable: false, reason: "records are for different cases" };
+  const same = candidate.variantId === baseline.variantId;
+  if (!same && candidate.baselineVariantId !== baseline.variantId)
+    return { comparable: false, reason: "candidate was not measured against this baseline" };
+  if (!same && candidate.changedAxis === null)
+    return { comparable: false, reason: "candidate names no changed axis" };
+  const weights = (record: RewardRecord) =>
+    [record.weights.breach, record.weights.cost, record.weights.latency].join(",");
+  if (weights(baseline) !== weights(candidate))
+    return { comparable: false, reason: "records use different weights" };
+  for (const record of [baseline, candidate])
+    if (computeReward(record) !== record.reward)
+      return { comparable: false, reason: `stored reward for ${record.variantId} does not recompute` };
+  const delta =
+    typeof baseline.reward === "number" && typeof candidate.reward === "number"
+      ? candidate.reward - baseline.reward
+      : "unmeasured";
+  return {
+    comparable: true,
+    caseId: candidate.caseId,
+    changedAxis: same ? null : candidate.changedAxis,
+    delta,
   };
 }

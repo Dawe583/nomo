@@ -94,6 +94,9 @@ latencyMs*latency`, where `breaches` counts measured guardrails above zero; a
 weighted term with an unmeasured input (or no guardrail at all for `breach`)
 makes `reward` the string `"unmeasured"`. Weights have no built-in default.
 The example numbers above are illustrative, not a computed record.
+H2 added `baselineVariantId` and `changedAxis` (both `null` without a
+baseline); `compareRewardRecords` refuses records that do not name each other,
+use different weights, or whose reward does not recompute.
 
 ### 2.2 VariantIdentity (H2)
 
@@ -112,6 +115,10 @@ The example numbers above are illustrative, not a computed record.
 
 Rules: two variants differ in exactly one axis to be comparable; the digest is
 over canonical JSON; the model id is part of the identity.
+As built (H2): `axes` holds every resolved numeric and text harness setting plus
+`promptPreamble` (a digest, never the text) and `model`; `compareVariants`
+also refuses an identity whose id does not recompute from its axes. Identical
+variants compare with `changedAxis: null`.
 
 ### 2.3 Arm (R1)
 
