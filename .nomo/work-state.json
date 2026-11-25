@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-25T12:38:06Z",
+  "updatedAt": "2026-11-25T12:44:47Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -1224,6 +1224,46 @@
         "git diff --check observed exit 0."
       ],
       "stopCondition": "Stop if an unrun probe renders ok or green, unknown and unmeasured are conflated, ledger head invents a hash or sequence, or any status row exceeds width."
+    },
+    {
+      "id": "t2-4-documents-panel-parity",
+      "status": "done",
+      "owner": "devin-6293643153014f56bb088c9a71fde97a",
+      "dependsOn": [
+        "t1-design-contract"
+      ],
+      "scope": [
+        "packages/cli/src/tui/workspace.ts",
+        "packages/cli/src/tui/workspace-parity.test.ts",
+        "packages/cli/src/tui/visual-snapshots.test.ts",
+        "packages/cli/src/tui/test/visual-snapshots.json",
+        "docs/plans/2026-11-25-nomo-24h-program-detailed.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "managed documents render with byte counts",
+        "empty state is explicit",
+        "a document named like a path remains a document name only",
+        "no host filesystem path is printed",
+        "frames render at five sizes without width overflow"
+      ],
+      "verifier": [
+        "node --test packages/cli/src/tui/workspace-parity.test.ts packages/cli/src/tui/visual-snapshots.test.ts",
+        "pnpm --filter @nomo/cli typecheck",
+        "node --test --test-concurrency=1 packages/cli/src/tui/*.test.ts"
+      ],
+      "evidence": [
+        "Reviewed rendered documents-empty@80x24 and documents-one@80x24 before accepting snapshots: explicit empty state, logical-record warning, one root document with 17 B, recovery footer and Esc hint were visible; rows stayed inside width.",
+        "NO_COLOR=1 node --test packages/cli/src/tui/workspace-parity.test.ts packages/cli/src/tui/visual-snapshots.test.ts observed exit 0: tests 103, pass 103, fail 0, duration_ms 9557.976542.",
+        "pnpm --filter @nomo/cli typecheck observed exit 0.",
+        "NOMO_UPDATE_SNAPSHOTS=1 visual snapshot update observed exit 0 and wrote 80 frame hashes.",
+        "NO_COLOR=1 node --test --test-concurrency=1 packages/cli/src/tui/*.test.ts observed exit 0: tests 532, pass 532, fail 0, duration_ms 33745.811125.",
+        "git diff --check observed exit 0."
+      ],
+      "stopCondition": "Stop if a host filesystem path is printed, a document row loses its byte count, logical document names are treated as host paths, or any document row exceeds width."
     }
   ]
 }
