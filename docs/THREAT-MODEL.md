@@ -700,7 +700,10 @@ already running as the operator.
 
 The exporter has one integrity limitation by design: cases are segmented by
 position, so interleaved cases in one chain can be misattributed until tool
-entries carry a case id. This affects measurement correctness, not secrecy.
+entries carry a case id. Rewards ingested from bare eval files carry no tool
+attribution evidence and therefore export with empty tool calls rather than
+adopting unrelated positional entries. This affects measurement correctness,
+not secrecy.
 Trailing unattributed tool calls are reported and not silently attached to a
 later case.
 
