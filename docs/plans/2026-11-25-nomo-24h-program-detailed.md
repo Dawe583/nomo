@@ -1020,6 +1020,14 @@ These are real, scoped follow-ups, not wishes. ~40 h.
 8. **H17 Reward model**: only after H16 and a human-labelled subset; a model
    that grades is not a measurement until it is validated against humans. 6 h.
 9. **H18 Multi-axis bandit**: two axes at once with interaction terms. 4 h.
+
+   As built: `harness-factorial-bandit.ts` composes a complete 2x2 factorial
+   treatment set from two harness axes, verifies every component digest,
+   explores the joint treatments with Thompson sampling and keeps append-only
+   replayable state. Main effects and the interaction contrast are computed
+   only when all four cells have measured reward; any empty cell is
+   `unmeasured`, never zero. A guardrail axis still needs approval bound to
+   the exact treatment digest set, and prompt text remains outside the record.
 10. **R8 Offline policy evaluation**: importance weighting for a new arm without
     deploying it. 3 h.
 

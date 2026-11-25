@@ -247,6 +247,11 @@ function sampleBeta(alpha: number, beta: number, random: () => number): number {
   return x / (x + sampleGamma(beta, random));
 }
 
+/** Shared Beta posterior draw for bandit implementations. */
+export function sampleBetaPosterior(alpha: number, beta: number, random: () => number): number {
+  return sampleBeta(alpha, beta, random);
+}
+
 /** Pick the arm to try next by Thompson sampling, or null once stopped. */
 export function sampleArm(state: BanditState, random: () => number = Math.random): string | null {
   if (state.stopReason) return null;
