@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-25T14:51:59Z",
+  "updatedAt": "2026-11-25T14:54:39Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -1871,6 +1871,40 @@
         "git diff --check observed exit 0."
       ],
       "stopCondition": "Stop if the palette uses a second command registry, recency hides commands, or weaker match tiers outrank exact/prefix matches."
+    },
+    {
+      "id": "t18-theme-system",
+      "status": "done",
+      "owner": "devin-6293643153014f56bb088c9a71fde97a",
+      "dependsOn": [
+        "t17-command-palette"
+      ],
+      "scope": [
+        "packages/cli/src/tui/theme-config.ts",
+        "packages/cli/src/tui/theme-config.test.ts",
+        "docs/plans/2026-11-25-nomo-24h-program-detailed.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "one token file",
+        "contrast test for every pair",
+        "no colour-only meaning"
+      ],
+      "verifier": [
+        "node --test packages/cli/src/tui/theme-config.test.ts",
+        "pnpm --filter @nomo/cli typecheck",
+        "node --test --test-concurrency=1 packages/cli/src/tui/*.test.ts"
+      ],
+      "evidence": [
+        "NO_COLOR=1 node --test packages/cli/src/tui/theme-config.test.ts observed exit 0: tests 4, pass 4, fail 0, duration_ms 73.386417; every text token in every theme keeps WCAG contrast against its background.",
+        "pnpm --filter @nomo/cli typecheck observed exit 0.",
+        "NO_COLOR=1 node --test --test-concurrency=1 packages/cli/src/tui/*.test.ts observed exit 0: tests 549, pass 549, fail 0, skipped 0, duration_ms 38905.27425.",
+        "git diff --check observed exit 0."
+      ],
+      "stopCondition": "Stop if theme tokens fork into a second source, decorative border/rule tokens are treated as text, or monochrome/ASCII output loses words."
     }
   ]
 }

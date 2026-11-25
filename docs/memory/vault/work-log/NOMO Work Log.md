@@ -9588,3 +9588,5 @@ Commit 3280db90942408dbc286a70f42124b4a3a33b277, subject Polish shared TUI motio
   Signed/derived grouping and chain status already existed. Entry rows now expose their risk class in the label, so the existing typed filter can filter by class from visible facts. Four intentional ledger snapshot hashes were refreshed. Verified: chain status 1/1, focused 105/105, typecheck 0, TUI 546/546. [[NOMO TUI Control Center]]
 - 2026-11-25 · T17 command palette completed in the free parent session.
   The palette already derives from the real command registry, so there is no hidden action. Tests now pin exact/prefix/substring/subsequence ranking plus frecency reordering without hiding commands. Verified: focused 131/131, typecheck 0, TUI 548/548. [[NOMO TUI Control Center]]
+- 2026-11-25 · T18 theme system completed in the free parent session.
+  `theme-config.ts` stays the single token source. Paper and solarized text tokens were adjusted in-hue so every text token/background pair passes 4.5:1; border/rule remain decorative. Verified: theme tests 4/4, typecheck 0, TUI 549/549. [[NOMO TUI Control Center]]

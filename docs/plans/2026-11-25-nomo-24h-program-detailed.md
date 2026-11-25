@@ -1008,6 +1008,13 @@ These are real, scoped follow-ups, not wishes. ~40 h.
    that recency reorders commands without hiding any of them.
 6. **T18 Theme system**: one token file, contrast test for every pair, no
    colour-only meaning. 3 h.
+
+   As built: `theme-config.ts` remains the single token source. Text-bearing
+   tokens in paper and both solarized themes were adjusted within their hue
+   families until every non-decorative token/background pair reaches WCAG
+   normal-text contrast 4.5:1. Border and rule remain decorative separators.
+   Existing monochrome/ASCII/frozen-motion tests pin the no-colour-only
+   contract.
 7. **H16 Evaluation corpus from real runs**: opt-in, content-minimised,
    reviewed before freezing. 4 h.
 8. **H17 Reward model**: only after H16 and a human-labelled subset; a model
