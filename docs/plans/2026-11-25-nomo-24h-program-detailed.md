@@ -1048,6 +1048,14 @@ These are real, scoped follow-ups, not wishes. ~40 h.
     termios are restored. The npm-registry integration remains explicitly
     opt-in through `NOMO_NETWORK_PACKAGING_TEST=1`.
 12. **Q12 Docs**: operator handbook refresh for the new commands. 2 h.
+
+    As built: both handbook editions now document `/health`, `/discover`,
+    `/usage`, `/diff-next`, `/pet`, `/settings` and `/revoke-agent`, including
+    the exact local-only boundary of agent revocation. The handbook gate now
+    imports the TUI command registry itself, so a newly registered command that
+    is absent from either edition fails the test instead of drifting silently.
+    The retired OpenTUI verifier is explicitly inventoried as history, keeping
+    the documentation truth gate green after T12.
 13. **Q13 Security review**: threat model for the eval runner and trajectory
     export. 3 h.
 

@@ -371,16 +371,16 @@ Navigace a session: `/new [prompt]`, `/clear`, `/quit`, `/exit`,
 `/rename <titul>`, `/archive`, `/bottom`, `/find <text>`, `/stop`, `/cancel`,
 `/branch [seq]`, `/retry [seq]`.
 
-Kontext a stav: `/status`, `/context`, `/cost`, `/stats`, `/diff`, `/todos`,
-`/memory`, `/history`, `/config`, `/sources`, `/queue [resume]`, `/compact`,
-`/expand`, `/edit`, `/bottom`, `/theme <color|mono|motion|still|reset>`,
-`/keybindings`, `/command-palette`.
+Kontext a stav: `/status`, `/context`, `/cost`, `/usage`, `/stats`, `/diff`,
+`/diff-next`, `/todos`, `/memory`, `/history`, `/config`, `/settings`, `/sources`,
+`/queue [resume]`, `/compact`, `/expand`, `/edit`, `/bottom`, `/theme
+<color|mono|motion|still|reset>`, `/keybindings`, `/command-palette`, `/pet`.
 
 Konfigurace prostoru: `/policy`, `/tools`, `/models`, `/permissions` (také `/mcp`),
 `/policy-file <connector-ID> <cesta-k-YAML>`, `/connector-file <cesta.json>`,
 `/test-connector <ID>`, `/hooks`, `/hook-file <cesta.json>`, `/projects`,
 `/project <ID|none>`, `/project-file <cesta.json>`, `/agents`, `/agent <ID>`,
-`/agent-file <cesta.json>`.
+`/agent-file <cesta.json>`, `/revoke-agent <ID>`.
 
 Poskytovatelé: `/providers`, `/model <přesné-ID>`, `/connect <source-ID>` (také
 `/login`), `/logout`.
@@ -389,8 +389,17 @@ Schvalování a obnova: `/approvals`, `/approve [hold-ID] [důvod...]`, `/deny
 [hold-ID] [důvod...]`, `/undo [operation-ID]`, `/rewind`, `/recovery [job-ID]`,
 `/verify`, `/document <cesta>`, `/attest`, `/export <ledger|chat|document>`.
 
-Nastavení a diagnostika: `/doctor`, `/init`, `/conformance`, `/harness
-<cloud|prime-agent>`.
+Nastavení a diagnostika: `/doctor`, `/init`, `/conformance`, `/health`,
+`/discover`, `/harness <cloud|prime-agent>`.
+
+`/usage` je measured model usage, `/diff-next` posune další outstanding
+operaci ve stejném filtrovaném diff seznamu, `/settings` otevře interaktivní
+settings surface a `/pet` ovládá jen zobrazení terminálového companiona.
+`/health` otevře measured stav subsystémů a `/discover` seskupí příkazy podle
+operátorova úkolu. `/revoke-agent <ID>` otevře kontrolu local revocation: zastaví
+lokální sessions agenta, zruší local grants a zapíše signed evidence jen na tomto
+Workbenchu. Není to fleet-wide revocation, protože NOMO nemá node inventory ani
+acknowledgement barrier.
 
 Samotný harness: `/harness scores` ukazuje, co harness změřil, `/harness
 review` žádá o revizi ihned a `/harness approve <digest>` a `/harness reject

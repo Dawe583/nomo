@@ -464,16 +464,16 @@ Navigation and session: `/new [prompt]`, `/clear`, `/quit`, `/exit`,
 `/rename <title>`, `/archive`, `/bottom`, `/find <text>`, `/stop`, `/cancel`,
 `/branch [seq]`, `/retry [seq]`.
 
-Context and state: `/status`, `/context`, `/cost`, `/stats`, `/diff`, `/todos`,
-`/memory`, `/history`, `/config`, `/sources`, `/queue [resume]`, `/compact`,
-`/expand`, `/edit`, `/bottom`, `/theme <color|mono|motion|still|reset>`,
-`/keybindings`, `/command-palette`.
+Context and state: `/status`, `/context`, `/cost`, `/usage`, `/stats`, `/diff`,
+`/diff-next`, `/todos`, `/memory`, `/history`, `/config`, `/settings`, `/sources`,
+`/queue [resume]`, `/compact`, `/expand`, `/edit`, `/bottom`, `/theme
+<color|mono|motion|still|reset>`, `/keybindings`, `/command-palette`, `/pet`.
 
 Workspace configuration: `/policy`, `/tools`, `/models`, `/permissions` (also
 `/mcp`), `/policy-file <connector-ID> <path-to-YAML>`, `/connector-file
 <path.json>`, `/test-connector <ID>`, `/hooks`, `/hook-file <path.json>`,
 `/projects`, `/project <ID|none>`, `/project-file <path.json>`, `/agents`,
-`/agent <ID>`, `/agent-file <path.json>`.
+`/agent <ID>`, `/agent-file <path.json>`, `/revoke-agent <ID>`.
 
 Providers: `/providers`, `/model <exact-ID>`, `/connect <source-ID>` (also
 `/login`), `/logout`.
@@ -482,9 +482,18 @@ Approval and recovery: `/approvals`, `/approve [hold-ID] [reason...]`, `/deny
 [hold-ID] [reason...]`, `/undo [operation-ID]`, `/rewind`, `/recovery [job-ID]`,
 `/verify`, `/document <path>`, `/attest`, `/export <ledger|chat|document>`.
 
-Setup and diagnostics: `/doctor`, `/init`, `/conformance`, `/harness
-<cloud|prime-agent>`. The two external agent binaries behind `/harness` are
-documented in `docs/AGENT-BINARIES.md`.
+Setup and diagnostics: `/doctor`, `/init`, `/conformance`, `/health`,
+`/discover`, `/harness <cloud|prime-agent>`. The two external agent binaries
+behind `/harness` are documented in `docs/AGENT-BINARIES.md`.
+
+`/usage` is measured model usage, `/diff-next` steps to the next outstanding
+operation in the same filtered diff list, `/settings` opens the interactive
+settings surface, and `/pet` controls only the terminal companion display.
+`/health` opens the measured subsystem status and `/discover` groups commands by
+operator task. `/revoke-agent <ID>` opens the local revocation review: it stops
+that agent's local sessions, drops local grants and writes signed evidence on
+this Workbench only. It is not a fleet-wide revocation, because NOMO has no node
+inventory or acknowledgement barrier.
 
 The harness itself: `/harness scores` shows what the harness measured,
 `/harness review` asks for a review now, and `/harness approve <digest>` and
