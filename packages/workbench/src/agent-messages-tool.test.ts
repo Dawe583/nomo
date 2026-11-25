@@ -407,6 +407,9 @@ test("a profile-less session's nomo_agent_send is held by default and a denied h
     "test-operator",
     "the decision names the operator who approved the hold",
   );
+  if (typeof decision.approvalMs !== "number")
+    assert.fail("the internal operator-decided hold keeps its measured latency");
+  assert.ok(Number.isFinite(decision.approvalMs) && decision.approvalMs >= 0);
 
   app.send(child.id, "Read my inbox");
   await app.settled();

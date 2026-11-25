@@ -12,6 +12,8 @@ export type LedgerFeedRecord = {
   readonly decision: string;
   readonly argsDigest: string;
   readonly captureDigest?: string;
+  /** Operator decision latency when the signed record measured one. */
+  readonly approvalMs?: number;
   /**
    * Present only on entries that carry a reason. Its absence is the record
    * making no attribution claim, which is a different fact from a record
@@ -146,6 +148,9 @@ function toFeedRecord(entry: JsonlEntry): LedgerFeedRecord {
     decision,
     argsDigest,
     ...(typeof body.captureDigest === "string" ? { captureDigest: body.captureDigest } : {}),
+    ...(typeof body.approvalMs === "number" && Number.isFinite(body.approvalMs) && body.approvalMs >= 0
+      ? { approvalMs: body.approvalMs }
+      : {}),
     ...(reason.kind === "attributed" ? { attribution: reason.attribution } : {}),
     ...(reversal.kind === "reversal" ? { reversal: reversal.reversal } : {}),
     keyId: entry.key_id,
