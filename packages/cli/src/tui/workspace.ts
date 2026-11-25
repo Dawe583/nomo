@@ -6769,7 +6769,23 @@ ${(doc.content ?? "").slice(0, 2000)}`;
             ...(s.parentId ? [`Parent conversation: ${s.parentId}`] : []),
           ],
         }));
-    if (this.tab === "runs")
+    if (this.tab === "runs") {
+      const tokensByRun = new Map<string, number>();
+      const measuredTokenRuns = new Set<string>();
+      for (const entry of activity(this.workbench.allViews()).usage) {
+        if (!entry.runId) continue;
+        if (
+          typeof entry.totalTokens === "number" &&
+          Number.isFinite(entry.totalTokens) &&
+          entry.totalTokens >= 0
+        ) {
+          tokensByRun.set(
+            entry.runId,
+            (tokensByRun.get(entry.runId) ?? 0) + entry.totalTokens,
+          );
+          measuredTokenRuns.add(entry.runId);
+        }
+      }
       rows = [...this.workbench.runs()]
         .sort((left, right) => {
           const leftTime = Date.parse(left.updatedAt ?? left.createdAt);
@@ -6799,11 +6815,15 @@ ${(doc.content ?? "").slice(0, 2000)}`;
             run.durationMs >= 0
               ? `${Math.round(run.durationMs / 100) / 10}s`
               : "time unknown";
+          const tokens = measuredTokenRuns.has(run.runId)
+            ? `${tokensByRun.get(run.runId) ?? 0} tokens`
+            : "tokens not reported";
+          const compactModel = fit(sanitizeText(run.model), COMPOSER_MODEL_CHIP_MAX);
           return {
             id: `${run.sessionId}:${run.runId}`,
             sessionId: run.sessionId,
             run,
-            label: `${stateIcon(run.state)} ${sanitizeText(run.state)} · ${sanitizeText(run.model)} · ${progress} · ${run.sessionId.slice(0, 8)}`,
+            label: `${stateIcon(run.state)} ${sanitizeText(run.state)} · ${compactModel} · ${tokens} · ${duration} · ${progress} · ${run.sessionId.slice(0, 8)}`,
             lines: [
               `${sessionIcons.run} Run: ${sanitizeText(run.runId)}`,
               `${stateIcon(run.state)} State: ${sanitizeText(run.state)} · provider status ${sanitizeText(run.status)}`,
@@ -6811,6 +6831,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
               `${sessionIcons.provider} Provider: ${sanitizeText(run.provider ?? "not reported")}`,
               `${sessionIcons.session} Conversation: ${run.sessionId}`,
               `${sessionIcons.usage} Progress: ${progress}`,
+              `${sessionIcons.tokens} Tokens: ${tokens}`,
               `${sessionIcons.tool} Tool steps: ${run.steps}`,
               `${sessionIcons.time} Duration: ${duration}`,
               `${sessionIcons.time} Started: ${sessionTimestamp(run.createdAt)}`,
@@ -6820,6 +6841,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
             ],
           };
         });
+    }
     if (this.tab === "documents")
       rows = this.workbench.documentsList().map((d) => ({
         id: `${d.sessionId}:${d.path}`,
@@ -10595,12 +10617,12 @@ ${(doc.content ?? "").slice(0, 2000)}`;
           : [
               `${getSymbols(this.themeConfig.symbolPreset).icons.run} RUNS · 0 recorded`,
               "",
-              "No run records are available in this workspace yet.",
+              "No runs in this conversation.",
               "Runs appear here after a conversation emits run events.",
               "",
               this.providerSummary(),
               "",
-              "Type to filter · /sessions opens conversation history",
+              "Type to filter · /sessions opens conversation history · Esc returns to Chat",
             ];
       const byState = new Map<string, number>();
       for (const run of runs)
@@ -10629,8 +10651,8 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         { motion: motionContext(this.frame) },
       );
       const progressSummary = progressValues.length
-        ? `Progress reported for ${progressValues.length}/${runs.length} runs · average ${Math.round(progressValues.reduce((sum, value) => sum + value, 0) / progressValues.length)}%`
-        : `Progress not reported for these ${runs.length} runs`;
+        ? `Progress reported for ${progressValues.length}/${runs.length} ${runs.length === 1 ? "run" : "runs"} · average ${Math.round(progressValues.reduce((sum, value) => sum + value, 0) / progressValues.length)}%`
+        : `Progress not reported for ${runs.length === 1 ? "this run" : `these ${runs.length} runs`}`;
       return [
         `${getSymbols(this.themeConfig.symbolPreset).icons.run} RUNS · ${runs.length} recorded · ${active} active · ${reconciliation} need reconciliation`,
         progressSummary,
@@ -10641,7 +10663,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         ...this.listRows(),
         "",
         "Type to filter · Up/Down selects · Enter inspects · /resume ID opens the conversation",
-        "Unknown outcomes stay marked for reconciliation; inspection does not change run state.",
+        "Esc returns to Chat · unknown outcomes stay marked for reconciliation; inspection does not change run state.",
       ];
     }
     if (this.tab === "documents" && !rows.length && !this.filter)
