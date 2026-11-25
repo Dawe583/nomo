@@ -621,6 +621,28 @@ test("the documents tab groups by folder and the arrows fold it", async (t) => {
   // feel like the flat list it replaced.
   assert.match(initial, /folders collapsed/);
 
+  // A relative document name that looks path-like is still only a managed
+  // document name. The panel never resolves it into or decorates it with a
+  // host filesystem path, and the byte count stays attached to the leaf.
+  await app.editDocument(
+    id,
+    {
+      path: "tmp/fake/passwd",
+      content: "x",
+      expectedRevision: null,
+    },
+    "tui-operator",
+  );
+  ui.choose("documents");
+  ui.items();
+  const pathLikeTree = ui.lines().join("\n");
+  assert.match(pathLikeTree, /tmp\//);
+  assert.match(pathLikeTree, /fake\//);
+  const pathLikeRow = ui.items().find((row) => row.path === "tmp/fake/passwd");
+  assert.match(pathLikeRow?.label ?? "", /tmp\/fake\/passwd\s+1 B/);
+  assert.ok(!pathLikeTree.includes(root), "the host temporary path never renders");
+  assert.ok(!(pathLikeRow?.label ?? "").includes(root), "the row never gains a host path");
+
   // The arrows fold and unfold rather than switching panels.
   const tree = ui.groupTree!;
   ui.groupTree = { ...tree, state: { ...tree.state, cursor: 0 } };

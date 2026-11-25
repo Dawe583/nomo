@@ -6877,7 +6877,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         id: `${d.sessionId}:${d.path}`,
         sessionId: d.sessionId,
         path: d.path,
-        label: `${ROW_ICONS.document} ${d.path}  ${d.bytes} B  ${d.sessionId.slice(0, 8)}`,
+        label: `${ROW_ICONS.document} ${sanitizeText(d.path)}  ${d.bytes} B  ${d.sessionId.slice(0, 8)}`,
         lines: json(d),
       }));
     if (this.tab === "ledger") {
@@ -10704,7 +10704,15 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       ];
     }
     if (this.tab === "documents" && !rows.length && !this.filter)
-      return ["DOCUMENT TREE", "No managed documents yet.", "Use /document PATH to inspect a saved workspace document."];
+      return [
+        "DOCUMENT TREE · 0 files",
+        "",
+        "No managed documents yet.",
+        "Managed documents are logical records, not host filesystem paths.",
+        "Use /document PATH to inspect a saved workspace document.",
+        "",
+        "Esc returns to Chat",
+      ];
     // Documents group by folder and conversations by state, for the same</path>
     // reason: a flat list of forty rows cannot be scanned, and a group the
     // operator does not care about should be one keystroke to hide rather
@@ -10730,7 +10738,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
           : "Every change has been decided: undone or kept.",
         "Type filters. Up/Down moves the tree cursor. Enter opens document details or toggles a folder. Home/End jump to the first/last row; PageUp/Down or Left/Right pages. /document path opens a document.",
       ];
-      const header = [`DOCUMENT TREE · ${rows.length} files`, ""];
+      const header = [`DOCUMENT TREE · ${rows.length} ${rows.length === 1 ? "file" : "files"}`, ""];
       return [
         ...header,
         ...renderTree(

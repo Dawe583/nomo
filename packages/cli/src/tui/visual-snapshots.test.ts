@@ -57,6 +57,7 @@ const CHILD_RUN_ID = "run-child";
 let visibleViews: readonly SessionView[] = [];
 let visibleConnectors: readonly Record<string, unknown>[] = [];
 let visibleChecks: readonly Check[] | null = null;
+let visibleDocuments: ReturnType<Workbench["documentsList"]> = [];
 
 const TERMINAL_SIZES = [
   [40, 12],
@@ -81,6 +82,8 @@ const SCENARIOS = [
   "mcp-one",
   "status-empty",
   "status-one",
+  "documents-empty",
+  "documents-one",
 ] as const;
 
 type Scenario = (typeof SCENARIOS)[number];
@@ -354,6 +357,20 @@ const STATUS_CHECKS: readonly Check[] = [
   },
 ];
 
+
+const DOCUMENT_FIXTURE = {
+  path: "release-plan.md",
+  revision: "rev-document",
+  bytes: 17,
+  updatedAt: at(5),
+  sessionId: PARENT_SESSION_ID,
+  workspace: `ws-${PARENT_SESSION_ID}`,
+};
+
+const DEFAULT_DOCUMENTS: ReturnType<Workbench["documentsList"]> = [
+  DOCUMENT_FIXTURE,
+];
+
 /**
  * Two held calls with no deadline. A deadline would be printed as a countdown
  * that moves every second, which is the one clock the approvals panel reads
@@ -515,7 +532,7 @@ async function loadSnapshotFile(): Promise<SnapshotFile> {
  * change a frame, so each one starts from the same panel state.
  */
 function resetPanel(ui: WorkspaceTui): void {
-  ui.tab = "chat";
+  ui.choose("chat");
   ui.detail = undefined;
   ui.confirmation = undefined;
   ui.palette = undefined;
@@ -534,6 +551,7 @@ function resetPanel(ui: WorkspaceTui): void {
   visibleViews = DEFAULT_VIEWS;
   visibleConnectors = DEFAULT_CONNECTORS;
   visibleChecks = null;
+  visibleDocuments = DEFAULT_DOCUMENTS;
 }
 
 function applyScenario(ui: WorkspaceTui, scenario: Scenario): void {
@@ -593,6 +611,14 @@ function applyScenario(ui: WorkspaceTui, scenario: Scenario): void {
     case "status-one":
       visibleChecks = STATUS_CHECKS;
       ui.choose("status");
+      return;
+    case "documents-empty":
+      visibleDocuments = [];
+      ui.choose("documents");
+      return;
+    case "documents-one":
+      visibleDocuments = DEFAULT_DOCUMENTS;
+      ui.choose("documents");
       return;
   }
 }
@@ -668,6 +694,7 @@ test("visual snapshots match the committed frame hashes", async (t) => {
   visibleViews = DEFAULT_VIEWS;
   visibleConnectors = DEFAULT_CONNECTORS;
   visibleChecks = null;
+  visibleDocuments = DEFAULT_DOCUMENTS;
   // The builtin tool registry is the real list; only the session lookup is
   // pinned, because no live session exists for these fixtures.
   const builtinTools = app.availableTools(undefined);
@@ -687,6 +714,27 @@ test("visual snapshots match the committed frame hashes", async (t) => {
     app,
     "connectionState",
     () => ({ connectors: [...visibleConnectors] }) as ReturnType<Workbench["connectionState"]>,
+  );
+  t.mock.method(app, "documentsList", () => [...visibleDocuments]);
+  t.mock.method(
+    app,
+    "workspace",
+    () =>
+      ({
+        version: 1,
+        files: { "release-plan.md": "x" },
+        operations: [
+          {
+            id: "op-document",
+            kind: "write",
+            path: "release-plan.md",
+            before: null,
+            after: "x",
+            at: at(5),
+            digest: "sha256:document",
+          },
+        ],
+      }) as ReturnType<Workbench["workspace"]>,
   );
 
   const ui = new WorkspaceTui(app, env);

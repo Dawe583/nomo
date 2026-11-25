@@ -332,6 +332,14 @@ path is shown as a document name only.
 
 **Verifier.** `node --test packages/cli/src/tui/*.test.ts`.
 
+**As built.** Document rows sanitize logical document names and keep byte
+counts attached. The empty state says that managed documents are logical
+records, not host filesystem paths, and keeps the Esc hint visible. Visual
+fixtures cover empty and one-document frames at five sizes as
+`documents-empty@*` and `documents-one@*`. A path-like relative document name
+is tested as a managed document name only, with no host path in the row or
+tree.
+
 ### T2.5. `usage` panel parity (1.0 h)
 
 **Files.** `workspace.ts`, `usage-visual.ts`, snapshots.

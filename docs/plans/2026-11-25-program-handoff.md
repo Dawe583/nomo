@@ -65,13 +65,13 @@ Last full local dry run was recorded in Q8 and merged to `main` as `96675914`.
 
 ## Next ready node
 
-Start T2.4, `documents` panel parity. Exact first action: open
-`docs/plans/2026-11-25-nomo-24h-program-detailed.md` section T2.4, then inspect
-the documents branch and row builder in `packages/cli/src/tui/workspace.ts` plus
-document tests. Implement managed document byte counts, explicit empty state,
-path-like document names without host paths, and width-safe visual fixtures.
+Start T2.5, `usage` panel parity. Exact first action: open
+`docs/plans/2026-11-25-nomo-24h-program-detailed.md` section T2.5, then inspect
+`packages/cli/src/tui/workspace.ts` and `packages/cli/src/tui/usage-visual.ts`.
+Implement measured token and cost rows, honest n/a for absent metrics, explicit
+empty state, and width-safe visual fixtures.
 
-After T2.4, finish T2.5, then T4, T5.x, T6, T7, T8,
+After T2.5, continue T4 panel navigation, then T4, T5.x, T6, T7, T8,
 T9 and T10 as the detailed program orders them. Do not start T11 unless the
 owner explicitly chooses the optional parity spike.
 
