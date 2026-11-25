@@ -66,8 +66,8 @@ Last full local dry run was recorded in Q8 and merged to `main` as `96675914`.
   not create a key.
 - G1 gradient training: gated on a trainable local model and GPU budget. Do not
   claim it exists.
-- G2 component-library parity: optional owner decision only, never default
-  without byte-for-byte parity.
+- G2 component-library parity: closed against Ink by the T11 byte-parity
+  experiment. Reopen only under the DECISIONS triggers, never as a default.
 - G3 paid benchmark: owner approval is present in-session, but no hosted model
   credential or concrete cost cap exists in this environment.
 - G4 release: owner approval is present in-session. A release still needs a
@@ -79,8 +79,9 @@ Last full local dry run was recorded in Q8 and merged to `main` as `96675914`.
 The original autonomous expansion backlog through Q13 is complete, H19 closed
 the reward-ingestion production gap, and Q17 repaired the scripts quality suite.
 H16 remains blocked on operator opt-in/review of a real-run corpus before
-freezing; H17 depends on H16 plus human labels. T11 is owner-approved as an
-optional spike but still must be removed unless the byte diff is empty.
+freezing; H17 depends on H16 plus human labels. T11 is complete as a rejected
+spike: Ink could not preserve even the exact input frame bytes because its
+renderer trims line endings and wraps width-padded rows.
 
 H20b implemented the first truthful attribution path: an explicit offline
 managed-workspace execution fixture, signed ingestion of attributed measurement

@@ -544,6 +544,14 @@ diff is not empty, remove the spike and record why.
 
 **Verifier.** byte diff against `visual-snapshots.json`.
 
+**As built.** Rejected and removed. The negative-control spike fed the exact
+current Help frame through Ink 8.0.0, so no layout mistake could explain the
+result. All five required hashes differed, all lines differed, trailing padding
+was missing, and the two wide sizes doubled row count through wrapping. Ink's
+renderer hard-codes `trimEnd()` per line, while the TUI contract requires every
+row padded to terminal width. The spike directory and temporary dependency
+links were removed; no production switch or package dependency was added.
+
 ### T12. Optional orphan verifier retirement (0.5 h)
 
 **Files.** `scripts/src/verify-opentui-terminal.py`.

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-25T20:24:05.619694Z",
+  "updatedAt": "2026-11-25T20:30:57.117490Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -2547,6 +2547,43 @@
       ],
       "stopCondition": "Stop if a newer verifier result contradicts the recorded state.",
       "completedAt": "2026-11-25T20:24:05.619694Z"
+    },
+    {
+      "id": "t11-ink-parity-spike",
+      "status": "done",
+      "owner": "devin-6293643153014f56bb088c9a71fde97a",
+      "dependsOn": [
+        "q19-bootstrap-handoff-refresh"
+      ],
+      "scope": [
+        "packages/cli/src/tui/spike/**",
+        "docs/DECISIONS.md",
+        "docs/plans/2026-11-25-nomo-24h-program-detailed.md",
+        "docs/plans/2026-11-25-program-handoff.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**",
+        "packages/cli/package.json",
+        "packages/cli/src/tui/workspace.ts"
+      ],
+      "acceptance": [
+        "render Help through Ink at five snapshot sizes and byte-compare with visual-snapshots.json",
+        "if diff is non-empty remove spike and record why",
+        "no production switch or package dependency is added"
+      ],
+      "verifier": [
+        "node packages/cli/src/tui/spike/ink-parity.mjs",
+        "node --test scripts/src/doc-truth.test.mjs"
+      ],
+      "evidence": [
+        "Temporary negative-control spike using Ink 8.0.0, React 19.3.1 and ink-testing-library 4.0.0 fed the exact current Help frame through Ink. Observed output: help@40x12 expected=26f463d780e4 actual=6d5ecf2865ba rows=12/12 changed-lines=12/12 missing-trailing-cells=246; help@52x16 expected=740fa5946860 actual=76ec83860ba8 rows=16/16 changed-lines=16/16 missing-trailing-cells=461; help@80x24 expected=2dab75f2392a actual=d276999b354e rows=24/24 changed-lines=24/24 missing-trailing-cells=1114; help@120x40 expected=9a3eac911b0e actual=6d42ba602fcb rows=80/40 changed-lines=40/40 missing-trailing-cells=2856; help@160x45 expected=cd7a1bbaa97c actual=f35e5bc839d4 rows=90/45 changed-lines=45/45 missing-trailing-cells=4894.",
+        "Structural cause observed in Ink 8.0.0 output.js: generated lines are returned through styledCharsToString(lineWithoutEmptyItems).trimEnd(), while the TUI frame contract requires width-padded rows. Because even exact input cannot round-trip, no layout implementation could produce byte parity through this renderer.",
+        "Post-experiment filesystem check: packages/cli/src/tui/spike removed; temporary node_modules/ink, react and ink-testing-library symlinks removed; packages/cli/package.json unchanged.",
+        "NO_COLOR=1 node --test scripts/src/doc-truth.test.mjs => exit 0; tests 9, pass 9, fail 0, duration_ms 155.108958"
+      ],
+      "stopCondition": "Stop if the only way to reach parity is rebaselining, changing the hand-rendered contract, patching Ink internals, or adding a dependency before an empty diff.",
+      "completedAt": "2026-11-25T20:30:57.117490Z"
     }
   ]
 }
