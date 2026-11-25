@@ -506,6 +506,12 @@ optimise. Without it, "learning" is a story.
 
 **Verifier.** `node scripts/src/harness-eval.mjs scripts/src/fixtures/harness-eval-v2.json -- <fixture runner>`.
 
+**As built.** 14 tasks (7 `train`, 7 `eval`); a refusal is the decision
+`{"tool":"none","class":"refused"}`. The freeze is a pinned sha256 in
+`scripts/src/harness-eval.test.mjs`. The fixture runner is
+`scripts/src/fixtures/harness-eval-oracle-runner.mjs`, which echoes the
+taskset's own expectation: its 14/14 proves the plumbing, not a model.
+
 ### H4. Reward replay (1 h)
 
 **Files.** New `scripts/src/harness-replay.mjs` + test.

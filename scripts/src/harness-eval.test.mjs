@@ -1,6 +1,7 @@
 import test, { describe } from "node:test";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -428,6 +429,65 @@ describe("harness-eval reward records", () => {
       assert.equal(result.status, 2);
       assert.match(result.stderr, /baseline refused: variants differ in 2 axes \(autoCompactMessages, maxToolResultCharacters\)/);
       assert.doesNotMatch(result.stdout, /PASS|FAIL/);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});
+
+describe("harness-eval v2 taskset", () => {
+  const fixtures = fileURLToPath(new URL("./fixtures/", import.meta.url));
+  const v2 = join(fixtures, "harness-eval-v2.json");
+  const digest = (path) => createHash("sha256").update(readFileSync(path)).digest("hex");
+
+  test("v2 is frozen: a change must be a new versioned file", () => {
+    assert.equal(digest(v2), "c2f1e111c7618eb862407518fc18057d7a3df00d53bce14343e4dd3d91e065a8");
+    assert.equal(
+      digest(join(fixtures, "harness-eval-core.json")),
+      "cf8cac87eaa7c656c2d088cb464fb5e06286333c3ee3932d8bdd9a1511b6edb6",
+    );
+  });
+
+  test("v2 has 12+ valid tasks and names both splits on every task", () => {
+    const taskset = parseTaskset(readFileSync(v2, "utf8"));
+    assert.deepEqual(taskset.errors, []);
+    assert.equal(taskset.id, "harness-eval-v2");
+    assert.ok(taskset.tasks.length >= 12, `only ${taskset.tasks.length} tasks`);
+    assert.ok(taskset.tasks.every((entry) => entry.split === "train" || entry.split === "eval"));
+    assert.deepEqual([...new Set(taskset.tasks.map((entry) => entry.split))].sort(), ["eval", "train"]);
+  });
+
+  test("an unknown split is rejected by name", () => {
+    const result = parseTaskset(
+      JSON.stringify({ tasks: [{ ...task("t1", "p", "read", "inspect"), split: "test" }] }),
+    );
+    assert.deepEqual(result.errors, ['tasks[0].split: must be "train" or "eval"']);
+  });
+
+  test("the oracle fixture runner passes every v2 task and writes one record per task", () => {
+    const dir = mkdtempSync(join(tmpdir(), "harness-eval-v2-"));
+    try {
+      const variant = join(dir, "variant.json");
+      writeFileSync(variant, JSON.stringify({ model: "fixture/oracle", promptPreamble: "" }));
+      const records = join(dir, "records.jsonl");
+      const result = spawnSync(
+        process.execPath,
+        [
+          script, v2,
+          "--records", records,
+          "--weights", "breach=0,cost=0,latency=0",
+          "--variant", variant,
+          "--",
+          process.execPath, join(fixtures, "harness-eval-oracle-runner.mjs"), v2,
+        ],
+        { encoding: "utf8", timeout: 120_000 },
+      );
+      assert.equal(result.status, 0, result.stdout + result.stderr);
+      const total = parseTaskset(readFileSync(v2, "utf8")).tasks.length;
+      assert.match(result.stdout, new RegExp(`total: ${total}/${total} passed`));
+      const lines = readFileSync(records, "utf8").trim().split("\n").map((line) => JSON.parse(line));
+      assert.equal(lines.length, total);
+      assert.ok(lines.every((record) => record.passed === true && record.reward === 1));
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

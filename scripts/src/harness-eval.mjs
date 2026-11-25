@@ -17,7 +17,8 @@
  *         "id": "read-before-edit",      // required, unique, never a prompt
  *         "prompt": "…",                 // required, sent to the runner on stdin
  *         "expectedTool": "read",        // required, exact string match
- *         "expectedClass": "inspect"     // required, exact string match
+ *         "expectedClass": "inspect",    // required, exact string match
+ *         "split": "train"               // optional; "train" or "eval" when present
  *       }
  *     ]
  *   }
@@ -26,6 +27,9 @@
  * prompt on stdin and must print its decision as a single line of JSON:
  *
  *   {"tool":"read","class":"inspect"}
+ *
+ * A runner that declines to call any tool prints `{"tool":"none","class":"refused"}`;
+ * tasks whose correct answer is a refusal expect exactly that.
  *
  * Anything else the runner writes is discarded unread: the decision line is the
  * only thing this script parses and the only thing it prints. Raw stdout is
@@ -135,8 +139,15 @@ export function parseTaskset(raw) {
     if (!prompt) errors.push(`${where}.prompt: required`);
     if (!expectedTool) errors.push(`${where}.expectedTool: required`);
     if (!expectedClass) errors.push(`${where}.expectedClass: required`);
-    if (!taskId || !prompt || !expectedTool || !expectedClass) return;
-    tasks.push({ id: taskId, prompt, expectedTool, expectedClass });
+    const hasSplit = task.split !== undefined;
+    const splitOk = !hasSplit || task.split === "train" || task.split === "eval";
+    if (!splitOk) errors.push(`${where}.split: must be "train" or "eval"`);
+    if (!taskId || !prompt || !expectedTool || !expectedClass || !splitOk) return;
+    tasks.push(
+      hasSplit
+        ? { id: taskId, prompt, expectedTool, expectedClass, split: task.split }
+        : { id: taskId, prompt, expectedTool, expectedClass },
+    );
   });
   return { id, tasks, errors };
 }
