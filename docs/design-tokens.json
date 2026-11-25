@@ -85,6 +85,20 @@
         "light": "#75509a",
         "dark": "#c4a9e2",
         "adjusted": "Apple has no semantic system colour for source-code punctuation, so this role carries the document's value and the Apple view derives from it. The value was measured against canvas and surface in both appearances rather than taken from a platform default."
+      },
+      "brandCoral": {
+        "system": "fixed brand artwork",
+        "light": "#ff705e",
+        "dark": "#ff705e",
+        "decorative": true,
+        "adjusted": "The coral cell is part of the fixed NOMO grid artwork. It never carries text or state, so it is decorative and keeps the same measured brand value in both appearances."
+      },
+      "brandTeal": {
+        "system": "fixed brand artwork",
+        "light": "#00a9bd",
+        "dark": "#00a9bd",
+        "decorative": true,
+        "adjusted": "The teal cell is part of the fixed NOMO grid artwork. It never carries text or state, so it is decorative and keeps the same measured brand value in both appearances."
       }
     },
     "shadow": {
