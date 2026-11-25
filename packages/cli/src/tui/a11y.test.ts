@@ -42,6 +42,7 @@ import {
   paletteFromCommands,
 } from "./palette.ts";
 import { detectCapabilities } from "./caps.ts";
+import { motionFrameAt, MOTION_TICK_MS } from "./motion.ts";
 import { stripAnsi, visibleLength } from "./layout.ts";
 import type { TerminalCapabilities } from "./types.ts";
 
@@ -812,6 +813,15 @@ test("the ASCII preset loses no word on any new surface", async (t) => {
       `${name} loses or gains a word in the ASCII preset`,
     );
   }
+});
+
+test("the motion budget advances one frame per 100 ms", () => {
+  assert.equal(MOTION_TICK_MS, 100);
+  assert.equal(motionFrameAt(0), 0);
+  assert.equal(motionFrameAt(99), 0);
+  assert.equal(motionFrameAt(100), 1);
+  assert.equal(motionFrameAt(199), 1);
+  assert.equal(motionFrameAt(200), 2);
 });
 
 test("reduced motion freezes the frame and keeps the text readable", async (t) => {

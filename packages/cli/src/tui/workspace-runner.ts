@@ -60,6 +60,7 @@ import {
   type MousePoint,
 } from "./mouse-selection.ts";
 import { sanitizeText, stripAnsi } from "./layout.ts";
+import { motionFrameAt, MOTION_TICK_MS } from "./motion.ts";
 import { dismissToast } from "./toast.ts";
 import { dataDir as productDataDir } from "../../../ledger/src/paths.ts";
 import { envValue } from "../../../ledger/src/env-compat.ts";
@@ -1334,7 +1335,7 @@ export async function runWorkspaceTui(
         now,
         frame:
           motion && ui.motionOverride !== false
-            ? Math.floor((now - startedAt) / 100)
+            ? motionFrameAt(now - startedAt)
             : 0,
         command: input.value,
         cursor: input.cursor,
@@ -3222,7 +3223,7 @@ export async function runWorkspaceTui(
       if (idleStep === lastIdlePetStep) return;
       lastIdlePetStep = idleStep;
       draw();
-    }, 100);
+    }, MOTION_TICK_MS);
     timer = setInterval(() => {
       if (refreshing || stopped || suspended) return;
       refreshing = true;
