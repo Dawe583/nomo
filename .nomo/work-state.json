@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-25T13:17:21Z",
+  "updatedAt": "2026-11-25T14:07:00Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -1388,6 +1388,36 @@
         "git diff --check observed exit 0 before the graph-only commit."
       ],
       "stopCondition": "Stop if completion uses a clock rather than run outcome, failure animates as an alarm, the sprite leaves 9x5, or the reaction costs a new row."
+    },
+    {
+      "id": "t5-2-second-blink-listening-pose",
+      "status": "done",
+      "owner": "devin-6293643153014f56bb088c9a71fde97a",
+      "dependsOn": [
+        "t5-1-pet-completed-run-reaction"
+      ],
+      "scope": [
+        "docs/plans/2026-11-25-nomo-24h-program-detailed.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "idle has a second blink rhythm",
+        "waiting listening pose is distinct in silhouette or posture",
+        "atlas cycle reflects the rhythms",
+        "every frame is a pure function of the counter"
+      ],
+      "verifier": [
+        "node --test packages/cli/src/tui/pet.test.ts"
+      ],
+      "evidence": [
+        "Source review: IDLE_RHYTHM is 24 and IDLE_CLOSED is steps 3, 9, 15 and 16, producing single blinks at 3/9 and a double blink at 15/16. waiting uses listening frames 12-15 of a 20-step cycle through listeningBody `^  _`, suppresses tail wag, and keeps only the two o/O eye frames. ATLAS_CYCLES encodes idle as 24 steps; atlas tests compare every atlas frame with petPose at frameForStep and verify cycle wrap plus reduced-motion frame zero.",
+        "NO_COLOR=1 node --test packages/cli/src/tui/pet.test.ts observed exit 0: tests 50, pass 50, fail 0, duration_ms 398.452208.",
+        "No source edit was needed because the requested behavior already existed; this node records verification rather than adding duplicate implementation."
+      ],
+      "stopCondition": "Stop if listening becomes a third blink/face, the atlas disagrees with the renderer, reduced motion starts mid-cycle, or a frame depends on wall-clock time."
     }
   ]
 }

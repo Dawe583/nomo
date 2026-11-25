@@ -422,6 +422,15 @@ update the atlas cycle; prove every frame is a pure function of the counter.
 
 **Verifier.** same.
 
+**As built.** The existing idle rhythm already carries two beats: single
+blinks at steps 3 and 9, then a double blink at 15 and 16 over a 24-frame
+cycle. Waiting has a distinct listening posture rather than another face: the
+near ear lifts, the mouth shifts off centre, the tail stops wagging and the
+eye row keeps only its calm o/O beat. Atlas cycle lengths include the 24-step
+idle rhythm and tests prove every atlas frame is exactly the pure renderer
+frame for its counter-derived step, including wrap and reduced-motion frame
+zero. No duplicate implementation was needed.
+
 ### T5.3. Motion budget (0.5 h)
 
 **Files.** `motion.ts`, `a11y.test.ts`.
