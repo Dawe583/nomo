@@ -1085,6 +1085,37 @@ export class WorkspaceInput {
 let petSplashShown = false;
 
 
+
+/** Whether the visible Chat surface owns keyboard input.
+ *
+ * Focus is derived from the surface, not remembered from the path that opened
+ * or closed it, so Escape, Tab, mouse and command-result closes converge on
+ * the same answer.
+ */
+export function workspaceChatComposerOwnsFocus(ui: WorkspaceTui): boolean {
+  return (
+    ui.tab === "chat" &&
+    !ui.detail &&
+    !ui.confirmation &&
+    !ui.settingsOpen &&
+    !ui.palette &&
+    !ui.modelPicker?.open &&
+    !ui.diffView &&
+    !ui.showingKeybindings &&
+    !ui.showingCheatSheet
+  );
+}
+
+/** Cycle the model picker panes in their keyboard tab order. */
+export function cycleModelPickerPane(ui: WorkspaceTui): void {
+  const picker = ui.modelPicker;
+  if (!picker?.open) return;
+  ui.modelPicker = {
+    ...picker,
+    focusedPane: picker.focusedPane === "providers" ? "models" : "providers",
+  };
+}
+
 /** The hit target under one-based terminal mouse coordinates. */
 export function workspaceHitAt(
   ui: WorkspaceTui,
@@ -1370,16 +1401,7 @@ export async function runWorkspaceTui(
   };
   // Keep input focus in sync with the same visible Chat surface the renderer
   // treats as the base view. Returning from a panel must restore typing.
-  const chatComposerOwnsFocus = () =>
-    ui.tab === "chat" &&
-    !ui.detail &&
-    !ui.confirmation &&
-    !ui.settingsOpen &&
-    !ui.palette &&
-    !ui.modelPicker?.open &&
-    !ui.diffView &&
-    !ui.showingKeybindings &&
-    !ui.showingCheatSheet;
+  const chatComposerOwnsFocus = () => workspaceChatComposerOwnsFocus(ui);
   const saveDraft = () => {
     if (!input.value.startsWith("/"))
       drafts[ui.sessionId ?? "new"] = input.value;
@@ -1745,11 +1767,7 @@ export async function runWorkspaceTui(
         return;
       }
       if (ui.modelPicker?.open && key.name === "tab") {
-        ui.modelPicker = {
-          ...ui.modelPicker,
-          focusedPane:
-            ui.modelPicker.focusedPane === "providers" ? "models" : "providers",
-        };
+        cycleModelPickerPane(ui);
         draw();
         return;
       }

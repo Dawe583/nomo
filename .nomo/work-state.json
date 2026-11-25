@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-25T14:14:47Z",
+  "updatedAt": "2026-11-25T14:17:58Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -1491,6 +1491,40 @@
         "git diff --check observed exit 0."
       ],
       "stopCondition": "Stop if a mouse event is decoded wrongly, wheel behavior diverges between runner and tests, hit targets survive a resize outside the frame, or a row kind cannot be resolved."
+    },
+    {
+      "id": "t7-keyboard-focus-parity",
+      "status": "done",
+      "owner": "devin-6293643153014f56bb088c9a71fde97a",
+      "dependsOn": [
+        "t6-mouse-parity"
+      ],
+      "scope": [
+        "packages/cli/src/tui/workspace-runner.ts",
+        "packages/cli/src/tui/workspace-input-parity.test.ts",
+        "docs/plans/2026-11-25-nomo-24h-program-detailed.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "tab order is explicit and state-preserving",
+        "Escape return restores Chat focus",
+        "no stale focus after panel closes through Escape, mouse or command result"
+      ],
+      "verifier": [
+        "node --test packages/cli/src/tui/workspace-input-parity.test.ts",
+        "pnpm --filter @nomo/cli typecheck",
+        "node --test --test-concurrency=1 packages/cli/src/tui/*.test.ts"
+      ],
+      "evidence": [
+        "NO_COLOR=1 node --test packages/cli/src/tui/workspace-input-parity.test.ts observed exit 0: tests 29, pass 29, fail 0, duration_ms 248.08075. The focus test covers Chat surface ownership before and after a panel plus detail, confirmation, settings, palette, diff, keybinding and cheat-sheet overlays. The picker test covers providers -> models -> providers while preserving query cursor and selection, and no focus after close.",
+        "pnpm --filter @nomo/cli typecheck observed exit 0.",
+        "NO_COLOR=1 node --test --test-concurrency=1 packages/cli/src/tui/*.test.ts observed exit 0: tests 542, pass 542, fail 0, duration_ms 36525.441291.",
+        "git diff --check observed exit 0."
+      ],
+      "stopCondition": "Stop if focus depends on the close path, Tab loses picker state, or an overlay close leaves input.editing true or false incorrectly."
     }
   ]
 }
