@@ -388,6 +388,15 @@ facts; never clip a word. Add one snapshot per screen at 40x12.
 
 **Verifier.** PTY matrix + snapshots.
 
+**As built.** Every workspace tab now has a narrow parity test at 40x12 and
+52x16 for screen title, primary fact, escape hint, exact row count and width.
+Snapshot coverage adds the missing policy, models and help screens and the
+52x16 size, so each screen has a 40x12 hash plus the wider matrix. At compact
+width the mode authority parenthesis is dropped whole as a secondary fact;
+it remains complete at wider sizes. The 52-column navigation hint uses a
+shorter whole-word form instead of clipping `Tab/Esc` mid-word. Chat is the
+home screen, so it has no escape-to-parent hint; every other tab does.
+
 ### T5.1. Pet completed-run reaction (1.0 h)
 
 **Files.** `pet.ts`, `pet.test.ts`.

@@ -14012,7 +14012,9 @@ export function renderWorkspace(
                     : "↑/↓ scroll · PgUp/PgDn page · Esc returns to Chat"
                   : width < 50
                     ? "↑↓ select · Enter open · Esc Chat"
-                    : "Type to filter · ↑/↓ select · Enter open · Tab/Esc Chat";
+                    : width < 64
+                      ? "Type filter · ↑↓ select · Enter open · Esc Chat"
+                      : "Type to filter · ↑/↓ select · Enter open · Tab/Esc Chat";
   const legendRows = chatBaseVisible
     ? []
     : modelPickerOpen
@@ -14817,8 +14819,10 @@ export function renderWorkspace(
     24,
   );
   segments.push(seg("model", modelShown, "accent"));
-  // Mode segment
-  const modeLabel = modeAuthorityLabel(ui.mode);
+  // Mode segment. Below the spacious breakpoint the enforcement note is a
+  // secondary fact, so it is dropped whole rather than clipped mid-word.
+  const modeLabel =
+    width < 64 ? `mode: ${ui.mode}` : modeAuthorityLabel(ui.mode);
   // The mode is the one setting that changes what a later key is allowed to
   // do, so it gets a pill: a shape the eye finds without reading it. The word
   // stays inside the pill, so the rails are never the only signal.
@@ -14952,7 +14956,7 @@ export function renderWorkspace(
     ? []
     : width < 50
       ? [
-          paintWithPalette(modeAuthorityLabel(ui.mode), "info", palette, caps),
+          paintWithPalette(modeLabel, "info", palette, caps),
           `${segments[0]} ${sep} ${compactContextOrQueue}`,
         ]
       : width < 100

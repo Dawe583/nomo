@@ -1120,8 +1120,12 @@ test("compact confirmation preview and decisions stay visible at 40x12", async (
       "the summary keeps the model",
     );
     assert.ok(
-      text.includes("mode: normal (local only, not enforce"),
-      "the summary keeps the local only authority label",
+      text.includes("mode: normal"),
+      "the summary keeps the compact whole mode label",
+    );
+    assert.ok(
+      !text.includes("not enforce."),
+      "the narrow summary drops the authority note instead of clipping it",
     );
     assert.equal(frame.split("\n").length, 16);
     assert.ok(frame.split("\n").every((line) => visibleLength(line) <= 40));

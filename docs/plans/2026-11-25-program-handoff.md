@@ -65,10 +65,10 @@ Last full local dry run was recorded in Q8 and merged to `main` as `96675914`.
 
 ## Next ready node
 
-Start T4, panel navigation. Exact first action: open
-`docs/plans/2026-11-25-nomo-24h-program-detailed.md` section T4, inspect keyboard
-and click navigation tests in `packages/cli/src/tui/`, then implement the
-smallest missing navigation parity slice with width-safe visual evidence.
+Start T5.1, pet completed-run reaction. Exact first action: open
+`docs/plans/2026-11-25-nomo-24h-program-detailed.md` section T5.1, inspect
+`packages/cli/src/tui/pet.ts` and `pet.test.ts`, then implement the settled-run
+pose as a pure counter/outcome function inside the existing 9x5 budget.
 
 After T2.5, continue T4 panel navigation, then T4, T5.x, T6, T7, T8,
 T9 and T10 as the detailed program orders them. Do not start T11 unless the

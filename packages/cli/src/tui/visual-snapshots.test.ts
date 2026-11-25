@@ -61,6 +61,7 @@ let visibleDocuments: ReturnType<Workbench["documentsList"]> = [];
 
 const TERMINAL_SIZES = [
   [40, 12],
+  [52, 16],
   [80, 24],
   [120, 40],
   [160, 45],
@@ -75,6 +76,9 @@ const SCENARIOS = [
   "usage",
   "usage-empty",
   "ledger",
+  "policy",
+  "models",
+  "help",
   "approvals",
   "settings",
   "runs-empty",
@@ -584,6 +588,15 @@ function applyScenario(ui: WorkspaceTui, scenario: Scenario): void {
       return;
     case "ledger":
       ui.choose("ledger");
+      return;
+    case "policy":
+      ui.choose("policy");
+      return;
+    case "models":
+      ui.choose("models");
+      return;
+    case "help":
+      ui.choose("help");
       return;
     case "approvals":
       ui.choose("approvals");
