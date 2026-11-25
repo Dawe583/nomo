@@ -22,6 +22,7 @@ import type { SessionView } from "../../../workbench/src/index.ts";
 import {
   PALETTE_PREVIEW_MIN_COLUMNS,
   TUI_COMMANDS,
+  WORKSPACE_TABS,
   WorkspaceTui,
   buildSessionBrowser,
   chatRows,
@@ -812,6 +813,46 @@ test("the ASCII preset loses no word on any new surface", async (t) => {
       unicode,
       `${name} loses or gains a word in the ASCII preset`,
     );
+  }
+});
+
+
+test("T2-T5 panel facts survive monochrome, ASCII and frozen motion", async (t) => {
+  const { app, root } = await fixture(t);
+  const facts: Record<string, readonly RegExp[]> = {
+    chat: [/Draft/],
+    sessions: [/SESSIONS · 0 conversations/, /Esc returns to Chat/],
+    runs: [/RUNS · 0 recorded/, /No runs in this conversation/, /Esc returns to Chat/],
+    documents: [/DOCUMENT TREE · 0 files/, /Esc returns to Chat/],
+    ledger: [/VERIFICATION · 1 · chain check/, /Esc returns to Chat/],
+    approvals: [/No approvals waiting\./, /Esc returns to Chat/],
+    policy: [/POLICY, 1 connectors: 1 confirmed/, /Esc returns to Chat/],
+    tools: [/r0 -- 5 tools/, /Esc returns to Chat/],
+    mcp: [/connected · NOMO documents/, /Esc returns to Chat/],
+    status: [/UNMEASURED · identity/, /Esc returns to Chat/],
+    models: [/MODELS · 0 configured providers/, /Esc returns to Chat/],
+    usage: [/No usage records yet\./, /tokens unmeasured/, /cost unmeasured/, /Esc returns to Chat/],
+    help: [/QUICK KEYS/, /Esc returns to Chat/],
+  };
+  for (const tab of WORKSPACE_TABS) {
+    const setup: Setup = (ui) => ui.choose(tab);
+    const mono = frame(app, root, setup, 120, 40);
+    const colored = frame(app, root, setup, 120, 40, { color: true });
+    const ascii = frame(app, root, setup, 120, 40, { preset: "ascii" });
+    assert.equal(
+      plain(colored),
+      mono,
+      `${tab} changes a fact when colour is the only difference`,
+    );
+    assert.deepEqual(
+      words(ascii),
+      words(mono),
+      `${tab} loses or gains a word in the ASCII preset`,
+    );
+    for (const fact of facts[tab] ?? []) {
+      assert.match(mono, fact, `${tab} monochrome lost ${fact}`);
+      assert.match(ascii, fact, `${tab} ASCII lost ${fact}`);
+    }
   }
 });
 

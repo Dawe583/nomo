@@ -509,6 +509,13 @@ motion carry the same words. Add one assertion per new fact.
 
 **Verifier.** `node --test packages/cli/src/tui/a11y.test.ts`.
 
+**As built.** Every workspace tab now has a monochrome, truecolour and ASCII
+frame comparison. Colour changes no text and the ASCII preset keeps the same
+word multiset. One assertion table covers the T2 through T5 facts visible on
+each panel: empty run/document/usage states, measured or unmeasured status,
+MCP connection, policy and tool counts, model inventory, escape hints and the
+Chat composer. The frozen-motion invariant remains separately asserted.
+
 ### T10. Performance re-measure (0.5 h)
 
 **Files.** `perf-budget.test.ts` (read-only unless it regresses).

@@ -9570,3 +9570,5 @@ Commit 3280db90942408dbc286a70f42124b4a3a33b277, subject Polish shared TUI motio
   Chat focus is now an exported visible-surface invariant used by the runner, so close path does not matter. Model picker Tab order is one exported providers/models transition preserving query, cursor and selection. Verified: input parity 29/29, CLI typecheck 0, wider TUI 542/542. [[NOMO TUI Control Center]]
 - 2026-11-25 · T8 snapshot and PTY refresh completed in the free parent session.
   Snapshot refresh rewrote the same 120 hashes with zero diff, so no unowned visual drift was accepted. The real PTY matrix exited 0 with every scenario at every size. Verified: snapshot tests 2/2, PTY 54 PASS lines. [[NOMO TUI Control Center]]
+- 2026-11-25 · T9 accessibility pass completed in the free parent session.
+  Every workspace tab now compares monochrome, truecolour and ASCII frames; colour changes no text and ASCII keeps the same word multiset. T2 through T5 panel facts have explicit assertions. Verified: a11y 14/14, CLI typecheck 0, wider TUI 543/543. [[NOMO TUI Control Center]]

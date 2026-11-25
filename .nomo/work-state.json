@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-25T14:27:06Z",
+  "updatedAt": "2026-11-25T14:28:57Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -1558,6 +1558,40 @@
         "python3 scripts/src/verify-tui-terminal.py observed exit 0. Exact final line: PASS: every scenario at every size. The matrix printed 54 PASS lines: 40 scenario size passes, 8 terminal restore passes, 5 double Ctrl+D restore passes and the final matrix pass."
       ],
       "stopCondition": "Stop if a snapshot hash changes without a named intentional frame change or any PTY scenario/size fails."
+    },
+    {
+      "id": "t9-accessibility-pass",
+      "status": "done",
+      "owner": "devin-6293643153014f56bb088c9a71fde97a",
+      "dependsOn": [
+        "t8-snapshot-pty-refresh"
+      ],
+      "scope": [
+        "packages/cli/src/tui/a11y.test.ts",
+        "docs/plans/2026-11-25-nomo-24h-program-detailed.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "monochrome carries the same words",
+        "ASCII preset carries the same words",
+        "frozen motion carries the same words",
+        "one assertion per T2-T5 fact"
+      ],
+      "verifier": [
+        "node --test packages/cli/src/tui/a11y.test.ts",
+        "pnpm --filter @nomo/cli typecheck",
+        "node --test --test-concurrency=1 packages/cli/src/tui/*.test.ts"
+      ],
+      "evidence": [
+        "NO_COLOR=1 node --test packages/cli/src/tui/a11y.test.ts observed exit 0: tests 14, pass 14, fail 0, duration_ms 430.089167.",
+        "pnpm --filter @nomo/cli typecheck observed exit 0.",
+        "NO_COLOR=1 node --test --test-concurrency=1 packages/cli/src/tui/*.test.ts observed exit 0: tests 543, pass 543, fail 0, duration_ms 60346.510209.",
+        "git diff --check observed exit 0."
+      ],
+      "stopCondition": "Stop if colour, ASCII symbols or motion become the only carrier of a fact, or a T2-T5 fact disappears from any variant."
     }
   ]
 }
