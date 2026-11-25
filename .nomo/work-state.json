@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-25T21:27:16.208093Z",
+  "updatedAt": "2026-11-25T21:59:12.529851Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -730,7 +730,7 @@
       "evidence": [
         "Implemented in the parent free-for-teams session after the delegated child was terminated before progress. docs/HARNESS-LEARNING.md now documents proposal -> approval -> activation -> measurement -> replay -> trend -> rollback, exact digest activation, one-command rollback, signed record names and commands.",
         "Manual read verifier: docs/HARNESS-LEARNING.md read end to end after writing; command usage checked against harness-replay and trajectory-export usage lines; exact reward, bandit, trajectory and rollback record names included; document states contextual bandit and policy search, not reinforcement learning.",
-        "rg -n \"[\u2014\u2013]\" docs/HARNESS-LEARNING.md observed exit 1 with no matches, so the file uses no em dash or en dash.",
+        "rg -n \"[—–]\" docs/HARNESS-LEARNING.md observed exit 1 with no matches, so the file uses no em dash or en dash.",
         "git diff --check observed exit 0."
       ],
       "stopCondition": "After one targeted repair, record the blocker and continue independent work."
@@ -759,7 +759,7 @@
       "evidence": [
         "Implemented in the parent free-for-teams session after the delegated child was terminated before progress. docs/HARNESS-LEARNING.md now explicitly separates bandit, policy search and gradient RL.",
         "Manual read verifier: docs/HARNESS-LEARNING.md read end to end after the R7 edit. It states that gradient RL updates model weights and that this repository has no trainable local model, GPU budget or training path, so no NOMO surface may claim RL training.",
-        "rg -n \"[\u2014\u2013]\" docs/HARNESS-LEARNING.md observed exit 1 with no matches.",
+        "rg -n \"[—–]\" docs/HARNESS-LEARNING.md observed exit 1 with no matches.",
         "git diff --check observed exit 0."
       ],
       "stopCondition": "After one targeted repair, record the blocker and continue independent work."
@@ -1349,7 +1349,7 @@
         "node --test --test-concurrency=1 packages/cli/src/tui/*.test.ts"
       ],
       "evidence": [
-        "Reviewed rendered empty workspace frames at 40x12 and 52x16 before accepting snapshots: titles, primary facts and Esc hints remain visible; compact mode reads the whole label `mode: normal`, and the 52-column hint reads `Type filter \u00b7 \u2191\u2193 select \u00b7 Enter open \u00b7 Esc Chat` without clipping Tab/Esc.",
+        "Reviewed rendered empty workspace frames at 40x12 and 52x16 before accepting snapshots: titles, primary facts and Esc hints remain visible; compact mode reads the whole label `mode: normal`, and the 52-column hint reads `Type filter · ↑↓ select · Enter open · Esc Chat` without clipping Tab/Esc.",
         "NO_COLOR=1 node --test packages/cli/src/tui/workspace-narrow.test.ts observed exit 0: tests 1, pass 1, fail 0, duration_ms 244.309208.",
         "NOMO_UPDATE_SNAPSHOTS=1 node --test packages/cli/src/tui/visual-snapshots.test.ts observed exit 0 and wrote 120 frame hashes.",
         "NO_COLOR=1 node --test packages/cli/src/tui/workspace.test.ts packages/cli/src/tui/workspace-parity.test.ts packages/cli/src/tui/workspace-narrow.test.ts observed exit 0: tests 231, pass 231, fail 0, duration_ms 12030.20725.",
@@ -1830,7 +1830,7 @@
         "node --test --test-concurrency=1 packages/cli/src/tui/*.test.ts"
       ],
       "evidence": [
-        "NO_COLOR=1 node --test packages/cli/src/tui/workspace-ledger-chain-status.test.ts observed exit 0: tests 1, pass 1, fail 0, duration_ms 305.074625. The row is allow:resolved \u00b7 [R1] postgres.row.update \u00b7 chain000 #1; filter r1 keeps one entry and filter r2 keeps zero.",
+        "NO_COLOR=1 node --test packages/cli/src/tui/workspace-ledger-chain-status.test.ts observed exit 0: tests 1, pass 1, fail 0, duration_ms 305.074625. The row is allow:resolved · [R1] postgres.row.update · chain000 #1; filter r1 keeps one entry and filter r2 keeps zero.",
         "pnpm --filter @nomo/cli typecheck observed exit 0.",
         "NO_COLOR=1 node --test packages/cli/src/tui/workspace-parity.test.ts packages/cli/src/tui/workspace-ledger-chain-status.test.ts packages/cli/src/tui/workspace-narrow.test.ts observed exit 0: tests 105, pass 105, fail 0, duration_ms 12418.632833.",
         "NOMO_UPDATE_SNAPSHOTS=1 NO_COLOR=1 node --test packages/cli/src/tui/visual-snapshots.test.ts observed exit 0: wrote 120 frame hashes, tests 2, pass 2, fail 0; only four intentional ledger hashes changed.",
@@ -2687,6 +2687,63 @@
       ],
       "stopCondition": "Stop if a remaining docs claim contradicts the implemented attribution boundary.",
       "completedAt": "2026-11-25T21:27:16.208093Z"
+    },
+    {
+      "id": "h20c3-production-eval-operator-surface",
+      "status": "done",
+      "owner": "devin-6293643153014f56bb088c9a71fde97a",
+      "dependsOn": [
+        "h20c2-threat-model-attribution-truth"
+      ],
+      "scope": [
+        "apps/control-plane/api/server.ts",
+        "apps/control-plane/api/server.test.ts",
+        "packages/cli/src/harness.ts",
+        "packages/cli/src/harness.test.ts",
+        "packages/cli/src/harness-run-eval.test.ts",
+        "packages/workbench/src/index.ts",
+        "docs/HARNESS-LEARNING.md",
+        "docs/HANDBOOK.md",
+        "docs/HANDBOOK.cs.md",
+        "docs/plans/2026-11-25-nomo-24h-program-detailed.md",
+        "docs/plans/2026-11-25-program-handoff.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "POST /api/sessions accepts optional bounded harnessEval identity and refuses malformed identity before creating a session",
+        "eval attribution participates in start idempotency identity, so one key cannot silently cover a different eval run",
+        "nomo harness run-eval starts one attributed production run, waits for terminal state, prints the state and returns nonzero outside idle",
+        "run-eval does not compute or ingest reward, so terminal idle is not represented as a passed eval",
+        "focused integration proves a real governed production run records harnessEval without prompt content"
+      ],
+      "verifier": [
+        "node --test packages/cli/src/harness.test.ts packages/cli/src/harness-run-eval.test.ts",
+        "node --test apps/control-plane/api/server.test.ts",
+        "node --test packages/workbench/src/reversal-record.test.ts packages/workbench/src/harness-eval-tools.test.ts scripts/src/trajectory-export.test.mjs scripts/src/doc-truth.test.mjs scripts/src/no-dash.test.mjs",
+        "node --test packages/workbench/src/gui.test.ts packages/workbench/src/lifecycle.test.ts",
+        "pnpm --filter @nomo/cli typecheck",
+        "pnpm --filter @nomo/workbench typecheck",
+        "pnpm exec tsc -p apps/control-plane/tsconfig.json",
+        "node --test scripts/src/*.test.mjs",
+        "git diff --check"
+      ],
+      "evidence": [
+        "CLI verifier: 26 tests, 26 pass, 0 fail, duration_ms 276.022208",
+        "control-plane API verifier: 49 tests, 49 pass, 0 fail, duration_ms 1285.569959",
+        "attribution and docs verifier: 27 tests, 27 pass, 0 fail, duration_ms 2415.904666",
+        "workbench lifecycle verifier: 18 tests, 18 pass, 0 fail, duration_ms 2114.910792",
+        "pnpm --filter @nomo/cli typecheck: exit 0",
+        "pnpm --filter @nomo/workbench typecheck: exit 0",
+        "pnpm exec tsc -p apps/control-plane/tsconfig.json: exit 0",
+        "wider scripts suite: 419 tests, 386 pass, 0 fail, cancelled 0, skipped 32, todo 1, duration_ms 9203.753375",
+        "git diff --check: exit 0",
+        "real governed integration: void_workspace_list chain records carry exactly harnessEval with caseId cli-production-eval, a sha256 variant id made of 64 lowercase a characters and run 1, while serialized records do not contain the prompt text"
+      ],
+      "stopCondition": "Stop if the surface would imply reward measurement, pass/fail judgment, fleet-wide effect or provider access beyond the explicitly invoked production run.",
+      "completedAt": "2026-11-25T21:59:12.529851Z"
     }
   ]
 }

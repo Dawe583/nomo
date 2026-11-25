@@ -1588,6 +1588,107 @@ test("the overview carries the fleet view fields for one registered agent", asyn
   }, { workbench });
 });
 
+
+test("session API binds bounded harnessEval identity and refuses malformed attribution", async (t) => {
+  const dataDir = await mkdtemp(join(tmpdir(), "nomo-api-eval-attribution-"));
+  const fetcher: typeof fetch = async (input) => {
+    const url = String(input instanceof Request ? input.url : input);
+    if (url === "https://fixture.test/v1/models")
+      return Response.json({ data: [{ id: "fixture-model" }] });
+    return Response.json({
+      choices: [{ message: { role: "assistant", content: "done" }, finish_reason: "stop" }],
+    });
+  };
+  const workbench = new Workbench({ NOMO_DATA_DIR: dataDir }, fetcher);
+  t.after(async () => {
+    await workbench.shutdown();
+    await rm(dataDir, { recursive: true, force: true });
+  });
+  await workbench.configure({
+    baseUrl: "https://fixture.test/v1",
+    apiKey: "fixture-private-key-never-expose",
+  });
+  const harnessEval = {
+    caseId: "api-case",
+    variantId: "sha256:" + "a".repeat(64),
+    run: 1,
+  };
+  await withServer("unused.jsonl", async (origin) => {
+    const post = (body: unknown) => fetch(`${origin}/api/sessions`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const createdResponse = await post({
+      prompt: "write the eval note",
+      model: "fixture-model",
+      harnessEval,
+    });
+    assert.equal(createdResponse.status, 201);
+    const created = await createdResponse.json() as {
+      session: { id: string; workspace: string };
+    };
+
+    await workbench.recordHarnessReward(created.session.id, {
+      caseId: harnessEval.caseId,
+      variantId: harnessEval.variantId,
+      baselineVariantId: null,
+      changedAxis: null,
+      passed: true,
+      guardrails: { deny_rate: 0 },
+      costUsd: 0.001,
+      latencyMs: 100,
+      approvalMs: "unmeasured",
+      weights: { breach: 0.5, cost: 1, latency: 0.001 },
+    });
+    const proof = await workbench.ledger(created.session.workspace);
+    const reward = proof?.entries
+      .map((entry) => entry.body as Record<string, unknown>)
+      .filter((body) => body.tool === "harness.reward")
+      .at(-1);
+    assert.ok(reward, "the attributed session must write the reward");
+    assert.deepEqual(reward.harnessEval, harnessEval);
+    assert.equal(reward.prompt, undefined);
+    assert.equal(reward.args, undefined);
+    assert.equal(reward.result, undefined);
+
+    const invalid = await post({
+      prompt: "write the eval note",
+      model: "fixture-model",
+      harnessEval: { ...harnessEval, run: 0 },
+    });
+    assert.equal(invalid.status, 400);
+    assert.deepEqual(await invalid.json(), { error: "invalid_session_eval" });
+
+    const keyed = await post({
+      prompt: "idempotent eval prompt",
+      model: "fixture-model",
+      idempotencyKey: "eval-key-1",
+      harnessEval,
+    });
+    assert.equal(keyed.status, 201);
+    const keyedSession = (await keyed.json() as { session: { id: string } }).session;
+    const same = await post({
+      prompt: "idempotent eval prompt",
+      model: "fixture-model",
+      idempotencyKey: "eval-key-1",
+      harnessEval,
+    });
+    assert.equal(same.status, 201);
+    assert.equal((await same.json() as { session: { id: string } }).session.id, keyedSession.id);
+    const changed = await post({
+      prompt: "idempotent eval prompt",
+      model: "fixture-model",
+      idempotencyKey: "eval-key-1",
+      harnessEval: { ...harnessEval, run: 2 },
+    });
+    assert.equal(changed.status, 409);
+    const changedBody = await changed.json() as { error?: string; message?: string };
+    assert.equal(changedBody.error, "session_not_started");
+    assert.match(changedBody.message ?? "", /Idempotency key belongs to another request/);
+  }, { workbench });
+});
+
 test("a decided approval records the approval event with its verdict", async () => {
   const decisions: Array<Record<string, unknown>> = [];
   await withServer("unused.jsonl", async (origin) => {

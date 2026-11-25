@@ -73,6 +73,7 @@ nomo harness rollback --session <id> <digest>
 nomo harness ratchet --session <id>
 nomo harness trend --session <id>
 nomo harness ingest-rewards --session <id> <records.jsonl>
+nomo harness run-eval --case <id> --variant <id> --run <n> --prompt <text>
 node scripts/src/harness-eval.mjs <taskset.json> -- <runner argv...>
 node scripts/src/harness-replay.mjs <chain.jsonl>
 node scripts/src/trajectory-export.mjs <chain.jsonl> [--out <path>]
@@ -100,6 +101,24 @@ Trajectory export groups those entries by case and variant, so interleaved
 production cases no longer depend on position. Entries without the field keep
 legacy positional treatment, malformed attribution refuses the affected
 export, and unrelated entries are counted as unattributed rather than guessed.
+
+Two operator surfaces expose the same path. `POST /api/sessions` accepts an
+optional `harnessEval` object with exactly `caseId`, `variantId` and `run`;
+malformed input is refused as `invalid_session_eval` before a session exists.
+The same object is part of idempotency identity, so one idempotency key cannot
+silently reuse a session for a different eval run. The CLI form is:
+
+```sh
+nomo harness run-eval --case <id> --variant <id> --run <n> \
+  (--prompt <text> | --prompt-file <path>) [--model <id>] [--agent <id>]
+```
+
+`run-eval` starts a real production model run and waits for its terminal
+state. It can incur provider cost only because the operator explicitly invoked
+that run. A non-idle terminal state is printed and returns a nonzero exit
+code; it is evidence to reconcile, not a success. The command does not compute
+or ingest a reward: task verification and reward measurement remain separate
+explicit steps, so an idle terminal state is not a passed eval by itself.
 
 ## Boundaries
 

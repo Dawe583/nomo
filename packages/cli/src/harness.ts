@@ -21,6 +21,7 @@ import { Workbench } from "../../workbench/src/index.ts";
 import type { HarnessSettings } from "../../workbench/src/harness-settings.ts";
 import {
   EVAL_TOOL_SCHEMA,
+  evalCaseAttribution,
   evalToolRecord,
   type EvalToolInput,
   type EvalToolRecord,
@@ -95,6 +96,18 @@ export type HarnessSurface = {
     input: EvalToolInput,
     provenance?: RewardIngestionProvenance,
   ): Promise<EvalToolRecord>;
+  /** Start one production run bound to eval case identity, when the surface
+   * owns runs. The command waits for settlement so its output is the observed
+   * terminal state rather than a claim that work merely began. Reward remains
+   * a separate measurement. */
+  startHarnessEval?(
+    prompt: string,
+    model: string | undefined,
+    attribution: unknown,
+    agent?: string,
+  ): Promise<{ readonly id: string; readonly status?: string }>;
+  /** Wait for one run, when the surface owns runs. */
+  waitForRun?(id: string): Promise<{ readonly status?: string }>;
   pendingApprovalsFor(
     sessionId: string,
   ): Promise<
@@ -158,6 +171,8 @@ const USAGE = [
   "  nomo harness reward --session <id> <caseId> show measured reward records",
   "  nomo harness ingest-rewards --session <id> <records.jsonl> append measured eval rewards",
   "  nomo harness ingest-eval --session <id> <measurements.jsonl> append rewards and attributed tool measurements",
+  "  nomo harness run-eval --case <id> --variant <id> --run <n> (--prompt <text> | --prompt-file <path>) [--model <id>] [--agent <id>]",
+  "                                      run one attributed production eval case and wait; provider cost may apply",
   "  nomo harness entries --session <id> show what the harness holds",
   "  nomo harness ratchet --session <id> measure the guardrails before and after the last refinement",
   "  nomo harness trend --session <id> show measured effects by activation",
@@ -171,6 +186,13 @@ type Flags = {
   readonly reason: string;
   readonly digest: string;
   readonly clear: boolean;
+  readonly caseId: string;
+  readonly variantId: string;
+  readonly run: string;
+  readonly model: string;
+  readonly agent: string;
+  readonly prompt: string;
+  readonly promptFile: string;
   readonly unknown: readonly string[];
 };
 
@@ -179,6 +201,13 @@ function parseFlags(args: readonly string[]): Flags {
   let reason = "";
   let digest = "";
   let clear = false;
+  let caseId = "";
+  let variantId = "";
+  let run = "";
+  let model = "";
+  let agent = "";
+  let prompt = "";
+  let promptFile = "";
   const unknown: string[] = [];
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index]!;
@@ -196,13 +225,48 @@ function parseFlags(args: readonly string[]): Flags {
       index += 1;
       continue;
     }
+    if (arg === "--case") {
+      caseId = args[index + 1] ?? "";
+      index += 1;
+      continue;
+    }
+    if (arg === "--variant") {
+      variantId = args[index + 1] ?? "";
+      index += 1;
+      continue;
+    }
+    if (arg === "--run") {
+      run = args[index + 1] ?? "";
+      index += 1;
+      continue;
+    }
+    if (arg === "--model") {
+      model = args[index + 1] ?? "";
+      index += 1;
+      continue;
+    }
+    if (arg === "--agent") {
+      agent = args[index + 1] ?? "";
+      index += 1;
+      continue;
+    }
+    if (arg === "--prompt") {
+      prompt = args[index + 1] ?? "";
+      index += 1;
+      continue;
+    }
+    if (arg === "--prompt-file") {
+      promptFile = args[index + 1] ?? "";
+      index += 1;
+      continue;
+    }
     if (arg.startsWith("-")) {
       unknown.push(arg);
       continue;
     }
     digest = arg;
   }
-  return { session, reason, digest, clear, unknown };
+  return { session, reason, digest, clear, caseId, variantId, run, model, agent, prompt, promptFile, unknown };
 }
 
 const REWARD_FIELDS = [
@@ -221,6 +285,7 @@ const REWARD_FIELDS = [
 ] as const;
 const REWARD_FIELD_SET = new Set<string>(REWARD_FIELDS);
 const MAX_REWARD_FILE_BYTES = 1024 * 1024;
+const MAX_EVAL_PROMPT_FILE_BYTES = 1024 * 1024;
 const REWARD_IDENTIFIER = /^[A-Za-z0-9_.:\/-]{1,128}$/;
 const rewardIdentifier = (value: unknown): value is string =>
   typeof value === "string" && REWARD_IDENTIFIER.test(value);
@@ -367,7 +432,7 @@ export async function runHarnessCommand(
     io.stdout(USAGE);
     return action ? 0 : 1;
   }
-  if (!["list", "entries", "approve", "reject", "rollback", "reward", "ingest-rewards", "ingest-eval", "model", "ratchet", "trend"].includes(action)) {
+  if (!["list", "entries", "approve", "reject", "rollback", "reward", "ingest-rewards", "ingest-eval", "run-eval", "model", "ratchet", "trend"].includes(action)) {
     io.stderr(`Unknown harness action ${action}.`);
     io.stderr(USAGE);
     return 1;
@@ -375,6 +440,14 @@ export async function runHarnessCommand(
   const flags = parseFlags(args.slice(1));
   if (flags.unknown.length) {
     io.stderr(`Unknown option ${flags.unknown[0]}.`);
+    io.stderr(USAGE);
+    return 1;
+  }
+  if (
+    action !== "run-eval" &&
+    (flags.caseId || flags.variantId || flags.run || flags.model || flags.agent || flags.prompt || flags.promptFile)
+  ) {
+    io.stderr("The eval case, variant, run, model, agent and prompt options belong to run-eval.");
     io.stderr(USAGE);
     return 1;
   }
@@ -417,12 +490,12 @@ export async function runHarnessCommand(
       return 1;
     }
   }
-  if (!flags.session && !["model", "ratchet"].includes(action)) {
+  if (!flags.session && !["model", "ratchet", "run-eval"].includes(action)) {
     io.stderr("The harness commands need a session: --session <id>.");
     io.stderr(USAGE);
     return 1;
   }
-  if (!["list", "entries", "model", "ratchet", "trend"].includes(action) && !flags.digest) {
+  if (!["list", "entries", "model", "ratchet", "trend", "run-eval"].includes(action) && !flags.digest) {
     io.stderr(
       `The ${action} action needs ${
         action === "reward"
@@ -454,6 +527,54 @@ export async function runHarnessCommand(
     ? await deps.workbench()
     : new Workbench(env);
   try {
+    if (action === "run-eval") {
+      if (flags.digest) {
+        io.stderr("run-eval takes its prompt through --prompt or --prompt-file, not a positional argument.");
+        return 1;
+      }
+      if (!workbench.startHarnessEval || !workbench.waitForRun) {
+        io.stderr("This harness surface cannot start measured production eval runs.");
+        return 1;
+      }
+      if ((flags.prompt ? 1 : 0) + (flags.promptFile ? 1 : 0) !== 1) {
+        io.stderr("run-eval needs exactly one prompt source: --prompt <text> or --prompt-file <path>.");
+        return 1;
+      }
+      let attribution;
+      try {
+        attribution = evalCaseAttribution({
+          caseId: flags.caseId,
+          variantId: flags.variantId,
+          run: flags.run === "" ? Number.NaN : Number(flags.run),
+        });
+      } catch (error) {
+        io.stderr(error instanceof Error ? error.message : String(error));
+        return 1;
+      }
+      let prompt = flags.prompt;
+      if (flags.promptFile) {
+        try {
+          const info = await stat(flags.promptFile);
+          if (!info.isFile() || info.size > MAX_EVAL_PROMPT_FILE_BYTES) {
+            io.stderr("Invalid prompt file: expected a text file of at most 1 MiB.");
+            return 1;
+          }
+          prompt = await readFile(flags.promptFile, "utf8");
+        } catch {
+          io.stderr("Prompt file could not be read.");
+          return 1;
+        }
+      }
+      const started = await workbench.startHarnessEval(
+        prompt,
+        flags.model || undefined,
+        attribution,
+        flags.agent || undefined,
+      );
+      const settled = await workbench.waitForRun(started.id);
+      io.stdout(`run-eval: session ${started.id} status ${settled.status ?? "unknown"}`);
+      return settled.status === "idle" ? 0 : 1;
+    }
     if (action === "ingest-rewards" || action === "ingest-eval") {
       if (!workbench.recordHarnessReward || (action === "ingest-eval" && !workbench.recordHarnessEvalTool)) {
         io.stderr("This harness surface cannot record measured eval evidence.");

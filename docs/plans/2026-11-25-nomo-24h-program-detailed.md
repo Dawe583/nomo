@@ -1104,6 +1104,17 @@ These are real, scoped follow-ups, not wishes. ~40 h.
     for explicitly started eval runs through bounded `harnessEval` identity on
     chain entries; only legacy entries without that identity keep positional
     grouping.
+16. **H20c Production eval attribution surface**: operator API and CLI access
+    to attributed production eval runs. 2 h.
+
+    As built: `POST /api/sessions` accepts optional `harnessEval` with exactly
+    case, variant and run, rejects malformed identity as
+    `invalid_session_eval` before session creation, and includes the validated
+    identity in idempotency identity. `nomo harness run-eval` starts one real
+    production run through `startHarnessEval`, waits for the terminal state,
+    prints it and returns nonzero outside `idle`. It can incur provider cost
+    only through that explicit invocation. It does not compute reward or claim
+    a passed eval by itself.
 
 ## 12. Program checklist
 

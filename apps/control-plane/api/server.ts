@@ -28,6 +28,7 @@ import {
   measureBoard,
   compareBoards,
 } from "../../../packages/workbench/src/harness-scores.ts";
+import { evalCaseAttribution } from "../../../packages/workbench/src/harness-eval-tools.ts";
 
 import { runReplayCommand } from "../../../packages/cli/src/replay.ts";
 import type { ReplayCommandOptions } from "../../../packages/cli/src/replay.ts";
@@ -1523,6 +1524,7 @@ async function route(
         background?: boolean;
         idempotencyKey?: string;
         images?: unknown;
+        harnessEval?: unknown;
       } | null;
       const images = parseSessionImages(body?.images);
       if (images === null)
@@ -1535,6 +1537,14 @@ async function route(
         (body.background !== undefined && typeof body.background !== "boolean")
       )
         return sendJson(response, 400, { error: "invalid_session" });
+      let harnessEval;
+      try {
+        harnessEval = body.harnessEval === undefined
+          ? undefined
+          : evalCaseAttribution(body.harnessEval);
+      } catch {
+        return sendJson(response, 400, { error: "invalid_session_eval" });
+      }
       try {
         const session = await options.workbench.start(
           body.prompt,
@@ -1544,6 +1554,7 @@ async function route(
           body.agent,
           body.background,
           images,
+          harnessEval,
         );
         options.fleetEvents.record({
           kind: "run_started",
