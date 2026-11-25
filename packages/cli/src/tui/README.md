@@ -24,6 +24,10 @@ made. An Ink skeleton was tried and removed the same day: it carried none of
 the rails, chips, pet, icons or panels, so it was visually worse than the
 renderer it would replace.
 
+[`DESIGN.md`](./DESIGN.md) is the one-page design contract every TUI change
+cites: rails, slot ladder, drop order, glyph presets, tones, borders, motion
+budget, pet grid and the 40-column rule.
+
 ## Visual contract
 
 The workspace frame uses box drawing with joined corners, one unbroken border
