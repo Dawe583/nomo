@@ -784,6 +784,8 @@ GPU budget or training path, so no NOMO surface may claim RL training.
 | id | steps | verifier | acceptance |
 |---|---|---|---|
 | Q1 | Node script: duplicate ids, dangling deps, done without evidence | node script | 0 / 0 / 0 |
+
+Q1 as built: `scripts/src/work-graph-check.mjs` checks duplicate ids, dangling dependencies and done nodes without evidence. It prints only counts and exits nonzero when any count is nonzero.
 | Q2 | Fix dead-path inventory and stale inventory named by doc-truth | `node --test scripts/src/doc-truth.test.mjs` | 9/9 |
 | Q3 | `test-fixture.ts`: wire it or allowlist with a reason | `node --test scripts/src/module-inventory.test.mjs` | 2/2 |
 | Q4 | Regenerate harness inventory | `node --test scripts/src/harness-inventory.test.mjs` | 20/20, empty gap list |

@@ -9507,3 +9507,7 @@ Commit 3280db90942408dbc286a70f42124b4a3a33b277, subject Polish shared TUI motio
   network and prints simple regret, samples per arm, spent and budgeted tokens, and stop reason. Observed table:
   compaction-75 170 samples, compaction-150 8 samples, regret=4.00, spentTokens=178000, stop=separated. Narrow test 2/2;
   harness eval/replay/simulation set 36/36. [[NOMO TUI Control Center]]
+- 2026-11-25 · Q1 graph validation completed in the free parent session.
+  `scripts/src/work-graph-check.mjs` now checks duplicate node ids, dangling dependencies and done nodes without
+  evidence. Observed verifier: `graph-check: duplicate ids 0 / dangling deps 0 / done without evidence 0`, exit 0.
+  [[NOMO TUI Control Center]]
