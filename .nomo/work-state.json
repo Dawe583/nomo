@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-25T22:09:32.911753Z",
+  "updatedAt": "2026-11-25T22:18:03.921071Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -2849,6 +2849,56 @@
       ],
       "stopCondition": "Stop if exposing the identity would require storing or returning prompt, arguments, results, document content or secrets.",
       "completedAt": "2026-11-25T22:09:32.911753Z"
+    },
+    {
+      "id": "h20c6-run-aware-trajectory-attribution",
+      "status": "done",
+      "owner": "devin-6293643153014f56bb088c9a71fde97a",
+      "dependsOn": [
+        "h20c5-eval-attribution-session-visibility"
+      ],
+      "scope": [
+        "scripts/src/trajectory-export.mjs",
+        "scripts/src/trajectory-export.test.mjs",
+        "packages/workbench/src/index.ts",
+        "packages/workbench/src/reversal-record.test.ts",
+        "docs/HARNESS-LEARNING.md",
+        "docs/THREAT-MODEL.md",
+        "docs/plans/2026-11-25-nomo-24h-program-detailed.md",
+        "docs/plans/2026-11-25-program-handoff.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "production trajectory attribution distinguishes repeated runs of the same case and variant when rewards carry harnessEval",
+        "an exact eval reward never adopts unrelated positional entries",
+        "a reward without run metadata cannot merge multiple pending runs",
+        "malformed or mismatched reward harnessEval is refused rather than guessed",
+        "Workbench refuses reward or eval-tool writes whose case identity contradicts the attributed session before they enter the chain",
+        "legacy positional and offline bare-file limits remain documented rather than hidden"
+      ],
+      "verifier": [
+        "node --test packages/workbench/src/reversal-record.test.ts packages/workbench/src/harness-eval-tools.test.ts scripts/src/trajectory-export.test.mjs scripts/src/doc-truth.test.mjs scripts/src/no-dash.test.mjs",
+        "node --test scripts/src/harness-*.test.mjs scripts/src/trajectory-export.test.mjs",
+        "pnpm --filter @nomo/workbench typecheck",
+        "pnpm --filter @nomo/cli typecheck",
+        "node --test scripts/src/*.test.mjs",
+        "git diff --check"
+      ],
+      "evidence": [
+        "focused verifier: 33 tests, 33 pass, 0 fail, duration_ms 2589.0295",
+        "harness plus trajectory verifier: 62 tests, 62 pass, 0 fail, duration_ms 4185.59275",
+        "pnpm --filter @nomo/workbench typecheck: exit 0",
+        "pnpm --filter @nomo/cli typecheck: exit 0",
+        "wider scripts suite: 424 tests, 391 pass, 0 fail, cancelled 0, skipped 32, todo 1, duration_ms 8104.045917",
+        "git diff --check: exit 0",
+        "trajectory tests: interleaved run 1 and run 2 of one case/variant export separate tool lists, exact eval reward with only legacy positional entries exports empty toolCalls, and ambiguous or mismatched reward attribution is refused",
+        "workbench test: mismatched reward and eval-tool writes reject before the chain entry count changes"
+      ],
+      "stopCondition": "Stop if exact run matching would break legacy positional exports without a documented compatibility path or would require prompt, arguments, results or document content.",
+      "completedAt": "2026-11-25T22:18:03.921071Z"
     }
   ]
 }

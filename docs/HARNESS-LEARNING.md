@@ -97,10 +97,15 @@ variant id and run number. Every ledger entry caused by that session carries
 only this bounded `harnessEval` identity; prompts, arguments, results and
 document contents never enter the attribution. Delegated subagent sessions
 inherit the same case identity because their work is part of the same run.
-Trajectory export groups those entries by case and variant, so interleaved
-production cases no longer depend on position. Entries without the field keep
-legacy positional treatment, malformed attribution refuses the affected
-export, and unrelated entries are counted as unattributed rather than guessed.
+Recording a reward or eval-tool measurement into that session is refused when
+its case identity does not match the session identity. Trajectory export
+groups attributed entries by exact case, variant and run when the reward
+carries `harnessEval`; interleaved repeated runs of one case do not merge.
+A reward without run metadata can adopt only one unambiguous pending run, and
+an exact eval reward never adopts unrelated positional entries. Entries
+without the field keep legacy positional treatment, malformed or mismatched
+attribution refuses the affected export, and unrelated entries are counted as
+unattributed rather than guessed.
 
 Two operator surfaces expose the same path. `POST /api/sessions` accepts an
 optional `harnessEval` object with exactly `caseId`, `variantId` and `run`;

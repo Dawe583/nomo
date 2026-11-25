@@ -12,7 +12,11 @@
  * misattributed. A reward ingested from a bare eval file carries no positional
  * tool attribution evidence, so it exports empty toolCalls unless explicit
  * `nomo.eval-tool.v1` measurements for the same case and ingestion file are
- * present. Direct bare files can match only by case, a documented limit.
+ * present. Production chain attribution matches the exact case, variant and
+ * run when the reward carries `harnessEval`. A reward without that metadata can
+ * adopt only one unambiguous pending run for the case and variant; repeated
+ * runs are refused rather than merged. Direct bare files can match only by
+ * case, a documented limit.
  *
  * Each record is built field by field from an allowlist: the tool name, its
  * reversibility class (`klass`) and whether it completed. Arguments, results,
@@ -93,13 +97,35 @@ export function exportTrajectories(raw) {
   let positionalPending = [];
   let pendingRefused = false;
   const evalPending = new Map();
+  const evalRuns = new Map();
   const attributed = new Map();
-  const evalKey = (caseId, variantId) => `${caseId}\u0000${variantId}`;
+  const evalPairKey = (caseId, variantId) => `${caseId}\u0000${variantId}`;
+  const evalRunKey = (caseId, variantId, run) => `${evalPairKey(caseId, variantId)}\u0000${run}`;
+  const addEvalPending = (key, pairKey, call) => {
+    const list = evalPending.get(key) ?? [];
+    list.push(call);
+    evalPending.set(key, list);
+    const runs = evalRuns.get(pairKey) ?? new Set();
+    runs.add(key);
+    evalRuns.set(pairKey, runs);
+  };
+  const takeEvalPending = (key, pairKey) => {
+    const list = evalPending.get(key);
+    if (list === undefined) return undefined;
+    evalPending.delete(key);
+    const runs = evalRuns.get(pairKey);
+    runs?.delete(key);
+    if (runs?.size === 0) evalRuns.delete(pairKey);
+    return list;
+  };
   const readEvalAttribution = (value) => {
     if (value === undefined) return { key: null };
     try {
       const parsed = evalCaseAttribution(value);
-      return { key: evalKey(parsed.caseId, parsed.variantId) };
+      return {
+        key: evalRunKey(parsed.caseId, parsed.variantId, parsed.run),
+        pairKey: evalPairKey(parsed.caseId, parsed.variantId),
+      };
     } catch {
       return { malformed: true };
     }
@@ -151,25 +177,47 @@ export function exportTrajectories(raw) {
         const key = attributionKey(record, record.caseId);
         const explicit = attributed.get(key);
         if (explicit !== undefined) attributed.delete(key);
-        const caseKey = evalKey(record.caseId, record.variantId);
-        const direct = evalPending.get(caseKey);
-        if (direct !== undefined) evalPending.delete(caseKey);
-        if (explicit !== undefined || ingestedBareEval) counts.unattributed += positionalPending.length;
-        trajectories.push({
-          schema: TRAJECTORY_SCHEMA,
-          caseId: record.caseId,
-          variantId: record.variantId,
-          toolCalls:
-            explicit !== undefined
-              ? explicit
-              : ingestedBareEval
-                ? []
-                : direct !== undefined
-                  ? direct
-                  : positionalPending,
-          verifier: { passed: record.passed, source: "harness-eval" },
-          reward: record.reward,
-        });
+        const rewardEval = readEvalAttribution(record.harnessEval);
+        let direct;
+        let attributionRefused = rewardEval.malformed === true;
+        if (
+          !attributionRefused &&
+          rewardEval.key &&
+          rewardEval.pairKey !== evalPairKey(record.caseId, record.variantId)
+        )
+          attributionRefused = true;
+        if (!attributionRefused && explicit === undefined && !ingestedBareEval) {
+          if (rewardEval.key) {
+            direct = takeEvalPending(rewardEval.key, rewardEval.pairKey);
+          } else {
+            const candidates = evalRuns.get(evalPairKey(record.caseId, record.variantId));
+            if (candidates?.size === 1)
+              direct = takeEvalPending([...candidates][0], evalPairKey(record.caseId, record.variantId));
+            else if (candidates && candidates.size > 1) attributionRefused = true;
+          }
+        }
+        if (explicit !== undefined || ingestedBareEval || rewardEval.key) counts.unattributed += positionalPending.length;
+        if (attributionRefused) {
+          counts.refused += 1;
+        } else {
+          trajectories.push({
+            schema: TRAJECTORY_SCHEMA,
+            caseId: record.caseId,
+            variantId: record.variantId,
+            toolCalls:
+              explicit !== undefined
+                ? explicit
+                : ingestedBareEval
+                  ? []
+                  : rewardEval.key
+                    ? (direct ?? [])
+                    : direct !== undefined
+                      ? direct
+                      : positionalPending,
+            verifier: { passed: record.passed, source: "harness-eval" },
+            reward: record.reward,
+          });
+        }
       }
       positionalPending = [];
       pendingRefused = false;
@@ -199,9 +247,7 @@ export function exportTrajectories(raw) {
       positionalPending.push(call);
       continue;
     }
-    const list = evalPending.get(evalContext.key) ?? [];
-    list.push(call);
-    evalPending.set(evalContext.key, list);
+    addEvalPending(evalContext.key, evalContext.pairKey, call);
   }
   counts.unattributed += positionalPending.length;
   for (const calls of evalPending.values()) counts.unattributed += calls.length;

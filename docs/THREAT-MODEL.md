@@ -714,8 +714,12 @@ The exporter has one integrity limitation by design: legacy direct
 production-chain entries without `harnessEval` are still segmented by position,
 so interleaved legacy cases in one chain can be misattributed. New production
 eval runs started through `startHarnessEval` bind validated case, variant and
-run identity into the signed entries they cause, and the exporter groups those
-entries without position. Explicit
+run identity into the signed entries they cause. Workbench refuses reward or
+eval-tool writes whose case identity contradicts the attributed session. The
+exporter groups those entries by exact case, variant and run when the reward
+carries `harnessEval`; a reward without run metadata cannot merge repeated
+pending runs, and mismatched or malformed reward attribution is refused.
+Explicit
 `nomo.eval-tool.v1` measurements are matched by case id and, after ingestion,
 by the signed ingestion file digest. They therefore override positional
 grouping for their own measurement. Rewards ingested from bare eval files
@@ -730,7 +734,7 @@ later case.
 
 | Risk | Current control | Residual truth |
 | --- | --- | --- |
-| Prompt or output leaks into trajectory export | Field allowlist plus sentinel tests | No leak observed; positional misattribution remains only for legacy entries without `harnessEval` |
+| Prompt or output leaks into trajectory export | Field allowlist plus sentinel tests | No leak observed; positional misattribution remains only for legacy entries without `harnessEval`, and ambiguous repeated-run attribution is refused |
 | Tampered reward is analyzed as valid | Exact recomputation, invalid case refused | Same-user chain/key compromise remains outside signature proof |
 | Eval fixture is mistaken for capability evidence | Runner and docs call it plumbing only | Human misuse of the number cannot be prevented mechanically |
 | Future model runner gains network or provider access | Not present; requires explicit approval | Must be reviewed as a new trust boundary before activation |

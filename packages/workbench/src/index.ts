@@ -4804,6 +4804,12 @@ export class Workbench {
     const session = this.sessions.get(sessionId);
     if (!session) throw new Error("Session not found.");
     const record = rewardRecord(input);
+    if (
+      session.evalAttribution &&
+      (record.caseId !== session.evalAttribution.caseId ||
+        record.variantId !== session.evalAttribution.variantId)
+    )
+      throw new Error("Reward case identity does not match the session harnessEval identity.");
     await this.commitWorkspace(
       session,
       this.workspace(sessionId),
@@ -4832,6 +4838,13 @@ export class Workbench {
     const session = this.sessions.get(sessionId);
     if (!session) throw new Error("Session not found.");
     const record = evalToolRecord(input);
+    if (
+      session.evalAttribution &&
+      (record.caseId !== session.evalAttribution.caseId ||
+        record.variantId !== session.evalAttribution.variantId ||
+        record.run !== session.evalAttribution.run)
+    )
+      throw new Error("Eval tool case identity does not match the session harnessEval identity.");
     await this.commitWorkspace(
       session,
       this.workspace(sessionId),

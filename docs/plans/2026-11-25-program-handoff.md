@@ -92,7 +92,9 @@ without `harnessEval` keep positional treatment. H20c exposes that path through
 CLI waits for terminal state, but reward computation and ingestion remain
 separate explicit measurement steps. H20c4 exposes `--idempotency-key` for
 safe exact retries of provider-costing eval runs. H20c5 exposes the bounded
-identity on session views and API reads, including after restart.
+identity on session views and API reads, including after restart. H20c6 makes
+trajectory attribution exact per run and refuses ambiguous or mismatched
+reward attribution rather than merging repeated runs.
 
 ## Do not do
 
