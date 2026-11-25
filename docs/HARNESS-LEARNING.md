@@ -185,6 +185,24 @@ for that measurement. If a direct attributed child workspace is unreadable, all 
 `unmeasured` rather than partial truth. Guardrail measurement is
 descriptive chain evidence, not a model capability proof.
 
+## Operator-scope promotions
+
+HP1 core is signed evidence, not prompt text copied across sessions.
+`Workbench.promoteHarnessProposal(sessionId, digest)` accepts only the full
+digest of an activation that is still operator approved in that session's
+verified chain and whose edits created or updated lesson entries. It writes
+`harness.promotion` with decision `promotion:activated` to the operator chain
+`nomo-operator-harness`. `demoteHarnessPromotion` appends
+`promotion:demoted`; a second demotion is refused.
+
+`operatorHarnessEntries()` replays only active promotions. Retrieval merges
+those entries into every conversation, while the conversation's own entry
+with the same id wins. The prompt labels promoted entries as operator
+approved for every conversation. They remain context only and never reach
+policy, permissions, or tool decisions. Mined observations and rules are not
+promoted as a class, and a tampered operator chain fails the same verified
+ledger read as any other workspace chain.
+
 ## Boundaries
 
 Activation never happens from a score alone. The operator types the full digest

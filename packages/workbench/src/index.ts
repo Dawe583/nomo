@@ -1228,6 +1228,74 @@ const UNAVAILABLE_PROVIDER_APIS = PROVIDER_MODEL_MANIFEST.apiTransports
  * blank because the key is missing, and it must not call those records
  * verified either.
  */
+export const OPERATOR_HARNESS_WORKSPACE = "nomo-operator-harness";
+
+type OperatorPromotion = {
+  readonly digest: string;
+  readonly entries: readonly HarnessEntry[];
+};
+
+function promotionEntry(value: unknown): HarnessEntry {
+  if (value === null || typeof value !== "object" || Array.isArray(value))
+    throw new TypeError("operator harness promotion entry is malformed");
+  const record = value as Record<string, unknown>;
+  const text = (key: string) => {
+    const item = record[key];
+    if (typeof item !== "string") throw new TypeError(`operator harness promotion entry has no ${key}`);
+    return item;
+  };
+  const seqs = Array.isArray(record.derivedFromSeq)
+    ? record.derivedFromSeq.filter((item): item is number => typeof item === "number" && Number.isInteger(item) && item >= 0)
+    : null;
+  if (seqs === null || seqs.length === 0)
+    throw new TypeError("operator harness promotion entry has no provenance");
+  if (typeof record.repeats !== "number" || !Number.isFinite(record.repeats) || record.repeats < 0)
+    throw new TypeError("operator harness promotion entry has invalid repeats");
+  if (record.kind !== "lesson")
+    throw new TypeError("operator harness promotion entry is not a lesson");
+  return {
+    id: text("id"),
+    kind: "lesson",
+    scope: "operator",
+    tool: typeof record.tool === "string" ? record.tool : "",
+    klass: typeof record.klass === "string" ? record.klass : "",
+    title: text("title"),
+    content: text("content"),
+    derivedFromSeq: seqs,
+    repeats: record.repeats,
+    createdAt: text("createdAt"),
+    decidedByOperator: true,
+    ...(typeof record.supersededBy === "string" ? { supersededBy: record.supersededBy } : {}),
+  };
+}
+
+function replayOperatorPromotions(entries: readonly JsonlEntry[]): Map<string, OperatorPromotion> {
+  const active = new Map<string, OperatorPromotion>();
+  for (const entry of entries) {
+    const body = entry.body as Record<string, unknown>;
+    const promotion = body.harnessPromotion;
+    if (promotion === null || typeof promotion !== "object" || Array.isArray(promotion)) continue;
+    const record = promotion as Record<string, unknown>;
+    const digest = record.digest;
+    if (typeof digest !== "string" || !/^[0-9a-f]{64}$/.test(digest))
+      throw new TypeError("operator harness promotion has no exact digest");
+    if (body.decision === "promotion:activated") {
+      if (!Array.isArray(record.entries) || record.entries.length === 0)
+        throw new TypeError("operator harness promotion carries no entries");
+      active.set(digest, {
+        digest,
+        entries: record.entries.map((item) => promotionEntry(item)),
+      });
+      continue;
+    }
+    if (body.decision === "promotion:demoted") {
+      active.delete(digest);
+      continue;
+    }
+  }
+  return active;
+}
+
 export type WorkspaceLedgerStatus = {
   readonly entries: readonly JsonlEntry[];
   readonly records: readonly LedgerRecordVerification[];
@@ -6634,17 +6702,21 @@ export class Workbench {
     const shared = this.sharedLearningWorkspaces().filter(
       (name) => name !== workspace,
     );
+    const operatorEntries = await this.operatorHarnessEntries();
     // A brand-new session's own chain cannot hold an entry yet (mining runs
-    // after dispatch), so with no shared scope there is nothing to read. The
-    // fast path matters: an extra await before the first provider call widens
-    // the window in which a Stop can arrive before the run registers.
-    if (firstTurn && shared.length === 0) return [];
+    // after dispatch), so with no shared or operator scope there is nothing
+    // to read. The fast path matters: an extra await before the first
+    // provider call widens the window in which a Stop can arrive before the
+    // run registers.
+    if (firstTurn && shared.length === 0 && operatorEntries.length === 0) return [];
     const entries = await this.harnessEntries(workspace);
-    if (shared.length === 0) return entries;
-    const byId = new Map(entries.map((entry) => [entry.id, entry]));
+    const byId = new Map(operatorEntries.map((entry) => [entry.id, entry]));
     for (const name of shared)
       for (const entry of await this.harnessEntries(name))
         if (!byId.has(entry.id)) byId.set(entry.id, entry);
+    // The conversation's own entry wins over a promoted entry with the same
+    // id: the local chain is the narrower and newer statement.
+    for (const entry of entries) byId.set(entry.id, entry);
     return [...byId.values()];
   }
 
@@ -6682,6 +6754,104 @@ export class Workbench {
     for (const entry of overrides)
       byId.set(entry.id, approvedByOperator ? { ...entry, decidedByOperator: true } : entry);
     return [...byId.values()];
+  }
+
+  /** Active operator-scope harness entries, replayed from the verified operator chain. */
+  async operatorHarnessEntries(): Promise<HarnessEntry[]> {
+    const proof = await this.ledger(OPERATOR_HARNESS_WORKSPACE);
+    if (!proof) return [];
+    return [...replayOperatorPromotions(proof.entries).values()].flatMap((promotion) => [...promotion.entries]);
+  }
+
+  private async commitOperatorHarness(
+    args: unknown,
+    decision: "promotion:activated" | "promotion:demoted",
+    harnessPromotion: Record<string, unknown>,
+  ) {
+    const state = this.documents[OPERATOR_HARNESS_WORKSPACE] ?? createWorkspace();
+    this.documents[OPERATOR_HARNESS_WORKSPACE] ??= state;
+    await this.commitWorkspaceEntry(
+      OPERATOR_HARNESS_WORKSPACE,
+      state,
+      "harness.promotion",
+      args,
+      decision,
+      undefined,
+      { by: "operator" },
+      { harnessPromotion },
+    );
+  }
+
+  /** Promote the entries of one activated operator-approved refinement into every conversation. */
+  async promoteHarnessProposal(sessionId: string, digest: string): Promise<{ entries: number }> {
+    const session = this.sessions.get(sessionId);
+    if (!session || session.view.id !== sessionId) throw new Error("Session not found.");
+    this.assertNormalMutation("harness promotion");
+    if (!/^[0-9a-f]{64}$/.test(digest)) throw new Error("Harness promotion needs the full activation digest.");
+    return this.locked(async () => {
+      const workspace = session.view.workspace;
+      const proof = await this.ledger(workspace);
+      if (!proof) throw new Error("No activated refinement matches that digest.");
+      let activation: { readonly seq: number; readonly body: Record<string, unknown> } | undefined;
+      for (const entry of proof.entries) {
+        const body = entry.body as Record<string, unknown>;
+        const refinement = body.harnessRefinement;
+        if (
+          body.decision === "proposal:activated" &&
+          refinement !== null &&
+          typeof refinement === "object" &&
+          !Array.isArray(refinement) &&
+          (refinement as Record<string, unknown>).digest === digest
+        )
+          activation = { seq: entry.seq, body };
+        if (
+          body.decision === "refinement:rolled-back" &&
+          refinement !== null &&
+          typeof refinement === "object" &&
+          !Array.isArray(refinement) &&
+          (refinement as Record<string, unknown>).rolledBackDigest === digest
+        )
+          throw new Error("That refinement was rolled back, so its entries are not still operator approved.");
+      }
+      if (!activation) throw new Error("No activated refinement matches that digest.");
+      const refinement = activation.body.harnessRefinement as Record<string, unknown>;
+      if (refinement.approvedBy !== "operator")
+        throw new Error("Only an operator-approved activation can be promoted.");
+      if (!Array.isArray(refinement.overrides) || refinement.overrides.length === 0)
+        throw new Error("That activation created or updated no promotable harness entry.");
+      const entries = refinement.overrides.map((item) => promotionEntry(item));
+      if (entries.some((entry) => entry.kind !== "lesson"))
+        throw new Error("Only harness lessons can be promoted; mined observations and rules stay in their conversation chain.");
+      if (secretLikeText(JSON.stringify(entries), this.knownSecretValues()))
+        throw new Error("Harness promotion contains secret-like content and was not recorded.");
+      const operatorProof = await this.ledger(OPERATOR_HARNESS_WORKSPACE);
+      const active = replayOperatorPromotions(operatorProof?.entries ?? []);
+      if (active.has(digest)) throw new Error("That refinement is already promoted.");
+      await this.commitOperatorHarness(
+        { digest },
+        "promotion:activated",
+        {
+          digest,
+          sourceWorkspace: workspace,
+          sourceDigest: digest,
+          activationSeq: activation.seq,
+          entries,
+        },
+      );
+      return { entries: entries.length };
+    });
+  }
+
+  /** End one active operator-scope promotion. */
+  async demoteHarnessPromotion(digest: string): Promise<void> {
+    this.assertNormalMutation("harness demotion");
+    if (!/^[0-9a-f]{64}$/.test(digest)) throw new Error("Harness demotion needs the full activation digest.");
+    return this.locked(async () => {
+      const proof = await this.ledger(OPERATOR_HARNESS_WORKSPACE);
+      const active = replayOperatorPromotions(proof?.entries ?? []);
+      if (!active.has(digest)) throw new Error("No active harness promotion matches that digest.");
+      await this.commitOperatorHarness({ digest }, "promotion:demoted", { digest });
+    });
   }
 
   async promotedAgentProfiles(workspace: string): Promise<AgentProfile[]> {

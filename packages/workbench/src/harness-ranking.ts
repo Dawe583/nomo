@@ -538,13 +538,21 @@ export function resetPromptBuildRecords(): void {
 export function formatForPrompt(ranked: readonly RankedEntry[], at: string): string {
   if (ranked.length === 0) return "";
   const line = (row: RankedEntry) => formatLines([row])[0]!;
-  const approved = ranked.filter((row) => row.entry.decidedByOperator);
-  const mined = ranked.filter((row) => !row.entry.decidedByOperator);
+  const operator = ranked.filter((row) => row.entry.scope === "operator");
+  const approved = ranked.filter((row) => row.entry.scope !== "operator" && row.entry.decidedByOperator);
+  const mined = ranked.filter((row) => row.entry.scope !== "operator" && !row.entry.decidedByOperator);
   // Each section header sits directly above its own entries. Emitting both
   // headers as a group first would leave a reader, including the model , 
   // unable to tell which line a claim applied to, which is the same defect as
   // having one claim for both.
   const lines = [`NOMO learned-entry digest, ${at}.`];
+  if (operator.length > 0)
+    lines.push(
+      "Operator-approved instructions for every conversation. An operator read",
+      "this exact text, approved it by digest, and promoted it across conversations.",
+      "It still changes no policy: no entry in this block reaches a decision.",
+      ...operator.map(line),
+    );
   if (approved.length > 0)
     lines.push(
       "Operator-approved instructions. An operator read this exact text and",

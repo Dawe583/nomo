@@ -76,7 +76,7 @@ export type HarnessKind = (typeof HARNESS_KINDS)[number];
  * `workspace` entries are derived from the chain and therefore survive a
  * restart, which is not the same as being promoted: nothing here writes.
  */
-export type HarnessScope = "session" | "workspace";
+export type HarnessScope = "session" | "workspace" | "operator";
 
 export type HarnessEntry = {
   readonly id: string;

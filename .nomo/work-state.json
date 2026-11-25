@@ -730,7 +730,7 @@
       "evidence": [
         "Implemented in the parent free-for-teams session after the delegated child was terminated before progress. docs/HARNESS-LEARNING.md now documents proposal -> approval -> activation -> measurement -> replay -> trend -> rollback, exact digest activation, one-command rollback, signed record names and commands.",
         "Manual read verifier: docs/HARNESS-LEARNING.md read end to end after writing; command usage checked against harness-replay and trajectory-export usage lines; exact reward, bandit, trajectory and rollback record names included; document states contextual bandit and policy search, not reinforcement learning.",
-        "rg -n \"[—–]\" docs/HARNESS-LEARNING.md observed exit 1 with no matches, so the file uses no em dash or en dash.",
+        "rg -n \"[\u2014\u2013]\" docs/HARNESS-LEARNING.md observed exit 1 with no matches, so the file uses no em dash or en dash.",
         "git diff --check observed exit 0."
       ],
       "stopCondition": "After one targeted repair, record the blocker and continue independent work."
@@ -759,7 +759,7 @@
       "evidence": [
         "Implemented in the parent free-for-teams session after the delegated child was terminated before progress. docs/HARNESS-LEARNING.md now explicitly separates bandit, policy search and gradient RL.",
         "Manual read verifier: docs/HARNESS-LEARNING.md read end to end after the R7 edit. It states that gradient RL updates model weights and that this repository has no trainable local model, GPU budget or training path, so no NOMO surface may claim RL training.",
-        "rg -n \"[—–]\" docs/HARNESS-LEARNING.md observed exit 1 with no matches.",
+        "rg -n \"[\u2014\u2013]\" docs/HARNESS-LEARNING.md observed exit 1 with no matches.",
         "git diff --check observed exit 0."
       ],
       "stopCondition": "After one targeted repair, record the blocker and continue independent work."
@@ -1349,7 +1349,7 @@
         "node --test --test-concurrency=1 packages/cli/src/tui/*.test.ts"
       ],
       "evidence": [
-        "Reviewed rendered empty workspace frames at 40x12 and 52x16 before accepting snapshots: titles, primary facts and Esc hints remain visible; compact mode reads the whole label `mode: normal`, and the 52-column hint reads `Type filter · ↑↓ select · Enter open · Esc Chat` without clipping Tab/Esc.",
+        "Reviewed rendered empty workspace frames at 40x12 and 52x16 before accepting snapshots: titles, primary facts and Esc hints remain visible; compact mode reads the whole label `mode: normal`, and the 52-column hint reads `Type filter \u00b7 \u2191\u2193 select \u00b7 Enter open \u00b7 Esc Chat` without clipping Tab/Esc.",
         "NO_COLOR=1 node --test packages/cli/src/tui/workspace-narrow.test.ts observed exit 0: tests 1, pass 1, fail 0, duration_ms 244.309208.",
         "NOMO_UPDATE_SNAPSHOTS=1 node --test packages/cli/src/tui/visual-snapshots.test.ts observed exit 0 and wrote 120 frame hashes.",
         "NO_COLOR=1 node --test packages/cli/src/tui/workspace.test.ts packages/cli/src/tui/workspace-parity.test.ts packages/cli/src/tui/workspace-narrow.test.ts observed exit 0: tests 231, pass 231, fail 0, duration_ms 12030.20725.",
@@ -1830,7 +1830,7 @@
         "node --test --test-concurrency=1 packages/cli/src/tui/*.test.ts"
       ],
       "evidence": [
-        "NO_COLOR=1 node --test packages/cli/src/tui/workspace-ledger-chain-status.test.ts observed exit 0: tests 1, pass 1, fail 0, duration_ms 305.074625. The row is allow:resolved · [R1] postgres.row.update · chain000 #1; filter r1 keeps one entry and filter r2 keeps zero.",
+        "NO_COLOR=1 node --test packages/cli/src/tui/workspace-ledger-chain-status.test.ts observed exit 0: tests 1, pass 1, fail 0, duration_ms 305.074625. The row is allow:resolved \u00b7 [R1] postgres.row.update \u00b7 chain000 #1; filter r1 keeps one entry and filter r2 keeps zero.",
         "pnpm --filter @nomo/cli typecheck observed exit 0.",
         "NO_COLOR=1 node --test packages/cli/src/tui/workspace-parity.test.ts packages/cli/src/tui/workspace-ledger-chain-status.test.ts packages/cli/src/tui/workspace-narrow.test.ts observed exit 0: tests 105, pass 105, fail 0, duration_ms 12418.632833.",
         "NOMO_UPDATE_SNAPSHOTS=1 NO_COLOR=1 node --test packages/cli/src/tui/visual-snapshots.test.ts observed exit 0: wrote 120 frame hashes, tests 2, pass 2, fail 0; only four intentional ledger hashes changed.",
@@ -3346,6 +3346,47 @@
       ],
       "stopCondition": "Stop if reporting would sample a treatment, approve guardrail exploration, train a model, deploy an arm, or turn empty cells into zero.",
       "completedAt": "2026-11-25T23:20:52.738841Z"
+    },
+    {
+      "id": "hp1a-operator-scope-core",
+      "status": "done",
+      "owner": "devin-6293643153014f56bb088c9a71fde97a",
+      "dependsOn": [
+        "h6-trend-report"
+      ],
+      "scope": [
+        "packages/workbench/src/index.ts",
+        "packages/workbench/src/learned-harness.ts",
+        "packages/workbench/src/harness-ranking.ts",
+        "packages/workbench/src/operator-harness.test.ts",
+        "docs/HARNESS-LEARNING.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "one signed operator chain nomo-operator-harness records promotion activation and demotion",
+        "promotion accepts only a full digest of an activated operator-approved refinement whose entries remain active",
+        "promotion entries are lesson entries with provenance and secret scanning",
+        "operator entries replay across restart and merge into retrieval for every conversation",
+        "a conversation entry with the same id wins over a promoted entry",
+        "demotion removes the entries and cannot be repeated",
+        "rolled back or merely pending refinements cannot be promoted"
+      ],
+      "verifier": [
+        "node --experimental-strip-types --test packages/workbench/src/operator-harness.test.ts packages/workbench/src/harness-ranking.test.ts packages/workbench/src/harness-retrieval-wiring.test.ts packages/workbench/src/harness-refinement-ledger.test.ts",
+        "pnpm --filter @nomo/workbench typecheck",
+        "git diff --check"
+      ],
+      "evidence": [
+        "focused operator/retrieval/refinement verifier: 84 tests, 84 pass, 0 fail, cancelled 0, skipped 0, todo 0, duration_ms 12212.105041",
+        "pnpm --filter @nomo/workbench typecheck: exit 0",
+        "git diff --check: exit 0",
+        "behaviour evidence: a promoted approved entry reached a new conversation prompt with the operator-scope section, demotion removed it, rollback blocked promotion, restart replayed the operator chain, and repeated demotion was refused"
+      ],
+      "stopCondition": "Stop if promotion would copy prompt text without signed evidence, promote mined rules as operator instructions, change policy or permissions, or fabricate recovery from a tampered operator chain.",
+      "completedAt": "2026-11-26T00:55:00Z"
     }
   ]
 }
