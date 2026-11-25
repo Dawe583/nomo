@@ -300,6 +300,12 @@ state is a word, not a colour.
 
 **Verifier.** `node --test packages/cli/src/tui/workspace-mcp.test.ts`.
 
+**As built.** MCP rows now carry the last measured contact state as the word
+`connected`, `error` or `unknown`, plus the tool count. Consent remains a
+separate detail fact. A failed probe records only the outcome, never error
+text or catalog data, and the outcome survives restart. Empty and one-server
+visual fixtures render at five sizes as `mcp-empty@*` and `mcp-one@*`.
+
 ### T2.3. `status` panel parity (1.5 h)
 
 **Files.** `workspace.ts`, `health.ts`, snapshots.

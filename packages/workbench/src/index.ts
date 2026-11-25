@@ -636,6 +636,8 @@ type Connector = McpConfig & {
   name: string;
   tools: McpTool[];
   consentState: "staged" | "probed" | "confirmed";
+  /** Last measured probe outcome. Absent means no completed probe is recorded. */
+  lastProbeOutcome?: "success" | "error";
   runtimeTokenProviderRequired?: true;
 };
 function persistedConnector<T extends McpConfig>(
@@ -5797,6 +5799,7 @@ export class Workbench {
         name: input.name?.trim().slice(0, 80) || new URL(url).hostname,
         tools: [],
         consentState: "staged",
+        lastProbeOutcome: undefined,
       };
       this.connectors.push(connector);
       this.persist();
@@ -5854,16 +5857,34 @@ export class Workbench {
   }
   /** The one outbound request an operator can make about a connector. It is
    * only ever reached from an explicit command, never from add, edit, load or
-   * session start. A failed probe leaves the staged connector exactly as it
-   * was: nothing is written and no catalog is kept. */
+   * session start. A failed probe keeps the staged consent and keeps no
+   * catalog, but records the measured error outcome so the operator can tell
+   * it apart from a connector that was never probed. */
   async probeConnector(id: string) {
     const previous = this.connectors.find((item) => item.id === id);
     if (!previous) throw new Error("Connector not found.");
-    const listed = await mcpCatalog(previous);
+    let listed;
+    try {
+      listed = await mcpCatalog(previous);
+    } catch (error) {
+      const failed: Connector = { ...previous, lastProbeOutcome: "error" };
+      await this.locked(async () => {
+        const before = this.connectors;
+        this.connectors = before.map((item) => (item.id === id ? failed : item));
+        try {
+          this.persist();
+        } catch (persistError) {
+          this.connectors = before;
+          throw persistError;
+        }
+      });
+      throw error;
+    }
     const updated: Connector = {
       ...previous,
       tools: listed.tools,
       consentState: "probed",
+      lastProbeOutcome: "success",
     };
     await this.locked(async () => {
       const before = this.connectors;

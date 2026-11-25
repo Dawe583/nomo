@@ -575,6 +575,7 @@ type ConnectorRow = {
   consent: "staged" | "probed" | "confirmed";
   tools: string[];
   endpoint: string;
+  lastProbeOutcome?: "success" | "error";
   policy?: string;
   facts?: Record<string, string | boolean>;
   mapping?: Record<string, string>;
@@ -924,6 +925,19 @@ export function connectorConsentIcon(consent: string): string {
   if (consent === "probed") return "◐";
   if (consent === "staged") return "○";
   return "?";
+}
+
+/** Last measured server contact as a word. Consent remains in the detail
+ * lines; colour and icon are never the only state carriers. */
+export function connectorContactState(connector: {
+  readonly builtin: boolean;
+  readonly consent: string;
+  readonly lastProbeOutcome?: "success" | "error";
+}): "connected" | "error" | "unknown" {
+  if (connector.lastProbeOutcome === "error") return "error";
+  if (connector.builtin) return "connected";
+  if (connector.lastProbeOutcome === "success") return "connected";
+  return "unknown";
 }
 
 /**
@@ -7246,10 +7260,11 @@ ${(doc.content ?? "").slice(0, 2000)}`;
           tools: connector.tools,
           consentState: connector.consent,
         },
-        label: `${connectorConsentIcon(connector.consent)} ${connector.consent.toUpperCase()} · ${sanitizeText(connector.name)} · ${connector.tools.length} tools`,
+        label: `${connectorConsentIcon(connector.consent)} ${connectorContactState(connector)} · ${sanitizeText(connector.name)} · ${connector.tools.length} tools`,
         lines: [
           `id ${sanitizeText(connector.id)}`,
           `endpoint ${sanitizeText(connector.endpoint)}`,
+          `state ${connectorContactState(connector)}`,
           `consent ${connector.consent}`,
           `tools ${connector.tools.length}: ${this.toolNames(connector.tools)}`,
           `policy ${policySummary(connector.policy)}`,
@@ -8310,6 +8325,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       consent: c.consentState,
       tools: [...c.tools],
       endpoint: "url" in c ? this.endpoint(c.url) : "builtin",
+      lastProbeOutcome: "lastProbeOutcome" in c ? c.lastProbeOutcome : undefined,
       policy: "policy" in c ? c.policy : undefined,
       facts: "facts" in c ? c.facts : undefined,
       mapping: "mapping" in c ? c.mapping : undefined,
@@ -10354,6 +10370,8 @@ ${(doc.content ?? "").slice(0, 2000)}`;
               "",
               "No connector records are available.",
               "Use /mcp add URL [name] to stage one locally; staging makes no request.",
+              "",
+              "Esc returns to Chat",
             ];
       const byConsent = new Map<string, number>();
       for (const connector of connectors)
@@ -10372,7 +10390,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         left.localeCompare(right),
       );
       return [
-        `${getSymbols(this.themeConfig.symbolPreset).icons.network} MCP · ${connectors.length} connectors · ${confirmed.length} confirmed · ${offeredTools} tools offered`,
+        `${getSymbols(this.themeConfig.symbolPreset).icons.network} MCP · ${connectors.length} ${connectors.length === 1 ? "connector" : "connectors"} · ${confirmed.length} confirmed · ${offeredTools} tools offered`,
         "Confirmed connectors serve new conversations; NOMO policy still applies.",
         "",
         "CONSENT STATES",
@@ -10387,8 +10405,8 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         "",
         ...this.listRows(),
         "",
-        "Type to filter · Up/Down selects · Enter inspects",
-        "/mcp probe ID contacts a server only after confirmation · /mcp confirm ID grants the probed connector",
+        "Type to filter · Up/Down selects · Enter inspects · Esc returns to Chat",
+        "State is the last measured contact, not a live probe · /mcp probe ID contacts a server only after confirmation",
       ];
     }
     if (this.tab === "status") {
