@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-25T14:17:58Z",
+  "updatedAt": "2026-11-25T14:27:06Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -1525,6 +1525,39 @@
         "git diff --check observed exit 0."
       ],
       "stopCondition": "Stop if focus depends on the close path, Tab loses picker state, or an overlay close leaves input.editing true or false incorrectly."
+    },
+    {
+      "id": "t8-snapshot-pty-refresh",
+      "status": "done",
+      "owner": "devin-6293643153014f56bb088c9a71fde97a",
+      "dependsOn": [
+        "t7-keyboard-focus-parity"
+      ],
+      "scope": [
+        "packages/cli/src/tui/test/visual-snapshots.json",
+        "scripts/src/verify-tui-terminal.py",
+        "docs/plans/2026-11-25-nomo-24h-program-detailed.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "snapshot refresh is key-by-key reviewed and accepts only named frames",
+        "PTY matrix passes all five sizes",
+        "counts are recorded"
+      ],
+      "verifier": [
+        "NOMO_UPDATE_SNAPSHOTS=1 node --test packages/cli/src/tui/visual-snapshots.test.ts",
+        "git diff -- packages/cli/src/tui/test/visual-snapshots.json",
+        "python3 scripts/src/verify-tui-terminal.py"
+      ],
+      "evidence": [
+        "NOMO_UPDATE_SNAPSHOTS=1 NO_COLOR=1 node --test packages/cli/src/tui/visual-snapshots.test.ts observed exit 0: tests 2, pass 2, fail 0. Output: Wrote 120 frame hashes; Snapshot holds 120 frame hashes.",
+        "git diff -- packages/cli/src/tui/test/visual-snapshots.json observed 0 lines after the refresh, so no frame hash changed.",
+        "python3 scripts/src/verify-tui-terminal.py observed exit 0. Exact final line: PASS: every scenario at every size. The matrix printed 54 PASS lines: 40 scenario size passes, 8 terminal restore passes, 5 double Ctrl+D restore passes and the final matrix pass."
+      ],
+      "stopCondition": "Stop if a snapshot hash changes without a named intentional frame change or any PTY scenario/size fails."
     }
   ]
 }
