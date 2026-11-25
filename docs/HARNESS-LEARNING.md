@@ -47,7 +47,10 @@ no model weights are updated by reward in this repository.
    `harnessRefinement.rolledBackDigest` naming the activation it undid.
 9. **Exploration.** `nomo.bandit.v1` history records Thompson-sampling state.
    Guardrail-axis exploration, currently `promptPreamble`, starts stopped as
-   `unapproved-guardrail` unless the exact arm-set digest was approved.
+   `unapproved-guardrail` unless the exact arm-set digest was approved. For a
+   two-axis factorial history, `node scripts/src/harness-factorial-bandit-report.mjs
+   <history.jsonl>` is a read-only measurement report: it prints cell means,
+   main effects and interaction, never samples or deploys a treatment.
 10. **Offline policy evaluation.** `node scripts/src/harness-offline-policy.mjs
    <rounds.jsonl> --arm <id> [--arm <id>...]` evaluates deterministic candidate
    arms with inverse propensity scoring. The input contract is one bounded
