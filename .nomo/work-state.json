@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-25T19:23:21.413320Z",
+  "updatedAt": "2026-11-25T19:47:31.248857Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -2222,6 +2222,60 @@
         "node --check scripts/src/trajectory-export.mjs observed exit 0. git diff --check observed exit 0."
       ],
       "stopCondition": "Stop if direct chain rewards lose existing positional behavior, if bare-eval ingestion is falsely presented as tool attribution, or if prompt/tool output reaches export."
+    },
+    {
+      "id": "h20b-tool-using-eval-attribution",
+      "status": "done",
+      "owner": "devin-6293643153014f56bb088c9a71fde97a",
+      "dependsOn": [
+        "h20-bare-eval-attribution-boundary"
+      ],
+      "scope": [
+        "scripts/src/harness-eval.mjs",
+        "scripts/src/harness-eval-runner.mjs",
+        "scripts/src/harness-eval.test.mjs",
+        "scripts/src/fixtures/harness-eval-v3-tools.json",
+        "packages/workbench/src/harness-eval-tools.ts",
+        "packages/workbench/src/harness-eval-tools.test.ts",
+        "packages/workbench/src/index.ts",
+        "packages/cli/src/harness.ts",
+        "scripts/src/harness-e2e-fixture.test.mjs",
+        "scripts/src/trajectory-export.mjs",
+        "scripts/src/trajectory-export.test.mjs",
+        "docs/HARNESS-LEARNING.md",
+        "docs/THREAT-MODEL.md",
+        "docs/plans/2026-11-25-program-handoff.md",
+        "docs/plans/2026-11-25-nomo-24h-program-detailed.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "offline eval can execute governed managed-workspace fixture actions without host filesystem, network, provider or model calls",
+        "eval measurement records carry explicit case attribution without prompts, args or tool output",
+        "mixed reward and eval-tool measurements can enter the signed workspace chain atomically after whole-file validation",
+        "trajectory export uses explicit attribution instead of positional guessing when present",
+        "exact reruns and partial ingestion resume by file digest and record position"
+      ],
+      "verifier": [
+        "node --test scripts/src/harness-eval.test.mjs scripts/src/harness-eval-runner.test.mjs scripts/src/trajectory-export.test.mjs scripts/src/harness-e2e-fixture.test.mjs",
+        "node --test packages/workbench/src/harness-eval-tools.test.ts packages/cli/src/harness.test.ts",
+        "pnpm --filter @nomo/cli typecheck",
+        "pnpm --filter @nomo/workbench typecheck"
+      ],
+      "evidence": [
+        "NO_COLOR=1 node --test scripts/src/harness-*.test.mjs scripts/src/trajectory-export.test.mjs => exit 0; tests 55, pass 55, fail 0, duration_ms 4749.056375",
+        "NO_COLOR=1 node --test packages/workbench/src/harness-eval-tools.test.ts packages/cli/src/harness.test.ts => exit 0; tests 24, pass 24, fail 0, duration_ms 229.95",
+        "pnpm --filter @nomo/cli typecheck => exit 0",
+        "pnpm --filter @nomo/workbench typecheck => exit 0",
+        "node --test scripts/src/doc-truth.test.mjs scripts/src/handbook-docs.test.mjs => exit 0; doc-truth tests 9, pass 9, fail 0, duration_ms 212.970041",
+        "git diff --check => exit 0",
+        "secret scan of zero-context diff => only fixture canaries SECRET-PATH-CANARY and assertions containing the word SECRET; no credential material",
+        "fixture eval observed offline: v3 total 6/6 passed, 11 measurement records written, no host file/network/provider/model path"
+      ],
+      "stopCondition": "Stop if execution would touch host files, network, provider or model, if prompts/args/results enter measurement output, if attribution is invented for unexecuted tools, or if validation writes partial invalid input.",
+      "completedAt": "2026-11-25T19:47:31.248718Z"
     }
   ]
 }

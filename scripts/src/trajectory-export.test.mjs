@@ -90,6 +90,80 @@ describe("trajectory-export", () => {
     assert.equal(report.unattributed, 1);
   });
 
+
+
+  test("explicit eval-tool measurements beat positional grouping and match ingestion provenance", () => {
+    const digest = "b".repeat(64);
+    const ingestion = { fileDigest: digest, index: 0, count: 2 };
+    const tool = {
+      schema: "nomo.eval-tool.v1",
+      caseId: "read-before-write",
+      variantId: "sha256:fixture",
+      run: 1,
+      toolName: "void_workspace_read",
+      toolClass: "r0",
+      ok: true,
+      execution: "managed-workspace-fixture",
+      rewardIngestion: ingestion,
+      tool: "harness.eval-tool",
+      decision: "eval-tool:recorded",
+      result: OUTPUT,
+    };
+    const ingestedReward = {
+      ...record(),
+      rewardIngestion: { ...ingestion, index: 1 },
+    };
+    const chain = [
+      entry(1, { tool: "unrelated", klass: "r1", decision: "execute:completed" }),
+      entry(2, tool),
+      entry(3, ingestedReward),
+    ].map((line) => JSON.stringify(line)).join("\n");
+    const report = exportTrajectories(chain);
+    assert.equal(report.trajectories.length, 1);
+    assert.deepEqual(report.trajectories[0].toolCalls, [
+      { name: "void_workspace_read", klass: "r0", ok: true },
+    ]);
+    assert.equal(report.unattributed, 1);
+    assert.ok(!JSON.stringify(report.trajectories).includes("unrelated"));
+    assert.ok(!JSON.stringify(report.trajectories).includes("SECRET"));
+  });
+
+  test("an eval-tool measurement with the wrong ingestion file is not adopted", () => {
+    const tool = {
+      schema: "nomo.eval-tool.v1",
+      caseId: "read-before-write",
+      variantId: "sha256:fixture",
+      run: 1,
+      toolName: "void_workspace_read",
+      toolClass: "r0",
+      ok: true,
+      execution: "managed-workspace-fixture",
+      rewardIngestion: { fileDigest: "c".repeat(64), index: 0, count: 2 },
+    };
+    const chain = [tool, { ...record(), rewardIngestion: { fileDigest: "d".repeat(64), index: 1, count: 2 } }]
+      .map((line) => JSON.stringify(line)).join("\n");
+    const report = exportTrajectories(chain);
+    assert.deepEqual(report.trajectories[0].toolCalls, []);
+  });
+
+  test("a hostile eval-tool measurement is refused without copying its content", () => {
+    const tool = {
+      schema: "nomo.eval-tool.v1",
+      caseId: PROMPT,
+      variantId: "sha256:fixture",
+      run: 1,
+      toolName: "void_workspace_read",
+      toolClass: "r0",
+      ok: true,
+      execution: "managed-workspace-fixture",
+    };
+    const report = exportTrajectories(`${JSON.stringify(tool)}\n${JSON.stringify(record())}\n`);
+    assert.equal(report.refused, 1);
+    assert.equal(report.trajectories.length, 1);
+    assert.deepEqual(report.trajectories[0].toolCalls, []);
+    assert.ok(!JSON.stringify(report.trajectories).includes("SECRET"));
+  });
+
   test("no prompt text or tool output reaches the export", () => {
     const text = JSON.stringify(exportTrajectories(fixtureChain()).trajectories);
     for (const secret of [PROMPT, OUTPUT, "SECRET", "/etc/passwd", "root:x"]) assert.ok(!text.includes(secret), secret);

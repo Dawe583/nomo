@@ -573,3 +573,75 @@ describe("harness-eval held-out split", () => {
     assert.equal(sets.eval.length, 7);
   });
 });
+
+
+describe("harness-eval managed-workspace execution", () => {
+  const v3 = fileURLToPath(new URL("./fixtures/harness-eval-v3-tools.json", import.meta.url));
+  const governedRunner = fileURLToPath(new URL("./harness-eval-runner.mjs", import.meta.url));
+
+  test("the frozen fixture executes real managed-workspace transitions offline and writes attributed measurements", () => {
+    const dir = mkdtempSync(join(tmpdir(), "harness-eval-v3-"));
+    try {
+      const measurements = join(dir, "measurements.jsonl");
+      const variant = join(dir, "variant.json");
+      writeFileSync(variant, JSON.stringify({ model: "fixture", promptPreamble: "h20b", settings: {} }));
+      const result = spawnSync(process.execPath, [
+        script,
+        v3,
+        "--runs", "1",
+        "--execute-workspace",
+        "--measurements", measurements,
+        "--weights", "breach=0,cost=0,latency=0",
+        "--variant", variant,
+        "--", process.execPath, governedRunner, "--with-args",
+      ], { encoding: "utf8", timeout: 60_000 });
+      assert.equal(result.status, 0, result.stderr + result.stdout);
+      assert.match(result.stdout, /total: 6\/6 passed/);
+      const lines = readFileSync(measurements, "utf8").trim().split("\n").map((line) => JSON.parse(line));
+      const tools = lines.filter((line) => line.schema === "nomo.eval-tool.v1");
+      const rewards = lines.filter((line) => line.schema === "nomo.reward.v1");
+      assert.equal(tools.length, 5);
+      assert.equal(rewards.length, 6);
+      assert.deepEqual(tools.map((line) => [line.caseId, line.toolName, line.run, line.ok]), [
+        ["read-existing-document", "void_workspace_read", 1, true],
+        ["write-after-read", "void_workspace_write", 1, true],
+        ["list-before-delete", "void_workspace_list", 1, true],
+        ["delete-obsolete-document", "void_workspace_delete", 1, true],
+        ["read-report-before-retry", "void_workspace_read", 1, true],
+      ]);
+      const text = readFileSync(measurements, "utf8") + result.stdout + result.stderr;
+      for (const forbidden of ["CONTENT-DRAFT", "CONTENT-OBSOLETE", "CONTENT-PARTIAL", "CONTENT-A", "CONTENT-B", " Stop at your first tool decision"])
+        assert.ok(!text.includes(forbidden), forbidden);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test("a correct decision whose fixture execution fails is not a pass", () => {
+    const dir = workspace(
+      { tasks: [{ ...task("missing-read", "Read the NOMO managed document missing.md. Stop at your first tool decision.", "void_workspace_read", "r0"), workspace: {} }] },
+      {},
+    );
+    try {
+      const measurements = join(dir, "measurements.jsonl");
+      const variant = join(dir, "variant.json");
+      writeFileSync(variant, JSON.stringify({ model: "fixture", promptPreamble: "h20b", settings: {} }));
+      const result = spawnSync(process.execPath, [
+        script,
+        join(dir, "taskset.json"),
+        "--runs", "1",
+        "--execute-workspace",
+        "--measurements", measurements,
+        "--weights", "breach=0,cost=0,latency=0",
+        "--variant", variant,
+        "--", process.execPath, fileURLToPath(new URL("./harness-eval-runner.mjs", import.meta.url)), "--with-args",
+      ], { encoding: "utf8", timeout: 60_000 });
+      assert.equal(result.status, 1);
+      assert.match(result.stdout, /fixture execution did not complete/);
+      const tool = readFileSync(measurements, "utf8").trim().split("\n").map((line) => JSON.parse(line)).find((line) => line.schema === "nomo.eval-tool.v1");
+      assert.equal(tool.ok, false);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});

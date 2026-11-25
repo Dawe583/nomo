@@ -666,16 +666,28 @@ sections 1 to 8.
 The eval runner is a deterministic fixture, not an agent runtime. It reads one
 untrusted prompt on stdin, proposes a first action by fixed rules, validates the
 tool name against the governed catalog, prints one JSON decision and exits. It
-does not execute the proposed tool, call a model, open a socket, read the
-taskset's expected answer, or use a provider credential. Unknown tools, unsafe
-URL shapes and known destructive patterns fail closed as `refused`.
+does not call a model, open a socket, read the taskset's expected answer, or
+use a provider credential. Unknown tools, unsafe URL shapes and known
+destructive patterns fail closed as `refused`. In `--with-args` mode its
+decision can carry proposed arguments. Those arguments are input to the eval
+harness only, are never printed in reports, and are not measurement output.
 
-Security consequence: prompt text is adversarial input to a parser, but the
-worst output it can select is a governed tool name plus class. It cannot cause
-execution by itself. The important residual risk is future misuse: if a real
-model adapter is added, the eval decision must remain a measurement artifact
-and must not become automatic authority to execute the action. The current
-runner has no execution path to abuse.
+When `--execute-workspace` is explicitly selected, the eval harness executes a
+proposed managed-document operation through the production
+`executeWorkspaceTool` state machine against a fresh in-memory fixture state.
+Only `void_workspace_list`, `read`, `write` and `delete` are executable there.
+No host filesystem path, network, provider, model or approval authority is
+available. Execution success becomes part of the task verdict, and only bounded
+outcome metadata is written as `nomo.eval-tool.v1`: case, variant, run, tool
+name, class and completion. Arguments, results, prompts and document content
+are not written.
+
+Security consequence: prompt text is adversarial input to a parser and, in the
+explicit execution fixture, to a deterministic in-memory state transition. It
+still cannot cause host execution. The important residual risk is future
+misuse: if a real model adapter is added, the eval decision must remain a
+measurement artifact and must not become automatic authority to execute the
+action outside the fixture.
 
 The deterministic pass rate is plumbing and governance evidence only. It is not
 model capability evidence and it is not reinforcement learning.
@@ -698,12 +710,16 @@ deputy to smuggle prompt or tool-output content into a training artifact.
 semantics; it is not a privilege boundary and does not protect against malware
 already running as the operator.
 
-The exporter has one integrity limitation by design: cases are segmented by
-position, so interleaved cases in one chain can be misattributed until tool
-entries carry a case id. Rewards ingested from bare eval files carry no tool
-attribution evidence and therefore export with empty tool calls rather than
-adopting unrelated positional entries. This affects measurement correctness,
-not secrecy.
+The exporter has one integrity limitation by design: direct production-chain
+cases are still segmented by position, so interleaved cases in one chain can be
+misattributed until production tool entries carry a case id. Explicit
+`nomo.eval-tool.v1` measurements are matched by case id and, after ingestion,
+by the signed ingestion file digest. They therefore override positional
+grouping for their own measurement. Rewards ingested from bare eval files
+without those explicit measurements export with empty tool calls rather than
+adopting unrelated positional entries. Bare uningested measurement files can
+match repeated measurements only by case id; ingestion provenance is the precise
+link. This affects measurement correctness, not secrecy.
 Trailing unattributed tool calls are reported and not silently attached to a
 later case.
 
@@ -711,7 +727,7 @@ later case.
 
 | Risk | Current control | Residual truth |
 | --- | --- | --- |
-| Prompt or output leaks into trajectory export | Field allowlist plus sentinel tests | No leak observed; positional misattribution remains |
+| Prompt or output leaks into trajectory export | Field allowlist plus sentinel tests | No leak observed; direct-chain positional misattribution remains |
 | Tampered reward is analyzed as valid | Exact recomputation, invalid case refused | Same-user chain/key compromise remains outside signature proof |
 | Eval fixture is mistaken for capability evidence | Runner and docs call it plumbing only | Human misuse of the number cannot be prevented mechanically |
 | Future model runner gains network or provider access | Not present; requires explicit approval | Must be reviewed as a new trust boundary before activation |

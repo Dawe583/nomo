@@ -90,12 +90,20 @@ import {
   compareVariants,
   variantIdentity,
 } from "../../packages/workbench/src/harness-settings.ts";
+import {
+  executeWorkspaceTool,
+  workspaceToolClass,
+} from "../../packages/workbench/src/workspace.ts";
+import {
+  EVAL_TOOL_EXECUTION,
+  evalToolRecord,
+} from "../../packages/workbench/src/harness-eval-tools.ts";
 
 const usage =
   "usage: node scripts/src/harness-eval.mjs <taskset.json> [--runs <n>] " +
   "[--timeout <ms>] [--records <path> --weights breach=<n>,cost=<n>,latency=<n> " +
   "--variant <variant.json> [--baseline <variant.json>]] [--split train|eval] " +
-  "-- <runner argv...>";
+  "[--execute-workspace --measurements <path>] -- <runner argv...>";
 
 const DEFAULT_RUNS = 2;
 const DEFAULT_TIMEOUT_MS = 60_000;
@@ -104,6 +112,33 @@ const MAX_RUNS = 20;
 /** A non-empty trimmed string, or "" so callers can test truthiness once. */
 function text(value) {
   return typeof value === "string" && value.trim() ? value.trim() : "";
+}
+
+const FIXTURE_DOCUMENT = /^[A-Za-z0-9_.-]{1,128}$/;
+const MAX_FIXTURE_DOCUMENT_BYTES = 256_000;
+const MAX_FIXTURE_WORKSPACE_BYTES = 1_000_000;
+
+function fixtureWorkspace(value, where) {
+  if (value === undefined) return { workspace: {}, errors: [] };
+  if (value === null || typeof value !== "object" || Array.isArray(value))
+    return { workspace: {}, errors: [`${where}.workspace: must be an object`] };
+  const workspace = {};
+  const errors = [];
+  let total = 0;
+  for (const [path, content] of Object.entries(value)) {
+    if (!FIXTURE_DOCUMENT.test(path) || ["__proto__", "constructor", "prototype"].includes(path)) {
+      errors.push(`${where}.workspace: document names must be bounded fixture names`);
+      continue;
+    }
+    if (typeof content !== "string" || Buffer.byteLength(content, "utf8") > MAX_FIXTURE_DOCUMENT_BYTES) {
+      errors.push(`${where}.workspace.${path}: content must be text within the fixture limit`);
+      continue;
+    }
+    total += Buffer.byteLength(content, "utf8");
+    workspace[path] = content;
+  }
+  if (total > MAX_FIXTURE_WORKSPACE_BYTES) errors.push(`${where}.workspace: total fixture size exceeded`);
+  return { workspace, errors };
 }
 
 /**
@@ -150,11 +185,13 @@ export function parseTaskset(raw) {
     const hasSplit = task.split !== undefined;
     const splitOk = !hasSplit || task.split === "train" || task.split === "eval";
     if (!splitOk) errors.push(`${where}.split: must be "train" or "eval"`);
-    if (!taskId || !prompt || !expectedTool || !expectedClass || !splitOk) return;
+    const fixture = fixtureWorkspace(task.workspace, where);
+    errors.push(...fixture.errors);
+    if (!taskId || !prompt || !expectedTool || !expectedClass || !splitOk || fixture.errors.length) return;
     tasks.push(
       hasSplit
-        ? { id: taskId, prompt, expectedTool, expectedClass, split: task.split }
-        : { id: taskId, prompt, expectedTool, expectedClass },
+        ? { id: taskId, prompt, expectedTool, expectedClass, split: task.split, workspace: fixture.workspace }
+        : { id: taskId, prompt, expectedTool, expectedClass, workspace: fixture.workspace },
     );
   });
   return { id, tasks, errors };
@@ -183,7 +220,9 @@ export function parseDecision(stdout) {
     if (!value || typeof value !== "object" || Array.isArray(value)) continue;
     const tool = text(value.tool);
     const decisionClass = text(value.class);
-    if (tool && decisionClass) return { tool, class: decisionClass };
+    const args = value.args;
+    if (args !== undefined && (args === null || typeof args !== "object" || Array.isArray(args))) continue;
+    if (tool && decisionClass) return { tool, class: decisionClass, ...(args === undefined ? {} : { args }) };
   }
   return null;
 }
@@ -296,8 +335,32 @@ export function splitTotals(split, results) {
   return { train: side(split.train), eval: side(split.eval) };
 }
 
+const EXECUTABLE_FIXTURE_TOOLS = new Set([
+  "void_workspace_list",
+  "void_workspace_read",
+  "void_workspace_write",
+  "void_workspace_delete",
+]);
+
+/** Execute one proposed managed-workspace action against the frozen in-memory
+ * fixture state. This uses the production state machine, but no host file,
+ * network, provider or model is touched. Only bounded outcome metadata leaves. */
+export function executeFixtureDecision(task, decision, run) {
+  const toolClass = workspaceToolClass(decision.tool) ?? "unmeasured";
+  if (!EXECUTABLE_FIXTURE_TOOLS.has(decision.tool))
+    return { toolName: decision.tool, toolClass, ok: false };
+  const state = { version: 1, files: { ...(task.workspace ?? {}) }, operations: [] };
+  const result = executeWorkspaceTool(state, {
+    id: `eval-${run}`,
+    name: decision.tool,
+    arguments: decision.args ?? {},
+    at: "2026-11-25T00:00:00.000Z",
+  });
+  return { toolName: decision.tool, toolClass, ok: result.result.isError !== true };
+}
+
 /** Runs one task once. Never throws, never returns stdout. */
-export function runAttempt(task, runner, timeoutMs) {
+export function runAttempt(task, runner, timeoutMs, executeWorkspace = false, run = 1) {
   const [command, ...args] = runner;
   const started = performance.now();
   const result = spawnSync(command, args, {
@@ -313,8 +376,14 @@ export function runAttempt(task, runner, timeoutMs) {
     // reported. ENOENT is the common case and it is still just "did not start".
     return { error: true };
   }
+  const decision = parseDecision(result.stdout);
+  const execution =
+    executeWorkspace && decision && decision.tool !== "none"
+      ? executeFixtureDecision(task, decision, run)
+      : null;
   return {
-    decision: parseDecision(result.stdout),
+    decision,
+    execution,
     code: result.status,
     elapsedMs: performance.now() - started,
   };
@@ -409,6 +478,8 @@ function parseArgs(argv) {
     variant: "",
     baseline: "",
     split: "",
+    executeWorkspace: false,
+    measurements: "",
     help: false,
     unknown: [],
   };
@@ -427,6 +498,10 @@ function parseArgs(argv) {
       options.help = true;
       continue;
     }
+    if (arg === "--execute-workspace") {
+      options.executeWorkspace = true;
+      continue;
+    }
     if (arg === "--runs" || arg === "--timeout") {
       const raw = argv[index + 1];
       index += 1;
@@ -443,7 +518,8 @@ function parseArgs(argv) {
       arg === "--weights" ||
       arg === "--variant" ||
       arg === "--baseline" ||
-      arg === "--split"
+      arg === "--split" ||
+      arg === "--measurements"
     ) {
       const raw = argv[index + 1];
       index += 1;
@@ -484,11 +560,11 @@ export function main(argv) {
     console.error("harness-eval: --timeout must be a positive whole number of ms.");
     return 2;
   }
-  if (Boolean(options.records) !== Boolean(options.weights)) {
+  if (!options.measurements && Boolean(options.records) !== Boolean(options.weights)) {
     console.error("harness-eval: --records and --weights are required together.");
     return 2;
   }
-  if (Boolean(options.records) !== Boolean(options.variant)) {
+  if (!options.measurements && Boolean(options.records) !== Boolean(options.variant)) {
     console.error("harness-eval: --records and --variant are required together.");
     return 2;
   }
@@ -498,6 +574,22 @@ export function main(argv) {
   }
   if (options.baseline && !options.variant) {
     console.error("harness-eval: --baseline needs --variant.");
+    return 2;
+  }
+  if (Boolean(options.measurements) !== Boolean(options.executeWorkspace)) {
+    console.error("harness-eval: --execute-workspace and --measurements are required together.");
+    return 2;
+  }
+  if (options.measurements && Boolean(options.weights) !== Boolean(options.measurements)) {
+    console.error("harness-eval: --measurements and --weights are required together.");
+    return 2;
+  }
+  if (options.measurements && !options.variant) {
+    console.error("harness-eval: --measurements needs --variant.");
+    return 2;
+  }
+  if (options.measurements && options.records) {
+    console.error("harness-eval: use either --records or --measurements, not both.");
     return 2;
   }
   let weights = null;
@@ -566,24 +658,51 @@ export function main(argv) {
   for (const task of tasks) {
     const attempts = [];
     for (let run = 0; run < options.runs; run += 1) {
-      attempts.push(runAttempt(task, options.runner, options.timeout));
+      attempts.push(runAttempt(task, options.runner, options.timeout, options.executeWorkspace, run + 1));
     }
-    const result = scoreTask(task, attempts);
+    let result = scoreTask(task, attempts);
+    if (options.executeWorkspace && result.status === "pass" && result.decision.tool !== "none") {
+      const failedIndex = attempts.findIndex((attempt) => attempt.execution?.ok !== true);
+      if (failedIndex !== -1)
+        result = {
+          ...result,
+          status: "fail",
+          run: failedIndex + 1,
+          detail: "fixture execution did not complete",
+        };
+    }
     results.push(result);
-    if (weights) records.push(caseRewardRecord(task, attempts, result, weights, variant));
+    if (weights && !options.measurements) records.push(caseRewardRecord(task, attempts, result, weights, variant));
+    if (options.measurements) {
+      for (const [index, attempt] of attempts.entries())
+        if (attempt.execution)
+          records.push(
+            evalToolRecord({
+              caseId: task.id,
+              variantId: variant.variantId,
+              run: index + 1,
+              toolName: attempt.execution.toolName,
+              toolClass: attempt.execution.toolClass,
+              ok: attempt.execution.ok,
+              execution: EVAL_TOOL_EXECUTION,
+            }),
+          );
+      records.push(caseRewardRecord(task, attempts, result, weights, variant));
+    }
   }
   for (const result of results) console.log(row(result, width));
   if (weights) {
+    const outputPath = options.measurements || options.records;
     try {
       writeFileSync(
-        options.records,
+        outputPath,
         records.map((record) => JSON.stringify(record)).join("\n") + "\n",
       );
     } catch {
-      console.error(`harness-eval: records could not be written: ${options.records}`);
+      console.error(`harness-eval: records could not be written: ${outputPath}`);
       return 1;
     }
-    console.log(`records: ${records.length} written to ${options.records}`);
+    console.log(`records: ${records.length} written to ${outputPath}`);
     console.log(
       `variant: ${variant.variantId}` +
         (variant.baselineVariantId

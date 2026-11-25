@@ -19,13 +19,23 @@ no model weights are updated by reward in this repository.
    <path> --weights breach=<n>,cost=<n>,latency=<n> --variant <variant.json> --
    <runner>` writes one `nomo.reward.v1` record per evaluated case. Missing
    producers stay `"unmeasured"`. Train and held-out eval results stay separate.
-5. **Ingestion.** `nomo harness ingest-rewards --session <id> <records.jsonl>`
-   validates the whole bare eval file before writing anything: schema,
-   bounded identifiers, exact weights and exact reward recomputation. Valid
-   records enter the session workspace chain through `recordHarnessReward`.
-   An exact rerun is recognised by the file digest plus record position and
-   skips only positions already written. A separate measurement file with the
-   same values is new evidence, not a duplicate. A tampered, malformed or
+   With `--execute-workspace --measurements <path>`, the offline fixture also
+   executes governed managed-document proposals through the production
+   `executeWorkspaceTool` state machine against in-memory fixture state only.
+   It writes explicit `nomo.eval-tool.v1` measurements before the reward. Those
+   records carry case, variant, run, tool name, class and completion only; no
+   host file, network, provider, model, prompt, argument, result or document
+   content is part of the measurement.
+5. **Ingestion.** `nomo harness ingest-rewards --session <id> <records.jsonl>
+nomo harness ingest-eval --session <id> <measurements.jsonl>`
+   validates a reward-only file. `nomo harness ingest-eval --session <id>
+   <measurements.jsonl>` validates a mixed reward and eval-tool measurement
+   file. Both validate the whole file before writing anything: schema, bounded
+   identifiers, exact weights, exact reward recomputation and exact eval-tool
+   record shape. Valid records enter the session workspace chain. An exact
+   rerun is recognised by the file digest plus record position and skips only
+   positions already written. A separate measurement file with the same values
+   is new evidence, not a duplicate. A tampered, malformed or
    side-channel-carrying file writes nothing.
 6. **Replay.** `node scripts/src/harness-replay.mjs <ledger-or-jsonl>` recomputes
    stored rewards. A mismatch is evidence against the writer, not something to
@@ -48,6 +58,8 @@ no model weights are updated by reward in this repository.
 - `refinement:rolled-back`: the rollback and the digest it restores past.
 - `nomo.reward.v1`: one measured case, recomputable from explicit weights.
 - `nomo.bandit.v1`: append-only contextual-bandit state.
+- `nomo.eval-tool.v1`: one governed offline fixture tool execution, explicitly
+  attributed to a case, variant and run. It never carries arguments or results.
 - `nomo.trajectory.v1`: export-only tool names, classes and outcomes. It never
   carries prompt text or tool output.
 

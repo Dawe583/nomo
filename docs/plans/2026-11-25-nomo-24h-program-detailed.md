@@ -1080,6 +1080,20 @@ These are real, scoped follow-ups, not wishes. ~40 h.
     and an independent measurement file with equal values remains new evidence.
     Files are bounded to 1 MiB. No tool, provider, network or model execution
     is part of ingestion.
+15. **H20b Tool-using eval attribution**: explicit measurement records from a
+    truthful offline tool execution fixture. 3 h.
+
+    As built: `scripts/src/fixtures/harness-eval-v3-tools.json` is frozen.
+    `harness-eval --execute-workspace --measurements <path>` executes governed
+    managed-document decisions through `executeWorkspaceTool` against fresh
+    in-memory fixture state only. It writes `nomo.eval-tool.v1` records with
+    case, variant, run, tool name, class and completion, never prompts,
+    arguments, results or document content. `nomo harness ingest-eval` validates
+    and signs mixed reward/tool measurement files with the same file digest and
+    position provenance as reward ingestion. Trajectory export uses explicit
+    ingestion-linked attribution when present and otherwise preserves the H20
+    no-adoption boundary. Direct production-chain positional grouping remains a
+    known limit.
 
 ## 12. Program checklist
 

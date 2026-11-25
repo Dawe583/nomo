@@ -62,6 +62,16 @@ function unsafeUrlDecision(prompt) {
   return null;
 }
 
+function documentPath(prompt, fallback = "notes.md") {
+  const match = /\b([A-Za-z0-9_.-]+\.md)\b/.exec(prompt);
+  return match ? match[1] : fallback;
+}
+
+function replacementContent(prompt) {
+  const match = /content with '([^']*)'|says '([^']*)'/.exec(prompt);
+  return match ? (match[1] ?? match[2]) : "final";
+}
+
 /** Deterministic first-action proposal. The rules read intent words only;
  * they never read the taskset file or its expected answers. */
 export function propose(prompt) {
@@ -81,14 +91,14 @@ export function propose(prompt) {
   if (/delete every|remove every/.test(text) && /do not know which|not seen/.test(text))
     return { tool: "void_workspace_list", args: {} };
   if (/timed out|unproven|truncated|not seen its current content|have not seen/.test(text))
-    return { tool: "void_workspace_read", args: {} };
+    return { tool: "void_workspace_read", args: { path: documentPath(prompt) } };
   if (/already read/.test(text) && /replacing|replace|write/.test(text))
-    return { tool: "void_workspace_write", args: {} };
+    return { tool: "void_workspace_write", args: { path: documentPath(prompt), content: replacementContent(prompt) } };
   if (/remove|delete/.test(text) && /obsolete\.md|managed document/.test(text))
-    return { tool: "void_workspace_delete", args: {} };
+    return { tool: "void_workspace_delete", args: { path: documentPath(prompt, "obsolete.md") } };
   if (/list the existing|list documents/.test(text)) return { tool: "void_workspace_list", args: {} };
-  if (/read the nomo managed document/.test(text)) return { tool: "void_workspace_read", args: {} };
-  if (/propose writing/.test(text)) return { tool: "void_workspace_write", args: {} };
+  if (/read the nomo managed document/.test(text)) return { tool: "void_workspace_read", args: { path: documentPath(prompt) } };
+  if (/propose writing/.test(text)) return { tool: "void_workspace_write", args: { path: documentPath(prompt), content: replacementContent(prompt) } };
   return REFUSAL;
 }
 
@@ -98,18 +108,23 @@ export function governDecision(proposal) {
   if (!GOVERNED_TOOLS.has(proposal.tool)) return REFUSAL;
   const klass = governedClass(proposal.tool);
   if (!klass) return REFUSAL;
-  return { tool: proposal.tool, class: klass };
+  return { tool: proposal.tool, class: klass, args: proposal.args ?? {} };
 }
 
-export function decide(prompt) {
-  return governDecision(propose(prompt));
+export function decide(prompt, options = {}) {
+  const decision = governDecision(propose(prompt));
+  if (!options.includeArgs) return { tool: decision.tool, class: decision.class };
+  return decision;
 }
 
-export function main() {
+export function main(argv = process.argv.slice(2)) {
   const prompt = readFileSync(0, "utf8");
-  const decision = decide(prompt);
+  const includeArgs = argv.includes("--with-args");
+  const decision = decide(prompt, { includeArgs });
   if (!decision || typeof decision.tool !== "string" || typeof decision.class !== "string") return 1;
-  process.stdout.write(`${JSON.stringify({ tool: decision.tool, class: decision.class })}\n`);
+  const out = { tool: decision.tool, class: decision.class };
+  if (includeArgs) out.args = decision.args ?? {};
+  process.stdout.write(`${JSON.stringify(out)}\n`);
   return 0;
 }
 
