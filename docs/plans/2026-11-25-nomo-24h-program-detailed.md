@@ -1100,8 +1100,10 @@ These are real, scoped follow-ups, not wishes. ~40 h.
     and signs mixed reward/tool measurement files with the same file digest and
     position provenance as reward ingestion. Trajectory export uses explicit
     ingestion-linked attribution when present and otherwise preserves the H20
-    no-adoption boundary. Direct production-chain positional grouping remains a
-    known limit.
+    no-adoption boundary. Direct production-chain attribution is implemented
+    for explicitly started eval runs through bounded `harnessEval` identity on
+    chain entries; only legacy entries without that identity keep positional
+    grouping.
 
 ## 12. Program checklist
 

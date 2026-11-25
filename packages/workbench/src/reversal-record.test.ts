@@ -12,6 +12,11 @@ import type { LedgerAttribution } from "../../ledger/src/attribution.ts";
 
 const MODEL = "fixture-model";
 const PROFILE = "attribution-fixture";
+const EVAL_CASE = {
+  caseId: "production-attribution-fixture",
+  variantId: "sha256:fixture",
+  run: 1,
+};
 
 type Body = Record<string, unknown>;
 
@@ -62,7 +67,7 @@ async function governedSession(t: test.TestContext) {
     maxTurns: 4,
     maxContextTokens: 131_072,
   });
-  const session = await app.start("Write the plan.", MODEL, undefined, undefined, PROFILE);
+  const session = await app.startHarnessEval("Write the plan.", MODEL, EVAL_CASE, PROFILE);
   // The default policy holds every class above r0, so the governed call
   // waits for an operator exactly the way a destructive one would.
   for (let poll = 0; poll < 200 && app.pending().length === 0; poll += 1) await delay(10);
@@ -112,6 +117,12 @@ test("a governed workbench record names the policy, the rule, the model and the 
     assert.match(attribution.requestDigest ?? "", /^[0-9a-f]{64}$/);
     assert.equal(attribution.rule?.index, 1, "the catch-all hold rule is index 1");
   }
+
+  const toolRecords = (evidence.entries as JsonlEntry[])
+    .map((entry) => entry.body as Body)
+    .filter((entry) => entry.tool === "void_workspace_write");
+  assert.ok(toolRecords.length >= 3, "hold, resolution and execution are recorded");
+  for (const body of toolRecords) assert.deepEqual(body.harnessEval, EVAL_CASE);
 });
 
 test("an undo names the record it inverts, and the chain still verifies", async (t) => {
