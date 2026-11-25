@@ -4,6 +4,7 @@ import { existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { runHarnessCommand, type HarnessSurface } from "./harness.ts";
+import { defaultHarnessSettings } from "../../workbench/src/harness-settings.ts";
 
 /**
  * The harness command, at the boundary an operator or a script touches.
@@ -468,4 +469,67 @@ test("the ratchet names the baseline and marks a guardrail that regressed", asyn
   assert.match(text, /Baseline: the board before the refinement activated at sequence 4/);
   assert.match(text, /deny_rate.*0\.000.*0\.667.*REGRESSED/);
   assert.match(text, /report, not a refusal/);
+});
+
+
+const rewardBody = (overrides: Record<string, unknown> = {}) => ({
+  schema: "nomo.reward.v1",
+  caseId: "case-1",
+  variantId: "variant-a",
+  baselineVariantId: null,
+  changedAxis: null,
+  passed: true,
+  guardrails: { deny_rate: 0 },
+  costUsd: 0.01,
+  latencyMs: 100,
+  approvalMs: "unmeasured",
+  weights: { breach: 0.5, cost: 1, latency: 0.001 },
+  reward: 0.89,
+  ...overrides,
+});
+
+function rewardChain(records: readonly Record<string, unknown>[]) {
+  return chain(records.map((body, index) => ({ body, seq: index + 1 })));
+}
+
+test("reward prints only a matching recomputed record, measured fields and current-weight rescoring", async () => {
+  const surface = rewardChain([rewardBody(), rewardBody({ caseId: "other-case" })]);
+  surface.harnessSettings = () => ({
+    ...defaultHarnessSettings(),
+    rewardCostWeight: 2,
+    rewardLatencyWeight: 0.002,
+  });
+  const terminal = io();
+  const code = await runHarnessCommand(
+    ["reward", "--session", "s1", "case-1"],
+    terminal,
+    { workbench: async () => surface },
+  );
+  assert.equal(code, 0, terminal.err.join(" "));
+  const lines = terminal.out;
+  assert.equal(lines.length, 1);
+  assert.match(lines[0]!, /seq 1 case=\"case-1\" variant=\"variant-a\"/);
+  assert.match(lines[0]!, /reward=0\.89 recompute=match currentWeightsReward=0\.78/);
+  assert.match(lines[0]!, /costUsd=0\.01 latencyMs=100 approvalMs=unmeasured/);
+});
+
+test("reward keeps a missing case empty and refuses a reward that does not recompute", async () => {
+  const missing = io();
+  const missingCode = await runHarnessCommand(
+    ["reward", "--session", "s1", "absent"],
+    missing,
+    { workbench: async () => rewardChain([rewardBody()]) },
+  );
+  assert.equal(missingCode, 0);
+  assert.match(missing.out.join("\n"), /No reward record for case \"absent\"/);
+
+  const tampered = io();
+  const tamperedCode = await runHarnessCommand(
+    ["reward", "--session", "s1", "case-1"],
+    tampered,
+    { workbench: async () => rewardChain([rewardBody({ reward: 1 })]) },
+  );
+  assert.equal(tamperedCode, 1);
+  assert.match(tampered.err.join("\n"), /stored 1 recomputes to 0\.89/);
+  assert.equal(tampered.out.length, 0);
 });

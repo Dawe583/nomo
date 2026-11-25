@@ -685,6 +685,14 @@ unmeasured, never a guess.
 
 **Verifier.** CLI test.
 
+**As built.** `nomo harness trend` already prints signed activation effects.
+`nomo harness reward --session <id> <caseId>` now reads matching
+`nomo.reward.v1` records from the verified workspace chain, recomputes each
+stored reward before printing it, refuses a mismatch, prints measured fields
+or `unmeasured`, and separately rescoring under the operator's current
+`rewardCostWeight` and `rewardLatencyWeight`. A missing case prints no record;
+it never guesses.
+
 ### H15. End-to-end fixture dry run (1 h)
 
 **Files.** scripts + fixture.
