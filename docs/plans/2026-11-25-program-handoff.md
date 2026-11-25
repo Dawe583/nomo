@@ -95,7 +95,7 @@ safe exact retries of provider-costing eval runs. H20c5 exposes the bounded
 identity on session views and API reads, including after restart. H20c6 makes
 trajectory attribution exact per run and refuses ambiguous or mismatched
 reward attribution rather than merging repeated runs. H20c7 applies the same
-unambiguous-run rule to explicit offline eval-tool measurements.
+unambiguous-run rule to explicit offline eval-tool measurements. H21 closes the production eval loop with an allowlisted verifier gate and signed reward recording.
 
 ## Do not do
 

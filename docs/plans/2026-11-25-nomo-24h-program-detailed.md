@@ -1124,7 +1124,7 @@ These are real, scoped follow-ups, not wishes. ~40 h.
     Workbench rejects mismatched reward or eval-tool writes before they enter
     the chain. H20c7 applies the same unambiguous-run rule to explicit offline
     eval-tool measurements inside their case, variant and ingestion-file
-    family; repeated pending runs are refused rather than merged.
+    family; repeated pending runs are refused rather than merged. H21 closes the production eval loop with an allowlisted verifier gate and signed reward recording.
 
 ## 12. Program checklist
 

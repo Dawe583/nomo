@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-25T22:22:03.049736Z",
+  "updatedAt": "2026-11-25T22:29:19.536313Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -2947,6 +2947,56 @@
       ],
       "stopCondition": "Stop if precise offline attribution would require changing nomo.reward.v1 or copying prompt, argument, result or document content.",
       "completedAt": "2026-11-25T22:22:03.049736Z"
+    },
+    {
+      "id": "h21-production-eval-reward-closure",
+      "status": "done",
+      "owner": "devin-6293643153014f56bb088c9a71fde97a",
+      "dependsOn": [
+        "h20c7-offline-eval-tool-run-attribution"
+      ],
+      "scope": [
+        "packages/workbench/src/index.ts",
+        "packages/cli/src/harness.ts",
+        "packages/cli/src/harness-run-eval.test.ts",
+        "docs/HARNESS-LEARNING.md",
+        "docs/THREAT-MODEL.md",
+        "docs/plans/2026-11-25-nomo-24h-program-detailed.md",
+        "docs/plans/2026-11-25-program-handoff.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "run-eval can execute an exact operator-allowlisted verifier after an attributed production run settles idle",
+        "the verifier command is validated before the first provider turn",
+        "signed chain evidence carries outcome, code, duration, pass boolean, harnessEval and command digest but never stdout or stderr",
+        "a verifier timeout or spawn failure records no passed-false reward",
+        "the measured reward is recomputed and written through the existing harness reward path",
+        "cost, latency and approval remain unmeasured rather than zero"
+      ],
+      "verifier": [
+        "node --test packages/cli/src/harness-run-eval.test.ts packages/cli/src/harness.test.ts",
+        "node --test packages/workbench/src/reversal-record.test.ts",
+        "node --test scripts/src/doc-truth.test.mjs scripts/src/no-dash.test.mjs",
+        "pnpm --filter @nomo/cli typecheck",
+        "pnpm --filter @nomo/workbench typecheck",
+        "node --test scripts/src/*.test.mjs",
+        "git diff --check"
+      ],
+      "evidence": [
+        "CLI verifier: 27 tests, 27 pass, 0 fail, duration_ms 299.574167",
+        "Workbench verifier: 5 tests, 5 pass, 0 fail, duration_ms 2579.646625",
+        "docs verifier: 10 tests, 10 pass, 0 fail, duration_ms 103.226417",
+        "pnpm --filter @nomo/cli typecheck: exit 0",
+        "pnpm --filter @nomo/workbench typecheck: exit 0",
+        "wider scripts suite: 427 tests, 394 pass, 0 fail, cancelled 0, skipped 32, todo 1, duration_ms 8126.630125",
+        "git diff --check: exit 0",
+        "integration evidence: one harness.eval-gate chain entry has decision eval-gate:passed, exact harnessEval identity and command digest, no stdout or stderr keys; one reward record has passed true and reward 1; a non-allowlisted verifier is refused with zero provider turns"
+      ],
+      "stopCondition": "Stop if verifier execution would require provider output, hook stdout or command text in measurement records, or if non-allowlisted commands must run.",
+      "completedAt": "2026-11-25T22:29:19.536313Z"
     }
   ]
 }
