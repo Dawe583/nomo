@@ -811,3 +811,88 @@ export function compareRewardRecords(
     delta,
   };
 }
+
+/**
+ * Map one H1 reward into the bandit's [0, 1] input (R3).
+ *
+ * A reward is at most 1 (a pass with no penalty) and has no lower bound, so
+ * the only clamp is the floor at 0: every outcome at or below "failed with no
+ * penalty" is one Beta failure. `aggregateArmRewards` counts each floored
+ * reward so the clamp stays visible. An unmeasured reward stays unmeasured and
+ * must not be fed to the bandit at all.
+ */
+export function toBanditReward(reward: Measured): Measured {
+  if (reward === "unmeasured") return reward;
+  if (typeof reward !== "number" || !Number.isFinite(reward) || reward > 1)
+    throw new RangeError("reward: expected a finite number at most 1 or \"unmeasured\"");
+  return Math.max(0, reward);
+}
+
+export type ArmRewardObservation = {
+  readonly armId: string;
+  readonly record: RewardRecord;
+};
+
+export type ArmRewardAggregate = {
+  readonly armId: string;
+  readonly records: number;
+  /** Records whose reward under the settings' weights is a number. */
+  readonly measured: number;
+  readonly unmeasured: number;
+  /** Measured rewards below 0 that the bandit input floors to 0. */
+  readonly floored: number;
+  /** Means over measured records only; unmeasured when none is measured. */
+  readonly meanReward: Measured;
+  readonly meanCostPenalty: Measured;
+  readonly meanLatencyPenalty: Measured;
+  readonly banditReward: Measured;
+};
+
+/**
+ * Aggregate reward records per bandit arm, with the cost and latency
+ * penalties of the operator's weights shown separately (R3).
+ *
+ * Every record must still recompute from its own fields, so a tampered record
+ * is refused rather than averaged. Each record is then scored under `weights`,
+ * the operator's settings, so arms measured under different stored weights are
+ * compared on one scale. Unmeasured rewards are counted, never averaged in as
+ * zero; an arm with no measured reward reports `"unmeasured"` throughout.
+ */
+export function aggregateArmRewards(
+  armIds: readonly string[],
+  observations: readonly ArmRewardObservation[],
+  weights: RewardWeights,
+): readonly ArmRewardAggregate[] {
+  const settings = parseRewardWeights(weights);
+  if (new Set(armIds).size !== armIds.length) throw new RangeError("armIds: must be unique");
+  const byArm = new Map(armIds.map((armId) => [armId, [] as RewardRecord[]]));
+  for (const { armId, record } of observations) {
+    const records = byArm.get(armId);
+    if (!records) throw new RangeError(`Unknown arm ${armId}. Known: ${armIds.join(", ")}.`);
+    if (record?.schema !== REWARD_SCHEMA) throw new TypeError(`${armId}: expected a ${REWARD_SCHEMA} record`);
+    if (computeReward(record) !== record.reward)
+      throw new TypeError(`${armId}: stored reward for case ${record.caseId} does not recompute`);
+    records.push(record);
+  }
+  const mean = (values: readonly number[]): Measured =>
+    values.length === 0 ? "unmeasured" : values.reduce((sum, value) => sum + value, 0) / values.length;
+  return armIds.map((armId) => {
+    const records = byArm.get(armId)!;
+    const scored = records
+      .map((record) => ({ record, reward: computeReward({ ...record, weights: settings }) }))
+      .filter((entry): entry is { record: RewardRecord; reward: number } => entry.reward !== "unmeasured");
+    // A measured reward under a nonzero weight implies that input was measured.
+    const penalty = (value: Measured, weight: number) => (weight === 0 ? 0 : (value as number) * weight);
+    return {
+      armId,
+      records: records.length,
+      measured: scored.length,
+      unmeasured: records.length - scored.length,
+      floored: scored.filter(({ reward }) => reward < 0).length,
+      meanReward: mean(scored.map(({ reward }) => reward)),
+      meanCostPenalty: mean(scored.map(({ record }) => penalty(record.costUsd, settings.cost))),
+      meanLatencyPenalty: mean(scored.map(({ record }) => penalty(record.latencyMs, settings.latency))),
+      banditReward: mean(scored.map(({ reward }) => toBanditReward(reward) as number)),
+    };
+  });
+}

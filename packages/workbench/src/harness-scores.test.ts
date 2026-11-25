@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 
 import {
   SCORE_GUARDRAILS,
+  aggregateArmRewards,
   SCORE_METRICS,
   compareBoards,
   compareRewardRecords,
@@ -14,6 +15,7 @@ import {
   rewardRecord,
   scoreCases,
   summariseCases,
+  toBanditReward,
   unmeasuredMetrics,
   type SplitSummary,
 } from "./harness-scores.ts";
@@ -551,4 +553,77 @@ test("every guardrail measured and none worse passes the gate", () => {
     [...SCORE_GUARDRAILS],
   );
   assert.ok(improved.checks.every((check) => check.status === "held"));
+});
+
+test("rewards aggregate per arm with cost and latency penalties under the settings' weights", () => {
+  const settings = { breach: 0.5, cost: 1, latency: 0.001 };
+  // Stored under other weights: the aggregate rescores each record under the settings.
+  const stored = { breach: 0, cost: 0, latency: 0 };
+  const fast = rewardRecord(rewardInput({ guardrails: { unknown_tool_rate: 0 }, latencyMs: 100, weights: stored }));
+  const slow = rewardRecord(rewardInput({ guardrails: { unknown_tool_rate: 0 }, latencyMs: 400, weights: stored }));
+  const [a, b] = aggregateArmRewards(
+    ["arm-a", "arm-b"],
+    [
+      { armId: "arm-a", record: fast },
+      { armId: "arm-a", record: slow },
+      { armId: "arm-b", record: rewardRecord(rewardInput({ passed: false, weights: settings })) },
+    ],
+    settings,
+  );
+  assert.equal(a!.records, 2);
+  assert.equal(a!.measured, 2);
+  assert.equal(a!.floored, 0);
+  assert.ok(Math.abs((a!.meanCostPenalty as number) - 0.0012) < 1e-12);
+  assert.ok(Math.abs((a!.meanLatencyPenalty as number) - 0.25) < 1e-12);
+  assert.ok(Math.abs((a!.meanReward as number) - (1 - 0.0012 - 0.25)) < 1e-12);
+  assert.equal(a!.banditReward, a!.meanReward);
+  // A failed run with a breach and penalties is below zero: floored, and counted.
+  assert.ok((b!.meanReward as number) < 0);
+  assert.equal(b!.banditReward, 0);
+  assert.equal(b!.floored, 1);
+});
+
+test("an unmeasured reward is counted, never averaged in as zero or fed to the bandit", () => {
+  const weights = { breach: 0, cost: 1, latency: 0 };
+  const measured = rewardRecord(rewardInput({ costUsd: 0.25, weights }));
+  const blind = rewardRecord(rewardInput({ costUsd: "unmeasured", weights }));
+  const [arm, empty] = aggregateArmRewards(
+    ["arm-a", "arm-b"],
+    [
+      { armId: "arm-a", record: measured },
+      { armId: "arm-a", record: blind },
+    ],
+    weights,
+  );
+  assert.equal(arm!.measured, 1);
+  assert.equal(arm!.unmeasured, 1);
+  assert.equal(arm!.meanReward, 0.75);
+  assert.equal(arm!.banditReward, 0.75);
+  assert.deepEqual(empty, {
+    armId: "arm-b",
+    records: 0,
+    measured: 0,
+    unmeasured: 0,
+    floored: 0,
+    meanReward: "unmeasured",
+    meanCostPenalty: "unmeasured",
+    meanLatencyPenalty: "unmeasured",
+    banditReward: "unmeasured",
+  });
+  assert.equal(toBanditReward("unmeasured"), "unmeasured");
+  assert.equal(toBanditReward(-3), 0);
+  assert.equal(toBanditReward(0.4), 0.4);
+  assert.throws(() => toBanditReward(1.5), /at most 1/);
+});
+
+test("aggregation refuses unknown arms, tampered records and missing weights", () => {
+  const weights = { breach: 0.5, cost: 1, latency: 0.001 };
+  const record = rewardRecord(rewardInput());
+  assert.throws(() => aggregateArmRewards(["a"], [{ armId: "b", record }], weights), /Unknown arm b/);
+  assert.throws(() => aggregateArmRewards(["a", "a"], [], weights), /unique/);
+  assert.throws(
+    () => aggregateArmRewards(["a"], [{ armId: "a", record: { ...record, reward: 1 } }], weights),
+    /does not recompute/,
+  );
+  assert.throws(() => aggregateArmRewards(["a"], [], { breach: 0.5, cost: 1 } as never), /weights\.latency/);
 });

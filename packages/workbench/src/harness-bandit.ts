@@ -10,12 +10,18 @@
  * State is an append-only JSONL history. The summary is derived by replaying
  * it, so a restart resumes the posterior rather than resetting it, and a reset
  * is itself a recorded event that must name its reason.
+ *
+ * Exploration guard (R4): an axis marked `guardrail` in `ARM_AXES` is never
+ * explored without an approval bound to the exact arms. Without one the
+ * history records a refusal and the search is stopped before any sample, so
+ * the refusal is visible in the record and no reset can lift it.
  */
 
+import { createHash } from "node:crypto";
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { canonicalJson } from "../../ledger/src/canonical.ts";
-import { verifyArm, type ArmAxis, type HarnessArm } from "./harness-arms.ts";
+import { ARM_AXES, verifyArm, type ArmAxis, type HarnessArm } from "./harness-arms.ts";
 
 export const BANDIT_SCHEMA = "nomo.bandit.v1";
 
@@ -29,7 +35,13 @@ export type BanditArmState = {
   readonly samples: number;
 };
 
-export type BanditStopReason = "budget" | "separated";
+export type BanditStopReason = "budget" | "separated" | "unapproved-guardrail";
+
+/** Who approved exploring a guardrail axis, bound to `armsDigest(arms)`. */
+export type BanditApproval = {
+  readonly approvedBy: string;
+  readonly armsDigest: string;
+};
 
 export type BanditState = {
   readonly schema: typeof BANDIT_SCHEMA;
@@ -46,7 +58,9 @@ type BanditEvent =
       readonly schema: typeof BANDIT_SCHEMA;
       readonly arms: readonly HarnessArm[];
       readonly budgetTokens: number;
+      readonly approval?: BanditApproval;
     }
+  | { readonly type: "refusal"; readonly axis: ArmAxis; readonly reason: string }
   | { readonly type: "observation"; readonly armId: string; readonly reward: number; readonly tokens: number }
   | { readonly type: "stop"; readonly reason: BanditStopReason }
   | { readonly type: "reset"; readonly reason: string };
@@ -67,14 +81,48 @@ function validateStart(arms: readonly HarnessArm[], budgetTokens: number): void 
     throw new RangeError("bandit: budgetTokens must be a positive integer");
 }
 
+/** The digest an approval must name: the arms' own digests, in order. */
+export function armsDigest(arms: readonly HarnessArm[]): string {
+  const text = canonicalJson(arms.map((arm) => arm.digest));
+  return `sha256:${createHash("sha256").update(text, "utf8").digest("hex")}`;
+}
+
+function validateApproval(approval: unknown): asserts approval is BanditApproval | undefined {
+  if (approval === undefined) return;
+  const value = approval as Record<string, unknown> | null;
+  if (value === null || typeof value !== "object" || Array.isArray(value))
+    throw new TypeError("bandit: approval must be an object with approvedBy and armsDigest");
+  for (const key of Object.keys(value))
+    if (key !== "approvedBy" && key !== "armsDigest") throw new TypeError(`bandit: approval has unknown field ${key}`);
+  if (typeof value.approvedBy !== "string" || !value.approvedBy.trim())
+    throw new TypeError("bandit: approval.approvedBy is required");
+  if (typeof value.armsDigest !== "string" || !/^sha256:[0-9a-f]{64}$/.test(value.armsDigest))
+    throw new TypeError("bandit: approval.armsDigest must be a sha256 digest");
+}
+
+/** Why exploring these arms is refused, or null when it may proceed. */
+function guardrailRefusal(arms: readonly HarnessArm[], approval: BanditApproval | undefined): string | null {
+  const axis = arms[0]!.axis;
+  if (!ARM_AXES[axis].guardrail) return null;
+  if (!approval) return `${axis} changes a guardrail and no approval was given`;
+  const expected = armsDigest(arms);
+  if (approval.armsDigest !== expected)
+    return `${axis} changes a guardrail and the approval names ${approval.armsDigest}, not ${expected}`;
+  return null;
+}
+
 function replay(events: readonly BanditEvent[]): BanditState {
   const [start, ...rest] = events;
   if (start?.type !== "start" || start.schema !== BANDIT_SCHEMA)
     throw new TypeError(`bandit: history must begin with a ${BANDIT_SCHEMA} start event`);
   validateStart(start.arms, start.budgetTokens);
+  validateApproval(start.approval);
+  // Derived from the start, not trusted from a later line: a history whose
+  // refusal line was deleted is still refused.
+  const refused = guardrailRefusal(start.arms, start.approval) !== null;
   let arms = start.arms.map((arm) => prior(arm.armId));
   let spentTokens = 0;
-  let stopReason: BanditStopReason | null = null;
+  let stopReason: BanditStopReason | null = refused ? "unapproved-guardrail" : null;
   for (const event of rest) {
     if (event.type === "observation") {
       if (stopReason) throw new TypeError(`bandit: observation recorded after stop (${stopReason})`);
@@ -88,9 +136,10 @@ function replay(events: readonly BanditEvent[]): BanditState {
       );
       spentTokens += event.tokens;
     } else if (event.type === "stop") stopReason = event.reason;
+    else if (event.type === "refusal") stopReason = "unapproved-guardrail";
     else if (event.type === "reset") {
       arms = arms.map((arm) => prior(arm.armId));
-      stopReason = spentTokens >= start.budgetTokens ? "budget" : null;
+      stopReason = refused ? "unapproved-guardrail" : spentTokens >= start.budgetTokens ? "budget" : null;
     } else throw new TypeError(`bandit: unknown event ${JSON.stringify(event)}`);
   }
   return {
@@ -129,13 +178,20 @@ export function readBandit(path: string): BanditState {
 }
 
 /** Start a bandit, or resume the existing history at `path`. Resuming with
- * different arms or budget is refused, so a restart cannot quietly begin a
- * new search over a stale posterior or discard the old one. */
+ * different arms, budget or approval is refused, so a restart cannot quietly
+ * begin a new search over a stale posterior or discard the old one. A
+ * guardrail axis without a matching approval starts already stopped, with
+ * the refusal recorded; a later approval needs a new history. */
 export function openBandit(
   path: string,
-  input: { readonly arms: readonly HarnessArm[]; readonly budgetTokens: number },
+  input: {
+    readonly arms: readonly HarnessArm[];
+    readonly budgetTokens: number;
+    readonly approval?: BanditApproval;
+  },
 ): BanditState {
   validateStart(input.arms, input.budgetTokens);
+  validateApproval(input.approval);
   if (existsSync(path)) {
     const events = readEvents(path);
     const start = events[0];
@@ -144,12 +200,23 @@ export function openBandit(
       throw new RangeError(`bandit: ${path} was started with different arms`);
     if (state.budgetTokens !== input.budgetTokens)
       throw new RangeError(`bandit: ${path} was started with budget ${state.budgetTokens}`);
+    if (start?.type === "start" && canonicalJson(start.approval ?? null) !== canonicalJson(input.approval ?? null))
+      throw new RangeError(`bandit: ${path} was started with a different approval; start a new history`);
     return state;
   }
   mkdirSync(dirname(path), { recursive: true });
-  const start: BanditEvent = { type: "start", schema: BANDIT_SCHEMA, arms: input.arms, budgetTokens: input.budgetTokens };
-  writeFileSync(path, `${canonicalJson(start)}\n`, { flag: "wx" });
-  return replay([start]);
+  const start: BanditEvent = {
+    type: "start",
+    schema: BANDIT_SCHEMA,
+    arms: input.arms,
+    budgetTokens: input.budgetTokens,
+    ...(input.approval ? { approval: { approvedBy: input.approval.approvedBy, armsDigest: input.approval.armsDigest } } : {}),
+  };
+  const lines: BanditEvent[] = [start];
+  const refusal = guardrailRefusal(input.arms, input.approval);
+  if (refusal) lines.push({ type: "refusal", axis: input.arms[0]!.axis, reason: refusal });
+  writeFileSync(path, lines.map((line) => `${canonicalJson(line)}\n`).join(""), { flag: "wx" });
+  return replay(lines);
 }
 
 function sampleNormal(random: () => number): number {
