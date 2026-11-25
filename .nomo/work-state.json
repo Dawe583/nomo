@@ -3387,6 +3387,43 @@
       ],
       "stopCondition": "Stop if promotion would copy prompt text without signed evidence, promote mined rules as operator instructions, change policy or permissions, or fabricate recovery from a tampered operator chain.",
       "completedAt": "2026-11-26T00:55:00Z"
+    },
+    {
+      "id": "hp1b-operator-scope-surfaces",
+      "status": "done",
+      "owner": "devin-6293643153014f56bb088c9a71fde97a",
+      "dependsOn": [
+        "hp1a-operator-scope-core"
+      ],
+      "scope": [
+        "packages/cli/src/harness.ts",
+        "apps/control-plane/api/server.ts",
+        "docs/HARNESS-LEARNING.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "CLI exposes promote with session and full digest",
+        "CLI exposes demote and global without pretending a session is needed",
+        "HTTP exposes promote, demote and global routes over the same workbench methods",
+        "operator entries remain context only and no route changes policy or permissions"
+      ],
+      "verifier": [
+        "node --experimental-strip-types --test packages/cli/src/harness.test.ts apps/control-plane/api/server.test.ts",
+        "pnpm --filter @nomo/cli typecheck",
+        "npx tsc -p apps/control-plane/tsconfig.json",
+        "git diff --check"
+      ],
+      "evidence": [
+        "focused CLI/API verifier: 75 tests, 75 pass, 0 fail, cancelled 0, skipped 0, todo 0, duration_ms 1129.483125",
+        "pnpm --filter @nomo/cli typecheck: exit 0",
+        "npx tsc -p apps/control-plane/tsconfig.json: exit 0",
+        "git diff --check: exit 0"
+      ],
+      "stopCondition": "Stop if a surface weakens exact digest authority, promotes pending or rolled back entries, or turns operator lessons into decision authority.",
+      "completedAt": "2026-11-26T01:05:00Z"
     }
   ]
 }

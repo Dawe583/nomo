@@ -1106,6 +1106,27 @@ async function route(
         proposals: await wb.pendingApprovalsFor(id),
       });
     }
+    const harnessGlobal = parsed.pathname === "/api/harness/global";
+    if (harnessGlobal) {
+      if (request.method !== "GET")
+        return sendJson(response, 405, { error: "method_not_allowed" });
+      return sendJson(response, 200, { entries: await wb.operatorHarnessEntries() });
+    }
+    const harnessPromotion =
+      /^\/api\/sessions\/([a-f0-9-]+)\/harness\/promotions\/([a-f0-9]{64})\/(promote|demote)$/.exec(
+        parsed.pathname,
+      );
+    if (harnessPromotion) {
+      const id = harnessPromotion[1]!, digest = harnessPromotion[2]!, action = harnessPromotion[3]!;
+      if (request.method !== "POST")
+        return sendJson(response, 405, { error: "method_not_allowed" });
+      if (action === "promote") {
+        if (!wb.get(id)) return sendJson(response, 404, { message: "Session not found." });
+        return sendJson(response, 200, await wb.promoteHarnessProposal(id, digest));
+      }
+      await wb.demoteHarnessPromotion(digest);
+      return sendJson(response, 200, { demoted: true, digest });
+    }
     const harnessDecision =
       /^\/api\/sessions\/([a-f0-9-]+)\/harness\/proposals\/([a-f0-9]{64})\/(approve|reject|rollback)$/.exec(
         parsed.pathname,

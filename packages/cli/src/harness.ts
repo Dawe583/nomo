@@ -161,6 +161,12 @@ export type HarnessSurface = {
     sessionId: string,
     digest: string,
   ): Promise<{ readonly applied: readonly unknown[] }>;
+  promoteHarnessProposal?(sessionId: string, digest: string): Promise<{ readonly entries: number }>;
+  demoteHarnessPromotion?(digest: string): Promise<void>;
+  operatorHarnessEntries?(): Promise<readonly {
+    readonly id: string; readonly kind: string; readonly title: string; readonly content: string;
+    readonly tool: string; readonly klass: string; readonly repeats: number; readonly decidedByOperator?: boolean;
+  }[]>;
 };
 
 export type HarnessDeps = {
@@ -643,7 +649,7 @@ export async function runHarnessCommand(
     io.stdout(USAGE);
     return action ? 0 : 1;
   }
-  if (!["list", "entries", "approve", "reject", "rollback", "reward", "ingest-rewards", "ingest-eval", "run-eval", "model", "ratchet", "trend"].includes(action)) {
+  if (!["list", "entries", "approve", "reject", "rollback", "reward", "ingest-rewards", "ingest-eval", "run-eval", "model", "ratchet", "trend", "promote", "demote", "global"].includes(action)) {
     io.stderr(`Unknown harness action ${action}.`);
     io.stderr(USAGE);
     return 1;
@@ -701,12 +707,12 @@ export async function runHarnessCommand(
       return 1;
     }
   }
-  if (!flags.session && !["model", "ratchet", "run-eval"].includes(action)) {
+  if (!flags.session && !["model", "ratchet", "run-eval", "demote", "global"].includes(action)) {
     io.stderr("The harness commands need a session: --session <id>.");
     io.stderr(USAGE);
     return 1;
   }
-  if (!["list", "entries", "model", "ratchet", "trend", "run-eval"].includes(action) && !flags.digest) {
+  if (!["list", "entries", "model", "ratchet", "trend", "run-eval", "global"].includes(action) && !flags.digest) {
     io.stderr(
       `The ${action} action needs ${
         action === "reward"
@@ -738,6 +744,43 @@ export async function runHarnessCommand(
     ? await deps.workbench()
     : new Workbench(env);
   try {
+    if (action === "promote") {
+      if (!workbench.promoteHarnessProposal) {
+        io.stderr("This harness surface cannot promote operator-scope lessons.");
+        return 1;
+      }
+      const digest = await resolveDigest(workbench, flags.session, flags.digest);
+      const promoted = await workbench.promoteHarnessProposal(flags.session, digest);
+      io.stdout(`promote: ${promoted.entries} operator-scope lesson${promoted.entries === 1 ? "" : "s"} activated for every conversation`);
+      return 0;
+    }
+    if (action === "demote") {
+      if (!workbench.demoteHarnessPromotion) {
+        io.stderr("This harness surface cannot demote operator-scope lessons.");
+        return 1;
+      }
+      const digest = await resolveDigest(workbench, "", flags.digest);
+      await workbench.demoteHarnessPromotion(digest);
+      io.stdout("demote: operator-scope promotion ended");
+      return 0;
+    }
+    if (action === "global") {
+      if (!workbench.operatorHarnessEntries) {
+        io.stderr("This harness surface cannot read operator-scope lessons.");
+        return 1;
+      }
+      const entries = await workbench.operatorHarnessEntries();
+      if (!entries.length) {
+        io.stdout("No active operator-scope harness lessons.");
+        return 0;
+      }
+      for (const entry of entries) {
+        io.stdout(`${entry.id}  ${entry.kind}  operator${entry.tool ? `  ${entry.tool}/${entry.klass}` : ""}`);
+        io.stdout(`    ${entry.title}`);
+        io.stdout(`    ${entry.content.length > 160 ? `${entry.content.slice(0, 160)}...` : entry.content}`);
+      }
+      return 0;
+    }
     if (action === "run-eval") {
       if (flags.digest) {
         io.stderr("run-eval takes its prompt through --prompt or --prompt-file, not a positional argument.");
