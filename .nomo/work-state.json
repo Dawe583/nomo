@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-25T23:19:29.564806Z",
+  "updatedAt": "2026-11-25T23:20:52.738841Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -3302,6 +3302,50 @@
       ],
       "stopCondition": "Stop if exposing approvalMs would expose arguments or payloads, if the proxy record truly lacks operator time, or if legacy records need fabricated latency.",
       "completedAt": "2026-11-25T23:19:29.564806Z"
+    },
+    {
+      "id": "h18-factorial-bandit-report-surface",
+      "status": "done",
+      "owner": "devin-6293643153014f56bb088c9a71fde97a",
+      "dependsOn": [
+        "h18-multi-axis-bandit"
+      ],
+      "scope": [
+        "scripts/src/harness-factorial-bandit-report.mjs",
+        "scripts/src/harness-factorial-bandit-report.test.mjs",
+        "scripts/src/module-inventory.test.mjs",
+        "docs/HARNESS-LEARNING.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "an existing factorial history has a read-only operator measurement report",
+        "the report prints cell means, samples, main effects, interaction, budget, spend and stop state",
+        "empty cells and incomplete factorial evidence are unmeasured rather than zero",
+        "the command never samples, approves, trains or deploys a treatment",
+        "harness-factorial-bandit.ts is no longer an orphan allowlist entry"
+      ],
+      "verifier": [
+        "node --test scripts/src/harness-factorial-bandit-report.test.mjs scripts/src/module-inventory.test.mjs",
+        "node --test packages/workbench/src/harness-factorial-bandit.test.ts packages/workbench/src/harness-bandit.test.ts",
+        "node --test scripts/src/doc-truth.test.mjs scripts/src/no-dash.test.mjs",
+        "node --test scripts/src/*.test.mjs",
+        "pnpm --filter @nomo/workbench typecheck",
+        "git diff --check"
+      ],
+      "evidence": [
+        "focused report plus inventory verifier: 6 tests, 6 pass, 0 fail, duration_ms 292.422583",
+        "factorial and one-axis bandit verifier: 15 tests, 15 pass, 0 fail, duration_ms 151.0425",
+        "docs verifier: 10 tests, 10 pass, 0 fail, duration_ms 116.10375",
+        "wider scripts suite: 435 tests, 402 pass, 0 fail, cancelled 0, skipped 32, todo 1, duration_ms 8449.73775",
+        "pnpm --filter @nomo/workbench typecheck: exit 0",
+        "git diff --check: exit 0",
+        "CLI output evidence: complete fixture reports main effects 0.4 and 0.3, interaction 0.2, unmeasured none; incomplete fixture reports empty cells and effects as unmeasured"
+      ],
+      "stopCondition": "Stop if reporting would sample a treatment, approve guardrail exploration, train a model, deploy an arm, or turn empty cells into zero.",
+      "completedAt": "2026-11-25T23:20:52.738841Z"
     }
   ]
 }
