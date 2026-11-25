@@ -22,9 +22,10 @@
 
 ## Verified state at push (commit e2ad7ac5 line, 2026-11-25)
 
-- workbench: `node --test packages/workbench/src/*.test.ts` → 1150 tests, 1148 pass, 0 fail, 2 skipped
+- workbench: `node --test --test-concurrency=1 packages/workbench/src/*.test.ts` → 1162 tests, 1160 pass, 0 fail, 2 skipped after H1-H3 integration
 - `pnpm --filter @nomo/workbench typecheck` → exit 0
-- agent-identity: 10/10 including revocation surviving restart
+- agent-identity: 11/11 including revocation surviving restart without local session evidence
+- H1 reward record, H2 variant identity and H3 eval set v2 are done; oracle eval 14/14 proves plumbing only, not model capability
 - Do not trust these numbers without re-running the gate you depend on.
 
 ## Product gates status (Track F)
