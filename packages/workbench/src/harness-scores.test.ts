@@ -6,7 +6,10 @@ import {
   SCORE_METRICS,
   compareBoards,
   compareSplit,
+  computeReward,
   measureBoard,
+  parseRewardWeights,
+  rewardRecord,
   summariseCases,
   unmeasuredMetrics,
   type SplitSummary,
@@ -370,5 +373,74 @@ test("a chain with nothing decided has no first-pass rate at all", () => {
   assert.equal(board.metrics.first_pass_rate.n, 0);
   assert.deepEqual(board.reasons, [
     "no decided call in the chain, so nothing was measured",
+  ]);
+});
+
+const rewardInput = (overrides: Record<string, unknown> = {}) => ({
+  caseId: "read-before-write",
+  variantId: "sha256:fixture",
+  passed: true,
+  guardrails: { unknown_tool_rate: 0, deny_rate: 0.5 },
+  costUsd: 0.0012,
+  latencyMs: 840,
+  approvalMs: "unmeasured" as const,
+  weights: { breach: 0.5, cost: 1, latency: 0.001 },
+  ...overrides,
+}) as Parameters<typeof rewardRecord>[0];
+
+test("a reward record recomputes to its stored reward from its own fields", () => {
+  const record = rewardRecord(rewardInput());
+  assert.equal(record.schema, "nomo.reward.v1");
+  assert.equal(record.reward, 1 - 1 * 0.5 - 0.0012 * 1 - 840 * 0.001);
+  // Round trip through JSON, as a stored record would, then recompute.
+  const stored = JSON.parse(JSON.stringify(record));
+  assert.equal(computeReward(stored), stored.reward);
+  assert.equal(record.approvalMs, "unmeasured");
+});
+
+test("a weighted term with no producer makes the reward unmeasured, not free", () => {
+  assert.equal(rewardRecord(rewardInput({ costUsd: "unmeasured" })).reward, "unmeasured");
+  assert.equal(
+    rewardRecord(rewardInput({ guardrails: { unknown_tool_rate: "unmeasured" } })).reward,
+    "unmeasured",
+  );
+  // No guardrail at all is not evidence that none was breached.
+  assert.equal(rewardRecord(rewardInput({ guardrails: {} })).reward, "unmeasured");
+});
+
+test("a zero weight lets an unmeasured input drop out of the reward", () => {
+  const record = rewardRecord(
+    rewardInput({
+      passed: false,
+      guardrails: {},
+      costUsd: "unmeasured",
+      weights: { breach: 0, cost: 0, latency: 0.001 },
+    }),
+  );
+  assert.equal(record.reward, 0 - 840 * 0.001);
+  assert.equal(record.costUsd, "unmeasured");
+});
+
+test("weights and metrics are validated, never defaulted to zero", () => {
+  assert.throws(() => parseRewardWeights({ breach: 0.5, cost: 1 }), /weights\.latency/);
+  assert.throws(() => parseRewardWeights({ breach: 0.5, cost: 1, latency: 0, bonus: 1 }), /unknown weight bonus/);
+  assert.throws(() => parseRewardWeights({ breach: -1, cost: 1, latency: 0 }), /weights\.breach/);
+  assert.throws(() => rewardRecord(rewardInput({ latencyMs: 0 / 0 })), /latencyMs/);
+  assert.throws(() => rewardRecord(rewardInput({ caseId: "" })), /caseId/);
+});
+
+test("a record carries no prompt or output field", () => {
+  const keys = Object.keys(rewardRecord(rewardInput())).sort();
+  assert.deepEqual(keys, [
+    "approvalMs",
+    "caseId",
+    "costUsd",
+    "guardrails",
+    "latencyMs",
+    "passed",
+    "reward",
+    "schema",
+    "variantId",
+    "weights",
   ]);
 });

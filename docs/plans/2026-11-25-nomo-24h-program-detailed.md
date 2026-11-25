@@ -89,6 +89,11 @@ this section in the same slice.
 Rules: `reward` is recomputable from the record and its weights; a metric with
 no producer is the string `"unmeasured"`, never `0`; no prompt or tool output is
 stored.
+As built (H1): `reward = passed - breaches*breach - costUsd*cost -
+latencyMs*latency`, where `breaches` counts measured guardrails above zero; a
+weighted term with an unmeasured input (or no guardrail at all for `breach`)
+makes `reward` the string `"unmeasured"`. Weights have no built-in default.
+The example numbers above are illustrative, not a computed record.
 
 ### 2.2 VariantIdentity (H2)
 

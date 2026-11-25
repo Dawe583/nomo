@@ -1,12 +1,13 @@
 import test, { describe } from "node:test";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { parseDecision, parseTaskset, scoreTask } from "./harness-eval.mjs";
+import { computeReward } from "../../packages/workbench/src/harness-scores.ts";
 
 const script = fileURLToPath(new URL("./harness-eval.mjs", import.meta.url));
 
@@ -289,6 +290,72 @@ describe("harness-eval CLI", () => {
       assert.match(result.stderr, /tasks\[0\]\.expectedClass: required/);
       assert.doesNotMatch(result.stderr, /SECRET-PROMPT-TEXT/);
       assert.doesNotMatch(result.stdout, /SECRET-PROMPT-TEXT/);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});
+
+describe("harness-eval reward records", () => {
+  const weights = ["--weights", "breach=0,cost=0,latency=0.001"];
+
+  test("a case with two runs writes one recomputable record and no prompt", () => {
+    const dir = workspace(
+      { tasks: [task("t1", "SECRET-PROMPT-CANARY", "read", "inspect")] },
+      { "SECRET-PROMPT-CANARY": [{ tool: "read", class: "inspect" }] },
+    );
+    try {
+      const records = join(dir, "records.jsonl");
+      const result = run(dir, ["--runs", "2", "--records", records, ...weights]);
+      assert.equal(result.status, 0);
+      assert.match(result.stdout, /records: 1 written to /);
+      const raw = readFileSync(records, "utf8");
+      assert.doesNotMatch(raw, /CANARY/);
+      const lines = raw.trim().split("\n");
+      assert.equal(lines.length, 1);
+      const record = JSON.parse(lines[0]);
+      assert.equal(record.schema, "nomo.reward.v1");
+      assert.equal(record.caseId, "t1");
+      assert.equal(record.passed, true);
+      assert.equal(record.costUsd, "unmeasured");
+      assert.equal(record.approvalMs, "unmeasured");
+      assert.ok(typeof record.latencyMs === "number" && record.latencyMs > 0);
+      assert.equal(typeof record.reward, "number");
+      assert.equal(computeReward(record), record.reward);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test("a weighted metric without a producer leaves the reward unmeasured", () => {
+    const dir = workspace(
+      { tasks: [task("t1", "p1", "read", "inspect")] },
+      { p1: [{ tool: "read", class: "inspect" }] },
+    );
+    try {
+      const records = join(dir, "records.jsonl");
+      const result = run(dir, ["--records", records, "--weights", "breach=0.5,cost=1,latency=0.001"]);
+      assert.equal(result.status, 0);
+      const record = JSON.parse(readFileSync(records, "utf8").trim());
+      assert.equal(record.reward, "unmeasured");
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test("records need explicit weights, and bad weights are refused", () => {
+    const dir = workspace(
+      { tasks: [task("t1", "p1", "read", "inspect")] },
+      { p1: [{ tool: "read", class: "inspect" }] },
+    );
+    try {
+      const records = join(dir, "records.jsonl");
+      const missing = run(dir, ["--records", records]);
+      assert.equal(missing.status, 2);
+      assert.match(missing.stderr, /--records and --weights are required together/);
+      const bad = run(dir, ["--records", records, "--weights", "breach=0.5,cost=1"]);
+      assert.equal(bad.status, 2);
+      assert.match(bad.stderr, /weights\.latency/);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

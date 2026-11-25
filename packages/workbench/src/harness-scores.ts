@@ -601,3 +601,108 @@ export function measureRefinementEffect(
     unmeasuredGuardrails,
   };
 }
+
+/**
+ * One reward per evaluated case: the number a policy search may optimise.
+ *
+ * `reward = passed - breaches*weights.breach - costUsd*weights.cost -
+ * latencyMs*weights.latency`, where `breaches` counts measured guardrails above
+ * zero. The weights travel with the record, so anyone holding the record can
+ * recompute the reward without trusting the writer. A metric with no producer
+ * is the string `"unmeasured"`, never `0`, and a weighted term whose input is
+ * unmeasured makes the whole reward unmeasured rather than silently free. No
+ * prompt or tool output belongs in a record.
+ */
+export const REWARD_SCHEMA = "nomo.reward.v1";
+
+export type Measured = number | "unmeasured";
+
+export type RewardWeights = {
+  readonly breach: number;
+  readonly cost: number;
+  readonly latency: number;
+};
+
+export type RewardRecord = {
+  readonly schema: typeof REWARD_SCHEMA;
+  readonly caseId: string;
+  readonly variantId: string;
+  readonly passed: boolean;
+  readonly guardrails: Readonly<Record<string, Measured>>;
+  readonly costUsd: Measured;
+  readonly latencyMs: Measured;
+  readonly approvalMs: Measured;
+  readonly weights: RewardWeights;
+  readonly reward: Measured;
+};
+
+export type RewardInput = Omit<RewardRecord, "schema" | "reward">;
+
+function measured(name: string, value: unknown): Measured {
+  if (value === "unmeasured") return value;
+  if (typeof value !== "number" || !Number.isFinite(value) || value < 0)
+    throw new TypeError(`${name}: expected a non-negative finite number or "unmeasured"`);
+  return value;
+}
+
+/** Validate operator-supplied weights. There are no default weights: a
+ * constant chosen here would be a preference nobody made. */
+export function parseRewardWeights(value: unknown): RewardWeights {
+  if (value === null || typeof value !== "object" || Array.isArray(value))
+    throw new TypeError("weights: expected an object with breach, cost and latency");
+  const record = value as Record<string, unknown>;
+  for (const key of Object.keys(record))
+    if (key !== "breach" && key !== "cost" && key !== "latency")
+      throw new TypeError(`weights: unknown weight ${key}`);
+  const weight = (key: keyof RewardWeights): number => {
+    const raw = record[key];
+    if (typeof raw !== "number" || !Number.isFinite(raw) || raw < 0)
+      throw new TypeError(`weights.${key}: expected a non-negative finite number`);
+    return raw;
+  };
+  return { breach: weight("breach"), cost: weight("cost"), latency: weight("latency") };
+}
+
+/** Recompute a reward from a record's own fields. Pure and deterministic, so
+ * a stored reward that differs from this value was not produced by it. */
+export function computeReward(input: RewardInput): Measured {
+  const weights = parseRewardWeights(input.weights);
+  const guardrails = Object.values(input.guardrails).map((value) => measured("guardrail", value));
+  let reward = input.passed ? 1 : 0;
+  if (weights.breach !== 0) {
+    // No guardrail at all is no evidence of no breach.
+    if (guardrails.length === 0 || guardrails.includes("unmeasured")) return "unmeasured";
+    reward -= guardrails.filter((value) => (value as number) > 0).length * weights.breach;
+  }
+  const terms: [Measured, number][] = [
+    [measured("costUsd", input.costUsd), weights.cost],
+    [measured("latencyMs", input.latencyMs), weights.latency],
+  ];
+  for (const [value, weight] of terms) {
+    if (weight === 0) continue;
+    if (value === "unmeasured") return "unmeasured";
+    reward -= value * weight;
+  }
+  return reward;
+}
+
+/** Build one record for one evaluated case. */
+export function rewardRecord(input: RewardInput): RewardRecord {
+  if (typeof input.caseId !== "string" || !input.caseId.trim())
+    throw new TypeError("caseId: required");
+  if (typeof input.variantId !== "string" || !input.variantId.trim())
+    throw new TypeError("variantId: required");
+  if (typeof input.passed !== "boolean") throw new TypeError("passed: expected a boolean");
+  return {
+    schema: REWARD_SCHEMA,
+    caseId: input.caseId,
+    variantId: input.variantId,
+    passed: input.passed,
+    guardrails: { ...input.guardrails },
+    costUsd: measured("costUsd", input.costUsd),
+    latencyMs: measured("latencyMs", input.latencyMs),
+    approvalMs: measured("approvalMs", input.approvalMs),
+    weights: parseRewardWeights(input.weights),
+    reward: computeReward(input),
+  };
+}
