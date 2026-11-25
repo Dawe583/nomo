@@ -457,6 +457,16 @@ resize; click on every tab and row kind is tested.
 
 **Verifier.** `node --test packages/cli/src/tui/workspace-terminal.test.ts`.
 
+**As built.** Mouse input decoding is explicitly tested for wheel, click,
+release and drag motion events. The runner now shares one testable wheel state
+transition across list, detail, chat, settings and model-picker surfaces, and
+one hit resolver for tab and row targets. Every workspace tab is rendered at
+80x24 and then 40x12 while tests assert its click target exists, all targets
+stay inside the resized terminal and no stale large-frame geometry survives.
+Hit resolution is covered for every row kind the runner can activate: item,
+tree, provider, model, setting, chip and toast. Selection behavior remains
+covered by the existing rail/transcript selection tests.
+
 ### T7. Keyboard focus parity (1.0 h)
 
 **Files.** `workspace-runner.ts`, `workspace-input-parity.test.ts`.

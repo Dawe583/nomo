@@ -1084,6 +1084,98 @@ export class WorkspaceInput {
  */
 let petSplashShown = false;
 
+
+/** The hit target under one-based terminal mouse coordinates. */
+export function workspaceHitAt(
+  ui: WorkspaceTui,
+  x: number,
+  y: number,
+): {
+  readonly tabTarget?: (typeof ui.tabHitTargets)[number];
+  readonly rowTarget?: (typeof ui.rowHitTargets)[number];
+} {
+  return {
+    tabTarget: ui.tabHitTargets.find(
+      (item) => item.row === y && x >= item.start && x <= item.end,
+    ),
+    rowTarget: ui.rowHitTargets.find(
+      (item) => item.row === y && x >= item.start && x <= item.end,
+    ),
+  };
+}
+
+/** Apply one mouse wheel step to the active workspace surface.
+ *
+ * The runner draws after this returns; keeping the state transition here is
+ * what lets the parity test exercise exactly the same wheel behavior without
+ * opening a terminal.
+ */
+export function applyWorkspaceWheel(
+  ui: WorkspaceTui,
+  delta: -1 | 1,
+  x = 1,
+): true {
+  if (ui.modelPicker?.open) {
+    const picker = ui.modelPicker;
+    const columns = Math.max(1, (ui.viewport.width ?? 80) - 4);
+    const wide = columns >= 88;
+    const sidebarWidth = wide
+      ? Math.min(28, Math.max(20, Math.floor(columns * 0.27)))
+      : 0;
+    const pane = wide
+      ? x <= sidebarWidth + 4
+        ? "providers"
+        : "models"
+      : picker.focusedPane;
+    const visibleRows = Math.max(1, ui.viewport.height - (wide ? 2 : 5));
+    const rows =
+      pane === "providers"
+        ? picker.providers
+        : modelPickerMatches(picker.models, picker.query);
+    const selected =
+      pane === "providers" ? picker.providerIndex : picker.selected;
+    const field =
+      pane === "providers" ? "providerWindowStart" : "modelWindowStart";
+    const currentStart = modelPickerWindowStart(
+      selected,
+      rows.length,
+      visibleRows,
+      picker[field],
+    );
+    const nextStart = modelPickerWindowStart(
+      selected,
+      rows.length,
+      visibleRows,
+      currentStart + delta,
+    );
+    ui.modelPicker = {
+      ...picker,
+      [field]: nextStart,
+    };
+    return true;
+  }
+  if (ui.settingsOpen) {
+    const settingsCount = ui.visibleSettingsControls().length;
+    ui.selectSetting(
+      Math.max(
+        0,
+        Math.min(settingsCount - 1, ui.settingsSelected + delta * 3),
+      ),
+    );
+  } else if (ui.detail) ui.scroll = Math.max(0, ui.scroll + delta * 3);
+  else if (ui.tab === "chat") {
+    const maxOffset = Math.max(0, ui.viewport.total - ui.viewport.height);
+    const current = ui.scroll < 0 ? maxOffset : ui.viewport.offset;
+    const next = Math.max(0, Math.min(maxOffset, current + delta * 3));
+    ui.scroll = next >= maxOffset ? -1 : next;
+  } else if (ui.groupTree) ui.moveTreeCursor(delta);
+  else {
+    const last = Math.max(0, ui.items().length - 1);
+    ui.selected = Math.max(0, Math.min(last, ui.selected + delta));
+  }
+  return true;
+}
+
 export async function runWorkspaceTui(
   argv: readonly string[],
 ): Promise<number> {
@@ -2861,67 +2953,7 @@ export async function runWorkspaceTui(
       if (button === 64 || button === 65) {
         lastMouseClick = undefined;
         // SGR wheel reports use button 64/65 for up/down.
-        if (ui.modelPicker?.open) {
-          const picker = ui.modelPicker;
-          const delta = button === 64 ? -1 : 1;
-          const columns = Math.max(1, (ui.viewport.width ?? 80) - 4);
-          const wide = columns >= 88;
-          const sidebarWidth = wide
-            ? Math.min(28, Math.max(20, Math.floor(columns * 0.27)))
-            : 0;
-          const pane = wide
-            ? event.x <= sidebarWidth + 4
-              ? "providers"
-              : "models"
-            : picker.focusedPane;
-          const visibleRows = Math.max(1, ui.viewport.height - (wide ? 2 : 5));
-          const rows =
-            pane === "providers"
-              ? picker.providers
-              : modelPickerMatches(picker.models, picker.query);
-          const selected =
-            pane === "providers" ? picker.providerIndex : picker.selected;
-          const field =
-            pane === "providers" ? "providerWindowStart" : "modelWindowStart";
-          const currentStart = modelPickerWindowStart(
-            selected,
-            rows.length,
-            visibleRows,
-            picker[field],
-          );
-          const nextStart = modelPickerWindowStart(
-            selected,
-            rows.length,
-            visibleRows,
-            currentStart + delta,
-          );
-          ui.modelPicker = {
-            ...picker,
-            [field]: nextStart,
-          };
-          draw();
-          return;
-        }
-        const delta = button === 64 ? -1 : 1;
-        if (ui.settingsOpen) {
-          const settingsCount = ui.visibleSettingsControls().length;
-          ui.selectSetting(
-            Math.max(
-              0,
-              Math.min(settingsCount - 1, ui.settingsSelected + delta * 3),
-            ),
-          );
-        } else if (ui.detail) ui.scroll = Math.max(0, ui.scroll + delta * 3);
-        else if (ui.tab === "chat") {
-          const maxOffset = Math.max(0, ui.viewport.total - ui.viewport.height);
-          const current = ui.scroll < 0 ? maxOffset : ui.viewport.offset;
-          const next = Math.max(0, Math.min(maxOffset, current + delta * 3));
-          ui.scroll = next >= maxOffset ? -1 : next;
-        } else if (ui.groupTree) ui.moveTreeCursor(delta);
-        else {
-          const last = Math.max(0, ui.items().length - 1);
-          ui.selected = Math.max(0, Math.min(last, ui.selected + delta));
-        }
+        applyWorkspaceWheel(ui, button === 64 ? -1 : 1, event.x);
         draw();
         return;
       }
@@ -2939,14 +2971,7 @@ export async function runWorkspaceTui(
         lastMouseClick = undefined;
         return;
       }
-      const tabTarget = ui.tabHitTargets.find(
-        (item) =>
-          item.row === event.y && event.x >= item.start && event.x <= item.end,
-      );
-      const rowTarget = ui.rowHitTargets.find(
-        (item) =>
-          item.row === event.y && event.x >= item.start && event.x <= item.end,
-      );
+      const { tabTarget, rowTarget } = workspaceHitAt(ui, event.x, event.y);
       const actionableRow =
         rowTarget &&
         !(
