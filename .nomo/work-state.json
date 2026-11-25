@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-25T01:11:58Z",
+  "updatedAt": "2026-11-25T01:30:39Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -423,7 +423,7 @@
     },
     {
       "id": "h5-activation-rollback",
-      "status": "in-progress",
+      "status": "done",
       "owner": "child-b239bc521caf40d6857a25426f9eb705",
       "dependsOn": [
         "h8-guardrail-regression-detector"
@@ -441,13 +441,19 @@
         "see plan package verifier"
       ],
       "evidence": [
-        "Delegated to child session b239bc521caf40d6857a25426f9eb705; parent retains integration and graph recording ownership."
+        "H5/R5 merged from child branch head 3cea664 and completed in the parent free-for-teams session. Pure activation and rollback gates are wired so CLI and TUI operator paths require the full exact 64 hexadecimal digest; prefix activation is refused before pending proposals are read.",
+        "Rollback remains one command: nomo harness rollback --session <id> <digest>. R5 sampled-arm activation verifies the arm and passes through the same exact digest gate.",
+        "node --test packages/cli/src/harness.test.ts observed exit 0; tests 19, pass 19, fail 0, duration_ms 491.965792.",
+        "node --test packages/cli/src/tui/workspace-harness-proposals.test.ts observed exit 0; tests 7, pass 7, fail 0, duration_ms 3062.707417.",
+        "pnpm --filter @nomo/cli typecheck observed exit 0; pnpm --filter @nomo/workbench typecheck observed exit 0.",
+        "node --test packages/workbench/src/refine-trigger.test.ts observed exit 0; tests 32, pass 32, fail 0, duration_ms 934.811458.",
+        "Wider gates observed exit 0: TUI tests 529, pass 529, fail 0, duration_ms 42624.837292; Workbench tests 1187, pass 1185, fail 0, skipped 2, duration_ms 96546.883708."
       ],
       "stopCondition": "After one targeted repair, record the blocker and continue independent work."
     },
     {
       "id": "r5-activation-from-arm",
-      "status": "pending",
+      "status": "done",
       "owner": "child-b239bc521caf40d6857a25426f9eb705",
       "dependsOn": [
         "r2-thompson-sampler",
@@ -466,7 +472,13 @@
         "see plan package verifier"
       ],
       "evidence": [
-        "Delegated to child session b239bc521caf40d6857a25426f9eb705; parent retains integration and graph recording ownership."
+        "H5/R5 merged from child branch head 3cea664 and completed in the parent free-for-teams session. Pure activation and rollback gates are wired so CLI and TUI operator paths require the full exact 64 hexadecimal digest; prefix activation is refused before pending proposals are read.",
+        "Rollback remains one command: nomo harness rollback --session <id> <digest>. R5 sampled-arm activation verifies the arm and passes through the same exact digest gate.",
+        "node --test packages/cli/src/harness.test.ts observed exit 0; tests 19, pass 19, fail 0, duration_ms 491.965792.",
+        "node --test packages/cli/src/tui/workspace-harness-proposals.test.ts observed exit 0; tests 7, pass 7, fail 0, duration_ms 3062.707417.",
+        "pnpm --filter @nomo/cli typecheck observed exit 0; pnpm --filter @nomo/workbench typecheck observed exit 0.",
+        "node --test packages/workbench/src/refine-trigger.test.ts observed exit 0; tests 32, pass 32, fail 0, duration_ms 934.811458.",
+        "Wider gates observed exit 0: TUI tests 529, pass 529, fail 0, duration_ms 42624.837292; Workbench tests 1187, pass 1185, fail 0, skipped 2, duration_ms 96546.883708."
       ],
       "stopCondition": "After one targeted repair, record the blocker and continue independent work."
     },

@@ -192,32 +192,19 @@ function describeEdit(edit: {
 }
 
 /**
- * The full digest behind what the operator typed.
- *
- * The interactive shell shows the first eight characters of a digest, so an
- * operator who read it there cannot paste it into a terminal. A prefix is
- * accepted when it names exactly one pending proposal, and refused when it
- * names none or several, because a decision that lands on the wrong
- * proposal is worse than one that does not land at all.
+ * A harness decision binds only to the full digest the operator typed.
+ * Short shell rendering is display text, never authorization input.
  */
 async function resolveDigest(
   workbench: HarnessSurface,
   sessionId: string,
   typed: string,
 ): Promise<string> {
-  if (typed.length === 64) return typed;
-  const proposals = await workbench.pendingApprovalsFor(sessionId);
-  const matches = proposals.filter((proposal) =>
-    proposal.digest.startsWith(typed),
-  );
-  if (matches.length === 1) return matches[0]!.digest;
-  if (matches.length > 1)
-    throw new Error(
-      `The digest prefix ${typed} names ${matches.length} pending proposals. Use more of it.`,
-    );
-  throw new Error(
-    `No pending proposal matches the digest prefix ${typed}.`,
-  );
+  void workbench;
+  void sessionId;
+  if (!/^[a-f0-9]{64}$/.test(typed))
+    throw new Error("Enter the full 64 hexadecimal digest characters.");
+  return typed;
 }
 
 export async function runHarnessCommand(
