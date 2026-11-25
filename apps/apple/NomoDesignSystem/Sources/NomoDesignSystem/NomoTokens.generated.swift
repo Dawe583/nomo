@@ -97,6 +97,26 @@ public enum NomoColorRole: String, CaseIterable, Sendable {
     /// The value recorded here is the one that was measured, not the
     /// platform's default. The reason it moved is the point.
     case syntaxNumber
+
+    /// The coral cell is part of the fixed NOMO grid artwork. It never carries
+    /// text or state, so it is decorative and keeps the same measured brand
+    /// value in both appearances.
+    ///
+    /// The value recorded here is the one that was measured, not the
+    /// platform's default. The reason it moved is the point.
+    /// Decorative. It separates, it never carries meaning, so no
+    /// contrast pair may be measured against it.
+    case brandCoral
+
+    /// The teal cell is part of the fixed NOMO grid artwork. It never carries
+    /// text or state, so it is decorative and keeps the same measured brand
+    /// value in both appearances.
+    ///
+    /// The value recorded here is the one that was measured, not the
+    /// platform's default. The reason it moved is the point.
+    /// Decorative. It separates, it never carries meaning, so no
+    /// contrast pair may be measured against it.
+    case brandTeal
 }
 
 public extension NomoColorRole {
@@ -119,6 +139,8 @@ public extension NomoColorRole {
         case .syntaxKeyword: "label"
         case .syntaxString: "secondaryLabel"
         case .syntaxNumber: "label"
+        case .brandCoral: "fixed brand artwork"
+        case .brandTeal: "fixed brand artwork"
         }
     }
 
@@ -135,6 +157,8 @@ public extension NomoColorRole {
     var isDecorative: Bool {
         switch self {
         case .separator: true
+        case .brandCoral: true
+        case .brandTeal: true
         default: false
         }
     }
@@ -156,6 +180,8 @@ public extension NomoColorRole {
         case .syntaxKeyword: NomoColorComponents(red: 0.65098, green: 0.239216, blue: 0.047059, alpha: 1.0)
         case .syntaxString: NomoColorComponents(red: 0.207843, green: 0.388235, blue: 0.266667, alpha: 1.0)
         case .syntaxNumber: NomoColorComponents(red: 0.458824, green: 0.313725, blue: 0.603922, alpha: 1.0)
+        case .brandCoral: NomoColorComponents(red: 1.0, green: 0.439216, blue: 0.368627, alpha: 1.0)
+        case .brandTeal: NomoColorComponents(red: 0.0, green: 0.662745, blue: 0.741176, alpha: 1.0)
         }
     }
 
@@ -176,6 +202,8 @@ public extension NomoColorRole {
         case .syntaxKeyword: NomoColorComponents(red: 0.933333, green: 0.596078, blue: 0.368627, alpha: 1.0)
         case .syntaxString: NomoColorComponents(red: 0.627451, green: 0.780392, blue: 0.596078, alpha: 1.0)
         case .syntaxNumber: NomoColorComponents(red: 0.768627, green: 0.662745, blue: 0.886275, alpha: 1.0)
+        case .brandCoral: NomoColorComponents(red: 1.0, green: 0.439216, blue: 0.368627, alpha: 1.0)
+        case .brandTeal: NomoColorComponents(red: 0.0, green: 0.662745, blue: 0.741176, alpha: 1.0)
         }
     }
 }

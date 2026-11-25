@@ -28,6 +28,8 @@
    syntaxKeyword -> --syntax-keyword
    syntaxString  -> --syntax-string
    syntaxNumber  -> --syntax-number
+   brandCoral    -> --brand-coral
+   brandTeal     -> --brand-teal
 
    A shadow role keeps the document's own name:
    --shadow-composer, --shadow-dialog, --shadow-float, --shadow-modal, --shadow-palette, --shadow-focus
@@ -57,6 +59,8 @@
   --syntax-keyword: #a63d0c;
   --syntax-string: #356344;
   --syntax-number: #75509a;
+  --brand-coral: #ff705e;
+  --brand-teal: #00a9bd;
 
   /* Elevation. */
   --shadow-composer: 0 1px 2px rgb(0 0 0 / 0.06);
@@ -119,6 +123,8 @@
   --syntax-keyword: #ee985e;
   --syntax-string: #a0c798;
   --syntax-number: #c4a9e2;
+  --brand-coral: #ff705e;
+  --brand-teal: #00a9bd;
 
   /* Elevation. */
   --shadow-composer: 0 1px 2px rgb(0 0 0 / 0.4);
@@ -322,6 +328,12 @@ small,
   color: var(--ink);
   font-size: 20px;
   letter-spacing: 2px;
+}
+.brand-accent-coral {
+  fill: var(--brand-coral);
+}
+.brand-accent-teal {
+  fill: var(--brand-teal);
 }
 .nomo-grid-mark {
   width: 32px;

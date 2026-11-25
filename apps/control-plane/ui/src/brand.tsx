@@ -32,8 +32,8 @@ export function BrandMark({ className = "" }: { className?: string }) {
         ))}
         <path d={STEM} />
       </g>
-      <rect x="118" y="59" width="44" height="44" fill="#ff705e" />
-      <rect x="236" y="236" width="44" height="44" fill="#00a9bd" />
+      <rect x="118" y="59" width="44" height="44" className="brand-accent-coral" />
+      <rect x="236" y="236" width="44" height="44" className="brand-accent-teal" />
     </svg>
   );
 }

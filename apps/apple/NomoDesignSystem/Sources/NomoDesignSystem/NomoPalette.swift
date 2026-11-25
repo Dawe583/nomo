@@ -37,7 +37,7 @@ public enum NomoPalette {
         // canvas and the surface in both appearances, and there is no platform
         // semantic colour that would reproduce the measurement. Taking a
         // platform default would silently undo it.
-        case .syntaxKeyword, .syntaxString, .syntaxNumber:
+        case .syntaxKeyword, .syntaxString, .syntaxNumber, .brandCoral, .brandTeal:
             return nil
         }
     }

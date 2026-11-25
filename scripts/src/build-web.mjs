@@ -57,6 +57,8 @@ const ROLE_PROPERTIES = [
   ["syntaxKeyword", "--syntax-keyword"],
   ["syntaxString", "--syntax-string"],
   ["syntaxNumber", "--syntax-number"],
+  ["brandCoral", "--brand-coral"],
+  ["brandTeal", "--brand-teal"],
 ];
 
 /** A CSS custom property declaration at a fixed indent. */
