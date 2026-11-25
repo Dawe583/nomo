@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-25T12:14:43Z",
+  "updatedAt": "2026-11-25T12:17:15Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -1035,6 +1035,65 @@
         "Compared with the session-start commit a85ed6d0, the files causing the colour, env-var, licence-gate, release-packaging and manifest failures have zero lines changed in this session, and `git diff a85ed6d0..HEAD -U0` contains added_dash_lines 0. The scripts suite therefore remains red only for named pre-existing failures, which Q8 explicitly allows."
       ],
       "stopCondition": "Stop if a new failure appears outside the six named pre-existing scripts failures or if typecheck, TUI, or Workbench is red."
+    },
+    {
+      "id": "q9-context-standards-consistency",
+      "status": "done",
+      "owner": "devin-6293643153014f56bb088c9a71fde97a",
+      "dependsOn": [
+        "q8-local-ci-dry-run"
+      ],
+      "scope": [
+        "docs/CONTEXT.md",
+        "docs/STANDARDS.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "manual read finds no contradiction with program changes"
+      ],
+      "verifier": [
+        "manual read"
+      ],
+      "evidence": [
+        "Manual read covered CONTEXT Product direction, Trust and enforcement model, Existing technical contracts, Repository and naming, Product source of truth, plus STANDARDS headings and the full Product honesty section.",
+        "No contract contradiction found: exact-digest approval, local-only revoke truth, signed append-only evidence, no secret persistence, measurement rather than RL, and fail-closed unknown state all match the implemented H, R, F and Q slices.",
+        "No CONTEXT.md or STANDARDS.md edit was needed because this program did not change those repository-wide contracts."
+      ],
+      "stopCondition": "Stop if an implemented surface contradicts the context pack rather than updating it quietly."
+    },
+    {
+      "id": "q10-program-handoff-page",
+      "status": "done",
+      "owner": "devin-6293643153014f56bb088c9a71fde97a",
+      "dependsOn": [
+        "q8-local-ci-dry-run",
+        "q9-context-standards-consistency"
+      ],
+      "scope": [
+        "docs/plans/2026-11-25-program-handoff.md",
+        "scripts/src/doc-truth.test.mjs",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "new session can start from shipped, blocked and next-ready state"
+      ],
+      "verifier": [
+        "manual read",
+        "node --test scripts/src/doc-truth.test.mjs"
+      ],
+      "evidence": [
+        "Created docs/plans/2026-11-25-program-handoff.md with verified base, shipped slices, limits, blocked or gated work, the exact next ready node T2.1, and forbidden actions.",
+        "Manual read observed 88 lines and dash_count 0 in the new handoff page.",
+        "Removed the now stale doc-truth inventory entry for docs/plans/2026-11-25-program-handoff.md because the planned file now exists.",
+        "NO_COLOR=1 node --test scripts/src/doc-truth.test.mjs observed exit 0: tests 9, pass 9, fail 0, duration_ms 99.381458."
+      ],
+      "stopCondition": "Stop if the handoff names a next node that is gated or depends on a provider-costing call."
     }
   ]
 }
