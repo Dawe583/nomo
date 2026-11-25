@@ -66,3 +66,35 @@ test("palette navigation order matches grouped command rows", () => {
     );
   }
 });
+
+test("fuzzy ranking keeps exact, prefix, substring and subsequence matches in score order", () => {
+  const items = paletteFromCommands([
+    ["/ab", "exact"],
+    ["/abc", "prefix"],
+    ["/zab", "substring"],
+    ["/axxb", "subsequence"],
+  ]);
+  const ranked = filterPalette(items, "ab");
+  assert.deepEqual(
+    ranked.map((item) => item.id),
+    ["/ab", "/abc", "/zab", "/axxb"],
+  );
+});
+
+test("recent commands float above unfrequented commands without hiding the rest", () => {
+  const items = paletteFromCommands([
+    ["/alpha", "first"],
+    ["/beta", "second"],
+    ["/gamma", "third"],
+  ]);
+  const recent = new Map([
+    ["/gamma", { count: 2, lastUsed: Date.now() }],
+  ]);
+  const ranked = filterPalette(items, "", recent);
+  assert.equal(ranked[0]?.id, "/gamma");
+  assert.deepEqual(
+    new Set(ranked.map((item) => item.id)),
+    new Set(items.map((item) => item.id)),
+    "frecency changes order only; it must not hide a command",
+  );
+});
