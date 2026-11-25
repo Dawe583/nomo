@@ -1001,6 +1001,11 @@ These are real, scoped follow-ups, not wishes. ~40 h.
    Four intentional ledger snapshot hashes were refreshed after review.
 5. **T17 Command palette**: fuzzy ranking, recent commands, no hidden action.
    2 h.
+
+   As built: the palette already draws from `TUI_COMMANDS` rather than a second
+   command list, so no hidden action can exist there. Tests now pin exact,
+   prefix, substring and subsequence ranking, frecency order and the invariant
+   that recency reorders commands without hiding any of them.
 6. **T18 Theme system**: one token file, contrast test for every pair, no
    colour-only meaning. 3 h.
 7. **H16 Evaluation corpus from real runs**: opt-in, content-minimised,
