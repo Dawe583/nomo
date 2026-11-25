@@ -9449,3 +9449,11 @@ Commit 3280db90942408dbc286a70f42124b4a3a33b277, subject Polish shared TUI motio
   fail-closed disconnected nodes and reconciliation. Observed: workspace-controls 27/27, agent-identity 10/10,
   CLI typecheck exit 0, Workbench typecheck exit 0, full TUI suite 526/526. Fleet-wide revoke itself remains absent.
   [[NOMO TUI Control Center]]
+- 2026-11-25 · H1, H2 and H3 completed by builder subagent and integrated by Devin Cloud.
+  H1 adds nomo.reward.v1 records whose reward recomputes from explicit weights, with missing producers staying
+  unmeasured. H2 adds canonical variant identity over settings, prompt preamble digest and model, refusing comparisons
+  that change more than one axis. H3 adds frozen harness-eval-v2 with 14 tasks, 7 train and 7 eval; the oracle runner
+  passes 14/14 but proves plumbing only, never model capability. Observed after integration: narrow tests 64/64,
+  harness-eval tests 23/23, eval fixture 14/14, Workbench typecheck exit 0, wider Workbench suite 1162 tests,
+  1160 pass, 0 fail, 2 skipped. The wider scripts suite still has 8 pre-existing failures also present on f4b429d5.
+  [[NOMO TUI Control Center]]

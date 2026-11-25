@@ -5,8 +5,12 @@ import {
   SCORE_GUARDRAILS,
   SCORE_METRICS,
   compareBoards,
+  compareRewardRecords,
   compareSplit,
+  computeReward,
   measureBoard,
+  parseRewardWeights,
+  rewardRecord,
   summariseCases,
   unmeasuredMetrics,
   type SplitSummary,
@@ -371,4 +375,116 @@ test("a chain with nothing decided has no first-pass rate at all", () => {
   assert.deepEqual(board.reasons, [
     "no decided call in the chain, so nothing was measured",
   ]);
+});
+
+const rewardInput = (overrides: Record<string, unknown> = {}) => ({
+  caseId: "read-before-write",
+  variantId: "sha256:fixture",
+  baselineVariantId: null,
+  changedAxis: null,
+  passed: true,
+  guardrails: { unknown_tool_rate: 0, deny_rate: 0.5 },
+  costUsd: 0.0012,
+  latencyMs: 840,
+  approvalMs: "unmeasured" as const,
+  weights: { breach: 0.5, cost: 1, latency: 0.001 },
+  ...overrides,
+}) as Parameters<typeof rewardRecord>[0];
+
+test("a reward record recomputes to its stored reward from its own fields", () => {
+  const record = rewardRecord(rewardInput());
+  assert.equal(record.schema, "nomo.reward.v1");
+  assert.equal(record.reward, 1 - 1 * 0.5 - 0.0012 * 1 - 840 * 0.001);
+  // Round trip through JSON, as a stored record would, then recompute.
+  const stored = JSON.parse(JSON.stringify(record));
+  assert.equal(computeReward(stored), stored.reward);
+  assert.equal(record.approvalMs, "unmeasured");
+});
+
+test("a weighted term with no producer makes the reward unmeasured, not free", () => {
+  assert.equal(rewardRecord(rewardInput({ costUsd: "unmeasured" })).reward, "unmeasured");
+  assert.equal(
+    rewardRecord(rewardInput({ guardrails: { unknown_tool_rate: "unmeasured" } })).reward,
+    "unmeasured",
+  );
+  // No guardrail at all is not evidence that none was breached.
+  assert.equal(rewardRecord(rewardInput({ guardrails: {} })).reward, "unmeasured");
+});
+
+test("a zero weight lets an unmeasured input drop out of the reward", () => {
+  const record = rewardRecord(
+    rewardInput({
+      passed: false,
+      guardrails: {},
+      costUsd: "unmeasured",
+      weights: { breach: 0, cost: 0, latency: 0.001 },
+    }),
+  );
+  assert.equal(record.reward, 0 - 840 * 0.001);
+  assert.equal(record.costUsd, "unmeasured");
+});
+
+test("weights and metrics are validated, never defaulted to zero", () => {
+  assert.throws(() => parseRewardWeights({ breach: 0.5, cost: 1 }), /weights\.latency/);
+  assert.throws(() => parseRewardWeights({ breach: 0.5, cost: 1, latency: 0, bonus: 1 }), /unknown weight bonus/);
+  assert.throws(() => parseRewardWeights({ breach: -1, cost: 1, latency: 0 }), /weights\.breach/);
+  assert.throws(() => rewardRecord(rewardInput({ latencyMs: 0 / 0 })), /latencyMs/);
+  assert.throws(() => rewardRecord(rewardInput({ caseId: "" })), /caseId/);
+});
+
+test("a record carries no prompt or output field", () => {
+  const keys = Object.keys(rewardRecord(rewardInput())).sort();
+  assert.deepEqual(keys, [
+    "approvalMs",
+    "baselineVariantId",
+    "caseId",
+    "changedAxis",
+    "costUsd",
+    "guardrails",
+    "latencyMs",
+    "passed",
+    "reward",
+    "schema",
+    "variantId",
+    "weights",
+  ]);
+});
+
+test("a candidate record measured against its baseline is comparable on one axis", () => {
+  const weights = { breach: 0, cost: 0, latency: 0.001 };
+  const base = rewardRecord(rewardInput({ variantId: "sha256:a", latencyMs: 900, weights }));
+  const next = rewardRecord(
+    rewardInput({
+      variantId: "sha256:b",
+      baselineVariantId: "sha256:a",
+      changedAxis: "autoCompactMessages",
+      latencyMs: 400,
+      weights,
+    }),
+  );
+  const result = compareRewardRecords(base, next);
+  assert.ok(result.comparable);
+  assert.equal(result.changedAxis, "autoCompactMessages");
+  assert.equal(result.delta, (1 - 400 * 0.001) - (1 - 900 * 0.001));
+});
+
+test("records that do not name each other, differ in weights or were tampered are refused", () => {
+  const weights = { breach: 0, cost: 0, latency: 0.001 };
+  const base = rewardRecord(rewardInput({ variantId: "sha256:a", weights }));
+  const stranger = rewardRecord(
+    rewardInput({ variantId: "sha256:b", baselineVariantId: "sha256:c", changedAxis: "model", weights }),
+  );
+  assert.equal(compareRewardRecords(base, stranger).comparable, false);
+  const reweighted = rewardRecord(
+    rewardInput({
+      variantId: "sha256:b",
+      baselineVariantId: "sha256:a",
+      changedAxis: "model",
+      weights: { ...weights, latency: 0.002 },
+    }),
+  );
+  assert.equal(compareRewardRecords(base, reweighted).comparable, false);
+  const tampered = { ...base, variantId: "sha256:b", baselineVariantId: "sha256:a", changedAxis: "model", reward: 1 };
+  assert.equal(compareRewardRecords(base, tampered).comparable, false);
+  assert.throws(() => rewardRecord(rewardInput({ changedAxis: "model" })), /needs a baselineVariantId/);
 });

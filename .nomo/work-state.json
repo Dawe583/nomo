@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-25T02:35:00+01:00",
+  "updatedAt": "2026-11-25T02:55:00+01:00",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -121,7 +121,7 @@
     },
     {
       "id": "h1-reward-record",
-      "status": "in-progress",
+      "status": "done",
       "owner": "child-689dad234260403c856e2aa677f71ab1",
       "dependsOn": [
         "f3-identity-fleet-truth"
@@ -139,13 +139,21 @@
         "node --test packages/workbench/src/harness-scores.test.ts"
       ],
       "evidence": [
-        "Delegated to child session 689dad234260403c856e2aa677f71ab1 after f4b429d5; parent retains integration and graph recording ownership."
+        "RewardRecord schema nomo.reward.v1 is implemented; reward recomputes from record and explicit weights; missing producers remain unmeasured; eval can write JSONL records.",
+        "Integration merge 4ef93289 was reviewed locally before recording. Branch devin/20261125-h1-h3-harness head 85ccc07e contained commits 3ed6bc5b H1, dbf6f8dc H2, 85ccc07e H3.",
+        "Narrow: node --test packages/workbench/src/harness-scores.test.ts packages/workbench/src/harness-settings.test.ts observed exit 0; tests 64, pass 64, fail 0, skipped 0, duration_ms 140.408708.",
+        "Eval tests: node --test scripts/src/harness-eval.test.mjs observed exit 0; tests 23, pass 23, fail 0, skipped 0, duration_ms 2521.766.",
+        "Eval fixture: node scripts/src/harness-eval.mjs scripts/src/fixtures/harness-eval-v2.json -- node scripts/src/fixtures/harness-eval-oracle-runner.mjs scripts/src/fixtures/harness-eval-v2.json observed exit 0; total 14/14 passed, 0 failed, 0 no-decision, 0 runner-error.",
+        "pnpm --filter @nomo/workbench typecheck observed exit 0.",
+        "Wider gate: node --test --test-concurrency=1 packages/workbench/src/*.test.ts observed exit 0; tests 1162, pass 1160, fail 0, skipped 2, duration_ms 87714.062042.",
+        "Credential scan of the branch diff found only the intentional test marker SECRET-PROMPT-CANARY and no real credential. Forbidden-path scan found no nomo-web, TUI, docs/memory, or .nomo writes in the child branch.",
+        "Child-reported wider scripts suite: tests 386, pass 345, fail 8, skipped 32; the same 8 failures were present on base f4b429d5. This is not a new H1-H3 regression and is not counted as a green gate."
       ],
       "stopCondition": "After one targeted repair, record the blocker and continue independent work."
     },
     {
       "id": "h2-variant-identity",
-      "status": "pending",
+      "status": "done",
       "owner": "child-689dad234260403c856e2aa677f71ab1",
       "dependsOn": [
         "h1-reward-record"
@@ -162,13 +170,21 @@
         "node --test packages/workbench/src/*.test.ts"
       ],
       "evidence": [
-        "Delegated to child session 689dad234260403c856e2aa677f71ab1 after f4b429d5; parent retains integration and graph recording ownership."
+        "VariantIdentity hashes canonical settings, prompt preamble digest and model; comparisons are refused when more than one axis differs; reward-record linkage is checked.",
+        "Integration merge 4ef93289 was reviewed locally before recording. Branch devin/20261125-h1-h3-harness head 85ccc07e contained commits 3ed6bc5b H1, dbf6f8dc H2, 85ccc07e H3.",
+        "Narrow: node --test packages/workbench/src/harness-scores.test.ts packages/workbench/src/harness-settings.test.ts observed exit 0; tests 64, pass 64, fail 0, skipped 0, duration_ms 140.408708.",
+        "Eval tests: node --test scripts/src/harness-eval.test.mjs observed exit 0; tests 23, pass 23, fail 0, skipped 0, duration_ms 2521.766.",
+        "Eval fixture: node scripts/src/harness-eval.mjs scripts/src/fixtures/harness-eval-v2.json -- node scripts/src/fixtures/harness-eval-oracle-runner.mjs scripts/src/fixtures/harness-eval-v2.json observed exit 0; total 14/14 passed, 0 failed, 0 no-decision, 0 runner-error.",
+        "pnpm --filter @nomo/workbench typecheck observed exit 0.",
+        "Wider gate: node --test --test-concurrency=1 packages/workbench/src/*.test.ts observed exit 0; tests 1162, pass 1160, fail 0, skipped 2, duration_ms 87714.062042.",
+        "Credential scan of the branch diff found only the intentional test marker SECRET-PROMPT-CANARY and no real credential. Forbidden-path scan found no nomo-web, TUI, docs/memory, or .nomo writes in the child branch.",
+        "Child-reported wider scripts suite: tests 386, pass 345, fail 8, skipped 32; the same 8 failures were present on base f4b429d5. This is not a new H1-H3 regression and is not counted as a green gate."
       ],
       "stopCondition": "After one targeted repair, record the blocker and continue independent work."
     },
     {
       "id": "h3-eval-set-v2",
-      "status": "pending",
+      "status": "done",
       "owner": "child-689dad234260403c856e2aa677f71ab1",
       "dependsOn": [
         "h2-variant-identity"
@@ -185,7 +201,15 @@
         "node scripts/src/harness-eval.mjs scripts/src/fixtures/harness-eval-v2.json -- <fixture runner>"
       ],
       "evidence": [
-        "Delegated to child session 689dad234260403c856e2aa677f71ab1 after f4b429d5; parent retains integration and graph recording ownership."
+        "Frozen harness-eval-v2.json has 14 tasks, 7 train and 7 eval; v1 is unchanged; oracle runner proves plumbing only and is not a model capability measurement.",
+        "Integration merge 4ef93289 was reviewed locally before recording. Branch devin/20261125-h1-h3-harness head 85ccc07e contained commits 3ed6bc5b H1, dbf6f8dc H2, 85ccc07e H3.",
+        "Narrow: node --test packages/workbench/src/harness-scores.test.ts packages/workbench/src/harness-settings.test.ts observed exit 0; tests 64, pass 64, fail 0, skipped 0, duration_ms 140.408708.",
+        "Eval tests: node --test scripts/src/harness-eval.test.mjs observed exit 0; tests 23, pass 23, fail 0, skipped 0, duration_ms 2521.766.",
+        "Eval fixture: node scripts/src/harness-eval.mjs scripts/src/fixtures/harness-eval-v2.json -- node scripts/src/fixtures/harness-eval-oracle-runner.mjs scripts/src/fixtures/harness-eval-v2.json observed exit 0; total 14/14 passed, 0 failed, 0 no-decision, 0 runner-error.",
+        "pnpm --filter @nomo/workbench typecheck observed exit 0.",
+        "Wider gate: node --test --test-concurrency=1 packages/workbench/src/*.test.ts observed exit 0; tests 1162, pass 1160, fail 0, skipped 2, duration_ms 87714.062042.",
+        "Credential scan of the branch diff found only the intentional test marker SECRET-PROMPT-CANARY and no real credential. Forbidden-path scan found no nomo-web, TUI, docs/memory, or .nomo writes in the child branch.",
+        "Child-reported wider scripts suite: tests 386, pass 345, fail 8, skipped 32; the same 8 failures were present on base f4b429d5. This is not a new H1-H3 regression and is not counted as a green gate."
       ],
       "stopCondition": "After one targeted repair, record the blocker and continue independent work."
     },
