@@ -393,6 +393,10 @@ export type SessionView = {
   readonly runId?: string;
   readonly provider?: string;
   readonly parentId?: string;
+  /** Bounded eval case identity for a session explicitly started as an
+   * attributed production eval. It is metadata only, never prompt or tool
+   * content. */
+  readonly harnessEval?: EvalCaseAttribution;
   readonly compaction?: CompactionResult;
   readonly contextMessages?: number;
   /** The checklist the model keeps for itself, replaced whole on each update. */
@@ -2606,6 +2610,9 @@ export class Workbench {
       session.recoveryBlock?.jobId ?? session.view.lastRecoveryJob?.jobId;
     return {
       ...session.view,
+      ...(session.evalAttribution
+        ? { harnessEval: { ...session.evalAttribution } }
+        : {}),
       lastRecoveryJob: jobId ? { jobId } : undefined,
       contextMessages: session.messages.length,
       state:
@@ -4052,7 +4059,9 @@ export class Workbench {
         ],
         result.id,
       );
-      return result;
+      return validatedEvalAttribution
+        ? { ...result, harnessEval: { ...validatedEvalAttribution } }
+        : result;
     });
   }
   private countRunning(): number {

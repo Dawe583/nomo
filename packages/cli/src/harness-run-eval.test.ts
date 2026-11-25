@@ -65,6 +65,7 @@ test("run-eval drives a real governed production run and the chain carries its c
   assert.ok(match, `unexpected output: ${out.join("\\n")}`);
   const session = fixture.app.get(match[1]!);
   assert.ok(session, "the command output must name a live session");
+  assert.deepEqual(session.harnessEval, EVAL_CASE);
   const turnsAfterCommand = turn;
   const repeated = await fixture.app.startHarnessEval(
     "List the managed documents.",
