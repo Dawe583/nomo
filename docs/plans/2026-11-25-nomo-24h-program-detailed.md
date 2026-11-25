@@ -406,6 +406,13 @@ row; a pure function of the counter plus the run outcome. Test both outcomes.
 
 **Verifier.** `node --test packages/cli/src/tui/pet.test.ts`.
 
+**As built.** The existing report pose already satisfies the slice: a settled
+successful run maps to `done`, sparkles only inside the existing 9x5 sprite
+for frames 1-3, and then holds the settled frame; failed and cancelled runs
+map to still report poses. `petStateFrom` reads the real run outcome, not a
+clock, and reduced motion is byte-identical to the settled frame. No new row
+or component was needed.
+
 ### T5.2. Second blink and listening pose (1.0 h)
 
 **Files.** `pet.ts`, `pet.test.ts`.
