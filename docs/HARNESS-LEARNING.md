@@ -19,16 +19,24 @@ no model weights are updated by reward in this repository.
    <path> --weights breach=<n>,cost=<n>,latency=<n> --variant <variant.json> --
    <runner>` writes one `nomo.reward.v1` record per evaluated case. Missing
    producers stay `"unmeasured"`. Train and held-out eval results stay separate.
-5. **Replay.** `node scripts/src/harness-replay.mjs <ledger-or-jsonl>` recomputes
+5. **Ingestion.** `nomo harness ingest-rewards --session <id> <records.jsonl>`
+   validates the whole bare eval file before writing anything: schema,
+   bounded identifiers, exact weights and exact reward recomputation. Valid
+   records enter the session workspace chain through `recordHarnessReward`.
+   An exact rerun is recognised by the file digest plus record position and
+   skips only positions already written. A separate measurement file with the
+   same values is new evidence, not a duplicate. A tampered, malformed or
+   side-channel-carrying file writes nothing.
+6. **Replay.** `node scripts/src/harness-replay.mjs <ledger-or-jsonl>` recomputes
    stored rewards. A mismatch is evidence against the writer, not something to
    repair silently.
-6. **Trend.** `nomo harness trend --session <id>` prints measured activation
+7. **Trend.** `nomo harness trend --session <id>` prints measured activation
    outcomes from the chain. `nomo harness ratchet --session <id>` compares the
    current board with the previous activation and reports guardrail regressions.
-7. **Rollback.** `nomo harness rollback --session <id> <digest>` is the one
+8. **Rollback.** `nomo harness rollback --session <id> <digest>` is the one
    operator command. It writes `refinement:rolled-back` with
    `harnessRefinement.rolledBackDigest` naming the activation it undid.
-8. **Exploration.** `nomo.bandit.v1` history records Thompson-sampling state.
+9. **Exploration.** `nomo.bandit.v1` history records Thompson-sampling state.
    Guardrail-axis exploration, currently `promptPreamble`, starts stopped as
    `unapproved-guardrail` unless the exact arm-set digest was approved.
 
@@ -52,6 +60,7 @@ nomo harness reject --session <id> <digest> --reason <text>
 nomo harness rollback --session <id> <digest>
 nomo harness ratchet --session <id>
 nomo harness trend --session <id>
+nomo harness ingest-rewards --session <id> <records.jsonl>
 node scripts/src/harness-eval.mjs <taskset.json> -- <runner argv...>
 node scripts/src/harness-replay.mjs <chain.jsonl>
 node scripts/src/trajectory-export.mjs <chain.jsonl> [--out <path>]

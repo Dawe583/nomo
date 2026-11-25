@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -8,6 +9,7 @@ import { fileURLToPath } from "node:url";
 
 import { isolatedWorkbench } from "../../packages/workbench/src/test-fixture.ts";
 import { runHarnessCommand } from "../../packages/cli/src/harness.ts";
+import { rewardRecord } from "../../packages/workbench/src/harness-scores.ts";
 
 const evalScript = fileURLToPath(new URL("./harness-eval.mjs", import.meta.url));
 const runner = fileURLToPath(new URL("./harness-eval-runner.mjs", import.meta.url));
@@ -96,4 +98,134 @@ test("fixture proposal activates, is measured through eval, and rolls back witho
   const finalBody = (await app.ledger(session.workspace)).entries.at(-1).body;
   assert.equal(finalBody.decision, "refinement:rolled-back");
   assert.equal(finalBody.harnessRefinement.rolledBackDigest, digest);
+});
+
+
+test("ingest-rewards validates a bare eval file, writes it once, and refuses tampering before any write", async (t) => {
+  const fixture = await isolatedWorkbench(t, fetcher, {}, { prefix: "nomo-h19-" });
+  const { app } = fixture;
+  const session = await app.start("Measure rewards", "fixture");
+  await app.settled();
+  const dir = mkdtempSync(join(tmpdir(), "nomo-h19-ingest-"));
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  const input = {
+    variantId: "sha256:" + "a".repeat(64),
+    baselineVariantId: null,
+    changedAxis: null,
+    guardrails: {},
+    costUsd: 0,
+    latencyMs: 10,
+    approvalMs: "unmeasured",
+    weights: { breach: 0, cost: 0, latency: 0 },
+  };
+  const first = rewardRecord({ ...input, caseId: "case-one", passed: true });
+  const second = rewardRecord({ ...input, caseId: "case-two", passed: false });
+  const recordsPath = join(dir, "records.jsonl");
+  writeFileSync(recordsPath, [first, second].map((record) => JSON.stringify(record)).join("\n") + "\n");
+
+  const rewardEntries = async () =>
+    (await app.ledger(session.workspace)).entries.filter(
+      (entry) => entry.body?.schema === "nomo.reward.v1",
+    );
+  const run = async (path) => {
+    const out = [];
+    const err = [];
+    const code = await runHarnessCommand(
+      ["ingest-rewards", "--session", session.id, path],
+      { stdout: (line) => out.push(line), stderr: (line) => err.push(line) },
+      { workbench: async () => app },
+    );
+    return { code, out, err };
+  };
+
+  const initial = await run(recordsPath);
+  assert.equal(initial.code, 0, initial.err.join(" "));
+  assert.deepEqual(initial.out, ["ingest-rewards: 2 written, 0 duplicates skipped, 2 validated"]);
+  const initialEntries = await rewardEntries();
+  assert.deepEqual(initialEntries.map((entry) => entry.body.caseId), ["case-one", "case-two"]);
+  const initialDigest = createHash("sha256").update(readFileSync(recordsPath, "utf8")).digest("hex");
+  assert.deepEqual(initialEntries.map((entry) => entry.body.rewardIngestion), [
+    { fileDigest: initialDigest, index: 0, count: 2 },
+    { fileDigest: initialDigest, index: 1, count: 2 },
+  ]);
+
+  const rerun = await run(recordsPath);
+  assert.equal(rerun.code, 0, rerun.err.join(" "));
+  assert.deepEqual(rerun.out, ["ingest-rewards: 0 written, 2 duplicates skipped, 2 validated"]);
+  assert.equal((await rewardEntries()).length, 2);
+
+  const third = rewardRecord({ ...input, caseId: "case-three", passed: true });
+  await assert.rejects(
+    () => app.recordHarnessReward(session.id, third, { fileDigest: "bad", index: 0, count: 1 }),
+    /fileDigest must be a sha256 hex digest/,
+  );
+  assert.equal((await rewardEntries()).length, 2);
+  const tampered = { ...third, reward: typeof third.reward === "number" ? third.reward + 0.25 : 0 };
+  const tamperedPath = join(dir, "tampered.jsonl");
+  writeFileSync(tamperedPath, JSON.stringify(tampered) + "\n");
+  const refused = await run(tamperedPath);
+  assert.equal(refused.code, 1);
+  assert.match(refused.err.join("\n"), /stored reward does not recompute/);
+  assert.match(refused.err.join("\n"), /Nothing was written/);
+  assert.equal((await rewardEntries()).length, 2);
+
+  const tooLargePath = join(dir, "too-large.jsonl");
+  writeFileSync(tooLargePath, "x".repeat(1024 * 1024 + 1));
+  const tooLarge = await run(tooLargePath);
+  assert.equal(tooLarge.code, 1);
+  assert.match(tooLarge.err.join("\n"), /at most 1 MiB/);
+  assert.equal((await rewardEntries()).length, 2);
+
+  const sideChannel = { ...third, prompt: "SECRET-PROMPT-CANARY" };
+  const sideChannelPath = join(dir, "side-channel.jsonl");
+  writeFileSync(sideChannelPath, JSON.stringify(sideChannel) + "\n");
+  const sideChannelRefused = await run(sideChannelPath);
+  assert.equal(sideChannelRefused.code, 1);
+  assert.match(sideChannelRefused.err.join("\n"), /unknown reward field/);
+  assert.doesNotMatch(sideChannelRefused.err.join("\n"), /SECRET-PROMPT-CANARY/);
+  assert.equal((await rewardEntries()).length, 2);
+
+  for (const [name, hostile] of [
+    ["case id", { ...third, caseId: "SECRET-PROMPT-CANARY case" }],
+    ["guardrail name", { ...third, guardrails: { "SECRET-PROMPT-CANARY guardrail": 1 } }],
+    ["weight name", { ...third, weights: { ...third.weights, "SECRET-PROMPT-CANARY weight": 1 } }],
+  ]) {
+    const hostilePath = join(dir, `${name.replaceAll(" ", "-")}.jsonl`);
+    writeFileSync(hostilePath, JSON.stringify(hostile) + "\n");
+    const hostileRefused = await run(hostilePath);
+    assert.equal(hostileRefused.code, 1, name);
+    assert.match(hostileRefused.err.join("\n"), /bounded identifiers|weights must contain only/);
+    assert.doesNotMatch(hostileRefused.err.join("\n"), /SECRET-PROMPT-CANARY/, name);
+    assert.equal((await rewardEntries()).length, 2, name);
+  }
+
+  // A separate measurement file may coincidentally contain exactly the same
+  // values. That is new evidence, not a duplicate: only the same file digest
+  // and record index make a rerun the same ingestion.
+  const independentPath = join(dir, "independent-identical.jsonl");
+  writeFileSync(
+    independentPath,
+    "\n" + [first, second].map((record) => JSON.stringify(record)).join("\n") + "\n",
+  );
+  const independent = await run(independentPath);
+  assert.equal(independent.code, 0, independent.err.join(" "));
+  assert.deepEqual(independent.out, ["ingest-rewards: 2 written, 0 duplicates skipped, 2 validated"]);
+  assert.equal((await rewardEntries()).length, 4);
+
+  // A partial write resumes at the missing position rather than starting over.
+  const fourth = rewardRecord({ ...input, caseId: "case-four", passed: true });
+  const fifth = rewardRecord({ ...input, caseId: "case-five", passed: false });
+  const partialPath = join(dir, "partial.jsonl");
+  const partialRaw = [fourth, fifth].map((record) => JSON.stringify(record)).join("\n") + "\n";
+  writeFileSync(partialPath, partialRaw);
+  const partialDigest = createHash("sha256").update(partialRaw).digest("hex");
+  await app.recordHarnessReward(session.id, fourth, { fileDigest: partialDigest, index: 0, count: 2 });
+  const resumed = await run(partialPath);
+  assert.equal(resumed.code, 0, resumed.err.join(" "));
+  assert.deepEqual(resumed.out, ["ingest-rewards: 1 written, 1 duplicates skipped, 2 validated"]);
+  assert.deepEqual(
+    (await rewardEntries()).map((entry) => entry.body.caseId).slice(-2),
+    ["case-four", "case-five"],
+  );
+  assert.equal((await rewardEntries()).length, 6);
 });
