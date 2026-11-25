@@ -73,7 +73,7 @@ nomo harness rollback --session <id> <digest>
 nomo harness ratchet --session <id>
 nomo harness trend --session <id>
 nomo harness ingest-rewards --session <id> <records.jsonl>
-nomo harness run-eval --case <id> --variant <id> --run <n> --prompt <text> [--idempotency-key <key>]
+nomo harness run-eval --case <id> --variant <id> --run <n> --prompt <text> [--idempotency-key <key>] [--gate <exact-command> --weights breach=<n>,cost=<n>,latency=<n>]
 node scripts/src/harness-eval.mjs <taskset.json> -- <runner argv...>
 node scripts/src/harness-replay.mjs <chain.jsonl>
 node scripts/src/trajectory-export.mjs <chain.jsonl> [--out <path>]
@@ -121,7 +121,7 @@ key cannot silently reuse a session for a different eval run. The CLI form is:
 ```sh
 nomo harness run-eval --case <id> --variant <id> --run <n> \
   (--prompt <text> | --prompt-file <path>) [--model <id>] [--agent <id>] \
-  [--idempotency-key <key>]
+  [--idempotency-key <key>] [--gate <exact-command> --weights breach=<n>,cost=<n>,latency=<n>]
 ```
 
 `run-eval` starts a real production model run and waits for its terminal
@@ -130,9 +130,30 @@ that run. `--idempotency-key` names one exact request so an operator retry
 after an interrupted CLI cannot silently start the same paid run twice; using
 that key for a different prompt, model, agent or eval identity is refused.
 A non-idle terminal state is printed and returns a nonzero exit code; it is
-evidence to reconcile, not a success. The command does not compute
-or ingest a reward: task verification and reward measurement remain separate
-explicit steps, so an idle terminal state is not a passed eval by itself.
+evidence to reconcile, not a success. Without `--gate`, the command does not
+compute or ingest a reward: an idle terminal state is not a passed eval by
+itself.
+
+With `--gate` and `--weights` together, the exact verifier command is validated
+against the operator hook allowlist before the first provider turn. The verifier
+runs only after settlement, its outcome is written as `harness.eval-gate`
+without stdout or stderr, and the reward is written through the signed chain.
+A timeout or spawn failure is verifier failure, not evidence that the case
+failed, so no reward is written. An exited verifier receipt is reused only when
+its command digest matches; one exact measurement retry does not duplicate the
+verifier or reward. A different weights object is a different scoring measurement,
+so it does not reuse a reward written with different weights.
+
+Every attributed eval provider turn writes one bounded `harness.usage` receipt,
+including receipts in direct attributed subagent workspaces. `costUsd` is
+measured only when every receipt in every attributed workspace carries the
+provider's own numeric cost; any missing, null, partial or unreadable producer
+leaves cost `unmeasured`, never zero.
+`latencyMs` is the operator-visible wall clock from immediately before the CLI
+start call until observed settlement, including queue and orchestration time. An
+idempotent replay cannot recover the original run's wall clock, so latency is
+`unmeasured` for that replay. `approvalMs` remains `unmeasured` until explicit
+approval timing evidence is aggregated.
 
 ## Boundaries
 

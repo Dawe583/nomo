@@ -6,6 +6,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { runHarnessCommand, type HarnessSurface } from "./harness.ts";
 import { defaultHarnessSettings } from "../../workbench/src/harness-settings.ts";
+import { rewardRecord, type RewardInput, type RewardRecord } from "../../workbench/src/harness-scores.ts";
 
 /**
  * The harness command, at the boundary an operator or a script touches.
@@ -209,6 +210,101 @@ test("run-eval starts one attributed production run and waits for its terminal s
   });
   assert.equal(waited, "eval-session-1");
   assert.match(terminal.out.join("\n"), /run-eval: session eval-session-1 status idle/);
+});
+
+
+test("run-eval aggregates provider cost across attributed child workspaces", async () => {
+  const attribution = {
+    caseId: "case-child-cost",
+    variantId: "sha256:" + "b".repeat(64),
+    run: 1,
+  };
+  const harnessEval = attribution;
+  let rewardInput: RewardInput | undefined;
+  const usage = (workspace: string, costUsd: number) => ({
+    body: {
+      workspace,
+      tool: "harness.usage",
+      event: "usage",
+      costUsd,
+      usageReported: true,
+      harnessEval,
+    },
+    seq: 1,
+  });
+  const priorDifferentWeightReward = {
+    ...rewardRecord({
+      caseId: attribution.caseId,
+      variantId: attribution.variantId,
+      baselineVariantId: null,
+      changedAxis: null,
+      passed: true,
+      guardrails: {},
+      costUsd: 0.75,
+      latencyMs: 10,
+      approvalMs: "unmeasured",
+      weights: { breach: 0, cost: 2, latency: 0 },
+    }),
+    harnessEval,
+  };
+  const rootEntries = [
+    { body: priorDifferentWeightReward, seq: 0 },
+    usage("agent-root", 0.25),
+    {
+      body: {
+        workspace: "agent-root",
+        tool: "void_subagent_spawn",
+        childWorkspace: "agent-child",
+        harnessEval,
+      },
+      seq: 2,
+    },
+  ];
+  const childEntries = [{ ...usage("agent-child", 0.5), seq: 1 }];
+  const surface = fake({
+    get(id) {
+      return id === "eval-session" ? { workspace: "agent-root" } : undefined;
+    },
+    async ledger(workspace) {
+      if (workspace === "agent-root") return { entries: rootEntries, result: {}, verification: {} };
+      if (workspace === "agent-child") return { entries: childEntries, result: {}, verification: {} };
+      return undefined;
+    },
+    async startHarnessEval() {
+      return { id: "eval-session", status: "running", idempotentReplay: false };
+    },
+    async waitForRun() {
+      return { status: "idle" };
+    },
+    validateHarnessEvalGate(command) {
+      return command;
+    },
+    async runHarnessEvalGate() {
+      return { outcome: "exited", code: 0, durationMs: 1, passed: true };
+    },
+    async recordHarnessReward(_sessionId, input) {
+      rewardInput = input;
+      return rewardRecord(input) as RewardRecord;
+    },
+  }).surface;
+  const terminal = io();
+  const code = await runHarnessCommand(
+    [
+      "run-eval",
+      "--case", attribution.caseId,
+      "--variant", attribution.variantId,
+      "--run", String(attribution.run),
+      "--prompt", "Measure.",
+      "--gate", "verify",
+      "--weights", "breach=0,cost=1,latency=0",
+    ],
+    terminal,
+    { workbench: async () => surface },
+  );
+  assert.equal(code, 0, terminal.err.join(" "));
+  assert.equal(rewardInput?.costUsd, 0.75);
+  assert.equal(rewardInput?.weights.cost, 1, "a different-weight prior reward must not block this measurement");
+  assert.equal(rewardInput ? rewardRecord(rewardInput).reward : undefined, 0.25);
 });
 
 test("run-eval reads a prompt file and refuses malformed attribution before starting", async (t) => {

@@ -4017,6 +4017,7 @@ export class Workbench {
     background = false,
     images?: readonly ModelImageInput[],
     evalAttribution?: unknown,
+    replayState?: { replayed: boolean },
   ): Promise<SessionView> {
     return this.locked(async () => {
       const selected = model ?? this.preferences.defaultModel;
@@ -4036,7 +4037,10 @@ export class Workbench {
             validatedEvalAttribution,
           ])
         : undefined;
-      if (prior) return this.get(prior)!;
+      if (prior) {
+        if (replayState) replayState.replayed = true;
+        return this.get(prior)!;
+      }
       await this.providerState();
       // There is no default model to fall back on. A provider configured from
       // the environment above may have set one; otherwise the operator picks.
@@ -4066,6 +4070,7 @@ export class Workbench {
         ],
         result.id,
       );
+      if (replayState) replayState.replayed = false;
       return validatedEvalAttribution
         ? { ...result, harnessEval: { ...validatedEvalAttribution } }
         : result;
@@ -4317,8 +4322,10 @@ export class Workbench {
     attribution: unknown,
     agent?: string,
     idempotencyKey?: string,
-  ): Promise<SessionView> {
-    return this.start(
+  ): Promise<SessionView & { readonly idempotentReplay: boolean }> {
+    const validated = evalCaseAttribution(attribution);
+    const replayState = { replayed: false };
+    const result = await this.start(
       prompt,
       model,
       idempotencyKey,
@@ -4326,8 +4333,10 @@ export class Workbench {
       agent,
       false,
       undefined,
-      evalCaseAttribution(attribution),
+      validated,
+      replayState,
     );
+    return { ...result, idempotentReplay: replayState.replayed };
   }
 
   send(
@@ -10407,23 +10416,32 @@ export class Workbench {
                 : {}),
             },
           );
-        // The score board can only measure cost if the chain carries one, and
-        // the only honest number is the provider's own. A turn that reports no
-        // cost writes nothing, so the metric stays unmeasured rather than zero.
-        if (typeof reply.usage?.cost_usd === "number")
+        // Every attributed eval turn writes one bounded usage receipt, even
+        // when the provider omitted usage or cost. The receipt is what lets an
+        // eval distinguish "zero measured cost" from "no producer reported
+        // cost". Outside eval, keep the older narrower receipt for a provider
+        // reported cost. The only honest cost number remains the provider's own.
+        if (session.evalAttribution || typeof reply.usage?.cost_usd === "number")
           await this.commitWorkspace(
             session,
             this.workspace(session.view.id),
             "harness.usage",
             {
-              costUsd: reply.usage.cost_usd,
-              totalTokens: reply.usage.total_tokens ?? null,
+              costUsd: reply.usage?.cost_usd ?? null,
+              totalTokens: reply.usage?.total_tokens ?? null,
               model: session.view.model,
+              usageReported: reply.usage !== undefined,
             },
             "usage:recorded",
             undefined,
             undefined,
-            { event: "usage", costUsd: reply.usage.cost_usd },
+            {
+              event: "usage",
+              costUsd: reply.usage?.cost_usd ?? null,
+              totalTokens: reply.usage?.total_tokens ?? null,
+              model: session.view.model,
+              usageReported: reply.usage !== undefined,
+            },
           );
         if (reply.usage?.total_tokens) {
           session.view = {
