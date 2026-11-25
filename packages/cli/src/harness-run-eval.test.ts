@@ -123,7 +123,7 @@ test("run-eval drives a real governed production run and the chain carries its c
   assert.equal(rewards[0]?.costUsd, "unmeasured");
   assert.equal(typeof rewards[0]?.latencyMs, "number");
   assert.ok((rewards[0]?.latencyMs as number) >= 0);
-  assert.equal(rewards[0]?.approvalMs, "unmeasured");
+  assert.equal(rewards[0]?.approvalMs, 0);
   assert.deepEqual(rewards[0]?.harnessEval, EVAL_CASE);
   const usageReceipts = entries.filter((body) => body.tool === "harness.usage" && body.harnessEval !== undefined);
   assert.equal(usageReceipts.length, 2, "every provider turn must carry a bounded usage receipt");

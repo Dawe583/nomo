@@ -1346,6 +1346,8 @@ export class Workbench {
       status: "pending" | "approved" | "denied";
       by?: string;
       reason?: string;
+      heldAt?: number;
+      decidedAt?: number;
       notify: string[];
     }
   >();
@@ -4704,12 +4706,14 @@ export class Workbench {
       local.status = decision.kind;
       local.by = decision.by;
       local.reason = decision.reason;
+      local.decidedAt = Date.now();
       try {
         this.persist();
       } catch (error) {
         local.status = "pending";
         delete local.by;
         delete local.reason;
+        delete local.decidedAt;
         throw error;
       }
       return true;
@@ -8520,9 +8524,12 @@ export class Workbench {
         notify: string[];
         by?: string;
         reason?: string;
+        heldAt: number;
+        decidedAt?: number;
       } = {
         holdId: `${session.view.id}:${randomUUID()}`,
         call,
+        heldAt: Date.now(),
         expiresAt: Date.now() + decision.seconds * 1000,
         status: "pending" as "pending" | "approved" | "denied",
         notify: [],
@@ -8551,6 +8558,14 @@ export class Workbench {
         hold.by = "runtime";
         hold.reason = "Session cancelled before approval.";
       }
+      const approvalMs =
+        (hold.status === "approved" || hold.status === "denied") &&
+        hold.by !== undefined &&
+        hold.by !== "runtime" &&
+        typeof hold.decidedAt === "number" &&
+        Number.isFinite(hold.decidedAt)
+          ? Math.max(0, hold.decidedAt - hold.heldAt)
+          : undefined;
       await this.locked(() =>
         this.commitWorkspace(
           session,
@@ -8560,7 +8575,10 @@ export class Workbench {
           allowed ? "hold:approved" : "hold:denied",
           undefined,
           hold,
-          { klass: call.klass },
+          {
+            klass: call.klass,
+            ...(approvalMs === undefined ? {} : { approvalMs }),
+          },
           this.sessionAttribution(session, policy, decision),
         ),
       );

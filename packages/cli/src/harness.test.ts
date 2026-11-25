@@ -281,6 +281,18 @@ test("run-eval aggregates provider cost across attributed child workspaces", asy
       },
       seq: 4,
     },
+    {
+      body: {
+        workspace: "agent-root",
+        tool: "fs_write",
+        klass: "r3",
+        decision: "hold:approved",
+        approvalMs: 120,
+        classification: "classified",
+        harnessEval,
+      },
+      seq: 5,
+    },
   ];
   const childEntries = [{ ...usage("agent-child", 0.5), seq: 1 }];
   let childMissing = false;
@@ -327,9 +339,10 @@ test("run-eval aggregates provider cost across attributed child workspaces", asy
   assert.equal(code, 0, terminal.err.join(" "));
   assert.equal(rewardInput?.costUsd, 0.75);
   assert.equal(rewardInput?.weights.cost, 1, "a different-weight prior reward must not block this measurement");
-  assert.equal(rewardInput?.guardrails.deny_rate, 0.5);
+  assert.equal(rewardInput?.guardrails.deny_rate, 0.25);
   assert.equal(rewardInput?.guardrails.rollback_count, 0);
   assert.equal(rewardInput?.guardrails.unknown_tool_rate, 0);
+  assert.equal(rewardInput?.approvalMs, 120);
   assert.equal(rewardInput ? rewardRecord(rewardInput).reward : undefined, 0.25);
 
   rewardInput = undefined;
@@ -351,6 +364,7 @@ test("run-eval aggregates provider cost across attributed child workspaces", asy
   assert.equal(missingCode, 0, missingChild.err.join(" "));
   const missingRewardInput = rewardInput as RewardInput | undefined;
   assert.equal(missingRewardInput?.costUsd, "unmeasured");
+  assert.equal(missingRewardInput?.approvalMs, "unmeasured");
   assert.equal(missingRewardInput?.guardrails.deny_rate, "unmeasured");
   assert.equal(missingRewardInput?.guardrails.rollback_count, "unmeasured");
   assert.equal(missingRewardInput?.guardrails.unknown_tool_rate, "unmeasured");

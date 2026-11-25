@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-25T22:51:07.281077Z",
+  "updatedAt": "2026-11-25T22:55:11.186815Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -3100,6 +3100,54 @@
       ],
       "stopCondition": "Stop if guardrail measurement would require classifier internals, registry facts, prompts, arguments, tool results or treating partial child evidence as complete.",
       "completedAt": "2026-11-25T22:51:07.281077Z"
+    },
+    {
+      "id": "h24-eval-approval-latency-measurement",
+      "status": "done",
+      "owner": "devin-6293643153014f56bb088c9a71fde97a",
+      "dependsOn": [
+        "h23-eval-guardrail-measurement"
+      ],
+      "scope": [
+        "packages/workbench/src/index.ts",
+        "packages/cli/src/harness.ts",
+        "packages/cli/src/harness.test.ts",
+        "packages/cli/src/harness-run-eval.test.ts",
+        "docs/HARNESS-LEARNING.md",
+        "docs/plans/2026-11-25-nomo-24h-program-detailed.md",
+        "docs/plans/2026-11-25-program-handoff.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "operator-approved or operator-denied internal holds carry elapsed decision latency when a decision timestamp exists",
+        "expired, cancelled or legacy holds do not fabricate operator decision time",
+        "run-eval approvalMs is zero when complete exact evidence contains no held decision, otherwise the sum of exact measured operator decision latencies",
+        "missing or partial approval evidence remains unmeasured"
+      ],
+      "verifier": [
+        "node --test packages/cli/src/harness-run-eval.test.ts packages/cli/src/harness.test.ts",
+        "node --test packages/workbench/src/workbench.test.ts",
+        "node --test scripts/src/doc-truth.test.mjs scripts/src/no-dash.test.mjs",
+        "pnpm --filter @nomo/cli typecheck",
+        "pnpm --filter @nomo/workbench typecheck",
+        "node --test scripts/src/*.test.mjs",
+        "git diff --check"
+      ],
+      "evidence": [
+        "CLI verifier: 30 tests, 30 pass, 0 fail, duration_ms 1963.280917",
+        "Workbench verifier: 40 tests, 40 pass, 0 fail, duration_ms 7853.909542",
+        "docs verifier: 10 tests, 10 pass, 0 fail, duration_ms 99.865708",
+        "pnpm --filter @nomo/cli typecheck: exit 0",
+        "pnpm --filter @nomo/workbench typecheck: exit 0",
+        "wider scripts suite: 427 tests, 394 pass, 0 fail, cancelled 0, skipped 32, todo 1, duration_ms 8268.9715",
+        "git diff --check: exit 0",
+        "focused fixture evidence: exact hold evidence with approvalMs 120 produced reward approvalMs 120; unreadable child evidence produced approvalMs unmeasured; a run with no holds produced approvalMs 0"
+      ],
+      "stopCondition": "Stop if approval timing would require estimating operator action time, counting expiry or cancellation as an operator decision, or treating partial child evidence as complete.",
+      "completedAt": "2026-11-25T22:55:11.186815Z"
     }
   ]
 }
