@@ -65,7 +65,7 @@ Last full local dry run was recorded in Q8 and merged to `main` as `96675914`.
 
 ## Next ready node
 
-T13 is complete as verification of existing behavior. Next ready expansion node: T14 diff panel, per-hunk staging, split/unified and side-by-side at 160+ columns. T11 remains owner-gated; Q5, G3 and G4 remain approval-gated.
+T13 is complete as verification of existing behavior. Next ready expansion node: T15 model picker, provider groups, capability disclosure and refusal while a session is running. T11 remains owner-gated; Q5, G3 and G4 remain approval-gated.
 
 After T2.5, continue T4 panel navigation, then T4, T5.x, T6, T7, T8,
 T9 and T10 as the detailed program orders them. Do not start T11 unless the

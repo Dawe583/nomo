@@ -70,7 +70,13 @@ import {
   ledgerGroupHeading,
 } from "./ledger-visual.ts";
 import { primeGitStatus, resetGitStatusCache } from "./git-status.ts";
-import { moveHunk, setSide, toggleHunk } from "./diff-panel.ts";
+import {
+  buildDiffView,
+  moveHunk,
+  renderDiffPanel,
+  setSide,
+  toggleHunk,
+} from "./diff-panel.ts";
 
 const assistantFetcher = (content: string, totalTokens?: number, costUsd?: number) => async (url: unknown) => {
   if (String(url).endsWith("/models"))
@@ -2401,6 +2407,40 @@ test("/diff keeps review state across re-renders and resets it per operation", a
   assert.ok(
     ui.diffView.hunks.every((hunk) => hunk.staged),
     "a new operation starts fully staged",
+  );
+});
+
+
+test("the diff panel renders unified and side-by-side split at 160 columns", () => {
+  const before = Array.from({ length: 12 }, (_, index) => `line ${index + 1}`);
+  const after = [...before];
+  after[0] = "FIRST CHANGED";
+  after[11] = "LAST CHANGED";
+  const view = buildDiffView(before.join("\n"), after.join("\n"), { context: 1 });
+  assert.ok(view.hunks.length >= 2, "the fixture needs independent hunks");
+
+  const unified = renderDiffPanel(view, 160, 24).join("\n");
+  assert.match(unified, /Diff \[unified\] staged \d+\/\d+ \+2 -2/);
+  assert.match(unified, /\+FIRST CHANGED/);
+  assert.match(unified, /-line 1/);
+
+  const split = renderDiffPanel(setSide(view, "split"), 160, 24);
+  const splitText = split.join("\n");
+  assert.match(splitText, /Diff \[split\] staged \d+\/\d+ \+2 -2/);
+  assert.ok(
+    split.some((line) => line.includes(" | ")),
+    "the 160-column split view does not show its two columns",
+  );
+  assert.ok(split.some((line) => line.startsWith("1:line 1") && line.includes(" | ")));
+  assert.ok(split.some((line) => line.includes("| 1:FIRST CHANGED")));
+  assert.ok(split.every((line) => visibleLength(line) <= 160));
+
+  const narrowed = toggleHunk(view, 0);
+  assert.equal(narrowed.hunks[0]?.staged, false);
+  assert.match(
+    renderDiffPanel(narrowed, 160, 24).join("\n"),
+    new RegExp(`staged ${view.hunks.length - 1}/${view.hunks.length}`),
+    "per-hunk staging changes the reported scope",
   );
 });
 

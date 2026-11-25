@@ -976,6 +976,11 @@ These are real, scoped follow-ups, not wishes. ~40 h.
    and empty plus filtered states are explicit.
 2. **T14 Diff panel**: per-hunk staging, split/unified, side-by-side at 160+.
    3 h.
+
+   As built: the diff panel already owned immutable hunk cursor/staging state;
+   this node added the missing acceptance proof. At 160 columns unified and
+   split render with hunk counts, two-column before/after rows and width
+   bounds, while per-hunk staging changes the reported scope.
 3. **T15 Model picker**: provider groups, capability disclosure, refusal when a
    session is running. 2 h.
 4. **T16 Ledger view**: signed/derived split, chain status, filter by class.
