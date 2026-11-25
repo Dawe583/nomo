@@ -525,6 +525,12 @@ names the tampered one.
 
 **Verifier.** `node --test scripts/src/harness-replay.test.mjs`.
 
+**As built.** Reads a ledger chain (`body` per entry) or bare eval record
+lines, recomputes with `computeReward`, prints `OK`/`MISMATCH`/`INVALID`/
+`UNREADABLE` per record with ids only. An unmeasured reward must stay
+unmeasured. Exit 1 on any non-match or when no reward record exists. Replay
+checks rewards only; hashes and signatures stay with the ledger verifier.
+
 ### H5. Activation and rollback (1.5 h)
 
 **Files.** `refine-trigger.ts`, `workspace.ts`, `refine-trigger.test.ts`.
