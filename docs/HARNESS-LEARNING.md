@@ -105,8 +105,10 @@ export, and unrelated entries are counted as unattributed rather than guessed.
 Two operator surfaces expose the same path. `POST /api/sessions` accepts an
 optional `harnessEval` object with exactly `caseId`, `variantId` and `run`;
 malformed input is refused as `invalid_session_eval` before a session exists.
-The same object is part of idempotency identity, so one idempotency key cannot
-silently reuse a session for a different eval run. The CLI form is:
+The returned session view and later reads carry that same bounded identity as
+`harnessEval`, so an operator can confirm attribution without opening raw
+ledger entries. The object is part of idempotency identity, so one idempotency
+key cannot silently reuse a session for a different eval run. The CLI form is:
 
 ```sh
 nomo harness run-eval --case <id> --variant <id> --run <n> \

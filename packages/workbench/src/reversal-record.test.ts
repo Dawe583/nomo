@@ -130,6 +130,7 @@ test("eval attribution survives restart for later chain entries", async (t) => {
   const f = await governedSession(t);
   await f.app.shutdown();
   const restarted = f.restart();
+  assert.deepEqual(restarted.get(f.session.id)?.harnessEval, EVAL_CASE);
 
   await restarted.recordHarnessReward(f.session.id, {
     caseId: EVAL_CASE.caseId,

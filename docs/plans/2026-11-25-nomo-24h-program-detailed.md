@@ -1116,7 +1116,9 @@ These are real, scoped follow-ups, not wishes. ~40 h.
     only through that explicit invocation. It does not compute reward or claim
     a passed eval by itself. H20c4 adds `--idempotency-key`, so an exact CLI
     retry reuses the same run and a different request under that key is
-    refused before another provider run starts.
+    refused before another provider run starts. H20c5 exposes the same bounded
+    identity on session views and API reads after restart, without widening it
+    to prompt or tool content.
 
 ## 12. Program checklist
 

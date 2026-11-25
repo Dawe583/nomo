@@ -1626,8 +1626,9 @@ test("session API binds bounded harnessEval identity and refuses malformed attri
     });
     assert.equal(createdResponse.status, 201);
     const created = await createdResponse.json() as {
-      session: { id: string; workspace: string };
+      session: { id: string; workspace: string; harnessEval?: unknown };
     };
+    assert.deepEqual(created.session.harnessEval, harnessEval);
 
     await workbench.recordHarnessReward(created.session.id, {
       caseId: harnessEval.caseId,
