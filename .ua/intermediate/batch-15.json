@@ -1,0 +1,3179 @@
+{
+ "nodes": [
+  {
+   "id": "file:cloud/recovery-routes.mjs",
+   "type": "file",
+   "name": "recovery-routes.mjs",
+   "filePath": "cloud/recovery-routes.mjs",
+   "summary": "recovery-routes.mjs \u2014 javascript code, 119 lines, 4 functions, 0 classes, 1 exports, 3 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/recovery-routes.mjs:identity",
+   "type": "function",
+   "name": "identity",
+   "filePath": "cloud/recovery-routes.mjs",
+   "lineRange": [
+    5,
+    5
+   ],
+   "summary": "identity() \u2014 function in recovery-routes.mjs, lines 5-5.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/recovery-routes.mjs:selection",
+   "type": "function",
+   "name": "selection",
+   "filePath": "cloud/recovery-routes.mjs",
+   "lineRange": [
+    6,
+    16
+   ],
+   "summary": "selection() \u2014 function in recovery-routes.mjs, lines 6-16.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/recovery-routes.mjs:response",
+   "type": "function",
+   "name": "response",
+   "filePath": "cloud/recovery-routes.mjs",
+   "lineRange": [
+    22,
+    32
+   ],
+   "summary": "response() \u2014 function in recovery-routes.mjs, lines 22-32.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/recovery-routes.mjs:mountRecoveryRoutes",
+   "type": "function",
+   "name": "mountRecoveryRoutes",
+   "filePath": "cloud/recovery-routes.mjs",
+   "lineRange": [
+    34,
+    119
+   ],
+   "summary": "mountRecoveryRoutes(app) \u2014 function in recovery-routes.mjs, lines 34-119.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:cloud/recovery-routes.test.mjs",
+   "type": "file",
+   "name": "recovery-routes.test.mjs",
+   "filePath": "cloud/recovery-routes.test.mjs",
+   "summary": "recovery-routes.test.mjs \u2014 javascript code, 231 lines, 1 functions, 0 classes, 0 exports, 3 imports.",
+   "tags": [
+    "javascript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:cloud/recovery-routes.test.mjs:fixture",
+   "type": "function",
+   "name": "fixture",
+   "filePath": "cloud/recovery-routes.test.mjs",
+   "lineRange": [
+    8,
+    69
+   ],
+   "summary": "fixture(t) \u2014 function in recovery-routes.test.mjs, lines 8-69.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:cloud/recovery.test.mjs",
+   "type": "file",
+   "name": "recovery.test.mjs",
+   "filePath": "cloud/recovery.test.mjs",
+   "summary": "recovery.test.mjs \u2014 javascript code, 299 lines, 0 functions, 0 classes, 0 exports, 4 imports.",
+   "tags": [
+    "javascript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:cloud/server.mjs",
+   "type": "file",
+   "name": "server.mjs",
+   "filePath": "cloud/server.mjs",
+   "summary": "server.mjs \u2014 javascript code, 1373 lines, 12 functions, 0 classes, 0 exports, 30 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "function:cloud/server.mjs:matches",
+   "type": "function",
+   "name": "matches",
+   "filePath": "cloud/server.mjs",
+   "lineRange": [
+    112,
+    117
+   ],
+   "summary": "matches(a, b) \u2014 function in server.mjs, lines 112-117.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/server.mjs:queryOf",
+   "type": "function",
+   "name": "queryOf",
+   "filePath": "cloud/server.mjs",
+   "lineRange": [
+    337,
+    338
+   ],
+   "summary": "queryOf(req) \u2014 function in server.mjs, lines 337-338.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/server.mjs:preferences",
+   "type": "function",
+   "name": "preferences",
+   "filePath": "cloud/server.mjs",
+   "lineRange": [
+    339,
+    348
+   ],
+   "summary": "preferences(req) \u2014 function in server.mjs, lines 339-348.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/server.mjs:settledSession",
+   "type": "function",
+   "name": "settledSession",
+   "filePath": "cloud/server.mjs",
+   "lineRange": [
+    451,
+    453
+   ],
+   "summary": "settledSession() \u2014 function in server.mjs, lines 451-453.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/server.mjs:undoProof",
+   "type": "function",
+   "name": "undoProof",
+   "filePath": "cloud/server.mjs",
+   "lineRange": [
+    879,
+    898
+   ],
+   "summary": "undoProof(req, id, operationId, client) \u2014 function in server.mjs, lines 879-898.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/server.mjs:applyManagedUndo",
+   "type": "function",
+   "name": "applyManagedUndo",
+   "filePath": "cloud/server.mjs",
+   "lineRange": [
+    916,
+    953
+   ],
+   "summary": "applyManagedUndo(req, id, operationId) \u2014 function in server.mjs, lines 916-953.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/server.mjs:launch",
+   "type": "function",
+   "name": "launch",
+   "filePath": "cloud/server.mjs",
+   "lineRange": [
+    962,
+    983
+   ],
+   "summary": "launch(req, session) \u2014 function in server.mjs, lines 962-983.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/server.mjs:requestKey",
+   "type": "function",
+   "name": "requestKey",
+   "filePath": "cloud/server.mjs",
+   "lineRange": [
+    984,
+    992
+   ],
+   "summary": "requestKey(req) \u2014 function in server.mjs, lines 984-992.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/server.mjs:priorRequest",
+   "type": "function",
+   "name": "priorRequest",
+   "filePath": "cloud/server.mjs",
+   "lineRange": [
+    993,
+    1002
+   ],
+   "summary": "priorRequest(req, key, digest, c) \u2014 function in server.mjs, lines 993-1002.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/server.mjs:stopSession",
+   "type": "function",
+   "name": "stopSession",
+   "filePath": "cloud/server.mjs",
+   "lineRange": [
+    1204,
+    1220
+   ],
+   "summary": "stopSession(req, res) \u2014 function in server.mjs, lines 1204-1220.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/server.mjs:selected",
+   "type": "function",
+   "name": "selected",
+   "filePath": "cloud/server.mjs",
+   "lineRange": [
+    1270,
+    1276
+   ],
+   "summary": "selected(req) \u2014 function in server.mjs, lines 1270-1276.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/server.mjs:record",
+   "type": "function",
+   "name": "record",
+   "filePath": "cloud/server.mjs",
+   "lineRange": [
+    1277,
+    1283
+   ],
+   "summary": "record(e) \u2014 function in server.mjs, lines 1277-1283.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:cloud/steps.mjs",
+   "type": "file",
+   "name": "steps.mjs",
+   "filePath": "cloud/steps.mjs",
+   "summary": "steps.mjs \u2014 javascript code, 523 lines, 6 functions, 0 classes, 6 exports, 19 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:cloud/steps.mjs:cloudToolDecision",
+   "type": "function",
+   "name": "cloudToolDecision",
+   "filePath": "cloud/steps.mjs",
+   "lineRange": [
+    36,
+    40
+   ],
+   "summary": "cloudToolDecision(policy, classification, callInfo) \u2014 function in steps.mjs, lines 36-40.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/steps.mjs:holdTokenMatches",
+   "type": "function",
+   "name": "holdTokenMatches",
+   "filePath": "cloud/steps.mjs",
+   "lineRange": [
+    46,
+    57
+   ],
+   "summary": "holdTokenMatches(record, presented) \u2014 function in steps.mjs, lines 46-57.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/steps.mjs:mintHoldToken",
+   "type": "function",
+   "name": "mintHoldToken",
+   "filePath": "cloud/steps.mjs",
+   "lineRange": [
+    66,
+    70
+   ],
+   "summary": "mintHoldToken() \u2014 function in steps.mjs, lines 66-70.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/steps.mjs:save",
+   "type": "function",
+   "name": "save",
+   "filePath": "cloud/steps.mjs",
+   "lineRange": [
+    71,
+    71
+   ],
+   "summary": "save(owner, s, c) \u2014 function in steps.mjs, lines 71-71.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/steps.mjs:advance",
+   "type": "function",
+   "name": "advance",
+   "filePath": "cloud/steps.mjs",
+   "lineRange": [
+    72,
+    506
+   ],
+   "summary": "advance(owner, id, generation) \u2014 function in steps.mjs, lines 72-506.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:cloud/steps.mjs:fail",
+   "type": "function",
+   "name": "fail",
+   "filePath": "cloud/steps.mjs",
+   "lineRange": [
+    507,
+    523
+   ],
+   "summary": "fail(owner, id, generation) \u2014 function in steps.mjs, lines 507-523.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:cloud/store.mjs",
+   "type": "file",
+   "name": "store.mjs",
+   "filePath": "cloud/store.mjs",
+   "summary": "store.mjs \u2014 javascript code, 500 lines, 17 functions, 0 classes, 17 exports, 9 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:cloud/store.mjs:database",
+   "type": "function",
+   "name": "database",
+   "filePath": "cloud/store.mjs",
+   "lineRange": [
+    13,
+    23
+   ],
+   "summary": "database() \u2014 function in store.mjs, lines 13-23.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/store.mjs:transaction",
+   "type": "function",
+   "name": "transaction",
+   "filePath": "cloud/store.mjs",
+   "lineRange": [
+    28,
+    48
+   ],
+   "summary": "transaction(owner, key, run) \u2014 function in store.mjs, lines 28-48.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/store.mjs:read",
+   "type": "function",
+   "name": "read",
+   "filePath": "cloud/store.mjs",
+   "lineRange": [
+    49,
+    57
+   ],
+   "summary": "read(owner, key, client) \u2014 function in store.mjs, lines 49-57.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/store.mjs:write",
+   "type": "function",
+   "name": "write",
+   "filePath": "cloud/store.mjs",
+   "lineRange": [
+    58,
+    79
+   ],
+   "summary": "write(owner, key, value, client) \u2014 function in store.mjs, lines 58-79.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/store.mjs:sessions",
+   "type": "function",
+   "name": "sessions",
+   "filePath": "cloud/store.mjs",
+   "lineRange": [
+    80,
+    88
+   ],
+   "summary": "sessions(owner) \u2014 function in store.mjs, lines 80-88.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/store.mjs:encrypt",
+   "type": "function",
+   "name": "encrypt",
+   "filePath": "cloud/store.mjs",
+   "lineRange": [
+    89,
+    102
+   ],
+   "summary": "encrypt(value) \u2014 function in store.mjs, lines 89-102.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/store.mjs:decrypt",
+   "type": "function",
+   "name": "decrypt",
+   "filePath": "cloud/store.mjs",
+   "lineRange": [
+    103,
+    116
+   ],
+   "summary": "decrypt(value) \u2014 function in store.mjs, lines 103-116.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/store.mjs:signer",
+   "type": "function",
+   "name": "signer",
+   "filePath": "cloud/store.mjs",
+   "lineRange": [
+    117,
+    121
+   ],
+   "summary": "signer() \u2014 function in store.mjs, lines 117-121.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/store.mjs:verifier",
+   "type": "function",
+   "name": "verifier",
+   "filePath": "cloud/store.mjs",
+   "lineRange": [
+    129,
+    138
+   ],
+   "summary": "verifier() \u2014 function in store.mjs, lines 129-138.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/store.mjs:append",
+   "type": "function",
+   "name": "append",
+   "filePath": "cloud/store.mjs",
+   "lineRange": [
+    139,
+    178
+   ],
+   "summary": "append(owner, body, client) \u2014 function in store.mjs, lines 139-178.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/store.mjs:ledger",
+   "type": "function",
+   "name": "ledger",
+   "filePath": "cloud/store.mjs",
+   "lineRange": [
+    179,
+    195
+   ],
+   "summary": "ledger(owner, workspace, client) \u2014 function in store.mjs, lines 179-195.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/store.mjs:event",
+   "type": "function",
+   "name": "event",
+   "filePath": "cloud/store.mjs",
+   "lineRange": [
+    196,
+    220
+   ],
+   "summary": "event(session, kind, text, type) \u2014 function in store.mjs, lines 196-220.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/store.mjs:view",
+   "type": "function",
+   "name": "view",
+   "filePath": "cloud/store.mjs",
+   "lineRange": [
+    221,
+    275
+   ],
+   "summary": "view(session) \u2014 function in store.mjs, lines 221-275.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/store.mjs:eventsAfter",
+   "type": "function",
+   "name": "eventsAfter",
+   "filePath": "cloud/store.mjs",
+   "lineRange": [
+    276,
+    286
+   ],
+   "summary": "eventsAfter(owner, id) \u2014 function in store.mjs, lines 276-286.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/store.mjs:sessionPage",
+   "type": "function",
+   "name": "sessionPage",
+   "filePath": "cloud/store.mjs",
+   "lineRange": [
+    289,
+    399
+   ],
+   "summary": "sessionPage(owner, query) \u2014 function in store.mjs, lines 289-399.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/store.mjs:ledgerPage",
+   "type": "function",
+   "name": "ledgerPage",
+   "filePath": "cloud/store.mjs",
+   "lineRange": [
+    400,
+    490
+   ],
+   "summary": "ledgerPage(owner, workspace, query) \u2014 function in store.mjs, lines 400-490.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/store.mjs:allEvents",
+   "type": "function",
+   "name": "allEvents",
+   "filePath": "cloud/store.mjs",
+   "lineRange": [
+    492,
+    500
+   ],
+   "summary": "allEvents(owner, id, client) \u2014 function in store.mjs, lines 492-500.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:cloud/store.test.mjs",
+   "type": "file",
+   "name": "store.test.mjs",
+   "filePath": "cloud/store.test.mjs",
+   "summary": "store.test.mjs \u2014 javascript code, 99 lines, 2 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "javascript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/store.test.mjs:withSigningKey",
+   "type": "function",
+   "name": "withSigningKey",
+   "filePath": "cloud/store.test.mjs",
+   "lineRange": [
+    18,
+    30
+   ],
+   "summary": "withSigningKey(run) \u2014 function in store.test.mjs, lines 18-30.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/store.test.mjs:recordingClient",
+   "type": "function",
+   "name": "recordingClient",
+   "filePath": "cloud/store.test.mjs",
+   "lineRange": [
+    32,
+    41
+   ],
+   "summary": "recordingClient() \u2014 function in store.test.mjs, lines 32-41.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:cloud/vercel-integration.mjs",
+   "type": "file",
+   "name": "vercel-integration.mjs",
+   "filePath": "cloud/vercel-integration.mjs",
+   "summary": "vercel-integration.mjs \u2014 javascript code, 346 lines, 9 functions, 0 classes, 2 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:cloud/vercel-integration.mjs:route",
+   "type": "function",
+   "name": "route",
+   "filePath": "cloud/vercel-integration.mjs",
+   "lineRange": [
+    9,
+    13
+   ],
+   "summary": "route(pattern, methods) \u2014 function in vercel-integration.mjs, lines 9-13.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/vercel-integration.mjs:failure",
+   "type": "function",
+   "name": "failure",
+   "filePath": "cloud/vercel-integration.mjs",
+   "lineRange": [
+    94,
+    96
+   ],
+   "summary": "failure(message, status, retryAfter) \u2014 function in vercel-integration.mjs, lines 94-96.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/vercel-integration.mjs:credentials",
+   "type": "function",
+   "name": "credentials",
+   "filePath": "cloud/vercel-integration.mjs",
+   "lineRange": [
+    97,
+    112
+   ],
+   "summary": "credentials(config) \u2014 function in vercel-integration.mjs, lines 97-112.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/vercel-integration.mjs:requestUrl",
+   "type": "function",
+   "name": "requestUrl",
+   "filePath": "cloud/vercel-integration.mjs",
+   "lineRange": [
+    113,
+    151
+   ],
+   "summary": "requestUrl(config, method, path, query) \u2014 function in vercel-integration.mjs, lines 113-151.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/vercel-integration.mjs:sanitize",
+   "type": "function",
+   "name": "sanitize",
+   "filePath": "cloud/vercel-integration.mjs",
+   "lineRange": [
+    154,
+    173
+   ],
+   "summary": "sanitize(value, secrets) \u2014 function in vercel-integration.mjs, lines 154-173.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/vercel-integration.mjs:bodySecrets",
+   "type": "function",
+   "name": "bodySecrets",
+   "filePath": "cloud/vercel-integration.mjs",
+   "lineRange": [
+    174,
+    182
+   ],
+   "summary": "bodySecrets(value) \u2014 function in vercel-integration.mjs, lines 174-182.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/vercel-integration.mjs:request",
+   "type": "function",
+   "name": "request",
+   "filePath": "cloud/vercel-integration.mjs",
+   "lineRange": [
+    183,
+    282
+   ],
+   "summary": "request(config, method, path, query\u2026) \u2014 function in vercel-integration.mjs, lines 183-282.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/vercel-integration.mjs:vercelCatalog",
+   "type": "function",
+   "name": "vercelCatalog",
+   "filePath": "cloud/vercel-integration.mjs",
+   "lineRange": [
+    283,
+    288
+   ],
+   "summary": "vercelCatalog(config) \u2014 function in vercel-integration.mjs, lines 283-288.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/vercel-integration.mjs:vercelCall",
+   "type": "function",
+   "name": "vercelCall",
+   "filePath": "cloud/vercel-integration.mjs",
+   "lineRange": [
+    289,
+    346
+   ],
+   "summary": "vercelCall(config, name, args) \u2014 function in vercel-integration.mjs, lines 289-346.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:cloud/vercel-integration.test.mjs",
+   "type": "file",
+   "name": "vercel-integration.test.mjs",
+   "filePath": "cloud/vercel-integration.test.mjs",
+   "summary": "vercel-integration.test.mjs \u2014 javascript code, 195 lines, 2 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "javascript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:cloud/vercel-integration.test.mjs:config",
+   "type": "function",
+   "name": "config",
+   "filePath": "cloud/vercel-integration.test.mjs",
+   "lineRange": [
+    5,
+    5
+   ],
+   "summary": "config(fetch) \u2014 function in vercel-integration.test.mjs, lines 5-5.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/vercel-integration.test.mjs:payload",
+   "type": "function",
+   "name": "payload",
+   "filePath": "cloud/vercel-integration.test.mjs",
+   "lineRange": [
+    6,
+    6
+   ],
+   "summary": "payload(result) \u2014 function in vercel-integration.test.mjs, lines 6-6.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:cloud/workflow.mjs",
+   "type": "file",
+   "name": "workflow.mjs",
+   "filePath": "cloud/workflow.mjs",
+   "summary": "workflow.mjs \u2014 javascript code, 22 lines, 1 functions, 0 classes, 1 exports, 1 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/workflow.mjs:runCloudSession",
+   "type": "function",
+   "name": "runCloudSession",
+   "filePath": "cloud/workflow.mjs",
+   "lineRange": [
+    10,
+    22
+   ],
+   "summary": "runCloudSession(owner, id, generation) \u2014 function in workflow.mjs, lines 10-22.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/provider-adapters/openai-completions.ts",
+   "type": "file",
+   "name": "openai-completions.ts",
+   "filePath": "packages/workbench/src/provider-adapters/openai-completions.ts",
+   "summary": "openai-completions.ts \u2014 typescript code, 169 lines, 0 functions, 1 classes, 1 exports, 3 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "class:packages/workbench/src/provider-adapters/openai-completions.ts:OpenAICompletionsAdapter",
+   "type": "class",
+   "name": "OpenAICompletionsAdapter",
+   "filePath": "packages/workbench/src/provider-adapters/openai-completions.ts",
+   "lineRange": [
+    36,
+    169
+   ],
+   "summary": "OpenAICompletionsAdapter \u2014 class in openai-completions.ts, lines 36-169, methods: complete.",
+   "tags": [
+    "typescript",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/provider-catalog.test.ts",
+   "type": "file",
+   "name": "provider-catalog.test.ts",
+   "filePath": "packages/workbench/src/provider-catalog.test.ts",
+   "summary": "provider-catalog.test.ts \u2014 typescript code, 832 lines, 0 functions, 0 classes, 0 exports, 5 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "file:packages/workbench/src/provider-defaults.test.ts",
+   "type": "file",
+   "name": "provider-defaults.test.ts",
+   "filePath": "packages/workbench/src/provider-defaults.test.ts",
+   "summary": "provider-defaults.test.ts \u2014 typescript code, 150 lines, 1 functions, 0 classes, 0 exports, 3 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-defaults.test.ts:workspace",
+   "type": "function",
+   "name": "workspace",
+   "filePath": "packages/workbench/src/provider-defaults.test.ts",
+   "lineRange": [
+    15,
+    26
+   ],
+   "summary": "workspace(t, models) \u2014 function in provider-defaults.test.ts, lines 15-26.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/provider-defaults.ts",
+   "type": "file",
+   "name": "provider-defaults.ts",
+   "filePath": "packages/workbench/src/provider-defaults.ts",
+   "summary": "provider-defaults.ts \u2014 typescript code, 124 lines, 0 functions, 0 classes, 9 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/provider-environment.test.ts",
+   "type": "file",
+   "name": "provider-environment.test.ts",
+   "filePath": "packages/workbench/src/provider-environment.test.ts",
+   "summary": "provider-environment.test.ts \u2014 typescript code, 219 lines, 0 functions, 0 classes, 0 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/workbench/src/provider-retry.test.ts",
+   "type": "file",
+   "name": "provider-retry.test.ts",
+   "filePath": "packages/workbench/src/provider-retry.test.ts",
+   "summary": "provider-retry.test.ts \u2014 typescript code, 191 lines, 1 functions, 0 classes, 0 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-retry.test.ts:answer",
+   "type": "function",
+   "name": "answer",
+   "filePath": "packages/workbench/src/provider-retry.test.ts",
+   "lineRange": [
+    8,
+    8
+   ],
+   "summary": "answer() \u2014 function in provider-retry.test.ts, lines 8-8.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/src/check-cloud-integration.mjs",
+   "type": "file",
+   "name": "check-cloud-integration.mjs",
+   "filePath": "scripts/src/check-cloud-integration.mjs",
+   "summary": "check-cloud-integration.mjs \u2014 javascript code, 72 lines, 1 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/check-cloud-integration.mjs:run",
+   "type": "function",
+   "name": "run",
+   "filePath": "scripts/src/check-cloud-integration.mjs",
+   "lineRange": [
+    27,
+    54
+   ],
+   "summary": "run(args) \u2014 function in check-cloud-integration.mjs, lines 27-54.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/src/check-managed-cloud.mjs",
+   "type": "file",
+   "name": "check-managed-cloud.mjs",
+   "filePath": "scripts/src/check-managed-cloud.mjs",
+   "summary": "check-managed-cloud.mjs \u2014 javascript code, 132 lines, 3 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/check-managed-cloud.mjs:target",
+   "type": "function",
+   "name": "target",
+   "filePath": "scripts/src/check-managed-cloud.mjs",
+   "lineRange": [
+    14,
+    17
+   ],
+   "summary": "target(value) \u2014 function in check-managed-cloud.mjs, lines 14-17.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/check-managed-cloud.mjs:listen",
+   "type": "function",
+   "name": "listen",
+   "filePath": "scripts/src/check-managed-cloud.mjs",
+   "lineRange": [
+    58,
+    58
+   ],
+   "summary": "listen() \u2014 function in check-managed-cloud.mjs, lines 58-58.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/check-managed-cloud.mjs:close",
+   "type": "function",
+   "name": "close",
+   "filePath": "scripts/src/check-managed-cloud.mjs",
+   "lineRange": [
+    59,
+    59
+   ],
+   "summary": "close() \u2014 function in check-managed-cloud.mjs, lines 59-59.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/src/cloud-boundaries.test.mjs",
+   "type": "file",
+   "name": "cloud-boundaries.test.mjs",
+   "filePath": "scripts/src/cloud-boundaries.test.mjs",
+   "summary": "cloud-boundaries.test.mjs \u2014 javascript code, 131 lines, 0 functions, 0 classes, 0 exports, 2 imports.",
+   "tags": [
+    "javascript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/src/cloud-test-config.mjs",
+   "type": "file",
+   "name": "cloud-test-config.mjs",
+   "filePath": "scripts/src/cloud-test-config.mjs",
+   "summary": "cloud-test-config.mjs \u2014 javascript code, 48 lines, 3 functions, 0 classes, 3 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/cloud-test-config.mjs:validateCloudTestEnvironment",
+   "type": "function",
+   "name": "validateCloudTestEnvironment",
+   "filePath": "scripts/src/cloud-test-config.mjs",
+   "lineRange": [
+    2,
+    29
+   ],
+   "summary": "validateCloudTestEnvironment(env) \u2014 function in cloud-test-config.mjs, lines 2-29.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/cloud-test-config.mjs:validateCloudTestProxy",
+   "type": "function",
+   "name": "validateCloudTestProxy",
+   "filePath": "scripts/src/cloud-test-config.mjs",
+   "lineRange": [
+    31,
+    38
+   ],
+   "summary": "validateCloudTestProxy(env) \u2014 function in cloud-test-config.mjs, lines 31-38.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/cloud-test-config.mjs:configureCloudTest",
+   "type": "function",
+   "name": "configureCloudTest",
+   "filePath": "scripts/src/cloud-test-config.mjs",
+   "lineRange": [
+    40,
+    48
+   ],
+   "summary": "configureCloudTest() \u2014 function in cloud-test-config.mjs, lines 40-48.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/src/cloud-test-config.test.mjs",
+   "type": "file",
+   "name": "cloud-test-config.test.mjs",
+   "filePath": "scripts/src/cloud-test-config.test.mjs",
+   "summary": "cloud-test-config.test.mjs \u2014 javascript code, 60 lines, 0 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "javascript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/src/cloud-test-preload.mjs",
+   "type": "file",
+   "name": "cloud-test-preload.mjs",
+   "filePath": "scripts/src/cloud-test-preload.mjs",
+   "summary": "cloud-test-preload.mjs \u2014 javascript code, 2 lines, 0 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/src/gateway.test.mjs",
+   "type": "file",
+   "name": "gateway.test.mjs",
+   "filePath": "scripts/src/gateway.test.mjs",
+   "summary": "gateway.test.mjs \u2014 javascript code, 87 lines, 1 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "javascript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/gateway.test.mjs:response",
+   "type": "function",
+   "name": "response",
+   "filePath": "scripts/src/gateway.test.mjs",
+   "lineRange": [
+    6,
+    8
+   ],
+   "summary": "response() \u2014 function in gateway.test.mjs, lines 6-8.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/src/preview-mobile-demo.mjs",
+   "type": "file",
+   "name": "preview-mobile-demo.mjs",
+   "filePath": "scripts/src/preview-mobile-demo.mjs",
+   "summary": "preview-mobile-demo.mjs \u2014 javascript code, 71 lines, 1 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/preview-mobile-demo.mjs:close",
+   "type": "function",
+   "name": "close",
+   "filePath": "scripts/src/preview-mobile-demo.mjs",
+   "lineRange": [
+    66,
+    69
+   ],
+   "summary": "close() \u2014 function in preview-mobile-demo.mjs, lines 66-69.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/src/provision-cloud.mjs",
+   "type": "file",
+   "name": "provision-cloud.mjs",
+   "filePath": "scripts/src/provision-cloud.mjs",
+   "summary": "provision-cloud.mjs \u2014 javascript code, 52 lines, 0 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "simple"
+  }
+ ],
+ "edges": [
+  {
+   "source": "file:cloud/recovery-routes.mjs",
+   "target": "function:cloud/recovery-routes.mjs:identity",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery-routes.mjs defines identity",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/recovery-routes.mjs",
+   "target": "function:cloud/recovery-routes.mjs:selection",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery-routes.mjs defines selection",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/recovery-routes.mjs",
+   "target": "function:cloud/recovery-routes.mjs:response",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery-routes.mjs defines response",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/recovery-routes.mjs",
+   "target": "function:cloud/recovery-routes.mjs:mountRecoveryRoutes",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery-routes.mjs defines mountRecoveryRoutes",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/recovery-routes.mjs",
+   "target": "function:cloud/recovery-routes.mjs:mountRecoveryRoutes",
+   "type": "exports",
+   "direction": "forward",
+   "description": "recovery-routes.mjs exports mountRecoveryRoutes",
+   "weight": 0.7
+  },
+  {
+   "source": "function:cloud/recovery-routes.mjs:mountRecoveryRoutes",
+   "target": "function:cloud/recovery-routes.mjs:selection",
+   "type": "calls",
+   "direction": "forward",
+   "description": "mountRecoveryRoutes calls selection",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/recovery-routes.mjs:mountRecoveryRoutes",
+   "target": "function:cloud/recovery-routes.mjs:identity",
+   "type": "calls",
+   "direction": "forward",
+   "description": "mountRecoveryRoutes calls identity",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/recovery-routes.mjs:mountRecoveryRoutes",
+   "target": "function:cloud/recovery-routes.mjs:response",
+   "type": "calls",
+   "direction": "forward",
+   "description": "mountRecoveryRoutes calls response",
+   "weight": 0.6
+  },
+  {
+   "source": "file:cloud/recovery-routes.test.mjs",
+   "target": "function:cloud/recovery-routes.test.mjs:fixture",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery-routes.test.mjs defines fixture",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/server.mjs",
+   "target": "function:cloud/server.mjs:matches",
+   "type": "contains",
+   "direction": "forward",
+   "description": "server.mjs defines matches",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/server.mjs",
+   "target": "function:cloud/server.mjs:queryOf",
+   "type": "contains",
+   "direction": "forward",
+   "description": "server.mjs defines queryOf",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/server.mjs",
+   "target": "function:cloud/server.mjs:preferences",
+   "type": "contains",
+   "direction": "forward",
+   "description": "server.mjs defines preferences",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/server.mjs",
+   "target": "function:cloud/server.mjs:settledSession",
+   "type": "contains",
+   "direction": "forward",
+   "description": "server.mjs defines settledSession",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/server.mjs",
+   "target": "function:cloud/server.mjs:undoProof",
+   "type": "contains",
+   "direction": "forward",
+   "description": "server.mjs defines undoProof",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/server.mjs",
+   "target": "function:cloud/server.mjs:applyManagedUndo",
+   "type": "contains",
+   "direction": "forward",
+   "description": "server.mjs defines applyManagedUndo",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/server.mjs",
+   "target": "function:cloud/server.mjs:launch",
+   "type": "contains",
+   "direction": "forward",
+   "description": "server.mjs defines launch",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/server.mjs",
+   "target": "function:cloud/server.mjs:requestKey",
+   "type": "contains",
+   "direction": "forward",
+   "description": "server.mjs defines requestKey",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/server.mjs",
+   "target": "function:cloud/server.mjs:priorRequest",
+   "type": "contains",
+   "direction": "forward",
+   "description": "server.mjs defines priorRequest",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/server.mjs",
+   "target": "function:cloud/server.mjs:stopSession",
+   "type": "contains",
+   "direction": "forward",
+   "description": "server.mjs defines stopSession",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/server.mjs",
+   "target": "function:cloud/server.mjs:selected",
+   "type": "contains",
+   "direction": "forward",
+   "description": "server.mjs defines selected",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/server.mjs",
+   "target": "function:cloud/server.mjs:record",
+   "type": "contains",
+   "direction": "forward",
+   "description": "server.mjs defines record",
+   "weight": 1.0
+  },
+  {
+   "source": "function:cloud/server.mjs:applyManagedUndo",
+   "target": "function:cloud/server.mjs:undoProof",
+   "type": "calls",
+   "direction": "forward",
+   "description": "applyManagedUndo calls undoProof",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/server.mjs:applyManagedUndo",
+   "target": "function:cloud/server.mjs:settledSession",
+   "type": "calls",
+   "direction": "forward",
+   "description": "applyManagedUndo calls settledSession",
+   "weight": 0.6
+  },
+  {
+   "source": "file:cloud/steps.mjs",
+   "target": "function:cloud/steps.mjs:cloudToolDecision",
+   "type": "contains",
+   "direction": "forward",
+   "description": "steps.mjs defines cloudToolDecision",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/steps.mjs",
+   "target": "function:cloud/steps.mjs:cloudToolDecision",
+   "type": "exports",
+   "direction": "forward",
+   "description": "steps.mjs exports cloudToolDecision",
+   "weight": 0.7
+  },
+  {
+   "source": "file:cloud/steps.mjs",
+   "target": "function:cloud/steps.mjs:holdTokenMatches",
+   "type": "contains",
+   "direction": "forward",
+   "description": "steps.mjs defines holdTokenMatches",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/steps.mjs",
+   "target": "function:cloud/steps.mjs:holdTokenMatches",
+   "type": "exports",
+   "direction": "forward",
+   "description": "steps.mjs exports holdTokenMatches",
+   "weight": 0.7
+  },
+  {
+   "source": "file:cloud/steps.mjs",
+   "target": "function:cloud/steps.mjs:mintHoldToken",
+   "type": "contains",
+   "direction": "forward",
+   "description": "steps.mjs defines mintHoldToken",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/steps.mjs",
+   "target": "function:cloud/steps.mjs:mintHoldToken",
+   "type": "exports",
+   "direction": "forward",
+   "description": "steps.mjs exports mintHoldToken",
+   "weight": 0.7
+  },
+  {
+   "source": "file:cloud/steps.mjs",
+   "target": "function:cloud/steps.mjs:save",
+   "type": "contains",
+   "direction": "forward",
+   "description": "steps.mjs defines save",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/steps.mjs",
+   "target": "function:cloud/steps.mjs:advance",
+   "type": "contains",
+   "direction": "forward",
+   "description": "steps.mjs defines advance",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/steps.mjs",
+   "target": "function:cloud/steps.mjs:advance",
+   "type": "exports",
+   "direction": "forward",
+   "description": "steps.mjs exports advance",
+   "weight": 0.7
+  },
+  {
+   "source": "file:cloud/steps.mjs",
+   "target": "function:cloud/steps.mjs:fail",
+   "type": "contains",
+   "direction": "forward",
+   "description": "steps.mjs defines fail",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/steps.mjs",
+   "target": "function:cloud/steps.mjs:fail",
+   "type": "exports",
+   "direction": "forward",
+   "description": "steps.mjs exports fail",
+   "weight": 0.7
+  },
+  {
+   "source": "function:cloud/steps.mjs:advance",
+   "target": "function:cloud/steps.mjs:save",
+   "type": "calls",
+   "direction": "forward",
+   "description": "advance calls save",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/steps.mjs:advance",
+   "target": "function:cloud/steps.mjs:cloudToolDecision",
+   "type": "calls",
+   "direction": "forward",
+   "description": "advance calls cloudToolDecision",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/steps.mjs:advance",
+   "target": "function:cloud/steps.mjs:mintHoldToken",
+   "type": "calls",
+   "direction": "forward",
+   "description": "advance calls mintHoldToken",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/steps.mjs:fail",
+   "target": "function:cloud/steps.mjs:save",
+   "type": "calls",
+   "direction": "forward",
+   "description": "fail calls save",
+   "weight": 0.6
+  },
+  {
+   "source": "file:cloud/store.mjs",
+   "target": "function:cloud/store.mjs:database",
+   "type": "contains",
+   "direction": "forward",
+   "description": "store.mjs defines database",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/store.mjs",
+   "target": "function:cloud/store.mjs:database",
+   "type": "exports",
+   "direction": "forward",
+   "description": "store.mjs exports database",
+   "weight": 0.7
+  },
+  {
+   "source": "file:cloud/store.mjs",
+   "target": "function:cloud/store.mjs:transaction",
+   "type": "contains",
+   "direction": "forward",
+   "description": "store.mjs defines transaction",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/store.mjs",
+   "target": "function:cloud/store.mjs:transaction",
+   "type": "exports",
+   "direction": "forward",
+   "description": "store.mjs exports transaction",
+   "weight": 0.7
+  },
+  {
+   "source": "file:cloud/store.mjs",
+   "target": "function:cloud/store.mjs:read",
+   "type": "contains",
+   "direction": "forward",
+   "description": "store.mjs defines read",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/store.mjs",
+   "target": "function:cloud/store.mjs:read",
+   "type": "exports",
+   "direction": "forward",
+   "description": "store.mjs exports read",
+   "weight": 0.7
+  },
+  {
+   "source": "file:cloud/store.mjs",
+   "target": "function:cloud/store.mjs:write",
+   "type": "contains",
+   "direction": "forward",
+   "description": "store.mjs defines write",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/store.mjs",
+   "target": "function:cloud/store.mjs:write",
+   "type": "exports",
+   "direction": "forward",
+   "description": "store.mjs exports write",
+   "weight": 0.7
+  },
+  {
+   "source": "file:cloud/store.mjs",
+   "target": "function:cloud/store.mjs:sessions",
+   "type": "contains",
+   "direction": "forward",
+   "description": "store.mjs defines sessions",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/store.mjs",
+   "target": "function:cloud/store.mjs:sessions",
+   "type": "exports",
+   "direction": "forward",
+   "description": "store.mjs exports sessions",
+   "weight": 0.7
+  },
+  {
+   "source": "file:cloud/store.mjs",
+   "target": "function:cloud/store.mjs:encrypt",
+   "type": "contains",
+   "direction": "forward",
+   "description": "store.mjs defines encrypt",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/store.mjs",
+   "target": "function:cloud/store.mjs:encrypt",
+   "type": "exports",
+   "direction": "forward",
+   "description": "store.mjs exports encrypt",
+   "weight": 0.7
+  },
+  {
+   "source": "file:cloud/store.mjs",
+   "target": "function:cloud/store.mjs:decrypt",
+   "type": "contains",
+   "direction": "forward",
+   "description": "store.mjs defines decrypt",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/store.mjs",
+   "target": "function:cloud/store.mjs:decrypt",
+   "type": "exports",
+   "direction": "forward",
+   "description": "store.mjs exports decrypt",
+   "weight": 0.7
+  },
+  {
+   "source": "file:cloud/store.mjs",
+   "target": "function:cloud/store.mjs:signer",
+   "type": "contains",
+   "direction": "forward",
+   "description": "store.mjs defines signer",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/store.mjs",
+   "target": "function:cloud/store.mjs:signer",
+   "type": "exports",
+   "direction": "forward",
+   "description": "store.mjs exports signer",
+   "weight": 0.7
+  },
+  {
+   "source": "file:cloud/store.mjs",
+   "target": "function:cloud/store.mjs:verifier",
+   "type": "contains",
+   "direction": "forward",
+   "description": "store.mjs defines verifier",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/store.mjs",
+   "target": "function:cloud/store.mjs:verifier",
+   "type": "exports",
+   "direction": "forward",
+   "description": "store.mjs exports verifier",
+   "weight": 0.7
+  },
+  {
+   "source": "file:cloud/store.mjs",
+   "target": "function:cloud/store.mjs:append",
+   "type": "contains",
+   "direction": "forward",
+   "description": "store.mjs defines append",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/store.mjs",
+   "target": "function:cloud/store.mjs:append",
+   "type": "exports",
+   "direction": "forward",
+   "description": "store.mjs exports append",
+   "weight": 0.7
+  },
+  {
+   "source": "file:cloud/store.mjs",
+   "target": "function:cloud/store.mjs:ledger",
+   "type": "contains",
+   "direction": "forward",
+   "description": "store.mjs defines ledger",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/store.mjs",
+   "target": "function:cloud/store.mjs:ledger",
+   "type": "exports",
+   "direction": "forward",
+   "description": "store.mjs exports ledger",
+   "weight": 0.7
+  },
+  {
+   "source": "file:cloud/store.mjs",
+   "target": "function:cloud/store.mjs:event",
+   "type": "contains",
+   "direction": "forward",
+   "description": "store.mjs defines event",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/store.mjs",
+   "target": "function:cloud/store.mjs:event",
+   "type": "exports",
+   "direction": "forward",
+   "description": "store.mjs exports event",
+   "weight": 0.7
+  },
+  {
+   "source": "file:cloud/store.mjs",
+   "target": "function:cloud/store.mjs:view",
+   "type": "contains",
+   "direction": "forward",
+   "description": "store.mjs defines view",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/store.mjs",
+   "target": "function:cloud/store.mjs:view",
+   "type": "exports",
+   "direction": "forward",
+   "description": "store.mjs exports view",
+   "weight": 0.7
+  },
+  {
+   "source": "file:cloud/store.mjs",
+   "target": "function:cloud/store.mjs:eventsAfter",
+   "type": "contains",
+   "direction": "forward",
+   "description": "store.mjs defines eventsAfter",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/store.mjs",
+   "target": "function:cloud/store.mjs:eventsAfter",
+   "type": "exports",
+   "direction": "forward",
+   "description": "store.mjs exports eventsAfter",
+   "weight": 0.7
+  },
+  {
+   "source": "file:cloud/store.mjs",
+   "target": "function:cloud/store.mjs:sessionPage",
+   "type": "contains",
+   "direction": "forward",
+   "description": "store.mjs defines sessionPage",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/store.mjs",
+   "target": "function:cloud/store.mjs:sessionPage",
+   "type": "exports",
+   "direction": "forward",
+   "description": "store.mjs exports sessionPage",
+   "weight": 0.7
+  },
+  {
+   "source": "file:cloud/store.mjs",
+   "target": "function:cloud/store.mjs:ledgerPage",
+   "type": "contains",
+   "direction": "forward",
+   "description": "store.mjs defines ledgerPage",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/store.mjs",
+   "target": "function:cloud/store.mjs:ledgerPage",
+   "type": "exports",
+   "direction": "forward",
+   "description": "store.mjs exports ledgerPage",
+   "weight": 0.7
+  },
+  {
+   "source": "file:cloud/store.mjs",
+   "target": "function:cloud/store.mjs:allEvents",
+   "type": "contains",
+   "direction": "forward",
+   "description": "store.mjs defines allEvents",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/store.mjs",
+   "target": "function:cloud/store.mjs:allEvents",
+   "type": "exports",
+   "direction": "forward",
+   "description": "store.mjs exports allEvents",
+   "weight": 0.7
+  },
+  {
+   "source": "function:cloud/store.mjs:transaction",
+   "target": "function:cloud/store.mjs:database",
+   "type": "calls",
+   "direction": "forward",
+   "description": "transaction calls database",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/store.mjs:read",
+   "target": "function:cloud/store.mjs:database",
+   "type": "calls",
+   "direction": "forward",
+   "description": "read calls database",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/store.mjs:write",
+   "target": "function:cloud/store.mjs:transaction",
+   "type": "calls",
+   "direction": "forward",
+   "description": "write calls transaction",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/store.mjs:sessions",
+   "target": "function:cloud/store.mjs:database",
+   "type": "calls",
+   "direction": "forward",
+   "description": "sessions calls database",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/store.mjs:append",
+   "target": "function:cloud/store.mjs:signer",
+   "type": "calls",
+   "direction": "forward",
+   "description": "append calls signer",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/store.mjs:ledger",
+   "target": "function:cloud/store.mjs:database",
+   "type": "calls",
+   "direction": "forward",
+   "description": "ledger calls database",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/store.mjs:ledger",
+   "target": "function:cloud/store.mjs:verifier",
+   "type": "calls",
+   "direction": "forward",
+   "description": "ledger calls verifier",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/store.mjs:view",
+   "target": "function:cloud/store.mjs:decrypt",
+   "type": "calls",
+   "direction": "forward",
+   "description": "view calls decrypt",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/store.mjs:eventsAfter",
+   "target": "function:cloud/store.mjs:database",
+   "type": "calls",
+   "direction": "forward",
+   "description": "eventsAfter calls database",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/store.mjs:sessionPage",
+   "target": "function:cloud/store.mjs:database",
+   "type": "calls",
+   "direction": "forward",
+   "description": "sessionPage calls database",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/store.mjs:sessionPage",
+   "target": "function:cloud/store.mjs:view",
+   "type": "calls",
+   "direction": "forward",
+   "description": "sessionPage calls view",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/store.mjs:ledgerPage",
+   "target": "function:cloud/store.mjs:database",
+   "type": "calls",
+   "direction": "forward",
+   "description": "ledgerPage calls database",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/store.mjs:allEvents",
+   "target": "function:cloud/store.mjs:database",
+   "type": "calls",
+   "direction": "forward",
+   "description": "allEvents calls database",
+   "weight": 0.6
+  },
+  {
+   "source": "file:cloud/store.test.mjs",
+   "target": "function:cloud/store.test.mjs:withSigningKey",
+   "type": "contains",
+   "direction": "forward",
+   "description": "store.test.mjs defines withSigningKey",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/store.test.mjs",
+   "target": "function:cloud/store.test.mjs:recordingClient",
+   "type": "contains",
+   "direction": "forward",
+   "description": "store.test.mjs defines recordingClient",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/vercel-integration.mjs",
+   "target": "function:cloud/vercel-integration.mjs:route",
+   "type": "contains",
+   "direction": "forward",
+   "description": "vercel-integration.mjs defines route",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/vercel-integration.mjs",
+   "target": "function:cloud/vercel-integration.mjs:failure",
+   "type": "contains",
+   "direction": "forward",
+   "description": "vercel-integration.mjs defines failure",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/vercel-integration.mjs",
+   "target": "function:cloud/vercel-integration.mjs:credentials",
+   "type": "contains",
+   "direction": "forward",
+   "description": "vercel-integration.mjs defines credentials",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/vercel-integration.mjs",
+   "target": "function:cloud/vercel-integration.mjs:requestUrl",
+   "type": "contains",
+   "direction": "forward",
+   "description": "vercel-integration.mjs defines requestUrl",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/vercel-integration.mjs",
+   "target": "function:cloud/vercel-integration.mjs:sanitize",
+   "type": "contains",
+   "direction": "forward",
+   "description": "vercel-integration.mjs defines sanitize",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/vercel-integration.mjs",
+   "target": "function:cloud/vercel-integration.mjs:bodySecrets",
+   "type": "contains",
+   "direction": "forward",
+   "description": "vercel-integration.mjs defines bodySecrets",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/vercel-integration.mjs",
+   "target": "function:cloud/vercel-integration.mjs:request",
+   "type": "contains",
+   "direction": "forward",
+   "description": "vercel-integration.mjs defines request",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/vercel-integration.mjs",
+   "target": "function:cloud/vercel-integration.mjs:vercelCatalog",
+   "type": "contains",
+   "direction": "forward",
+   "description": "vercel-integration.mjs defines vercelCatalog",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/vercel-integration.mjs",
+   "target": "function:cloud/vercel-integration.mjs:vercelCatalog",
+   "type": "exports",
+   "direction": "forward",
+   "description": "vercel-integration.mjs exports vercelCatalog",
+   "weight": 0.7
+  },
+  {
+   "source": "file:cloud/vercel-integration.mjs",
+   "target": "function:cloud/vercel-integration.mjs:vercelCall",
+   "type": "contains",
+   "direction": "forward",
+   "description": "vercel-integration.mjs defines vercelCall",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/vercel-integration.mjs",
+   "target": "function:cloud/vercel-integration.mjs:vercelCall",
+   "type": "exports",
+   "direction": "forward",
+   "description": "vercel-integration.mjs exports vercelCall",
+   "weight": 0.7
+  },
+  {
+   "source": "function:cloud/vercel-integration.mjs:credentials",
+   "target": "function:cloud/vercel-integration.mjs:failure",
+   "type": "calls",
+   "direction": "forward",
+   "description": "credentials calls failure",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/vercel-integration.mjs:requestUrl",
+   "target": "function:cloud/vercel-integration.mjs:failure",
+   "type": "calls",
+   "direction": "forward",
+   "description": "requestUrl calls failure",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/vercel-integration.mjs:request",
+   "target": "function:cloud/vercel-integration.mjs:credentials",
+   "type": "calls",
+   "direction": "forward",
+   "description": "request calls credentials",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/vercel-integration.mjs:request",
+   "target": "function:cloud/vercel-integration.mjs:requestUrl",
+   "type": "calls",
+   "direction": "forward",
+   "description": "request calls requestUrl",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/vercel-integration.mjs:request",
+   "target": "function:cloud/vercel-integration.mjs:failure",
+   "type": "calls",
+   "direction": "forward",
+   "description": "request calls failure",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/vercel-integration.mjs:request",
+   "target": "function:cloud/vercel-integration.mjs:sanitize",
+   "type": "calls",
+   "direction": "forward",
+   "description": "request calls sanitize",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/vercel-integration.mjs:request",
+   "target": "function:cloud/vercel-integration.mjs:bodySecrets",
+   "type": "calls",
+   "direction": "forward",
+   "description": "request calls bodySecrets",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/vercel-integration.mjs:vercelCatalog",
+   "target": "function:cloud/vercel-integration.mjs:request",
+   "type": "calls",
+   "direction": "forward",
+   "description": "vercelCatalog calls request",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/vercel-integration.mjs:vercelCatalog",
+   "target": "function:cloud/vercel-integration.mjs:failure",
+   "type": "calls",
+   "direction": "forward",
+   "description": "vercelCatalog calls failure",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/vercel-integration.mjs:vercelCall",
+   "target": "function:cloud/vercel-integration.mjs:failure",
+   "type": "calls",
+   "direction": "forward",
+   "description": "vercelCall calls failure",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/vercel-integration.mjs:vercelCall",
+   "target": "function:cloud/vercel-integration.mjs:request",
+   "type": "calls",
+   "direction": "forward",
+   "description": "vercelCall calls request",
+   "weight": 0.6
+  },
+  {
+   "source": "file:cloud/vercel-integration.test.mjs",
+   "target": "function:cloud/vercel-integration.test.mjs:config",
+   "type": "contains",
+   "direction": "forward",
+   "description": "vercel-integration.test.mjs defines config",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/vercel-integration.test.mjs",
+   "target": "function:cloud/vercel-integration.test.mjs:payload",
+   "type": "contains",
+   "direction": "forward",
+   "description": "vercel-integration.test.mjs defines payload",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/workflow.mjs",
+   "target": "function:cloud/workflow.mjs:runCloudSession",
+   "type": "contains",
+   "direction": "forward",
+   "description": "workflow.mjs defines runCloudSession",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/workflow.mjs",
+   "target": "function:cloud/workflow.mjs:runCloudSession",
+   "type": "exports",
+   "direction": "forward",
+   "description": "workflow.mjs exports runCloudSession",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/openai-completions.ts",
+   "target": "class:packages/workbench/src/provider-adapters/openai-completions.ts:OpenAICompletionsAdapter",
+   "type": "contains",
+   "direction": "forward",
+   "description": "openai-completions.ts defines class OpenAICompletionsAdapter",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-defaults.test.ts",
+   "target": "function:packages/workbench/src/provider-defaults.test.ts:workspace",
+   "type": "contains",
+   "direction": "forward",
+   "description": "provider-defaults.test.ts defines workspace",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-retry.test.ts",
+   "target": "function:packages/workbench/src/provider-retry.test.ts:answer",
+   "type": "contains",
+   "direction": "forward",
+   "description": "provider-retry.test.ts defines answer",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/check-cloud-integration.mjs",
+   "target": "function:scripts/src/check-cloud-integration.mjs:run",
+   "type": "contains",
+   "direction": "forward",
+   "description": "check-cloud-integration.mjs defines run",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/check-managed-cloud.mjs",
+   "target": "function:scripts/src/check-managed-cloud.mjs:target",
+   "type": "contains",
+   "direction": "forward",
+   "description": "check-managed-cloud.mjs defines target",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/check-managed-cloud.mjs",
+   "target": "function:scripts/src/check-managed-cloud.mjs:listen",
+   "type": "contains",
+   "direction": "forward",
+   "description": "check-managed-cloud.mjs defines listen",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/check-managed-cloud.mjs",
+   "target": "function:scripts/src/check-managed-cloud.mjs:close",
+   "type": "contains",
+   "direction": "forward",
+   "description": "check-managed-cloud.mjs defines close",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/cloud-test-config.mjs",
+   "target": "function:scripts/src/cloud-test-config.mjs:validateCloudTestEnvironment",
+   "type": "contains",
+   "direction": "forward",
+   "description": "cloud-test-config.mjs defines validateCloudTestEnvironment",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/cloud-test-config.mjs",
+   "target": "function:scripts/src/cloud-test-config.mjs:validateCloudTestEnvironment",
+   "type": "exports",
+   "direction": "forward",
+   "description": "cloud-test-config.mjs exports validateCloudTestEnvironment",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/src/cloud-test-config.mjs",
+   "target": "function:scripts/src/cloud-test-config.mjs:validateCloudTestProxy",
+   "type": "contains",
+   "direction": "forward",
+   "description": "cloud-test-config.mjs defines validateCloudTestProxy",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/cloud-test-config.mjs",
+   "target": "function:scripts/src/cloud-test-config.mjs:validateCloudTestProxy",
+   "type": "exports",
+   "direction": "forward",
+   "description": "cloud-test-config.mjs exports validateCloudTestProxy",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/src/cloud-test-config.mjs",
+   "target": "function:scripts/src/cloud-test-config.mjs:configureCloudTest",
+   "type": "contains",
+   "direction": "forward",
+   "description": "cloud-test-config.mjs defines configureCloudTest",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/cloud-test-config.mjs",
+   "target": "function:scripts/src/cloud-test-config.mjs:configureCloudTest",
+   "type": "exports",
+   "direction": "forward",
+   "description": "cloud-test-config.mjs exports configureCloudTest",
+   "weight": 0.7
+  },
+  {
+   "source": "function:scripts/src/cloud-test-config.mjs:configureCloudTest",
+   "target": "function:scripts/src/cloud-test-config.mjs:validateCloudTestEnvironment",
+   "type": "calls",
+   "direction": "forward",
+   "description": "configureCloudTest calls validateCloudTestEnvironment",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/cloud-test-config.mjs:configureCloudTest",
+   "target": "function:scripts/src/cloud-test-config.mjs:validateCloudTestProxy",
+   "type": "calls",
+   "direction": "forward",
+   "description": "configureCloudTest calls validateCloudTestProxy",
+   "weight": 0.6
+  },
+  {
+   "source": "file:scripts/src/gateway.test.mjs",
+   "target": "function:scripts/src/gateway.test.mjs:response",
+   "type": "contains",
+   "direction": "forward",
+   "description": "gateway.test.mjs defines response",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/preview-mobile-demo.mjs",
+   "target": "function:scripts/src/preview-mobile-demo.mjs:close",
+   "type": "contains",
+   "direction": "forward",
+   "description": "preview-mobile-demo.mjs defines close",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/recovery-routes.mjs",
+   "target": "file:cloud/owner.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery-routes.mjs imports owner.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/recovery-routes.mjs",
+   "target": "file:cloud/recovery.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery-routes.mjs imports recovery.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/recovery-routes.mjs",
+   "target": "file:cloud/store.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery-routes.mjs imports store.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/recovery-routes.test.mjs",
+   "target": "file:cloud/owner.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery-routes.test.mjs imports owner.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/recovery-routes.test.mjs",
+   "target": "file:cloud/recovery-routes.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery-routes.test.mjs imports recovery-routes.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/recovery-routes.test.mjs",
+   "target": "file:cloud/store.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery-routes.test.mjs imports store.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/recovery.test.mjs",
+   "target": "file:cloud/owner.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery.test.mjs imports owner.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/recovery.test.mjs",
+   "target": "file:cloud/recovery.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery.test.mjs imports recovery.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/recovery.test.mjs",
+   "target": "file:cloud/store.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery.test.mjs imports store.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/recovery.test.mjs",
+   "target": "file:scripts/src/cloud-test-config.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery.test.mjs imports cloud-test-config.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/server.mjs",
+   "target": "file:apps/control-plane/api/session-cookie.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "server.mjs imports session-cookie.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/server.mjs",
+   "target": "file:cloud/account.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "server.mjs imports account.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/server.mjs",
+   "target": "file:cloud/billing.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "server.mjs imports billing.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/server.mjs",
+   "target": "file:cloud/capability-gate.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "server.mjs imports capability-gate.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/server.mjs",
+   "target": "file:cloud/demo.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "server.mjs imports demo.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/server.mjs",
+   "target": "file:cloud/env.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "server.mjs imports env.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/server.mjs",
+   "target": "file:cloud/integrations.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "server.mjs imports integrations.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/server.mjs",
+   "target": "file:cloud/mcp.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "server.mjs imports mcp.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/server.mjs",
+   "target": "file:cloud/owner.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "server.mjs imports owner.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/server.mjs",
+   "target": "file:cloud/prime.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "server.mjs imports prime.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/server.mjs",
+   "target": "file:cloud/provider.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "server.mjs imports provider.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/server.mjs",
+   "target": "file:cloud/recovery-routes.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "server.mjs imports recovery-routes.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/server.mjs",
+   "target": "file:cloud/recovery.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "server.mjs imports recovery.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/server.mjs",
+   "target": "file:cloud/steps.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "server.mjs imports steps.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/server.mjs",
+   "target": "file:cloud/store.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "server.mjs imports store.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/server.mjs",
+   "target": "file:cloud/workflow.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "server.mjs imports workflow.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/server.mjs",
+   "target": "file:packages/ledger/src/canonical.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "server.mjs imports canonical.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/server.mjs",
+   "target": "file:packages/ledger/src/sign.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "server.mjs imports sign.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/server.mjs",
+   "target": "file:packages/ledger/src/taint/graph.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "server.mjs imports graph.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/server.mjs",
+   "target": "file:packages/ledger/src/taint/query.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "server.mjs imports query.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/server.mjs",
+   "target": "file:packages/policy/src/rules.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "server.mjs imports rules.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/server.mjs",
+   "target": "file:packages/workbench/src/context.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "server.mjs imports context.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/server.mjs",
+   "target": "file:packages/workbench/src/gui.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "server.mjs imports gui.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/server.mjs",
+   "target": "file:packages/workbench/src/project-sandbox.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "server.mjs imports project-sandbox.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/server.mjs",
+   "target": "file:packages/workbench/src/provider-defaults.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "server.mjs imports provider-defaults.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/server.mjs",
+   "target": "file:packages/workbench/src/provider.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "server.mjs imports provider.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/server.mjs",
+   "target": "file:packages/workbench/src/tool-catalog.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "server.mjs imports tool-catalog.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/server.mjs",
+   "target": "file:packages/workbench/src/workspace.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "server.mjs imports workspace.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/steps.mjs",
+   "target": "file:cloud/integrations.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "steps.mjs imports integrations.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/steps.mjs",
+   "target": "file:cloud/mcp.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "steps.mjs imports mcp.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/steps.mjs",
+   "target": "file:cloud/oauth.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "steps.mjs imports oauth.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/steps.mjs",
+   "target": "file:cloud/owner.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "steps.mjs imports owner.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/steps.mjs",
+   "target": "file:cloud/provider.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "steps.mjs imports provider.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/steps.mjs",
+   "target": "file:cloud/recovery.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "steps.mjs imports recovery.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/steps.mjs",
+   "target": "file:cloud/store.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "steps.mjs imports store.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/steps.mjs",
+   "target": "file:cloud/vercel-integration.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "steps.mjs imports vercel-integration.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/steps.mjs",
+   "target": "file:packages/ledger/src/attribution.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "steps.mjs imports attribution.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/steps.mjs",
+   "target": "file:packages/ledger/src/canonical.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "steps.mjs imports canonical.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/steps.mjs",
+   "target": "file:packages/ledger/src/sign.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "steps.mjs imports sign.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/steps.mjs",
+   "target": "file:packages/policy/src/decide.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "steps.mjs imports decide.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/steps.mjs",
+   "target": "file:packages/policy/src/digest.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "steps.mjs imports digest.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/steps.mjs",
+   "target": "file:packages/policy/src/rules.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "steps.mjs imports rules.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/steps.mjs",
+   "target": "file:packages/registry/src/evaluate.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "steps.mjs imports evaluate.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/steps.mjs",
+   "target": "file:packages/workbench/src/gui.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "steps.mjs imports gui.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/steps.mjs",
+   "target": "file:packages/workbench/src/provider.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "steps.mjs imports provider.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/steps.mjs",
+   "target": "file:packages/workbench/src/workspace.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "steps.mjs imports workspace.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/store.mjs",
+   "target": "file:cloud/env.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "store.mjs imports env.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/store.mjs",
+   "target": "file:cloud/owner.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "store.mjs imports owner.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/store.mjs",
+   "target": "file:packages/ledger/src/canonical.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "store.mjs imports canonical.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/store.mjs",
+   "target": "file:packages/ledger/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "store.mjs imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/store.mjs",
+   "target": "file:packages/ledger/src/sign.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "store.mjs imports sign.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/store.mjs",
+   "target": "file:packages/ledger/src/verify-key.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "store.mjs imports verify-key.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/store.mjs",
+   "target": "file:packages/ledger/src/verify.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "store.mjs imports verify.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/store.mjs",
+   "target": "file:packages/workbench/src/gui.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "store.mjs imports gui.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/store.mjs",
+   "target": "file:packages/workbench/src/provider-defaults.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "store.mjs imports provider-defaults.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/store.test.mjs",
+   "target": "file:cloud/store.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "store.test.mjs imports store.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/vercel-integration.test.mjs",
+   "target": "file:cloud/vercel-integration.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "vercel-integration.test.mjs imports vercel-integration.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/workflow.mjs",
+   "target": "file:cloud/steps.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "workflow.mjs imports steps.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/openai-completions.ts",
+   "target": "file:packages/workbench/src/harness-settings.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "openai-completions.ts imports harness-settings.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/openai-completions.ts",
+   "target": "file:packages/workbench/src/provider-defaults.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "openai-completions.ts imports provider-defaults.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/openai-completions.ts",
+   "target": "file:packages/workbench/src/provider.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "openai-completions.ts imports provider.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-catalog.test.ts",
+   "target": "file:packages/workbench/src/provider-adapters/types.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "provider-catalog.test.ts imports types.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-catalog.test.ts",
+   "target": "file:packages/workbench/src/provider-catalog.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "provider-catalog.test.ts imports provider-catalog.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-catalog.test.ts",
+   "target": "file:packages/workbench/src/provider-defaults.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "provider-catalog.test.ts imports provider-defaults.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-catalog.test.ts",
+   "target": "file:packages/workbench/src/test-fixture.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "provider-catalog.test.ts imports test-fixture.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-defaults.test.ts",
+   "target": "file:packages/workbench/src/provider-defaults.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "provider-defaults.test.ts imports provider-defaults.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-defaults.test.ts",
+   "target": "file:packages/workbench/src/provider.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "provider-defaults.test.ts imports provider.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-defaults.test.ts",
+   "target": "file:packages/workbench/src/test-fixture.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "provider-defaults.test.ts imports test-fixture.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-environment.test.ts",
+   "target": "file:packages/workbench/src/provider-defaults.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "provider-environment.test.ts imports provider-defaults.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-environment.test.ts",
+   "target": "file:packages/workbench/src/test-fixture.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "provider-environment.test.ts imports test-fixture.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-retry.test.ts",
+   "target": "file:packages/workbench/src/provider-defaults.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "provider-retry.test.ts imports provider-defaults.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-retry.test.ts",
+   "target": "file:packages/workbench/src/provider.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "provider-retry.test.ts imports provider.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:scripts/src/check-cloud-integration.mjs",
+   "target": "file:scripts/src/cloud-test-config.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "check-cloud-integration.mjs imports cloud-test-config.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:scripts/src/check-managed-cloud.mjs",
+   "target": "file:scripts/src/cloud-test-config.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "check-managed-cloud.mjs imports cloud-test-config.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:scripts/src/cloud-boundaries.test.mjs",
+   "target": "file:cloud/mcp.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "cloud-boundaries.test.mjs imports mcp.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:scripts/src/cloud-boundaries.test.mjs",
+   "target": "file:cloud/store.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "cloud-boundaries.test.mjs imports store.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:scripts/src/cloud-test-config.test.mjs",
+   "target": "file:scripts/src/cloud-test-config.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "cloud-test-config.test.mjs imports cloud-test-config.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:scripts/src/cloud-test-preload.mjs",
+   "target": "file:scripts/src/cloud-test-config.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "cloud-test-preload.mjs imports cloud-test-config.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:scripts/src/gateway.test.mjs",
+   "target": "file:apps/control-plane/api/remote-gateway.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "gateway.test.mjs imports remote-gateway.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:scripts/src/preview-mobile-demo.mjs",
+   "target": "file:cloud/demo.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "preview-mobile-demo.mjs imports demo.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:scripts/src/provision-cloud.mjs",
+   "target": "file:cloud/store.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "provision-cloud.mjs imports store.mjs",
+   "weight": 0.8
+  }
+ ]
+}

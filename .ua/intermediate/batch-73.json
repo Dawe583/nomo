@@ -1,0 +1,41 @@
+{
+ "nodes": [
+  {
+   "id": "file:site/fonts/Instrument-Serif-LICENSE.txt",
+   "type": "document",
+   "name": "Instrument-Serif-LICENSE.txt",
+   "filePath": "site/fonts/Instrument-Serif-LICENSE.txt",
+   "summary": "Instrument-Serif-LICENSE.txt \u2014 txt docs, 93 lines.",
+   "tags": [
+    "txt",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:site/fonts/Inter-LICENSE.txt",
+   "type": "document",
+   "name": "Inter-LICENSE.txt",
+   "filePath": "site/fonts/Inter-LICENSE.txt",
+   "summary": "Inter-LICENSE.txt \u2014 txt docs, 93 lines.",
+   "tags": [
+    "txt",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:site/fonts/JetBrains-Mono-LICENSE.txt",
+   "type": "document",
+   "name": "JetBrains-Mono-LICENSE.txt",
+   "filePath": "site/fonts/JetBrains-Mono-LICENSE.txt",
+   "summary": "JetBrains-Mono-LICENSE.txt \u2014 txt docs, 93 lines.",
+   "tags": [
+    "txt",
+    "docs"
+   ],
+   "complexity": "simple"
+  }
+ ],
+ "edges": []
+}

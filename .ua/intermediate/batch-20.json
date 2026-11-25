@@ -1,0 +1,4888 @@
+{
+ "nodes": [
+  {
+   "id": "file:packages/policy/src/index.test.ts",
+   "type": "file",
+   "name": "index.test.ts",
+   "filePath": "packages/policy/src/index.test.ts",
+   "summary": "index.test.ts \u2014 typescript code, 26 lines, 0 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/policy/src/index.ts",
+   "type": "file",
+   "name": "index.ts",
+   "filePath": "packages/policy/src/index.ts",
+   "summary": "index.ts \u2014 typescript code, 20 lines, 0 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/proxy/src/bin.test.ts",
+   "type": "file",
+   "name": "bin.test.ts",
+   "filePath": "packages/proxy/src/bin.test.ts",
+   "summary": "bin.test.ts \u2014 typescript code, 1981 lines, 15 functions, 0 classes, 0 exports, 6 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "function:packages/proxy/src/bin.test.ts:platformTestTimeoutMs",
+   "type": "function",
+   "name": "platformTestTimeoutMs",
+   "filePath": "packages/proxy/src/bin.test.ts",
+   "lineRange": [
+    21,
+    25
+   ],
+   "summary": "platformTestTimeoutMs(milliseconds, windowsMilliseconds) \u2014 function in bin.test.ts, lines 21-25.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/bin.test.ts:runBoundProxy",
+   "type": "function",
+   "name": "runBoundProxy",
+   "filePath": "packages/proxy/src/bin.test.ts",
+   "lineRange": [
+    1531,
+    1556
+   ],
+   "summary": "runBoundProxy(input) \u2014 function in bin.test.ts, lines 1531-1556.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/bin.test.ts:testLegacyBinding",
+   "type": "function",
+   "name": "testLegacyBinding",
+   "filePath": "packages/proxy/src/bin.test.ts",
+   "lineRange": [
+    1558,
+    1609
+   ],
+   "summary": "testLegacyBinding(lifecycle, outcomes) \u2014 function in bin.test.ts, lines 1558-1609.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/bin.test.ts:makeHarness",
+   "type": "function",
+   "name": "makeHarness",
+   "filePath": "packages/proxy/src/bin.test.ts",
+   "lineRange": [
+    1622,
+    1672
+   ],
+   "summary": "makeHarness(decision, posture) \u2014 function in bin.test.ts, lines 1622-1672.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/bin.test.ts:fakeUpstream",
+   "type": "function",
+   "name": "fakeUpstream",
+   "filePath": "packages/proxy/src/bin.test.ts",
+   "lineRange": [
+    1674,
+    1715
+   ],
+   "summary": "fakeUpstream(events, seen) \u2014 function in bin.test.ts, lines 1674-1715.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/bin.test.ts:policyText",
+   "type": "function",
+   "name": "policyText",
+   "filePath": "packages/proxy/src/bin.test.ts",
+   "lineRange": [
+    1721,
+    1727
+   ],
+   "summary": "policyText(decision) \u2014 function in bin.test.ts, lines 1721-1727.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/bin.test.ts:toolCall",
+   "type": "function",
+   "name": "toolCall",
+   "filePath": "packages/proxy/src/bin.test.ts",
+   "lineRange": [
+    1729,
+    1736
+   ],
+   "summary": "toolCall(id, name) \u2014 function in bin.test.ts, lines 1729-1736.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/bin.test.ts:waitForQueue",
+   "type": "function",
+   "name": "waitForQueue",
+   "filePath": "packages/proxy/src/bin.test.ts",
+   "lineRange": [
+    1738,
+    1752
+   ],
+   "summary": "waitForQueue(getQueue) \u2014 function in bin.test.ts, lines 1738-1752.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/bin.test.ts:makeHttpHarness",
+   "type": "function",
+   "name": "makeHttpHarness",
+   "filePath": "packages/proxy/src/bin.test.ts",
+   "lineRange": [
+    1774,
+    1816
+   ],
+   "summary": "makeHttpHarness(server, decision) \u2014 function in bin.test.ts, lines 1774-1816.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/bin.test.ts:startHttpUpstream",
+   "type": "function",
+   "name": "startHttpUpstream",
+   "filePath": "packages/proxy/src/bin.test.ts",
+   "lineRange": [
+    1818,
+    1843
+   ],
+   "summary": "startHttpUpstream() \u2014 function in bin.test.ts, lines 1818-1843.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/bin.test.ts:handleHttpUpstreamRequest",
+   "type": "function",
+   "name": "handleHttpUpstreamRequest",
+   "filePath": "packages/proxy/src/bin.test.ts",
+   "lineRange": [
+    1845,
+    1901
+   ],
+   "summary": "handleHttpUpstreamRequest(request, response, messages, streams) \u2014 function in bin.test.ts, lines 1845-1901.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/bin.test.ts:requestText",
+   "type": "function",
+   "name": "requestText",
+   "filePath": "packages/proxy/src/bin.test.ts",
+   "lineRange": [
+    1903,
+    1909
+   ],
+   "summary": "requestText(request) \u2014 function in bin.test.ts, lines 1903-1909.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/bin.test.ts:lineQueue",
+   "type": "function",
+   "name": "lineQueue",
+   "filePath": "packages/proxy/src/bin.test.ts",
+   "lineRange": [
+    1911,
+    1956
+   ],
+   "summary": "lineQueue() \u2014 function in bin.test.ts, lines 1911-1956.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/bin.test.ts:readLedgerDecisions",
+   "type": "function",
+   "name": "readLedgerDecisions",
+   "filePath": "packages/proxy/src/bin.test.ts",
+   "lineRange": [
+    1958,
+    1972
+   ],
+   "summary": "readLedgerDecisions(ledgerDir, workspace) \u2014 function in bin.test.ts, lines 1958-1972.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/bin.test.ts:waitFor",
+   "type": "function",
+   "name": "waitFor",
+   "filePath": "packages/proxy/src/bin.test.ts",
+   "lineRange": [
+    1974,
+    1981
+   ],
+   "summary": "waitFor(predicate, label) \u2014 function in bin.test.ts, lines 1974-1981.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/proxy/src/bin.ts",
+   "type": "file",
+   "name": "bin.ts",
+   "filePath": "packages/proxy/src/bin.ts",
+   "summary": "bin.ts \u2014 typescript code, 1411 lines, 30 functions, 5 classes, 7 exports, 22 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "function:packages/proxy/src/bin.ts:runProxy",
+   "type": "function",
+   "name": "runProxy",
+   "filePath": "packages/proxy/src/bin.ts",
+   "lineRange": [
+    142,
+    664
+   ],
+   "summary": "runProxy(options) \u2014 function in bin.ts, lines 142-664.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/proxy/src/bin.ts:validateStartup",
+   "type": "function",
+   "name": "validateStartup",
+   "filePath": "packages/proxy/src/bin.ts",
+   "lineRange": [
+    674,
+    715
+   ],
+   "summary": "validateStartup(options, writeError) \u2014 function in bin.ts, lines 674-715.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/bin.ts:isSupportedProxyTransport",
+   "type": "function",
+   "name": "isSupportedProxyTransport",
+   "filePath": "packages/proxy/src/bin.ts",
+   "lineRange": [
+    717,
+    719
+   ],
+   "summary": "isSupportedProxyTransport(value) \u2014 function in bin.ts, lines 717-719.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/bin.ts:processShutdownSignals",
+   "type": "function",
+   "name": "processShutdownSignals",
+   "filePath": "packages/proxy/src/bin.ts",
+   "lineRange": [
+    721,
+    733
+   ],
+   "summary": "processShutdownSignals() \u2014 function in bin.ts, lines 721-733.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/bin.ts:readPolicy",
+   "type": "function",
+   "name": "readPolicy",
+   "filePath": "packages/proxy/src/bin.ts",
+   "lineRange": [
+    735,
+    740
+   ],
+   "summary": "readPolicy(path) \u2014 function in bin.ts, lines 735-740.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/bin.ts:readFacts",
+   "type": "function",
+   "name": "readFacts",
+   "filePath": "packages/proxy/src/bin.ts",
+   "lineRange": [
+    742,
+    748
+   ],
+   "summary": "readFacts(path) \u2014 function in bin.ts, lines 742-748.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/bin.ts:handleToolCall",
+   "type": "function",
+   "name": "handleToolCall",
+   "filePath": "packages/proxy/src/bin.ts",
+   "lineRange": [
+    750,
+    892
+   ],
+   "summary": "handleToolCall(request, policy, facts, queue\u2026) \u2014 function in bin.ts, lines 750-892.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/bin.ts:interceptedCall",
+   "type": "function",
+   "name": "interceptedCall",
+   "filePath": "packages/proxy/src/bin.ts",
+   "lineRange": [
+    894,
+    907
+   ],
+   "summary": "interceptedCall(request) \u2014 function in bin.ts, lines 894-907.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/bin.ts:immutableClone",
+   "type": "function",
+   "name": "immutableClone",
+   "filePath": "packages/proxy/src/bin.ts",
+   "lineRange": [
+    909,
+    911
+   ],
+   "summary": "immutableClone(value) \u2014 function in bin.ts, lines 909-911.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/bin.ts:deepFreeze",
+   "type": "function",
+   "name": "deepFreeze",
+   "filePath": "packages/proxy/src/bin.ts",
+   "lineRange": [
+    913,
+    919
+   ],
+   "summary": "deepFreeze(value) \u2014 function in bin.ts, lines 913-919.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/bin.ts:connectorFromName",
+   "type": "function",
+   "name": "connectorFromName",
+   "filePath": "packages/proxy/src/bin.ts",
+   "lineRange": [
+    921,
+    924
+   ],
+   "summary": "connectorFromName(name) \u2014 function in bin.ts, lines 921-924.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/bin.ts:rewriteInitializeResult",
+   "type": "function",
+   "name": "rewriteInitializeResult",
+   "filePath": "packages/proxy/src/bin.ts",
+   "lineRange": [
+    926,
+    947
+   ],
+   "summary": "rewriteInitializeResult(message, session, init) \u2014 function in bin.ts, lines 926-947.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/bin.ts:cancellationFromAgent",
+   "type": "function",
+   "name": "cancellationFromAgent",
+   "filePath": "packages/proxy/src/bin.ts",
+   "lineRange": [
+    949,
+    960
+   ],
+   "summary": "cancellationFromAgent(notification, session) \u2014 function in bin.ts, lines 949-960.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/bin.ts:parseMessage",
+   "type": "function",
+   "name": "parseMessage",
+   "filePath": "packages/proxy/src/bin.ts",
+   "lineRange": [
+    993,
+    1006
+   ],
+   "summary": "parseMessage(line, maxBytes) \u2014 function in bin.ts, lines 993-1006.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/bin.ts:parseFailure",
+   "type": "function",
+   "name": "parseFailure",
+   "filePath": "packages/proxy/src/bin.ts",
+   "lineRange": [
+    1008,
+    1019
+   ],
+   "summary": "parseFailure(error) \u2014 function in bin.ts, lines 1008-1019.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/bin.ts:jsonRpcError",
+   "type": "function",
+   "name": "jsonRpcError",
+   "filePath": "packages/proxy/src/bin.ts",
+   "lineRange": [
+    1021,
+    1036
+   ],
+   "summary": "jsonRpcError(id, code, message, data) \u2014 function in bin.ts, lines 1021-1036.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/bin.ts:isRequest",
+   "type": "function",
+   "name": "isRequest",
+   "filePath": "packages/proxy/src/bin.ts",
+   "lineRange": [
+    1038,
+    1040
+   ],
+   "summary": "isRequest(message) \u2014 function in bin.ts, lines 1038-1040.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/bin.ts:isNotification",
+   "type": "function",
+   "name": "isNotification",
+   "filePath": "packages/proxy/src/bin.ts",
+   "lineRange": [
+    1042,
+    1046
+   ],
+   "summary": "isNotification(message) \u2014 function in bin.ts, lines 1042-1046.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/bin.ts:isResponse",
+   "type": "function",
+   "name": "isResponse",
+   "filePath": "packages/proxy/src/bin.ts",
+   "lineRange": [
+    1048,
+    1052
+   ],
+   "summary": "isResponse(message) \u2014 function in bin.ts, lines 1048-1052.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/bin.ts:isObject",
+   "type": "function",
+   "name": "isObject",
+   "filePath": "packages/proxy/src/bin.ts",
+   "lineRange": [
+    1054,
+    1056
+   ],
+   "summary": "isObject(value) \u2014 function in bin.ts, lines 1054-1056.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/bin.ts:readProtocolVersion",
+   "type": "function",
+   "name": "readProtocolVersion",
+   "filePath": "packages/proxy/src/bin.ts",
+   "lineRange": [
+    1058,
+    1062
+   ],
+   "summary": "readProtocolVersion(params) \u2014 function in bin.ts, lines 1058-1062.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/bin.ts:isResourceMethod",
+   "type": "function",
+   "name": "isResourceMethod",
+   "filePath": "packages/proxy/src/bin.ts",
+   "lineRange": [
+    1064,
+    1071
+   ],
+   "summary": "isResourceMethod(method) \u2014 function in bin.ts, lines 1064-1071.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/bin.ts:isPromptMethod",
+   "type": "function",
+   "name": "isPromptMethod",
+   "filePath": "packages/proxy/src/bin.ts",
+   "lineRange": [
+    1073,
+    1075
+   ],
+   "summary": "isPromptMethod(method) \u2014 function in bin.ts, lines 1073-1075.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/bin.ts:normalizePosture",
+   "type": "function",
+   "name": "normalizePosture",
+   "filePath": "packages/proxy/src/bin.ts",
+   "lineRange": [
+    1077,
+    1081
+   ],
+   "summary": "normalizePosture(posture) \u2014 function in bin.ts, lines 1077-1081.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/bin.ts:cleanEnv",
+   "type": "function",
+   "name": "cleanEnv",
+   "filePath": "packages/proxy/src/bin.ts",
+   "lineRange": [
+    1099,
+    1110
+   ],
+   "summary": "cleanEnv(env) \u2014 function in bin.ts, lines 1099-1110.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/bin.ts:errorMessage",
+   "type": "function",
+   "name": "errorMessage",
+   "filePath": "packages/proxy/src/bin.ts",
+   "lineRange": [
+    1112,
+    1114
+   ],
+   "summary": "errorMessage(error) \u2014 function in bin.ts, lines 1112-1114.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/bin.ts:createLocalProxyRpcBridge",
+   "type": "function",
+   "name": "createLocalProxyRpcBridge",
+   "filePath": "packages/proxy/src/bin.ts",
+   "lineRange": [
+    1373,
+    1377
+   ],
+   "summary": "createLocalProxyRpcBridge(options) \u2014 function in bin.ts, lines 1373-1377.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/bin.ts:parseProxyTools",
+   "type": "function",
+   "name": "parseProxyTools",
+   "filePath": "packages/proxy/src/bin.ts",
+   "lineRange": [
+    1379,
+    1399
+   ],
+   "summary": "parseProxyTools(result) \u2014 function in bin.ts, lines 1379-1399.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/bin.ts:validProxyToolName",
+   "type": "function",
+   "name": "validProxyToolName",
+   "filePath": "packages/proxy/src/bin.ts",
+   "lineRange": [
+    1401,
+    1407
+   ],
+   "summary": "validProxyToolName(value) \u2014 function in bin.ts, lines 1401-1407.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/bin.ts:asError",
+   "type": "function",
+   "name": "asError",
+   "filePath": "packages/proxy/src/bin.ts",
+   "lineRange": [
+    1409,
+    1411
+   ],
+   "summary": "asError(error) \u2014 function in bin.ts, lines 1409-1411.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:packages/proxy/src/bin.ts:PolicyStartupError",
+   "type": "class",
+   "name": "PolicyStartupError",
+   "filePath": "packages/proxy/src/bin.ts",
+   "lineRange": [
+    666,
+    666
+   ],
+   "summary": "PolicyStartupError \u2014 class in bin.ts, lines 666-666.",
+   "tags": [
+    "typescript",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:packages/proxy/src/bin.ts:ProxyStartupError",
+   "type": "class",
+   "name": "ProxyStartupError",
+   "filePath": "packages/proxy/src/bin.ts",
+   "lineRange": [
+    667,
+    667
+   ],
+   "summary": "ProxyStartupError \u2014 class in bin.ts, lines 667-667.",
+   "tags": [
+    "typescript",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:packages/proxy/src/bin.ts:UpstreamStartError",
+   "type": "class",
+   "name": "UpstreamStartError",
+   "filePath": "packages/proxy/src/bin.ts",
+   "lineRange": [
+    668,
+    668
+   ],
+   "summary": "UpstreamStartError \u2014 class in bin.ts, lines 668-668.",
+   "tags": [
+    "typescript",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:packages/proxy/src/bin.ts:AsyncLineQueue",
+   "type": "class",
+   "name": "AsyncLineQueue",
+   "filePath": "packages/proxy/src/bin.ts",
+   "lineRange": [
+    1132,
+    1168
+   ],
+   "summary": "AsyncLineQueue \u2014 class in bin.ts, lines 1132-1168, methods: push, close.",
+   "tags": [
+    "typescript",
+    "class"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:packages/proxy/src/bin.ts:LocalProxyRpcBridge",
+   "type": "class",
+   "name": "LocalProxyRpcBridge",
+   "filePath": "packages/proxy/src/bin.ts",
+   "lineRange": [
+    1175,
+    1371
+   ],
+   "summary": "LocalProxyRpcBridge \u2014 class in bin.ts, lines 1175-1371, methods: listTools, callTool, close.",
+   "tags": [
+    "typescript",
+    "class",
+    "exported"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/proxy/src/blast.ts",
+   "type": "file",
+   "name": "blast.ts",
+   "filePath": "packages/proxy/src/blast.ts",
+   "summary": "blast.ts \u2014 typescript code, 73 lines, 2 functions, 0 classes, 1 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/blast.ts:probeDispatcher",
+   "type": "function",
+   "name": "probeDispatcher",
+   "filePath": "packages/proxy/src/blast.ts",
+   "lineRange": [
+    29,
+    69
+   ],
+   "summary": "probeDispatcher(picker, cache, executor) \u2014 function in blast.ts, lines 29-69.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/blast.ts:errorMessage",
+   "type": "function",
+   "name": "errorMessage",
+   "filePath": "packages/proxy/src/blast.ts",
+   "lineRange": [
+    71,
+    73
+   ],
+   "summary": "errorMessage(error) \u2014 function in blast.ts, lines 71-73.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/proxy/src/forward/forward.test.ts",
+   "type": "file",
+   "name": "forward.test.ts",
+   "filePath": "packages/proxy/src/forward/forward.test.ts",
+   "summary": "forward.test.ts \u2014 typescript code, 38 lines, 0 functions, 0 classes, 0 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/proxy/src/forward/legacy-binding.test.ts",
+   "type": "file",
+   "name": "legacy-binding.test.ts",
+   "filePath": "packages/proxy/src/forward/legacy-binding.test.ts",
+   "summary": "legacy-binding.test.ts \u2014 typescript code, 110 lines, 1 functions, 0 classes, 0 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/forward/legacy-binding.test.ts:outcome",
+   "type": "function",
+   "name": "outcome",
+   "filePath": "packages/proxy/src/forward/legacy-binding.test.ts",
+   "lineRange": [
+    35,
+    45
+   ],
+   "summary": "outcome(status) \u2014 function in legacy-binding.test.ts, lines 35-45.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/proxy/src/forward/legacy-binding.ts",
+   "type": "file",
+   "name": "legacy-binding.ts",
+   "filePath": "packages/proxy/src/forward/legacy-binding.ts",
+   "summary": "legacy-binding.ts \u2014 typescript code, 175 lines, 9 functions, 0 classes, 5 exports, 4 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/proxy/src/forward/legacy-binding.ts:legacyArgsDigest",
+   "type": "function",
+   "name": "legacyArgsDigest",
+   "filePath": "packages/proxy/src/forward/legacy-binding.ts",
+   "lineRange": [
+    60,
+    64
+   ],
+   "summary": "legacyArgsDigest(args) \u2014 function in legacy-binding.ts, lines 60-64.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/forward/legacy-binding.ts:captureLegacyEnvelope",
+   "type": "function",
+   "name": "captureLegacyEnvelope",
+   "filePath": "packages/proxy/src/forward/legacy-binding.ts",
+   "lineRange": [
+    66,
+    79
+   ],
+   "summary": "captureLegacyEnvelope(tool, args, workspace, argsDigest) \u2014 function in legacy-binding.ts, lines 66-79.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/forward/legacy-binding.ts:validateLegacyCapture",
+   "type": "function",
+   "name": "validateLegacyCapture",
+   "filePath": "packages/proxy/src/forward/legacy-binding.ts",
+   "lineRange": [
+    81,
+    96
+   ],
+   "summary": "validateLegacyCapture(call, argsDigest, evidence) \u2014 function in legacy-binding.ts, lines 81-96.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/forward/legacy-binding.ts:validateLegacyOutcome",
+   "type": "function",
+   "name": "validateLegacyOutcome",
+   "filePath": "packages/proxy/src/forward/legacy-binding.ts",
+   "lineRange": [
+    98,
+    110
+   ],
+   "summary": "validateLegacyOutcome(capture, response, outcome) \u2014 function in legacy-binding.ts, lines 98-110.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/forward/legacy-binding.ts:validateLegacyRecoveryEvidence",
+   "type": "function",
+   "name": "validateLegacyRecoveryEvidence",
+   "filePath": "packages/proxy/src/forward/legacy-binding.ts",
+   "lineRange": [
+    113,
+    122
+   ],
+   "summary": "validateLegacyRecoveryEvidence(capture, outcome) \u2014 function in legacy-binding.ts, lines 113-122.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/forward/legacy-binding.ts:validateCaptureEvidence",
+   "type": "function",
+   "name": "validateCaptureEvidence",
+   "filePath": "packages/proxy/src/forward/legacy-binding.ts",
+   "lineRange": [
+    124,
+    143
+   ],
+   "summary": "validateCaptureEvidence(evidence) \u2014 function in legacy-binding.ts, lines 124-143.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/forward/legacy-binding.ts:validateOutcomeIdentity",
+   "type": "function",
+   "name": "validateOutcomeIdentity",
+   "filePath": "packages/proxy/src/forward/legacy-binding.ts",
+   "lineRange": [
+    145,
+    167
+   ],
+   "summary": "validateOutcomeIdentity(capture, outcome) \u2014 function in legacy-binding.ts, lines 145-167.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/forward/legacy-binding.ts:isDigest",
+   "type": "function",
+   "name": "isDigest",
+   "filePath": "packages/proxy/src/forward/legacy-binding.ts",
+   "lineRange": [
+    169,
+    171
+   ],
+   "summary": "isDigest(value) \u2014 function in legacy-binding.ts, lines 169-171.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/forward/legacy-binding.ts:isSnapshotDigest",
+   "type": "function",
+   "name": "isSnapshotDigest",
+   "filePath": "packages/proxy/src/forward/legacy-binding.ts",
+   "lineRange": [
+    173,
+    175
+   ],
+   "summary": "isSnapshotDigest(value) \u2014 function in legacy-binding.ts, lines 173-175.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/proxy/src/forward/prompts.ts",
+   "type": "file",
+   "name": "prompts.ts",
+   "filePath": "packages/proxy/src/forward/prompts.ts",
+   "summary": "prompts.ts \u2014 typescript code, 39 lines, 5 functions, 0 classes, 2 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/forward/prompts.ts:forwardPromptMessage",
+   "type": "function",
+   "name": "forwardPromptMessage",
+   "filePath": "packages/proxy/src/forward/prompts.ts",
+   "lineRange": [
+    10,
+    13
+   ],
+   "summary": "forwardPromptMessage(message, forward) \u2014 function in prompts.ts, lines 10-13.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/forward/prompts.ts:relayPromptNotification",
+   "type": "function",
+   "name": "relayPromptNotification",
+   "filePath": "packages/proxy/src/forward/prompts.ts",
+   "lineRange": [
+    15,
+    22
+   ],
+   "summary": "relayPromptNotification(message) \u2014 function in prompts.ts, lines 15-22.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/forward/prompts.ts:validatePromptRequest",
+   "type": "function",
+   "name": "validatePromptRequest",
+   "filePath": "packages/proxy/src/forward/prompts.ts",
+   "lineRange": [
+    24,
+    31
+   ],
+   "summary": "validatePromptRequest(message) \u2014 function in prompts.ts, lines 24-31.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/forward/prompts.ts:requireStringParam",
+   "type": "function",
+   "name": "requireStringParam",
+   "filePath": "packages/proxy/src/forward/prompts.ts",
+   "lineRange": [
+    33,
+    35
+   ],
+   "summary": "requireStringParam(params, name) \u2014 function in prompts.ts, lines 33-35.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/forward/prompts.ts:isObject",
+   "type": "function",
+   "name": "isObject",
+   "filePath": "packages/proxy/src/forward/prompts.ts",
+   "lineRange": [
+    37,
+    39
+   ],
+   "summary": "isObject(value) \u2014 function in prompts.ts, lines 37-39.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/proxy/src/forward/resources.ts",
+   "type": "file",
+   "name": "resources.ts",
+   "filePath": "packages/proxy/src/forward/resources.ts",
+   "summary": "resources.ts \u2014 typescript code, 41 lines, 5 functions, 0 classes, 2 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/forward/resources.ts:forwardResourceMessage",
+   "type": "function",
+   "name": "forwardResourceMessage",
+   "filePath": "packages/proxy/src/forward/resources.ts",
+   "lineRange": [
+    10,
+    13
+   ],
+   "summary": "forwardResourceMessage(message, forward) \u2014 function in resources.ts, lines 10-13.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/forward/resources.ts:relayResourceNotification",
+   "type": "function",
+   "name": "relayResourceNotification",
+   "filePath": "packages/proxy/src/forward/resources.ts",
+   "lineRange": [
+    15,
+    22
+   ],
+   "summary": "relayResourceNotification(message) \u2014 function in resources.ts, lines 15-22.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/forward/resources.ts:validateResourceRequest",
+   "type": "function",
+   "name": "validateResourceRequest",
+   "filePath": "packages/proxy/src/forward/resources.ts",
+   "lineRange": [
+    24,
+    33
+   ],
+   "summary": "validateResourceRequest(message) \u2014 function in resources.ts, lines 24-33.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/forward/resources.ts:requireStringParam",
+   "type": "function",
+   "name": "requireStringParam",
+   "filePath": "packages/proxy/src/forward/resources.ts",
+   "lineRange": [
+    35,
+    37
+   ],
+   "summary": "requireStringParam(params, name) \u2014 function in resources.ts, lines 35-37.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/forward/resources.ts:isObject",
+   "type": "function",
+   "name": "isObject",
+   "filePath": "packages/proxy/src/forward/resources.ts",
+   "lineRange": [
+    39,
+    41
+   ],
+   "summary": "isObject(value) \u2014 function in resources.ts, lines 39-41.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/proxy/src/forward/tools.test.ts",
+   "type": "file",
+   "name": "tools.test.ts",
+   "filePath": "packages/proxy/src/forward/tools.test.ts",
+   "summary": "tools.test.ts \u2014 typescript code, 363 lines, 1 functions, 0 classes, 0 exports, 4 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/proxy/src/forward/tools.test.ts:classified",
+   "type": "function",
+   "name": "classified",
+   "filePath": "packages/proxy/src/forward/tools.test.ts",
+   "lineRange": [
+    15,
+    17
+   ],
+   "summary": "classified(klass) \u2014 function in tools.test.ts, lines 15-17.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/proxy/src/forward/tools.ts",
+   "type": "file",
+   "name": "tools.ts",
+   "filePath": "packages/proxy/src/forward/tools.ts",
+   "summary": "tools.ts \u2014 typescript code, 445 lines, 10 functions, 0 classes, 3 exports, 7 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/proxy/src/forward/tools.ts:interceptCall",
+   "type": "function",
+   "name": "interceptCall",
+   "filePath": "packages/proxy/src/forward/tools.ts",
+   "lineRange": [
+    90,
+    266
+   ],
+   "summary": "interceptCall(call, deps) \u2014 function in tools.ts, lines 90-266.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/proxy/src/forward/tools.ts:buildPolicyCall",
+   "type": "function",
+   "name": "buildPolicyCall",
+   "filePath": "packages/proxy/src/forward/tools.ts",
+   "lineRange": [
+    268,
+    282
+   ],
+   "summary": "buildPolicyCall(call, classification, blastRadius) \u2014 function in tools.ts, lines 268-282.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/forward/tools.ts:runProbe",
+   "type": "function",
+   "name": "runProbe",
+   "filePath": "packages/proxy/src/forward/tools.ts",
+   "lineRange": [
+    284,
+    295
+   ],
+   "summary": "runProbe(deps, call, policyCall) \u2014 function in tools.ts, lines 284-295.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/forward/tools.ts:chooseBlastRadius",
+   "type": "function",
+   "name": "chooseBlastRadius",
+   "filePath": "packages/proxy/src/forward/tools.ts",
+   "lineRange": [
+    297,
+    311
+   ],
+   "summary": "chooseBlastRadius(probeResult) \u2014 function in tools.ts, lines 297-311.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/forward/tools.ts:runCaptureGate",
+   "type": "function",
+   "name": "runCaptureGate",
+   "filePath": "packages/proxy/src/forward/tools.ts",
+   "lineRange": [
+    319,
+    343
+   ],
+   "summary": "runCaptureGate(deps, now, call, policyCall\u2026) \u2014 function in tools.ts, lines 319-343.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/forward/tools.ts:writeLedger",
+   "type": "function",
+   "name": "writeLedger",
+   "filePath": "packages/proxy/src/forward/tools.ts",
+   "lineRange": [
+    345,
+    364
+   ],
+   "summary": "writeLedger(deps, now, tool, klass\u2026) \u2014 function in tools.ts, lines 345-364.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/forward/tools.ts:decisionAttribution",
+   "type": "function",
+   "name": "decisionAttribution",
+   "filePath": "packages/proxy/src/forward/tools.ts",
+   "lineRange": [
+    372,
+    381
+   ],
+   "summary": "decisionAttribution(deps, decision) \u2014 function in tools.ts, lines 372-381.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/forward/tools.ts:denyError",
+   "type": "function",
+   "name": "denyError",
+   "filePath": "packages/proxy/src/forward/tools.ts",
+   "lineRange": [
+    383,
+    407
+   ],
+   "summary": "denyError(call, policyCall, ruleIndex, rationale) \u2014 function in tools.ts, lines 383-407.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/forward/tools.ts:toHeldCall",
+   "type": "function",
+   "name": "toHeldCall",
+   "filePath": "packages/proxy/src/forward/tools.ts",
+   "lineRange": [
+    409,
+    427
+   ],
+   "summary": "toHeldCall(call, policyCall, decision) \u2014 function in tools.ts, lines 409-427.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/forward/tools.ts:holdError",
+   "type": "function",
+   "name": "holdError",
+   "filePath": "packages/proxy/src/forward/tools.ts",
+   "lineRange": [
+    429,
+    445
+   ],
+   "summary": "holdError(call, outcome, decision) \u2014 function in tools.ts, lines 429-445.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/proxy/src/hardening.test.ts",
+   "type": "file",
+   "name": "hardening.test.ts",
+   "filePath": "packages/proxy/src/hardening.test.ts",
+   "summary": "hardening.test.ts \u2014 typescript code, 419 lines, 6 functions, 0 classes, 0 exports, 5 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/proxy/src/hardening.test.ts:makeHarness",
+   "type": "function",
+   "name": "makeHarness",
+   "filePath": "packages/proxy/src/hardening.test.ts",
+   "lineRange": [
+    255,
+    284
+   ],
+   "summary": "makeHarness(inboundMaxBytes) \u2014 function in hardening.test.ts, lines 255-284.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/hardening.test.ts:fakeUpstream",
+   "type": "function",
+   "name": "fakeUpstream",
+   "filePath": "packages/proxy/src/hardening.test.ts",
+   "lineRange": [
+    286,
+    299
+   ],
+   "summary": "fakeUpstream(_events, seen) \u2014 function in hardening.test.ts, lines 286-299.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/hardening.test.ts:queueLines",
+   "type": "function",
+   "name": "queueLines",
+   "filePath": "packages/proxy/src/hardening.test.ts",
+   "lineRange": [
+    313,
+    342
+   ],
+   "summary": "queueLines() \u2014 function in hardening.test.ts, lines 313-342.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/hardening.test.ts:fakeSignals",
+   "type": "function",
+   "name": "fakeSignals",
+   "filePath": "packages/proxy/src/hardening.test.ts",
+   "lineRange": [
+    349,
+    368
+   ],
+   "summary": "fakeSignals() \u2014 function in hardening.test.ts, lines 349-368.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/hardening.test.ts:makeHoldHarness",
+   "type": "function",
+   "name": "makeHoldHarness",
+   "filePath": "packages/proxy/src/hardening.test.ts",
+   "lineRange": [
+    370,
+    410
+   ],
+   "summary": "makeHoldHarness(signals) \u2014 function in hardening.test.ts, lines 370-410.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/hardening.test.ts:waitFor",
+   "type": "function",
+   "name": "waitFor",
+   "filePath": "packages/proxy/src/hardening.test.ts",
+   "lineRange": [
+    412,
+    419
+   ],
+   "summary": "waitFor(predicate, label) \u2014 function in hardening.test.ts, lines 412-419.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/proxy/src/hardening.ts",
+   "type": "file",
+   "name": "hardening.ts",
+   "filePath": "packages/proxy/src/hardening.ts",
+   "summary": "hardening.ts \u2014 typescript code, 144 lines, 6 functions, 2 classes, 7 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/hardening.ts:assertInboundLineCeiling",
+   "type": "function",
+   "name": "assertInboundLineCeiling",
+   "filePath": "packages/proxy/src/hardening.ts",
+   "lineRange": [
+    15,
+    29
+   ],
+   "summary": "assertInboundLineCeiling(line, maxBytes) \u2014 function in hardening.ts, lines 15-29.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/hardening.ts:assertOutboundLineCeiling",
+   "type": "function",
+   "name": "assertOutboundLineCeiling",
+   "filePath": "packages/proxy/src/hardening.ts",
+   "lineRange": [
+    46,
+    60
+   ],
+   "summary": "assertOutboundLineCeiling(line, maxBytes) \u2014 function in hardening.ts, lines 46-60.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/hardening.ts:assertOutboundQueueCeiling",
+   "type": "function",
+   "name": "assertOutboundQueueCeiling",
+   "filePath": "packages/proxy/src/hardening.ts",
+   "lineRange": [
+    68,
+    82
+   ],
+   "summary": "assertOutboundQueueCeiling(bufferedBytes, incomingBytes, maxBytes) \u2014 function in hardening.ts, lines 68-82.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/hardening.ts:assertSingleJsonRpcMessage",
+   "type": "function",
+   "name": "assertSingleJsonRpcMessage",
+   "filePath": "packages/proxy/src/hardening.ts",
+   "lineRange": [
+    84,
+    121
+   ],
+   "summary": "assertSingleJsonRpcMessage(value) \u2014 function in hardening.ts, lines 84-121.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/hardening.ts:assertRequestId",
+   "type": "function",
+   "name": "assertRequestId",
+   "filePath": "packages/proxy/src/hardening.ts",
+   "lineRange": [
+    123,
+    140
+   ],
+   "summary": "assertRequestId(value) \u2014 function in hardening.ts, lines 123-140.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/hardening.ts:isObject",
+   "type": "function",
+   "name": "isObject",
+   "filePath": "packages/proxy/src/hardening.ts",
+   "lineRange": [
+    142,
+    144
+   ],
+   "summary": "isObject(value) \u2014 function in hardening.ts, lines 142-144.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:packages/proxy/src/hardening.ts:JsonRpcInputError",
+   "type": "class",
+   "name": "JsonRpcInputError",
+   "filePath": "packages/proxy/src/hardening.ts",
+   "lineRange": [
+    5,
+    13
+   ],
+   "summary": "JsonRpcInputError \u2014 class in hardening.ts, lines 5-13.",
+   "tags": [
+    "typescript",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:packages/proxy/src/hardening.ts:ProxyOutputError",
+   "type": "class",
+   "name": "ProxyOutputError",
+   "filePath": "packages/proxy/src/hardening.ts",
+   "lineRange": [
+    31,
+    39
+   ],
+   "summary": "ProxyOutputError \u2014 class in hardening.ts, lines 31-39.",
+   "tags": [
+    "typescript",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/proxy/src/legacy-root.test.ts",
+   "type": "file",
+   "name": "legacy-root.test.ts",
+   "filePath": "packages/proxy/src/legacy-root.test.ts",
+   "summary": "legacy-root.test.ts \u2014 typescript code, 297 lines, 2 functions, 0 classes, 0 exports, 4 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/proxy/src/legacy-root.test.ts:call",
+   "type": "function",
+   "name": "call",
+   "filePath": "packages/proxy/src/legacy-root.test.ts",
+   "lineRange": [
+    24,
+    26
+   ],
+   "summary": "call(tool, args) \u2014 function in legacy-root.test.ts, lines 24-26.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/legacy-root.test.ts:harness",
+   "type": "function",
+   "name": "harness",
+   "filePath": "packages/proxy/src/legacy-root.test.ts",
+   "lineRange": [
+    36,
+    77
+   ],
+   "summary": "harness(overrides) \u2014 function in legacy-root.test.ts, lines 36-77.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/proxy/src/legacy-root.ts",
+   "type": "file",
+   "name": "legacy-root.ts",
+   "filePath": "packages/proxy/src/legacy-root.ts",
+   "summary": "legacy-root.ts \u2014 typescript code, 235 lines, 3 functions, 1 classes, 3 exports, 3 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/proxy/src/legacy-root.ts:legacyBindingRoot",
+   "type": "function",
+   "name": "legacyBindingRoot",
+   "filePath": "packages/proxy/src/legacy-root.ts",
+   "lineRange": [
+    142,
+    214
+   ],
+   "summary": "legacyBindingRoot(name, deps) \u2014 function in legacy-root.ts, lines 142-214.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/legacy-root.ts:terminalStatus",
+   "type": "function",
+   "name": "terminalStatus",
+   "filePath": "packages/proxy/src/legacy-root.ts",
+   "lineRange": [
+    221,
+    228
+   ],
+   "summary": "terminalStatus(response, completed) \u2014 function in legacy-root.ts, lines 221-228.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/legacy-root.ts:requireBindingName",
+   "type": "function",
+   "name": "requireBindingName",
+   "filePath": "packages/proxy/src/legacy-root.ts",
+   "lineRange": [
+    230,
+    235
+   ],
+   "summary": "requireBindingName(name) \u2014 function in legacy-root.ts, lines 230-235.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:packages/proxy/src/legacy-root.ts:UnknownLegacyBindingError",
+   "type": "class",
+   "name": "UnknownLegacyBindingError",
+   "filePath": "packages/proxy/src/legacy-root.ts",
+   "lineRange": [
+    50,
+    60
+   ],
+   "summary": "UnknownLegacyBindingError \u2014 class in legacy-root.ts, lines 50-60.",
+   "tags": [
+    "typescript",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/proxy/src/relay/http-requests.test.ts",
+   "type": "file",
+   "name": "http-requests.test.ts",
+   "filePath": "packages/proxy/src/relay/http-requests.test.ts",
+   "summary": "http-requests.test.ts \u2014 typescript code, 361 lines, 5 functions, 1 classes, 0 exports, 5 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/proxy/src/relay/http-requests.test.ts:listen",
+   "type": "function",
+   "name": "listen",
+   "filePath": "packages/proxy/src/relay/http-requests.test.ts",
+   "lineRange": [
+    36,
+    43
+   ],
+   "summary": "listen(server) \u2014 function in http-requests.test.ts, lines 36-43.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/relay/http-requests.test.ts:closeServer",
+   "type": "function",
+   "name": "closeServer",
+   "filePath": "packages/proxy/src/relay/http-requests.test.ts",
+   "lineRange": [
+    45,
+    55
+   ],
+   "summary": "closeServer(server) \u2014 function in http-requests.test.ts, lines 45-55.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/relay/http-requests.test.ts:waitFor",
+   "type": "function",
+   "name": "waitFor",
+   "filePath": "packages/proxy/src/relay/http-requests.test.ts",
+   "lineRange": [
+    57,
+    68
+   ],
+   "summary": "waitFor(condition) \u2014 function in http-requests.test.ts, lines 57-68.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/relay/http-requests.test.ts:fakeUpstream",
+   "type": "function",
+   "name": "fakeUpstream",
+   "filePath": "packages/proxy/src/relay/http-requests.test.ts",
+   "lineRange": [
+    70,
+    80
+   ],
+   "summary": "fakeUpstream(sent) \u2014 function in http-requests.test.ts, lines 70-80.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/relay/http-requests.test.ts:withRelay",
+   "type": "function",
+   "name": "withRelay",
+   "filePath": "packages/proxy/src/relay/http-requests.test.ts",
+   "lineRange": [
+    82,
+    95
+   ],
+   "summary": "withRelay(testBody, options) \u2014 function in http-requests.test.ts, lines 82-95.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:packages/proxy/src/relay/http-requests.test.ts:StringIdSession",
+   "type": "class",
+   "name": "StringIdSession",
+   "filePath": "packages/proxy/src/relay/http-requests.test.ts",
+   "lineRange": [
+    15,
+    27
+   ],
+   "summary": "StringIdSession \u2014 class in http-requests.test.ts, lines 15-27, methods: translateRequestOut, translateInbound.",
+   "tags": [
+    "typescript",
+    "class"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/proxy/src/relay/http-requests.ts",
+   "type": "file",
+   "name": "http-requests.ts",
+   "filePath": "packages/proxy/src/relay/http-requests.ts",
+   "summary": "http-requests.ts \u2014 typescript code, 477 lines, 14 functions, 2 classes, 2 exports, 4 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/proxy/src/relay/http-requests.ts:createHttpRequestRelay",
+   "type": "function",
+   "name": "createHttpRequestRelay",
+   "filePath": "packages/proxy/src/relay/http-requests.ts",
+   "lineRange": [
+    39,
+    229
+   ],
+   "summary": "createHttpRequestRelay(options) \u2014 function in http-requests.ts, lines 39-229.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/proxy/src/relay/http-requests.ts:receiveRequest",
+   "type": "function",
+   "name": "receiveRequest",
+   "filePath": "packages/proxy/src/relay/http-requests.ts",
+   "lineRange": [
+    231,
+    237
+   ],
+   "summary": "receiveRequest(request, response, relay) \u2014 function in http-requests.ts, lines 231-237.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/relay/http-requests.ts:readBody",
+   "type": "function",
+   "name": "readBody",
+   "filePath": "packages/proxy/src/relay/http-requests.ts",
+   "lineRange": [
+    395,
+    407
+   ],
+   "summary": "readBody(request, maxBodySize) \u2014 function in http-requests.ts, lines 395-407.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/relay/http-requests.ts:routeNotification",
+   "type": "function",
+   "name": "routeNotification",
+   "filePath": "packages/proxy/src/relay/http-requests.ts",
+   "lineRange": [
+    409,
+    435
+   ],
+   "summary": "routeNotification(notification, upstream, session, pendingByAgent\u2026) \u2014 function in http-requests.ts, lines 409-435.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/relay/http-requests.ts:writeJson",
+   "type": "function",
+   "name": "writeJson",
+   "filePath": "packages/proxy/src/relay/http-requests.ts",
+   "lineRange": [
+    437,
+    440
+   ],
+   "summary": "writeJson(response, status, body) \u2014 function in http-requests.ts, lines 437-440.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/relay/http-requests.ts:jsonRpcError",
+   "type": "function",
+   "name": "jsonRpcError",
+   "filePath": "packages/proxy/src/relay/http-requests.ts",
+   "lineRange": [
+    442,
+    444
+   ],
+   "summary": "jsonRpcError(id, code, message, data) \u2014 function in http-requests.ts, lines 442-444.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/relay/http-requests.ts:acceptsSse",
+   "type": "function",
+   "name": "acceptsSse",
+   "filePath": "packages/proxy/src/relay/http-requests.ts",
+   "lineRange": [
+    446,
+    448
+   ],
+   "summary": "acceptsSse(accept) \u2014 function in http-requests.ts, lines 446-448.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/relay/http-requests.ts:isObject",
+   "type": "function",
+   "name": "isObject",
+   "filePath": "packages/proxy/src/relay/http-requests.ts",
+   "lineRange": [
+    450,
+    452
+   ],
+   "summary": "isObject(value) \u2014 function in http-requests.ts, lines 450-452.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/relay/http-requests.ts:isRequest",
+   "type": "function",
+   "name": "isRequest",
+   "filePath": "packages/proxy/src/relay/http-requests.ts",
+   "lineRange": [
+    454,
+    456
+   ],
+   "summary": "isRequest(value) \u2014 function in http-requests.ts, lines 454-456.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/relay/http-requests.ts:isNotification",
+   "type": "function",
+   "name": "isNotification",
+   "filePath": "packages/proxy/src/relay/http-requests.ts",
+   "lineRange": [
+    458,
+    460
+   ],
+   "summary": "isNotification(value) \u2014 function in http-requests.ts, lines 458-460.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/relay/http-requests.ts:isResponse",
+   "type": "function",
+   "name": "isResponse",
+   "filePath": "packages/proxy/src/relay/http-requests.ts",
+   "lineRange": [
+    462,
+    464
+   ],
+   "summary": "isResponse(value) \u2014 function in http-requests.ts, lines 462-464.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/relay/http-requests.ts:isProgressNotification",
+   "type": "function",
+   "name": "isProgressNotification",
+   "filePath": "packages/proxy/src/relay/http-requests.ts",
+   "lineRange": [
+    466,
+    468
+   ],
+   "summary": "isProgressNotification(value) \u2014 function in http-requests.ts, lines 466-468.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/relay/http-requests.ts:readIdParam",
+   "type": "function",
+   "name": "readIdParam",
+   "filePath": "packages/proxy/src/relay/http-requests.ts",
+   "lineRange": [
+    470,
+    473
+   ],
+   "summary": "readIdParam(params, key) \u2014 function in http-requests.ts, lines 470-473.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/relay/http-requests.ts:errorMessage",
+   "type": "function",
+   "name": "errorMessage",
+   "filePath": "packages/proxy/src/relay/http-requests.ts",
+   "lineRange": [
+    475,
+    477
+   ],
+   "summary": "errorMessage(error) \u2014 function in http-requests.ts, lines 475-477.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:packages/proxy/src/relay/http-requests.ts:PendingHttpResponse",
+   "type": "class",
+   "name": "PendingHttpResponse",
+   "filePath": "packages/proxy/src/relay/http-requests.ts",
+   "lineRange": [
+    239,
+    391
+   ],
+   "summary": "PendingHttpResponse \u2014 class in http-requests.ts, lines 239-391, methods: add, delete, complete, cancel, writeSse, closeWithError.",
+   "tags": [
+    "typescript",
+    "class"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "class:packages/proxy/src/relay/http-requests.ts:BodyTooLargeError",
+   "type": "class",
+   "name": "BodyTooLargeError",
+   "filePath": "packages/proxy/src/relay/http-requests.ts",
+   "lineRange": [
+    393,
+    393
+   ],
+   "summary": "BodyTooLargeError \u2014 class in http-requests.ts, lines 393-393.",
+   "tags": [
+    "typescript",
+    "class"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/proxy/src/relay/notifications.test.ts",
+   "type": "file",
+   "name": "notifications.test.ts",
+   "filePath": "packages/proxy/src/relay/notifications.test.ts",
+   "summary": "notifications.test.ts \u2014 typescript code, 91 lines, 0 functions, 0 classes, 0 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/proxy/src/relay/notifications.ts",
+   "type": "file",
+   "name": "notifications.ts",
+   "filePath": "packages/proxy/src/relay/notifications.ts",
+   "summary": "notifications.ts \u2014 typescript code, 99 lines, 5 functions, 0 classes, 2 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/relay/notifications.ts:lookupReverse",
+   "type": "function",
+   "name": "lookupReverse",
+   "filePath": "packages/proxy/src/relay/notifications.ts",
+   "lineRange": [
+    22,
+    34
+   ],
+   "summary": "lookupReverse(map, value) \u2014 function in notifications.ts, lines 22-34.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/relay/notifications.ts:translateProgressToken",
+   "type": "function",
+   "name": "translateProgressToken",
+   "filePath": "packages/proxy/src/relay/notifications.ts",
+   "lineRange": [
+    36,
+    38
+   ],
+   "summary": "translateProgressToken(token, session) \u2014 function in notifications.ts, lines 36-38.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/relay/notifications.ts:translateCancelledRequest",
+   "type": "function",
+   "name": "translateCancelledRequest",
+   "filePath": "packages/proxy/src/relay/notifications.ts",
+   "lineRange": [
+    40,
+    44
+   ],
+   "summary": "translateCancelledRequest(requestId, session) \u2014 function in notifications.ts, lines 40-44.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/relay/notifications.ts:translatedParams",
+   "type": "function",
+   "name": "translatedParams",
+   "filePath": "packages/proxy/src/relay/notifications.ts",
+   "lineRange": [
+    46,
+    87
+   ],
+   "summary": "translatedParams(notification, session) \u2014 function in notifications.ts, lines 46-87.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/relay/notifications.ts:relayNotification",
+   "type": "function",
+   "name": "relayNotification",
+   "filePath": "packages/proxy/src/relay/notifications.ts",
+   "lineRange": [
+    89,
+    99
+   ],
+   "summary": "relayNotification(notification, session) \u2014 function in notifications.ts, lines 89-99.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/proxy/src/relay/requests.test.ts",
+   "type": "file",
+   "name": "requests.test.ts",
+   "filePath": "packages/proxy/src/relay/requests.test.ts",
+   "summary": "requests.test.ts \u2014 typescript code, 102 lines, 0 functions, 0 classes, 0 exports, 3 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/proxy/src/relay/requests.ts",
+   "type": "file",
+   "name": "requests.ts",
+   "filePath": "packages/proxy/src/relay/requests.ts",
+   "summary": "requests.ts \u2014 typescript code, 99 lines, 5 functions, 0 classes, 3 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/relay/requests.ts:setMapValue",
+   "type": "function",
+   "name": "setMapValue",
+   "filePath": "packages/proxy/src/relay/requests.ts",
+   "lineRange": [
+    34,
+    38
+   ],
+   "summary": "setMapValue(map, key, value) \u2014 function in requests.ts, lines 34-38.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/relay/requests.ts:lookupReverse",
+   "type": "function",
+   "name": "lookupReverse",
+   "filePath": "packages/proxy/src/relay/requests.ts",
+   "lineRange": [
+    40,
+    48
+   ],
+   "summary": "lookupReverse(map, value) \u2014 function in requests.ts, lines 40-48.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/relay/requests.ts:relayServerRequest",
+   "type": "function",
+   "name": "relayServerRequest",
+   "filePath": "packages/proxy/src/relay/requests.ts",
+   "lineRange": [
+    50,
+    61
+   ],
+   "summary": "relayServerRequest(request, session) \u2014 function in requests.ts, lines 50-61.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/relay/requests.ts:remapProgressToken",
+   "type": "function",
+   "name": "remapProgressToken",
+   "filePath": "packages/proxy/src/relay/requests.ts",
+   "lineRange": [
+    65,
+    83
+   ],
+   "summary": "remapProgressToken(params, agentId, session) \u2014 function in requests.ts, lines 65-83.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/relay/requests.ts:relayServerResponse",
+   "type": "function",
+   "name": "relayServerResponse",
+   "filePath": "packages/proxy/src/relay/requests.ts",
+   "lineRange": [
+    85,
+    99
+   ],
+   "summary": "relayServerResponse(agentResponse, upstreamToAgent) \u2014 function in requests.ts, lines 85-99.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/proxy/src/rpc.ts",
+   "type": "file",
+   "name": "rpc.ts",
+   "filePath": "packages/proxy/src/rpc.ts",
+   "summary": "rpc.ts \u2014 typescript code, 40 lines, 0 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  }
+ ],
+ "edges": [
+  {
+   "source": "file:packages/proxy/src/bin.test.ts",
+   "target": "function:packages/proxy/src/bin.test.ts:platformTestTimeoutMs",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bin.test.ts defines platformTestTimeoutMs",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/bin.test.ts",
+   "target": "function:packages/proxy/src/bin.test.ts:runBoundProxy",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bin.test.ts defines runBoundProxy",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/bin.test.ts",
+   "target": "function:packages/proxy/src/bin.test.ts:testLegacyBinding",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bin.test.ts defines testLegacyBinding",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/bin.test.ts",
+   "target": "function:packages/proxy/src/bin.test.ts:makeHarness",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bin.test.ts defines makeHarness",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/bin.test.ts",
+   "target": "function:packages/proxy/src/bin.test.ts:fakeUpstream",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bin.test.ts defines fakeUpstream",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/bin.test.ts",
+   "target": "function:packages/proxy/src/bin.test.ts:policyText",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bin.test.ts defines policyText",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/bin.test.ts",
+   "target": "function:packages/proxy/src/bin.test.ts:toolCall",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bin.test.ts defines toolCall",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/bin.test.ts",
+   "target": "function:packages/proxy/src/bin.test.ts:waitForQueue",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bin.test.ts defines waitForQueue",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/bin.test.ts",
+   "target": "function:packages/proxy/src/bin.test.ts:makeHttpHarness",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bin.test.ts defines makeHttpHarness",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/bin.test.ts",
+   "target": "function:packages/proxy/src/bin.test.ts:startHttpUpstream",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bin.test.ts defines startHttpUpstream",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/bin.test.ts",
+   "target": "function:packages/proxy/src/bin.test.ts:handleHttpUpstreamRequest",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bin.test.ts defines handleHttpUpstreamRequest",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/bin.test.ts",
+   "target": "function:packages/proxy/src/bin.test.ts:requestText",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bin.test.ts defines requestText",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/bin.test.ts",
+   "target": "function:packages/proxy/src/bin.test.ts:lineQueue",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bin.test.ts defines lineQueue",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/bin.test.ts",
+   "target": "function:packages/proxy/src/bin.test.ts:readLedgerDecisions",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bin.test.ts defines readLedgerDecisions",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/bin.test.ts",
+   "target": "function:packages/proxy/src/bin.test.ts:waitFor",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bin.test.ts defines waitFor",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/proxy/src/bin.test.ts:runBoundProxy",
+   "target": "function:packages/proxy/src/bin.test.ts:policyText",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runBoundProxy calls policyText",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/proxy/src/bin.test.ts:makeHarness",
+   "target": "function:packages/proxy/src/bin.test.ts:policyText",
+   "type": "calls",
+   "direction": "forward",
+   "description": "makeHarness calls policyText",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/proxy/src/bin.test.ts:waitForQueue",
+   "target": "function:packages/proxy/src/bin.test.ts:platformTestTimeoutMs",
+   "type": "calls",
+   "direction": "forward",
+   "description": "waitForQueue calls platformTestTimeoutMs",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/proxy/src/bin.test.ts:makeHttpHarness",
+   "target": "function:packages/proxy/src/bin.test.ts:policyText",
+   "type": "calls",
+   "direction": "forward",
+   "description": "makeHttpHarness calls policyText",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/proxy/src/bin.test.ts:makeHttpHarness",
+   "target": "function:packages/proxy/src/bin.test.ts:lineQueue",
+   "type": "calls",
+   "direction": "forward",
+   "description": "makeHttpHarness calls lineQueue",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/proxy/src/bin.test.ts:startHttpUpstream",
+   "target": "function:packages/proxy/src/bin.test.ts:handleHttpUpstreamRequest",
+   "type": "calls",
+   "direction": "forward",
+   "description": "startHttpUpstream calls handleHttpUpstreamRequest",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/proxy/src/bin.test.ts:handleHttpUpstreamRequest",
+   "target": "function:packages/proxy/src/bin.test.ts:requestText",
+   "type": "calls",
+   "direction": "forward",
+   "description": "handleHttpUpstreamRequest calls requestText",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/proxy/src/bin.test.ts:waitFor",
+   "target": "function:packages/proxy/src/bin.test.ts:platformTestTimeoutMs",
+   "type": "calls",
+   "direction": "forward",
+   "description": "waitFor calls platformTestTimeoutMs",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/proxy/src/bin.ts",
+   "target": "function:packages/proxy/src/bin.ts:runProxy",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bin.ts defines runProxy",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/bin.ts",
+   "target": "function:packages/proxy/src/bin.ts:runProxy",
+   "type": "exports",
+   "direction": "forward",
+   "description": "bin.ts exports runProxy",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/proxy/src/bin.ts",
+   "target": "function:packages/proxy/src/bin.ts:validateStartup",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bin.ts defines validateStartup",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/bin.ts",
+   "target": "function:packages/proxy/src/bin.ts:isSupportedProxyTransport",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bin.ts defines isSupportedProxyTransport",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/bin.ts",
+   "target": "function:packages/proxy/src/bin.ts:processShutdownSignals",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bin.ts defines processShutdownSignals",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/bin.ts",
+   "target": "function:packages/proxy/src/bin.ts:readPolicy",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bin.ts defines readPolicy",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/bin.ts",
+   "target": "function:packages/proxy/src/bin.ts:readFacts",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bin.ts defines readFacts",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/bin.ts",
+   "target": "function:packages/proxy/src/bin.ts:handleToolCall",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bin.ts defines handleToolCall",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/bin.ts",
+   "target": "function:packages/proxy/src/bin.ts:interceptedCall",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bin.ts defines interceptedCall",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/bin.ts",
+   "target": "function:packages/proxy/src/bin.ts:immutableClone",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bin.ts defines immutableClone",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/bin.ts",
+   "target": "function:packages/proxy/src/bin.ts:deepFreeze",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bin.ts defines deepFreeze",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/bin.ts",
+   "target": "function:packages/proxy/src/bin.ts:connectorFromName",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bin.ts defines connectorFromName",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/bin.ts",
+   "target": "function:packages/proxy/src/bin.ts:rewriteInitializeResult",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bin.ts defines rewriteInitializeResult",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/bin.ts",
+   "target": "function:packages/proxy/src/bin.ts:cancellationFromAgent",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bin.ts defines cancellationFromAgent",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/bin.ts",
+   "target": "function:packages/proxy/src/bin.ts:parseMessage",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bin.ts defines parseMessage",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/bin.ts",
+   "target": "function:packages/proxy/src/bin.ts:parseFailure",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bin.ts defines parseFailure",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/bin.ts",
+   "target": "function:packages/proxy/src/bin.ts:jsonRpcError",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bin.ts defines jsonRpcError",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/bin.ts",
+   "target": "function:packages/proxy/src/bin.ts:isRequest",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bin.ts defines isRequest",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/bin.ts",
+   "target": "function:packages/proxy/src/bin.ts:isNotification",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bin.ts defines isNotification",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/bin.ts",
+   "target": "function:packages/proxy/src/bin.ts:isResponse",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bin.ts defines isResponse",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/bin.ts",
+   "target": "function:packages/proxy/src/bin.ts:isObject",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bin.ts defines isObject",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/bin.ts",
+   "target": "function:packages/proxy/src/bin.ts:readProtocolVersion",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bin.ts defines readProtocolVersion",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/bin.ts",
+   "target": "function:packages/proxy/src/bin.ts:isResourceMethod",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bin.ts defines isResourceMethod",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/bin.ts",
+   "target": "function:packages/proxy/src/bin.ts:isPromptMethod",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bin.ts defines isPromptMethod",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/bin.ts",
+   "target": "function:packages/proxy/src/bin.ts:normalizePosture",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bin.ts defines normalizePosture",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/bin.ts",
+   "target": "function:packages/proxy/src/bin.ts:cleanEnv",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bin.ts defines cleanEnv",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/bin.ts",
+   "target": "function:packages/proxy/src/bin.ts:errorMessage",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bin.ts defines errorMessage",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/bin.ts",
+   "target": "function:packages/proxy/src/bin.ts:createLocalProxyRpcBridge",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bin.ts defines createLocalProxyRpcBridge",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/bin.ts",
+   "target": "function:packages/proxy/src/bin.ts:createLocalProxyRpcBridge",
+   "type": "exports",
+   "direction": "forward",
+   "description": "bin.ts exports createLocalProxyRpcBridge",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/proxy/src/bin.ts",
+   "target": "function:packages/proxy/src/bin.ts:parseProxyTools",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bin.ts defines parseProxyTools",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/bin.ts",
+   "target": "function:packages/proxy/src/bin.ts:validProxyToolName",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bin.ts defines validProxyToolName",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/bin.ts",
+   "target": "function:packages/proxy/src/bin.ts:asError",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bin.ts defines asError",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/bin.ts",
+   "target": "class:packages/proxy/src/bin.ts:PolicyStartupError",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bin.ts defines class PolicyStartupError",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/bin.ts",
+   "target": "class:packages/proxy/src/bin.ts:ProxyStartupError",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bin.ts defines class ProxyStartupError",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/bin.ts",
+   "target": "class:packages/proxy/src/bin.ts:UpstreamStartError",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bin.ts defines class UpstreamStartError",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/bin.ts",
+   "target": "class:packages/proxy/src/bin.ts:AsyncLineQueue",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bin.ts defines class AsyncLineQueue",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/bin.ts",
+   "target": "class:packages/proxy/src/bin.ts:LocalProxyRpcBridge",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bin.ts defines class LocalProxyRpcBridge",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/proxy/src/bin.ts:runProxy",
+   "target": "function:packages/proxy/src/bin.ts:validateStartup",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runProxy calls validateStartup",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/proxy/src/bin.ts:runProxy",
+   "target": "function:packages/proxy/src/bin.ts:readPolicy",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runProxy calls readPolicy",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/proxy/src/bin.ts:runProxy",
+   "target": "function:packages/proxy/src/bin.ts:readFacts",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runProxy calls readFacts",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/proxy/src/bin.ts:runProxy",
+   "target": "function:packages/proxy/src/bin.ts:errorMessage",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runProxy calls errorMessage",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/proxy/src/bin.ts:runProxy",
+   "target": "function:packages/proxy/src/bin.ts:cleanEnv",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runProxy calls cleanEnv",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/proxy/src/bin.ts:runProxy",
+   "target": "function:packages/proxy/src/bin.ts:processShutdownSignals",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runProxy calls processShutdownSignals",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/proxy/src/bin.ts:runProxy",
+   "target": "function:packages/proxy/src/bin.ts:jsonRpcError",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runProxy calls jsonRpcError",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/proxy/src/bin.ts:validateStartup",
+   "target": "function:packages/proxy/src/bin.ts:isSupportedProxyTransport",
+   "type": "calls",
+   "direction": "forward",
+   "description": "validateStartup calls isSupportedProxyTransport",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/proxy/src/bin.ts:validateStartup",
+   "target": "function:packages/proxy/src/bin.ts:errorMessage",
+   "type": "calls",
+   "direction": "forward",
+   "description": "validateStartup calls errorMessage",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/proxy/src/bin.ts:handleToolCall",
+   "target": "function:packages/proxy/src/bin.ts:interceptedCall",
+   "type": "calls",
+   "direction": "forward",
+   "description": "handleToolCall calls interceptedCall",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/proxy/src/bin.ts:interceptedCall",
+   "target": "function:packages/proxy/src/bin.ts:isObject",
+   "type": "calls",
+   "direction": "forward",
+   "description": "interceptedCall calls isObject",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/proxy/src/bin.ts:interceptedCall",
+   "target": "function:packages/proxy/src/bin.ts:connectorFromName",
+   "type": "calls",
+   "direction": "forward",
+   "description": "interceptedCall calls connectorFromName",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/proxy/src/bin.ts:interceptedCall",
+   "target": "function:packages/proxy/src/bin.ts:immutableClone",
+   "type": "calls",
+   "direction": "forward",
+   "description": "interceptedCall calls immutableClone",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/proxy/src/bin.ts:immutableClone",
+   "target": "function:packages/proxy/src/bin.ts:deepFreeze",
+   "type": "calls",
+   "direction": "forward",
+   "description": "immutableClone calls deepFreeze",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/proxy/src/bin.ts:rewriteInitializeResult",
+   "target": "function:packages/proxy/src/bin.ts:isObject",
+   "type": "calls",
+   "direction": "forward",
+   "description": "rewriteInitializeResult calls isObject",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/proxy/src/bin.ts:parseProxyTools",
+   "target": "function:packages/proxy/src/bin.ts:isObject",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parseProxyTools calls isObject",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/proxy/src/bin.ts:parseProxyTools",
+   "target": "function:packages/proxy/src/bin.ts:validProxyToolName",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parseProxyTools calls validProxyToolName",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/proxy/src/blast.ts",
+   "target": "function:packages/proxy/src/blast.ts:probeDispatcher",
+   "type": "contains",
+   "direction": "forward",
+   "description": "blast.ts defines probeDispatcher",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/blast.ts",
+   "target": "function:packages/proxy/src/blast.ts:probeDispatcher",
+   "type": "exports",
+   "direction": "forward",
+   "description": "blast.ts exports probeDispatcher",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/proxy/src/blast.ts",
+   "target": "function:packages/proxy/src/blast.ts:errorMessage",
+   "type": "contains",
+   "direction": "forward",
+   "description": "blast.ts defines errorMessage",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/proxy/src/blast.ts:probeDispatcher",
+   "target": "function:packages/proxy/src/blast.ts:errorMessage",
+   "type": "calls",
+   "direction": "forward",
+   "description": "probeDispatcher calls errorMessage",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/proxy/src/forward/legacy-binding.test.ts",
+   "target": "function:packages/proxy/src/forward/legacy-binding.test.ts:outcome",
+   "type": "contains",
+   "direction": "forward",
+   "description": "legacy-binding.test.ts defines outcome",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/forward/legacy-binding.ts",
+   "target": "function:packages/proxy/src/forward/legacy-binding.ts:legacyArgsDigest",
+   "type": "contains",
+   "direction": "forward",
+   "description": "legacy-binding.ts defines legacyArgsDigest",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/forward/legacy-binding.ts",
+   "target": "function:packages/proxy/src/forward/legacy-binding.ts:legacyArgsDigest",
+   "type": "exports",
+   "direction": "forward",
+   "description": "legacy-binding.ts exports legacyArgsDigest",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/proxy/src/forward/legacy-binding.ts",
+   "target": "function:packages/proxy/src/forward/legacy-binding.ts:captureLegacyEnvelope",
+   "type": "contains",
+   "direction": "forward",
+   "description": "legacy-binding.ts defines captureLegacyEnvelope",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/forward/legacy-binding.ts",
+   "target": "function:packages/proxy/src/forward/legacy-binding.ts:captureLegacyEnvelope",
+   "type": "exports",
+   "direction": "forward",
+   "description": "legacy-binding.ts exports captureLegacyEnvelope",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/proxy/src/forward/legacy-binding.ts",
+   "target": "function:packages/proxy/src/forward/legacy-binding.ts:validateLegacyCapture",
+   "type": "contains",
+   "direction": "forward",
+   "description": "legacy-binding.ts defines validateLegacyCapture",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/forward/legacy-binding.ts",
+   "target": "function:packages/proxy/src/forward/legacy-binding.ts:validateLegacyCapture",
+   "type": "exports",
+   "direction": "forward",
+   "description": "legacy-binding.ts exports validateLegacyCapture",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/proxy/src/forward/legacy-binding.ts",
+   "target": "function:packages/proxy/src/forward/legacy-binding.ts:validateLegacyOutcome",
+   "type": "contains",
+   "direction": "forward",
+   "description": "legacy-binding.ts defines validateLegacyOutcome",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/forward/legacy-binding.ts",
+   "target": "function:packages/proxy/src/forward/legacy-binding.ts:validateLegacyOutcome",
+   "type": "exports",
+   "direction": "forward",
+   "description": "legacy-binding.ts exports validateLegacyOutcome",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/proxy/src/forward/legacy-binding.ts",
+   "target": "function:packages/proxy/src/forward/legacy-binding.ts:validateLegacyRecoveryEvidence",
+   "type": "contains",
+   "direction": "forward",
+   "description": "legacy-binding.ts defines validateLegacyRecoveryEvidence",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/forward/legacy-binding.ts",
+   "target": "function:packages/proxy/src/forward/legacy-binding.ts:validateLegacyRecoveryEvidence",
+   "type": "exports",
+   "direction": "forward",
+   "description": "legacy-binding.ts exports validateLegacyRecoveryEvidence",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/proxy/src/forward/legacy-binding.ts",
+   "target": "function:packages/proxy/src/forward/legacy-binding.ts:validateCaptureEvidence",
+   "type": "contains",
+   "direction": "forward",
+   "description": "legacy-binding.ts defines validateCaptureEvidence",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/forward/legacy-binding.ts",
+   "target": "function:packages/proxy/src/forward/legacy-binding.ts:validateOutcomeIdentity",
+   "type": "contains",
+   "direction": "forward",
+   "description": "legacy-binding.ts defines validateOutcomeIdentity",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/forward/legacy-binding.ts",
+   "target": "function:packages/proxy/src/forward/legacy-binding.ts:isDigest",
+   "type": "contains",
+   "direction": "forward",
+   "description": "legacy-binding.ts defines isDigest",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/forward/legacy-binding.ts",
+   "target": "function:packages/proxy/src/forward/legacy-binding.ts:isSnapshotDigest",
+   "type": "contains",
+   "direction": "forward",
+   "description": "legacy-binding.ts defines isSnapshotDigest",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/proxy/src/forward/legacy-binding.ts:captureLegacyEnvelope",
+   "target": "function:packages/proxy/src/forward/legacy-binding.ts:legacyArgsDigest",
+   "type": "calls",
+   "direction": "forward",
+   "description": "captureLegacyEnvelope calls legacyArgsDigest",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/proxy/src/forward/legacy-binding.ts:validateLegacyCapture",
+   "target": "function:packages/proxy/src/forward/legacy-binding.ts:validateCaptureEvidence",
+   "type": "calls",
+   "direction": "forward",
+   "description": "validateLegacyCapture calls validateCaptureEvidence",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/proxy/src/forward/legacy-binding.ts:validateLegacyOutcome",
+   "target": "function:packages/proxy/src/forward/legacy-binding.ts:validateOutcomeIdentity",
+   "type": "calls",
+   "direction": "forward",
+   "description": "validateLegacyOutcome calls validateOutcomeIdentity",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/proxy/src/forward/legacy-binding.ts:validateLegacyRecoveryEvidence",
+   "target": "function:packages/proxy/src/forward/legacy-binding.ts:validateCaptureEvidence",
+   "type": "calls",
+   "direction": "forward",
+   "description": "validateLegacyRecoveryEvidence calls validateCaptureEvidence",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/proxy/src/forward/legacy-binding.ts:validateLegacyRecoveryEvidence",
+   "target": "function:packages/proxy/src/forward/legacy-binding.ts:validateOutcomeIdentity",
+   "type": "calls",
+   "direction": "forward",
+   "description": "validateLegacyRecoveryEvidence calls validateOutcomeIdentity",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/proxy/src/forward/legacy-binding.ts:validateCaptureEvidence",
+   "target": "function:packages/proxy/src/forward/legacy-binding.ts:isDigest",
+   "type": "calls",
+   "direction": "forward",
+   "description": "validateCaptureEvidence calls isDigest",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/proxy/src/forward/legacy-binding.ts:validateCaptureEvidence",
+   "target": "function:packages/proxy/src/forward/legacy-binding.ts:isSnapshotDigest",
+   "type": "calls",
+   "direction": "forward",
+   "description": "validateCaptureEvidence calls isSnapshotDigest",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/proxy/src/forward/prompts.ts",
+   "target": "function:packages/proxy/src/forward/prompts.ts:forwardPromptMessage",
+   "type": "contains",
+   "direction": "forward",
+   "description": "prompts.ts defines forwardPromptMessage",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/forward/prompts.ts",
+   "target": "function:packages/proxy/src/forward/prompts.ts:forwardPromptMessage",
+   "type": "exports",
+   "direction": "forward",
+   "description": "prompts.ts exports forwardPromptMessage",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/proxy/src/forward/prompts.ts",
+   "target": "function:packages/proxy/src/forward/prompts.ts:relayPromptNotification",
+   "type": "contains",
+   "direction": "forward",
+   "description": "prompts.ts defines relayPromptNotification",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/forward/prompts.ts",
+   "target": "function:packages/proxy/src/forward/prompts.ts:relayPromptNotification",
+   "type": "exports",
+   "direction": "forward",
+   "description": "prompts.ts exports relayPromptNotification",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/proxy/src/forward/prompts.ts",
+   "target": "function:packages/proxy/src/forward/prompts.ts:validatePromptRequest",
+   "type": "contains",
+   "direction": "forward",
+   "description": "prompts.ts defines validatePromptRequest",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/forward/prompts.ts",
+   "target": "function:packages/proxy/src/forward/prompts.ts:requireStringParam",
+   "type": "contains",
+   "direction": "forward",
+   "description": "prompts.ts defines requireStringParam",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/forward/prompts.ts",
+   "target": "function:packages/proxy/src/forward/prompts.ts:isObject",
+   "type": "contains",
+   "direction": "forward",
+   "description": "prompts.ts defines isObject",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/proxy/src/forward/prompts.ts:forwardPromptMessage",
+   "target": "function:packages/proxy/src/forward/prompts.ts:validatePromptRequest",
+   "type": "calls",
+   "direction": "forward",
+   "description": "forwardPromptMessage calls validatePromptRequest",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/proxy/src/forward/prompts.ts:relayPromptNotification",
+   "target": "function:packages/proxy/src/forward/prompts.ts:isObject",
+   "type": "calls",
+   "direction": "forward",
+   "description": "relayPromptNotification calls isObject",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/proxy/src/forward/prompts.ts:validatePromptRequest",
+   "target": "function:packages/proxy/src/forward/prompts.ts:isObject",
+   "type": "calls",
+   "direction": "forward",
+   "description": "validatePromptRequest calls isObject",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/proxy/src/forward/prompts.ts:validatePromptRequest",
+   "target": "function:packages/proxy/src/forward/prompts.ts:requireStringParam",
+   "type": "calls",
+   "direction": "forward",
+   "description": "validatePromptRequest calls requireStringParam",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/proxy/src/forward/prompts.ts:requireStringParam",
+   "target": "function:packages/proxy/src/forward/prompts.ts:isObject",
+   "type": "calls",
+   "direction": "forward",
+   "description": "requireStringParam calls isObject",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/proxy/src/forward/resources.ts",
+   "target": "function:packages/proxy/src/forward/resources.ts:forwardResourceMessage",
+   "type": "contains",
+   "direction": "forward",
+   "description": "resources.ts defines forwardResourceMessage",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/forward/resources.ts",
+   "target": "function:packages/proxy/src/forward/resources.ts:forwardResourceMessage",
+   "type": "exports",
+   "direction": "forward",
+   "description": "resources.ts exports forwardResourceMessage",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/proxy/src/forward/resources.ts",
+   "target": "function:packages/proxy/src/forward/resources.ts:relayResourceNotification",
+   "type": "contains",
+   "direction": "forward",
+   "description": "resources.ts defines relayResourceNotification",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/forward/resources.ts",
+   "target": "function:packages/proxy/src/forward/resources.ts:relayResourceNotification",
+   "type": "exports",
+   "direction": "forward",
+   "description": "resources.ts exports relayResourceNotification",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/proxy/src/forward/resources.ts",
+   "target": "function:packages/proxy/src/forward/resources.ts:validateResourceRequest",
+   "type": "contains",
+   "direction": "forward",
+   "description": "resources.ts defines validateResourceRequest",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/forward/resources.ts",
+   "target": "function:packages/proxy/src/forward/resources.ts:requireStringParam",
+   "type": "contains",
+   "direction": "forward",
+   "description": "resources.ts defines requireStringParam",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/forward/resources.ts",
+   "target": "function:packages/proxy/src/forward/resources.ts:isObject",
+   "type": "contains",
+   "direction": "forward",
+   "description": "resources.ts defines isObject",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/proxy/src/forward/resources.ts:forwardResourceMessage",
+   "target": "function:packages/proxy/src/forward/resources.ts:validateResourceRequest",
+   "type": "calls",
+   "direction": "forward",
+   "description": "forwardResourceMessage calls validateResourceRequest",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/proxy/src/forward/resources.ts:relayResourceNotification",
+   "target": "function:packages/proxy/src/forward/resources.ts:isObject",
+   "type": "calls",
+   "direction": "forward",
+   "description": "relayResourceNotification calls isObject",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/proxy/src/forward/resources.ts:validateResourceRequest",
+   "target": "function:packages/proxy/src/forward/resources.ts:isObject",
+   "type": "calls",
+   "direction": "forward",
+   "description": "validateResourceRequest calls isObject",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/proxy/src/forward/resources.ts:validateResourceRequest",
+   "target": "function:packages/proxy/src/forward/resources.ts:requireStringParam",
+   "type": "calls",
+   "direction": "forward",
+   "description": "validateResourceRequest calls requireStringParam",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/proxy/src/forward/resources.ts:requireStringParam",
+   "target": "function:packages/proxy/src/forward/resources.ts:isObject",
+   "type": "calls",
+   "direction": "forward",
+   "description": "requireStringParam calls isObject",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/proxy/src/forward/tools.test.ts",
+   "target": "function:packages/proxy/src/forward/tools.test.ts:classified",
+   "type": "contains",
+   "direction": "forward",
+   "description": "tools.test.ts defines classified",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/forward/tools.ts",
+   "target": "function:packages/proxy/src/forward/tools.ts:interceptCall",
+   "type": "contains",
+   "direction": "forward",
+   "description": "tools.ts defines interceptCall",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/forward/tools.ts",
+   "target": "function:packages/proxy/src/forward/tools.ts:interceptCall",
+   "type": "exports",
+   "direction": "forward",
+   "description": "tools.ts exports interceptCall",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/proxy/src/forward/tools.ts",
+   "target": "function:packages/proxy/src/forward/tools.ts:buildPolicyCall",
+   "type": "contains",
+   "direction": "forward",
+   "description": "tools.ts defines buildPolicyCall",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/forward/tools.ts",
+   "target": "function:packages/proxy/src/forward/tools.ts:runProbe",
+   "type": "contains",
+   "direction": "forward",
+   "description": "tools.ts defines runProbe",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/forward/tools.ts",
+   "target": "function:packages/proxy/src/forward/tools.ts:chooseBlastRadius",
+   "type": "contains",
+   "direction": "forward",
+   "description": "tools.ts defines chooseBlastRadius",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/forward/tools.ts",
+   "target": "function:packages/proxy/src/forward/tools.ts:runCaptureGate",
+   "type": "contains",
+   "direction": "forward",
+   "description": "tools.ts defines runCaptureGate",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/forward/tools.ts",
+   "target": "function:packages/proxy/src/forward/tools.ts:writeLedger",
+   "type": "contains",
+   "direction": "forward",
+   "description": "tools.ts defines writeLedger",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/forward/tools.ts",
+   "target": "function:packages/proxy/src/forward/tools.ts:decisionAttribution",
+   "type": "contains",
+   "direction": "forward",
+   "description": "tools.ts defines decisionAttribution",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/forward/tools.ts",
+   "target": "function:packages/proxy/src/forward/tools.ts:denyError",
+   "type": "contains",
+   "direction": "forward",
+   "description": "tools.ts defines denyError",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/forward/tools.ts",
+   "target": "function:packages/proxy/src/forward/tools.ts:toHeldCall",
+   "type": "contains",
+   "direction": "forward",
+   "description": "tools.ts defines toHeldCall",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/forward/tools.ts",
+   "target": "function:packages/proxy/src/forward/tools.ts:holdError",
+   "type": "contains",
+   "direction": "forward",
+   "description": "tools.ts defines holdError",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/proxy/src/forward/tools.ts:interceptCall",
+   "target": "function:packages/proxy/src/forward/tools.ts:runProbe",
+   "type": "calls",
+   "direction": "forward",
+   "description": "interceptCall calls runProbe",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/proxy/src/forward/tools.ts:interceptCall",
+   "target": "function:packages/proxy/src/forward/tools.ts:buildPolicyCall",
+   "type": "calls",
+   "direction": "forward",
+   "description": "interceptCall calls buildPolicyCall",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/proxy/src/forward/tools.ts:interceptCall",
+   "target": "function:packages/proxy/src/forward/tools.ts:chooseBlastRadius",
+   "type": "calls",
+   "direction": "forward",
+   "description": "interceptCall calls chooseBlastRadius",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/proxy/src/forward/tools.ts:interceptCall",
+   "target": "function:packages/proxy/src/forward/tools.ts:decisionAttribution",
+   "type": "calls",
+   "direction": "forward",
+   "description": "interceptCall calls decisionAttribution",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/proxy/src/forward/tools.ts:interceptCall",
+   "target": "function:packages/proxy/src/forward/tools.ts:writeLedger",
+   "type": "calls",
+   "direction": "forward",
+   "description": "interceptCall calls writeLedger",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/proxy/src/forward/tools.ts:interceptCall",
+   "target": "function:packages/proxy/src/forward/tools.ts:runCaptureGate",
+   "type": "calls",
+   "direction": "forward",
+   "description": "interceptCall calls runCaptureGate",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/proxy/src/forward/tools.ts:interceptCall",
+   "target": "function:packages/proxy/src/forward/tools.ts:denyError",
+   "type": "calls",
+   "direction": "forward",
+   "description": "interceptCall calls denyError",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/proxy/src/forward/tools.ts:interceptCall",
+   "target": "function:packages/proxy/src/forward/tools.ts:toHeldCall",
+   "type": "calls",
+   "direction": "forward",
+   "description": "interceptCall calls toHeldCall",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/proxy/src/forward/tools.ts:interceptCall",
+   "target": "function:packages/proxy/src/forward/tools.ts:holdError",
+   "type": "calls",
+   "direction": "forward",
+   "description": "interceptCall calls holdError",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/proxy/src/forward/tools.ts:runCaptureGate",
+   "target": "function:packages/proxy/src/forward/tools.ts:writeLedger",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runCaptureGate calls writeLedger",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/proxy/src/hardening.test.ts",
+   "target": "function:packages/proxy/src/hardening.test.ts:makeHarness",
+   "type": "contains",
+   "direction": "forward",
+   "description": "hardening.test.ts defines makeHarness",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/hardening.test.ts",
+   "target": "function:packages/proxy/src/hardening.test.ts:fakeUpstream",
+   "type": "contains",
+   "direction": "forward",
+   "description": "hardening.test.ts defines fakeUpstream",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/hardening.test.ts",
+   "target": "function:packages/proxy/src/hardening.test.ts:queueLines",
+   "type": "contains",
+   "direction": "forward",
+   "description": "hardening.test.ts defines queueLines",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/hardening.test.ts",
+   "target": "function:packages/proxy/src/hardening.test.ts:fakeSignals",
+   "type": "contains",
+   "direction": "forward",
+   "description": "hardening.test.ts defines fakeSignals",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/hardening.test.ts",
+   "target": "function:packages/proxy/src/hardening.test.ts:makeHoldHarness",
+   "type": "contains",
+   "direction": "forward",
+   "description": "hardening.test.ts defines makeHoldHarness",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/hardening.test.ts",
+   "target": "function:packages/proxy/src/hardening.test.ts:waitFor",
+   "type": "contains",
+   "direction": "forward",
+   "description": "hardening.test.ts defines waitFor",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/hardening.ts",
+   "target": "function:packages/proxy/src/hardening.ts:assertInboundLineCeiling",
+   "type": "contains",
+   "direction": "forward",
+   "description": "hardening.ts defines assertInboundLineCeiling",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/hardening.ts",
+   "target": "function:packages/proxy/src/hardening.ts:assertInboundLineCeiling",
+   "type": "exports",
+   "direction": "forward",
+   "description": "hardening.ts exports assertInboundLineCeiling",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/proxy/src/hardening.ts",
+   "target": "function:packages/proxy/src/hardening.ts:assertOutboundLineCeiling",
+   "type": "contains",
+   "direction": "forward",
+   "description": "hardening.ts defines assertOutboundLineCeiling",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/hardening.ts",
+   "target": "function:packages/proxy/src/hardening.ts:assertOutboundLineCeiling",
+   "type": "exports",
+   "direction": "forward",
+   "description": "hardening.ts exports assertOutboundLineCeiling",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/proxy/src/hardening.ts",
+   "target": "function:packages/proxy/src/hardening.ts:assertOutboundQueueCeiling",
+   "type": "contains",
+   "direction": "forward",
+   "description": "hardening.ts defines assertOutboundQueueCeiling",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/hardening.ts",
+   "target": "function:packages/proxy/src/hardening.ts:assertOutboundQueueCeiling",
+   "type": "exports",
+   "direction": "forward",
+   "description": "hardening.ts exports assertOutboundQueueCeiling",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/proxy/src/hardening.ts",
+   "target": "function:packages/proxy/src/hardening.ts:assertSingleJsonRpcMessage",
+   "type": "contains",
+   "direction": "forward",
+   "description": "hardening.ts defines assertSingleJsonRpcMessage",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/hardening.ts",
+   "target": "function:packages/proxy/src/hardening.ts:assertSingleJsonRpcMessage",
+   "type": "exports",
+   "direction": "forward",
+   "description": "hardening.ts exports assertSingleJsonRpcMessage",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/proxy/src/hardening.ts",
+   "target": "function:packages/proxy/src/hardening.ts:assertRequestId",
+   "type": "contains",
+   "direction": "forward",
+   "description": "hardening.ts defines assertRequestId",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/hardening.ts",
+   "target": "function:packages/proxy/src/hardening.ts:isObject",
+   "type": "contains",
+   "direction": "forward",
+   "description": "hardening.ts defines isObject",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/hardening.ts",
+   "target": "class:packages/proxy/src/hardening.ts:JsonRpcInputError",
+   "type": "contains",
+   "direction": "forward",
+   "description": "hardening.ts defines class JsonRpcInputError",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/hardening.ts",
+   "target": "class:packages/proxy/src/hardening.ts:ProxyOutputError",
+   "type": "contains",
+   "direction": "forward",
+   "description": "hardening.ts defines class ProxyOutputError",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/proxy/src/hardening.ts:assertSingleJsonRpcMessage",
+   "target": "function:packages/proxy/src/hardening.ts:isObject",
+   "type": "calls",
+   "direction": "forward",
+   "description": "assertSingleJsonRpcMessage calls isObject",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/proxy/src/hardening.ts:assertSingleJsonRpcMessage",
+   "target": "function:packages/proxy/src/hardening.ts:assertRequestId",
+   "type": "calls",
+   "direction": "forward",
+   "description": "assertSingleJsonRpcMessage calls assertRequestId",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/proxy/src/legacy-root.test.ts",
+   "target": "function:packages/proxy/src/legacy-root.test.ts:call",
+   "type": "contains",
+   "direction": "forward",
+   "description": "legacy-root.test.ts defines call",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/legacy-root.test.ts",
+   "target": "function:packages/proxy/src/legacy-root.test.ts:harness",
+   "type": "contains",
+   "direction": "forward",
+   "description": "legacy-root.test.ts defines harness",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/legacy-root.ts",
+   "target": "function:packages/proxy/src/legacy-root.ts:legacyBindingRoot",
+   "type": "contains",
+   "direction": "forward",
+   "description": "legacy-root.ts defines legacyBindingRoot",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/legacy-root.ts",
+   "target": "function:packages/proxy/src/legacy-root.ts:legacyBindingRoot",
+   "type": "exports",
+   "direction": "forward",
+   "description": "legacy-root.ts exports legacyBindingRoot",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/proxy/src/legacy-root.ts",
+   "target": "function:packages/proxy/src/legacy-root.ts:terminalStatus",
+   "type": "contains",
+   "direction": "forward",
+   "description": "legacy-root.ts defines terminalStatus",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/legacy-root.ts",
+   "target": "function:packages/proxy/src/legacy-root.ts:requireBindingName",
+   "type": "contains",
+   "direction": "forward",
+   "description": "legacy-root.ts defines requireBindingName",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/legacy-root.ts",
+   "target": "class:packages/proxy/src/legacy-root.ts:UnknownLegacyBindingError",
+   "type": "contains",
+   "direction": "forward",
+   "description": "legacy-root.ts defines class UnknownLegacyBindingError",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/proxy/src/legacy-root.ts:legacyBindingRoot",
+   "target": "function:packages/proxy/src/legacy-root.ts:requireBindingName",
+   "type": "calls",
+   "direction": "forward",
+   "description": "legacyBindingRoot calls requireBindingName",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/proxy/src/relay/http-requests.test.ts",
+   "target": "function:packages/proxy/src/relay/http-requests.test.ts:listen",
+   "type": "contains",
+   "direction": "forward",
+   "description": "http-requests.test.ts defines listen",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/relay/http-requests.test.ts",
+   "target": "function:packages/proxy/src/relay/http-requests.test.ts:closeServer",
+   "type": "contains",
+   "direction": "forward",
+   "description": "http-requests.test.ts defines closeServer",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/relay/http-requests.test.ts",
+   "target": "function:packages/proxy/src/relay/http-requests.test.ts:waitFor",
+   "type": "contains",
+   "direction": "forward",
+   "description": "http-requests.test.ts defines waitFor",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/relay/http-requests.test.ts",
+   "target": "function:packages/proxy/src/relay/http-requests.test.ts:fakeUpstream",
+   "type": "contains",
+   "direction": "forward",
+   "description": "http-requests.test.ts defines fakeUpstream",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/relay/http-requests.test.ts",
+   "target": "function:packages/proxy/src/relay/http-requests.test.ts:withRelay",
+   "type": "contains",
+   "direction": "forward",
+   "description": "http-requests.test.ts defines withRelay",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/relay/http-requests.test.ts",
+   "target": "class:packages/proxy/src/relay/http-requests.test.ts:StringIdSession",
+   "type": "contains",
+   "direction": "forward",
+   "description": "http-requests.test.ts defines class StringIdSession",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/proxy/src/relay/http-requests.test.ts:withRelay",
+   "target": "function:packages/proxy/src/relay/http-requests.test.ts:fakeUpstream",
+   "type": "calls",
+   "direction": "forward",
+   "description": "withRelay calls fakeUpstream",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/proxy/src/relay/http-requests.test.ts:withRelay",
+   "target": "function:packages/proxy/src/relay/http-requests.test.ts:listen",
+   "type": "calls",
+   "direction": "forward",
+   "description": "withRelay calls listen",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/proxy/src/relay/http-requests.test.ts:withRelay",
+   "target": "function:packages/proxy/src/relay/http-requests.test.ts:closeServer",
+   "type": "calls",
+   "direction": "forward",
+   "description": "withRelay calls closeServer",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/proxy/src/relay/http-requests.ts",
+   "target": "function:packages/proxy/src/relay/http-requests.ts:createHttpRequestRelay",
+   "type": "contains",
+   "direction": "forward",
+   "description": "http-requests.ts defines createHttpRequestRelay",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/relay/http-requests.ts",
+   "target": "function:packages/proxy/src/relay/http-requests.ts:createHttpRequestRelay",
+   "type": "exports",
+   "direction": "forward",
+   "description": "http-requests.ts exports createHttpRequestRelay",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/proxy/src/relay/http-requests.ts",
+   "target": "function:packages/proxy/src/relay/http-requests.ts:receiveRequest",
+   "type": "contains",
+   "direction": "forward",
+   "description": "http-requests.ts defines receiveRequest",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/relay/http-requests.ts",
+   "target": "function:packages/proxy/src/relay/http-requests.ts:receiveRequest",
+   "type": "exports",
+   "direction": "forward",
+   "description": "http-requests.ts exports receiveRequest",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/proxy/src/relay/http-requests.ts",
+   "target": "function:packages/proxy/src/relay/http-requests.ts:readBody",
+   "type": "contains",
+   "direction": "forward",
+   "description": "http-requests.ts defines readBody",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/relay/http-requests.ts",
+   "target": "function:packages/proxy/src/relay/http-requests.ts:routeNotification",
+   "type": "contains",
+   "direction": "forward",
+   "description": "http-requests.ts defines routeNotification",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/relay/http-requests.ts",
+   "target": "function:packages/proxy/src/relay/http-requests.ts:writeJson",
+   "type": "contains",
+   "direction": "forward",
+   "description": "http-requests.ts defines writeJson",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/relay/http-requests.ts",
+   "target": "function:packages/proxy/src/relay/http-requests.ts:jsonRpcError",
+   "type": "contains",
+   "direction": "forward",
+   "description": "http-requests.ts defines jsonRpcError",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/relay/http-requests.ts",
+   "target": "function:packages/proxy/src/relay/http-requests.ts:acceptsSse",
+   "type": "contains",
+   "direction": "forward",
+   "description": "http-requests.ts defines acceptsSse",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/relay/http-requests.ts",
+   "target": "function:packages/proxy/src/relay/http-requests.ts:isObject",
+   "type": "contains",
+   "direction": "forward",
+   "description": "http-requests.ts defines isObject",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/relay/http-requests.ts",
+   "target": "function:packages/proxy/src/relay/http-requests.ts:isRequest",
+   "type": "contains",
+   "direction": "forward",
+   "description": "http-requests.ts defines isRequest",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/relay/http-requests.ts",
+   "target": "function:packages/proxy/src/relay/http-requests.ts:isNotification",
+   "type": "contains",
+   "direction": "forward",
+   "description": "http-requests.ts defines isNotification",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/relay/http-requests.ts",
+   "target": "function:packages/proxy/src/relay/http-requests.ts:isResponse",
+   "type": "contains",
+   "direction": "forward",
+   "description": "http-requests.ts defines isResponse",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/relay/http-requests.ts",
+   "target": "function:packages/proxy/src/relay/http-requests.ts:isProgressNotification",
+   "type": "contains",
+   "direction": "forward",
+   "description": "http-requests.ts defines isProgressNotification",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/relay/http-requests.ts",
+   "target": "function:packages/proxy/src/relay/http-requests.ts:readIdParam",
+   "type": "contains",
+   "direction": "forward",
+   "description": "http-requests.ts defines readIdParam",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/relay/http-requests.ts",
+   "target": "function:packages/proxy/src/relay/http-requests.ts:errorMessage",
+   "type": "contains",
+   "direction": "forward",
+   "description": "http-requests.ts defines errorMessage",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/relay/http-requests.ts",
+   "target": "class:packages/proxy/src/relay/http-requests.ts:PendingHttpResponse",
+   "type": "contains",
+   "direction": "forward",
+   "description": "http-requests.ts defines class PendingHttpResponse",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/relay/http-requests.ts",
+   "target": "class:packages/proxy/src/relay/http-requests.ts:BodyTooLargeError",
+   "type": "contains",
+   "direction": "forward",
+   "description": "http-requests.ts defines class BodyTooLargeError",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/proxy/src/relay/http-requests.ts:routeNotification",
+   "target": "function:packages/proxy/src/relay/http-requests.ts:readIdParam",
+   "type": "calls",
+   "direction": "forward",
+   "description": "routeNotification calls readIdParam",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/proxy/src/relay/http-requests.ts:isRequest",
+   "target": "function:packages/proxy/src/relay/http-requests.ts:isObject",
+   "type": "calls",
+   "direction": "forward",
+   "description": "isRequest calls isObject",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/proxy/src/relay/http-requests.ts:isNotification",
+   "target": "function:packages/proxy/src/relay/http-requests.ts:isObject",
+   "type": "calls",
+   "direction": "forward",
+   "description": "isNotification calls isObject",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/proxy/src/relay/http-requests.ts:isProgressNotification",
+   "target": "function:packages/proxy/src/relay/http-requests.ts:isNotification",
+   "type": "calls",
+   "direction": "forward",
+   "description": "isProgressNotification calls isNotification",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/proxy/src/relay/notifications.ts",
+   "target": "function:packages/proxy/src/relay/notifications.ts:lookupReverse",
+   "type": "contains",
+   "direction": "forward",
+   "description": "notifications.ts defines lookupReverse",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/relay/notifications.ts",
+   "target": "function:packages/proxy/src/relay/notifications.ts:translateProgressToken",
+   "type": "contains",
+   "direction": "forward",
+   "description": "notifications.ts defines translateProgressToken",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/relay/notifications.ts",
+   "target": "function:packages/proxy/src/relay/notifications.ts:translateCancelledRequest",
+   "type": "contains",
+   "direction": "forward",
+   "description": "notifications.ts defines translateCancelledRequest",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/relay/notifications.ts",
+   "target": "function:packages/proxy/src/relay/notifications.ts:translatedParams",
+   "type": "contains",
+   "direction": "forward",
+   "description": "notifications.ts defines translatedParams",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/relay/notifications.ts",
+   "target": "function:packages/proxy/src/relay/notifications.ts:relayNotification",
+   "type": "contains",
+   "direction": "forward",
+   "description": "notifications.ts defines relayNotification",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/relay/notifications.ts",
+   "target": "function:packages/proxy/src/relay/notifications.ts:relayNotification",
+   "type": "exports",
+   "direction": "forward",
+   "description": "notifications.ts exports relayNotification",
+   "weight": 0.7
+  },
+  {
+   "source": "function:packages/proxy/src/relay/notifications.ts:translateProgressToken",
+   "target": "function:packages/proxy/src/relay/notifications.ts:lookupReverse",
+   "type": "calls",
+   "direction": "forward",
+   "description": "translateProgressToken calls lookupReverse",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/proxy/src/relay/notifications.ts:translateCancelledRequest",
+   "target": "function:packages/proxy/src/relay/notifications.ts:lookupReverse",
+   "type": "calls",
+   "direction": "forward",
+   "description": "translateCancelledRequest calls lookupReverse",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/proxy/src/relay/notifications.ts:translatedParams",
+   "target": "function:packages/proxy/src/relay/notifications.ts:translateProgressToken",
+   "type": "calls",
+   "direction": "forward",
+   "description": "translatedParams calls translateProgressToken",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/proxy/src/relay/notifications.ts:translatedParams",
+   "target": "function:packages/proxy/src/relay/notifications.ts:translateCancelledRequest",
+   "type": "calls",
+   "direction": "forward",
+   "description": "translatedParams calls translateCancelledRequest",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/proxy/src/relay/notifications.ts:relayNotification",
+   "target": "function:packages/proxy/src/relay/notifications.ts:translatedParams",
+   "type": "calls",
+   "direction": "forward",
+   "description": "relayNotification calls translatedParams",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/proxy/src/relay/requests.ts",
+   "target": "function:packages/proxy/src/relay/requests.ts:setMapValue",
+   "type": "contains",
+   "direction": "forward",
+   "description": "requests.ts defines setMapValue",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/relay/requests.ts",
+   "target": "function:packages/proxy/src/relay/requests.ts:lookupReverse",
+   "type": "contains",
+   "direction": "forward",
+   "description": "requests.ts defines lookupReverse",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/relay/requests.ts",
+   "target": "function:packages/proxy/src/relay/requests.ts:relayServerRequest",
+   "type": "contains",
+   "direction": "forward",
+   "description": "requests.ts defines relayServerRequest",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/relay/requests.ts",
+   "target": "function:packages/proxy/src/relay/requests.ts:relayServerRequest",
+   "type": "exports",
+   "direction": "forward",
+   "description": "requests.ts exports relayServerRequest",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/proxy/src/relay/requests.ts",
+   "target": "function:packages/proxy/src/relay/requests.ts:remapProgressToken",
+   "type": "contains",
+   "direction": "forward",
+   "description": "requests.ts defines remapProgressToken",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/relay/requests.ts",
+   "target": "function:packages/proxy/src/relay/requests.ts:relayServerResponse",
+   "type": "contains",
+   "direction": "forward",
+   "description": "requests.ts defines relayServerResponse",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/relay/requests.ts",
+   "target": "function:packages/proxy/src/relay/requests.ts:relayServerResponse",
+   "type": "exports",
+   "direction": "forward",
+   "description": "requests.ts exports relayServerResponse",
+   "weight": 0.7
+  },
+  {
+   "source": "function:packages/proxy/src/relay/requests.ts:relayServerRequest",
+   "target": "function:packages/proxy/src/relay/requests.ts:setMapValue",
+   "type": "calls",
+   "direction": "forward",
+   "description": "relayServerRequest calls setMapValue",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/proxy/src/relay/requests.ts:relayServerRequest",
+   "target": "function:packages/proxy/src/relay/requests.ts:remapProgressToken",
+   "type": "calls",
+   "direction": "forward",
+   "description": "relayServerRequest calls remapProgressToken",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/proxy/src/relay/requests.ts:relayServerResponse",
+   "target": "function:packages/proxy/src/relay/requests.ts:lookupReverse",
+   "type": "calls",
+   "direction": "forward",
+   "description": "relayServerResponse calls lookupReverse",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/policy/src/index.test.ts",
+   "target": "file:packages/policy/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "index.test.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/bin.test.ts",
+   "target": "file:packages/ledger/src/sign.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "bin.test.ts imports sign.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/bin.test.ts",
+   "target": "file:packages/policy/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "bin.test.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/bin.test.ts",
+   "target": "file:packages/proxy/src/bin.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "bin.test.ts imports bin.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/bin.test.ts",
+   "target": "file:packages/proxy/src/forward/legacy-binding.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "bin.test.ts imports legacy-binding.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/bin.test.ts",
+   "target": "file:packages/proxy/src/transport/stdio.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "bin.test.ts imports stdio.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/bin.ts",
+   "target": "file:packages/ledger/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "bin.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/bin.ts",
+   "target": "file:packages/ledger/src/sign.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "bin.ts imports sign.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/bin.ts",
+   "target": "file:packages/ledger/src/store.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "bin.ts imports store.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/bin.ts",
+   "target": "file:packages/policy/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "bin.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/bin.ts",
+   "target": "file:packages/proxy/src/forward/legacy-binding.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "bin.ts imports legacy-binding.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/bin.ts",
+   "target": "file:packages/proxy/src/forward/prompts.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "bin.ts imports prompts.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/bin.ts",
+   "target": "file:packages/proxy/src/forward/resources.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "bin.ts imports resources.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/bin.ts",
+   "target": "file:packages/proxy/src/forward/tools.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "bin.ts imports tools.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/bin.ts",
+   "target": "file:packages/proxy/src/hardening.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "bin.ts imports hardening.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/bin.ts",
+   "target": "file:packages/proxy/src/relay/notifications.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "bin.ts imports notifications.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/bin.ts",
+   "target": "file:packages/proxy/src/relay/requests.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "bin.ts imports requests.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/bin.ts",
+   "target": "file:packages/proxy/src/rpc.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "bin.ts imports rpc.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/bin.ts",
+   "target": "file:packages/proxy/src/session.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "bin.ts imports session.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/bin.ts",
+   "target": "file:packages/proxy/src/transport/http.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "bin.ts imports http.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/bin.ts",
+   "target": "file:packages/proxy/src/transport/stdio.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "bin.ts imports stdio.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/bin.ts",
+   "target": "file:packages/registry/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "bin.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/blast.ts",
+   "target": "file:packages/policy/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "blast.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/forward/forward.test.ts",
+   "target": "file:packages/proxy/src/forward/prompts.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "forward.test.ts imports prompts.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/forward/forward.test.ts",
+   "target": "file:packages/proxy/src/forward/resources.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "forward.test.ts imports resources.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/forward/legacy-binding.test.ts",
+   "target": "file:packages/proxy/src/forward/legacy-binding.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "legacy-binding.test.ts imports legacy-binding.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/forward/legacy-binding.test.ts",
+   "target": "file:packages/proxy/src/rpc.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "legacy-binding.test.ts imports rpc.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/forward/legacy-binding.ts",
+   "target": "file:packages/ledger/src/canonical.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "legacy-binding.ts imports canonical.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/forward/legacy-binding.ts",
+   "target": "file:packages/ledger/src/sign.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "legacy-binding.ts imports sign.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/forward/legacy-binding.ts",
+   "target": "file:packages/proxy/src/forward/tools.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "legacy-binding.ts imports tools.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/forward/legacy-binding.ts",
+   "target": "file:packages/proxy/src/rpc.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "legacy-binding.ts imports rpc.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/forward/prompts.ts",
+   "target": "file:packages/proxy/src/rpc.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "prompts.ts imports rpc.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/forward/resources.ts",
+   "target": "file:packages/proxy/src/rpc.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "resources.ts imports rpc.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/forward/tools.test.ts",
+   "target": "file:packages/proxy/src/blast.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "tools.test.ts imports blast.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/forward/tools.test.ts",
+   "target": "file:packages/proxy/src/forward/legacy-binding.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "tools.test.ts imports legacy-binding.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/forward/tools.test.ts",
+   "target": "file:packages/proxy/src/forward/tools.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "tools.test.ts imports tools.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/forward/tools.test.ts",
+   "target": "file:packages/registry/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "tools.test.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/forward/tools.ts",
+   "target": "file:packages/ledger/src/attribution.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "tools.ts imports attribution.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/forward/tools.ts",
+   "target": "file:packages/policy/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "tools.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/forward/tools.ts",
+   "target": "file:packages/proxy/src/blast.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "tools.ts imports blast.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/forward/tools.ts",
+   "target": "file:packages/proxy/src/forward/legacy-binding.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "tools.ts imports legacy-binding.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/forward/tools.ts",
+   "target": "file:packages/proxy/src/rpc.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "tools.ts imports rpc.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/forward/tools.ts",
+   "target": "file:packages/registry/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "tools.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/hardening.test.ts",
+   "target": "file:packages/policy/src/hold.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "hardening.test.ts imports hold.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/hardening.test.ts",
+   "target": "file:packages/proxy/src/bin.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "hardening.test.ts imports bin.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/hardening.test.ts",
+   "target": "file:packages/proxy/src/hardening.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "hardening.test.ts imports hardening.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/hardening.test.ts",
+   "target": "file:packages/proxy/src/transport/stdio.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "hardening.test.ts imports stdio.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/hardening.ts",
+   "target": "file:packages/proxy/src/rpc.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "hardening.ts imports rpc.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/legacy-root.test.ts",
+   "target": "file:packages/proxy/src/forward/legacy-binding.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "legacy-root.test.ts imports legacy-binding.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/legacy-root.test.ts",
+   "target": "file:packages/proxy/src/forward/tools.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "legacy-root.test.ts imports tools.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/legacy-root.test.ts",
+   "target": "file:packages/proxy/src/legacy-root.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "legacy-root.test.ts imports legacy-root.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/legacy-root.test.ts",
+   "target": "file:packages/proxy/src/rpc.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "legacy-root.test.ts imports rpc.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/legacy-root.ts",
+   "target": "file:packages/proxy/src/forward/legacy-binding.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "legacy-root.ts imports legacy-binding.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/legacy-root.ts",
+   "target": "file:packages/proxy/src/forward/tools.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "legacy-root.ts imports tools.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/legacy-root.ts",
+   "target": "file:packages/proxy/src/rpc.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "legacy-root.ts imports rpc.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/relay/http-requests.test.ts",
+   "target": "file:packages/proxy/src/relay/http-requests.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "http-requests.test.ts imports http-requests.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/relay/http-requests.test.ts",
+   "target": "file:packages/proxy/src/rpc.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "http-requests.test.ts imports rpc.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/relay/http-requests.test.ts",
+   "target": "file:packages/proxy/src/session.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "http-requests.test.ts imports session.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/relay/http-requests.test.ts",
+   "target": "file:packages/proxy/src/transport/stdio.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "http-requests.test.ts imports stdio.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/relay/http-requests.ts",
+   "target": "file:packages/proxy/src/relay/notifications.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "http-requests.ts imports notifications.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/relay/http-requests.ts",
+   "target": "file:packages/proxy/src/rpc.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "http-requests.ts imports rpc.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/relay/http-requests.ts",
+   "target": "file:packages/proxy/src/session.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "http-requests.ts imports session.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/relay/http-requests.ts",
+   "target": "file:packages/proxy/src/transport/stdio.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "http-requests.ts imports stdio.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/relay/notifications.test.ts",
+   "target": "file:packages/proxy/src/relay/notifications.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "notifications.test.ts imports notifications.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/relay/notifications.ts",
+   "target": "file:packages/proxy/src/rpc.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "notifications.ts imports rpc.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/relay/requests.test.ts",
+   "target": "file:packages/proxy/src/relay/requests.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "requests.test.ts imports requests.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/relay/requests.test.ts",
+   "target": "file:packages/proxy/src/session.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "requests.test.ts imports session.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/relay/requests.ts",
+   "target": "file:packages/proxy/src/rpc.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "requests.ts imports rpc.ts",
+   "weight": 0.8
+  }
+ ]
+}

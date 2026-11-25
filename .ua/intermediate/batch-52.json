@@ -1,0 +1,245 @@
+{
+ "nodes": [
+  {
+   "id": "file:docs/RECOVERY-COVERAGE.md",
+   "type": "document",
+   "name": "RECOVERY-COVERAGE.md",
+   "filePath": "docs/RECOVERY-COVERAGE.md",
+   "summary": "RECOVERY-COVERAGE.md \u2014 markdown document, 143 lines, 4 sections: Recovery coverage, PostgreSQL limitations, Managed PostgreSQL metadata migration, Verification interpretation.",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/RELEASE-1.0.1-MATRIX.md",
+   "type": "document",
+   "name": "RELEASE-1.0.1-MATRIX.md",
+   "filePath": "docs/RELEASE-1.0.1-MATRIX.md",
+   "summary": "RELEASE-1.0.1-MATRIX.md \u2014 markdown document, 1043 lines, 33 sections: NOMO 1.0.1 release evidence matrix, Current capability and tooling snapshot, 2026-09-26 web surface, credentialed end to end, 2026-09-26 re-check of the two recorded P0 reliability findings (+29 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "file:docs/RELEASE.md",
+   "type": "document",
+   "name": "RELEASE.md",
+   "filePath": "docs/RELEASE.md",
+   "summary": "RELEASE.md \u2014 markdown document, 315 lines, 9 sections: NOMO 0.1.0 release runbook, Status and version policy, Runtime support, Done, with evidence boundaries (+5 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:docs/RESEARCH-NEXT-FUNCTIONS-2026-10-04.md",
+   "type": "document",
+   "name": "RESEARCH-NEXT-FUNCTIONS-2026-10-04.md",
+   "filePath": "docs/RESEARCH-NEXT-FUNCTIONS-2026-10-04.md",
+   "summary": "RESEARCH-NEXT-FUNCTIONS-2026-10-04.md \u2014 markdown document, 81 lines, 5 sections: What to build next, and what not to, The two things that changed the picture since 2026-09-26, The candidates, What I would not build (+1 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/REVERSE-ENGINE-VALIDATION.md",
+   "type": "document",
+   "name": "REVERSE-ENGINE-VALIDATION.md",
+   "filePath": "docs/REVERSE-ENGINE-VALIDATION.md",
+   "summary": "REVERSE-ENGINE-VALIDATION.md \u2014 markdown document, 181 lines, 14 sections: NOMO reverse engine: ov\u011b\u0159en\u00ed j\u00e1dra a skute\u010dn\u00e9 hranice, V\u00fdsledek, Co bylo spu\u0161t\u011bno, Re\u00e1ln\u00e9 cesty proveden\u00ed (+10 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:docs/REVERSE-TOOL-UPGRADE-PLAN.md",
+   "type": "document",
+   "name": "REVERSE-TOOL-UPGRADE-PLAN.md",
+   "filePath": "docs/REVERSE-TOOL-UPGRADE-PLAN.md",
+   "summary": "REVERSE-TOOL-UPGRADE-PLAN.md \u2014 markdown document, 418 lines, 32 sections: NOMO: pl\u00e1n dokon\u010den\u00ed vrstvy pro obnovu po AI agentech, 1. C\u00edl a rozhodnut\u00ed, 2. Co p\u0159esn\u011b vypl\u00fdv\u00e1 z p\u016fvodn\u00edho webu, Rozpory ve webu, kter\u00e9 je nutn\u00e9 rozhodnout p\u0159ed implementac\u00ed (+28 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:docs/REVERSE-UPGRADE-PROGRESS.md",
+   "type": "document",
+   "name": "REVERSE-UPGRADE-PROGRESS.md",
+   "filePath": "docs/REVERSE-UPGRADE-PROGRESS.md",
+   "summary": "REVERSE-UPGRADE-PROGRESS.md \u2014 markdown document, 242 lines, 14 sections: Reverse upgrade implementation progress, Adapter conformance and Windows filesystem follow-up, 2026-09-15, Python transport client, 2026-09-25, Verified foundation (+10 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:docs/SDK.md",
+   "type": "document",
+   "name": "SDK.md",
+   "filePath": "docs/SDK.md",
+   "summary": "SDK.md \u2014 markdown document, 133 lines, 11 sections: NOMO SDK, Purpose, Public exports, Client options (+7 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/STANDARDS.md",
+   "type": "document",
+   "name": "STANDARDS.md",
+   "filePath": "docs/STANDARDS.md",
+   "summary": "STANDARDS.md \u2014 markdown document, 496 lines, 13 sections: NOMO: standards, 1. No em dash, no en dash. Anywhere., 2. Comments explain why, not what, 3. Tests: `node:test`, no dependency, no flag (+9 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:docs/TESTING.md",
+   "type": "document",
+   "name": "TESTING.md",
+   "filePath": "docs/TESTING.md",
+   "summary": "TESTING.md \u2014 markdown document, 88 lines, 7 sections: NOMO testing, Package test commands, Typecheck commands, Workspace wide loop (+3 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/THREAT-MODEL.md",
+   "type": "document",
+   "name": "THREAT-MODEL.md",
+   "filePath": "docs/THREAT-MODEL.md",
+   "summary": "THREAT-MODEL.md \u2014 markdown document, 653 lines, 24 sections: Threat model: what NOMO's signature can and cannot prove, 1. Trust-boundary map, 1.1 What \"the process\" is on each surface, 1.2 The one piece of boundary work that does exist, and what it is worth (+20 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "file:docs/TUI-HARNESS-MAP.md",
+   "type": "document",
+   "name": "TUI-HARNESS-MAP.md",
+   "filePath": "docs/TUI-HARNESS-MAP.md",
+   "summary": "TUI-HARNESS-MAP.md \u2014 markdown document, 335 lines, 13 sections: TUI harness map, evidence for \"Surface the harness in the TUI\", 1. Where the TUI lives, TUI vs. web UI: two surfaces, one backend, 2. The tab structure (+9 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:docs/TUI-WORKSPACE.md",
+   "type": "document",
+   "name": "TUI-WORKSPACE.md",
+   "filePath": "docs/TUI-WORKSPACE.md",
+   "summary": "TUI-WORKSPACE.md \u2014 markdown document, 344 lines, 12 sections: NOMO na vlastn\u00edm po\u010d\u00edta\u010di, Spu\u0161t\u011bn\u00ed, Prvn\u00ed skute\u010dn\u00fd test, Katalog a model (+8 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:docs/UI-UX-UPGRADE-PLAN.md",
+   "type": "document",
+   "name": "UI-UX-UPGRADE-PLAN.md",
+   "filePath": "docs/UI-UX-UPGRADE-PLAN.md",
+   "summary": "UI-UX-UPGRADE-PLAN.md \u2014 markdown document, 263 lines, 32 sections: NOMO UI/UX Upgrade Plan - Mobile-First, Claude Chat Parity, 1. Provider Configuration - OpenCode Zen as Default, 1.1 OpenCode Zen Configuration, 1.2 Configuration Files to Update (+28 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:docs/UPGRADE-CHECKPOINT.md",
+   "type": "document",
+   "name": "UPGRADE-CHECKPOINT.md",
+   "filePath": "docs/UPGRADE-CHECKPOINT.md",
+   "summary": "UPGRADE-CHECKPOINT.md \u2014 markdown document, 97 lines, 5 sections: NOMO upgrade checkpoint, The run, What this run did not cover, How to reproduce (+1 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/UPGRADE-PLAN-NEXT-2026-09-18.md",
+   "type": "document",
+   "name": "UPGRADE-PLAN-NEXT-2026-09-18.md",
+   "filePath": "docs/UPGRADE-PLAN-NEXT-2026-09-18.md",
+   "summary": "UPGRADE-PLAN-NEXT-2026-09-18.md \u2014 markdown document, 158 lines, 14 sections: NOMO, pl\u00e1n dal\u0161\u00edho upgradu (TUI + GUI + AI agentic reverse tool), Current status correction, 0. Co je nov\u00e9ho na GitHubu (ov\u011b\u0159eno lok\u00e1ln\u011b), 1. Inventura n\u00e1stroj\u016f (poctiv\u011b, co je a co nen\u00ed) (+10 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:docs/UPGRADE-VERIFICATION.md",
+   "type": "document",
+   "name": "UPGRADE-VERIFICATION.md",
+   "filePath": "docs/UPGRADE-VERIFICATION.md",
+   "summary": "UPGRADE-VERIFICATION.md \u2014 markdown document, 47 lines, 5 sections: Bounded upgrade verification, Delivered scope, Verification evidence, Prime Agent MCP (+1 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/VENDORING-DECISION.md",
+   "type": "document",
+   "name": "VENDORING-DECISION.md",
+   "filePath": "docs/VENDORING-DECISION.md",
+   "summary": "VENDORING-DECISION.md \u2014 markdown document, 516 lines, 28 sections: Vendoring decision: evidence pack, How to read the labels, Sources actually read, 1. The four options, costed (+24 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:docs/VERSIONING-AND-UPDATE-PLAN.md",
+   "type": "document",
+   "name": "VERSIONING-AND-UPDATE-PLAN.md",
+   "filePath": "docs/VERSIONING-AND-UPDATE-PLAN.md",
+   "summary": "VERSIONING-AND-UPDATE-PLAN.md \u2014 markdown document, 722 lines, 21 sections: NOMO versioning and self-update plan, 1. Where the version lives today, What a bump breaks, precisely, 2. Single source of truth (+17 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "file:docs/WINDOWS-DESKTOP.md",
+   "type": "document",
+   "name": "WINDOWS-DESKTOP.md",
+   "filePath": "docs/WINDOWS-DESKTOP.md",
+   "summary": "WINDOWS-DESKTOP.md \u2014 markdown document, 189 lines, 6 sections: Windows desktop, Release scope, 2026-10-04 developer inner-loop map (keep TUI, mobile and desktop easy), Windows workspace-key storage source audit (+2 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  }
+ ],
+ "edges": []
+}

@@ -1,0 +1,3632 @@
+{
+ "nodes": [
+  {
+   "id": "file:packages/agent-policy/src/check.test.ts",
+   "type": "file",
+   "name": "check.test.ts",
+   "filePath": "packages/agent-policy/src/check.test.ts",
+   "summary": "check.test.ts \u2014 typescript code, 443 lines, 3 functions, 0 classes, 0 exports, 4 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/agent-policy/src/check.test.ts:grant",
+   "type": "function",
+   "name": "grant",
+   "filePath": "packages/agent-policy/src/check.test.ts",
+   "lineRange": [
+    60,
+    69
+   ],
+   "summary": "grant(agentId, over) \u2014 function in check.test.ts, lines 60-69.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/agent-policy/src/check.test.ts:request",
+   "type": "function",
+   "name": "request",
+   "filePath": "packages/agent-policy/src/check.test.ts",
+   "lineRange": [
+    72,
+    87
+   ],
+   "summary": "request(over) \u2014 function in check.test.ts, lines 72-87.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/agent-policy/src/check.test.ts:deps",
+   "type": "function",
+   "name": "deps",
+   "filePath": "packages/agent-policy/src/check.test.ts",
+   "lineRange": [
+    89,
+    102
+   ],
+   "summary": "deps(over) \u2014 function in check.test.ts, lines 89-102.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/agent-policy/src/check.ts",
+   "type": "file",
+   "name": "check.ts",
+   "filePath": "packages/agent-policy/src/check.ts",
+   "summary": "check.ts \u2014 typescript code, 341 lines, 4 functions, 0 classes, 2 exports, 8 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/agent-policy/src/check.ts:targetProblem",
+   "type": "function",
+   "name": "targetProblem",
+   "filePath": "packages/agent-policy/src/check.ts",
+   "lineRange": [
+    93,
+    102
+   ],
+   "summary": "targetProblem(target) \u2014 function in check.ts, lines 93-102.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/agent-policy/src/check.ts:requestProblem",
+   "type": "function",
+   "name": "requestProblem",
+   "filePath": "packages/agent-policy/src/check.ts",
+   "lineRange": [
+    104,
+    116
+   ],
+   "summary": "requestProblem(request) \u2014 function in check.ts, lines 104-116.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/agent-policy/src/check.ts:identityProblem",
+   "type": "function",
+   "name": "identityProblem",
+   "filePath": "packages/agent-policy/src/check.ts",
+   "lineRange": [
+    119,
+    134
+   ],
+   "summary": "identityProblem(identity) \u2014 function in check.ts, lines 119-134.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/agent-policy/src/check.ts:checkPolicy",
+   "type": "function",
+   "name": "checkPolicy",
+   "filePath": "packages/agent-policy/src/check.ts",
+   "lineRange": [
+    142,
+    341
+   ],
+   "summary": "checkPolicy(request, deps) \u2014 function in check.ts, lines 142-341.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/agent-policy/src/evaluate.ts",
+   "type": "file",
+   "name": "evaluate.ts",
+   "filePath": "packages/agent-policy/src/evaluate.ts",
+   "summary": "evaluate.ts \u2014 typescript code, 117 lines, 4 functions, 0 classes, 1 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/agent-policy/src/evaluate.ts:list",
+   "type": "function",
+   "name": "list",
+   "filePath": "packages/agent-policy/src/evaluate.ts",
+   "lineRange": [
+    33,
+    34
+   ],
+   "summary": "list(value) \u2014 function in evaluate.ts, lines 33-34.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/agent-policy/src/evaluate.ts:classMatches",
+   "type": "function",
+   "name": "classMatches",
+   "filePath": "packages/agent-policy/src/evaluate.ts",
+   "lineRange": [
+    42,
+    55
+   ],
+   "summary": "classMatches(expected, actual, decision) \u2014 function in evaluate.ts, lines 42-55.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/agent-policy/src/evaluate.ts:ruleMatches",
+   "type": "function",
+   "name": "ruleMatches",
+   "filePath": "packages/agent-policy/src/evaluate.ts",
+   "lineRange": [
+    57,
+    91
+   ],
+   "summary": "ruleMatches(rule, call) \u2014 function in evaluate.ts, lines 57-91.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/agent-policy/src/evaluate.ts:evaluateAgentPolicy",
+   "type": "function",
+   "name": "evaluateAgentPolicy",
+   "filePath": "packages/agent-policy/src/evaluate.ts",
+   "lineRange": [
+    99,
+    117
+   ],
+   "summary": "evaluateAgentPolicy(policy, call) \u2014 function in evaluate.ts, lines 99-117.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/agent-policy/src/grammar.ts",
+   "type": "file",
+   "name": "grammar.ts",
+   "filePath": "packages/agent-policy/src/grammar.ts",
+   "summary": "grammar.ts \u2014 typescript code, 65 lines, 2 functions, 0 classes, 10 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/agent-policy/src/grammar.ts:isScope",
+   "type": "function",
+   "name": "isScope",
+   "filePath": "packages/agent-policy/src/grammar.ts",
+   "lineRange": [
+    59,
+    61
+   ],
+   "summary": "isScope(value) \u2014 function in grammar.ts, lines 59-61.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/agent-policy/src/grammar.ts:isAgentMatchKey",
+   "type": "function",
+   "name": "isAgentMatchKey",
+   "filePath": "packages/agent-policy/src/grammar.ts",
+   "lineRange": [
+    63,
+    65
+   ],
+   "summary": "isAgentMatchKey(name) \u2014 function in grammar.ts, lines 63-65.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/agent-policy/src/load.test.ts",
+   "type": "file",
+   "name": "load.test.ts",
+   "filePath": "packages/agent-policy/src/load.test.ts",
+   "summary": "load.test.ts \u2014 typescript code, 166 lines, 2 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/agent-policy/src/load.test.ts:minimal",
+   "type": "function",
+   "name": "minimal",
+   "filePath": "packages/agent-policy/src/load.test.ts",
+   "lineRange": [
+    12,
+    13
+   ],
+   "summary": "minimal(rules, agents) \u2014 function in load.test.ts, lines 12-13.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/agent-policy/src/load.test.ts:errorsOf",
+   "type": "function",
+   "name": "errorsOf",
+   "filePath": "packages/agent-policy/src/load.test.ts",
+   "lineRange": [
+    17,
+    21
+   ],
+   "summary": "errorsOf(text) \u2014 function in load.test.ts, lines 17-21.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/agent-policy/src/load.ts",
+   "type": "file",
+   "name": "load.ts",
+   "filePath": "packages/agent-policy/src/load.ts",
+   "summary": "load.ts \u2014 typescript code, 244 lines, 5 functions, 0 classes, 2 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/agent-policy/src/load.ts:isObject",
+   "type": "function",
+   "name": "isObject",
+   "filePath": "packages/agent-policy/src/load.ts",
+   "lineRange": [
+    55,
+    56
+   ],
+   "summary": "isObject(value) \u2014 function in load.ts, lines 55-56.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/agent-policy/src/load.ts:unknownKeys",
+   "type": "function",
+   "name": "unknownKeys",
+   "filePath": "packages/agent-policy/src/load.ts",
+   "lineRange": [
+    58,
+    61
+   ],
+   "summary": "unknownKeys(value, allowed) \u2014 function in load.ts, lines 58-61.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/agent-policy/src/load.ts:validateAgentPolicyFile",
+   "type": "function",
+   "name": "validateAgentPolicyFile",
+   "filePath": "packages/agent-policy/src/load.ts",
+   "lineRange": [
+    63,
+    175
+   ],
+   "summary": "validateAgentPolicyFile(value) \u2014 function in load.ts, lines 63-175.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/agent-policy/src/load.ts:validateMatch",
+   "type": "function",
+   "name": "validateMatch",
+   "filePath": "packages/agent-policy/src/load.ts",
+   "lineRange": [
+    177,
+    232
+   ],
+   "summary": "validateMatch(match, path, declared) \u2014 function in load.ts, lines 177-232.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/agent-policy/src/load.ts:loadAgentPolicy",
+   "type": "function",
+   "name": "loadAgentPolicy",
+   "filePath": "packages/agent-policy/src/load.ts",
+   "lineRange": [
+    234,
+    244
+   ],
+   "summary": "loadAgentPolicy(text) \u2014 function in load.ts, lines 234-244.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/agent-policy/src/scaffold.test.ts",
+   "type": "file",
+   "name": "scaffold.test.ts",
+   "filePath": "packages/agent-policy/src/scaffold.test.ts",
+   "summary": "scaffold.test.ts \u2014 typescript code, 211 lines, 1 functions, 0 classes, 0 exports, 5 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/agent-policy/src/scaffold.test.ts:withDir",
+   "type": "function",
+   "name": "withDir",
+   "filePath": "packages/agent-policy/src/scaffold.test.ts",
+   "lineRange": [
+    18,
+    25
+   ],
+   "summary": "withDir(run) \u2014 function in scaffold.test.ts, lines 18-25.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/agent-policy/src/scaffold.ts",
+   "type": "file",
+   "name": "scaffold.ts",
+   "filePath": "packages/agent-policy/src/scaffold.ts",
+   "summary": "scaffold.ts \u2014 typescript code, 139 lines, 4 functions, 1 classes, 4 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/agent-policy/src/scaffold.ts:optionsProblem",
+   "type": "function",
+   "name": "optionsProblem",
+   "filePath": "packages/agent-policy/src/scaffold.ts",
+   "lineRange": [
+    31,
+    45
+   ],
+   "summary": "optionsProblem(options) \u2014 function in scaffold.ts, lines 31-45.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/agent-policy/src/scaffold.ts:defaultAgentPolicy",
+   "type": "function",
+   "name": "defaultAgentPolicy",
+   "filePath": "packages/agent-policy/src/scaffold.ts",
+   "lineRange": [
+    52,
+    86
+   ],
+   "summary": "defaultAgentPolicy(options) \u2014 function in scaffold.ts, lines 52-86.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/agent-policy/src/scaffold.ts:sameText",
+   "type": "function",
+   "name": "sameText",
+   "filePath": "packages/agent-policy/src/scaffold.ts",
+   "lineRange": [
+    102,
+    103
+   ],
+   "summary": "sameText(a, b) \u2014 function in scaffold.ts, lines 102-103.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/agent-policy/src/scaffold.ts:writeDefaultAgentPolicy",
+   "type": "function",
+   "name": "writeDefaultAgentPolicy",
+   "filePath": "packages/agent-policy/src/scaffold.ts",
+   "lineRange": [
+    110,
+    139
+   ],
+   "summary": "writeDefaultAgentPolicy(path, options) \u2014 function in scaffold.ts, lines 110-139.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:packages/agent-policy/src/scaffold.ts:AgentPolicyScaffoldError",
+   "type": "class",
+   "name": "AgentPolicyScaffoldError",
+   "filePath": "packages/agent-policy/src/scaffold.ts",
+   "lineRange": [
+    20,
+    20
+   ],
+   "summary": "AgentPolicyScaffoldError \u2014 class in scaffold.ts, lines 20-20.",
+   "tags": [
+    "typescript",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/agent-policy/src/spike.test.ts",
+   "type": "file",
+   "name": "spike.test.ts",
+   "filePath": "packages/agent-policy/src/spike.test.ts",
+   "summary": "spike.test.ts \u2014 typescript code, 230 lines, 0 functions, 1 classes, 0 exports, 6 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "class:packages/agent-policy/src/spike.test.ts:FakeFs",
+   "type": "class",
+   "name": "FakeFs",
+   "filePath": "packages/agent-policy/src/spike.test.ts",
+   "lineRange": [
+    47,
+    59
+   ],
+   "summary": "FakeFs \u2014 class in spike.test.ts, lines 47-59, methods: run.",
+   "tags": [
+    "typescript",
+    "class"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/approve.test.ts",
+   "type": "file",
+   "name": "approve.test.ts",
+   "filePath": "packages/cli/src/approve.test.ts",
+   "summary": "approve.test.ts \u2014 typescript code, 186 lines, 1 functions, 0 classes, 0 exports, 4 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/cli/src/approve.test.ts:fixture",
+   "type": "function",
+   "name": "fixture",
+   "filePath": "packages/cli/src/approve.test.ts",
+   "lineRange": [
+    12,
+    22
+   ],
+   "summary": "fixture(t) \u2014 function in approve.test.ts, lines 12-22.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/approve.ts",
+   "type": "file",
+   "name": "approve.ts",
+   "filePath": "packages/cli/src/approve.ts",
+   "summary": "approve.ts \u2014 typescript code, 82 lines, 4 functions, 0 classes, 2 exports, 3 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/approve.ts:runApproveCommand",
+   "type": "function",
+   "name": "runApproveCommand",
+   "filePath": "packages/cli/src/approve.ts",
+   "lineRange": [
+    19,
+    34
+   ],
+   "summary": "runApproveCommand(argv, io, options) \u2014 function in approve.ts, lines 19-34.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/approve.ts:runApprovalsCommand",
+   "type": "function",
+   "name": "runApprovalsCommand",
+   "filePath": "packages/cli/src/approve.ts",
+   "lineRange": [
+    36,
+    54
+   ],
+   "summary": "runApprovalsCommand(argv, io, options) \u2014 function in approve.ts, lines 36-54.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/approve.ts:parseArgs",
+   "type": "function",
+   "name": "parseArgs",
+   "filePath": "packages/cli/src/approve.ts",
+   "lineRange": [
+    56,
+    80
+   ],
+   "summary": "parseArgs(argv, approve, env) \u2014 function in approve.ts, lines 56-80.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/approve.ts:message",
+   "type": "function",
+   "name": "message",
+   "filePath": "packages/cli/src/approve.ts",
+   "lineRange": [
+    82,
+    82
+   ],
+   "summary": "message(error) \u2014 function in approve.ts, lines 82-82.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/policy/src/approval-state.test.ts",
+   "type": "file",
+   "name": "approval-state.test.ts",
+   "filePath": "packages/policy/src/approval-state.test.ts",
+   "summary": "approval-state.test.ts \u2014 typescript code, 765 lines, 8 functions, 0 classes, 0 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "function:packages/policy/src/approval-state.test.ts:recording",
+   "type": "function",
+   "name": "recording",
+   "filePath": "packages/policy/src/approval-state.test.ts",
+   "lineRange": [
+    674,
+    681
+   ],
+   "summary": "recording(commands) \u2014 function in approval-state.test.ts, lines 674-681.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/policy/src/approval-state.test.ts:pinOperator",
+   "type": "function",
+   "name": "pinOperator",
+   "filePath": "packages/policy/src/approval-state.test.ts",
+   "lineRange": [
+    686,
+    697
+   ],
+   "summary": "pinOperator(t) \u2014 function in approval-state.test.ts, lines 686-697.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/policy/src/approval-state.test.ts:verdictFor",
+   "type": "function",
+   "name": "verdictFor",
+   "filePath": "packages/policy/src/approval-state.test.ts",
+   "lineRange": [
+    715,
+    723
+   ],
+   "summary": "verdictFor(dir, principal, rights) \u2014 function in approval-state.test.ts, lines 715-723.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/policy/src/approval-state.test.ts:trustedEntries",
+   "type": "function",
+   "name": "trustedEntries",
+   "filePath": "packages/policy/src/approval-state.test.ts",
+   "lineRange": [
+    725,
+    733
+   ],
+   "summary": "trustedEntries() \u2014 function in approval-state.test.ts, lines 725-733.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/policy/src/approval-state.test.ts:code",
+   "type": "function",
+   "name": "code",
+   "filePath": "packages/policy/src/approval-state.test.ts",
+   "lineRange": [
+    735,
+    737
+   ],
+   "summary": "code(verdict) \u2014 function in approval-state.test.ts, lines 735-737.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/policy/src/approval-state.test.ts:icacls",
+   "type": "function",
+   "name": "icacls",
+   "filePath": "packages/policy/src/approval-state.test.ts",
+   "lineRange": [
+    739,
+    745
+   ],
+   "summary": "icacls(target, args) \u2014 function in approval-state.test.ts, lines 739-745.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/policy/src/approval-state.test.ts:temporary",
+   "type": "function",
+   "name": "temporary",
+   "filePath": "packages/policy/src/approval-state.test.ts",
+   "lineRange": [
+    747,
+    754
+   ],
+   "summary": "temporary(t, name) \u2014 function in approval-state.test.ts, lines 747-754.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/policy/src/approval-state.test.ts:stat",
+   "type": "function",
+   "name": "stat",
+   "filePath": "packages/policy/src/approval-state.test.ts",
+   "lineRange": [
+    756,
+    766
+   ],
+   "summary": "stat(overrides) \u2014 function in approval-state.test.ts, lines 756-766.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/policy/src/approvals.test.ts",
+   "type": "file",
+   "name": "approvals.test.ts",
+   "filePath": "packages/policy/src/approvals.test.ts",
+   "summary": "approvals.test.ts \u2014 typescript code, 111 lines, 2 functions, 0 classes, 0 exports, 3 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/policy/src/approvals.test.ts:policyCall",
+   "type": "function",
+   "name": "policyCall",
+   "filePath": "packages/policy/src/approvals.test.ts",
+   "lineRange": [
+    91,
+    99
+   ],
+   "summary": "policyCall() \u2014 function in approvals.test.ts, lines 91-99.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/policy/src/approvals.test.ts:heldCall",
+   "type": "function",
+   "name": "heldCall",
+   "filePath": "packages/policy/src/approvals.test.ts",
+   "lineRange": [
+    101,
+    111
+   ],
+   "summary": "heldCall() \u2014 function in approvals.test.ts, lines 101-111.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/policy/src/approvals.ts",
+   "type": "file",
+   "name": "approvals.ts",
+   "filePath": "packages/policy/src/approvals.ts",
+   "summary": "approvals.ts \u2014 typescript code, 971 lines, 27 functions, 3 classes, 9 exports, 3 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "function:packages/policy/src/approvals.ts:notifyChannels",
+   "type": "function",
+   "name": "notifyChannels",
+   "filePath": "packages/policy/src/approvals.ts",
+   "lineRange": [
+    378,
+    385
+   ],
+   "summary": "notifyChannels(values) \u2014 function in approvals.ts, lines 378-385.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/policy/src/approvals.ts:sameCall",
+   "type": "function",
+   "name": "sameCall",
+   "filePath": "packages/policy/src/approvals.ts",
+   "lineRange": [
+    387,
+    389
+   ],
+   "summary": "sameCall(held, call) \u2014 function in approvals.ts, lines 387-389.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/policy/src/approvals.ts:savePending",
+   "type": "function",
+   "name": "savePending",
+   "filePath": "packages/policy/src/approvals.ts",
+   "lineRange": [
+    403,
+    405
+   ],
+   "summary": "savePending(dir, records, fs) \u2014 function in approvals.ts, lines 403-405.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/policy/src/approvals.ts:loadPending",
+   "type": "function",
+   "name": "loadPending",
+   "filePath": "packages/policy/src/approvals.ts",
+   "lineRange": [
+    407,
+    427
+   ],
+   "summary": "loadPending(dir, fs, acknowledge) \u2014 function in approvals.ts, lines 407-427.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/policy/src/approvals.ts:writeDecision",
+   "type": "function",
+   "name": "writeDecision",
+   "filePath": "packages/policy/src/approvals.ts",
+   "lineRange": [
+    429,
+    443
+   ],
+   "summary": "writeDecision(dir, holdId, decision, fs\u2026) \u2014 function in approvals.ts, lines 429-443.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/policy/src/approvals.ts:stateCheck",
+   "type": "function",
+   "name": "stateCheck",
+   "filePath": "packages/policy/src/approvals.ts",
+   "lineRange": [
+    445,
+    447
+   ],
+   "summary": "stateCheck(fs, acknowledge) \u2014 function in approvals.ts, lines 445-447.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/policy/src/approvals.ts:atomicWrite",
+   "type": "function",
+   "name": "atomicWrite",
+   "filePath": "packages/policy/src/approvals.ts",
+   "lineRange": [
+    449,
+    478
+   ],
+   "summary": "atomicWrite(dir, name, value, check) \u2014 function in approvals.ts, lines 449-478.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/policy/src/approvals.ts:isObject",
+   "type": "function",
+   "name": "isObject",
+   "filePath": "packages/policy/src/approvals.ts",
+   "lineRange": [
+    480,
+    482
+   ],
+   "summary": "isObject(value) \u2014 function in approvals.ts, lines 480-482.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/policy/src/approvals.ts:validateDecision",
+   "type": "function",
+   "name": "validateDecision",
+   "filePath": "packages/policy/src/approvals.ts",
+   "lineRange": [
+    484,
+    494
+   ],
+   "summary": "validateDecision(value) \u2014 function in approvals.ts, lines 484-494.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/policy/src/approvals.ts:secureDirectory",
+   "type": "function",
+   "name": "secureDirectory",
+   "filePath": "packages/policy/src/approvals.ts",
+   "lineRange": [
+    496,
+    512
+   ],
+   "summary": "secureDirectory(dir, check) \u2014 function in approvals.ts, lines 496-512.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/policy/src/approvals.ts:assertPrivateDirectory",
+   "type": "function",
+   "name": "assertPrivateDirectory",
+   "filePath": "packages/policy/src/approvals.ts",
+   "lineRange": [
+    514,
+    529
+   ],
+   "summary": "assertPrivateDirectory(dir, check, harden) \u2014 function in approvals.ts, lines 514-529.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/policy/src/approvals.ts:inspectApprovalStateDirectory",
+   "type": "function",
+   "name": "inspectApprovalStateDirectory",
+   "filePath": "packages/policy/src/approvals.ts",
+   "lineRange": [
+    540,
+    554
+   ],
+   "summary": "inspectApprovalStateDirectory(dir, options) \u2014 function in approvals.ts, lines 540-554.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/policy/src/approvals.ts:classifyPosixApprovalState",
+   "type": "function",
+   "name": "classifyPosixApprovalState",
+   "filePath": "packages/policy/src/approvals.ts",
+   "lineRange": [
+    561,
+    581
+   ],
+   "summary": "classifyPosixApprovalState(stat, effectiveUid) \u2014 function in approvals.ts, lines 561-581.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/policy/src/approvals.ts:approvalStateVerdict",
+   "type": "function",
+   "name": "approvalStateVerdict",
+   "filePath": "packages/policy/src/approvals.ts",
+   "lineRange": [
+    590,
+    611
+   ],
+   "summary": "approvalStateVerdict(dir, check, harden) \u2014 function in approvals.ts, lines 590-611.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/policy/src/approvals.ts:verifyWindowsApprovalState",
+   "type": "function",
+   "name": "verifyWindowsApprovalState",
+   "filePath": "packages/policy/src/approvals.ts",
+   "lineRange": [
+    635,
+    664
+   ],
+   "summary": "verifyWindowsApprovalState(dir, input) \u2014 function in approvals.ts, lines 635-664.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/policy/src/approvals.ts:daclMemo",
+   "type": "function",
+   "name": "daclMemo",
+   "filePath": "packages/policy/src/approvals.ts",
+   "lineRange": [
+    666,
+    674
+   ],
+   "summary": "daclMemo(reader) \u2014 function in approvals.ts, lines 666-674.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/policy/src/approvals.ts:remember",
+   "type": "function",
+   "name": "remember",
+   "filePath": "packages/policy/src/approvals.ts",
+   "lineRange": [
+    676,
+    687
+   ],
+   "summary": "remember(memo, key, verdict) \u2014 function in approvals.ts, lines 676-687.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/policy/src/approvals.ts:unverifiable",
+   "type": "function",
+   "name": "unverifiable",
+   "filePath": "packages/policy/src/approvals.ts",
+   "lineRange": [
+    689,
+    694
+   ],
+   "summary": "unverifiable(code, hardened) \u2014 function in approvals.ts, lines 689-694.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/policy/src/approvals.ts:operatorPrincipals",
+   "type": "function",
+   "name": "operatorPrincipals",
+   "filePath": "packages/policy/src/approvals.ts",
+   "lineRange": [
+    696,
+    703
+   ],
+   "summary": "operatorPrincipals() \u2014 function in approvals.ts, lines 696-703.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/policy/src/approvals.ts:classifyWindowsAcl",
+   "type": "function",
+   "name": "classifyWindowsAcl",
+   "filePath": "packages/policy/src/approvals.ts",
+   "lineRange": [
+    705,
+    758
+   ],
+   "summary": "classifyWindowsAcl(entries, operator) \u2014 function in approvals.ts, lines 705-758.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/policy/src/approvals.ts:writesAccess",
+   "type": "function",
+   "name": "writesAccess",
+   "filePath": "packages/policy/src/approvals.ts",
+   "lineRange": [
+    813,
+    820
+   ],
+   "summary": "writesAccess(rights) \u2014 function in approvals.ts, lines 813-820.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/policy/src/approvals.ts:matchesAny",
+   "type": "function",
+   "name": "matchesAny",
+   "filePath": "packages/policy/src/approvals.ts",
+   "lineRange": [
+    822,
+    833
+   ],
+   "summary": "matchesAny(principal, names, extra) \u2014 function in approvals.ts, lines 822-833.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/policy/src/approvals.ts:narrowWindowsAcl",
+   "type": "function",
+   "name": "narrowWindowsAcl",
+   "filePath": "packages/policy/src/approvals.ts",
+   "lineRange": [
+    838,
+    867
+   ],
+   "summary": "narrowWindowsAcl(dir, entries, run) \u2014 function in approvals.ts, lines 838-867.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/policy/src/approvals.ts:aclToken",
+   "type": "function",
+   "name": "aclToken",
+   "filePath": "packages/policy/src/approvals.ts",
+   "lineRange": [
+    869,
+    874
+   ],
+   "summary": "aclToken(principal) \u2014 function in approvals.ts, lines 869-874.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/policy/src/approvals.ts:runIcacls",
+   "type": "function",
+   "name": "runIcacls",
+   "filePath": "packages/policy/src/approvals.ts",
+   "lineRange": [
+    876,
+    888
+   ],
+   "summary": "runIcacls(dir, args) \u2014 function in approvals.ts, lines 876-888.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/policy/src/approvals.ts:readWindowsAcl",
+   "type": "function",
+   "name": "readWindowsAcl",
+   "filePath": "packages/policy/src/approvals.ts",
+   "lineRange": [
+    899,
+    922
+   ],
+   "summary": "readWindowsAcl(dir) \u2014 function in approvals.ts, lines 899-922.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/policy/src/approvals.ts:assertPrivateFile",
+   "type": "function",
+   "name": "assertPrivateFile",
+   "filePath": "packages/policy/src/approvals.ts",
+   "lineRange": [
+    924,
+    944
+   ],
+   "summary": "assertPrivateFile(path, check) \u2014 function in approvals.ts, lines 924-944.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:packages/policy/src/approvals.ts:ApprovalBroker",
+   "type": "class",
+   "name": "ApprovalBroker",
+   "filePath": "packages/policy/src/approvals.ts",
+   "lineRange": [
+    167,
+    376
+   ],
+   "summary": "ApprovalBroker \u2014 class in approvals.ts, lines 167-376, methods: register, decide, cancel, expire, get, list.",
+   "tags": [
+    "typescript",
+    "class",
+    "exported"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "class:packages/policy/src/approvals.ts:ApprovalStateInUseError",
+   "type": "class",
+   "name": "ApprovalStateInUseError",
+   "filePath": "packages/policy/src/approvals.ts",
+   "lineRange": [
+    946,
+    952
+   ],
+   "summary": "ApprovalStateInUseError \u2014 class in approvals.ts, lines 946-952.",
+   "tags": [
+    "typescript",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:packages/policy/src/approvals.ts:ApprovalStateUnsafeError",
+   "type": "class",
+   "name": "ApprovalStateUnsafeError",
+   "filePath": "packages/policy/src/approvals.ts",
+   "lineRange": [
+    954,
+    971
+   ],
+   "summary": "ApprovalStateUnsafeError \u2014 class in approvals.ts, lines 954-971.",
+   "tags": [
+    "typescript",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/policy/src/attribution.test.ts",
+   "type": "file",
+   "name": "attribution.test.ts",
+   "filePath": "packages/policy/src/attribution.test.ts",
+   "summary": "attribution.test.ts \u2014 typescript code, 120 lines, 1 functions, 0 classes, 0 exports, 4 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/policy/src/attribution.test.ts:call",
+   "type": "function",
+   "name": "call",
+   "filePath": "packages/policy/src/attribution.test.ts",
+   "lineRange": [
+    10,
+    17
+   ],
+   "summary": "call(over) \u2014 function in attribution.test.ts, lines 10-17.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/policy/src/channels/cli.test.ts",
+   "type": "file",
+   "name": "cli.test.ts",
+   "filePath": "packages/policy/src/channels/cli.test.ts",
+   "summary": "cli.test.ts \u2014 typescript code, 150 lines, 0 functions, 0 classes, 0 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/policy/src/channels/cli.ts",
+   "type": "file",
+   "name": "cli.ts",
+   "filePath": "packages/policy/src/channels/cli.ts",
+   "summary": "cli.ts \u2014 typescript code, 88 lines, 6 functions, 0 classes, 4 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/policy/src/channels/cli.ts:redactSecrets",
+   "type": "function",
+   "name": "redactSecrets",
+   "filePath": "packages/policy/src/channels/cli.ts",
+   "lineRange": [
+    26,
+    38
+   ],
+   "summary": "redactSecrets(value) \u2014 function in cli.ts, lines 26-38.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/policy/src/channels/cli.ts:renderArgs",
+   "type": "function",
+   "name": "renderArgs",
+   "filePath": "packages/policy/src/channels/cli.ts",
+   "lineRange": [
+    40,
+    45
+   ],
+   "summary": "renderArgs(args) \u2014 function in cli.ts, lines 40-45.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/policy/src/channels/cli.ts:renderHold",
+   "type": "function",
+   "name": "renderHold",
+   "filePath": "packages/policy/src/channels/cli.ts",
+   "lineRange": [
+    47,
+    52
+   ],
+   "summary": "renderHold(call, index, now) \u2014 function in cli.ts, lines 47-52.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/policy/src/channels/cli.ts:renderQueue",
+   "type": "function",
+   "name": "renderQueue",
+   "filePath": "packages/policy/src/channels/cli.ts",
+   "lineRange": [
+    55,
+    59
+   ],
+   "summary": "renderQueue(queue, now) \u2014 function in cli.ts, lines 55-59.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/policy/src/channels/cli.ts:keyToRelease",
+   "type": "function",
+   "name": "keyToRelease",
+   "filePath": "packages/policy/src/channels/cli.ts",
+   "lineRange": [
+    66,
+    70
+   ],
+   "summary": "keyToRelease(key, by) \u2014 function in cli.ts, lines 66-70.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/policy/src/channels/cli.ts:decideKeypress",
+   "type": "function",
+   "name": "decideKeypress",
+   "filePath": "packages/policy/src/channels/cli.ts",
+   "lineRange": [
+    77,
+    88
+   ],
+   "summary": "decideKeypress(queue, view, key, row) \u2014 function in cli.ts, lines 77-88.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/policy/src/decide.ts",
+   "type": "file",
+   "name": "decide.ts",
+   "filePath": "packages/policy/src/decide.ts",
+   "summary": "decide.ts \u2014 typescript code, 203 lines, 7 functions, 0 classes, 1 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/policy/src/decide.ts:matchesOne",
+   "type": "function",
+   "name": "matchesOne",
+   "filePath": "packages/policy/src/decide.ts",
+   "lineRange": [
+    69,
+    97
+   ],
+   "summary": "matchesOne(rule, call) \u2014 function in decide.ts, lines 69-97.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/policy/src/decide.ts:radiusMatches",
+   "type": "function",
+   "name": "radiusMatches",
+   "filePath": "packages/policy/src/decide.ts",
+   "lineRange": [
+    105,
+    112
+   ],
+   "summary": "radiusMatches(rawValue, radius) \u2014 function in decide.ts, lines 105-112.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/policy/src/decide.ts:valueMatches",
+   "type": "function",
+   "name": "valueMatches",
+   "filePath": "packages/policy/src/decide.ts",
+   "lineRange": [
+    114,
+    118
+   ],
+   "summary": "valueMatches(expected, actual) \u2014 function in decide.ts, lines 114-118.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/policy/src/decide.ts:ruleOptsIntoUnknown",
+   "type": "function",
+   "name": "ruleOptsIntoUnknown",
+   "filePath": "packages/policy/src/decide.ts",
+   "lineRange": [
+    126,
+    128
+   ],
+   "summary": "ruleOptsIntoUnknown(rule) \u2014 function in decide.ts, lines 126-128.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/policy/src/decide.ts:classOptsIntoUnknown",
+   "type": "function",
+   "name": "classOptsIntoUnknown",
+   "filePath": "packages/policy/src/decide.ts",
+   "lineRange": [
+    130,
+    135
+   ],
+   "summary": "classOptsIntoUnknown(rawValue) \u2014 function in decide.ts, lines 130-135.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/policy/src/decide.ts:matchesExceptClass",
+   "type": "function",
+   "name": "matchesExceptClass",
+   "filePath": "packages/policy/src/decide.ts",
+   "lineRange": [
+    142,
+    166
+   ],
+   "summary": "matchesExceptClass(rule, call) \u2014 function in decide.ts, lines 142-166.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/policy/src/decide.ts:decide",
+   "type": "function",
+   "name": "decide",
+   "filePath": "packages/policy/src/decide.ts",
+   "lineRange": [
+    174,
+    203
+   ],
+   "summary": "decide(policy, call) \u2014 function in decide.ts, lines 174-203.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/policy/src/digest.ts",
+   "type": "file",
+   "name": "digest.ts",
+   "filePath": "packages/policy/src/digest.ts",
+   "summary": "digest.ts \u2014 typescript code, 20 lines, 1 functions, 0 classes, 1 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/policy/src/digest.ts:policyDigest",
+   "type": "function",
+   "name": "policyDigest",
+   "filePath": "packages/policy/src/digest.ts",
+   "lineRange": [
+    19,
+    20
+   ],
+   "summary": "policyDigest(policy) \u2014 function in digest.ts, lines 19-20.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/policy/src/grammar.ts",
+   "type": "file",
+   "name": "grammar.ts",
+   "filePath": "packages/policy/src/grammar.ts",
+   "summary": "grammar.ts \u2014 typescript code, 57 lines, 1 functions, 0 classes, 7 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/policy/src/grammar.ts:isMatchKey",
+   "type": "function",
+   "name": "isMatchKey",
+   "filePath": "packages/policy/src/grammar.ts",
+   "lineRange": [
+    55,
+    57
+   ],
+   "summary": "isMatchKey(name) \u2014 function in grammar.ts, lines 55-57.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/policy/src/hold.test.ts",
+   "type": "file",
+   "name": "hold.test.ts",
+   "filePath": "packages/policy/src/hold.test.ts",
+   "summary": "hold.test.ts \u2014 typescript code, 151 lines, 1 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/policy/src/hold.test.ts:held",
+   "type": "function",
+   "name": "held",
+   "filePath": "packages/policy/src/hold.test.ts",
+   "lineRange": [
+    21,
+    27
+   ],
+   "summary": "held(over) \u2014 function in hold.test.ts, lines 21-27.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/policy/src/hold.ts",
+   "type": "file",
+   "name": "hold.ts",
+   "filePath": "packages/policy/src/hold.ts",
+   "summary": "hold.ts \u2014 typescript code, 202 lines, 1 functions, 1 classes, 2 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/policy/src/hold.ts:holdErrorMessage",
+   "type": "function",
+   "name": "holdErrorMessage",
+   "filePath": "packages/policy/src/hold.ts",
+   "lineRange": [
+    56,
+    89
+   ],
+   "summary": "holdErrorMessage(call, outcome, decision) \u2014 function in hold.ts, lines 56-89.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:packages/policy/src/hold.ts:HoldQueue",
+   "type": "class",
+   "name": "HoldQueue",
+   "filePath": "packages/policy/src/hold.ts",
+   "lineRange": [
+    99,
+    202
+   ],
+   "summary": "HoldQueue \u2014 class in hold.ts, lines 99-202, methods: hold, cancel, resolve, list, close, finish.",
+   "tags": [
+    "typescript",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  }
+ ],
+ "edges": [
+  {
+   "source": "file:packages/agent-policy/src/check.test.ts",
+   "target": "function:packages/agent-policy/src/check.test.ts:grant",
+   "type": "contains",
+   "direction": "forward",
+   "description": "check.test.ts defines grant",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/agent-policy/src/check.test.ts",
+   "target": "function:packages/agent-policy/src/check.test.ts:request",
+   "type": "contains",
+   "direction": "forward",
+   "description": "check.test.ts defines request",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/agent-policy/src/check.test.ts",
+   "target": "function:packages/agent-policy/src/check.test.ts:deps",
+   "type": "contains",
+   "direction": "forward",
+   "description": "check.test.ts defines deps",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/agent-policy/src/check.test.ts:request",
+   "target": "function:packages/agent-policy/src/check.test.ts:grant",
+   "type": "calls",
+   "direction": "forward",
+   "description": "request calls grant",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/agent-policy/src/check.ts",
+   "target": "function:packages/agent-policy/src/check.ts:targetProblem",
+   "type": "contains",
+   "direction": "forward",
+   "description": "check.ts defines targetProblem",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/agent-policy/src/check.ts",
+   "target": "function:packages/agent-policy/src/check.ts:requestProblem",
+   "type": "contains",
+   "direction": "forward",
+   "description": "check.ts defines requestProblem",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/agent-policy/src/check.ts",
+   "target": "function:packages/agent-policy/src/check.ts:identityProblem",
+   "type": "contains",
+   "direction": "forward",
+   "description": "check.ts defines identityProblem",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/agent-policy/src/check.ts",
+   "target": "function:packages/agent-policy/src/check.ts:checkPolicy",
+   "type": "contains",
+   "direction": "forward",
+   "description": "check.ts defines checkPolicy",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/agent-policy/src/check.ts",
+   "target": "function:packages/agent-policy/src/check.ts:checkPolicy",
+   "type": "exports",
+   "direction": "forward",
+   "description": "check.ts exports checkPolicy",
+   "weight": 0.7
+  },
+  {
+   "source": "function:packages/agent-policy/src/check.ts:requestProblem",
+   "target": "function:packages/agent-policy/src/check.ts:targetProblem",
+   "type": "calls",
+   "direction": "forward",
+   "description": "requestProblem calls targetProblem",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/agent-policy/src/check.ts:checkPolicy",
+   "target": "function:packages/agent-policy/src/check.ts:requestProblem",
+   "type": "calls",
+   "direction": "forward",
+   "description": "checkPolicy calls requestProblem",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/agent-policy/src/check.ts:checkPolicy",
+   "target": "function:packages/agent-policy/src/check.ts:identityProblem",
+   "type": "calls",
+   "direction": "forward",
+   "description": "checkPolicy calls identityProblem",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/agent-policy/src/evaluate.ts",
+   "target": "function:packages/agent-policy/src/evaluate.ts:list",
+   "type": "contains",
+   "direction": "forward",
+   "description": "evaluate.ts defines list",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/agent-policy/src/evaluate.ts",
+   "target": "function:packages/agent-policy/src/evaluate.ts:classMatches",
+   "type": "contains",
+   "direction": "forward",
+   "description": "evaluate.ts defines classMatches",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/agent-policy/src/evaluate.ts",
+   "target": "function:packages/agent-policy/src/evaluate.ts:ruleMatches",
+   "type": "contains",
+   "direction": "forward",
+   "description": "evaluate.ts defines ruleMatches",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/agent-policy/src/evaluate.ts",
+   "target": "function:packages/agent-policy/src/evaluate.ts:evaluateAgentPolicy",
+   "type": "contains",
+   "direction": "forward",
+   "description": "evaluate.ts defines evaluateAgentPolicy",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/agent-policy/src/evaluate.ts",
+   "target": "function:packages/agent-policy/src/evaluate.ts:evaluateAgentPolicy",
+   "type": "exports",
+   "direction": "forward",
+   "description": "evaluate.ts exports evaluateAgentPolicy",
+   "weight": 0.7
+  },
+  {
+   "source": "function:packages/agent-policy/src/evaluate.ts:classMatches",
+   "target": "function:packages/agent-policy/src/evaluate.ts:list",
+   "type": "calls",
+   "direction": "forward",
+   "description": "classMatches calls list",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/agent-policy/src/evaluate.ts:ruleMatches",
+   "target": "function:packages/agent-policy/src/evaluate.ts:classMatches",
+   "type": "calls",
+   "direction": "forward",
+   "description": "ruleMatches calls classMatches",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/agent-policy/src/evaluate.ts:ruleMatches",
+   "target": "function:packages/agent-policy/src/evaluate.ts:list",
+   "type": "calls",
+   "direction": "forward",
+   "description": "ruleMatches calls list",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/agent-policy/src/evaluate.ts:evaluateAgentPolicy",
+   "target": "function:packages/agent-policy/src/evaluate.ts:ruleMatches",
+   "type": "calls",
+   "direction": "forward",
+   "description": "evaluateAgentPolicy calls ruleMatches",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/agent-policy/src/grammar.ts",
+   "target": "function:packages/agent-policy/src/grammar.ts:isScope",
+   "type": "contains",
+   "direction": "forward",
+   "description": "grammar.ts defines isScope",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/agent-policy/src/grammar.ts",
+   "target": "function:packages/agent-policy/src/grammar.ts:isScope",
+   "type": "exports",
+   "direction": "forward",
+   "description": "grammar.ts exports isScope",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/agent-policy/src/grammar.ts",
+   "target": "function:packages/agent-policy/src/grammar.ts:isAgentMatchKey",
+   "type": "contains",
+   "direction": "forward",
+   "description": "grammar.ts defines isAgentMatchKey",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/agent-policy/src/grammar.ts",
+   "target": "function:packages/agent-policy/src/grammar.ts:isAgentMatchKey",
+   "type": "exports",
+   "direction": "forward",
+   "description": "grammar.ts exports isAgentMatchKey",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/agent-policy/src/load.test.ts",
+   "target": "function:packages/agent-policy/src/load.test.ts:minimal",
+   "type": "contains",
+   "direction": "forward",
+   "description": "load.test.ts defines minimal",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/agent-policy/src/load.test.ts",
+   "target": "function:packages/agent-policy/src/load.test.ts:errorsOf",
+   "type": "contains",
+   "direction": "forward",
+   "description": "load.test.ts defines errorsOf",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/agent-policy/src/load.ts",
+   "target": "function:packages/agent-policy/src/load.ts:isObject",
+   "type": "contains",
+   "direction": "forward",
+   "description": "load.ts defines isObject",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/agent-policy/src/load.ts",
+   "target": "function:packages/agent-policy/src/load.ts:unknownKeys",
+   "type": "contains",
+   "direction": "forward",
+   "description": "load.ts defines unknownKeys",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/agent-policy/src/load.ts",
+   "target": "function:packages/agent-policy/src/load.ts:validateAgentPolicyFile",
+   "type": "contains",
+   "direction": "forward",
+   "description": "load.ts defines validateAgentPolicyFile",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/agent-policy/src/load.ts",
+   "target": "function:packages/agent-policy/src/load.ts:validateAgentPolicyFile",
+   "type": "exports",
+   "direction": "forward",
+   "description": "load.ts exports validateAgentPolicyFile",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/agent-policy/src/load.ts",
+   "target": "function:packages/agent-policy/src/load.ts:validateMatch",
+   "type": "contains",
+   "direction": "forward",
+   "description": "load.ts defines validateMatch",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/agent-policy/src/load.ts",
+   "target": "function:packages/agent-policy/src/load.ts:loadAgentPolicy",
+   "type": "contains",
+   "direction": "forward",
+   "description": "load.ts defines loadAgentPolicy",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/agent-policy/src/load.ts",
+   "target": "function:packages/agent-policy/src/load.ts:loadAgentPolicy",
+   "type": "exports",
+   "direction": "forward",
+   "description": "load.ts exports loadAgentPolicy",
+   "weight": 0.7
+  },
+  {
+   "source": "function:packages/agent-policy/src/load.ts:validateAgentPolicyFile",
+   "target": "function:packages/agent-policy/src/load.ts:isObject",
+   "type": "calls",
+   "direction": "forward",
+   "description": "validateAgentPolicyFile calls isObject",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/agent-policy/src/load.ts:validateAgentPolicyFile",
+   "target": "function:packages/agent-policy/src/load.ts:unknownKeys",
+   "type": "calls",
+   "direction": "forward",
+   "description": "validateAgentPolicyFile calls unknownKeys",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/agent-policy/src/load.ts:validateAgentPolicyFile",
+   "target": "function:packages/agent-policy/src/load.ts:validateMatch",
+   "type": "calls",
+   "direction": "forward",
+   "description": "validateAgentPolicyFile calls validateMatch",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/agent-policy/src/load.ts:loadAgentPolicy",
+   "target": "function:packages/agent-policy/src/load.ts:validateAgentPolicyFile",
+   "type": "calls",
+   "direction": "forward",
+   "description": "loadAgentPolicy calls validateAgentPolicyFile",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/agent-policy/src/scaffold.test.ts",
+   "target": "function:packages/agent-policy/src/scaffold.test.ts:withDir",
+   "type": "contains",
+   "direction": "forward",
+   "description": "scaffold.test.ts defines withDir",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/agent-policy/src/scaffold.ts",
+   "target": "function:packages/agent-policy/src/scaffold.ts:optionsProblem",
+   "type": "contains",
+   "direction": "forward",
+   "description": "scaffold.ts defines optionsProblem",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/agent-policy/src/scaffold.ts",
+   "target": "function:packages/agent-policy/src/scaffold.ts:defaultAgentPolicy",
+   "type": "contains",
+   "direction": "forward",
+   "description": "scaffold.ts defines defaultAgentPolicy",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/agent-policy/src/scaffold.ts",
+   "target": "function:packages/agent-policy/src/scaffold.ts:defaultAgentPolicy",
+   "type": "exports",
+   "direction": "forward",
+   "description": "scaffold.ts exports defaultAgentPolicy",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/agent-policy/src/scaffold.ts",
+   "target": "function:packages/agent-policy/src/scaffold.ts:sameText",
+   "type": "contains",
+   "direction": "forward",
+   "description": "scaffold.ts defines sameText",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/agent-policy/src/scaffold.ts",
+   "target": "function:packages/agent-policy/src/scaffold.ts:writeDefaultAgentPolicy",
+   "type": "contains",
+   "direction": "forward",
+   "description": "scaffold.ts defines writeDefaultAgentPolicy",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/agent-policy/src/scaffold.ts",
+   "target": "function:packages/agent-policy/src/scaffold.ts:writeDefaultAgentPolicy",
+   "type": "exports",
+   "direction": "forward",
+   "description": "scaffold.ts exports writeDefaultAgentPolicy",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/agent-policy/src/scaffold.ts",
+   "target": "class:packages/agent-policy/src/scaffold.ts:AgentPolicyScaffoldError",
+   "type": "contains",
+   "direction": "forward",
+   "description": "scaffold.ts defines class AgentPolicyScaffoldError",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/agent-policy/src/scaffold.ts:defaultAgentPolicy",
+   "target": "function:packages/agent-policy/src/scaffold.ts:optionsProblem",
+   "type": "calls",
+   "direction": "forward",
+   "description": "defaultAgentPolicy calls optionsProblem",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/agent-policy/src/scaffold.ts:writeDefaultAgentPolicy",
+   "target": "function:packages/agent-policy/src/scaffold.ts:defaultAgentPolicy",
+   "type": "calls",
+   "direction": "forward",
+   "description": "writeDefaultAgentPolicy calls defaultAgentPolicy",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/agent-policy/src/scaffold.ts:writeDefaultAgentPolicy",
+   "target": "function:packages/agent-policy/src/scaffold.ts:sameText",
+   "type": "calls",
+   "direction": "forward",
+   "description": "writeDefaultAgentPolicy calls sameText",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/agent-policy/src/spike.test.ts",
+   "target": "class:packages/agent-policy/src/spike.test.ts:FakeFs",
+   "type": "contains",
+   "direction": "forward",
+   "description": "spike.test.ts defines class FakeFs",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/approve.test.ts",
+   "target": "function:packages/cli/src/approve.test.ts:fixture",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approve.test.ts defines fixture",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/approve.ts",
+   "target": "function:packages/cli/src/approve.ts:runApproveCommand",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approve.ts defines runApproveCommand",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/approve.ts",
+   "target": "function:packages/cli/src/approve.ts:runApproveCommand",
+   "type": "exports",
+   "direction": "forward",
+   "description": "approve.ts exports runApproveCommand",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/approve.ts",
+   "target": "function:packages/cli/src/approve.ts:runApprovalsCommand",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approve.ts defines runApprovalsCommand",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/approve.ts",
+   "target": "function:packages/cli/src/approve.ts:runApprovalsCommand",
+   "type": "exports",
+   "direction": "forward",
+   "description": "approve.ts exports runApprovalsCommand",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/approve.ts",
+   "target": "function:packages/cli/src/approve.ts:parseArgs",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approve.ts defines parseArgs",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/approve.ts",
+   "target": "function:packages/cli/src/approve.ts:message",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approve.ts defines message",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/cli/src/approve.ts:runApproveCommand",
+   "target": "function:packages/cli/src/approve.ts:parseArgs",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runApproveCommand calls parseArgs",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/approve.ts:runApproveCommand",
+   "target": "function:packages/cli/src/approve.ts:message",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runApproveCommand calls message",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/approve.ts:runApprovalsCommand",
+   "target": "function:packages/cli/src/approve.ts:parseArgs",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runApprovalsCommand calls parseArgs",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/approve.ts:runApprovalsCommand",
+   "target": "function:packages/cli/src/approve.ts:message",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runApprovalsCommand calls message",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/policy/src/approval-state.test.ts",
+   "target": "function:packages/policy/src/approval-state.test.ts:recording",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approval-state.test.ts defines recording",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/policy/src/approval-state.test.ts",
+   "target": "function:packages/policy/src/approval-state.test.ts:pinOperator",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approval-state.test.ts defines pinOperator",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/policy/src/approval-state.test.ts",
+   "target": "function:packages/policy/src/approval-state.test.ts:verdictFor",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approval-state.test.ts defines verdictFor",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/policy/src/approval-state.test.ts",
+   "target": "function:packages/policy/src/approval-state.test.ts:trustedEntries",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approval-state.test.ts defines trustedEntries",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/policy/src/approval-state.test.ts",
+   "target": "function:packages/policy/src/approval-state.test.ts:code",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approval-state.test.ts defines code",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/policy/src/approval-state.test.ts",
+   "target": "function:packages/policy/src/approval-state.test.ts:icacls",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approval-state.test.ts defines icacls",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/policy/src/approval-state.test.ts",
+   "target": "function:packages/policy/src/approval-state.test.ts:temporary",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approval-state.test.ts defines temporary",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/policy/src/approval-state.test.ts",
+   "target": "function:packages/policy/src/approval-state.test.ts:stat",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approval-state.test.ts defines stat",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/policy/src/approvals.test.ts",
+   "target": "function:packages/policy/src/approvals.test.ts:policyCall",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approvals.test.ts defines policyCall",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/policy/src/approvals.test.ts",
+   "target": "function:packages/policy/src/approvals.test.ts:heldCall",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approvals.test.ts defines heldCall",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/policy/src/approvals.ts",
+   "target": "function:packages/policy/src/approvals.ts:notifyChannels",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approvals.ts defines notifyChannels",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/policy/src/approvals.ts",
+   "target": "function:packages/policy/src/approvals.ts:sameCall",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approvals.ts defines sameCall",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/policy/src/approvals.ts",
+   "target": "function:packages/policy/src/approvals.ts:savePending",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approvals.ts defines savePending",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/policy/src/approvals.ts",
+   "target": "function:packages/policy/src/approvals.ts:savePending",
+   "type": "exports",
+   "direction": "forward",
+   "description": "approvals.ts exports savePending",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/policy/src/approvals.ts",
+   "target": "function:packages/policy/src/approvals.ts:loadPending",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approvals.ts defines loadPending",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/policy/src/approvals.ts",
+   "target": "function:packages/policy/src/approvals.ts:loadPending",
+   "type": "exports",
+   "direction": "forward",
+   "description": "approvals.ts exports loadPending",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/policy/src/approvals.ts",
+   "target": "function:packages/policy/src/approvals.ts:writeDecision",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approvals.ts defines writeDecision",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/policy/src/approvals.ts",
+   "target": "function:packages/policy/src/approvals.ts:writeDecision",
+   "type": "exports",
+   "direction": "forward",
+   "description": "approvals.ts exports writeDecision",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/policy/src/approvals.ts",
+   "target": "function:packages/policy/src/approvals.ts:stateCheck",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approvals.ts defines stateCheck",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/policy/src/approvals.ts",
+   "target": "function:packages/policy/src/approvals.ts:atomicWrite",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approvals.ts defines atomicWrite",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/policy/src/approvals.ts",
+   "target": "function:packages/policy/src/approvals.ts:isObject",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approvals.ts defines isObject",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/policy/src/approvals.ts",
+   "target": "function:packages/policy/src/approvals.ts:validateDecision",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approvals.ts defines validateDecision",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/policy/src/approvals.ts",
+   "target": "function:packages/policy/src/approvals.ts:secureDirectory",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approvals.ts defines secureDirectory",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/policy/src/approvals.ts",
+   "target": "function:packages/policy/src/approvals.ts:assertPrivateDirectory",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approvals.ts defines assertPrivateDirectory",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/policy/src/approvals.ts",
+   "target": "function:packages/policy/src/approvals.ts:inspectApprovalStateDirectory",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approvals.ts defines inspectApprovalStateDirectory",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/policy/src/approvals.ts",
+   "target": "function:packages/policy/src/approvals.ts:inspectApprovalStateDirectory",
+   "type": "exports",
+   "direction": "forward",
+   "description": "approvals.ts exports inspectApprovalStateDirectory",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/policy/src/approvals.ts",
+   "target": "function:packages/policy/src/approvals.ts:classifyPosixApprovalState",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approvals.ts defines classifyPosixApprovalState",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/policy/src/approvals.ts",
+   "target": "function:packages/policy/src/approvals.ts:classifyPosixApprovalState",
+   "type": "exports",
+   "direction": "forward",
+   "description": "approvals.ts exports classifyPosixApprovalState",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/policy/src/approvals.ts",
+   "target": "function:packages/policy/src/approvals.ts:approvalStateVerdict",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approvals.ts defines approvalStateVerdict",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/policy/src/approvals.ts",
+   "target": "function:packages/policy/src/approvals.ts:verifyWindowsApprovalState",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approvals.ts defines verifyWindowsApprovalState",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/policy/src/approvals.ts",
+   "target": "function:packages/policy/src/approvals.ts:verifyWindowsApprovalState",
+   "type": "exports",
+   "direction": "forward",
+   "description": "approvals.ts exports verifyWindowsApprovalState",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/policy/src/approvals.ts",
+   "target": "function:packages/policy/src/approvals.ts:daclMemo",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approvals.ts defines daclMemo",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/policy/src/approvals.ts",
+   "target": "function:packages/policy/src/approvals.ts:remember",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approvals.ts defines remember",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/policy/src/approvals.ts",
+   "target": "function:packages/policy/src/approvals.ts:unverifiable",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approvals.ts defines unverifiable",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/policy/src/approvals.ts",
+   "target": "function:packages/policy/src/approvals.ts:operatorPrincipals",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approvals.ts defines operatorPrincipals",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/policy/src/approvals.ts",
+   "target": "function:packages/policy/src/approvals.ts:classifyWindowsAcl",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approvals.ts defines classifyWindowsAcl",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/policy/src/approvals.ts",
+   "target": "function:packages/policy/src/approvals.ts:writesAccess",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approvals.ts defines writesAccess",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/policy/src/approvals.ts",
+   "target": "function:packages/policy/src/approvals.ts:matchesAny",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approvals.ts defines matchesAny",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/policy/src/approvals.ts",
+   "target": "function:packages/policy/src/approvals.ts:narrowWindowsAcl",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approvals.ts defines narrowWindowsAcl",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/policy/src/approvals.ts",
+   "target": "function:packages/policy/src/approvals.ts:aclToken",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approvals.ts defines aclToken",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/policy/src/approvals.ts",
+   "target": "function:packages/policy/src/approvals.ts:runIcacls",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approvals.ts defines runIcacls",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/policy/src/approvals.ts",
+   "target": "function:packages/policy/src/approvals.ts:readWindowsAcl",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approvals.ts defines readWindowsAcl",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/policy/src/approvals.ts",
+   "target": "function:packages/policy/src/approvals.ts:assertPrivateFile",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approvals.ts defines assertPrivateFile",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/policy/src/approvals.ts",
+   "target": "class:packages/policy/src/approvals.ts:ApprovalBroker",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approvals.ts defines class ApprovalBroker",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/policy/src/approvals.ts",
+   "target": "class:packages/policy/src/approvals.ts:ApprovalStateInUseError",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approvals.ts defines class ApprovalStateInUseError",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/policy/src/approvals.ts",
+   "target": "class:packages/policy/src/approvals.ts:ApprovalStateUnsafeError",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approvals.ts defines class ApprovalStateUnsafeError",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/policy/src/approvals.ts:savePending",
+   "target": "function:packages/policy/src/approvals.ts:atomicWrite",
+   "type": "calls",
+   "direction": "forward",
+   "description": "savePending calls atomicWrite",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/policy/src/approvals.ts:savePending",
+   "target": "function:packages/policy/src/approvals.ts:stateCheck",
+   "type": "calls",
+   "direction": "forward",
+   "description": "savePending calls stateCheck",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/policy/src/approvals.ts:loadPending",
+   "target": "function:packages/policy/src/approvals.ts:stateCheck",
+   "type": "calls",
+   "direction": "forward",
+   "description": "loadPending calls stateCheck",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/policy/src/approvals.ts:loadPending",
+   "target": "function:packages/policy/src/approvals.ts:assertPrivateDirectory",
+   "type": "calls",
+   "direction": "forward",
+   "description": "loadPending calls assertPrivateDirectory",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/policy/src/approvals.ts:loadPending",
+   "target": "function:packages/policy/src/approvals.ts:assertPrivateFile",
+   "type": "calls",
+   "direction": "forward",
+   "description": "loadPending calls assertPrivateFile",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/policy/src/approvals.ts:loadPending",
+   "target": "function:packages/policy/src/approvals.ts:isObject",
+   "type": "calls",
+   "direction": "forward",
+   "description": "loadPending calls isObject",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/policy/src/approvals.ts:writeDecision",
+   "target": "function:packages/policy/src/approvals.ts:validateDecision",
+   "type": "calls",
+   "direction": "forward",
+   "description": "writeDecision calls validateDecision",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/policy/src/approvals.ts:writeDecision",
+   "target": "function:packages/policy/src/approvals.ts:stateCheck",
+   "type": "calls",
+   "direction": "forward",
+   "description": "writeDecision calls stateCheck",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/policy/src/approvals.ts:writeDecision",
+   "target": "function:packages/policy/src/approvals.ts:loadPending",
+   "type": "calls",
+   "direction": "forward",
+   "description": "writeDecision calls loadPending",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/policy/src/approvals.ts:writeDecision",
+   "target": "function:packages/policy/src/approvals.ts:atomicWrite",
+   "type": "calls",
+   "direction": "forward",
+   "description": "writeDecision calls atomicWrite",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/policy/src/approvals.ts:atomicWrite",
+   "target": "function:packages/policy/src/approvals.ts:secureDirectory",
+   "type": "calls",
+   "direction": "forward",
+   "description": "atomicWrite calls secureDirectory",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/policy/src/approvals.ts:validateDecision",
+   "target": "function:packages/policy/src/approvals.ts:isObject",
+   "type": "calls",
+   "direction": "forward",
+   "description": "validateDecision calls isObject",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/policy/src/approvals.ts:secureDirectory",
+   "target": "function:packages/policy/src/approvals.ts:isObject",
+   "type": "calls",
+   "direction": "forward",
+   "description": "secureDirectory calls isObject",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/policy/src/approvals.ts:secureDirectory",
+   "target": "function:packages/policy/src/approvals.ts:assertPrivateDirectory",
+   "type": "calls",
+   "direction": "forward",
+   "description": "secureDirectory calls assertPrivateDirectory",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/policy/src/approvals.ts:assertPrivateDirectory",
+   "target": "function:packages/policy/src/approvals.ts:approvalStateVerdict",
+   "type": "calls",
+   "direction": "forward",
+   "description": "assertPrivateDirectory calls approvalStateVerdict",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/policy/src/approvals.ts:inspectApprovalStateDirectory",
+   "target": "function:packages/policy/src/approvals.ts:approvalStateVerdict",
+   "type": "calls",
+   "direction": "forward",
+   "description": "inspectApprovalStateDirectory calls approvalStateVerdict",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/policy/src/approvals.ts:approvalStateVerdict",
+   "target": "function:packages/policy/src/approvals.ts:classifyPosixApprovalState",
+   "type": "calls",
+   "direction": "forward",
+   "description": "approvalStateVerdict calls classifyPosixApprovalState",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/policy/src/approvals.ts:approvalStateVerdict",
+   "target": "function:packages/policy/src/approvals.ts:verifyWindowsApprovalState",
+   "type": "calls",
+   "direction": "forward",
+   "description": "approvalStateVerdict calls verifyWindowsApprovalState",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/policy/src/approvals.ts:verifyWindowsApprovalState",
+   "target": "function:packages/policy/src/approvals.ts:daclMemo",
+   "type": "calls",
+   "direction": "forward",
+   "description": "verifyWindowsApprovalState calls daclMemo",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/policy/src/approvals.ts:verifyWindowsApprovalState",
+   "target": "function:packages/policy/src/approvals.ts:unverifiable",
+   "type": "calls",
+   "direction": "forward",
+   "description": "verifyWindowsApprovalState calls unverifiable",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/policy/src/approvals.ts:verifyWindowsApprovalState",
+   "target": "function:packages/policy/src/approvals.ts:classifyWindowsAcl",
+   "type": "calls",
+   "direction": "forward",
+   "description": "verifyWindowsApprovalState calls classifyWindowsAcl",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/policy/src/approvals.ts:verifyWindowsApprovalState",
+   "target": "function:packages/policy/src/approvals.ts:operatorPrincipals",
+   "type": "calls",
+   "direction": "forward",
+   "description": "verifyWindowsApprovalState calls operatorPrincipals",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/policy/src/approvals.ts:verifyWindowsApprovalState",
+   "target": "function:packages/policy/src/approvals.ts:remember",
+   "type": "calls",
+   "direction": "forward",
+   "description": "verifyWindowsApprovalState calls remember",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/policy/src/approvals.ts:verifyWindowsApprovalState",
+   "target": "function:packages/policy/src/approvals.ts:narrowWindowsAcl",
+   "type": "calls",
+   "direction": "forward",
+   "description": "verifyWindowsApprovalState calls narrowWindowsAcl",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/policy/src/approvals.ts:classifyWindowsAcl",
+   "target": "function:packages/policy/src/approvals.ts:matchesAny",
+   "type": "calls",
+   "direction": "forward",
+   "description": "classifyWindowsAcl calls matchesAny",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/policy/src/approvals.ts:classifyWindowsAcl",
+   "target": "function:packages/policy/src/approvals.ts:writesAccess",
+   "type": "calls",
+   "direction": "forward",
+   "description": "classifyWindowsAcl calls writesAccess",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/policy/src/approvals.ts:classifyWindowsAcl",
+   "target": "function:packages/policy/src/approvals.ts:unverifiable",
+   "type": "calls",
+   "direction": "forward",
+   "description": "classifyWindowsAcl calls unverifiable",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/policy/src/approvals.ts:narrowWindowsAcl",
+   "target": "function:packages/policy/src/approvals.ts:operatorPrincipals",
+   "type": "calls",
+   "direction": "forward",
+   "description": "narrowWindowsAcl calls operatorPrincipals",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/policy/src/approvals.ts:narrowWindowsAcl",
+   "target": "function:packages/policy/src/approvals.ts:aclToken",
+   "type": "calls",
+   "direction": "forward",
+   "description": "narrowWindowsAcl calls aclToken",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/policy/src/approvals.ts:narrowWindowsAcl",
+   "target": "function:packages/policy/src/approvals.ts:matchesAny",
+   "type": "calls",
+   "direction": "forward",
+   "description": "narrowWindowsAcl calls matchesAny",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/policy/src/attribution.test.ts",
+   "target": "function:packages/policy/src/attribution.test.ts:call",
+   "type": "contains",
+   "direction": "forward",
+   "description": "attribution.test.ts defines call",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/policy/src/channels/cli.ts",
+   "target": "function:packages/policy/src/channels/cli.ts:redactSecrets",
+   "type": "contains",
+   "direction": "forward",
+   "description": "cli.ts defines redactSecrets",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/policy/src/channels/cli.ts",
+   "target": "function:packages/policy/src/channels/cli.ts:renderArgs",
+   "type": "contains",
+   "direction": "forward",
+   "description": "cli.ts defines renderArgs",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/policy/src/channels/cli.ts",
+   "target": "function:packages/policy/src/channels/cli.ts:renderHold",
+   "type": "contains",
+   "direction": "forward",
+   "description": "cli.ts defines renderHold",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/policy/src/channels/cli.ts",
+   "target": "function:packages/policy/src/channels/cli.ts:renderHold",
+   "type": "exports",
+   "direction": "forward",
+   "description": "cli.ts exports renderHold",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/policy/src/channels/cli.ts",
+   "target": "function:packages/policy/src/channels/cli.ts:renderQueue",
+   "type": "contains",
+   "direction": "forward",
+   "description": "cli.ts defines renderQueue",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/policy/src/channels/cli.ts",
+   "target": "function:packages/policy/src/channels/cli.ts:renderQueue",
+   "type": "exports",
+   "direction": "forward",
+   "description": "cli.ts exports renderQueue",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/policy/src/channels/cli.ts",
+   "target": "function:packages/policy/src/channels/cli.ts:keyToRelease",
+   "type": "contains",
+   "direction": "forward",
+   "description": "cli.ts defines keyToRelease",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/policy/src/channels/cli.ts",
+   "target": "function:packages/policy/src/channels/cli.ts:keyToRelease",
+   "type": "exports",
+   "direction": "forward",
+   "description": "cli.ts exports keyToRelease",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/policy/src/channels/cli.ts",
+   "target": "function:packages/policy/src/channels/cli.ts:decideKeypress",
+   "type": "contains",
+   "direction": "forward",
+   "description": "cli.ts defines decideKeypress",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/policy/src/channels/cli.ts",
+   "target": "function:packages/policy/src/channels/cli.ts:decideKeypress",
+   "type": "exports",
+   "direction": "forward",
+   "description": "cli.ts exports decideKeypress",
+   "weight": 0.7
+  },
+  {
+   "source": "function:packages/policy/src/channels/cli.ts:renderArgs",
+   "target": "function:packages/policy/src/channels/cli.ts:redactSecrets",
+   "type": "calls",
+   "direction": "forward",
+   "description": "renderArgs calls redactSecrets",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/policy/src/channels/cli.ts:renderHold",
+   "target": "function:packages/policy/src/channels/cli.ts:renderArgs",
+   "type": "calls",
+   "direction": "forward",
+   "description": "renderHold calls renderArgs",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/policy/src/channels/cli.ts:renderQueue",
+   "target": "function:packages/policy/src/channels/cli.ts:renderHold",
+   "type": "calls",
+   "direction": "forward",
+   "description": "renderQueue calls renderHold",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/policy/src/channels/cli.ts:decideKeypress",
+   "target": "function:packages/policy/src/channels/cli.ts:keyToRelease",
+   "type": "calls",
+   "direction": "forward",
+   "description": "decideKeypress calls keyToRelease",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/policy/src/decide.ts",
+   "target": "function:packages/policy/src/decide.ts:matchesOne",
+   "type": "contains",
+   "direction": "forward",
+   "description": "decide.ts defines matchesOne",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/policy/src/decide.ts",
+   "target": "function:packages/policy/src/decide.ts:radiusMatches",
+   "type": "contains",
+   "direction": "forward",
+   "description": "decide.ts defines radiusMatches",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/policy/src/decide.ts",
+   "target": "function:packages/policy/src/decide.ts:valueMatches",
+   "type": "contains",
+   "direction": "forward",
+   "description": "decide.ts defines valueMatches",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/policy/src/decide.ts",
+   "target": "function:packages/policy/src/decide.ts:ruleOptsIntoUnknown",
+   "type": "contains",
+   "direction": "forward",
+   "description": "decide.ts defines ruleOptsIntoUnknown",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/policy/src/decide.ts",
+   "target": "function:packages/policy/src/decide.ts:classOptsIntoUnknown",
+   "type": "contains",
+   "direction": "forward",
+   "description": "decide.ts defines classOptsIntoUnknown",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/policy/src/decide.ts",
+   "target": "function:packages/policy/src/decide.ts:matchesExceptClass",
+   "type": "contains",
+   "direction": "forward",
+   "description": "decide.ts defines matchesExceptClass",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/policy/src/decide.ts",
+   "target": "function:packages/policy/src/decide.ts:decide",
+   "type": "contains",
+   "direction": "forward",
+   "description": "decide.ts defines decide",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/policy/src/decide.ts",
+   "target": "function:packages/policy/src/decide.ts:decide",
+   "type": "exports",
+   "direction": "forward",
+   "description": "decide.ts exports decide",
+   "weight": 0.7
+  },
+  {
+   "source": "function:packages/policy/src/decide.ts:matchesOne",
+   "target": "function:packages/policy/src/decide.ts:valueMatches",
+   "type": "calls",
+   "direction": "forward",
+   "description": "matchesOne calls valueMatches",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/policy/src/decide.ts:matchesOne",
+   "target": "function:packages/policy/src/decide.ts:radiusMatches",
+   "type": "calls",
+   "direction": "forward",
+   "description": "matchesOne calls radiusMatches",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/policy/src/decide.ts:ruleOptsIntoUnknown",
+   "target": "function:packages/policy/src/decide.ts:classOptsIntoUnknown",
+   "type": "calls",
+   "direction": "forward",
+   "description": "ruleOptsIntoUnknown calls classOptsIntoUnknown",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/policy/src/decide.ts:matchesExceptClass",
+   "target": "function:packages/policy/src/decide.ts:valueMatches",
+   "type": "calls",
+   "direction": "forward",
+   "description": "matchesExceptClass calls valueMatches",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/policy/src/decide.ts:matchesExceptClass",
+   "target": "function:packages/policy/src/decide.ts:radiusMatches",
+   "type": "calls",
+   "direction": "forward",
+   "description": "matchesExceptClass calls radiusMatches",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/policy/src/decide.ts:decide",
+   "target": "function:packages/policy/src/decide.ts:ruleOptsIntoUnknown",
+   "type": "calls",
+   "direction": "forward",
+   "description": "decide calls ruleOptsIntoUnknown",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/policy/src/decide.ts:decide",
+   "target": "function:packages/policy/src/decide.ts:matchesExceptClass",
+   "type": "calls",
+   "direction": "forward",
+   "description": "decide calls matchesExceptClass",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/policy/src/decide.ts:decide",
+   "target": "function:packages/policy/src/decide.ts:matchesOne",
+   "type": "calls",
+   "direction": "forward",
+   "description": "decide calls matchesOne",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/policy/src/digest.ts",
+   "target": "function:packages/policy/src/digest.ts:policyDigest",
+   "type": "contains",
+   "direction": "forward",
+   "description": "digest.ts defines policyDigest",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/policy/src/digest.ts",
+   "target": "function:packages/policy/src/digest.ts:policyDigest",
+   "type": "exports",
+   "direction": "forward",
+   "description": "digest.ts exports policyDigest",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/policy/src/grammar.ts",
+   "target": "function:packages/policy/src/grammar.ts:isMatchKey",
+   "type": "contains",
+   "direction": "forward",
+   "description": "grammar.ts defines isMatchKey",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/policy/src/grammar.ts",
+   "target": "function:packages/policy/src/grammar.ts:isMatchKey",
+   "type": "exports",
+   "direction": "forward",
+   "description": "grammar.ts exports isMatchKey",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/policy/src/hold.test.ts",
+   "target": "function:packages/policy/src/hold.test.ts:held",
+   "type": "contains",
+   "direction": "forward",
+   "description": "hold.test.ts defines held",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/policy/src/hold.ts",
+   "target": "function:packages/policy/src/hold.ts:holdErrorMessage",
+   "type": "contains",
+   "direction": "forward",
+   "description": "hold.ts defines holdErrorMessage",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/policy/src/hold.ts",
+   "target": "function:packages/policy/src/hold.ts:holdErrorMessage",
+   "type": "exports",
+   "direction": "forward",
+   "description": "hold.ts exports holdErrorMessage",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/policy/src/hold.ts",
+   "target": "class:packages/policy/src/hold.ts:HoldQueue",
+   "type": "contains",
+   "direction": "forward",
+   "description": "hold.ts defines class HoldQueue",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/agent-policy/src/check.test.ts",
+   "target": "file:packages/agent-policy/src/check.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "check.test.ts imports check.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/agent-policy/src/check.test.ts",
+   "target": "file:packages/agent-policy/src/load.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "check.test.ts imports load.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/agent-policy/src/check.test.ts",
+   "target": "file:packages/policy/src/rules.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "check.test.ts imports rules.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/agent-policy/src/check.test.ts",
+   "target": "file:packages/registry/src/evaluate.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "check.test.ts imports evaluate.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/agent-policy/src/check.ts",
+   "target": "file:packages/agent-policy/src/evaluate.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "check.ts imports evaluate.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/agent-policy/src/check.ts",
+   "target": "file:packages/agent-policy/src/grammar.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "check.ts imports grammar.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/agent-policy/src/check.ts",
+   "target": "file:packages/agent-policy/src/load.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "check.ts imports load.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/agent-policy/src/check.ts",
+   "target": "file:packages/ledger/src/sign.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "check.ts imports sign.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/agent-policy/src/check.ts",
+   "target": "file:packages/policy/src/decide.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "check.ts imports decide.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/agent-policy/src/check.ts",
+   "target": "file:packages/policy/src/digest.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "check.ts imports digest.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/agent-policy/src/check.ts",
+   "target": "file:packages/policy/src/rules.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "check.ts imports rules.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/agent-policy/src/check.ts",
+   "target": "file:packages/registry/src/evaluate.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "check.ts imports evaluate.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/agent-policy/src/evaluate.ts",
+   "target": "file:packages/agent-policy/src/grammar.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "evaluate.ts imports grammar.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/agent-policy/src/evaluate.ts",
+   "target": "file:packages/agent-policy/src/load.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "evaluate.ts imports load.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/agent-policy/src/load.test.ts",
+   "target": "file:packages/agent-policy/src/load.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "load.test.ts imports load.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/agent-policy/src/load.ts",
+   "target": "file:packages/agent-policy/src/grammar.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "load.ts imports grammar.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/agent-policy/src/scaffold.test.ts",
+   "target": "file:packages/agent-policy/src/check.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "scaffold.test.ts imports check.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/agent-policy/src/scaffold.test.ts",
+   "target": "file:packages/agent-policy/src/load.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "scaffold.test.ts imports load.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/agent-policy/src/scaffold.test.ts",
+   "target": "file:packages/agent-policy/src/scaffold.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "scaffold.test.ts imports scaffold.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/agent-policy/src/scaffold.test.ts",
+   "target": "file:packages/policy/src/rules.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "scaffold.test.ts imports rules.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/agent-policy/src/scaffold.test.ts",
+   "target": "file:packages/registry/src/evaluate.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "scaffold.test.ts imports evaluate.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/agent-policy/src/scaffold.ts",
+   "target": "file:packages/agent-policy/src/grammar.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "scaffold.ts imports grammar.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/agent-policy/src/scaffold.ts",
+   "target": "file:packages/agent-policy/src/load.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "scaffold.ts imports load.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/agent-policy/src/spike.test.ts",
+   "target": "file:packages/agent-policy/src/check.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "spike.test.ts imports check.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/agent-policy/src/spike.test.ts",
+   "target": "file:packages/agent-policy/src/grammar.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "spike.test.ts imports grammar.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/agent-policy/src/spike.test.ts",
+   "target": "file:packages/agent-policy/src/load.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "spike.test.ts imports load.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/agent-policy/src/spike.test.ts",
+   "target": "file:packages/policy/src/rules.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "spike.test.ts imports rules.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/agent-policy/src/spike.test.ts",
+   "target": "file:packages/registry/src/evaluate.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "spike.test.ts imports evaluate.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/agent-policy/src/spike.test.ts",
+   "target": "file:packages/workbench/src/agent-identity.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "spike.test.ts imports agent-identity.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/approve.test.ts",
+   "target": "file:packages/cli/src/approve.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "approve.test.ts imports approve.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/approve.test.ts",
+   "target": "file:packages/policy/src/approvals.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "approve.test.ts imports approvals.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/approve.test.ts",
+   "target": "file:packages/policy/src/hold.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "approve.test.ts imports hold.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/approve.test.ts",
+   "target": "file:packages/proxy/src/approval-loop.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "approve.test.ts imports approval-loop.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/approve.ts",
+   "target": "file:packages/ledger/src/paths.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "approve.ts imports paths.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/approve.ts",
+   "target": "file:packages/policy/src/approvals.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "approve.ts imports approvals.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/policy/src/approval-state.test.ts",
+   "target": "file:packages/policy/src/approvals.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "approval-state.test.ts imports approvals.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/policy/src/approvals.test.ts",
+   "target": "file:packages/policy/src/approvals.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "approvals.test.ts imports approvals.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/policy/src/approvals.test.ts",
+   "target": "file:packages/policy/src/decide.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "approvals.test.ts imports decide.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/policy/src/approvals.test.ts",
+   "target": "file:packages/policy/src/hold.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "approvals.test.ts imports hold.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/policy/src/approvals.ts",
+   "target": "file:packages/policy/src/decide.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "approvals.ts imports decide.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/policy/src/approvals.ts",
+   "target": "file:packages/policy/src/hold.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "approvals.ts imports hold.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/policy/src/approvals.ts",
+   "target": "file:packages/policy/src/rules.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "approvals.ts imports rules.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/policy/src/attribution.test.ts",
+   "target": "file:packages/ledger/src/sign.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "attribution.test.ts imports sign.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/policy/src/attribution.test.ts",
+   "target": "file:packages/policy/src/decide.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "attribution.test.ts imports decide.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/policy/src/attribution.test.ts",
+   "target": "file:packages/policy/src/digest.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "attribution.test.ts imports digest.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/policy/src/attribution.test.ts",
+   "target": "file:packages/policy/src/rules.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "attribution.test.ts imports rules.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/policy/src/channels/cli.test.ts",
+   "target": "file:packages/policy/src/channels/cli.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "cli.test.ts imports cli.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/policy/src/channels/cli.test.ts",
+   "target": "file:packages/policy/src/hold.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "cli.test.ts imports hold.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/policy/src/channels/cli.ts",
+   "target": "file:packages/policy/src/hold.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "cli.ts imports hold.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/policy/src/decide.ts",
+   "target": "file:packages/policy/src/grammar.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "decide.ts imports grammar.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/policy/src/decide.ts",
+   "target": "file:packages/policy/src/rules.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "decide.ts imports rules.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/policy/src/digest.ts",
+   "target": "file:packages/ledger/src/sign.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "digest.ts imports sign.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/policy/src/digest.ts",
+   "target": "file:packages/policy/src/rules.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "digest.ts imports rules.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/policy/src/hold.test.ts",
+   "target": "file:packages/policy/src/hold.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "hold.test.ts imports hold.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/policy/src/hold.ts",
+   "target": "file:packages/policy/src/grammar.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "hold.ts imports grammar.ts",
+   "weight": 0.8
+  }
+ ]
+}

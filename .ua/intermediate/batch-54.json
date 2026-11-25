@@ -1,0 +1,245 @@
+{
+ "nodes": [
+  {
+   "id": "file:docs/strategy/2026-10-27-nomo-field-expert-product-paper.md",
+   "type": "document",
+   "name": "2026-10-27-nomo-field-expert-product-paper.md",
+   "filePath": "docs/strategy/2026-10-27-nomo-field-expert-product-paper.md",
+   "summary": "2026-10-27-nomo-field-expert-product-paper.md \u2014 markdown document, 326 lines, 25 sections: NOMO Field Expert: product and market paper, Executive summary, 1. Strategic fit, YC request (+21 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:docs/strategy/2026-10-27-nomo-field-expert-product-spec.md",
+   "type": "document",
+   "name": "2026-10-27-nomo-field-expert-product-spec.md",
+   "filePath": "docs/strategy/2026-10-27-nomo-field-expert-product-spec.md",
+   "summary": "2026-10-27-nomo-field-expert-product-spec.md \u2014 markdown document, 330 lines, 26 sections: NOMO Field Expert: pilot product and implementation specification, 1. Product boundary, Objective, Intended pilot user (+22 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:docs/strategy/2026-10-27-nomo-field-expert-roadmap.md",
+   "type": "document",
+   "name": "2026-10-27-nomo-field-expert-roadmap.md",
+   "filePath": "docs/strategy/2026-10-27-nomo-field-expert-roadmap.md",
+   "summary": "2026-10-27-nomo-field-expert-roadmap.md \u2014 markdown document, 281 lines, 29 sections: NOMO Field Expert: validation and delivery roadmap, Outcome, Sequence at a glance, Phase 0: asset and access audit (+25 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:docs/strategy/2026-10-27-nomo-papayai-reuse-audit.md",
+   "type": "document",
+   "name": "2026-10-27-nomo-papayai-reuse-audit.md",
+   "filePath": "docs/strategy/2026-10-27-nomo-papayai-reuse-audit.md",
+   "summary": "2026-10-27-nomo-papayai-reuse-audit.md \u2014 markdown document, 64 lines, 8 sections: NOMO x YC: project reuse audit, Executive result, Confirmed local project facts, NOMO (+4 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/strategy/2026-10-27-nomo-private-ai-market-research.md",
+   "type": "document",
+   "name": "2026-10-27-nomo-private-ai-market-research.md",
+   "filePath": "docs/strategy/2026-10-27-nomo-private-ai-market-research.md",
+   "summary": "2026-10-27-nomo-private-ai-market-research.md \u2014 markdown document, 300 lines, 30 sections: NOMO private AI opportunity: market research memo, Executive summary, 1. What YC is signalling, Full Winter 2027 RFS map against NOMO (+26 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:docs/strategy/2026-10-27-nomoyc-air-gapped-deployment.md",
+   "type": "document",
+   "name": "2026-10-27-nomoyc-air-gapped-deployment.md",
+   "filePath": "docs/strategy/2026-10-27-nomoyc-air-gapped-deployment.md",
+   "summary": "2026-10-27-nomoyc-air-gapped-deployment.md \u2014 markdown document, 74 lines, 9 sections: AI for the Air-Gapped Economy: product and readiness plan, What the promise means, Product customer, Build only after these demand gates (+5 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/strategy/2026-10-27-nomoyc-architecture-and-data-boundaries.md",
+   "type": "document",
+   "name": "2026-10-27-nomoyc-architecture-and-data-boundaries.md",
+   "filePath": "docs/strategy/2026-10-27-nomoyc-architecture-and-data-boundaries.md",
+   "summary": "2026-10-27-nomoyc-architecture-and-data-boundaries.md \u2014 markdown document, 93 lines, 10 sections: NOMO x YC: architecture and data boundaries, Product boundary, Request flow, Data classes (+6 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/strategy/2026-10-27-nomoyc-demand-validation-sprint.md",
+   "type": "document",
+   "name": "2026-10-27-nomoyc-demand-validation-sprint.md",
+   "filePath": "docs/strategy/2026-10-27-nomoyc-demand-validation-sprint.md",
+   "summary": "2026-10-27-nomoyc-demand-validation-sprint.md \u2014 markdown document, 81 lines, 10 sections: NOMO x YC: two-week demand validation sprint, Goal, Required team, Days 1 and 2: find a real repeated job (+6 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/strategy/2026-10-27-nomoyc-developer-runbook.md",
+   "type": "document",
+   "name": "2026-10-27-nomoyc-developer-runbook.md",
+   "filePath": "docs/strategy/2026-10-27-nomoyc-developer-runbook.md",
+   "summary": "2026-10-27-nomoyc-developer-runbook.md \u2014 markdown document, 143 lines, 8 sections: NOMO \u00d7 YC: developer runbook for the private founder page, Prerequisites, Back up and restore the content key, Validate the encrypted library (+4 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/strategy/2026-10-27-nomoyc-evaluation-and-economics.md",
+   "type": "document",
+   "name": "2026-10-27-nomoyc-evaluation-and-economics.md",
+   "filePath": "docs/strategy/2026-10-27-nomoyc-evaluation-and-economics.md",
+   "summary": "2026-10-27-nomoyc-evaluation-and-economics.md \u2014 markdown document, 101 lines, 13 sections: NOMO x YC: evaluation, pilot economics, and decision rules, Core question, Baseline protocol, Quality measures (+9 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/strategy/2026-10-27-nomoyc-evaluation-and-pilot-plan.md",
+   "type": "document",
+   "name": "2026-10-27-nomoyc-evaluation-and-pilot-plan.md",
+   "filePath": "docs/strategy/2026-10-27-nomoyc-evaluation-and-pilot-plan.md",
+   "summary": "2026-10-27-nomoyc-evaluation-and-pilot-plan.md \u2014 markdown document, 69 lines, 7 sections: NOMO x YC: evaluation and pilot plan, North-star outcome, Baseline, Evaluation dataset (+3 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/strategy/2026-10-27-nomoyc-expert-workflow-product-spec.md",
+   "type": "document",
+   "name": "2026-10-27-nomoyc-expert-workflow-product-spec.md",
+   "filePath": "docs/strategy/2026-10-27-nomoyc-expert-workflow-product-spec.md",
+   "summary": "2026-10-27-nomoyc-expert-workflow-product-spec.md \u2014 markdown document, 113 lines, 13 sections: The $15-an-Hour Expert: discovery-first product specification, Product outcome, Required roles, Workflow-selection contract (+9 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/strategy/2026-10-27-nomoyc-first-customer-interview.md",
+   "type": "document",
+   "name": "2026-10-27-nomoyc-first-customer-interview.md",
+   "filePath": "docs/strategy/2026-10-27-nomoyc-first-customer-interview.md",
+   "summary": "2026-10-27-nomoyc-first-customer-interview.md \u2014 markdown document, 104 lines, 13 sections: NOMO x YC: first customer discovery interview, Interview goal, Before the call, 45-minute guide (+9 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/strategy/2026-10-27-nomoyc-founder-thesis.md",
+   "type": "document",
+   "name": "2026-10-27-nomoyc-founder-thesis.md",
+   "filePath": "docs/strategy/2026-10-27-nomoyc-founder-thesis.md",
+   "summary": "2026-10-27-nomoyc-founder-thesis.md \u2014 markdown document, 89 lines, 11 sections: NOMO x YC Winter 2027: founder thesis, Decision in one page, What is known, inferred, and unproven, Opportunity portfolio (+7 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/strategy/2026-10-27-nomoyc-go-to-market-and-pricing.md",
+   "type": "document",
+   "name": "2026-10-27-nomoyc-go-to-market-and-pricing.md",
+   "filePath": "docs/strategy/2026-10-27-nomoyc-go-to-market-and-pricing.md",
+   "summary": "2026-10-27-nomoyc-go-to-market-and-pricing.md \u2014 markdown document, 53 lines, 8 sections: NOMO x YC: go-to-market and pricing hypotheses, Buyer and user, Positioning hypothesis, Design partner offer (+4 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/strategy/2026-10-27-nomoyc-gstack-review-report.md",
+   "type": "document",
+   "name": "2026-10-27-nomoyc-gstack-review-report.md",
+   "filePath": "docs/strategy/2026-10-27-nomoyc-gstack-review-report.md",
+   "summary": "2026-10-27-nomoyc-gstack-review-report.md \u2014 markdown document, 67 lines, 8 sections: NOMO \u00d7 YC Winter 2027: GStack review report, Decision summary, Phase coverage, What changed after review (+4 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/strategy/2026-10-27-nomoyc-index.md",
+   "type": "document",
+   "name": "2026-10-27-nomoyc-index.md",
+   "filePath": "docs/strategy/2026-10-27-nomoyc-index.md",
+   "summary": "2026-10-27-nomoyc-index.md \u2014 markdown document, 50 lines, 6 sections: NOMO x YC Winter 2027: document library, Start here, Market and product, Supporting research and controls (+2 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/strategy/2026-10-27-nomoyc-integrated-roadmap.md",
+   "type": "document",
+   "name": "2026-10-27-nomoyc-integrated-roadmap.md",
+   "filePath": "docs/strategy/2026-10-27-nomoyc-integrated-roadmap.md",
+   "summary": "2026-10-27-nomoyc-integrated-roadmap.md \u2014 markdown document, 174 lines, 21 sections: NOMO x YC: integrated startup and product roadmap, Problem statement, Implementation plan, Order of work (+17 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:docs/strategy/2026-10-27-nomoyc-leadspicker-and-sales.md",
+   "type": "document",
+   "name": "2026-10-27-nomoyc-leadspicker-and-sales.md",
+   "filePath": "docs/strategy/2026-10-27-nomoyc-leadspicker-and-sales.md",
+   "summary": "2026-10-27-nomoyc-leadspicker-and-sales.md \u2014 markdown document, 85 lines, 13 sections: NOMO x YC: Czech-first discovery and sales, Objective, Current access and gaps, LeadsPicker qualification workflow (+9 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/strategy/2026-10-27-nomoyc-market-and-competition.md",
+   "type": "document",
+   "name": "2026-10-27-nomoyc-market-and-competition.md",
+   "filePath": "docs/strategy/2026-10-27-nomoyc-market-and-competition.md",
+   "summary": "2026-10-27-nomoyc-market-and-competition.md \u2014 markdown document, 104 lines, 11 sections: NOMO x YC: market and competition review, Executive conclusion, YC signal, read narrowly, European market evidence (+7 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  }
+ ],
+ "edges": []
+}

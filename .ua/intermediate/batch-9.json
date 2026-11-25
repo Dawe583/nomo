@@ -1,0 +1,3303 @@
+{
+ "nodes": [
+  {
+   "id": "file:packages/cli/src/tui/workspace-settings.test.ts",
+   "type": "file",
+   "name": "workspace-settings.test.ts",
+   "filePath": "packages/cli/src/tui/workspace-settings.test.ts",
+   "summary": "workspace-settings.test.ts \u2014 typescript code, 161 lines, 2 functions, 0 classes, 0 exports, 4 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/cli/src/tui/workspace-settings.test.ts:assistantFetcher",
+   "type": "function",
+   "name": "assistantFetcher",
+   "filePath": "packages/cli/src/tui/workspace-settings.test.ts",
+   "lineRange": [
+    21,
+    26
+   ],
+   "summary": "assistantFetcher(url) \u2014 function in workspace-settings.test.ts, lines 21-26.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/workspace-settings.test.ts:settings",
+   "type": "function",
+   "name": "settings",
+   "filePath": "packages/cli/src/tui/workspace-settings.test.ts",
+   "lineRange": [
+    28,
+    46
+   ],
+   "summary": "settings(t) \u2014 function in workspace-settings.test.ts, lines 28-46.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/compaction-summary.test.ts",
+   "type": "file",
+   "name": "compaction-summary.test.ts",
+   "filePath": "packages/workbench/src/compaction-summary.test.ts",
+   "summary": "compaction-summary.test.ts \u2014 typescript code, 140 lines, 3 functions, 0 classes, 0 exports, 3 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/compaction-summary.test.ts:models",
+   "type": "function",
+   "name": "models",
+   "filePath": "packages/workbench/src/compaction-summary.test.ts",
+   "lineRange": [
+    19,
+    19
+   ],
+   "summary": "models() \u2014 function in compaction-summary.test.ts, lines 19-19.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/compaction-summary.test.ts:message",
+   "type": "function",
+   "name": "message",
+   "filePath": "packages/workbench/src/compaction-summary.test.ts",
+   "lineRange": [
+    21,
+    24
+   ],
+   "summary": "message(role, content) \u2014 function in compaction-summary.test.ts, lines 21-24.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/compaction-summary.test.ts:summarising",
+   "type": "function",
+   "name": "summarising",
+   "filePath": "packages/workbench/src/compaction-summary.test.ts",
+   "lineRange": [
+    76,
+    87
+   ],
+   "summary": "summarising(reply) \u2014 function in compaction-summary.test.ts, lines 76-87.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/context.test.ts",
+   "type": "file",
+   "name": "context.test.ts",
+   "filePath": "packages/workbench/src/context.test.ts",
+   "summary": "context.test.ts \u2014 typescript code, 25 lines, 0 functions, 0 classes, 0 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/context.ts",
+   "type": "file",
+   "name": "context.ts",
+   "filePath": "packages/workbench/src/context.ts",
+   "summary": "context.ts \u2014 typescript code, 132 lines, 3 functions, 0 classes, 3 exports, 4 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/context.ts:compactMessages",
+   "type": "function",
+   "name": "compactMessages",
+   "filePath": "packages/workbench/src/context.ts",
+   "lineRange": [
+    13,
+    89
+   ],
+   "summary": "compactMessages(sessionId, messages, messageIds, options) \u2014 function in context.ts, lines 13-89.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/context.ts:omittedByCompaction",
+   "type": "function",
+   "name": "omittedByCompaction",
+   "filePath": "packages/workbench/src/context.ts",
+   "lineRange": [
+    98,
+    107
+   ],
+   "summary": "omittedByCompaction(messages) \u2014 function in context.ts, lines 98-107.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/context.ts:buildHarnessContext",
+   "type": "function",
+   "name": "buildHarnessContext",
+   "filePath": "packages/workbench/src/context.ts",
+   "lineRange": [
+    119,
+    132
+   ],
+   "summary": "buildHarnessContext(entries, query, maxChars) \u2014 function in context.ts, lines 119-132.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/harness-conversation.test.ts",
+   "type": "file",
+   "name": "harness-conversation.test.ts",
+   "filePath": "packages/workbench/src/harness-conversation.test.ts",
+   "summary": "harness-conversation.test.ts \u2014 typescript code, 208 lines, 5 functions, 0 classes, 0 exports, 3 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-conversation.test.ts:models",
+   "type": "function",
+   "name": "models",
+   "filePath": "packages/workbench/src/harness-conversation.test.ts",
+   "lineRange": [
+    18,
+    18
+   ],
+   "summary": "models() \u2014 function in harness-conversation.test.ts, lines 18-18.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-conversation.test.ts:answer",
+   "type": "function",
+   "name": "answer",
+   "filePath": "packages/workbench/src/harness-conversation.test.ts",
+   "lineRange": [
+    19,
+    20
+   ],
+   "summary": "answer(content) \u2014 function in harness-conversation.test.ts, lines 19-20.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-conversation.test.ts:message",
+   "type": "function",
+   "name": "message",
+   "filePath": "packages/workbench/src/harness-conversation.test.ts",
+   "lineRange": [
+    22,
+    26
+   ],
+   "summary": "message(role, content, extra) \u2014 function in harness-conversation.test.ts, lines 22-26.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-conversation.test.ts:recording",
+   "type": "function",
+   "name": "recording",
+   "filePath": "packages/workbench/src/harness-conversation.test.ts",
+   "lineRange": [
+    106,
+    123
+   ],
+   "summary": "recording() \u2014 function in harness-conversation.test.ts, lines 106-123.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-conversation.test.ts:seeded",
+   "type": "function",
+   "name": "seeded",
+   "filePath": "packages/workbench/src/harness-conversation.test.ts",
+   "lineRange": [
+    125,
+    156
+   ],
+   "summary": "seeded(t, fetcher) \u2014 function in harness-conversation.test.ts, lines 125-156.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/harness-conversation.ts",
+   "type": "file",
+   "name": "harness-conversation.ts",
+   "filePath": "packages/workbench/src/harness-conversation.ts",
+   "summary": "harness-conversation.ts \u2014 typescript code, 110 lines, 3 functions, 0 classes, 4 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-conversation.ts:eligible",
+   "type": "function",
+   "name": "eligible",
+   "filePath": "packages/workbench/src/harness-conversation.ts",
+   "lineRange": [
+    66,
+    74
+   ],
+   "summary": "eligible(messages) \u2014 function in harness-conversation.ts, lines 66-74.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-conversation.ts:render",
+   "type": "function",
+   "name": "render",
+   "filePath": "packages/workbench/src/harness-conversation.ts",
+   "lineRange": [
+    77,
+    83
+   ],
+   "summary": "render(message) \u2014 function in harness-conversation.ts, lines 77-83.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-conversation.ts:buildConversationTail",
+   "type": "function",
+   "name": "buildConversationTail",
+   "filePath": "packages/workbench/src/harness-conversation.ts",
+   "lineRange": [
+    91,
+    110
+   ],
+   "summary": "buildConversationTail(messages, options) \u2014 function in harness-conversation.ts, lines 91-110.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/harness-retrieval-wiring.test.ts",
+   "type": "file",
+   "name": "harness-retrieval-wiring.test.ts",
+   "filePath": "packages/workbench/src/harness-retrieval-wiring.test.ts",
+   "summary": "harness-retrieval-wiring.test.ts \u2014 typescript code, 286 lines, 5 functions, 0 classes, 0 exports, 4 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-retrieval-wiring.test.ts:models",
+   "type": "function",
+   "name": "models",
+   "filePath": "packages/workbench/src/harness-retrieval-wiring.test.ts",
+   "lineRange": [
+    19,
+    20
+   ],
+   "summary": "models() \u2014 function in harness-retrieval-wiring.test.ts, lines 19-20.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-retrieval-wiring.test.ts:answer",
+   "type": "function",
+   "name": "answer",
+   "filePath": "packages/workbench/src/harness-retrieval-wiring.test.ts",
+   "lineRange": [
+    21,
+    22
+   ],
+   "summary": "answer() \u2014 function in harness-retrieval-wiring.test.ts, lines 21-22.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-retrieval-wiring.test.ts:lessonProposal",
+   "type": "function",
+   "name": "lessonProposal",
+   "filePath": "packages/workbench/src/harness-retrieval-wiring.test.ts",
+   "lineRange": [
+    24,
+    38
+   ],
+   "summary": "lessonProposal() \u2014 function in harness-retrieval-wiring.test.ts, lines 24-38.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-retrieval-wiring.test.ts:fixture",
+   "type": "function",
+   "name": "fixture",
+   "filePath": "packages/workbench/src/harness-retrieval-wiring.test.ts",
+   "lineRange": [
+    40,
+    60
+   ],
+   "summary": "fixture(t) \u2014 function in harness-retrieval-wiring.test.ts, lines 40-60.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-retrieval-wiring.test.ts:systemTexts",
+   "type": "function",
+   "name": "systemTexts",
+   "filePath": "packages/workbench/src/harness-retrieval-wiring.test.ts",
+   "lineRange": [
+    62,
+    71
+   ],
+   "summary": "systemTexts(body) \u2014 function in harness-retrieval-wiring.test.ts, lines 62-71.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/harness-review-model.test.ts",
+   "type": "file",
+   "name": "harness-review-model.test.ts",
+   "filePath": "packages/workbench/src/harness-review-model.test.ts",
+   "summary": "harness-review-model.test.ts \u2014 typescript code, 171 lines, 4 functions, 0 classes, 0 exports, 3 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-review-model.test.ts:models",
+   "type": "function",
+   "name": "models",
+   "filePath": "packages/workbench/src/harness-review-model.test.ts",
+   "lineRange": [
+    23,
+    23
+   ],
+   "summary": "models() \u2014 function in harness-review-model.test.ts, lines 23-23.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-review-model.test.ts:lesson",
+   "type": "function",
+   "name": "lesson",
+   "filePath": "packages/workbench/src/harness-review-model.test.ts",
+   "lineRange": [
+    25,
+    37
+   ],
+   "summary": "lesson() \u2014 function in harness-review-model.test.ts, lines 25-37.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-review-model.test.ts:answering",
+   "type": "function",
+   "name": "answering",
+   "filePath": "packages/workbench/src/harness-review-model.test.ts",
+   "lineRange": [
+    41,
+    64
+   ],
+   "summary": "answering(options) \u2014 function in harness-review-model.test.ts, lines 41-64.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-review-model.test.ts:fixture",
+   "type": "function",
+   "name": "fixture",
+   "filePath": "packages/workbench/src/harness-review-model.test.ts",
+   "lineRange": [
+    66,
+    81
+   ],
+   "summary": "fixture(t, fetcher) \u2014 function in harness-review-model.test.ts, lines 66-81.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/harness-settings.ts",
+   "type": "file",
+   "name": "harness-settings.ts",
+   "filePath": "packages/workbench/src/harness-settings.ts",
+   "summary": "harness-settings.ts \u2014 typescript code, 527 lines, 10 functions, 0 classes, 12 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-settings.ts:defaultHarnessSettings",
+   "type": "function",
+   "name": "defaultHarnessSettings",
+   "filePath": "packages/workbench/src/harness-settings.ts",
+   "lineRange": [
+    318,
+    325
+   ],
+   "summary": "defaultHarnessSettings() \u2014 function in harness-settings.ts, lines 318-325.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-settings.ts:clampHarnessSetting",
+   "type": "function",
+   "name": "clampHarnessSetting",
+   "filePath": "packages/workbench/src/harness-settings.ts",
+   "lineRange": [
+    330,
+    337
+   ],
+   "summary": "clampHarnessSetting(key, value) \u2014 function in harness-settings.ts, lines 330-337.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-settings.ts:resolveHarnessSettings",
+   "type": "function",
+   "name": "resolveHarnessSettings",
+   "filePath": "packages/workbench/src/harness-settings.ts",
+   "lineRange": [
+    342,
+    352
+   ],
+   "summary": "resolveHarnessSettings(stored) \u2014 function in harness-settings.ts, lines 342-352.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-settings.ts:harnessSettingsPatch",
+   "type": "function",
+   "name": "harnessSettingsPatch",
+   "filePath": "packages/workbench/src/harness-settings.ts",
+   "lineRange": [
+    360,
+    380
+   ],
+   "summary": "harnessSettingsPatch(body) \u2014 function in harness-settings.ts, lines 360-380.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-settings.ts:harnessSettingsView",
+   "type": "function",
+   "name": "harnessSettingsView",
+   "filePath": "packages/workbench/src/harness-settings.ts",
+   "lineRange": [
+    385,
+    398
+   ],
+   "summary": "harnessSettingsView(settings) \u2014 function in harness-settings.ts, lines 385-398.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-settings.ts:defaultHarnessTextSettings",
+   "type": "function",
+   "name": "defaultHarnessTextSettings",
+   "filePath": "packages/workbench/src/harness-settings.ts",
+   "lineRange": [
+    447,
+    454
+   ],
+   "summary": "defaultHarnessTextSettings() \u2014 function in harness-settings.ts, lines 447-454.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-settings.ts:harnessTextSettingRejection",
+   "type": "function",
+   "name": "harnessTextSettingRejection",
+   "filePath": "packages/workbench/src/harness-settings.ts",
+   "lineRange": [
+    458,
+    471
+   ],
+   "summary": "harnessTextSettingRejection(key, value) \u2014 function in harness-settings.ts, lines 458-471.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-settings.ts:resolveHarnessTextSettings",
+   "type": "function",
+   "name": "resolveHarnessTextSettings",
+   "filePath": "packages/workbench/src/harness-settings.ts",
+   "lineRange": [
+    476,
+    489
+   ],
+   "summary": "resolveHarnessTextSettings(stored) \u2014 function in harness-settings.ts, lines 476-489.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-settings.ts:harnessTextSettingsPatch",
+   "type": "function",
+   "name": "harnessTextSettingsPatch",
+   "filePath": "packages/workbench/src/harness-settings.ts",
+   "lineRange": [
+    494,
+    511
+   ],
+   "summary": "harnessTextSettingsPatch(body) \u2014 function in harness-settings.ts, lines 494-511.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-settings.ts:harnessTextSettingsView",
+   "type": "function",
+   "name": "harnessTextSettingsView",
+   "filePath": "packages/workbench/src/harness-settings.ts",
+   "lineRange": [
+    514,
+    527
+   ],
+   "summary": "harnessTextSettingsView(settings) \u2014 function in harness-settings.ts, lines 514-527.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/harness-wiring.test.ts",
+   "type": "file",
+   "name": "harness-wiring.test.ts",
+   "filePath": "packages/workbench/src/harness-wiring.test.ts",
+   "summary": "harness-wiring.test.ts \u2014 typescript code, 316 lines, 4 functions, 0 classes, 0 exports, 3 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-wiring.test.ts:models",
+   "type": "function",
+   "name": "models",
+   "filePath": "packages/workbench/src/harness-wiring.test.ts",
+   "lineRange": [
+    15,
+    15
+   ],
+   "summary": "models() \u2014 function in harness-wiring.test.ts, lines 15-15.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-wiring.test.ts:answer",
+   "type": "function",
+   "name": "answer",
+   "filePath": "packages/workbench/src/harness-wiring.test.ts",
+   "lineRange": [
+    16,
+    17
+   ],
+   "summary": "answer() \u2014 function in harness-wiring.test.ts, lines 16-17.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-wiring.test.ts:toolCallLoop",
+   "type": "function",
+   "name": "toolCallLoop",
+   "filePath": "packages/workbench/src/harness-wiring.test.ts",
+   "lineRange": [
+    21,
+    38
+   ],
+   "summary": "toolCallLoop(calls) \u2014 function in harness-wiring.test.ts, lines 21-38.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-wiring.test.ts:fixture",
+   "type": "function",
+   "name": "fixture",
+   "filePath": "packages/workbench/src/harness-wiring.test.ts",
+   "lineRange": [
+    40,
+    46
+   ],
+   "summary": "fixture(t, fetcher, release) \u2014 function in harness-wiring.test.ts, lines 40-46.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/provider-adapters/anthropic-messages-reasoning.test.ts",
+   "type": "file",
+   "name": "anthropic-messages-reasoning.test.ts",
+   "filePath": "packages/workbench/src/provider-adapters/anthropic-messages-reasoning.test.ts",
+   "summary": "anthropic-messages-reasoning.test.ts \u2014 typescript code, 166 lines, 2 functions, 0 classes, 0 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-adapters/anthropic-messages-reasoning.test.ts:sse",
+   "type": "function",
+   "name": "sse",
+   "filePath": "packages/workbench/src/provider-adapters/anthropic-messages-reasoning.test.ts",
+   "lineRange": [
+    15,
+    24
+   ],
+   "summary": "sse(events) \u2014 function in anthropic-messages-reasoning.test.ts, lines 15-24.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-adapters/anthropic-messages-reasoning.test.ts:adapterFor",
+   "type": "function",
+   "name": "adapterFor",
+   "filePath": "packages/workbench/src/provider-adapters/anthropic-messages-reasoning.test.ts",
+   "lineRange": [
+    26,
+    35
+   ],
+   "summary": "adapterFor(events) \u2014 function in anthropic-messages-reasoning.test.ts, lines 26-35.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/provider-adapters/anthropic-messages-timeout.test.ts",
+   "type": "file",
+   "name": "anthropic-messages-timeout.test.ts",
+   "filePath": "packages/workbench/src/provider-adapters/anthropic-messages-timeout.test.ts",
+   "summary": "anthropic-messages-timeout.test.ts \u2014 typescript code, 35 lines, 0 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/provider-adapters/anthropic-messages.ts",
+   "type": "file",
+   "name": "anthropic-messages.ts",
+   "filePath": "packages/workbench/src/provider-adapters/anthropic-messages.ts",
+   "summary": "anthropic-messages.ts \u2014 typescript code, 350 lines, 0 functions, 1 classes, 1 exports, 3 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "class:packages/workbench/src/provider-adapters/anthropic-messages.ts:AnthropicMessagesAdapter",
+   "type": "class",
+   "name": "AnthropicMessagesAdapter",
+   "filePath": "packages/workbench/src/provider-adapters/anthropic-messages.ts",
+   "lineRange": [
+    21,
+    350
+   ],
+   "summary": "AnthropicMessagesAdapter \u2014 class in anthropic-messages.ts, lines 21-350, methods: complete, consumeStream.",
+   "tags": [
+    "typescript",
+    "class",
+    "exported"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/workbench/src/provider-adapters/aws-sigv4.ts",
+   "type": "file",
+   "name": "aws-sigv4.ts",
+   "filePath": "packages/workbench/src/provider-adapters/aws-sigv4.ts",
+   "summary": "aws-sigv4.ts \u2014 typescript code, 77 lines, 5 functions, 0 classes, 2 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-adapters/aws-sigv4.ts:sha256",
+   "type": "function",
+   "name": "sha256",
+   "filePath": "packages/workbench/src/provider-adapters/aws-sigv4.ts",
+   "lineRange": [
+    9,
+    11
+   ],
+   "summary": "sha256(value) \u2014 function in aws-sigv4.ts, lines 9-11.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-adapters/aws-sigv4.ts:hmac",
+   "type": "function",
+   "name": "hmac",
+   "filePath": "packages/workbench/src/provider-adapters/aws-sigv4.ts",
+   "lineRange": [
+    13,
+    15
+   ],
+   "summary": "hmac(key, value) \u2014 function in aws-sigv4.ts, lines 13-15.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-adapters/aws-sigv4.ts:signSigV4String",
+   "type": "function",
+   "name": "signSigV4String",
+   "filePath": "packages/workbench/src/provider-adapters/aws-sigv4.ts",
+   "lineRange": [
+    17,
+    29
+   ],
+   "summary": "signSigV4String(secretAccessKey, dateStamp, region, service\u2026) \u2014 function in aws-sigv4.ts, lines 17-29.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-adapters/aws-sigv4.ts:canonicalPath",
+   "type": "function",
+   "name": "canonicalPath",
+   "filePath": "packages/workbench/src/provider-adapters/aws-sigv4.ts",
+   "lineRange": [
+    31,
+    44
+   ],
+   "summary": "canonicalPath(pathname) \u2014 function in aws-sigv4.ts, lines 31-44.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-adapters/aws-sigv4.ts:signBedrockRequest",
+   "type": "function",
+   "name": "signBedrockRequest",
+   "filePath": "packages/workbench/src/provider-adapters/aws-sigv4.ts",
+   "lineRange": [
+    46,
+    77
+   ],
+   "summary": "signBedrockRequest(url, body, credentials, region\u2026) \u2014 function in aws-sigv4.ts, lines 46-77.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/provider-adapters/azure-openai-responses.test.ts",
+   "type": "file",
+   "name": "azure-openai-responses.test.ts",
+   "filePath": "packages/workbench/src/provider-adapters/azure-openai-responses.test.ts",
+   "summary": "azure-openai-responses.test.ts \u2014 typescript code, 178 lines, 1 functions, 0 classes, 0 exports, 3 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-adapters/azure-openai-responses.test.ts:eventStream",
+   "type": "function",
+   "name": "eventStream",
+   "filePath": "packages/workbench/src/provider-adapters/azure-openai-responses.test.ts",
+   "lineRange": [
+    15,
+    18
+   ],
+   "summary": "eventStream(events) \u2014 function in azure-openai-responses.test.ts, lines 15-18.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/provider-adapters/bedrock-converse-stream.test.ts",
+   "type": "file",
+   "name": "bedrock-converse-stream.test.ts",
+   "filePath": "packages/workbench/src/provider-adapters/bedrock-converse-stream.test.ts",
+   "summary": "bedrock-converse-stream.test.ts \u2014 typescript code, 541 lines, 6 functions, 0 classes, 0 exports, 5 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-adapters/bedrock-converse-stream.test.ts:fixtureCredentialProvider",
+   "type": "function",
+   "name": "fixtureCredentialProvider",
+   "filePath": "packages/workbench/src/provider-adapters/bedrock-converse-stream.test.ts",
+   "lineRange": [
+    17,
+    17
+   ],
+   "summary": "fixtureCredentialProvider() \u2014 function in bedrock-converse-stream.test.ts, lines 17-17.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-adapters/bedrock-converse-stream.test.ts:crc32",
+   "type": "function",
+   "name": "crc32",
+   "filePath": "packages/workbench/src/provider-adapters/bedrock-converse-stream.test.ts",
+   "lineRange": [
+    33,
+    40
+   ],
+   "summary": "crc32(data) \u2014 function in bedrock-converse-stream.test.ts, lines 33-40.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-adapters/bedrock-converse-stream.test.ts:frame",
+   "type": "function",
+   "name": "frame",
+   "filePath": "packages/workbench/src/provider-adapters/bedrock-converse-stream.test.ts",
+   "lineRange": [
+    42,
+    57
+   ],
+   "summary": "frame(headers, payload) \u2014 function in bedrock-converse-stream.test.ts, lines 42-57.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-adapters/bedrock-converse-stream.test.ts:event",
+   "type": "function",
+   "name": "event",
+   "filePath": "packages/workbench/src/provider-adapters/bedrock-converse-stream.test.ts",
+   "lineRange": [
+    59,
+    61
+   ],
+   "summary": "event(type, payload) \u2014 function in bedrock-converse-stream.test.ts, lines 59-61.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-adapters/bedrock-converse-stream.test.ts:exceptionEvent",
+   "type": "function",
+   "name": "exceptionEvent",
+   "filePath": "packages/workbench/src/provider-adapters/bedrock-converse-stream.test.ts",
+   "lineRange": [
+    63,
+    65
+   ],
+   "summary": "exceptionEvent(type, payload) \u2014 function in bedrock-converse-stream.test.ts, lines 63-65.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-adapters/bedrock-converse-stream.test.ts:stream",
+   "type": "function",
+   "name": "stream",
+   "filePath": "packages/workbench/src/provider-adapters/bedrock-converse-stream.test.ts",
+   "lineRange": [
+    67,
+    75
+   ],
+   "summary": "stream(...events) \u2014 function in bedrock-converse-stream.test.ts, lines 67-75.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/provider-adapters/bedrock-converse-stream.ts",
+   "type": "file",
+   "name": "bedrock-converse-stream.ts",
+   "filePath": "packages/workbench/src/provider-adapters/bedrock-converse-stream.ts",
+   "summary": "bedrock-converse-stream.ts \u2014 typescript code, 406 lines, 4 functions, 1 classes, 1 exports, 5 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-adapters/bedrock-converse-stream.ts:crc32",
+   "type": "function",
+   "name": "crc32",
+   "filePath": "packages/workbench/src/provider-adapters/bedrock-converse-stream.ts",
+   "lineRange": [
+    23,
+    30
+   ],
+   "summary": "crc32(data) \u2014 function in bedrock-converse-stream.ts, lines 23-30.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-adapters/bedrock-converse-stream.ts:decodeHeaders",
+   "type": "function",
+   "name": "decodeHeaders",
+   "filePath": "packages/workbench/src/provider-adapters/bedrock-converse-stream.ts",
+   "lineRange": [
+    32,
+    64
+   ],
+   "summary": "decodeHeaders(bytes) \u2014 function in bedrock-converse-stream.ts, lines 32-64.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-adapters/bedrock-converse-stream.ts:decodeFrame",
+   "type": "function",
+   "name": "decodeFrame",
+   "filePath": "packages/workbench/src/provider-adapters/bedrock-converse-stream.ts",
+   "lineRange": [
+    66,
+    86
+   ],
+   "summary": "decodeFrame(frame) \u2014 function in bedrock-converse-stream.ts, lines 66-86.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-adapters/bedrock-converse-stream.ts:encodeModelPath",
+   "type": "function",
+   "name": "encodeModelPath",
+   "filePath": "packages/workbench/src/provider-adapters/bedrock-converse-stream.ts",
+   "lineRange": [
+    88,
+    90
+   ],
+   "summary": "encodeModelPath(model) \u2014 function in bedrock-converse-stream.ts, lines 88-90.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:packages/workbench/src/provider-adapters/bedrock-converse-stream.ts:BedrockConverseStreamAdapter",
+   "type": "class",
+   "name": "BedrockConverseStreamAdapter",
+   "filePath": "packages/workbench/src/provider-adapters/bedrock-converse-stream.ts",
+   "lineRange": [
+    93,
+    406
+   ],
+   "summary": "BedrockConverseStreamAdapter \u2014 class in bedrock-converse-stream.ts, lines 93-406, methods: models, complete, redact, resolveCredentials, requestBody, consume.",
+   "tags": [
+    "typescript",
+    "class",
+    "exported"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/workbench/src/provider-adapters/bedrock-mantle-config.ts",
+   "type": "file",
+   "name": "bedrock-mantle-config.ts",
+   "filePath": "packages/workbench/src/provider-adapters/bedrock-mantle-config.ts",
+   "summary": "bedrock-mantle-config.ts \u2014 typescript code, 17 lines, 1 functions, 0 classes, 1 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-adapters/bedrock-mantle-config.ts:isBedrockMantleBaseUrl",
+   "type": "function",
+   "name": "isBedrockMantleBaseUrl",
+   "filePath": "packages/workbench/src/provider-adapters/bedrock-mantle-config.ts",
+   "lineRange": [
+    1,
+    17
+   ],
+   "summary": "isBedrockMantleBaseUrl(value) \u2014 function in bedrock-mantle-config.ts, lines 1-17.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/provider-adapters/bedrock-mantle-credential-chain.test.ts",
+   "type": "file",
+   "name": "bedrock-mantle-credential-chain.test.ts",
+   "filePath": "packages/workbench/src/provider-adapters/bedrock-mantle-credential-chain.test.ts",
+   "summary": "bedrock-mantle-credential-chain.test.ts \u2014 typescript code, 223 lines, 1 functions, 0 classes, 0 exports, 4 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-adapters/bedrock-mantle-credential-chain.test.ts:unusedRequest",
+   "type": "function",
+   "name": "unusedRequest",
+   "filePath": "packages/workbench/src/provider-adapters/bedrock-mantle-credential-chain.test.ts",
+   "lineRange": [
+    16,
+    18
+   ],
+   "summary": "unusedRequest() \u2014 function in bedrock-mantle-credential-chain.test.ts, lines 16-18.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/provider-adapters/bedrock-mantle-responses.ts",
+   "type": "file",
+   "name": "bedrock-mantle-responses.ts",
+   "filePath": "packages/workbench/src/provider-adapters/bedrock-mantle-responses.ts",
+   "summary": "bedrock-mantle-responses.ts \u2014 typescript code, 179 lines, 3 functions, 1 classes, 1 exports, 6 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-adapters/bedrock-mantle-responses.ts:credentialSecrets",
+   "type": "function",
+   "name": "credentialSecrets",
+   "filePath": "packages/workbench/src/provider-adapters/bedrock-mantle-responses.ts",
+   "lineRange": [
+    9,
+    12
+   ],
+   "summary": "credentialSecrets(credentials) \u2014 function in bedrock-mantle-responses.ts, lines 9-12.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-adapters/bedrock-mantle-responses.ts:redactSecrets",
+   "type": "function",
+   "name": "redactSecrets",
+   "filePath": "packages/workbench/src/provider-adapters/bedrock-mantle-responses.ts",
+   "lineRange": [
+    14,
+    16
+   ],
+   "summary": "redactSecrets(text, secrets) \u2014 function in bedrock-mantle-responses.ts, lines 14-16.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-adapters/bedrock-mantle-responses.ts:redactReply",
+   "type": "function",
+   "name": "redactReply",
+   "filePath": "packages/workbench/src/provider-adapters/bedrock-mantle-responses.ts",
+   "lineRange": [
+    18,
+    39
+   ],
+   "summary": "redactReply(reply, secrets) \u2014 function in bedrock-mantle-responses.ts, lines 18-39.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:packages/workbench/src/provider-adapters/bedrock-mantle-responses.ts:BedrockMantleResponsesAdapter",
+   "type": "class",
+   "name": "BedrockMantleResponsesAdapter",
+   "filePath": "packages/workbench/src/provider-adapters/bedrock-mantle-responses.ts",
+   "lineRange": [
+    41,
+    179
+   ],
+   "summary": "BedrockMantleResponsesAdapter \u2014 class in bedrock-mantle-responses.ts, lines 41-179, methods: models, complete, redact, streamRedactor, requestSigned, resolveCredentials.",
+   "tags": [
+    "typescript",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/provider-adapters/cloudflare-ai-gateway-config.ts",
+   "type": "file",
+   "name": "cloudflare-ai-gateway-config.ts",
+   "filePath": "packages/workbench/src/provider-adapters/cloudflare-ai-gateway-config.ts",
+   "summary": "cloudflare-ai-gateway-config.ts \u2014 typescript code, 52 lines, 2 functions, 0 classes, 2 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-adapters/cloudflare-ai-gateway-config.ts:cloudflareAiGatewayRouteForTransport",
+   "type": "function",
+   "name": "cloudflareAiGatewayRouteForTransport",
+   "filePath": "packages/workbench/src/provider-adapters/cloudflare-ai-gateway-config.ts",
+   "lineRange": [
+    1,
+    8
+   ],
+   "summary": "cloudflareAiGatewayRouteForTransport(transport) \u2014 function in cloudflare-ai-gateway-config.ts, lines 1-8.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-adapters/cloudflare-ai-gateway-config.ts:normalizeCloudflareAiGatewayEndpoint",
+   "type": "function",
+   "name": "normalizeCloudflareAiGatewayEndpoint",
+   "filePath": "packages/workbench/src/provider-adapters/cloudflare-ai-gateway-config.ts",
+   "lineRange": [
+    10,
+    52
+   ],
+   "summary": "normalizeCloudflareAiGatewayEndpoint(url, transport) \u2014 function in cloudflare-ai-gateway-config.ts, lines 10-52.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/provider-adapters/cloudflare-workers-ai-config.ts",
+   "type": "file",
+   "name": "cloudflare-workers-ai-config.ts",
+   "filePath": "packages/workbench/src/provider-adapters/cloudflare-workers-ai-config.ts",
+   "summary": "cloudflare-workers-ai-config.ts \u2014 typescript code, 18 lines, 1 functions, 0 classes, 1 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-adapters/cloudflare-workers-ai-config.ts:normalizeCloudflareWorkersAiEndpoint",
+   "type": "function",
+   "name": "normalizeCloudflareWorkersAiEndpoint",
+   "filePath": "packages/workbench/src/provider-adapters/cloudflare-workers-ai-config.ts",
+   "lineRange": [
+    4,
+    18
+   ],
+   "summary": "normalizeCloudflareWorkersAiEndpoint(input) \u2014 function in cloudflare-workers-ai-config.ts, lines 4-18.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/provider-adapters/compatible-provider-timeout.test.ts",
+   "type": "file",
+   "name": "compatible-provider-timeout.test.ts",
+   "filePath": "packages/workbench/src/provider-adapters/compatible-provider-timeout.test.ts",
+   "summary": "compatible-provider-timeout.test.ts \u2014 typescript code, 14 lines, 0 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/provider-adapters/factory.test.ts",
+   "type": "file",
+   "name": "factory.test.ts",
+   "filePath": "packages/workbench/src/provider-adapters/factory.test.ts",
+   "summary": "factory.test.ts \u2014 typescript code, 712 lines, 0 functions, 0 classes, 0 exports, 4 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "file:packages/workbench/src/provider-adapters/factory.ts",
+   "type": "file",
+   "name": "factory.ts",
+   "filePath": "packages/workbench/src/provider-adapters/factory.ts",
+   "summary": "factory.ts \u2014 typescript code, 148 lines, 2 functions, 0 classes, 1 exports, 13 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-adapters/factory.ts:blockedProviderApi",
+   "type": "function",
+   "name": "blockedProviderApi",
+   "filePath": "packages/workbench/src/provider-adapters/factory.ts",
+   "lineRange": [
+    28,
+    48
+   ],
+   "summary": "blockedProviderApi(config) \u2014 function in factory.ts, lines 28-48.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-adapters/factory.ts:createProviderClient",
+   "type": "function",
+   "name": "createProviderClient",
+   "filePath": "packages/workbench/src/provider-adapters/factory.ts",
+   "lineRange": [
+    53,
+    148
+   ],
+   "summary": "createProviderClient(config, request, settings, dependencies) \u2014 function in factory.ts, lines 53-148.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/provider-adapters/gateway.test.ts",
+   "type": "file",
+   "name": "gateway.test.ts",
+   "filePath": "packages/workbench/src/provider-adapters/gateway.test.ts",
+   "summary": "gateway.test.ts \u2014 typescript code, 243 lines, 1 functions, 0 classes, 0 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-adapters/gateway.test.ts:fixtureFetch",
+   "type": "function",
+   "name": "fixtureFetch",
+   "filePath": "packages/workbench/src/provider-adapters/gateway.test.ts",
+   "lineRange": [
+    6,
+    26
+   ],
+   "summary": "fixtureFetch(calls) \u2014 function in gateway.test.ts, lines 6-26.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/provider-adapters/gateways.ts",
+   "type": "file",
+   "name": "gateways.ts",
+   "filePath": "packages/workbench/src/provider-adapters/gateways.ts",
+   "summary": "gateways.ts \u2014 typescript code, 298 lines, 5 functions, 0 classes, 2 exports, 7 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-adapters/gateways.ts:isGatewayProvider",
+   "type": "function",
+   "name": "isGatewayProvider",
+   "filePath": "packages/workbench/src/provider-adapters/gateways.ts",
+   "lineRange": [
+    23,
+    25
+   ],
+   "summary": "isGatewayProvider(providerId) \u2014 function in gateways.ts, lines 23-25.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-adapters/gateways.ts:createGatewayProvider",
+   "type": "function",
+   "name": "createGatewayProvider",
+   "filePath": "packages/workbench/src/provider-adapters/gateways.ts",
+   "lineRange": [
+    27,
+    87
+   ],
+   "summary": "createGatewayProvider(config, request, settings) \u2014 function in gateways.ts, lines 27-87.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-adapters/gateways.ts:validateGatewayEndpoint",
+   "type": "function",
+   "name": "validateGatewayEndpoint",
+   "filePath": "packages/workbench/src/provider-adapters/gateways.ts",
+   "lineRange": [
+    89,
+    173
+   ],
+   "summary": "validateGatewayEndpoint(config) \u2014 function in gateways.ts, lines 89-173.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-adapters/gateways.ts:createGatewayFetch",
+   "type": "function",
+   "name": "createGatewayFetch",
+   "filePath": "packages/workbench/src/provider-adapters/gateways.ts",
+   "lineRange": [
+    175,
+    254
+   ],
+   "summary": "createGatewayFetch(config, request) \u2014 function in gateways.ts, lines 175-254.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-adapters/gateways.ts:pinnedModels",
+   "type": "function",
+   "name": "pinnedModels",
+   "filePath": "packages/workbench/src/provider-adapters/gateways.ts",
+   "lineRange": [
+    256,
+    298
+   ],
+   "summary": "pinnedModels(config) \u2014 function in gateways.ts, lines 256-298.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/provider-adapters/google-generative-ai-timeout.test.ts",
+   "type": "file",
+   "name": "google-generative-ai-timeout.test.ts",
+   "filePath": "packages/workbench/src/provider-adapters/google-generative-ai-timeout.test.ts",
+   "summary": "google-generative-ai-timeout.test.ts \u2014 typescript code, 51 lines, 0 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/provider-adapters/google-generative-ai.test.ts",
+   "type": "file",
+   "name": "google-generative-ai.test.ts",
+   "filePath": "packages/workbench/src/provider-adapters/google-generative-ai.test.ts",
+   "summary": "google-generative-ai.test.ts \u2014 typescript code, 313 lines, 0 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  }
+ ],
+ "edges": [
+  {
+   "source": "file:packages/cli/src/tui/workspace-settings.test.ts",
+   "target": "function:packages/cli/src/tui/workspace-settings.test.ts:assistantFetcher",
+   "type": "contains",
+   "direction": "forward",
+   "description": "workspace-settings.test.ts defines assistantFetcher",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/workspace-settings.test.ts",
+   "target": "function:packages/cli/src/tui/workspace-settings.test.ts:settings",
+   "type": "contains",
+   "direction": "forward",
+   "description": "workspace-settings.test.ts defines settings",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/compaction-summary.test.ts",
+   "target": "function:packages/workbench/src/compaction-summary.test.ts:models",
+   "type": "contains",
+   "direction": "forward",
+   "description": "compaction-summary.test.ts defines models",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/compaction-summary.test.ts",
+   "target": "function:packages/workbench/src/compaction-summary.test.ts:message",
+   "type": "contains",
+   "direction": "forward",
+   "description": "compaction-summary.test.ts defines message",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/compaction-summary.test.ts",
+   "target": "function:packages/workbench/src/compaction-summary.test.ts:summarising",
+   "type": "contains",
+   "direction": "forward",
+   "description": "compaction-summary.test.ts defines summarising",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/context.ts",
+   "target": "function:packages/workbench/src/context.ts:compactMessages",
+   "type": "contains",
+   "direction": "forward",
+   "description": "context.ts defines compactMessages",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/context.ts",
+   "target": "function:packages/workbench/src/context.ts:compactMessages",
+   "type": "exports",
+   "direction": "forward",
+   "description": "context.ts exports compactMessages",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/context.ts",
+   "target": "function:packages/workbench/src/context.ts:omittedByCompaction",
+   "type": "contains",
+   "direction": "forward",
+   "description": "context.ts defines omittedByCompaction",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/context.ts",
+   "target": "function:packages/workbench/src/context.ts:omittedByCompaction",
+   "type": "exports",
+   "direction": "forward",
+   "description": "context.ts exports omittedByCompaction",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/context.ts",
+   "target": "function:packages/workbench/src/context.ts:buildHarnessContext",
+   "type": "contains",
+   "direction": "forward",
+   "description": "context.ts defines buildHarnessContext",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/context.ts",
+   "target": "function:packages/workbench/src/context.ts:buildHarnessContext",
+   "type": "exports",
+   "direction": "forward",
+   "description": "context.ts exports buildHarnessContext",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/harness-conversation.test.ts",
+   "target": "function:packages/workbench/src/harness-conversation.test.ts:models",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-conversation.test.ts defines models",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/harness-conversation.test.ts",
+   "target": "function:packages/workbench/src/harness-conversation.test.ts:answer",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-conversation.test.ts defines answer",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/harness-conversation.test.ts",
+   "target": "function:packages/workbench/src/harness-conversation.test.ts:message",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-conversation.test.ts defines message",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/harness-conversation.test.ts",
+   "target": "function:packages/workbench/src/harness-conversation.test.ts:recording",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-conversation.test.ts defines recording",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/harness-conversation.test.ts",
+   "target": "function:packages/workbench/src/harness-conversation.test.ts:seeded",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-conversation.test.ts defines seeded",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/harness-conversation.ts",
+   "target": "function:packages/workbench/src/harness-conversation.ts:eligible",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-conversation.ts defines eligible",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/harness-conversation.ts",
+   "target": "function:packages/workbench/src/harness-conversation.ts:render",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-conversation.ts defines render",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/harness-conversation.ts",
+   "target": "function:packages/workbench/src/harness-conversation.ts:buildConversationTail",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-conversation.ts defines buildConversationTail",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/harness-conversation.ts",
+   "target": "function:packages/workbench/src/harness-conversation.ts:buildConversationTail",
+   "type": "exports",
+   "direction": "forward",
+   "description": "harness-conversation.ts exports buildConversationTail",
+   "weight": 0.7
+  },
+  {
+   "source": "function:packages/workbench/src/harness-conversation.ts:buildConversationTail",
+   "target": "function:packages/workbench/src/harness-conversation.ts:eligible",
+   "type": "calls",
+   "direction": "forward",
+   "description": "buildConversationTail calls eligible",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/workbench/src/harness-retrieval-wiring.test.ts",
+   "target": "function:packages/workbench/src/harness-retrieval-wiring.test.ts:models",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-retrieval-wiring.test.ts defines models",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/harness-retrieval-wiring.test.ts",
+   "target": "function:packages/workbench/src/harness-retrieval-wiring.test.ts:answer",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-retrieval-wiring.test.ts defines answer",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/harness-retrieval-wiring.test.ts",
+   "target": "function:packages/workbench/src/harness-retrieval-wiring.test.ts:lessonProposal",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-retrieval-wiring.test.ts defines lessonProposal",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/harness-retrieval-wiring.test.ts",
+   "target": "function:packages/workbench/src/harness-retrieval-wiring.test.ts:fixture",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-retrieval-wiring.test.ts defines fixture",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/harness-retrieval-wiring.test.ts",
+   "target": "function:packages/workbench/src/harness-retrieval-wiring.test.ts:systemTexts",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-retrieval-wiring.test.ts defines systemTexts",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/harness-review-model.test.ts",
+   "target": "function:packages/workbench/src/harness-review-model.test.ts:models",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-review-model.test.ts defines models",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/harness-review-model.test.ts",
+   "target": "function:packages/workbench/src/harness-review-model.test.ts:lesson",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-review-model.test.ts defines lesson",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/harness-review-model.test.ts",
+   "target": "function:packages/workbench/src/harness-review-model.test.ts:answering",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-review-model.test.ts defines answering",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/harness-review-model.test.ts",
+   "target": "function:packages/workbench/src/harness-review-model.test.ts:fixture",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-review-model.test.ts defines fixture",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/workbench/src/harness-review-model.test.ts:fixture",
+   "target": "function:packages/workbench/src/harness-review-model.test.ts:lesson",
+   "type": "calls",
+   "direction": "forward",
+   "description": "fixture calls lesson",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/workbench/src/harness-settings.ts",
+   "target": "function:packages/workbench/src/harness-settings.ts:defaultHarnessSettings",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-settings.ts defines defaultHarnessSettings",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/harness-settings.ts",
+   "target": "function:packages/workbench/src/harness-settings.ts:defaultHarnessSettings",
+   "type": "exports",
+   "direction": "forward",
+   "description": "harness-settings.ts exports defaultHarnessSettings",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/harness-settings.ts",
+   "target": "function:packages/workbench/src/harness-settings.ts:clampHarnessSetting",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-settings.ts defines clampHarnessSetting",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/harness-settings.ts",
+   "target": "function:packages/workbench/src/harness-settings.ts:clampHarnessSetting",
+   "type": "exports",
+   "direction": "forward",
+   "description": "harness-settings.ts exports clampHarnessSetting",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/harness-settings.ts",
+   "target": "function:packages/workbench/src/harness-settings.ts:resolveHarnessSettings",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-settings.ts defines resolveHarnessSettings",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/harness-settings.ts",
+   "target": "function:packages/workbench/src/harness-settings.ts:resolveHarnessSettings",
+   "type": "exports",
+   "direction": "forward",
+   "description": "harness-settings.ts exports resolveHarnessSettings",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/harness-settings.ts",
+   "target": "function:packages/workbench/src/harness-settings.ts:harnessSettingsPatch",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-settings.ts defines harnessSettingsPatch",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/harness-settings.ts",
+   "target": "function:packages/workbench/src/harness-settings.ts:harnessSettingsPatch",
+   "type": "exports",
+   "direction": "forward",
+   "description": "harness-settings.ts exports harnessSettingsPatch",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/harness-settings.ts",
+   "target": "function:packages/workbench/src/harness-settings.ts:harnessSettingsView",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-settings.ts defines harnessSettingsView",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/harness-settings.ts",
+   "target": "function:packages/workbench/src/harness-settings.ts:harnessSettingsView",
+   "type": "exports",
+   "direction": "forward",
+   "description": "harness-settings.ts exports harnessSettingsView",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/harness-settings.ts",
+   "target": "function:packages/workbench/src/harness-settings.ts:defaultHarnessTextSettings",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-settings.ts defines defaultHarnessTextSettings",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/harness-settings.ts",
+   "target": "function:packages/workbench/src/harness-settings.ts:defaultHarnessTextSettings",
+   "type": "exports",
+   "direction": "forward",
+   "description": "harness-settings.ts exports defaultHarnessTextSettings",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/harness-settings.ts",
+   "target": "function:packages/workbench/src/harness-settings.ts:harnessTextSettingRejection",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-settings.ts defines harnessTextSettingRejection",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/harness-settings.ts",
+   "target": "function:packages/workbench/src/harness-settings.ts:harnessTextSettingRejection",
+   "type": "exports",
+   "direction": "forward",
+   "description": "harness-settings.ts exports harnessTextSettingRejection",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/harness-settings.ts",
+   "target": "function:packages/workbench/src/harness-settings.ts:resolveHarnessTextSettings",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-settings.ts defines resolveHarnessTextSettings",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/harness-settings.ts",
+   "target": "function:packages/workbench/src/harness-settings.ts:resolveHarnessTextSettings",
+   "type": "exports",
+   "direction": "forward",
+   "description": "harness-settings.ts exports resolveHarnessTextSettings",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/harness-settings.ts",
+   "target": "function:packages/workbench/src/harness-settings.ts:harnessTextSettingsPatch",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-settings.ts defines harnessTextSettingsPatch",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/harness-settings.ts",
+   "target": "function:packages/workbench/src/harness-settings.ts:harnessTextSettingsPatch",
+   "type": "exports",
+   "direction": "forward",
+   "description": "harness-settings.ts exports harnessTextSettingsPatch",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/harness-settings.ts",
+   "target": "function:packages/workbench/src/harness-settings.ts:harnessTextSettingsView",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-settings.ts defines harnessTextSettingsView",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/harness-settings.ts",
+   "target": "function:packages/workbench/src/harness-settings.ts:harnessTextSettingsView",
+   "type": "exports",
+   "direction": "forward",
+   "description": "harness-settings.ts exports harnessTextSettingsView",
+   "weight": 0.7
+  },
+  {
+   "source": "function:packages/workbench/src/harness-settings.ts:resolveHarnessSettings",
+   "target": "function:packages/workbench/src/harness-settings.ts:defaultHarnessSettings",
+   "type": "calls",
+   "direction": "forward",
+   "description": "resolveHarnessSettings calls defaultHarnessSettings",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/harness-settings.ts:resolveHarnessSettings",
+   "target": "function:packages/workbench/src/harness-settings.ts:clampHarnessSetting",
+   "type": "calls",
+   "direction": "forward",
+   "description": "resolveHarnessSettings calls clampHarnessSetting",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/harness-settings.ts:harnessSettingsPatch",
+   "target": "function:packages/workbench/src/harness-settings.ts:clampHarnessSetting",
+   "type": "calls",
+   "direction": "forward",
+   "description": "harnessSettingsPatch calls clampHarnessSetting",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/harness-settings.ts:resolveHarnessTextSettings",
+   "target": "function:packages/workbench/src/harness-settings.ts:defaultHarnessTextSettings",
+   "type": "calls",
+   "direction": "forward",
+   "description": "resolveHarnessTextSettings calls defaultHarnessTextSettings",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/harness-settings.ts:resolveHarnessTextSettings",
+   "target": "function:packages/workbench/src/harness-settings.ts:harnessTextSettingRejection",
+   "type": "calls",
+   "direction": "forward",
+   "description": "resolveHarnessTextSettings calls harnessTextSettingRejection",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/harness-settings.ts:harnessTextSettingsPatch",
+   "target": "function:packages/workbench/src/harness-settings.ts:harnessTextSettingRejection",
+   "type": "calls",
+   "direction": "forward",
+   "description": "harnessTextSettingsPatch calls harnessTextSettingRejection",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/workbench/src/harness-wiring.test.ts",
+   "target": "function:packages/workbench/src/harness-wiring.test.ts:models",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-wiring.test.ts defines models",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/harness-wiring.test.ts",
+   "target": "function:packages/workbench/src/harness-wiring.test.ts:answer",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-wiring.test.ts defines answer",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/harness-wiring.test.ts",
+   "target": "function:packages/workbench/src/harness-wiring.test.ts:toolCallLoop",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-wiring.test.ts defines toolCallLoop",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/harness-wiring.test.ts",
+   "target": "function:packages/workbench/src/harness-wiring.test.ts:fixture",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-wiring.test.ts defines fixture",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/workbench/src/harness-wiring.test.ts:toolCallLoop",
+   "target": "function:packages/workbench/src/harness-wiring.test.ts:models",
+   "type": "calls",
+   "direction": "forward",
+   "description": "toolCallLoop calls models",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/anthropic-messages-reasoning.test.ts",
+   "target": "function:packages/workbench/src/provider-adapters/anthropic-messages-reasoning.test.ts:sse",
+   "type": "contains",
+   "direction": "forward",
+   "description": "anthropic-messages-reasoning.test.ts defines sse",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/anthropic-messages-reasoning.test.ts",
+   "target": "function:packages/workbench/src/provider-adapters/anthropic-messages-reasoning.test.ts:adapterFor",
+   "type": "contains",
+   "direction": "forward",
+   "description": "anthropic-messages-reasoning.test.ts defines adapterFor",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/workbench/src/provider-adapters/anthropic-messages-reasoning.test.ts:adapterFor",
+   "target": "function:packages/workbench/src/provider-adapters/anthropic-messages-reasoning.test.ts:sse",
+   "type": "calls",
+   "direction": "forward",
+   "description": "adapterFor calls sse",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/anthropic-messages.ts",
+   "target": "class:packages/workbench/src/provider-adapters/anthropic-messages.ts:AnthropicMessagesAdapter",
+   "type": "contains",
+   "direction": "forward",
+   "description": "anthropic-messages.ts defines class AnthropicMessagesAdapter",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/aws-sigv4.ts",
+   "target": "function:packages/workbench/src/provider-adapters/aws-sigv4.ts:sha256",
+   "type": "contains",
+   "direction": "forward",
+   "description": "aws-sigv4.ts defines sha256",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/aws-sigv4.ts",
+   "target": "function:packages/workbench/src/provider-adapters/aws-sigv4.ts:hmac",
+   "type": "contains",
+   "direction": "forward",
+   "description": "aws-sigv4.ts defines hmac",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/aws-sigv4.ts",
+   "target": "function:packages/workbench/src/provider-adapters/aws-sigv4.ts:signSigV4String",
+   "type": "contains",
+   "direction": "forward",
+   "description": "aws-sigv4.ts defines signSigV4String",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/aws-sigv4.ts",
+   "target": "function:packages/workbench/src/provider-adapters/aws-sigv4.ts:signSigV4String",
+   "type": "exports",
+   "direction": "forward",
+   "description": "aws-sigv4.ts exports signSigV4String",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/aws-sigv4.ts",
+   "target": "function:packages/workbench/src/provider-adapters/aws-sigv4.ts:canonicalPath",
+   "type": "contains",
+   "direction": "forward",
+   "description": "aws-sigv4.ts defines canonicalPath",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/aws-sigv4.ts",
+   "target": "function:packages/workbench/src/provider-adapters/aws-sigv4.ts:signBedrockRequest",
+   "type": "contains",
+   "direction": "forward",
+   "description": "aws-sigv4.ts defines signBedrockRequest",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/aws-sigv4.ts",
+   "target": "function:packages/workbench/src/provider-adapters/aws-sigv4.ts:signBedrockRequest",
+   "type": "exports",
+   "direction": "forward",
+   "description": "aws-sigv4.ts exports signBedrockRequest",
+   "weight": 0.7
+  },
+  {
+   "source": "function:packages/workbench/src/provider-adapters/aws-sigv4.ts:signSigV4String",
+   "target": "function:packages/workbench/src/provider-adapters/aws-sigv4.ts:hmac",
+   "type": "calls",
+   "direction": "forward",
+   "description": "signSigV4String calls hmac",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/provider-adapters/aws-sigv4.ts:signBedrockRequest",
+   "target": "function:packages/workbench/src/provider-adapters/aws-sigv4.ts:sha256",
+   "type": "calls",
+   "direction": "forward",
+   "description": "signBedrockRequest calls sha256",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/provider-adapters/aws-sigv4.ts:signBedrockRequest",
+   "target": "function:packages/workbench/src/provider-adapters/aws-sigv4.ts:canonicalPath",
+   "type": "calls",
+   "direction": "forward",
+   "description": "signBedrockRequest calls canonicalPath",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/provider-adapters/aws-sigv4.ts:signBedrockRequest",
+   "target": "function:packages/workbench/src/provider-adapters/aws-sigv4.ts:signSigV4String",
+   "type": "calls",
+   "direction": "forward",
+   "description": "signBedrockRequest calls signSigV4String",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/azure-openai-responses.test.ts",
+   "target": "function:packages/workbench/src/provider-adapters/azure-openai-responses.test.ts:eventStream",
+   "type": "contains",
+   "direction": "forward",
+   "description": "azure-openai-responses.test.ts defines eventStream",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/bedrock-converse-stream.test.ts",
+   "target": "function:packages/workbench/src/provider-adapters/bedrock-converse-stream.test.ts:fixtureCredentialProvider",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bedrock-converse-stream.test.ts defines fixtureCredentialProvider",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/bedrock-converse-stream.test.ts",
+   "target": "function:packages/workbench/src/provider-adapters/bedrock-converse-stream.test.ts:crc32",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bedrock-converse-stream.test.ts defines crc32",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/bedrock-converse-stream.test.ts",
+   "target": "function:packages/workbench/src/provider-adapters/bedrock-converse-stream.test.ts:frame",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bedrock-converse-stream.test.ts defines frame",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/bedrock-converse-stream.test.ts",
+   "target": "function:packages/workbench/src/provider-adapters/bedrock-converse-stream.test.ts:event",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bedrock-converse-stream.test.ts defines event",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/bedrock-converse-stream.test.ts",
+   "target": "function:packages/workbench/src/provider-adapters/bedrock-converse-stream.test.ts:exceptionEvent",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bedrock-converse-stream.test.ts defines exceptionEvent",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/bedrock-converse-stream.test.ts",
+   "target": "function:packages/workbench/src/provider-adapters/bedrock-converse-stream.test.ts:stream",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bedrock-converse-stream.test.ts defines stream",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/workbench/src/provider-adapters/bedrock-converse-stream.test.ts:frame",
+   "target": "function:packages/workbench/src/provider-adapters/bedrock-converse-stream.test.ts:crc32",
+   "type": "calls",
+   "direction": "forward",
+   "description": "frame calls crc32",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/provider-adapters/bedrock-converse-stream.test.ts:event",
+   "target": "function:packages/workbench/src/provider-adapters/bedrock-converse-stream.test.ts:frame",
+   "type": "calls",
+   "direction": "forward",
+   "description": "event calls frame",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/provider-adapters/bedrock-converse-stream.test.ts:exceptionEvent",
+   "target": "function:packages/workbench/src/provider-adapters/bedrock-converse-stream.test.ts:frame",
+   "type": "calls",
+   "direction": "forward",
+   "description": "exceptionEvent calls frame",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/bedrock-converse-stream.ts",
+   "target": "function:packages/workbench/src/provider-adapters/bedrock-converse-stream.ts:crc32",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bedrock-converse-stream.ts defines crc32",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/bedrock-converse-stream.ts",
+   "target": "function:packages/workbench/src/provider-adapters/bedrock-converse-stream.ts:decodeHeaders",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bedrock-converse-stream.ts defines decodeHeaders",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/bedrock-converse-stream.ts",
+   "target": "function:packages/workbench/src/provider-adapters/bedrock-converse-stream.ts:decodeFrame",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bedrock-converse-stream.ts defines decodeFrame",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/bedrock-converse-stream.ts",
+   "target": "function:packages/workbench/src/provider-adapters/bedrock-converse-stream.ts:encodeModelPath",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bedrock-converse-stream.ts defines encodeModelPath",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/bedrock-converse-stream.ts",
+   "target": "class:packages/workbench/src/provider-adapters/bedrock-converse-stream.ts:BedrockConverseStreamAdapter",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bedrock-converse-stream.ts defines class BedrockConverseStreamAdapter",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/workbench/src/provider-adapters/bedrock-converse-stream.ts:decodeFrame",
+   "target": "function:packages/workbench/src/provider-adapters/bedrock-converse-stream.ts:crc32",
+   "type": "calls",
+   "direction": "forward",
+   "description": "decodeFrame calls crc32",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/provider-adapters/bedrock-converse-stream.ts:decodeFrame",
+   "target": "function:packages/workbench/src/provider-adapters/bedrock-converse-stream.ts:decodeHeaders",
+   "type": "calls",
+   "direction": "forward",
+   "description": "decodeFrame calls decodeHeaders",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/bedrock-mantle-config.ts",
+   "target": "function:packages/workbench/src/provider-adapters/bedrock-mantle-config.ts:isBedrockMantleBaseUrl",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bedrock-mantle-config.ts defines isBedrockMantleBaseUrl",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/bedrock-mantle-config.ts",
+   "target": "function:packages/workbench/src/provider-adapters/bedrock-mantle-config.ts:isBedrockMantleBaseUrl",
+   "type": "exports",
+   "direction": "forward",
+   "description": "bedrock-mantle-config.ts exports isBedrockMantleBaseUrl",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/bedrock-mantle-credential-chain.test.ts",
+   "target": "function:packages/workbench/src/provider-adapters/bedrock-mantle-credential-chain.test.ts:unusedRequest",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bedrock-mantle-credential-chain.test.ts defines unusedRequest",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/bedrock-mantle-responses.ts",
+   "target": "function:packages/workbench/src/provider-adapters/bedrock-mantle-responses.ts:credentialSecrets",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bedrock-mantle-responses.ts defines credentialSecrets",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/bedrock-mantle-responses.ts",
+   "target": "function:packages/workbench/src/provider-adapters/bedrock-mantle-responses.ts:redactSecrets",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bedrock-mantle-responses.ts defines redactSecrets",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/bedrock-mantle-responses.ts",
+   "target": "function:packages/workbench/src/provider-adapters/bedrock-mantle-responses.ts:redactReply",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bedrock-mantle-responses.ts defines redactReply",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/bedrock-mantle-responses.ts",
+   "target": "class:packages/workbench/src/provider-adapters/bedrock-mantle-responses.ts:BedrockMantleResponsesAdapter",
+   "type": "contains",
+   "direction": "forward",
+   "description": "bedrock-mantle-responses.ts defines class BedrockMantleResponsesAdapter",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/workbench/src/provider-adapters/bedrock-mantle-responses.ts:redactReply",
+   "target": "function:packages/workbench/src/provider-adapters/bedrock-mantle-responses.ts:redactSecrets",
+   "type": "calls",
+   "direction": "forward",
+   "description": "redactReply calls redactSecrets",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/cloudflare-ai-gateway-config.ts",
+   "target": "function:packages/workbench/src/provider-adapters/cloudflare-ai-gateway-config.ts:cloudflareAiGatewayRouteForTransport",
+   "type": "contains",
+   "direction": "forward",
+   "description": "cloudflare-ai-gateway-config.ts defines cloudflareAiGatewayRouteForTransport",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/cloudflare-ai-gateway-config.ts",
+   "target": "function:packages/workbench/src/provider-adapters/cloudflare-ai-gateway-config.ts:cloudflareAiGatewayRouteForTransport",
+   "type": "exports",
+   "direction": "forward",
+   "description": "cloudflare-ai-gateway-config.ts exports cloudflareAiGatewayRouteForTransport",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/cloudflare-ai-gateway-config.ts",
+   "target": "function:packages/workbench/src/provider-adapters/cloudflare-ai-gateway-config.ts:normalizeCloudflareAiGatewayEndpoint",
+   "type": "contains",
+   "direction": "forward",
+   "description": "cloudflare-ai-gateway-config.ts defines normalizeCloudflareAiGatewayEndpoint",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/cloudflare-ai-gateway-config.ts",
+   "target": "function:packages/workbench/src/provider-adapters/cloudflare-ai-gateway-config.ts:normalizeCloudflareAiGatewayEndpoint",
+   "type": "exports",
+   "direction": "forward",
+   "description": "cloudflare-ai-gateway-config.ts exports normalizeCloudflareAiGatewayEndpoint",
+   "weight": 0.7
+  },
+  {
+   "source": "function:packages/workbench/src/provider-adapters/cloudflare-ai-gateway-config.ts:normalizeCloudflareAiGatewayEndpoint",
+   "target": "function:packages/workbench/src/provider-adapters/cloudflare-ai-gateway-config.ts:cloudflareAiGatewayRouteForTransport",
+   "type": "calls",
+   "direction": "forward",
+   "description": "normalizeCloudflareAiGatewayEndpoint calls cloudflareAiGatewayRouteForTransport",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/cloudflare-workers-ai-config.ts",
+   "target": "function:packages/workbench/src/provider-adapters/cloudflare-workers-ai-config.ts:normalizeCloudflareWorkersAiEndpoint",
+   "type": "contains",
+   "direction": "forward",
+   "description": "cloudflare-workers-ai-config.ts defines normalizeCloudflareWorkersAiEndpoint",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/cloudflare-workers-ai-config.ts",
+   "target": "function:packages/workbench/src/provider-adapters/cloudflare-workers-ai-config.ts:normalizeCloudflareWorkersAiEndpoint",
+   "type": "exports",
+   "direction": "forward",
+   "description": "cloudflare-workers-ai-config.ts exports normalizeCloudflareWorkersAiEndpoint",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/factory.ts",
+   "target": "function:packages/workbench/src/provider-adapters/factory.ts:blockedProviderApi",
+   "type": "contains",
+   "direction": "forward",
+   "description": "factory.ts defines blockedProviderApi",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/factory.ts",
+   "target": "function:packages/workbench/src/provider-adapters/factory.ts:createProviderClient",
+   "type": "contains",
+   "direction": "forward",
+   "description": "factory.ts defines createProviderClient",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/factory.ts",
+   "target": "function:packages/workbench/src/provider-adapters/factory.ts:createProviderClient",
+   "type": "exports",
+   "direction": "forward",
+   "description": "factory.ts exports createProviderClient",
+   "weight": 0.7
+  },
+  {
+   "source": "function:packages/workbench/src/provider-adapters/factory.ts:createProviderClient",
+   "target": "function:packages/workbench/src/provider-adapters/factory.ts:blockedProviderApi",
+   "type": "calls",
+   "direction": "forward",
+   "description": "createProviderClient calls blockedProviderApi",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/gateway.test.ts",
+   "target": "function:packages/workbench/src/provider-adapters/gateway.test.ts:fixtureFetch",
+   "type": "contains",
+   "direction": "forward",
+   "description": "gateway.test.ts defines fixtureFetch",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/gateways.ts",
+   "target": "function:packages/workbench/src/provider-adapters/gateways.ts:isGatewayProvider",
+   "type": "contains",
+   "direction": "forward",
+   "description": "gateways.ts defines isGatewayProvider",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/gateways.ts",
+   "target": "function:packages/workbench/src/provider-adapters/gateways.ts:isGatewayProvider",
+   "type": "exports",
+   "direction": "forward",
+   "description": "gateways.ts exports isGatewayProvider",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/gateways.ts",
+   "target": "function:packages/workbench/src/provider-adapters/gateways.ts:createGatewayProvider",
+   "type": "contains",
+   "direction": "forward",
+   "description": "gateways.ts defines createGatewayProvider",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/gateways.ts",
+   "target": "function:packages/workbench/src/provider-adapters/gateways.ts:createGatewayProvider",
+   "type": "exports",
+   "direction": "forward",
+   "description": "gateways.ts exports createGatewayProvider",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/gateways.ts",
+   "target": "function:packages/workbench/src/provider-adapters/gateways.ts:validateGatewayEndpoint",
+   "type": "contains",
+   "direction": "forward",
+   "description": "gateways.ts defines validateGatewayEndpoint",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/gateways.ts",
+   "target": "function:packages/workbench/src/provider-adapters/gateways.ts:createGatewayFetch",
+   "type": "contains",
+   "direction": "forward",
+   "description": "gateways.ts defines createGatewayFetch",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/gateways.ts",
+   "target": "function:packages/workbench/src/provider-adapters/gateways.ts:pinnedModels",
+   "type": "contains",
+   "direction": "forward",
+   "description": "gateways.ts defines pinnedModels",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/workbench/src/provider-adapters/gateways.ts:createGatewayProvider",
+   "target": "function:packages/workbench/src/provider-adapters/gateways.ts:validateGatewayEndpoint",
+   "type": "calls",
+   "direction": "forward",
+   "description": "createGatewayProvider calls validateGatewayEndpoint",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/provider-adapters/gateways.ts:createGatewayProvider",
+   "target": "function:packages/workbench/src/provider-adapters/gateways.ts:createGatewayFetch",
+   "type": "calls",
+   "direction": "forward",
+   "description": "createGatewayProvider calls createGatewayFetch",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/provider-adapters/gateways.ts:createGatewayProvider",
+   "target": "function:packages/workbench/src/provider-adapters/gateways.ts:pinnedModels",
+   "type": "calls",
+   "direction": "forward",
+   "description": "createGatewayProvider calls pinnedModels",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/provider-adapters/gateways.ts:createGatewayFetch",
+   "target": "function:packages/workbench/src/provider-adapters/gateways.ts:validateGatewayEndpoint",
+   "type": "calls",
+   "direction": "forward",
+   "description": "createGatewayFetch calls validateGatewayEndpoint",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/cli/src/tui/workspace-settings.test.ts",
+   "target": "file:packages/cli/src/tui/workspace.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "workspace-settings.test.ts imports workspace.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/workspace-settings.test.ts",
+   "target": "file:packages/workbench/src/harness-settings.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "workspace-settings.test.ts imports harness-settings.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/workspace-settings.test.ts",
+   "target": "file:packages/workbench/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "workspace-settings.test.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/workspace-settings.test.ts",
+   "target": "file:packages/workbench/src/test-fixture.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "workspace-settings.test.ts imports test-fixture.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/compaction-summary.test.ts",
+   "target": "file:packages/workbench/src/context.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "compaction-summary.test.ts imports context.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/compaction-summary.test.ts",
+   "target": "file:packages/workbench/src/provider.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "compaction-summary.test.ts imports provider.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/compaction-summary.test.ts",
+   "target": "file:packages/workbench/src/test-fixture.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "compaction-summary.test.ts imports test-fixture.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/context.test.ts",
+   "target": "file:packages/workbench/src/context.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "context.test.ts imports context.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/context.test.ts",
+   "target": "file:packages/workbench/src/provider.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "context.test.ts imports provider.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/context.ts",
+   "target": "file:packages/workbench/src/agents.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "context.ts imports agents.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/context.ts",
+   "target": "file:packages/workbench/src/harness-ranking.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "context.ts imports harness-ranking.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/context.ts",
+   "target": "file:packages/workbench/src/learned-harness.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "context.ts imports learned-harness.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/context.ts",
+   "target": "file:packages/workbench/src/provider.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "context.ts imports provider.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/harness-conversation.test.ts",
+   "target": "file:packages/workbench/src/harness-conversation.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "harness-conversation.test.ts imports harness-conversation.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/harness-conversation.test.ts",
+   "target": "file:packages/workbench/src/provider.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "harness-conversation.test.ts imports provider.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/harness-conversation.test.ts",
+   "target": "file:packages/workbench/src/test-fixture.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "harness-conversation.test.ts imports test-fixture.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/harness-conversation.ts",
+   "target": "file:packages/workbench/src/provider.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "harness-conversation.ts imports provider.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/harness-retrieval-wiring.test.ts",
+   "target": "file:packages/workbench/src/harness-settings.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "harness-retrieval-wiring.test.ts imports harness-settings.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/harness-retrieval-wiring.test.ts",
+   "target": "file:packages/workbench/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "harness-retrieval-wiring.test.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/harness-retrieval-wiring.test.ts",
+   "target": "file:packages/workbench/src/refine-pass.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "harness-retrieval-wiring.test.ts imports refine-pass.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/harness-retrieval-wiring.test.ts",
+   "target": "file:packages/workbench/src/test-fixture.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "harness-retrieval-wiring.test.ts imports test-fixture.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/harness-review-model.test.ts",
+   "target": "file:packages/workbench/src/harness-settings.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "harness-review-model.test.ts imports harness-settings.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/harness-review-model.test.ts",
+   "target": "file:packages/workbench/src/refine-pass.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "harness-review-model.test.ts imports refine-pass.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/harness-review-model.test.ts",
+   "target": "file:packages/workbench/src/test-fixture.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "harness-review-model.test.ts imports test-fixture.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/harness-wiring.test.ts",
+   "target": "file:packages/workbench/src/harness-settings.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "harness-wiring.test.ts imports harness-settings.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/harness-wiring.test.ts",
+   "target": "file:packages/workbench/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "harness-wiring.test.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/harness-wiring.test.ts",
+   "target": "file:packages/workbench/src/test-fixture.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "harness-wiring.test.ts imports test-fixture.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/anthropic-messages-reasoning.test.ts",
+   "target": "file:packages/workbench/src/harness-settings.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "anthropic-messages-reasoning.test.ts imports harness-settings.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/anthropic-messages-reasoning.test.ts",
+   "target": "file:packages/workbench/src/provider-adapters/anthropic-messages.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "anthropic-messages-reasoning.test.ts imports anthropic-messages.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/anthropic-messages-timeout.test.ts",
+   "target": "file:packages/workbench/src/provider.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "anthropic-messages-timeout.test.ts imports provider.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/anthropic-messages.ts",
+   "target": "file:packages/workbench/src/harness-settings.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "anthropic-messages.ts imports harness-settings.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/anthropic-messages.ts",
+   "target": "file:packages/workbench/src/provider-adapters/guards.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "anthropic-messages.ts imports guards.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/anthropic-messages.ts",
+   "target": "file:packages/workbench/src/provider.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "anthropic-messages.ts imports provider.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/azure-openai-responses.test.ts",
+   "target": "file:packages/workbench/src/provider-adapters/factory.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "azure-openai-responses.test.ts imports factory.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/azure-openai-responses.test.ts",
+   "target": "file:packages/workbench/src/provider-adapters/types.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "azure-openai-responses.test.ts imports types.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/azure-openai-responses.test.ts",
+   "target": "file:packages/workbench/src/provider.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "azure-openai-responses.test.ts imports provider.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/bedrock-converse-stream.test.ts",
+   "target": "file:packages/workbench/src/provider-adapters/aws-sigv4.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "bedrock-converse-stream.test.ts imports aws-sigv4.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/bedrock-converse-stream.test.ts",
+   "target": "file:packages/workbench/src/provider-adapters/bedrock-converse-stream.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "bedrock-converse-stream.test.ts imports bedrock-converse-stream.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/bedrock-converse-stream.test.ts",
+   "target": "file:packages/workbench/src/provider-adapters/factory.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "bedrock-converse-stream.test.ts imports factory.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/bedrock-converse-stream.test.ts",
+   "target": "file:packages/workbench/src/provider-adapters/types.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "bedrock-converse-stream.test.ts imports types.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/bedrock-converse-stream.test.ts",
+   "target": "file:packages/workbench/src/provider.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "bedrock-converse-stream.test.ts imports provider.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/bedrock-converse-stream.ts",
+   "target": "file:packages/workbench/src/harness-settings.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "bedrock-converse-stream.ts imports harness-settings.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/bedrock-converse-stream.ts",
+   "target": "file:packages/workbench/src/provider-adapters/aws-sigv4.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "bedrock-converse-stream.ts imports aws-sigv4.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/bedrock-converse-stream.ts",
+   "target": "file:packages/workbench/src/provider-adapters/types.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "bedrock-converse-stream.ts imports types.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/bedrock-converse-stream.ts",
+   "target": "file:packages/workbench/src/provider.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "bedrock-converse-stream.ts imports provider.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/bedrock-mantle-credential-chain.test.ts",
+   "target": "file:packages/workbench/src/provider-adapters/aws-sigv4.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "bedrock-mantle-credential-chain.test.ts imports aws-sigv4.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/bedrock-mantle-credential-chain.test.ts",
+   "target": "file:packages/workbench/src/provider-adapters/factory.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "bedrock-mantle-credential-chain.test.ts imports factory.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/bedrock-mantle-credential-chain.test.ts",
+   "target": "file:packages/workbench/src/provider-adapters/types.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "bedrock-mantle-credential-chain.test.ts imports types.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/bedrock-mantle-credential-chain.test.ts",
+   "target": "file:packages/workbench/src/provider-catalog.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "bedrock-mantle-credential-chain.test.ts imports provider-catalog.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/bedrock-mantle-responses.ts",
+   "target": "file:packages/workbench/src/harness-settings.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "bedrock-mantle-responses.ts imports harness-settings.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/bedrock-mantle-responses.ts",
+   "target": "file:packages/workbench/src/provider-adapters/aws-sigv4.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "bedrock-mantle-responses.ts imports aws-sigv4.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/bedrock-mantle-responses.ts",
+   "target": "file:packages/workbench/src/provider-adapters/openai-responses.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "bedrock-mantle-responses.ts imports openai-responses.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/bedrock-mantle-responses.ts",
+   "target": "file:packages/workbench/src/provider-adapters/types.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "bedrock-mantle-responses.ts imports types.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/bedrock-mantle-responses.ts",
+   "target": "file:packages/workbench/src/provider-catalog.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "bedrock-mantle-responses.ts imports provider-catalog.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/bedrock-mantle-responses.ts",
+   "target": "file:packages/workbench/src/provider.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "bedrock-mantle-responses.ts imports provider.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/compatible-provider-timeout.test.ts",
+   "target": "file:packages/workbench/src/provider-adapters/factory.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "compatible-provider-timeout.test.ts imports factory.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/factory.test.ts",
+   "target": "file:packages/workbench/src/provider-adapters/factory.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "factory.test.ts imports factory.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/factory.test.ts",
+   "target": "file:packages/workbench/src/provider-adapters/types.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "factory.test.ts imports types.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/factory.test.ts",
+   "target": "file:packages/workbench/src/provider-catalog.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "factory.test.ts imports provider-catalog.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/factory.test.ts",
+   "target": "file:packages/workbench/src/provider.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "factory.test.ts imports provider.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/factory.ts",
+   "target": "file:packages/workbench/src/harness-settings.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "factory.ts imports harness-settings.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/factory.ts",
+   "target": "file:packages/workbench/src/provider-adapters/bedrock-converse-stream.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "factory.ts imports bedrock-converse-stream.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/factory.ts",
+   "target": "file:packages/workbench/src/provider-adapters/bedrock-mantle-responses.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "factory.ts imports bedrock-mantle-responses.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/factory.ts",
+   "target": "file:packages/workbench/src/provider-adapters/gateways.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "factory.ts imports gateways.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/factory.ts",
+   "target": "file:packages/workbench/src/provider-adapters/google-generative-ai.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "factory.ts imports google-generative-ai.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/factory.ts",
+   "target": "file:packages/workbench/src/provider-adapters/mistral-conversations.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "factory.ts imports mistral-conversations.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/factory.ts",
+   "target": "file:packages/workbench/src/provider-adapters/ollama-chat.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "factory.ts imports ollama-chat.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/factory.ts",
+   "target": "file:packages/workbench/src/provider-adapters/openai-responses.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "factory.ts imports openai-responses.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/factory.ts",
+   "target": "file:packages/workbench/src/provider-adapters/prime-inference.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "factory.ts imports prime-inference.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/factory.ts",
+   "target": "file:packages/workbench/src/provider-adapters/types.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "factory.ts imports types.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/factory.ts",
+   "target": "file:packages/workbench/src/provider.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "factory.ts imports provider.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/gateway.test.ts",
+   "target": "file:packages/workbench/src/provider-adapters/factory.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "gateway.test.ts imports factory.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/gateway.test.ts",
+   "target": "file:packages/workbench/src/provider-adapters/types.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "gateway.test.ts imports types.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/gateways.ts",
+   "target": "file:packages/workbench/src/harness-settings.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "gateways.ts imports harness-settings.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/gateways.ts",
+   "target": "file:packages/workbench/src/provider-adapters/cloudflare-ai-gateway-config.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "gateways.ts imports cloudflare-ai-gateway-config.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/gateways.ts",
+   "target": "file:packages/workbench/src/provider-adapters/cloudflare-workers-ai-config.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "gateways.ts imports cloudflare-workers-ai-config.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/gateways.ts",
+   "target": "file:packages/workbench/src/provider-adapters/openai-responses.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "gateways.ts imports openai-responses.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/gateways.ts",
+   "target": "file:packages/workbench/src/provider-adapters/types.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "gateways.ts imports types.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/gateways.ts",
+   "target": "file:packages/workbench/src/provider-catalog.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "gateways.ts imports provider-catalog.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/gateways.ts",
+   "target": "file:packages/workbench/src/provider.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "gateways.ts imports provider.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/google-generative-ai-timeout.test.ts",
+   "target": "file:packages/workbench/src/provider-adapters/factory.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "google-generative-ai-timeout.test.ts imports factory.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/provider-adapters/google-generative-ai.test.ts",
+   "target": "file:packages/workbench/src/provider-adapters/factory.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "google-generative-ai.test.ts imports factory.ts",
+   "weight": 0.8
+  }
+ ]
+}

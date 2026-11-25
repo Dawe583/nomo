@@ -258,8 +258,9 @@ Each node follows the loop in section 3.2. Statuses are tracked in
   Verifier: `node scripts/src/check-tests.mjs` inside the gate. Stop: the gate
   is green or a double-red blocker is recorded.
 
-- H10. Refinement outcome feedback. Status: implemented 2026-11-21, pending
-  the gate. Paths: `packages/workbench/src/refinement-outcomes.ts`,
+- H10. Refinement outcome feedback. Status: implemented 2026-11-21; restored
+  2026-11-24 after the merge deleted it, with `measureRefinementEffect` and its
+  types ported back into `harness-scores.ts`. Paths: `packages/workbench/src/refinement-outcomes.ts`,
   `packages/workbench/src/harness-runtime.ts`, `packages/workbench/src/index.ts`.
   Goal: the reviewer reads the signed fate of the workspace's earlier
   proposals, and a rejected or rolled back refinement cannot be proposed again
@@ -288,7 +289,9 @@ The parity lane (HP0 to HP11, owner request 2026-11-21) measures the harness
 against Hermes Agent and Prime Agent and orders the slices that close the gap:
 `docs/superpowers/designs/2026-11-21-hp0-harness-parity.md`.
 
-- HP1. Operator scope. Status: implemented 2026-11-21. Paths:
+- HP1. Operator scope. Status: NOT implemented at HEAD. Merge d7b55f38
+  (2026-11-23) deleted `operator-harness.ts` and its test; nothing at HEAD
+  imports or exposes it. Historical paths:
   `packages/workbench/src/operator-harness.ts`,
   `packages/workbench/src/index.ts`, `packages/workbench/src/harness-ranking.ts`,
   `packages/cli/src/harness.ts`, `apps/control-plane/api/server.ts`. Goal: an
@@ -301,7 +304,9 @@ against Hermes Agent and Prime Agent and orders the slices that close the gap:
   path that promotes a mined observation, an unapproved or rolled back
   refinement, or lets a promoted entry reach `decide` stops the node.
 
-- HP2. Automatic compaction. Status: implemented 2026-11-21. Paths:
+- HP2. Automatic compaction. Status: partial. The settings keys are restored;
+  the automatic compaction path itself is not, so a long session still stops at
+  the message cap. Paths:
   `packages/workbench/src/context.ts`, `packages/workbench/src/index.ts`,
   `packages/workbench/src/harness-settings.ts`, `docs/HARNESS-SETTINGS.md`.
   Goal: the run compacts with the conversation's own model summary before the
@@ -391,7 +396,9 @@ against Hermes Agent and Prime Agent and orders the slices that close the gap:
   `NOMO_HOOK_COMMANDS` executes, a terminal goal resumes, or gate command/output
   text leaks into model prompts.
 
-- HP8. Project read and search. Status: implemented 2026-11-21. Paths:
+- HP8. Project read and search. Status: NOT implemented at HEAD. Merge
+  d7b55f38 deleted `project-read.ts` and its test; nothing at HEAD imports it.
+  Historical paths:
   `packages/workbench/src/project-read.ts`,
   `packages/workbench/src/project-workspace.ts`,
   `packages/workbench/src/workspace.ts`, `packages/workbench/src/index.ts`.

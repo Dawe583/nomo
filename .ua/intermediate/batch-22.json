@@ -1,0 +1,2648 @@
+{
+ "nodes": [
+  {
+   "id": "file:packages/proxy/src/security.test.ts",
+   "type": "file",
+   "name": "security.test.ts",
+   "filePath": "packages/proxy/src/security.test.ts",
+   "summary": "security.test.ts \u2014 typescript code, 142 lines, 0 functions, 0 classes, 0 exports, 3 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/proxy/src/session.test.ts",
+   "type": "file",
+   "name": "session.test.ts",
+   "filePath": "packages/proxy/src/session.test.ts",
+   "summary": "session.test.ts \u2014 typescript code, 575 lines, 2 functions, 0 classes, 0 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/proxy/src/session.test.ts:request",
+   "type": "function",
+   "name": "request",
+   "filePath": "packages/proxy/src/session.test.ts",
+   "lineRange": [
+    152,
+    154
+   ],
+   "summary": "request(id, method) \u2014 function in session.test.ts, lines 152-154.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/session.test.ts:relayedRequest",
+   "type": "function",
+   "name": "relayedRequest",
+   "filePath": "packages/proxy/src/session.test.ts",
+   "lineRange": [
+    158,
+    161
+   ],
+   "summary": "relayedRequest(message) \u2014 function in session.test.ts, lines 158-161.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/proxy/src/session.ts",
+   "type": "file",
+   "name": "session.ts",
+   "filePath": "packages/proxy/src/session.ts",
+   "summary": "session.ts \u2014 typescript code, 393 lines, 7 functions, 1 classes, 1 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/proxy/src/session.ts:isResult",
+   "type": "function",
+   "name": "isResult",
+   "filePath": "packages/proxy/src/session.ts",
+   "lineRange": [
+    323,
+    325
+   ],
+   "summary": "isResult(message) \u2014 function in session.ts, lines 323-325.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/session.ts:isError",
+   "type": "function",
+   "name": "isError",
+   "filePath": "packages/proxy/src/session.ts",
+   "lineRange": [
+    327,
+    329
+   ],
+   "summary": "isError(message) \u2014 function in session.ts, lines 327-329.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/session.ts:isNotification",
+   "type": "function",
+   "name": "isNotification",
+   "filePath": "packages/proxy/src/session.ts",
+   "lineRange": [
+    331,
+    335
+   ],
+   "summary": "isNotification(message) \u2014 function in session.ts, lines 331-335.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/session.ts:assertRequestId",
+   "type": "function",
+   "name": "assertRequestId",
+   "filePath": "packages/proxy/src/session.ts",
+   "lineRange": [
+    337,
+    349
+   ],
+   "summary": "assertRequestId(id) \u2014 function in session.ts, lines 337-349.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/session.ts:readRequestIdParam",
+   "type": "function",
+   "name": "readRequestIdParam",
+   "filePath": "packages/proxy/src/session.ts",
+   "lineRange": [
+    351,
+    368
+   ],
+   "summary": "readRequestIdParam(params, key) \u2014 function in session.ts, lines 351-368.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/session.ts:remapMetaToken",
+   "type": "function",
+   "name": "remapMetaToken",
+   "filePath": "packages/proxy/src/session.ts",
+   "lineRange": [
+    370,
+    380
+   ],
+   "summary": "remapMetaToken(params, nextToken) \u2014 function in session.ts, lines 370-380.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/session.ts:readMeta",
+   "type": "function",
+   "name": "readMeta",
+   "filePath": "packages/proxy/src/session.ts",
+   "lineRange": [
+    382,
+    393
+   ],
+   "summary": "readMeta(params) \u2014 function in session.ts, lines 382-393.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:packages/proxy/src/session.ts:Session",
+   "type": "class",
+   "name": "Session",
+   "filePath": "packages/proxy/src/session.ts",
+   "lineRange": [
+    24,
+    319
+   ],
+   "summary": "Session \u2014 class in session.ts, lines 24-319, methods: allocateAgentId, recordServerRequest, recordProgressToken, translateRequestOut, translateInbound, negotiatedVersion.",
+   "tags": [
+    "typescript",
+    "class",
+    "exported"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/proxy/src/transport/http-server.test.ts",
+   "type": "file",
+   "name": "http-server.test.ts",
+   "filePath": "packages/proxy/src/transport/http-server.test.ts",
+   "summary": "http-server.test.ts \u2014 typescript code, 551 lines, 0 functions, 0 classes, 0 exports, 4 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/proxy/src/transport/http-server.ts",
+   "type": "file",
+   "name": "http-server.ts",
+   "filePath": "packages/proxy/src/transport/http-server.ts",
+   "summary": "http-server.ts \u2014 typescript code, 273 lines, 11 functions, 0 classes, 1 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/proxy/src/transport/http-server.ts:startLocalMcpHttpServer",
+   "type": "function",
+   "name": "startLocalMcpHttpServer",
+   "filePath": "packages/proxy/src/transport/http-server.ts",
+   "lineRange": [
+    46,
+    157
+   ],
+   "summary": "startLocalMcpHttpServer(options) \u2014 function in http-server.ts, lines 46-157.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/transport/http-server.ts:registerProxyTool",
+   "type": "function",
+   "name": "registerProxyTool",
+   "filePath": "packages/proxy/src/transport/http-server.ts",
+   "lineRange": [
+    159,
+    192
+   ],
+   "summary": "registerProxyTool(server, bridge, options, token\u2026) \u2014 function in http-server.ts, lines 159-192.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/transport/http-server.ts:resolveIdentity",
+   "type": "function",
+   "name": "resolveIdentity",
+   "filePath": "packages/proxy/src/transport/http-server.ts",
+   "lineRange": [
+    194,
+    205
+   ],
+   "summary": "resolveIdentity(resolve, token, upstreamId) \u2014 function in http-server.ts, lines 194-205.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/transport/http-server.ts:isValidIdentity",
+   "type": "function",
+   "name": "isValidIdentity",
+   "filePath": "packages/proxy/src/transport/http-server.ts",
+   "lineRange": [
+    207,
+    215
+   ],
+   "summary": "isValidIdentity(value) \u2014 function in http-server.ts, lines 207-215.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/transport/http-server.ts:bearerToken",
+   "type": "function",
+   "name": "bearerToken",
+   "filePath": "packages/proxy/src/transport/http-server.ts",
+   "lineRange": [
+    217,
+    221
+   ],
+   "summary": "bearerToken(value) \u2014 function in http-server.ts, lines 217-221.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/transport/http-server.ts:validIdentifier",
+   "type": "function",
+   "name": "validIdentifier",
+   "filePath": "packages/proxy/src/transport/http-server.ts",
+   "lineRange": [
+    223,
+    229
+   ],
+   "summary": "validIdentifier(value) \u2014 function in http-server.ts, lines 223-229.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/transport/http-server.ts:asJsonObject",
+   "type": "function",
+   "name": "asJsonObject",
+   "filePath": "packages/proxy/src/transport/http-server.ts",
+   "lineRange": [
+    231,
+    235
+   ],
+   "summary": "asJsonObject(value) \u2014 function in http-server.ts, lines 231-235.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/transport/http-server.ts:writeUnauthorized",
+   "type": "function",
+   "name": "writeUnauthorized",
+   "filePath": "packages/proxy/src/transport/http-server.ts",
+   "lineRange": [
+    237,
+    246
+   ],
+   "summary": "writeUnauthorized(response, reason) \u2014 function in http-server.ts, lines 237-246.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/transport/http-server.ts:writeJson",
+   "type": "function",
+   "name": "writeJson",
+   "filePath": "packages/proxy/src/transport/http-server.ts",
+   "lineRange": [
+    248,
+    255
+   ],
+   "summary": "writeJson(response, status, body) \u2014 function in http-server.ts, lines 248-255.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/transport/http-server.ts:listenLoopback",
+   "type": "function",
+   "name": "listenLoopback",
+   "filePath": "packages/proxy/src/transport/http-server.ts",
+   "lineRange": [
+    257,
+    266
+   ],
+   "summary": "listenLoopback(server, port) \u2014 function in http-server.ts, lines 257-266.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/transport/http-server.ts:closeNodeServer",
+   "type": "function",
+   "name": "closeNodeServer",
+   "filePath": "packages/proxy/src/transport/http-server.ts",
+   "lineRange": [
+    268,
+    273
+   ],
+   "summary": "closeNodeServer(server) \u2014 function in http-server.ts, lines 268-273.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/proxy/src/transport/http.test.ts",
+   "type": "file",
+   "name": "http.test.ts",
+   "filePath": "packages/proxy/src/transport/http.test.ts",
+   "summary": "http.test.ts \u2014 typescript code, 332 lines, 6 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/proxy/src/transport/http.test.ts:listen",
+   "type": "function",
+   "name": "listen",
+   "filePath": "packages/proxy/src/transport/http.test.ts",
+   "lineRange": [
+    16,
+    23
+   ],
+   "summary": "listen(server) \u2014 function in http.test.ts, lines 16-23.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/transport/http.test.ts:closeServer",
+   "type": "function",
+   "name": "closeServer",
+   "filePath": "packages/proxy/src/transport/http.test.ts",
+   "lineRange": [
+    25,
+    35
+   ],
+   "summary": "closeServer(server) \u2014 function in http.test.ts, lines 25-35.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/transport/http.test.ts:readBody",
+   "type": "function",
+   "name": "readBody",
+   "filePath": "packages/proxy/src/transport/http.test.ts",
+   "lineRange": [
+    37,
+    43
+   ],
+   "summary": "readBody(request) \u2014 function in http.test.ts, lines 37-43.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/transport/http.test.ts:waitFor",
+   "type": "function",
+   "name": "waitFor",
+   "filePath": "packages/proxy/src/transport/http.test.ts",
+   "lineRange": [
+    45,
+    56
+   ],
+   "summary": "waitFor(condition) \u2014 function in http.test.ts, lines 45-56.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/transport/http.test.ts:writeJson",
+   "type": "function",
+   "name": "writeJson",
+   "filePath": "packages/proxy/src/transport/http.test.ts",
+   "lineRange": [
+    58,
+    61
+   ],
+   "summary": "writeJson(response, body, headers) \u2014 function in http.test.ts, lines 58-61.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/transport/http.test.ts:headerValue",
+   "type": "function",
+   "name": "headerValue",
+   "filePath": "packages/proxy/src/transport/http.test.ts",
+   "lineRange": [
+    330,
+    332
+   ],
+   "summary": "headerValue(value) \u2014 function in http.test.ts, lines 330-332.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/proxy/src/transport/http.ts",
+   "type": "file",
+   "name": "http.ts",
+   "filePath": "packages/proxy/src/transport/http.ts",
+   "summary": "http.ts \u2014 typescript code, 357 lines, 5 functions, 1 classes, 2 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/proxy/src/transport/http.ts:hasUnref",
+   "type": "function",
+   "name": "hasUnref",
+   "filePath": "packages/proxy/src/transport/http.ts",
+   "lineRange": [
+    56,
+    58
+   ],
+   "summary": "hasUnref(handle) \u2014 function in http.ts, lines 56-58.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/transport/http.ts:upstreamHttp",
+   "type": "function",
+   "name": "upstreamHttp",
+   "filePath": "packages/proxy/src/transport/http.ts",
+   "lineRange": [
+    60,
+    253
+   ],
+   "summary": "upstreamHttp(url, options) \u2014 function in http.ts, lines 60-253.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/proxy/src/transport/http.ts:readText",
+   "type": "function",
+   "name": "readText",
+   "filePath": "packages/proxy/src/transport/http.ts",
+   "lineRange": [
+    255,
+    280
+   ],
+   "summary": "readText(response, maxBufferSize) \u2014 function in http.ts, lines 255-280.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/transport/http.ts:readSse",
+   "type": "function",
+   "name": "readSse",
+   "filePath": "packages/proxy/src/transport/http.ts",
+   "lineRange": [
+    282,
+    353
+   ],
+   "summary": "readSse(response, maxBufferSize, onMessage) \u2014 function in http.ts, lines 282-353.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/transport/http.ts:isAbortError",
+   "type": "function",
+   "name": "isAbortError",
+   "filePath": "packages/proxy/src/transport/http.ts",
+   "lineRange": [
+    355,
+    357
+   ],
+   "summary": "isAbortError(error) \u2014 function in http.ts, lines 355-357.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:packages/proxy/src/transport/http.ts:HttpUpstreamError",
+   "type": "class",
+   "name": "HttpUpstreamError",
+   "filePath": "packages/proxy/src/transport/http.ts",
+   "lineRange": [
+    35,
+    43
+   ],
+   "summary": "HttpUpstreamError \u2014 class in http.ts, lines 35-43.",
+   "tags": [
+    "typescript",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/proxy/src/transport/stdio.test.ts",
+   "type": "file",
+   "name": "stdio.test.ts",
+   "filePath": "packages/proxy/src/transport/stdio.test.ts",
+   "summary": "stdio.test.ts \u2014 typescript code, 369 lines, 1 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/proxy/src/transport/stdio.test.ts:onceClose",
+   "type": "function",
+   "name": "onceClose",
+   "filePath": "packages/proxy/src/transport/stdio.test.ts",
+   "lineRange": [
+    7,
+    34
+   ],
+   "summary": "onceClose() \u2014 function in stdio.test.ts, lines 7-34.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/proxy/src/transport/stdio.ts",
+   "type": "file",
+   "name": "stdio.ts",
+   "filePath": "packages/proxy/src/transport/stdio.ts",
+   "summary": "stdio.ts \u2014 typescript code, 232 lines, 2 functions, 1 classes, 2 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/proxy/src/transport/stdio.ts:hasUnref",
+   "type": "function",
+   "name": "hasUnref",
+   "filePath": "packages/proxy/src/transport/stdio.ts",
+   "lineRange": [
+    86,
+    88
+   ],
+   "summary": "hasUnref(handle) \u2014 function in stdio.ts, lines 86-88.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/transport/stdio.ts:spawnUpstream",
+   "type": "function",
+   "name": "spawnUpstream",
+   "filePath": "packages/proxy/src/transport/stdio.ts",
+   "lineRange": [
+    96,
+    232
+   ],
+   "summary": "spawnUpstream(command, env, options) \u2014 function in stdio.ts, lines 96-232.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:packages/proxy/src/transport/stdio.ts:ReadBuffer",
+   "type": "class",
+   "name": "ReadBuffer",
+   "filePath": "packages/proxy/src/transport/stdio.ts",
+   "lineRange": [
+    39,
+    78
+   ],
+   "summary": "ReadBuffer \u2014 class in stdio.ts, lines 39-78, methods: append, readLine, clear.",
+   "tags": [
+    "typescript",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/registry/src/batch3.test.ts",
+   "type": "file",
+   "name": "batch3.test.ts",
+   "filePath": "packages/registry/src/batch3.test.ts",
+   "summary": "batch3.test.ts \u2014 typescript code, 92 lines, 1 functions, 0 classes, 0 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/registry/src/batch3.test.ts:conjuncts",
+   "type": "function",
+   "name": "conjuncts",
+   "filePath": "packages/registry/src/batch3.test.ts",
+   "lineRange": [
+    22,
+    27
+   ],
+   "summary": "conjuncts(guard) \u2014 function in batch3.test.ts, lines 22-27.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/registry/src/evaluate.test.ts",
+   "type": "file",
+   "name": "evaluate.test.ts",
+   "filePath": "packages/registry/src/evaluate.test.ts",
+   "summary": "evaluate.test.ts \u2014 typescript code, 252 lines, 1 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/registry/src/evaluate.test.ts:withIfs",
+   "type": "function",
+   "name": "withIfs",
+   "filePath": "packages/registry/src/evaluate.test.ts",
+   "lineRange": [
+    23,
+    28
+   ],
+   "summary": "withIfs(entry, ifs) \u2014 function in evaluate.test.ts, lines 23-28.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/registry/src/facts.test.ts",
+   "type": "file",
+   "name": "facts.test.ts",
+   "filePath": "packages/registry/src/facts.test.ts",
+   "summary": "facts.test.ts \u2014 typescript code, 111 lines, 1 functions, 0 classes, 0 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/registry/src/facts.test.ts:at",
+   "type": "function",
+   "name": "at",
+   "filePath": "packages/registry/src/facts.test.ts",
+   "lineRange": [
+    15,
+    15
+   ],
+   "summary": "at(hoursAgo) \u2014 function in facts.test.ts, lines 15-15.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/registry/src/facts.ts",
+   "type": "file",
+   "name": "facts.ts",
+   "filePath": "packages/registry/src/facts.ts",
+   "summary": "facts.ts \u2014 typescript code, 126 lines, 3 functions, 0 classes, 3 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/registry/src/facts.ts:validateFactsFile",
+   "type": "function",
+   "name": "validateFactsFile",
+   "filePath": "packages/registry/src/facts.ts",
+   "lineRange": [
+    54,
+    86
+   ],
+   "summary": "validateFactsFile(value) \u2014 function in facts.ts, lines 54-86.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/registry/src/facts.ts:loadFacts",
+   "type": "function",
+   "name": "loadFacts",
+   "filePath": "packages/registry/src/facts.ts",
+   "lineRange": [
+    90,
+    117
+   ],
+   "summary": "loadFacts(file, now, staleAfterHours) \u2014 function in facts.ts, lines 90-117.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/registry/src/facts.ts:toEvaluationContext",
+   "type": "function",
+   "name": "toEvaluationContext",
+   "filePath": "packages/registry/src/facts.ts",
+   "lineRange": [
+    119,
+    126
+   ],
+   "summary": "toEvaluationContext(report, args) \u2014 function in facts.ts, lines 119-126.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/registry/src/index.test.ts",
+   "type": "file",
+   "name": "index.test.ts",
+   "filePath": "packages/registry/src/index.test.ts",
+   "summary": "index.test.ts \u2014 typescript code, 74 lines, 0 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/registry/src/index.ts",
+   "type": "file",
+   "name": "index.ts",
+   "filePath": "packages/registry/src/index.ts",
+   "summary": "index.ts \u2014 typescript code, 9 lines, 0 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/sdk/src/client.ts",
+   "type": "file",
+   "name": "client.ts",
+   "filePath": "packages/sdk/src/client.ts",
+   "summary": "client.ts \u2014 typescript code, 592 lines, 10 functions, 2 classes, 4 exports, 14 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/sdk/src/client.ts:createNomoClient",
+   "type": "function",
+   "name": "createNomoClient",
+   "filePath": "packages/sdk/src/client.ts",
+   "lineRange": [
+    495,
+    497
+   ],
+   "summary": "createNomoClient(options) \u2014 function in client.ts, lines 495-497.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/sdk/src/client.ts:callFromHeld",
+   "type": "function",
+   "name": "callFromHeld",
+   "filePath": "packages/sdk/src/client.ts",
+   "lineRange": [
+    544,
+    552
+   ],
+   "summary": "callFromHeld(held, workspace) \u2014 function in client.ts, lines 544-552.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/sdk/src/client.ts:connectorFromName",
+   "type": "function",
+   "name": "connectorFromName",
+   "filePath": "packages/sdk/src/client.ts",
+   "lineRange": [
+    554,
+    557
+   ],
+   "summary": "connectorFromName(name) \u2014 function in client.ts, lines 554-557.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/sdk/src/client.ts:toolName",
+   "type": "function",
+   "name": "toolName",
+   "filePath": "packages/sdk/src/client.ts",
+   "lineRange": [
+    559,
+    562
+   ],
+   "summary": "toolName(params) \u2014 function in client.ts, lines 559-562.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/sdk/src/client.ts:isResponse",
+   "type": "function",
+   "name": "isResponse",
+   "filePath": "packages/sdk/src/client.ts",
+   "lineRange": [
+    564,
+    566
+   ],
+   "summary": "isResponse(message) \u2014 function in client.ts, lines 564-566.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/sdk/src/client.ts:errorFromJsonRpc",
+   "type": "function",
+   "name": "errorFromJsonRpc",
+   "filePath": "packages/sdk/src/client.ts",
+   "lineRange": [
+    568,
+    574
+   ],
+   "summary": "errorFromJsonRpc(message, holdId) \u2014 function in client.ts, lines 568-574.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/sdk/src/client.ts:mapStartupError",
+   "type": "function",
+   "name": "mapStartupError",
+   "filePath": "packages/sdk/src/client.ts",
+   "lineRange": [
+    576,
+    580
+   ],
+   "summary": "mapStartupError(error) \u2014 function in client.ts, lines 576-580.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/sdk/src/client.ts:isObject",
+   "type": "function",
+   "name": "isObject",
+   "filePath": "packages/sdk/src/client.ts",
+   "lineRange": [
+    582,
+    584
+   ],
+   "summary": "isObject(value) \u2014 function in client.ts, lines 582-584.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/sdk/src/client.ts:hasUnref",
+   "type": "function",
+   "name": "hasUnref",
+   "filePath": "packages/sdk/src/client.ts",
+   "lineRange": [
+    586,
+    588
+   ],
+   "summary": "hasUnref(value) \u2014 function in client.ts, lines 586-588.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/sdk/src/client.ts:errorMessage",
+   "type": "function",
+   "name": "errorMessage",
+   "filePath": "packages/sdk/src/client.ts",
+   "lineRange": [
+    590,
+    592
+   ],
+   "summary": "errorMessage(error) \u2014 function in client.ts, lines 590-592.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:packages/sdk/src/client.ts:NomoClient",
+   "type": "class",
+   "name": "NomoClient",
+   "filePath": "packages/sdk/src/client.ts",
+   "lineRange": [
+    108,
+    493
+   ],
+   "summary": "NomoClient \u2014 class in client.ts, lines 108-493, methods: verification, errors, errorsDropped, request, awaitHold, hold.",
+   "tags": [
+    "typescript",
+    "class",
+    "exported"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "class:packages/sdk/src/client.ts:ScriptInput",
+   "type": "class",
+   "name": "ScriptInput",
+   "filePath": "packages/sdk/src/client.ts",
+   "lineRange": [
+    499,
+    542
+   ],
+   "summary": "ScriptInput \u2014 class in client.ts, lines 499-542, methods: push, pushLine, remove, end, next, return.",
+   "tags": [
+    "typescript",
+    "class"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/sdk/src/errors.ts",
+   "type": "file",
+   "name": "errors.ts",
+   "filePath": "packages/sdk/src/errors.ts",
+   "summary": "errors.ts \u2014 typescript code, 63 lines, 0 functions, 4 classes, 4 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:packages/sdk/src/errors.ts:HoldDeniedError",
+   "type": "class",
+   "name": "HoldDeniedError",
+   "filePath": "packages/sdk/src/errors.ts",
+   "lineRange": [
+    10,
+    21
+   ],
+   "summary": "HoldDeniedError \u2014 class in errors.ts, lines 10-21.",
+   "tags": [
+    "typescript",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:packages/sdk/src/errors.ts:LedgerVerifyError",
+   "type": "class",
+   "name": "LedgerVerifyError",
+   "filePath": "packages/sdk/src/errors.ts",
+   "lineRange": [
+    23,
+    34
+   ],
+   "summary": "LedgerVerifyError \u2014 class in errors.ts, lines 23-34.",
+   "tags": [
+    "typescript",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:packages/sdk/src/errors.ts:PolicyStartupError",
+   "type": "class",
+   "name": "PolicyStartupError",
+   "filePath": "packages/sdk/src/errors.ts",
+   "lineRange": [
+    36,
+    43
+   ],
+   "summary": "PolicyStartupError \u2014 class in errors.ts, lines 36-43.",
+   "tags": [
+    "typescript",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:packages/sdk/src/errors.ts:RefusedError",
+   "type": "class",
+   "name": "RefusedError",
+   "filePath": "packages/sdk/src/errors.ts",
+   "lineRange": [
+    47,
+    63
+   ],
+   "summary": "RefusedError \u2014 class in errors.ts, lines 47-63, methods: fromReport.",
+   "tags": [
+    "typescript",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/sdk/src/hold.ts",
+   "type": "file",
+   "name": "hold.ts",
+   "filePath": "packages/sdk/src/hold.ts",
+   "summary": "hold.ts \u2014 typescript code, 59 lines, 1 functions, 0 classes, 1 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/sdk/src/hold.ts:holdHandle",
+   "type": "function",
+   "name": "holdHandle",
+   "filePath": "packages/sdk/src/hold.ts",
+   "lineRange": [
+    21,
+    59
+   ],
+   "summary": "holdHandle(broker, holdId, options) \u2014 function in hold.ts, lines 21-59.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:python/nomo-transport/tests/fixtures/nomo_proxy_http.mjs",
+   "type": "file",
+   "name": "nomo_proxy_http.mjs",
+   "filePath": "python/nomo-transport/tests/fixtures/nomo_proxy_http.mjs",
+   "summary": "nomo_proxy_http.mjs \u2014 javascript code, 74 lines, 0 functions, 0 classes, 0 exports, 2 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/src/e2e.mjs",
+   "type": "file",
+   "name": "e2e.mjs",
+   "filePath": "scripts/src/e2e.mjs",
+   "summary": "e2e.mjs \u2014 javascript code, 249 lines, 9 functions, 1 classes, 0 exports, 1 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:scripts/src/e2e.mjs:pass",
+   "type": "function",
+   "name": "pass",
+   "filePath": "scripts/src/e2e.mjs",
+   "lineRange": [
+    14,
+    18
+   ],
+   "summary": "pass(name) \u2014 function in e2e.mjs, lines 14-18.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/e2e.mjs:fail",
+   "type": "function",
+   "name": "fail",
+   "filePath": "scripts/src/e2e.mjs",
+   "lineRange": [
+    20,
+    25
+   ],
+   "summary": "fail(name, error) \u2014 function in e2e.mjs, lines 20-25.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/e2e.mjs:check",
+   "type": "function",
+   "name": "check",
+   "filePath": "scripts/src/e2e.mjs",
+   "lineRange": [
+    27,
+    34
+   ],
+   "summary": "check(name, fn) \u2014 function in e2e.mjs, lines 27-34.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/e2e.mjs:waitFor",
+   "type": "function",
+   "name": "waitFor",
+   "filePath": "scripts/src/e2e.mjs",
+   "lineRange": [
+    78,
+    85
+   ],
+   "summary": "waitFor(predicate, label) \u2014 function in e2e.mjs, lines 78-85.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/e2e.mjs:strictFactsPath",
+   "type": "function",
+   "name": "strictFactsPath",
+   "filePath": "scripts/src/e2e.mjs",
+   "lineRange": [
+    87,
+    97
+   ],
+   "summary": "strictFactsPath() \u2014 function in e2e.mjs, lines 87-97.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/e2e.mjs:textFrom",
+   "type": "function",
+   "name": "textFrom",
+   "filePath": "scripts/src/e2e.mjs",
+   "lineRange": [
+    99,
+    101
+   ],
+   "summary": "textFrom(response) \u2014 function in e2e.mjs, lines 99-101.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/e2e.mjs:runApiPass",
+   "type": "function",
+   "name": "runApiPass",
+   "filePath": "scripts/src/e2e.mjs",
+   "lineRange": [
+    103,
+    176
+   ],
+   "summary": "runApiPass(factsPath) \u2014 function in e2e.mjs, lines 103-176.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/e2e.mjs:runBinaryObservePass",
+   "type": "function",
+   "name": "runBinaryObservePass",
+   "filePath": "scripts/src/e2e.mjs",
+   "lineRange": [
+    178,
+    227
+   ],
+   "summary": "runBinaryObservePass(factsPath) \u2014 function in e2e.mjs, lines 178-227.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/e2e.mjs:runGapChecks",
+   "type": "function",
+   "name": "runGapChecks",
+   "filePath": "scripts/src/e2e.mjs",
+   "lineRange": [
+    229,
+    242
+   ],
+   "summary": "runGapChecks() \u2014 function in e2e.mjs, lines 229-242.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:scripts/src/e2e.mjs:ScriptInput",
+   "type": "class",
+   "name": "ScriptInput",
+   "filePath": "scripts/src/e2e.mjs",
+   "lineRange": [
+    36,
+    76
+   ],
+   "summary": "ScriptInput \u2014 class in e2e.mjs, lines 36-76, methods: push, pushLine, end, next, return.",
+   "tags": [
+    "javascript",
+    "class"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/src/licence-line.test.mjs",
+   "type": "file",
+   "name": "licence-line.test.mjs",
+   "filePath": "scripts/src/licence-line.test.mjs",
+   "summary": "licence-line.test.mjs \u2014 javascript code, 810 lines, 4 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "javascript",
+    "code",
+    "test"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "function:scripts/src/licence-line.test.mjs:read",
+   "type": "function",
+   "name": "read",
+   "filePath": "scripts/src/licence-line.test.mjs",
+   "lineRange": [
+    171,
+    171
+   ],
+   "summary": "read(file) \u2014 function in licence-line.test.mjs, lines 171-171.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/licence-line.test.mjs:readJson",
+   "type": "function",
+   "name": "readJson",
+   "filePath": "scripts/src/licence-line.test.mjs",
+   "lineRange": [
+    172,
+    172
+   ],
+   "summary": "readJson(file) \u2014 function in licence-line.test.mjs, lines 172-172.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/licence-line.test.mjs:flat",
+   "type": "function",
+   "name": "flat",
+   "filePath": "scripts/src/licence-line.test.mjs",
+   "lineRange": [
+    177,
+    177
+   ],
+   "summary": "flat(text) \u2014 function in licence-line.test.mjs, lines 177-177.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/licence-line.test.mjs:walk",
+   "type": "function",
+   "name": "walk",
+   "filePath": "scripts/src/licence-line.test.mjs",
+   "lineRange": [
+    187,
+    196
+   ],
+   "summary": "walk(dir) \u2014 function in licence-line.test.mjs, lines 187-196.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/src/load-proxy.mjs",
+   "type": "file",
+   "name": "load-proxy.mjs",
+   "filePath": "scripts/src/load-proxy.mjs",
+   "summary": "load-proxy.mjs \u2014 javascript code, 63 lines, 0 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "simple"
+  }
+ ],
+ "edges": [
+  {
+   "source": "file:packages/proxy/src/session.test.ts",
+   "target": "function:packages/proxy/src/session.test.ts:request",
+   "type": "contains",
+   "direction": "forward",
+   "description": "session.test.ts defines request",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/session.test.ts",
+   "target": "function:packages/proxy/src/session.test.ts:relayedRequest",
+   "type": "contains",
+   "direction": "forward",
+   "description": "session.test.ts defines relayedRequest",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/session.ts",
+   "target": "function:packages/proxy/src/session.ts:isResult",
+   "type": "contains",
+   "direction": "forward",
+   "description": "session.ts defines isResult",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/session.ts",
+   "target": "function:packages/proxy/src/session.ts:isError",
+   "type": "contains",
+   "direction": "forward",
+   "description": "session.ts defines isError",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/session.ts",
+   "target": "function:packages/proxy/src/session.ts:isNotification",
+   "type": "contains",
+   "direction": "forward",
+   "description": "session.ts defines isNotification",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/session.ts",
+   "target": "function:packages/proxy/src/session.ts:assertRequestId",
+   "type": "contains",
+   "direction": "forward",
+   "description": "session.ts defines assertRequestId",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/session.ts",
+   "target": "function:packages/proxy/src/session.ts:readRequestIdParam",
+   "type": "contains",
+   "direction": "forward",
+   "description": "session.ts defines readRequestIdParam",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/session.ts",
+   "target": "function:packages/proxy/src/session.ts:remapMetaToken",
+   "type": "contains",
+   "direction": "forward",
+   "description": "session.ts defines remapMetaToken",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/session.ts",
+   "target": "function:packages/proxy/src/session.ts:readMeta",
+   "type": "contains",
+   "direction": "forward",
+   "description": "session.ts defines readMeta",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/session.ts",
+   "target": "class:packages/proxy/src/session.ts:Session",
+   "type": "contains",
+   "direction": "forward",
+   "description": "session.ts defines class Session",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/proxy/src/session.ts:remapMetaToken",
+   "target": "function:packages/proxy/src/session.ts:readMeta",
+   "type": "calls",
+   "direction": "forward",
+   "description": "remapMetaToken calls readMeta",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/proxy/src/transport/http-server.ts",
+   "target": "function:packages/proxy/src/transport/http-server.ts:startLocalMcpHttpServer",
+   "type": "contains",
+   "direction": "forward",
+   "description": "http-server.ts defines startLocalMcpHttpServer",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/transport/http-server.ts",
+   "target": "function:packages/proxy/src/transport/http-server.ts:startLocalMcpHttpServer",
+   "type": "exports",
+   "direction": "forward",
+   "description": "http-server.ts exports startLocalMcpHttpServer",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/proxy/src/transport/http-server.ts",
+   "target": "function:packages/proxy/src/transport/http-server.ts:registerProxyTool",
+   "type": "contains",
+   "direction": "forward",
+   "description": "http-server.ts defines registerProxyTool",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/transport/http-server.ts",
+   "target": "function:packages/proxy/src/transport/http-server.ts:resolveIdentity",
+   "type": "contains",
+   "direction": "forward",
+   "description": "http-server.ts defines resolveIdentity",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/transport/http-server.ts",
+   "target": "function:packages/proxy/src/transport/http-server.ts:isValidIdentity",
+   "type": "contains",
+   "direction": "forward",
+   "description": "http-server.ts defines isValidIdentity",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/transport/http-server.ts",
+   "target": "function:packages/proxy/src/transport/http-server.ts:bearerToken",
+   "type": "contains",
+   "direction": "forward",
+   "description": "http-server.ts defines bearerToken",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/transport/http-server.ts",
+   "target": "function:packages/proxy/src/transport/http-server.ts:validIdentifier",
+   "type": "contains",
+   "direction": "forward",
+   "description": "http-server.ts defines validIdentifier",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/transport/http-server.ts",
+   "target": "function:packages/proxy/src/transport/http-server.ts:asJsonObject",
+   "type": "contains",
+   "direction": "forward",
+   "description": "http-server.ts defines asJsonObject",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/transport/http-server.ts",
+   "target": "function:packages/proxy/src/transport/http-server.ts:writeUnauthorized",
+   "type": "contains",
+   "direction": "forward",
+   "description": "http-server.ts defines writeUnauthorized",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/transport/http-server.ts",
+   "target": "function:packages/proxy/src/transport/http-server.ts:writeJson",
+   "type": "contains",
+   "direction": "forward",
+   "description": "http-server.ts defines writeJson",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/transport/http-server.ts",
+   "target": "function:packages/proxy/src/transport/http-server.ts:listenLoopback",
+   "type": "contains",
+   "direction": "forward",
+   "description": "http-server.ts defines listenLoopback",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/transport/http-server.ts",
+   "target": "function:packages/proxy/src/transport/http-server.ts:closeNodeServer",
+   "type": "contains",
+   "direction": "forward",
+   "description": "http-server.ts defines closeNodeServer",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/proxy/src/transport/http-server.ts:startLocalMcpHttpServer",
+   "target": "function:packages/proxy/src/transport/http-server.ts:validIdentifier",
+   "type": "calls",
+   "direction": "forward",
+   "description": "startLocalMcpHttpServer calls validIdentifier",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/proxy/src/transport/http-server.ts:startLocalMcpHttpServer",
+   "target": "function:packages/proxy/src/transport/http-server.ts:resolveIdentity",
+   "type": "calls",
+   "direction": "forward",
+   "description": "startLocalMcpHttpServer calls resolveIdentity",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/proxy/src/transport/http-server.ts:startLocalMcpHttpServer",
+   "target": "function:packages/proxy/src/transport/http-server.ts:registerProxyTool",
+   "type": "calls",
+   "direction": "forward",
+   "description": "startLocalMcpHttpServer calls registerProxyTool",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/proxy/src/transport/http-server.ts:startLocalMcpHttpServer",
+   "target": "function:packages/proxy/src/transport/http-server.ts:writeJson",
+   "type": "calls",
+   "direction": "forward",
+   "description": "startLocalMcpHttpServer calls writeJson",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/proxy/src/transport/http-server.ts:startLocalMcpHttpServer",
+   "target": "function:packages/proxy/src/transport/http-server.ts:listenLoopback",
+   "type": "calls",
+   "direction": "forward",
+   "description": "startLocalMcpHttpServer calls listenLoopback",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/proxy/src/transport/http-server.ts:startLocalMcpHttpServer",
+   "target": "function:packages/proxy/src/transport/http-server.ts:closeNodeServer",
+   "type": "calls",
+   "direction": "forward",
+   "description": "startLocalMcpHttpServer calls closeNodeServer",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/proxy/src/transport/http-server.ts:registerProxyTool",
+   "target": "function:packages/proxy/src/transport/http-server.ts:asJsonObject",
+   "type": "calls",
+   "direction": "forward",
+   "description": "registerProxyTool calls asJsonObject",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/proxy/src/transport/http-server.ts:resolveIdentity",
+   "target": "function:packages/proxy/src/transport/http-server.ts:isValidIdentity",
+   "type": "calls",
+   "direction": "forward",
+   "description": "resolveIdentity calls isValidIdentity",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/proxy/src/transport/http-server.ts:isValidIdentity",
+   "target": "function:packages/proxy/src/transport/http-server.ts:validIdentifier",
+   "type": "calls",
+   "direction": "forward",
+   "description": "isValidIdentity calls validIdentifier",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/proxy/src/transport/http.test.ts",
+   "target": "function:packages/proxy/src/transport/http.test.ts:listen",
+   "type": "contains",
+   "direction": "forward",
+   "description": "http.test.ts defines listen",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/transport/http.test.ts",
+   "target": "function:packages/proxy/src/transport/http.test.ts:closeServer",
+   "type": "contains",
+   "direction": "forward",
+   "description": "http.test.ts defines closeServer",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/transport/http.test.ts",
+   "target": "function:packages/proxy/src/transport/http.test.ts:readBody",
+   "type": "contains",
+   "direction": "forward",
+   "description": "http.test.ts defines readBody",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/transport/http.test.ts",
+   "target": "function:packages/proxy/src/transport/http.test.ts:waitFor",
+   "type": "contains",
+   "direction": "forward",
+   "description": "http.test.ts defines waitFor",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/transport/http.test.ts",
+   "target": "function:packages/proxy/src/transport/http.test.ts:writeJson",
+   "type": "contains",
+   "direction": "forward",
+   "description": "http.test.ts defines writeJson",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/transport/http.test.ts",
+   "target": "function:packages/proxy/src/transport/http.test.ts:headerValue",
+   "type": "contains",
+   "direction": "forward",
+   "description": "http.test.ts defines headerValue",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/transport/http.ts",
+   "target": "function:packages/proxy/src/transport/http.ts:hasUnref",
+   "type": "contains",
+   "direction": "forward",
+   "description": "http.ts defines hasUnref",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/transport/http.ts",
+   "target": "function:packages/proxy/src/transport/http.ts:upstreamHttp",
+   "type": "contains",
+   "direction": "forward",
+   "description": "http.ts defines upstreamHttp",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/transport/http.ts",
+   "target": "function:packages/proxy/src/transport/http.ts:upstreamHttp",
+   "type": "exports",
+   "direction": "forward",
+   "description": "http.ts exports upstreamHttp",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/proxy/src/transport/http.ts",
+   "target": "function:packages/proxy/src/transport/http.ts:readText",
+   "type": "contains",
+   "direction": "forward",
+   "description": "http.ts defines readText",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/transport/http.ts",
+   "target": "function:packages/proxy/src/transport/http.ts:readSse",
+   "type": "contains",
+   "direction": "forward",
+   "description": "http.ts defines readSse",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/transport/http.ts",
+   "target": "function:packages/proxy/src/transport/http.ts:isAbortError",
+   "type": "contains",
+   "direction": "forward",
+   "description": "http.ts defines isAbortError",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/transport/http.ts",
+   "target": "class:packages/proxy/src/transport/http.ts:HttpUpstreamError",
+   "type": "contains",
+   "direction": "forward",
+   "description": "http.ts defines class HttpUpstreamError",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/transport/stdio.test.ts",
+   "target": "function:packages/proxy/src/transport/stdio.test.ts:onceClose",
+   "type": "contains",
+   "direction": "forward",
+   "description": "stdio.test.ts defines onceClose",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/transport/stdio.ts",
+   "target": "function:packages/proxy/src/transport/stdio.ts:hasUnref",
+   "type": "contains",
+   "direction": "forward",
+   "description": "stdio.ts defines hasUnref",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/transport/stdio.ts",
+   "target": "function:packages/proxy/src/transport/stdio.ts:spawnUpstream",
+   "type": "contains",
+   "direction": "forward",
+   "description": "stdio.ts defines spawnUpstream",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/transport/stdio.ts",
+   "target": "function:packages/proxy/src/transport/stdio.ts:spawnUpstream",
+   "type": "exports",
+   "direction": "forward",
+   "description": "stdio.ts exports spawnUpstream",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/proxy/src/transport/stdio.ts",
+   "target": "class:packages/proxy/src/transport/stdio.ts:ReadBuffer",
+   "type": "contains",
+   "direction": "forward",
+   "description": "stdio.ts defines class ReadBuffer",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/registry/src/batch3.test.ts",
+   "target": "function:packages/registry/src/batch3.test.ts:conjuncts",
+   "type": "contains",
+   "direction": "forward",
+   "description": "batch3.test.ts defines conjuncts",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/registry/src/evaluate.test.ts",
+   "target": "function:packages/registry/src/evaluate.test.ts:withIfs",
+   "type": "contains",
+   "direction": "forward",
+   "description": "evaluate.test.ts defines withIfs",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/registry/src/facts.test.ts",
+   "target": "function:packages/registry/src/facts.test.ts:at",
+   "type": "contains",
+   "direction": "forward",
+   "description": "facts.test.ts defines at",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/registry/src/facts.ts",
+   "target": "function:packages/registry/src/facts.ts:validateFactsFile",
+   "type": "contains",
+   "direction": "forward",
+   "description": "facts.ts defines validateFactsFile",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/registry/src/facts.ts",
+   "target": "function:packages/registry/src/facts.ts:validateFactsFile",
+   "type": "exports",
+   "direction": "forward",
+   "description": "facts.ts exports validateFactsFile",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/registry/src/facts.ts",
+   "target": "function:packages/registry/src/facts.ts:loadFacts",
+   "type": "contains",
+   "direction": "forward",
+   "description": "facts.ts defines loadFacts",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/registry/src/facts.ts",
+   "target": "function:packages/registry/src/facts.ts:loadFacts",
+   "type": "exports",
+   "direction": "forward",
+   "description": "facts.ts exports loadFacts",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/registry/src/facts.ts",
+   "target": "function:packages/registry/src/facts.ts:toEvaluationContext",
+   "type": "contains",
+   "direction": "forward",
+   "description": "facts.ts defines toEvaluationContext",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/registry/src/facts.ts",
+   "target": "function:packages/registry/src/facts.ts:toEvaluationContext",
+   "type": "exports",
+   "direction": "forward",
+   "description": "facts.ts exports toEvaluationContext",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/sdk/src/client.ts",
+   "target": "function:packages/sdk/src/client.ts:createNomoClient",
+   "type": "contains",
+   "direction": "forward",
+   "description": "client.ts defines createNomoClient",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/sdk/src/client.ts",
+   "target": "function:packages/sdk/src/client.ts:createNomoClient",
+   "type": "exports",
+   "direction": "forward",
+   "description": "client.ts exports createNomoClient",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/sdk/src/client.ts",
+   "target": "function:packages/sdk/src/client.ts:callFromHeld",
+   "type": "contains",
+   "direction": "forward",
+   "description": "client.ts defines callFromHeld",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/sdk/src/client.ts",
+   "target": "function:packages/sdk/src/client.ts:connectorFromName",
+   "type": "contains",
+   "direction": "forward",
+   "description": "client.ts defines connectorFromName",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/sdk/src/client.ts",
+   "target": "function:packages/sdk/src/client.ts:toolName",
+   "type": "contains",
+   "direction": "forward",
+   "description": "client.ts defines toolName",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/sdk/src/client.ts",
+   "target": "function:packages/sdk/src/client.ts:isResponse",
+   "type": "contains",
+   "direction": "forward",
+   "description": "client.ts defines isResponse",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/sdk/src/client.ts",
+   "target": "function:packages/sdk/src/client.ts:errorFromJsonRpc",
+   "type": "contains",
+   "direction": "forward",
+   "description": "client.ts defines errorFromJsonRpc",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/sdk/src/client.ts",
+   "target": "function:packages/sdk/src/client.ts:mapStartupError",
+   "type": "contains",
+   "direction": "forward",
+   "description": "client.ts defines mapStartupError",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/sdk/src/client.ts",
+   "target": "function:packages/sdk/src/client.ts:isObject",
+   "type": "contains",
+   "direction": "forward",
+   "description": "client.ts defines isObject",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/sdk/src/client.ts",
+   "target": "function:packages/sdk/src/client.ts:hasUnref",
+   "type": "contains",
+   "direction": "forward",
+   "description": "client.ts defines hasUnref",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/sdk/src/client.ts",
+   "target": "function:packages/sdk/src/client.ts:errorMessage",
+   "type": "contains",
+   "direction": "forward",
+   "description": "client.ts defines errorMessage",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/sdk/src/client.ts",
+   "target": "class:packages/sdk/src/client.ts:NomoClient",
+   "type": "contains",
+   "direction": "forward",
+   "description": "client.ts defines class NomoClient",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/sdk/src/client.ts",
+   "target": "class:packages/sdk/src/client.ts:ScriptInput",
+   "type": "contains",
+   "direction": "forward",
+   "description": "client.ts defines class ScriptInput",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/sdk/src/client.ts:callFromHeld",
+   "target": "function:packages/sdk/src/client.ts:connectorFromName",
+   "type": "calls",
+   "direction": "forward",
+   "description": "callFromHeld calls connectorFromName",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/sdk/src/client.ts:errorFromJsonRpc",
+   "target": "function:packages/sdk/src/client.ts:isObject",
+   "type": "calls",
+   "direction": "forward",
+   "description": "errorFromJsonRpc calls isObject",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/sdk/src/errors.ts",
+   "target": "class:packages/sdk/src/errors.ts:HoldDeniedError",
+   "type": "contains",
+   "direction": "forward",
+   "description": "errors.ts defines class HoldDeniedError",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/sdk/src/errors.ts",
+   "target": "class:packages/sdk/src/errors.ts:LedgerVerifyError",
+   "type": "contains",
+   "direction": "forward",
+   "description": "errors.ts defines class LedgerVerifyError",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/sdk/src/errors.ts",
+   "target": "class:packages/sdk/src/errors.ts:PolicyStartupError",
+   "type": "contains",
+   "direction": "forward",
+   "description": "errors.ts defines class PolicyStartupError",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/sdk/src/errors.ts",
+   "target": "class:packages/sdk/src/errors.ts:RefusedError",
+   "type": "contains",
+   "direction": "forward",
+   "description": "errors.ts defines class RefusedError",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/sdk/src/hold.ts",
+   "target": "function:packages/sdk/src/hold.ts:holdHandle",
+   "type": "contains",
+   "direction": "forward",
+   "description": "hold.ts defines holdHandle",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/sdk/src/hold.ts",
+   "target": "function:packages/sdk/src/hold.ts:holdHandle",
+   "type": "exports",
+   "direction": "forward",
+   "description": "hold.ts exports holdHandle",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/src/e2e.mjs",
+   "target": "function:scripts/src/e2e.mjs:pass",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e.mjs defines pass",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/e2e.mjs",
+   "target": "function:scripts/src/e2e.mjs:fail",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e.mjs defines fail",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/e2e.mjs",
+   "target": "function:scripts/src/e2e.mjs:check",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e.mjs defines check",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/e2e.mjs",
+   "target": "function:scripts/src/e2e.mjs:waitFor",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e.mjs defines waitFor",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/e2e.mjs",
+   "target": "function:scripts/src/e2e.mjs:strictFactsPath",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e.mjs defines strictFactsPath",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/e2e.mjs",
+   "target": "function:scripts/src/e2e.mjs:textFrom",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e.mjs defines textFrom",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/e2e.mjs",
+   "target": "function:scripts/src/e2e.mjs:runApiPass",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e.mjs defines runApiPass",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/e2e.mjs",
+   "target": "function:scripts/src/e2e.mjs:runBinaryObservePass",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e.mjs defines runBinaryObservePass",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/e2e.mjs",
+   "target": "function:scripts/src/e2e.mjs:runGapChecks",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e.mjs defines runGapChecks",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/e2e.mjs",
+   "target": "class:scripts/src/e2e.mjs:ScriptInput",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e.mjs defines class ScriptInput",
+   "weight": 1.0
+  },
+  {
+   "source": "function:scripts/src/e2e.mjs:check",
+   "target": "function:scripts/src/e2e.mjs:pass",
+   "type": "calls",
+   "direction": "forward",
+   "description": "check calls pass",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/e2e.mjs:check",
+   "target": "function:scripts/src/e2e.mjs:fail",
+   "type": "calls",
+   "direction": "forward",
+   "description": "check calls fail",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/e2e.mjs:runApiPass",
+   "target": "function:scripts/src/e2e.mjs:check",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runApiPass calls check",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/e2e.mjs:runApiPass",
+   "target": "function:scripts/src/e2e.mjs:waitFor",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runApiPass calls waitFor",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/e2e.mjs:runApiPass",
+   "target": "function:scripts/src/e2e.mjs:textFrom",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runApiPass calls textFrom",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/e2e.mjs:runBinaryObservePass",
+   "target": "function:scripts/src/e2e.mjs:check",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runBinaryObservePass calls check",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/e2e.mjs:runBinaryObservePass",
+   "target": "function:scripts/src/e2e.mjs:waitFor",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runBinaryObservePass calls waitFor",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/e2e.mjs:runBinaryObservePass",
+   "target": "function:scripts/src/e2e.mjs:textFrom",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runBinaryObservePass calls textFrom",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/e2e.mjs:runGapChecks",
+   "target": "function:scripts/src/e2e.mjs:check",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runGapChecks calls check",
+   "weight": 0.6
+  },
+  {
+   "source": "file:scripts/src/licence-line.test.mjs",
+   "target": "function:scripts/src/licence-line.test.mjs:read",
+   "type": "contains",
+   "direction": "forward",
+   "description": "licence-line.test.mjs defines read",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/licence-line.test.mjs",
+   "target": "function:scripts/src/licence-line.test.mjs:readJson",
+   "type": "contains",
+   "direction": "forward",
+   "description": "licence-line.test.mjs defines readJson",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/licence-line.test.mjs",
+   "target": "function:scripts/src/licence-line.test.mjs:flat",
+   "type": "contains",
+   "direction": "forward",
+   "description": "licence-line.test.mjs defines flat",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/licence-line.test.mjs",
+   "target": "function:scripts/src/licence-line.test.mjs:walk",
+   "type": "contains",
+   "direction": "forward",
+   "description": "licence-line.test.mjs defines walk",
+   "weight": 1.0
+  },
+  {
+   "source": "function:scripts/src/licence-line.test.mjs:readJson",
+   "target": "function:scripts/src/licence-line.test.mjs:read",
+   "type": "calls",
+   "direction": "forward",
+   "description": "readJson calls read",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/proxy/src/security.test.ts",
+   "target": "file:packages/policy/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "security.test.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/security.test.ts",
+   "target": "file:packages/proxy/src/forward/tools.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "security.test.ts imports tools.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/security.test.ts",
+   "target": "file:packages/proxy/src/transport/http.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "security.test.ts imports http.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/session.test.ts",
+   "target": "file:packages/proxy/src/rpc.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "session.test.ts imports rpc.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/session.test.ts",
+   "target": "file:packages/proxy/src/session.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "session.test.ts imports session.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/session.ts",
+   "target": "file:packages/proxy/src/rpc.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "session.ts imports rpc.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/transport/http-server.test.ts",
+   "target": "file:packages/ledger/src/sign.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "http-server.test.ts imports sign.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/transport/http-server.test.ts",
+   "target": "file:packages/proxy/src/bin.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "http-server.test.ts imports bin.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/transport/http-server.test.ts",
+   "target": "file:packages/proxy/src/transport/http-server.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "http-server.test.ts imports http-server.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/transport/http-server.test.ts",
+   "target": "file:packages/proxy/src/transport/stdio.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "http-server.test.ts imports stdio.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/transport/http-server.ts",
+   "target": "file:packages/proxy/src/bin.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "http-server.ts imports bin.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/transport/http.test.ts",
+   "target": "file:packages/proxy/src/transport/http.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "http.test.ts imports http.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/transport/http.ts",
+   "target": "file:packages/proxy/src/transport/stdio.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "http.ts imports stdio.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/transport/stdio.test.ts",
+   "target": "file:packages/proxy/src/transport/stdio.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "stdio.test.ts imports stdio.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/transport/stdio.ts",
+   "target": "file:packages/proxy/src/hardening.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "stdio.ts imports hardening.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/registry/src/batch3.test.ts",
+   "target": "file:packages/registry/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "batch3.test.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/registry/src/evaluate.test.ts",
+   "target": "file:packages/registry/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "evaluate.test.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/registry/src/facts.test.ts",
+   "target": "file:packages/registry/src/facts.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "facts.test.ts imports facts.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/registry/src/facts.test.ts",
+   "target": "file:packages/registry/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "facts.test.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/registry/src/facts.ts",
+   "target": "file:packages/registry/src/evaluate.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "facts.ts imports evaluate.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/registry/src/index.test.ts",
+   "target": "file:packages/registry/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "index.test.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/sdk/src/client.ts",
+   "target": "file:packages/ledger/src/paths.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "client.ts imports paths.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/sdk/src/client.ts",
+   "target": "file:packages/ledger/src/store.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "client.ts imports store.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/sdk/src/client.ts",
+   "target": "file:packages/ledger/src/verify-key.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "client.ts imports verify-key.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/sdk/src/client.ts",
+   "target": "file:packages/ledger/src/verify.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "client.ts imports verify.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/sdk/src/client.ts",
+   "target": "file:packages/policy/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "client.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/sdk/src/client.ts",
+   "target": "file:packages/proxy/src/bin.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "client.ts imports bin.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/sdk/src/client.ts",
+   "target": "file:packages/proxy/src/forward/legacy-binding.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "client.ts imports legacy-binding.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/sdk/src/client.ts",
+   "target": "file:packages/proxy/src/rpc.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "client.ts imports rpc.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/sdk/src/client.ts",
+   "target": "file:packages/proxy/src/transport/http.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "client.ts imports http.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/sdk/src/client.ts",
+   "target": "file:packages/sdk/src/errors.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "client.ts imports errors.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/sdk/src/client.ts",
+   "target": "file:packages/sdk/src/hold.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "client.ts imports hold.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/sdk/src/errors.ts",
+   "target": "file:packages/connectors/src/registry.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "errors.ts imports registry.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/sdk/src/errors.ts",
+   "target": "file:packages/proxy/src/bin.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "errors.ts imports bin.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/sdk/src/hold.ts",
+   "target": "file:packages/policy/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "hold.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:python/nomo-transport/tests/fixtures/nomo_proxy_http.mjs",
+   "target": "file:packages/proxy/src/relay/http-requests.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "nomo_proxy_http.mjs imports http-requests.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:python/nomo-transport/tests/fixtures/nomo_proxy_http.mjs",
+   "target": "file:packages/proxy/src/transport/stdio.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "nomo_proxy_http.mjs imports stdio.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:scripts/src/e2e.mjs",
+   "target": "file:packages/proxy/src/bin.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "e2e.mjs imports bin.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:scripts/src/licence-line.test.mjs",
+   "target": "file:packages/registry/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "licence-line.test.mjs imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:scripts/src/load-proxy.mjs",
+   "target": "file:packages/proxy/src/relay/http-requests.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "load-proxy.mjs imports http-requests.ts",
+   "weight": 0.8
+  }
+ ]
+}

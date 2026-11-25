@@ -8,6 +8,60 @@ import {
   type RecoveryRequest,
   type RecoveryApply,
 } from "./recovery-jobs.ts";
+import {
+  PROFILE_PROMOTED_EVENT,
+  PROFILE_ROLLED_BACK_EVENT,
+  describeProfilePromotionReview,
+  prepareProfilePromotion,
+  prepareProfileRollback,
+  reviewProfilePromotion,
+  type HarnessProfileRecord,
+  type ParentBound,
+  type ProfilePromotionReview,
+} from "./profile-promotion.ts";
+import {
+  SKILL_PROMOTED_EVENT,
+  SKILL_ROLLED_BACK_EVENT,
+  formatPromotedSkillsForPrompt,
+  prepareSkillPromotion,
+  prepareSkillRollback,
+  replayPromotedSkills,
+  type PromotedSkill,
+  type SkillChange,
+  type ParsedSkillChange,
+} from "./skill-promotion.ts";
+import {
+  DELEGATE_TOOL,
+  SUBAGENT_RESULT_TOOL,
+  parseDelegateCall,
+  parseSubagentResultCall,
+  untrustedSubagentResultText,
+} from "./delegate-tools.ts";
+import {
+  AGENT_INBOX_TOOL,
+  AGENT_LIST_TOOL,
+  AGENT_SEND_TOOL,
+  formatInboxMessages,
+  parseAgentSend,
+  reachableFamily,
+  validateAgentMessageDelivery,
+  type AgentMessage,
+  type FamilyMember,
+} from "./agent-messages.ts";
+import {
+  WEB_FETCH_TOOL,
+  WEB_SEARCH_TOOL,
+  executeWebFetch,
+  executeWebSearch,
+} from "./web-tools.ts";
+import {
+  SCHEDULE_LIMITS,
+  dueSchedules,
+  parseScheduleInput,
+  recordScheduleRun,
+  type Schedule,
+  type ScheduleOutcome,
+} from "./schedules.ts";
 import { toolCatalog } from "./tool-catalog.ts";
 import { managedDocumentAdapter } from "./managed-documents.ts";
 import {
@@ -200,6 +254,14 @@ import {
   type RefinementProposal,
 } from "./refine-pass.ts";
 import { resolveLensCount, reviewRanNote, serviceHarnessBoundary } from "./harness-runtime.ts";
+import {
+  formatEffectsForReview,
+  formatOutcomesForReview,
+  mineRefinementEffects,
+  mineRefinementOutcomes,
+  repeatRefusal,
+  repeatsSettledProposal,
+} from "./refinement-outcomes.ts";
 import { buildConversationTail } from "./harness-conversation.ts";
 import {
   HARNESS_ADD_TOOL,
@@ -209,6 +271,25 @@ import {
   type HarnessToolArgs,
 } from "./harness-tools.ts";
 import { TODO_TOOLS, TODO_WRITE_TOOL, todoWritePlan } from "./todo-tool.ts";
+import { PLAN_TOOL, parsePlanUpdate, type PlanItem } from "./plan.ts";
+import {
+  SESSION_SEARCH_LIMITS,
+  SESSION_SEARCH_TOOL,
+  searchSessions,
+} from "./session-search.ts";
+import {
+  readProjectContextFiles,
+  type ProjectContextFile,
+  type RefusedProjectContextFile,
+} from "./project-context-files.ts";
+import {
+  evaluateGoal,
+  goalContinuationPrompt,
+  goalStartPrompt,
+  parseGoalInput,
+  type Goal,
+  type GoalGateFailure,
+} from "./goals.ts";
 import {
   resolveRefineGates,
   type GateSurface,
@@ -217,8 +298,10 @@ import {
   arm,
   initialTriggerState,
   onBranchMove,
+  persistTriggerState,
   recordSettledTurn,
   requestManualReview,
+  restoreTriggerStates,
   type ServiceResult,
   type TriggerState,
 } from "./refine-trigger.ts";
@@ -298,6 +381,10 @@ export type SessionView = {
   readonly parentId?: string;
   readonly compaction?: CompactionResult;
   readonly contextMessages?: number;
+  /** The checklist the model keeps for itself, replaced whole on each update. */
+  readonly plan?: readonly PlanItem[];
+  /** The operator's goal for this session, when one is running or settled. */
+  readonly goal?: Goal;
   readonly lastRecoveryJob?: { readonly jobId: string };
   readonly state?: RunState;
   readonly status:
@@ -559,6 +646,10 @@ type ProjectAccess = {
   readonly workspace: ProjectWorkspace;
   readonly skills: readonly ProjectSkillSnapshot[];
   readonly skillDigests: readonly { readonly id: string; readonly digest: string }[];
+  /** AGENTS.md and CLAUDE.md read from the protected baseline, so the agent
+   * follows the project's own instructions without reading the live tree. */
+  readonly contextFiles?: readonly ProjectContextFile[];
+  readonly refusedContextFiles?: readonly RefusedProjectContextFile[];
 };
 function projectSystemContext(access: ProjectAccess | undefined): string {
   if (!access) return "";
@@ -575,6 +666,18 @@ function projectSystemContext(access: ProjectAccess | undefined): string {
       })),
     ),
   ];
+  // The project's own instruction files come first: they are what the
+  // operator already agreed to, and a refused one is named rather than
+  // silently dropped, because "the agent never saw AGENTS.md" is a fact the
+  // operator has to be able to learn.
+  for (const file of access.contextFiles ?? [])
+    context.push(
+      `Project instruction file ${file.path} (sha256 ${file.sha256}, ${file.size} bytes):\n${file.content}`,
+    );
+  for (const refused of access.refusedContextFiles ?? [])
+    context.push(
+      `Project instruction file ${refused.path} was not read: ${refused.reason}`,
+    );
   return `\n\nProject access context:\n${context.join("\n")}`;
 }
 type WorkbenchProviderConfig = ProviderConfig | ProviderAdapterConfig;
@@ -909,6 +1012,149 @@ type PendingApproval = {
   readonly atSeq: number;
 };
 
+/**
+ * Which workspace tools a run may offer.
+ *
+ * Cross-session search and the two web tools are opt-in, so a catalog built
+ * from the module list alone would offer a capability the operator switched
+ * off. One predicate keeps the catalog sites and the execution path agreeing
+ * about what "offered" means.
+ */
+function gatedWorkspaceToolEnabled(
+  name: string,
+  harness: { readonly webToolsEnabled: number; readonly sessionSearchEnabled: number },
+): boolean {
+  if (name === WEB_FETCH_TOOL.name || name === WEB_SEARCH_TOOL.name)
+    return harness.webToolsEnabled === 1;
+  // Reading another conversation is a different risk from reaching the
+  // network, so it has its own switch rather than riding the web one.
+  if (name === SESSION_SEARCH_TOOL.name) return harness.sessionSearchEnabled === 1;
+  return true;
+}
+
+/**
+ * A stored mailbox, re-checked row by row.
+ *
+ * A message that cannot be read back exactly as it was delivered is dropped
+ * rather than repaired: a recipient that is shown a guessed sender or a
+ * truncated body would be reading text nobody sent. The signed ledger remains
+ * the proof that the message was sent, so dropping the copy loses no evidence.
+ */
+function restoreAgentMailboxes(value: unknown): Record<string, AgentMessage[]> {
+  if (value === null || typeof value !== "object" || Array.isArray(value))
+    return {};
+  const relations: readonly string[] = ["parent", "child", "sibling"];
+  const restored: Record<string, AgentMessage[]> = {};
+  for (const [recipient, rows] of Object.entries(
+    value as Record<string, unknown>,
+  )) {
+    if (!Array.isArray(rows)) continue;
+    const messages: AgentMessage[] = [];
+    for (const row of rows) {
+      const message = row as AgentMessage;
+      if (
+        message === null ||
+        typeof message !== "object" ||
+        !Number.isInteger(message.seq) ||
+        message.seq < 1 ||
+        typeof message.from !== "string" ||
+        !message.from ||
+        typeof message.to !== "string" ||
+        message.to !== recipient ||
+        typeof message.text !== "string" ||
+        !relations.includes(message.relation)
+      )
+        continue;
+      messages.push({
+        seq: message.seq,
+        from: message.from,
+        to: message.to,
+        relation: message.relation,
+        text: message.text,
+      });
+    }
+    if (messages.length) restored[recipient] = messages.sort((left, right) => left.seq - right.seq);
+  }
+  return restored;
+}
+
+/** One settled firing, as `runDueSchedules` reports it. */
+export type ScheduleFiring = {
+  readonly scheduleId: string;
+  readonly sessionId: string;
+  readonly outcome: ScheduleOutcome;
+};
+
+/**
+ * A stored schedule, re-checked against the rules in force now.
+ *
+ * The operator's prompt ceiling and the cadence floor can both have narrowed
+ * since the record was written, so the snapshot is re-parsed rather than
+ * trusted. The derived fields (`id`, `status`, counters, the stored slot) are
+ * carried as written, because they are history rather than operator input.
+ */
+function validateStoredSchedule(
+  value: unknown,
+  maxPromptCharacters: number,
+): Schedule {
+  const record = value as Schedule;
+  if (record === null || typeof record !== "object")
+    throw new Error("A stored schedule is not an object.");
+  if (typeof record.id !== "string" || record.id === "")
+    throw new Error("A stored schedule has no id.");
+  const createdAt = Date.parse(record.createdAt);
+  if (!Number.isFinite(createdAt))
+    throw new Error(`Schedule ${record.id} has an unreadable creation time.`);
+  const parsed = parseScheduleInput(
+    {
+      name: record.name,
+      prompt: record.prompt,
+      cadence: record.cadence,
+      ...(record.sessionId === undefined ? {} : { sessionId: record.sessionId }),
+      ...(record.model === undefined ? {} : { model: record.model }),
+      ...(record.agent === undefined ? {} : { agent: record.agent }),
+      maxRuns: record.maxRuns,
+      ...(record.tokenBudget === undefined
+        ? {}
+        : { tokenBudget: record.tokenBudget }),
+      enabled: record.enabled,
+    },
+    maxPromptCharacters,
+    createdAt,
+  );
+  const statuses: readonly string[] = [
+    "active",
+    "paused",
+    "completed",
+    "budget_limited",
+    "paused_unknown",
+  ];
+  if (!statuses.includes(record.status))
+    throw new Error(`Schedule ${record.id} has an unknown status.`);
+  if (!Number.isInteger(record.runCount) || record.runCount < 0)
+    throw new Error(`Schedule ${record.id} has an unreadable run count.`);
+  if (!Number.isInteger(record.tokensUsed) || record.tokensUsed < 0)
+    throw new Error(`Schedule ${record.id} has an unreadable token count.`);
+  if (!Number.isFinite(Date.parse(record.nextRunAt)))
+    throw new Error(`Schedule ${record.id} has an unreadable next slot.`);
+  return {
+    id: record.id,
+    ...parsed,
+    status: record.status,
+    runCount: record.runCount,
+    tokensUsed: record.tokensUsed,
+    createdAt: record.createdAt,
+    nextRunAt: record.nextRunAt,
+    ...(record.lastRunAt === undefined ? {} : { lastRunAt: record.lastRunAt }),
+    ...(record.lastSessionId === undefined
+      ? {}
+      : { lastSessionId: record.lastSessionId }),
+    ...(record.lastOutcome === undefined
+      ? {}
+      : { lastOutcome: record.lastOutcome }),
+  };
+}
+
 export type PendingHarnessProposal = {
   readonly digest: string;
   readonly at: string;
@@ -917,6 +1163,17 @@ export type PendingHarnessProposal = {
   readonly proposal: RefinementProposal;
   /** Compatibility view for callers that only render prompt addenda. */
   readonly addendum: string;
+  readonly profileReview?: ProfilePromotionReview;
+  readonly profileReviewText?: string;
+  readonly skillReview?: SkillPromotionReview;
+  readonly skillReviewText?: string;
+};
+
+/** What the operator reads before approving a markdown skill promotion. */
+export type SkillPromotionReview = {
+  readonly digest: string;
+  readonly atSeq: number;
+  readonly changes: readonly SkillChange[];
 };
 /** What `/harness review` gets back.
  *
@@ -994,16 +1251,24 @@ export class Workbench {
   private recoveryRequests: Record<string, RecoveryRequest> = {};
   private agentProfiles: AgentProfile[] = [];
   private hooks: Hook[] = [];
+  private agentMailboxes: Record<string, AgentMessage[]> = {};
+  private schedules: Schedule[] = [];
   private readonly hookAllowlist: readonly string[];
   private harness: HarnessSettings = defaultHarnessSettings();
   private harnessText: HarnessTextSettings = defaultHarnessTextSettings();
   /**
    * Per-session refinement trigger state.
    *
-   * Deliberately in memory and not in the encrypted workspace: a crash costs a
-   * delayed review, never a wrong one, because the state that decides whether
-   * to spend a model call is derived from the chain again at the next boundary.
-   * Persisting it would mean a stored timestamp deciding what the product does.
+   * Stored with the rest of the harness snapshot, because the cooldown is only
+   * real if it survives a restart: while this lived only in memory, stopping
+   * and starting the process was a way to buy a free review, and a provider
+   * that had just failed could be re-asked for the price of a restart.
+   *
+   * The one field whose meaning differs in the snapshot is `inFlight`. A
+   * stored `true` records a round the process died inside, so it is restored as
+   * `false` (a crash must not hold the gate shut forever) and the cooldown is
+   * stamped instead (the interrupted review may already have been paid for).
+   * `restoreTriggerState` carries the full reasoning.
    */
   private readonly harnessTriggers = new Map<string, TriggerState>();
   /**
@@ -1220,6 +1485,11 @@ export class Workbench {
         root: string;
         updatedAt: string;
       }>;
+      agentMailboxes?: unknown;
+      schedules?: unknown[];
+      /** Validated by `restoreTriggerStates`, not trusted because it was
+       * written by an earlier process. */
+      harnessTriggers?: unknown;
     }>();
     if (saved) {
       let migrated = false;
@@ -1323,6 +1593,19 @@ export class Workbench {
       });
       this.documents = saved.documents;
       this.evidence = saved.evidence;
+      // Revocations restore from signed evidence, not from process state: the
+      // issuer is in-memory, so without this an agent revoked before a
+      // restart could receive a fresh grant after it. The store is the app's
+      // own data directory; chain signatures are still verified on read.
+      for (const entries of Object.values(this.evidence))
+        for (const entry of entries) {
+          const body = entry.body as Record<string, unknown>;
+          if (
+            body.tool === "agent_revoke" &&
+            typeof body.revokedAgentId === "string"
+          )
+            this.localIdentityIssuer.revokeAgent(body.revokedAgentId);
+        }
       this.recoveryRequests = saved.recoveryRequests ?? {};
       this.agentProfiles = (saved.agentProfiles ?? []).map((profile) =>
         validateAgentProfile(profile),
@@ -1339,6 +1622,18 @@ export class Workbench {
         }
       });
       this.projectList = saved.projects ?? [];
+      this.agentMailboxes = restoreAgentMailboxes(saved.agentMailboxes);
+      // A stored schedule is re-validated, not trusted because it was accepted
+      // once: the operator's prompt ceiling and the cadence floor can both have
+      // narrowed since the record was written, and a snapshot that outlived the
+      // rule that admitted it would fire on a bound nobody chose.
+      this.schedules = (saved.schedules ?? []).flatMap((schedule) => {
+        try {
+          return [validateStoredSchedule(schedule, this.harness.maxPromptCharacters)];
+        } catch {
+          return [];
+        }
+      });
       if (this.config)
         this.provider = createProviderClient(
           this.config,
@@ -1453,6 +1748,19 @@ export class Workbench {
           controller: new AbortController(),
         });
       }
+      // Restored after the sessions, because a trigger belongs to one: an
+      // entry whose session is gone is dropped rather than carried, and the
+      // live set is what decides. The state that comes back has already been
+      // normalised (a crashed round is not restored as in flight, and it
+      // stamps the cooldown), so a repair here is written back once and not
+      // repeated on the next start.
+      const triggers = restoreTriggerStates(
+        saved.harnessTriggers,
+        Date.now(),
+        new Set(this.sessions.keys()),
+      );
+      for (const [id, state] of triggers.states) this.harnessTriggers.set(id, state);
+      if (triggers.changed) migrated = true;
       if (migrated) this.persist();
     }
   }
@@ -1482,6 +1790,15 @@ export class Workbench {
       agentProfiles: this.agentProfiles,
       hooks: this.hooks,
       projects: this.projectList,
+      agentMailboxes: this.agentMailboxes,
+      schedules: this.schedules,
+      // Only live sessions: the store and the session list cannot disagree
+      // about which triggers exist, so an entry can never outlive its session.
+      harnessTriggers: Object.fromEntries(
+        [...this.harnessTriggers]
+          .filter(([id]) => this.sessions.has(id))
+          .map(([id, state]) => [id, persistTriggerState(state)]),
+      ),
       sessions: [...this.sessions.values()].map(
         ({
           view,
@@ -2031,6 +2348,8 @@ export class Workbench {
         ...workspaceTools,
         ...this.connectors.flatMap((connector) => connector.tools),
         ...TODO_TOOLS,
+        PLAN_TOOL,
+        SESSION_SEARCH_TOOL,
         PROJECT_CHANGES_TOOL,
       ].map((tool) => tool.name),
     );
@@ -2278,12 +2597,19 @@ export class Workbench {
         projectRoot,
         dataRoot: this.storage.directory,
       });
+      const contextFiles = await readProjectContextFiles({
+        projectRoot,
+        copyRoot: workspace.directory,
+        manifest: workspace.manifest,
+      });
       const binding: ProjectAccess = {
         root: workspace.root,
         rootDigest: workspace.rootDigest,
         workspace,
         skills: structuredClone(orderedSkills),
         skillDigests,
+        contextFiles: contextFiles.files,
+        refusedContextFiles: contextFiles.refused,
       };
       this.projectAccess = binding;
       let restoredSessions = 0;
@@ -2403,7 +2729,7 @@ export class Workbench {
       );
     const tools = (
       session
-        ? (session.tools ?? [...workspaceTools, ...HARNESS_TOOLS, ...TODO_TOOLS])
+        ? (session.tools ?? [...workspaceTools, ...HARNESS_TOOLS, ...TODO_TOOLS, PLAN_TOOL, SESSION_SEARCH_TOOL])
         : [
             ...workspaceTools,
             ...this.connectors
@@ -2415,6 +2741,7 @@ export class Workbench {
     ).filter(
       (tool) =>
         this.toolAllowedInMode(tool) &&
+        gatedWorkspaceToolEnabled(tool.name, this.harness) &&
         ((tool.name !== PROJECT_EXEC_TOOL.name &&
           tool.name !== PROJECT_CHANGES_TOOL.name) ||
           (!!session &&
@@ -2463,10 +2790,13 @@ export class Workbench {
       ...workspaceTools.filter(
         (tool) =>
           tool.name !== PROJECT_EXEC_TOOL.name &&
-          tool.name !== PROJECT_CHANGES_TOOL.name,
+          tool.name !== PROJECT_CHANGES_TOOL.name &&
+          gatedWorkspaceToolEnabled(tool.name, this.harness),
       ),
       ...HARNESS_TOOLS,
       ...TODO_TOOLS,
+      PLAN_TOOL,
+      SESSION_SEARCH_TOOL,
       PROJECT_EXEC_TOOL,
       PROJECT_CHANGES_TOOL,
     ];
@@ -2741,6 +3071,10 @@ export class Workbench {
     } catch (error) {
       this.activeHostRuns.delete(id);
       this.sessions.delete(id);
+      // A trigger belongs to its session, so it goes with it. Left behind it
+      // would be dropped by the next load anyway; dropping it here means the
+      // in-memory map and the store never disagree.
+      this.harnessTriggers.delete(id);
       delete this.documents[session.view.workspace];
       this.persist();
       throw error;
@@ -2914,6 +3248,7 @@ export class Workbench {
     } catch (error) {
       this.activeAgentRuns.delete(id);
       this.sessions.delete(id);
+      this.harnessTriggers.delete(id);
       delete this.documents[session.view.workspace];
       this.persist();
       throw error;
@@ -3772,7 +4107,8 @@ export class Workbench {
       ...workspaceTools.filter(
         (tool) =>
           tool.name !== PROJECT_EXEC_TOOL.name &&
-          tool.name !== PROJECT_CHANGES_TOOL.name,
+          tool.name !== PROJECT_CHANGES_TOOL.name &&
+          gatedWorkspaceToolEnabled(tool.name, this.harness),
       ),
       // The agent may propose what it learned. The proposal is inert until an
       // operator approves its exact digest, so the tool cannot write the
@@ -3781,6 +4117,10 @@ export class Workbench {
       // The checklist is the run's own plan. It reaches nothing outside the
       // conversation, so it needs no hold and no document authority.
       ...TODO_TOOLS,
+      PLAN_TOOL,
+      ...(gatedWorkspaceToolEnabled(SESSION_SEARCH_TOOL.name, this.harness)
+        ? [SESSION_SEARCH_TOOL]
+        : []),
       ...(projectToolEnabled ? [PROJECT_EXEC_TOOL] : []),
       ...(projectChangesToolEnabled ? [PROJECT_CHANGES_TOOL] : []),
     ];
@@ -3837,6 +4177,7 @@ export class Workbench {
       background &&
       (this.jobs.size > 0 ||
         [...this.sessions.values()].some((s) => s.view.status === "running"));
+    this.assertAgentNotRevoked(selectedProfile?.id ?? selectedAgent?.id);
     const session: Session = {
       view: {
         id,
@@ -4400,6 +4741,77 @@ export class Workbench {
           tool.name === "void_workspace_read"))
     );
   }
+  /**
+   * Starts an operator goal. The goal is persisted before the first run is
+   * sent, so a crash leaves a goal the operator can see rather than a run
+   * nobody can attribute.
+   */
+  async startGoal(sessionId: string, input: unknown): Promise<Goal> {
+    const session = this.sessions.get(sessionId);
+    if (!session) throw new Error("Session not found.");
+    if (session.view.status !== "idle")
+      throw new Error("Start a goal only while the session is idle.");
+    if (session.view.goal?.status === "active")
+      throw new Error("This session already has an active goal.");
+    const parsed = parseGoalInput(
+      input,
+      this.hookAllowlist,
+      this.harness.maxPromptCharacters,
+    );
+    const goal: Goal = {
+      id: randomUUID(),
+      ...parsed,
+      status: "active",
+      runTokenBase: session.view.runTokenCount,
+      lastWorkspaceDigest: await this.goalWorkspaceDigest(session),
+      continuationCount: 0,
+    };
+    const previous = session.view.goal;
+    session.view = { ...session.view, goal };
+    this.persist();
+    try {
+      this.send(sessionId, goalStartPrompt(goal), `goal:${goal.id}:0`);
+    } catch (error) {
+      session.view = { ...session.view, goal: previous };
+      this.persist();
+      throw error;
+    }
+    return structuredClone(goal);
+  }
+
+  getGoal(sessionId: string): Goal | null {
+    const session = this.sessions.get(sessionId);
+    if (!session) throw new Error("Session not found.");
+    return session.view.goal ? structuredClone(session.view.goal) : null;
+  }
+
+  cancelGoal(sessionId: string): Goal {
+    const session = this.sessions.get(sessionId);
+    if (!session) throw new Error("Session not found.");
+    const current = session.view.goal;
+    if (!current) throw new Error("This session has no goal.");
+    if (current.status !== "active") return structuredClone(current);
+    const goal: Goal = { ...current, status: "cancelled" };
+    if (
+      session.queuedPrompt?.includes(`Goal: ${current.objective}`) &&
+      this.queued.delete(sessionId)
+    ) {
+      delete session.queuedPrompt;
+      delete session.queuedImages;
+      session.view = { ...session.view, status: "idle" };
+    }
+    session.view = { ...session.view, goal };
+    this.event(
+      session,
+      "tool",
+      "Goal cancelled by the operator.",
+      { goalId: goal.id, status: goal.status },
+      "goal.status",
+    );
+    this.persist();
+    return structuredClone(goal);
+  }
+
   patchSession(id: string, body: Record<string, unknown>) {
     const session = this.sessions.get(id);
     if (!session)
@@ -4415,6 +4827,179 @@ export class Workbench {
     this.persist();
     return this.view(session);
   }
+  /**
+   * The operator's schedule table (HP9).
+   *
+   * A schedule decides when unattended work starts, so every method here is an
+   * operator door: no model tool reaches this table, and the firing runs
+   * through the normal `start` or `send` path, which is where policy, holds,
+   * turn limits and the ledger already live. The rules (cadence floor, run and
+   * token bounds, what a settled firing means) belong to `schedules.ts`; this
+   * only stores the table and drives it.
+   */
+  listSchedules(): Schedule[] {
+    return this.schedules.map((schedule) => structuredClone(schedule));
+  }
+
+  createSchedule(input: unknown, nowMs?: number): Schedule {
+    const parsed = parseScheduleInput(
+      input,
+      this.harness.maxPromptCharacters,
+      nowMs,
+    );
+    if (this.schedules.length >= SCHEDULE_LIMITS.schedules)
+      throw new Error(
+        `A workbench holds at most ${SCHEDULE_LIMITS.schedules} schedules.`,
+      );
+    const createdAtMs = nowMs ?? Date.now();
+    const schedule: Schedule = {
+      id: randomUUID(),
+      ...parsed,
+      status: parsed.enabled ? "active" : "paused",
+      runCount: 0,
+      tokensUsed: 0,
+      createdAt: new Date(createdAtMs).toISOString(),
+    };
+    this.schedules.push(schedule);
+    this.persist();
+    return structuredClone(schedule);
+  }
+
+  pauseSchedule(id: string): Schedule {
+    const index = this.schedules.findIndex((schedule) => schedule.id === id);
+    if (index < 0) throw new Error(`No schedule matches ${id}.`);
+    const paused: Schedule = {
+      ...this.schedules[index]!,
+      status: "paused",
+      enabled: false,
+    };
+    this.schedules[index] = paused;
+    this.persist();
+    return structuredClone(paused);
+  }
+
+  resumeSchedule(id: string): Schedule {
+    const index = this.schedules.findIndex((schedule) => schedule.id === id);
+    if (index < 0) throw new Error(`No schedule matches ${id}.`);
+    const current = this.schedules[index]!;
+    if (current.status !== "paused" && current.status !== "active")
+      throw new Error(
+        `Schedule ${id} is ${current.status}; only a paused schedule can resume.`,
+      );
+    const now = Date.now();
+    const nextRunAt =
+      current.cadence.kind === "interval"
+        ? new Date(now + current.cadence.everySeconds * 1000).toISOString()
+        : current.nextRunAt;
+    // A once instant that passed while the record was paused cannot be
+    // resumed into the past: the operator would be asking for a firing at a
+    // moment nobody meant, and the first evaluation would run it immediately.
+    if (Date.parse(nextRunAt) <= now)
+      throw new Error(
+        `Schedule ${id} has no future slot to resume; create a new schedule.`,
+      );
+    const resumed: Schedule = {
+      ...current,
+      status: "active",
+      enabled: true,
+      nextRunAt,
+    };
+    this.schedules[index] = resumed;
+    this.persist();
+    return structuredClone(resumed);
+  }
+
+  deleteSchedule(id: string): boolean {
+    const index = this.schedules.findIndex((schedule) => schedule.id === id);
+    if (index < 0) return false;
+    this.schedules.splice(index, 1);
+    this.persist();
+    return true;
+  }
+
+  /**
+   * Fire every schedule that is due, once each, and report what settled.
+   *
+   * A target that is busy is skipped and its record is left exactly as it was,
+   * so the next evaluation sees the same slot. A target whose state cannot be
+   * read parks the record without starting a run, because repeating an
+   * unverified side effect is the one thing a loop must not do.
+   */
+  async runDueSchedules(nowMs?: number): Promise<ScheduleFiring[]> {
+    const now = nowMs ?? Date.now();
+    const due = dueSchedules(this.schedules, now);
+    const firings: ScheduleFiring[] = [];
+    for (const dueSchedule of due) {
+      const index = this.schedules.findIndex(
+        (schedule) => schedule.id === dueSchedule.id,
+      );
+      if (index < 0) continue;
+      const current = this.schedules[index]!;
+      // Re-checked per record: an earlier firing in this pass may have paused
+      // or completed a record that the first read still saw as due.
+      if (dueSchedules([current], now).length === 0) continue;
+
+      let sessionId = current.sessionId;
+      if (sessionId !== undefined) {
+        const target = this.sessions.get(sessionId);
+        if (!target || target.view.status === "unknown") {
+          this.schedules[index] = {
+            ...current,
+            status: "paused_unknown",
+            enabled: false,
+          };
+          this.persist();
+          continue;
+        }
+        if (target.view.status !== "idle") continue;
+      }
+
+      const tokensBefore =
+        sessionId === undefined
+          ? 0
+          : (this.sessions.get(sessionId)?.view.runTokenCount ?? 0);
+      // A firing that cannot start is not a firing: the error propagates after
+      // the table is persisted, so the operator sees why the loop stopped
+      // instead of a schedule that silently never runs. The record keeps its
+      // slot, so the next evaluation retries the same instant.
+      if (sessionId === undefined) {
+        const created = await this.start(
+          current.prompt,
+          current.model,
+          `schedule:${current.id}:${current.runCount}`,
+          undefined,
+          current.agent,
+        );
+        sessionId = created.id;
+      } else {
+        this.send(
+          sessionId,
+          current.prompt,
+          `schedule:${current.id}:${current.runCount}`,
+        );
+      }
+      const view = await this.waitForRun(sessionId);
+      const tokensUsed = Math.max(0, (view.runTokenCount ?? 0) - tokensBefore);
+      const outcome: ScheduleOutcome =
+        view.status === "idle"
+          ? "idle"
+          : view.status === "failed"
+            ? "failed"
+            : view.status === "cancelled"
+              ? "cancelled"
+              : "unknown";
+      this.schedules[index] = recordScheduleRun(current, {
+        firedAtMs: now,
+        sessionId,
+        tokensUsed,
+        outcome,
+      });
+      firings.push({ scheduleId: current.id, sessionId, outcome });
+      this.persist();
+    }
+    return firings;
+  }
+
   sessionPage(query: URLSearchParams) {
     const all = filterRows(this.allViews(), query)
       .filter(
@@ -4781,7 +5366,8 @@ export class Workbench {
         ...workspaceTools.filter(
           (tool) =>
             tool.name !== PROJECT_EXEC_TOOL.name &&
-            tool.name !== PROJECT_CHANGES_TOOL.name,
+            tool.name !== PROJECT_CHANGES_TOOL.name &&
+            gatedWorkspaceToolEnabled(tool.name, this.harness),
         ),
         // The agent may propose what it learned. The proposal is inert until
         // an operator approves its exact digest, so the tool cannot write
@@ -4790,6 +5376,10 @@ export class Workbench {
         // A child records its own checklist; the event names the child
         // session, so the parent's rail is never given the child's rows.
         ...TODO_TOOLS,
+        PLAN_TOOL,
+        ...(gatedWorkspaceToolEnabled(SESSION_SEARCH_TOOL.name, this.harness)
+          ? [SESSION_SEARCH_TOOL]
+          : []),
         ...(projectToolEnabled ? [PROJECT_EXEC_TOOL] : []),
         ...(projectChangesToolEnabled ? [PROJECT_CHANGES_TOOL] : []),
       ];
@@ -4841,12 +5431,20 @@ export class Workbench {
           )
         : tools
       ).filter((tool) => this.toolAllowedInMode(tool));
-      const finalTools = subsetTools(baseTools, parent.tools ?? []);
+      // Model delegation is depth one. A child still cannot recover a tool its
+      // parent lacked, and it never inherits the tools that spawn or read a
+      // further child, so a model cannot grow an unbounded delegation chain.
+      const finalTools = subsetTools(baseTools, parent.tools ?? []).filter(
+        (tool) =>
+          tool.name !== DELEGATE_TOOL.name &&
+          tool.name !== SUBAGENT_RESULT_TOOL.name,
+      );
 
       const queued =
         this.jobs.size > 0 ||
         this.countRunning() >= this.harness.maxConcurrentRuns;
 
+      this.assertAgentNotRevoked(selectedProfile?.id ?? selectedAgent?.id);
       const session: Session = {
         view: {
           id: childId,
@@ -4907,6 +5505,7 @@ export class Workbench {
       } catch (error) {
         client?.close();
         this.sessions.delete(childId);
+        this.harnessTriggers.delete(childId);
         delete this.documents[workspace];
         this.queued.delete(childId);
         throw error instanceof Error
@@ -5660,6 +6259,18 @@ export class Workbench {
                 runtimeId,
               );
           confirmed = result.status !== "unknown";
+          // The score board measures whether recovery actually restored the
+          // document. That fact exists only here, so it is recorded here.
+          await this.commitWorkspace(
+            session,
+            this.workspace(id),
+            "harness.recovery",
+            { runtimeId, status: result.status },
+            "recovery:recorded",
+            undefined,
+            undefined,
+            { event: "recovery", ok: result.status === "restored" },
+          );
           if (result.status !== "restored")
             throw new Error(`Managed document recovery ${result.status}.`);
         } else {
@@ -5721,6 +6332,44 @@ export class Workbench {
    * with deterministic lessons mined from the same chain. This is descriptive
    * context only; policy and decision paths continue to mine rules separately.
    */
+  /**
+   * Workspaces an operator named as a shared learning scope.
+   *
+   * Opt-in through `NOMO_SHARED_LEARNING_WORKSPACES`, a comma-separated list.
+   * Empty is the default and the isolation guarantee: a session sees only its
+   * own chain. The named chains are read, never written, so sharing adds no
+   * second copy of a signed record.
+   */
+  private sharedLearningWorkspaces(): string[] {
+    const raw = this.env.NOMO_SHARED_LEARNING_WORKSPACES ?? "";
+    return raw
+      .split(",")
+      .map((name) => name.trim())
+      .filter(Boolean);
+  }
+
+  /** The session's entries plus any operator-named shared scope, deduped. */
+  private async entriesForPrompt(
+    workspace: string,
+    firstTurn: boolean,
+  ): Promise<HarnessEntry[]> {
+    const shared = this.sharedLearningWorkspaces().filter(
+      (name) => name !== workspace,
+    );
+    // A brand-new session's own chain cannot hold an entry yet (mining runs
+    // after dispatch), so with no shared scope there is nothing to read. The
+    // fast path matters: an extra await before the first provider call widens
+    // the window in which a Stop can arrive before the run registers.
+    if (firstTurn && shared.length === 0) return [];
+    const entries = await this.harnessEntries(workspace);
+    if (shared.length === 0) return entries;
+    const byId = new Map(entries.map((entry) => [entry.id, entry]));
+    for (const name of shared)
+      for (const entry of await this.harnessEntries(name))
+        if (!byId.has(entry.id)) byId.set(entry.id, entry);
+    return [...byId.values()];
+  }
+
   async harnessEntries(workspace: string): Promise<HarnessEntry[]> {
     const proof = await this.ledger(workspace);
     const entries = proof?.entries ?? [];
@@ -5801,6 +6450,32 @@ export class Workbench {
   }
 
   /**
+   * The learned markdown skills this workspace reads, replayed from the
+   * verified chain. A promoted skill is guidance only (H4b): it never reaches
+   * `decide`, policy, permissions or the tool catalog, and the one rendering it
+   * gets is `formatPromotedSkillsForPrompt` inside the operator's prompt
+   * ceiling.
+   */
+  async promotedSkills(workspace: string): Promise<PromotedSkill[]> {
+    const entries = (await this.ledger(workspace))?.entries ?? [];
+    return replayPromotedSkills(
+      entries.map((entry) => ({ body: entry.body, seq: entry.seq })),
+    ).skills as PromotedSkill[];
+  }
+
+  private sessionParentBound(session: {
+    readonly tools?: readonly { readonly name: string }[];
+    readonly agentProfile?: AgentProfile;
+  }): ParentBound {
+    return {
+      allowedTools: [...new Set((session.tools ?? []).map((tool) => tool.name))].sort(),
+      policyProfile: session.agentProfile?.policyProfile ?? DEFAULT_POLICY_PROFILE,
+      maxTurns: session.agentProfile?.maxTurns ?? this.harness.maxTurns,
+      maxContextTokens: session.agentProfile?.maxContextTokens ?? AGENT_LIMITS.maxContextTokens,
+    };
+  }
+
+  /**
    * Record a validated refinement as an inert, signed workspace proposal.
    * Skills activate as lessons; subagent profiles activate only after exact
    * digest approval and remain scoped to this workspace's verified chain.
@@ -5831,6 +6506,12 @@ export class Workbench {
       return { applied: [], awaitingApproval: [] };
 
     const workspace = session.view.workspace;
+    // A settled rejection is a decision, not a suggestion. A proposal that
+    // cites nothing recorded after it would spend an approval round to re-ask
+    // a question the operator already answered.
+    const settled = mineRefinementOutcomes(this.evidence[workspace] ?? []);
+    const repeated = repeatsSettledProposal(proposal, settled);
+    if (repeated) throw new Error(repeatRefusal(repeated));
     return this.locked(async () => {
       // branch() uses this same lock. Check after acquiring it, so a branch
       // queued ahead of this proposal makes the stale review fail closed.
@@ -5943,17 +6624,162 @@ export class Workbench {
     if (!session || session.view.id !== sessionId) return [];
     const proof = await this.ledger(session.view.workspace);
     if (!proof) return [];
-    return (await this.pendingForWorkspace(proof.entries)).map((pending) => ({
-      digest: pending.digest,
-      at: pending.at,
+    const activeProfiles = new Map(
+      (await this.promotedAgentProfiles(session.view.workspace)).map((profile) => [
+        profile.id,
+        profile,
+      ]),
+    );
+    const parentBound = this.sessionParentBound(session);
+    const activeSkills = await this.promotedSkills(session.view.workspace);
+    return (await this.pendingForWorkspace(proof.entries)).map((pending) => {
+      const subagentEdits = pending.proposal.edits.filter((edit) => edit.kind === "subagent");
+      let profileReview: ProfilePromotionReview | undefined;
+      let profileReviewText: string | undefined;
+      if (subagentEdits.length > 0) {
+        const previewRecord: HarnessProfileRecord = {
+          digest: pending.digest,
+          atSeq: pending.atSeq,
+          parentBound,
+          changes: subagentEdits.map((edit) => {
+            const id = edit.profile?.id ?? edit.id ?? "";
+            return {
+              id,
+              before: activeProfiles.get(id) ?? null,
+              after: edit.action === "delete" ? null : (edit.profile ?? null),
+            };
+          }),
+        };
+        try {
+          profileReview = reviewProfilePromotion(previewRecord);
+          profileReviewText = describeProfilePromotionReview(previewRecord);
+        } catch {
+          profileReview = {
+            digest: pending.digest,
+            atSeq: pending.atSeq,
+            parentBound: {
+              allowedTools: [...parentBound.allowedTools],
+              policyProfile: parentBound.policyProfile,
+              maxTurns: parentBound.maxTurns,
+              maxContextTokens: parentBound.maxContextTokens,
+            },
+            edits: previewRecord.changes.map((change) => ({
+              id: change.id,
+              action:
+                change.before === null
+                  ? "create"
+                  : change.after === null
+                    ? "delete"
+                    : "update",
+              before: change.before ? structuredClone(change.before) : null,
+              after: change.after ? structuredClone(change.after) : null,
+            })),
+          };
+        }
+      }
+      const skillEdits = pending.proposal.edits.filter((edit) => edit.kind === "skill");
+      let skillReview: SkillPromotionReview | undefined;
+      let skillReviewText: string | undefined;
+      if (skillEdits.length > 0) {
+        const active = new Map(activeSkills.map((skill) => [skill.id, skill]));
+        const changes: SkillChange[] = skillEdits.map((edit) => {
+          const id = edit.id ?? "";
+          const before = active.get(id) ?? null;
+          const after =
+            edit.action === "delete"
+              ? null
+              : {
+                  id,
+                  title: edit.title ?? "",
+                  description: "",
+                  body: edit.content ?? "",
+                };
+          return { id, before, after };
+        });
+        skillReview = { digest: pending.digest, atSeq: pending.atSeq, changes };
+        skillReviewText = changes
+          .map((change) => {
+            const action =
+              change.before === null
+                ? "create"
+                : change.after === null
+                  ? "delete"
+                  : "update";
+            const text = change.after ?? change.before;
+            const body = (text?.body ?? "").split("\n").join(" ");
+            return [
+              `skill ${action} "${change.id}": ${text?.title ?? ""}`,
+              `  body: ${body.length > 240 ? `${body.slice(0, 240)}...` : body}`,
+            ].join("\n");
+          })
+          .join("\n");
+      }
+      return {
+        digest: pending.digest,
+        at: pending.at,
+        atSeq: pending.atSeq,
+        summary: pending.proposal.summary,
+        proposal: structuredClone(pending.proposal),
+        addendum: pending.proposal.edits
+          .filter((edit) => edit.kind === "prompt")
+          .map((edit) => edit.promptAddendum ?? "")
+          .join("\n"),
+        ...(profileReview ? { profileReview } : {}),
+        ...(profileReviewText ? { profileReviewText } : {}),
+        ...(skillReview ? { skillReview } : {}),
+        ...(skillReviewText ? { skillReviewText } : {}),
+      };
+    });
+  }
+
+  /**
+   * Build the signed skill promotion for the skill edits of one approved
+   * proposal, or undefined when it carries none.
+   *
+   * The module owns every refusal (digest, chain position, change cap, project
+   * id collision, secrets, active cap); this only hands it the two snapshots a
+   * proposal cannot carry on its own, which are the skills the workspace reads
+   * now.
+   */
+  private signedSkillPromotion(
+    pending: PendingApproval,
+    chainLength: number,
+    digest: string,
+    active: readonly PromotedSkill[],
+  ) {
+    const parsed: ParsedSkillChange[] = [];
+    for (const edit of pending.proposal.edits) {
+      if (edit.kind !== "skill") continue;
+      const id = edit.id ?? "";
+      // A skill edit with no id is addressed by its content and keeps its
+      // existing lesson-only behaviour. A promotion is named by the operator
+      // and replayed by id, so an id the proposal never stated is not a
+      // promotion: minting one here would sign an identifier nobody reviewed.
+      if (id === "") continue;
+      if (edit.action === "delete") {
+        parsed.push({ action: "delete", id });
+        continue;
+      }
+      parsed.push({
+        action: edit.action === "update" ? "update" : "create",
+        skill: {
+          id,
+          title: edit.title ?? "",
+          description: "",
+          body: edit.content ?? "",
+        },
+      });
+    }
+    if (parsed.length === 0) return undefined;
+    return prepareSkillPromotion({
+      digest,
+      approvedDigest: pending.digest,
       atSeq: pending.atSeq,
-      summary: pending.proposal.summary,
-      proposal: structuredClone(pending.proposal),
-      addendum: pending.proposal.edits
-        .filter((edit) => edit.kind === "prompt")
-        .map((edit) => edit.promptAddendum ?? "")
-        .join("\n"),
-    }));
+      chainLength,
+      changes: parsed,
+      active: [...active],
+      knownSecrets: this.knownSecretValues(),
+    });
   }
 
   async approveHarnessProposal(
@@ -5988,65 +6814,29 @@ export class Workbench {
       );
       if (!result.applied.length && !result.profileEdits.length)
         throw new Error("The approved proposal has no supported edit to activate.");
-      const profiles = new Map(
-        (await this.promotedAgentProfiles(workspace)).map((profile) => [
-          profile.id,
-          profile,
-        ]),
-      );
-      const profileChanges: Array<{
-        id: string;
-        before: AgentProfile | null;
-        after: AgentProfile | null;
-      }> = [];
-      const seenProfileIds = new Set<string>();
-      const parentTools = new Set(
-        (session.tools ?? []).map((tool) => tool.name),
-      );
-      const parentPolicy =
-        session.agentProfile?.policyProfile ?? DEFAULT_POLICY_PROFILE;
-      const parentTurns =
-        session.agentProfile?.maxTurns ?? this.harness.maxTurns;
-      const parentContext =
-        session.agentProfile?.maxContextTokens ?? AGENT_LIMITS.maxContextTokens;
-      for (const edit of result.profileEdits) {
-        const id = edit.profile?.id ?? edit.id!;
-        if (seenProfileIds.has(id))
-          throw new Error(`Only one subagent profile edit per id is allowed: ${id}.`);
-        seenProfileIds.add(id);
-        const before = profiles.get(id) ?? null;
-        if (edit.action === "create" && before)
-          throw new Error(`Workspace profile ${id} already exists.`);
-        if (edit.action !== "create" && !before)
-          throw new Error(`Workspace profile ${id} does not exist.`);
-        if (edit.action !== "delete") {
-          const profile = validateAgentProfile(edit.profile, "subagent profile");
-          if (
-            AGENT_PRESETS.some((preset) => preset.id === id) ||
-            this.agentProfiles.some((candidate) => candidate.id === id)
-          )
-            throw new Error(`Workspace profile ${id} collides with an existing agent.`);
-          if (profile.allowedTools.some((name) => !parentTools.has(name)))
-            throw new Error(`Subagent profile ${id} exceeds the parent tool scope.`);
-          if (
-            profile.policyProfile !== parentPolicy ||
-            profile.maxTurns > parentTurns ||
-            profile.maxContextTokens > parentContext
-          )
-            throw new Error(`Subagent profile ${id} exceeds the parent run bounds or policy.`);
-          profiles.set(id, profile);
-        } else {
-          profiles.delete(id);
-        }
-        profileChanges.push({
-          id,
-          before,
-          after: edit.action === "delete" ? null : profiles.get(id)!,
-        });
-      }
-      const signedProfiles = profileChanges.length
-        ? { digest, changes: profileChanges }
+      const signedProfiles = result.profileEdits.length
+        ? prepareProfilePromotion({
+            digest,
+            approvedDigest: pending.digest,
+            refinementDigest: digest,
+            atSeq: pending.atSeq,
+            chainLength: proof.entries.length,
+            parent: this.sessionParentBound(session),
+            edits: result.profileEdits,
+            activeProfiles: await this.promotedAgentProfiles(workspace),
+            builtinProfileIds: [
+              ...AGENT_PRESETS.map((preset) => preset.id),
+              ...this.agentProfiles.map((candidate) => candidate.id),
+            ],
+            knownSecrets: this.knownSecretValues(),
+          })
         : undefined;
+      const signedSkills = this.signedSkillPromotion(
+        pending,
+        proof.entries.length,
+        digest,
+        await this.promotedSkills(workspace),
+      );
       const { overrides, suppressedIds } = this.refinementDelta(
         workspace,
         result.entries,
@@ -6072,10 +6862,13 @@ export class Workbench {
         { by: "operator" },
         {
           harnessProposal: { digest, status: "approved", proposal: pending.proposal },
+          ...(signedProfiles ? { harnessProfile: signedProfiles } : {}),
+          ...(signedSkills ? { harnessSkill: signedSkills } : {}),
           harnessLifecycle: {
             digest,
             events: [
-              ...(signedProfiles ? ["profile:activated"] : []),
+              ...(signedProfiles ? [PROFILE_PROMOTED_EVENT, "profile:activated"] : []),
+              ...(signedSkills ? [SKILL_PROMOTED_EVENT] : []),
               "proposal:approved",
               "proposal:activated",
               ...(tombstones.length ? ["entry:tombstone"] : []),
@@ -6092,7 +6885,9 @@ export class Workbench {
             applied: result.applied,
             overrides,
             suppressedIds,
-            ...(signedProfiles ? { profiles: signedProfiles } : {}),
+            ...(signedProfiles
+              ? { profiles: { digest, changes: signedProfiles.changes } }
+              : {}),
             approvedBy: "operator",
             digest,
             atSeq: pending.atSeq,
@@ -6237,25 +7032,54 @@ export class Workbench {
       const applied = Array.isArray(activation.record.applied)
         ? activation.record.applied
         : [];
-      const profileRecord = activation.record.profiles;
+      const activationBody = entries[activation.index]!.body as Record<string, unknown>;
+      const profileRecord =
+        activationBody.harnessProfile ?? activation.record.profiles;
       const profileEvent = profileRecord && typeof profileRecord === "object"
         ? profileRecord as Record<string, unknown>
         : undefined;
       const activatedProfileChanges = Array.isArray(profileEvent?.changes)
         ? profileEvent.changes as Array<Record<string, unknown>>
         : [];
-      if (!applied.length && !activatedProfileChanges.length)
+      const skillRecord = activationBody.harnessSkill;
+      const skillEvent = skillRecord && typeof skillRecord === "object"
+        ? skillRecord as Record<string, unknown>
+        : undefined;
+      const activatedSkillChanges = Array.isArray(skillEvent?.changes)
+        ? skillEvent.changes as unknown as SkillChange[]
+        : [];
+      if (!applied.length && !activatedProfileChanges.length && !activatedSkillChanges.length)
         throw new Error("The activated refinement carries no applied edit to roll back.");
-      const activeProfiles = new Map(
-        (await this.promotedAgentProfiles(workspace)).map((profile) => [profile.id, profile]),
-      );
-      const rollbackProfiles = activatedProfileChanges.map((change) => {
-        const id = change.id;
-        if (typeof id !== "string" ||
-          JSON.stringify(activeProfiles.get(id) ?? null) !== JSON.stringify(change.after))
-          throw new Error("The active profile no longer matches the signed activation.");
-        return { id, before: change.after, after: change.before };
-      });
+      const secrets = this.knownSecretValues();
+      const skillRollback = activatedSkillChanges.length
+        ? prepareSkillRollback({
+            digest,
+            atSeq:
+              typeof skillEvent?.atSeq === "number" ? skillEvent.atSeq : activation.seq,
+            changes: activatedSkillChanges,
+            active: await this.promotedSkills(workspace),
+          })
+        : undefined;
+      const rollbackSkills = skillRollback?.changes ?? [];
+      const profileRollback = activatedProfileChanges.length
+        ? prepareProfileRollback({
+            digest,
+            activation: {
+              digest: typeof profileEvent?.digest === "string" ? profileEvent.digest : digest,
+              atSeq:
+                typeof profileEvent?.atSeq === "number"
+                  ? profileEvent.atSeq
+                  : activation.seq,
+              ...(profileEvent?.parentBound && typeof profileEvent.parentBound === "object"
+                ? { parentBound: profileEvent.parentBound as ParentBound }
+                : {}),
+              changes: activatedProfileChanges as unknown as HarnessProfileRecord["changes"],
+            },
+            activeProfiles: await this.promotedAgentProfiles(workspace),
+            knownSecrets: secrets,
+          })
+        : undefined;
+      const rollbackProfiles = profileRollback?.changes ?? [];
       const edits: RefinementEdit[] = [];
       // Backwards, because the inverse of a sequence of edits on one entry is
       // that sequence reversed. Applied forwards, two updates of the same id
@@ -6375,7 +7199,7 @@ export class Workbench {
               },
         );
       }
-      if (!edits.length && !rollbackProfiles.length)
+      if (!edits.length && !rollbackProfiles.length && !rollbackSkills.length)
         throw new Error("The activated refinement carries no edit a rollback can restore.");
       const inverse: RefinementProposal = {
         summary: `Rollback of refinement ${digest}`,
@@ -6395,10 +7219,10 @@ export class Workbench {
       // environment after that write would travel into the chain again
       // through the rollback, and the guarantee the write path gives has to
       // be re-established here rather than assumed.
-      const secrets = this.knownSecretValues();
       if (
         refinementTextIsSensitive(inverse, secrets) ||
-        secretLikeText(JSON.stringify(rollbackProfiles), secrets)
+        secretLikeText(JSON.stringify(rollbackProfiles), secrets) ||
+        secretLikeText(JSON.stringify(rollbackSkills), secrets)
       )
         throw new Error("Refinement contains secret-like content and was not recorded.");
       const generatedAt = new Date().toISOString();
@@ -6408,7 +7232,7 @@ export class Workbench {
         digest,
         atSeq: activation.seq,
       });
-      if (!result.applied.length && !rollbackProfiles.length)
+      if (!result.applied.length && !rollbackProfiles.length && !rollbackSkills.length)
         throw new Error("The rollback applied no edit, so it would record a change of nothing.");
       // The applied count is not the evidence: a delete that hit no entry is
       // still counted as applied, and the view would read exactly as before.
@@ -6416,6 +7240,7 @@ export class Workbench {
       const afterIds = new Set(result.entries.map((entry) => entry.id));
       const changed =
         rollbackProfiles.length > 0 ||
+        rollbackSkills.length > 0 ||
         beforeIds.size !== afterIds.size ||
         current.some((entry) => {
           const next = result.entries.find((item) => item.id === entry.id);
@@ -6450,14 +7275,19 @@ export class Workbench {
         { by: "operator" },
         {
           event: "rollback",
+          ...(profileRollback ? { harnessProfile: profileRollback } : {}),
+          ...(skillRollback ? { harnessSkill: skillRollback } : {}),
           harnessLifecycle: {
             digest,
             events: [
-              ...(rollbackProfiles.length ? ["profile:rolled-back"] : []),
+              ...(rollbackProfiles.length ? [PROFILE_ROLLED_BACK_EVENT] : []),
+              ...(rollbackSkills.length ? [SKILL_ROLLED_BACK_EVENT] : []),
               "refinement:rolled-back",
               ...(tombstones.length ? ["entry:tombstone"] : []),
             ],
             tombstones,
+            ...(profileRollback ? { restoredIds: profileRollback.restoredIds } : {}),
+            ...(skillRollback ? { restoredSkillIds: skillRollback.restoredIds } : {}),
             atSeq: activation.seq,
           },
           harnessRefinement: {
@@ -6468,7 +7298,18 @@ export class Workbench {
             overrides,
             suppressedIds,
             ...(rollbackProfiles.length
-              ? { profiles: { digest, changes: rollbackProfiles } }
+              ? {
+                  profiles: {
+                    digest,
+                    changes: rollbackProfiles,
+                    ...(profileRollback
+                      ? { restoredIds: profileRollback.restoredIds }
+                      : {}),
+                  },
+                }
+              : {}),
+            ...(rollbackSkills.length
+              ? { skills: { digest, changes: rollbackSkills } }
               : {}),
             // Not "operator". That label decides whether the harness shows
             // a restored entry as an instruction to follow, and the operator
@@ -6519,6 +7360,53 @@ export class Workbench {
       toolScope,
     });
   }
+  /**
+   * Local agent revocation, distinct from a run stop: every live session of
+   * the agent is cancelled, all its grants are dropped, re-issue is refused
+   * in the issuer, and a signed record lands in each affected workspace so
+   * the revocation is evidence, not only process state. Fleet-wide revocation
+   * across nodes is not claimed; an agent with no sessions leaves no chain
+   * record, which the return value makes visible.
+   */
+  async revokeAgent(
+    agentId: string,
+    by: string,
+  ): Promise<{ droppedGrants: number; stoppedSessions: string[] }> {
+    const droppedGrants = this.localIdentityIssuer.revokeAgent(agentId);
+    const stopped: string[] = [];
+    const writes: Promise<unknown>[] = [];
+    for (const session of this.sessions.values()) {
+      if (session.view.agent !== agentId) continue;
+      if (session.view.status === "running") {
+        this.cancel(session.view.id);
+        stopped.push(session.view.id);
+      }
+      writes.push(
+        this.commitWorkspace(
+          session,
+          this.workspace(session.view.id),
+          "agent_revoke",
+          { agentId },
+          "revoke:applied",
+          undefined,
+          { by },
+          { revokedAgentId: agentId },
+        ),
+      );
+    }
+    await Promise.all(writes);
+    return { droppedGrants, stoppedSessions: stopped };
+  }
+
+  isAgentRevoked(agentId: string): boolean {
+    return this.localIdentityIssuer.isAgentRevoked(agentId);
+  }
+
+  private assertAgentNotRevoked(agentId: string | undefined): void {
+    if (agentId !== undefined && this.localIdentityIssuer.isAgentRevoked(agentId))
+      throw new Error(`Agent ${agentId} is revoked.`);
+  }
+
   /** Validate a grant against the proxy audience, upstream and requested tool. */
   validateLocalAgentGrant(
     token: string,
@@ -6801,6 +7689,10 @@ export class Workbench {
         id,
         requestManualReview(this.harnessTriggers.get(id) ?? initialTriggerState()),
       );
+      // No boundary runs on this path, so this is the only write that can make
+      // the queued request survive a restart. It is the operator's own intent
+      // and losing it to a restart would ask them to state it again.
+      this.persist();
       const note =
         "The conversation is running; the request is served at the next settled boundary.";
       this.event(
@@ -6943,6 +7835,15 @@ export class Workbench {
       // round is worth paying for, and handing over the full rule list would
       // answer a question the chain does not support.
       rules: () => mineLearnedRules(this.evidence[session.view.workspace] ?? []).length,
+      // What happened to this harness's earlier proposals, and what the last
+      // activation measured. Without it the reviewer re-proposes an idea the
+      // operator already rejected, once per paid round.
+      outcomes: () => {
+        const chain = this.evidence[session.view.workspace] ?? [];
+        const fates = formatOutcomesForReview(mineRefinementOutcomes(chain));
+        const effects = formatEffectsForReview(mineRefinementEffects(chain));
+        return [fates, effects].filter(Boolean).join("\n\n");
+      },
       ask: async (request) => {
         // The review may name another model than the conversation runs on:
         // a review is a bounded, structured request, and an operator may want
@@ -7020,6 +7921,13 @@ export class Workbench {
       this.harnessTriggers.set(id, merged);
     }
     this.reportHarnessOutcome(session, result, lenses);
+    // The write that makes the cooldown real. Every outcome above either
+    // stamped `lastReviewAt` or left the entry as it was, and a stamp that is
+    // only in memory is a cooldown a restart can erase -- which is a free
+    // review, and on a failing provider an unbounded bill. It runs after the
+    // outcome is reported, so a failed write cannot replace the result of a
+    // round that did run; it throws to the caller, which reports it.
+    this.persist();
     return result;
   }
   /**
@@ -7748,6 +8656,403 @@ export class Workbench {
       return false;
     }
   }
+  /**
+   * Run one agent-to-agent tool (HP11).
+   *
+   * Reachability is the direct family only, and the workbench's own session id
+   * is the sender: a model cannot name who it is, so a forged `from` is not a
+   * thing this surface can express. A send writes its signed record before the
+   * text reaches a mailbox, so a reader can always tell a delivered message
+   * from a refused one, and the record carries the digest rather than the body.
+   */
+  private async goalWorkspaceDigest(session: Session): Promise<string> {
+    const project =
+      session.projectBinding && session.projectBinding === this.projectAccess
+        ? await projectWorkspaceStatus(session.projectBinding.workspace)
+        : undefined;
+    return sha256Hex(
+      canonicalJson({
+        documents: this.workspace(session.view.id).files,
+        project: project?.changes.map((change) => change.digest) ?? [],
+      }),
+    );
+  }
+
+  private async serviceGoal(session: Session): Promise<void> {
+    const current = session.view.goal;
+    if (!current || current.status !== "active" || session.view.status !== "idle")
+      return;
+    let gatesPassed = true;
+    let failure: GoalGateFailure | undefined;
+    for (const [index, command] of current.gates.entries()) {
+      const result = await runHook(
+        {
+          id: `goal-${current.id}-${index}`,
+          event: "after-run",
+          command,
+          enabled: true,
+        },
+        {
+          sessionId: session.view.id,
+          workspace: session.view.workspace,
+          runId: session.view.runId,
+          goalId: current.id,
+        },
+        {
+          timeoutMs: this.hookTimeoutFromEnv ?? this.harness.hookTimeoutMs,
+          env: this.env,
+        },
+      );
+      this.event(
+        session,
+        "tool",
+        `Goal gate ${index + 1}: ${result.outcome}, exit ${result.code ?? "none"}.`,
+        {
+          goalId: current.id,
+          gate: index + 1,
+          outcome: result.outcome,
+          code: result.code,
+          durationMs: result.durationMs,
+        },
+        "goal.gate",
+      );
+      if (!hookSucceeded(result)) {
+        gatesPassed = false;
+        failure = { index: index + 1, outcome: result.outcome, code: result.code };
+        break;
+      }
+    }
+    const decision = evaluateGoal(current, {
+      gatesPassed,
+      tokensUsed: Math.max(0, session.view.runTokenCount - current.runTokenBase),
+      workspaceDigest: await this.goalWorkspaceDigest(session),
+    });
+    session.view = { ...session.view, goal: decision.goal };
+    if (!decision.continue) {
+      this.event(
+        session,
+        "tool",
+        `Goal ${decision.goal.status.replaceAll("_", " ")}.`,
+        { goalId: decision.goal.id, status: decision.goal.status },
+        "goal.status",
+      );
+      this.persist();
+      return;
+    }
+    this.persist();
+    try {
+      if (this.queued.size >= this.harness.maxQueuedRuns)
+        throw new Error(
+          `Background queue is full (${this.harness.maxQueuedRuns} queued runs).`,
+        );
+      const prompt = goalContinuationPrompt(decision.goal, failure!);
+      session.queuedPrompt = prompt;
+      delete session.queuedImages;
+      this.queued.add(session.view.id);
+      session.view = { ...session.view, status: "queued", runId: randomUUID() };
+      this.event(session, "user", prompt, { goalId: decision.goal.id });
+      this.event(
+        session,
+        "tool",
+        "Queued goal continuation.",
+        { status: "queued", goalId: decision.goal.id },
+        "run.status",
+      );
+      this.persist();
+    } catch (error) {
+      const goal: Goal = { ...decision.goal, status: "stalled" };
+      session.view = { ...session.view, goal };
+      this.event(
+        session,
+        "tool",
+        "Goal continuation could not be queued; goal stalled.",
+        {
+          goalId: goal.id,
+          status: goal.status,
+          reason: error instanceof Error ? error.message : "Queue refused.",
+        },
+        "goal.status",
+      );
+      this.persist();
+    }
+  }
+
+  private async executeSessionSearchTool(
+    session: Session,
+    args: JsonObject,
+  ) {
+    return this.locked(async () => {
+      await this.ledger(session.view.workspace);
+      try {
+        const targets = [...this.sessions.values()].filter(
+          (candidate) => candidate.view.id !== session.view.id,
+        );
+        const byId = new Map(
+          targets.map((candidate) => [candidate.view.id, candidate]),
+        );
+        const found = searchSessions(
+          targets.map((candidate) => ({
+            id: candidate.view.id,
+            title: candidate.view.title,
+            messages: candidate.messages,
+          })),
+          args,
+        );
+        const knownSecrets = this.knownSecretValues();
+        const results: Array<{
+          sessionId: string;
+          title?: string;
+          role: "title" | "user" | "assistant" | "tool";
+          excerpt: string;
+        }> = [];
+        let withheld = 0;
+        for (const hit of found.results) {
+          const target = byId.get(hit.sessionId);
+          const redact = (text: string): string => {
+            let safe = session.provider?.redact(text) ?? text;
+            safe = target?.provider?.redact(safe) ?? safe;
+            for (const config of [
+              ...Object.values(session.connections ?? {}),
+              ...Object.values(target?.connections ?? {}),
+              ...this.connectors,
+            ])
+              if (config.token) safe = safe.split(config.token).join("[redacted]");
+            return safe.slice(0, SESSION_SEARCH_LIMITS.excerptCharacters);
+          };
+          const title = hit.title === undefined ? undefined : redact(hit.title);
+          const excerpt = redact(hit.excerpt);
+          if (secretLikeText(`${title ?? ""}\n${excerpt}`, knownSecrets)) {
+            withheld++;
+            continue;
+          }
+          results.push({
+            sessionId: hit.sessionId,
+            role: hit.role,
+            excerpt,
+            ...(title === undefined ? {} : { title }),
+          });
+        }
+        const result = {
+          content: [
+            {
+              type: "text" as const,
+              text: JSON.stringify({
+                results,
+                truncated: found.truncated || withheld > 0,
+              }),
+            },
+          ],
+        };
+        await this.commitWorkspace(
+          session,
+          this.workspace(session.view.id),
+          SESSION_SEARCH_TOOL.name,
+          args,
+          "execute:completed",
+        );
+        return result;
+      } catch (error) {
+        const result = {
+          isError: true as const,
+          content: [
+            {
+              type: "text" as const,
+              text:
+                error instanceof Error ? error.message : "Session search refused.",
+            },
+          ],
+        };
+        await this.commitWorkspace(
+          session,
+          this.workspace(session.view.id),
+          SESSION_SEARCH_TOOL.name,
+          args,
+          "execute:failed",
+        );
+        return result;
+      }
+    });
+  }
+
+  private async executeAgentTool(
+    session: Session,
+    name: string,
+    args: JsonObject,
+  ) {
+    const refuse = (error: unknown) => ({
+      isError: true as const,
+      content: [
+        {
+          type: "text" as const,
+          text: error instanceof Error ? error.message : "Agent message refused.",
+        },
+      ],
+    });
+    if (name === AGENT_LIST_TOOL.name) {
+      try {
+        return {
+          content: [{
+            type: "text" as const,
+            text: JSON.stringify({
+              family: reachableFamily(session.view.id, this.familyMembers()),
+            }),
+          }],
+        };
+      } catch (error) {
+        return refuse(error);
+      }
+    }
+    if (name === AGENT_INBOX_TOOL.name) {
+      try {
+        const read = formatInboxMessages(
+          {
+            selfId: session.view.id,
+            messages: this.agentMailboxes[session.view.id] ?? [],
+          },
+          args,
+        );
+        return {
+          content: [{ type: "text" as const, text: JSON.stringify(read) }],
+        };
+      } catch (error) {
+        return refuse(error);
+      }
+    }
+    try {
+      const call = parseAgentSend(args);
+      const mailbox = this.agentMailboxes[call.to] ?? [];
+      const delivery = validateAgentMessageDelivery({
+        callerId: session.view.id,
+        call,
+        sessions: this.familyMembers(),
+        sentByCaller: this.sentMessageCount(session),
+        recipientUnread: mailbox.length,
+        recipientRetained: mailbox.length,
+        knownSecrets: this.knownSecretValues(),
+      });
+      const seq = (mailbox.at(-1)?.seq ?? 0) + 1;
+      await this.commitWorkspace(
+        session,
+        this.workspace(session.view.id),
+        name,
+        args,
+        "execute:completed",
+        undefined,
+        undefined,
+        {
+          from: delivery.from,
+          to: delivery.to,
+          relation: delivery.relation,
+          seq,
+          digest: await sha256Hex(delivery.text),
+          ...(delivery.redacted ? { redacted: true } : {}),
+        },
+      );
+      this.agentMailboxes[delivery.to] = [
+        ...mailbox,
+        {
+          seq,
+          from: delivery.from,
+          to: delivery.to,
+          relation: delivery.relation,
+          text: delivery.text,
+        },
+      ];
+      this.persist();
+      return {
+        content: [{
+          type: "text" as const,
+          text: JSON.stringify({
+            to: delivery.to,
+            seq,
+            relation: delivery.relation,
+            redacted: delivery.redacted,
+          }),
+        }],
+      };
+    } catch (error) {
+      return refuse(error);
+    }
+  }
+
+  /** The caller's family, as the messaging rules read it. */
+  private familyMembers(): FamilyMember[] {
+    return [...this.sessions.values()].map((candidate) => ({
+      id: candidate.view.id,
+      ...(candidate.view.parentId === undefined
+        ? {}
+        : { parentSessionId: candidate.view.parentId }),
+      title: candidate.view.title ?? "",
+      status: candidate.view.status,
+      ...(candidate.view.agent === undefined ? {} : { agent: candidate.view.agent }),
+    }));
+  }
+
+  /** Messages this session already sent, counted from its signed chain. */
+  private sentMessageCount(session: Session): number {
+    return (this.evidence[session.view.workspace] ?? []).filter((entry) => {
+      const body = entry.body as Record<string, unknown>;
+      return typeof body.from === "string" && body.from === session.view.id;
+    }).length;
+  }
+
+  /**
+   * Run one governed web tool and return its untrusted result.
+   *
+   * The module owns every rule (SSRF ranges, redirects, bounds, framing). This
+   * adds the run's own secrets to the redaction, because a fetched page can
+   * echo a credential the run already holds and the prompt is the one place it
+   * must not land, and turns a refusal into an error result rather than a
+   * failed turn.
+   */
+  private async executeWebTool(
+    session: Session,
+    name: string,
+    args: JsonObject,
+  ) {
+    const redact = (text: string): string => {
+      let safe = session.provider?.redact(text) ?? text;
+      for (const config of [
+        ...Object.values(session.connections ?? {}),
+        ...this.connectors,
+      ]) {
+        const token = (config as { readonly token?: string }).token;
+        if (typeof token === "string" && token.length >= 4)
+          safe = safe.split(token).join("[redacted]");
+      }
+      for (const secret of this.knownSecretValues())
+        if (secret.length >= 4) safe = safe.split(secret).join("[redacted]");
+      return safe;
+    };
+    try {
+      const outcome =
+        name === WEB_FETCH_TOOL.name
+          ? await executeWebFetch(args, {
+              fetcher: this.fetcher,
+              redact,
+              timeoutMs: this.harness.providerRequestTimeoutMs,
+            })
+          : await executeWebSearch(args, {
+              fetcher: this.fetcher,
+              redact,
+              searchUrl: this.env.NOMO_WEB_SEARCH_URL,
+              apiKey: this.env.NOMO_WEB_SEARCH_API_KEY,
+              timeoutMs: this.harness.providerRequestTimeoutMs,
+            });
+      return { content: outcome.content };
+    } catch (error) {
+      return {
+        isError: true,
+        content: [
+          {
+            type: "text",
+            text: `Web tool refused: ${(error as Error).message}`,
+          },
+        ],
+      };
+    }
+  }
+
   private async executeTool(
     session: Session,
     tool: McpTool,
@@ -8006,6 +9311,62 @@ export class Workbench {
         ],
       };
     }
+    if (!tool.connectorId && tool.name === PLAN_TOOL.name) {
+      // A plan update is not an action either. It is replaced whole, so the
+      // rail can never show a row the model did not send in this call.
+      observed.decision = "plan-update";
+      return this.locked(async () => {
+        await this.ledger(session.view.workspace);
+        let plan: PlanItem[];
+        try {
+          plan = parsePlanUpdate(args);
+        } catch (error) {
+          const result = {
+            isError: true as const,
+            content: [
+              {
+                type: "text" as const,
+                text:
+                  error instanceof Error ? error.message : "Invalid plan update.",
+              },
+            ],
+          };
+          await this.commitWorkspace(
+            session,
+            this.workspace(session.view.id),
+            tool.name,
+            args,
+            "execute:failed",
+          );
+          return result;
+        }
+        session.view = { ...session.view, plan };
+        const result = {
+          content: [{ type: "text" as const, text: JSON.stringify({ items: plan }) }],
+        };
+        await this.commitWorkspace(
+          session,
+          this.workspace(session.view.id),
+          tool.name,
+          args,
+          "execute:completed",
+        );
+        return result;
+      });
+    }
+    if (!tool.connectorId && tool.name === SESSION_SEARCH_TOOL.name) {
+      // Reading another conversation is offered only when the operator turned
+      // it on; the refusal is recorded like any other decision.
+      if (this.harness.sessionSearchEnabled !== 1)
+        return {
+          isError: true,
+          content: [
+            { type: "text", text: "Session search is disabled by harness settings." },
+          ],
+        };
+      observed.decision = "session-search";
+      return this.executeSessionSearchTool(session, args);
+    }
     if (!tool.connectorId && tool.name === PROJECT_EXEC_TOOL.name) {
       observed.decision = "sandbox";
       return this.executeProjectTool(session, args, id);
@@ -8013,6 +9374,225 @@ export class Workbench {
     if (!tool.connectorId && tool.name === PROJECT_CHANGES_TOOL.name) {
       observed.decision = "project-review";
       return this.executeProjectChangesTool(session, args, id);
+    }
+    if (
+      !tool.connectorId &&
+      (tool.name === WEB_FETCH_TOOL.name || tool.name === WEB_SEARCH_TOOL.name) &&
+      this.harness.webToolsEnabled === 0
+    ) {
+      observed.decision = "web-tools:disabled";
+      return {
+        isError: true,
+        content: [{
+          type: "text",
+          text: "Web tools are disabled. Enable webToolsEnabled before using them.",
+        }],
+      };
+    }
+    if (
+      !tool.connectorId &&
+      (tool.name === WEB_FETCH_TOOL.name || tool.name === WEB_SEARCH_TOOL.name)
+    ) {
+      // A profile already authorized this call above. A profile-less session
+      // must not bypass the same default hold just because it has no profile:
+      // an outbound request leaves the machine and carries text the model
+      // chose, so the operator sees it before it happens.
+      if (!session.agentProfile) {
+        const profile = resolvePolicyProfile(
+          DEFAULT_POLICY_PROFILE,
+          this.env.NOMO_POLICY_PATH,
+        );
+        if (!profile.ok) throw new Error(`Default policy is unusable: ${profile.reason}.`);
+        const call = {
+          tool: tool.name,
+          workspace: session.view.workspace,
+          connector: "workspace",
+          klass: "r1" as const,
+          blastRadius: 1,
+          reason: "Outbound web request from a URL or query the model chose.",
+          arguments: args,
+        };
+        const decision = decide(profile.policy, call);
+        const allowed = await this.authorizeTool(
+          session,
+          call,
+          decision,
+          profile.policy,
+        );
+        observed.decision =
+          decision.kind === "hold"
+            ? allowed
+              ? "hold:approved"
+              : "hold:denied"
+            : decision.kind;
+        if (!allowed)
+          return {
+            isError: true,
+            content: [{
+              type: "text",
+              text: denialText(tool.name, call.klass, decision),
+            }],
+          };
+      }
+      observed.decision =
+        tool.name === WEB_FETCH_TOOL.name ? "web-fetch" : "web-search";
+      return this.executeWebTool(session, tool.name, args);
+    }
+    if (
+      !tool.connectorId &&
+      (tool.name === AGENT_LIST_TOOL.name || tool.name === AGENT_INBOX_TOOL.name)
+    ) {
+      observed.decision = "agent-family";
+      return this.executeAgentTool(session, tool.name, args);
+    }
+    if (!tool.connectorId && tool.name === AGENT_SEND_TOOL.name) {
+      // A send writes into another conversation, so a profile-less session is
+      // held by the same default policy a profile would have applied, before
+      // the family is resolved and before anything is written.
+      if (!session.agentProfile) {
+        const profile = resolvePolicyProfile(
+          DEFAULT_POLICY_PROFILE,
+          this.env.NOMO_POLICY_PATH,
+        );
+        if (!profile.ok) throw new Error(`Default policy is unusable: ${profile.reason}.`);
+        const call = {
+          tool: tool.name,
+          workspace: session.view.workspace,
+          connector: "workspace",
+          klass: "r1" as const,
+          blastRadius: 1,
+          reason: "Send one message into a family session's mailbox.",
+          arguments: args,
+        };
+        const decision = decide(profile.policy, call);
+        const allowed = await this.authorizeTool(
+          session,
+          call,
+          decision,
+          profile.policy,
+        );
+        observed.decision =
+          decision.kind === "hold"
+            ? allowed
+              ? "hold:approved"
+              : "hold:denied"
+            : decision.kind;
+        if (!allowed)
+          return {
+            isError: true,
+            content: [{
+              type: "text",
+              text: denialText(tool.name, call.klass, decision),
+            }],
+          };
+      }
+      observed.decision = "agent-send";
+      return this.executeAgentTool(session, tool.name, args);
+    }
+    if (!tool.connectorId && tool.name === DELEGATE_TOOL.name) {
+      // A profile already authorized this call above. A profile-less session
+      // must not bypass the same default hold just because it has no profile.
+      if (!session.agentProfile) {
+        const profile = resolvePolicyProfile(
+          DEFAULT_POLICY_PROFILE,
+          this.env.NOMO_POLICY_PATH,
+        );
+        if (!profile.ok) throw new Error(`Default policy is unusable: ${profile.reason}.`);
+        const call = {
+          tool: tool.name,
+          workspace: session.view.workspace,
+          connector: "workspace",
+          klass: "r1" as const,
+          blastRadius: 1,
+          reason: "Spawn a child through the governed, tool-narrowed delegation path.",
+          arguments: args,
+        };
+        const decision = decide(profile.policy, call);
+        const allowed = await this.authorizeTool(
+          session,
+          call,
+          decision,
+          profile.policy,
+        );
+        observed.decision = decision.kind === "hold"
+          ? allowed
+            ? "hold:approved"
+            : "hold:denied"
+          : decision.kind;
+        if (!allowed)
+          return {
+            isError: true,
+            content: [{ type: "text", text: denialText(tool.name, call.klass, decision) }],
+          };
+      }
+      try {
+        const parsed = parseDelegateCall(args, this.harness.maxPromptCharacters);
+        const child = await this.spawnSubagent(session.view.id, parsed.prompt, {
+          agent: parsed.agent,
+          model: parsed.model,
+          idempotencyKey: id,
+        });
+        return {
+          content: [{
+            type: "text",
+            text: JSON.stringify({ childId: child.id, status: child.status }),
+          }],
+        };
+      } catch (error) {
+        return {
+          isError: true,
+          content: [{
+            type: "text",
+            text: error instanceof Error ? error.message : "Delegation refused.",
+          }],
+        };
+      }
+    }
+    if (!tool.connectorId && tool.name === SUBAGENT_RESULT_TOOL.name) {
+      observed.decision = "subagent-result";
+      return this.locked(async () => {
+        await this.ledger(session.view.workspace);
+        try {
+          const { childId } = parseSubagentResultCall(args);
+          const settled = await this.subagentResult(session.view.id, childId);
+          const payload = settled
+            ? {
+                childId,
+                runId: settled.runId,
+                status: "settled",
+                truncated: settled.truncated,
+                text: untrustedSubagentResultText(settled.text),
+              }
+            : { childId, status: "pending" };
+          const result = {
+            content: [{ type: "text" as const, text: JSON.stringify(payload) }],
+          };
+          await this.commitWorkspace(
+            session,
+            this.workspace(session.view.id),
+            tool.name,
+            args,
+            "execute:completed",
+          );
+          return result;
+        } catch (error) {
+          const result = {
+            isError: true as const,
+            content: [{
+              type: "text" as const,
+              text: error instanceof Error ? error.message : "Subagent result refused.",
+            }],
+          };
+          await this.commitWorkspace(
+            session,
+            this.workspace(session.view.id),
+            tool.name,
+            args,
+            "execute:failed",
+          );
+          return result;
+        }
+      });
     }
     if (!tool.connectorId) {
       observed.decision = "managed-document";
@@ -8188,6 +9768,18 @@ export class Workbench {
      * with the failed request.
      */
     let flushPendingDeltas: () => void = () => {};
+    /**
+     * Flushes buffered text on its own clock. Without it a single chunk that
+     * is never followed by another stays invisible until the turn ends, so a
+     * slow provider looks like a stalled one even though its answer arrived.
+     */
+    let flushTimer: ReturnType<typeof setTimeout> | undefined;
+    const clearFlushTimer = () => {
+      if (flushTimer !== undefined) {
+        clearTimeout(flushTimer);
+        flushTimer = undefined;
+      }
+    };
     try {
       if (!provider)
         throw new Error(
@@ -8224,7 +9816,11 @@ export class Workbench {
           `Hook ${refused.hookId} refused this run: ${refused.outcome}${refused.code === null ? "" : ` (exit ${refused.code})`}.${refused.stderr ? ` ${refused.stderr}` : ""}`,
         );
       session.proxyGrantReadyRunId = session.view.runId;
-      const listed = { tools: session.tools ?? [...workspaceTools] };
+      const listed = {
+        tools: (session.tools ?? [...workspaceTools]).filter(
+          (tool) => gatedWorkspaceToolEnabled(tool.name, this.harness),
+        ),
+      };
       const mapping = new Map<string, (typeof listed.tools)[number]>();
       // Providers can return the configured registry ID from the tool description.
       // Only unique catalog matches are accepted.
@@ -8261,27 +9857,52 @@ export class Workbench {
       // somebody chose for that session. The harness setting is the fallback
       // for a run with no profile, which is the case an operator is tuning.
       const maxTurns = session.agentProfile?.maxTurns ?? this.harness.maxTurns;
-      // Retrieved context rides follow-up turns only, never the turn that mined
-      // it: mining runs at the settled boundary after dispatch, so a first turn
-      // has nothing to retrieve by construction. Ephemeral: pushed for this
-      // run's provider calls and removed in the finally below, so the stored
-      // conversation never carries a digest block. A stale block, left by a
-      // crash between push and removal, is swept first for the same reason.
+      // A later session's first turn can retrieve entries mined by an earlier
+      // session, so the gate is "the chain has entries", not "this conversation
+      // already has a turn". The mining turn still carries nothing: mining runs
+      // at the settled boundary after dispatch, so the chain has no entry yet
+      // when that turn is built. Ephemeral: pushed for this run's provider
+      // calls and removed in the finally below, so the stored conversation
+      // never carries a digest block. A stale block, left by a crash between
+      // push and removal, is swept first for the same reason.
       session.messages = session.messages.filter(
         (message) =>
           message.role !== "system" ||
           typeof message.content !== "string" ||
           !message.content.startsWith("NOMO learned-entry digest,"),
       );
-      if (session.messages.length > 2) {
+      // A promoted markdown skill is workspace-scoped signed guidance (H4b), so
+      // it applies from the conversation's first turn on, exactly as an
+      // operator-promoted entry does. It rides the same transient system
+      // message as the retrieved context, so it is removed before the
+      // conversation is stored and never becomes durable text.
+      const promotedSkills = await this.promotedSkills(session.view.workspace);
+      const entriesForPrompt = await this.entriesForPrompt(
+        session.view.workspace,
+        session.messages.length <= 2,
+      );
+      if (entriesForPrompt.length > 0 || promotedSkills.length > 0) {
         const latestUser = [...session.messages]
           .reverse()
           .find((message) => message.role === "user");
-        const block = retrievalContext(
-          await this.harnessEntries(session.view.workspace),
+        const retrieved = retrievalContext(
+          entriesForPrompt,
           String(latestUser?.content ?? ""),
           this.harness,
         );
+        // A quarter of the operator's ceiling, so guidance can never crowd out
+        // the retrieved context that was there first. Both blocks already fit
+        // their own budgets; this is the share, not a second limit.
+        const skillsBlock = formatPromotedSkillsForPrompt(
+          promotedSkills,
+          Math.max(0, Math.floor(this.harness.maxPromptCharacters / 4)),
+        );
+        const block =
+          retrieved === ""
+            ? skillsBlock
+            : skillsBlock === ""
+              ? retrieved
+              : `${retrieved}\n\n${skillsBlock}`;
         if (block !== "") {
           digestMarker = { role: "system", content: block };
           session.messages.push(digestMarker);
@@ -8326,6 +9947,36 @@ export class Workbench {
           this.persist();
           return;
         }
+        // Automatic compaction runs before the turn that would exceed the
+        // setting, so the model is handed a summarized conversation rather
+        // than the run stopping at the context limit. Zero disables it.
+        const autoCompactAt = this.harness.autoCompactMessages;
+        if (autoCompactAt > 0 && session.messages.length >= autoCompactAt) {
+          const compacted = compactMessages(
+            session.view.id,
+            session.messages,
+            session.messageIds,
+          );
+          session.messages = compacted.messages;
+          session.messageIds = compacted.messageIds;
+          session.view = {
+            ...session.view,
+            compaction: compacted.result,
+            contextMessages: session.messages.length,
+          };
+          this.event(
+            session,
+            "tool",
+            "Context compacted automatically.",
+            {
+              atMessages: autoCompactAt,
+              afterMessages: session.messages.length,
+              omittedMessages: compacted.result.omittedMessageCount,
+            },
+            "context.compacted",
+          );
+          this.persist();
+        }
         this.checkContextBudget(session, tools);
         // The record a tool call produces has to name what asked for it, and
         // the conversation is the only part of that which is not derivable
@@ -8358,6 +10009,7 @@ export class Workbench {
          * "no answer" instead of completing a run.
          */
         const flushDeltas = () => {
+          clearFlushTimer();
           if (reasoning) {
             this.event(
               session,
@@ -8374,6 +10026,48 @@ export class Workbench {
           }
         };
         flushPendingDeltas = flushDeltas;
+        /**
+         * Persists at most as often as the old chunk-driven throttle did. A
+         * flush only changes what the operator can see; the stored snapshot
+         * does not need to keep pace with it, and `persist()` is a synchronous
+         * full-workspace snapshot.
+         */
+        let persistedAt = Date.now();
+        const persistFlush = () => {
+          if (Date.now() - persistedAt < 250) return;
+          persistedAt = Date.now();
+          this.persist();
+        };
+        /**
+         * Arms the flush timer once per buffered burst. The 100 ms window is
+         * short enough that a lone chunk becomes visible well inside the
+         * 150 ms the TUI plan allows, and long enough that chunks arriving
+         * faster than the window still share one flush.
+         */
+        const scheduleFlush = () => {
+          if (flushTimer !== undefined) return;
+          flushTimer = setTimeout(() => {
+            flushTimer = undefined;
+            if (session.controller.signal.aborted) return;
+            try {
+              flushDeltas();
+              flushed = Date.now();
+              persistFlush();
+            } catch (error) {
+              // This callback runs outside the turn's try/catch, so a failed
+              // write here would otherwise escape as an uncaught exception and
+              // kill the process with the run still marked running.
+              this.event(
+                session,
+                "error",
+                error instanceof Error ? error.message : "Session failed.",
+                {},
+              );
+              session.view = { ...session.view, status: "failed" };
+              session.controller.abort();
+            }
+          }, 100);
+        };
         const reply = await Promise.race([
           provider.complete(
             session.view.model,
@@ -8386,8 +10080,8 @@ export class Workbench {
               if (Date.now() - flushed > 250 || delta.length > 512) {
                 flushDeltas();
                 flushed = Date.now();
-                this.persist();
-              }
+                persistFlush();
+              } else scheduleFlush();
             },
             (text) => {
               if (session.controller.signal.aborted) return;
@@ -8395,8 +10089,8 @@ export class Workbench {
               if (Date.now() - flushed > 250 || reasoning.length > 512) {
                 flushDeltas();
                 flushed = Date.now();
-                this.persist();
-              }
+                persistFlush();
+              } else scheduleFlush();
             },
           ),
           // Raced rather than relied on through the signal alone: a transport
@@ -8432,8 +10126,32 @@ export class Workbench {
               ...reply.usage,
               model: session.view.model,
               source: "provider",
-              cost: null,
+              // The provider's own number when it sends one. `cost` stays null
+              // rather than zero when it does not, so the score board reads
+              // "unmeasured" instead of "free".
+              cost: reply.usage.cost_usd ?? null,
+              ...(typeof reply.usage.cost_usd === "number"
+                ? { costUsd: reply.usage.cost_usd }
+                : {}),
             },
+          );
+        // The score board can only measure cost if the chain carries one, and
+        // the only honest number is the provider's own. A turn that reports no
+        // cost writes nothing, so the metric stays unmeasured rather than zero.
+        if (typeof reply.usage?.cost_usd === "number")
+          await this.commitWorkspace(
+            session,
+            this.workspace(session.view.id),
+            "harness.usage",
+            {
+              costUsd: reply.usage.cost_usd,
+              totalTokens: reply.usage.total_tokens ?? null,
+              model: session.view.model,
+            },
+            "usage:recorded",
+            undefined,
+            undefined,
+            { event: "usage", costUsd: reply.usage.cost_usd },
           );
         if (reply.usage?.total_tokens) {
           session.view = {
@@ -8484,12 +10202,26 @@ export class Workbench {
             { tool: name, callId: call.id, arguments: args },
             "tool.started",
           );
-          const result = await this.execute(
-            session,
-            tool,
-            args,
-            `${session.view.runId}-${turn}-${callIndex}`,
-          );
+          const callTimeoutMs = this.harness.toolRequestTimeoutMs;
+          let timer: ReturnType<typeof setTimeout> | undefined;
+          const result = await Promise.race([
+            this.execute(
+              session,
+              tool,
+              args,
+              `${session.view.runId}-${turn}-${callIndex}`,
+            ),
+            new Promise<never>((_, refuse) => {
+              // The upstream call is not cancelled: this only stops the run
+              // waiting, and the record below says the call went unanswered.
+              timer = setTimeout(
+                () => refuse(new Error(`Tool ${name} did not answer within ${callTimeoutMs} ms.`)),
+                callTimeoutMs,
+              );
+            }),
+          ]).finally(() => {
+            if (timer !== undefined) clearTimeout(timer);
+          });
           if (session.controller.signal.aborted) return;
           this.event(
             session,
@@ -8497,10 +10229,17 @@ export class Workbench {
             `${name}: ${(result as { isError?: boolean })?.isError ? "refused or failed" : "result received"}`,
             { tool: name, callId: call.id, result },
           );
+          const limit = this.harness.maxToolResultCharacters;
+          const redacted = provider.redact(JSON.stringify(result));
+          // A cut result says it was cut. Silently truncating would show the
+          // model a partial answer that reads as the whole one.
           session.messages.push({
             role: "tool",
             tool_call_id: call.id,
-            content: provider.redact(JSON.stringify(result)).slice(0, 64000),
+            content:
+              redacted.length <= limit
+                ? redacted
+                : `${redacted.slice(0, limit)}\n[truncated: ${redacted.length - limit} characters omitted by maxToolResultCharacters]`,
           });
         }
       }
@@ -8544,6 +10283,7 @@ export class Workbench {
         session.client?.close();
       }
     } finally {
+      clearFlushTimer();
       // The retrieval block was only ever provider input for this run. Take it
       // back out first, so neither the stored conversation nor a later digest
       // over these messages carries a copy of it.
@@ -8587,6 +10327,9 @@ export class Workbench {
       // that failed is not settled: there is nothing to learn from an outcome
       // nobody knows.
       if (session.view.status === "idle") {
+        // A goal continuation is the operator's own next step, so it is
+        // serviced before the harness spends a call on learning.
+        await this.serviceGoal(session).catch(() => {});
         const pass = this.serviceHarnessTurn(session, "checkpoint").catch(() => {});
         this.harnessJobs.add(pass);
         void pass.finally(() => this.harnessJobs.delete(pass));

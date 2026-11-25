@@ -14,6 +14,8 @@ import { runWatchCommand } from "./watch.ts";
 import { runApproveCommand, runApprovalsCommand } from "./approve.ts";
 import { runDoctorCommand } from "./doctor.ts";
 import { runHarnessCommand } from "./harness.ts";
+import { runGoalCommand } from "./goal.ts";
+import { runScheduleCommand } from "./schedule.ts";
 import { runConfigCommand } from "./config.ts";
 import { runInitCommand } from "./init.ts";
 import { runUpdateCommand } from "./update.ts";
@@ -113,6 +115,26 @@ export async function runCommand(
       stdout: (line) => console.log(line),
       stderr: (line) => console.error(line),
     }, { env: injected });
+  }
+  if (parsed.command === "schedule") {
+    return await runScheduleCommand(
+      parsed.args,
+      {
+        stdout: (line) => console.log(line),
+        stderr: (line) => console.error(line),
+      },
+      { env: injected },
+    );
+  }
+  if (parsed.command === "goal") {
+    return await runGoalCommand(
+      parsed.args,
+      {
+        stdout: (line) => console.log(line),
+        stderr: (line) => console.error(line),
+      },
+      { env: injected },
+    );
   }
   if (parsed.command === "verify") {
     return await runVerifyCommand(parsed.args, {

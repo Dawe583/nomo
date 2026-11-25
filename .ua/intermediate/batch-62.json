@@ -1,0 +1,41 @@
+{
+ "nodes": [
+  {
+   "id": "file:packages/connectors/README.md",
+   "type": "document",
+   "name": "README.md",
+   "filePath": "packages/connectors/README.md",
+   "summary": "README.md \u2014 markdown document, 335 lines, 20 sections: @nomo/connectors contract, Design goals, Connector interface, Typed errors (+16 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/connectors/package.json",
+   "type": "config",
+   "name": "package.json",
+   "filePath": "packages/connectors/package.json",
+   "summary": "package.json \u2014 json config, 38 lines.",
+   "tags": [
+    "json",
+    "config"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/connectors/tsconfig.json",
+   "type": "config",
+   "name": "tsconfig.json",
+   "filePath": "packages/connectors/tsconfig.json",
+   "summary": "tsconfig.json \u2014 json config, 18 lines.",
+   "tags": [
+    "json",
+    "config"
+   ],
+   "complexity": "simple"
+  }
+ ],
+ "edges": []
+}

@@ -600,7 +600,7 @@ const INTERFACE_WORDS = [
 
 /** The newest decision in the pack. Renaming that heading renames this. */
 const NEWEST_DECISION =
-  "## Appwrite removed; Apple app work out of plans, 2026-11-21";
+  "## Terminal component library: not adopted, 2026-11-25";
 
 const MONO_FOR_INTERFACE = /\bmono\w*/i;
 const NAMES_INTERFACE_WORD = new RegExp(

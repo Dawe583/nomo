@@ -862,10 +862,10 @@ test("the ledger tab groups mixed records in the order they are read", async (t)
   // refusal stops in the right block instead of stepping over four kinds.
   const order = [
     "VERIFICATION",
-    "SIGNED ENTRIES",
-    "LEARNED FROM THE CHAIN",
     "HARNESS SCORE",
     "HARNESS",
+    "SIGNED ENTRIES",
+    "LEARNED FROM THE CHAIN",
     "AGENTS",
     "HOOKS",
   ].filter((title) => text.includes(title));
@@ -883,8 +883,11 @@ test("the ledger tab groups mixed records in the order they are read", async (t)
     [...positions].sort((a, b) => a - b),
     `groups out of reading order: ${order.join(" -> ")}`,
   );
-  // Signed entries come first because they are the only rows that are
-  // evidence of anything.
+  // The two bounded singletons sit above the unbounded record list, and the
+  // signed records stay above the derived groups because they are the only
+  // rows that are evidence of anything.
+  assert.ok(text.indexOf("HARNESS SCORE") < text.indexOf("SIGNED ENTRIES"));
+  assert.ok(text.indexOf("SIGNED ENTRIES") < text.indexOf("LEARNED FROM THE CHAIN"));
   assert.ok(text.indexOf("SIGNED ENTRIES") < text.indexOf("AGENTS"));
   const entryIndex = ui.items().findIndex((row) => row.kind === "entry");
   assert.ok(entryIndex >= 0);

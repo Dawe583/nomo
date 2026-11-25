@@ -102,6 +102,81 @@ test("runs navigation keeps unknown outcomes and missing progress explicit", asy
   }
 });
 
+test("status shows the agent identity binding and separates local revoke from fleet revoke", async (t) => {
+  const { app, ui } = await fixture(t);
+  await app.configure({
+    baseUrl: "https://fixture.invalid/v1",
+    apiKey: "fixture",
+  });
+  const session = await app.start("Run to inspect", "fixture");
+  await app.settled();
+  const agentId = session.agent;
+  const runId = session.runId;
+  assert.ok(agentId, "the session carries an agent identity");
+  assert.ok(runId, "the session carries a run identity");
+
+  await ui.initialize();
+  await ui.command("/status");
+  const row = ui.items().find((item) => item.id === "identity:agent revocation");
+  assert.ok(row, "status carries an agent revocation row");
+  assert.match(row.label, /WARN · identity · agent revocation/);
+  const text = row.lines.join("\n");
+  assert.ok(text.includes("principal workbench-local"), text);
+  assert.ok(text.includes(`workspace ${session.workspace}`), text);
+  assert.ok(text.includes(`agent ${agentId}`), text);
+  assert.ok(text.includes(`run ${runId}`), text);
+  assert.match(text, /local agent revoke available/i);
+  assert.match(text, /fleet-wide revoke unavailable/i);
+  assert.match(text, /acknowledg/i);
+  for (const width of [40, 80, 120, 200]) {
+    const lines = stripAnsi(renderWorkspace(ui, width, 24)).split("\n");
+    assert.ok(lines.length <= 24);
+    assert.ok(lines.every((line) => visibleLength(line) <= width));
+  }
+});
+
+test("/revoke-agent requires confirmation and status then reports the durable local state", async (t) => {
+  const { app, ui } = await fixture(t);
+  await app.configure({
+    baseUrl: "https://fixture.invalid/v1",
+    apiKey: "fixture",
+  });
+  const session = await app.start("Run to revoke", "fixture");
+  const agentId = session.agent;
+  assert.ok(agentId, "the session carries an agent identity");
+  assert.ok(
+    commandSuggestions("/rev").some(([name]) => name === "/revoke-agent"),
+    "the revocation command is discoverable",
+  );
+
+  await ui.initialize();
+  await ui.command(`/revoke-agent ${agentId}`);
+  assert.ok(ui.confirmation, "revocation requires explicit confirmation");
+  assert.match(ui.confirmation.title, /LOCAL AGENT REVOKE/);
+  const review = ui.confirmation.lines.join("\n");
+  assert.match(review, /local Workbench/i);
+  assert.match(review, /new grants|new run/i);
+  assert.match(review, /fleet-wide revoke is unavailable/i);
+  assert.match(review, /other node/i);
+
+  await ui.confirm();
+  assert.equal(app.isAgentRevoked(agentId), true);
+  await assert.rejects(
+    app.start("another run", "fixture"),
+    /revoked/,
+    "a revoked agent cannot start a new session",
+  );
+  assert.match(ui.notice, /local agent .* revoked/i);
+
+  await ui.command("/status");
+  const row = ui.items().find((item) => item.id === "identity:agent revocation");
+  assert.ok(row, "status keeps the agent revocation row");
+  const text = row.lines.join("\n");
+  assert.ok(text.includes(`agent ${agentId}`), text);
+  assert.match(text, /agent revoked/i);
+  assert.match(text, /fleet-wide revoke unavailable/i);
+});
+
 test("provider status exposes setup-required without defaulting an unconfigured provider", async (t) => {
   const { app, ui } = await fixture(t);
   await ui.initialize();

@@ -1,0 +1,1200 @@
+{
+ "nodes": [
+  {
+   "id": "file:apps/desktop/src-tauri/tests/runtime_exit_smoke.rs",
+   "type": "file",
+   "name": "runtime_exit_smoke.rs",
+   "filePath": "apps/desktop/src-tauri/tests/runtime_exit_smoke.rs",
+   "summary": "runtime_exit_smoke.rs \u2014 rust code, 54 lines, 1 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "rust",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/desktop/src-tauri/tests/runtime_exit_smoke.rs:runtime_exit_smoke_reports_monitor_failure_and_exits_nonzero",
+   "type": "function",
+   "name": "runtime_exit_smoke_reports_monitor_failure_and_exits_nonzero",
+   "filePath": "apps/desktop/src-tauri/tests/runtime_exit_smoke.rs",
+   "lineRange": [
+    13,
+    54
+   ],
+   "summary": "runtime_exit_smoke_reports_monitor_failure_and_exits_nonzero() \u2014 function in runtime_exit_smoke.rs, lines 13-54.",
+   "tags": [
+    "rust",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/desktop/test_env.rs",
+   "type": "file",
+   "name": "test_env.rs",
+   "filePath": "apps/desktop/test_env.rs",
+   "summary": "test_env.rs \u2014 rust code, 25 lines, 2 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "rust",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/desktop/test_env.rs:resolve_env",
+   "type": "function",
+   "name": "resolve_env",
+   "filePath": "apps/desktop/test_env.rs",
+   "lineRange": [
+    3,
+    8
+   ],
+   "summary": "resolve_env(nomo_key, void_key) \u2014 function in test_env.rs, lines 3-8.",
+   "tags": [
+    "rust",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/desktop/test_env.rs:main",
+   "type": "function",
+   "name": "main",
+   "filePath": "apps/desktop/test_env.rs",
+   "lineRange": [
+    10,
+    25
+   ],
+   "summary": "main() \u2014 function in test_env.rs, lines 10-25.",
+   "tags": [
+    "rust",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/desktop/ui/index.html",
+   "type": "file",
+   "name": "index.html",
+   "filePath": "apps/desktop/ui/index.html",
+   "summary": "index.html \u2014 html markup, 1 lines.",
+   "tags": [
+    "html",
+    "markup"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/tui-preview/index.html",
+   "type": "file",
+   "name": "index.html",
+   "filePath": "apps/tui-preview/index.html",
+   "summary": "index.html \u2014 html markup, 59 lines.",
+   "tags": [
+    "html",
+    "markup"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:cloud/schema.test.mjs",
+   "type": "file",
+   "name": "schema.test.mjs",
+   "filePath": "cloud/schema.test.mjs",
+   "summary": "schema.test.mjs \u2014 javascript code, 33 lines, 0 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/assets/nomo-execution-flow.mmd",
+   "type": "file",
+   "name": "nomo-execution-flow.mmd",
+   "filePath": "docs/assets/nomo-execution-flow.mmd",
+   "summary": "nomo-execution-flow.mmd \u2014 mmd code, 11 lines.",
+   "tags": [
+    "mmd",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/assets/nomo-mrr-funnel.mmd",
+   "type": "file",
+   "name": "nomo-mrr-funnel.mmd",
+   "filePath": "docs/assets/nomo-mrr-funnel.mmd",
+   "summary": "nomo-mrr-funnel.mmd \u2014 mmd code, 11 lines.",
+   "tags": [
+    "mmd",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/assets/nomo-mrr-timeline.mmd",
+   "type": "file",
+   "name": "nomo-mrr-timeline.mmd",
+   "filePath": "docs/assets/nomo-mrr-timeline.mmd",
+   "summary": "nomo-mrr-timeline.mmd \u2014 mmd code, 10 lines.",
+   "tags": [
+    "mmd",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/assets/nomo-slack-architecture.mmd",
+   "type": "file",
+   "name": "nomo-slack-architecture.mmd",
+   "filePath": "docs/assets/nomo-slack-architecture.mmd",
+   "summary": "nomo-slack-architecture.mmd \u2014 mmd code, 13 lines.",
+   "tags": [
+    "mmd",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/nomo/CONTRACT.md",
+   "type": "document",
+   "name": "CONTRACT.md",
+   "filePath": "docs/nomo/CONTRACT.md",
+   "summary": "CONTRACT.md \u2014 markdown document, 310 lines, 13 sections: NOMO interface contract, v0 (spike draft), 0. The one flow the spike must prove, 1. Decision on layering (needs [DAVID]), 2. Policy check input (+9 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:docs/plans/2026-11-22-tui-next-steps.md",
+   "type": "document",
+   "name": "2026-11-22-tui-next-steps.md",
+   "filePath": "docs/plans/2026-11-22-tui-next-steps.md",
+   "summary": "2026-11-22-tui-next-steps.md \u2014 markdown document, 373 lines, 14 sections: NOMO TUI next development plans, 1. Real provider streaming and honest progress, 2. Compact Chat and approval layout, 3. Settings keyboard completeness (+10 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:docs/superpowers/GRAPH-ENGINEERING.md",
+   "type": "document",
+   "name": "GRAPH-ENGINEERING.md",
+   "filePath": "docs/superpowers/GRAPH-ENGINEERING.md",
+   "summary": "GRAPH-ENGINEERING.md \u2014 markdown document, 137 lines, 10 sections: Graph engineering: the agreed execution model, Why a graph, not a chain, State schema, Nodes (+6 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/superpowers/evidence/2026-11-21-h7-harness-proof.md",
+   "type": "document",
+   "name": "2026-11-21-h7-harness-proof.md",
+   "filePath": "docs/superpowers/evidence/2026-11-21-h7-harness-proof.md",
+   "summary": "2026-11-21-h7-harness-proof.md \u2014 markdown document, 76 lines, 4 sections: H7 End-to-End Harness Proof Transcript (2026-11-21), Reproduction command, Observed stdio proxy closed-loop transcript, Scope boundaries (what this transcript does not prove).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/superpowers/scouts/2026-10-16-nomo-subagents-scout.md",
+   "type": "document",
+   "name": "2026-10-16-nomo-subagents-scout.md",
+   "filePath": "docs/superpowers/scouts/2026-10-16-nomo-subagents-scout.md",
+   "summary": "2026-10-16-nomo-subagents-scout.md \u2014 markdown document, 121 lines, 7 sections: Scout: subagent orchestration (2026-10-16), 1. Existing state (what is there), 2. References (second-hand where noted), 3. Where it would live (+3 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:fixtures/e2e-http-server.mjs",
+   "type": "file",
+   "name": "e2e-http-server.mjs",
+   "filePath": "fixtures/e2e-http-server.mjs",
+   "summary": "e2e-http-server.mjs \u2014 javascript code, 118 lines, 7 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:fixtures/e2e-http-server.mjs:result",
+   "type": "function",
+   "name": "result",
+   "filePath": "fixtures/e2e-http-server.mjs",
+   "lineRange": [
+    6,
+    8
+   ],
+   "summary": "result(id, value) \u2014 function in e2e-http-server.mjs, lines 6-8.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:fixtures/e2e-http-server.mjs:failure",
+   "type": "function",
+   "name": "failure",
+   "filePath": "fixtures/e2e-http-server.mjs",
+   "lineRange": [
+    10,
+    12
+   ],
+   "summary": "failure(id, code, message) \u2014 function in e2e-http-server.mjs, lines 10-12.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:fixtures/e2e-http-server.mjs:isObject",
+   "type": "function",
+   "name": "isObject",
+   "filePath": "fixtures/e2e-http-server.mjs",
+   "lineRange": [
+    14,
+    16
+   ],
+   "summary": "isObject(value) \u2014 function in e2e-http-server.mjs, lines 14-16.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:fixtures/e2e-http-server.mjs:toolList",
+   "type": "function",
+   "name": "toolList",
+   "filePath": "fixtures/e2e-http-server.mjs",
+   "lineRange": [
+    18,
+    41
+   ],
+   "summary": "toolList() \u2014 function in e2e-http-server.mjs, lines 18-41.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:fixtures/e2e-http-server.mjs:callTool",
+   "type": "function",
+   "name": "callTool",
+   "filePath": "fixtures/e2e-http-server.mjs",
+   "lineRange": [
+    43,
+    58
+   ],
+   "summary": "callTool(id, params) \u2014 function in e2e-http-server.mjs, lines 43-58.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:fixtures/e2e-http-server.mjs:handle",
+   "type": "function",
+   "name": "handle",
+   "filePath": "fixtures/e2e-http-server.mjs",
+   "lineRange": [
+    60,
+    75
+   ],
+   "summary": "handle(message) \u2014 function in e2e-http-server.mjs, lines 60-75.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:fixtures/e2e-http-server.mjs:close",
+   "type": "function",
+   "name": "close",
+   "filePath": "fixtures/e2e-http-server.mjs",
+   "lineRange": [
+    112,
+    115
+   ],
+   "summary": "close() \u2014 function in e2e-http-server.mjs, lines 112-115.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:fixtures/e2e-policy.yaml",
+   "type": "config",
+   "name": "e2e-policy.yaml",
+   "filePath": "fixtures/e2e-policy.yaml",
+   "summary": "e2e-policy.yaml \u2014 yaml config, 15 lines.",
+   "tags": [
+    "yaml",
+    "config",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:fixtures/e2e-server.mjs",
+   "type": "file",
+   "name": "e2e-server.mjs",
+   "filePath": "fixtures/e2e-server.mjs",
+   "summary": "e2e-server.mjs \u2014 javascript code, 107 lines, 7 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:fixtures/e2e-server.mjs:write",
+   "type": "function",
+   "name": "write",
+   "filePath": "fixtures/e2e-server.mjs",
+   "lineRange": [
+    6,
+    8
+   ],
+   "summary": "write(message) \u2014 function in e2e-server.mjs, lines 6-8.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:fixtures/e2e-server.mjs:result",
+   "type": "function",
+   "name": "result",
+   "filePath": "fixtures/e2e-server.mjs",
+   "lineRange": [
+    10,
+    12
+   ],
+   "summary": "result(id, value) \u2014 function in e2e-server.mjs, lines 10-12.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:fixtures/e2e-server.mjs:error",
+   "type": "function",
+   "name": "error",
+   "filePath": "fixtures/e2e-server.mjs",
+   "lineRange": [
+    14,
+    16
+   ],
+   "summary": "error(id, code, message) \u2014 function in e2e-server.mjs, lines 14-16.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:fixtures/e2e-server.mjs:isObject",
+   "type": "function",
+   "name": "isObject",
+   "filePath": "fixtures/e2e-server.mjs",
+   "lineRange": [
+    18,
+    20
+   ],
+   "summary": "isObject(value) \u2014 function in e2e-server.mjs, lines 18-20.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:fixtures/e2e-server.mjs:toolList",
+   "type": "function",
+   "name": "toolList",
+   "filePath": "fixtures/e2e-server.mjs",
+   "lineRange": [
+    22,
+    45
+   ],
+   "summary": "toolList() \u2014 function in e2e-server.mjs, lines 22-45.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:fixtures/e2e-server.mjs:callTool",
+   "type": "function",
+   "name": "callTool",
+   "filePath": "fixtures/e2e-server.mjs",
+   "lineRange": [
+    47,
+    68
+   ],
+   "summary": "callTool(id, params) \u2014 function in e2e-server.mjs, lines 47-68.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:fixtures/e2e-server.mjs:handle",
+   "type": "function",
+   "name": "handle",
+   "filePath": "fixtures/e2e-server.mjs",
+   "lineRange": [
+    70,
+    98
+   ],
+   "summary": "handle(message) \u2014 function in e2e-server.mjs, lines 70-98.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:fixtures/facts.json",
+   "type": "config",
+   "name": "facts.json",
+   "filePath": "fixtures/facts.json",
+   "summary": "facts.json \u2014 json config, 24 lines.",
+   "tags": [
+    "json",
+    "config",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:fixtures/registry/wp04b-batch2.json",
+   "type": "config",
+   "name": "wp04b-batch2.json",
+   "filePath": "fixtures/registry/wp04b-batch2.json",
+   "summary": "wp04b-batch2.json \u2014 json config, 2870 lines.",
+   "tags": [
+    "json",
+    "config",
+    "test"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "file:fixtures/registry/wp04b-batch3.json",
+   "type": "config",
+   "name": "wp04b-batch3.json",
+   "filePath": "fixtures/registry/wp04b-batch3.json",
+   "summary": "wp04b-batch3.json \u2014 json config, 3435 lines.",
+   "tags": [
+    "json",
+    "config",
+    "test"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "file:fixtures/session.jsonl",
+   "type": "file",
+   "name": "session.jsonl",
+   "filePath": "fixtures/session.jsonl",
+   "summary": "session.jsonl \u2014 jsonl code, 30 lines.",
+   "tags": [
+    "jsonl",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:gui-web/app.js",
+   "type": "file",
+   "name": "app.js",
+   "filePath": "gui-web/app.js",
+   "summary": "app.js \u2014 javascript code, 262 lines, 11 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:gui-web/app.js:applyTheme",
+   "type": "function",
+   "name": "applyTheme",
+   "filePath": "gui-web/app.js",
+   "lineRange": [
+    27,
+    29
+   ],
+   "summary": "applyTheme(t) \u2014 function in app.js, lines 27-29.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:gui-web/app.js:initTheme",
+   "type": "function",
+   "name": "initTheme",
+   "filePath": "gui-web/app.js",
+   "lineRange": [
+    30,
+    34
+   ],
+   "summary": "initTheme() \u2014 function in app.js, lines 30-34.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:gui-web/app.js:toggleTheme",
+   "type": "function",
+   "name": "toggleTheme",
+   "filePath": "gui-web/app.js",
+   "lineRange": [
+    35,
+    40
+   ],
+   "summary": "toggleTheme() \u2014 function in app.js, lines 35-40.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:gui-web/app.js:currentView",
+   "type": "function",
+   "name": "currentView",
+   "filePath": "gui-web/app.js",
+   "lineRange": [
+    46,
+    50
+   ],
+   "summary": "currentView() \u2014 function in app.js, lines 46-50.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:gui-web/app.js:render",
+   "type": "function",
+   "name": "render",
+   "filePath": "gui-web/app.js",
+   "lineRange": [
+    52,
+    87
+   ],
+   "summary": "render() \u2014 function in app.js, lines 52-87.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:gui-web/app.js:updateStatus",
+   "type": "function",
+   "name": "updateStatus",
+   "filePath": "gui-web/app.js",
+   "lineRange": [
+    89,
+    102
+   ],
+   "summary": "updateStatus() \u2014 function in app.js, lines 89-102.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:gui-web/app.js:boot",
+   "type": "function",
+   "name": "boot",
+   "filePath": "gui-web/app.js",
+   "lineRange": [
+    106,
+    141
+   ],
+   "summary": "boot() \u2014 function in app.js, lines 106-141.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:gui-web/app.js:openPalette",
+   "type": "function",
+   "name": "openPalette",
+   "filePath": "gui-web/app.js",
+   "lineRange": [
+    143,
+    150
+   ],
+   "summary": "openPalette() \u2014 function in app.js, lines 143-150.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:gui-web/app.js:paletteRows",
+   "type": "function",
+   "name": "paletteRows",
+   "filePath": "gui-web/app.js",
+   "lineRange": [
+    153,
+    165
+   ],
+   "summary": "paletteRows(q) \u2014 function in app.js, lines 153-165.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:gui-web/app.js:paintPalette",
+   "type": "function",
+   "name": "paintPalette",
+   "filePath": "gui-web/app.js",
+   "lineRange": [
+    167,
+    181
+   ],
+   "summary": "paintPalette(q, sel) \u2014 function in app.js, lines 167-181.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:gui-web/app.js:typing",
+   "type": "function",
+   "name": "typing",
+   "filePath": "gui-web/app.js",
+   "lineRange": [
+    183,
+    186
+   ],
+   "summary": "typing() \u2014 function in app.js, lines 183-186.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:gui-web/fixtures.js",
+   "type": "file",
+   "name": "fixtures.js",
+   "filePath": "gui-web/fixtures.js",
+   "summary": "fixtures.js \u2014 javascript code, 129 lines, 0 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:gui-web/js/api.js",
+   "type": "file",
+   "name": "api.js",
+   "filePath": "gui-web/js/api.js",
+   "summary": "api.js \u2014 javascript code, 159 lines, 0 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:gui-web/sw.js",
+   "type": "file",
+   "name": "sw.js",
+   "filePath": "gui-web/sw.js",
+   "summary": "sw.js \u2014 javascript code, 39 lines, 0 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "simple"
+  }
+ ],
+ "edges": [
+  {
+   "source": "file:apps/desktop/src-tauri/tests/runtime_exit_smoke.rs",
+   "target": "function:apps/desktop/src-tauri/tests/runtime_exit_smoke.rs:runtime_exit_smoke_reports_monitor_failure_and_exits_nonzero",
+   "type": "contains",
+   "direction": "forward",
+   "description": "runtime_exit_smoke.rs defines runtime_exit_smoke_reports_monitor_failure_and_exits_nonzero",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/desktop/test_env.rs",
+   "target": "function:apps/desktop/test_env.rs:resolve_env",
+   "type": "contains",
+   "direction": "forward",
+   "description": "test_env.rs defines resolve_env",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/desktop/test_env.rs",
+   "target": "function:apps/desktop/test_env.rs:main",
+   "type": "contains",
+   "direction": "forward",
+   "description": "test_env.rs defines main",
+   "weight": 1.0
+  },
+  {
+   "source": "file:fixtures/e2e-http-server.mjs",
+   "target": "function:fixtures/e2e-http-server.mjs:result",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-http-server.mjs defines result",
+   "weight": 1.0
+  },
+  {
+   "source": "file:fixtures/e2e-http-server.mjs",
+   "target": "function:fixtures/e2e-http-server.mjs:failure",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-http-server.mjs defines failure",
+   "weight": 1.0
+  },
+  {
+   "source": "file:fixtures/e2e-http-server.mjs",
+   "target": "function:fixtures/e2e-http-server.mjs:isObject",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-http-server.mjs defines isObject",
+   "weight": 1.0
+  },
+  {
+   "source": "file:fixtures/e2e-http-server.mjs",
+   "target": "function:fixtures/e2e-http-server.mjs:toolList",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-http-server.mjs defines toolList",
+   "weight": 1.0
+  },
+  {
+   "source": "file:fixtures/e2e-http-server.mjs",
+   "target": "function:fixtures/e2e-http-server.mjs:callTool",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-http-server.mjs defines callTool",
+   "weight": 1.0
+  },
+  {
+   "source": "file:fixtures/e2e-http-server.mjs",
+   "target": "function:fixtures/e2e-http-server.mjs:handle",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-http-server.mjs defines handle",
+   "weight": 1.0
+  },
+  {
+   "source": "file:fixtures/e2e-http-server.mjs",
+   "target": "function:fixtures/e2e-http-server.mjs:close",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-http-server.mjs defines close",
+   "weight": 1.0
+  },
+  {
+   "source": "function:fixtures/e2e-http-server.mjs:callTool",
+   "target": "function:fixtures/e2e-http-server.mjs:isObject",
+   "type": "calls",
+   "direction": "forward",
+   "description": "callTool calls isObject",
+   "weight": 0.6
+  },
+  {
+   "source": "function:fixtures/e2e-http-server.mjs:callTool",
+   "target": "function:fixtures/e2e-http-server.mjs:failure",
+   "type": "calls",
+   "direction": "forward",
+   "description": "callTool calls failure",
+   "weight": 0.6
+  },
+  {
+   "source": "function:fixtures/e2e-http-server.mjs:callTool",
+   "target": "function:fixtures/e2e-http-server.mjs:result",
+   "type": "calls",
+   "direction": "forward",
+   "description": "callTool calls result",
+   "weight": 0.6
+  },
+  {
+   "source": "function:fixtures/e2e-http-server.mjs:handle",
+   "target": "function:fixtures/e2e-http-server.mjs:isObject",
+   "type": "calls",
+   "direction": "forward",
+   "description": "handle calls isObject",
+   "weight": 0.6
+  },
+  {
+   "source": "function:fixtures/e2e-http-server.mjs:handle",
+   "target": "function:fixtures/e2e-http-server.mjs:failure",
+   "type": "calls",
+   "direction": "forward",
+   "description": "handle calls failure",
+   "weight": 0.6
+  },
+  {
+   "source": "function:fixtures/e2e-http-server.mjs:handle",
+   "target": "function:fixtures/e2e-http-server.mjs:result",
+   "type": "calls",
+   "direction": "forward",
+   "description": "handle calls result",
+   "weight": 0.6
+  },
+  {
+   "source": "function:fixtures/e2e-http-server.mjs:handle",
+   "target": "function:fixtures/e2e-http-server.mjs:toolList",
+   "type": "calls",
+   "direction": "forward",
+   "description": "handle calls toolList",
+   "weight": 0.6
+  },
+  {
+   "source": "function:fixtures/e2e-http-server.mjs:handle",
+   "target": "function:fixtures/e2e-http-server.mjs:callTool",
+   "type": "calls",
+   "direction": "forward",
+   "description": "handle calls callTool",
+   "weight": 0.6
+  },
+  {
+   "source": "file:fixtures/e2e-server.mjs",
+   "target": "function:fixtures/e2e-server.mjs:write",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-server.mjs defines write",
+   "weight": 1.0
+  },
+  {
+   "source": "file:fixtures/e2e-server.mjs",
+   "target": "function:fixtures/e2e-server.mjs:result",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-server.mjs defines result",
+   "weight": 1.0
+  },
+  {
+   "source": "file:fixtures/e2e-server.mjs",
+   "target": "function:fixtures/e2e-server.mjs:error",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-server.mjs defines error",
+   "weight": 1.0
+  },
+  {
+   "source": "file:fixtures/e2e-server.mjs",
+   "target": "function:fixtures/e2e-server.mjs:isObject",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-server.mjs defines isObject",
+   "weight": 1.0
+  },
+  {
+   "source": "file:fixtures/e2e-server.mjs",
+   "target": "function:fixtures/e2e-server.mjs:toolList",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-server.mjs defines toolList",
+   "weight": 1.0
+  },
+  {
+   "source": "file:fixtures/e2e-server.mjs",
+   "target": "function:fixtures/e2e-server.mjs:callTool",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-server.mjs defines callTool",
+   "weight": 1.0
+  },
+  {
+   "source": "file:fixtures/e2e-server.mjs",
+   "target": "function:fixtures/e2e-server.mjs:handle",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-server.mjs defines handle",
+   "weight": 1.0
+  },
+  {
+   "source": "function:fixtures/e2e-server.mjs:result",
+   "target": "function:fixtures/e2e-server.mjs:write",
+   "type": "calls",
+   "direction": "forward",
+   "description": "result calls write",
+   "weight": 0.6
+  },
+  {
+   "source": "function:fixtures/e2e-server.mjs:error",
+   "target": "function:fixtures/e2e-server.mjs:write",
+   "type": "calls",
+   "direction": "forward",
+   "description": "error calls write",
+   "weight": 0.6
+  },
+  {
+   "source": "function:fixtures/e2e-server.mjs:callTool",
+   "target": "function:fixtures/e2e-server.mjs:isObject",
+   "type": "calls",
+   "direction": "forward",
+   "description": "callTool calls isObject",
+   "weight": 0.6
+  },
+  {
+   "source": "function:fixtures/e2e-server.mjs:callTool",
+   "target": "function:fixtures/e2e-server.mjs:error",
+   "type": "calls",
+   "direction": "forward",
+   "description": "callTool calls error",
+   "weight": 0.6
+  },
+  {
+   "source": "function:fixtures/e2e-server.mjs:callTool",
+   "target": "function:fixtures/e2e-server.mjs:result",
+   "type": "calls",
+   "direction": "forward",
+   "description": "callTool calls result",
+   "weight": 0.6
+  },
+  {
+   "source": "function:fixtures/e2e-server.mjs:handle",
+   "target": "function:fixtures/e2e-server.mjs:isObject",
+   "type": "calls",
+   "direction": "forward",
+   "description": "handle calls isObject",
+   "weight": 0.6
+  },
+  {
+   "source": "function:fixtures/e2e-server.mjs:handle",
+   "target": "function:fixtures/e2e-server.mjs:error",
+   "type": "calls",
+   "direction": "forward",
+   "description": "handle calls error",
+   "weight": 0.6
+  },
+  {
+   "source": "function:fixtures/e2e-server.mjs:handle",
+   "target": "function:fixtures/e2e-server.mjs:result",
+   "type": "calls",
+   "direction": "forward",
+   "description": "handle calls result",
+   "weight": 0.6
+  },
+  {
+   "source": "function:fixtures/e2e-server.mjs:handle",
+   "target": "function:fixtures/e2e-server.mjs:toolList",
+   "type": "calls",
+   "direction": "forward",
+   "description": "handle calls toolList",
+   "weight": 0.6
+  },
+  {
+   "source": "function:fixtures/e2e-server.mjs:handle",
+   "target": "function:fixtures/e2e-server.mjs:callTool",
+   "type": "calls",
+   "direction": "forward",
+   "description": "handle calls callTool",
+   "weight": 0.6
+  },
+  {
+   "source": "file:gui-web/app.js",
+   "target": "function:gui-web/app.js:applyTheme",
+   "type": "contains",
+   "direction": "forward",
+   "description": "app.js defines applyTheme",
+   "weight": 1.0
+  },
+  {
+   "source": "file:gui-web/app.js",
+   "target": "function:gui-web/app.js:initTheme",
+   "type": "contains",
+   "direction": "forward",
+   "description": "app.js defines initTheme",
+   "weight": 1.0
+  },
+  {
+   "source": "file:gui-web/app.js",
+   "target": "function:gui-web/app.js:toggleTheme",
+   "type": "contains",
+   "direction": "forward",
+   "description": "app.js defines toggleTheme",
+   "weight": 1.0
+  },
+  {
+   "source": "file:gui-web/app.js",
+   "target": "function:gui-web/app.js:currentView",
+   "type": "contains",
+   "direction": "forward",
+   "description": "app.js defines currentView",
+   "weight": 1.0
+  },
+  {
+   "source": "file:gui-web/app.js",
+   "target": "function:gui-web/app.js:render",
+   "type": "contains",
+   "direction": "forward",
+   "description": "app.js defines render",
+   "weight": 1.0
+  },
+  {
+   "source": "file:gui-web/app.js",
+   "target": "function:gui-web/app.js:updateStatus",
+   "type": "contains",
+   "direction": "forward",
+   "description": "app.js defines updateStatus",
+   "weight": 1.0
+  },
+  {
+   "source": "file:gui-web/app.js",
+   "target": "function:gui-web/app.js:boot",
+   "type": "contains",
+   "direction": "forward",
+   "description": "app.js defines boot",
+   "weight": 1.0
+  },
+  {
+   "source": "file:gui-web/app.js",
+   "target": "function:gui-web/app.js:openPalette",
+   "type": "contains",
+   "direction": "forward",
+   "description": "app.js defines openPalette",
+   "weight": 1.0
+  },
+  {
+   "source": "file:gui-web/app.js",
+   "target": "function:gui-web/app.js:paletteRows",
+   "type": "contains",
+   "direction": "forward",
+   "description": "app.js defines paletteRows",
+   "weight": 1.0
+  },
+  {
+   "source": "file:gui-web/app.js",
+   "target": "function:gui-web/app.js:paintPalette",
+   "type": "contains",
+   "direction": "forward",
+   "description": "app.js defines paintPalette",
+   "weight": 1.0
+  },
+  {
+   "source": "file:gui-web/app.js",
+   "target": "function:gui-web/app.js:typing",
+   "type": "contains",
+   "direction": "forward",
+   "description": "app.js defines typing",
+   "weight": 1.0
+  },
+  {
+   "source": "function:gui-web/app.js:initTheme",
+   "target": "function:gui-web/app.js:applyTheme",
+   "type": "calls",
+   "direction": "forward",
+   "description": "initTheme calls applyTheme",
+   "weight": 0.6
+  },
+  {
+   "source": "function:gui-web/app.js:toggleTheme",
+   "target": "function:gui-web/app.js:applyTheme",
+   "type": "calls",
+   "direction": "forward",
+   "description": "toggleTheme calls applyTheme",
+   "weight": 0.6
+  },
+  {
+   "source": "function:gui-web/app.js:render",
+   "target": "function:gui-web/app.js:currentView",
+   "type": "calls",
+   "direction": "forward",
+   "description": "render calls currentView",
+   "weight": 0.6
+  },
+  {
+   "source": "function:gui-web/app.js:render",
+   "target": "function:gui-web/app.js:updateStatus",
+   "type": "calls",
+   "direction": "forward",
+   "description": "render calls updateStatus",
+   "weight": 0.6
+  },
+  {
+   "source": "function:gui-web/app.js:openPalette",
+   "target": "function:gui-web/app.js:paintPalette",
+   "type": "calls",
+   "direction": "forward",
+   "description": "openPalette calls paintPalette",
+   "weight": 0.6
+  },
+  {
+   "source": "function:gui-web/app.js:paletteRows",
+   "target": "function:gui-web/app.js:toggleTheme",
+   "type": "calls",
+   "direction": "forward",
+   "description": "paletteRows calls toggleTheme",
+   "weight": 0.6
+  },
+  {
+   "source": "function:gui-web/app.js:paintPalette",
+   "target": "function:gui-web/app.js:paletteRows",
+   "type": "calls",
+   "direction": "forward",
+   "description": "paintPalette calls paletteRows",
+   "weight": 0.6
+  }
+ ]
+}

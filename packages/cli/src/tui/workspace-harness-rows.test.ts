@@ -261,8 +261,15 @@ test("the ledger has an honest harness score row when no samples exist", async (
   assert.ok(row, "no harness score row on the ledger tab");
   assert.match(row.label, /harness score/);
   assert.match(row.lines.join("\n"), /insufficient-data/);
-  assert.match(row.lines.join("\n"), /0 cases/);
-  assert.match(row.lines.join("\n"), /CI: unavailable/);
+  // The case count rides on the label so the row body stays about the claim.
+  assert.match(row.label, /0 cases/);
+  // A rate and a confidence interval implied a measurement that cannot exist:
+  // `first_pass_rate` is computed from an empty case list.
+  assert.match(
+    row.lines.join("\n"),
+    /First-pass rate: unmeasured; no producer writes this metric yet\./,
+  );
+  assert.doesNotMatch(row.lines.join("\n"), /95% CI/);
 });
 
 test("/harness scores reports the verified sample count and CI without authority", async (t) => {
@@ -270,8 +277,11 @@ test("/harness scores reports the verified sample count and CI without authority
   await ui.command("/harness scores");
   const output = (ui.detail ?? []).join("\n");
   assert.match(output, /HARNESS SCORES, verdict: insufficient-data/);
-  assert.match(output, /95% CI: unavailable/);
-  assert.match(output, /Sample count: 0 first-pass samples/);
+  assert.match(
+    output,
+    /First-pass rate: unmeasured; no producer writes this metric yet\./,
+  );
+  assert.doesNotMatch(output, /95% CI/);
   assert.match(output, /Case count: 0 verified tool-call cases/);
   assert.match(output, /never changes a decision or permission/);
 });
@@ -302,8 +312,11 @@ test("score sampling deduplicates sessions that share one verified workspace cha
   }]);
   const row = rowsOf(ui).find((r) => r.id === "harness:scores");
   assert.ok(row);
-  assert.match(row.lines.join("\n"), /1 case/);
-  assert.match(row.lines.join("\n"), /95% CI: unavailable/);
+  assert.match(row.label, /1 case/);
+  assert.match(
+    row.lines.join("\n"),
+    /First-pass rate: unmeasured; no producer writes this metric yet\./,
+  );
 });
 
 test("the score row prints the reason the verdict is what it is", async (t) => {

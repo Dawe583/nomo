@@ -1,0 +1,240 @@
+{
+ "nodes": [
+  {
+   "id": "file:python/nomo-transport/tests/__init__.py",
+   "type": "file",
+   "name": "__init__.py",
+   "filePath": "python/nomo-transport/tests/__init__.py",
+   "summary": "__init__.py \u2014 python code, 15 lines, 0 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "python",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:python/nomo-transport/tests/support.py",
+   "type": "file",
+   "name": "support.py",
+   "filePath": "python/nomo-transport/tests/support.py",
+   "summary": "support.py \u2014 python code, 83 lines, 3 functions, 0 classes, 3 exports, 0 imports.",
+   "tags": [
+    "python",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:python/nomo-transport/tests/support.py:load_samples",
+   "type": "function",
+   "name": "load_samples",
+   "filePath": "python/nomo-transport/tests/support.py",
+   "lineRange": [
+    24,
+    34
+   ],
+   "summary": "load_samples() \u2014 function in support.py, lines 24-34.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:python/nomo-transport/tests/support.py:decode_corpus",
+   "type": "function",
+   "name": "decode_corpus",
+   "filePath": "python/nomo-transport/tests/support.py",
+   "lineRange": [
+    37,
+    54
+   ],
+   "summary": "decode_corpus() \u2014 function in support.py, lines 37-54.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:python/nomo-transport/tests/support.py:run_node_canonical",
+   "type": "function",
+   "name": "run_node_canonical",
+   "filePath": "python/nomo-transport/tests/support.py",
+   "lineRange": [
+    57,
+    83
+   ],
+   "summary": "run_node_canonical(samples) \u2014 function in support.py, lines 57-83.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:python/nomo-transport/tests/test_canonical.py",
+   "type": "file",
+   "name": "test_canonical.py",
+   "filePath": "python/nomo-transport/tests/test_canonical.py",
+   "summary": "test_canonical.py \u2014 python code, 181 lines, 0 functions, 3 classes, 3 exports, 0 imports.",
+   "tags": [
+    "python",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "class:python/nomo-transport/tests/test_canonical.py:CanonicalJsonTest",
+   "type": "class",
+   "name": "CanonicalJsonTest",
+   "filePath": "python/nomo-transport/tests/test_canonical.py",
+   "lineRange": [
+    21,
+    129
+   ],
+   "summary": "CanonicalJsonTest \u2014 class in test_canonical.py, lines 21-129, methods: test_scalars_render_as_json, test_keys_sort_at_every_depth, test_empty_containers_survive, test_no_insignificant_whitespace, test_solidus_and_unicode_stay_raw, test_control_characters_are_escaped.",
+   "tags": [
+    "python",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:python/nomo-transport/tests/test_canonical.py:DigestTest",
+   "type": "class",
+   "name": "DigestTest",
+   "filePath": "python/nomo-transport/tests/test_canonical.py",
+   "lineRange": [
+    132,
+    154
+   ],
+   "summary": "DigestTest \u2014 class in test_canonical.py, lines 132-154, methods: test_digest_shape_is_prefixed_sha256, test_digest_covers_canonical_text_not_input_order, test_digest_changes_when_any_byte_changes, test_lowercase_sha256_predicate.",
+   "tags": [
+    "python",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:python/nomo-transport/tests/test_canonical.py:CanonicalNodeParityTest",
+   "type": "class",
+   "name": "CanonicalNodeParityTest",
+   "filePath": "python/nomo-transport/tests/test_canonical.py",
+   "lineRange": [
+    157,
+    177
+   ],
+   "summary": "CanonicalNodeParityTest \u2014 class in test_canonical.py, lines 157-177, methods: test_python_and_node_agree_byte_for_byte.",
+   "tags": [
+    "python",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  }
+ ],
+ "edges": [
+  {
+   "source": "file:python/nomo-transport/tests/support.py",
+   "target": "function:python/nomo-transport/tests/support.py:load_samples",
+   "type": "contains",
+   "direction": "forward",
+   "description": "support.py defines load_samples",
+   "weight": 1.0
+  },
+  {
+   "source": "file:python/nomo-transport/tests/support.py",
+   "target": "function:python/nomo-transport/tests/support.py:load_samples",
+   "type": "exports",
+   "direction": "forward",
+   "description": "support.py exports load_samples",
+   "weight": 0.7
+  },
+  {
+   "source": "file:python/nomo-transport/tests/support.py",
+   "target": "function:python/nomo-transport/tests/support.py:decode_corpus",
+   "type": "contains",
+   "direction": "forward",
+   "description": "support.py defines decode_corpus",
+   "weight": 1.0
+  },
+  {
+   "source": "file:python/nomo-transport/tests/support.py",
+   "target": "function:python/nomo-transport/tests/support.py:decode_corpus",
+   "type": "exports",
+   "direction": "forward",
+   "description": "support.py exports decode_corpus",
+   "weight": 0.7
+  },
+  {
+   "source": "file:python/nomo-transport/tests/support.py",
+   "target": "function:python/nomo-transport/tests/support.py:run_node_canonical",
+   "type": "contains",
+   "direction": "forward",
+   "description": "support.py defines run_node_canonical",
+   "weight": 1.0
+  },
+  {
+   "source": "file:python/nomo-transport/tests/support.py",
+   "target": "function:python/nomo-transport/tests/support.py:run_node_canonical",
+   "type": "exports",
+   "direction": "forward",
+   "description": "support.py exports run_node_canonical",
+   "weight": 0.7
+  },
+  {
+   "source": "function:python/nomo-transport/tests/support.py:load_samples",
+   "target": "function:python/nomo-transport/tests/support.py:decode_corpus",
+   "type": "calls",
+   "direction": "forward",
+   "description": "load_samples calls decode_corpus",
+   "weight": 0.6
+  },
+  {
+   "source": "file:python/nomo-transport/tests/test_canonical.py",
+   "target": "class:python/nomo-transport/tests/test_canonical.py:CanonicalJsonTest",
+   "type": "contains",
+   "direction": "forward",
+   "description": "test_canonical.py defines class CanonicalJsonTest",
+   "weight": 1.0
+  },
+  {
+   "source": "file:python/nomo-transport/tests/test_canonical.py",
+   "target": "class:python/nomo-transport/tests/test_canonical.py:DigestTest",
+   "type": "contains",
+   "direction": "forward",
+   "description": "test_canonical.py defines class DigestTest",
+   "weight": 1.0
+  },
+  {
+   "source": "file:python/nomo-transport/tests/test_canonical.py",
+   "target": "class:python/nomo-transport/tests/test_canonical.py:CanonicalNodeParityTest",
+   "type": "contains",
+   "direction": "forward",
+   "description": "test_canonical.py defines class CanonicalNodeParityTest",
+   "weight": 1.0
+  },
+  {
+   "source": "file:python/nomo-transport/tests/test_canonical.py",
+   "target": "file:python/nomo-transport/tests/__init__.py",
+   "type": "imports",
+   "direction": "forward",
+   "description": "test_canonical.py imports __init__.py",
+   "weight": 0.8
+  },
+  {
+   "source": "file:python/nomo-transport/tests/test_canonical.py",
+   "target": "file:python/nomo-transport/tests/support.py",
+   "type": "imports",
+   "direction": "forward",
+   "description": "test_canonical.py imports support.py",
+   "weight": 0.8
+  }
+ ]
+}

@@ -1,0 +1,41 @@
+{
+ "nodes": [
+  {
+   "id": "file:docs/agent-tooling.md",
+   "type": "document",
+   "name": "agent-tooling.md",
+   "filePath": "docs/agent-tooling.md",
+   "summary": "agent-tooling.md \u2014 markdown document, 83 lines, 3 sections: NOMO agent tooling, Install from a fresh cache, DSH activation boundary.",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/agent-work-system.md",
+   "type": "document",
+   "name": "agent-work-system.md",
+   "filePath": "docs/agent-work-system.md",
+   "summary": "agent-work-system.md \u2014 markdown document, 93 lines, 7 sections: NOMO agent work system, Graph and loop workflow, Graph and memory roles, Delegation (+3 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/design-tokens.json",
+   "type": "config",
+   "name": "design-tokens.json",
+   "filePath": "docs/design-tokens.json",
+   "summary": "design-tokens.json \u2014 json config, 187 lines.",
+   "tags": [
+    "json",
+    "config"
+   ],
+   "complexity": "moderate"
+  }
+ ],
+ "edges": []
+}

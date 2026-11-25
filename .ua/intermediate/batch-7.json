@@ -1,0 +1,6215 @@
+{
+ "nodes": [
+  {
+   "id": "file:packages/ledger/src/env-compat.test.ts",
+   "type": "file",
+   "name": "env-compat.test.ts",
+   "filePath": "packages/ledger/src/env-compat.test.ts",
+   "summary": "env-compat.test.ts \u2014 typescript code, 92 lines, 0 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/ledger/src/env-compat.ts",
+   "type": "file",
+   "name": "env-compat.ts",
+   "filePath": "packages/ledger/src/env-compat.ts",
+   "summary": "env-compat.ts \u2014 typescript code, 152 lines, 4 functions, 0 classes, 7 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/ledger/src/env-compat.ts:legacyEnvKey",
+   "type": "function",
+   "name": "legacyEnvKey",
+   "filePath": "packages/ledger/src/env-compat.ts",
+   "lineRange": [
+    38,
+    42
+   ],
+   "summary": "legacyEnvKey(nomoKey) \u2014 function in env-compat.ts, lines 38-42.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/env-compat.ts:envValue",
+   "type": "function",
+   "name": "envValue",
+   "filePath": "packages/ledger/src/env-compat.ts",
+   "lineRange": [
+    50,
+    57
+   ],
+   "summary": "envValue(env, nomoKey) \u2014 function in env-compat.ts, lines 50-57.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/env-compat.ts:normalizeEnv",
+   "type": "function",
+   "name": "normalizeEnv",
+   "filePath": "packages/ledger/src/env-compat.ts",
+   "lineRange": [
+    73,
+    86
+   ],
+   "summary": "normalizeEnv(env, keys) \u2014 function in env-compat.ts, lines 73-86.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/ledger/src/env-compat.ts:normalizeOwnedEnv",
+   "type": "function",
+   "name": "normalizeOwnedEnv",
+   "filePath": "packages/ledger/src/env-compat.ts",
+   "lineRange": [
+    148,
+    152
+   ],
+   "summary": "normalizeOwnedEnv(env) \u2014 function in env-compat.ts, lines 148-152.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/sdk/src/index.ts",
+   "type": "file",
+   "name": "index.ts",
+   "filePath": "packages/sdk/src/index.ts",
+   "summary": "index.ts \u2014 typescript code, 26 lines, 0 functions, 0 classes, 23 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/agent-identity.test.ts",
+   "type": "file",
+   "name": "agent-identity.test.ts",
+   "filePath": "packages/workbench/src/agent-identity.test.ts",
+   "summary": "agent-identity.test.ts \u2014 typescript code, 306 lines, 1 functions, 0 classes, 0 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-identity.test.ts:identityCatalogServer",
+   "type": "function",
+   "name": "identityCatalogServer",
+   "filePath": "packages/workbench/src/agent-identity.test.ts",
+   "lineRange": [
+    152,
+    175
+   ],
+   "summary": "identityCatalogServer() \u2014 function in agent-identity.test.ts, lines 152-175.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/agent-identity.ts",
+   "type": "file",
+   "name": "agent-identity.ts",
+   "filePath": "packages/workbench/src/agent-identity.ts",
+   "summary": "agent-identity.ts \u2014 typescript code, 211 lines, 3 functions, 1 classes, 5 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-identity.ts:validIdentifier",
+   "type": "function",
+   "name": "validIdentifier",
+   "filePath": "packages/workbench/src/agent-identity.ts",
+   "lineRange": [
+    52,
+    60
+   ],
+   "summary": "validIdentifier(value) \u2014 function in agent-identity.ts, lines 52-60.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-identity.ts:canonicalToolScope",
+   "type": "function",
+   "name": "canonicalToolScope",
+   "filePath": "packages/workbench/src/agent-identity.ts",
+   "lineRange": [
+    62,
+    74
+   ],
+   "summary": "canonicalToolScope(value) \u2014 function in agent-identity.ts, lines 62-74.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-identity.ts:tokenDigest",
+   "type": "function",
+   "name": "tokenDigest",
+   "filePath": "packages/workbench/src/agent-identity.ts",
+   "lineRange": [
+    76,
+    78
+   ],
+   "summary": "tokenDigest(token) \u2014 function in agent-identity.ts, lines 76-78.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:packages/workbench/src/agent-identity.ts:LocalAgentIdentityIssuer",
+   "type": "class",
+   "name": "LocalAgentIdentityIssuer",
+   "filePath": "packages/workbench/src/agent-identity.ts",
+   "lineRange": [
+    80,
+    211
+   ],
+   "summary": "LocalAgentIdentityIssuer \u2014 class in agent-identity.ts, lines 80-211, methods: issue, authenticate, validate, revoke.",
+   "tags": [
+    "typescript",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/agent-messages-tool.test.ts",
+   "type": "file",
+   "name": "agent-messages-tool.test.ts",
+   "filePath": "packages/workbench/src/agent-messages-tool.test.ts",
+   "summary": "agent-messages-tool.test.ts \u2014 typescript code, 685 lines, 20 functions, 0 classes, 0 exports, 4 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-messages-tool.test.ts:models",
+   "type": "function",
+   "name": "models",
+   "filePath": "packages/workbench/src/agent-messages-tool.test.ts",
+   "lineRange": [
+    58,
+    58
+   ],
+   "summary": "models() \u2014 function in agent-messages-tool.test.ts, lines 58-58.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-messages-tool.test.ts:done",
+   "type": "function",
+   "name": "done",
+   "filePath": "packages/workbench/src/agent-messages-tool.test.ts",
+   "lineRange": [
+    59,
+    62
+   ],
+   "summary": "done(text) \u2014 function in agent-messages-tool.test.ts, lines 59-62.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-messages-tool.test.ts:call",
+   "type": "function",
+   "name": "call",
+   "filePath": "packages/workbench/src/agent-messages-tool.test.ts",
+   "lineRange": [
+    64,
+    79
+   ],
+   "summary": "call(name, args, id) \u2014 function in agent-messages-tool.test.ts, lines 64-79.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-messages-tool.test.ts:requestedTool",
+   "type": "function",
+   "name": "requestedTool",
+   "filePath": "packages/workbench/src/agent-messages-tool.test.ts",
+   "lineRange": [
+    83,
+    89
+   ],
+   "summary": "requestedTool(body, name) \u2014 function in agent-messages-tool.test.ts, lines 83-89.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-messages-tool.test.ts:followUp",
+   "type": "function",
+   "name": "followUp",
+   "filePath": "packages/workbench/src/agent-messages-tool.test.ts",
+   "lineRange": [
+    96,
+    98
+   ],
+   "summary": "followUp(body) \u2014 function in agent-messages-tool.test.ts, lines 96-98.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-messages-tool.test.ts:latestUser",
+   "type": "function",
+   "name": "latestUser",
+   "filePath": "packages/workbench/src/agent-messages-tool.test.ts",
+   "lineRange": [
+    100,
+    103
+   ],
+   "summary": "latestUser(body) \u2014 function in agent-messages-tool.test.ts, lines 100-103.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-messages-tool.test.ts:scriptedFetcher",
+   "type": "function",
+   "name": "scriptedFetcher",
+   "filePath": "packages/workbench/src/agent-messages-tool.test.ts",
+   "lineRange": [
+    111,
+    123
+   ],
+   "summary": "scriptedFetcher(script) \u2014 function in agent-messages-tool.test.ts, lines 111-123.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-messages-tool.test.ts:listCall",
+   "type": "function",
+   "name": "listCall",
+   "filePath": "packages/workbench/src/agent-messages-tool.test.ts",
+   "lineRange": [
+    125,
+    128
+   ],
+   "summary": "listCall(body, id) \u2014 function in agent-messages-tool.test.ts, lines 125-128.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-messages-tool.test.ts:sendCall",
+   "type": "function",
+   "name": "sendCall",
+   "filePath": "packages/workbench/src/agent-messages-tool.test.ts",
+   "lineRange": [
+    130,
+    133
+   ],
+   "summary": "sendCall(body, to, text, id) \u2014 function in agent-messages-tool.test.ts, lines 130-133.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-messages-tool.test.ts:inboxCall",
+   "type": "function",
+   "name": "inboxCall",
+   "filePath": "packages/workbench/src/agent-messages-tool.test.ts",
+   "lineRange": [
+    135,
+    138
+   ],
+   "summary": "inboxCall(body, args, id) \u2014 function in agent-messages-tool.test.ts, lines 135-138.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-messages-tool.test.ts:toolResults",
+   "type": "function",
+   "name": "toolResults",
+   "filePath": "packages/workbench/src/agent-messages-tool.test.ts",
+   "lineRange": [
+    140,
+    148
+   ],
+   "summary": "toolResults(app, sessionId, tool) \u2014 function in agent-messages-tool.test.ts, lines 140-148.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-messages-tool.test.ts:resultText",
+   "type": "function",
+   "name": "resultText",
+   "filePath": "packages/workbench/src/agent-messages-tool.test.ts",
+   "lineRange": [
+    150,
+    152
+   ],
+   "summary": "resultText(result) \u2014 function in agent-messages-tool.test.ts, lines 150-152.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-messages-tool.test.ts:lastError",
+   "type": "function",
+   "name": "lastError",
+   "filePath": "packages/workbench/src/agent-messages-tool.test.ts",
+   "lineRange": [
+    157,
+    162
+   ],
+   "summary": "lastError(app, sessionId) \u2014 function in agent-messages-tool.test.ts, lines 157-162.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-messages-tool.test.ts:inboxRead",
+   "type": "function",
+   "name": "inboxRead",
+   "filePath": "packages/workbench/src/agent-messages-tool.test.ts",
+   "lineRange": [
+    164,
+    179
+   ],
+   "summary": "inboxRead(result) \u2014 function in agent-messages-tool.test.ts, lines 164-179.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-messages-tool.test.ts:listedEntries",
+   "type": "function",
+   "name": "listedEntries",
+   "filePath": "packages/workbench/src/agent-messages-tool.test.ts",
+   "lineRange": [
+    186,
+    209
+   ],
+   "summary": "listedEntries(text) \u2014 function in agent-messages-tool.test.ts, lines 186-209.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-messages-tool.test.ts:messageRecords",
+   "type": "function",
+   "name": "messageRecords",
+   "filePath": "packages/workbench/src/agent-messages-tool.test.ts",
+   "lineRange": [
+    216,
+    228
+   ],
+   "summary": "messageRecords(app, workspace) \u2014 function in agent-messages-tool.test.ts, lines 216-228.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-messages-tool.test.ts:waitForHold",
+   "type": "function",
+   "name": "waitForHold",
+   "filePath": "packages/workbench/src/agent-messages-tool.test.ts",
+   "lineRange": [
+    233,
+    247
+   ],
+   "summary": "waitForHold(app, sessionId) \u2014 function in agent-messages-tool.test.ts, lines 233-247.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-messages-tool.test.ts:holdOrNothing",
+   "type": "function",
+   "name": "holdOrNothing",
+   "filePath": "packages/workbench/src/agent-messages-tool.test.ts",
+   "lineRange": [
+    255,
+    264
+   ],
+   "summary": "holdOrNothing(app, sessionId) \u2014 function in agent-messages-tool.test.ts, lines 255-264.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-messages-tool.test.ts:approvedSend",
+   "type": "function",
+   "name": "approvedSend",
+   "filePath": "packages/workbench/src/agent-messages-tool.test.ts",
+   "lineRange": [
+    268,
+    285
+   ],
+   "summary": "approvedSend(app, sessionId, prompt) \u2014 function in agent-messages-tool.test.ts, lines 268-285.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-messages-tool.test.ts:refusedSend",
+   "type": "function",
+   "name": "refusedSend",
+   "filePath": "packages/workbench/src/agent-messages-tool.test.ts",
+   "lineRange": [
+    289,
+    307
+   ],
+   "summary": "refusedSend(app, sessionId, prompt) \u2014 function in agent-messages-tool.test.ts, lines 289-307.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/agent-messages.test.ts",
+   "type": "file",
+   "name": "agent-messages.test.ts",
+   "filePath": "packages/workbench/src/agent-messages.test.ts",
+   "summary": "agent-messages.test.ts \u2014 typescript code, 686 lines, 4 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-messages.test.ts:member",
+   "type": "function",
+   "name": "member",
+   "filePath": "packages/workbench/src/agent-messages.test.ts",
+   "lineRange": [
+    41,
+    53
+   ],
+   "summary": "member(id, parentSessionId, extra) \u2014 function in agent-messages.test.ts, lines 41-53.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-messages.test.ts:delivery",
+   "type": "function",
+   "name": "delivery",
+   "filePath": "packages/workbench/src/agent-messages.test.ts",
+   "lineRange": [
+    68,
+    80
+   ],
+   "summary": "delivery(overrides) \u2014 function in agent-messages.test.ts, lines 68-80.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-messages.test.ts:message",
+   "type": "function",
+   "name": "message",
+   "filePath": "packages/workbench/src/agent-messages.test.ts",
+   "lineRange": [
+    82,
+    90
+   ],
+   "summary": "message(seq, from, relation, text\u2026) \u2014 function in agent-messages.test.ts, lines 82-90.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-messages.test.ts:refusalMessage",
+   "type": "function",
+   "name": "refusalMessage",
+   "filePath": "packages/workbench/src/agent-messages.test.ts",
+   "lineRange": [
+    92,
+    99
+   ],
+   "summary": "refusalMessage(run) \u2014 function in agent-messages.test.ts, lines 92-99.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/agent-messages.ts",
+   "type": "file",
+   "name": "agent-messages.ts",
+   "filePath": "packages/workbench/src/agent-messages.ts",
+   "summary": "agent-messages.ts \u2014 typescript code, 549 lines, 15 functions, 0 classes, 11 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-messages.ts:untrustedAgentMessageLabel",
+   "type": "function",
+   "name": "untrustedAgentMessageLabel",
+   "filePath": "packages/workbench/src/agent-messages.ts",
+   "lineRange": [
+    232,
+    237
+   ],
+   "summary": "untrustedAgentMessageLabel(relation, from) \u2014 function in agent-messages.ts, lines 232-237.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-messages.ts:reachableFamily",
+   "type": "function",
+   "name": "reachableFamily",
+   "filePath": "packages/workbench/src/agent-messages.ts",
+   "lineRange": [
+    249,
+    282
+   ],
+   "summary": "reachableFamily(callerId, sessions) \u2014 function in agent-messages.ts, lines 249-282.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-messages.ts:parseAgentSend",
+   "type": "function",
+   "name": "parseAgentSend",
+   "filePath": "packages/workbench/src/agent-messages.ts",
+   "lineRange": [
+    289,
+    300
+   ],
+   "summary": "parseAgentSend(input) \u2014 function in agent-messages.ts, lines 289-300.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-messages.ts:validateAgentMessageDelivery",
+   "type": "function",
+   "name": "validateAgentMessageDelivery",
+   "filePath": "packages/workbench/src/agent-messages.ts",
+   "lineRange": [
+    311,
+    354
+   ],
+   "summary": "validateAgentMessageDelivery(request) \u2014 function in agent-messages.ts, lines 311-354.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-messages.ts:formatInboxMessages",
+   "type": "function",
+   "name": "formatInboxMessages",
+   "filePath": "packages/workbench/src/agent-messages.ts",
+   "lineRange": [
+    366,
+    392
+   ],
+   "summary": "formatInboxMessages(inbox, input) \u2014 function in agent-messages.ts, lines 366-392.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-messages.ts:indexSessions",
+   "type": "function",
+   "name": "indexSessions",
+   "filePath": "packages/workbench/src/agent-messages.ts",
+   "lineRange": [
+    396,
+    410
+   ],
+   "summary": "indexSessions(sessions) \u2014 function in agent-messages.ts, lines 396-410.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-messages.ts:sorted",
+   "type": "function",
+   "name": "sorted",
+   "filePath": "packages/workbench/src/agent-messages.ts",
+   "lineRange": [
+    412,
+    417
+   ],
+   "summary": "sorted(family, keep) \u2014 function in agent-messages.ts, lines 412-417.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-messages.ts:compare",
+   "type": "function",
+   "name": "compare",
+   "filePath": "packages/workbench/src/agent-messages.ts",
+   "lineRange": [
+    419,
+    421
+   ],
+   "summary": "compare(left, right) \u2014 function in agent-messages.ts, lines 419-421.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-messages.ts:entry",
+   "type": "function",
+   "name": "entry",
+   "filePath": "packages/workbench/src/agent-messages.ts",
+   "lineRange": [
+    423,
+    431
+   ],
+   "summary": "entry(member, relation) \u2014 function in agent-messages.ts, lines 423-431.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-messages.ts:messageText",
+   "type": "function",
+   "name": "messageText",
+   "filePath": "packages/workbench/src/agent-messages.ts",
+   "lineRange": [
+    435,
+    453
+   ],
+   "summary": "messageText(raw) \u2014 function in agent-messages.ts, lines 435-453.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-messages.ts:redactKnownSecrets",
+   "type": "function",
+   "name": "redactKnownSecrets",
+   "filePath": "packages/workbench/src/agent-messages.ts",
+   "lineRange": [
+    459,
+    478
+   ],
+   "summary": "redactKnownSecrets(text, knownSecrets) \u2014 function in agent-messages.ts, lines 459-478.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-messages.ts:counter",
+   "type": "function",
+   "name": "counter",
+   "filePath": "packages/workbench/src/agent-messages.ts",
+   "lineRange": [
+    480,
+    486
+   ],
+   "summary": "counter(name, value) \u2014 function in agent-messages.ts, lines 480-486.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-messages.ts:readInboxArguments",
+   "type": "function",
+   "name": "readInboxArguments",
+   "filePath": "packages/workbench/src/agent-messages.ts",
+   "lineRange": [
+    488,
+    509
+   ],
+   "summary": "readInboxArguments(input) \u2014 function in agent-messages.ts, lines 488-509.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-messages.ts:storedMessage",
+   "type": "function",
+   "name": "storedMessage",
+   "filePath": "packages/workbench/src/agent-messages.ts",
+   "lineRange": [
+    514,
+    531
+   ],
+   "summary": "storedMessage(message) \u2014 function in agent-messages.ts, lines 514-531.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-messages.ts:fields",
+   "type": "function",
+   "name": "fields",
+   "filePath": "packages/workbench/src/agent-messages.ts",
+   "lineRange": [
+    533,
+    549
+   ],
+   "summary": "fields(what, input, allowed) \u2014 function in agent-messages.ts, lines 533-549.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/agent-runners/agent-runner-workbench.test.ts",
+   "type": "file",
+   "name": "agent-runner-workbench.test.ts",
+   "filePath": "packages/workbench/src/agent-runners/agent-runner-workbench.test.ts",
+   "summary": "agent-runner-workbench.test.ts \u2014 typescript code, 851 lines, 0 functions, 0 classes, 0 exports, 4 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "file:packages/workbench/src/agent-runners/agent-runner.test.ts",
+   "type": "file",
+   "name": "agent-runner.test.ts",
+   "filePath": "packages/workbench/src/agent-runners/agent-runner.test.ts",
+   "summary": "agent-runner.test.ts \u2014 typescript code, 278 lines, 4 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-runners/agent-runner.test.ts:statusEvent",
+   "type": "function",
+   "name": "statusEvent",
+   "filePath": "packages/workbench/src/agent-runners/agent-runner.test.ts",
+   "lineRange": [
+    29,
+    35
+   ],
+   "summary": "statusEvent(sequence, status, runId) \u2014 function in agent-runner.test.ts, lines 29-35.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-runners/agent-runner.test.ts:terminalEvent",
+   "type": "function",
+   "name": "terminalEvent",
+   "filePath": "packages/workbench/src/agent-runners/agent-runner.test.ts",
+   "lineRange": [
+    37,
+    43
+   ],
+   "summary": "terminalEvent(sequence, status, runId) \u2014 function in agent-runner.test.ts, lines 37-43.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-runners/agent-runner.test.ts:collect",
+   "type": "function",
+   "name": "collect",
+   "filePath": "packages/workbench/src/agent-runners/agent-runner.test.ts",
+   "lineRange": [
+    45,
+    49
+   ],
+   "summary": "collect(events, runId) \u2014 function in agent-runner.test.ts, lines 45-49.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-runners/agent-runner.test.ts:hasCode",
+   "type": "function",
+   "name": "hasCode",
+   "filePath": "packages/workbench/src/agent-runners/agent-runner.test.ts",
+   "lineRange": [
+    55,
+    58
+   ],
+   "summary": "hasCode(code) \u2014 function in agent-runner.test.ts, lines 55-58.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/agent-runners/agent-runner.ts",
+   "type": "file",
+   "name": "agent-runner.ts",
+   "filePath": "packages/workbench/src/agent-runners/agent-runner.ts",
+   "summary": "agent-runner.ts \u2014 typescript code, 401 lines, 9 functions, 1 classes, 7 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-runners/agent-runner.ts:assertKnownAgentRunnerProfile",
+   "type": "function",
+   "name": "assertKnownAgentRunnerProfile",
+   "filePath": "packages/workbench/src/agent-runners/agent-runner.ts",
+   "lineRange": [
+    130,
+    136
+   ],
+   "summary": "assertKnownAgentRunnerProfile(description, profileId) \u2014 function in agent-runner.ts, lines 130-136.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-runners/agent-runner.ts:assertDescriptionShape",
+   "type": "function",
+   "name": "assertDescriptionShape",
+   "filePath": "packages/workbench/src/agent-runners/agent-runner.ts",
+   "lineRange": [
+    144,
+    184
+   ],
+   "summary": "assertDescriptionShape(raw) \u2014 function in agent-runner.ts, lines 144-184.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-runners/agent-runner.ts:assertSafeAgentRunnerDescription",
+   "type": "function",
+   "name": "assertSafeAgentRunnerDescription",
+   "filePath": "packages/workbench/src/agent-runners/agent-runner.ts",
+   "lineRange": [
+    186,
+    217
+   ],
+   "summary": "assertSafeAgentRunnerDescription(raw) \u2014 function in agent-runner.ts, lines 186-217.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-runners/agent-runner.ts:assertHostAgentRunnerDescription",
+   "type": "function",
+   "name": "assertHostAgentRunnerDescription",
+   "filePath": "packages/workbench/src/agent-runners/agent-runner.ts",
+   "lineRange": [
+    231,
+    260
+   ],
+   "summary": "assertHostAgentRunnerDescription(raw) \u2014 function in agent-runner.ts, lines 231-260.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-runners/agent-runner.ts:mediateAgentRunEvents",
+   "type": "function",
+   "name": "mediateAgentRunEvents",
+   "filePath": "packages/workbench/src/agent-runners/agent-runner.ts",
+   "lineRange": [
+    295,
+    325
+   ],
+   "summary": "mediateAgentRunEvents(run, executeTool, onEvent) \u2014 function in agent-runner.ts, lines 295-325.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-runners/agent-runner.ts:validateEvent",
+   "type": "function",
+   "name": "validateEvent",
+   "filePath": "packages/workbench/src/agent-runners/agent-runner.ts",
+   "lineRange": [
+    327,
+    385
+   ],
+   "summary": "validateEvent(raw, runId, expectedSequence) \u2014 function in agent-runner.ts, lines 327-385.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-runners/agent-runner.ts:onlyKeys",
+   "type": "function",
+   "name": "onlyKeys",
+   "filePath": "packages/workbench/src/agent-runners/agent-runner.ts",
+   "lineRange": [
+    387,
+    389
+   ],
+   "summary": "onlyKeys(event, allowed) \u2014 function in agent-runner.ts, lines 387-389.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-runners/agent-runner.ts:eventTextBytes",
+   "type": "function",
+   "name": "eventTextBytes",
+   "filePath": "packages/workbench/src/agent-runners/agent-runner.ts",
+   "lineRange": [
+    391,
+    397
+   ],
+   "summary": "eventTextBytes(event) \u2014 function in agent-runner.ts, lines 391-397.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-runners/agent-runner.ts:isBoundedText",
+   "type": "function",
+   "name": "isBoundedText",
+   "filePath": "packages/workbench/src/agent-runners/agent-runner.ts",
+   "lineRange": [
+    399,
+    401
+   ],
+   "summary": "isBoundedText(value, maxBytes) \u2014 function in agent-runner.ts, lines 399-401.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:packages/workbench/src/agent-runners/agent-runner.ts:AgentRunnerContractError",
+   "type": "class",
+   "name": "AgentRunnerContractError",
+   "filePath": "packages/workbench/src/agent-runners/agent-runner.ts",
+   "lineRange": [
+    29,
+    36
+   ],
+   "summary": "AgentRunnerContractError \u2014 class in agent-runner.ts, lines 29-36.",
+   "tags": [
+    "typescript",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/agent-runners/claude-agent-sdk.test.ts",
+   "type": "file",
+   "name": "claude-agent-sdk.test.ts",
+   "filePath": "packages/workbench/src/agent-runners/claude-agent-sdk.test.ts",
+   "summary": "claude-agent-sdk.test.ts \u2014 typescript code, 153 lines, 2 functions, 0 classes, 0 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-runners/claude-agent-sdk.test.ts:deferred",
+   "type": "function",
+   "name": "deferred",
+   "filePath": "packages/workbench/src/agent-runners/claude-agent-sdk.test.ts",
+   "lineRange": [
+    11,
+    23
+   ],
+   "summary": "deferred() \u2014 function in claude-agent-sdk.test.ts, lines 11-23.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-runners/claude-agent-sdk.test.ts:sse",
+   "type": "function",
+   "name": "sse",
+   "filePath": "packages/workbench/src/agent-runners/claude-agent-sdk.test.ts",
+   "lineRange": [
+    24,
+    26
+   ],
+   "summary": "sse(res, event, data) \u2014 function in claude-agent-sdk.test.ts, lines 24-26.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/agent-runners/claude-agent-sdk.ts",
+   "type": "file",
+   "name": "claude-agent-sdk.ts",
+   "filePath": "packages/workbench/src/agent-runners/claude-agent-sdk.ts",
+   "summary": "claude-agent-sdk.ts \u2014 typescript code, 336 lines, 4 functions, 2 classes, 1 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-runners/claude-agent-sdk.ts:deferred",
+   "type": "function",
+   "name": "deferred",
+   "filePath": "packages/workbench/src/agent-runners/claude-agent-sdk.ts",
+   "lineRange": [
+    39,
+    45
+   ],
+   "summary": "deferred() \u2014 function in claude-agent-sdk.ts, lines 39-45.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-runners/claude-agent-sdk.ts:assertEndpoint",
+   "type": "function",
+   "name": "assertEndpoint",
+   "filePath": "packages/workbench/src/agent-runners/claude-agent-sdk.ts",
+   "lineRange": [
+    46,
+    57
+   ],
+   "summary": "assertEndpoint(endpoint) \u2014 function in claude-agent-sdk.ts, lines 46-57.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-runners/claude-agent-sdk.ts:fieldSchema",
+   "type": "function",
+   "name": "fieldSchema",
+   "filePath": "packages/workbench/src/agent-runners/claude-agent-sdk.ts",
+   "lineRange": [
+    59,
+    87
+   ],
+   "summary": "fieldSchema(raw) \u2014 function in claude-agent-sdk.ts, lines 59-87.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-runners/claude-agent-sdk.ts:toolShape",
+   "type": "function",
+   "name": "toolShape",
+   "filePath": "packages/workbench/src/agent-runners/claude-agent-sdk.ts",
+   "lineRange": [
+    89,
+    131
+   ],
+   "summary": "toolShape(schema) \u2014 function in claude-agent-sdk.ts, lines 89-131.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:packages/workbench/src/agent-runners/claude-agent-sdk.ts:EventQueue",
+   "type": "class",
+   "name": "EventQueue",
+   "filePath": "packages/workbench/src/agent-runners/claude-agent-sdk.ts",
+   "lineRange": [
+    133,
+    159
+   ],
+   "summary": "EventQueue \u2014 class in claude-agent-sdk.ts, lines 133-159, methods: push, close.",
+   "tags": [
+    "typescript",
+    "class"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:packages/workbench/src/agent-runners/claude-agent-sdk.ts:ClaudeAgentSdkRunner",
+   "type": "class",
+   "name": "ClaudeAgentSdkRunner",
+   "filePath": "packages/workbench/src/agent-runners/claude-agent-sdk.ts",
+   "lineRange": [
+    161,
+    336
+   ],
+   "summary": "ClaudeAgentSdkRunner \u2014 class in claude-agent-sdk.ts, lines 161-336, methods: describe, start, cancel.",
+   "tags": [
+    "typescript",
+    "class",
+    "exported"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/workbench/src/agent-runners/host-cli-workbench.test.ts",
+   "type": "file",
+   "name": "host-cli-workbench.test.ts",
+   "filePath": "packages/workbench/src/agent-runners/host-cli-workbench.test.ts",
+   "summary": "host-cli-workbench.test.ts \u2014 typescript code, 654 lines, 5 functions, 0 classes, 0 exports, 4 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-runners/host-cli-workbench.test.ts:digestOf",
+   "type": "function",
+   "name": "digestOf",
+   "filePath": "packages/workbench/src/agent-runners/host-cli-workbench.test.ts",
+   "lineRange": [
+    35,
+    37
+   ],
+   "summary": "digestOf(value) \u2014 function in host-cli-workbench.test.ts, lines 35-37.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-runners/host-cli-workbench.test.ts:json",
+   "type": "function",
+   "name": "json",
+   "filePath": "packages/workbench/src/agent-runners/host-cli-workbench.test.ts",
+   "lineRange": [
+    39,
+    41
+   ],
+   "summary": "json(value) \u2014 function in host-cli-workbench.test.ts, lines 39-41.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-runners/host-cli-workbench.test.ts:fixture",
+   "type": "function",
+   "name": "fixture",
+   "filePath": "packages/workbench/src/agent-runners/host-cli-workbench.test.ts",
+   "lineRange": [
+    52,
+    77
+   ],
+   "summary": "fixture(t) \u2014 function in host-cli-workbench.test.ts, lines 52-77.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-runners/host-cli-workbench.test.ts:successHost",
+   "type": "function",
+   "name": "successHost",
+   "filePath": "packages/workbench/src/agent-runners/host-cli-workbench.test.ts",
+   "lineRange": [
+    80,
+    91
+   ],
+   "summary": "successHost(f) \u2014 function in host-cli-workbench.test.ts, lines 80-91.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-runners/host-cli-workbench.test.ts:ledgerBodies",
+   "type": "function",
+   "name": "ledgerBodies",
+   "filePath": "packages/workbench/src/agent-runners/host-cli-workbench.test.ts",
+   "lineRange": [
+    93,
+    97
+   ],
+   "summary": "ledgerBodies(entries) \u2014 function in host-cli-workbench.test.ts, lines 93-97.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/agent-runners/host-cli.test.ts",
+   "type": "file",
+   "name": "host-cli.test.ts",
+   "filePath": "packages/workbench/src/agent-runners/host-cli.test.ts",
+   "summary": "host-cli.test.ts \u2014 typescript code, 967 lines, 6 functions, 0 classes, 0 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-runners/host-cli.test.ts:fixture",
+   "type": "function",
+   "name": "fixture",
+   "filePath": "packages/workbench/src/agent-runners/host-cli.test.ts",
+   "lineRange": [
+    64,
+    89
+   ],
+   "summary": "fixture(t) \u2014 function in host-cli.test.ts, lines 64-89.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-runners/host-cli.test.ts:runnerFor",
+   "type": "function",
+   "name": "runnerFor",
+   "filePath": "packages/workbench/src/agent-runners/host-cli.test.ts",
+   "lineRange": [
+    91,
+    103
+   ],
+   "summary": "runnerFor(host, env, cwd, extra) \u2014 function in host-cli.test.ts, lines 91-103.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-runners/host-cli.test.ts:collect",
+   "type": "function",
+   "name": "collect",
+   "filePath": "packages/workbench/src/agent-runners/host-cli.test.ts",
+   "lineRange": [
+    105,
+    110
+   ],
+   "summary": "collect(run) \u2014 function in host-cli.test.ts, lines 105-110.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-runners/host-cli.test.ts:terminal",
+   "type": "function",
+   "name": "terminal",
+   "filePath": "packages/workbench/src/agent-runners/host-cli.test.ts",
+   "lineRange": [
+    112,
+    114
+   ],
+   "summary": "terminal(events) \u2014 function in host-cli.test.ts, lines 112-114.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-runners/host-cli.test.ts:json",
+   "type": "function",
+   "name": "json",
+   "filePath": "packages/workbench/src/agent-runners/host-cli.test.ts",
+   "lineRange": [
+    116,
+    118
+   ],
+   "summary": "json(value) \u2014 function in host-cli.test.ts, lines 116-118.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-runners/host-cli.test.ts:runWith",
+   "type": "function",
+   "name": "runWith",
+   "filePath": "packages/workbench/src/agent-runners/host-cli.test.ts",
+   "lineRange": [
+    582,
+    597
+   ],
+   "summary": "runWith(f, host, task, extra) \u2014 function in host-cli.test.ts, lines 582-597.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/agent-runners/host-cli.ts",
+   "type": "file",
+   "name": "host-cli.ts",
+   "filePath": "packages/workbench/src/agent-runners/host-cli.ts",
+   "summary": "host-cli.ts \u2014 typescript code, 1246 lines, 20 functions, 2 classes, 13 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-runners/host-cli.ts:hostCliEnvironment",
+   "type": "function",
+   "name": "hostCliEnvironment",
+   "filePath": "packages/workbench/src/agent-runners/host-cli.ts",
+   "lineRange": [
+    139,
+    152
+   ],
+   "summary": "hostCliEnvironment(env) \u2014 function in host-cli.ts, lines 139-152.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-runners/host-cli.ts:redactHostCliText",
+   "type": "function",
+   "name": "redactHostCliText",
+   "filePath": "packages/workbench/src/agent-runners/host-cli.ts",
+   "lineRange": [
+    178,
+    182
+   ],
+   "summary": "redactHostCliText(text) \u2014 function in host-cli.ts, lines 178-182.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-runners/host-cli.ts:safeEventType",
+   "type": "function",
+   "name": "safeEventType",
+   "filePath": "packages/workbench/src/agent-runners/host-cli.ts",
+   "lineRange": [
+    190,
+    193
+   ],
+   "summary": "safeEventType(value) \u2014 function in host-cli.ts, lines 190-193.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-runners/host-cli.ts:isBareBinaryName",
+   "type": "function",
+   "name": "isBareBinaryName",
+   "filePath": "packages/workbench/src/agent-runners/host-cli.ts",
+   "lineRange": [
+    207,
+    214
+   ],
+   "summary": "isBareBinaryName(value) \u2014 function in host-cli.ts, lines 207-214.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-runners/host-cli.ts:hostCliArguments",
+   "type": "function",
+   "name": "hostCliArguments",
+   "filePath": "packages/workbench/src/agent-runners/host-cli.ts",
+   "lineRange": [
+    230,
+    296
+   ],
+   "summary": "hostCliArguments(host, input) \u2014 function in host-cli.ts, lines 230-296.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-runners/host-cli.ts:record",
+   "type": "function",
+   "name": "record",
+   "filePath": "packages/workbench/src/agent-runners/host-cli.ts",
+   "lineRange": [
+    305,
+    309
+   ],
+   "summary": "record(value) \u2014 function in host-cli.ts, lines 305-309.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-runners/host-cli.ts:textBlocks",
+   "type": "function",
+   "name": "textBlocks",
+   "filePath": "packages/workbench/src/agent-runners/host-cli.ts",
+   "lineRange": [
+    311,
+    330
+   ],
+   "summary": "textBlocks(content) \u2014 function in host-cli.ts, lines 311-330.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-runners/host-cli.ts:parseHostCliLine",
+   "type": "function",
+   "name": "parseHostCliLine",
+   "filePath": "packages/workbench/src/agent-runners/host-cli.ts",
+   "lineRange": [
+    339,
+    412
+   ],
+   "summary": "parseHostCliLine(host, line) \u2014 function in host-cli.ts, lines 339-412.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-runners/host-cli.ts:runHostProcess",
+   "type": "function",
+   "name": "runHostProcess",
+   "filePath": "packages/workbench/src/agent-runners/host-cli.ts",
+   "lineRange": [
+    453,
+    591
+   ],
+   "summary": "runHostProcess(options) \u2014 function in host-cli.ts, lines 453-591.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-runners/host-cli.ts:resolveHostBinary",
+   "type": "function",
+   "name": "resolveHostBinary",
+   "filePath": "packages/workbench/src/agent-runners/host-cli.ts",
+   "lineRange": [
+    594,
+    614
+   ],
+   "summary": "resolveHostBinary(binary, env) \u2014 function in host-cli.ts, lines 594-614.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-runners/host-cli.ts:resetHostCliProbeCache",
+   "type": "function",
+   "name": "resetHostCliProbeCache",
+   "filePath": "packages/workbench/src/agent-runners/host-cli.ts",
+   "lineRange": [
+    619,
+    621
+   ],
+   "summary": "resetHostCliProbeCache() \u2014 function in host-cli.ts, lines 619-621.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-runners/host-cli.ts:collectProbeLines",
+   "type": "function",
+   "name": "collectProbeLines",
+   "filePath": "packages/workbench/src/agent-runners/host-cli.ts",
+   "lineRange": [
+    623,
+    646
+   ],
+   "summary": "collectProbeLines(binary, args, env) \u2014 function in host-cli.ts, lines 623-646.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-runners/host-cli.ts:failedProbe",
+   "type": "function",
+   "name": "failedProbe",
+   "filePath": "packages/workbench/src/agent-runners/host-cli.ts",
+   "lineRange": [
+    648,
+    653
+   ],
+   "summary": "failedProbe(host, reason) \u2014 function in host-cli.ts, lines 648-653.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-runners/host-cli.ts:probePrimeAgent",
+   "type": "function",
+   "name": "probePrimeAgent",
+   "filePath": "packages/workbench/src/agent-runners/host-cli.ts",
+   "lineRange": [
+    655,
+    672
+   ],
+   "summary": "probePrimeAgent(binary, env, provider) \u2014 function in host-cli.ts, lines 655-672.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-runners/host-cli.ts:probeClaude",
+   "type": "function",
+   "name": "probeClaude",
+   "filePath": "packages/workbench/src/agent-runners/host-cli.ts",
+   "lineRange": [
+    674,
+    713
+   ],
+   "summary": "probeClaude(binary, env) \u2014 function in host-cli.ts, lines 674-713.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-runners/host-cli.ts:probeHostCli",
+   "type": "function",
+   "name": "probeHostCli",
+   "filePath": "packages/workbench/src/agent-runners/host-cli.ts",
+   "lineRange": [
+    725,
+    752
+   ],
+   "summary": "probeHostCli(host, env, now) \u2014 function in host-cli.ts, lines 725-752.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-runners/host-cli.ts:deferred",
+   "type": "function",
+   "name": "deferred",
+   "filePath": "packages/workbench/src/agent-runners/host-cli.ts",
+   "lineRange": [
+    782,
+    788
+   ],
+   "summary": "deferred() \u2014 function in host-cli.ts, lines 782-788.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-runners/host-cli.ts:truncateText",
+   "type": "function",
+   "name": "truncateText",
+   "filePath": "packages/workbench/src/agent-runners/host-cli.ts",
+   "lineRange": [
+    790,
+    805
+   ],
+   "summary": "truncateText(text, maxBytes) \u2014 function in host-cli.ts, lines 790-805.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-runners/host-cli.ts:safeToolName",
+   "type": "function",
+   "name": "safeToolName",
+   "filePath": "packages/workbench/src/agent-runners/host-cli.ts",
+   "lineRange": [
+    807,
+    811
+   ],
+   "summary": "safeToolName(value) \u2014 function in host-cli.ts, lines 807-811.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agent-runners/host-cli.ts:hostRunMetrics",
+   "type": "function",
+   "name": "hostRunMetrics",
+   "filePath": "packages/workbench/src/agent-runners/host-cli.ts",
+   "lineRange": [
+    861,
+    868
+   ],
+   "summary": "hostRunMetrics(runner, runId) \u2014 function in host-cli.ts, lines 861-868.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:packages/workbench/src/agent-runners/host-cli.ts:EventQueue",
+   "type": "class",
+   "name": "EventQueue",
+   "filePath": "packages/workbench/src/agent-runners/host-cli.ts",
+   "lineRange": [
+    754,
+    780
+   ],
+   "summary": "EventQueue \u2014 class in host-cli.ts, lines 754-780, methods: push, close.",
+   "tags": [
+    "typescript",
+    "class"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:packages/workbench/src/agent-runners/host-cli.ts:HostCliRunner",
+   "type": "class",
+   "name": "HostCliRunner",
+   "filePath": "packages/workbench/src/agent-runners/host-cli.ts",
+   "lineRange": [
+    895,
+    1242
+   ],
+   "summary": "HostCliRunner \u2014 class in host-cli.ts, lines 895-1242, methods: describe, describeHost, start, metricsForRun, recordMetrics, cancel.",
+   "tags": [
+    "typescript",
+    "class",
+    "exported"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/workbench/src/agents.test.ts",
+   "type": "file",
+   "name": "agents.test.ts",
+   "filePath": "packages/workbench/src/agents.test.ts",
+   "summary": "agents.test.ts \u2014 typescript code, 265 lines, 6 functions, 0 classes, 0 exports, 4 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/workbench/src/agents.test.ts:fixture",
+   "type": "function",
+   "name": "fixture",
+   "filePath": "packages/workbench/src/agents.test.ts",
+   "lineRange": [
+    13,
+    24
+   ],
+   "summary": "fixture(t, fetcher, hookCommands, hookTimeoutMs) \u2014 function in agents.test.ts, lines 13-24.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agents.test.ts:models",
+   "type": "function",
+   "name": "models",
+   "filePath": "packages/workbench/src/agents.test.ts",
+   "lineRange": [
+    25,
+    25
+   ],
+   "summary": "models() \u2014 function in agents.test.ts, lines 25-25.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agents.test.ts:response",
+   "type": "function",
+   "name": "response",
+   "filePath": "packages/workbench/src/agents.test.ts",
+   "lineRange": [
+    26,
+    26
+   ],
+   "summary": "response() \u2014 function in agents.test.ts, lines 26-26.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agents.test.ts:hookScript",
+   "type": "function",
+   "name": "hookScript",
+   "filePath": "packages/workbench/src/agents.test.ts",
+   "lineRange": [
+    140,
+    144
+   ],
+   "summary": "hookScript(directory, name, body) \u2014 function in agents.test.ts, lines 140-144.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agents.test.ts:marker",
+   "type": "function",
+   "name": "marker",
+   "filePath": "packages/workbench/src/agents.test.ts",
+   "lineRange": [
+    145,
+    145
+   ],
+   "summary": "marker(path) \u2014 function in agents.test.ts, lines 145-145.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agents.test.ts:wasRun",
+   "type": "function",
+   "name": "wasRun",
+   "filePath": "packages/workbench/src/agents.test.ts",
+   "lineRange": [
+    146,
+    146
+   ],
+   "summary": "wasRun(path) \u2014 function in agents.test.ts, lines 146-146.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/agents.ts",
+   "type": "file",
+   "name": "agents.ts",
+   "filePath": "packages/workbench/src/agents.ts",
+   "summary": "agents.ts \u2014 typescript code, 394 lines, 7 functions, 0 classes, 11 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/workbench/src/agents.ts:validateAgentProfile",
+   "type": "function",
+   "name": "validateAgentProfile",
+   "filePath": "packages/workbench/src/agents.ts",
+   "lineRange": [
+    29,
+    73
+   ],
+   "summary": "validateAgentProfile(input, context) \u2014 function in agents.ts, lines 29-73.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agents.ts:validateHook",
+   "type": "function",
+   "name": "validateHook",
+   "filePath": "packages/workbench/src/agents.ts",
+   "lineRange": [
+    75,
+    102
+   ],
+   "summary": "validateHook(input, allowlist, context) \u2014 function in agents.ts, lines 75-102.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agents.ts:hookSucceeded",
+   "type": "function",
+   "name": "hookSucceeded",
+   "filePath": "packages/workbench/src/agents.ts",
+   "lineRange": [
+    120,
+    122
+   ],
+   "summary": "hookSucceeded(result) \u2014 function in agents.ts, lines 120-122.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agents.ts:hookArgv",
+   "type": "function",
+   "name": "hookArgv",
+   "filePath": "packages/workbench/src/agents.ts",
+   "lineRange": [
+    136,
+    167
+   ],
+   "summary": "hookArgv(command) \u2014 function in agents.ts, lines 136-167.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agents.ts:runHook",
+   "type": "function",
+   "name": "runHook",
+   "filePath": "packages/workbench/src/agents.ts",
+   "lineRange": [
+    199,
+    297
+   ],
+   "summary": "runHook(hook, context, options) \u2014 function in agents.ts, lines 199-297.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agents.ts:isRecord",
+   "type": "function",
+   "name": "isRecord",
+   "filePath": "packages/workbench/src/agents.ts",
+   "lineRange": [
+    340,
+    342
+   ],
+   "summary": "isRecord(value) \u2014 function in agents.ts, lines 340-342.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/agents.ts:validateLocalHarnessTask",
+   "type": "function",
+   "name": "validateLocalHarnessTask",
+   "filePath": "packages/workbench/src/agents.ts",
+   "lineRange": [
+    344,
+    394
+   ],
+   "summary": "validateLocalHarnessTask(input) \u2014 function in agents.ts, lines 344-394.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/attest.test.ts",
+   "type": "file",
+   "name": "attest.test.ts",
+   "filePath": "packages/workbench/src/attest.test.ts",
+   "summary": "attest.test.ts \u2014 typescript code, 206 lines, 6 functions, 0 classes, 0 exports, 4 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/workbench/src/attest.test.ts:frame",
+   "type": "function",
+   "name": "frame",
+   "filePath": "packages/workbench/src/attest.test.ts",
+   "lineRange": [
+    12,
+    12
+   ],
+   "summary": "frame(value) \u2014 function in attest.test.ts, lines 12-12.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/attest.test.ts:stream",
+   "type": "function",
+   "name": "stream",
+   "filePath": "packages/workbench/src/attest.test.ts",
+   "lineRange": [
+    14,
+    25
+   ],
+   "summary": "stream(text) \u2014 function in attest.test.ts, lines 14-25.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/attest.test.ts:advertisedWriteTool",
+   "type": "function",
+   "name": "advertisedWriteTool",
+   "filePath": "packages/workbench/src/attest.test.ts",
+   "lineRange": [
+    31,
+    38
+   ],
+   "summary": "advertisedWriteTool(init) \u2014 function in attest.test.ts, lines 31-38.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/attest.test.ts:answer",
+   "type": "function",
+   "name": "answer",
+   "filePath": "packages/workbench/src/attest.test.ts",
+   "lineRange": [
+    107,
+    109
+   ],
+   "summary": "answer(lookup, keyId) \u2014 function in attest.test.ts, lines 107-109.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/attest.test.ts:fetcher",
+   "type": "function",
+   "name": "fetcher",
+   "filePath": "packages/workbench/src/attest.test.ts",
+   "lineRange": [
+    111,
+    114
+   ],
+   "summary": "fetcher(url) \u2014 function in attest.test.ts, lines 111-114.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/attest.test.ts:internalsOf",
+   "type": "function",
+   "name": "internalsOf",
+   "filePath": "packages/workbench/src/attest.test.ts",
+   "lineRange": [
+    116,
+    120
+   ],
+   "summary": "internalsOf(app) \u2014 function in attest.test.ts, lines 116-120.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/delegate-tool.test.ts",
+   "type": "file",
+   "name": "delegate-tool.test.ts",
+   "filePath": "packages/workbench/src/delegate-tool.test.ts",
+   "summary": "delegate-tool.test.ts \u2014 typescript code, 130 lines, 5 functions, 0 classes, 0 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/delegate-tool.test.ts:models",
+   "type": "function",
+   "name": "models",
+   "filePath": "packages/workbench/src/delegate-tool.test.ts",
+   "lineRange": [
+    8,
+    8
+   ],
+   "summary": "models() \u2014 function in delegate-tool.test.ts, lines 8-8.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/delegate-tool.test.ts:done",
+   "type": "function",
+   "name": "done",
+   "filePath": "packages/workbench/src/delegate-tool.test.ts",
+   "lineRange": [
+    9,
+    10
+   ],
+   "summary": "done(text) \u2014 function in delegate-tool.test.ts, lines 9-10.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/delegate-tool.test.ts:requestedTool",
+   "type": "function",
+   "name": "requestedTool",
+   "filePath": "packages/workbench/src/delegate-tool.test.ts",
+   "lineRange": [
+    12,
+    16
+   ],
+   "summary": "requestedTool(body, name) \u2014 function in delegate-tool.test.ts, lines 12-16.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/delegate-tool.test.ts:call",
+   "type": "function",
+   "name": "call",
+   "filePath": "packages/workbench/src/delegate-tool.test.ts",
+   "lineRange": [
+    18,
+    29
+   ],
+   "summary": "call(name, args, id) \u2014 function in delegate-tool.test.ts, lines 18-29.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/delegate-tool.test.ts:waitForHold",
+   "type": "function",
+   "name": "waitForHold",
+   "filePath": "packages/workbench/src/delegate-tool.test.ts",
+   "lineRange": [
+    31,
+    37
+   ],
+   "summary": "waitForHold(app, sessionId) \u2014 function in delegate-tool.test.ts, lines 31-37.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/delegate-tools.test.ts",
+   "type": "file",
+   "name": "delegate-tools.test.ts",
+   "filePath": "packages/workbench/src/delegate-tools.test.ts",
+   "summary": "delegate-tools.test.ts \u2014 typescript code, 217 lines, 1 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/workbench/src/delegate-tools.test.ts:refuses",
+   "type": "function",
+   "name": "refuses",
+   "filePath": "packages/workbench/src/delegate-tools.test.ts",
+   "lineRange": [
+    20,
+    21
+   ],
+   "summary": "refuses(run, pattern, why) \u2014 function in delegate-tools.test.ts, lines 20-21.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/delegate-tools.ts",
+   "type": "file",
+   "name": "delegate-tools.ts",
+   "filePath": "packages/workbench/src/delegate-tools.ts",
+   "summary": "delegate-tools.ts \u2014 typescript code, 204 lines, 5 functions, 0 classes, 7 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/workbench/src/delegate-tools.ts:parseDelegateCall",
+   "type": "function",
+   "name": "parseDelegateCall",
+   "filePath": "packages/workbench/src/delegate-tools.ts",
+   "lineRange": [
+    109,
+    136
+   ],
+   "summary": "parseDelegateCall(input, maxPromptCharacters) \u2014 function in delegate-tools.ts, lines 109-136.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/delegate-tools.ts:parseSubagentResultCall",
+   "type": "function",
+   "name": "parseSubagentResultCall",
+   "filePath": "packages/workbench/src/delegate-tools.ts",
+   "lineRange": [
+    144,
+    154
+   ],
+   "summary": "parseSubagentResultCall(input) \u2014 function in delegate-tools.ts, lines 144-154.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/delegate-tools.ts:untrustedSubagentResultText",
+   "type": "function",
+   "name": "untrustedSubagentResultText",
+   "filePath": "packages/workbench/src/delegate-tools.ts",
+   "lineRange": [
+    162,
+    164
+   ],
+   "summary": "untrustedSubagentResultText(text) \u2014 function in delegate-tools.ts, lines 162-164.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/delegate-tools.ts:fields",
+   "type": "function",
+   "name": "fields",
+   "filePath": "packages/workbench/src/delegate-tools.ts",
+   "lineRange": [
+    166,
+    182
+   ],
+   "summary": "fields(what, input, allowed) \u2014 function in delegate-tools.ts, lines 166-182.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/delegate-tools.ts:optionalIdentifier",
+   "type": "function",
+   "name": "optionalIdentifier",
+   "filePath": "packages/workbench/src/delegate-tools.ts",
+   "lineRange": [
+    184,
+    204
+   ],
+   "summary": "optionalIdentifier(name, value, maxLength) \u2014 function in delegate-tools.ts, lines 184-204.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/env-compat.test.ts",
+   "type": "file",
+   "name": "env-compat.test.ts",
+   "filePath": "packages/workbench/src/env-compat.test.ts",
+   "summary": "env-compat.test.ts \u2014 typescript code, 231 lines, 2 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/workbench/src/env-compat.test.ts:withRoot",
+   "type": "function",
+   "name": "withRoot",
+   "filePath": "packages/workbench/src/env-compat.test.ts",
+   "lineRange": [
+    18,
+    22
+   ],
+   "summary": "withRoot(t) \u2014 function in env-compat.test.ts, lines 18-22.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/env-compat.test.ts:exists",
+   "type": "function",
+   "name": "exists",
+   "filePath": "packages/workbench/src/env-compat.test.ts",
+   "lineRange": [
+    24,
+    28
+   ],
+   "summary": "exists(path) \u2014 function in env-compat.test.ts, lines 24-28.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/gui-harness-settings.test.ts",
+   "type": "file",
+   "name": "gui-harness-settings.test.ts",
+   "filePath": "packages/workbench/src/gui-harness-settings.test.ts",
+   "summary": "gui-harness-settings.test.ts \u2014 typescript code, 77 lines, 0 functions, 0 classes, 0 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/gui.test.ts",
+   "type": "file",
+   "name": "gui.test.ts",
+   "filePath": "packages/workbench/src/gui.test.ts",
+   "summary": "gui.test.ts \u2014 typescript code, 438 lines, 0 functions, 0 classes, 0 exports, 3 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/workbench/src/gui.ts",
+   "type": "file",
+   "name": "gui.ts",
+   "filePath": "packages/workbench/src/gui.ts",
+   "summary": "gui.ts \u2014 typescript code, 552 lines, 13 functions, 0 classes, 15 exports, 3 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/workbench/src/gui.ts:page",
+   "type": "function",
+   "name": "page",
+   "filePath": "packages/workbench/src/gui.ts",
+   "lineRange": [
+    6,
+    51
+   ],
+   "summary": "page(source, query, scope) \u2014 function in gui.ts, lines 6-51.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/gui.ts:sessionPatch",
+   "type": "function",
+   "name": "sessionPatch",
+   "filePath": "packages/workbench/src/gui.ts",
+   "lineRange": [
+    52,
+    85
+   ],
+   "summary": "sessionPatch(body) \u2014 function in gui.ts, lines 52-85.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/gui.ts:preferencePatch",
+   "type": "function",
+   "name": "preferencePatch",
+   "filePath": "packages/workbench/src/gui.ts",
+   "lineRange": [
+    86,
+    123
+   ],
+   "summary": "preferencePatch(body) \u2014 function in gui.ts, lines 86-123.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/gui.ts:documentView",
+   "type": "function",
+   "name": "documentView",
+   "filePath": "packages/workbench/src/gui.ts",
+   "lineRange": [
+    124,
+    139
+   ],
+   "summary": "documentView(state, path, sessionId) \u2014 function in gui.ts, lines 124-139.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/gui.ts:filterRows",
+   "type": "function",
+   "name": "filterRows",
+   "filePath": "packages/workbench/src/gui.ts",
+   "lineRange": [
+    140,
+    179
+   ],
+   "summary": "filterRows(rows, query) \u2014 function in gui.ts, lines 140-179.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/gui.ts:serverPermissionMode",
+   "type": "function",
+   "name": "serverPermissionMode",
+   "filePath": "packages/workbench/src/gui.ts",
+   "lineRange": [
+    200,
+    204
+   ],
+   "summary": "serverPermissionMode(value) \u2014 function in gui.ts, lines 200-204.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/gui.ts:capabilities",
+   "type": "function",
+   "name": "capabilities",
+   "filePath": "packages/workbench/src/gui.ts",
+   "lineRange": [
+    213,
+    245
+   ],
+   "summary": "capabilities(mode, permissionMode, settings) \u2014 function in gui.ts, lines 213-245.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/gui.ts:deriveRunState",
+   "type": "function",
+   "name": "deriveRunState",
+   "filePath": "packages/workbench/src/gui.ts",
+   "lineRange": [
+    270,
+    286
+   ],
+   "summary": "deriveRunState(status, events) \u2014 function in gui.ts, lines 270-286.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/gui.ts:activity",
+   "type": "function",
+   "name": "activity",
+   "filePath": "packages/workbench/src/gui.ts",
+   "lineRange": [
+    287,
+    402
+   ],
+   "summary": "activity(views) \u2014 function in gui.ts, lines 287-402.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/gui.ts:providerFailure",
+   "type": "function",
+   "name": "providerFailure",
+   "filePath": "packages/workbench/src/gui.ts",
+   "lineRange": [
+    403,
+    430
+   ],
+   "summary": "providerFailure(error) \u2014 function in gui.ts, lines 403-430.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/gui.ts:providerStateFromFailure",
+   "type": "function",
+   "name": "providerStateFromFailure",
+   "filePath": "packages/workbench/src/gui.ts",
+   "lineRange": [
+    434,
+    468
+   ],
+   "summary": "providerStateFromFailure(connected, failure, credentials) \u2014 function in gui.ts, lines 434-468.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/gui.ts:connectorInput",
+   "type": "function",
+   "name": "connectorInput",
+   "filePath": "packages/workbench/src/gui.ts",
+   "lineRange": [
+    470,
+    523
+   ],
+   "summary": "connectorInput(body, previous) \u2014 function in gui.ts, lines 470-523.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/gui.ts:publicConnector",
+   "type": "function",
+   "name": "publicConnector",
+   "filePath": "packages/workbench/src/gui.ts",
+   "lineRange": [
+    524,
+    552
+   ],
+   "summary": "publicConnector(config) \u2014 function in gui.ts, lines 524-552.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/harness-dispose.test.ts",
+   "type": "file",
+   "name": "harness-dispose.test.ts",
+   "filePath": "packages/workbench/src/harness-dispose.test.ts",
+   "summary": "harness-dispose.test.ts \u2014 typescript code, 98 lines, 6 functions, 0 classes, 0 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-dispose.test.ts:models",
+   "type": "function",
+   "name": "models",
+   "filePath": "packages/workbench/src/harness-dispose.test.ts",
+   "lineRange": [
+    17,
+    17
+   ],
+   "summary": "models() \u2014 function in harness-dispose.test.ts, lines 17-17.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-dispose.test.ts:answer",
+   "type": "function",
+   "name": "answer",
+   "filePath": "packages/workbench/src/harness-dispose.test.ts",
+   "lineRange": [
+    18,
+    19
+   ],
+   "summary": "answer(content) \u2014 function in harness-dispose.test.ts, lines 18-19.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-dispose.test.ts:declined",
+   "type": "function",
+   "name": "declined",
+   "filePath": "packages/workbench/src/harness-dispose.test.ts",
+   "lineRange": [
+    20,
+    21
+   ],
+   "summary": "declined() \u2014 function in harness-dispose.test.ts, lines 20-21.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-dispose.test.ts:lesson",
+   "type": "function",
+   "name": "lesson",
+   "filePath": "packages/workbench/src/harness-dispose.test.ts",
+   "lineRange": [
+    23,
+    37
+   ],
+   "summary": "lesson() \u2014 function in harness-dispose.test.ts, lines 23-37.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-dispose.test.ts:answering",
+   "type": "function",
+   "name": "answering",
+   "filePath": "packages/workbench/src/harness-dispose.test.ts",
+   "lineRange": [
+    39,
+    47
+   ],
+   "summary": "answering(completion) \u2014 function in harness-dispose.test.ts, lines 39-47.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-dispose.test.ts:seeded",
+   "type": "function",
+   "name": "seeded",
+   "filePath": "packages/workbench/src/harness-dispose.test.ts",
+   "lineRange": [
+    49,
+    63
+   ],
+   "summary": "seeded(t, fetcher) \u2014 function in harness-dispose.test.ts, lines 49-63.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/harness-enforcement-boundary.test.ts",
+   "type": "file",
+   "name": "harness-enforcement-boundary.test.ts",
+   "filePath": "packages/workbench/src/harness-enforcement-boundary.test.ts",
+   "summary": "harness-enforcement-boundary.test.ts \u2014 typescript code, 329 lines, 7 functions, 0 classes, 0 exports, 3 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-enforcement-boundary.test.ts:mcpServer",
+   "type": "function",
+   "name": "mcpServer",
+   "filePath": "packages/workbench/src/harness-enforcement-boundary.test.ts",
+   "lineRange": [
+    41,
+    68
+   ],
+   "summary": "mcpServer() \u2014 function in harness-enforcement-boundary.test.ts, lines 41-68.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-enforcement-boundary.test.ts:callingProvider",
+   "type": "function",
+   "name": "callingProvider",
+   "filePath": "packages/workbench/src/harness-enforcement-boundary.test.ts",
+   "lineRange": [
+    71,
+    95
+   ],
+   "summary": "callingProvider(url, init) \u2014 function in harness-enforcement-boundary.test.ts, lines 71-95.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-enforcement-boundary.test.ts:overrideProposal",
+   "type": "function",
+   "name": "overrideProposal",
+   "filePath": "packages/workbench/src/harness-enforcement-boundary.test.ts",
+   "lineRange": [
+    97,
+    111
+   ],
+   "summary": "overrideProposal() \u2014 function in harness-enforcement-boundary.test.ts, lines 97-111.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-enforcement-boundary.test.ts:answeringProvider",
+   "type": "function",
+   "name": "answeringProvider",
+   "filePath": "packages/workbench/src/harness-enforcement-boundary.test.ts",
+   "lineRange": [
+    118,
+    122
+   ],
+   "summary": "answeringProvider(url) \u2014 function in harness-enforcement-boundary.test.ts, lines 118-122.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-enforcement-boundary.test.ts:systemTexts",
+   "type": "function",
+   "name": "systemTexts",
+   "filePath": "packages/workbench/src/harness-enforcement-boundary.test.ts",
+   "lineRange": [
+    124,
+    133
+   ],
+   "summary": "systemTexts(body) \u2014 function in harness-enforcement-boundary.test.ts, lines 124-133.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-enforcement-boundary.test.ts:seededSession",
+   "type": "function",
+   "name": "seededSession",
+   "filePath": "packages/workbench/src/harness-enforcement-boundary.test.ts",
+   "lineRange": [
+    137,
+    146
+   ],
+   "summary": "seededSession(app, prompt) \u2014 function in harness-enforcement-boundary.test.ts, lines 137-146.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-enforcement-boundary.test.ts:approvedOverride",
+   "type": "function",
+   "name": "approvedOverride",
+   "filePath": "packages/workbench/src/harness-enforcement-boundary.test.ts",
+   "lineRange": [
+    148,
+    153
+   ],
+   "summary": "approvedOverride(app, sessionId) \u2014 function in harness-enforcement-boundary.test.ts, lines 148-153.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/harness-manual-review.test.ts",
+   "type": "file",
+   "name": "harness-manual-review.test.ts",
+   "filePath": "packages/workbench/src/harness-manual-review.test.ts",
+   "summary": "harness-manual-review.test.ts \u2014 typescript code, 324 lines, 7 functions, 0 classes, 0 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-manual-review.test.ts:models",
+   "type": "function",
+   "name": "models",
+   "filePath": "packages/workbench/src/harness-manual-review.test.ts",
+   "lineRange": [
+    15,
+    15
+   ],
+   "summary": "models() \u2014 function in harness-manual-review.test.ts, lines 15-15.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-manual-review.test.ts:answer",
+   "type": "function",
+   "name": "answer",
+   "filePath": "packages/workbench/src/harness-manual-review.test.ts",
+   "lineRange": [
+    16,
+    17
+   ],
+   "summary": "answer(content) \u2014 function in harness-manual-review.test.ts, lines 16-17.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-manual-review.test.ts:declined",
+   "type": "function",
+   "name": "declined",
+   "filePath": "packages/workbench/src/harness-manual-review.test.ts",
+   "lineRange": [
+    18,
+    19
+   ],
+   "summary": "declined() \u2014 function in harness-manual-review.test.ts, lines 18-19.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-manual-review.test.ts:lesson",
+   "type": "function",
+   "name": "lesson",
+   "filePath": "packages/workbench/src/harness-manual-review.test.ts",
+   "lineRange": [
+    21,
+    35
+   ],
+   "summary": "lesson() \u2014 function in harness-manual-review.test.ts, lines 21-35.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-manual-review.test.ts:answering",
+   "type": "function",
+   "name": "answering",
+   "filePath": "packages/workbench/src/harness-manual-review.test.ts",
+   "lineRange": [
+    37,
+    45
+   ],
+   "summary": "answering(completion) \u2014 function in harness-manual-review.test.ts, lines 37-45.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-manual-review.test.ts:seeded",
+   "type": "function",
+   "name": "seeded",
+   "filePath": "packages/workbench/src/harness-manual-review.test.ts",
+   "lineRange": [
+    48,
+    60
+   ],
+   "summary": "seeded(t, fetcher) \u2014 function in harness-manual-review.test.ts, lines 48-60.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-manual-review.test.ts:seedLesson",
+   "type": "function",
+   "name": "seedLesson",
+   "filePath": "packages/workbench/src/harness-manual-review.test.ts",
+   "lineRange": [
+    63,
+    66
+   ],
+   "summary": "seedLesson(app, sessionId) \u2014 function in harness-manual-review.test.ts, lines 63-66.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/harness-profile-audit.test.ts",
+   "type": "file",
+   "name": "harness-profile-audit.test.ts",
+   "filePath": "packages/workbench/src/harness-profile-audit.test.ts",
+   "summary": "harness-profile-audit.test.ts \u2014 typescript code, 135 lines, 2 functions, 0 classes, 0 exports, 4 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-profile-audit.test.ts:fetcher",
+   "type": "function",
+   "name": "fetcher",
+   "filePath": "packages/workbench/src/harness-profile-audit.test.ts",
+   "lineRange": [
+    9,
+    14
+   ],
+   "summary": "fetcher(url) \u2014 function in harness-profile-audit.test.ts, lines 9-14.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-profile-audit.test.ts:profileProposal",
+   "type": "function",
+   "name": "profileProposal",
+   "filePath": "packages/workbench/src/harness-profile-audit.test.ts",
+   "lineRange": [
+    26,
+    44
+   ],
+   "summary": "profileProposal(action, derivedFromSeq, profile) \u2014 function in harness-profile-audit.test.ts, lines 26-44.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/harness-proof.test.ts",
+   "type": "file",
+   "name": "harness-proof.test.ts",
+   "filePath": "packages/workbench/src/harness-proof.test.ts",
+   "summary": "harness-proof.test.ts \u2014 typescript code, 354 lines, 5 functions, 0 classes, 0 exports, 7 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-proof.test.ts:catalogServer",
+   "type": "function",
+   "name": "catalogServer",
+   "filePath": "packages/workbench/src/harness-proof.test.ts",
+   "lineRange": [
+    43,
+    70
+   ],
+   "summary": "catalogServer() \u2014 function in harness-proof.test.ts, lines 43-70.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-proof.test.ts:calling",
+   "type": "function",
+   "name": "calling",
+   "filePath": "packages/workbench/src/harness-proof.test.ts",
+   "lineRange": [
+    76,
+    117
+   ],
+   "summary": "calling(gate) \u2014 function in harness-proof.test.ts, lines 76-117.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-proof.test.ts:fixture",
+   "type": "function",
+   "name": "fixture",
+   "filePath": "packages/workbench/src/harness-proof.test.ts",
+   "lineRange": [
+    128,
+    157
+   ],
+   "summary": "fixture(t, policy) \u2014 function in harness-proof.test.ts, lines 128-157.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-proof.test.ts:bodies",
+   "type": "function",
+   "name": "bodies",
+   "filePath": "packages/workbench/src/harness-proof.test.ts",
+   "lineRange": [
+    160,
+    170
+   ],
+   "summary": "bodies(app, workspace) \u2014 function in harness-proof.test.ts, lines 160-170.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-proof.test.ts:decisionsFor",
+   "type": "function",
+   "name": "decisionsFor",
+   "filePath": "packages/workbench/src/harness-proof.test.ts",
+   "lineRange": [
+    172,
+    178
+   ],
+   "summary": "decisionsFor(records, tool) \u2014 function in harness-proof.test.ts, lines 172-178.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  }
+ ],
+ "edges": [
+  {
+   "source": "file:packages/ledger/src/env-compat.ts",
+   "target": "function:packages/ledger/src/env-compat.ts:legacyEnvKey",
+   "type": "contains",
+   "direction": "forward",
+   "description": "env-compat.ts defines legacyEnvKey",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/env-compat.ts",
+   "target": "function:packages/ledger/src/env-compat.ts:legacyEnvKey",
+   "type": "exports",
+   "direction": "forward",
+   "description": "env-compat.ts exports legacyEnvKey",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/ledger/src/env-compat.ts",
+   "target": "function:packages/ledger/src/env-compat.ts:envValue",
+   "type": "contains",
+   "direction": "forward",
+   "description": "env-compat.ts defines envValue",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/env-compat.ts",
+   "target": "function:packages/ledger/src/env-compat.ts:envValue",
+   "type": "exports",
+   "direction": "forward",
+   "description": "env-compat.ts exports envValue",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/ledger/src/env-compat.ts",
+   "target": "function:packages/ledger/src/env-compat.ts:normalizeEnv",
+   "type": "contains",
+   "direction": "forward",
+   "description": "env-compat.ts defines normalizeEnv",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/env-compat.ts",
+   "target": "function:packages/ledger/src/env-compat.ts:normalizeEnv",
+   "type": "exports",
+   "direction": "forward",
+   "description": "env-compat.ts exports normalizeEnv",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/ledger/src/env-compat.ts",
+   "target": "function:packages/ledger/src/env-compat.ts:normalizeOwnedEnv",
+   "type": "contains",
+   "direction": "forward",
+   "description": "env-compat.ts defines normalizeOwnedEnv",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/ledger/src/env-compat.ts",
+   "target": "function:packages/ledger/src/env-compat.ts:normalizeOwnedEnv",
+   "type": "exports",
+   "direction": "forward",
+   "description": "env-compat.ts exports normalizeOwnedEnv",
+   "weight": 0.7
+  },
+  {
+   "source": "function:packages/ledger/src/env-compat.ts:envValue",
+   "target": "function:packages/ledger/src/env-compat.ts:legacyEnvKey",
+   "type": "calls",
+   "direction": "forward",
+   "description": "envValue calls legacyEnvKey",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/ledger/src/env-compat.ts:normalizeEnv",
+   "target": "function:packages/ledger/src/env-compat.ts:legacyEnvKey",
+   "type": "calls",
+   "direction": "forward",
+   "description": "normalizeEnv calls legacyEnvKey",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/ledger/src/env-compat.ts:normalizeOwnedEnv",
+   "target": "function:packages/ledger/src/env-compat.ts:normalizeEnv",
+   "type": "calls",
+   "direction": "forward",
+   "description": "normalizeOwnedEnv calls normalizeEnv",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/workbench/src/agent-identity.test.ts",
+   "target": "function:packages/workbench/src/agent-identity.test.ts:identityCatalogServer",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agent-identity.test.ts defines identityCatalogServer",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-identity.ts",
+   "target": "function:packages/workbench/src/agent-identity.ts:validIdentifier",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agent-identity.ts defines validIdentifier",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-identity.ts",
+   "target": "function:packages/workbench/src/agent-identity.ts:canonicalToolScope",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agent-identity.ts defines canonicalToolScope",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-identity.ts",
+   "target": "function:packages/workbench/src/agent-identity.ts:tokenDigest",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agent-identity.ts defines tokenDigest",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-identity.ts",
+   "target": "class:packages/workbench/src/agent-identity.ts:LocalAgentIdentityIssuer",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agent-identity.ts defines class LocalAgentIdentityIssuer",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/workbench/src/agent-identity.ts:canonicalToolScope",
+   "target": "function:packages/workbench/src/agent-identity.ts:validIdentifier",
+   "type": "calls",
+   "direction": "forward",
+   "description": "canonicalToolScope calls validIdentifier",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/workbench/src/agent-messages-tool.test.ts",
+   "target": "function:packages/workbench/src/agent-messages-tool.test.ts:models",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agent-messages-tool.test.ts defines models",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-messages-tool.test.ts",
+   "target": "function:packages/workbench/src/agent-messages-tool.test.ts:done",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agent-messages-tool.test.ts defines done",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-messages-tool.test.ts",
+   "target": "function:packages/workbench/src/agent-messages-tool.test.ts:call",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agent-messages-tool.test.ts defines call",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-messages-tool.test.ts",
+   "target": "function:packages/workbench/src/agent-messages-tool.test.ts:requestedTool",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agent-messages-tool.test.ts defines requestedTool",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-messages-tool.test.ts",
+   "target": "function:packages/workbench/src/agent-messages-tool.test.ts:followUp",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agent-messages-tool.test.ts defines followUp",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-messages-tool.test.ts",
+   "target": "function:packages/workbench/src/agent-messages-tool.test.ts:latestUser",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agent-messages-tool.test.ts defines latestUser",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-messages-tool.test.ts",
+   "target": "function:packages/workbench/src/agent-messages-tool.test.ts:scriptedFetcher",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agent-messages-tool.test.ts defines scriptedFetcher",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-messages-tool.test.ts",
+   "target": "function:packages/workbench/src/agent-messages-tool.test.ts:listCall",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agent-messages-tool.test.ts defines listCall",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-messages-tool.test.ts",
+   "target": "function:packages/workbench/src/agent-messages-tool.test.ts:sendCall",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agent-messages-tool.test.ts defines sendCall",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-messages-tool.test.ts",
+   "target": "function:packages/workbench/src/agent-messages-tool.test.ts:inboxCall",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agent-messages-tool.test.ts defines inboxCall",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-messages-tool.test.ts",
+   "target": "function:packages/workbench/src/agent-messages-tool.test.ts:toolResults",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agent-messages-tool.test.ts defines toolResults",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-messages-tool.test.ts",
+   "target": "function:packages/workbench/src/agent-messages-tool.test.ts:resultText",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agent-messages-tool.test.ts defines resultText",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-messages-tool.test.ts",
+   "target": "function:packages/workbench/src/agent-messages-tool.test.ts:lastError",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agent-messages-tool.test.ts defines lastError",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-messages-tool.test.ts",
+   "target": "function:packages/workbench/src/agent-messages-tool.test.ts:inboxRead",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agent-messages-tool.test.ts defines inboxRead",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-messages-tool.test.ts",
+   "target": "function:packages/workbench/src/agent-messages-tool.test.ts:listedEntries",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agent-messages-tool.test.ts defines listedEntries",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-messages-tool.test.ts",
+   "target": "function:packages/workbench/src/agent-messages-tool.test.ts:messageRecords",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agent-messages-tool.test.ts defines messageRecords",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-messages-tool.test.ts",
+   "target": "function:packages/workbench/src/agent-messages-tool.test.ts:waitForHold",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agent-messages-tool.test.ts defines waitForHold",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-messages-tool.test.ts",
+   "target": "function:packages/workbench/src/agent-messages-tool.test.ts:holdOrNothing",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agent-messages-tool.test.ts defines holdOrNothing",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-messages-tool.test.ts",
+   "target": "function:packages/workbench/src/agent-messages-tool.test.ts:approvedSend",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agent-messages-tool.test.ts defines approvedSend",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-messages-tool.test.ts",
+   "target": "function:packages/workbench/src/agent-messages-tool.test.ts:refusedSend",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agent-messages-tool.test.ts defines refusedSend",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/workbench/src/agent-messages-tool.test.ts:scriptedFetcher",
+   "target": "function:packages/workbench/src/agent-messages-tool.test.ts:models",
+   "type": "calls",
+   "direction": "forward",
+   "description": "scriptedFetcher calls models",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/agent-messages-tool.test.ts:scriptedFetcher",
+   "target": "function:packages/workbench/src/agent-messages-tool.test.ts:latestUser",
+   "type": "calls",
+   "direction": "forward",
+   "description": "scriptedFetcher calls latestUser",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/agent-messages-tool.test.ts:listCall",
+   "target": "function:packages/workbench/src/agent-messages-tool.test.ts:followUp",
+   "type": "calls",
+   "direction": "forward",
+   "description": "listCall calls followUp",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/agent-messages-tool.test.ts:listCall",
+   "target": "function:packages/workbench/src/agent-messages-tool.test.ts:done",
+   "type": "calls",
+   "direction": "forward",
+   "description": "listCall calls done",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/agent-messages-tool.test.ts:listCall",
+   "target": "function:packages/workbench/src/agent-messages-tool.test.ts:call",
+   "type": "calls",
+   "direction": "forward",
+   "description": "listCall calls call",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/agent-messages-tool.test.ts:listCall",
+   "target": "function:packages/workbench/src/agent-messages-tool.test.ts:requestedTool",
+   "type": "calls",
+   "direction": "forward",
+   "description": "listCall calls requestedTool",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/agent-messages-tool.test.ts:sendCall",
+   "target": "function:packages/workbench/src/agent-messages-tool.test.ts:followUp",
+   "type": "calls",
+   "direction": "forward",
+   "description": "sendCall calls followUp",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/agent-messages-tool.test.ts:sendCall",
+   "target": "function:packages/workbench/src/agent-messages-tool.test.ts:done",
+   "type": "calls",
+   "direction": "forward",
+   "description": "sendCall calls done",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/agent-messages-tool.test.ts:sendCall",
+   "target": "function:packages/workbench/src/agent-messages-tool.test.ts:call",
+   "type": "calls",
+   "direction": "forward",
+   "description": "sendCall calls call",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/agent-messages-tool.test.ts:sendCall",
+   "target": "function:packages/workbench/src/agent-messages-tool.test.ts:requestedTool",
+   "type": "calls",
+   "direction": "forward",
+   "description": "sendCall calls requestedTool",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/agent-messages-tool.test.ts:inboxCall",
+   "target": "function:packages/workbench/src/agent-messages-tool.test.ts:followUp",
+   "type": "calls",
+   "direction": "forward",
+   "description": "inboxCall calls followUp",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/agent-messages-tool.test.ts:inboxCall",
+   "target": "function:packages/workbench/src/agent-messages-tool.test.ts:done",
+   "type": "calls",
+   "direction": "forward",
+   "description": "inboxCall calls done",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/agent-messages-tool.test.ts:inboxCall",
+   "target": "function:packages/workbench/src/agent-messages-tool.test.ts:call",
+   "type": "calls",
+   "direction": "forward",
+   "description": "inboxCall calls call",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/agent-messages-tool.test.ts:inboxCall",
+   "target": "function:packages/workbench/src/agent-messages-tool.test.ts:requestedTool",
+   "type": "calls",
+   "direction": "forward",
+   "description": "inboxCall calls requestedTool",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/agent-messages-tool.test.ts:inboxRead",
+   "target": "function:packages/workbench/src/agent-messages-tool.test.ts:resultText",
+   "type": "calls",
+   "direction": "forward",
+   "description": "inboxRead calls resultText",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/agent-messages-tool.test.ts:waitForHold",
+   "target": "function:packages/workbench/src/agent-messages-tool.test.ts:lastError",
+   "type": "calls",
+   "direction": "forward",
+   "description": "waitForHold calls lastError",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/agent-messages-tool.test.ts:approvedSend",
+   "target": "function:packages/workbench/src/agent-messages-tool.test.ts:toolResults",
+   "type": "calls",
+   "direction": "forward",
+   "description": "approvedSend calls toolResults",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/agent-messages-tool.test.ts:approvedSend",
+   "target": "function:packages/workbench/src/agent-messages-tool.test.ts:waitForHold",
+   "type": "calls",
+   "direction": "forward",
+   "description": "approvedSend calls waitForHold",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/agent-messages-tool.test.ts:refusedSend",
+   "target": "function:packages/workbench/src/agent-messages-tool.test.ts:toolResults",
+   "type": "calls",
+   "direction": "forward",
+   "description": "refusedSend calls toolResults",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/agent-messages-tool.test.ts:refusedSend",
+   "target": "function:packages/workbench/src/agent-messages-tool.test.ts:holdOrNothing",
+   "type": "calls",
+   "direction": "forward",
+   "description": "refusedSend calls holdOrNothing",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/workbench/src/agent-messages.test.ts",
+   "target": "function:packages/workbench/src/agent-messages.test.ts:member",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agent-messages.test.ts defines member",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-messages.test.ts",
+   "target": "function:packages/workbench/src/agent-messages.test.ts:delivery",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agent-messages.test.ts defines delivery",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-messages.test.ts",
+   "target": "function:packages/workbench/src/agent-messages.test.ts:message",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agent-messages.test.ts defines message",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-messages.test.ts",
+   "target": "function:packages/workbench/src/agent-messages.test.ts:refusalMessage",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agent-messages.test.ts defines refusalMessage",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-messages.ts",
+   "target": "function:packages/workbench/src/agent-messages.ts:untrustedAgentMessageLabel",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agent-messages.ts defines untrustedAgentMessageLabel",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-messages.ts",
+   "target": "function:packages/workbench/src/agent-messages.ts:untrustedAgentMessageLabel",
+   "type": "exports",
+   "direction": "forward",
+   "description": "agent-messages.ts exports untrustedAgentMessageLabel",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/agent-messages.ts",
+   "target": "function:packages/workbench/src/agent-messages.ts:reachableFamily",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agent-messages.ts defines reachableFamily",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-messages.ts",
+   "target": "function:packages/workbench/src/agent-messages.ts:reachableFamily",
+   "type": "exports",
+   "direction": "forward",
+   "description": "agent-messages.ts exports reachableFamily",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/agent-messages.ts",
+   "target": "function:packages/workbench/src/agent-messages.ts:parseAgentSend",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agent-messages.ts defines parseAgentSend",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-messages.ts",
+   "target": "function:packages/workbench/src/agent-messages.ts:parseAgentSend",
+   "type": "exports",
+   "direction": "forward",
+   "description": "agent-messages.ts exports parseAgentSend",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/agent-messages.ts",
+   "target": "function:packages/workbench/src/agent-messages.ts:validateAgentMessageDelivery",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agent-messages.ts defines validateAgentMessageDelivery",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-messages.ts",
+   "target": "function:packages/workbench/src/agent-messages.ts:validateAgentMessageDelivery",
+   "type": "exports",
+   "direction": "forward",
+   "description": "agent-messages.ts exports validateAgentMessageDelivery",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/agent-messages.ts",
+   "target": "function:packages/workbench/src/agent-messages.ts:formatInboxMessages",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agent-messages.ts defines formatInboxMessages",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-messages.ts",
+   "target": "function:packages/workbench/src/agent-messages.ts:formatInboxMessages",
+   "type": "exports",
+   "direction": "forward",
+   "description": "agent-messages.ts exports formatInboxMessages",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/agent-messages.ts",
+   "target": "function:packages/workbench/src/agent-messages.ts:indexSessions",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agent-messages.ts defines indexSessions",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-messages.ts",
+   "target": "function:packages/workbench/src/agent-messages.ts:sorted",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agent-messages.ts defines sorted",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-messages.ts",
+   "target": "function:packages/workbench/src/agent-messages.ts:compare",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agent-messages.ts defines compare",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-messages.ts",
+   "target": "function:packages/workbench/src/agent-messages.ts:entry",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agent-messages.ts defines entry",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-messages.ts",
+   "target": "function:packages/workbench/src/agent-messages.ts:messageText",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agent-messages.ts defines messageText",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-messages.ts",
+   "target": "function:packages/workbench/src/agent-messages.ts:redactKnownSecrets",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agent-messages.ts defines redactKnownSecrets",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-messages.ts",
+   "target": "function:packages/workbench/src/agent-messages.ts:counter",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agent-messages.ts defines counter",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-messages.ts",
+   "target": "function:packages/workbench/src/agent-messages.ts:readInboxArguments",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agent-messages.ts defines readInboxArguments",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-messages.ts",
+   "target": "function:packages/workbench/src/agent-messages.ts:storedMessage",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agent-messages.ts defines storedMessage",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-messages.ts",
+   "target": "function:packages/workbench/src/agent-messages.ts:fields",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agent-messages.ts defines fields",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/workbench/src/agent-messages.ts:reachableFamily",
+   "target": "function:packages/workbench/src/agent-messages.ts:indexSessions",
+   "type": "calls",
+   "direction": "forward",
+   "description": "reachableFamily calls indexSessions",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/agent-messages.ts:reachableFamily",
+   "target": "function:packages/workbench/src/agent-messages.ts:sorted",
+   "type": "calls",
+   "direction": "forward",
+   "description": "reachableFamily calls sorted",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/agent-messages.ts:parseAgentSend",
+   "target": "function:packages/workbench/src/agent-messages.ts:fields",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parseAgentSend calls fields",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/agent-messages.ts:parseAgentSend",
+   "target": "function:packages/workbench/src/agent-messages.ts:messageText",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parseAgentSend calls messageText",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/agent-messages.ts:validateAgentMessageDelivery",
+   "target": "function:packages/workbench/src/agent-messages.ts:counter",
+   "type": "calls",
+   "direction": "forward",
+   "description": "validateAgentMessageDelivery calls counter",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/agent-messages.ts:validateAgentMessageDelivery",
+   "target": "function:packages/workbench/src/agent-messages.ts:reachableFamily",
+   "type": "calls",
+   "direction": "forward",
+   "description": "validateAgentMessageDelivery calls reachableFamily",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/agent-messages.ts:validateAgentMessageDelivery",
+   "target": "function:packages/workbench/src/agent-messages.ts:redactKnownSecrets",
+   "type": "calls",
+   "direction": "forward",
+   "description": "validateAgentMessageDelivery calls redactKnownSecrets",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/agent-messages.ts:validateAgentMessageDelivery",
+   "target": "function:packages/workbench/src/agent-messages.ts:messageText",
+   "type": "calls",
+   "direction": "forward",
+   "description": "validateAgentMessageDelivery calls messageText",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/agent-messages.ts:formatInboxMessages",
+   "target": "function:packages/workbench/src/agent-messages.ts:readInboxArguments",
+   "type": "calls",
+   "direction": "forward",
+   "description": "formatInboxMessages calls readInboxArguments",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/agent-messages.ts:formatInboxMessages",
+   "target": "function:packages/workbench/src/agent-messages.ts:storedMessage",
+   "type": "calls",
+   "direction": "forward",
+   "description": "formatInboxMessages calls storedMessage",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/agent-messages.ts:formatInboxMessages",
+   "target": "function:packages/workbench/src/agent-messages.ts:untrustedAgentMessageLabel",
+   "type": "calls",
+   "direction": "forward",
+   "description": "formatInboxMessages calls untrustedAgentMessageLabel",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/agent-messages.ts:sorted",
+   "target": "function:packages/workbench/src/agent-messages.ts:compare",
+   "type": "calls",
+   "direction": "forward",
+   "description": "sorted calls compare",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/agent-messages.ts:redactKnownSecrets",
+   "target": "function:packages/workbench/src/agent-messages.ts:compare",
+   "type": "calls",
+   "direction": "forward",
+   "description": "redactKnownSecrets calls compare",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/agent-messages.ts:readInboxArguments",
+   "target": "function:packages/workbench/src/agent-messages.ts:fields",
+   "type": "calls",
+   "direction": "forward",
+   "description": "readInboxArguments calls fields",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/agent-runner.test.ts",
+   "target": "function:packages/workbench/src/agent-runners/agent-runner.test.ts:statusEvent",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agent-runner.test.ts defines statusEvent",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/agent-runner.test.ts",
+   "target": "function:packages/workbench/src/agent-runners/agent-runner.test.ts:terminalEvent",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agent-runner.test.ts defines terminalEvent",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/agent-runner.test.ts",
+   "target": "function:packages/workbench/src/agent-runners/agent-runner.test.ts:collect",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agent-runner.test.ts defines collect",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/agent-runner.test.ts",
+   "target": "function:packages/workbench/src/agent-runners/agent-runner.test.ts:hasCode",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agent-runner.test.ts defines hasCode",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/agent-runner.ts",
+   "target": "function:packages/workbench/src/agent-runners/agent-runner.ts:assertKnownAgentRunnerProfile",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agent-runner.ts defines assertKnownAgentRunnerProfile",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/agent-runner.ts",
+   "target": "function:packages/workbench/src/agent-runners/agent-runner.ts:assertKnownAgentRunnerProfile",
+   "type": "exports",
+   "direction": "forward",
+   "description": "agent-runner.ts exports assertKnownAgentRunnerProfile",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/agent-runner.ts",
+   "target": "function:packages/workbench/src/agent-runners/agent-runner.ts:assertDescriptionShape",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agent-runner.ts defines assertDescriptionShape",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/agent-runner.ts",
+   "target": "function:packages/workbench/src/agent-runners/agent-runner.ts:assertSafeAgentRunnerDescription",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agent-runner.ts defines assertSafeAgentRunnerDescription",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/agent-runner.ts",
+   "target": "function:packages/workbench/src/agent-runners/agent-runner.ts:assertSafeAgentRunnerDescription",
+   "type": "exports",
+   "direction": "forward",
+   "description": "agent-runner.ts exports assertSafeAgentRunnerDescription",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/agent-runner.ts",
+   "target": "function:packages/workbench/src/agent-runners/agent-runner.ts:assertHostAgentRunnerDescription",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agent-runner.ts defines assertHostAgentRunnerDescription",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/agent-runner.ts",
+   "target": "function:packages/workbench/src/agent-runners/agent-runner.ts:assertHostAgentRunnerDescription",
+   "type": "exports",
+   "direction": "forward",
+   "description": "agent-runner.ts exports assertHostAgentRunnerDescription",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/agent-runner.ts",
+   "target": "function:packages/workbench/src/agent-runners/agent-runner.ts:mediateAgentRunEvents",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agent-runner.ts defines mediateAgentRunEvents",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/agent-runner.ts",
+   "target": "function:packages/workbench/src/agent-runners/agent-runner.ts:mediateAgentRunEvents",
+   "type": "exports",
+   "direction": "forward",
+   "description": "agent-runner.ts exports mediateAgentRunEvents",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/agent-runner.ts",
+   "target": "function:packages/workbench/src/agent-runners/agent-runner.ts:validateEvent",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agent-runner.ts defines validateEvent",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/agent-runner.ts",
+   "target": "function:packages/workbench/src/agent-runners/agent-runner.ts:onlyKeys",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agent-runner.ts defines onlyKeys",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/agent-runner.ts",
+   "target": "function:packages/workbench/src/agent-runners/agent-runner.ts:eventTextBytes",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agent-runner.ts defines eventTextBytes",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/agent-runner.ts",
+   "target": "function:packages/workbench/src/agent-runners/agent-runner.ts:isBoundedText",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agent-runner.ts defines isBoundedText",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/agent-runner.ts",
+   "target": "class:packages/workbench/src/agent-runners/agent-runner.ts:AgentRunnerContractError",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agent-runner.ts defines class AgentRunnerContractError",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/workbench/src/agent-runners/agent-runner.ts:assertDescriptionShape",
+   "target": "function:packages/workbench/src/agent-runners/agent-runner.ts:onlyKeys",
+   "type": "calls",
+   "direction": "forward",
+   "description": "assertDescriptionShape calls onlyKeys",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/agent-runners/agent-runner.ts:assertDescriptionShape",
+   "target": "function:packages/workbench/src/agent-runners/agent-runner.ts:isBoundedText",
+   "type": "calls",
+   "direction": "forward",
+   "description": "assertDescriptionShape calls isBoundedText",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/agent-runners/agent-runner.ts:assertSafeAgentRunnerDescription",
+   "target": "function:packages/workbench/src/agent-runners/agent-runner.ts:assertDescriptionShape",
+   "type": "calls",
+   "direction": "forward",
+   "description": "assertSafeAgentRunnerDescription calls assertDescriptionShape",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/agent-runners/agent-runner.ts:assertHostAgentRunnerDescription",
+   "target": "function:packages/workbench/src/agent-runners/agent-runner.ts:assertDescriptionShape",
+   "type": "calls",
+   "direction": "forward",
+   "description": "assertHostAgentRunnerDescription calls assertDescriptionShape",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/agent-runners/agent-runner.ts:mediateAgentRunEvents",
+   "target": "function:packages/workbench/src/agent-runners/agent-runner.ts:isBoundedText",
+   "type": "calls",
+   "direction": "forward",
+   "description": "mediateAgentRunEvents calls isBoundedText",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/agent-runners/agent-runner.ts:validateEvent",
+   "target": "function:packages/workbench/src/agent-runners/agent-runner.ts:onlyKeys",
+   "type": "calls",
+   "direction": "forward",
+   "description": "validateEvent calls onlyKeys",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/agent-runners/agent-runner.ts:validateEvent",
+   "target": "function:packages/workbench/src/agent-runners/agent-runner.ts:isBoundedText",
+   "type": "calls",
+   "direction": "forward",
+   "description": "validateEvent calls isBoundedText",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/agent-runners/agent-runner.ts:validateEvent",
+   "target": "function:packages/workbench/src/agent-runners/agent-runner.ts:eventTextBytes",
+   "type": "calls",
+   "direction": "forward",
+   "description": "validateEvent calls eventTextBytes",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/claude-agent-sdk.test.ts",
+   "target": "function:packages/workbench/src/agent-runners/claude-agent-sdk.test.ts:deferred",
+   "type": "contains",
+   "direction": "forward",
+   "description": "claude-agent-sdk.test.ts defines deferred",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/claude-agent-sdk.test.ts",
+   "target": "function:packages/workbench/src/agent-runners/claude-agent-sdk.test.ts:sse",
+   "type": "contains",
+   "direction": "forward",
+   "description": "claude-agent-sdk.test.ts defines sse",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/claude-agent-sdk.ts",
+   "target": "function:packages/workbench/src/agent-runners/claude-agent-sdk.ts:deferred",
+   "type": "contains",
+   "direction": "forward",
+   "description": "claude-agent-sdk.ts defines deferred",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/claude-agent-sdk.ts",
+   "target": "function:packages/workbench/src/agent-runners/claude-agent-sdk.ts:assertEndpoint",
+   "type": "contains",
+   "direction": "forward",
+   "description": "claude-agent-sdk.ts defines assertEndpoint",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/claude-agent-sdk.ts",
+   "target": "function:packages/workbench/src/agent-runners/claude-agent-sdk.ts:fieldSchema",
+   "type": "contains",
+   "direction": "forward",
+   "description": "claude-agent-sdk.ts defines fieldSchema",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/claude-agent-sdk.ts",
+   "target": "function:packages/workbench/src/agent-runners/claude-agent-sdk.ts:toolShape",
+   "type": "contains",
+   "direction": "forward",
+   "description": "claude-agent-sdk.ts defines toolShape",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/claude-agent-sdk.ts",
+   "target": "class:packages/workbench/src/agent-runners/claude-agent-sdk.ts:EventQueue",
+   "type": "contains",
+   "direction": "forward",
+   "description": "claude-agent-sdk.ts defines class EventQueue",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/claude-agent-sdk.ts",
+   "target": "class:packages/workbench/src/agent-runners/claude-agent-sdk.ts:ClaudeAgentSdkRunner",
+   "type": "contains",
+   "direction": "forward",
+   "description": "claude-agent-sdk.ts defines class ClaudeAgentSdkRunner",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/workbench/src/agent-runners/claude-agent-sdk.ts:toolShape",
+   "target": "function:packages/workbench/src/agent-runners/claude-agent-sdk.ts:fieldSchema",
+   "type": "calls",
+   "direction": "forward",
+   "description": "toolShape calls fieldSchema",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/host-cli-workbench.test.ts",
+   "target": "function:packages/workbench/src/agent-runners/host-cli-workbench.test.ts:digestOf",
+   "type": "contains",
+   "direction": "forward",
+   "description": "host-cli-workbench.test.ts defines digestOf",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/host-cli-workbench.test.ts",
+   "target": "function:packages/workbench/src/agent-runners/host-cli-workbench.test.ts:json",
+   "type": "contains",
+   "direction": "forward",
+   "description": "host-cli-workbench.test.ts defines json",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/host-cli-workbench.test.ts",
+   "target": "function:packages/workbench/src/agent-runners/host-cli-workbench.test.ts:fixture",
+   "type": "contains",
+   "direction": "forward",
+   "description": "host-cli-workbench.test.ts defines fixture",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/host-cli-workbench.test.ts",
+   "target": "function:packages/workbench/src/agent-runners/host-cli-workbench.test.ts:successHost",
+   "type": "contains",
+   "direction": "forward",
+   "description": "host-cli-workbench.test.ts defines successHost",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/host-cli-workbench.test.ts",
+   "target": "function:packages/workbench/src/agent-runners/host-cli-workbench.test.ts:ledgerBodies",
+   "type": "contains",
+   "direction": "forward",
+   "description": "host-cli-workbench.test.ts defines ledgerBodies",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/host-cli.test.ts",
+   "target": "function:packages/workbench/src/agent-runners/host-cli.test.ts:fixture",
+   "type": "contains",
+   "direction": "forward",
+   "description": "host-cli.test.ts defines fixture",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/host-cli.test.ts",
+   "target": "function:packages/workbench/src/agent-runners/host-cli.test.ts:runnerFor",
+   "type": "contains",
+   "direction": "forward",
+   "description": "host-cli.test.ts defines runnerFor",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/host-cli.test.ts",
+   "target": "function:packages/workbench/src/agent-runners/host-cli.test.ts:collect",
+   "type": "contains",
+   "direction": "forward",
+   "description": "host-cli.test.ts defines collect",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/host-cli.test.ts",
+   "target": "function:packages/workbench/src/agent-runners/host-cli.test.ts:terminal",
+   "type": "contains",
+   "direction": "forward",
+   "description": "host-cli.test.ts defines terminal",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/host-cli.test.ts",
+   "target": "function:packages/workbench/src/agent-runners/host-cli.test.ts:json",
+   "type": "contains",
+   "direction": "forward",
+   "description": "host-cli.test.ts defines json",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/host-cli.test.ts",
+   "target": "function:packages/workbench/src/agent-runners/host-cli.test.ts:runWith",
+   "type": "contains",
+   "direction": "forward",
+   "description": "host-cli.test.ts defines runWith",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/workbench/src/agent-runners/host-cli.test.ts:runWith",
+   "target": "function:packages/workbench/src/agent-runners/host-cli.test.ts:runnerFor",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runWith calls runnerFor",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/agent-runners/host-cli.test.ts:runWith",
+   "target": "function:packages/workbench/src/agent-runners/host-cli.test.ts:collect",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runWith calls collect",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/host-cli.ts",
+   "target": "function:packages/workbench/src/agent-runners/host-cli.ts:hostCliEnvironment",
+   "type": "contains",
+   "direction": "forward",
+   "description": "host-cli.ts defines hostCliEnvironment",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/host-cli.ts",
+   "target": "function:packages/workbench/src/agent-runners/host-cli.ts:hostCliEnvironment",
+   "type": "exports",
+   "direction": "forward",
+   "description": "host-cli.ts exports hostCliEnvironment",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/host-cli.ts",
+   "target": "function:packages/workbench/src/agent-runners/host-cli.ts:redactHostCliText",
+   "type": "contains",
+   "direction": "forward",
+   "description": "host-cli.ts defines redactHostCliText",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/host-cli.ts",
+   "target": "function:packages/workbench/src/agent-runners/host-cli.ts:redactHostCliText",
+   "type": "exports",
+   "direction": "forward",
+   "description": "host-cli.ts exports redactHostCliText",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/host-cli.ts",
+   "target": "function:packages/workbench/src/agent-runners/host-cli.ts:safeEventType",
+   "type": "contains",
+   "direction": "forward",
+   "description": "host-cli.ts defines safeEventType",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/host-cli.ts",
+   "target": "function:packages/workbench/src/agent-runners/host-cli.ts:isBareBinaryName",
+   "type": "contains",
+   "direction": "forward",
+   "description": "host-cli.ts defines isBareBinaryName",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/host-cli.ts",
+   "target": "function:packages/workbench/src/agent-runners/host-cli.ts:hostCliArguments",
+   "type": "contains",
+   "direction": "forward",
+   "description": "host-cli.ts defines hostCliArguments",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/host-cli.ts",
+   "target": "function:packages/workbench/src/agent-runners/host-cli.ts:hostCliArguments",
+   "type": "exports",
+   "direction": "forward",
+   "description": "host-cli.ts exports hostCliArguments",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/host-cli.ts",
+   "target": "function:packages/workbench/src/agent-runners/host-cli.ts:record",
+   "type": "contains",
+   "direction": "forward",
+   "description": "host-cli.ts defines record",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/host-cli.ts",
+   "target": "function:packages/workbench/src/agent-runners/host-cli.ts:textBlocks",
+   "type": "contains",
+   "direction": "forward",
+   "description": "host-cli.ts defines textBlocks",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/host-cli.ts",
+   "target": "function:packages/workbench/src/agent-runners/host-cli.ts:parseHostCliLine",
+   "type": "contains",
+   "direction": "forward",
+   "description": "host-cli.ts defines parseHostCliLine",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/host-cli.ts",
+   "target": "function:packages/workbench/src/agent-runners/host-cli.ts:parseHostCliLine",
+   "type": "exports",
+   "direction": "forward",
+   "description": "host-cli.ts exports parseHostCliLine",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/host-cli.ts",
+   "target": "function:packages/workbench/src/agent-runners/host-cli.ts:runHostProcess",
+   "type": "contains",
+   "direction": "forward",
+   "description": "host-cli.ts defines runHostProcess",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/host-cli.ts",
+   "target": "function:packages/workbench/src/agent-runners/host-cli.ts:resolveHostBinary",
+   "type": "contains",
+   "direction": "forward",
+   "description": "host-cli.ts defines resolveHostBinary",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/host-cli.ts",
+   "target": "function:packages/workbench/src/agent-runners/host-cli.ts:resolveHostBinary",
+   "type": "exports",
+   "direction": "forward",
+   "description": "host-cli.ts exports resolveHostBinary",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/host-cli.ts",
+   "target": "function:packages/workbench/src/agent-runners/host-cli.ts:resetHostCliProbeCache",
+   "type": "contains",
+   "direction": "forward",
+   "description": "host-cli.ts defines resetHostCliProbeCache",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/host-cli.ts",
+   "target": "function:packages/workbench/src/agent-runners/host-cli.ts:resetHostCliProbeCache",
+   "type": "exports",
+   "direction": "forward",
+   "description": "host-cli.ts exports resetHostCliProbeCache",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/host-cli.ts",
+   "target": "function:packages/workbench/src/agent-runners/host-cli.ts:collectProbeLines",
+   "type": "contains",
+   "direction": "forward",
+   "description": "host-cli.ts defines collectProbeLines",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/host-cli.ts",
+   "target": "function:packages/workbench/src/agent-runners/host-cli.ts:failedProbe",
+   "type": "contains",
+   "direction": "forward",
+   "description": "host-cli.ts defines failedProbe",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/host-cli.ts",
+   "target": "function:packages/workbench/src/agent-runners/host-cli.ts:probePrimeAgent",
+   "type": "contains",
+   "direction": "forward",
+   "description": "host-cli.ts defines probePrimeAgent",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/host-cli.ts",
+   "target": "function:packages/workbench/src/agent-runners/host-cli.ts:probeClaude",
+   "type": "contains",
+   "direction": "forward",
+   "description": "host-cli.ts defines probeClaude",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/host-cli.ts",
+   "target": "function:packages/workbench/src/agent-runners/host-cli.ts:probeHostCli",
+   "type": "contains",
+   "direction": "forward",
+   "description": "host-cli.ts defines probeHostCli",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/host-cli.ts",
+   "target": "function:packages/workbench/src/agent-runners/host-cli.ts:probeHostCli",
+   "type": "exports",
+   "direction": "forward",
+   "description": "host-cli.ts exports probeHostCli",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/host-cli.ts",
+   "target": "function:packages/workbench/src/agent-runners/host-cli.ts:deferred",
+   "type": "contains",
+   "direction": "forward",
+   "description": "host-cli.ts defines deferred",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/host-cli.ts",
+   "target": "function:packages/workbench/src/agent-runners/host-cli.ts:truncateText",
+   "type": "contains",
+   "direction": "forward",
+   "description": "host-cli.ts defines truncateText",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/host-cli.ts",
+   "target": "function:packages/workbench/src/agent-runners/host-cli.ts:safeToolName",
+   "type": "contains",
+   "direction": "forward",
+   "description": "host-cli.ts defines safeToolName",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/host-cli.ts",
+   "target": "function:packages/workbench/src/agent-runners/host-cli.ts:hostRunMetrics",
+   "type": "contains",
+   "direction": "forward",
+   "description": "host-cli.ts defines hostRunMetrics",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/host-cli.ts",
+   "target": "function:packages/workbench/src/agent-runners/host-cli.ts:hostRunMetrics",
+   "type": "exports",
+   "direction": "forward",
+   "description": "host-cli.ts exports hostRunMetrics",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/host-cli.ts",
+   "target": "class:packages/workbench/src/agent-runners/host-cli.ts:EventQueue",
+   "type": "contains",
+   "direction": "forward",
+   "description": "host-cli.ts defines class EventQueue",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/host-cli.ts",
+   "target": "class:packages/workbench/src/agent-runners/host-cli.ts:HostCliRunner",
+   "type": "contains",
+   "direction": "forward",
+   "description": "host-cli.ts defines class HostCliRunner",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/workbench/src/agent-runners/host-cli.ts:safeEventType",
+   "target": "function:packages/workbench/src/agent-runners/host-cli.ts:redactHostCliText",
+   "type": "calls",
+   "direction": "forward",
+   "description": "safeEventType calls redactHostCliText",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/agent-runners/host-cli.ts:textBlocks",
+   "target": "function:packages/workbench/src/agent-runners/host-cli.ts:record",
+   "type": "calls",
+   "direction": "forward",
+   "description": "textBlocks calls record",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/agent-runners/host-cli.ts:parseHostCliLine",
+   "target": "function:packages/workbench/src/agent-runners/host-cli.ts:record",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parseHostCliLine calls record",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/agent-runners/host-cli.ts:parseHostCliLine",
+   "target": "function:packages/workbench/src/agent-runners/host-cli.ts:textBlocks",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parseHostCliLine calls textBlocks",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/agent-runners/host-cli.ts:parseHostCliLine",
+   "target": "function:packages/workbench/src/agent-runners/host-cli.ts:redactHostCliText",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parseHostCliLine calls redactHostCliText",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/agent-runners/host-cli.ts:parseHostCliLine",
+   "target": "function:packages/workbench/src/agent-runners/host-cli.ts:safeEventType",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parseHostCliLine calls safeEventType",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/agent-runners/host-cli.ts:collectProbeLines",
+   "target": "function:packages/workbench/src/agent-runners/host-cli.ts:runHostProcess",
+   "type": "calls",
+   "direction": "forward",
+   "description": "collectProbeLines calls runHostProcess",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/agent-runners/host-cli.ts:probePrimeAgent",
+   "target": "function:packages/workbench/src/agent-runners/host-cli.ts:collectProbeLines",
+   "type": "calls",
+   "direction": "forward",
+   "description": "probePrimeAgent calls collectProbeLines",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/agent-runners/host-cli.ts:probePrimeAgent",
+   "target": "function:packages/workbench/src/agent-runners/host-cli.ts:failedProbe",
+   "type": "calls",
+   "direction": "forward",
+   "description": "probePrimeAgent calls failedProbe",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/agent-runners/host-cli.ts:probeClaude",
+   "target": "function:packages/workbench/src/agent-runners/host-cli.ts:collectProbeLines",
+   "type": "calls",
+   "direction": "forward",
+   "description": "probeClaude calls collectProbeLines",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/agent-runners/host-cli.ts:probeClaude",
+   "target": "function:packages/workbench/src/agent-runners/host-cli.ts:failedProbe",
+   "type": "calls",
+   "direction": "forward",
+   "description": "probeClaude calls failedProbe",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/agent-runners/host-cli.ts:probeClaude",
+   "target": "function:packages/workbench/src/agent-runners/host-cli.ts:record",
+   "type": "calls",
+   "direction": "forward",
+   "description": "probeClaude calls record",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/agent-runners/host-cli.ts:probeHostCli",
+   "target": "function:packages/workbench/src/agent-runners/host-cli.ts:failedProbe",
+   "type": "calls",
+   "direction": "forward",
+   "description": "probeHostCli calls failedProbe",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/agent-runners/host-cli.ts:probeHostCli",
+   "target": "function:packages/workbench/src/agent-runners/host-cli.ts:hostCliEnvironment",
+   "type": "calls",
+   "direction": "forward",
+   "description": "probeHostCli calls hostCliEnvironment",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/agent-runners/host-cli.ts:probeHostCli",
+   "target": "function:packages/workbench/src/agent-runners/host-cli.ts:resolveHostBinary",
+   "type": "calls",
+   "direction": "forward",
+   "description": "probeHostCli calls resolveHostBinary",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/agent-runners/host-cli.ts:probeHostCli",
+   "target": "function:packages/workbench/src/agent-runners/host-cli.ts:probePrimeAgent",
+   "type": "calls",
+   "direction": "forward",
+   "description": "probeHostCli calls probePrimeAgent",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/agent-runners/host-cli.ts:probeHostCli",
+   "target": "function:packages/workbench/src/agent-runners/host-cli.ts:probeClaude",
+   "type": "calls",
+   "direction": "forward",
+   "description": "probeHostCli calls probeClaude",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/agent-runners/host-cli.ts:safeToolName",
+   "target": "function:packages/workbench/src/agent-runners/host-cli.ts:redactHostCliText",
+   "type": "calls",
+   "direction": "forward",
+   "description": "safeToolName calls redactHostCliText",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/workbench/src/agents.test.ts",
+   "target": "function:packages/workbench/src/agents.test.ts:fixture",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agents.test.ts defines fixture",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agents.test.ts",
+   "target": "function:packages/workbench/src/agents.test.ts:models",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agents.test.ts defines models",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agents.test.ts",
+   "target": "function:packages/workbench/src/agents.test.ts:response",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agents.test.ts defines response",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agents.test.ts",
+   "target": "function:packages/workbench/src/agents.test.ts:hookScript",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agents.test.ts defines hookScript",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agents.test.ts",
+   "target": "function:packages/workbench/src/agents.test.ts:marker",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agents.test.ts defines marker",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agents.test.ts",
+   "target": "function:packages/workbench/src/agents.test.ts:wasRun",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agents.test.ts defines wasRun",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agents.ts",
+   "target": "function:packages/workbench/src/agents.ts:validateAgentProfile",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agents.ts defines validateAgentProfile",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agents.ts",
+   "target": "function:packages/workbench/src/agents.ts:validateAgentProfile",
+   "type": "exports",
+   "direction": "forward",
+   "description": "agents.ts exports validateAgentProfile",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/agents.ts",
+   "target": "function:packages/workbench/src/agents.ts:validateHook",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agents.ts defines validateHook",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agents.ts",
+   "target": "function:packages/workbench/src/agents.ts:validateHook",
+   "type": "exports",
+   "direction": "forward",
+   "description": "agents.ts exports validateHook",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/agents.ts",
+   "target": "function:packages/workbench/src/agents.ts:hookSucceeded",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agents.ts defines hookSucceeded",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agents.ts",
+   "target": "function:packages/workbench/src/agents.ts:hookSucceeded",
+   "type": "exports",
+   "direction": "forward",
+   "description": "agents.ts exports hookSucceeded",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/agents.ts",
+   "target": "function:packages/workbench/src/agents.ts:hookArgv",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agents.ts defines hookArgv",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agents.ts",
+   "target": "function:packages/workbench/src/agents.ts:hookArgv",
+   "type": "exports",
+   "direction": "forward",
+   "description": "agents.ts exports hookArgv",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/agents.ts",
+   "target": "function:packages/workbench/src/agents.ts:runHook",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agents.ts defines runHook",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agents.ts",
+   "target": "function:packages/workbench/src/agents.ts:runHook",
+   "type": "exports",
+   "direction": "forward",
+   "description": "agents.ts exports runHook",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/agents.ts",
+   "target": "function:packages/workbench/src/agents.ts:isRecord",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agents.ts defines isRecord",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agents.ts",
+   "target": "function:packages/workbench/src/agents.ts:validateLocalHarnessTask",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agents.ts defines validateLocalHarnessTask",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/agents.ts",
+   "target": "function:packages/workbench/src/agents.ts:validateLocalHarnessTask",
+   "type": "exports",
+   "direction": "forward",
+   "description": "agents.ts exports validateLocalHarnessTask",
+   "weight": 0.7
+  },
+  {
+   "source": "function:packages/workbench/src/agents.ts:runHook",
+   "target": "function:packages/workbench/src/agents.ts:hookArgv",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runHook calls hookArgv",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/agents.ts:validateLocalHarnessTask",
+   "target": "function:packages/workbench/src/agents.ts:isRecord",
+   "type": "calls",
+   "direction": "forward",
+   "description": "validateLocalHarnessTask calls isRecord",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/workbench/src/attest.test.ts",
+   "target": "function:packages/workbench/src/attest.test.ts:frame",
+   "type": "contains",
+   "direction": "forward",
+   "description": "attest.test.ts defines frame",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/attest.test.ts",
+   "target": "function:packages/workbench/src/attest.test.ts:stream",
+   "type": "contains",
+   "direction": "forward",
+   "description": "attest.test.ts defines stream",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/attest.test.ts",
+   "target": "function:packages/workbench/src/attest.test.ts:advertisedWriteTool",
+   "type": "contains",
+   "direction": "forward",
+   "description": "attest.test.ts defines advertisedWriteTool",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/attest.test.ts",
+   "target": "function:packages/workbench/src/attest.test.ts:answer",
+   "type": "contains",
+   "direction": "forward",
+   "description": "attest.test.ts defines answer",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/attest.test.ts",
+   "target": "function:packages/workbench/src/attest.test.ts:fetcher",
+   "type": "contains",
+   "direction": "forward",
+   "description": "attest.test.ts defines fetcher",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/attest.test.ts",
+   "target": "function:packages/workbench/src/attest.test.ts:internalsOf",
+   "type": "contains",
+   "direction": "forward",
+   "description": "attest.test.ts defines internalsOf",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/delegate-tool.test.ts",
+   "target": "function:packages/workbench/src/delegate-tool.test.ts:models",
+   "type": "contains",
+   "direction": "forward",
+   "description": "delegate-tool.test.ts defines models",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/delegate-tool.test.ts",
+   "target": "function:packages/workbench/src/delegate-tool.test.ts:done",
+   "type": "contains",
+   "direction": "forward",
+   "description": "delegate-tool.test.ts defines done",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/delegate-tool.test.ts",
+   "target": "function:packages/workbench/src/delegate-tool.test.ts:requestedTool",
+   "type": "contains",
+   "direction": "forward",
+   "description": "delegate-tool.test.ts defines requestedTool",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/delegate-tool.test.ts",
+   "target": "function:packages/workbench/src/delegate-tool.test.ts:call",
+   "type": "contains",
+   "direction": "forward",
+   "description": "delegate-tool.test.ts defines call",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/delegate-tool.test.ts",
+   "target": "function:packages/workbench/src/delegate-tool.test.ts:waitForHold",
+   "type": "contains",
+   "direction": "forward",
+   "description": "delegate-tool.test.ts defines waitForHold",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/delegate-tools.test.ts",
+   "target": "function:packages/workbench/src/delegate-tools.test.ts:refuses",
+   "type": "contains",
+   "direction": "forward",
+   "description": "delegate-tools.test.ts defines refuses",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/delegate-tools.ts",
+   "target": "function:packages/workbench/src/delegate-tools.ts:parseDelegateCall",
+   "type": "contains",
+   "direction": "forward",
+   "description": "delegate-tools.ts defines parseDelegateCall",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/delegate-tools.ts",
+   "target": "function:packages/workbench/src/delegate-tools.ts:parseDelegateCall",
+   "type": "exports",
+   "direction": "forward",
+   "description": "delegate-tools.ts exports parseDelegateCall",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/delegate-tools.ts",
+   "target": "function:packages/workbench/src/delegate-tools.ts:parseSubagentResultCall",
+   "type": "contains",
+   "direction": "forward",
+   "description": "delegate-tools.ts defines parseSubagentResultCall",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/delegate-tools.ts",
+   "target": "function:packages/workbench/src/delegate-tools.ts:parseSubagentResultCall",
+   "type": "exports",
+   "direction": "forward",
+   "description": "delegate-tools.ts exports parseSubagentResultCall",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/delegate-tools.ts",
+   "target": "function:packages/workbench/src/delegate-tools.ts:untrustedSubagentResultText",
+   "type": "contains",
+   "direction": "forward",
+   "description": "delegate-tools.ts defines untrustedSubagentResultText",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/delegate-tools.ts",
+   "target": "function:packages/workbench/src/delegate-tools.ts:untrustedSubagentResultText",
+   "type": "exports",
+   "direction": "forward",
+   "description": "delegate-tools.ts exports untrustedSubagentResultText",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/delegate-tools.ts",
+   "target": "function:packages/workbench/src/delegate-tools.ts:fields",
+   "type": "contains",
+   "direction": "forward",
+   "description": "delegate-tools.ts defines fields",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/delegate-tools.ts",
+   "target": "function:packages/workbench/src/delegate-tools.ts:optionalIdentifier",
+   "type": "contains",
+   "direction": "forward",
+   "description": "delegate-tools.ts defines optionalIdentifier",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/workbench/src/delegate-tools.ts:parseDelegateCall",
+   "target": "function:packages/workbench/src/delegate-tools.ts:fields",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parseDelegateCall calls fields",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/delegate-tools.ts:parseDelegateCall",
+   "target": "function:packages/workbench/src/delegate-tools.ts:optionalIdentifier",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parseDelegateCall calls optionalIdentifier",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/delegate-tools.ts:parseSubagentResultCall",
+   "target": "function:packages/workbench/src/delegate-tools.ts:fields",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parseSubagentResultCall calls fields",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/workbench/src/env-compat.test.ts",
+   "target": "function:packages/workbench/src/env-compat.test.ts:withRoot",
+   "type": "contains",
+   "direction": "forward",
+   "description": "env-compat.test.ts defines withRoot",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/env-compat.test.ts",
+   "target": "function:packages/workbench/src/env-compat.test.ts:exists",
+   "type": "contains",
+   "direction": "forward",
+   "description": "env-compat.test.ts defines exists",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/gui.ts",
+   "target": "function:packages/workbench/src/gui.ts:page",
+   "type": "contains",
+   "direction": "forward",
+   "description": "gui.ts defines page",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/gui.ts",
+   "target": "function:packages/workbench/src/gui.ts:page",
+   "type": "exports",
+   "direction": "forward",
+   "description": "gui.ts exports page",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/gui.ts",
+   "target": "function:packages/workbench/src/gui.ts:sessionPatch",
+   "type": "contains",
+   "direction": "forward",
+   "description": "gui.ts defines sessionPatch",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/gui.ts",
+   "target": "function:packages/workbench/src/gui.ts:sessionPatch",
+   "type": "exports",
+   "direction": "forward",
+   "description": "gui.ts exports sessionPatch",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/gui.ts",
+   "target": "function:packages/workbench/src/gui.ts:preferencePatch",
+   "type": "contains",
+   "direction": "forward",
+   "description": "gui.ts defines preferencePatch",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/gui.ts",
+   "target": "function:packages/workbench/src/gui.ts:preferencePatch",
+   "type": "exports",
+   "direction": "forward",
+   "description": "gui.ts exports preferencePatch",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/gui.ts",
+   "target": "function:packages/workbench/src/gui.ts:documentView",
+   "type": "contains",
+   "direction": "forward",
+   "description": "gui.ts defines documentView",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/gui.ts",
+   "target": "function:packages/workbench/src/gui.ts:documentView",
+   "type": "exports",
+   "direction": "forward",
+   "description": "gui.ts exports documentView",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/gui.ts",
+   "target": "function:packages/workbench/src/gui.ts:filterRows",
+   "type": "contains",
+   "direction": "forward",
+   "description": "gui.ts defines filterRows",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/gui.ts",
+   "target": "function:packages/workbench/src/gui.ts:filterRows",
+   "type": "exports",
+   "direction": "forward",
+   "description": "gui.ts exports filterRows",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/gui.ts",
+   "target": "function:packages/workbench/src/gui.ts:serverPermissionMode",
+   "type": "contains",
+   "direction": "forward",
+   "description": "gui.ts defines serverPermissionMode",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/gui.ts",
+   "target": "function:packages/workbench/src/gui.ts:serverPermissionMode",
+   "type": "exports",
+   "direction": "forward",
+   "description": "gui.ts exports serverPermissionMode",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/gui.ts",
+   "target": "function:packages/workbench/src/gui.ts:capabilities",
+   "type": "contains",
+   "direction": "forward",
+   "description": "gui.ts defines capabilities",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/gui.ts",
+   "target": "function:packages/workbench/src/gui.ts:capabilities",
+   "type": "exports",
+   "direction": "forward",
+   "description": "gui.ts exports capabilities",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/gui.ts",
+   "target": "function:packages/workbench/src/gui.ts:deriveRunState",
+   "type": "contains",
+   "direction": "forward",
+   "description": "gui.ts defines deriveRunState",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/gui.ts",
+   "target": "function:packages/workbench/src/gui.ts:deriveRunState",
+   "type": "exports",
+   "direction": "forward",
+   "description": "gui.ts exports deriveRunState",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/gui.ts",
+   "target": "function:packages/workbench/src/gui.ts:activity",
+   "type": "contains",
+   "direction": "forward",
+   "description": "gui.ts defines activity",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/gui.ts",
+   "target": "function:packages/workbench/src/gui.ts:activity",
+   "type": "exports",
+   "direction": "forward",
+   "description": "gui.ts exports activity",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/gui.ts",
+   "target": "function:packages/workbench/src/gui.ts:providerFailure",
+   "type": "contains",
+   "direction": "forward",
+   "description": "gui.ts defines providerFailure",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/gui.ts",
+   "target": "function:packages/workbench/src/gui.ts:providerFailure",
+   "type": "exports",
+   "direction": "forward",
+   "description": "gui.ts exports providerFailure",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/gui.ts",
+   "target": "function:packages/workbench/src/gui.ts:providerStateFromFailure",
+   "type": "contains",
+   "direction": "forward",
+   "description": "gui.ts defines providerStateFromFailure",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/gui.ts",
+   "target": "function:packages/workbench/src/gui.ts:providerStateFromFailure",
+   "type": "exports",
+   "direction": "forward",
+   "description": "gui.ts exports providerStateFromFailure",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/gui.ts",
+   "target": "function:packages/workbench/src/gui.ts:connectorInput",
+   "type": "contains",
+   "direction": "forward",
+   "description": "gui.ts defines connectorInput",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/gui.ts",
+   "target": "function:packages/workbench/src/gui.ts:connectorInput",
+   "type": "exports",
+   "direction": "forward",
+   "description": "gui.ts exports connectorInput",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/gui.ts",
+   "target": "function:packages/workbench/src/gui.ts:publicConnector",
+   "type": "contains",
+   "direction": "forward",
+   "description": "gui.ts defines publicConnector",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/gui.ts",
+   "target": "function:packages/workbench/src/gui.ts:publicConnector",
+   "type": "exports",
+   "direction": "forward",
+   "description": "gui.ts exports publicConnector",
+   "weight": 0.7
+  },
+  {
+   "source": "function:packages/workbench/src/gui.ts:activity",
+   "target": "function:packages/workbench/src/gui.ts:deriveRunState",
+   "type": "calls",
+   "direction": "forward",
+   "description": "activity calls deriveRunState",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/gui.ts:providerStateFromFailure",
+   "target": "function:packages/workbench/src/gui.ts:providerFailure",
+   "type": "calls",
+   "direction": "forward",
+   "description": "providerStateFromFailure calls providerFailure",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/workbench/src/harness-dispose.test.ts",
+   "target": "function:packages/workbench/src/harness-dispose.test.ts:models",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-dispose.test.ts defines models",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/harness-dispose.test.ts",
+   "target": "function:packages/workbench/src/harness-dispose.test.ts:answer",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-dispose.test.ts defines answer",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/harness-dispose.test.ts",
+   "target": "function:packages/workbench/src/harness-dispose.test.ts:declined",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-dispose.test.ts defines declined",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/harness-dispose.test.ts",
+   "target": "function:packages/workbench/src/harness-dispose.test.ts:lesson",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-dispose.test.ts defines lesson",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/harness-dispose.test.ts",
+   "target": "function:packages/workbench/src/harness-dispose.test.ts:answering",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-dispose.test.ts defines answering",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/harness-dispose.test.ts",
+   "target": "function:packages/workbench/src/harness-dispose.test.ts:seeded",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-dispose.test.ts defines seeded",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/workbench/src/harness-dispose.test.ts:declined",
+   "target": "function:packages/workbench/src/harness-dispose.test.ts:answer",
+   "type": "calls",
+   "direction": "forward",
+   "description": "declined calls answer",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/harness-dispose.test.ts:seeded",
+   "target": "function:packages/workbench/src/harness-dispose.test.ts:lesson",
+   "type": "calls",
+   "direction": "forward",
+   "description": "seeded calls lesson",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/workbench/src/harness-enforcement-boundary.test.ts",
+   "target": "function:packages/workbench/src/harness-enforcement-boundary.test.ts:mcpServer",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-enforcement-boundary.test.ts defines mcpServer",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/harness-enforcement-boundary.test.ts",
+   "target": "function:packages/workbench/src/harness-enforcement-boundary.test.ts:callingProvider",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-enforcement-boundary.test.ts defines callingProvider",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/harness-enforcement-boundary.test.ts",
+   "target": "function:packages/workbench/src/harness-enforcement-boundary.test.ts:overrideProposal",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-enforcement-boundary.test.ts defines overrideProposal",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/harness-enforcement-boundary.test.ts",
+   "target": "function:packages/workbench/src/harness-enforcement-boundary.test.ts:answeringProvider",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-enforcement-boundary.test.ts defines answeringProvider",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/harness-enforcement-boundary.test.ts",
+   "target": "function:packages/workbench/src/harness-enforcement-boundary.test.ts:systemTexts",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-enforcement-boundary.test.ts defines systemTexts",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/harness-enforcement-boundary.test.ts",
+   "target": "function:packages/workbench/src/harness-enforcement-boundary.test.ts:seededSession",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-enforcement-boundary.test.ts defines seededSession",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/harness-enforcement-boundary.test.ts",
+   "target": "function:packages/workbench/src/harness-enforcement-boundary.test.ts:approvedOverride",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-enforcement-boundary.test.ts defines approvedOverride",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/workbench/src/harness-enforcement-boundary.test.ts:approvedOverride",
+   "target": "function:packages/workbench/src/harness-enforcement-boundary.test.ts:overrideProposal",
+   "type": "calls",
+   "direction": "forward",
+   "description": "approvedOverride calls overrideProposal",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/workbench/src/harness-manual-review.test.ts",
+   "target": "function:packages/workbench/src/harness-manual-review.test.ts:models",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-manual-review.test.ts defines models",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/harness-manual-review.test.ts",
+   "target": "function:packages/workbench/src/harness-manual-review.test.ts:answer",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-manual-review.test.ts defines answer",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/harness-manual-review.test.ts",
+   "target": "function:packages/workbench/src/harness-manual-review.test.ts:declined",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-manual-review.test.ts defines declined",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/harness-manual-review.test.ts",
+   "target": "function:packages/workbench/src/harness-manual-review.test.ts:lesson",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-manual-review.test.ts defines lesson",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/harness-manual-review.test.ts",
+   "target": "function:packages/workbench/src/harness-manual-review.test.ts:answering",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-manual-review.test.ts defines answering",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/harness-manual-review.test.ts",
+   "target": "function:packages/workbench/src/harness-manual-review.test.ts:seeded",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-manual-review.test.ts defines seeded",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/harness-manual-review.test.ts",
+   "target": "function:packages/workbench/src/harness-manual-review.test.ts:seedLesson",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-manual-review.test.ts defines seedLesson",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/workbench/src/harness-manual-review.test.ts:declined",
+   "target": "function:packages/workbench/src/harness-manual-review.test.ts:answer",
+   "type": "calls",
+   "direction": "forward",
+   "description": "declined calls answer",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/harness-manual-review.test.ts:seedLesson",
+   "target": "function:packages/workbench/src/harness-manual-review.test.ts:lesson",
+   "type": "calls",
+   "direction": "forward",
+   "description": "seedLesson calls lesson",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/workbench/src/harness-profile-audit.test.ts",
+   "target": "function:packages/workbench/src/harness-profile-audit.test.ts:fetcher",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-profile-audit.test.ts defines fetcher",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/harness-profile-audit.test.ts",
+   "target": "function:packages/workbench/src/harness-profile-audit.test.ts:profileProposal",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-profile-audit.test.ts defines profileProposal",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/harness-proof.test.ts",
+   "target": "function:packages/workbench/src/harness-proof.test.ts:catalogServer",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-proof.test.ts defines catalogServer",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/harness-proof.test.ts",
+   "target": "function:packages/workbench/src/harness-proof.test.ts:calling",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-proof.test.ts defines calling",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/harness-proof.test.ts",
+   "target": "function:packages/workbench/src/harness-proof.test.ts:fixture",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-proof.test.ts defines fixture",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/harness-proof.test.ts",
+   "target": "function:packages/workbench/src/harness-proof.test.ts:bodies",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-proof.test.ts defines bodies",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/harness-proof.test.ts",
+   "target": "function:packages/workbench/src/harness-proof.test.ts:decisionsFor",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-proof.test.ts defines decisionsFor",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/workbench/src/harness-proof.test.ts:fixture",
+   "target": "function:packages/workbench/src/harness-proof.test.ts:catalogServer",
+   "type": "calls",
+   "direction": "forward",
+   "description": "fixture calls catalogServer",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/harness-proof.test.ts:fixture",
+   "target": "function:packages/workbench/src/harness-proof.test.ts:calling",
+   "type": "calls",
+   "direction": "forward",
+   "description": "fixture calls calling",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/ledger/src/env-compat.test.ts",
+   "target": "file:packages/ledger/src/env-compat.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "env-compat.test.ts imports env-compat.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/agent-identity.test.ts",
+   "target": "file:packages/workbench/src/agent-identity.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "agent-identity.test.ts imports agent-identity.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/agent-identity.test.ts",
+   "target": "file:packages/workbench/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "agent-identity.test.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/agent-messages-tool.test.ts",
+   "target": "file:packages/workbench/src/agent-messages.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "agent-messages-tool.test.ts imports agent-messages.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/agent-messages-tool.test.ts",
+   "target": "file:packages/workbench/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "agent-messages-tool.test.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/agent-messages-tool.test.ts",
+   "target": "file:packages/workbench/src/test-fixture.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "agent-messages-tool.test.ts imports test-fixture.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/agent-messages-tool.test.ts",
+   "target": "file:packages/workbench/src/workspace.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "agent-messages-tool.test.ts imports workspace.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/agent-messages.test.ts",
+   "target": "file:packages/workbench/src/agent-messages.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "agent-messages.test.ts imports agent-messages.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/agent-runner-workbench.test.ts",
+   "target": "file:packages/workbench/src/agent-runners/agent-runner.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "agent-runner-workbench.test.ts imports agent-runner.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/agent-runner-workbench.test.ts",
+   "target": "file:packages/workbench/src/project-sandbox.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "agent-runner-workbench.test.ts imports project-sandbox.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/agent-runner-workbench.test.ts",
+   "target": "file:packages/workbench/src/project-workspace.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "agent-runner-workbench.test.ts imports project-workspace.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/agent-runner-workbench.test.ts",
+   "target": "file:packages/workbench/src/test-fixture.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "agent-runner-workbench.test.ts imports test-fixture.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/agent-runner.test.ts",
+   "target": "file:packages/workbench/src/agent-runners/agent-runner.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "agent-runner.test.ts imports agent-runner.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/claude-agent-sdk.test.ts",
+   "target": "file:packages/workbench/src/agent-runners/agent-runner.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "claude-agent-sdk.test.ts imports agent-runner.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/claude-agent-sdk.test.ts",
+   "target": "file:packages/workbench/src/project-workspace.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "claude-agent-sdk.test.ts imports project-workspace.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/claude-agent-sdk.ts",
+   "target": "file:packages/workbench/src/agent-runners/agent-runner.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "claude-agent-sdk.ts imports agent-runner.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/host-cli-workbench.test.ts",
+   "target": "file:packages/workbench/src/agent-runners/agent-runner.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "host-cli-workbench.test.ts imports agent-runner.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/host-cli-workbench.test.ts",
+   "target": "file:packages/workbench/src/agent-runners/host-cli.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "host-cli-workbench.test.ts imports host-cli.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/host-cli-workbench.test.ts",
+   "target": "file:packages/workbench/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "host-cli-workbench.test.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/host-cli-workbench.test.ts",
+   "target": "file:packages/workbench/src/test-fixture.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "host-cli-workbench.test.ts imports test-fixture.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/host-cli.test.ts",
+   "target": "file:packages/workbench/src/agent-runners/agent-runner.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "host-cli.test.ts imports agent-runner.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/host-cli.test.ts",
+   "target": "file:packages/workbench/src/agent-runners/host-cli.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "host-cli.test.ts imports host-cli.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/agent-runners/host-cli.ts",
+   "target": "file:packages/workbench/src/agent-runners/agent-runner.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "host-cli.ts imports agent-runner.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/agents.test.ts",
+   "target": "file:packages/workbench/src/agents.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "agents.test.ts imports agents.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/agents.test.ts",
+   "target": "file:packages/workbench/src/provider.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "agents.test.ts imports provider.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/agents.test.ts",
+   "target": "file:packages/workbench/src/test-fixture.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "agents.test.ts imports test-fixture.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/attest.test.ts",
+   "target": "file:packages/ledger/src/verify.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "attest.test.ts imports verify.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/attest.test.ts",
+   "target": "file:packages/workbench/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "attest.test.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/attest.test.ts",
+   "target": "file:packages/workbench/src/test-fixture.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "attest.test.ts imports test-fixture.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/attest.test.ts",
+   "target": "file:packages/workbench/src/workspace.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "attest.test.ts imports workspace.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/delegate-tool.test.ts",
+   "target": "file:packages/workbench/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "delegate-tool.test.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/delegate-tool.test.ts",
+   "target": "file:packages/workbench/src/test-fixture.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "delegate-tool.test.ts imports test-fixture.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/delegate-tools.test.ts",
+   "target": "file:packages/workbench/src/delegate-tools.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "delegate-tools.test.ts imports delegate-tools.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/delegate-tools.ts",
+   "target": "file:packages/workbench/src/subagents.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "delegate-tools.ts imports subagents.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/env-compat.test.ts",
+   "target": "file:packages/workbench/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "env-compat.test.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/gui-harness-settings.test.ts",
+   "target": "file:packages/workbench/src/gui.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "gui-harness-settings.test.ts imports gui.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/gui-harness-settings.test.ts",
+   "target": "file:packages/workbench/src/harness-settings.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "gui-harness-settings.test.ts imports harness-settings.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/gui.test.ts",
+   "target": "file:packages/workbench/src/gui.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "gui.test.ts imports gui.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/gui.test.ts",
+   "target": "file:packages/workbench/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "gui.test.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/gui.test.ts",
+   "target": "file:packages/workbench/src/test-fixture.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "gui.test.ts imports test-fixture.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/gui.ts",
+   "target": "file:packages/workbench/src/harness-settings.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "gui.ts imports harness-settings.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/gui.ts",
+   "target": "file:packages/workbench/src/mcp.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "gui.ts imports mcp.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/gui.ts",
+   "target": "file:packages/workbench/src/workspace.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "gui.ts imports workspace.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/harness-dispose.test.ts",
+   "target": "file:packages/workbench/src/refine-pass.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "harness-dispose.test.ts imports refine-pass.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/harness-dispose.test.ts",
+   "target": "file:packages/workbench/src/test-fixture.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "harness-dispose.test.ts imports test-fixture.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/harness-enforcement-boundary.test.ts",
+   "target": "file:packages/workbench/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "harness-enforcement-boundary.test.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/harness-enforcement-boundary.test.ts",
+   "target": "file:packages/workbench/src/refine-pass.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "harness-enforcement-boundary.test.ts imports refine-pass.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/harness-enforcement-boundary.test.ts",
+   "target": "file:packages/workbench/src/test-fixture.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "harness-enforcement-boundary.test.ts imports test-fixture.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/harness-manual-review.test.ts",
+   "target": "file:packages/workbench/src/refine-pass.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "harness-manual-review.test.ts imports refine-pass.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/harness-manual-review.test.ts",
+   "target": "file:packages/workbench/src/test-fixture.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "harness-manual-review.test.ts imports test-fixture.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/harness-profile-audit.test.ts",
+   "target": "file:packages/cli/src/harness.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "harness-profile-audit.test.ts imports harness.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/harness-profile-audit.test.ts",
+   "target": "file:packages/workbench/src/agents.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "harness-profile-audit.test.ts imports agents.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/harness-profile-audit.test.ts",
+   "target": "file:packages/workbench/src/refine-pass.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "harness-profile-audit.test.ts imports refine-pass.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/harness-profile-audit.test.ts",
+   "target": "file:packages/workbench/src/test-fixture.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "harness-profile-audit.test.ts imports test-fixture.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/harness-proof.test.ts",
+   "target": "file:packages/ledger/src/sign.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "harness-proof.test.ts imports sign.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/harness-proof.test.ts",
+   "target": "file:packages/ledger/src/store.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "harness-proof.test.ts imports store.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/harness-proof.test.ts",
+   "target": "file:packages/workbench/src/harness-scores.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "harness-proof.test.ts imports harness-scores.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/harness-proof.test.ts",
+   "target": "file:packages/workbench/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "harness-proof.test.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/harness-proof.test.ts",
+   "target": "file:packages/workbench/src/learned-rules.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "harness-proof.test.ts imports learned-rules.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/harness-proof.test.ts",
+   "target": "file:packages/workbench/src/refine-pass.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "harness-proof.test.ts imports refine-pass.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/harness-proof.test.ts",
+   "target": "file:packages/workbench/src/test-fixture.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "harness-proof.test.ts imports test-fixture.ts",
+   "weight": 0.8
+  }
+ ]
+}

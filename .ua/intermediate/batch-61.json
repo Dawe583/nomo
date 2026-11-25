@@ -1,0 +1,41 @@
+{
+ "nodes": [
+  {
+   "id": "file:packages/cli/README.md",
+   "type": "document",
+   "name": "README.md",
+   "filePath": "packages/cli/README.md",
+   "summary": "README.md \u2014 markdown document, 79 lines, 4 sections: @nomo/cli, Runnable surfaces, Boundaries, Public TypeScript surface.",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/package.json",
+   "type": "config",
+   "name": "package.json",
+   "filePath": "packages/cli/package.json",
+   "summary": "package.json \u2014 json config, 53 lines.",
+   "tags": [
+    "json",
+    "config"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/tsconfig.json",
+   "type": "config",
+   "name": "tsconfig.json",
+   "filePath": "packages/cli/tsconfig.json",
+   "summary": "tsconfig.json \u2014 json config, 19 lines.",
+   "tags": [
+    "json",
+    "config"
+   ],
+   "complexity": "simple"
+  }
+ ],
+ "edges": []
+}

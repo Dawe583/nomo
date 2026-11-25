@@ -1,0 +1,1020 @@
+{
+ "nodes": [
+  {
+   "id": "file:gui-web/views/artifacts.js",
+   "type": "file",
+   "name": "artifacts.js",
+   "filePath": "gui-web/views/artifacts.js",
+   "summary": "artifacts.js \u2014 javascript code, 173 lines, 0 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:gui-web/views/audit.js",
+   "type": "file",
+   "name": "audit.js",
+   "filePath": "gui-web/views/audit.js",
+   "summary": "audit.js \u2014 javascript code, 64 lines, 0 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:gui-web/views/chat.js",
+   "type": "file",
+   "name": "chat.js",
+   "filePath": "gui-web/views/chat.js",
+   "summary": "chat.js \u2014 javascript code, 769 lines, 0 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "file:gui-web/views/cli.js",
+   "type": "file",
+   "name": "cli.js",
+   "filePath": "gui-web/views/cli.js",
+   "summary": "cli.js \u2014 javascript code, 54 lines, 0 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:gui-web/views/connectors.js",
+   "type": "file",
+   "name": "connectors.js",
+   "filePath": "gui-web/views/connectors.js",
+   "summary": "connectors.js \u2014 javascript code, 30 lines, 0 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:gui-web/views/facts.js",
+   "type": "file",
+   "name": "facts.js",
+   "filePath": "gui-web/views/facts.js",
+   "summary": "facts.js \u2014 javascript code, 40 lines, 0 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:gui-web/views/github.js",
+   "type": "file",
+   "name": "github.js",
+   "filePath": "gui-web/views/github.js",
+   "summary": "github.js \u2014 javascript code, 93 lines, 0 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:gui-web/views/holds.js",
+   "type": "file",
+   "name": "holds.js",
+   "filePath": "gui-web/views/holds.js",
+   "summary": "holds.js \u2014 javascript code, 176 lines, 0 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:gui-web/views/intercept.js",
+   "type": "file",
+   "name": "intercept.js",
+   "filePath": "gui-web/views/intercept.js",
+   "summary": "intercept.js \u2014 javascript code, 70 lines, 0 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:gui-web/views/ledger.js",
+   "type": "file",
+   "name": "ledger.js",
+   "filePath": "gui-web/views/ledger.js",
+   "summary": "ledger.js \u2014 javascript code, 116 lines, 0 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:gui-web/views/live.js",
+   "type": "file",
+   "name": "live.js",
+   "filePath": "gui-web/views/live.js",
+   "summary": "live.js \u2014 javascript code, 59 lines, 0 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:gui-web/views/models.js",
+   "type": "file",
+   "name": "models.js",
+   "filePath": "gui-web/views/models.js",
+   "summary": "models.js \u2014 javascript code, 65 lines, 0 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:gui-web/views/overview.js",
+   "type": "file",
+   "name": "overview.js",
+   "filePath": "gui-web/views/overview.js",
+   "summary": "overview.js \u2014 javascript code, 93 lines, 0 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:gui-web/views/policy.js",
+   "type": "file",
+   "name": "policy.js",
+   "filePath": "gui-web/views/policy.js",
+   "summary": "policy.js \u2014 javascript code, 35 lines, 0 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:gui-web/views/providers.js",
+   "type": "file",
+   "name": "providers.js",
+   "filePath": "gui-web/views/providers.js",
+   "summary": "providers.js \u2014 javascript code, 80 lines, 0 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:gui-web/views/registry.js",
+   "type": "file",
+   "name": "registry.js",
+   "filePath": "gui-web/views/registry.js",
+   "summary": "registry.js \u2014 javascript code, 42 lines, 0 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:gui-web/views/replay.js",
+   "type": "file",
+   "name": "replay.js",
+   "filePath": "gui-web/views/replay.js",
+   "summary": "replay.js \u2014 javascript code, 64 lines, 0 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:gui-web/views/sessions.js",
+   "type": "file",
+   "name": "sessions.js",
+   "filePath": "gui-web/views/sessions.js",
+   "summary": "sessions.js \u2014 javascript code, 43 lines, 0 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:gui-web/views/settings.js",
+   "type": "file",
+   "name": "settings.js",
+   "filePath": "gui-web/views/settings.js",
+   "summary": "settings.js \u2014 javascript code, 58 lines, 0 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:gui-web/views/shortcuts.js",
+   "type": "file",
+   "name": "shortcuts.js",
+   "filePath": "gui-web/views/shortcuts.js",
+   "summary": "shortcuts.js \u2014 javascript code, 43 lines, 0 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:gui-web/views/taint.js",
+   "type": "file",
+   "name": "taint.js",
+   "filePath": "gui-web/views/taint.js",
+   "summary": "taint.js \u2014 javascript code, 26 lines, 0 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:marketing/teaser/README.md",
+   "type": "document",
+   "name": "README.md",
+   "filePath": "marketing/teaser/README.md",
+   "summary": "README.md \u2014 markdown document, 62 lines, 5 sections: NOMO / Signal Control, Creative treatment, Rebuild, Asset provenance (+1 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:marketing/teaser/finish.py",
+   "type": "file",
+   "name": "finish.py",
+   "filePath": "marketing/teaser/finish.py",
+   "summary": "finish.py \u2014 python code, 225 lines, 9 functions, 0 classes, 9 exports, 0 imports.",
+   "tags": [
+    "python",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:marketing/teaser/finish.py:font",
+   "type": "function",
+   "name": "font",
+   "filePath": "marketing/teaser/finish.py",
+   "lineRange": [
+    27,
+    29
+   ],
+   "summary": "font(size, kind) \u2014 function in finish.py, lines 27-29.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:marketing/teaser/finish.py:text",
+   "type": "function",
+   "name": "text",
+   "filePath": "marketing/teaser/finish.py",
+   "lineRange": [
+    31,
+    37
+   ],
+   "summary": "text(draw, xy, s, size\u2026) \u2014 function in finish.py, lines 31-37.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:marketing/teaser/finish.py:tracked",
+   "type": "function",
+   "name": "tracked",
+   "filePath": "marketing/teaser/finish.py",
+   "lineRange": [
+    39,
+    43
+   ],
+   "summary": "tracked(draw, s, y, size\u2026) \u2014 function in finish.py, lines 39-43.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:marketing/teaser/finish.py:corners",
+   "type": "function",
+   "name": "corners",
+   "filePath": "marketing/teaser/finish.py",
+   "lineRange": [
+    45,
+    48
+   ],
+   "summary": "corners(draw, b, color, width\u2026) \u2014 function in finish.py, lines 45-48.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:marketing/teaser/finish.py:hud",
+   "type": "function",
+   "name": "hud",
+   "filePath": "marketing/teaser/finish.py",
+   "lineRange": [
+    50,
+    59
+   ],
+   "summary": "hud(draw, t, section) \u2014 function in finish.py, lines 50-59.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:marketing/teaser/finish.py:ascii_layer",
+   "type": "function",
+   "name": "ascii_layer",
+   "filePath": "marketing/teaser/finish.py",
+   "lineRange": [
+    61,
+    71
+   ],
+   "summary": "ascii_layer(base, t, strong) \u2014 function in finish.py, lines 61-71.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:marketing/teaser/finish.py:compose",
+   "type": "function",
+   "name": "compose",
+   "filePath": "marketing/teaser/finish.py",
+   "lineRange": [
+    73,
+    163
+   ],
+   "summary": "compose(frame) \u2014 function in finish.py, lines 73-163.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:marketing/teaser/finish.py:audio",
+   "type": "function",
+   "name": "audio",
+   "filePath": "marketing/teaser/finish.py",
+   "lineRange": [
+    165,
+    205
+   ],
+   "summary": "audio() \u2014 function in finish.py, lines 165-205.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:marketing/teaser/finish.py:main",
+   "type": "function",
+   "name": "main",
+   "filePath": "marketing/teaser/finish.py",
+   "lineRange": [
+    207,
+    223
+   ],
+   "summary": "main() \u2014 function in finish.py, lines 207-223.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:marketing/teaser/finish_v2.py",
+   "type": "file",
+   "name": "finish_v2.py",
+   "filePath": "marketing/teaser/finish_v2.py",
+   "summary": "finish_v2.py \u2014 python code, 73 lines, 3 functions, 0 classes, 3 exports, 0 imports.",
+   "tags": [
+    "python",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:marketing/teaser/finish_v2.py:score",
+   "type": "function",
+   "name": "score",
+   "filePath": "marketing/teaser/finish_v2.py",
+   "lineRange": [
+    20,
+    34
+   ],
+   "summary": "score() \u2014 function in finish_v2.py, lines 20-34.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:marketing/teaser/finish_v2.py:compose",
+   "type": "function",
+   "name": "compose",
+   "filePath": "marketing/teaser/finish_v2.py",
+   "lineRange": [
+    36,
+    45
+   ],
+   "summary": "compose(f) \u2014 function in finish_v2.py, lines 36-45.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:marketing/teaser/finish_v2.py:main",
+   "type": "function",
+   "name": "main",
+   "filePath": "marketing/teaser/finish_v2.py",
+   "lineRange": [
+    47,
+    71
+   ],
+   "summary": "main() \u2014 function in finish_v2.py, lines 47-71.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:marketing/teaser/scene.py",
+   "type": "file",
+   "name": "scene.py",
+   "filePath": "marketing/teaser/scene.py",
+   "summary": "scene.py \u2014 python code, 198 lines, 6 functions, 0 classes, 6 exports, 0 imports.",
+   "tags": [
+    "python",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:marketing/teaser/scene.py:material",
+   "type": "function",
+   "name": "material",
+   "filePath": "marketing/teaser/scene.py",
+   "lineRange": [
+    43,
+    51
+   ],
+   "summary": "material(name, color, metallic, rough\u2026) \u2014 function in scene.py, lines 43-51.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:marketing/teaser/scene.py:box",
+   "type": "function",
+   "name": "box",
+   "filePath": "marketing/teaser/scene.py",
+   "lineRange": [
+    61,
+    70
+   ],
+   "summary": "box(name, loc, scale, mat\u2026) \u2014 function in scene.py, lines 61-70.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:marketing/teaser/scene.py:prism",
+   "type": "function",
+   "name": "prism",
+   "filePath": "marketing/teaser/scene.py",
+   "lineRange": [
+    72,
+    83
+   ],
+   "summary": "prism(name, points, depth, mat\u2026) \u2014 function in scene.py, lines 72-83.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:marketing/teaser/scene.py:area",
+   "type": "function",
+   "name": "area",
+   "filePath": "marketing/teaser/scene.py",
+   "lineRange": [
+    136,
+    139
+   ],
+   "summary": "area(name, loc, power, color\u2026) \u2014 function in scene.py, lines 136-139.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:marketing/teaser/scene.py:aim",
+   "type": "function",
+   "name": "aim",
+   "filePath": "marketing/teaser/scene.py",
+   "lineRange": [
+    154,
+    155
+   ],
+   "summary": "aim(pos, target, roll) \u2014 function in scene.py, lines 154-155.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:marketing/teaser/scene.py:setup",
+   "type": "function",
+   "name": "setup",
+   "filePath": "marketing/teaser/scene.py",
+   "lineRange": [
+    157,
+    191
+   ],
+   "summary": "setup(frame) \u2014 function in scene.py, lines 157-191.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  }
+ ],
+ "edges": [
+  {
+   "source": "file:marketing/teaser/finish.py",
+   "target": "function:marketing/teaser/finish.py:font",
+   "type": "contains",
+   "direction": "forward",
+   "description": "finish.py defines font",
+   "weight": 1.0
+  },
+  {
+   "source": "file:marketing/teaser/finish.py",
+   "target": "function:marketing/teaser/finish.py:font",
+   "type": "exports",
+   "direction": "forward",
+   "description": "finish.py exports font",
+   "weight": 0.7
+  },
+  {
+   "source": "file:marketing/teaser/finish.py",
+   "target": "function:marketing/teaser/finish.py:text",
+   "type": "contains",
+   "direction": "forward",
+   "description": "finish.py defines text",
+   "weight": 1.0
+  },
+  {
+   "source": "file:marketing/teaser/finish.py",
+   "target": "function:marketing/teaser/finish.py:text",
+   "type": "exports",
+   "direction": "forward",
+   "description": "finish.py exports text",
+   "weight": 0.7
+  },
+  {
+   "source": "file:marketing/teaser/finish.py",
+   "target": "function:marketing/teaser/finish.py:tracked",
+   "type": "contains",
+   "direction": "forward",
+   "description": "finish.py defines tracked",
+   "weight": 1.0
+  },
+  {
+   "source": "file:marketing/teaser/finish.py",
+   "target": "function:marketing/teaser/finish.py:tracked",
+   "type": "exports",
+   "direction": "forward",
+   "description": "finish.py exports tracked",
+   "weight": 0.7
+  },
+  {
+   "source": "file:marketing/teaser/finish.py",
+   "target": "function:marketing/teaser/finish.py:corners",
+   "type": "contains",
+   "direction": "forward",
+   "description": "finish.py defines corners",
+   "weight": 1.0
+  },
+  {
+   "source": "file:marketing/teaser/finish.py",
+   "target": "function:marketing/teaser/finish.py:corners",
+   "type": "exports",
+   "direction": "forward",
+   "description": "finish.py exports corners",
+   "weight": 0.7
+  },
+  {
+   "source": "file:marketing/teaser/finish.py",
+   "target": "function:marketing/teaser/finish.py:hud",
+   "type": "contains",
+   "direction": "forward",
+   "description": "finish.py defines hud",
+   "weight": 1.0
+  },
+  {
+   "source": "file:marketing/teaser/finish.py",
+   "target": "function:marketing/teaser/finish.py:hud",
+   "type": "exports",
+   "direction": "forward",
+   "description": "finish.py exports hud",
+   "weight": 0.7
+  },
+  {
+   "source": "file:marketing/teaser/finish.py",
+   "target": "function:marketing/teaser/finish.py:ascii_layer",
+   "type": "contains",
+   "direction": "forward",
+   "description": "finish.py defines ascii_layer",
+   "weight": 1.0
+  },
+  {
+   "source": "file:marketing/teaser/finish.py",
+   "target": "function:marketing/teaser/finish.py:ascii_layer",
+   "type": "exports",
+   "direction": "forward",
+   "description": "finish.py exports ascii_layer",
+   "weight": 0.7
+  },
+  {
+   "source": "file:marketing/teaser/finish.py",
+   "target": "function:marketing/teaser/finish.py:compose",
+   "type": "contains",
+   "direction": "forward",
+   "description": "finish.py defines compose",
+   "weight": 1.0
+  },
+  {
+   "source": "file:marketing/teaser/finish.py",
+   "target": "function:marketing/teaser/finish.py:compose",
+   "type": "exports",
+   "direction": "forward",
+   "description": "finish.py exports compose",
+   "weight": 0.7
+  },
+  {
+   "source": "file:marketing/teaser/finish.py",
+   "target": "function:marketing/teaser/finish.py:audio",
+   "type": "contains",
+   "direction": "forward",
+   "description": "finish.py defines audio",
+   "weight": 1.0
+  },
+  {
+   "source": "file:marketing/teaser/finish.py",
+   "target": "function:marketing/teaser/finish.py:audio",
+   "type": "exports",
+   "direction": "forward",
+   "description": "finish.py exports audio",
+   "weight": 0.7
+  },
+  {
+   "source": "file:marketing/teaser/finish.py",
+   "target": "function:marketing/teaser/finish.py:main",
+   "type": "contains",
+   "direction": "forward",
+   "description": "finish.py defines main",
+   "weight": 1.0
+  },
+  {
+   "source": "file:marketing/teaser/finish.py",
+   "target": "function:marketing/teaser/finish.py:main",
+   "type": "exports",
+   "direction": "forward",
+   "description": "finish.py exports main",
+   "weight": 0.7
+  },
+  {
+   "source": "function:marketing/teaser/finish.py:text",
+   "target": "function:marketing/teaser/finish.py:font",
+   "type": "calls",
+   "direction": "forward",
+   "description": "text calls font",
+   "weight": 0.6
+  },
+  {
+   "source": "function:marketing/teaser/finish.py:tracked",
+   "target": "function:marketing/teaser/finish.py:font",
+   "type": "calls",
+   "direction": "forward",
+   "description": "tracked calls font",
+   "weight": 0.6
+  },
+  {
+   "source": "function:marketing/teaser/finish.py:hud",
+   "target": "function:marketing/teaser/finish.py:text",
+   "type": "calls",
+   "direction": "forward",
+   "description": "hud calls text",
+   "weight": 0.6
+  },
+  {
+   "source": "function:marketing/teaser/finish.py:ascii_layer",
+   "target": "function:marketing/teaser/finish.py:font",
+   "type": "calls",
+   "direction": "forward",
+   "description": "ascii_layer calls font",
+   "weight": 0.6
+  },
+  {
+   "source": "function:marketing/teaser/finish.py:compose",
+   "target": "function:marketing/teaser/finish.py:ascii_layer",
+   "type": "calls",
+   "direction": "forward",
+   "description": "compose calls ascii_layer",
+   "weight": 0.6
+  },
+  {
+   "source": "function:marketing/teaser/finish.py:compose",
+   "target": "function:marketing/teaser/finish.py:hud",
+   "type": "calls",
+   "direction": "forward",
+   "description": "compose calls hud",
+   "weight": 0.6
+  },
+  {
+   "source": "function:marketing/teaser/finish.py:compose",
+   "target": "function:marketing/teaser/finish.py:text",
+   "type": "calls",
+   "direction": "forward",
+   "description": "compose calls text",
+   "weight": 0.6
+  },
+  {
+   "source": "function:marketing/teaser/finish.py:compose",
+   "target": "function:marketing/teaser/finish.py:tracked",
+   "type": "calls",
+   "direction": "forward",
+   "description": "compose calls tracked",
+   "weight": 0.6
+  },
+  {
+   "source": "function:marketing/teaser/finish.py:compose",
+   "target": "function:marketing/teaser/finish.py:corners",
+   "type": "calls",
+   "direction": "forward",
+   "description": "compose calls corners",
+   "weight": 0.6
+  },
+  {
+   "source": "function:marketing/teaser/finish.py:main",
+   "target": "function:marketing/teaser/finish.py:compose",
+   "type": "calls",
+   "direction": "forward",
+   "description": "main calls compose",
+   "weight": 0.6
+  },
+  {
+   "source": "function:marketing/teaser/finish.py:main",
+   "target": "function:marketing/teaser/finish.py:audio",
+   "type": "calls",
+   "direction": "forward",
+   "description": "main calls audio",
+   "weight": 0.6
+  },
+  {
+   "source": "file:marketing/teaser/finish_v2.py",
+   "target": "function:marketing/teaser/finish_v2.py:score",
+   "type": "contains",
+   "direction": "forward",
+   "description": "finish_v2.py defines score",
+   "weight": 1.0
+  },
+  {
+   "source": "file:marketing/teaser/finish_v2.py",
+   "target": "function:marketing/teaser/finish_v2.py:score",
+   "type": "exports",
+   "direction": "forward",
+   "description": "finish_v2.py exports score",
+   "weight": 0.7
+  },
+  {
+   "source": "file:marketing/teaser/finish_v2.py",
+   "target": "function:marketing/teaser/finish_v2.py:compose",
+   "type": "contains",
+   "direction": "forward",
+   "description": "finish_v2.py defines compose",
+   "weight": 1.0
+  },
+  {
+   "source": "file:marketing/teaser/finish_v2.py",
+   "target": "function:marketing/teaser/finish_v2.py:compose",
+   "type": "exports",
+   "direction": "forward",
+   "description": "finish_v2.py exports compose",
+   "weight": 0.7
+  },
+  {
+   "source": "file:marketing/teaser/finish_v2.py",
+   "target": "function:marketing/teaser/finish_v2.py:main",
+   "type": "contains",
+   "direction": "forward",
+   "description": "finish_v2.py defines main",
+   "weight": 1.0
+  },
+  {
+   "source": "file:marketing/teaser/finish_v2.py",
+   "target": "function:marketing/teaser/finish_v2.py:main",
+   "type": "exports",
+   "direction": "forward",
+   "description": "finish_v2.py exports main",
+   "weight": 0.7
+  },
+  {
+   "source": "function:marketing/teaser/finish_v2.py:main",
+   "target": "function:marketing/teaser/finish_v2.py:compose",
+   "type": "calls",
+   "direction": "forward",
+   "description": "main calls compose",
+   "weight": 0.6
+  },
+  {
+   "source": "function:marketing/teaser/finish_v2.py:main",
+   "target": "function:marketing/teaser/finish_v2.py:score",
+   "type": "calls",
+   "direction": "forward",
+   "description": "main calls score",
+   "weight": 0.6
+  },
+  {
+   "source": "file:marketing/teaser/scene.py",
+   "target": "function:marketing/teaser/scene.py:material",
+   "type": "contains",
+   "direction": "forward",
+   "description": "scene.py defines material",
+   "weight": 1.0
+  },
+  {
+   "source": "file:marketing/teaser/scene.py",
+   "target": "function:marketing/teaser/scene.py:material",
+   "type": "exports",
+   "direction": "forward",
+   "description": "scene.py exports material",
+   "weight": 0.7
+  },
+  {
+   "source": "file:marketing/teaser/scene.py",
+   "target": "function:marketing/teaser/scene.py:box",
+   "type": "contains",
+   "direction": "forward",
+   "description": "scene.py defines box",
+   "weight": 1.0
+  },
+  {
+   "source": "file:marketing/teaser/scene.py",
+   "target": "function:marketing/teaser/scene.py:box",
+   "type": "exports",
+   "direction": "forward",
+   "description": "scene.py exports box",
+   "weight": 0.7
+  },
+  {
+   "source": "file:marketing/teaser/scene.py",
+   "target": "function:marketing/teaser/scene.py:prism",
+   "type": "contains",
+   "direction": "forward",
+   "description": "scene.py defines prism",
+   "weight": 1.0
+  },
+  {
+   "source": "file:marketing/teaser/scene.py",
+   "target": "function:marketing/teaser/scene.py:prism",
+   "type": "exports",
+   "direction": "forward",
+   "description": "scene.py exports prism",
+   "weight": 0.7
+  },
+  {
+   "source": "file:marketing/teaser/scene.py",
+   "target": "function:marketing/teaser/scene.py:area",
+   "type": "contains",
+   "direction": "forward",
+   "description": "scene.py defines area",
+   "weight": 1.0
+  },
+  {
+   "source": "file:marketing/teaser/scene.py",
+   "target": "function:marketing/teaser/scene.py:area",
+   "type": "exports",
+   "direction": "forward",
+   "description": "scene.py exports area",
+   "weight": 0.7
+  },
+  {
+   "source": "file:marketing/teaser/scene.py",
+   "target": "function:marketing/teaser/scene.py:aim",
+   "type": "contains",
+   "direction": "forward",
+   "description": "scene.py defines aim",
+   "weight": 1.0
+  },
+  {
+   "source": "file:marketing/teaser/scene.py",
+   "target": "function:marketing/teaser/scene.py:aim",
+   "type": "exports",
+   "direction": "forward",
+   "description": "scene.py exports aim",
+   "weight": 0.7
+  },
+  {
+   "source": "file:marketing/teaser/scene.py",
+   "target": "function:marketing/teaser/scene.py:setup",
+   "type": "contains",
+   "direction": "forward",
+   "description": "scene.py defines setup",
+   "weight": 1.0
+  },
+  {
+   "source": "file:marketing/teaser/scene.py",
+   "target": "function:marketing/teaser/scene.py:setup",
+   "type": "exports",
+   "direction": "forward",
+   "description": "scene.py exports setup",
+   "weight": 0.7
+  },
+  {
+   "source": "function:marketing/teaser/scene.py:setup",
+   "target": "function:marketing/teaser/scene.py:aim",
+   "type": "calls",
+   "direction": "forward",
+   "description": "setup calls aim",
+   "weight": 0.6
+  },
+  {
+   "source": "file:marketing/teaser/finish_v2.py",
+   "target": "file:marketing/teaser/finish.py",
+   "type": "imports",
+   "direction": "forward",
+   "description": "finish_v2.py imports finish.py",
+   "weight": 0.8
+  }
+ ]
+}

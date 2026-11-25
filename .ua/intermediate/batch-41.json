@@ -1,0 +1,41 @@
+{
+ "nodes": [
+  {
+   "id": "file:.github/workflows/ci.yml.disabled",
+   "type": "config",
+   "name": "ci.yml.disabled",
+   "filePath": ".github/workflows/ci.yml.disabled",
+   "summary": "ci.yml.disabled \u2014 disabled infra, 190 lines.",
+   "tags": [
+    "disabled",
+    "infra"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:.github/workflows/cloud-integration.yml.disabled",
+   "type": "config",
+   "name": "cloud-integration.yml.disabled",
+   "filePath": ".github/workflows/cloud-integration.yml.disabled",
+   "summary": "cloud-integration.yml.disabled \u2014 disabled infra, 72 lines.",
+   "tags": [
+    "disabled",
+    "infra"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:.github/workflows/manifest.yml.disabled",
+   "type": "config",
+   "name": "manifest.yml.disabled",
+   "filePath": ".github/workflows/manifest.yml.disabled",
+   "summary": "manifest.yml.disabled \u2014 disabled infra, 46 lines.",
+   "tags": [
+    "disabled",
+    "infra"
+   ],
+   "complexity": "simple"
+  }
+ ],
+ "edges": []
+}

@@ -1,0 +1,301 @@
+{
+ "nodes": [
+  {
+   "id": "file:scripts/src/check-tests-swift-result.mjs",
+   "type": "file",
+   "name": "check-tests-swift-result.mjs",
+   "filePath": "scripts/src/check-tests-swift-result.mjs",
+   "summary": "check-tests-swift-result.mjs \u2014 javascript code, 91 lines, 3 functions, 0 classes, 2 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/check-tests-swift-result.mjs:isSwiftMacroFlake",
+   "type": "function",
+   "name": "isSwiftMacroFlake",
+   "filePath": "scripts/src/check-tests-swift-result.mjs",
+   "lineRange": [
+    36,
+    43
+   ],
+   "summary": "isSwiftMacroFlake() \u2014 function in check-tests-swift-result.mjs, lines 36-43.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/check-tests-swift-result.mjs:absentModule",
+   "type": "function",
+   "name": "absentModule",
+   "filePath": "scripts/src/check-tests-swift-result.mjs",
+   "lineRange": [
+    46,
+    48
+   ],
+   "summary": "absentModule(output) \u2014 function in check-tests-swift-result.mjs, lines 46-48.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/check-tests-swift-result.mjs:interpretSwiftRun",
+   "type": "function",
+   "name": "interpretSwiftRun",
+   "filePath": "scripts/src/check-tests-swift-result.mjs",
+   "lineRange": [
+    65,
+    91
+   ],
+   "summary": "interpretSwiftRun(result) \u2014 function in check-tests-swift-result.mjs, lines 65-91.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/src/check-tests-swift-result.test.mjs",
+   "type": "file",
+   "name": "check-tests-swift-result.test.mjs",
+   "filePath": "scripts/src/check-tests-swift-result.test.mjs",
+   "summary": "check-tests-swift-result.test.mjs \u2014 javascript code, 133 lines, 0 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "javascript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/src/check-tests.mjs",
+   "type": "file",
+   "name": "check-tests.mjs",
+   "filePath": "scripts/src/check-tests.mjs",
+   "summary": "check-tests.mjs \u2014 javascript code, 692 lines, 5 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "function:scripts/src/check-tests.mjs:runPythonSuite",
+   "type": "function",
+   "name": "runPythonSuite",
+   "filePath": "scripts/src/check-tests.mjs",
+   "lineRange": [
+    204,
+    258
+   ],
+   "summary": "runPythonSuite(suite) \u2014 function in check-tests.mjs, lines 204-258.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/check-tests.mjs:unrunResult",
+   "type": "function",
+   "name": "unrunResult",
+   "filePath": "scripts/src/check-tests.mjs",
+   "lineRange": [
+    260,
+    273
+   ],
+   "summary": "unrunResult(name, reason) \u2014 function in check-tests.mjs, lines 260-273.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/check-tests.mjs:runSwiftSuite",
+   "type": "function",
+   "name": "runSwiftSuite",
+   "filePath": "scripts/src/check-tests.mjs",
+   "lineRange": [
+    324,
+    396
+   ],
+   "summary": "runSwiftSuite(suite) \u2014 function in check-tests.mjs, lines 324-396.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/check-tests.mjs:runScriptSuite",
+   "type": "function",
+   "name": "runScriptSuite",
+   "filePath": "scripts/src/check-tests.mjs",
+   "lineRange": [
+    440,
+    502
+   ],
+   "summary": "runScriptSuite(suite) \u2014 function in check-tests.mjs, lines 440-502.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/check-tests.mjs:runSuite",
+   "type": "function",
+   "name": "runSuite",
+   "filePath": "scripts/src/check-tests.mjs",
+   "lineRange": [
+    516,
+    560
+   ],
+   "summary": "runSuite(name, dir, files, runner) \u2014 function in check-tests.mjs, lines 516-560.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  }
+ ],
+ "edges": [
+  {
+   "source": "file:scripts/src/check-tests-swift-result.mjs",
+   "target": "function:scripts/src/check-tests-swift-result.mjs:isSwiftMacroFlake",
+   "type": "contains",
+   "direction": "forward",
+   "description": "check-tests-swift-result.mjs defines isSwiftMacroFlake",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/check-tests-swift-result.mjs",
+   "target": "function:scripts/src/check-tests-swift-result.mjs:isSwiftMacroFlake",
+   "type": "exports",
+   "direction": "forward",
+   "description": "check-tests-swift-result.mjs exports isSwiftMacroFlake",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/src/check-tests-swift-result.mjs",
+   "target": "function:scripts/src/check-tests-swift-result.mjs:absentModule",
+   "type": "contains",
+   "direction": "forward",
+   "description": "check-tests-swift-result.mjs defines absentModule",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/check-tests-swift-result.mjs",
+   "target": "function:scripts/src/check-tests-swift-result.mjs:interpretSwiftRun",
+   "type": "contains",
+   "direction": "forward",
+   "description": "check-tests-swift-result.mjs defines interpretSwiftRun",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/check-tests-swift-result.mjs",
+   "target": "function:scripts/src/check-tests-swift-result.mjs:interpretSwiftRun",
+   "type": "exports",
+   "direction": "forward",
+   "description": "check-tests-swift-result.mjs exports interpretSwiftRun",
+   "weight": 0.7
+  },
+  {
+   "source": "function:scripts/src/check-tests-swift-result.mjs:interpretSwiftRun",
+   "target": "function:scripts/src/check-tests-swift-result.mjs:absentModule",
+   "type": "calls",
+   "direction": "forward",
+   "description": "interpretSwiftRun calls absentModule",
+   "weight": 0.6
+  },
+  {
+   "source": "file:scripts/src/check-tests.mjs",
+   "target": "function:scripts/src/check-tests.mjs:runPythonSuite",
+   "type": "contains",
+   "direction": "forward",
+   "description": "check-tests.mjs defines runPythonSuite",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/check-tests.mjs",
+   "target": "function:scripts/src/check-tests.mjs:unrunResult",
+   "type": "contains",
+   "direction": "forward",
+   "description": "check-tests.mjs defines unrunResult",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/check-tests.mjs",
+   "target": "function:scripts/src/check-tests.mjs:runSwiftSuite",
+   "type": "contains",
+   "direction": "forward",
+   "description": "check-tests.mjs defines runSwiftSuite",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/check-tests.mjs",
+   "target": "function:scripts/src/check-tests.mjs:runScriptSuite",
+   "type": "contains",
+   "direction": "forward",
+   "description": "check-tests.mjs defines runScriptSuite",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/check-tests.mjs",
+   "target": "function:scripts/src/check-tests.mjs:runSuite",
+   "type": "contains",
+   "direction": "forward",
+   "description": "check-tests.mjs defines runSuite",
+   "weight": 1.0
+  },
+  {
+   "source": "function:scripts/src/check-tests.mjs:runPythonSuite",
+   "target": "function:scripts/src/check-tests.mjs:unrunResult",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runPythonSuite calls unrunResult",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/check-tests.mjs:runSwiftSuite",
+   "target": "function:scripts/src/check-tests.mjs:unrunResult",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runSwiftSuite calls unrunResult",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/check-tests.mjs:runScriptSuite",
+   "target": "function:scripts/src/check-tests.mjs:unrunResult",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runScriptSuite calls unrunResult",
+   "weight": 0.6
+  },
+  {
+   "source": "file:scripts/src/check-tests-swift-result.test.mjs",
+   "target": "file:scripts/src/check-tests-swift-result.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "check-tests-swift-result.test.mjs imports check-tests-swift-result.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:scripts/src/check-tests.mjs",
+   "target": "file:scripts/src/check-tests-swift-result.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "check-tests.mjs imports check-tests-swift-result.mjs",
+   "weight": 0.8
+  }
+ ]
+}

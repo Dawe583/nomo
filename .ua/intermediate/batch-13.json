@@ -1,0 +1,6405 @@
+{
+ "nodes": [
+  {
+   "id": "file:packages/cli/src/agent-config.test.ts",
+   "type": "file",
+   "name": "agent-config.test.ts",
+   "filePath": "packages/cli/src/agent-config.test.ts",
+   "summary": "agent-config.test.ts \u2014 typescript code, 122 lines, 0 functions, 0 classes, 0 exports, 3 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/agent.ts",
+   "type": "file",
+   "name": "agent.ts",
+   "filePath": "packages/cli/src/agent.ts",
+   "summary": "agent.ts \u2014 typescript code, 58 lines, 1 functions, 0 classes, 1 exports, 5 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/agent.ts:runAgentCommand",
+   "type": "function",
+   "name": "runAgentCommand",
+   "filePath": "packages/cli/src/agent.ts",
+   "lineRange": [
+    9,
+    58
+   ],
+   "summary": "runAgentCommand(argv) \u2014 function in agent.ts, lines 9-58.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/env-keys.ts",
+   "type": "file",
+   "name": "env-keys.ts",
+   "filePath": "packages/cli/src/env-keys.ts",
+   "summary": "env-keys.ts \u2014 typescript code, 15 lines, 0 functions, 0 classes, 6 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/tui/a11y.test.ts",
+   "type": "file",
+   "name": "a11y.test.ts",
+   "filePath": "packages/cli/src/tui/a11y.test.ts",
+   "summary": "a11y.test.ts \u2014 typescript code, 950 lines, 10 functions, 0 classes, 0 exports, 7 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "function:packages/cli/src/tui/a11y.test.ts:capabilities",
+   "type": "function",
+   "name": "capabilities",
+   "filePath": "packages/cli/src/tui/a11y.test.ts",
+   "lineRange": [
+    56,
+    69
+   ],
+   "summary": "capabilities(columns, rows, colorDepth) \u2014 function in a11y.test.ts, lines 56-69.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/a11y.test.ts:fixture",
+   "type": "function",
+   "name": "fixture",
+   "filePath": "packages/cli/src/tui/a11y.test.ts",
+   "lineRange": [
+    71,
+    81
+   ],
+   "summary": "fixture(t) \u2014 function in a11y.test.ts, lines 71-81.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/a11y.test.ts:sessionFixture",
+   "type": "function",
+   "name": "sessionFixture",
+   "filePath": "packages/cli/src/tui/a11y.test.ts",
+   "lineRange": [
+    83,
+    100
+   ],
+   "summary": "sessionFixture(overrides) \u2014 function in a11y.test.ts, lines 83-100.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/a11y.test.ts:frame",
+   "type": "function",
+   "name": "frame",
+   "filePath": "packages/cli/src/tui/a11y.test.ts",
+   "lineRange": [
+    117,
+    148
+   ],
+   "summary": "frame(app, root, setup, columns\u2026) \u2014 function in a11y.test.ts, lines 117-148.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/a11y.test.ts:plain",
+   "type": "function",
+   "name": "plain",
+   "filePath": "packages/cli/src/tui/a11y.test.ts",
+   "lineRange": [
+    150,
+    150
+   ],
+   "summary": "plain(value) \u2014 function in a11y.test.ts, lines 150-150.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/a11y.test.ts:rectText",
+   "type": "function",
+   "name": "rectText",
+   "filePath": "packages/cli/src/tui/a11y.test.ts",
+   "lineRange": [
+    153,
+    155
+   ],
+   "summary": "rectText(row, target) \u2014 function in a11y.test.ts, lines 153-155.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/a11y.test.ts:words",
+   "type": "function",
+   "name": "words",
+   "filePath": "packages/cli/src/tui/a11y.test.ts",
+   "lineRange": [
+    164,
+    170
+   ],
+   "summary": "words(value) \u2014 function in a11y.test.ts, lines 164-170.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/a11y.test.ts:paletteSetup",
+   "type": "function",
+   "name": "paletteSetup",
+   "filePath": "packages/cli/src/tui/a11y.test.ts",
+   "lineRange": [
+    172,
+    177
+   ],
+   "summary": "paletteSetup(ui) \u2014 function in a11y.test.ts, lines 172-177.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/a11y.test.ts:toastHost",
+   "type": "function",
+   "name": "toastHost",
+   "filePath": "packages/cli/src/tui/a11y.test.ts",
+   "lineRange": [
+    179,
+    199
+   ],
+   "summary": "toastHost() \u2014 function in a11y.test.ts, lines 179-199.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/a11y.test.ts:chatToastSetup",
+   "type": "function",
+   "name": "chatToastSetup",
+   "filePath": "packages/cli/src/tui/a11y.test.ts",
+   "lineRange": [
+    201,
+    205
+   ],
+   "summary": "chatToastSetup(ui) \u2014 function in a11y.test.ts, lines 201-205.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/tui/activity.ts",
+   "type": "file",
+   "name": "activity.ts",
+   "filePath": "packages/cli/src/tui/activity.ts",
+   "summary": "activity.ts \u2014 typescript code, 421 lines, 14 functions, 0 classes, 5 exports, 6 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/cli/src/tui/activity.ts:markFor",
+   "type": "function",
+   "name": "markFor",
+   "filePath": "packages/cli/src/tui/activity.ts",
+   "lineRange": [
+    42,
+    51
+   ],
+   "summary": "markFor(kind, timed, symbols) \u2014 function in activity.ts, lines 42-51.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/activity.ts:isRecord",
+   "type": "function",
+   "name": "isRecord",
+   "filePath": "packages/cli/src/tui/activity.ts",
+   "lineRange": [
+    57,
+    59
+   ],
+   "summary": "isRecord(value) \u2014 function in activity.ts, lines 57-59.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/activity.ts:firstText",
+   "type": "function",
+   "name": "firstText",
+   "filePath": "packages/cli/src/tui/activity.ts",
+   "lineRange": [
+    61,
+    70
+   ],
+   "summary": "firstText(record, keys) \u2014 function in activity.ts, lines 61-70.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/activity.ts:canonicalKind",
+   "type": "function",
+   "name": "canonicalKind",
+   "filePath": "packages/cli/src/tui/activity.ts",
+   "lineRange": [
+    75,
+    112
+   ],
+   "summary": "canonicalKind(raw) \u2014 function in activity.ts, lines 75-112.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/activity.ts:parseAt",
+   "type": "function",
+   "name": "parseAt",
+   "filePath": "packages/cli/src/tui/activity.ts",
+   "lineRange": [
+    117,
+    132
+   ],
+   "summary": "parseAt(value) \u2014 function in activity.ts, lines 117-132.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/activity.ts:buildActivity",
+   "type": "function",
+   "name": "buildActivity",
+   "filePath": "packages/cli/src/tui/activity.ts",
+   "lineRange": [
+    140,
+    193
+   ],
+   "summary": "buildActivity(events) \u2014 function in activity.ts, lines 140-193.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/activity.ts:stripMarks",
+   "type": "function",
+   "name": "stripMarks",
+   "filePath": "packages/cli/src/tui/activity.ts",
+   "lineRange": [
+    203,
+    219
+   ],
+   "summary": "stripMarks(strip, symbols) \u2014 function in activity.ts, lines 203-219.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/activity.ts:resolveMotion",
+   "type": "function",
+   "name": "resolveMotion",
+   "filePath": "packages/cli/src/tui/activity.ts",
+   "lineRange": [
+    221,
+    223
+   ],
+   "summary": "resolveMotion(motion) \u2014 function in activity.ts, lines 221-223.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/activity.ts:activityStrip",
+   "type": "function",
+   "name": "activityStrip",
+   "filePath": "packages/cli/src/tui/activity.ts",
+   "lineRange": [
+    232,
+    281
+   ],
+   "summary": "activityStrip(strip, width, options) \u2014 function in activity.ts, lines 232-281.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/activity.ts:formatSpan",
+   "type": "function",
+   "name": "formatSpan",
+   "filePath": "packages/cli/src/tui/activity.ts",
+   "lineRange": [
+    283,
+    296
+   ],
+   "summary": "formatSpan(ms) \u2014 function in activity.ts, lines 283-296.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/activity.ts:kindWords",
+   "type": "function",
+   "name": "kindWords",
+   "filePath": "packages/cli/src/tui/activity.ts",
+   "lineRange": [
+    300,
+    307
+   ],
+   "summary": "kindWords(kind) \u2014 function in activity.ts, lines 300-307.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/activity.ts:activitySummary",
+   "type": "function",
+   "name": "activitySummary",
+   "filePath": "packages/cli/src/tui/activity.ts",
+   "lineRange": [
+    316,
+    348
+   ],
+   "summary": "activitySummary(strip, now) \u2014 function in activity.ts, lines 316-348.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/activity.ts:legendRow",
+   "type": "function",
+   "name": "legendRow",
+   "filePath": "packages/cli/src/tui/activity.ts",
+   "lineRange": [
+    352,
+    356
+   ],
+   "summary": "legendRow(symbols) \u2014 function in activity.ts, lines 352-356.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/activity.ts:renderActivity",
+   "type": "function",
+   "name": "renderActivity",
+   "filePath": "packages/cli/src/tui/activity.ts",
+   "lineRange": [
+    364,
+    421
+   ],
+   "summary": "renderActivity(strip, width, options) \u2014 function in activity.ts, lines 364-421.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/tui/approvals.ts",
+   "type": "file",
+   "name": "approvals.ts",
+   "filePath": "packages/cli/src/tui/approvals.ts",
+   "summary": "approvals.ts \u2014 typescript code, 49 lines, 3 functions, 0 classes, 1 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/approvals.ts:countdown",
+   "type": "function",
+   "name": "countdown",
+   "filePath": "packages/cli/src/tui/approvals.ts",
+   "lineRange": [
+    16,
+    21
+   ],
+   "summary": "countdown(expiresAt, now) \u2014 function in approvals.ts, lines 16-21.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/approvals.ts:radius",
+   "type": "function",
+   "name": "radius",
+   "filePath": "packages/cli/src/tui/approvals.ts",
+   "lineRange": [
+    23,
+    26
+   ],
+   "summary": "radius(call) \u2014 function in approvals.ts, lines 23-26.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/approvals.ts:approvalsView",
+   "type": "function",
+   "name": "approvalsView",
+   "filePath": "packages/cli/src/tui/approvals.ts",
+   "lineRange": [
+    28,
+    49
+   ],
+   "summary": "approvalsView(holds, now) \u2014 function in approvals.ts, lines 28-49.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/tui/blocks.ts",
+   "type": "file",
+   "name": "blocks.ts",
+   "filePath": "packages/cli/src/tui/blocks.ts",
+   "summary": "blocks.ts \u2014 typescript code, 344 lines, 13 functions, 0 classes, 5 exports, 3 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/cli/src/tui/blocks.ts:blockText",
+   "type": "function",
+   "name": "blockText",
+   "filePath": "packages/cli/src/tui/blocks.ts",
+   "lineRange": [
+    5,
+    7
+   ],
+   "summary": "blockText(value) \u2014 function in blocks.ts, lines 5-7.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/blocks.ts:roleIcon",
+   "type": "function",
+   "name": "roleIcon",
+   "filePath": "packages/cli/src/tui/blocks.ts",
+   "lineRange": [
+    81,
+    86
+   ],
+   "summary": "roleIcon(role, preset) \u2014 function in blocks.ts, lines 81-86.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/blocks.ts:roleLabel",
+   "type": "function",
+   "name": "roleLabel",
+   "filePath": "packages/cli/src/tui/blocks.ts",
+   "lineRange": [
+    88,
+    90
+   ],
+   "summary": "roleLabel(role) \u2014 function in blocks.ts, lines 88-90.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/blocks.ts:displayName",
+   "type": "function",
+   "name": "displayName",
+   "filePath": "packages/cli/src/tui/blocks.ts",
+   "lineRange": [
+    94,
+    96
+   ],
+   "summary": "displayName(input) \u2014 function in blocks.ts, lines 94-96.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/blocks.ts:shortTime",
+   "type": "function",
+   "name": "shortTime",
+   "filePath": "packages/cli/src/tui/blocks.ts",
+   "lineRange": [
+    98,
+    111
+   ],
+   "summary": "shortTime(at) \u2014 function in blocks.ts, lines 98-111.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/blocks.ts:lifecycleLabel",
+   "type": "function",
+   "name": "lifecycleLabel",
+   "filePath": "packages/cli/src/tui/blocks.ts",
+   "lineRange": [
+    113,
+    118
+   ],
+   "summary": "lifecycleLabel(status) \u2014 function in blocks.ts, lines 113-118.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/blocks.ts:blockHeading",
+   "type": "function",
+   "name": "blockHeading",
+   "filePath": "packages/cli/src/tui/blocks.ts",
+   "lineRange": [
+    121,
+    148
+   ],
+   "summary": "blockHeading(input, width, preset) \u2014 function in blocks.ts, lines 121-148.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/blocks.ts:wrapCells",
+   "type": "function",
+   "name": "wrapCells",
+   "filePath": "packages/cli/src/tui/blocks.ts",
+   "lineRange": [
+    153,
+    166
+   ],
+   "summary": "wrapCells(line, width) \u2014 function in blocks.ts, lines 153-166.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/blocks.ts:wrapBody",
+   "type": "function",
+   "name": "wrapBody",
+   "filePath": "packages/cli/src/tui/blocks.ts",
+   "lineRange": [
+    168,
+    183
+   ],
+   "summary": "wrapBody(input, width) \u2014 function in blocks.ts, lines 168-183.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/blocks.ts:collapseBody",
+   "type": "function",
+   "name": "collapseBody",
+   "filePath": "packages/cli/src/tui/blocks.ts",
+   "lineRange": [
+    192,
+    219
+   ],
+   "summary": "collapseBody(all, maxRows, collapsible, width) \u2014 function in blocks.ts, lines 192-219.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/blocks.ts:blockBody",
+   "type": "function",
+   "name": "blockBody",
+   "filePath": "packages/cli/src/tui/blocks.ts",
+   "lineRange": [
+    222,
+    236
+   ],
+   "summary": "blockBody(input, width, maxRows) \u2014 function in blocks.ts, lines 222-236.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/blocks.ts:footerPlain",
+   "type": "function",
+   "name": "footerPlain",
+   "filePath": "packages/cli/src/tui/blocks.ts",
+   "lineRange": [
+    242,
+    288
+   ],
+   "summary": "footerPlain(input, body, width, motion) \u2014 function in blocks.ts, lines 242-288.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/blocks.ts:renderBlock",
+   "type": "function",
+   "name": "renderBlock",
+   "filePath": "packages/cli/src/tui/blocks.ts",
+   "lineRange": [
+    291,
+    344
+   ],
+   "summary": "renderBlock(input, options, maxRows) \u2014 function in blocks.ts, lines 291-344.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/tui/brand.test.ts",
+   "type": "file",
+   "name": "brand.test.ts",
+   "filePath": "packages/cli/src/tui/brand.test.ts",
+   "summary": "brand.test.ts \u2014 typescript code, 35 lines, 0 functions, 0 classes, 0 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/tui/brand.ts",
+   "type": "file",
+   "name": "brand.ts",
+   "filePath": "packages/cli/src/tui/brand.ts",
+   "summary": "brand.ts \u2014 typescript code, 474 lines, 15 functions, 0 classes, 11 exports, 6 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/cli/src/tui/brand.ts:kittyVirtualImageTransfer",
+   "type": "function",
+   "name": "kittyVirtualImageTransfer",
+   "filePath": "packages/cli/src/tui/brand.ts",
+   "lineRange": [
+    18,
+    35
+   ],
+   "summary": "kittyVirtualImageTransfer(id, png, placement) \u2014 function in brand.ts, lines 18-35.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/brand.ts:validTabIcon",
+   "type": "function",
+   "name": "validTabIcon",
+   "filePath": "packages/cli/src/tui/brand.ts",
+   "lineRange": [
+    96,
+    108
+   ],
+   "summary": "validTabIcon(png) \u2014 function in brand.ts, lines 96-108.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/brand.ts:loadLocalTabIcons",
+   "type": "function",
+   "name": "loadLocalTabIcons",
+   "filePath": "packages/cli/src/tui/brand.ts",
+   "lineRange": [
+    110,
+    293
+   ],
+   "summary": "loadLocalTabIcons(env) \u2014 function in brand.ts, lines 110-293.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/cli/src/tui/brand.ts:kittyTabIconsTransfer",
+   "type": "function",
+   "name": "kittyTabIconsTransfer",
+   "filePath": "packages/cli/src/tui/brand.ts",
+   "lineRange": [
+    304,
+    331
+   ],
+   "summary": "kittyTabIconsTransfer(icons, env) \u2014 function in brand.ts, lines 304-331.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/brand.ts:kittyTabIconsCleanup",
+   "type": "function",
+   "name": "kittyTabIconsCleanup",
+   "filePath": "packages/cli/src/tui/brand.ts",
+   "lineRange": [
+    333,
+    345
+   ],
+   "summary": "kittyTabIconsCleanup(icons) \u2014 function in brand.ts, lines 333-345.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/brand.ts:kittyProviderIconTransfer",
+   "type": "function",
+   "name": "kittyProviderIconTransfer",
+   "filePath": "packages/cli/src/tui/brand.ts",
+   "lineRange": [
+    347,
+    359
+   ],
+   "summary": "kittyProviderIconTransfer(icons) \u2014 function in brand.ts, lines 347-359.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/brand.ts:kittyProviderIconCleanup",
+   "type": "function",
+   "name": "kittyProviderIconCleanup",
+   "filePath": "packages/cli/src/tui/brand.ts",
+   "lineRange": [
+    361,
+    367
+   ],
+   "summary": "kittyProviderIconCleanup(icons) \u2014 function in brand.ts, lines 361-367.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/brand.ts:kittyIconLabel",
+   "type": "function",
+   "name": "kittyIconLabel",
+   "filePath": "packages/cli/src/tui/brand.ts",
+   "lineRange": [
+    369,
+    374
+   ],
+   "summary": "kittyIconLabel(id) \u2014 function in brand.ts, lines 369-374.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/brand.ts:kittyTabIconLabel",
+   "type": "function",
+   "name": "kittyTabIconLabel",
+   "filePath": "packages/cli/src/tui/brand.ts",
+   "lineRange": [
+    376,
+    385
+   ],
+   "summary": "kittyTabIconLabel(tab, icons, theme) \u2014 function in brand.ts, lines 376-385.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/brand.ts:kittyProviderIconLabel",
+   "type": "function",
+   "name": "kittyProviderIconLabel",
+   "filePath": "packages/cli/src/tui/brand.ts",
+   "lineRange": [
+    387,
+    394
+   ],
+   "summary": "kittyProviderIconLabel(icons, theme) \u2014 function in brand.ts, lines 387-394.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/brand.ts:kittySemanticIconLabel",
+   "type": "function",
+   "name": "kittySemanticIconLabel",
+   "filePath": "packages/cli/src/tui/brand.ts",
+   "lineRange": [
+    396,
+    406
+   ],
+   "summary": "kittySemanticIconLabel(semantic, icons, theme) \u2014 function in brand.ts, lines 396-406.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/brand.ts:kittyActivityIconLabel",
+   "type": "function",
+   "name": "kittyActivityIconLabel",
+   "filePath": "packages/cli/src/tui/brand.ts",
+   "lineRange": [
+    408,
+    417
+   ],
+   "summary": "kittyActivityIconLabel(activity, icons, theme) \u2014 function in brand.ts, lines 408-417.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/brand.ts:brandHeader",
+   "type": "function",
+   "name": "brandHeader",
+   "filePath": "packages/cli/src/tui/brand.ts",
+   "lineRange": [
+    419,
+    448
+   ],
+   "summary": "brandHeader(label, caps) \u2014 function in brand.ts, lines 419-448.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/brand.ts:paintBrand",
+   "type": "function",
+   "name": "paintBrand",
+   "filePath": "packages/cli/src/tui/brand.ts",
+   "lineRange": [
+    450,
+    469
+   ],
+   "summary": "paintBrand(value, tone, caps) \u2014 function in brand.ts, lines 450-469.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/brand.ts:compactBrandMark",
+   "type": "function",
+   "name": "compactBrandMark",
+   "filePath": "packages/cli/src/tui/brand.ts",
+   "lineRange": [
+    472,
+    474
+   ],
+   "summary": "compactBrandMark(caps) \u2014 function in brand.ts, lines 472-474.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/tui/caps.ts",
+   "type": "file",
+   "name": "caps.ts",
+   "filePath": "packages/cli/src/tui/caps.ts",
+   "summary": "caps.ts \u2014 typescript code, 77 lines, 2 functions, 0 classes, 1 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/caps.ts:positive",
+   "type": "function",
+   "name": "positive",
+   "filePath": "packages/cli/src/tui/caps.ts",
+   "lineRange": [
+    10,
+    11
+   ],
+   "summary": "positive(value) \u2014 function in caps.ts, lines 10-11.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/caps.ts:detectCapabilities",
+   "type": "function",
+   "name": "detectCapabilities",
+   "filePath": "packages/cli/src/tui/caps.ts",
+   "lineRange": [
+    13,
+    77
+   ],
+   "summary": "detectCapabilities(env, stream) \u2014 function in caps.ts, lines 13-77.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/tui/charts.test.ts",
+   "type": "file",
+   "name": "charts.test.ts",
+   "filePath": "packages/cli/src/tui/charts.test.ts",
+   "summary": "charts.test.ts \u2014 typescript code, 14 lines, 0 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/tui/charts.ts",
+   "type": "file",
+   "name": "charts.ts",
+   "filePath": "packages/cli/src/tui/charts.ts",
+   "summary": "charts.ts \u2014 typescript code, 383 lines, 12 functions, 0 classes, 5 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/cli/src/tui/charts.ts:resolveMotion",
+   "type": "function",
+   "name": "resolveMotion",
+   "filePath": "packages/cli/src/tui/charts.ts",
+   "lineRange": [
+    54,
+    56
+   ],
+   "summary": "resolveMotion(motion) \u2014 function in charts.ts, lines 54-56.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/charts.ts:isLive",
+   "type": "function",
+   "name": "isLive",
+   "filePath": "packages/cli/src/tui/charts.ts",
+   "lineRange": [
+    60,
+    62
+   ],
+   "summary": "isLive(motion) \u2014 function in charts.ts, lines 60-62.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/charts.ts:isFiniteNumber",
+   "type": "function",
+   "name": "isFiniteNumber",
+   "filePath": "packages/cli/src/tui/charts.ts",
+   "lineRange": [
+    64,
+    66
+   ],
+   "summary": "isFiniteNumber(value) \u2014 function in charts.ts, lines 64-66.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/charts.ts:formatNumber",
+   "type": "function",
+   "name": "formatNumber",
+   "filePath": "packages/cli/src/tui/charts.ts",
+   "lineRange": [
+    70,
+    75
+   ],
+   "summary": "formatNumber(value) \u2014 function in charts.ts, lines 70-75.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/charts.ts:clamp01",
+   "type": "function",
+   "name": "clamp01",
+   "filePath": "packages/cli/src/tui/charts.ts",
+   "lineRange": [
+    77,
+    82
+   ],
+   "summary": "clamp01(value) \u2014 function in charts.ts, lines 77-82.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/charts.ts:levelFor",
+   "type": "function",
+   "name": "levelFor",
+   "filePath": "packages/cli/src/tui/charts.ts",
+   "lineRange": [
+    85,
+    88
+   ],
+   "summary": "levelFor(value, lo, hi) \u2014 function in charts.ts, lines 85-88.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/charts.ts:sparkline",
+   "type": "function",
+   "name": "sparkline",
+   "filePath": "packages/cli/src/tui/charts.ts",
+   "lineRange": [
+    95,
+    142
+   ],
+   "summary": "sparkline(series, width, options) \u2014 function in charts.ts, lines 95-142.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/charts.ts:barChart",
+   "type": "function",
+   "name": "barChart",
+   "filePath": "packages/cli/src/tui/charts.ts",
+   "lineRange": [
+    149,
+    225
+   ],
+   "summary": "barChart(series, width, options) \u2014 function in charts.ts, lines 149-225.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/charts.ts:stackedBar",
+   "type": "function",
+   "name": "stackedBar",
+   "filePath": "packages/cli/src/tui/charts.ts",
+   "lineRange": [
+    232,
+    301
+   ],
+   "summary": "stackedBar(segments, width, options) \u2014 function in charts.ts, lines 232-301.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/charts.ts:fitLegend",
+   "type": "function",
+   "name": "fitLegend",
+   "filePath": "packages/cli/src/tui/charts.ts",
+   "lineRange": [
+    306,
+    322
+   ],
+   "summary": "fitLegend(entries, dropped, cells) \u2014 function in charts.ts, lines 306-322.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/charts.ts:gauge",
+   "type": "function",
+   "name": "gauge",
+   "filePath": "packages/cli/src/tui/charts.ts",
+   "lineRange": [
+    328,
+    358
+   ],
+   "summary": "gauge(value, max, options) \u2014 function in charts.ts, lines 328-358.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/charts.ts:deltaLabel",
+   "type": "function",
+   "name": "deltaLabel",
+   "filePath": "packages/cli/src/tui/charts.ts",
+   "lineRange": [
+    365,
+    383
+   ],
+   "summary": "deltaLabel(current, previous, options) \u2014 function in charts.ts, lines 365-383.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/tui/chat-markdown.ts",
+   "type": "file",
+   "name": "chat-markdown.ts",
+   "filePath": "packages/cli/src/tui/chat-markdown.ts",
+   "summary": "chat-markdown.ts \u2014 typescript code, 38 lines, 2 functions, 0 classes, 1 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/chat-markdown.ts:inlineText",
+   "type": "function",
+   "name": "inlineText",
+   "filePath": "packages/cli/src/tui/chat-markdown.ts",
+   "lineRange": [
+    8,
+    14
+   ],
+   "summary": "inlineText(text) \u2014 function in chat-markdown.ts, lines 8-14.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/chat-markdown.ts:assistantMarkdownLine",
+   "type": "function",
+   "name": "assistantMarkdownLine",
+   "filePath": "packages/cli/src/tui/chat-markdown.ts",
+   "lineRange": [
+    17,
+    38
+   ],
+   "summary": "assistantMarkdownLine(source) \u2014 function in chat-markdown.ts, lines 17-38.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/tui/cheatsheet.ts",
+   "type": "file",
+   "name": "cheatsheet.ts",
+   "filePath": "packages/cli/src/tui/cheatsheet.ts",
+   "summary": "cheatsheet.ts \u2014 typescript code, 330 lines, 6 functions, 0 classes, 4 exports, 3 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/cli/src/tui/cheatsheet.ts:escBindingFor",
+   "type": "function",
+   "name": "escBindingFor",
+   "filePath": "packages/cli/src/tui/cheatsheet.ts",
+   "lineRange": [
+    113,
+    130
+   ],
+   "summary": "escBindingFor(context) \u2014 function in cheatsheet.ts, lines 113-130.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/cheatsheet.ts:bindingsFor",
+   "type": "function",
+   "name": "bindingsFor",
+   "filePath": "packages/cli/src/tui/cheatsheet.ts",
+   "lineRange": [
+    132,
+    213
+   ],
+   "summary": "bindingsFor(context) \u2014 function in cheatsheet.ts, lines 132-213.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/cheatsheet.ts:filterBindings",
+   "type": "function",
+   "name": "filterBindings",
+   "filePath": "packages/cli/src/tui/cheatsheet.ts",
+   "lineRange": [
+    215,
+    230
+   ],
+   "summary": "filterBindings(bindings, query) \u2014 function in cheatsheet.ts, lines 215-230.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/cheatsheet.ts:bindingField",
+   "type": "function",
+   "name": "bindingField",
+   "filePath": "packages/cli/src/tui/cheatsheet.ts",
+   "lineRange": [
+    248,
+    254
+   ],
+   "summary": "bindingField(binding) \u2014 function in cheatsheet.ts, lines 248-254.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/cheatsheet.ts:cheatSheetCount",
+   "type": "function",
+   "name": "cheatSheetCount",
+   "filePath": "packages/cli/src/tui/cheatsheet.ts",
+   "lineRange": [
+    257,
+    264
+   ],
+   "summary": "cheatSheetCount(bindings, shown) \u2014 function in cheatsheet.ts, lines 257-264.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/cheatsheet.ts:renderCheatSheet",
+   "type": "function",
+   "name": "renderCheatSheet",
+   "filePath": "packages/cli/src/tui/cheatsheet.ts",
+   "lineRange": [
+    266,
+    330
+   ],
+   "summary": "renderCheatSheet(state, options) \u2014 function in cheatsheet.ts, lines 266-330.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/tui/clipboard.ts",
+   "type": "file",
+   "name": "clipboard.ts",
+   "filePath": "packages/cli/src/tui/clipboard.ts",
+   "summary": "clipboard.ts \u2014 typescript code, 68 lines, 3 functions, 0 classes, 1 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/clipboard.ts:tryCopy",
+   "type": "function",
+   "name": "tryCopy",
+   "filePath": "packages/cli/src/tui/clipboard.ts",
+   "lineRange": [
+    14,
+    50
+   ],
+   "summary": "tryCopy(command, args, value) \u2014 function in clipboard.ts, lines 14-50.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/clipboard.ts:writeTextToClipboard",
+   "type": "function",
+   "name": "writeTextToClipboard",
+   "filePath": "packages/cli/src/tui/clipboard.ts",
+   "lineRange": [
+    53,
+    59
+   ],
+   "summary": "writeTextToClipboard(value) \u2014 function in clipboard.ts, lines 53-59.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/clipboard.ts:copyTextToClipboard",
+   "type": "function",
+   "name": "copyTextToClipboard",
+   "filePath": "packages/cli/src/tui/clipboard.ts",
+   "lineRange": [
+    64,
+    68
+   ],
+   "summary": "copyTextToClipboard(value) \u2014 function in clipboard.ts, lines 64-68.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/tui/diff-panel.ts",
+   "type": "file",
+   "name": "diff-panel.ts",
+   "filePath": "packages/cli/src/tui/diff-panel.ts",
+   "summary": "diff-panel.ts \u2014 typescript code, 307 lines, 11 functions, 0 classes, 6 exports, 3 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/cli/src/tui/diff-panel.ts:diffStats",
+   "type": "function",
+   "name": "diffStats",
+   "filePath": "packages/cli/src/tui/diff-panel.ts",
+   "lineRange": [
+    38,
+    53
+   ],
+   "summary": "diffStats(rows) \u2014 function in diff-panel.ts, lines 38-53.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/diff-panel.ts:buildDiffView",
+   "type": "function",
+   "name": "buildDiffView",
+   "filePath": "packages/cli/src/tui/diff-panel.ts",
+   "lineRange": [
+    55,
+    77
+   ],
+   "summary": "buildDiffView(before, after, options) \u2014 function in diff-panel.ts, lines 55-77.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/diff-panel.ts:toggleHunk",
+   "type": "function",
+   "name": "toggleHunk",
+   "filePath": "packages/cli/src/tui/diff-panel.ts",
+   "lineRange": [
+    79,
+    88
+   ],
+   "summary": "toggleHunk(state, index) \u2014 function in diff-panel.ts, lines 79-88.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/diff-panel.ts:moveHunk",
+   "type": "function",
+   "name": "moveHunk",
+   "filePath": "packages/cli/src/tui/diff-panel.ts",
+   "lineRange": [
+    90,
+    98
+   ],
+   "summary": "moveHunk(state, delta) \u2014 function in diff-panel.ts, lines 90-98.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/diff-panel.ts:setSide",
+   "type": "function",
+   "name": "setSide",
+   "filePath": "packages/cli/src/tui/diff-panel.ts",
+   "lineRange": [
+    100,
+    102
+   ],
+   "summary": "setSide(state, side) \u2014 function in diff-panel.ts, lines 100-102.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/diff-panel.ts:parseHunkHeader",
+   "type": "function",
+   "name": "parseHunkHeader",
+   "filePath": "packages/cli/src/tui/diff-panel.ts",
+   "lineRange": [
+    108,
+    115
+   ],
+   "summary": "parseHunkHeader(header) \u2014 function in diff-panel.ts, lines 108-115.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/diff-panel.ts:hunkHeaderLine",
+   "type": "function",
+   "name": "hunkHeaderLine",
+   "filePath": "packages/cli/src/tui/diff-panel.ts",
+   "lineRange": [
+    117,
+    130
+   ],
+   "summary": "hunkHeaderLine(hunk, hunkIndex, total, isCursor) \u2014 function in diff-panel.ts, lines 117-130.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/diff-panel.ts:unifiedBody",
+   "type": "function",
+   "name": "unifiedBody",
+   "filePath": "packages/cli/src/tui/diff-panel.ts",
+   "lineRange": [
+    132,
+    154
+   ],
+   "summary": "unifiedBody(state, compact) \u2014 function in diff-panel.ts, lines 132-154.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/diff-panel.ts:splitBody",
+   "type": "function",
+   "name": "splitBody",
+   "filePath": "packages/cli/src/tui/diff-panel.ts",
+   "lineRange": [
+    156,
+    198
+   ],
+   "summary": "splitBody(state, width) \u2014 function in diff-panel.ts, lines 156-198.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/diff-panel.ts:renderDiffPanel",
+   "type": "function",
+   "name": "renderDiffPanel",
+   "filePath": "packages/cli/src/tui/diff-panel.ts",
+   "lineRange": [
+    200,
+    292
+   ],
+   "summary": "renderDiffPanel(state, width, height, options) \u2014 function in diff-panel.ts, lines 200-292.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/diff-panel.ts:isHunkHeaderRow",
+   "type": "function",
+   "name": "isHunkHeaderRow",
+   "filePath": "packages/cli/src/tui/diff-panel.ts",
+   "lineRange": [
+    297,
+    307
+   ],
+   "summary": "isHunkHeaderRow(body, absolute) \u2014 function in diff-panel.ts, lines 297-307.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/tui/discover.ts",
+   "type": "file",
+   "name": "discover.ts",
+   "filePath": "packages/cli/src/tui/discover.ts",
+   "summary": "discover.ts \u2014 typescript code, 236 lines, 7 functions, 0 classes, 6 exports, 3 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/cli/src/tui/discover.ts:groupIcon",
+   "type": "function",
+   "name": "groupIcon",
+   "filePath": "packages/cli/src/tui/discover.ts",
+   "lineRange": [
+    82,
+    89
+   ],
+   "summary": "groupIcon(group) \u2014 function in discover.ts, lines 82-89.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/discover.ts:groupTitle",
+   "type": "function",
+   "name": "groupTitle",
+   "filePath": "packages/cli/src/tui/discover.ts",
+   "lineRange": [
+    91,
+    99
+   ],
+   "summary": "groupTitle(group) \u2014 function in discover.ts, lines 91-99.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/discover.ts:canonicalGroup",
+   "type": "function",
+   "name": "canonicalGroup",
+   "filePath": "packages/cli/src/tui/discover.ts",
+   "lineRange": [
+    105,
+    112
+   ],
+   "summary": "canonicalGroup(raw) \u2014 function in discover.ts, lines 105-112.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/discover.ts:groupedCommands",
+   "type": "function",
+   "name": "groupedCommands",
+   "filePath": "packages/cli/src/tui/discover.ts",
+   "lineRange": [
+    115,
+    156
+   ],
+   "summary": "groupedCommands(commands) \u2014 function in discover.ts, lines 115-156.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/discover.ts:groupBlurb",
+   "type": "function",
+   "name": "groupBlurb",
+   "filePath": "packages/cli/src/tui/discover.ts",
+   "lineRange": [
+    161,
+    163
+   ],
+   "summary": "groupBlurb(group) \u2014 function in discover.ts, lines 161-163.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/discover.ts:discoveryRows",
+   "type": "function",
+   "name": "discoveryRows",
+   "filePath": "packages/cli/src/tui/discover.ts",
+   "lineRange": [
+    166,
+    229
+   ],
+   "summary": "discoveryRows(commands, options) \u2014 function in discover.ts, lines 166-229.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/discover.ts:absentCapabilities",
+   "type": "function",
+   "name": "absentCapabilities",
+   "filePath": "packages/cli/src/tui/discover.ts",
+   "lineRange": [
+    232,
+    236
+   ],
+   "summary": "absentCapabilities() \u2014 function in discover.ts, lines 232-236.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/tui/fixtures.ts",
+   "type": "file",
+   "name": "fixtures.ts",
+   "filePath": "packages/cli/src/tui/fixtures.ts",
+   "summary": "fixtures.ts \u2014 typescript code, 126 lines, 0 functions, 0 classes, 2 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/tui/git-status.test.ts",
+   "type": "file",
+   "name": "git-status.test.ts",
+   "filePath": "packages/cli/src/tui/git-status.test.ts",
+   "summary": "git-status.test.ts \u2014 typescript code, 144 lines, 2 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/git-status.test.ts:git",
+   "type": "function",
+   "name": "git",
+   "filePath": "packages/cli/src/tui/git-status.test.ts",
+   "lineRange": [
+    16,
+    20
+   ],
+   "summary": "git(root, ...args) \u2014 function in git-status.test.ts, lines 16-20.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/git-status.test.ts:repository",
+   "type": "function",
+   "name": "repository",
+   "filePath": "packages/cli/src/tui/git-status.test.ts",
+   "lineRange": [
+    23,
+    33
+   ],
+   "summary": "repository(branch) \u2014 function in git-status.test.ts, lines 23-33.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/tui/git-status.ts",
+   "type": "file",
+   "name": "git-status.ts",
+   "filePath": "packages/cli/src/tui/git-status.ts",
+   "summary": "git-status.ts \u2014 typescript code, 159 lines, 9 functions, 0 classes, 6 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/cli/src/tui/git-status.ts:sanitizeBranch",
+   "type": "function",
+   "name": "sanitizeBranch",
+   "filePath": "packages/cli/src/tui/git-status.ts",
+   "lineRange": [
+    39,
+    44
+   ],
+   "summary": "sanitizeBranch(value) \u2014 function in git-status.ts, lines 39-44.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/git-status.ts:probeDirectory",
+   "type": "function",
+   "name": "probeDirectory",
+   "filePath": "packages/cli/src/tui/git-status.ts",
+   "lineRange": [
+    53,
+    60
+   ],
+   "summary": "probeDirectory(cwd) \u2014 function in git-status.ts, lines 53-60.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/git-status.ts:gitOutput",
+   "type": "function",
+   "name": "gitOutput",
+   "filePath": "packages/cli/src/tui/git-status.ts",
+   "lineRange": [
+    62,
+    80
+   ],
+   "summary": "gitOutput(cwd, args) \u2014 function in git-status.ts, lines 62-80.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/git-status.ts:probe",
+   "type": "function",
+   "name": "probe",
+   "filePath": "packages/cli/src/tui/git-status.ts",
+   "lineRange": [
+    82,
+    96
+   ],
+   "summary": "probe(cwd) \u2014 function in git-status.ts, lines 82-96.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/git-status.ts:remember",
+   "type": "function",
+   "name": "remember",
+   "filePath": "packages/cli/src/tui/git-status.ts",
+   "lineRange": [
+    98,
+    104
+   ],
+   "summary": "remember(cwd, status) \u2014 function in git-status.ts, lines 98-104.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/git-status.ts:readGitStatus",
+   "type": "function",
+   "name": "readGitStatus",
+   "filePath": "packages/cli/src/tui/git-status.ts",
+   "lineRange": [
+    112,
+    129
+   ],
+   "summary": "readGitStatus(cwd) \u2014 function in git-status.ts, lines 112-129.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/git-status.ts:cachedGitStatus",
+   "type": "function",
+   "name": "cachedGitStatus",
+   "filePath": "packages/cli/src/tui/git-status.ts",
+   "lineRange": [
+    139,
+    149
+   ],
+   "summary": "cachedGitStatus(cwd) \u2014 function in git-status.ts, lines 139-149.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/git-status.ts:primeGitStatus",
+   "type": "function",
+   "name": "primeGitStatus",
+   "filePath": "packages/cli/src/tui/git-status.ts",
+   "lineRange": [
+    152,
+    154
+   ],
+   "summary": "primeGitStatus(cwd) \u2014 function in git-status.ts, lines 152-154.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/git-status.ts:resetGitStatusCache",
+   "type": "function",
+   "name": "resetGitStatusCache",
+   "filePath": "packages/cli/src/tui/git-status.ts",
+   "lineRange": [
+    157,
+    159
+   ],
+   "summary": "resetGitStatusCache() \u2014 function in git-status.ts, lines 157-159.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/tui/health.ts",
+   "type": "file",
+   "name": "health.ts",
+   "filePath": "packages/cli/src/tui/health.ts",
+   "summary": "health.ts \u2014 typescript code, 274 lines, 14 functions, 0 classes, 6 exports, 6 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/cli/src/tui/health.ts:healthIcon",
+   "type": "function",
+   "name": "healthIcon",
+   "filePath": "packages/cli/src/tui/health.ts",
+   "lineRange": [
+    64,
+    66
+   ],
+   "summary": "healthIcon(state) \u2014 function in health.ts, lines 64-66.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/health.ts:healthWord",
+   "type": "function",
+   "name": "healthWord",
+   "filePath": "packages/cli/src/tui/health.ts",
+   "lineRange": [
+    69,
+    71
+   ],
+   "summary": "healthWord(state) \u2014 function in health.ts, lines 69-71.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/health.ts:healthTone",
+   "type": "function",
+   "name": "healthTone",
+   "filePath": "packages/cli/src/tui/health.ts",
+   "lineRange": [
+    73,
+    77
+   ],
+   "summary": "healthTone(state) \u2014 function in health.ts, lines 73-77.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/health.ts:severityRank",
+   "type": "function",
+   "name": "severityRank",
+   "filePath": "packages/cli/src/tui/health.ts",
+   "lineRange": [
+    82,
+    95
+   ],
+   "summary": "severityRank(state) \u2014 function in health.ts, lines 82-95.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/health.ts:compareText",
+   "type": "function",
+   "name": "compareText",
+   "filePath": "packages/cli/src/tui/health.ts",
+   "lineRange": [
+    100,
+    104
+   ],
+   "summary": "compareText(a, b) \u2014 function in health.ts, lines 100-104.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/health.ts:orderChecks",
+   "type": "function",
+   "name": "orderChecks",
+   "filePath": "packages/cli/src/tui/health.ts",
+   "lineRange": [
+    107,
+    118
+   ],
+   "summary": "orderChecks(checks) \u2014 function in health.ts, lines 107-118.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/health.ts:pillTone",
+   "type": "function",
+   "name": "pillTone",
+   "filePath": "packages/cli/src/tui/health.ts",
+   "lineRange": [
+    124,
+    127
+   ],
+   "summary": "pillTone(state) \u2014 function in health.ts, lines 124-127.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/health.ts:buildValue",
+   "type": "function",
+   "name": "buildValue",
+   "filePath": "packages/cli/src/tui/health.ts",
+   "lineRange": [
+    135,
+    148
+   ],
+   "summary": "buildValue(check, motion) \u2014 function in health.ts, lines 135-148.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/health.ts:checkLabel",
+   "type": "function",
+   "name": "checkLabel",
+   "filePath": "packages/cli/src/tui/health.ts",
+   "lineRange": [
+    150,
+    153
+   ],
+   "summary": "checkLabel(check, index) \u2014 function in health.ts, lines 150-153.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/health.ts:areaTitle",
+   "type": "function",
+   "name": "areaTitle",
+   "filePath": "packages/cli/src/tui/health.ts",
+   "lineRange": [
+    155,
+    158
+   ],
+   "summary": "areaTitle(area) \u2014 function in health.ts, lines 155-158.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/health.ts:renderHealth",
+   "type": "function",
+   "name": "renderHealth",
+   "filePath": "packages/cli/src/tui/health.ts",
+   "lineRange": [
+    161,
+    217
+   ],
+   "summary": "renderHealth(checks, width, options) \u2014 function in health.ts, lines 161-217.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/health.ts:countBy",
+   "type": "function",
+   "name": "countBy",
+   "filePath": "packages/cli/src/tui/health.ts",
+   "lineRange": [
+    221,
+    227
+   ],
+   "summary": "countBy(checks, state) \u2014 function in health.ts, lines 221-227.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/health.ts:nameWorst",
+   "type": "function",
+   "name": "nameWorst",
+   "filePath": "packages/cli/src/tui/health.ts",
+   "lineRange": [
+    232,
+    240
+   ],
+   "summary": "nameWorst(check) \u2014 function in health.ts, lines 232-240.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/health.ts:healthSummary",
+   "type": "function",
+   "name": "healthSummary",
+   "filePath": "packages/cli/src/tui/health.ts",
+   "lineRange": [
+    243,
+    274
+   ],
+   "summary": "healthSummary(checks) \u2014 function in health.ts, lines 243-274.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/tui/inline.ts",
+   "type": "file",
+   "name": "inline.ts",
+   "filePath": "packages/cli/src/tui/inline.ts",
+   "summary": "inline.ts \u2014 typescript code, 33 lines, 1 functions, 0 classes, 1 exports, 3 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/inline.ts:renderInlineCall",
+   "type": "function",
+   "name": "renderInlineCall",
+   "filePath": "packages/cli/src/tui/inline.ts",
+   "lineRange": [
+    5,
+    33
+   ],
+   "summary": "renderInlineCall(call, capabilities) \u2014 function in inline.ts, lines 5-33.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/tui/inspector.ts",
+   "type": "file",
+   "name": "inspector.ts",
+   "filePath": "packages/cli/src/tui/inspector.ts",
+   "summary": "inspector.ts \u2014 typescript code, 362 lines, 11 functions, 0 classes, 2 exports, 3 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/cli/src/tui/inspector.ts:paintField",
+   "type": "function",
+   "name": "paintField",
+   "filePath": "packages/cli/src/tui/inspector.ts",
+   "lineRange": [
+    56,
+    64
+   ],
+   "summary": "paintField(paint, text, tone, bold) \u2014 function in inspector.ts, lines 56-64.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/inspector.ts:wrapCells",
+   "type": "function",
+   "name": "wrapCells",
+   "filePath": "packages/cli/src/tui/inspector.ts",
+   "lineRange": [
+    69,
+    82
+   ],
+   "summary": "wrapCells(line, width) \u2014 function in inspector.ts, lines 69-82.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/inspector.ts:splitValue",
+   "type": "function",
+   "name": "splitValue",
+   "filePath": "packages/cli/src/tui/inspector.ts",
+   "lineRange": [
+    88,
+    106
+   ],
+   "summary": "splitValue(text, firstWidth, restWidth) \u2014 function in inspector.ts, lines 88-106.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/inspector.ts:badgeText",
+   "type": "function",
+   "name": "badgeText",
+   "filePath": "packages/cli/src/tui/inspector.ts",
+   "lineRange": [
+    113,
+    123
+   ],
+   "summary": "badgeText(badge, tone, width, paint\u2026) \u2014 function in inspector.ts, lines 113-123.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/inspector.ts:renderField",
+   "type": "function",
+   "name": "renderField",
+   "filePath": "packages/cli/src/tui/inspector.ts",
+   "lineRange": [
+    125,
+    181
+   ],
+   "summary": "renderField(field, cleanLabel, labelCol, width\u2026) \u2014 function in inspector.ts, lines 125-181.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/inspector.ts:pushBody",
+   "type": "function",
+   "name": "pushBody",
+   "filePath": "packages/cli/src/tui/inspector.ts",
+   "lineRange": [
+    183,
+    195
+   ],
+   "summary": "pushBody(rows, body, width, paint) \u2014 function in inspector.ts, lines 183-195.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/inspector.ts:renderNarrow",
+   "type": "function",
+   "name": "renderNarrow",
+   "filePath": "packages/cli/src/tui/inspector.ts",
+   "lineRange": [
+    200,
+    247
+   ],
+   "summary": "renderNarrow(spec, width, paint, motion) \u2014 function in inspector.ts, lines 200-247.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/inspector.ts:pushHint",
+   "type": "function",
+   "name": "pushHint",
+   "filePath": "packages/cli/src/tui/inspector.ts",
+   "lineRange": [
+    249,
+    261
+   ],
+   "summary": "pushHint(rows, hint, width, paint) \u2014 function in inspector.ts, lines 249-261.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/inspector.ts:renderInspector",
+   "type": "function",
+   "name": "renderInspector",
+   "filePath": "packages/cli/src/tui/inspector.ts",
+   "lineRange": [
+    263,
+    347
+   ],
+   "summary": "renderInspector(spec, options) \u2014 function in inspector.ts, lines 263-347.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/inspector.ts:clipHeight",
+   "type": "function",
+   "name": "clipHeight",
+   "filePath": "packages/cli/src/tui/inspector.ts",
+   "lineRange": [
+    351,
+    354
+   ],
+   "summary": "clipHeight(rows, height) \u2014 function in inspector.ts, lines 351-354.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/inspector.ts:inspectorSummary",
+   "type": "function",
+   "name": "inspectorSummary",
+   "filePath": "packages/cli/src/tui/inspector.ts",
+   "lineRange": [
+    357,
+    362
+   ],
+   "summary": "inspectorSummary(spec) \u2014 function in inspector.ts, lines 357-362.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/tui/layout.test.ts",
+   "type": "file",
+   "name": "layout.test.ts",
+   "filePath": "packages/cli/src/tui/layout.test.ts",
+   "summary": "layout.test.ts \u2014 typescript code, 35 lines, 0 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/tui/layout.ts",
+   "type": "file",
+   "name": "layout.ts",
+   "filePath": "packages/cli/src/tui/layout.ts",
+   "summary": "layout.ts \u2014 typescript code, 385 lines, 17 functions, 0 classes, 14 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/cli/src/tui/layout.ts:sanitizeText",
+   "type": "function",
+   "name": "sanitizeText",
+   "filePath": "packages/cli/src/tui/layout.ts",
+   "lineRange": [
+    21,
+    23
+   ],
+   "summary": "sanitizeText(value) \u2014 function in layout.ts, lines 21-23.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/layout.ts:stripAnsi",
+   "type": "function",
+   "name": "stripAnsi",
+   "filePath": "packages/cli/src/tui/layout.ts",
+   "lineRange": [
+    25,
+    27
+   ],
+   "summary": "stripAnsi(value) \u2014 function in layout.ts, lines 25-27.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/layout.ts:cellWidth",
+   "type": "function",
+   "name": "cellWidth",
+   "filePath": "packages/cli/src/tui/layout.ts",
+   "lineRange": [
+    37,
+    77
+   ],
+   "summary": "cellWidth(point) \u2014 function in layout.ts, lines 37-77.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/layout.ts:plainWidth",
+   "type": "function",
+   "name": "plainWidth",
+   "filePath": "packages/cli/src/tui/layout.ts",
+   "lineRange": [
+    79,
+    83
+   ],
+   "summary": "plainWidth(value) \u2014 function in layout.ts, lines 79-83.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/layout.ts:visibleLength",
+   "type": "function",
+   "name": "visibleLength",
+   "filePath": "packages/cli/src/tui/layout.ts",
+   "lineRange": [
+    85,
+    87
+   ],
+   "summary": "visibleLength(value) \u2014 function in layout.ts, lines 85-87.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/layout.ts:fit",
+   "type": "function",
+   "name": "fit",
+   "filePath": "packages/cli/src/tui/layout.ts",
+   "lineRange": [
+    91,
+    123
+   ],
+   "summary": "fit(value, width, side) \u2014 function in layout.ts, lines 91-123.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/layout.ts:pad",
+   "type": "function",
+   "name": "pad",
+   "filePath": "packages/cli/src/tui/layout.ts",
+   "lineRange": [
+    125,
+    128
+   ],
+   "summary": "pad(value, width) \u2014 function in layout.ts, lines 125-128.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/layout.ts:rule",
+   "type": "function",
+   "name": "rule",
+   "filePath": "packages/cli/src/tui/layout.ts",
+   "lineRange": [
+    130,
+    137
+   ],
+   "summary": "rule(width, character) \u2014 function in layout.ts, lines 130-137.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/layout.ts:box",
+   "type": "function",
+   "name": "box",
+   "filePath": "packages/cli/src/tui/layout.ts",
+   "lineRange": [
+    153,
+    174
+   ],
+   "summary": "box(title, content, width, frame) \u2014 function in layout.ts, lines 153-174.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/layout.ts:columns",
+   "type": "function",
+   "name": "columns",
+   "filePath": "packages/cli/src/tui/layout.ts",
+   "lineRange": [
+    176,
+    190
+   ],
+   "summary": "columns(left, right, leftWidth, gap) \u2014 function in layout.ts, lines 176-190.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/layout.ts:crop",
+   "type": "function",
+   "name": "crop",
+   "filePath": "packages/cli/src/tui/layout.ts",
+   "lineRange": [
+    192,
+    198
+   ],
+   "summary": "crop(lines, width, height) \u2014 function in layout.ts, lines 192-198.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/layout.ts:meter",
+   "type": "function",
+   "name": "meter",
+   "filePath": "packages/cli/src/tui/layout.ts",
+   "lineRange": [
+    200,
+    207
+   ],
+   "summary": "meter(value, max, width) \u2014 function in layout.ts, lines 200-207.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/layout.ts:progressBar",
+   "type": "function",
+   "name": "progressBar",
+   "filePath": "packages/cli/src/tui/layout.ts",
+   "lineRange": [
+    209,
+    218
+   ],
+   "summary": "progressBar(value, max, width) \u2014 function in layout.ts, lines 209-218.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/layout.ts:myersOps",
+   "type": "function",
+   "name": "myersOps",
+   "filePath": "packages/cli/src/tui/layout.ts",
+   "lineRange": [
+    222,
+    297
+   ],
+   "summary": "myersOps(a, b) \u2014 function in layout.ts, lines 222-297.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/layout.ts:unifiedDiff",
+   "type": "function",
+   "name": "unifiedDiff",
+   "filePath": "packages/cli/src/tui/layout.ts",
+   "lineRange": [
+    300,
+    357
+   ],
+   "summary": "unifiedDiff(before, after, context, maxRows) \u2014 function in layout.ts, lines 300-357.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/layout.ts:splitDiffHunks",
+   "type": "function",
+   "name": "splitDiffHunks",
+   "filePath": "packages/cli/src/tui/layout.ts",
+   "lineRange": [
+    362,
+    369
+   ],
+   "summary": "splitDiffHunks(rows) \u2014 function in layout.ts, lines 362-369.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/layout.ts:renderHunkSelection",
+   "type": "function",
+   "name": "renderHunkSelection",
+   "filePath": "packages/cli/src/tui/layout.ts",
+   "lineRange": [
+    373,
+    385
+   ],
+   "summary": "renderHunkSelection(chunks, selected) \u2014 function in layout.ts, lines 373-385.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/tui/ledger-visual.ts",
+   "type": "file",
+   "name": "ledger-visual.ts",
+   "filePath": "packages/cli/src/tui/ledger-visual.ts",
+   "summary": "ledger-visual.ts \u2014 typescript code, 155 lines, 4 functions, 0 classes, 4 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/cli/src/tui/ledger-visual.ts:chainGlyphs",
+   "type": "function",
+   "name": "chainGlyphs",
+   "filePath": "packages/cli/src/tui/ledger-visual.ts",
+   "lineRange": [
+    46,
+    67
+   ],
+   "summary": "chainGlyphs(entries, options) \u2014 function in ledger-visual.ts, lines 46-67.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/ledger-visual.ts:chainStatusLine",
+   "type": "function",
+   "name": "chainStatusLine",
+   "filePath": "packages/cli/src/tui/ledger-visual.ts",
+   "lineRange": [
+    78,
+    100
+   ],
+   "summary": "chainStatusLine(view, width) \u2014 function in ledger-visual.ts, lines 78-100.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/ledger-visual.ts:ledgerChainLines",
+   "type": "function",
+   "name": "ledgerChainLines",
+   "filePath": "packages/cli/src/tui/ledger-visual.ts",
+   "lineRange": [
+    108,
+    129
+   ],
+   "summary": "ledgerChainLines(managed, proxy, width) \u2014 function in ledger-visual.ts, lines 108-129.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/ledger-visual.ts:ledgerGroupHeading",
+   "type": "function",
+   "name": "ledgerGroupHeading",
+   "filePath": "packages/cli/src/tui/ledger-visual.ts",
+   "lineRange": [
+    146,
+    155
+   ],
+   "summary": "ledgerGroupHeading(input) \u2014 function in ledger-visual.ts, lines 146-155.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  }
+ ],
+ "edges": [
+  {
+   "source": "file:packages/cli/src/agent.ts",
+   "target": "function:packages/cli/src/agent.ts:runAgentCommand",
+   "type": "contains",
+   "direction": "forward",
+   "description": "agent.ts defines runAgentCommand",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/agent.ts",
+   "target": "function:packages/cli/src/agent.ts:runAgentCommand",
+   "type": "exports",
+   "direction": "forward",
+   "description": "agent.ts exports runAgentCommand",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/tui/a11y.test.ts",
+   "target": "function:packages/cli/src/tui/a11y.test.ts:capabilities",
+   "type": "contains",
+   "direction": "forward",
+   "description": "a11y.test.ts defines capabilities",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/a11y.test.ts",
+   "target": "function:packages/cli/src/tui/a11y.test.ts:fixture",
+   "type": "contains",
+   "direction": "forward",
+   "description": "a11y.test.ts defines fixture",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/a11y.test.ts",
+   "target": "function:packages/cli/src/tui/a11y.test.ts:sessionFixture",
+   "type": "contains",
+   "direction": "forward",
+   "description": "a11y.test.ts defines sessionFixture",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/a11y.test.ts",
+   "target": "function:packages/cli/src/tui/a11y.test.ts:frame",
+   "type": "contains",
+   "direction": "forward",
+   "description": "a11y.test.ts defines frame",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/a11y.test.ts",
+   "target": "function:packages/cli/src/tui/a11y.test.ts:plain",
+   "type": "contains",
+   "direction": "forward",
+   "description": "a11y.test.ts defines plain",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/a11y.test.ts",
+   "target": "function:packages/cli/src/tui/a11y.test.ts:rectText",
+   "type": "contains",
+   "direction": "forward",
+   "description": "a11y.test.ts defines rectText",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/a11y.test.ts",
+   "target": "function:packages/cli/src/tui/a11y.test.ts:words",
+   "type": "contains",
+   "direction": "forward",
+   "description": "a11y.test.ts defines words",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/a11y.test.ts",
+   "target": "function:packages/cli/src/tui/a11y.test.ts:paletteSetup",
+   "type": "contains",
+   "direction": "forward",
+   "description": "a11y.test.ts defines paletteSetup",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/a11y.test.ts",
+   "target": "function:packages/cli/src/tui/a11y.test.ts:toastHost",
+   "type": "contains",
+   "direction": "forward",
+   "description": "a11y.test.ts defines toastHost",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/a11y.test.ts",
+   "target": "function:packages/cli/src/tui/a11y.test.ts:chatToastSetup",
+   "type": "contains",
+   "direction": "forward",
+   "description": "a11y.test.ts defines chatToastSetup",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/cli/src/tui/a11y.test.ts:frame",
+   "target": "function:packages/cli/src/tui/a11y.test.ts:capabilities",
+   "type": "calls",
+   "direction": "forward",
+   "description": "frame calls capabilities",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/a11y.test.ts:words",
+   "target": "function:packages/cli/src/tui/a11y.test.ts:plain",
+   "type": "calls",
+   "direction": "forward",
+   "description": "words calls plain",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/a11y.test.ts:chatToastSetup",
+   "target": "function:packages/cli/src/tui/a11y.test.ts:toastHost",
+   "type": "calls",
+   "direction": "forward",
+   "description": "chatToastSetup calls toastHost",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/cli/src/tui/activity.ts",
+   "target": "function:packages/cli/src/tui/activity.ts:markFor",
+   "type": "contains",
+   "direction": "forward",
+   "description": "activity.ts defines markFor",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/activity.ts",
+   "target": "function:packages/cli/src/tui/activity.ts:isRecord",
+   "type": "contains",
+   "direction": "forward",
+   "description": "activity.ts defines isRecord",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/activity.ts",
+   "target": "function:packages/cli/src/tui/activity.ts:firstText",
+   "type": "contains",
+   "direction": "forward",
+   "description": "activity.ts defines firstText",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/activity.ts",
+   "target": "function:packages/cli/src/tui/activity.ts:canonicalKind",
+   "type": "contains",
+   "direction": "forward",
+   "description": "activity.ts defines canonicalKind",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/activity.ts",
+   "target": "function:packages/cli/src/tui/activity.ts:parseAt",
+   "type": "contains",
+   "direction": "forward",
+   "description": "activity.ts defines parseAt",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/activity.ts",
+   "target": "function:packages/cli/src/tui/activity.ts:buildActivity",
+   "type": "contains",
+   "direction": "forward",
+   "description": "activity.ts defines buildActivity",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/activity.ts",
+   "target": "function:packages/cli/src/tui/activity.ts:buildActivity",
+   "type": "exports",
+   "direction": "forward",
+   "description": "activity.ts exports buildActivity",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/tui/activity.ts",
+   "target": "function:packages/cli/src/tui/activity.ts:stripMarks",
+   "type": "contains",
+   "direction": "forward",
+   "description": "activity.ts defines stripMarks",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/activity.ts",
+   "target": "function:packages/cli/src/tui/activity.ts:resolveMotion",
+   "type": "contains",
+   "direction": "forward",
+   "description": "activity.ts defines resolveMotion",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/activity.ts",
+   "target": "function:packages/cli/src/tui/activity.ts:activityStrip",
+   "type": "contains",
+   "direction": "forward",
+   "description": "activity.ts defines activityStrip",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/activity.ts",
+   "target": "function:packages/cli/src/tui/activity.ts:activityStrip",
+   "type": "exports",
+   "direction": "forward",
+   "description": "activity.ts exports activityStrip",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/tui/activity.ts",
+   "target": "function:packages/cli/src/tui/activity.ts:formatSpan",
+   "type": "contains",
+   "direction": "forward",
+   "description": "activity.ts defines formatSpan",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/activity.ts",
+   "target": "function:packages/cli/src/tui/activity.ts:kindWords",
+   "type": "contains",
+   "direction": "forward",
+   "description": "activity.ts defines kindWords",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/activity.ts",
+   "target": "function:packages/cli/src/tui/activity.ts:activitySummary",
+   "type": "contains",
+   "direction": "forward",
+   "description": "activity.ts defines activitySummary",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/activity.ts",
+   "target": "function:packages/cli/src/tui/activity.ts:activitySummary",
+   "type": "exports",
+   "direction": "forward",
+   "description": "activity.ts exports activitySummary",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/tui/activity.ts",
+   "target": "function:packages/cli/src/tui/activity.ts:legendRow",
+   "type": "contains",
+   "direction": "forward",
+   "description": "activity.ts defines legendRow",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/activity.ts",
+   "target": "function:packages/cli/src/tui/activity.ts:renderActivity",
+   "type": "contains",
+   "direction": "forward",
+   "description": "activity.ts defines renderActivity",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/activity.ts",
+   "target": "function:packages/cli/src/tui/activity.ts:renderActivity",
+   "type": "exports",
+   "direction": "forward",
+   "description": "activity.ts exports renderActivity",
+   "weight": 0.7
+  },
+  {
+   "source": "function:packages/cli/src/tui/activity.ts:buildActivity",
+   "target": "function:packages/cli/src/tui/activity.ts:isRecord",
+   "type": "calls",
+   "direction": "forward",
+   "description": "buildActivity calls isRecord",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/activity.ts:buildActivity",
+   "target": "function:packages/cli/src/tui/activity.ts:firstText",
+   "type": "calls",
+   "direction": "forward",
+   "description": "buildActivity calls firstText",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/activity.ts:buildActivity",
+   "target": "function:packages/cli/src/tui/activity.ts:canonicalKind",
+   "type": "calls",
+   "direction": "forward",
+   "description": "buildActivity calls canonicalKind",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/activity.ts:buildActivity",
+   "target": "function:packages/cli/src/tui/activity.ts:parseAt",
+   "type": "calls",
+   "direction": "forward",
+   "description": "buildActivity calls parseAt",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/activity.ts:stripMarks",
+   "target": "function:packages/cli/src/tui/activity.ts:markFor",
+   "type": "calls",
+   "direction": "forward",
+   "description": "stripMarks calls markFor",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/activity.ts:activityStrip",
+   "target": "function:packages/cli/src/tui/activity.ts:resolveMotion",
+   "type": "calls",
+   "direction": "forward",
+   "description": "activityStrip calls resolveMotion",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/activity.ts:activityStrip",
+   "target": "function:packages/cli/src/tui/activity.ts:stripMarks",
+   "type": "calls",
+   "direction": "forward",
+   "description": "activityStrip calls stripMarks",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/activity.ts:activitySummary",
+   "target": "function:packages/cli/src/tui/activity.ts:kindWords",
+   "type": "calls",
+   "direction": "forward",
+   "description": "activitySummary calls kindWords",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/activity.ts:activitySummary",
+   "target": "function:packages/cli/src/tui/activity.ts:formatSpan",
+   "type": "calls",
+   "direction": "forward",
+   "description": "activitySummary calls formatSpan",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/activity.ts:renderActivity",
+   "target": "function:packages/cli/src/tui/activity.ts:resolveMotion",
+   "type": "calls",
+   "direction": "forward",
+   "description": "renderActivity calls resolveMotion",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/activity.ts:renderActivity",
+   "target": "function:packages/cli/src/tui/activity.ts:activityStrip",
+   "type": "calls",
+   "direction": "forward",
+   "description": "renderActivity calls activityStrip",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/activity.ts:renderActivity",
+   "target": "function:packages/cli/src/tui/activity.ts:activitySummary",
+   "type": "calls",
+   "direction": "forward",
+   "description": "renderActivity calls activitySummary",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/activity.ts:renderActivity",
+   "target": "function:packages/cli/src/tui/activity.ts:legendRow",
+   "type": "calls",
+   "direction": "forward",
+   "description": "renderActivity calls legendRow",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/cli/src/tui/approvals.ts",
+   "target": "function:packages/cli/src/tui/approvals.ts:countdown",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approvals.ts defines countdown",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/approvals.ts",
+   "target": "function:packages/cli/src/tui/approvals.ts:radius",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approvals.ts defines radius",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/approvals.ts",
+   "target": "function:packages/cli/src/tui/approvals.ts:approvalsView",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approvals.ts defines approvalsView",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/approvals.ts",
+   "target": "function:packages/cli/src/tui/approvals.ts:approvalsView",
+   "type": "exports",
+   "direction": "forward",
+   "description": "approvals.ts exports approvalsView",
+   "weight": 0.7
+  },
+  {
+   "source": "function:packages/cli/src/tui/approvals.ts:approvalsView",
+   "target": "function:packages/cli/src/tui/approvals.ts:countdown",
+   "type": "calls",
+   "direction": "forward",
+   "description": "approvalsView calls countdown",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/approvals.ts:approvalsView",
+   "target": "function:packages/cli/src/tui/approvals.ts:radius",
+   "type": "calls",
+   "direction": "forward",
+   "description": "approvalsView calls radius",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/cli/src/tui/blocks.ts",
+   "target": "function:packages/cli/src/tui/blocks.ts:blockText",
+   "type": "contains",
+   "direction": "forward",
+   "description": "blocks.ts defines blockText",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/blocks.ts",
+   "target": "function:packages/cli/src/tui/blocks.ts:roleIcon",
+   "type": "contains",
+   "direction": "forward",
+   "description": "blocks.ts defines roleIcon",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/blocks.ts",
+   "target": "function:packages/cli/src/tui/blocks.ts:roleIcon",
+   "type": "exports",
+   "direction": "forward",
+   "description": "blocks.ts exports roleIcon",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/tui/blocks.ts",
+   "target": "function:packages/cli/src/tui/blocks.ts:roleLabel",
+   "type": "contains",
+   "direction": "forward",
+   "description": "blocks.ts defines roleLabel",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/blocks.ts",
+   "target": "function:packages/cli/src/tui/blocks.ts:roleLabel",
+   "type": "exports",
+   "direction": "forward",
+   "description": "blocks.ts exports roleLabel",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/tui/blocks.ts",
+   "target": "function:packages/cli/src/tui/blocks.ts:displayName",
+   "type": "contains",
+   "direction": "forward",
+   "description": "blocks.ts defines displayName",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/blocks.ts",
+   "target": "function:packages/cli/src/tui/blocks.ts:shortTime",
+   "type": "contains",
+   "direction": "forward",
+   "description": "blocks.ts defines shortTime",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/blocks.ts",
+   "target": "function:packages/cli/src/tui/blocks.ts:lifecycleLabel",
+   "type": "contains",
+   "direction": "forward",
+   "description": "blocks.ts defines lifecycleLabel",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/blocks.ts",
+   "target": "function:packages/cli/src/tui/blocks.ts:blockHeading",
+   "type": "contains",
+   "direction": "forward",
+   "description": "blocks.ts defines blockHeading",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/blocks.ts",
+   "target": "function:packages/cli/src/tui/blocks.ts:blockHeading",
+   "type": "exports",
+   "direction": "forward",
+   "description": "blocks.ts exports blockHeading",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/tui/blocks.ts",
+   "target": "function:packages/cli/src/tui/blocks.ts:wrapCells",
+   "type": "contains",
+   "direction": "forward",
+   "description": "blocks.ts defines wrapCells",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/blocks.ts",
+   "target": "function:packages/cli/src/tui/blocks.ts:wrapBody",
+   "type": "contains",
+   "direction": "forward",
+   "description": "blocks.ts defines wrapBody",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/blocks.ts",
+   "target": "function:packages/cli/src/tui/blocks.ts:collapseBody",
+   "type": "contains",
+   "direction": "forward",
+   "description": "blocks.ts defines collapseBody",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/blocks.ts",
+   "target": "function:packages/cli/src/tui/blocks.ts:blockBody",
+   "type": "contains",
+   "direction": "forward",
+   "description": "blocks.ts defines blockBody",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/blocks.ts",
+   "target": "function:packages/cli/src/tui/blocks.ts:blockBody",
+   "type": "exports",
+   "direction": "forward",
+   "description": "blocks.ts exports blockBody",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/tui/blocks.ts",
+   "target": "function:packages/cli/src/tui/blocks.ts:footerPlain",
+   "type": "contains",
+   "direction": "forward",
+   "description": "blocks.ts defines footerPlain",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/blocks.ts",
+   "target": "function:packages/cli/src/tui/blocks.ts:renderBlock",
+   "type": "contains",
+   "direction": "forward",
+   "description": "blocks.ts defines renderBlock",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/blocks.ts",
+   "target": "function:packages/cli/src/tui/blocks.ts:renderBlock",
+   "type": "exports",
+   "direction": "forward",
+   "description": "blocks.ts exports renderBlock",
+   "weight": 0.7
+  },
+  {
+   "source": "function:packages/cli/src/tui/blocks.ts:displayName",
+   "target": "function:packages/cli/src/tui/blocks.ts:blockText",
+   "type": "calls",
+   "direction": "forward",
+   "description": "displayName calls blockText",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/blocks.ts:blockHeading",
+   "target": "function:packages/cli/src/tui/blocks.ts:displayName",
+   "type": "calls",
+   "direction": "forward",
+   "description": "blockHeading calls displayName",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/blocks.ts:blockHeading",
+   "target": "function:packages/cli/src/tui/blocks.ts:roleLabel",
+   "type": "calls",
+   "direction": "forward",
+   "description": "blockHeading calls roleLabel",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/blocks.ts:blockHeading",
+   "target": "function:packages/cli/src/tui/blocks.ts:lifecycleLabel",
+   "type": "calls",
+   "direction": "forward",
+   "description": "blockHeading calls lifecycleLabel",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/blocks.ts:blockHeading",
+   "target": "function:packages/cli/src/tui/blocks.ts:roleIcon",
+   "type": "calls",
+   "direction": "forward",
+   "description": "blockHeading calls roleIcon",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/blocks.ts:blockHeading",
+   "target": "function:packages/cli/src/tui/blocks.ts:shortTime",
+   "type": "calls",
+   "direction": "forward",
+   "description": "blockHeading calls shortTime",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/blocks.ts:blockHeading",
+   "target": "function:packages/cli/src/tui/blocks.ts:blockText",
+   "type": "calls",
+   "direction": "forward",
+   "description": "blockHeading calls blockText",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/blocks.ts:wrapBody",
+   "target": "function:packages/cli/src/tui/blocks.ts:wrapCells",
+   "type": "calls",
+   "direction": "forward",
+   "description": "wrapBody calls wrapCells",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/blocks.ts:wrapBody",
+   "target": "function:packages/cli/src/tui/blocks.ts:blockText",
+   "type": "calls",
+   "direction": "forward",
+   "description": "wrapBody calls blockText",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/blocks.ts:blockBody",
+   "target": "function:packages/cli/src/tui/blocks.ts:collapseBody",
+   "type": "calls",
+   "direction": "forward",
+   "description": "blockBody calls collapseBody",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/blocks.ts:blockBody",
+   "target": "function:packages/cli/src/tui/blocks.ts:wrapBody",
+   "type": "calls",
+   "direction": "forward",
+   "description": "blockBody calls wrapBody",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/blocks.ts:renderBlock",
+   "target": "function:packages/cli/src/tui/blocks.ts:blockHeading",
+   "type": "calls",
+   "direction": "forward",
+   "description": "renderBlock calls blockHeading",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/blocks.ts:renderBlock",
+   "target": "function:packages/cli/src/tui/blocks.ts:wrapBody",
+   "type": "calls",
+   "direction": "forward",
+   "description": "renderBlock calls wrapBody",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/blocks.ts:renderBlock",
+   "target": "function:packages/cli/src/tui/blocks.ts:collapseBody",
+   "type": "calls",
+   "direction": "forward",
+   "description": "renderBlock calls collapseBody",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/blocks.ts:renderBlock",
+   "target": "function:packages/cli/src/tui/blocks.ts:footerPlain",
+   "type": "calls",
+   "direction": "forward",
+   "description": "renderBlock calls footerPlain",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/cli/src/tui/brand.ts",
+   "target": "function:packages/cli/src/tui/brand.ts:kittyVirtualImageTransfer",
+   "type": "contains",
+   "direction": "forward",
+   "description": "brand.ts defines kittyVirtualImageTransfer",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/brand.ts",
+   "target": "function:packages/cli/src/tui/brand.ts:validTabIcon",
+   "type": "contains",
+   "direction": "forward",
+   "description": "brand.ts defines validTabIcon",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/brand.ts",
+   "target": "function:packages/cli/src/tui/brand.ts:loadLocalTabIcons",
+   "type": "contains",
+   "direction": "forward",
+   "description": "brand.ts defines loadLocalTabIcons",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/brand.ts",
+   "target": "function:packages/cli/src/tui/brand.ts:loadLocalTabIcons",
+   "type": "exports",
+   "direction": "forward",
+   "description": "brand.ts exports loadLocalTabIcons",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/tui/brand.ts",
+   "target": "function:packages/cli/src/tui/brand.ts:kittyTabIconsTransfer",
+   "type": "contains",
+   "direction": "forward",
+   "description": "brand.ts defines kittyTabIconsTransfer",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/brand.ts",
+   "target": "function:packages/cli/src/tui/brand.ts:kittyTabIconsTransfer",
+   "type": "exports",
+   "direction": "forward",
+   "description": "brand.ts exports kittyTabIconsTransfer",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/tui/brand.ts",
+   "target": "function:packages/cli/src/tui/brand.ts:kittyTabIconsCleanup",
+   "type": "contains",
+   "direction": "forward",
+   "description": "brand.ts defines kittyTabIconsCleanup",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/brand.ts",
+   "target": "function:packages/cli/src/tui/brand.ts:kittyTabIconsCleanup",
+   "type": "exports",
+   "direction": "forward",
+   "description": "brand.ts exports kittyTabIconsCleanup",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/tui/brand.ts",
+   "target": "function:packages/cli/src/tui/brand.ts:kittyProviderIconTransfer",
+   "type": "contains",
+   "direction": "forward",
+   "description": "brand.ts defines kittyProviderIconTransfer",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/brand.ts",
+   "target": "function:packages/cli/src/tui/brand.ts:kittyProviderIconTransfer",
+   "type": "exports",
+   "direction": "forward",
+   "description": "brand.ts exports kittyProviderIconTransfer",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/tui/brand.ts",
+   "target": "function:packages/cli/src/tui/brand.ts:kittyProviderIconCleanup",
+   "type": "contains",
+   "direction": "forward",
+   "description": "brand.ts defines kittyProviderIconCleanup",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/brand.ts",
+   "target": "function:packages/cli/src/tui/brand.ts:kittyProviderIconCleanup",
+   "type": "exports",
+   "direction": "forward",
+   "description": "brand.ts exports kittyProviderIconCleanup",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/tui/brand.ts",
+   "target": "function:packages/cli/src/tui/brand.ts:kittyIconLabel",
+   "type": "contains",
+   "direction": "forward",
+   "description": "brand.ts defines kittyIconLabel",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/brand.ts",
+   "target": "function:packages/cli/src/tui/brand.ts:kittyTabIconLabel",
+   "type": "contains",
+   "direction": "forward",
+   "description": "brand.ts defines kittyTabIconLabel",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/brand.ts",
+   "target": "function:packages/cli/src/tui/brand.ts:kittyTabIconLabel",
+   "type": "exports",
+   "direction": "forward",
+   "description": "brand.ts exports kittyTabIconLabel",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/tui/brand.ts",
+   "target": "function:packages/cli/src/tui/brand.ts:kittyProviderIconLabel",
+   "type": "contains",
+   "direction": "forward",
+   "description": "brand.ts defines kittyProviderIconLabel",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/brand.ts",
+   "target": "function:packages/cli/src/tui/brand.ts:kittyProviderIconLabel",
+   "type": "exports",
+   "direction": "forward",
+   "description": "brand.ts exports kittyProviderIconLabel",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/tui/brand.ts",
+   "target": "function:packages/cli/src/tui/brand.ts:kittySemanticIconLabel",
+   "type": "contains",
+   "direction": "forward",
+   "description": "brand.ts defines kittySemanticIconLabel",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/brand.ts",
+   "target": "function:packages/cli/src/tui/brand.ts:kittySemanticIconLabel",
+   "type": "exports",
+   "direction": "forward",
+   "description": "brand.ts exports kittySemanticIconLabel",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/tui/brand.ts",
+   "target": "function:packages/cli/src/tui/brand.ts:kittyActivityIconLabel",
+   "type": "contains",
+   "direction": "forward",
+   "description": "brand.ts defines kittyActivityIconLabel",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/brand.ts",
+   "target": "function:packages/cli/src/tui/brand.ts:kittyActivityIconLabel",
+   "type": "exports",
+   "direction": "forward",
+   "description": "brand.ts exports kittyActivityIconLabel",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/tui/brand.ts",
+   "target": "function:packages/cli/src/tui/brand.ts:brandHeader",
+   "type": "contains",
+   "direction": "forward",
+   "description": "brand.ts defines brandHeader",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/brand.ts",
+   "target": "function:packages/cli/src/tui/brand.ts:brandHeader",
+   "type": "exports",
+   "direction": "forward",
+   "description": "brand.ts exports brandHeader",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/tui/brand.ts",
+   "target": "function:packages/cli/src/tui/brand.ts:paintBrand",
+   "type": "contains",
+   "direction": "forward",
+   "description": "brand.ts defines paintBrand",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/brand.ts",
+   "target": "function:packages/cli/src/tui/brand.ts:compactBrandMark",
+   "type": "contains",
+   "direction": "forward",
+   "description": "brand.ts defines compactBrandMark",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/brand.ts",
+   "target": "function:packages/cli/src/tui/brand.ts:compactBrandMark",
+   "type": "exports",
+   "direction": "forward",
+   "description": "brand.ts exports compactBrandMark",
+   "weight": 0.7
+  },
+  {
+   "source": "function:packages/cli/src/tui/brand.ts:kittyTabIconsTransfer",
+   "target": "function:packages/cli/src/tui/brand.ts:kittyVirtualImageTransfer",
+   "type": "calls",
+   "direction": "forward",
+   "description": "kittyTabIconsTransfer calls kittyVirtualImageTransfer",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/brand.ts:kittyProviderIconTransfer",
+   "target": "function:packages/cli/src/tui/brand.ts:kittyVirtualImageTransfer",
+   "type": "calls",
+   "direction": "forward",
+   "description": "kittyProviderIconTransfer calls kittyVirtualImageTransfer",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/brand.ts:kittyTabIconLabel",
+   "target": "function:packages/cli/src/tui/brand.ts:kittyIconLabel",
+   "type": "calls",
+   "direction": "forward",
+   "description": "kittyTabIconLabel calls kittyIconLabel",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/brand.ts:kittyProviderIconLabel",
+   "target": "function:packages/cli/src/tui/brand.ts:kittyIconLabel",
+   "type": "calls",
+   "direction": "forward",
+   "description": "kittyProviderIconLabel calls kittyIconLabel",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/brand.ts:kittySemanticIconLabel",
+   "target": "function:packages/cli/src/tui/brand.ts:kittyIconLabel",
+   "type": "calls",
+   "direction": "forward",
+   "description": "kittySemanticIconLabel calls kittyIconLabel",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/brand.ts:kittyActivityIconLabel",
+   "target": "function:packages/cli/src/tui/brand.ts:kittySemanticIconLabel",
+   "type": "calls",
+   "direction": "forward",
+   "description": "kittyActivityIconLabel calls kittySemanticIconLabel",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/brand.ts:brandHeader",
+   "target": "function:packages/cli/src/tui/brand.ts:paintBrand",
+   "type": "calls",
+   "direction": "forward",
+   "description": "brandHeader calls paintBrand",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/brand.ts:compactBrandMark",
+   "target": "function:packages/cli/src/tui/brand.ts:paintBrand",
+   "type": "calls",
+   "direction": "forward",
+   "description": "compactBrandMark calls paintBrand",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/cli/src/tui/caps.ts",
+   "target": "function:packages/cli/src/tui/caps.ts:positive",
+   "type": "contains",
+   "direction": "forward",
+   "description": "caps.ts defines positive",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/caps.ts",
+   "target": "function:packages/cli/src/tui/caps.ts:detectCapabilities",
+   "type": "contains",
+   "direction": "forward",
+   "description": "caps.ts defines detectCapabilities",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/caps.ts",
+   "target": "function:packages/cli/src/tui/caps.ts:detectCapabilities",
+   "type": "exports",
+   "direction": "forward",
+   "description": "caps.ts exports detectCapabilities",
+   "weight": 0.7
+  },
+  {
+   "source": "function:packages/cli/src/tui/caps.ts:detectCapabilities",
+   "target": "function:packages/cli/src/tui/caps.ts:positive",
+   "type": "calls",
+   "direction": "forward",
+   "description": "detectCapabilities calls positive",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/cli/src/tui/charts.ts",
+   "target": "function:packages/cli/src/tui/charts.ts:resolveMotion",
+   "type": "contains",
+   "direction": "forward",
+   "description": "charts.ts defines resolveMotion",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/charts.ts",
+   "target": "function:packages/cli/src/tui/charts.ts:isLive",
+   "type": "contains",
+   "direction": "forward",
+   "description": "charts.ts defines isLive",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/charts.ts",
+   "target": "function:packages/cli/src/tui/charts.ts:isFiniteNumber",
+   "type": "contains",
+   "direction": "forward",
+   "description": "charts.ts defines isFiniteNumber",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/charts.ts",
+   "target": "function:packages/cli/src/tui/charts.ts:formatNumber",
+   "type": "contains",
+   "direction": "forward",
+   "description": "charts.ts defines formatNumber",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/charts.ts",
+   "target": "function:packages/cli/src/tui/charts.ts:clamp01",
+   "type": "contains",
+   "direction": "forward",
+   "description": "charts.ts defines clamp01",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/charts.ts",
+   "target": "function:packages/cli/src/tui/charts.ts:levelFor",
+   "type": "contains",
+   "direction": "forward",
+   "description": "charts.ts defines levelFor",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/charts.ts",
+   "target": "function:packages/cli/src/tui/charts.ts:sparkline",
+   "type": "contains",
+   "direction": "forward",
+   "description": "charts.ts defines sparkline",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/charts.ts",
+   "target": "function:packages/cli/src/tui/charts.ts:sparkline",
+   "type": "exports",
+   "direction": "forward",
+   "description": "charts.ts exports sparkline",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/tui/charts.ts",
+   "target": "function:packages/cli/src/tui/charts.ts:barChart",
+   "type": "contains",
+   "direction": "forward",
+   "description": "charts.ts defines barChart",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/charts.ts",
+   "target": "function:packages/cli/src/tui/charts.ts:barChart",
+   "type": "exports",
+   "direction": "forward",
+   "description": "charts.ts exports barChart",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/tui/charts.ts",
+   "target": "function:packages/cli/src/tui/charts.ts:stackedBar",
+   "type": "contains",
+   "direction": "forward",
+   "description": "charts.ts defines stackedBar",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/charts.ts",
+   "target": "function:packages/cli/src/tui/charts.ts:stackedBar",
+   "type": "exports",
+   "direction": "forward",
+   "description": "charts.ts exports stackedBar",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/tui/charts.ts",
+   "target": "function:packages/cli/src/tui/charts.ts:fitLegend",
+   "type": "contains",
+   "direction": "forward",
+   "description": "charts.ts defines fitLegend",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/charts.ts",
+   "target": "function:packages/cli/src/tui/charts.ts:gauge",
+   "type": "contains",
+   "direction": "forward",
+   "description": "charts.ts defines gauge",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/charts.ts",
+   "target": "function:packages/cli/src/tui/charts.ts:gauge",
+   "type": "exports",
+   "direction": "forward",
+   "description": "charts.ts exports gauge",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/tui/charts.ts",
+   "target": "function:packages/cli/src/tui/charts.ts:deltaLabel",
+   "type": "contains",
+   "direction": "forward",
+   "description": "charts.ts defines deltaLabel",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/charts.ts",
+   "target": "function:packages/cli/src/tui/charts.ts:deltaLabel",
+   "type": "exports",
+   "direction": "forward",
+   "description": "charts.ts exports deltaLabel",
+   "weight": 0.7
+  },
+  {
+   "source": "function:packages/cli/src/tui/charts.ts:clamp01",
+   "target": "function:packages/cli/src/tui/charts.ts:isFiniteNumber",
+   "type": "calls",
+   "direction": "forward",
+   "description": "clamp01 calls isFiniteNumber",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/charts.ts:levelFor",
+   "target": "function:packages/cli/src/tui/charts.ts:clamp01",
+   "type": "calls",
+   "direction": "forward",
+   "description": "levelFor calls clamp01",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/charts.ts:sparkline",
+   "target": "function:packages/cli/src/tui/charts.ts:isFiniteNumber",
+   "type": "calls",
+   "direction": "forward",
+   "description": "sparkline calls isFiniteNumber",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/charts.ts:sparkline",
+   "target": "function:packages/cli/src/tui/charts.ts:resolveMotion",
+   "type": "calls",
+   "direction": "forward",
+   "description": "sparkline calls resolveMotion",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/charts.ts:sparkline",
+   "target": "function:packages/cli/src/tui/charts.ts:levelFor",
+   "type": "calls",
+   "direction": "forward",
+   "description": "sparkline calls levelFor",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/charts.ts:sparkline",
+   "target": "function:packages/cli/src/tui/charts.ts:isLive",
+   "type": "calls",
+   "direction": "forward",
+   "description": "sparkline calls isLive",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/charts.ts:barChart",
+   "target": "function:packages/cli/src/tui/charts.ts:isFiniteNumber",
+   "type": "calls",
+   "direction": "forward",
+   "description": "barChart calls isFiniteNumber",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/charts.ts:barChart",
+   "target": "function:packages/cli/src/tui/charts.ts:formatNumber",
+   "type": "calls",
+   "direction": "forward",
+   "description": "barChart calls formatNumber",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/charts.ts:barChart",
+   "target": "function:packages/cli/src/tui/charts.ts:resolveMotion",
+   "type": "calls",
+   "direction": "forward",
+   "description": "barChart calls resolveMotion",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/charts.ts:barChart",
+   "target": "function:packages/cli/src/tui/charts.ts:clamp01",
+   "type": "calls",
+   "direction": "forward",
+   "description": "barChart calls clamp01",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/charts.ts:barChart",
+   "target": "function:packages/cli/src/tui/charts.ts:isLive",
+   "type": "calls",
+   "direction": "forward",
+   "description": "barChart calls isLive",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/charts.ts:stackedBar",
+   "target": "function:packages/cli/src/tui/charts.ts:resolveMotion",
+   "type": "calls",
+   "direction": "forward",
+   "description": "stackedBar calls resolveMotion",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/charts.ts:stackedBar",
+   "target": "function:packages/cli/src/tui/charts.ts:isFiniteNumber",
+   "type": "calls",
+   "direction": "forward",
+   "description": "stackedBar calls isFiniteNumber",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/charts.ts:stackedBar",
+   "target": "function:packages/cli/src/tui/charts.ts:isLive",
+   "type": "calls",
+   "direction": "forward",
+   "description": "stackedBar calls isLive",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/charts.ts:stackedBar",
+   "target": "function:packages/cli/src/tui/charts.ts:formatNumber",
+   "type": "calls",
+   "direction": "forward",
+   "description": "stackedBar calls formatNumber",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/charts.ts:stackedBar",
+   "target": "function:packages/cli/src/tui/charts.ts:fitLegend",
+   "type": "calls",
+   "direction": "forward",
+   "description": "stackedBar calls fitLegend",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/charts.ts:gauge",
+   "target": "function:packages/cli/src/tui/charts.ts:isFiniteNumber",
+   "type": "calls",
+   "direction": "forward",
+   "description": "gauge calls isFiniteNumber",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/charts.ts:gauge",
+   "target": "function:packages/cli/src/tui/charts.ts:formatNumber",
+   "type": "calls",
+   "direction": "forward",
+   "description": "gauge calls formatNumber",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/charts.ts:gauge",
+   "target": "function:packages/cli/src/tui/charts.ts:clamp01",
+   "type": "calls",
+   "direction": "forward",
+   "description": "gauge calls clamp01",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/charts.ts:gauge",
+   "target": "function:packages/cli/src/tui/charts.ts:resolveMotion",
+   "type": "calls",
+   "direction": "forward",
+   "description": "gauge calls resolveMotion",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/charts.ts:gauge",
+   "target": "function:packages/cli/src/tui/charts.ts:isLive",
+   "type": "calls",
+   "direction": "forward",
+   "description": "gauge calls isLive",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/charts.ts:deltaLabel",
+   "target": "function:packages/cli/src/tui/charts.ts:isFiniteNumber",
+   "type": "calls",
+   "direction": "forward",
+   "description": "deltaLabel calls isFiniteNumber",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/charts.ts:deltaLabel",
+   "target": "function:packages/cli/src/tui/charts.ts:formatNumber",
+   "type": "calls",
+   "direction": "forward",
+   "description": "deltaLabel calls formatNumber",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/cli/src/tui/chat-markdown.ts",
+   "target": "function:packages/cli/src/tui/chat-markdown.ts:inlineText",
+   "type": "contains",
+   "direction": "forward",
+   "description": "chat-markdown.ts defines inlineText",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/chat-markdown.ts",
+   "target": "function:packages/cli/src/tui/chat-markdown.ts:assistantMarkdownLine",
+   "type": "contains",
+   "direction": "forward",
+   "description": "chat-markdown.ts defines assistantMarkdownLine",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/chat-markdown.ts",
+   "target": "function:packages/cli/src/tui/chat-markdown.ts:assistantMarkdownLine",
+   "type": "exports",
+   "direction": "forward",
+   "description": "chat-markdown.ts exports assistantMarkdownLine",
+   "weight": 0.7
+  },
+  {
+   "source": "function:packages/cli/src/tui/chat-markdown.ts:assistantMarkdownLine",
+   "target": "function:packages/cli/src/tui/chat-markdown.ts:inlineText",
+   "type": "calls",
+   "direction": "forward",
+   "description": "assistantMarkdownLine calls inlineText",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/cli/src/tui/cheatsheet.ts",
+   "target": "function:packages/cli/src/tui/cheatsheet.ts:escBindingFor",
+   "type": "contains",
+   "direction": "forward",
+   "description": "cheatsheet.ts defines escBindingFor",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/cheatsheet.ts",
+   "target": "function:packages/cli/src/tui/cheatsheet.ts:bindingsFor",
+   "type": "contains",
+   "direction": "forward",
+   "description": "cheatsheet.ts defines bindingsFor",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/cheatsheet.ts",
+   "target": "function:packages/cli/src/tui/cheatsheet.ts:bindingsFor",
+   "type": "exports",
+   "direction": "forward",
+   "description": "cheatsheet.ts exports bindingsFor",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/tui/cheatsheet.ts",
+   "target": "function:packages/cli/src/tui/cheatsheet.ts:filterBindings",
+   "type": "contains",
+   "direction": "forward",
+   "description": "cheatsheet.ts defines filterBindings",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/cheatsheet.ts",
+   "target": "function:packages/cli/src/tui/cheatsheet.ts:filterBindings",
+   "type": "exports",
+   "direction": "forward",
+   "description": "cheatsheet.ts exports filterBindings",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/tui/cheatsheet.ts",
+   "target": "function:packages/cli/src/tui/cheatsheet.ts:bindingField",
+   "type": "contains",
+   "direction": "forward",
+   "description": "cheatsheet.ts defines bindingField",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/cheatsheet.ts",
+   "target": "function:packages/cli/src/tui/cheatsheet.ts:cheatSheetCount",
+   "type": "contains",
+   "direction": "forward",
+   "description": "cheatsheet.ts defines cheatSheetCount",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/cheatsheet.ts",
+   "target": "function:packages/cli/src/tui/cheatsheet.ts:cheatSheetCount",
+   "type": "exports",
+   "direction": "forward",
+   "description": "cheatsheet.ts exports cheatSheetCount",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/tui/cheatsheet.ts",
+   "target": "function:packages/cli/src/tui/cheatsheet.ts:renderCheatSheet",
+   "type": "contains",
+   "direction": "forward",
+   "description": "cheatsheet.ts defines renderCheatSheet",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/cheatsheet.ts",
+   "target": "function:packages/cli/src/tui/cheatsheet.ts:renderCheatSheet",
+   "type": "exports",
+   "direction": "forward",
+   "description": "cheatsheet.ts exports renderCheatSheet",
+   "weight": 0.7
+  },
+  {
+   "source": "function:packages/cli/src/tui/cheatsheet.ts:bindingsFor",
+   "target": "function:packages/cli/src/tui/cheatsheet.ts:escBindingFor",
+   "type": "calls",
+   "direction": "forward",
+   "description": "bindingsFor calls escBindingFor",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/cheatsheet.ts:renderCheatSheet",
+   "target": "function:packages/cli/src/tui/cheatsheet.ts:cheatSheetCount",
+   "type": "calls",
+   "direction": "forward",
+   "description": "renderCheatSheet calls cheatSheetCount",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/cli/src/tui/clipboard.ts",
+   "target": "function:packages/cli/src/tui/clipboard.ts:tryCopy",
+   "type": "contains",
+   "direction": "forward",
+   "description": "clipboard.ts defines tryCopy",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/clipboard.ts",
+   "target": "function:packages/cli/src/tui/clipboard.ts:writeTextToClipboard",
+   "type": "contains",
+   "direction": "forward",
+   "description": "clipboard.ts defines writeTextToClipboard",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/clipboard.ts",
+   "target": "function:packages/cli/src/tui/clipboard.ts:copyTextToClipboard",
+   "type": "contains",
+   "direction": "forward",
+   "description": "clipboard.ts defines copyTextToClipboard",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/clipboard.ts",
+   "target": "function:packages/cli/src/tui/clipboard.ts:copyTextToClipboard",
+   "type": "exports",
+   "direction": "forward",
+   "description": "clipboard.ts exports copyTextToClipboard",
+   "weight": 0.7
+  },
+  {
+   "source": "function:packages/cli/src/tui/clipboard.ts:writeTextToClipboard",
+   "target": "function:packages/cli/src/tui/clipboard.ts:tryCopy",
+   "type": "calls",
+   "direction": "forward",
+   "description": "writeTextToClipboard calls tryCopy",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/clipboard.ts:copyTextToClipboard",
+   "target": "function:packages/cli/src/tui/clipboard.ts:writeTextToClipboard",
+   "type": "calls",
+   "direction": "forward",
+   "description": "copyTextToClipboard calls writeTextToClipboard",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/cli/src/tui/diff-panel.ts",
+   "target": "function:packages/cli/src/tui/diff-panel.ts:diffStats",
+   "type": "contains",
+   "direction": "forward",
+   "description": "diff-panel.ts defines diffStats",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/diff-panel.ts",
+   "target": "function:packages/cli/src/tui/diff-panel.ts:diffStats",
+   "type": "exports",
+   "direction": "forward",
+   "description": "diff-panel.ts exports diffStats",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/tui/diff-panel.ts",
+   "target": "function:packages/cli/src/tui/diff-panel.ts:buildDiffView",
+   "type": "contains",
+   "direction": "forward",
+   "description": "diff-panel.ts defines buildDiffView",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/diff-panel.ts",
+   "target": "function:packages/cli/src/tui/diff-panel.ts:buildDiffView",
+   "type": "exports",
+   "direction": "forward",
+   "description": "diff-panel.ts exports buildDiffView",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/tui/diff-panel.ts",
+   "target": "function:packages/cli/src/tui/diff-panel.ts:toggleHunk",
+   "type": "contains",
+   "direction": "forward",
+   "description": "diff-panel.ts defines toggleHunk",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/diff-panel.ts",
+   "target": "function:packages/cli/src/tui/diff-panel.ts:toggleHunk",
+   "type": "exports",
+   "direction": "forward",
+   "description": "diff-panel.ts exports toggleHunk",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/tui/diff-panel.ts",
+   "target": "function:packages/cli/src/tui/diff-panel.ts:moveHunk",
+   "type": "contains",
+   "direction": "forward",
+   "description": "diff-panel.ts defines moveHunk",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/diff-panel.ts",
+   "target": "function:packages/cli/src/tui/diff-panel.ts:moveHunk",
+   "type": "exports",
+   "direction": "forward",
+   "description": "diff-panel.ts exports moveHunk",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/tui/diff-panel.ts",
+   "target": "function:packages/cli/src/tui/diff-panel.ts:setSide",
+   "type": "contains",
+   "direction": "forward",
+   "description": "diff-panel.ts defines setSide",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/diff-panel.ts",
+   "target": "function:packages/cli/src/tui/diff-panel.ts:setSide",
+   "type": "exports",
+   "direction": "forward",
+   "description": "diff-panel.ts exports setSide",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/tui/diff-panel.ts",
+   "target": "function:packages/cli/src/tui/diff-panel.ts:parseHunkHeader",
+   "type": "contains",
+   "direction": "forward",
+   "description": "diff-panel.ts defines parseHunkHeader",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/diff-panel.ts",
+   "target": "function:packages/cli/src/tui/diff-panel.ts:hunkHeaderLine",
+   "type": "contains",
+   "direction": "forward",
+   "description": "diff-panel.ts defines hunkHeaderLine",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/diff-panel.ts",
+   "target": "function:packages/cli/src/tui/diff-panel.ts:unifiedBody",
+   "type": "contains",
+   "direction": "forward",
+   "description": "diff-panel.ts defines unifiedBody",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/diff-panel.ts",
+   "target": "function:packages/cli/src/tui/diff-panel.ts:splitBody",
+   "type": "contains",
+   "direction": "forward",
+   "description": "diff-panel.ts defines splitBody",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/diff-panel.ts",
+   "target": "function:packages/cli/src/tui/diff-panel.ts:renderDiffPanel",
+   "type": "contains",
+   "direction": "forward",
+   "description": "diff-panel.ts defines renderDiffPanel",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/diff-panel.ts",
+   "target": "function:packages/cli/src/tui/diff-panel.ts:renderDiffPanel",
+   "type": "exports",
+   "direction": "forward",
+   "description": "diff-panel.ts exports renderDiffPanel",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/tui/diff-panel.ts",
+   "target": "function:packages/cli/src/tui/diff-panel.ts:isHunkHeaderRow",
+   "type": "contains",
+   "direction": "forward",
+   "description": "diff-panel.ts defines isHunkHeaderRow",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/cli/src/tui/diff-panel.ts:unifiedBody",
+   "target": "function:packages/cli/src/tui/diff-panel.ts:hunkHeaderLine",
+   "type": "calls",
+   "direction": "forward",
+   "description": "unifiedBody calls hunkHeaderLine",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/diff-panel.ts:splitBody",
+   "target": "function:packages/cli/src/tui/diff-panel.ts:hunkHeaderLine",
+   "type": "calls",
+   "direction": "forward",
+   "description": "splitBody calls hunkHeaderLine",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/diff-panel.ts:splitBody",
+   "target": "function:packages/cli/src/tui/diff-panel.ts:parseHunkHeader",
+   "type": "calls",
+   "direction": "forward",
+   "description": "splitBody calls parseHunkHeader",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/diff-panel.ts:renderDiffPanel",
+   "target": "function:packages/cli/src/tui/diff-panel.ts:diffStats",
+   "type": "calls",
+   "direction": "forward",
+   "description": "renderDiffPanel calls diffStats",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/diff-panel.ts:renderDiffPanel",
+   "target": "function:packages/cli/src/tui/diff-panel.ts:splitBody",
+   "type": "calls",
+   "direction": "forward",
+   "description": "renderDiffPanel calls splitBody",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/diff-panel.ts:renderDiffPanel",
+   "target": "function:packages/cli/src/tui/diff-panel.ts:unifiedBody",
+   "type": "calls",
+   "direction": "forward",
+   "description": "renderDiffPanel calls unifiedBody",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/diff-panel.ts:renderDiffPanel",
+   "target": "function:packages/cli/src/tui/diff-panel.ts:isHunkHeaderRow",
+   "type": "calls",
+   "direction": "forward",
+   "description": "renderDiffPanel calls isHunkHeaderRow",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/cli/src/tui/discover.ts",
+   "target": "function:packages/cli/src/tui/discover.ts:groupIcon",
+   "type": "contains",
+   "direction": "forward",
+   "description": "discover.ts defines groupIcon",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/discover.ts",
+   "target": "function:packages/cli/src/tui/discover.ts:groupIcon",
+   "type": "exports",
+   "direction": "forward",
+   "description": "discover.ts exports groupIcon",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/tui/discover.ts",
+   "target": "function:packages/cli/src/tui/discover.ts:groupTitle",
+   "type": "contains",
+   "direction": "forward",
+   "description": "discover.ts defines groupTitle",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/discover.ts",
+   "target": "function:packages/cli/src/tui/discover.ts:groupTitle",
+   "type": "exports",
+   "direction": "forward",
+   "description": "discover.ts exports groupTitle",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/tui/discover.ts",
+   "target": "function:packages/cli/src/tui/discover.ts:canonicalGroup",
+   "type": "contains",
+   "direction": "forward",
+   "description": "discover.ts defines canonicalGroup",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/discover.ts",
+   "target": "function:packages/cli/src/tui/discover.ts:groupedCommands",
+   "type": "contains",
+   "direction": "forward",
+   "description": "discover.ts defines groupedCommands",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/discover.ts",
+   "target": "function:packages/cli/src/tui/discover.ts:groupedCommands",
+   "type": "exports",
+   "direction": "forward",
+   "description": "discover.ts exports groupedCommands",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/tui/discover.ts",
+   "target": "function:packages/cli/src/tui/discover.ts:groupBlurb",
+   "type": "contains",
+   "direction": "forward",
+   "description": "discover.ts defines groupBlurb",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/discover.ts",
+   "target": "function:packages/cli/src/tui/discover.ts:discoveryRows",
+   "type": "contains",
+   "direction": "forward",
+   "description": "discover.ts defines discoveryRows",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/discover.ts",
+   "target": "function:packages/cli/src/tui/discover.ts:discoveryRows",
+   "type": "exports",
+   "direction": "forward",
+   "description": "discover.ts exports discoveryRows",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/tui/discover.ts",
+   "target": "function:packages/cli/src/tui/discover.ts:absentCapabilities",
+   "type": "contains",
+   "direction": "forward",
+   "description": "discover.ts defines absentCapabilities",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/discover.ts",
+   "target": "function:packages/cli/src/tui/discover.ts:absentCapabilities",
+   "type": "exports",
+   "direction": "forward",
+   "description": "discover.ts exports absentCapabilities",
+   "weight": 0.7
+  },
+  {
+   "source": "function:packages/cli/src/tui/discover.ts:groupedCommands",
+   "target": "function:packages/cli/src/tui/discover.ts:canonicalGroup",
+   "type": "calls",
+   "direction": "forward",
+   "description": "groupedCommands calls canonicalGroup",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/discover.ts:discoveryRows",
+   "target": "function:packages/cli/src/tui/discover.ts:groupedCommands",
+   "type": "calls",
+   "direction": "forward",
+   "description": "discoveryRows calls groupedCommands",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/discover.ts:discoveryRows",
+   "target": "function:packages/cli/src/tui/discover.ts:groupIcon",
+   "type": "calls",
+   "direction": "forward",
+   "description": "discoveryRows calls groupIcon",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/discover.ts:discoveryRows",
+   "target": "function:packages/cli/src/tui/discover.ts:groupTitle",
+   "type": "calls",
+   "direction": "forward",
+   "description": "discoveryRows calls groupTitle",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/discover.ts:discoveryRows",
+   "target": "function:packages/cli/src/tui/discover.ts:groupBlurb",
+   "type": "calls",
+   "direction": "forward",
+   "description": "discoveryRows calls groupBlurb",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/cli/src/tui/git-status.test.ts",
+   "target": "function:packages/cli/src/tui/git-status.test.ts:git",
+   "type": "contains",
+   "direction": "forward",
+   "description": "git-status.test.ts defines git",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/git-status.test.ts",
+   "target": "function:packages/cli/src/tui/git-status.test.ts:repository",
+   "type": "contains",
+   "direction": "forward",
+   "description": "git-status.test.ts defines repository",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/cli/src/tui/git-status.test.ts:repository",
+   "target": "function:packages/cli/src/tui/git-status.test.ts:git",
+   "type": "calls",
+   "direction": "forward",
+   "description": "repository calls git",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/cli/src/tui/git-status.ts",
+   "target": "function:packages/cli/src/tui/git-status.ts:sanitizeBranch",
+   "type": "contains",
+   "direction": "forward",
+   "description": "git-status.ts defines sanitizeBranch",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/git-status.ts",
+   "target": "function:packages/cli/src/tui/git-status.ts:sanitizeBranch",
+   "type": "exports",
+   "direction": "forward",
+   "description": "git-status.ts exports sanitizeBranch",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/tui/git-status.ts",
+   "target": "function:packages/cli/src/tui/git-status.ts:probeDirectory",
+   "type": "contains",
+   "direction": "forward",
+   "description": "git-status.ts defines probeDirectory",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/git-status.ts",
+   "target": "function:packages/cli/src/tui/git-status.ts:gitOutput",
+   "type": "contains",
+   "direction": "forward",
+   "description": "git-status.ts defines gitOutput",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/git-status.ts",
+   "target": "function:packages/cli/src/tui/git-status.ts:probe",
+   "type": "contains",
+   "direction": "forward",
+   "description": "git-status.ts defines probe",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/git-status.ts",
+   "target": "function:packages/cli/src/tui/git-status.ts:remember",
+   "type": "contains",
+   "direction": "forward",
+   "description": "git-status.ts defines remember",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/git-status.ts",
+   "target": "function:packages/cli/src/tui/git-status.ts:readGitStatus",
+   "type": "contains",
+   "direction": "forward",
+   "description": "git-status.ts defines readGitStatus",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/git-status.ts",
+   "target": "function:packages/cli/src/tui/git-status.ts:readGitStatus",
+   "type": "exports",
+   "direction": "forward",
+   "description": "git-status.ts exports readGitStatus",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/tui/git-status.ts",
+   "target": "function:packages/cli/src/tui/git-status.ts:cachedGitStatus",
+   "type": "contains",
+   "direction": "forward",
+   "description": "git-status.ts defines cachedGitStatus",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/git-status.ts",
+   "target": "function:packages/cli/src/tui/git-status.ts:cachedGitStatus",
+   "type": "exports",
+   "direction": "forward",
+   "description": "git-status.ts exports cachedGitStatus",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/tui/git-status.ts",
+   "target": "function:packages/cli/src/tui/git-status.ts:primeGitStatus",
+   "type": "contains",
+   "direction": "forward",
+   "description": "git-status.ts defines primeGitStatus",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/git-status.ts",
+   "target": "function:packages/cli/src/tui/git-status.ts:primeGitStatus",
+   "type": "exports",
+   "direction": "forward",
+   "description": "git-status.ts exports primeGitStatus",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/tui/git-status.ts",
+   "target": "function:packages/cli/src/tui/git-status.ts:resetGitStatusCache",
+   "type": "contains",
+   "direction": "forward",
+   "description": "git-status.ts defines resetGitStatusCache",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/git-status.ts",
+   "target": "function:packages/cli/src/tui/git-status.ts:resetGitStatusCache",
+   "type": "exports",
+   "direction": "forward",
+   "description": "git-status.ts exports resetGitStatusCache",
+   "weight": 0.7
+  },
+  {
+   "source": "function:packages/cli/src/tui/git-status.ts:probe",
+   "target": "function:packages/cli/src/tui/git-status.ts:gitOutput",
+   "type": "calls",
+   "direction": "forward",
+   "description": "probe calls gitOutput",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/git-status.ts:probe",
+   "target": "function:packages/cli/src/tui/git-status.ts:sanitizeBranch",
+   "type": "calls",
+   "direction": "forward",
+   "description": "probe calls sanitizeBranch",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/git-status.ts:readGitStatus",
+   "target": "function:packages/cli/src/tui/git-status.ts:probeDirectory",
+   "type": "calls",
+   "direction": "forward",
+   "description": "readGitStatus calls probeDirectory",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/git-status.ts:readGitStatus",
+   "target": "function:packages/cli/src/tui/git-status.ts:probe",
+   "type": "calls",
+   "direction": "forward",
+   "description": "readGitStatus calls probe",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/git-status.ts:readGitStatus",
+   "target": "function:packages/cli/src/tui/git-status.ts:remember",
+   "type": "calls",
+   "direction": "forward",
+   "description": "readGitStatus calls remember",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/git-status.ts:cachedGitStatus",
+   "target": "function:packages/cli/src/tui/git-status.ts:probeDirectory",
+   "type": "calls",
+   "direction": "forward",
+   "description": "cachedGitStatus calls probeDirectory",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/git-status.ts:cachedGitStatus",
+   "target": "function:packages/cli/src/tui/git-status.ts:readGitStatus",
+   "type": "calls",
+   "direction": "forward",
+   "description": "cachedGitStatus calls readGitStatus",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/git-status.ts:primeGitStatus",
+   "target": "function:packages/cli/src/tui/git-status.ts:readGitStatus",
+   "type": "calls",
+   "direction": "forward",
+   "description": "primeGitStatus calls readGitStatus",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/cli/src/tui/health.ts",
+   "target": "function:packages/cli/src/tui/health.ts:healthIcon",
+   "type": "contains",
+   "direction": "forward",
+   "description": "health.ts defines healthIcon",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/health.ts",
+   "target": "function:packages/cli/src/tui/health.ts:healthIcon",
+   "type": "exports",
+   "direction": "forward",
+   "description": "health.ts exports healthIcon",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/tui/health.ts",
+   "target": "function:packages/cli/src/tui/health.ts:healthWord",
+   "type": "contains",
+   "direction": "forward",
+   "description": "health.ts defines healthWord",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/health.ts",
+   "target": "function:packages/cli/src/tui/health.ts:healthWord",
+   "type": "exports",
+   "direction": "forward",
+   "description": "health.ts exports healthWord",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/tui/health.ts",
+   "target": "function:packages/cli/src/tui/health.ts:healthTone",
+   "type": "contains",
+   "direction": "forward",
+   "description": "health.ts defines healthTone",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/health.ts",
+   "target": "function:packages/cli/src/tui/health.ts:healthTone",
+   "type": "exports",
+   "direction": "forward",
+   "description": "health.ts exports healthTone",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/tui/health.ts",
+   "target": "function:packages/cli/src/tui/health.ts:severityRank",
+   "type": "contains",
+   "direction": "forward",
+   "description": "health.ts defines severityRank",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/health.ts",
+   "target": "function:packages/cli/src/tui/health.ts:compareText",
+   "type": "contains",
+   "direction": "forward",
+   "description": "health.ts defines compareText",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/health.ts",
+   "target": "function:packages/cli/src/tui/health.ts:orderChecks",
+   "type": "contains",
+   "direction": "forward",
+   "description": "health.ts defines orderChecks",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/health.ts",
+   "target": "function:packages/cli/src/tui/health.ts:orderChecks",
+   "type": "exports",
+   "direction": "forward",
+   "description": "health.ts exports orderChecks",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/tui/health.ts",
+   "target": "function:packages/cli/src/tui/health.ts:pillTone",
+   "type": "contains",
+   "direction": "forward",
+   "description": "health.ts defines pillTone",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/health.ts",
+   "target": "function:packages/cli/src/tui/health.ts:buildValue",
+   "type": "contains",
+   "direction": "forward",
+   "description": "health.ts defines buildValue",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/health.ts",
+   "target": "function:packages/cli/src/tui/health.ts:checkLabel",
+   "type": "contains",
+   "direction": "forward",
+   "description": "health.ts defines checkLabel",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/health.ts",
+   "target": "function:packages/cli/src/tui/health.ts:areaTitle",
+   "type": "contains",
+   "direction": "forward",
+   "description": "health.ts defines areaTitle",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/health.ts",
+   "target": "function:packages/cli/src/tui/health.ts:renderHealth",
+   "type": "contains",
+   "direction": "forward",
+   "description": "health.ts defines renderHealth",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/health.ts",
+   "target": "function:packages/cli/src/tui/health.ts:renderHealth",
+   "type": "exports",
+   "direction": "forward",
+   "description": "health.ts exports renderHealth",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/tui/health.ts",
+   "target": "function:packages/cli/src/tui/health.ts:countBy",
+   "type": "contains",
+   "direction": "forward",
+   "description": "health.ts defines countBy",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/health.ts",
+   "target": "function:packages/cli/src/tui/health.ts:nameWorst",
+   "type": "contains",
+   "direction": "forward",
+   "description": "health.ts defines nameWorst",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/health.ts",
+   "target": "function:packages/cli/src/tui/health.ts:healthSummary",
+   "type": "contains",
+   "direction": "forward",
+   "description": "health.ts defines healthSummary",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/health.ts",
+   "target": "function:packages/cli/src/tui/health.ts:healthSummary",
+   "type": "exports",
+   "direction": "forward",
+   "description": "health.ts exports healthSummary",
+   "weight": 0.7
+  },
+  {
+   "source": "function:packages/cli/src/tui/health.ts:orderChecks",
+   "target": "function:packages/cli/src/tui/health.ts:severityRank",
+   "type": "calls",
+   "direction": "forward",
+   "description": "orderChecks calls severityRank",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/health.ts:orderChecks",
+   "target": "function:packages/cli/src/tui/health.ts:compareText",
+   "type": "calls",
+   "direction": "forward",
+   "description": "orderChecks calls compareText",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/health.ts:pillTone",
+   "target": "function:packages/cli/src/tui/health.ts:healthTone",
+   "type": "calls",
+   "direction": "forward",
+   "description": "pillTone calls healthTone",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/health.ts:buildValue",
+   "target": "function:packages/cli/src/tui/health.ts:healthIcon",
+   "type": "calls",
+   "direction": "forward",
+   "description": "buildValue calls healthIcon",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/health.ts:buildValue",
+   "target": "function:packages/cli/src/tui/health.ts:healthWord",
+   "type": "calls",
+   "direction": "forward",
+   "description": "buildValue calls healthWord",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/health.ts:buildValue",
+   "target": "function:packages/cli/src/tui/health.ts:pillTone",
+   "type": "calls",
+   "direction": "forward",
+   "description": "buildValue calls pillTone",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/health.ts:renderHealth",
+   "target": "function:packages/cli/src/tui/health.ts:orderChecks",
+   "type": "calls",
+   "direction": "forward",
+   "description": "renderHealth calls orderChecks",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/health.ts:renderHealth",
+   "target": "function:packages/cli/src/tui/health.ts:areaTitle",
+   "type": "calls",
+   "direction": "forward",
+   "description": "renderHealth calls areaTitle",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/health.ts:renderHealth",
+   "target": "function:packages/cli/src/tui/health.ts:checkLabel",
+   "type": "calls",
+   "direction": "forward",
+   "description": "renderHealth calls checkLabel",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/health.ts:renderHealth",
+   "target": "function:packages/cli/src/tui/health.ts:buildValue",
+   "type": "calls",
+   "direction": "forward",
+   "description": "renderHealth calls buildValue",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/health.ts:renderHealth",
+   "target": "function:packages/cli/src/tui/health.ts:healthTone",
+   "type": "calls",
+   "direction": "forward",
+   "description": "renderHealth calls healthTone",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/health.ts:renderHealth",
+   "target": "function:packages/cli/src/tui/health.ts:healthSummary",
+   "type": "calls",
+   "direction": "forward",
+   "description": "renderHealth calls healthSummary",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/health.ts:nameWorst",
+   "target": "function:packages/cli/src/tui/health.ts:healthWord",
+   "type": "calls",
+   "direction": "forward",
+   "description": "nameWorst calls healthWord",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/health.ts:healthSummary",
+   "target": "function:packages/cli/src/tui/health.ts:orderChecks",
+   "type": "calls",
+   "direction": "forward",
+   "description": "healthSummary calls orderChecks",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/health.ts:healthSummary",
+   "target": "function:packages/cli/src/tui/health.ts:countBy",
+   "type": "calls",
+   "direction": "forward",
+   "description": "healthSummary calls countBy",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/health.ts:healthSummary",
+   "target": "function:packages/cli/src/tui/health.ts:nameWorst",
+   "type": "calls",
+   "direction": "forward",
+   "description": "healthSummary calls nameWorst",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/cli/src/tui/inline.ts",
+   "target": "function:packages/cli/src/tui/inline.ts:renderInlineCall",
+   "type": "contains",
+   "direction": "forward",
+   "description": "inline.ts defines renderInlineCall",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/inline.ts",
+   "target": "function:packages/cli/src/tui/inline.ts:renderInlineCall",
+   "type": "exports",
+   "direction": "forward",
+   "description": "inline.ts exports renderInlineCall",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/tui/inspector.ts",
+   "target": "function:packages/cli/src/tui/inspector.ts:paintField",
+   "type": "contains",
+   "direction": "forward",
+   "description": "inspector.ts defines paintField",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/inspector.ts",
+   "target": "function:packages/cli/src/tui/inspector.ts:wrapCells",
+   "type": "contains",
+   "direction": "forward",
+   "description": "inspector.ts defines wrapCells",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/inspector.ts",
+   "target": "function:packages/cli/src/tui/inspector.ts:splitValue",
+   "type": "contains",
+   "direction": "forward",
+   "description": "inspector.ts defines splitValue",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/inspector.ts",
+   "target": "function:packages/cli/src/tui/inspector.ts:badgeText",
+   "type": "contains",
+   "direction": "forward",
+   "description": "inspector.ts defines badgeText",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/inspector.ts",
+   "target": "function:packages/cli/src/tui/inspector.ts:renderField",
+   "type": "contains",
+   "direction": "forward",
+   "description": "inspector.ts defines renderField",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/inspector.ts",
+   "target": "function:packages/cli/src/tui/inspector.ts:pushBody",
+   "type": "contains",
+   "direction": "forward",
+   "description": "inspector.ts defines pushBody",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/inspector.ts",
+   "target": "function:packages/cli/src/tui/inspector.ts:renderNarrow",
+   "type": "contains",
+   "direction": "forward",
+   "description": "inspector.ts defines renderNarrow",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/inspector.ts",
+   "target": "function:packages/cli/src/tui/inspector.ts:pushHint",
+   "type": "contains",
+   "direction": "forward",
+   "description": "inspector.ts defines pushHint",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/inspector.ts",
+   "target": "function:packages/cli/src/tui/inspector.ts:renderInspector",
+   "type": "contains",
+   "direction": "forward",
+   "description": "inspector.ts defines renderInspector",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/inspector.ts",
+   "target": "function:packages/cli/src/tui/inspector.ts:renderInspector",
+   "type": "exports",
+   "direction": "forward",
+   "description": "inspector.ts exports renderInspector",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/tui/inspector.ts",
+   "target": "function:packages/cli/src/tui/inspector.ts:clipHeight",
+   "type": "contains",
+   "direction": "forward",
+   "description": "inspector.ts defines clipHeight",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/inspector.ts",
+   "target": "function:packages/cli/src/tui/inspector.ts:inspectorSummary",
+   "type": "contains",
+   "direction": "forward",
+   "description": "inspector.ts defines inspectorSummary",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/inspector.ts",
+   "target": "function:packages/cli/src/tui/inspector.ts:inspectorSummary",
+   "type": "exports",
+   "direction": "forward",
+   "description": "inspector.ts exports inspectorSummary",
+   "weight": 0.7
+  },
+  {
+   "source": "function:packages/cli/src/tui/inspector.ts:badgeText",
+   "target": "function:packages/cli/src/tui/inspector.ts:paintField",
+   "type": "calls",
+   "direction": "forward",
+   "description": "badgeText calls paintField",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/inspector.ts:renderField",
+   "target": "function:packages/cli/src/tui/inspector.ts:paintField",
+   "type": "calls",
+   "direction": "forward",
+   "description": "renderField calls paintField",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/inspector.ts:renderField",
+   "target": "function:packages/cli/src/tui/inspector.ts:splitValue",
+   "type": "calls",
+   "direction": "forward",
+   "description": "renderField calls splitValue",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/inspector.ts:renderField",
+   "target": "function:packages/cli/src/tui/inspector.ts:badgeText",
+   "type": "calls",
+   "direction": "forward",
+   "description": "renderField calls badgeText",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/inspector.ts:pushBody",
+   "target": "function:packages/cli/src/tui/inspector.ts:wrapCells",
+   "type": "calls",
+   "direction": "forward",
+   "description": "pushBody calls wrapCells",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/inspector.ts:pushBody",
+   "target": "function:packages/cli/src/tui/inspector.ts:paintField",
+   "type": "calls",
+   "direction": "forward",
+   "description": "pushBody calls paintField",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/inspector.ts:renderNarrow",
+   "target": "function:packages/cli/src/tui/inspector.ts:paintField",
+   "type": "calls",
+   "direction": "forward",
+   "description": "renderNarrow calls paintField",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/inspector.ts:renderNarrow",
+   "target": "function:packages/cli/src/tui/inspector.ts:pushBody",
+   "type": "calls",
+   "direction": "forward",
+   "description": "renderNarrow calls pushBody",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/inspector.ts:renderNarrow",
+   "target": "function:packages/cli/src/tui/inspector.ts:pushHint",
+   "type": "calls",
+   "direction": "forward",
+   "description": "renderNarrow calls pushHint",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/inspector.ts:pushHint",
+   "target": "function:packages/cli/src/tui/inspector.ts:paintField",
+   "type": "calls",
+   "direction": "forward",
+   "description": "pushHint calls paintField",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/inspector.ts:renderInspector",
+   "target": "function:packages/cli/src/tui/inspector.ts:clipHeight",
+   "type": "calls",
+   "direction": "forward",
+   "description": "renderInspector calls clipHeight",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/inspector.ts:renderInspector",
+   "target": "function:packages/cli/src/tui/inspector.ts:renderNarrow",
+   "type": "calls",
+   "direction": "forward",
+   "description": "renderInspector calls renderNarrow",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/inspector.ts:renderInspector",
+   "target": "function:packages/cli/src/tui/inspector.ts:paintField",
+   "type": "calls",
+   "direction": "forward",
+   "description": "renderInspector calls paintField",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/inspector.ts:renderInspector",
+   "target": "function:packages/cli/src/tui/inspector.ts:renderField",
+   "type": "calls",
+   "direction": "forward",
+   "description": "renderInspector calls renderField",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/inspector.ts:renderInspector",
+   "target": "function:packages/cli/src/tui/inspector.ts:pushBody",
+   "type": "calls",
+   "direction": "forward",
+   "description": "renderInspector calls pushBody",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/inspector.ts:renderInspector",
+   "target": "function:packages/cli/src/tui/inspector.ts:pushHint",
+   "type": "calls",
+   "direction": "forward",
+   "description": "renderInspector calls pushHint",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/cli/src/tui/layout.ts",
+   "target": "function:packages/cli/src/tui/layout.ts:sanitizeText",
+   "type": "contains",
+   "direction": "forward",
+   "description": "layout.ts defines sanitizeText",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/layout.ts",
+   "target": "function:packages/cli/src/tui/layout.ts:sanitizeText",
+   "type": "exports",
+   "direction": "forward",
+   "description": "layout.ts exports sanitizeText",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/tui/layout.ts",
+   "target": "function:packages/cli/src/tui/layout.ts:stripAnsi",
+   "type": "contains",
+   "direction": "forward",
+   "description": "layout.ts defines stripAnsi",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/layout.ts",
+   "target": "function:packages/cli/src/tui/layout.ts:stripAnsi",
+   "type": "exports",
+   "direction": "forward",
+   "description": "layout.ts exports stripAnsi",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/tui/layout.ts",
+   "target": "function:packages/cli/src/tui/layout.ts:cellWidth",
+   "type": "contains",
+   "direction": "forward",
+   "description": "layout.ts defines cellWidth",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/layout.ts",
+   "target": "function:packages/cli/src/tui/layout.ts:plainWidth",
+   "type": "contains",
+   "direction": "forward",
+   "description": "layout.ts defines plainWidth",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/layout.ts",
+   "target": "function:packages/cli/src/tui/layout.ts:visibleLength",
+   "type": "contains",
+   "direction": "forward",
+   "description": "layout.ts defines visibleLength",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/layout.ts",
+   "target": "function:packages/cli/src/tui/layout.ts:visibleLength",
+   "type": "exports",
+   "direction": "forward",
+   "description": "layout.ts exports visibleLength",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/tui/layout.ts",
+   "target": "function:packages/cli/src/tui/layout.ts:fit",
+   "type": "contains",
+   "direction": "forward",
+   "description": "layout.ts defines fit",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/layout.ts",
+   "target": "function:packages/cli/src/tui/layout.ts:fit",
+   "type": "exports",
+   "direction": "forward",
+   "description": "layout.ts exports fit",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/tui/layout.ts",
+   "target": "function:packages/cli/src/tui/layout.ts:pad",
+   "type": "contains",
+   "direction": "forward",
+   "description": "layout.ts defines pad",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/layout.ts",
+   "target": "function:packages/cli/src/tui/layout.ts:pad",
+   "type": "exports",
+   "direction": "forward",
+   "description": "layout.ts exports pad",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/tui/layout.ts",
+   "target": "function:packages/cli/src/tui/layout.ts:rule",
+   "type": "contains",
+   "direction": "forward",
+   "description": "layout.ts defines rule",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/layout.ts",
+   "target": "function:packages/cli/src/tui/layout.ts:rule",
+   "type": "exports",
+   "direction": "forward",
+   "description": "layout.ts exports rule",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/tui/layout.ts",
+   "target": "function:packages/cli/src/tui/layout.ts:box",
+   "type": "contains",
+   "direction": "forward",
+   "description": "layout.ts defines box",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/layout.ts",
+   "target": "function:packages/cli/src/tui/layout.ts:box",
+   "type": "exports",
+   "direction": "forward",
+   "description": "layout.ts exports box",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/tui/layout.ts",
+   "target": "function:packages/cli/src/tui/layout.ts:columns",
+   "type": "contains",
+   "direction": "forward",
+   "description": "layout.ts defines columns",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/layout.ts",
+   "target": "function:packages/cli/src/tui/layout.ts:columns",
+   "type": "exports",
+   "direction": "forward",
+   "description": "layout.ts exports columns",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/tui/layout.ts",
+   "target": "function:packages/cli/src/tui/layout.ts:crop",
+   "type": "contains",
+   "direction": "forward",
+   "description": "layout.ts defines crop",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/layout.ts",
+   "target": "function:packages/cli/src/tui/layout.ts:crop",
+   "type": "exports",
+   "direction": "forward",
+   "description": "layout.ts exports crop",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/tui/layout.ts",
+   "target": "function:packages/cli/src/tui/layout.ts:meter",
+   "type": "contains",
+   "direction": "forward",
+   "description": "layout.ts defines meter",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/layout.ts",
+   "target": "function:packages/cli/src/tui/layout.ts:meter",
+   "type": "exports",
+   "direction": "forward",
+   "description": "layout.ts exports meter",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/tui/layout.ts",
+   "target": "function:packages/cli/src/tui/layout.ts:progressBar",
+   "type": "contains",
+   "direction": "forward",
+   "description": "layout.ts defines progressBar",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/layout.ts",
+   "target": "function:packages/cli/src/tui/layout.ts:progressBar",
+   "type": "exports",
+   "direction": "forward",
+   "description": "layout.ts exports progressBar",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/tui/layout.ts",
+   "target": "function:packages/cli/src/tui/layout.ts:myersOps",
+   "type": "contains",
+   "direction": "forward",
+   "description": "layout.ts defines myersOps",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/layout.ts",
+   "target": "function:packages/cli/src/tui/layout.ts:unifiedDiff",
+   "type": "contains",
+   "direction": "forward",
+   "description": "layout.ts defines unifiedDiff",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/layout.ts",
+   "target": "function:packages/cli/src/tui/layout.ts:unifiedDiff",
+   "type": "exports",
+   "direction": "forward",
+   "description": "layout.ts exports unifiedDiff",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/tui/layout.ts",
+   "target": "function:packages/cli/src/tui/layout.ts:splitDiffHunks",
+   "type": "contains",
+   "direction": "forward",
+   "description": "layout.ts defines splitDiffHunks",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/layout.ts",
+   "target": "function:packages/cli/src/tui/layout.ts:splitDiffHunks",
+   "type": "exports",
+   "direction": "forward",
+   "description": "layout.ts exports splitDiffHunks",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/tui/layout.ts",
+   "target": "function:packages/cli/src/tui/layout.ts:renderHunkSelection",
+   "type": "contains",
+   "direction": "forward",
+   "description": "layout.ts defines renderHunkSelection",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/layout.ts",
+   "target": "function:packages/cli/src/tui/layout.ts:renderHunkSelection",
+   "type": "exports",
+   "direction": "forward",
+   "description": "layout.ts exports renderHunkSelection",
+   "weight": 0.7
+  },
+  {
+   "source": "function:packages/cli/src/tui/layout.ts:plainWidth",
+   "target": "function:packages/cli/src/tui/layout.ts:cellWidth",
+   "type": "calls",
+   "direction": "forward",
+   "description": "plainWidth calls cellWidth",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/layout.ts:visibleLength",
+   "target": "function:packages/cli/src/tui/layout.ts:plainWidth",
+   "type": "calls",
+   "direction": "forward",
+   "description": "visibleLength calls plainWidth",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/layout.ts:visibleLength",
+   "target": "function:packages/cli/src/tui/layout.ts:stripAnsi",
+   "type": "calls",
+   "direction": "forward",
+   "description": "visibleLength calls stripAnsi",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/layout.ts:fit",
+   "target": "function:packages/cli/src/tui/layout.ts:stripAnsi",
+   "type": "calls",
+   "direction": "forward",
+   "description": "fit calls stripAnsi",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/layout.ts:fit",
+   "target": "function:packages/cli/src/tui/layout.ts:plainWidth",
+   "type": "calls",
+   "direction": "forward",
+   "description": "fit calls plainWidth",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/layout.ts:pad",
+   "target": "function:packages/cli/src/tui/layout.ts:fit",
+   "type": "calls",
+   "direction": "forward",
+   "description": "pad calls fit",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/layout.ts:pad",
+   "target": "function:packages/cli/src/tui/layout.ts:visibleLength",
+   "type": "calls",
+   "direction": "forward",
+   "description": "pad calls visibleLength",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/layout.ts:rule",
+   "target": "function:packages/cli/src/tui/layout.ts:sanitizeText",
+   "type": "calls",
+   "direction": "forward",
+   "description": "rule calls sanitizeText",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/layout.ts:rule",
+   "target": "function:packages/cli/src/tui/layout.ts:visibleLength",
+   "type": "calls",
+   "direction": "forward",
+   "description": "rule calls visibleLength",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/layout.ts:box",
+   "target": "function:packages/cli/src/tui/layout.ts:rule",
+   "type": "calls",
+   "direction": "forward",
+   "description": "box calls rule",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/layout.ts:box",
+   "target": "function:packages/cli/src/tui/layout.ts:fit",
+   "type": "calls",
+   "direction": "forward",
+   "description": "box calls fit",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/layout.ts:box",
+   "target": "function:packages/cli/src/tui/layout.ts:visibleLength",
+   "type": "calls",
+   "direction": "forward",
+   "description": "box calls visibleLength",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/layout.ts:box",
+   "target": "function:packages/cli/src/tui/layout.ts:pad",
+   "type": "calls",
+   "direction": "forward",
+   "description": "box calls pad",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/layout.ts:columns",
+   "target": "function:packages/cli/src/tui/layout.ts:pad",
+   "type": "calls",
+   "direction": "forward",
+   "description": "columns calls pad",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/layout.ts:crop",
+   "target": "function:packages/cli/src/tui/layout.ts:fit",
+   "type": "calls",
+   "direction": "forward",
+   "description": "crop calls fit",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/layout.ts:unifiedDiff",
+   "target": "function:packages/cli/src/tui/layout.ts:myersOps",
+   "type": "calls",
+   "direction": "forward",
+   "description": "unifiedDiff calls myersOps",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/cli/src/tui/ledger-visual.ts",
+   "target": "function:packages/cli/src/tui/ledger-visual.ts:chainGlyphs",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ledger-visual.ts defines chainGlyphs",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/ledger-visual.ts",
+   "target": "function:packages/cli/src/tui/ledger-visual.ts:chainGlyphs",
+   "type": "exports",
+   "direction": "forward",
+   "description": "ledger-visual.ts exports chainGlyphs",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/tui/ledger-visual.ts",
+   "target": "function:packages/cli/src/tui/ledger-visual.ts:chainStatusLine",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ledger-visual.ts defines chainStatusLine",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/ledger-visual.ts",
+   "target": "function:packages/cli/src/tui/ledger-visual.ts:chainStatusLine",
+   "type": "exports",
+   "direction": "forward",
+   "description": "ledger-visual.ts exports chainStatusLine",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/tui/ledger-visual.ts",
+   "target": "function:packages/cli/src/tui/ledger-visual.ts:ledgerChainLines",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ledger-visual.ts defines ledgerChainLines",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/ledger-visual.ts",
+   "target": "function:packages/cli/src/tui/ledger-visual.ts:ledgerChainLines",
+   "type": "exports",
+   "direction": "forward",
+   "description": "ledger-visual.ts exports ledgerChainLines",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/tui/ledger-visual.ts",
+   "target": "function:packages/cli/src/tui/ledger-visual.ts:ledgerGroupHeading",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ledger-visual.ts defines ledgerGroupHeading",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/ledger-visual.ts",
+   "target": "function:packages/cli/src/tui/ledger-visual.ts:ledgerGroupHeading",
+   "type": "exports",
+   "direction": "forward",
+   "description": "ledger-visual.ts exports ledgerGroupHeading",
+   "weight": 0.7
+  },
+  {
+   "source": "function:packages/cli/src/tui/ledger-visual.ts:chainStatusLine",
+   "target": "function:packages/cli/src/tui/ledger-visual.ts:chainGlyphs",
+   "type": "calls",
+   "direction": "forward",
+   "description": "chainStatusLine calls chainGlyphs",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/ledger-visual.ts:ledgerChainLines",
+   "target": "function:packages/cli/src/tui/ledger-visual.ts:chainStatusLine",
+   "type": "calls",
+   "direction": "forward",
+   "description": "ledgerChainLines calls chainStatusLine",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/cli/src/agent-config.test.ts",
+   "target": "file:packages/cli/src/config.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "agent-config.test.ts imports config.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/agent-config.test.ts",
+   "target": "file:packages/cli/src/env-keys.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "agent-config.test.ts imports env-keys.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/agent-config.test.ts",
+   "target": "file:packages/ledger/src/env-compat.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "agent-config.test.ts imports env-compat.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/agent.ts",
+   "target": "file:packages/cli/src/tui/brand.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "agent.ts imports brand.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/agent.ts",
+   "target": "file:packages/cli/src/tui/caps.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "agent.ts imports caps.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/agent.ts",
+   "target": "file:packages/cli/src/tui/layout.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "agent.ts imports layout.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/agent.ts",
+   "target": "file:packages/ledger/src/env-compat.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "agent.ts imports env-compat.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/agent.ts",
+   "target": "file:packages/workbench/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "agent.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/a11y.test.ts",
+   "target": "file:packages/cli/src/tui/caps.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "a11y.test.ts imports caps.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/a11y.test.ts",
+   "target": "file:packages/cli/src/tui/layout.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "a11y.test.ts imports layout.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/a11y.test.ts",
+   "target": "file:packages/cli/src/tui/palette.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "a11y.test.ts imports palette.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/a11y.test.ts",
+   "target": "file:packages/cli/src/tui/types.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "a11y.test.ts imports types.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/a11y.test.ts",
+   "target": "file:packages/cli/src/tui/workspace.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "a11y.test.ts imports workspace.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/a11y.test.ts",
+   "target": "file:packages/workbench/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "a11y.test.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/activity.ts",
+   "target": "file:packages/cli/src/tui/charts.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "activity.ts imports charts.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/activity.ts",
+   "target": "file:packages/cli/src/tui/layout.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "activity.ts imports layout.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/activity.ts",
+   "target": "file:packages/cli/src/tui/motion.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "activity.ts imports motion.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/activity.ts",
+   "target": "file:packages/cli/src/tui/run-timeline.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "activity.ts imports run-timeline.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/activity.ts",
+   "target": "file:packages/cli/src/tui/theme.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "activity.ts imports theme.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/approvals.ts",
+   "target": "file:packages/cli/src/tui/layout.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "approvals.ts imports layout.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/blocks.ts",
+   "target": "file:packages/cli/src/tui/layout.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "blocks.ts imports layout.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/blocks.ts",
+   "target": "file:packages/cli/src/tui/motion.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "blocks.ts imports motion.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/blocks.ts",
+   "target": "file:packages/cli/src/tui/theme.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "blocks.ts imports theme.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/brand.test.ts",
+   "target": "file:packages/cli/src/tui/brand.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "brand.test.ts imports brand.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/brand.test.ts",
+   "target": "file:packages/cli/src/tui/types.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "brand.test.ts imports types.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/brand.ts",
+   "target": "file:packages/cli/src/tui/layout.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "brand.ts imports layout.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/brand.ts",
+   "target": "file:packages/cli/src/tui/pet.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "brand.ts imports pet.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/brand.ts",
+   "target": "file:packages/cli/src/tui/theme-config.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "brand.ts imports theme-config.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/brand.ts",
+   "target": "file:packages/cli/src/tui/theme.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "brand.ts imports theme.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/brand.ts",
+   "target": "file:packages/cli/src/tui/types.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "brand.ts imports types.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/brand.ts",
+   "target": "file:packages/ledger/src/paths.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "brand.ts imports paths.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/caps.ts",
+   "target": "file:packages/cli/src/tui/types.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "caps.ts imports types.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/charts.test.ts",
+   "target": "file:packages/cli/src/tui/charts.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "charts.test.ts imports charts.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/charts.ts",
+   "target": "file:packages/cli/src/tui/layout.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "charts.ts imports layout.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/charts.ts",
+   "target": "file:packages/cli/src/tui/motion.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "charts.ts imports motion.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/chat-markdown.ts",
+   "target": "file:packages/cli/src/tui/layout.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "chat-markdown.ts imports layout.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/cheatsheet.ts",
+   "target": "file:packages/cli/src/tui/inspector.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "cheatsheet.ts imports inspector.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/cheatsheet.ts",
+   "target": "file:packages/cli/src/tui/layout.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "cheatsheet.ts imports layout.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/cheatsheet.ts",
+   "target": "file:packages/cli/src/tui/motion.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "cheatsheet.ts imports motion.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/diff-panel.ts",
+   "target": "file:packages/cli/src/tui/layout.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "diff-panel.ts imports layout.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/diff-panel.ts",
+   "target": "file:packages/cli/src/tui/theme.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "diff-panel.ts imports theme.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/diff-panel.ts",
+   "target": "file:packages/cli/src/tui/types.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "diff-panel.ts imports types.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/discover.ts",
+   "target": "file:packages/cli/src/tui/inspector.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "discover.ts imports inspector.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/discover.ts",
+   "target": "file:packages/cli/src/tui/layout.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "discover.ts imports layout.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/discover.ts",
+   "target": "file:packages/cli/src/tui/motion.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "discover.ts imports motion.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/fixtures.ts",
+   "target": "file:packages/cli/src/tui/types.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "fixtures.ts imports types.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/git-status.test.ts",
+   "target": "file:packages/cli/src/tui/git-status.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "git-status.test.ts imports git-status.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/health.ts",
+   "target": "file:packages/cli/src/tui/inspector.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "health.ts imports inspector.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/health.ts",
+   "target": "file:packages/cli/src/tui/layout.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "health.ts imports layout.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/health.ts",
+   "target": "file:packages/cli/src/tui/motion.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "health.ts imports motion.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/health.ts",
+   "target": "file:packages/cli/src/tui/theme.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "health.ts imports theme.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/inline.ts",
+   "target": "file:packages/cli/src/tui/layout.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "inline.ts imports layout.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/inline.ts",
+   "target": "file:packages/cli/src/tui/theme.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "inline.ts imports theme.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/inline.ts",
+   "target": "file:packages/cli/src/tui/types.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "inline.ts imports types.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/inspector.ts",
+   "target": "file:packages/cli/src/tui/layout.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "inspector.ts imports layout.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/inspector.ts",
+   "target": "file:packages/cli/src/tui/motion.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "inspector.ts imports motion.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/inspector.ts",
+   "target": "file:packages/cli/src/tui/theme.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "inspector.ts imports theme.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/layout.test.ts",
+   "target": "file:packages/cli/src/tui/layout.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "layout.test.ts imports layout.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/layout.ts",
+   "target": "file:packages/cli/src/tui/theme-config.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "layout.ts imports theme-config.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/ledger-visual.ts",
+   "target": "file:packages/cli/src/tui/layout.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "ledger-visual.ts imports layout.ts",
+   "weight": 0.8
+  }
+ ]
+}

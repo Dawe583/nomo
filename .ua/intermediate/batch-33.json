@@ -1,0 +1,796 @@
+{
+ "nodes": [
+  {
+   "id": "file:python/nomo-transport/src/nomo_transport/__init__.py",
+   "type": "file",
+   "name": "__init__.py",
+   "filePath": "python/nomo-transport/src/nomo_transport/__init__.py",
+   "summary": "__init__.py \u2014 python code, 69 lines, 0 functions, 0 classes, 0 exports, 3 imports.",
+   "tags": [
+    "python",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:python/nomo-transport/src/nomo_transport/canonical.py",
+   "type": "file",
+   "name": "canonical.py",
+   "filePath": "python/nomo-transport/src/nomo_transport/canonical.py",
+   "summary": "canonical.py \u2014 python code, 264 lines, 10 functions, 1 classes, 11 exports, 0 imports.",
+   "tags": [
+    "python",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:python/nomo-transport/src/nomo_transport/canonical.py:canonical_json",
+   "type": "function",
+   "name": "canonical_json",
+   "filePath": "python/nomo-transport/src/nomo_transport/canonical.py",
+   "lineRange": [
+    74,
+    148
+   ],
+   "summary": "canonical_json(value) \u2014 function in canonical.py, lines 74-148.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:python/nomo-transport/src/nomo_transport/canonical.py:canonical_bytes",
+   "type": "function",
+   "name": "canonical_bytes",
+   "filePath": "python/nomo-transport/src/nomo_transport/canonical.py",
+   "lineRange": [
+    151,
+    153
+   ],
+   "summary": "canonical_bytes(value) \u2014 function in canonical.py, lines 151-153.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:python/nomo-transport/src/nomo_transport/canonical.py:digest",
+   "type": "function",
+   "name": "digest",
+   "filePath": "python/nomo-transport/src/nomo_transport/canonical.py",
+   "lineRange": [
+    156,
+    163
+   ],
+   "summary": "digest(value) \u2014 function in canonical.py, lines 156-163.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:python/nomo-transport/src/nomo_transport/canonical.py:is_lowercase_sha256",
+   "type": "function",
+   "name": "is_lowercase_sha256",
+   "filePath": "python/nomo-transport/src/nomo_transport/canonical.py",
+   "lineRange": [
+    166,
+    174
+   ],
+   "summary": "is_lowercase_sha256(value) \u2014 function in canonical.py, lines 166-174.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:python/nomo-transport/src/nomo_transport/canonical.py:_enter",
+   "type": "function",
+   "name": "_enter",
+   "filePath": "python/nomo-transport/src/nomo_transport/canonical.py",
+   "lineRange": [
+    177,
+    181
+   ],
+   "summary": "_enter(value, on_path) \u2014 function in canonical.py, lines 177-181.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:python/nomo-transport/src/nomo_transport/canonical.py:_sort_key",
+   "type": "function",
+   "name": "_sort_key",
+   "filePath": "python/nomo-transport/src/nomo_transport/canonical.py",
+   "lineRange": [
+    184,
+    195
+   ],
+   "summary": "_sort_key(key) \u2014 function in canonical.py, lines 184-195.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:python/nomo-transport/src/nomo_transport/canonical.py:_canonical_integer",
+   "type": "function",
+   "name": "_canonical_integer",
+   "filePath": "python/nomo-transport/src/nomo_transport/canonical.py",
+   "lineRange": [
+    198,
+    203
+   ],
+   "summary": "_canonical_integer(value) \u2014 function in canonical.py, lines 198-203.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:python/nomo-transport/src/nomo_transport/canonical.py:_canonical_number",
+   "type": "function",
+   "name": "_canonical_number",
+   "filePath": "python/nomo-transport/src/nomo_transport/canonical.py",
+   "lineRange": [
+    206,
+    224
+   ],
+   "summary": "_canonical_number(value) \u2014 function in canonical.py, lines 206-224.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:python/nomo-transport/src/nomo_transport/canonical.py:_shortest_digits",
+   "type": "function",
+   "name": "_shortest_digits",
+   "filePath": "python/nomo-transport/src/nomo_transport/canonical.py",
+   "lineRange": [
+    227,
+    247
+   ],
+   "summary": "_shortest_digits(value) \u2014 function in canonical.py, lines 227-247.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:python/nomo-transport/src/nomo_transport/canonical.py:_canonical_string",
+   "type": "function",
+   "name": "_canonical_string",
+   "filePath": "python/nomo-transport/src/nomo_transport/canonical.py",
+   "lineRange": [
+    250,
+    264
+   ],
+   "summary": "_canonical_string(value) \u2014 function in canonical.py, lines 250-264.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:python/nomo-transport/src/nomo_transport/canonical.py:CanonicalError",
+   "type": "class",
+   "name": "CanonicalError",
+   "filePath": "python/nomo-transport/src/nomo_transport/canonical.py",
+   "lineRange": [
+    70,
+    71
+   ],
+   "summary": "CanonicalError \u2014 class in canonical.py, lines 70-71.",
+   "tags": [
+    "python",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:python/nomo-transport/src/nomo_transport/client.py",
+   "type": "file",
+   "name": "client.py",
+   "filePath": "python/nomo-transport/src/nomo_transport/client.py",
+   "summary": "client.py \u2014 python code, 733 lines, 2 functions, 4 classes, 6 exports, 1 imports.",
+   "tags": [
+    "python",
+    "code"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "function:python/nomo-transport/src/nomo_transport/client.py:_is_bounded_id",
+   "type": "function",
+   "name": "_is_bounded_id",
+   "filePath": "python/nomo-transport/src/nomo_transport/client.py",
+   "lineRange": [
+    77,
+    84
+   ],
+   "summary": "_is_bounded_id(value) \u2014 function in client.py, lines 77-84.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:python/nomo-transport/src/nomo_transport/client.py:_is_method_name",
+   "type": "function",
+   "name": "_is_method_name",
+   "filePath": "python/nomo-transport/src/nomo_transport/client.py",
+   "lineRange": [
+    87,
+    98
+   ],
+   "summary": "_is_method_name(value) \u2014 function in client.py, lines 87-98.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:python/nomo-transport/src/nomo_transport/client.py:ServerInfo",
+   "type": "class",
+   "name": "ServerInfo",
+   "filePath": "python/nomo-transport/src/nomo_transport/client.py",
+   "lineRange": [
+    102,
+    107
+   ],
+   "summary": "ServerInfo \u2014 class in client.py, lines 102-107.",
+   "tags": [
+    "python",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:python/nomo-transport/src/nomo_transport/client.py:ToolSummary",
+   "type": "class",
+   "name": "ToolSummary",
+   "filePath": "python/nomo-transport/src/nomo_transport/client.py",
+   "lineRange": [
+    111,
+    116
+   ],
+   "summary": "ToolSummary \u2014 class in client.py, lines 111-116.",
+   "tags": [
+    "python",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:python/nomo-transport/src/nomo_transport/client.py:PendingCall",
+   "type": "class",
+   "name": "PendingCall",
+   "filePath": "python/nomo-transport/src/nomo_transport/client.py",
+   "lineRange": [
+    120,
+    157
+   ],
+   "summary": "PendingCall \u2014 class in client.py, lines 120-157, methods: _settle, done, wait.",
+   "tags": [
+    "python",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:python/nomo-transport/src/nomo_transport/client.py:NomoTransportClient",
+   "type": "class",
+   "name": "NomoTransportClient",
+   "filePath": "python/nomo-transport/src/nomo_transport/client.py",
+   "lineRange": [
+    160,
+    733
+   ],
+   "summary": "NomoTransportClient \u2014 class in client.py, lines 160-733, methods: __init__, __repr__, handshake, session_id, pending_holds, initialize.",
+   "tags": [
+    "python",
+    "class",
+    "exported"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:python/nomo-transport/src/nomo_transport/errors.py",
+   "type": "file",
+   "name": "errors.py",
+   "filePath": "python/nomo-transport/src/nomo_transport/errors.py",
+   "summary": "errors.py \u2014 python code, 128 lines, 0 functions, 5 classes, 5 exports, 0 imports.",
+   "tags": [
+    "python",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:python/nomo-transport/src/nomo_transport/errors.py:NomoTransportError",
+   "type": "class",
+   "name": "NomoTransportError",
+   "filePath": "python/nomo-transport/src/nomo_transport/errors.py",
+   "lineRange": [
+    51,
+    62
+   ],
+   "summary": "NomoTransportError \u2014 class in errors.py, lines 51-62, methods: __init__.",
+   "tags": [
+    "python",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:python/nomo-transport/src/nomo_transport/errors.py:HoldDeniedError",
+   "type": "class",
+   "name": "HoldDeniedError",
+   "filePath": "python/nomo-transport/src/nomo_transport/errors.py",
+   "lineRange": [
+    65,
+    73
+   ],
+   "summary": "HoldDeniedError \u2014 class in errors.py, lines 65-73, methods: __init__.",
+   "tags": [
+    "python",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:python/nomo-transport/src/nomo_transport/errors.py:LedgerVerifyError",
+   "type": "class",
+   "name": "LedgerVerifyError",
+   "filePath": "python/nomo-transport/src/nomo_transport/errors.py",
+   "lineRange": [
+    76,
+    86
+   ],
+   "summary": "LedgerVerifyError \u2014 class in errors.py, lines 76-86, methods: __init__.",
+   "tags": [
+    "python",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:python/nomo-transport/src/nomo_transport/errors.py:PolicyStartupError",
+   "type": "class",
+   "name": "PolicyStartupError",
+   "filePath": "python/nomo-transport/src/nomo_transport/errors.py",
+   "lineRange": [
+    89,
+    92
+   ],
+   "summary": "PolicyStartupError \u2014 class in errors.py, lines 89-92.",
+   "tags": [
+    "python",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:python/nomo-transport/src/nomo_transport/errors.py:RefusedError",
+   "type": "class",
+   "name": "RefusedError",
+   "filePath": "python/nomo-transport/src/nomo_transport/errors.py",
+   "lineRange": [
+    95,
+    128
+   ],
+   "summary": "RefusedError \u2014 class in errors.py, lines 95-128, methods: __init__, from_report.",
+   "tags": [
+    "python",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  }
+ ],
+ "edges": [
+  {
+   "source": "file:python/nomo-transport/src/nomo_transport/canonical.py",
+   "target": "function:python/nomo-transport/src/nomo_transport/canonical.py:canonical_json",
+   "type": "contains",
+   "direction": "forward",
+   "description": "canonical.py defines canonical_json",
+   "weight": 1.0
+  },
+  {
+   "source": "file:python/nomo-transport/src/nomo_transport/canonical.py",
+   "target": "function:python/nomo-transport/src/nomo_transport/canonical.py:canonical_json",
+   "type": "exports",
+   "direction": "forward",
+   "description": "canonical.py exports canonical_json",
+   "weight": 0.7
+  },
+  {
+   "source": "file:python/nomo-transport/src/nomo_transport/canonical.py",
+   "target": "function:python/nomo-transport/src/nomo_transport/canonical.py:canonical_bytes",
+   "type": "contains",
+   "direction": "forward",
+   "description": "canonical.py defines canonical_bytes",
+   "weight": 1.0
+  },
+  {
+   "source": "file:python/nomo-transport/src/nomo_transport/canonical.py",
+   "target": "function:python/nomo-transport/src/nomo_transport/canonical.py:canonical_bytes",
+   "type": "exports",
+   "direction": "forward",
+   "description": "canonical.py exports canonical_bytes",
+   "weight": 0.7
+  },
+  {
+   "source": "file:python/nomo-transport/src/nomo_transport/canonical.py",
+   "target": "function:python/nomo-transport/src/nomo_transport/canonical.py:digest",
+   "type": "contains",
+   "direction": "forward",
+   "description": "canonical.py defines digest",
+   "weight": 1.0
+  },
+  {
+   "source": "file:python/nomo-transport/src/nomo_transport/canonical.py",
+   "target": "function:python/nomo-transport/src/nomo_transport/canonical.py:digest",
+   "type": "exports",
+   "direction": "forward",
+   "description": "canonical.py exports digest",
+   "weight": 0.7
+  },
+  {
+   "source": "file:python/nomo-transport/src/nomo_transport/canonical.py",
+   "target": "function:python/nomo-transport/src/nomo_transport/canonical.py:is_lowercase_sha256",
+   "type": "contains",
+   "direction": "forward",
+   "description": "canonical.py defines is_lowercase_sha256",
+   "weight": 1.0
+  },
+  {
+   "source": "file:python/nomo-transport/src/nomo_transport/canonical.py",
+   "target": "function:python/nomo-transport/src/nomo_transport/canonical.py:is_lowercase_sha256",
+   "type": "exports",
+   "direction": "forward",
+   "description": "canonical.py exports is_lowercase_sha256",
+   "weight": 0.7
+  },
+  {
+   "source": "file:python/nomo-transport/src/nomo_transport/canonical.py",
+   "target": "function:python/nomo-transport/src/nomo_transport/canonical.py:_enter",
+   "type": "contains",
+   "direction": "forward",
+   "description": "canonical.py defines _enter",
+   "weight": 1.0
+  },
+  {
+   "source": "file:python/nomo-transport/src/nomo_transport/canonical.py",
+   "target": "function:python/nomo-transport/src/nomo_transport/canonical.py:_enter",
+   "type": "exports",
+   "direction": "forward",
+   "description": "canonical.py exports _enter",
+   "weight": 0.7
+  },
+  {
+   "source": "file:python/nomo-transport/src/nomo_transport/canonical.py",
+   "target": "function:python/nomo-transport/src/nomo_transport/canonical.py:_sort_key",
+   "type": "contains",
+   "direction": "forward",
+   "description": "canonical.py defines _sort_key",
+   "weight": 1.0
+  },
+  {
+   "source": "file:python/nomo-transport/src/nomo_transport/canonical.py",
+   "target": "function:python/nomo-transport/src/nomo_transport/canonical.py:_sort_key",
+   "type": "exports",
+   "direction": "forward",
+   "description": "canonical.py exports _sort_key",
+   "weight": 0.7
+  },
+  {
+   "source": "file:python/nomo-transport/src/nomo_transport/canonical.py",
+   "target": "function:python/nomo-transport/src/nomo_transport/canonical.py:_canonical_integer",
+   "type": "contains",
+   "direction": "forward",
+   "description": "canonical.py defines _canonical_integer",
+   "weight": 1.0
+  },
+  {
+   "source": "file:python/nomo-transport/src/nomo_transport/canonical.py",
+   "target": "function:python/nomo-transport/src/nomo_transport/canonical.py:_canonical_integer",
+   "type": "exports",
+   "direction": "forward",
+   "description": "canonical.py exports _canonical_integer",
+   "weight": 0.7
+  },
+  {
+   "source": "file:python/nomo-transport/src/nomo_transport/canonical.py",
+   "target": "function:python/nomo-transport/src/nomo_transport/canonical.py:_canonical_number",
+   "type": "contains",
+   "direction": "forward",
+   "description": "canonical.py defines _canonical_number",
+   "weight": 1.0
+  },
+  {
+   "source": "file:python/nomo-transport/src/nomo_transport/canonical.py",
+   "target": "function:python/nomo-transport/src/nomo_transport/canonical.py:_canonical_number",
+   "type": "exports",
+   "direction": "forward",
+   "description": "canonical.py exports _canonical_number",
+   "weight": 0.7
+  },
+  {
+   "source": "file:python/nomo-transport/src/nomo_transport/canonical.py",
+   "target": "function:python/nomo-transport/src/nomo_transport/canonical.py:_shortest_digits",
+   "type": "contains",
+   "direction": "forward",
+   "description": "canonical.py defines _shortest_digits",
+   "weight": 1.0
+  },
+  {
+   "source": "file:python/nomo-transport/src/nomo_transport/canonical.py",
+   "target": "function:python/nomo-transport/src/nomo_transport/canonical.py:_shortest_digits",
+   "type": "exports",
+   "direction": "forward",
+   "description": "canonical.py exports _shortest_digits",
+   "weight": 0.7
+  },
+  {
+   "source": "file:python/nomo-transport/src/nomo_transport/canonical.py",
+   "target": "function:python/nomo-transport/src/nomo_transport/canonical.py:_canonical_string",
+   "type": "contains",
+   "direction": "forward",
+   "description": "canonical.py defines _canonical_string",
+   "weight": 1.0
+  },
+  {
+   "source": "file:python/nomo-transport/src/nomo_transport/canonical.py",
+   "target": "function:python/nomo-transport/src/nomo_transport/canonical.py:_canonical_string",
+   "type": "exports",
+   "direction": "forward",
+   "description": "canonical.py exports _canonical_string",
+   "weight": 0.7
+  },
+  {
+   "source": "file:python/nomo-transport/src/nomo_transport/canonical.py",
+   "target": "class:python/nomo-transport/src/nomo_transport/canonical.py:CanonicalError",
+   "type": "contains",
+   "direction": "forward",
+   "description": "canonical.py defines class CanonicalError",
+   "weight": 1.0
+  },
+  {
+   "source": "function:python/nomo-transport/src/nomo_transport/canonical.py:canonical_json",
+   "target": "function:python/nomo-transport/src/nomo_transport/canonical.py:_canonical_integer",
+   "type": "calls",
+   "direction": "forward",
+   "description": "canonical_json calls _canonical_integer",
+   "weight": 0.6
+  },
+  {
+   "source": "function:python/nomo-transport/src/nomo_transport/canonical.py:canonical_json",
+   "target": "function:python/nomo-transport/src/nomo_transport/canonical.py:_canonical_number",
+   "type": "calls",
+   "direction": "forward",
+   "description": "canonical_json calls _canonical_number",
+   "weight": 0.6
+  },
+  {
+   "source": "function:python/nomo-transport/src/nomo_transport/canonical.py:canonical_json",
+   "target": "function:python/nomo-transport/src/nomo_transport/canonical.py:_canonical_string",
+   "type": "calls",
+   "direction": "forward",
+   "description": "canonical_json calls _canonical_string",
+   "weight": 0.6
+  },
+  {
+   "source": "function:python/nomo-transport/src/nomo_transport/canonical.py:canonical_json",
+   "target": "function:python/nomo-transport/src/nomo_transport/canonical.py:_enter",
+   "type": "calls",
+   "direction": "forward",
+   "description": "canonical_json calls _enter",
+   "weight": 0.6
+  },
+  {
+   "source": "function:python/nomo-transport/src/nomo_transport/canonical.py:canonical_json",
+   "target": "function:python/nomo-transport/src/nomo_transport/canonical.py:_sort_key",
+   "type": "calls",
+   "direction": "forward",
+   "description": "canonical_json calls _sort_key",
+   "weight": 0.6
+  },
+  {
+   "source": "function:python/nomo-transport/src/nomo_transport/canonical.py:canonical_bytes",
+   "target": "function:python/nomo-transport/src/nomo_transport/canonical.py:canonical_json",
+   "type": "calls",
+   "direction": "forward",
+   "description": "canonical_bytes calls canonical_json",
+   "weight": 0.6
+  },
+  {
+   "source": "function:python/nomo-transport/src/nomo_transport/canonical.py:digest",
+   "target": "function:python/nomo-transport/src/nomo_transport/canonical.py:canonical_bytes",
+   "type": "calls",
+   "direction": "forward",
+   "description": "digest calls canonical_bytes",
+   "weight": 0.6
+  },
+  {
+   "source": "function:python/nomo-transport/src/nomo_transport/canonical.py:_canonical_number",
+   "target": "function:python/nomo-transport/src/nomo_transport/canonical.py:_shortest_digits",
+   "type": "calls",
+   "direction": "forward",
+   "description": "_canonical_number calls _shortest_digits",
+   "weight": 0.6
+  },
+  {
+   "source": "file:python/nomo-transport/src/nomo_transport/client.py",
+   "target": "function:python/nomo-transport/src/nomo_transport/client.py:_is_bounded_id",
+   "type": "contains",
+   "direction": "forward",
+   "description": "client.py defines _is_bounded_id",
+   "weight": 1.0
+  },
+  {
+   "source": "file:python/nomo-transport/src/nomo_transport/client.py",
+   "target": "function:python/nomo-transport/src/nomo_transport/client.py:_is_bounded_id",
+   "type": "exports",
+   "direction": "forward",
+   "description": "client.py exports _is_bounded_id",
+   "weight": 0.7
+  },
+  {
+   "source": "file:python/nomo-transport/src/nomo_transport/client.py",
+   "target": "function:python/nomo-transport/src/nomo_transport/client.py:_is_method_name",
+   "type": "contains",
+   "direction": "forward",
+   "description": "client.py defines _is_method_name",
+   "weight": 1.0
+  },
+  {
+   "source": "file:python/nomo-transport/src/nomo_transport/client.py",
+   "target": "function:python/nomo-transport/src/nomo_transport/client.py:_is_method_name",
+   "type": "exports",
+   "direction": "forward",
+   "description": "client.py exports _is_method_name",
+   "weight": 0.7
+  },
+  {
+   "source": "file:python/nomo-transport/src/nomo_transport/client.py",
+   "target": "class:python/nomo-transport/src/nomo_transport/client.py:ServerInfo",
+   "type": "contains",
+   "direction": "forward",
+   "description": "client.py defines class ServerInfo",
+   "weight": 1.0
+  },
+  {
+   "source": "file:python/nomo-transport/src/nomo_transport/client.py",
+   "target": "class:python/nomo-transport/src/nomo_transport/client.py:ToolSummary",
+   "type": "contains",
+   "direction": "forward",
+   "description": "client.py defines class ToolSummary",
+   "weight": 1.0
+  },
+  {
+   "source": "file:python/nomo-transport/src/nomo_transport/client.py",
+   "target": "class:python/nomo-transport/src/nomo_transport/client.py:PendingCall",
+   "type": "contains",
+   "direction": "forward",
+   "description": "client.py defines class PendingCall",
+   "weight": 1.0
+  },
+  {
+   "source": "file:python/nomo-transport/src/nomo_transport/client.py",
+   "target": "class:python/nomo-transport/src/nomo_transport/client.py:NomoTransportClient",
+   "type": "contains",
+   "direction": "forward",
+   "description": "client.py defines class NomoTransportClient",
+   "weight": 1.0
+  },
+  {
+   "source": "file:python/nomo-transport/src/nomo_transport/errors.py",
+   "target": "class:python/nomo-transport/src/nomo_transport/errors.py:NomoTransportError",
+   "type": "contains",
+   "direction": "forward",
+   "description": "errors.py defines class NomoTransportError",
+   "weight": 1.0
+  },
+  {
+   "source": "file:python/nomo-transport/src/nomo_transport/errors.py",
+   "target": "class:python/nomo-transport/src/nomo_transport/errors.py:HoldDeniedError",
+   "type": "contains",
+   "direction": "forward",
+   "description": "errors.py defines class HoldDeniedError",
+   "weight": 1.0
+  },
+  {
+   "source": "file:python/nomo-transport/src/nomo_transport/errors.py",
+   "target": "class:python/nomo-transport/src/nomo_transport/errors.py:LedgerVerifyError",
+   "type": "contains",
+   "direction": "forward",
+   "description": "errors.py defines class LedgerVerifyError",
+   "weight": 1.0
+  },
+  {
+   "source": "file:python/nomo-transport/src/nomo_transport/errors.py",
+   "target": "class:python/nomo-transport/src/nomo_transport/errors.py:PolicyStartupError",
+   "type": "contains",
+   "direction": "forward",
+   "description": "errors.py defines class PolicyStartupError",
+   "weight": 1.0
+  },
+  {
+   "source": "file:python/nomo-transport/src/nomo_transport/errors.py",
+   "target": "class:python/nomo-transport/src/nomo_transport/errors.py:RefusedError",
+   "type": "contains",
+   "direction": "forward",
+   "description": "errors.py defines class RefusedError",
+   "weight": 1.0
+  },
+  {
+   "source": "file:python/nomo-transport/src/nomo_transport/__init__.py",
+   "target": "file:python/nomo-transport/src/nomo_transport/canonical.py",
+   "type": "imports",
+   "direction": "forward",
+   "description": "__init__.py imports canonical.py",
+   "weight": 0.8
+  },
+  {
+   "source": "file:python/nomo-transport/src/nomo_transport/__init__.py",
+   "target": "file:python/nomo-transport/src/nomo_transport/client.py",
+   "type": "imports",
+   "direction": "forward",
+   "description": "__init__.py imports client.py",
+   "weight": 0.8
+  },
+  {
+   "source": "file:python/nomo-transport/src/nomo_transport/__init__.py",
+   "target": "file:python/nomo-transport/src/nomo_transport/errors.py",
+   "type": "imports",
+   "direction": "forward",
+   "description": "__init__.py imports errors.py",
+   "weight": 0.8
+  },
+  {
+   "source": "file:python/nomo-transport/src/nomo_transport/client.py",
+   "target": "file:python/nomo-transport/src/nomo_transport/errors.py",
+   "type": "imports",
+   "direction": "forward",
+   "description": "client.py imports errors.py",
+   "weight": 0.8
+  }
+ ]
+}

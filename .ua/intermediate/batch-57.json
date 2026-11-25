@@ -1,0 +1,41 @@
+{
+ "nodes": [
+  {
+   "id": "file:docs/superpowers/graphs/2026-10-15-nomo-harness-workstream.md",
+   "type": "document",
+   "name": "2026-10-15-nomo-harness-workstream.md",
+   "filePath": "docs/superpowers/graphs/2026-10-15-nomo-harness-workstream.md",
+   "summary": "2026-10-15-nomo-harness-workstream.md \u2014 markdown document, 390 lines, 15 sections: The harness workstream as a graph (2026-10-15), Output, in one sentence, Nodes, Edges (+11 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:docs/superpowers/graphs/2026-10-16-nomo-subagents-workstream.md",
+   "type": "document",
+   "name": "2026-10-16-nomo-subagents-workstream.md",
+   "filePath": "docs/superpowers/graphs/2026-10-16-nomo-subagents-workstream.md",
+   "summary": "2026-10-16-nomo-subagents-workstream.md \u2014 markdown document, 261 lines, 13 sections: The subagents workstream as a graph (2026-10-16), Output, in one sentence, Nodes, Edges (+9 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:docs/superpowers/graphs/2026-10-29-nomo-work-continuation-graph.md",
+   "type": "document",
+   "name": "2026-10-29-nomo-work-continuation-graph.md",
+   "filePath": "docs/superpowers/graphs/2026-10-29-nomo-work-continuation-graph.md",
+   "summary": "2026-10-29-nomo-work-continuation-graph.md \u2014 markdown document, 81 lines, 7 sections: The wave 1 continuation workstream as a graph (2026-10-29), Directive, Node lifecycle per lane, The dependencies in this wave (+3 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  }
+ ],
+ "edges": []
+}

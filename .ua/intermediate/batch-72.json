@@ -1,0 +1,77 @@
+{
+ "nodes": [
+  {
+   "id": "file:scripts/fresh-install.sh",
+   "type": "file",
+   "name": "fresh-install.sh",
+   "filePath": "scripts/fresh-install.sh",
+   "summary": "fresh-install.sh \u2014 shell script, 57 lines.",
+   "tags": [
+    "shell",
+    "script"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/install-nomo.sh",
+   "type": "file",
+   "name": "install-nomo.sh",
+   "filePath": "scripts/install-nomo.sh",
+   "summary": "install-nomo.sh \u2014 shell script, 214 lines.",
+   "tags": [
+    "shell",
+    "script"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:scripts/nomo-omp.sh",
+   "type": "file",
+   "name": "nomo-omp.sh",
+   "filePath": "scripts/nomo-omp.sh",
+   "summary": "nomo-omp.sh \u2014 shell script, 19 lines.",
+   "tags": [
+    "shell",
+    "script"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/nomo-prime-agent.sh",
+   "type": "file",
+   "name": "nomo-prime-agent.sh",
+   "filePath": "scripts/nomo-prime-agent.sh",
+   "summary": "nomo-prime-agent.sh \u2014 shell script, 23 lines.",
+   "tags": [
+    "shell",
+    "script"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/nomo-wt.sh",
+   "type": "file",
+   "name": "nomo-wt.sh",
+   "filePath": "scripts/nomo-wt.sh",
+   "summary": "nomo-wt.sh \u2014 shell script, 16 lines.",
+   "tags": [
+    "shell",
+    "script"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/package.json",
+   "type": "config",
+   "name": "package.json",
+   "filePath": "scripts/package.json",
+   "summary": "package.json \u2014 json config, 25 lines.",
+   "tags": [
+    "json",
+    "config"
+   ],
+   "complexity": "simple"
+  }
+ ],
+ "edges": []
+}

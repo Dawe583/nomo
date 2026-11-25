@@ -70,6 +70,8 @@ function deps(
     readonly harnessStateAvailable?: boolean;
     readonly maxPromptCharacters?: number;
     readonly reviewLensCount?: number;
+    readonly outcomes?: () => string;
+    readonly onEntries?: () => void;
   } = {},
 ): { readonly deps: Parameters<typeof serviceHarnessBoundary>[1]; readonly counters: Counters } {
   const counters: Counters = { asked: 0, applied: [] };
@@ -90,7 +92,10 @@ function deps(
       gates: resolveRefineGates(overrides.gates),
       surface: overrides.surface ?? "checkpoint",
       now: overrides.now ?? (() => 1_000_000),
-      entries: async () => overrides.entries ?? [entry("lesson-1", 1)],
+      entries: async () => {
+        overrides.onEntries?.();
+        return overrides.entries ?? [entry("lesson-1", 1)];
+      },
       rules: () => 2,
       ask:
         overrides.ask ??
@@ -105,6 +110,7 @@ function deps(
       harnessStateAvailable: overrides.harnessStateAvailable ?? true,
       maxPromptCharacters: overrides.maxPromptCharacters,
       reviewLensCount: overrides.reviewLensCount,
+      outcomes: overrides.outcomes,
     },
   };
 }
@@ -631,4 +637,53 @@ test("lenses: merging nothing declines rather than approving nothing", () => {
     approve: false,
     reason: "No lens returned a verdict.",
   });
+});
+
+test("the reviewer is told what happened to its earlier proposals", async () => {
+  // A reviewer that cannot see a rejection proposes the same edit again, once
+  // per paid round. The block is charged to the same ceiling as the evidence.
+  const seen: string[] = [];
+  const { deps: wired } = deps({
+    outcomes: () => "EARLIER PROPOSALS\n- abcd1234: rejected (operator)",
+    ask: async (request: string) => {
+      seen.push(request);
+      return JSON.stringify({ approve: true, proposal: PROPOSAL });
+    },
+  });
+  const result = await serviceHarnessBoundary(ready(), wired);
+
+  assert.equal(result.outcome.kind, "ran");
+  assert.equal(seen.length, 1);
+  assert.match(seen[0]!, /EARLIER PROPOSALS/);
+  assert.match(seen[0]!, /abcd1234: rejected/);
+});
+
+test("a refused boundary never reads the chain", async () => {
+  // Reading the chain is a full verifyChain with per-record Ed25519 plus a
+  // re-mine. The gate claims to be free, so a refusal must happen before that
+  // read, not after it.
+  let reads = 0;
+  const { deps: wired } = deps({
+    gates: { enabled: false },
+    onEntries: () => {
+      reads += 1;
+    },
+  });
+  const result = await serviceHarnessBoundary(ready(), wired);
+
+  assert.equal(result.outcome.kind, "not-run");
+  assert.equal(reads, 0, "a disabled harness must not verify the chain");
+});
+
+test("a boundary that can proceed still reads the chain", async () => {
+  let reads = 0;
+  const { deps: wired } = deps({
+    onEntries: () => {
+      reads += 1;
+    },
+  });
+  const result = await serviceHarnessBoundary(ready(), wired);
+
+  assert.equal(result.outcome.kind, "ran");
+  assert.equal(reads, 1);
 });

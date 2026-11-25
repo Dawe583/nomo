@@ -1,0 +1,77 @@
+{
+ "nodes": [
+  {
+   "id": "file:docs/strategy/2026-10-27-nomoyc-nomo-integration-plan.md",
+   "type": "document",
+   "name": "2026-10-27-nomoyc-nomo-integration-plan.md",
+   "filePath": "docs/strategy/2026-10-27-nomoyc-nomo-integration-plan.md",
+   "summary": "2026-10-27-nomoyc-nomo-integration-plan.md \u2014 markdown document, 143 lines, 16 sections: NOMO x YC: technical integration and implementation plan, Architecture decision, Verified reusable building blocks, Proposed request path (+12 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/strategy/2026-10-27-nomoyc-own-your-intelligence.md",
+   "type": "document",
+   "name": "2026-10-27-nomoyc-own-your-intelligence.md",
+   "filePath": "docs/strategy/2026-10-27-nomoyc-own-your-intelligence.md",
+   "summary": "2026-10-27-nomoyc-own-your-intelligence.md \u2014 markdown document, 76 lines, 14 sections: Own Your Intelligence: product and technical plan, Product definition, Customer outcome, Non-goals (+10 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/strategy/2026-10-27-nomoyc-risk-register.md",
+   "type": "document",
+   "name": "2026-10-27-nomoyc-risk-register.md",
+   "filePath": "docs/strategy/2026-10-27-nomoyc-risk-register.md",
+   "summary": "2026-10-27-nomoyc-risk-register.md \u2014 markdown document, 38 lines, 4 sections: NOMO x YC: risk register and decision log, Risks, Founder decision log, Open questions for founders.",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/strategy/2026-10-27-nomoyc-segment-scorecard.md",
+   "type": "document",
+   "name": "2026-10-27-nomoyc-segment-scorecard.md",
+   "filePath": "docs/strategy/2026-10-27-nomoyc-segment-scorecard.md",
+   "summary": "2026-10-27-nomoyc-segment-scorecard.md \u2014 markdown document, 91 lines, 10 sections: NOMO x YC: segment and workflow scorecard, Candidate segments, Public adoption context, not a segment verdict, Interview plan (+6 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/strategy/2026-10-27-nomoyc-startup-blueprint.md",
+   "type": "document",
+   "name": "2026-10-27-nomoyc-startup-blueprint.md",
+   "filePath": "docs/strategy/2026-10-27-nomoyc-startup-blueprint.md",
+   "summary": "2026-10-27-nomoyc-startup-blueprint.md \u2014 markdown document, 105 lines, 14 sections: NOMO x YC Winter 2027: startup blueprint, Decision in one page, How the three ideas fit, Customer and market starting point (+10 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/strategy/2026-10-28-nomoyc-three-idea-execution-playbook.md",
+   "type": "document",
+   "name": "2026-10-28-nomoyc-three-idea-execution-playbook.md",
+   "filePath": "docs/strategy/2026-10-28-nomoyc-three-idea-execution-playbook.md",
+   "summary": "2026-10-28-nomoyc-three-idea-execution-playbook.md \u2014 markdown document, 48 lines, 8 sections: NOMO \u00d7 YC: three-idea execution playbook, One product sequence, not three parallel products, 1. The $15-an-Hour Expert \u2014 first customer outcome, 2. Own Your Intelligence \u2014 later improvement loop (+4 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  }
+ ],
+ "edges": []
+}

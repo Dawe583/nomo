@@ -52,6 +52,7 @@ test("providerModelsProjection separates configured profiles from attached catal
   assert.equal(projection.activeProviderId, "https://first.test/v1");
   assert.deepEqual(projection.providers[0], {
     id: "https://first.test/v1",
+    name: "https://first.test/v1",
     configured: true,
     attached: true,
     catalogStatus: "ready",
@@ -82,7 +83,7 @@ test("providerModelsProjection keeps inactive profiles configured but never clai
   assert.equal(projection.providers.length, 2);
   assert.equal(projection.activeProviderId, "https://second.test/v1");
   assert.deepEqual(projection.providers.map(({ attached, catalogStatus, models }) => ({ attached, catalogStatus, models })), [
-    { attached: false, catalogStatus: "unavailable", models: [] },
+    { attached: false, catalogStatus: "idle", models: [] },
     { attached: true, catalogStatus: "ready", models: [{ id: "same", name: "First" }] },
   ]);
   assert.deepEqual(catalogRequests, ["https://first.test/v1/models", "https://second.test/v1/models"]);
@@ -285,7 +286,7 @@ test("model tool calls cross a real NOMO proxy and produce a ledger", async (t) 
       choices: [
         { message: { role: "assistant", content: `Finished ${secret}` }, finish_reason: "stop" },
       ],
-      usage: { total_tokens: 23 },
+      usage: { total_tokens: 23, cost_usd: 0.0012 },
     });
   };
   const proxyEnv = {
@@ -331,6 +332,13 @@ test("model tool calls cross a real NOMO proxy and produce a ledger", async (t) 
     managed?.entries.some(
       (e) => (e.body as { tool: string }).tool === "void_workspace_write",
     ),
+  );
+  assert.ok(
+    managed?.entries.some((e) => {
+      const b = e.body as { event?: string; costUsd?: number };
+      return b.event === "usage" && b.costUsd === 0.0012;
+    }),
+    "the provider's own cost must reach the signed chain, not an estimate",
   );
   assert.ok(
     managed?.entries.some((e) => {
@@ -468,6 +476,11 @@ test("long sessions keep advancing event cursors and refuse unbounded context", 
     baseUrl: "https://provider.test/v1",
     apiKey: secret,
   });
+  // The claim below is that an unbounded conversation is refused. Automatic
+  // compaction is a different answer to the same pressure, so it is off here;
+  // leaving it on would make the run compact instead of refusing and the test
+  // would pass without ever reaching the limit it names.
+  workbench.patchHarnessSettings({ autoCompactMessages: 0 });
   const started = await workbench.start("First", "fixture-model");
   for (let turn = 0; turn < 99; turn++) {
     for (

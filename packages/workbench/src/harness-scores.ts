@@ -359,6 +359,7 @@ export function measureBoard(
     const recoveries: number[] = [];
     const costs: number[] = [];
     let unknownCount = 0;
+    let classifiedCount = 0;
     let hasClassification = false;
     let localUnclassifiedUnmeasured = 0;
     for (const entry of entries) {
@@ -379,6 +380,7 @@ export function measureBoard(
       }
       if (Object.prototype.hasOwnProperty.call(record, "classification")) {
         hasClassification = true;
+        classifiedCount += 1;
         if (str(record, "classification") === "unclassified") unknownCount += 1;
       } else if (isAttempt) {
         localUnclassifiedUnmeasured += 1;
@@ -392,8 +394,14 @@ export function measureBoard(
     // classification outcome. Chains written before that field existed, or
     // chains with no connector call, stay unmeasured rather than reporting a
     // measured zero that nobody observed.
+    // The metric is a rate, so the sample is a fraction of the calls that were
+    // actually classified. Pushing the raw count made a longer chain look
+    // worse than a short one, and it put a count where the schema declares a
+    // ratio.
     unknownCases.push(
-      localDecided > 0 && hasClassification ? [unknownCount] : [],
+      localDecided > 0 && hasClassification && classifiedCount > 0
+        ? [unknownCount / classifiedCount]
+        : [],
     );
     unknownUnmeasuredTotal += localUnclassifiedUnmeasured;
   }
@@ -500,4 +508,96 @@ export function unmeasuredMetrics(board: ScoreBoard): ScoreMetric["key"][] {
   return (Object.keys(board.metrics) as ScoreMetric["key"][]).filter(
     (key) => board.metrics[key].n === 0,
   );
+}
+
+/** A ledger entry with its sequence number, used to partition records across a
+ * signed activation boundary without depending on array order. */
+export type SequencedEntry = { readonly body: unknown; readonly seq?: number };
+
+export type GuardrailEffect = {
+  readonly key: ScoreMetric["key"];
+  readonly label: string;
+  readonly before: SplitSummary;
+  readonly after: SplitSummary;
+  readonly verdict: ScoreVerdict;
+  readonly regressed: boolean;
+  /** True only when both sides of the split carry at least one measured case. */
+  readonly measured: boolean;
+};
+
+export type RefinementEffect = {
+  readonly activationSeq: number;
+  /** Inclusive upper sequence bound when the refinement was later rolled back;
+   * null while it remains standing at the chain head. */
+  readonly untilSeq: number | null;
+  readonly before: ScoreBoard;
+  readonly after: ScoreBoard & { readonly guardrailBreaches: readonly string[] };
+  readonly verdict: ScoreVerdict;
+  readonly guardrailBreaches: readonly string[];
+  readonly guardrails: readonly GuardrailEffect[];
+  /** Guardrails lacking a measurement on either side of the split, named so no
+   * consumer mistakes absence of evidence for a pass or a zero. */
+  readonly unmeasuredGuardrails: readonly ScoreMetric["key"][];
+};
+
+/**
+ * Measure the descriptive effect of an activated refinement by splitting the
+ * signed chain strictly around its activation sequence (`seq < activationSeq`
+ * versus `seq > activationSeq`, capped at `<= untilSeq` when rolled back).
+ *
+ * Pure, deterministic and order-independent. Strictly disjoint windows prevent
+ * pre-activation calls from leaking into post-activation scores, so an
+ * activation with no subsequent calls reports every guardrail as unmeasured
+ * rather than echoing pre-activation averages. Per decision D1, this never
+ * mutates state, gates a proposal, triggers a rollback or enters `decide`.
+ */
+export function measureRefinementEffect(
+  entries: readonly SequencedEntry[],
+  activationSeq: number,
+  options?: {
+    readonly untilSeq?: number | null;
+    readonly generatedAt?: string;
+  },
+): RefinementEffect {
+  const ordered = entries
+    .filter((entry) => typeof entry.seq === "number" && Number.isInteger(entry.seq))
+    .slice()
+    .sort((a, b) => a.seq! - b.seq!);
+  const untilSeq = options?.untilSeq ?? null;
+  const generatedAt = options?.generatedAt ?? "";
+  const beforeEntries = ordered.filter((entry) => entry.seq! < activationSeq);
+  const afterEntries = ordered.filter(
+    (entry) => entry.seq! > activationSeq && (untilSeq === null || entry.seq! <= untilSeq),
+  );
+  const before = measureBoard(scoreCases(beforeEntries), generatedAt);
+  const afterRaw = measureBoard(scoreCases(afterEntries), generatedAt);
+  const compared = compareBoards(before, afterRaw);
+  const guardrails: GuardrailEffect[] = SCORE_GUARDRAILS.map((key) => {
+    const metric = SCORE_METRICS[key];
+    const prior = before.guardrails[key];
+    const next = afterRaw.guardrails[key];
+    const verdict = compareSplit(prior, next, metric.direction);
+    return {
+      key,
+      label: metric.label,
+      before: prior,
+      after: next,
+      verdict,
+      regressed: verdict === "declining",
+      measured: prior.n > 0 && next.n > 0,
+    };
+  });
+  const unmeasuredGuardrails = guardrails
+    .filter((guardrail) => !guardrail.measured)
+    .map((guardrail) => guardrail.key);
+  return {
+    activationSeq,
+    untilSeq,
+    before,
+    after: compared,
+    verdict: compared.verdict,
+    guardrailBreaches: compared.guardrailBreaches,
+    guardrails,
+    unmeasuredGuardrails,
+  };
 }

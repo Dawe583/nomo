@@ -1,0 +1,6463 @@
+{
+ "nodes": [
+  {
+   "id": "file:apps/control-plane/api/auth.ts",
+   "type": "file",
+   "name": "auth.ts",
+   "filePath": "apps/control-plane/api/auth.ts",
+   "summary": "auth.ts \u2014 typescript code, 18 lines, 2 functions, 0 classes, 2 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/auth.ts:matchesToken",
+   "type": "function",
+   "name": "matchesToken",
+   "filePath": "apps/control-plane/api/auth.ts",
+   "lineRange": [
+    5,
+    9
+   ],
+   "summary": "matchesToken(value, token) \u2014 function in auth.ts, lines 5-9.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/auth.ts:authorizedRemote",
+   "type": "function",
+   "name": "authorizedRemote",
+   "filePath": "apps/control-plane/api/auth.ts",
+   "lineRange": [
+    11,
+    18
+   ],
+   "summary": "authorizedRemote(request, env) \u2014 function in auth.ts, lines 11-18.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/api/beta.test.ts",
+   "type": "file",
+   "name": "beta.test.ts",
+   "filePath": "apps/control-plane/api/beta.test.ts",
+   "summary": "beta.test.ts \u2014 typescript code, 63 lines, 0 functions, 0 classes, 0 exports, 5 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/api/desktop-setup.test.ts",
+   "type": "file",
+   "name": "desktop-setup.test.ts",
+   "filePath": "apps/control-plane/api/desktop-setup.test.ts",
+   "summary": "desktop-setup.test.ts \u2014 typescript code, 357 lines, 2 functions, 0 classes, 0 exports, 4 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:apps/control-plane/api/desktop-setup.test.ts:fixture",
+   "type": "function",
+   "name": "fixture",
+   "filePath": "apps/control-plane/api/desktop-setup.test.ts",
+   "lineRange": [
+    12,
+    28
+   ],
+   "summary": "fixture(t, fetcher) \u2014 function in desktop-setup.test.ts, lines 12-28.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/desktop-setup.test.ts:writeOmpCredentials",
+   "type": "function",
+   "name": "writeOmpCredentials",
+   "filePath": "apps/control-plane/api/desktop-setup.test.ts",
+   "lineRange": [
+    37,
+    49
+   ],
+   "summary": "writeOmpCredentials(home, entries) \u2014 function in desktop-setup.test.ts, lines 37-49.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/api/desktop-setup.ts",
+   "type": "file",
+   "name": "desktop-setup.ts",
+   "filePath": "apps/control-plane/api/desktop-setup.ts",
+   "summary": "desktop-setup.ts \u2014 typescript code, 521 lines, 26 functions, 0 classes, 4 exports, 6 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:apps/control-plane/api/desktop-setup.ts:object",
+   "type": "function",
+   "name": "object",
+   "filePath": "apps/control-plane/api/desktop-setup.ts",
+   "lineRange": [
+    111,
+    113
+   ],
+   "summary": "object(value) \u2014 function in desktop-setup.ts, lines 111-113.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/desktop-setup.ts:inside",
+   "type": "function",
+   "name": "inside",
+   "filePath": "apps/control-plane/api/desktop-setup.ts",
+   "lineRange": [
+    114,
+    117
+   ],
+   "summary": "inside(root, path) \u2014 function in desktop-setup.ts, lines 114-117.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/desktop-setup.ts:homeDirectory",
+   "type": "function",
+   "name": "homeDirectory",
+   "filePath": "apps/control-plane/api/desktop-setup.ts",
+   "lineRange": [
+    118,
+    122
+   ],
+   "summary": "homeDirectory(env) \u2014 function in desktop-setup.ts, lines 118-122.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/desktop-setup.ts:opaqueValue",
+   "type": "function",
+   "name": "opaqueValue",
+   "filePath": "apps/control-plane/api/desktop-setup.ts",
+   "lineRange": [
+    125,
+    128
+   ],
+   "summary": "opaqueValue(value) \u2014 function in desktop-setup.ts, lines 125-128.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/desktop-setup.ts:presetFor",
+   "type": "function",
+   "name": "presetFor",
+   "filePath": "apps/control-plane/api/desktop-setup.ts",
+   "lineRange": [
+    129,
+    131
+   ],
+   "summary": "presetFor(providerId) \u2014 function in desktop-setup.ts, lines 129-131.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/desktop-setup.ts:importableApiKey",
+   "type": "function",
+   "name": "importableApiKey",
+   "filePath": "apps/control-plane/api/desktop-setup.ts",
+   "lineRange": [
+    132,
+    134
+   ],
+   "summary": "importableApiKey(providerId) \u2014 function in desktop-setup.ts, lines 132-134.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/desktop-setup.ts:knownForApiKey",
+   "type": "function",
+   "name": "knownForApiKey",
+   "filePath": "apps/control-plane/api/desktop-setup.ts",
+   "lineRange": [
+    138,
+    140
+   ],
+   "summary": "knownForApiKey(providerId) \u2014 function in desktop-setup.ts, lines 138-140.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/desktop-setup.ts:displayName",
+   "type": "function",
+   "name": "displayName",
+   "filePath": "apps/control-plane/api/desktop-setup.ts",
+   "lineRange": [
+    141,
+    143
+   ],
+   "summary": "displayName(providerId) \u2014 function in desktop-setup.ts, lines 141-143.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/desktop-setup.ts:ompDatabasePath",
+   "type": "function",
+   "name": "ompDatabasePath",
+   "filePath": "apps/control-plane/api/desktop-setup.ts",
+   "lineRange": [
+    144,
+    180
+   ],
+   "summary": "ompDatabasePath(home, env) \u2014 function in desktop-setup.ts, lines 144-180.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/desktop-setup.ts:openOmpDatabase",
+   "type": "function",
+   "name": "openOmpDatabase",
+   "filePath": "apps/control-plane/api/desktop-setup.ts",
+   "lineRange": [
+    181,
+    194
+   ],
+   "summary": "openOmpDatabase(home, env) \u2014 function in desktop-setup.ts, lines 181-194.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/desktop-setup.ts:ompCredentialAvailable",
+   "type": "function",
+   "name": "ompCredentialAvailable",
+   "filePath": "apps/control-plane/api/desktop-setup.ts",
+   "lineRange": [
+    195,
+    200
+   ],
+   "summary": "ompCredentialAvailable(database, provider) \u2014 function in desktop-setup.ts, lines 195-200.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/desktop-setup.ts:ompApiKey",
+   "type": "function",
+   "name": "ompApiKey",
+   "filePath": "apps/control-plane/api/desktop-setup.ts",
+   "lineRange": [
+    201,
+    212
+   ],
+   "summary": "ompApiKey(home, env, provider) \u2014 function in desktop-setup.ts, lines 201-212.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/desktop-setup.ts:readCredentialFile",
+   "type": "function",
+   "name": "readCredentialFile",
+   "filePath": "apps/control-plane/api/desktop-setup.ts",
+   "lineRange": [
+    216,
+    245
+   ],
+   "summary": "readCredentialFile(path) \u2014 function in desktop-setup.ts, lines 216-245.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/desktop-setup.ts:readCredentialObject",
+   "type": "function",
+   "name": "readCredentialObject",
+   "filePath": "apps/control-plane/api/desktop-setup.ts",
+   "lineRange": [
+    246,
+    248
+   ],
+   "summary": "readCredentialObject(path) \u2014 function in desktop-setup.ts, lines 246-248.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/desktop-setup.ts:providerConfig",
+   "type": "function",
+   "name": "providerConfig",
+   "filePath": "apps/control-plane/api/desktop-setup.ts",
+   "lineRange": [
+    252,
+    265
+   ],
+   "summary": "providerConfig(providerId, apiKey) \u2014 function in desktop-setup.ts, lines 252-265.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/desktop-setup.ts:credential",
+   "type": "function",
+   "name": "credential",
+   "filePath": "apps/control-plane/api/desktop-setup.ts",
+   "lineRange": [
+    266,
+    306
+   ],
+   "summary": "credential(source, env) \u2014 function in desktop-setup.ts, lines 266-306.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/desktop-setup.ts:oauthEntry",
+   "type": "function",
+   "name": "oauthEntry",
+   "filePath": "apps/control-plane/api/desktop-setup.ts",
+   "lineRange": [
+    309,
+    322
+   ],
+   "summary": "oauthEntry(source, env) \u2014 function in desktop-setup.ts, lines 309-322.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/desktop-setup.ts:sourceStatus",
+   "type": "function",
+   "name": "sourceStatus",
+   "filePath": "apps/control-plane/api/desktop-setup.ts",
+   "lineRange": [
+    324,
+    353
+   ],
+   "summary": "sourceStatus(source, env) \u2014 function in desktop-setup.ts, lines 324-353.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/desktop-setup.ts:discoveredOmpSources",
+   "type": "function",
+   "name": "discoveredOmpSources",
+   "filePath": "apps/control-plane/api/desktop-setup.ts",
+   "lineRange": [
+    355,
+    381
+   ],
+   "summary": "discoveredOmpSources(home, env) \u2014 function in desktop-setup.ts, lines 355-381.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/desktop-setup.ts:discoverSources",
+   "type": "function",
+   "name": "discoverSources",
+   "filePath": "apps/control-plane/api/desktop-setup.ts",
+   "lineRange": [
+    382,
+    447
+   ],
+   "summary": "discoverSources(env) \u2014 function in desktop-setup.ts, lines 382-447.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/desktop-setup.ts:publicSource",
+   "type": "function",
+   "name": "publicSource",
+   "filePath": "apps/control-plane/api/desktop-setup.ts",
+   "lineRange": [
+    448,
+    464
+   ],
+   "summary": "publicSource(source, status) \u2014 function in desktop-setup.ts, lines 448-464.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/desktop-setup.ts:desktopSetup",
+   "type": "function",
+   "name": "desktopSetup",
+   "filePath": "apps/control-plane/api/desktop-setup.ts",
+   "lineRange": [
+    466,
+    473
+   ],
+   "summary": "desktopSetup(env) \u2014 function in desktop-setup.ts, lines 466-473.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/desktop-setup.ts:ompProviderSources",
+   "type": "function",
+   "name": "ompProviderSources",
+   "filePath": "apps/control-plane/api/desktop-setup.ts",
+   "lineRange": [
+    475,
+    478
+   ],
+   "summary": "ompProviderSources(env) \u2014 function in desktop-setup.ts, lines 475-478.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/desktop-setup.ts:desktopProviderConfig",
+   "type": "function",
+   "name": "desktopProviderConfig",
+   "filePath": "apps/control-plane/api/desktop-setup.ts",
+   "lineRange": [
+    480,
+    504
+   ],
+   "summary": "desktopProviderConfig(id, env) \u2014 function in desktop-setup.ts, lines 480-504.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/desktop-setup.ts:desktopProviderModels",
+   "type": "function",
+   "name": "desktopProviderModels",
+   "filePath": "apps/control-plane/api/desktop-setup.ts",
+   "lineRange": [
+    505,
+    508
+   ],
+   "summary": "desktopProviderModels(id, env, workbench) \u2014 function in desktop-setup.ts, lines 505-508.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/desktop-setup.ts:importDesktopProvider",
+   "type": "function",
+   "name": "importDesktopProvider",
+   "filePath": "apps/control-plane/api/desktop-setup.ts",
+   "lineRange": [
+    510,
+    521
+   ],
+   "summary": "importDesktopProvider(id, env, workbench, preferredModel) \u2014 function in desktop-setup.ts, lines 510-521.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/api/fleet-events.test.ts",
+   "type": "file",
+   "name": "fleet-events.test.ts",
+   "filePath": "apps/control-plane/api/fleet-events.test.ts",
+   "summary": "fleet-events.test.ts \u2014 typescript code, 59 lines, 0 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/api/fleet-events.ts",
+   "type": "file",
+   "name": "fleet-events.ts",
+   "filePath": "apps/control-plane/api/fleet-events.ts",
+   "summary": "fleet-events.ts \u2014 typescript code, 85 lines, 0 functions, 1 classes, 2 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/control-plane/api/fleet-events.ts:FleetEventStore",
+   "type": "class",
+   "name": "FleetEventStore",
+   "filePath": "apps/control-plane/api/fleet-events.ts",
+   "lineRange": [
+    43,
+    82
+   ],
+   "summary": "FleetEventStore \u2014 class in fleet-events.ts, lines 43-82, methods: record, after, latest, stopAck.",
+   "tags": [
+    "typescript",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/api/goal.test.ts",
+   "type": "file",
+   "name": "goal.test.ts",
+   "filePath": "apps/control-plane/api/goal.test.ts",
+   "summary": "goal.test.ts \u2014 typescript code, 234 lines, 5 functions, 0 classes, 0 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:apps/control-plane/api/goal.test.ts:fetcher",
+   "type": "function",
+   "name": "fetcher",
+   "filePath": "apps/control-plane/api/goal.test.ts",
+   "lineRange": [
+    43,
+    50
+   ],
+   "summary": "fetcher(url) \u2014 function in goal.test.ts, lines 43-50.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/goal.test.ts:fixture",
+   "type": "function",
+   "name": "fixture",
+   "filePath": "apps/control-plane/api/goal.test.ts",
+   "lineRange": [
+    52,
+    90
+   ],
+   "summary": "fixture(t) \u2014 function in goal.test.ts, lines 52-90.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/goal.test.ts:postGoal",
+   "type": "function",
+   "name": "postGoal",
+   "filePath": "apps/control-plane/api/goal.test.ts",
+   "lineRange": [
+    92,
+    98
+   ],
+   "summary": "postGoal(f, body) \u2014 function in goal.test.ts, lines 92-98.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/goal.test.ts:readGoal",
+   "type": "function",
+   "name": "readGoal",
+   "filePath": "apps/control-plane/api/goal.test.ts",
+   "lineRange": [
+    100,
+    105
+   ],
+   "summary": "readGoal(f) \u2014 function in goal.test.ts, lines 100-105.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/goal.test.ts:waitForGoal",
+   "type": "function",
+   "name": "waitForGoal",
+   "filePath": "apps/control-plane/api/goal.test.ts",
+   "lineRange": [
+    112,
+    125
+   ],
+   "summary": "waitForGoal(f, done, label) \u2014 function in goal.test.ts, lines 112-125.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/api/harness-proposals.test.ts",
+   "type": "file",
+   "name": "harness-proposals.test.ts",
+   "filePath": "apps/control-plane/api/harness-proposals.test.ts",
+   "summary": "harness-proposals.test.ts \u2014 typescript code, 166 lines, 3 functions, 0 classes, 0 exports, 3 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:apps/control-plane/api/harness-proposals.test.ts:fetcher",
+   "type": "function",
+   "name": "fetcher",
+   "filePath": "apps/control-plane/api/harness-proposals.test.ts",
+   "lineRange": [
+    22,
+    25
+   ],
+   "summary": "fetcher(url) \u2014 function in harness-proposals.test.ts, lines 22-25.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/harness-proposals.test.ts:proposal",
+   "type": "function",
+   "name": "proposal",
+   "filePath": "apps/control-plane/api/harness-proposals.test.ts",
+   "lineRange": [
+    27,
+    39
+   ],
+   "summary": "proposal(title) \u2014 function in harness-proposals.test.ts, lines 27-39.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/harness-proposals.test.ts:fixture",
+   "type": "function",
+   "name": "fixture",
+   "filePath": "apps/control-plane/api/harness-proposals.test.ts",
+   "lineRange": [
+    41,
+    84
+   ],
+   "summary": "fixture(t) \u2014 function in harness-proposals.test.ts, lines 41-84.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/api/harness-review-settings.test.ts",
+   "type": "file",
+   "name": "harness-review-settings.test.ts",
+   "filePath": "apps/control-plane/api/harness-review-settings.test.ts",
+   "summary": "harness-review-settings.test.ts \u2014 typescript code, 62 lines, 0 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/api/harness-settings.test.ts",
+   "type": "file",
+   "name": "harness-settings.test.ts",
+   "filePath": "apps/control-plane/api/harness-settings.test.ts",
+   "summary": "harness-settings.test.ts \u2014 typescript code, 71 lines, 0 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/api/local-approvals.ts",
+   "type": "file",
+   "name": "local-approvals.ts",
+   "filePath": "apps/control-plane/api/local-approvals.ts",
+   "summary": "local-approvals.ts \u2014 typescript code, 25 lines, 1 functions, 0 classes, 1 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/local-approvals.ts:localApprovals",
+   "type": "function",
+   "name": "localApprovals",
+   "filePath": "apps/control-plane/api/local-approvals.ts",
+   "lineRange": [
+    8,
+    25
+   ],
+   "summary": "localApprovals(env) \u2014 function in local-approvals.ts, lines 8-25.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/api/openai-compatible.ts",
+   "type": "file",
+   "name": "openai-compatible.ts",
+   "filePath": "apps/control-plane/api/openai-compatible.ts",
+   "summary": "openai-compatible.ts \u2014 typescript code, 209 lines, 5 functions, 0 classes, 4 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:apps/control-plane/api/openai-compatible.ts:invalidRequest",
+   "type": "function",
+   "name": "invalidRequest",
+   "filePath": "apps/control-plane/api/openai-compatible.ts",
+   "lineRange": [
+    23,
+    40
+   ],
+   "summary": "invalidRequest(message, param, code) \u2014 function in openai-compatible.ts, lines 23-40.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/openai-compatible.ts:parseOpenAIChatRequest",
+   "type": "function",
+   "name": "parseOpenAIChatRequest",
+   "filePath": "apps/control-plane/api/openai-compatible.ts",
+   "lineRange": [
+    42,
+    144
+   ],
+   "summary": "parseOpenAIChatRequest(value) \u2014 function in openai-compatible.ts, lines 42-144.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/openai-compatible.ts:openAIModelList",
+   "type": "function",
+   "name": "openAIModelList",
+   "filePath": "apps/control-plane/api/openai-compatible.ts",
+   "lineRange": [
+    146,
+    160
+   ],
+   "summary": "openAIModelList(models, providerId) \u2014 function in openai-compatible.ts, lines 146-160.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/openai-compatible.ts:openAICompletion",
+   "type": "function",
+   "name": "openAICompletion",
+   "filePath": "apps/control-plane/api/openai-compatible.ts",
+   "lineRange": [
+    162,
+    189
+   ],
+   "summary": "openAICompletion(session, model, content, usage) \u2014 function in openai-compatible.ts, lines 162-189.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/openai-compatible.ts:openAIError",
+   "type": "function",
+   "name": "openAIError",
+   "filePath": "apps/control-plane/api/openai-compatible.ts",
+   "lineRange": [
+    191,
+    209
+   ],
+   "summary": "openAIError(status, message, code, type\u2026) \u2014 function in openai-compatible.ts, lines 191-209.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/api/parity.test.ts",
+   "type": "file",
+   "name": "parity.test.ts",
+   "filePath": "apps/control-plane/api/parity.test.ts",
+   "summary": "parity.test.ts \u2014 typescript code, 139 lines, 0 functions, 0 classes, 0 exports, 3 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/api/plan.test.ts",
+   "type": "file",
+   "name": "plan.test.ts",
+   "filePath": "apps/control-plane/api/plan.test.ts",
+   "summary": "plan.test.ts \u2014 typescript code, 60 lines, 0 functions, 0 classes, 0 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/api/schedules.test.ts",
+   "type": "file",
+   "name": "schedules.test.ts",
+   "filePath": "apps/control-plane/api/schedules.test.ts",
+   "summary": "schedules.test.ts \u2014 typescript code, 339 lines, 7 functions, 0 classes, 0 exports, 3 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:apps/control-plane/api/schedules.test.ts:fetcher",
+   "type": "function",
+   "name": "fetcher",
+   "filePath": "apps/control-plane/api/schedules.test.ts",
+   "lineRange": [
+    37,
+    45
+   ],
+   "summary": "fetcher(url) \u2014 function in schedules.test.ts, lines 37-45.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/schedules.test.ts:fixture",
+   "type": "function",
+   "name": "fixture",
+   "filePath": "apps/control-plane/api/schedules.test.ts",
+   "lineRange": [
+    52,
+    70
+   ],
+   "summary": "fixture(t) \u2014 function in schedules.test.ts, lines 52-70.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/schedules.test.ts:post",
+   "type": "function",
+   "name": "post",
+   "filePath": "apps/control-plane/api/schedules.test.ts",
+   "lineRange": [
+    74,
+    80
+   ],
+   "summary": "post(url, body) \u2014 function in schedules.test.ts, lines 74-80.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/schedules.test.ts:input",
+   "type": "function",
+   "name": "input",
+   "filePath": "apps/control-plane/api/schedules.test.ts",
+   "lineRange": [
+    82,
+    89
+   ],
+   "summary": "input(overrides) \u2014 function in schedules.test.ts, lines 82-89.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/schedules.test.ts:readSchedules",
+   "type": "function",
+   "name": "readSchedules",
+   "filePath": "apps/control-plane/api/schedules.test.ts",
+   "lineRange": [
+    91,
+    97
+   ],
+   "summary": "readSchedules(f) \u2014 function in schedules.test.ts, lines 91-97.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/schedules.test.ts:createSchedule",
+   "type": "function",
+   "name": "createSchedule",
+   "filePath": "apps/control-plane/api/schedules.test.ts",
+   "lineRange": [
+    99,
+    109
+   ],
+   "summary": "createSchedule(f, body) \u2014 function in schedules.test.ts, lines 99-109.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/schedules.test.ts:waitForSchedule",
+   "type": "function",
+   "name": "waitForSchedule",
+   "filePath": "apps/control-plane/api/schedules.test.ts",
+   "lineRange": [
+    115,
+    130
+   ],
+   "summary": "waitForSchedule(f, id, done) \u2014 function in schedules.test.ts, lines 115-130.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/api/server.ts",
+   "type": "file",
+   "name": "server.ts",
+   "filePath": "apps/control-plane/api/server.ts",
+   "summary": "server.ts \u2014 typescript code, 2807 lines, 40 functions, 4 classes, 6 exports, 27 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "function:apps/control-plane/api/server.ts:resolveVerifyKey",
+   "type": "function",
+   "name": "resolveVerifyKey",
+   "filePath": "apps/control-plane/api/server.ts",
+   "lineRange": [
+    329,
+    341
+   ],
+   "summary": "resolveVerifyKey(env) \u2014 function in server.ts, lines 329-341.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/server.ts:createControlPlaneServer",
+   "type": "function",
+   "name": "createControlPlaneServer",
+   "filePath": "apps/control-plane/api/server.ts",
+   "lineRange": [
+    343,
+    419
+   ],
+   "summary": "createControlPlaneServer(options) \u2014 function in server.ts, lines 343-419.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/server.ts:listenControlPlane",
+   "type": "function",
+   "name": "listenControlPlane",
+   "filePath": "apps/control-plane/api/server.ts",
+   "lineRange": [
+    421,
+    445
+   ],
+   "summary": "listenControlPlane(options) \u2014 function in server.ts, lines 421-445.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/server.ts:route",
+   "type": "function",
+   "name": "route",
+   "filePath": "apps/control-plane/api/server.ts",
+   "lineRange": [
+    447,
+    1870
+   ],
+   "summary": "route(request, response, parsed, options) \u2014 function in server.ts, lines 447-1870.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "function:apps/control-plane/api/server.ts:verificationSummary",
+   "type": "function",
+   "name": "verificationSummary",
+   "filePath": "apps/control-plane/api/server.ts",
+   "lineRange": [
+    1889,
+    1913
+   ],
+   "summary": "verificationSummary(key) \u2014 function in server.ts, lines 1889-1913.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/server.ts:handleFeed",
+   "type": "function",
+   "name": "handleFeed",
+   "filePath": "apps/control-plane/api/server.ts",
+   "lineRange": [
+    1915,
+    1985
+   ],
+   "summary": "handleFeed(response, options, searchParams) \u2014 function in server.ts, lines 1915-1985.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/server.ts:handleVerify",
+   "type": "function",
+   "name": "handleVerify",
+   "filePath": "apps/control-plane/api/server.ts",
+   "lineRange": [
+    1987,
+    2026
+   ],
+   "summary": "handleVerify(response, options, searchParams) \u2014 function in server.ts, lines 1987-2026.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/server.ts:handleApprovals",
+   "type": "function",
+   "name": "handleApprovals",
+   "filePath": "apps/control-plane/api/server.ts",
+   "lineRange": [
+    2028,
+    2034
+   ],
+   "summary": "handleApprovals(response, approvals) \u2014 function in server.ts, lines 2028-2034.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/server.ts:handleApprovalDecision",
+   "type": "function",
+   "name": "handleApprovalDecision",
+   "filePath": "apps/control-plane/api/server.ts",
+   "lineRange": [
+    2036,
+    2064
+   ],
+   "summary": "handleApprovalDecision(request, response, approvals, holdId\u2026) \u2014 function in server.ts, lines 2036-2064.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/server.ts:serveStatic",
+   "type": "function",
+   "name": "serveStatic",
+   "filePath": "apps/control-plane/api/server.ts",
+   "lineRange": [
+    2066,
+    2099
+   ],
+   "summary": "serveStatic(request, response, webRoot, pathname) \u2014 function in server.ts, lines 2066-2099.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/server.ts:toApiEntry",
+   "type": "function",
+   "name": "toApiEntry",
+   "filePath": "apps/control-plane/api/server.ts",
+   "lineRange": [
+    2101,
+    2119
+   ],
+   "summary": "toApiEntry(record) \u2014 function in server.ts, lines 2101-2119.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/server.ts:toApiApproval",
+   "type": "function",
+   "name": "toApiApproval",
+   "filePath": "apps/control-plane/api/server.ts",
+   "lineRange": [
+    2121,
+    2128
+   ],
+   "summary": "toApiApproval(record) \u2014 function in server.ts, lines 2121-2128.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/server.ts:isProjectWorkspaceRoutePath",
+   "type": "function",
+   "name": "isProjectWorkspaceRoutePath",
+   "filePath": "apps/control-plane/api/server.ts",
+   "lineRange": [
+    2133,
+    2136
+   ],
+   "summary": "isProjectWorkspaceRoutePath(pathname) \u2014 function in server.ts, lines 2133-2136.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/server.ts:handleProjectWorkspaceRoute",
+   "type": "function",
+   "name": "handleProjectWorkspaceRoute",
+   "filePath": "apps/control-plane/api/server.ts",
+   "lineRange": [
+    2141,
+    2297
+   ],
+   "summary": "handleProjectWorkspaceRoute(request, response, url, workbench) \u2014 function in server.ts, lines 2141-2297.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:apps/control-plane/api/server.ts:readProjectWorkspaceBody",
+   "type": "function",
+   "name": "readProjectWorkspaceBody",
+   "filePath": "apps/control-plane/api/server.ts",
+   "lineRange": [
+    2299,
+    2306
+   ],
+   "summary": "readProjectWorkspaceBody(request) \u2014 function in server.ts, lines 2299-2306.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/server.ts:isLocalRequest",
+   "type": "function",
+   "name": "isLocalRequest",
+   "filePath": "apps/control-plane/api/server.ts",
+   "lineRange": [
+    2310,
+    2326
+   ],
+   "summary": "isLocalRequest(request) \u2014 function in server.ts, lines 2310-2326.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/server.ts:parseRequestUrl",
+   "type": "function",
+   "name": "parseRequestUrl",
+   "filePath": "apps/control-plane/api/server.ts",
+   "lineRange": [
+    2328,
+    2334
+   ],
+   "summary": "parseRequestUrl(request) \u2014 function in server.ts, lines 2328-2334.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/server.ts:parseLimit",
+   "type": "function",
+   "name": "parseLimit",
+   "filePath": "apps/control-plane/api/server.ts",
+   "lineRange": [
+    2336,
+    2341
+   ],
+   "summary": "parseLimit(raw) \u2014 function in server.ts, lines 2336-2341.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/server.ts:readPendingApprovals",
+   "type": "function",
+   "name": "readPendingApprovals",
+   "filePath": "apps/control-plane/api/server.ts",
+   "lineRange": [
+    2343,
+    2349
+   ],
+   "summary": "readPendingApprovals(approvals) \u2014 function in server.ts, lines 2343-2349.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/server.ts:parseDecision",
+   "type": "function",
+   "name": "parseDecision",
+   "filePath": "apps/control-plane/api/server.ts",
+   "lineRange": [
+    2351,
+    2361
+   ],
+   "summary": "parseDecision(value) \u2014 function in server.ts, lines 2351-2361.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/server.ts:parseBranchInput",
+   "type": "function",
+   "name": "parseBranchInput",
+   "filePath": "apps/control-plane/api/server.ts",
+   "lineRange": [
+    2363,
+    2406
+   ],
+   "summary": "parseBranchInput(value) \u2014 function in server.ts, lines 2363-2406.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/server.ts:sendRequestError",
+   "type": "function",
+   "name": "sendRequestError",
+   "filePath": "apps/control-plane/api/server.ts",
+   "lineRange": [
+    2415,
+    2426
+   ],
+   "summary": "sendRequestError(response, error, status, body) \u2014 function in server.ts, lines 2415-2426.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/server.ts:jsonObject",
+   "type": "function",
+   "name": "jsonObject",
+   "filePath": "apps/control-plane/api/server.ts",
+   "lineRange": [
+    2428,
+    2430
+   ],
+   "summary": "jsonObject(value) \u2014 function in server.ts, lines 2428-2430.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/server.ts:exactKeys",
+   "type": "function",
+   "name": "exactKeys",
+   "filePath": "apps/control-plane/api/server.ts",
+   "lineRange": [
+    2432,
+    2440
+   ],
+   "summary": "exactKeys(value, keys) \u2014 function in server.ts, lines 2432-2440.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/server.ts:nonEmptyString",
+   "type": "function",
+   "name": "nonEmptyString",
+   "filePath": "apps/control-plane/api/server.ts",
+   "lineRange": [
+    2442,
+    2444
+   ],
+   "summary": "nonEmptyString(value) \u2014 function in server.ts, lines 2442-2444.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/server.ts:stringArray",
+   "type": "function",
+   "name": "stringArray",
+   "filePath": "apps/control-plane/api/server.ts",
+   "lineRange": [
+    2446,
+    2448
+   ],
+   "summary": "stringArray(value) \u2014 function in server.ts, lines 2446-2448.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/server.ts:finiteNumberRecord",
+   "type": "function",
+   "name": "finiteNumberRecord",
+   "filePath": "apps/control-plane/api/server.ts",
+   "lineRange": [
+    2450,
+    2461
+   ],
+   "summary": "finiteNumberRecord(value, keys) \u2014 function in server.ts, lines 2450-2461.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/server.ts:openRouterThreshold",
+   "type": "function",
+   "name": "openRouterThreshold",
+   "filePath": "apps/control-plane/api/server.ts",
+   "lineRange": [
+    2463,
+    2468
+   ],
+   "summary": "openRouterThreshold(value) \u2014 function in server.ts, lines 2463-2468.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/server.ts:openRouterProviderPreferences",
+   "type": "function",
+   "name": "openRouterProviderPreferences",
+   "filePath": "apps/control-plane/api/server.ts",
+   "lineRange": [
+    2470,
+    2535
+   ],
+   "summary": "openRouterProviderPreferences(value) \u2014 function in server.ts, lines 2470-2535.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/server.ts:parseGatewayOptions",
+   "type": "function",
+   "name": "parseGatewayOptions",
+   "filePath": "apps/control-plane/api/server.ts",
+   "lineRange": [
+    2537,
+    2561
+   ],
+   "summary": "parseGatewayOptions(value, providerId) \u2014 function in server.ts, lines 2537-2561.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/server.ts:parseTypedProviderConfig",
+   "type": "function",
+   "name": "parseTypedProviderConfig",
+   "filePath": "apps/control-plane/api/server.ts",
+   "lineRange": [
+    2563,
+    2630
+   ],
+   "summary": "parseTypedProviderConfig(body) \u2014 function in server.ts, lines 2563-2630.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/server.ts:readJsonBody",
+   "type": "function",
+   "name": "readJsonBody",
+   "filePath": "apps/control-plane/api/server.ts",
+   "lineRange": [
+    2632,
+    2653
+   ],
+   "summary": "readJsonBody(request, maxBytes) \u2014 function in server.ts, lines 2632-2653.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/server.ts:applicationJsonContentType",
+   "type": "function",
+   "name": "applicationJsonContentType",
+   "filePath": "apps/control-plane/api/server.ts",
+   "lineRange": [
+    2655,
+    2658
+   ],
+   "summary": "applicationJsonContentType(header) \u2014 function in server.ts, lines 2655-2658.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/server.ts:isImageMimeType",
+   "type": "function",
+   "name": "isImageMimeType",
+   "filePath": "apps/control-plane/api/server.ts",
+   "lineRange": [
+    2659,
+    2665
+   ],
+   "summary": "isImageMimeType(value) \u2014 function in server.ts, lines 2659-2665.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/server.ts:parseSessionImages",
+   "type": "function",
+   "name": "parseSessionImages",
+   "filePath": "apps/control-plane/api/server.ts",
+   "lineRange": [
+    2667,
+    2705
+   ],
+   "summary": "parseSessionImages(value) \u2014 function in server.ts, lines 2667-2705.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/server.ts:sendJson",
+   "type": "function",
+   "name": "sendJson",
+   "filePath": "apps/control-plane/api/server.ts",
+   "lineRange": [
+    2707,
+    2717
+   ],
+   "summary": "sendJson(response, statusCode, value) \u2014 function in server.ts, lines 2707-2717.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/server.ts:sendOnce",
+   "type": "function",
+   "name": "sendOnce",
+   "filePath": "apps/control-plane/api/server.ts",
+   "lineRange": [
+    2723,
+    2731
+   ],
+   "summary": "sendOnce(response, statusCode, value) \u2014 function in server.ts, lines 2723-2731.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/server.ts:staticPath",
+   "type": "function",
+   "name": "staticPath",
+   "filePath": "apps/control-plane/api/server.ts",
+   "lineRange": [
+    2733,
+    2768
+   ],
+   "summary": "staticPath(webRoot, pathname) \u2014 function in server.ts, lines 2733-2768.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/server.ts:contentType",
+   "type": "function",
+   "name": "contentType",
+   "filePath": "apps/control-plane/api/server.ts",
+   "lineRange": [
+    2770,
+    2778
+   ],
+   "summary": "contentType(filePath) \u2014 function in server.ts, lines 2770-2778.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/server.ts:selectLedgerPath",
+   "type": "function",
+   "name": "selectLedgerPath",
+   "filePath": "apps/control-plane/api/server.ts",
+   "lineRange": [
+    2780,
+    2789
+   ],
+   "summary": "selectLedgerPath(options, workspace) \u2014 function in server.ts, lines 2780-2789.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/control-plane/api/server.ts:SessionStream",
+   "type": "class",
+   "name": "SessionStream",
+   "filePath": "apps/control-plane/api/server.ts",
+   "lineRange": [
+    203,
+    304
+   ],
+   "summary": "SessionStream \u2014 class in server.ts, lines 203-304, methods: start.",
+   "tags": [
+    "typescript",
+    "class"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/control-plane/api/server.ts:InvalidProjectWorkspaceRequest",
+   "type": "class",
+   "name": "InvalidProjectWorkspaceRequest",
+   "filePath": "apps/control-plane/api/server.ts",
+   "lineRange": [
+    2138,
+    2138
+   ],
+   "summary": "InvalidProjectWorkspaceRequest \u2014 class in server.ts, lines 2138-2138.",
+   "tags": [
+    "typescript",
+    "class"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/control-plane/api/server.ts:UnsupportedProjectWorkspaceContentType",
+   "type": "class",
+   "name": "UnsupportedProjectWorkspaceContentType",
+   "filePath": "apps/control-plane/api/server.ts",
+   "lineRange": [
+    2139,
+    2139
+   ],
+   "summary": "UnsupportedProjectWorkspaceContentType \u2014 class in server.ts, lines 2139-2139.",
+   "tags": [
+    "typescript",
+    "class"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/control-plane/api/server.ts:RequestBodyTooLarge",
+   "type": "class",
+   "name": "RequestBodyTooLarge",
+   "filePath": "apps/control-plane/api/server.ts",
+   "lineRange": [
+    2408,
+    2413
+   ],
+   "summary": "RequestBodyTooLarge \u2014 class in server.ts, lines 2408-2413.",
+   "tags": [
+    "typescript",
+    "class"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/api/sse-backpressure.test.ts",
+   "type": "file",
+   "name": "sse-backpressure.test.ts",
+   "filePath": "apps/control-plane/api/sse-backpressure.test.ts",
+   "summary": "sse-backpressure.test.ts \u2014 typescript code, 202 lines, 3 functions, 0 classes, 0 exports, 3 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:apps/control-plane/api/sse-backpressure.test.ts:bigReplyFetcher",
+   "type": "function",
+   "name": "bigReplyFetcher",
+   "filePath": "apps/control-plane/api/sse-backpressure.test.ts",
+   "lineRange": [
+    18,
+    27
+   ],
+   "summary": "bigReplyFetcher(bytes) \u2014 function in sse-backpressure.test.ts, lines 18-27.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/sse-backpressure.test.ts:seedHeavySession",
+   "type": "function",
+   "name": "seedHeavySession",
+   "filePath": "apps/control-plane/api/sse-backpressure.test.ts",
+   "lineRange": [
+    33,
+    53
+   ],
+   "summary": "seedHeavySession(turns, replyBytes) \u2014 function in sse-backpressure.test.ts, lines 33-53.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/sse-backpressure.test.ts:stallingSubscriber",
+   "type": "function",
+   "name": "stallingSubscriber",
+   "filePath": "apps/control-plane/api/sse-backpressure.test.ts",
+   "lineRange": [
+    60,
+    78
+   ],
+   "summary": "stallingSubscriber(port, path) \u2014 function in sse-backpressure.test.ts, lines 60-78.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/api/static-spa.test.ts",
+   "type": "file",
+   "name": "static-spa.test.ts",
+   "filePath": "apps/control-plane/api/static-spa.test.ts",
+   "summary": "static-spa.test.ts \u2014 typescript code, 56 lines, 0 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:cloud/steps.test.mjs",
+   "type": "file",
+   "name": "steps.test.mjs",
+   "filePath": "cloud/steps.test.mjs",
+   "summary": "steps.test.mjs \u2014 javascript code, 92 lines, 1 functions, 0 classes, 0 exports, 3 imports.",
+   "tags": [
+    "javascript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/steps.test.mjs:builtinCall",
+   "type": "function",
+   "name": "builtinCall",
+   "filePath": "cloud/steps.test.mjs",
+   "lineRange": [
+    12,
+    26
+   ],
+   "summary": "builtinCall(name) \u2014 function in steps.test.mjs, lines 12-26.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/goal.test.ts",
+   "type": "file",
+   "name": "goal.test.ts",
+   "filePath": "packages/cli/src/goal.test.ts",
+   "summary": "goal.test.ts \u2014 typescript code, 500 lines, 2 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/cli/src/goal.test.ts:fake",
+   "type": "function",
+   "name": "fake",
+   "filePath": "packages/cli/src/goal.test.ts",
+   "lineRange": [
+    29,
+    58
+   ],
+   "summary": "fake(overrides) \u2014 function in goal.test.ts, lines 29-58.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/goal.test.ts:io",
+   "type": "function",
+   "name": "io",
+   "filePath": "packages/cli/src/goal.test.ts",
+   "lineRange": [
+    60,
+    69
+   ],
+   "summary": "io() \u2014 function in goal.test.ts, lines 60-69.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/goal.ts",
+   "type": "file",
+   "name": "goal.ts",
+   "filePath": "packages/cli/src/goal.ts",
+   "summary": "goal.ts \u2014 typescript code, 314 lines, 5 functions, 0 classes, 1 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/cli/src/goal.ts:workspaceDir",
+   "type": "function",
+   "name": "workspaceDir",
+   "filePath": "packages/cli/src/goal.ts",
+   "lineRange": [
+    74,
+    79
+   ],
+   "summary": "workspaceDir(env) \u2014 function in goal.ts, lines 74-79.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/goal.ts:parseFlags",
+   "type": "function",
+   "name": "parseFlags",
+   "filePath": "packages/cli/src/goal.ts",
+   "lineRange": [
+    107,
+    145
+   ],
+   "summary": "parseFlags(args) \u2014 function in goal.ts, lines 107-145.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/goal.ts:describeGoal",
+   "type": "function",
+   "name": "describeGoal",
+   "filePath": "packages/cli/src/goal.ts",
+   "lineRange": [
+    148,
+    164
+   ],
+   "summary": "describeGoal(goal) \u2014 function in goal.ts, lines 148-164.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/goal.ts:readGoal",
+   "type": "function",
+   "name": "readGoal",
+   "filePath": "packages/cli/src/goal.ts",
+   "lineRange": [
+    175,
+    185
+   ],
+   "summary": "readGoal(surface, sessionId) \u2014 function in goal.ts, lines 175-185.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/goal.ts:runGoalCommand",
+   "type": "function",
+   "name": "runGoalCommand",
+   "filePath": "packages/cli/src/goal.ts",
+   "lineRange": [
+    187,
+    314
+   ],
+   "summary": "runGoalCommand(args, io, deps) \u2014 function in goal.ts, lines 187-314.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/harness.test.ts",
+   "type": "file",
+   "name": "harness.test.ts",
+   "filePath": "packages/cli/src/harness.test.ts",
+   "summary": "harness.test.ts \u2014 typescript code, 478 lines, 6 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/cli/src/harness.test.ts:fake",
+   "type": "function",
+   "name": "fake",
+   "filePath": "packages/cli/src/harness.test.ts",
+   "lineRange": [
+    34,
+    77
+   ],
+   "summary": "fake(overrides) \u2014 function in harness.test.ts, lines 34-77.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/harness.test.ts:io",
+   "type": "function",
+   "name": "io",
+   "filePath": "packages/cli/src/harness.test.ts",
+   "lineRange": [
+    79,
+    88
+   ],
+   "summary": "io() \u2014 function in harness.test.ts, lines 79-88.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/harness.test.ts:chain",
+   "type": "function",
+   "name": "chain",
+   "filePath": "packages/cli/src/harness.test.ts",
+   "lineRange": [
+    402,
+    407
+   ],
+   "summary": "chain(entries) \u2014 function in harness.test.ts, lines 402-407.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/harness.test.ts:refused",
+   "type": "function",
+   "name": "refused",
+   "filePath": "packages/cli/src/harness.test.ts",
+   "lineRange": [
+    409,
+    412
+   ],
+   "summary": "refused(seq, tool) \u2014 function in harness.test.ts, lines 409-412.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/harness.test.ts:allowed",
+   "type": "function",
+   "name": "allowed",
+   "filePath": "packages/cli/src/harness.test.ts",
+   "lineRange": [
+    413,
+    416
+   ],
+   "summary": "allowed(seq, tool) \u2014 function in harness.test.ts, lines 413-416.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/harness.test.ts:activated",
+   "type": "function",
+   "name": "activated",
+   "filePath": "packages/cli/src/harness.test.ts",
+   "lineRange": [
+    417,
+    420
+   ],
+   "summary": "activated(seq) \u2014 function in harness.test.ts, lines 417-420.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/harness.ts",
+   "type": "file",
+   "name": "harness.ts",
+   "filePath": "packages/cli/src/harness.ts",
+   "summary": "harness.ts \u2014 typescript code, 471 lines, 5 functions, 0 classes, 1 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/cli/src/harness.ts:workspaceDir",
+   "type": "function",
+   "name": "workspaceDir",
+   "filePath": "packages/cli/src/harness.ts",
+   "lineRange": [
+    110,
+    115
+   ],
+   "summary": "workspaceDir(env) \u2014 function in harness.ts, lines 110-115.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/harness.ts:parseFlags",
+   "type": "function",
+   "name": "parseFlags",
+   "filePath": "packages/cli/src/harness.ts",
+   "lineRange": [
+    138,
+    167
+   ],
+   "summary": "parseFlags(args) \u2014 function in harness.ts, lines 138-167.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/harness.ts:describeEdit",
+   "type": "function",
+   "name": "describeEdit",
+   "filePath": "packages/cli/src/harness.ts",
+   "lineRange": [
+    170,
+    186
+   ],
+   "summary": "describeEdit(edit) \u2014 function in harness.ts, lines 170-186.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/harness.ts:resolveDigest",
+   "type": "function",
+   "name": "resolveDigest",
+   "filePath": "packages/cli/src/harness.ts",
+   "lineRange": [
+    197,
+    215
+   ],
+   "summary": "resolveDigest(workbench, sessionId, typed) \u2014 function in harness.ts, lines 197-215.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/harness.ts:runHarnessCommand",
+   "type": "function",
+   "name": "runHarnessCommand",
+   "filePath": "packages/cli/src/harness.ts",
+   "lineRange": [
+    217,
+    471
+   ],
+   "summary": "runHarnessCommand(args, io, deps) \u2014 function in harness.ts, lines 217-471.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/cli/src/schedule.test.ts",
+   "type": "file",
+   "name": "schedule.test.ts",
+   "filePath": "packages/cli/src/schedule.test.ts",
+   "summary": "schedule.test.ts \u2014 typescript code, 799 lines, 3 functions, 0 classes, 0 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "function:packages/cli/src/schedule.test.ts:fake",
+   "type": "function",
+   "name": "fake",
+   "filePath": "packages/cli/src/schedule.test.ts",
+   "lineRange": [
+    39,
+    76
+   ],
+   "summary": "fake(overrides) \u2014 function in schedule.test.ts, lines 39-76.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/schedule.test.ts:io",
+   "type": "function",
+   "name": "io",
+   "filePath": "packages/cli/src/schedule.test.ts",
+   "lineRange": [
+    78,
+    87
+   ],
+   "summary": "io() \u2014 function in schedule.test.ts, lines 78-87.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/schedule.test.ts:unopened",
+   "type": "function",
+   "name": "unopened",
+   "filePath": "packages/cli/src/schedule.test.ts",
+   "lineRange": [
+    91,
+    100
+   ],
+   "summary": "unopened(overrides) \u2014 function in schedule.test.ts, lines 91-100.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/schedule.ts",
+   "type": "file",
+   "name": "schedule.ts",
+   "filePath": "packages/cli/src/schedule.ts",
+   "summary": "schedule.ts \u2014 typescript code, 547 lines, 15 functions, 0 classes, 1 exports, 3 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/cli/src/schedule.ts:workspaceDir",
+   "type": "function",
+   "name": "workspaceDir",
+   "filePath": "packages/cli/src/schedule.ts",
+   "lineRange": [
+    121,
+    126
+   ],
+   "summary": "workspaceDir(env) \u2014 function in schedule.ts, lines 121-126.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/schedule.ts:parseFlags",
+   "type": "function",
+   "name": "parseFlags",
+   "filePath": "packages/cli/src/schedule.ts",
+   "lineRange": [
+    188,
+    247
+   ],
+   "summary": "parseFlags(args) \u2014 function in schedule.ts, lines 188-247.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/schedule.ts:refuse",
+   "type": "function",
+   "name": "refuse",
+   "filePath": "packages/cli/src/schedule.ts",
+   "lineRange": [
+    258,
+    262
+   ],
+   "summary": "refuse(io, message) \u2014 function in schedule.ts, lines 258-262.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/schedule.ts:startOnlyOption",
+   "type": "function",
+   "name": "startOnlyOption",
+   "filePath": "packages/cli/src/schedule.ts",
+   "lineRange": [
+    265,
+    276
+   ],
+   "summary": "startOnlyOption(flags) \u2014 function in schedule.ts, lines 265-276.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/schedule.ts:wholeNumber",
+   "type": "function",
+   "name": "wholeNumber",
+   "filePath": "packages/cli/src/schedule.ts",
+   "lineRange": [
+    280,
+    284
+   ],
+   "summary": "wholeNumber(value) \u2014 function in schedule.ts, lines 280-284.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/schedule.ts:integerRefusal",
+   "type": "function",
+   "name": "integerRefusal",
+   "filePath": "packages/cli/src/schedule.ts",
+   "lineRange": [
+    286,
+    288
+   ],
+   "summary": "integerRefusal(flag, value, what) \u2014 function in schedule.ts, lines 286-288.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/schedule.ts:addInput",
+   "type": "function",
+   "name": "addInput",
+   "filePath": "packages/cli/src/schedule.ts",
+   "lineRange": [
+    298,
+    341
+   ],
+   "summary": "addInput(flags) \u2014 function in schedule.ts, lines 298-341.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/schedule.ts:prepare",
+   "type": "function",
+   "name": "prepare",
+   "filePath": "packages/cli/src/schedule.ts",
+   "lineRange": [
+    343,
+    369
+   ],
+   "summary": "prepare(command, flags, io) \u2014 function in schedule.ts, lines 343-369.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/schedule.ts:describeCadence",
+   "type": "function",
+   "name": "describeCadence",
+   "filePath": "packages/cli/src/schedule.ts",
+   "lineRange": [
+    371,
+    375
+   ],
+   "summary": "describeCadence(cadence) \u2014 function in schedule.ts, lines 371-375.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/schedule.ts:describeSchedule",
+   "type": "function",
+   "name": "describeSchedule",
+   "filePath": "packages/cli/src/schedule.ts",
+   "lineRange": [
+    378,
+    401
+   ],
+   "summary": "describeSchedule(schedule) \u2014 function in schedule.ts, lines 378-401.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/schedule.ts:summaryLine",
+   "type": "function",
+   "name": "summaryLine",
+   "filePath": "packages/cli/src/schedule.ts",
+   "lineRange": [
+    404,
+    410
+   ],
+   "summary": "summaryLine(schedule) \u2014 function in schedule.ts, lines 404-410.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/schedule.ts:describeList",
+   "type": "function",
+   "name": "describeList",
+   "filePath": "packages/cli/src/schedule.ts",
+   "lineRange": [
+    412,
+    419
+   ],
+   "summary": "describeList(schedules) \u2014 function in schedule.ts, lines 412-419.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/schedule.ts:describeFiring",
+   "type": "function",
+   "name": "describeFiring",
+   "filePath": "packages/cli/src/schedule.ts",
+   "lineRange": [
+    421,
+    424
+   ],
+   "summary": "describeFiring(firing) \u2014 function in schedule.ts, lines 421-424.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/schedule.ts:noSupport",
+   "type": "function",
+   "name": "noSupport",
+   "filePath": "packages/cli/src/schedule.ts",
+   "lineRange": [
+    426,
+    429
+   ],
+   "summary": "noSupport(io) \u2014 function in schedule.ts, lines 426-429.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/schedule.ts:runScheduleCommand",
+   "type": "function",
+   "name": "runScheduleCommand",
+   "filePath": "packages/cli/src/schedule.ts",
+   "lineRange": [
+    431,
+    547
+   ],
+   "summary": "runScheduleCommand(args, io, deps) \u2014 function in schedule.ts, lines 431-547.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/tui/run-activity.ts",
+   "type": "file",
+   "name": "run-activity.ts",
+   "filePath": "packages/cli/src/tui/run-activity.ts",
+   "summary": "run-activity.ts \u2014 typescript code, 258 lines, 8 functions, 0 classes, 1 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/cli/src/tui/run-activity.ts:record",
+   "type": "function",
+   "name": "record",
+   "filePath": "packages/cli/src/tui/run-activity.ts",
+   "lineRange": [
+    29,
+    33
+   ],
+   "summary": "record(value) \u2014 function in run-activity.ts, lines 29-33.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/run-activity.ts:redactSecrets",
+   "type": "function",
+   "name": "redactSecrets",
+   "filePath": "packages/cli/src/tui/run-activity.ts",
+   "lineRange": [
+    36,
+    55
+   ],
+   "summary": "redactSecrets(value) \u2014 function in run-activity.ts, lines 36-55.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/run-activity.ts:safeText",
+   "type": "function",
+   "name": "safeText",
+   "filePath": "packages/cli/src/tui/run-activity.ts",
+   "lineRange": [
+    57,
+    59
+   ],
+   "summary": "safeText(value) \u2014 function in run-activity.ts, lines 57-59.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/run-activity.ts:safeMultiline",
+   "type": "function",
+   "name": "safeMultiline",
+   "filePath": "packages/cli/src/tui/run-activity.ts",
+   "lineRange": [
+    61,
+    66
+   ],
+   "summary": "safeMultiline(value) \u2014 function in run-activity.ts, lines 61-66.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/run-activity.ts:cleanField",
+   "type": "function",
+   "name": "cleanField",
+   "filePath": "packages/cli/src/tui/run-activity.ts",
+   "lineRange": [
+    68,
+    142
+   ],
+   "summary": "cleanField(key, value, mode, depth) \u2014 function in run-activity.ts, lines 68-142.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/run-activity.ts:resultText",
+   "type": "function",
+   "name": "resultText",
+   "filePath": "packages/cli/src/tui/run-activity.ts",
+   "lineRange": [
+    144,
+    159
+   ],
+   "summary": "resultText(result) \u2014 function in run-activity.ts, lines 144-159.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/run-activity.ts:bounded",
+   "type": "function",
+   "name": "bounded",
+   "filePath": "packages/cli/src/tui/run-activity.ts",
+   "lineRange": [
+    161,
+    169
+   ],
+   "summary": "bounded(lines) \u2014 function in run-activity.ts, lines 161-169.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/run-activity.ts:formatRunActivity",
+   "type": "function",
+   "name": "formatRunActivity",
+   "filePath": "packages/cli/src/tui/run-activity.ts",
+   "lineRange": [
+    172,
+    258
+   ],
+   "summary": "formatRunActivity(event, mode) \u2014 function in run-activity.ts, lines 172-258.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/tui/workspace-approval.test.ts",
+   "type": "file",
+   "name": "workspace-approval.test.ts",
+   "filePath": "packages/cli/src/tui/workspace-approval.test.ts",
+   "summary": "workspace-approval.test.ts \u2014 typescript code, 174 lines, 0 functions, 0 classes, 0 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/cli/src/tui/workspace-harness-proposals.test.ts",
+   "type": "file",
+   "name": "workspace-harness-proposals.test.ts",
+   "filePath": "packages/cli/src/tui/workspace-harness-proposals.test.ts",
+   "summary": "workspace-harness-proposals.test.ts \u2014 typescript code, 199 lines, 2 functions, 0 classes, 0 exports, 4 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/cli/src/tui/workspace-harness-proposals.test.ts:fixture",
+   "type": "function",
+   "name": "fixture",
+   "filePath": "packages/cli/src/tui/workspace-harness-proposals.test.ts",
+   "lineRange": [
+    11,
+    36
+   ],
+   "summary": "fixture(t) \u2014 function in workspace-harness-proposals.test.ts, lines 11-36.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/workspace-harness-proposals.test.ts:proposal",
+   "type": "function",
+   "name": "proposal",
+   "filePath": "packages/cli/src/tui/workspace-harness-proposals.test.ts",
+   "lineRange": [
+    38,
+    50
+   ],
+   "summary": "proposal() \u2014 function in workspace-harness-proposals.test.ts, lines 38-50.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/tui/workspace-harness-rows.test.ts",
+   "type": "file",
+   "name": "workspace-harness-rows.test.ts",
+   "filePath": "packages/cli/src/tui/workspace-harness-rows.test.ts",
+   "summary": "workspace-harness-rows.test.ts \u2014 typescript code, 317 lines, 3 functions, 0 classes, 0 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/cli/src/tui/workspace-harness-rows.test.ts:assistantFetcher",
+   "type": "function",
+   "name": "assistantFetcher",
+   "filePath": "packages/cli/src/tui/workspace-harness-rows.test.ts",
+   "lineRange": [
+    15,
+    21
+   ],
+   "summary": "assistantFetcher(content) \u2014 function in workspace-harness-rows.test.ts, lines 15-21.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/workspace-harness-rows.test.ts:ledgerRows",
+   "type": "function",
+   "name": "ledgerRows",
+   "filePath": "packages/cli/src/tui/workspace-harness-rows.test.ts",
+   "lineRange": [
+    23,
+    50
+   ],
+   "summary": "ledgerRows(t, hookCommands) \u2014 function in workspace-harness-rows.test.ts, lines 23-50.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/workspace-harness-rows.test.ts:rowsOf",
+   "type": "function",
+   "name": "rowsOf",
+   "filePath": "packages/cli/src/tui/workspace-harness-rows.test.ts",
+   "lineRange": [
+    54,
+    54
+   ],
+   "summary": "rowsOf(ui) \u2014 function in workspace-harness-rows.test.ts, lines 54-54.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/tui/workspace-host-run.test.ts",
+   "type": "file",
+   "name": "workspace-host-run.test.ts",
+   "filePath": "packages/cli/src/tui/workspace-host-run.test.ts",
+   "summary": "workspace-host-run.test.ts \u2014 typescript code, 180 lines, 4 functions, 0 classes, 0 exports, 4 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/cli/src/tui/workspace-host-run.test.ts:json",
+   "type": "function",
+   "name": "json",
+   "filePath": "packages/cli/src/tui/workspace-host-run.test.ts",
+   "lineRange": [
+    22,
+    24
+   ],
+   "summary": "json(value) \u2014 function in workspace-host-run.test.ts, lines 22-24.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/workspace-host-run.test.ts:fixture",
+   "type": "function",
+   "name": "fixture",
+   "filePath": "packages/cli/src/tui/workspace-host-run.test.ts",
+   "lineRange": [
+    37,
+    64
+   ],
+   "summary": "fixture(t) \u2014 function in workspace-host-run.test.ts, lines 37-64.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/workspace-host-run.test.ts:waitFor",
+   "type": "function",
+   "name": "waitFor",
+   "filePath": "packages/cli/src/tui/workspace-host-run.test.ts",
+   "lineRange": [
+    66,
+    77
+   ],
+   "summary": "waitFor(predicate, label, timeoutMs) \u2014 function in workspace-host-run.test.ts, lines 66-77.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/workspace-host-run.test.ts:ledgerTools",
+   "type": "function",
+   "name": "ledgerTools",
+   "filePath": "packages/cli/src/tui/workspace-host-run.test.ts",
+   "lineRange": [
+    79,
+    85
+   ],
+   "summary": "ledgerTools(entries) \u2014 function in workspace-host-run.test.ts, lines 79-85.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/tui/workspace-learned-rows.test.ts",
+   "type": "file",
+   "name": "workspace-learned-rows.test.ts",
+   "filePath": "packages/cli/src/tui/workspace-learned-rows.test.ts",
+   "summary": "workspace-learned-rows.test.ts \u2014 typescript code, 196 lines, 5 functions, 0 classes, 0 exports, 3 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/cli/src/tui/workspace-learned-rows.test.ts:assistantFetcher",
+   "type": "function",
+   "name": "assistantFetcher",
+   "filePath": "packages/cli/src/tui/workspace-learned-rows.test.ts",
+   "lineRange": [
+    19,
+    25
+   ],
+   "summary": "assistantFetcher(content) \u2014 function in workspace-learned-rows.test.ts, lines 19-25.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/workspace-learned-rows.test.ts:ledgerRows",
+   "type": "function",
+   "name": "ledgerRows",
+   "filePath": "packages/cli/src/tui/workspace-learned-rows.test.ts",
+   "lineRange": [
+    27,
+    45
+   ],
+   "summary": "ledgerRows(t) \u2014 function in workspace-learned-rows.test.ts, lines 27-45.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/workspace-learned-rows.test.ts:rowsOf",
+   "type": "function",
+   "name": "rowsOf",
+   "filePath": "packages/cli/src/tui/workspace-learned-rows.test.ts",
+   "lineRange": [
+    49,
+    49
+   ],
+   "summary": "rowsOf(ui) \u2014 function in workspace-learned-rows.test.ts, lines 49-49.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/workspace-learned-rows.test.ts:learnedRows",
+   "type": "function",
+   "name": "learnedRows",
+   "filePath": "packages/cli/src/tui/workspace-learned-rows.test.ts",
+   "lineRange": [
+    52,
+    53
+   ],
+   "summary": "learnedRows(ui) \u2014 function in workspace-learned-rows.test.ts, lines 52-53.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/tui/workspace-learned-rows.test.ts:refusal",
+   "type": "function",
+   "name": "refusal",
+   "filePath": "packages/cli/src/tui/workspace-learned-rows.test.ts",
+   "lineRange": [
+    60,
+    63
+   ],
+   "summary": "refusal(tool, klass) \u2014 function in workspace-learned-rows.test.ts, lines 60-63.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  }
+ ],
+ "edges": [
+  {
+   "source": "file:apps/control-plane/api/auth.ts",
+   "target": "function:apps/control-plane/api/auth.ts:matchesToken",
+   "type": "contains",
+   "direction": "forward",
+   "description": "auth.ts defines matchesToken",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/auth.ts",
+   "target": "function:apps/control-plane/api/auth.ts:matchesToken",
+   "type": "exports",
+   "direction": "forward",
+   "description": "auth.ts exports matchesToken",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/api/auth.ts",
+   "target": "function:apps/control-plane/api/auth.ts:authorizedRemote",
+   "type": "contains",
+   "direction": "forward",
+   "description": "auth.ts defines authorizedRemote",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/auth.ts",
+   "target": "function:apps/control-plane/api/auth.ts:authorizedRemote",
+   "type": "exports",
+   "direction": "forward",
+   "description": "auth.ts exports authorizedRemote",
+   "weight": 0.7
+  },
+  {
+   "source": "function:apps/control-plane/api/auth.ts:authorizedRemote",
+   "target": "function:apps/control-plane/api/auth.ts:matchesToken",
+   "type": "calls",
+   "direction": "forward",
+   "description": "authorizedRemote calls matchesToken",
+   "weight": 0.6
+  },
+  {
+   "source": "file:apps/control-plane/api/desktop-setup.test.ts",
+   "target": "function:apps/control-plane/api/desktop-setup.test.ts:fixture",
+   "type": "contains",
+   "direction": "forward",
+   "description": "desktop-setup.test.ts defines fixture",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/desktop-setup.test.ts",
+   "target": "function:apps/control-plane/api/desktop-setup.test.ts:writeOmpCredentials",
+   "type": "contains",
+   "direction": "forward",
+   "description": "desktop-setup.test.ts defines writeOmpCredentials",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/desktop-setup.ts",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:object",
+   "type": "contains",
+   "direction": "forward",
+   "description": "desktop-setup.ts defines object",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/desktop-setup.ts",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:inside",
+   "type": "contains",
+   "direction": "forward",
+   "description": "desktop-setup.ts defines inside",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/desktop-setup.ts",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:homeDirectory",
+   "type": "contains",
+   "direction": "forward",
+   "description": "desktop-setup.ts defines homeDirectory",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/desktop-setup.ts",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:opaqueValue",
+   "type": "contains",
+   "direction": "forward",
+   "description": "desktop-setup.ts defines opaqueValue",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/desktop-setup.ts",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:presetFor",
+   "type": "contains",
+   "direction": "forward",
+   "description": "desktop-setup.ts defines presetFor",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/desktop-setup.ts",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:importableApiKey",
+   "type": "contains",
+   "direction": "forward",
+   "description": "desktop-setup.ts defines importableApiKey",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/desktop-setup.ts",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:knownForApiKey",
+   "type": "contains",
+   "direction": "forward",
+   "description": "desktop-setup.ts defines knownForApiKey",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/desktop-setup.ts",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:displayName",
+   "type": "contains",
+   "direction": "forward",
+   "description": "desktop-setup.ts defines displayName",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/desktop-setup.ts",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:ompDatabasePath",
+   "type": "contains",
+   "direction": "forward",
+   "description": "desktop-setup.ts defines ompDatabasePath",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/desktop-setup.ts",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:openOmpDatabase",
+   "type": "contains",
+   "direction": "forward",
+   "description": "desktop-setup.ts defines openOmpDatabase",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/desktop-setup.ts",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:ompCredentialAvailable",
+   "type": "contains",
+   "direction": "forward",
+   "description": "desktop-setup.ts defines ompCredentialAvailable",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/desktop-setup.ts",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:ompApiKey",
+   "type": "contains",
+   "direction": "forward",
+   "description": "desktop-setup.ts defines ompApiKey",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/desktop-setup.ts",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:readCredentialFile",
+   "type": "contains",
+   "direction": "forward",
+   "description": "desktop-setup.ts defines readCredentialFile",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/desktop-setup.ts",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:readCredentialObject",
+   "type": "contains",
+   "direction": "forward",
+   "description": "desktop-setup.ts defines readCredentialObject",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/desktop-setup.ts",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:providerConfig",
+   "type": "contains",
+   "direction": "forward",
+   "description": "desktop-setup.ts defines providerConfig",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/desktop-setup.ts",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:credential",
+   "type": "contains",
+   "direction": "forward",
+   "description": "desktop-setup.ts defines credential",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/desktop-setup.ts",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:oauthEntry",
+   "type": "contains",
+   "direction": "forward",
+   "description": "desktop-setup.ts defines oauthEntry",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/desktop-setup.ts",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:sourceStatus",
+   "type": "contains",
+   "direction": "forward",
+   "description": "desktop-setup.ts defines sourceStatus",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/desktop-setup.ts",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:discoveredOmpSources",
+   "type": "contains",
+   "direction": "forward",
+   "description": "desktop-setup.ts defines discoveredOmpSources",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/desktop-setup.ts",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:discoverSources",
+   "type": "contains",
+   "direction": "forward",
+   "description": "desktop-setup.ts defines discoverSources",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/desktop-setup.ts",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:publicSource",
+   "type": "contains",
+   "direction": "forward",
+   "description": "desktop-setup.ts defines publicSource",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/desktop-setup.ts",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:desktopSetup",
+   "type": "contains",
+   "direction": "forward",
+   "description": "desktop-setup.ts defines desktopSetup",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/desktop-setup.ts",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:desktopSetup",
+   "type": "exports",
+   "direction": "forward",
+   "description": "desktop-setup.ts exports desktopSetup",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/api/desktop-setup.ts",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:ompProviderSources",
+   "type": "contains",
+   "direction": "forward",
+   "description": "desktop-setup.ts defines ompProviderSources",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/desktop-setup.ts",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:ompProviderSources",
+   "type": "exports",
+   "direction": "forward",
+   "description": "desktop-setup.ts exports ompProviderSources",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/api/desktop-setup.ts",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:desktopProviderConfig",
+   "type": "contains",
+   "direction": "forward",
+   "description": "desktop-setup.ts defines desktopProviderConfig",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/desktop-setup.ts",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:desktopProviderModels",
+   "type": "contains",
+   "direction": "forward",
+   "description": "desktop-setup.ts defines desktopProviderModels",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/desktop-setup.ts",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:desktopProviderModels",
+   "type": "exports",
+   "direction": "forward",
+   "description": "desktop-setup.ts exports desktopProviderModels",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/api/desktop-setup.ts",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:importDesktopProvider",
+   "type": "contains",
+   "direction": "forward",
+   "description": "desktop-setup.ts defines importDesktopProvider",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/desktop-setup.ts",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:importDesktopProvider",
+   "type": "exports",
+   "direction": "forward",
+   "description": "desktop-setup.ts exports importDesktopProvider",
+   "weight": 0.7
+  },
+  {
+   "source": "function:apps/control-plane/api/desktop-setup.ts:importableApiKey",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:presetFor",
+   "type": "calls",
+   "direction": "forward",
+   "description": "importableApiKey calls presetFor",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/desktop-setup.ts:knownForApiKey",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:presetFor",
+   "type": "calls",
+   "direction": "forward",
+   "description": "knownForApiKey calls presetFor",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/desktop-setup.ts:displayName",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:presetFor",
+   "type": "calls",
+   "direction": "forward",
+   "description": "displayName calls presetFor",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/desktop-setup.ts:ompDatabasePath",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:inside",
+   "type": "calls",
+   "direction": "forward",
+   "description": "ompDatabasePath calls inside",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/desktop-setup.ts:openOmpDatabase",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:ompDatabasePath",
+   "type": "calls",
+   "direction": "forward",
+   "description": "openOmpDatabase calls ompDatabasePath",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/desktop-setup.ts:openOmpDatabase",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:inside",
+   "type": "calls",
+   "direction": "forward",
+   "description": "openOmpDatabase calls inside",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/desktop-setup.ts:ompApiKey",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:openOmpDatabase",
+   "type": "calls",
+   "direction": "forward",
+   "description": "ompApiKey calls openOmpDatabase",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/desktop-setup.ts:ompApiKey",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:object",
+   "type": "calls",
+   "direction": "forward",
+   "description": "ompApiKey calls object",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/desktop-setup.ts:ompApiKey",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:opaqueValue",
+   "type": "calls",
+   "direction": "forward",
+   "description": "ompApiKey calls opaqueValue",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/desktop-setup.ts:readCredentialObject",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:object",
+   "type": "calls",
+   "direction": "forward",
+   "description": "readCredentialObject calls object",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/desktop-setup.ts:readCredentialObject",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:readCredentialFile",
+   "type": "calls",
+   "direction": "forward",
+   "description": "readCredentialObject calls readCredentialFile",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/desktop-setup.ts:providerConfig",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:presetFor",
+   "type": "calls",
+   "direction": "forward",
+   "description": "providerConfig calls presetFor",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/desktop-setup.ts:credential",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:homeDirectory",
+   "type": "calls",
+   "direction": "forward",
+   "description": "credential calls homeDirectory",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/desktop-setup.ts:credential",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:providerConfig",
+   "type": "calls",
+   "direction": "forward",
+   "description": "credential calls providerConfig",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/desktop-setup.ts:credential",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:ompApiKey",
+   "type": "calls",
+   "direction": "forward",
+   "description": "credential calls ompApiKey",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/desktop-setup.ts:credential",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:readCredentialFile",
+   "type": "calls",
+   "direction": "forward",
+   "description": "credential calls readCredentialFile",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/desktop-setup.ts:credential",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:object",
+   "type": "calls",
+   "direction": "forward",
+   "description": "credential calls object",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/desktop-setup.ts:credential",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:presetFor",
+   "type": "calls",
+   "direction": "forward",
+   "description": "credential calls presetFor",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/desktop-setup.ts:credential",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:opaqueValue",
+   "type": "calls",
+   "direction": "forward",
+   "description": "credential calls opaqueValue",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/desktop-setup.ts:oauthEntry",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:homeDirectory",
+   "type": "calls",
+   "direction": "forward",
+   "description": "oauthEntry calls homeDirectory",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/desktop-setup.ts:oauthEntry",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:readCredentialObject",
+   "type": "calls",
+   "direction": "forward",
+   "description": "oauthEntry calls readCredentialObject",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/desktop-setup.ts:sourceStatus",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:oauthEntry",
+   "type": "calls",
+   "direction": "forward",
+   "description": "sourceStatus calls oauthEntry",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/desktop-setup.ts:sourceStatus",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:importableApiKey",
+   "type": "calls",
+   "direction": "forward",
+   "description": "sourceStatus calls importableApiKey",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/desktop-setup.ts:sourceStatus",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:openOmpDatabase",
+   "type": "calls",
+   "direction": "forward",
+   "description": "sourceStatus calls openOmpDatabase",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/desktop-setup.ts:sourceStatus",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:homeDirectory",
+   "type": "calls",
+   "direction": "forward",
+   "description": "sourceStatus calls homeDirectory",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/desktop-setup.ts:sourceStatus",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:ompCredentialAvailable",
+   "type": "calls",
+   "direction": "forward",
+   "description": "sourceStatus calls ompCredentialAvailable",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/desktop-setup.ts:sourceStatus",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:credential",
+   "type": "calls",
+   "direction": "forward",
+   "description": "sourceStatus calls credential",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/desktop-setup.ts:discoveredOmpSources",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:openOmpDatabase",
+   "type": "calls",
+   "direction": "forward",
+   "description": "discoveredOmpSources calls openOmpDatabase",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/desktop-setup.ts:discoveredOmpSources",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:knownForApiKey",
+   "type": "calls",
+   "direction": "forward",
+   "description": "discoveredOmpSources calls knownForApiKey",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/desktop-setup.ts:discoveredOmpSources",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:presetFor",
+   "type": "calls",
+   "direction": "forward",
+   "description": "discoveredOmpSources calls presetFor",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/desktop-setup.ts:discoveredOmpSources",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:displayName",
+   "type": "calls",
+   "direction": "forward",
+   "description": "discoveredOmpSources calls displayName",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/desktop-setup.ts:discoverSources",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:homeDirectory",
+   "type": "calls",
+   "direction": "forward",
+   "description": "discoverSources calls homeDirectory",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/desktop-setup.ts:discoverSources",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:readCredentialObject",
+   "type": "calls",
+   "direction": "forward",
+   "description": "discoverSources calls readCredentialObject",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/desktop-setup.ts:discoverSources",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:object",
+   "type": "calls",
+   "direction": "forward",
+   "description": "discoverSources calls object",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/desktop-setup.ts:discoverSources",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:knownForApiKey",
+   "type": "calls",
+   "direction": "forward",
+   "description": "discoverSources calls knownForApiKey",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/desktop-setup.ts:discoverSources",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:presetFor",
+   "type": "calls",
+   "direction": "forward",
+   "description": "discoverSources calls presetFor",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/desktop-setup.ts:discoverSources",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:displayName",
+   "type": "calls",
+   "direction": "forward",
+   "description": "discoverSources calls displayName",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/desktop-setup.ts:discoverSources",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:discoveredOmpSources",
+   "type": "calls",
+   "direction": "forward",
+   "description": "discoverSources calls discoveredOmpSources",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/desktop-setup.ts:desktopSetup",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:discoverSources",
+   "type": "calls",
+   "direction": "forward",
+   "description": "desktopSetup calls discoverSources",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/desktop-setup.ts:desktopSetup",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:publicSource",
+   "type": "calls",
+   "direction": "forward",
+   "description": "desktopSetup calls publicSource",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/desktop-setup.ts:desktopSetup",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:sourceStatus",
+   "type": "calls",
+   "direction": "forward",
+   "description": "desktopSetup calls sourceStatus",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/desktop-setup.ts:ompProviderSources",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:discoverSources",
+   "type": "calls",
+   "direction": "forward",
+   "description": "ompProviderSources calls discoverSources",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/desktop-setup.ts:ompProviderSources",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:publicSource",
+   "type": "calls",
+   "direction": "forward",
+   "description": "ompProviderSources calls publicSource",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/desktop-setup.ts:ompProviderSources",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:sourceStatus",
+   "type": "calls",
+   "direction": "forward",
+   "description": "ompProviderSources calls sourceStatus",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/desktop-setup.ts:desktopProviderConfig",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:discoverSources",
+   "type": "calls",
+   "direction": "forward",
+   "description": "desktopProviderConfig calls discoverSources",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/desktop-setup.ts:desktopProviderConfig",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:oauthEntry",
+   "type": "calls",
+   "direction": "forward",
+   "description": "desktopProviderConfig calls oauthEntry",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/desktop-setup.ts:desktopProviderConfig",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:presetFor",
+   "type": "calls",
+   "direction": "forward",
+   "description": "desktopProviderConfig calls presetFor",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/desktop-setup.ts:desktopProviderConfig",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:credential",
+   "type": "calls",
+   "direction": "forward",
+   "description": "desktopProviderConfig calls credential",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/desktop-setup.ts:desktopProviderModels",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:desktopProviderConfig",
+   "type": "calls",
+   "direction": "forward",
+   "description": "desktopProviderModels calls desktopProviderConfig",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/desktop-setup.ts:importDesktopProvider",
+   "target": "function:apps/control-plane/api/desktop-setup.ts:desktopProviderConfig",
+   "type": "calls",
+   "direction": "forward",
+   "description": "importDesktopProvider calls desktopProviderConfig",
+   "weight": 0.6
+  },
+  {
+   "source": "file:apps/control-plane/api/fleet-events.ts",
+   "target": "class:apps/control-plane/api/fleet-events.ts:FleetEventStore",
+   "type": "contains",
+   "direction": "forward",
+   "description": "fleet-events.ts defines class FleetEventStore",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/goal.test.ts",
+   "target": "function:apps/control-plane/api/goal.test.ts:fetcher",
+   "type": "contains",
+   "direction": "forward",
+   "description": "goal.test.ts defines fetcher",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/goal.test.ts",
+   "target": "function:apps/control-plane/api/goal.test.ts:fixture",
+   "type": "contains",
+   "direction": "forward",
+   "description": "goal.test.ts defines fixture",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/goal.test.ts",
+   "target": "function:apps/control-plane/api/goal.test.ts:postGoal",
+   "type": "contains",
+   "direction": "forward",
+   "description": "goal.test.ts defines postGoal",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/goal.test.ts",
+   "target": "function:apps/control-plane/api/goal.test.ts:readGoal",
+   "type": "contains",
+   "direction": "forward",
+   "description": "goal.test.ts defines readGoal",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/goal.test.ts",
+   "target": "function:apps/control-plane/api/goal.test.ts:waitForGoal",
+   "type": "contains",
+   "direction": "forward",
+   "description": "goal.test.ts defines waitForGoal",
+   "weight": 1.0
+  },
+  {
+   "source": "function:apps/control-plane/api/goal.test.ts:waitForGoal",
+   "target": "function:apps/control-plane/api/goal.test.ts:readGoal",
+   "type": "calls",
+   "direction": "forward",
+   "description": "waitForGoal calls readGoal",
+   "weight": 0.6
+  },
+  {
+   "source": "file:apps/control-plane/api/harness-proposals.test.ts",
+   "target": "function:apps/control-plane/api/harness-proposals.test.ts:fetcher",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-proposals.test.ts defines fetcher",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/harness-proposals.test.ts",
+   "target": "function:apps/control-plane/api/harness-proposals.test.ts:proposal",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-proposals.test.ts defines proposal",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/harness-proposals.test.ts",
+   "target": "function:apps/control-plane/api/harness-proposals.test.ts:fixture",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-proposals.test.ts defines fixture",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/local-approvals.ts",
+   "target": "function:apps/control-plane/api/local-approvals.ts:localApprovals",
+   "type": "contains",
+   "direction": "forward",
+   "description": "local-approvals.ts defines localApprovals",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/local-approvals.ts",
+   "target": "function:apps/control-plane/api/local-approvals.ts:localApprovals",
+   "type": "exports",
+   "direction": "forward",
+   "description": "local-approvals.ts exports localApprovals",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/api/openai-compatible.ts",
+   "target": "function:apps/control-plane/api/openai-compatible.ts:invalidRequest",
+   "type": "contains",
+   "direction": "forward",
+   "description": "openai-compatible.ts defines invalidRequest",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/openai-compatible.ts",
+   "target": "function:apps/control-plane/api/openai-compatible.ts:parseOpenAIChatRequest",
+   "type": "contains",
+   "direction": "forward",
+   "description": "openai-compatible.ts defines parseOpenAIChatRequest",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/openai-compatible.ts",
+   "target": "function:apps/control-plane/api/openai-compatible.ts:parseOpenAIChatRequest",
+   "type": "exports",
+   "direction": "forward",
+   "description": "openai-compatible.ts exports parseOpenAIChatRequest",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/api/openai-compatible.ts",
+   "target": "function:apps/control-plane/api/openai-compatible.ts:openAIModelList",
+   "type": "contains",
+   "direction": "forward",
+   "description": "openai-compatible.ts defines openAIModelList",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/openai-compatible.ts",
+   "target": "function:apps/control-plane/api/openai-compatible.ts:openAIModelList",
+   "type": "exports",
+   "direction": "forward",
+   "description": "openai-compatible.ts exports openAIModelList",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/api/openai-compatible.ts",
+   "target": "function:apps/control-plane/api/openai-compatible.ts:openAICompletion",
+   "type": "contains",
+   "direction": "forward",
+   "description": "openai-compatible.ts defines openAICompletion",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/openai-compatible.ts",
+   "target": "function:apps/control-plane/api/openai-compatible.ts:openAICompletion",
+   "type": "exports",
+   "direction": "forward",
+   "description": "openai-compatible.ts exports openAICompletion",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/api/openai-compatible.ts",
+   "target": "function:apps/control-plane/api/openai-compatible.ts:openAIError",
+   "type": "contains",
+   "direction": "forward",
+   "description": "openai-compatible.ts defines openAIError",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/openai-compatible.ts",
+   "target": "function:apps/control-plane/api/openai-compatible.ts:openAIError",
+   "type": "exports",
+   "direction": "forward",
+   "description": "openai-compatible.ts exports openAIError",
+   "weight": 0.7
+  },
+  {
+   "source": "function:apps/control-plane/api/openai-compatible.ts:parseOpenAIChatRequest",
+   "target": "function:apps/control-plane/api/openai-compatible.ts:invalidRequest",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parseOpenAIChatRequest calls invalidRequest",
+   "weight": 0.6
+  },
+  {
+   "source": "file:apps/control-plane/api/schedules.test.ts",
+   "target": "function:apps/control-plane/api/schedules.test.ts:fetcher",
+   "type": "contains",
+   "direction": "forward",
+   "description": "schedules.test.ts defines fetcher",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/schedules.test.ts",
+   "target": "function:apps/control-plane/api/schedules.test.ts:fixture",
+   "type": "contains",
+   "direction": "forward",
+   "description": "schedules.test.ts defines fixture",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/schedules.test.ts",
+   "target": "function:apps/control-plane/api/schedules.test.ts:post",
+   "type": "contains",
+   "direction": "forward",
+   "description": "schedules.test.ts defines post",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/schedules.test.ts",
+   "target": "function:apps/control-plane/api/schedules.test.ts:input",
+   "type": "contains",
+   "direction": "forward",
+   "description": "schedules.test.ts defines input",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/schedules.test.ts",
+   "target": "function:apps/control-plane/api/schedules.test.ts:readSchedules",
+   "type": "contains",
+   "direction": "forward",
+   "description": "schedules.test.ts defines readSchedules",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/schedules.test.ts",
+   "target": "function:apps/control-plane/api/schedules.test.ts:createSchedule",
+   "type": "contains",
+   "direction": "forward",
+   "description": "schedules.test.ts defines createSchedule",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/schedules.test.ts",
+   "target": "function:apps/control-plane/api/schedules.test.ts:waitForSchedule",
+   "type": "contains",
+   "direction": "forward",
+   "description": "schedules.test.ts defines waitForSchedule",
+   "weight": 1.0
+  },
+  {
+   "source": "function:apps/control-plane/api/schedules.test.ts:createSchedule",
+   "target": "function:apps/control-plane/api/schedules.test.ts:post",
+   "type": "calls",
+   "direction": "forward",
+   "description": "createSchedule calls post",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/schedules.test.ts:waitForSchedule",
+   "target": "function:apps/control-plane/api/schedules.test.ts:readSchedules",
+   "type": "calls",
+   "direction": "forward",
+   "description": "waitForSchedule calls readSchedules",
+   "weight": 0.6
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "function:apps/control-plane/api/server.ts:resolveVerifyKey",
+   "type": "contains",
+   "direction": "forward",
+   "description": "server.ts defines resolveVerifyKey",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "function:apps/control-plane/api/server.ts:createControlPlaneServer",
+   "type": "contains",
+   "direction": "forward",
+   "description": "server.ts defines createControlPlaneServer",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "function:apps/control-plane/api/server.ts:createControlPlaneServer",
+   "type": "exports",
+   "direction": "forward",
+   "description": "server.ts exports createControlPlaneServer",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "function:apps/control-plane/api/server.ts:listenControlPlane",
+   "type": "contains",
+   "direction": "forward",
+   "description": "server.ts defines listenControlPlane",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "function:apps/control-plane/api/server.ts:listenControlPlane",
+   "type": "exports",
+   "direction": "forward",
+   "description": "server.ts exports listenControlPlane",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "function:apps/control-plane/api/server.ts:route",
+   "type": "contains",
+   "direction": "forward",
+   "description": "server.ts defines route",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "function:apps/control-plane/api/server.ts:verificationSummary",
+   "type": "contains",
+   "direction": "forward",
+   "description": "server.ts defines verificationSummary",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "function:apps/control-plane/api/server.ts:handleFeed",
+   "type": "contains",
+   "direction": "forward",
+   "description": "server.ts defines handleFeed",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "function:apps/control-plane/api/server.ts:handleVerify",
+   "type": "contains",
+   "direction": "forward",
+   "description": "server.ts defines handleVerify",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "function:apps/control-plane/api/server.ts:handleApprovals",
+   "type": "contains",
+   "direction": "forward",
+   "description": "server.ts defines handleApprovals",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "function:apps/control-plane/api/server.ts:handleApprovalDecision",
+   "type": "contains",
+   "direction": "forward",
+   "description": "server.ts defines handleApprovalDecision",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "function:apps/control-plane/api/server.ts:serveStatic",
+   "type": "contains",
+   "direction": "forward",
+   "description": "server.ts defines serveStatic",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "function:apps/control-plane/api/server.ts:toApiEntry",
+   "type": "contains",
+   "direction": "forward",
+   "description": "server.ts defines toApiEntry",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "function:apps/control-plane/api/server.ts:toApiApproval",
+   "type": "contains",
+   "direction": "forward",
+   "description": "server.ts defines toApiApproval",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "function:apps/control-plane/api/server.ts:isProjectWorkspaceRoutePath",
+   "type": "contains",
+   "direction": "forward",
+   "description": "server.ts defines isProjectWorkspaceRoutePath",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "function:apps/control-plane/api/server.ts:handleProjectWorkspaceRoute",
+   "type": "contains",
+   "direction": "forward",
+   "description": "server.ts defines handleProjectWorkspaceRoute",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "function:apps/control-plane/api/server.ts:readProjectWorkspaceBody",
+   "type": "contains",
+   "direction": "forward",
+   "description": "server.ts defines readProjectWorkspaceBody",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "function:apps/control-plane/api/server.ts:isLocalRequest",
+   "type": "contains",
+   "direction": "forward",
+   "description": "server.ts defines isLocalRequest",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "function:apps/control-plane/api/server.ts:parseRequestUrl",
+   "type": "contains",
+   "direction": "forward",
+   "description": "server.ts defines parseRequestUrl",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "function:apps/control-plane/api/server.ts:parseLimit",
+   "type": "contains",
+   "direction": "forward",
+   "description": "server.ts defines parseLimit",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "function:apps/control-plane/api/server.ts:readPendingApprovals",
+   "type": "contains",
+   "direction": "forward",
+   "description": "server.ts defines readPendingApprovals",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "function:apps/control-plane/api/server.ts:parseDecision",
+   "type": "contains",
+   "direction": "forward",
+   "description": "server.ts defines parseDecision",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "function:apps/control-plane/api/server.ts:parseBranchInput",
+   "type": "contains",
+   "direction": "forward",
+   "description": "server.ts defines parseBranchInput",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "function:apps/control-plane/api/server.ts:sendRequestError",
+   "type": "contains",
+   "direction": "forward",
+   "description": "server.ts defines sendRequestError",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "function:apps/control-plane/api/server.ts:jsonObject",
+   "type": "contains",
+   "direction": "forward",
+   "description": "server.ts defines jsonObject",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "function:apps/control-plane/api/server.ts:exactKeys",
+   "type": "contains",
+   "direction": "forward",
+   "description": "server.ts defines exactKeys",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "function:apps/control-plane/api/server.ts:nonEmptyString",
+   "type": "contains",
+   "direction": "forward",
+   "description": "server.ts defines nonEmptyString",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "function:apps/control-plane/api/server.ts:stringArray",
+   "type": "contains",
+   "direction": "forward",
+   "description": "server.ts defines stringArray",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "function:apps/control-plane/api/server.ts:finiteNumberRecord",
+   "type": "contains",
+   "direction": "forward",
+   "description": "server.ts defines finiteNumberRecord",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "function:apps/control-plane/api/server.ts:openRouterThreshold",
+   "type": "contains",
+   "direction": "forward",
+   "description": "server.ts defines openRouterThreshold",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "function:apps/control-plane/api/server.ts:openRouterProviderPreferences",
+   "type": "contains",
+   "direction": "forward",
+   "description": "server.ts defines openRouterProviderPreferences",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "function:apps/control-plane/api/server.ts:parseGatewayOptions",
+   "type": "contains",
+   "direction": "forward",
+   "description": "server.ts defines parseGatewayOptions",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "function:apps/control-plane/api/server.ts:parseTypedProviderConfig",
+   "type": "contains",
+   "direction": "forward",
+   "description": "server.ts defines parseTypedProviderConfig",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "function:apps/control-plane/api/server.ts:readJsonBody",
+   "type": "contains",
+   "direction": "forward",
+   "description": "server.ts defines readJsonBody",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "function:apps/control-plane/api/server.ts:applicationJsonContentType",
+   "type": "contains",
+   "direction": "forward",
+   "description": "server.ts defines applicationJsonContentType",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "function:apps/control-plane/api/server.ts:isImageMimeType",
+   "type": "contains",
+   "direction": "forward",
+   "description": "server.ts defines isImageMimeType",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "function:apps/control-plane/api/server.ts:parseSessionImages",
+   "type": "contains",
+   "direction": "forward",
+   "description": "server.ts defines parseSessionImages",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "function:apps/control-plane/api/server.ts:sendJson",
+   "type": "contains",
+   "direction": "forward",
+   "description": "server.ts defines sendJson",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "function:apps/control-plane/api/server.ts:sendOnce",
+   "type": "contains",
+   "direction": "forward",
+   "description": "server.ts defines sendOnce",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "function:apps/control-plane/api/server.ts:staticPath",
+   "type": "contains",
+   "direction": "forward",
+   "description": "server.ts defines staticPath",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "function:apps/control-plane/api/server.ts:contentType",
+   "type": "contains",
+   "direction": "forward",
+   "description": "server.ts defines contentType",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "function:apps/control-plane/api/server.ts:selectLedgerPath",
+   "type": "contains",
+   "direction": "forward",
+   "description": "server.ts defines selectLedgerPath",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "class:apps/control-plane/api/server.ts:SessionStream",
+   "type": "contains",
+   "direction": "forward",
+   "description": "server.ts defines class SessionStream",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "class:apps/control-plane/api/server.ts:InvalidProjectWorkspaceRequest",
+   "type": "contains",
+   "direction": "forward",
+   "description": "server.ts defines class InvalidProjectWorkspaceRequest",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "class:apps/control-plane/api/server.ts:UnsupportedProjectWorkspaceContentType",
+   "type": "contains",
+   "direction": "forward",
+   "description": "server.ts defines class UnsupportedProjectWorkspaceContentType",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "class:apps/control-plane/api/server.ts:RequestBodyTooLarge",
+   "type": "contains",
+   "direction": "forward",
+   "description": "server.ts defines class RequestBodyTooLarge",
+   "weight": 1.0
+  },
+  {
+   "source": "function:apps/control-plane/api/server.ts:createControlPlaneServer",
+   "target": "function:apps/control-plane/api/server.ts:parseRequestUrl",
+   "type": "calls",
+   "direction": "forward",
+   "description": "createControlPlaneServer calls parseRequestUrl",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/server.ts:createControlPlaneServer",
+   "target": "function:apps/control-plane/api/server.ts:isProjectWorkspaceRoutePath",
+   "type": "calls",
+   "direction": "forward",
+   "description": "createControlPlaneServer calls isProjectWorkspaceRoutePath",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/server.ts:createControlPlaneServer",
+   "target": "function:apps/control-plane/api/server.ts:isLocalRequest",
+   "type": "calls",
+   "direction": "forward",
+   "description": "createControlPlaneServer calls isLocalRequest",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/server.ts:createControlPlaneServer",
+   "target": "function:apps/control-plane/api/server.ts:sendJson",
+   "type": "calls",
+   "direction": "forward",
+   "description": "createControlPlaneServer calls sendJson",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/server.ts:createControlPlaneServer",
+   "target": "function:apps/control-plane/api/server.ts:resolveVerifyKey",
+   "type": "calls",
+   "direction": "forward",
+   "description": "createControlPlaneServer calls resolveVerifyKey",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/server.ts:createControlPlaneServer",
+   "target": "function:apps/control-plane/api/server.ts:route",
+   "type": "calls",
+   "direction": "forward",
+   "description": "createControlPlaneServer calls route",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/server.ts:createControlPlaneServer",
+   "target": "function:apps/control-plane/api/server.ts:readPendingApprovals",
+   "type": "calls",
+   "direction": "forward",
+   "description": "createControlPlaneServer calls readPendingApprovals",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/server.ts:createControlPlaneServer",
+   "target": "function:apps/control-plane/api/server.ts:sendRequestError",
+   "type": "calls",
+   "direction": "forward",
+   "description": "createControlPlaneServer calls sendRequestError",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/server.ts:listenControlPlane",
+   "target": "function:apps/control-plane/api/server.ts:createControlPlaneServer",
+   "type": "calls",
+   "direction": "forward",
+   "description": "listenControlPlane calls createControlPlaneServer",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/server.ts:route",
+   "target": "function:apps/control-plane/api/server.ts:sendJson",
+   "type": "calls",
+   "direction": "forward",
+   "description": "route calls sendJson",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/server.ts:route",
+   "target": "function:apps/control-plane/api/server.ts:isProjectWorkspaceRoutePath",
+   "type": "calls",
+   "direction": "forward",
+   "description": "route calls isProjectWorkspaceRoutePath",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/server.ts:route",
+   "target": "function:apps/control-plane/api/server.ts:isLocalRequest",
+   "type": "calls",
+   "direction": "forward",
+   "description": "route calls isLocalRequest",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/server.ts:route",
+   "target": "function:apps/control-plane/api/server.ts:handleProjectWorkspaceRoute",
+   "type": "calls",
+   "direction": "forward",
+   "description": "route calls handleProjectWorkspaceRoute",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/server.ts:route",
+   "target": "function:apps/control-plane/api/server.ts:readJsonBody",
+   "type": "calls",
+   "direction": "forward",
+   "description": "route calls readJsonBody",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/server.ts:route",
+   "target": "function:apps/control-plane/api/server.ts:jsonObject",
+   "type": "calls",
+   "direction": "forward",
+   "description": "route calls jsonObject",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/server.ts:route",
+   "target": "function:apps/control-plane/api/server.ts:nonEmptyString",
+   "type": "calls",
+   "direction": "forward",
+   "description": "route calls nonEmptyString",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/server.ts:route",
+   "target": "function:apps/control-plane/api/server.ts:sendRequestError",
+   "type": "calls",
+   "direction": "forward",
+   "description": "route calls sendRequestError",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/server.ts:route",
+   "target": "function:apps/control-plane/api/server.ts:parseBranchInput",
+   "type": "calls",
+   "direction": "forward",
+   "description": "route calls parseBranchInput",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/server.ts:route",
+   "target": "function:apps/control-plane/api/server.ts:parseTypedProviderConfig",
+   "type": "calls",
+   "direction": "forward",
+   "description": "route calls parseTypedProviderConfig",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/server.ts:route",
+   "target": "function:apps/control-plane/api/server.ts:verificationSummary",
+   "type": "calls",
+   "direction": "forward",
+   "description": "route calls verificationSummary",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/server.ts:route",
+   "target": "function:apps/control-plane/api/server.ts:parseSessionImages",
+   "type": "calls",
+   "direction": "forward",
+   "description": "route calls parseSessionImages",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/server.ts:route",
+   "target": "function:apps/control-plane/api/server.ts:selectLedgerPath",
+   "type": "calls",
+   "direction": "forward",
+   "description": "route calls selectLedgerPath",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/server.ts:route",
+   "target": "function:apps/control-plane/api/server.ts:handleFeed",
+   "type": "calls",
+   "direction": "forward",
+   "description": "route calls handleFeed",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/server.ts:route",
+   "target": "function:apps/control-plane/api/server.ts:handleVerify",
+   "type": "calls",
+   "direction": "forward",
+   "description": "route calls handleVerify",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/server.ts:route",
+   "target": "function:apps/control-plane/api/server.ts:handleApprovals",
+   "type": "calls",
+   "direction": "forward",
+   "description": "route calls handleApprovals",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/server.ts:route",
+   "target": "function:apps/control-plane/api/server.ts:handleApprovalDecision",
+   "type": "calls",
+   "direction": "forward",
+   "description": "route calls handleApprovalDecision",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/server.ts:route",
+   "target": "function:apps/control-plane/api/server.ts:serveStatic",
+   "type": "calls",
+   "direction": "forward",
+   "description": "route calls serveStatic",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/server.ts:handleFeed",
+   "target": "function:apps/control-plane/api/server.ts:selectLedgerPath",
+   "type": "calls",
+   "direction": "forward",
+   "description": "handleFeed calls selectLedgerPath",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/server.ts:handleFeed",
+   "target": "function:apps/control-plane/api/server.ts:sendJson",
+   "type": "calls",
+   "direction": "forward",
+   "description": "handleFeed calls sendJson",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/server.ts:handleFeed",
+   "target": "function:apps/control-plane/api/server.ts:verificationSummary",
+   "type": "calls",
+   "direction": "forward",
+   "description": "handleFeed calls verificationSummary",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/server.ts:handleFeed",
+   "target": "function:apps/control-plane/api/server.ts:toApiEntry",
+   "type": "calls",
+   "direction": "forward",
+   "description": "handleFeed calls toApiEntry",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/server.ts:handleVerify",
+   "target": "function:apps/control-plane/api/server.ts:selectLedgerPath",
+   "type": "calls",
+   "direction": "forward",
+   "description": "handleVerify calls selectLedgerPath",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/server.ts:handleVerify",
+   "target": "function:apps/control-plane/api/server.ts:sendJson",
+   "type": "calls",
+   "direction": "forward",
+   "description": "handleVerify calls sendJson",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/server.ts:handleVerify",
+   "target": "function:apps/control-plane/api/server.ts:verificationSummary",
+   "type": "calls",
+   "direction": "forward",
+   "description": "handleVerify calls verificationSummary",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/server.ts:handleApprovals",
+   "target": "function:apps/control-plane/api/server.ts:readPendingApprovals",
+   "type": "calls",
+   "direction": "forward",
+   "description": "handleApprovals calls readPendingApprovals",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/server.ts:handleApprovals",
+   "target": "function:apps/control-plane/api/server.ts:sendJson",
+   "type": "calls",
+   "direction": "forward",
+   "description": "handleApprovals calls sendJson",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/server.ts:handleApprovalDecision",
+   "target": "function:apps/control-plane/api/server.ts:sendJson",
+   "type": "calls",
+   "direction": "forward",
+   "description": "handleApprovalDecision calls sendJson",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/server.ts:handleApprovalDecision",
+   "target": "function:apps/control-plane/api/server.ts:readJsonBody",
+   "type": "calls",
+   "direction": "forward",
+   "description": "handleApprovalDecision calls readJsonBody",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/server.ts:handleApprovalDecision",
+   "target": "function:apps/control-plane/api/server.ts:parseDecision",
+   "type": "calls",
+   "direction": "forward",
+   "description": "handleApprovalDecision calls parseDecision",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/server.ts:serveStatic",
+   "target": "function:apps/control-plane/api/server.ts:staticPath",
+   "type": "calls",
+   "direction": "forward",
+   "description": "serveStatic calls staticPath",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/server.ts:serveStatic",
+   "target": "function:apps/control-plane/api/server.ts:sendJson",
+   "type": "calls",
+   "direction": "forward",
+   "description": "serveStatic calls sendJson",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/server.ts:serveStatic",
+   "target": "function:apps/control-plane/api/server.ts:contentType",
+   "type": "calls",
+   "direction": "forward",
+   "description": "serveStatic calls contentType",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/server.ts:handleProjectWorkspaceRoute",
+   "target": "function:apps/control-plane/api/server.ts:sendJson",
+   "type": "calls",
+   "direction": "forward",
+   "description": "handleProjectWorkspaceRoute calls sendJson",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/server.ts:handleProjectWorkspaceRoute",
+   "target": "function:apps/control-plane/api/server.ts:readProjectWorkspaceBody",
+   "type": "calls",
+   "direction": "forward",
+   "description": "handleProjectWorkspaceRoute calls readProjectWorkspaceBody",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/server.ts:handleProjectWorkspaceRoute",
+   "target": "function:apps/control-plane/api/server.ts:jsonObject",
+   "type": "calls",
+   "direction": "forward",
+   "description": "handleProjectWorkspaceRoute calls jsonObject",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/server.ts:handleProjectWorkspaceRoute",
+   "target": "function:apps/control-plane/api/server.ts:nonEmptyString",
+   "type": "calls",
+   "direction": "forward",
+   "description": "handleProjectWorkspaceRoute calls nonEmptyString",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/server.ts:readProjectWorkspaceBody",
+   "target": "function:apps/control-plane/api/server.ts:applicationJsonContentType",
+   "type": "calls",
+   "direction": "forward",
+   "description": "readProjectWorkspaceBody calls applicationJsonContentType",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/server.ts:readProjectWorkspaceBody",
+   "target": "function:apps/control-plane/api/server.ts:readJsonBody",
+   "type": "calls",
+   "direction": "forward",
+   "description": "readProjectWorkspaceBody calls readJsonBody",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/server.ts:sendRequestError",
+   "target": "function:apps/control-plane/api/server.ts:sendOnce",
+   "type": "calls",
+   "direction": "forward",
+   "description": "sendRequestError calls sendOnce",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/server.ts:finiteNumberRecord",
+   "target": "function:apps/control-plane/api/server.ts:jsonObject",
+   "type": "calls",
+   "direction": "forward",
+   "description": "finiteNumberRecord calls jsonObject",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/server.ts:openRouterThreshold",
+   "target": "function:apps/control-plane/api/server.ts:finiteNumberRecord",
+   "type": "calls",
+   "direction": "forward",
+   "description": "openRouterThreshold calls finiteNumberRecord",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/server.ts:openRouterProviderPreferences",
+   "target": "function:apps/control-plane/api/server.ts:jsonObject",
+   "type": "calls",
+   "direction": "forward",
+   "description": "openRouterProviderPreferences calls jsonObject",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/server.ts:openRouterProviderPreferences",
+   "target": "function:apps/control-plane/api/server.ts:stringArray",
+   "type": "calls",
+   "direction": "forward",
+   "description": "openRouterProviderPreferences calls stringArray",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/server.ts:openRouterProviderPreferences",
+   "target": "function:apps/control-plane/api/server.ts:openRouterThreshold",
+   "type": "calls",
+   "direction": "forward",
+   "description": "openRouterProviderPreferences calls openRouterThreshold",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/server.ts:parseGatewayOptions",
+   "target": "function:apps/control-plane/api/server.ts:jsonObject",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parseGatewayOptions calls jsonObject",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/server.ts:parseGatewayOptions",
+   "target": "function:apps/control-plane/api/server.ts:exactKeys",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parseGatewayOptions calls exactKeys",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/server.ts:parseGatewayOptions",
+   "target": "function:apps/control-plane/api/server.ts:nonEmptyString",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parseGatewayOptions calls nonEmptyString",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/server.ts:parseGatewayOptions",
+   "target": "function:apps/control-plane/api/server.ts:stringArray",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parseGatewayOptions calls stringArray",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/server.ts:parseGatewayOptions",
+   "target": "function:apps/control-plane/api/server.ts:openRouterProviderPreferences",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parseGatewayOptions calls openRouterProviderPreferences",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/server.ts:parseTypedProviderConfig",
+   "target": "function:apps/control-plane/api/server.ts:exactKeys",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parseTypedProviderConfig calls exactKeys",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/server.ts:parseTypedProviderConfig",
+   "target": "function:apps/control-plane/api/server.ts:nonEmptyString",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parseTypedProviderConfig calls nonEmptyString",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/server.ts:parseTypedProviderConfig",
+   "target": "function:apps/control-plane/api/server.ts:jsonObject",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parseTypedProviderConfig calls jsonObject",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/server.ts:parseTypedProviderConfig",
+   "target": "function:apps/control-plane/api/server.ts:parseGatewayOptions",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parseTypedProviderConfig calls parseGatewayOptions",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/server.ts:readJsonBody",
+   "target": "function:apps/control-plane/api/server.ts:applicationJsonContentType",
+   "type": "calls",
+   "direction": "forward",
+   "description": "readJsonBody calls applicationJsonContentType",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/server.ts:parseSessionImages",
+   "target": "function:apps/control-plane/api/server.ts:jsonObject",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parseSessionImages calls jsonObject",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/server.ts:parseSessionImages",
+   "target": "function:apps/control-plane/api/server.ts:isImageMimeType",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parseSessionImages calls isImageMimeType",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/server.ts:sendOnce",
+   "target": "function:apps/control-plane/api/server.ts:sendJson",
+   "type": "calls",
+   "direction": "forward",
+   "description": "sendOnce calls sendJson",
+   "weight": 0.6
+  },
+  {
+   "source": "file:apps/control-plane/api/sse-backpressure.test.ts",
+   "target": "function:apps/control-plane/api/sse-backpressure.test.ts:bigReplyFetcher",
+   "type": "contains",
+   "direction": "forward",
+   "description": "sse-backpressure.test.ts defines bigReplyFetcher",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/sse-backpressure.test.ts",
+   "target": "function:apps/control-plane/api/sse-backpressure.test.ts:seedHeavySession",
+   "type": "contains",
+   "direction": "forward",
+   "description": "sse-backpressure.test.ts defines seedHeavySession",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/sse-backpressure.test.ts",
+   "target": "function:apps/control-plane/api/sse-backpressure.test.ts:stallingSubscriber",
+   "type": "contains",
+   "direction": "forward",
+   "description": "sse-backpressure.test.ts defines stallingSubscriber",
+   "weight": 1.0
+  },
+  {
+   "source": "function:apps/control-plane/api/sse-backpressure.test.ts:seedHeavySession",
+   "target": "function:apps/control-plane/api/sse-backpressure.test.ts:bigReplyFetcher",
+   "type": "calls",
+   "direction": "forward",
+   "description": "seedHeavySession calls bigReplyFetcher",
+   "weight": 0.6
+  },
+  {
+   "source": "file:cloud/steps.test.mjs",
+   "target": "function:cloud/steps.test.mjs:builtinCall",
+   "type": "contains",
+   "direction": "forward",
+   "description": "steps.test.mjs defines builtinCall",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/goal.test.ts",
+   "target": "function:packages/cli/src/goal.test.ts:fake",
+   "type": "contains",
+   "direction": "forward",
+   "description": "goal.test.ts defines fake",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/goal.test.ts",
+   "target": "function:packages/cli/src/goal.test.ts:io",
+   "type": "contains",
+   "direction": "forward",
+   "description": "goal.test.ts defines io",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/goal.ts",
+   "target": "function:packages/cli/src/goal.ts:workspaceDir",
+   "type": "contains",
+   "direction": "forward",
+   "description": "goal.ts defines workspaceDir",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/goal.ts",
+   "target": "function:packages/cli/src/goal.ts:parseFlags",
+   "type": "contains",
+   "direction": "forward",
+   "description": "goal.ts defines parseFlags",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/goal.ts",
+   "target": "function:packages/cli/src/goal.ts:describeGoal",
+   "type": "contains",
+   "direction": "forward",
+   "description": "goal.ts defines describeGoal",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/goal.ts",
+   "target": "function:packages/cli/src/goal.ts:readGoal",
+   "type": "contains",
+   "direction": "forward",
+   "description": "goal.ts defines readGoal",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/goal.ts",
+   "target": "function:packages/cli/src/goal.ts:runGoalCommand",
+   "type": "contains",
+   "direction": "forward",
+   "description": "goal.ts defines runGoalCommand",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/goal.ts",
+   "target": "function:packages/cli/src/goal.ts:runGoalCommand",
+   "type": "exports",
+   "direction": "forward",
+   "description": "goal.ts exports runGoalCommand",
+   "weight": 0.7
+  },
+  {
+   "source": "function:packages/cli/src/goal.ts:runGoalCommand",
+   "target": "function:packages/cli/src/goal.ts:parseFlags",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runGoalCommand calls parseFlags",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/goal.ts:runGoalCommand",
+   "target": "function:packages/cli/src/goal.ts:workspaceDir",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runGoalCommand calls workspaceDir",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/goal.ts:runGoalCommand",
+   "target": "function:packages/cli/src/goal.ts:describeGoal",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runGoalCommand calls describeGoal",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/goal.ts:runGoalCommand",
+   "target": "function:packages/cli/src/goal.ts:readGoal",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runGoalCommand calls readGoal",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/cli/src/harness.test.ts",
+   "target": "function:packages/cli/src/harness.test.ts:fake",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness.test.ts defines fake",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/harness.test.ts",
+   "target": "function:packages/cli/src/harness.test.ts:io",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness.test.ts defines io",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/harness.test.ts",
+   "target": "function:packages/cli/src/harness.test.ts:chain",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness.test.ts defines chain",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/harness.test.ts",
+   "target": "function:packages/cli/src/harness.test.ts:refused",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness.test.ts defines refused",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/harness.test.ts",
+   "target": "function:packages/cli/src/harness.test.ts:allowed",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness.test.ts defines allowed",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/harness.test.ts",
+   "target": "function:packages/cli/src/harness.test.ts:activated",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness.test.ts defines activated",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/cli/src/harness.test.ts:chain",
+   "target": "function:packages/cli/src/harness.test.ts:fake",
+   "type": "calls",
+   "direction": "forward",
+   "description": "chain calls fake",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/cli/src/harness.ts",
+   "target": "function:packages/cli/src/harness.ts:workspaceDir",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness.ts defines workspaceDir",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/harness.ts",
+   "target": "function:packages/cli/src/harness.ts:parseFlags",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness.ts defines parseFlags",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/harness.ts",
+   "target": "function:packages/cli/src/harness.ts:describeEdit",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness.ts defines describeEdit",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/harness.ts",
+   "target": "function:packages/cli/src/harness.ts:resolveDigest",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness.ts defines resolveDigest",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/harness.ts",
+   "target": "function:packages/cli/src/harness.ts:runHarnessCommand",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness.ts defines runHarnessCommand",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/harness.ts",
+   "target": "function:packages/cli/src/harness.ts:runHarnessCommand",
+   "type": "exports",
+   "direction": "forward",
+   "description": "harness.ts exports runHarnessCommand",
+   "weight": 0.7
+  },
+  {
+   "source": "function:packages/cli/src/harness.ts:runHarnessCommand",
+   "target": "function:packages/cli/src/harness.ts:parseFlags",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runHarnessCommand calls parseFlags",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/harness.ts:runHarnessCommand",
+   "target": "function:packages/cli/src/harness.ts:workspaceDir",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runHarnessCommand calls workspaceDir",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/harness.ts:runHarnessCommand",
+   "target": "function:packages/cli/src/harness.ts:describeEdit",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runHarnessCommand calls describeEdit",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/harness.ts:runHarnessCommand",
+   "target": "function:packages/cli/src/harness.ts:resolveDigest",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runHarnessCommand calls resolveDigest",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/cli/src/schedule.test.ts",
+   "target": "function:packages/cli/src/schedule.test.ts:fake",
+   "type": "contains",
+   "direction": "forward",
+   "description": "schedule.test.ts defines fake",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/schedule.test.ts",
+   "target": "function:packages/cli/src/schedule.test.ts:io",
+   "type": "contains",
+   "direction": "forward",
+   "description": "schedule.test.ts defines io",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/schedule.test.ts",
+   "target": "function:packages/cli/src/schedule.test.ts:unopened",
+   "type": "contains",
+   "direction": "forward",
+   "description": "schedule.test.ts defines unopened",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/cli/src/schedule.test.ts:unopened",
+   "target": "function:packages/cli/src/schedule.test.ts:fake",
+   "type": "calls",
+   "direction": "forward",
+   "description": "unopened calls fake",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/cli/src/schedule.ts",
+   "target": "function:packages/cli/src/schedule.ts:workspaceDir",
+   "type": "contains",
+   "direction": "forward",
+   "description": "schedule.ts defines workspaceDir",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/schedule.ts",
+   "target": "function:packages/cli/src/schedule.ts:parseFlags",
+   "type": "contains",
+   "direction": "forward",
+   "description": "schedule.ts defines parseFlags",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/schedule.ts",
+   "target": "function:packages/cli/src/schedule.ts:refuse",
+   "type": "contains",
+   "direction": "forward",
+   "description": "schedule.ts defines refuse",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/schedule.ts",
+   "target": "function:packages/cli/src/schedule.ts:startOnlyOption",
+   "type": "contains",
+   "direction": "forward",
+   "description": "schedule.ts defines startOnlyOption",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/schedule.ts",
+   "target": "function:packages/cli/src/schedule.ts:wholeNumber",
+   "type": "contains",
+   "direction": "forward",
+   "description": "schedule.ts defines wholeNumber",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/schedule.ts",
+   "target": "function:packages/cli/src/schedule.ts:integerRefusal",
+   "type": "contains",
+   "direction": "forward",
+   "description": "schedule.ts defines integerRefusal",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/schedule.ts",
+   "target": "function:packages/cli/src/schedule.ts:addInput",
+   "type": "contains",
+   "direction": "forward",
+   "description": "schedule.ts defines addInput",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/schedule.ts",
+   "target": "function:packages/cli/src/schedule.ts:prepare",
+   "type": "contains",
+   "direction": "forward",
+   "description": "schedule.ts defines prepare",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/schedule.ts",
+   "target": "function:packages/cli/src/schedule.ts:describeCadence",
+   "type": "contains",
+   "direction": "forward",
+   "description": "schedule.ts defines describeCadence",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/schedule.ts",
+   "target": "function:packages/cli/src/schedule.ts:describeSchedule",
+   "type": "contains",
+   "direction": "forward",
+   "description": "schedule.ts defines describeSchedule",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/schedule.ts",
+   "target": "function:packages/cli/src/schedule.ts:summaryLine",
+   "type": "contains",
+   "direction": "forward",
+   "description": "schedule.ts defines summaryLine",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/schedule.ts",
+   "target": "function:packages/cli/src/schedule.ts:describeList",
+   "type": "contains",
+   "direction": "forward",
+   "description": "schedule.ts defines describeList",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/schedule.ts",
+   "target": "function:packages/cli/src/schedule.ts:describeFiring",
+   "type": "contains",
+   "direction": "forward",
+   "description": "schedule.ts defines describeFiring",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/schedule.ts",
+   "target": "function:packages/cli/src/schedule.ts:noSupport",
+   "type": "contains",
+   "direction": "forward",
+   "description": "schedule.ts defines noSupport",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/schedule.ts",
+   "target": "function:packages/cli/src/schedule.ts:runScheduleCommand",
+   "type": "contains",
+   "direction": "forward",
+   "description": "schedule.ts defines runScheduleCommand",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/schedule.ts",
+   "target": "function:packages/cli/src/schedule.ts:runScheduleCommand",
+   "type": "exports",
+   "direction": "forward",
+   "description": "schedule.ts exports runScheduleCommand",
+   "weight": 0.7
+  },
+  {
+   "source": "function:packages/cli/src/schedule.ts:addInput",
+   "target": "function:packages/cli/src/schedule.ts:wholeNumber",
+   "type": "calls",
+   "direction": "forward",
+   "description": "addInput calls wholeNumber",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/schedule.ts:addInput",
+   "target": "function:packages/cli/src/schedule.ts:integerRefusal",
+   "type": "calls",
+   "direction": "forward",
+   "description": "addInput calls integerRefusal",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/schedule.ts:prepare",
+   "target": "function:packages/cli/src/schedule.ts:addInput",
+   "type": "calls",
+   "direction": "forward",
+   "description": "prepare calls addInput",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/schedule.ts:prepare",
+   "target": "function:packages/cli/src/schedule.ts:refuse",
+   "type": "calls",
+   "direction": "forward",
+   "description": "prepare calls refuse",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/schedule.ts:prepare",
+   "target": "function:packages/cli/src/schedule.ts:startOnlyOption",
+   "type": "calls",
+   "direction": "forward",
+   "description": "prepare calls startOnlyOption",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/schedule.ts:describeSchedule",
+   "target": "function:packages/cli/src/schedule.ts:describeCadence",
+   "type": "calls",
+   "direction": "forward",
+   "description": "describeSchedule calls describeCadence",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/schedule.ts:summaryLine",
+   "target": "function:packages/cli/src/schedule.ts:describeCadence",
+   "type": "calls",
+   "direction": "forward",
+   "description": "summaryLine calls describeCadence",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/schedule.ts:describeList",
+   "target": "function:packages/cli/src/schedule.ts:summaryLine",
+   "type": "calls",
+   "direction": "forward",
+   "description": "describeList calls summaryLine",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/schedule.ts:runScheduleCommand",
+   "target": "function:packages/cli/src/schedule.ts:parseFlags",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runScheduleCommand calls parseFlags",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/schedule.ts:runScheduleCommand",
+   "target": "function:packages/cli/src/schedule.ts:prepare",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runScheduleCommand calls prepare",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/schedule.ts:runScheduleCommand",
+   "target": "function:packages/cli/src/schedule.ts:workspaceDir",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runScheduleCommand calls workspaceDir",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/schedule.ts:runScheduleCommand",
+   "target": "function:packages/cli/src/schedule.ts:noSupport",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runScheduleCommand calls noSupport",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/schedule.ts:runScheduleCommand",
+   "target": "function:packages/cli/src/schedule.ts:describeList",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runScheduleCommand calls describeList",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/schedule.ts:runScheduleCommand",
+   "target": "function:packages/cli/src/schedule.ts:describeSchedule",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runScheduleCommand calls describeSchedule",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/schedule.ts:runScheduleCommand",
+   "target": "function:packages/cli/src/schedule.ts:describeFiring",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runScheduleCommand calls describeFiring",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/cli/src/tui/run-activity.ts",
+   "target": "function:packages/cli/src/tui/run-activity.ts:record",
+   "type": "contains",
+   "direction": "forward",
+   "description": "run-activity.ts defines record",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/run-activity.ts",
+   "target": "function:packages/cli/src/tui/run-activity.ts:redactSecrets",
+   "type": "contains",
+   "direction": "forward",
+   "description": "run-activity.ts defines redactSecrets",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/run-activity.ts",
+   "target": "function:packages/cli/src/tui/run-activity.ts:safeText",
+   "type": "contains",
+   "direction": "forward",
+   "description": "run-activity.ts defines safeText",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/run-activity.ts",
+   "target": "function:packages/cli/src/tui/run-activity.ts:safeMultiline",
+   "type": "contains",
+   "direction": "forward",
+   "description": "run-activity.ts defines safeMultiline",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/run-activity.ts",
+   "target": "function:packages/cli/src/tui/run-activity.ts:cleanField",
+   "type": "contains",
+   "direction": "forward",
+   "description": "run-activity.ts defines cleanField",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/run-activity.ts",
+   "target": "function:packages/cli/src/tui/run-activity.ts:resultText",
+   "type": "contains",
+   "direction": "forward",
+   "description": "run-activity.ts defines resultText",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/run-activity.ts",
+   "target": "function:packages/cli/src/tui/run-activity.ts:bounded",
+   "type": "contains",
+   "direction": "forward",
+   "description": "run-activity.ts defines bounded",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/run-activity.ts",
+   "target": "function:packages/cli/src/tui/run-activity.ts:formatRunActivity",
+   "type": "contains",
+   "direction": "forward",
+   "description": "run-activity.ts defines formatRunActivity",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/run-activity.ts",
+   "target": "function:packages/cli/src/tui/run-activity.ts:formatRunActivity",
+   "type": "exports",
+   "direction": "forward",
+   "description": "run-activity.ts exports formatRunActivity",
+   "weight": 0.7
+  },
+  {
+   "source": "function:packages/cli/src/tui/run-activity.ts:safeText",
+   "target": "function:packages/cli/src/tui/run-activity.ts:redactSecrets",
+   "type": "calls",
+   "direction": "forward",
+   "description": "safeText calls redactSecrets",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/run-activity.ts:safeMultiline",
+   "target": "function:packages/cli/src/tui/run-activity.ts:redactSecrets",
+   "type": "calls",
+   "direction": "forward",
+   "description": "safeMultiline calls redactSecrets",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/run-activity.ts:cleanField",
+   "target": "function:packages/cli/src/tui/run-activity.ts:safeText",
+   "type": "calls",
+   "direction": "forward",
+   "description": "cleanField calls safeText",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/run-activity.ts:cleanField",
+   "target": "function:packages/cli/src/tui/run-activity.ts:safeMultiline",
+   "type": "calls",
+   "direction": "forward",
+   "description": "cleanField calls safeMultiline",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/run-activity.ts:cleanField",
+   "target": "function:packages/cli/src/tui/run-activity.ts:record",
+   "type": "calls",
+   "direction": "forward",
+   "description": "cleanField calls record",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/run-activity.ts:resultText",
+   "target": "function:packages/cli/src/tui/run-activity.ts:record",
+   "type": "calls",
+   "direction": "forward",
+   "description": "resultText calls record",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/run-activity.ts:bounded",
+   "target": "function:packages/cli/src/tui/run-activity.ts:safeText",
+   "type": "calls",
+   "direction": "forward",
+   "description": "bounded calls safeText",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/run-activity.ts:formatRunActivity",
+   "target": "function:packages/cli/src/tui/run-activity.ts:safeText",
+   "type": "calls",
+   "direction": "forward",
+   "description": "formatRunActivity calls safeText",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/run-activity.ts:formatRunActivity",
+   "target": "function:packages/cli/src/tui/run-activity.ts:record",
+   "type": "calls",
+   "direction": "forward",
+   "description": "formatRunActivity calls record",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/run-activity.ts:formatRunActivity",
+   "target": "function:packages/cli/src/tui/run-activity.ts:cleanField",
+   "type": "calls",
+   "direction": "forward",
+   "description": "formatRunActivity calls cleanField",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/run-activity.ts:formatRunActivity",
+   "target": "function:packages/cli/src/tui/run-activity.ts:bounded",
+   "type": "calls",
+   "direction": "forward",
+   "description": "formatRunActivity calls bounded",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/run-activity.ts:formatRunActivity",
+   "target": "function:packages/cli/src/tui/run-activity.ts:resultText",
+   "type": "calls",
+   "direction": "forward",
+   "description": "formatRunActivity calls resultText",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/run-activity.ts:formatRunActivity",
+   "target": "function:packages/cli/src/tui/run-activity.ts:safeMultiline",
+   "type": "calls",
+   "direction": "forward",
+   "description": "formatRunActivity calls safeMultiline",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/cli/src/tui/workspace-harness-proposals.test.ts",
+   "target": "function:packages/cli/src/tui/workspace-harness-proposals.test.ts:fixture",
+   "type": "contains",
+   "direction": "forward",
+   "description": "workspace-harness-proposals.test.ts defines fixture",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/workspace-harness-proposals.test.ts",
+   "target": "function:packages/cli/src/tui/workspace-harness-proposals.test.ts:proposal",
+   "type": "contains",
+   "direction": "forward",
+   "description": "workspace-harness-proposals.test.ts defines proposal",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/workspace-harness-rows.test.ts",
+   "target": "function:packages/cli/src/tui/workspace-harness-rows.test.ts:assistantFetcher",
+   "type": "contains",
+   "direction": "forward",
+   "description": "workspace-harness-rows.test.ts defines assistantFetcher",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/workspace-harness-rows.test.ts",
+   "target": "function:packages/cli/src/tui/workspace-harness-rows.test.ts:ledgerRows",
+   "type": "contains",
+   "direction": "forward",
+   "description": "workspace-harness-rows.test.ts defines ledgerRows",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/workspace-harness-rows.test.ts",
+   "target": "function:packages/cli/src/tui/workspace-harness-rows.test.ts:rowsOf",
+   "type": "contains",
+   "direction": "forward",
+   "description": "workspace-harness-rows.test.ts defines rowsOf",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/cli/src/tui/workspace-harness-rows.test.ts:ledgerRows",
+   "target": "function:packages/cli/src/tui/workspace-harness-rows.test.ts:assistantFetcher",
+   "type": "calls",
+   "direction": "forward",
+   "description": "ledgerRows calls assistantFetcher",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/cli/src/tui/workspace-host-run.test.ts",
+   "target": "function:packages/cli/src/tui/workspace-host-run.test.ts:json",
+   "type": "contains",
+   "direction": "forward",
+   "description": "workspace-host-run.test.ts defines json",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/workspace-host-run.test.ts",
+   "target": "function:packages/cli/src/tui/workspace-host-run.test.ts:fixture",
+   "type": "contains",
+   "direction": "forward",
+   "description": "workspace-host-run.test.ts defines fixture",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/workspace-host-run.test.ts",
+   "target": "function:packages/cli/src/tui/workspace-host-run.test.ts:waitFor",
+   "type": "contains",
+   "direction": "forward",
+   "description": "workspace-host-run.test.ts defines waitFor",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/workspace-host-run.test.ts",
+   "target": "function:packages/cli/src/tui/workspace-host-run.test.ts:ledgerTools",
+   "type": "contains",
+   "direction": "forward",
+   "description": "workspace-host-run.test.ts defines ledgerTools",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/workspace-learned-rows.test.ts",
+   "target": "function:packages/cli/src/tui/workspace-learned-rows.test.ts:assistantFetcher",
+   "type": "contains",
+   "direction": "forward",
+   "description": "workspace-learned-rows.test.ts defines assistantFetcher",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/workspace-learned-rows.test.ts",
+   "target": "function:packages/cli/src/tui/workspace-learned-rows.test.ts:ledgerRows",
+   "type": "contains",
+   "direction": "forward",
+   "description": "workspace-learned-rows.test.ts defines ledgerRows",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/workspace-learned-rows.test.ts",
+   "target": "function:packages/cli/src/tui/workspace-learned-rows.test.ts:rowsOf",
+   "type": "contains",
+   "direction": "forward",
+   "description": "workspace-learned-rows.test.ts defines rowsOf",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/workspace-learned-rows.test.ts",
+   "target": "function:packages/cli/src/tui/workspace-learned-rows.test.ts:learnedRows",
+   "type": "contains",
+   "direction": "forward",
+   "description": "workspace-learned-rows.test.ts defines learnedRows",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/tui/workspace-learned-rows.test.ts",
+   "target": "function:packages/cli/src/tui/workspace-learned-rows.test.ts:refusal",
+   "type": "contains",
+   "direction": "forward",
+   "description": "workspace-learned-rows.test.ts defines refusal",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/cli/src/tui/workspace-learned-rows.test.ts:ledgerRows",
+   "target": "function:packages/cli/src/tui/workspace-learned-rows.test.ts:assistantFetcher",
+   "type": "calls",
+   "direction": "forward",
+   "description": "ledgerRows calls assistantFetcher",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/tui/workspace-learned-rows.test.ts:learnedRows",
+   "target": "function:packages/cli/src/tui/workspace-learned-rows.test.ts:rowsOf",
+   "type": "calls",
+   "direction": "forward",
+   "description": "learnedRows calls rowsOf",
+   "weight": 0.6
+  },
+  {
+   "source": "file:apps/control-plane/api/auth.ts",
+   "target": "file:packages/ledger/src/env-compat.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "auth.ts imports env-compat.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/beta.test.ts",
+   "target": "file:apps/control-plane/api/auth.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "beta.test.ts imports auth.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/beta.test.ts",
+   "target": "file:apps/control-plane/api/local-approvals.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "beta.test.ts imports local-approvals.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/beta.test.ts",
+   "target": "file:apps/control-plane/api/server.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "beta.test.ts imports server.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/beta.test.ts",
+   "target": "file:packages/policy/src/approvals.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "beta.test.ts imports approvals.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/beta.test.ts",
+   "target": "file:packages/policy/src/hold.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "beta.test.ts imports hold.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/desktop-setup.test.ts",
+   "target": "file:apps/control-plane/api/desktop-setup.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "desktop-setup.test.ts imports desktop-setup.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/desktop-setup.test.ts",
+   "target": "file:apps/control-plane/api/server.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "desktop-setup.test.ts imports server.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/desktop-setup.test.ts",
+   "target": "file:packages/workbench/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "desktop-setup.test.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/desktop-setup.test.ts",
+   "target": "file:packages/workbench/src/test-fixture.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "desktop-setup.test.ts imports test-fixture.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/desktop-setup.ts",
+   "target": "file:packages/workbench/src/agent-runners/host-cli.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "desktop-setup.ts imports host-cli.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/desktop-setup.ts",
+   "target": "file:packages/workbench/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "desktop-setup.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/desktop-setup.ts",
+   "target": "file:packages/workbench/src/provider-adapters/types.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "desktop-setup.ts imports types.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/desktop-setup.ts",
+   "target": "file:packages/workbench/src/provider-catalog.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "desktop-setup.ts imports provider-catalog.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/desktop-setup.ts",
+   "target": "file:packages/workbench/src/provider-defaults.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "desktop-setup.ts imports provider-defaults.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/desktop-setup.ts",
+   "target": "file:packages/workbench/src/provider-oauth.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "desktop-setup.ts imports provider-oauth.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/fleet-events.test.ts",
+   "target": "file:apps/control-plane/api/fleet-events.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "fleet-events.test.ts imports fleet-events.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/goal.test.ts",
+   "target": "file:apps/control-plane/api/server.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "goal.test.ts imports server.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/goal.test.ts",
+   "target": "file:packages/workbench/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "goal.test.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/harness-proposals.test.ts",
+   "target": "file:apps/control-plane/api/server.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "harness-proposals.test.ts imports server.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/harness-proposals.test.ts",
+   "target": "file:packages/workbench/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "harness-proposals.test.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/harness-proposals.test.ts",
+   "target": "file:packages/workbench/src/refine-pass.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "harness-proposals.test.ts imports refine-pass.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/harness-review-settings.test.ts",
+   "target": "file:apps/control-plane/api/server.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "harness-review-settings.test.ts imports server.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/harness-settings.test.ts",
+   "target": "file:apps/control-plane/api/server.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "harness-settings.test.ts imports server.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/local-approvals.ts",
+   "target": "file:apps/control-plane/api/server.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "local-approvals.ts imports server.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/local-approvals.ts",
+   "target": "file:packages/policy/src/approvals.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "local-approvals.ts imports approvals.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/openai-compatible.ts",
+   "target": "file:packages/workbench/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "openai-compatible.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/parity.test.ts",
+   "target": "file:apps/control-plane/api/server.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "parity.test.ts imports server.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/parity.test.ts",
+   "target": "file:packages/workbench/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "parity.test.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/parity.test.ts",
+   "target": "file:packages/workbench/src/test-fixture.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "parity.test.ts imports test-fixture.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/plan.test.ts",
+   "target": "file:apps/control-plane/api/server.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "plan.test.ts imports server.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/plan.test.ts",
+   "target": "file:packages/workbench/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "plan.test.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/schedules.test.ts",
+   "target": "file:apps/control-plane/api/server.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "schedules.test.ts imports server.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/schedules.test.ts",
+   "target": "file:packages/workbench/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "schedules.test.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/schedules.test.ts",
+   "target": "file:packages/workbench/src/schedules.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "schedules.test.ts imports schedules.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "file:apps/control-plane/api/auth.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "server.ts imports auth.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "file:apps/control-plane/api/companion/envelope.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "server.ts imports envelope.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "file:apps/control-plane/api/companion/routes.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "server.ts imports routes.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "file:apps/control-plane/api/desktop-setup.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "server.ts imports desktop-setup.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "file:apps/control-plane/api/fleet-events.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "server.ts imports fleet-events.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "file:apps/control-plane/api/local-approvals.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "server.ts imports local-approvals.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "file:apps/control-plane/api/openai-compatible.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "server.ts imports openai-compatible.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "file:packages/cli/src/replay.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "server.ts imports replay.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "file:packages/ledger/src/canonical.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "server.ts imports canonical.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "file:packages/ledger/src/env-compat.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "server.ts imports env-compat.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "file:packages/ledger/src/feed.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "server.ts imports feed.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "file:packages/ledger/src/taint/graph.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "server.ts imports graph.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "file:packages/ledger/src/taint/query.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "server.ts imports query.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "file:packages/ledger/src/verify-key.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "server.ts imports verify-key.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "file:packages/ledger/src/verify.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "server.ts imports verify.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "file:packages/workbench/src/agent-runners/agent-runner.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "server.ts imports agent-runner.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "file:packages/workbench/src/gui.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "server.ts imports gui.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "file:packages/workbench/src/harness-scores.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "server.ts imports harness-scores.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "file:packages/workbench/src/harness-settings.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "server.ts imports harness-settings.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "file:packages/workbench/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "server.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "file:packages/workbench/src/project-workspace.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "server.ts imports project-workspace.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "file:packages/workbench/src/provider-adapters/google-vertex-config.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "server.ts imports google-vertex-config.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "file:packages/workbench/src/provider-adapters/types.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "server.ts imports types.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "file:packages/workbench/src/provider-catalog.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "server.ts imports provider-catalog.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/server.ts",
+   "target": "file:packages/workbench/src/provider.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "server.ts imports provider.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/sse-backpressure.test.ts",
+   "target": "file:apps/control-plane/api/server.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "sse-backpressure.test.ts imports server.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/sse-backpressure.test.ts",
+   "target": "file:packages/workbench/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "sse-backpressure.test.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/sse-backpressure.test.ts",
+   "target": "file:packages/workbench/src/test-fixture.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "sse-backpressure.test.ts imports test-fixture.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/static-spa.test.ts",
+   "target": "file:apps/control-plane/api/server.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "static-spa.test.ts imports server.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/steps.test.mjs",
+   "target": "file:cloud/steps.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "steps.test.mjs imports steps.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/steps.test.mjs",
+   "target": "file:packages/policy/src/rules.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "steps.test.mjs imports rules.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/steps.test.mjs",
+   "target": "file:packages/workbench/src/workspace.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "steps.test.mjs imports workspace.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/goal.test.ts",
+   "target": "file:packages/cli/src/goal.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "goal.test.ts imports goal.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/goal.ts",
+   "target": "file:packages/ledger/src/paths.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "goal.ts imports paths.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/goal.ts",
+   "target": "file:packages/workbench/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "goal.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/harness.test.ts",
+   "target": "file:packages/cli/src/harness.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "harness.test.ts imports harness.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/harness.ts",
+   "target": "file:packages/ledger/src/paths.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "harness.ts imports paths.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/harness.ts",
+   "target": "file:packages/workbench/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "harness.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/schedule.test.ts",
+   "target": "file:packages/cli/src/schedule.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "schedule.test.ts imports schedule.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/schedule.test.ts",
+   "target": "file:packages/workbench/src/schedules.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "schedule.test.ts imports schedules.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/schedule.ts",
+   "target": "file:packages/ledger/src/paths.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "schedule.ts imports paths.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/schedule.ts",
+   "target": "file:packages/workbench/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "schedule.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/schedule.ts",
+   "target": "file:packages/workbench/src/schedules.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "schedule.ts imports schedules.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/run-activity.ts",
+   "target": "file:packages/cli/src/tui/layout.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "run-activity.ts imports layout.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/run-activity.ts",
+   "target": "file:packages/workbench/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "run-activity.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/workspace-approval.test.ts",
+   "target": "file:packages/cli/src/tui/workspace.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "workspace-approval.test.ts imports workspace.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/workspace-approval.test.ts",
+   "target": "file:packages/workbench/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "workspace-approval.test.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/workspace-harness-proposals.test.ts",
+   "target": "file:packages/cli/src/tui/workspace.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "workspace-harness-proposals.test.ts imports workspace.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/workspace-harness-proposals.test.ts",
+   "target": "file:packages/workbench/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "workspace-harness-proposals.test.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/workspace-harness-proposals.test.ts",
+   "target": "file:packages/workbench/src/refine-pass.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "workspace-harness-proposals.test.ts imports refine-pass.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/workspace-harness-proposals.test.ts",
+   "target": "file:packages/workbench/src/test-fixture.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "workspace-harness-proposals.test.ts imports test-fixture.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/workspace-harness-rows.test.ts",
+   "target": "file:packages/cli/src/tui/workspace.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "workspace-harness-rows.test.ts imports workspace.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/workspace-harness-rows.test.ts",
+   "target": "file:packages/workbench/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "workspace-harness-rows.test.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/workspace-host-run.test.ts",
+   "target": "file:packages/cli/src/tui/workspace.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "workspace-host-run.test.ts imports workspace.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/workspace-host-run.test.ts",
+   "target": "file:packages/workbench/src/agent-runners/host-cli.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "workspace-host-run.test.ts imports host-cli.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/workspace-host-run.test.ts",
+   "target": "file:packages/workbench/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "workspace-host-run.test.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/workspace-host-run.test.ts",
+   "target": "file:packages/workbench/src/test-fixture.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "workspace-host-run.test.ts imports test-fixture.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/workspace-learned-rows.test.ts",
+   "target": "file:packages/cli/src/tui/workspace.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "workspace-learned-rows.test.ts imports workspace.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/workspace-learned-rows.test.ts",
+   "target": "file:packages/ledger/src/store.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "workspace-learned-rows.test.ts imports store.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/tui/workspace-learned-rows.test.ts",
+   "target": "file:packages/workbench/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "workspace-learned-rows.test.ts imports index.ts",
+   "weight": 0.8
+  }
+ ]
+}

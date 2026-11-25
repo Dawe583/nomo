@@ -1,0 +1,41 @@
+{
+ "nodes": [
+  {
+   "id": "file:packages/ledger/README.md",
+   "type": "document",
+   "name": "README.md",
+   "filePath": "packages/ledger/README.md",
+   "summary": "README.md \u2014 markdown document, 73 lines, 7 sections: @nomo/ledger, Responsible for, Known limitation of the dev tier, Must never import (+3 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/ledger/package.json",
+   "type": "config",
+   "name": "package.json",
+   "filePath": "packages/ledger/package.json",
+   "summary": "package.json \u2014 json config, 34 lines.",
+   "tags": [
+    "json",
+    "config"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/ledger/tsconfig.json",
+   "type": "config",
+   "name": "tsconfig.json",
+   "filePath": "packages/ledger/tsconfig.json",
+   "summary": "tsconfig.json \u2014 json config, 18 lines.",
+   "tags": [
+    "json",
+    "config"
+   ],
+   "complexity": "simple"
+  }
+ ],
+ "edges": []
+}

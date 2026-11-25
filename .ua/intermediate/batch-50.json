@@ -1,0 +1,245 @@
+{
+ "nodes": [
+  {
+   "id": "file:docs/GUI-DESIGN-RESEARCH.md",
+   "type": "document",
+   "name": "GUI-DESIGN-RESEARCH.md",
+   "filePath": "docs/GUI-DESIGN-RESEARCH.md",
+   "summary": "GUI-DESIGN-RESEARCH.md \u2014 markdown document, 312 lines, 11 sections: NOMO interface and interaction research, Product identity, Mobile Safari and the toolbar, Component systems (+7 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:docs/GUI-RULES.md",
+   "type": "document",
+   "name": "GUI-RULES.md",
+   "filePath": "docs/GUI-RULES.md",
+   "summary": "GUI-RULES.md \u2014 markdown document, 57 lines, 4 sections: NOMO GUI design rules, Structure, Content and boundaries, Validation.",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/GUI-UPGRADE-AUDIT.md",
+   "type": "document",
+   "name": "GUI-UPGRADE-AUDIT.md",
+   "filePath": "docs/GUI-UPGRADE-AUDIT.md",
+   "summary": "GUI-UPGRADE-AUDIT.md \u2014 markdown document, 112 lines, 10 sections: Audit GUI p\u0159ed velk\u00fdm upgradem, Current contract addendum, Co bylo skute\u010dn\u011b ov\u011b\u0159eno, N\u00e1lezy a jejich d\u016fsledky (+6 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/GUI-UPGRADE-DELIVERY.md",
+   "type": "document",
+   "name": "GUI-UPGRADE-DELIVERY.md",
+   "filePath": "docs/GUI-UPGRADE-DELIVERY.md",
+   "summary": "GUI-UPGRADE-DELIVERY.md \u2014 markdown document, 144 lines, 8 sections: GUI upgrade, p\u0159ed\u00e1n\u00ed 2026-09-11, Dodan\u00e9 chov\u00e1n\u00ed, Current management parity increment, Ov\u011b\u0159en\u00ed (+4 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/GUI-UPGRADE-PLAN.md",
+   "type": "document",
+   "name": "GUI-UPGRADE-PLAN.md",
+   "filePath": "docs/GUI-UPGRADE-PLAN.md",
+   "summary": "GUI-UPGRADE-PLAN.md \u2014 markdown document, 391 lines, 26 sections: NOMO, pl\u00e1n velk\u00e9ho upgradu GUI, Current contract and delivery boundary, 1. C\u00edl a pevn\u00e1 rozhodnut\u00ed, 2. Vizu\u00e1ln\u00ed sm\u011br (+22 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:docs/GUI-VISUAL-REFINEMENT.md",
+   "type": "document",
+   "name": "GUI-VISUAL-REFINEMENT.md",
+   "filePath": "docs/GUI-VISUAL-REFINEMENT.md",
+   "summary": "GUI-VISUAL-REFINEMENT.md \u2014 markdown document, 28 lines, 3 sections: Visual refinement, 2026-09-11, Changes, Verification.",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/HANDBOOK.cs.md",
+   "type": "document",
+   "name": "HANDBOOK.cs.md",
+   "filePath": "docs/HANDBOOK.cs.md",
+   "summary": "HANDBOOK.cs.md \u2014 markdown document, 1229 lines, 32 sections: NOMO handbook, 1. Co NOMO je, 2. Co NOMO neum\u00ed, 3. Pojmy (+28 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "file:docs/HANDBOOK.md",
+   "type": "document",
+   "name": "HANDBOOK.md",
+   "filePath": "docs/HANDBOOK.md",
+   "summary": "HANDBOOK.md \u2014 markdown document, 1331 lines, 32 sections: NOMO handbook, 1. What NOMO is, 2. What NOMO does not do, 3. Vocabulary (+28 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "file:docs/HARNESS-ACCEPTANCE-HANDOFF.md",
+   "type": "document",
+   "name": "HARNESS-ACCEPTANCE-HANDOFF.md",
+   "filePath": "docs/HARNESS-ACCEPTANCE-HANDOFF.md",
+   "summary": "HARNESS-ACCEPTANCE-HANDOFF.md \u2014 markdown document, 78 lines, 8 sections: Handoff: harness beta acceptance audit, Acceptance review, Historical blocked graph snapshot, H34 exact evidence (+4 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/HARNESS-LOOP-PLAN.md",
+   "type": "document",
+   "name": "HARNESS-LOOP-PLAN.md",
+   "filePath": "docs/HARNESS-LOOP-PLAN.md",
+   "summary": "HARNESS-LOOP-PLAN.md \u2014 markdown document, 512 lines, 16 sections: NOMO Harness Loop Plan, 1. Goal and definition of done, 2. Authority, 3. Operating contract (+12 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:docs/HARNESS-SETTINGS.md",
+   "type": "document",
+   "name": "HARNESS-SETTINGS.md",
+   "filePath": "docs/HARNESS-SETTINGS.md",
+   "summary": "HARNESS-SETTINGS.md \u2014 markdown document, 246 lines, 9 sections: Harness settings, What changed and why, Using them, The settings (+5 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:docs/INTERNAL-AUTOMATION-PLAN-2026-09-20.md",
+   "type": "document",
+   "name": "INTERNAL-AUTOMATION-PLAN-2026-09-20.md",
+   "filePath": "docs/INTERNAL-AUTOMATION-PLAN-2026-09-20.md",
+   "summary": "INTERNAL-AUTOMATION-PLAN-2026-09-20.md \u2014 markdown document, 576 lines, 37 sections: Historical VOID internal automation and agent capability plan, 1. Goal, 2. Verified baseline, Repository (+33 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:docs/IOS-CACHE-AND-REMOVAL-POLICY.md",
+   "type": "document",
+   "name": "IOS-CACHE-AND-REMOVAL-POLICY.md",
+   "filePath": "docs/IOS-CACHE-AND-REMOVAL-POLICY.md",
+   "summary": "IOS-CACHE-AND-REMOVAL-POLICY.md \u2014 markdown document, 61 lines, 4 sections: iOS cache retention and device removal, The policy, Where the operator reads it, What this does not claim.",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/LEARNING-STEP-MAP.md",
+   "type": "document",
+   "name": "LEARNING-STEP-MAP.md",
+   "filePath": "docs/LEARNING-STEP-MAP.md",
+   "summary": "LEARNING-STEP-MAP.md \u2014 markdown document, 121 lines, 7 sections: Implementation map: the ledger-reading learning step, What already exists, What does not exist, Five decisions, in order (+3 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/MACOS-ALL-IN-ONE-RESEARCH.md",
+   "type": "document",
+   "name": "MACOS-ALL-IN-ONE-RESEARCH.md",
+   "filePath": "docs/MACOS-ALL-IN-ONE-RESEARCH.md",
+   "summary": "MACOS-ALL-IN-ONE-RESEARCH.md \u2014 markdown document, 147 lines, 11 sections: macOS: guided projects with verifiable recovery, Direction, Findings from primary sources, What shipped in this iteration (+7 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/MANAGED-FILESYSTEM.md",
+   "type": "document",
+   "name": "MANAGED-FILESYSTEM.md",
+   "filePath": "docs/MANAGED-FILESYSTEM.md",
+   "summary": "MANAGED-FILESYSTEM.md \u2014 markdown document, 124 lines, 5 sections: Managed filesystem recovery, Ownership and conflicts, Configuration and CLI, Crash behavior (+1 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/MANAGED-GIT.md",
+   "type": "document",
+   "name": "MANAGED-GIT.md",
+   "filePath": "docs/MANAGED-GIT.md",
+   "summary": "MANAGED-GIT.md \u2014 markdown document, 327 lines, 5 sections: Managed Git recovery, Managed commit slice, The Git child shutdown ladder, Managed remote recovery (+1 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:docs/MANAGED-RECOVERY.md",
+   "type": "document",
+   "name": "MANAGED-RECOVERY.md",
+   "filePath": "docs/MANAGED-RECOVERY.md",
+   "summary": "MANAGED-RECOVERY.md \u2014 markdown document, 219 lines, 6 sections: Managed PostgreSQL recovery, Configuration, Capacity and migration, Operator workflow (+2 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:docs/MANIFEST-DURABILITY.md",
+   "type": "document",
+   "name": "MANIFEST-DURABILITY.md",
+   "filePath": "docs/MANIFEST-DURABILITY.md",
+   "summary": "MANIFEST-DURABILITY.md \u2014 markdown document, 35 lines, 1 sections: Snapshot manifest persistence.",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:docs/MOBILE-ACCESSIBILITY-ACCEPTANCE.md",
+   "type": "document",
+   "name": "MOBILE-ACCESSIBILITY-ACCEPTANCE.md",
+   "filePath": "docs/MOBILE-ACCESSIBILITY-ACCEPTANCE.md",
+   "summary": "MOBILE-ACCESSIBILITY-ACCEPTANCE.md \u2014 markdown document, 66 lines, 3 sections: Mobile and accessibility acceptance, Browser verification, 15 September 2026, Follow-up verification, 15 September 2026.",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  }
+ ],
+ "edges": []
+}

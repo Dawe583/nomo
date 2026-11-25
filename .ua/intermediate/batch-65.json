@@ -1,0 +1,41 @@
+{
+ "nodes": [
+  {
+   "id": "file:packages/policy/packs/balanced.yaml",
+   "type": "config",
+   "name": "balanced.yaml",
+   "filePath": "packages/policy/packs/balanced.yaml",
+   "summary": "balanced.yaml \u2014 yaml config, 15 lines.",
+   "tags": [
+    "yaml",
+    "config"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/policy/packs/dev.yaml",
+   "type": "config",
+   "name": "dev.yaml",
+   "filePath": "packages/policy/packs/dev.yaml",
+   "summary": "dev.yaml \u2014 yaml config, 15 lines.",
+   "tags": [
+    "yaml",
+    "config"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/policy/packs/strict.yaml",
+   "type": "config",
+   "name": "strict.yaml",
+   "filePath": "packages/policy/packs/strict.yaml",
+   "summary": "strict.yaml \u2014 yaml config, 9 lines.",
+   "tags": [
+    "yaml",
+    "config"
+   ],
+   "complexity": "simple"
+  }
+ ],
+ "edges": []
+}

@@ -1,0 +1,222 @@
+{
+ "nodes": [
+  {
+   "id": "file:apps/desktop/release.test.mjs",
+   "type": "file",
+   "name": "release.test.mjs",
+   "filePath": "apps/desktop/release.test.mjs",
+   "summary": "release.test.mjs \u2014 javascript code, 192 lines, 2 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "javascript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:apps/desktop/release.test.mjs:noIdentities",
+   "type": "function",
+   "name": "noIdentities",
+   "filePath": "apps/desktop/release.test.mjs",
+   "lineRange": [
+    21,
+    21
+   ],
+   "summary": "noIdentities() \u2014 function in release.test.mjs, lines 21-21.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/desktop/release.test.mjs:captureWarnings",
+   "type": "function",
+   "name": "captureWarnings",
+   "filePath": "apps/desktop/release.test.mjs",
+   "lineRange": [
+    24,
+    27
+   ],
+   "summary": "captureWarnings() \u2014 function in release.test.mjs, lines 24-27.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/desktop/scripts/build-policy.mjs",
+   "type": "file",
+   "name": "build-policy.mjs",
+   "filePath": "apps/desktop/scripts/build-policy.mjs",
+   "summary": "build-policy.mjs \u2014 javascript code, 148 lines, 4 functions, 0 classes, 1 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/desktop/scripts/build-policy.mjs:listKeychainIdentities",
+   "type": "function",
+   "name": "listKeychainIdentities",
+   "filePath": "apps/desktop/scripts/build-policy.mjs",
+   "lineRange": [
+    47,
+    61
+   ],
+   "summary": "listKeychainIdentities() \u2014 function in build-policy.mjs, lines 47-61.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/desktop/scripts/build-policy.mjs:asIdentityEntry",
+   "type": "function",
+   "name": "asIdentityEntry",
+   "filePath": "apps/desktop/scripts/build-policy.mjs",
+   "lineRange": [
+    64,
+    66
+   ],
+   "summary": "asIdentityEntry(entry) \u2014 function in build-policy.mjs, lines 64-66.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/desktop/scripts/build-policy.mjs:identityRank",
+   "type": "function",
+   "name": "identityRank",
+   "filePath": "apps/desktop/scripts/build-policy.mjs",
+   "lineRange": [
+    69,
+    72
+   ],
+   "summary": "identityRank(name) \u2014 function in build-policy.mjs, lines 69-72.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/desktop/scripts/build-policy.mjs:resolveBuildPolicy",
+   "type": "function",
+   "name": "resolveBuildPolicy",
+   "filePath": "apps/desktop/scripts/build-policy.mjs",
+   "lineRange": [
+    74,
+    148
+   ],
+   "summary": "resolveBuildPolicy() \u2014 function in build-policy.mjs, lines 74-148.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/desktop/scripts/build.mjs",
+   "type": "file",
+   "name": "build.mjs",
+   "filePath": "apps/desktop/scripts/build.mjs",
+   "summary": "build.mjs \u2014 javascript code, 23 lines, 0 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "simple"
+  }
+ ],
+ "edges": [
+  {
+   "source": "file:apps/desktop/release.test.mjs",
+   "target": "function:apps/desktop/release.test.mjs:noIdentities",
+   "type": "contains",
+   "direction": "forward",
+   "description": "release.test.mjs defines noIdentities",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/desktop/release.test.mjs",
+   "target": "function:apps/desktop/release.test.mjs:captureWarnings",
+   "type": "contains",
+   "direction": "forward",
+   "description": "release.test.mjs defines captureWarnings",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/desktop/scripts/build-policy.mjs",
+   "target": "function:apps/desktop/scripts/build-policy.mjs:listKeychainIdentities",
+   "type": "contains",
+   "direction": "forward",
+   "description": "build-policy.mjs defines listKeychainIdentities",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/desktop/scripts/build-policy.mjs",
+   "target": "function:apps/desktop/scripts/build-policy.mjs:asIdentityEntry",
+   "type": "contains",
+   "direction": "forward",
+   "description": "build-policy.mjs defines asIdentityEntry",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/desktop/scripts/build-policy.mjs",
+   "target": "function:apps/desktop/scripts/build-policy.mjs:identityRank",
+   "type": "contains",
+   "direction": "forward",
+   "description": "build-policy.mjs defines identityRank",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/desktop/scripts/build-policy.mjs",
+   "target": "function:apps/desktop/scripts/build-policy.mjs:resolveBuildPolicy",
+   "type": "contains",
+   "direction": "forward",
+   "description": "build-policy.mjs defines resolveBuildPolicy",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/desktop/scripts/build-policy.mjs",
+   "target": "function:apps/desktop/scripts/build-policy.mjs:resolveBuildPolicy",
+   "type": "exports",
+   "direction": "forward",
+   "description": "build-policy.mjs exports resolveBuildPolicy",
+   "weight": 0.7
+  },
+  {
+   "source": "function:apps/desktop/scripts/build-policy.mjs:resolveBuildPolicy",
+   "target": "function:apps/desktop/scripts/build-policy.mjs:identityRank",
+   "type": "calls",
+   "direction": "forward",
+   "description": "resolveBuildPolicy calls identityRank",
+   "weight": 0.6
+  },
+  {
+   "source": "file:apps/desktop/release.test.mjs",
+   "target": "file:apps/desktop/scripts/build-policy.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "release.test.mjs imports build-policy.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/desktop/scripts/build.mjs",
+   "target": "file:apps/desktop/scripts/build-policy.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "build.mjs imports build-policy.mjs",
+   "weight": 0.8
+  }
+ ]
+}

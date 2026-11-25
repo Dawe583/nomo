@@ -1,0 +1,3292 @@
+{
+ "nodes": [
+  {
+   "id": "file:packages/policy/src/packs.test.ts",
+   "type": "file",
+   "name": "packs.test.ts",
+   "filePath": "packages/policy/src/packs.test.ts",
+   "summary": "packs.test.ts \u2014 typescript code, 86 lines, 0 functions, 0 classes, 0 exports, 3 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/policy/src/packs.ts",
+   "type": "file",
+   "name": "packs.ts",
+   "filePath": "packages/policy/src/packs.ts",
+   "summary": "packs.ts \u2014 typescript code, 37 lines, 2 functions, 1 classes, 3 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/policy/src/packs.ts:listPacks",
+   "type": "function",
+   "name": "listPacks",
+   "filePath": "packages/policy/src/packs.ts",
+   "lineRange": [
+    17,
+    19
+   ],
+   "summary": "listPacks() \u2014 function in packs.ts, lines 17-19.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/policy/src/packs.ts:loadPack",
+   "type": "function",
+   "name": "loadPack",
+   "filePath": "packages/policy/src/packs.ts",
+   "lineRange": [
+    21,
+    37
+   ],
+   "summary": "loadPack(name, dir) \u2014 function in packs.ts, lines 21-37.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:packages/policy/src/packs.ts:PackError",
+   "type": "class",
+   "name": "PackError",
+   "filePath": "packages/policy/src/packs.ts",
+   "lineRange": [
+    10,
+    15
+   ],
+   "summary": "PackError \u2014 class in packs.ts, lines 10-15.",
+   "tags": [
+    "typescript",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/policy/src/rules.test.ts",
+   "type": "file",
+   "name": "rules.test.ts",
+   "filePath": "packages/policy/src/rules.test.ts",
+   "summary": "rules.test.ts \u2014 typescript code, 421 lines, 1 functions, 0 classes, 0 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/policy/src/rules.test.ts:call",
+   "type": "function",
+   "name": "call",
+   "filePath": "packages/policy/src/rules.test.ts",
+   "lineRange": [
+    13,
+    20
+   ],
+   "summary": "call(over) \u2014 function in rules.test.ts, lines 13-20.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/policy/src/rules.ts",
+   "type": "file",
+   "name": "rules.ts",
+   "filePath": "packages/policy/src/rules.ts",
+   "summary": "rules.ts \u2014 typescript code, 259 lines, 3 functions, 0 classes, 3 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/policy/src/rules.ts:validatePolicyFile",
+   "type": "function",
+   "name": "validatePolicyFile",
+   "filePath": "packages/policy/src/rules.ts",
+   "lineRange": [
+    72,
+    205
+   ],
+   "summary": "validatePolicyFile(value) \u2014 function in rules.ts, lines 72-205.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/policy/src/rules.ts:blastRadiusErrors",
+   "type": "function",
+   "name": "blastRadiusErrors",
+   "filePath": "packages/policy/src/rules.ts",
+   "lineRange": [
+    213,
+    241
+   ],
+   "summary": "blastRadiusErrors(path, value) \u2014 function in rules.ts, lines 213-241.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/policy/src/rules.ts:loadPolicy",
+   "type": "function",
+   "name": "loadPolicy",
+   "filePath": "packages/policy/src/rules.ts",
+   "lineRange": [
+    249,
+    259
+   ],
+   "summary": "loadPolicy(text) \u2014 function in rules.ts, lines 249-259.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/policy/src/skeptics.test.ts",
+   "type": "file",
+   "name": "skeptics.test.ts",
+   "filePath": "packages/policy/src/skeptics.test.ts",
+   "summary": "skeptics.test.ts \u2014 typescript code, 143 lines, 4 functions, 0 classes, 0 exports, 5 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/policy/src/skeptics.test.ts:call",
+   "type": "function",
+   "name": "call",
+   "filePath": "packages/policy/src/skeptics.test.ts",
+   "lineRange": [
+    10,
+    17
+   ],
+   "summary": "call(over) \u2014 function in skeptics.test.ts, lines 10-17.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/policy/src/skeptics.test.ts:baseCall",
+   "type": "function",
+   "name": "baseCall",
+   "filePath": "packages/policy/src/skeptics.test.ts",
+   "lineRange": [
+    19,
+    28
+   ],
+   "summary": "baseCall(over) \u2014 function in skeptics.test.ts, lines 19-28.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/policy/src/skeptics.test.ts:approveAs",
+   "type": "function",
+   "name": "approveAs",
+   "filePath": "packages/policy/src/skeptics.test.ts",
+   "lineRange": [
+    30,
+    33
+   ],
+   "summary": "approveAs(queue, id, release, caller) \u2014 function in skeptics.test.ts, lines 30-33.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/policy/src/skeptics.test.ts:assertReleased",
+   "type": "function",
+   "name": "assertReleased",
+   "filePath": "packages/policy/src/skeptics.test.ts",
+   "lineRange": [
+    35,
+    39
+   ],
+   "summary": "assertReleased(resolution) \u2014 function in skeptics.test.ts, lines 35-39.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/proxy/bin/nomo-proxy.mjs",
+   "type": "file",
+   "name": "nomo-proxy.mjs",
+   "filePath": "packages/proxy/bin/nomo-proxy.mjs",
+   "summary": "nomo-proxy.mjs \u2014 javascript code, 77 lines, 3 functions, 0 classes, 0 exports, 4 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/bin/nomo-proxy.mjs:readFlag",
+   "type": "function",
+   "name": "readFlag",
+   "filePath": "packages/proxy/bin/nomo-proxy.mjs",
+   "lineRange": [
+    11,
+    17
+   ],
+   "summary": "readFlag(name) \u2014 function in nomo-proxy.mjs, lines 11-17.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/bin/nomo-proxy.mjs:usage",
+   "type": "function",
+   "name": "usage",
+   "filePath": "packages/proxy/bin/nomo-proxy.mjs",
+   "lineRange": [
+    19,
+    21
+   ],
+   "summary": "usage() \u2014 function in nomo-proxy.mjs, lines 19-21.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/bin/nomo-proxy.mjs:main",
+   "type": "function",
+   "name": "main",
+   "filePath": "packages/proxy/bin/nomo-proxy.mjs",
+   "lineRange": [
+    23,
+    66
+   ],
+   "summary": "main() \u2014 function in nomo-proxy.mjs, lines 23-66.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/proxy/src/approval-loop.test.ts",
+   "type": "file",
+   "name": "approval-loop.test.ts",
+   "filePath": "packages/proxy/src/approval-loop.test.ts",
+   "summary": "approval-loop.test.ts \u2014 typescript code, 218 lines, 5 functions, 0 classes, 0 exports, 6 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/proxy/src/approval-loop.test.ts:makeHarness",
+   "type": "function",
+   "name": "makeHarness",
+   "filePath": "packages/proxy/src/approval-loop.test.ts",
+   "lineRange": [
+    127,
+    161
+   ],
+   "summary": "makeHarness(decision, broker, posture) \u2014 function in approval-loop.test.ts, lines 127-161.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/approval-loop.test.ts:fakeUpstream",
+   "type": "function",
+   "name": "fakeUpstream",
+   "filePath": "packages/proxy/src/approval-loop.test.ts",
+   "lineRange": [
+    163,
+    175
+   ],
+   "summary": "fakeUpstream(events, seen) \u2014 function in approval-loop.test.ts, lines 163-175.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/approval-loop.test.ts:policyText",
+   "type": "function",
+   "name": "policyText",
+   "filePath": "packages/proxy/src/approval-loop.test.ts",
+   "lineRange": [
+    181,
+    191
+   ],
+   "summary": "policyText(decision) \u2014 function in approval-loop.test.ts, lines 181-191.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/approval-loop.test.ts:toolCall",
+   "type": "function",
+   "name": "toolCall",
+   "filePath": "packages/proxy/src/approval-loop.test.ts",
+   "lineRange": [
+    193,
+    195
+   ],
+   "summary": "toolCall(id, name) \u2014 function in approval-loop.test.ts, lines 193-195.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/approval-loop.test.ts:brokerWithNotification",
+   "type": "function",
+   "name": "brokerWithNotification",
+   "filePath": "packages/proxy/src/approval-loop.test.ts",
+   "lineRange": [
+    199,
+    218
+   ],
+   "summary": "brokerWithNotification() \u2014 function in approval-loop.test.ts, lines 199-218.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/proxy/src/approval-loop.ts",
+   "type": "file",
+   "name": "approval-loop.ts",
+   "filePath": "packages/proxy/src/approval-loop.ts",
+   "summary": "approval-loop.ts \u2014 typescript code, 130 lines, 5 functions, 0 classes, 1 exports, 3 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/approval-loop.ts:pumpApprovals",
+   "type": "function",
+   "name": "pumpApprovals",
+   "filePath": "packages/proxy/src/approval-loop.ts",
+   "lineRange": [
+    29,
+    95
+   ],
+   "summary": "pumpApprovals(broker, clock, options) \u2014 function in approval-loop.ts, lines 29-95.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/approval-loop.ts:newestHold",
+   "type": "function",
+   "name": "newestHold",
+   "filePath": "packages/proxy/src/approval-loop.ts",
+   "lineRange": [
+    97,
+    102
+   ],
+   "summary": "newestHold(queue, tool) \u2014 function in approval-loop.ts, lines 97-102.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/approval-loop.ts:policyCallFromHeld",
+   "type": "function",
+   "name": "policyCallFromHeld",
+   "filePath": "packages/proxy/src/approval-loop.ts",
+   "lineRange": [
+    104,
+    117
+   ],
+   "summary": "policyCallFromHeld(held) \u2014 function in approval-loop.ts, lines 104-117.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/approval-loop.ts:connectorFromTool",
+   "type": "function",
+   "name": "connectorFromTool",
+   "filePath": "packages/proxy/src/approval-loop.ts",
+   "lineRange": [
+    119,
+    122
+   ],
+   "summary": "connectorFromTool(tool) \u2014 function in approval-loop.ts, lines 119-122.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/approval-loop.ts:watchDecisions",
+   "type": "function",
+   "name": "watchDecisions",
+   "filePath": "packages/proxy/src/approval-loop.ts",
+   "lineRange": [
+    124,
+    130
+   ],
+   "summary": "watchDecisions(_dir, changed, _failed) \u2014 function in approval-loop.ts, lines 124-130.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/registry/src/audit.test.ts",
+   "type": "file",
+   "name": "audit.test.ts",
+   "filePath": "packages/registry/src/audit.test.ts",
+   "summary": "audit.test.ts \u2014 typescript code, 123 lines, 2 functions, 0 classes, 0 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/registry/src/audit.test.ts:isFallback",
+   "type": "function",
+   "name": "isFallback",
+   "filePath": "packages/registry/src/audit.test.ts",
+   "lineRange": [
+    23,
+    25
+   ],
+   "summary": "isFallback(c) \u2014 function in audit.test.ts, lines 23-25.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/registry/src/audit.test.ts:guardFacts",
+   "type": "function",
+   "name": "guardFacts",
+   "filePath": "packages/registry/src/audit.test.ts",
+   "lineRange": [
+    27,
+    45
+   ],
+   "summary": "guardFacts(c, into) \u2014 function in audit.test.ts, lines 27-45.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/registry/src/evaluate.ts",
+   "type": "file",
+   "name": "evaluate.ts",
+   "filePath": "packages/registry/src/evaluate.ts",
+   "summary": "evaluate.ts \u2014 typescript code, 141 lines, 3 functions, 0 classes, 2 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/registry/src/evaluate.ts:evaluate",
+   "type": "function",
+   "name": "evaluate",
+   "filePath": "packages/registry/src/evaluate.ts",
+   "lineRange": [
+    56,
+    105
+   ],
+   "summary": "evaluate(entry, context) \u2014 function in evaluate.ts, lines 56-105.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/registry/src/evaluate.ts:classifyTool",
+   "type": "function",
+   "name": "classifyTool",
+   "filePath": "packages/registry/src/evaluate.ts",
+   "lineRange": [
+    113,
+    121
+   ],
+   "summary": "classifyTool(toolId, context) \u2014 function in evaluate.ts, lines 113-121.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/registry/src/evaluate.ts:collectFactNames",
+   "type": "function",
+   "name": "collectFactNames",
+   "filePath": "packages/registry/src/evaluate.ts",
+   "lineRange": [
+    123,
+    141
+   ],
+   "summary": "collectFactNames(precondition, into) \u2014 function in evaluate.ts, lines 123-141.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/registry/src/precondition.ts",
+   "type": "file",
+   "name": "precondition.ts",
+   "filePath": "packages/registry/src/precondition.ts",
+   "summary": "precondition.ts \u2014 typescript code, 197 lines, 3 functions, 0 classes, 3 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/registry/src/precondition.ts:validatePrecondition",
+   "type": "function",
+   "name": "validatePrecondition",
+   "filePath": "packages/registry/src/precondition.ts",
+   "lineRange": [
+    80,
+    82
+   ],
+   "summary": "validatePrecondition(value, path) \u2014 function in precondition.ts, lines 80-82.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/registry/src/precondition.ts:validatePreconditionAt",
+   "type": "function",
+   "name": "validatePreconditionAt",
+   "filePath": "packages/registry/src/precondition.ts",
+   "lineRange": [
+    84,
+    151
+   ],
+   "summary": "validatePreconditionAt(value, path, depth) \u2014 function in precondition.ts, lines 84-151.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/registry/src/precondition.ts:holds",
+   "type": "function",
+   "name": "holds",
+   "filePath": "packages/registry/src/precondition.ts",
+   "lineRange": [
+    161,
+    197
+   ],
+   "summary": "holds(precondition, facts, args, depth) \u2014 function in precondition.ts, lines 161-197.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/registry/src/registry.ts",
+   "type": "file",
+   "name": "registry.ts",
+   "filePath": "packages/registry/src/registry.ts",
+   "summary": "registry.ts \u2014 typescript code, 3112 lines, 9 functions, 0 classes, 13 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "function:packages/registry/src/registry.ts:worstCase",
+   "type": "function",
+   "name": "worstCase",
+   "filePath": "packages/registry/src/registry.ts",
+   "lineRange": [
+    3030,
+    3032
+   ],
+   "summary": "worstCase(entry) \u2014 function in registry.ts, lines 3030-3032.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/registry/src/registry.ts:bestCase",
+   "type": "function",
+   "name": "bestCase",
+   "filePath": "packages/registry/src/registry.ts",
+   "lineRange": [
+    3035,
+    3037
+   ],
+   "summary": "bestCase(entry) \u2014 function in registry.ts, lines 3035-3037.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/registry/src/registry.ts:isConditional",
+   "type": "function",
+   "name": "isConditional",
+   "filePath": "packages/registry/src/registry.ts",
+   "lineRange": [
+    3044,
+    3046
+   ],
+   "summary": "isConditional(entry) \u2014 function in registry.ts, lines 3044-3046.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/registry/src/registry.ts:spread",
+   "type": "function",
+   "name": "spread",
+   "filePath": "packages/registry/src/registry.ts",
+   "lineRange": [
+    3049,
+    3051
+   ],
+   "summary": "spread(entry) \u2014 function in registry.ts, lines 3049-3051.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/registry/src/registry.ts:findEntry",
+   "type": "function",
+   "name": "findEntry",
+   "filePath": "packages/registry/src/registry.ts",
+   "lineRange": [
+    3053,
+    3055
+   ],
+   "summary": "findEntry(id) \u2014 function in registry.ts, lines 3053-3055.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/registry/src/registry.ts:searchRegistry",
+   "type": "function",
+   "name": "searchRegistry",
+   "filePath": "packages/registry/src/registry.ts",
+   "lineRange": [
+    3065,
+    3080
+   ],
+   "summary": "searchRegistry(query) \u2014 function in registry.ts, lines 3065-3080.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/registry/src/registry.ts:registryVendors",
+   "type": "function",
+   "name": "registryVendors",
+   "filePath": "packages/registry/src/registry.ts",
+   "lineRange": [
+    3082,
+    3088
+   ],
+   "summary": "registryVendors() \u2014 function in registry.ts, lines 3082-3088.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/registry/src/registry.ts:registryTags",
+   "type": "function",
+   "name": "registryTags",
+   "filePath": "packages/registry/src/registry.ts",
+   "lineRange": [
+    3090,
+    3094
+   ],
+   "summary": "registryTags() \u2014 function in registry.ts, lines 3090-3094.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/registry/src/registry.ts:registryStats",
+   "type": "function",
+   "name": "registryStats",
+   "filePath": "packages/registry/src/registry.ts",
+   "lineRange": [
+    3096,
+    3112
+   ],
+   "summary": "registryStats() \u2014 function in registry.ts, lines 3096-3112.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/connector.test.ts",
+   "type": "file",
+   "name": "connector.test.ts",
+   "filePath": "packages/workbench/src/connector.test.ts",
+   "summary": "connector.test.ts \u2014 typescript code, 731 lines, 9 functions, 0 classes, 0 exports, 10 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "function:packages/workbench/src/connector.test.ts:catalogServer",
+   "type": "function",
+   "name": "catalogServer",
+   "filePath": "packages/workbench/src/connector.test.ts",
+   "lineRange": [
+    21,
+    61
+   ],
+   "summary": "catalogServer(tools, status) \u2014 function in connector.test.ts, lines 21-61.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/connector.test.ts:provider",
+   "type": "function",
+   "name": "provider",
+   "filePath": "packages/workbench/src/connector.test.ts",
+   "lineRange": [
+    63,
+    66
+   ],
+   "summary": "provider(url) \u2014 function in connector.test.ts, lines 63-66.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/connector.test.ts:connectorState",
+   "type": "function",
+   "name": "connectorState",
+   "filePath": "packages/workbench/src/connector.test.ts",
+   "lineRange": [
+    68,
+    72
+   ],
+   "summary": "connectorState(app, id) \u2014 function in connector.test.ts, lines 68-72.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/connector.test.ts:confirmedConnector",
+   "type": "function",
+   "name": "confirmedConnector",
+   "filePath": "packages/workbench/src/connector.test.ts",
+   "lineRange": [
+    388,
+    401
+   ],
+   "summary": "confirmedConnector(app, url, name, policy\u2026) \u2014 function in connector.test.ts, lines 388-401.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/connector.test.ts:phasedProvider",
+   "type": "function",
+   "name": "phasedProvider",
+   "filePath": "packages/workbench/src/connector.test.ts",
+   "lineRange": [
+    407,
+    436
+   ],
+   "summary": "phasedProvider(pick, gate) \u2014 function in connector.test.ts, lines 407-436.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/connector.test.ts:deleteName",
+   "type": "function",
+   "name": "deleteName",
+   "filePath": "packages/workbench/src/connector.test.ts",
+   "lineRange": [
+    438,
+    440
+   ],
+   "summary": "deleteName(tools) \u2014 function in connector.test.ts, lines 438-440.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/connector.test.ts:unmappedName",
+   "type": "function",
+   "name": "unmappedName",
+   "filePath": "packages/workbench/src/connector.test.ts",
+   "lineRange": [
+    442,
+    444
+   ],
+   "summary": "unmappedName(tools) \u2014 function in connector.test.ts, lines 442-444.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/connector.test.ts:refusalSeed",
+   "type": "function",
+   "name": "refusalSeed",
+   "filePath": "packages/workbench/src/connector.test.ts",
+   "lineRange": [
+    450,
+    456
+   ],
+   "summary": "refusalSeed(tool, klass) \u2014 function in connector.test.ts, lines 450-456.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/connector.test.ts:signRefusals",
+   "type": "function",
+   "name": "signRefusals",
+   "filePath": "packages/workbench/src/connector.test.ts",
+   "lineRange": [
+    466,
+    503
+   ],
+   "summary": "signRefusals(app, workspace, bodies) \u2014 function in connector.test.ts, lines 466-503.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/harness-skill-promotion.test.ts",
+   "type": "file",
+   "name": "harness-skill-promotion.test.ts",
+   "filePath": "packages/workbench/src/harness-skill-promotion.test.ts",
+   "summary": "harness-skill-promotion.test.ts \u2014 typescript code, 495 lines, 11 functions, 0 classes, 0 exports, 6 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-skill-promotion.test.ts:models",
+   "type": "function",
+   "name": "models",
+   "filePath": "packages/workbench/src/harness-skill-promotion.test.ts",
+   "lineRange": [
+    94,
+    94
+   ],
+   "summary": "models() \u2014 function in harness-skill-promotion.test.ts, lines 94-94.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-skill-promotion.test.ts:answer",
+   "type": "function",
+   "name": "answer",
+   "filePath": "packages/workbench/src/harness-skill-promotion.test.ts",
+   "lineRange": [
+    95,
+    100
+   ],
+   "summary": "answer() \u2014 function in harness-skill-promotion.test.ts, lines 95-100.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-skill-promotion.test.ts:fixture",
+   "type": "function",
+   "name": "fixture",
+   "filePath": "packages/workbench/src/harness-skill-promotion.test.ts",
+   "lineRange": [
+    107,
+    139
+   ],
+   "summary": "fixture(t, extraEnv) \u2014 function in harness-skill-promotion.test.ts, lines 107-139.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-skill-promotion.test.ts:surfaceOf",
+   "type": "function",
+   "name": "surfaceOf",
+   "filePath": "packages/workbench/src/harness-skill-promotion.test.ts",
+   "lineRange": [
+    141,
+    143
+   ],
+   "summary": "surfaceOf(app) \u2014 function in harness-skill-promotion.test.ts, lines 141-143.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-skill-promotion.test.ts:lastSeq",
+   "type": "function",
+   "name": "lastSeq",
+   "filePath": "packages/workbench/src/harness-skill-promotion.test.ts",
+   "lineRange": [
+    145,
+    149
+   ],
+   "summary": "lastSeq(app, workspace) \u2014 function in harness-skill-promotion.test.ts, lines 145-149.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-skill-promotion.test.ts:lastBody",
+   "type": "function",
+   "name": "lastBody",
+   "filePath": "packages/workbench/src/harness-skill-promotion.test.ts",
+   "lineRange": [
+    151,
+    155
+   ],
+   "summary": "lastBody(app, workspace) \u2014 function in harness-skill-promotion.test.ts, lines 151-155.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-skill-promotion.test.ts:entryCount",
+   "type": "function",
+   "name": "entryCount",
+   "filePath": "packages/workbench/src/harness-skill-promotion.test.ts",
+   "lineRange": [
+    157,
+    161
+   ],
+   "summary": "entryCount(app, workspace) \u2014 function in harness-skill-promotion.test.ts, lines 157-161.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-skill-promotion.test.ts:skillProposal",
+   "type": "function",
+   "name": "skillProposal",
+   "filePath": "packages/workbench/src/harness-skill-promotion.test.ts",
+   "lineRange": [
+    163,
+    183
+   ],
+   "summary": "skillProposal(action, derivedFromSeq, body) \u2014 function in harness-skill-promotion.test.ts, lines 163-183.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-skill-promotion.test.ts:pendingSkillReview",
+   "type": "function",
+   "name": "pendingSkillReview",
+   "filePath": "packages/workbench/src/harness-skill-promotion.test.ts",
+   "lineRange": [
+    186,
+    197
+   ],
+   "summary": "pendingSkillReview(app, sessionId) \u2014 function in harness-skill-promotion.test.ts, lines 186-197.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-skill-promotion.test.ts:listFiles",
+   "type": "function",
+   "name": "listFiles",
+   "filePath": "packages/workbench/src/harness-skill-promotion.test.ts",
+   "lineRange": [
+    200,
+    208
+   ],
+   "summary": "listFiles(root, base) \u2014 function in harness-skill-promotion.test.ts, lines 200-208.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/harness-skill-promotion.test.ts:transientSuffix",
+   "type": "function",
+   "name": "transientSuffix",
+   "filePath": "packages/workbench/src/harness-skill-promotion.test.ts",
+   "lineRange": [
+    212,
+    223
+   ],
+   "summary": "transientSuffix(body) \u2014 function in harness-skill-promotion.test.ts, lines 212-223.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/learned-rules.test.ts",
+   "type": "file",
+   "name": "learned-rules.test.ts",
+   "filePath": "packages/workbench/src/learned-rules.test.ts",
+   "summary": "learned-rules.test.ts \u2014 typescript code, 430 lines, 1 functions, 0 classes, 0 exports, 5 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/workbench/src/learned-rules.test.ts:entry",
+   "type": "function",
+   "name": "entry",
+   "filePath": "packages/workbench/src/learned-rules.test.ts",
+   "lineRange": [
+    17,
+    29
+   ],
+   "summary": "entry(tool, klass, decision, attribution) \u2014 function in learned-rules.test.ts, lines 17-29.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/learned-rules.ts",
+   "type": "file",
+   "name": "learned-rules.ts",
+   "filePath": "packages/workbench/src/learned-rules.ts",
+   "summary": "learned-rules.ts \u2014 typescript code, 254 lines, 8 functions, 0 classes, 6 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/workbench/src/learned-rules.ts:learnedRuleRationale",
+   "type": "function",
+   "name": "learnedRuleRationale",
+   "filePath": "packages/workbench/src/learned-rules.ts",
+   "lineRange": [
+    39,
+    41
+   ],
+   "summary": "learnedRuleRationale(repeats) \u2014 function in learned-rules.ts, lines 39-41.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/learned-rules.ts:isRefusal",
+   "type": "function",
+   "name": "isRefusal",
+   "filePath": "packages/workbench/src/learned-rules.ts",
+   "lineRange": [
+    64,
+    70
+   ],
+   "summary": "isRefusal(decision) \u2014 function in learned-rules.ts, lines 64-70.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/learned-rules.ts:field",
+   "type": "function",
+   "name": "field",
+   "filePath": "packages/workbench/src/learned-rules.ts",
+   "lineRange": [
+    72,
+    75
+   ],
+   "summary": "field(body, key) \u2014 function in learned-rules.ts, lines 72-75.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/learned-rules.ts:learnedRuleGroups",
+   "type": "function",
+   "name": "learnedRuleGroups",
+   "filePath": "packages/workbench/src/learned-rules.ts",
+   "lineRange": [
+    95,
+    187
+   ],
+   "summary": "learnedRuleGroups(entries, minRepeats) \u2014 function in learned-rules.ts, lines 95-187.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/learned-rules.ts:learnedRule",
+   "type": "function",
+   "name": "learnedRule",
+   "filePath": "packages/workbench/src/learned-rules.ts",
+   "lineRange": [
+    194,
+    202
+   ],
+   "summary": "learnedRule(group) \u2014 function in learned-rules.ts, lines 194-202.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/learned-rules.ts:mineLearnedRules",
+   "type": "function",
+   "name": "mineLearnedRules",
+   "filePath": "packages/workbench/src/learned-rules.ts",
+   "lineRange": [
+    204,
+    209
+   ],
+   "summary": "mineLearnedRules(entries, minRepeats) \u2014 function in learned-rules.ts, lines 204-209.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/learned-rules.ts:policyScalar",
+   "type": "function",
+   "name": "policyScalar",
+   "filePath": "packages/workbench/src/learned-rules.ts",
+   "lineRange": [
+    219,
+    226
+   ],
+   "summary": "policyScalar(value) \u2014 function in learned-rules.ts, lines 219-226.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/learned-rules.ts:ruleAsPolicyText",
+   "type": "function",
+   "name": "ruleAsPolicyText",
+   "filePath": "packages/workbench/src/learned-rules.ts",
+   "lineRange": [
+    238,
+    254
+   ],
+   "summary": "ruleAsPolicyText(rule) \u2014 function in learned-rules.ts, lines 238-254.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/policy-profile.ts",
+   "type": "file",
+   "name": "policy-profile.ts",
+   "filePath": "packages/workbench/src/policy-profile.ts",
+   "summary": "policy-profile.ts \u2014 typescript code, 108 lines, 2 functions, 0 classes, 4 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/policy-profile.ts:listPolicyProfiles",
+   "type": "function",
+   "name": "listPolicyProfiles",
+   "filePath": "packages/workbench/src/policy-profile.ts",
+   "lineRange": [
+    50,
+    65
+   ],
+   "summary": "listPolicyProfiles(policyPath) \u2014 function in policy-profile.ts, lines 50-65.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/policy-profile.ts:resolvePolicyProfile",
+   "type": "function",
+   "name": "resolvePolicyProfile",
+   "filePath": "packages/workbench/src/policy-profile.ts",
+   "lineRange": [
+    72,
+    109
+   ],
+   "summary": "resolvePolicyProfile(name, policyPath) \u2014 function in policy-profile.ts, lines 72-109.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/reversal-record.test.ts",
+   "type": "file",
+   "name": "reversal-record.test.ts",
+   "filePath": "packages/workbench/src/reversal-record.test.ts",
+   "summary": "reversal-record.test.ts \u2014 typescript code, 164 lines, 1 functions, 0 classes, 0 exports, 7 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/workbench/src/reversal-record.test.ts:governedSession",
+   "type": "function",
+   "name": "governedSession",
+   "filePath": "packages/workbench/src/reversal-record.test.ts",
+   "lineRange": [
+    24,
+    85
+   ],
+   "summary": "governedSession(t) \u2014 function in reversal-record.test.ts, lines 24-85.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:paid/channels/slack.test.ts",
+   "type": "file",
+   "name": "slack.test.ts",
+   "filePath": "paid/channels/slack.test.ts",
+   "summary": "slack.test.ts \u2014 typescript code, 158 lines, 0 functions, 0 classes, 0 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:paid/channels/slack.ts",
+   "type": "file",
+   "name": "slack.ts",
+   "filePath": "paid/channels/slack.ts",
+   "summary": "slack.ts \u2014 typescript code, 176 lines, 5 functions, 1 classes, 4 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:paid/channels/slack.ts:checkSlackWebhookUrl",
+   "type": "function",
+   "name": "checkSlackWebhookUrl",
+   "filePath": "paid/channels/slack.ts",
+   "lineRange": [
+    45,
+    56
+   ],
+   "summary": "checkSlackWebhookUrl(value) \u2014 function in slack.ts, lines 45-56.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:paid/channels/slack.ts:operatorText",
+   "type": "function",
+   "name": "operatorText",
+   "filePath": "paid/channels/slack.ts",
+   "lineRange": [
+    58,
+    71
+   ],
+   "summary": "operatorText(text, webhookUrl) \u2014 function in slack.ts, lines 58-71.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:paid/channels/slack.ts:touched",
+   "type": "function",
+   "name": "touched",
+   "filePath": "paid/channels/slack.ts",
+   "lineRange": [
+    97,
+    99
+   ],
+   "summary": "touched(call) \u2014 function in slack.ts, lines 97-99.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:paid/channels/slack.ts:slackPayload",
+   "type": "function",
+   "name": "slackPayload",
+   "filePath": "paid/channels/slack.ts",
+   "lineRange": [
+    101,
+    131
+   ],
+   "summary": "slackPayload(call, resolveUrl) \u2014 function in slack.ts, lines 101-131.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:paid/channels/slack.ts:postHoldToSlack",
+   "type": "function",
+   "name": "postHoldToSlack",
+   "filePath": "paid/channels/slack.ts",
+   "lineRange": [
+    133,
+    157
+   ],
+   "summary": "postHoldToSlack(webhookUrl, call, resolveUrl, fetcher) \u2014 function in slack.ts, lines 133-157.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:paid/channels/slack.ts:SlackChannel",
+   "type": "class",
+   "name": "SlackChannel",
+   "filePath": "paid/channels/slack.ts",
+   "lineRange": [
+    159,
+    176
+   ],
+   "summary": "SlackChannel \u2014 class in slack.ts, lines 159-176, methods: postHold.",
+   "tags": [
+    "typescript",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/src/moment.mjs",
+   "type": "file",
+   "name": "moment.mjs",
+   "filePath": "scripts/src/moment.mjs",
+   "summary": "moment.mjs \u2014 javascript code, 150 lines, 4 functions, 0 classes, 0 exports, 5 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:scripts/src/moment.mjs:checkedDecision",
+   "type": "function",
+   "name": "checkedDecision",
+   "filePath": "scripts/src/moment.mjs",
+   "lineRange": [
+    47,
+    52
+   ],
+   "summary": "checkedDecision(scenario) \u2014 function in moment.mjs, lines 47-52.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/moment.mjs:runScenario",
+   "type": "function",
+   "name": "runScenario",
+   "filePath": "scripts/src/moment.mjs",
+   "lineRange": [
+    54,
+    101
+   ],
+   "summary": "runScenario(scenario) \u2014 function in moment.mjs, lines 54-101.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/moment.mjs:runText",
+   "type": "function",
+   "name": "runText",
+   "filePath": "scripts/src/moment.mjs",
+   "lineRange": [
+    103,
+    110
+   ],
+   "summary": "runText() \u2014 function in moment.mjs, lines 103-110.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/moment.mjs:runTui",
+   "type": "function",
+   "name": "runTui",
+   "filePath": "scripts/src/moment.mjs",
+   "lineRange": [
+    112,
+    138
+   ],
+   "summary": "runTui() \u2014 function in moment.mjs, lines 112-138.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  }
+ ],
+ "edges": [
+  {
+   "source": "file:packages/policy/src/packs.ts",
+   "target": "function:packages/policy/src/packs.ts:listPacks",
+   "type": "contains",
+   "direction": "forward",
+   "description": "packs.ts defines listPacks",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/policy/src/packs.ts",
+   "target": "function:packages/policy/src/packs.ts:listPacks",
+   "type": "exports",
+   "direction": "forward",
+   "description": "packs.ts exports listPacks",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/policy/src/packs.ts",
+   "target": "function:packages/policy/src/packs.ts:loadPack",
+   "type": "contains",
+   "direction": "forward",
+   "description": "packs.ts defines loadPack",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/policy/src/packs.ts",
+   "target": "function:packages/policy/src/packs.ts:loadPack",
+   "type": "exports",
+   "direction": "forward",
+   "description": "packs.ts exports loadPack",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/policy/src/packs.ts",
+   "target": "class:packages/policy/src/packs.ts:PackError",
+   "type": "contains",
+   "direction": "forward",
+   "description": "packs.ts defines class PackError",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/policy/src/rules.test.ts",
+   "target": "function:packages/policy/src/rules.test.ts:call",
+   "type": "contains",
+   "direction": "forward",
+   "description": "rules.test.ts defines call",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/policy/src/rules.ts",
+   "target": "function:packages/policy/src/rules.ts:validatePolicyFile",
+   "type": "contains",
+   "direction": "forward",
+   "description": "rules.ts defines validatePolicyFile",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/policy/src/rules.ts",
+   "target": "function:packages/policy/src/rules.ts:validatePolicyFile",
+   "type": "exports",
+   "direction": "forward",
+   "description": "rules.ts exports validatePolicyFile",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/policy/src/rules.ts",
+   "target": "function:packages/policy/src/rules.ts:blastRadiusErrors",
+   "type": "contains",
+   "direction": "forward",
+   "description": "rules.ts defines blastRadiusErrors",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/policy/src/rules.ts",
+   "target": "function:packages/policy/src/rules.ts:loadPolicy",
+   "type": "contains",
+   "direction": "forward",
+   "description": "rules.ts defines loadPolicy",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/policy/src/rules.ts",
+   "target": "function:packages/policy/src/rules.ts:loadPolicy",
+   "type": "exports",
+   "direction": "forward",
+   "description": "rules.ts exports loadPolicy",
+   "weight": 0.7
+  },
+  {
+   "source": "function:packages/policy/src/rules.ts:validatePolicyFile",
+   "target": "function:packages/policy/src/rules.ts:blastRadiusErrors",
+   "type": "calls",
+   "direction": "forward",
+   "description": "validatePolicyFile calls blastRadiusErrors",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/policy/src/rules.ts:loadPolicy",
+   "target": "function:packages/policy/src/rules.ts:validatePolicyFile",
+   "type": "calls",
+   "direction": "forward",
+   "description": "loadPolicy calls validatePolicyFile",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/policy/src/skeptics.test.ts",
+   "target": "function:packages/policy/src/skeptics.test.ts:call",
+   "type": "contains",
+   "direction": "forward",
+   "description": "skeptics.test.ts defines call",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/policy/src/skeptics.test.ts",
+   "target": "function:packages/policy/src/skeptics.test.ts:baseCall",
+   "type": "contains",
+   "direction": "forward",
+   "description": "skeptics.test.ts defines baseCall",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/policy/src/skeptics.test.ts",
+   "target": "function:packages/policy/src/skeptics.test.ts:approveAs",
+   "type": "contains",
+   "direction": "forward",
+   "description": "skeptics.test.ts defines approveAs",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/policy/src/skeptics.test.ts",
+   "target": "function:packages/policy/src/skeptics.test.ts:assertReleased",
+   "type": "contains",
+   "direction": "forward",
+   "description": "skeptics.test.ts defines assertReleased",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/bin/nomo-proxy.mjs",
+   "target": "function:packages/proxy/bin/nomo-proxy.mjs:readFlag",
+   "type": "contains",
+   "direction": "forward",
+   "description": "nomo-proxy.mjs defines readFlag",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/bin/nomo-proxy.mjs",
+   "target": "function:packages/proxy/bin/nomo-proxy.mjs:usage",
+   "type": "contains",
+   "direction": "forward",
+   "description": "nomo-proxy.mjs defines usage",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/bin/nomo-proxy.mjs",
+   "target": "function:packages/proxy/bin/nomo-proxy.mjs:main",
+   "type": "contains",
+   "direction": "forward",
+   "description": "nomo-proxy.mjs defines main",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/proxy/bin/nomo-proxy.mjs:main",
+   "target": "function:packages/proxy/bin/nomo-proxy.mjs:readFlag",
+   "type": "calls",
+   "direction": "forward",
+   "description": "main calls readFlag",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/proxy/bin/nomo-proxy.mjs:main",
+   "target": "function:packages/proxy/bin/nomo-proxy.mjs:usage",
+   "type": "calls",
+   "direction": "forward",
+   "description": "main calls usage",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/proxy/src/approval-loop.test.ts",
+   "target": "function:packages/proxy/src/approval-loop.test.ts:makeHarness",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approval-loop.test.ts defines makeHarness",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/approval-loop.test.ts",
+   "target": "function:packages/proxy/src/approval-loop.test.ts:fakeUpstream",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approval-loop.test.ts defines fakeUpstream",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/approval-loop.test.ts",
+   "target": "function:packages/proxy/src/approval-loop.test.ts:policyText",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approval-loop.test.ts defines policyText",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/approval-loop.test.ts",
+   "target": "function:packages/proxy/src/approval-loop.test.ts:toolCall",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approval-loop.test.ts defines toolCall",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/approval-loop.test.ts",
+   "target": "function:packages/proxy/src/approval-loop.test.ts:brokerWithNotification",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approval-loop.test.ts defines brokerWithNotification",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/proxy/src/approval-loop.test.ts:makeHarness",
+   "target": "function:packages/proxy/src/approval-loop.test.ts:policyText",
+   "type": "calls",
+   "direction": "forward",
+   "description": "makeHarness calls policyText",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/proxy/src/approval-loop.ts",
+   "target": "function:packages/proxy/src/approval-loop.ts:pumpApprovals",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approval-loop.ts defines pumpApprovals",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/approval-loop.ts",
+   "target": "function:packages/proxy/src/approval-loop.ts:pumpApprovals",
+   "type": "exports",
+   "direction": "forward",
+   "description": "approval-loop.ts exports pumpApprovals",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/proxy/src/approval-loop.ts",
+   "target": "function:packages/proxy/src/approval-loop.ts:newestHold",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approval-loop.ts defines newestHold",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/approval-loop.ts",
+   "target": "function:packages/proxy/src/approval-loop.ts:policyCallFromHeld",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approval-loop.ts defines policyCallFromHeld",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/approval-loop.ts",
+   "target": "function:packages/proxy/src/approval-loop.ts:connectorFromTool",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approval-loop.ts defines connectorFromTool",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/approval-loop.ts",
+   "target": "function:packages/proxy/src/approval-loop.ts:watchDecisions",
+   "type": "contains",
+   "direction": "forward",
+   "description": "approval-loop.ts defines watchDecisions",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/proxy/src/approval-loop.ts:policyCallFromHeld",
+   "target": "function:packages/proxy/src/approval-loop.ts:connectorFromTool",
+   "type": "calls",
+   "direction": "forward",
+   "description": "policyCallFromHeld calls connectorFromTool",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/registry/src/audit.test.ts",
+   "target": "function:packages/registry/src/audit.test.ts:isFallback",
+   "type": "contains",
+   "direction": "forward",
+   "description": "audit.test.ts defines isFallback",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/registry/src/audit.test.ts",
+   "target": "function:packages/registry/src/audit.test.ts:guardFacts",
+   "type": "contains",
+   "direction": "forward",
+   "description": "audit.test.ts defines guardFacts",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/registry/src/evaluate.ts",
+   "target": "function:packages/registry/src/evaluate.ts:evaluate",
+   "type": "contains",
+   "direction": "forward",
+   "description": "evaluate.ts defines evaluate",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/registry/src/evaluate.ts",
+   "target": "function:packages/registry/src/evaluate.ts:evaluate",
+   "type": "exports",
+   "direction": "forward",
+   "description": "evaluate.ts exports evaluate",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/registry/src/evaluate.ts",
+   "target": "function:packages/registry/src/evaluate.ts:classifyTool",
+   "type": "contains",
+   "direction": "forward",
+   "description": "evaluate.ts defines classifyTool",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/registry/src/evaluate.ts",
+   "target": "function:packages/registry/src/evaluate.ts:classifyTool",
+   "type": "exports",
+   "direction": "forward",
+   "description": "evaluate.ts exports classifyTool",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/registry/src/evaluate.ts",
+   "target": "function:packages/registry/src/evaluate.ts:collectFactNames",
+   "type": "contains",
+   "direction": "forward",
+   "description": "evaluate.ts defines collectFactNames",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/registry/src/evaluate.ts:evaluate",
+   "target": "function:packages/registry/src/evaluate.ts:collectFactNames",
+   "type": "calls",
+   "direction": "forward",
+   "description": "evaluate calls collectFactNames",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/registry/src/evaluate.ts:classifyTool",
+   "target": "function:packages/registry/src/evaluate.ts:evaluate",
+   "type": "calls",
+   "direction": "forward",
+   "description": "classifyTool calls evaluate",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/registry/src/precondition.ts",
+   "target": "function:packages/registry/src/precondition.ts:validatePrecondition",
+   "type": "contains",
+   "direction": "forward",
+   "description": "precondition.ts defines validatePrecondition",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/registry/src/precondition.ts",
+   "target": "function:packages/registry/src/precondition.ts:validatePrecondition",
+   "type": "exports",
+   "direction": "forward",
+   "description": "precondition.ts exports validatePrecondition",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/registry/src/precondition.ts",
+   "target": "function:packages/registry/src/precondition.ts:validatePreconditionAt",
+   "type": "contains",
+   "direction": "forward",
+   "description": "precondition.ts defines validatePreconditionAt",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/registry/src/precondition.ts",
+   "target": "function:packages/registry/src/precondition.ts:holds",
+   "type": "contains",
+   "direction": "forward",
+   "description": "precondition.ts defines holds",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/registry/src/precondition.ts",
+   "target": "function:packages/registry/src/precondition.ts:holds",
+   "type": "exports",
+   "direction": "forward",
+   "description": "precondition.ts exports holds",
+   "weight": 0.7
+  },
+  {
+   "source": "function:packages/registry/src/precondition.ts:validatePrecondition",
+   "target": "function:packages/registry/src/precondition.ts:validatePreconditionAt",
+   "type": "calls",
+   "direction": "forward",
+   "description": "validatePrecondition calls validatePreconditionAt",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/registry/src/registry.ts",
+   "target": "function:packages/registry/src/registry.ts:worstCase",
+   "type": "contains",
+   "direction": "forward",
+   "description": "registry.ts defines worstCase",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/registry/src/registry.ts",
+   "target": "function:packages/registry/src/registry.ts:worstCase",
+   "type": "exports",
+   "direction": "forward",
+   "description": "registry.ts exports worstCase",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/registry/src/registry.ts",
+   "target": "function:packages/registry/src/registry.ts:bestCase",
+   "type": "contains",
+   "direction": "forward",
+   "description": "registry.ts defines bestCase",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/registry/src/registry.ts",
+   "target": "function:packages/registry/src/registry.ts:bestCase",
+   "type": "exports",
+   "direction": "forward",
+   "description": "registry.ts exports bestCase",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/registry/src/registry.ts",
+   "target": "function:packages/registry/src/registry.ts:isConditional",
+   "type": "contains",
+   "direction": "forward",
+   "description": "registry.ts defines isConditional",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/registry/src/registry.ts",
+   "target": "function:packages/registry/src/registry.ts:isConditional",
+   "type": "exports",
+   "direction": "forward",
+   "description": "registry.ts exports isConditional",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/registry/src/registry.ts",
+   "target": "function:packages/registry/src/registry.ts:spread",
+   "type": "contains",
+   "direction": "forward",
+   "description": "registry.ts defines spread",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/registry/src/registry.ts",
+   "target": "function:packages/registry/src/registry.ts:spread",
+   "type": "exports",
+   "direction": "forward",
+   "description": "registry.ts exports spread",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/registry/src/registry.ts",
+   "target": "function:packages/registry/src/registry.ts:findEntry",
+   "type": "contains",
+   "direction": "forward",
+   "description": "registry.ts defines findEntry",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/registry/src/registry.ts",
+   "target": "function:packages/registry/src/registry.ts:findEntry",
+   "type": "exports",
+   "direction": "forward",
+   "description": "registry.ts exports findEntry",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/registry/src/registry.ts",
+   "target": "function:packages/registry/src/registry.ts:searchRegistry",
+   "type": "contains",
+   "direction": "forward",
+   "description": "registry.ts defines searchRegistry",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/registry/src/registry.ts",
+   "target": "function:packages/registry/src/registry.ts:searchRegistry",
+   "type": "exports",
+   "direction": "forward",
+   "description": "registry.ts exports searchRegistry",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/registry/src/registry.ts",
+   "target": "function:packages/registry/src/registry.ts:registryVendors",
+   "type": "contains",
+   "direction": "forward",
+   "description": "registry.ts defines registryVendors",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/registry/src/registry.ts",
+   "target": "function:packages/registry/src/registry.ts:registryVendors",
+   "type": "exports",
+   "direction": "forward",
+   "description": "registry.ts exports registryVendors",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/registry/src/registry.ts",
+   "target": "function:packages/registry/src/registry.ts:registryTags",
+   "type": "contains",
+   "direction": "forward",
+   "description": "registry.ts defines registryTags",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/registry/src/registry.ts",
+   "target": "function:packages/registry/src/registry.ts:registryTags",
+   "type": "exports",
+   "direction": "forward",
+   "description": "registry.ts exports registryTags",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/registry/src/registry.ts",
+   "target": "function:packages/registry/src/registry.ts:registryStats",
+   "type": "contains",
+   "direction": "forward",
+   "description": "registry.ts defines registryStats",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/registry/src/registry.ts",
+   "target": "function:packages/registry/src/registry.ts:registryStats",
+   "type": "exports",
+   "direction": "forward",
+   "description": "registry.ts exports registryStats",
+   "weight": 0.7
+  },
+  {
+   "source": "function:packages/registry/src/registry.ts:isConditional",
+   "target": "function:packages/registry/src/registry.ts:worstCase",
+   "type": "calls",
+   "direction": "forward",
+   "description": "isConditional calls worstCase",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/registry/src/registry.ts:isConditional",
+   "target": "function:packages/registry/src/registry.ts:bestCase",
+   "type": "calls",
+   "direction": "forward",
+   "description": "isConditional calls bestCase",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/registry/src/registry.ts:spread",
+   "target": "function:packages/registry/src/registry.ts:worstCase",
+   "type": "calls",
+   "direction": "forward",
+   "description": "spread calls worstCase",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/registry/src/registry.ts:spread",
+   "target": "function:packages/registry/src/registry.ts:bestCase",
+   "type": "calls",
+   "direction": "forward",
+   "description": "spread calls bestCase",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/registry/src/registry.ts:searchRegistry",
+   "target": "function:packages/registry/src/registry.ts:worstCase",
+   "type": "calls",
+   "direction": "forward",
+   "description": "searchRegistry calls worstCase",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/registry/src/registry.ts:searchRegistry",
+   "target": "function:packages/registry/src/registry.ts:isConditional",
+   "type": "calls",
+   "direction": "forward",
+   "description": "searchRegistry calls isConditional",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/registry/src/registry.ts:registryStats",
+   "target": "function:packages/registry/src/registry.ts:worstCase",
+   "type": "calls",
+   "direction": "forward",
+   "description": "registryStats calls worstCase",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/registry/src/registry.ts:registryStats",
+   "target": "function:packages/registry/src/registry.ts:registryVendors",
+   "type": "calls",
+   "direction": "forward",
+   "description": "registryStats calls registryVendors",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/registry/src/registry.ts:registryStats",
+   "target": "function:packages/registry/src/registry.ts:spread",
+   "type": "calls",
+   "direction": "forward",
+   "description": "registryStats calls spread",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/workbench/src/connector.test.ts",
+   "target": "function:packages/workbench/src/connector.test.ts:catalogServer",
+   "type": "contains",
+   "direction": "forward",
+   "description": "connector.test.ts defines catalogServer",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/connector.test.ts",
+   "target": "function:packages/workbench/src/connector.test.ts:provider",
+   "type": "contains",
+   "direction": "forward",
+   "description": "connector.test.ts defines provider",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/connector.test.ts",
+   "target": "function:packages/workbench/src/connector.test.ts:connectorState",
+   "type": "contains",
+   "direction": "forward",
+   "description": "connector.test.ts defines connectorState",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/connector.test.ts",
+   "target": "function:packages/workbench/src/connector.test.ts:confirmedConnector",
+   "type": "contains",
+   "direction": "forward",
+   "description": "connector.test.ts defines confirmedConnector",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/connector.test.ts",
+   "target": "function:packages/workbench/src/connector.test.ts:phasedProvider",
+   "type": "contains",
+   "direction": "forward",
+   "description": "connector.test.ts defines phasedProvider",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/connector.test.ts",
+   "target": "function:packages/workbench/src/connector.test.ts:deleteName",
+   "type": "contains",
+   "direction": "forward",
+   "description": "connector.test.ts defines deleteName",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/connector.test.ts",
+   "target": "function:packages/workbench/src/connector.test.ts:unmappedName",
+   "type": "contains",
+   "direction": "forward",
+   "description": "connector.test.ts defines unmappedName",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/connector.test.ts",
+   "target": "function:packages/workbench/src/connector.test.ts:refusalSeed",
+   "type": "contains",
+   "direction": "forward",
+   "description": "connector.test.ts defines refusalSeed",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/connector.test.ts",
+   "target": "function:packages/workbench/src/connector.test.ts:signRefusals",
+   "type": "contains",
+   "direction": "forward",
+   "description": "connector.test.ts defines signRefusals",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/harness-skill-promotion.test.ts",
+   "target": "function:packages/workbench/src/harness-skill-promotion.test.ts:models",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-skill-promotion.test.ts defines models",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/harness-skill-promotion.test.ts",
+   "target": "function:packages/workbench/src/harness-skill-promotion.test.ts:answer",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-skill-promotion.test.ts defines answer",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/harness-skill-promotion.test.ts",
+   "target": "function:packages/workbench/src/harness-skill-promotion.test.ts:fixture",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-skill-promotion.test.ts defines fixture",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/harness-skill-promotion.test.ts",
+   "target": "function:packages/workbench/src/harness-skill-promotion.test.ts:surfaceOf",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-skill-promotion.test.ts defines surfaceOf",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/harness-skill-promotion.test.ts",
+   "target": "function:packages/workbench/src/harness-skill-promotion.test.ts:lastSeq",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-skill-promotion.test.ts defines lastSeq",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/harness-skill-promotion.test.ts",
+   "target": "function:packages/workbench/src/harness-skill-promotion.test.ts:lastBody",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-skill-promotion.test.ts defines lastBody",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/harness-skill-promotion.test.ts",
+   "target": "function:packages/workbench/src/harness-skill-promotion.test.ts:entryCount",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-skill-promotion.test.ts defines entryCount",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/harness-skill-promotion.test.ts",
+   "target": "function:packages/workbench/src/harness-skill-promotion.test.ts:skillProposal",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-skill-promotion.test.ts defines skillProposal",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/harness-skill-promotion.test.ts",
+   "target": "function:packages/workbench/src/harness-skill-promotion.test.ts:pendingSkillReview",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-skill-promotion.test.ts defines pendingSkillReview",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/harness-skill-promotion.test.ts",
+   "target": "function:packages/workbench/src/harness-skill-promotion.test.ts:listFiles",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-skill-promotion.test.ts defines listFiles",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/harness-skill-promotion.test.ts",
+   "target": "function:packages/workbench/src/harness-skill-promotion.test.ts:transientSuffix",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-skill-promotion.test.ts defines transientSuffix",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/learned-rules.test.ts",
+   "target": "function:packages/workbench/src/learned-rules.test.ts:entry",
+   "type": "contains",
+   "direction": "forward",
+   "description": "learned-rules.test.ts defines entry",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/learned-rules.ts",
+   "target": "function:packages/workbench/src/learned-rules.ts:learnedRuleRationale",
+   "type": "contains",
+   "direction": "forward",
+   "description": "learned-rules.ts defines learnedRuleRationale",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/learned-rules.ts",
+   "target": "function:packages/workbench/src/learned-rules.ts:learnedRuleRationale",
+   "type": "exports",
+   "direction": "forward",
+   "description": "learned-rules.ts exports learnedRuleRationale",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/learned-rules.ts",
+   "target": "function:packages/workbench/src/learned-rules.ts:isRefusal",
+   "type": "contains",
+   "direction": "forward",
+   "description": "learned-rules.ts defines isRefusal",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/learned-rules.ts",
+   "target": "function:packages/workbench/src/learned-rules.ts:field",
+   "type": "contains",
+   "direction": "forward",
+   "description": "learned-rules.ts defines field",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/learned-rules.ts",
+   "target": "function:packages/workbench/src/learned-rules.ts:learnedRuleGroups",
+   "type": "contains",
+   "direction": "forward",
+   "description": "learned-rules.ts defines learnedRuleGroups",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/learned-rules.ts",
+   "target": "function:packages/workbench/src/learned-rules.ts:learnedRuleGroups",
+   "type": "exports",
+   "direction": "forward",
+   "description": "learned-rules.ts exports learnedRuleGroups",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/learned-rules.ts",
+   "target": "function:packages/workbench/src/learned-rules.ts:learnedRule",
+   "type": "contains",
+   "direction": "forward",
+   "description": "learned-rules.ts defines learnedRule",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/learned-rules.ts",
+   "target": "function:packages/workbench/src/learned-rules.ts:learnedRule",
+   "type": "exports",
+   "direction": "forward",
+   "description": "learned-rules.ts exports learnedRule",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/learned-rules.ts",
+   "target": "function:packages/workbench/src/learned-rules.ts:mineLearnedRules",
+   "type": "contains",
+   "direction": "forward",
+   "description": "learned-rules.ts defines mineLearnedRules",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/learned-rules.ts",
+   "target": "function:packages/workbench/src/learned-rules.ts:mineLearnedRules",
+   "type": "exports",
+   "direction": "forward",
+   "description": "learned-rules.ts exports mineLearnedRules",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/learned-rules.ts",
+   "target": "function:packages/workbench/src/learned-rules.ts:policyScalar",
+   "type": "contains",
+   "direction": "forward",
+   "description": "learned-rules.ts defines policyScalar",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/learned-rules.ts",
+   "target": "function:packages/workbench/src/learned-rules.ts:ruleAsPolicyText",
+   "type": "contains",
+   "direction": "forward",
+   "description": "learned-rules.ts defines ruleAsPolicyText",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/learned-rules.ts",
+   "target": "function:packages/workbench/src/learned-rules.ts:ruleAsPolicyText",
+   "type": "exports",
+   "direction": "forward",
+   "description": "learned-rules.ts exports ruleAsPolicyText",
+   "weight": 0.7
+  },
+  {
+   "source": "function:packages/workbench/src/learned-rules.ts:learnedRuleGroups",
+   "target": "function:packages/workbench/src/learned-rules.ts:isRefusal",
+   "type": "calls",
+   "direction": "forward",
+   "description": "learnedRuleGroups calls isRefusal",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/learned-rules.ts:learnedRuleGroups",
+   "target": "function:packages/workbench/src/learned-rules.ts:field",
+   "type": "calls",
+   "direction": "forward",
+   "description": "learnedRuleGroups calls field",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/learned-rules.ts:learnedRule",
+   "target": "function:packages/workbench/src/learned-rules.ts:learnedRuleRationale",
+   "type": "calls",
+   "direction": "forward",
+   "description": "learnedRule calls learnedRuleRationale",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/learned-rules.ts:mineLearnedRules",
+   "target": "function:packages/workbench/src/learned-rules.ts:learnedRuleGroups",
+   "type": "calls",
+   "direction": "forward",
+   "description": "mineLearnedRules calls learnedRuleGroups",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/learned-rules.ts:ruleAsPolicyText",
+   "target": "function:packages/workbench/src/learned-rules.ts:policyScalar",
+   "type": "calls",
+   "direction": "forward",
+   "description": "ruleAsPolicyText calls policyScalar",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/workbench/src/policy-profile.ts",
+   "target": "function:packages/workbench/src/policy-profile.ts:listPolicyProfiles",
+   "type": "contains",
+   "direction": "forward",
+   "description": "policy-profile.ts defines listPolicyProfiles",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/policy-profile.ts",
+   "target": "function:packages/workbench/src/policy-profile.ts:listPolicyProfiles",
+   "type": "exports",
+   "direction": "forward",
+   "description": "policy-profile.ts exports listPolicyProfiles",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/policy-profile.ts",
+   "target": "function:packages/workbench/src/policy-profile.ts:resolvePolicyProfile",
+   "type": "contains",
+   "direction": "forward",
+   "description": "policy-profile.ts defines resolvePolicyProfile",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/policy-profile.ts",
+   "target": "function:packages/workbench/src/policy-profile.ts:resolvePolicyProfile",
+   "type": "exports",
+   "direction": "forward",
+   "description": "policy-profile.ts exports resolvePolicyProfile",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/reversal-record.test.ts",
+   "target": "function:packages/workbench/src/reversal-record.test.ts:governedSession",
+   "type": "contains",
+   "direction": "forward",
+   "description": "reversal-record.test.ts defines governedSession",
+   "weight": 1.0
+  },
+  {
+   "source": "file:paid/channels/slack.ts",
+   "target": "function:paid/channels/slack.ts:checkSlackWebhookUrl",
+   "type": "contains",
+   "direction": "forward",
+   "description": "slack.ts defines checkSlackWebhookUrl",
+   "weight": 1.0
+  },
+  {
+   "source": "file:paid/channels/slack.ts",
+   "target": "function:paid/channels/slack.ts:checkSlackWebhookUrl",
+   "type": "exports",
+   "direction": "forward",
+   "description": "slack.ts exports checkSlackWebhookUrl",
+   "weight": 0.7
+  },
+  {
+   "source": "file:paid/channels/slack.ts",
+   "target": "function:paid/channels/slack.ts:operatorText",
+   "type": "contains",
+   "direction": "forward",
+   "description": "slack.ts defines operatorText",
+   "weight": 1.0
+  },
+  {
+   "source": "file:paid/channels/slack.ts",
+   "target": "function:paid/channels/slack.ts:touched",
+   "type": "contains",
+   "direction": "forward",
+   "description": "slack.ts defines touched",
+   "weight": 1.0
+  },
+  {
+   "source": "file:paid/channels/slack.ts",
+   "target": "function:paid/channels/slack.ts:slackPayload",
+   "type": "contains",
+   "direction": "forward",
+   "description": "slack.ts defines slackPayload",
+   "weight": 1.0
+  },
+  {
+   "source": "file:paid/channels/slack.ts",
+   "target": "function:paid/channels/slack.ts:slackPayload",
+   "type": "exports",
+   "direction": "forward",
+   "description": "slack.ts exports slackPayload",
+   "weight": 0.7
+  },
+  {
+   "source": "file:paid/channels/slack.ts",
+   "target": "function:paid/channels/slack.ts:postHoldToSlack",
+   "type": "contains",
+   "direction": "forward",
+   "description": "slack.ts defines postHoldToSlack",
+   "weight": 1.0
+  },
+  {
+   "source": "file:paid/channels/slack.ts",
+   "target": "function:paid/channels/slack.ts:postHoldToSlack",
+   "type": "exports",
+   "direction": "forward",
+   "description": "slack.ts exports postHoldToSlack",
+   "weight": 0.7
+  },
+  {
+   "source": "file:paid/channels/slack.ts",
+   "target": "class:paid/channels/slack.ts:SlackChannel",
+   "type": "contains",
+   "direction": "forward",
+   "description": "slack.ts defines class SlackChannel",
+   "weight": 1.0
+  },
+  {
+   "source": "function:paid/channels/slack.ts:slackPayload",
+   "target": "function:paid/channels/slack.ts:touched",
+   "type": "calls",
+   "direction": "forward",
+   "description": "slackPayload calls touched",
+   "weight": 0.6
+  },
+  {
+   "source": "function:paid/channels/slack.ts:postHoldToSlack",
+   "target": "function:paid/channels/slack.ts:checkSlackWebhookUrl",
+   "type": "calls",
+   "direction": "forward",
+   "description": "postHoldToSlack calls checkSlackWebhookUrl",
+   "weight": 0.6
+  },
+  {
+   "source": "function:paid/channels/slack.ts:postHoldToSlack",
+   "target": "function:paid/channels/slack.ts:slackPayload",
+   "type": "calls",
+   "direction": "forward",
+   "description": "postHoldToSlack calls slackPayload",
+   "weight": 0.6
+  },
+  {
+   "source": "function:paid/channels/slack.ts:postHoldToSlack",
+   "target": "function:paid/channels/slack.ts:operatorText",
+   "type": "calls",
+   "direction": "forward",
+   "description": "postHoldToSlack calls operatorText",
+   "weight": 0.6
+  },
+  {
+   "source": "file:scripts/src/moment.mjs",
+   "target": "function:scripts/src/moment.mjs:checkedDecision",
+   "type": "contains",
+   "direction": "forward",
+   "description": "moment.mjs defines checkedDecision",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/moment.mjs",
+   "target": "function:scripts/src/moment.mjs:runScenario",
+   "type": "contains",
+   "direction": "forward",
+   "description": "moment.mjs defines runScenario",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/moment.mjs",
+   "target": "function:scripts/src/moment.mjs:runText",
+   "type": "contains",
+   "direction": "forward",
+   "description": "moment.mjs defines runText",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/moment.mjs",
+   "target": "function:scripts/src/moment.mjs:runTui",
+   "type": "contains",
+   "direction": "forward",
+   "description": "moment.mjs defines runTui",
+   "weight": 1.0
+  },
+  {
+   "source": "function:scripts/src/moment.mjs:runScenario",
+   "target": "function:scripts/src/moment.mjs:checkedDecision",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runScenario calls checkedDecision",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/moment.mjs:runText",
+   "target": "function:scripts/src/moment.mjs:runScenario",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runText calls runScenario",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/moment.mjs:runTui",
+   "target": "function:scripts/src/moment.mjs:checkedDecision",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runTui calls checkedDecision",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/policy/src/packs.test.ts",
+   "target": "file:packages/policy/src/decide.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "packs.test.ts imports decide.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/policy/src/packs.test.ts",
+   "target": "file:packages/policy/src/packs.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "packs.test.ts imports packs.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/policy/src/packs.ts",
+   "target": "file:packages/policy/src/rules.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "packs.ts imports rules.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/policy/src/rules.test.ts",
+   "target": "file:packages/policy/src/decide.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "rules.test.ts imports decide.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/policy/src/rules.test.ts",
+   "target": "file:packages/policy/src/rules.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "rules.test.ts imports rules.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/policy/src/rules.ts",
+   "target": "file:packages/policy/src/grammar.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "rules.ts imports grammar.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/policy/src/skeptics.test.ts",
+   "target": "file:packages/policy/src/decide.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "skeptics.test.ts imports decide.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/policy/src/skeptics.test.ts",
+   "target": "file:packages/policy/src/hold.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "skeptics.test.ts imports hold.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/policy/src/skeptics.test.ts",
+   "target": "file:packages/policy/src/rules.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "skeptics.test.ts imports rules.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/bin/nomo-proxy.mjs",
+   "target": "file:packages/ledger/src/paths.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "nomo-proxy.mjs imports paths.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/bin/nomo-proxy.mjs",
+   "target": "file:packages/policy/src/approvals.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "nomo-proxy.mjs imports approvals.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/bin/nomo-proxy.mjs",
+   "target": "file:packages/proxy/src/approval-loop.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "nomo-proxy.mjs imports approval-loop.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/bin/nomo-proxy.mjs",
+   "target": "file:packages/proxy/src/bin.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "nomo-proxy.mjs imports bin.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/approval-loop.test.ts",
+   "target": "file:packages/policy/src/approvals.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "approval-loop.test.ts imports approvals.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/approval-loop.test.ts",
+   "target": "file:packages/policy/src/hold.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "approval-loop.test.ts imports hold.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/approval-loop.test.ts",
+   "target": "file:packages/proxy/src/approval-loop.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "approval-loop.test.ts imports approval-loop.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/approval-loop.test.ts",
+   "target": "file:packages/proxy/src/bin.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "approval-loop.test.ts imports bin.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/approval-loop.test.ts",
+   "target": "file:packages/proxy/src/transport/stdio.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "approval-loop.test.ts imports stdio.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/approval-loop.ts",
+   "target": "file:packages/policy/src/approvals.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "approval-loop.ts imports approvals.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/approval-loop.ts",
+   "target": "file:packages/policy/src/decide.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "approval-loop.ts imports decide.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/approval-loop.ts",
+   "target": "file:packages/policy/src/hold.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "approval-loop.ts imports hold.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/registry/src/audit.test.ts",
+   "target": "file:packages/registry/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "audit.test.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/registry/src/audit.test.ts",
+   "target": "file:packages/registry/src/registry.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "audit.test.ts imports registry.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/registry/src/evaluate.ts",
+   "target": "file:packages/registry/src/precondition.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "evaluate.ts imports precondition.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/registry/src/evaluate.ts",
+   "target": "file:packages/registry/src/registry.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "evaluate.ts imports registry.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/registry/src/registry.ts",
+   "target": "file:packages/registry/src/precondition.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "registry.ts imports precondition.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/connector.test.ts",
+   "target": "file:packages/ledger/src/canonical.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "connector.test.ts imports canonical.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/connector.test.ts",
+   "target": "file:packages/ledger/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "connector.test.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/connector.test.ts",
+   "target": "file:packages/ledger/src/sign.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "connector.test.ts imports sign.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/connector.test.ts",
+   "target": "file:packages/policy/src/digest.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "connector.test.ts imports digest.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/connector.test.ts",
+   "target": "file:packages/policy/src/rules.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "connector.test.ts imports rules.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/connector.test.ts",
+   "target": "file:packages/workbench/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "connector.test.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/connector.test.ts",
+   "target": "file:packages/workbench/src/learned-rules.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "connector.test.ts imports learned-rules.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/connector.test.ts",
+   "target": "file:packages/workbench/src/storage.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "connector.test.ts imports storage.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/connector.test.ts",
+   "target": "file:packages/workbench/src/test-fixture.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "connector.test.ts imports test-fixture.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/harness-skill-promotion.test.ts",
+   "target": "file:packages/policy/src/decide.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "harness-skill-promotion.test.ts imports decide.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/harness-skill-promotion.test.ts",
+   "target": "file:packages/policy/src/rules.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "harness-skill-promotion.test.ts imports rules.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/harness-skill-promotion.test.ts",
+   "target": "file:packages/workbench/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "harness-skill-promotion.test.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/harness-skill-promotion.test.ts",
+   "target": "file:packages/workbench/src/policy-profile.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "harness-skill-promotion.test.ts imports policy-profile.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/harness-skill-promotion.test.ts",
+   "target": "file:packages/workbench/src/refine-pass.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "harness-skill-promotion.test.ts imports refine-pass.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/harness-skill-promotion.test.ts",
+   "target": "file:packages/workbench/src/test-fixture.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "harness-skill-promotion.test.ts imports test-fixture.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/learned-rules.test.ts",
+   "target": "file:packages/policy/src/decide.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "learned-rules.test.ts imports decide.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/learned-rules.test.ts",
+   "target": "file:packages/policy/src/rules.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "learned-rules.test.ts imports rules.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/learned-rules.test.ts",
+   "target": "file:packages/workbench/src/learned-harness.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "learned-rules.test.ts imports learned-harness.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/learned-rules.test.ts",
+   "target": "file:packages/workbench/src/learned-rules.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "learned-rules.test.ts imports learned-rules.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/learned-rules.test.ts",
+   "target": "file:packages/workbench/src/test-fixture.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "learned-rules.test.ts imports test-fixture.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/learned-rules.ts",
+   "target": "file:packages/policy/src/rules.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "learned-rules.ts imports rules.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/policy-profile.ts",
+   "target": "file:packages/policy/src/rules.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "policy-profile.ts imports rules.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/reversal-record.test.ts",
+   "target": "file:packages/ledger/src/attribution.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "reversal-record.test.ts imports attribution.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/reversal-record.test.ts",
+   "target": "file:packages/ledger/src/store.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "reversal-record.test.ts imports store.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/reversal-record.test.ts",
+   "target": "file:packages/policy/src/digest.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "reversal-record.test.ts imports digest.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/reversal-record.test.ts",
+   "target": "file:packages/policy/src/rules.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "reversal-record.test.ts imports rules.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/reversal-record.test.ts",
+   "target": "file:packages/workbench/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "reversal-record.test.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/reversal-record.test.ts",
+   "target": "file:packages/workbench/src/storage.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "reversal-record.test.ts imports storage.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/reversal-record.test.ts",
+   "target": "file:packages/workbench/src/test-fixture.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "reversal-record.test.ts imports test-fixture.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:paid/channels/slack.test.ts",
+   "target": "file:packages/policy/src/hold.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "slack.test.ts imports hold.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:paid/channels/slack.test.ts",
+   "target": "file:paid/channels/slack.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "slack.test.ts imports slack.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:paid/channels/slack.ts",
+   "target": "file:packages/policy/src/hold.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "slack.ts imports hold.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:scripts/src/moment.mjs",
+   "target": "file:packages/cli/src/tui/approvals.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "moment.mjs imports approvals.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:scripts/src/moment.mjs",
+   "target": "file:packages/policy/src/channels/cli.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "moment.mjs imports cli.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:scripts/src/moment.mjs",
+   "target": "file:packages/policy/src/decide.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "moment.mjs imports decide.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:scripts/src/moment.mjs",
+   "target": "file:packages/policy/src/hold.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "moment.mjs imports hold.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:scripts/src/moment.mjs",
+   "target": "file:packages/policy/src/rules.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "moment.mjs imports rules.ts",
+   "weight": 0.8
+  }
+ ]
+}

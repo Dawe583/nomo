@@ -432,6 +432,21 @@ test("the ratchet says there is nothing to measure when the chain is empty", asy
   assert.match(text, /descriptive only/);
 });
 
+test("the trend reports multiple signed activations and leaves gaps unmeasured", async () => {
+  const terminal = io();
+  const code = await runHarnessCommand(
+    ["trend", "--session", "s1"],
+    terminal,
+    { workbench: async () => chain([activated(1), allowed(2, "fixture.read"), activated(3)]) },
+  );
+  assert.equal(code, 0, terminal.err.join(" "));
+  const text = terminal.out.join("\n");
+  const latest = text.indexOf("activated at seq 3");
+  assert.ok(latest >= 0 && text.indexOf("activated at seq 1") > latest);
+  assert.match(text, /unmeasured guardrails/);
+  assert.match(text, /Descriptive only/);
+});
+
 test("with no previous refinement the ratchet reports the board as it stands", async () => {
   const terminal = io();
   const code = await runHarnessCommand(

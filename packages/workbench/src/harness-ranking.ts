@@ -34,6 +34,12 @@
  * entries it selects are observations, not authority, the same line
  * `learned-rules.ts` draws. Ranking by relevance cannot promote an entry into a
  * rule, and the type of the return value says so by carrying no policy at all.
+ *
+ * The work is cached between turns. Two consecutive turns usually rank the same
+ * chain, so the lowered fields of every entry and the IDF of a query that
+ * repeats are kept and rebuilt only when the corpus changes. The cache changes
+ * no score; `rankingCacheStats()` exists so a test can prove the second turn
+ * reused the first turn's index instead of tokenising the corpus again.
  */
 
 import type { HarnessEntry } from "./learned-harness.ts";
@@ -147,8 +153,11 @@ export function queryTermsFrom(input: { user: string; ledger?: string }): QueryT
   return terms;
 }
 
+/** The lowered text an entry is searched in, field by field. */
+type EntryTexts = { readonly title: string; readonly content: string; readonly identifier: string };
+
 /** The text an entry is searched in, field by field. */
-function fields(entry: HarnessEntry): { title: string; content: string; identifier: string } {
+function fields(entry: HarnessEntry): EntryTexts {
   return {
     title: entry.title.toLowerCase(),
     content: `${entry.tool} ${entry.klass} ${entry.content}`.toLowerCase(),
@@ -156,18 +165,146 @@ function fields(entry: HarnessEntry): { title: string; content: string; identifi
   };
 }
 
+const FNV_OFFSET_A = 0x811c9dc5;
+const FNV_OFFSET_B = 0x7f4a7c15;
+const FNV_PRIME = 0x01000193;
+
+/** FNV-1a, carried across calls so one pass can hash a whole corpus. */
+function hashText(hash: number, text: string): number {
+  let h = hash;
+  for (let i = 0; i < text.length; i++) {
+    h = Math.imul(h ^ text.charCodeAt(i), FNV_PRIME) >>> 0;
+  }
+  return h;
+}
+
+type HashState = { a: number; b: number };
+
+function mix(state: HashState, text: string): void {
+  state.a = hashText(state.a, text);
+  state.b = hashText(state.b, text);
+}
+
 /**
- * Inverse document frequency over the corpus being ranked.
+ * A cheap fingerprint of the corpus.
  *
- * A term in every entry weighs `ln(2)`; a term in one of N weighs `ln(1 + N)`.
- * Terms matching nothing are absent rather than zero, so they cannot score.
+ * The length, the first and last id, and a hash of the fields scoring reads.
+ * The ids alone would be enough if an id were content-addressed over the text,
+ * but `learned-harness.ts` derives it from kind, class, tool and title only, so
+ * two entries can share an id and differ in `content`. Hashing the fields as
+ * well is one linear pass and removes the possibility of serving a stale index
+ * for text that changed. Two independent accumulators, so two different corpora
+ * do not collide on a 32-bit value.
  */
-export function termIdf(entries: readonly HarnessEntry[], terms: QueryTerms): QueryTerms {
+function corpusFingerprint(entries: readonly HarnessEntry[]): string {
+  const state: HashState = { a: FNV_OFFSET_A, b: FNV_OFFSET_B };
+  for (const entry of entries) {
+    mix(state, entry.id);
+    mix(state, "\u0000");
+    mix(state, entry.title);
+    mix(state, "\u0000");
+    mix(state, entry.tool);
+    mix(state, "\u0000");
+    mix(state, entry.klass);
+    mix(state, "\u0000");
+    mix(state, entry.content);
+    mix(state, "\u0001");
+  }
+  const first = entries[0]?.id ?? "";
+  const last = entries[entries.length - 1]?.id ?? "";
+  return `${entries.length}|${first}|${last}|${state.a.toString(16)}:${state.b.toString(16)}`;
+}
+
+/**
+ * A key for a query's term map.
+ *
+ * Sorted, so the same question built in a different insertion order is the same
+ * key rather than a miss. Terms are word runs or CJK bigrams and cannot contain
+ * a NUL, which is why the separators are safe.
+ */
+function termsFingerprint(terms: QueryTerms): string {
+  const parts = [...terms.entries()]
+    .sort(([left], [right]) => (left < right ? -1 : left > right ? 1 : 0))
+    .map(([term, weight]) => `${term}\u0000${weight}`);
+  return `${terms.size}|${parts.join("\u0001")}`;
+}
+
+type CachedCorpus = {
+  readonly fingerprint: string;
+  /** Parallel to the entries the fingerprint was taken over. */
+  readonly texts: readonly EntryTexts[];
+  /** IDF per query, keyed by `termsFingerprint`. */
+  readonly idfByTerms: Map<string, QueryTerms>;
+};
+
+/** The current chain and the one before it. A third would hold text nobody is
+ * asking about, and the entries are a corpus rather than a record. */
+const MAX_CACHED_CORPORA = 2;
+const MAX_CACHED_TERM_SETS = 2;
+
+let corpusCache: CachedCorpus[] = [];
+let cacheBuilds = 0;
+let cacheHits = 0;
+
+export type RankingCacheStats = {
+  /** Times the corpus was tokenised. One per distinct chain. */
+  readonly builds: number;
+  /** Times a turn reused an index instead of tokenising the corpus. */
+  readonly hits: number;
+};
+
+/**
+ * What the retrieval cache has done.
+ *
+ * The counter is the only way to tell "the second turn was cheap" from "the
+ * second turn was cheap by luck": a ranking that returned the same list twice
+ * says nothing about whether the corpus was walked twice.
+ */
+export function rankingCacheStats(): RankingCacheStats {
+  return { builds: cacheBuilds, hits: cacheHits };
+}
+
+/** Drop the cache and its counters. A test that asserts exact counts starts here. */
+export function resetRankingCache(): void {
+  corpusCache = [];
+  cacheBuilds = 0;
+  cacheHits = 0;
+}
+
+/**
+ * The index for a corpus, built on a miss and reused on a hit.
+ *
+ * Only the lowered text is held, not the entries: the cache must not extend the
+ * life of anything the caller handed over, and the text is what the next turn
+ * would otherwise rebuild.
+ */
+function cachedCorpus(entries: readonly HarnessEntry[]): CachedCorpus {
+  const fingerprint = corpusFingerprint(entries);
+  const found = corpusCache.find((cached) => cached.fingerprint === fingerprint);
+  if (found !== undefined) {
+    cacheHits++;
+    // Most recently used first, so the two slots are the current chain and the
+    // one before it rather than two arbitrary old ones.
+    corpusCache = [found, ...corpusCache.filter((cached) => cached !== found)];
+    return found;
+  }
+  cacheBuilds++;
+  const built: CachedCorpus = {
+    fingerprint,
+    texts: entries.map((entry) => fields(entry)),
+    idfByTerms: new Map(),
+  };
+  corpusCache = [built, ...corpusCache].slice(0, MAX_CACHED_CORPORA);
+  return built;
+}
+
+/** Document frequencies turned into weights. The formula is documented on
+ * `termIdf`, which is the surface a caller sees. */
+function computeIdf(texts: readonly EntryTexts[], terms: QueryTerms): QueryTerms {
   const idf = new Map<string, number>();
   if (terms.size === 0) return idf;
   const documents = new Map<string, number>();
-  for (const entry of entries) {
-    const text = fields(entry);
+  for (const text of texts) {
     for (const term of terms.keys()) {
       if (text.title.includes(term) || text.content.includes(term) || text.identifier.includes(term)) {
         documents.set(term, (documents.get(term) ?? 0) + 1);
@@ -175,9 +312,39 @@ export function termIdf(entries: readonly HarnessEntry[], terms: QueryTerms): Qu
     }
   }
   for (const [term, frequency] of documents) {
-    idf.set(term, Math.log(1 + entries.length / frequency));
+    idf.set(term, Math.log(1 + texts.length / frequency));
   }
   return idf;
+}
+
+/** The IDF for one query over one corpus, cached under the corpus. */
+function idfFor(corpus: CachedCorpus, terms: QueryTerms): QueryTerms {
+  const key = termsFingerprint(terms);
+  const cached = corpus.idfByTerms.get(key);
+  if (cached !== undefined) return cached;
+  const idf = computeIdf(corpus.texts, terms);
+  corpus.idfByTerms.set(key, idf);
+  while (corpus.idfByTerms.size > MAX_CACHED_TERM_SETS) {
+    const oldest = corpus.idfByTerms.keys().next();
+    if (oldest.done) break;
+    corpus.idfByTerms.delete(oldest.value);
+  }
+  return idf;
+}
+
+/**
+ * Inverse document frequency over the corpus being ranked.
+ *
+ * A term in every entry weighs `ln(2)`; a term in one of N weighs `ln(1 + N)`.
+ * Terms matching nothing are absent rather than zero, so they cannot score.
+ *
+ * The table is cached, and what comes back is a copy: the cached one is shared
+ * with later turns, and a caller that mutated what it was handed would corrupt
+ * them.
+ */
+export function termIdf(entries: readonly HarnessEntry[], terms: QueryTerms): QueryTerms {
+  if (terms.size === 0) return new Map();
+  return new Map(idfFor(cachedCorpus(entries), terms));
 }
 
 /**
@@ -188,8 +355,12 @@ export function termIdf(entries: readonly HarnessEntry[], terms: QueryTerms): Qu
  * cannot score highly by repeating one word.
  */
 export function scoreEntry(entry: HarnessEntry, terms: QueryTerms, idf: QueryTerms): number {
+  return scoreTexts(fields(entry), terms, idf);
+}
+
+/** The scoring itself, over text that may already be lowered and cached. */
+function scoreTexts(text: EntryTexts, terms: QueryTerms, idf: QueryTerms): number {
   if (terms.size === 0) return 0;
-  const text = fields(entry);
   let score = 0;
   for (const [term, weight] of terms) {
     let matched = 0;
@@ -236,9 +407,12 @@ export function rankEntries(
   if (options.contentChars < 1) throw new Error("contentChars must be a positive integer.");
   if (entries.length === 0 || terms.size === 0) return [];
 
-  const idf = termIdf(entries, terms);
+  // One index build and one IDF table per turn, reused from the turn before
+  // when the chain has not moved.
+  const corpus = cachedCorpus(entries);
+  const idf = idfFor(corpus, terms);
   const scored: RankedEntry[] = entries
-    .map((entry) => ({ entry, score: scoreEntry(entry, terms, idf) }))
+    .map((entry, index) => ({ entry, score: scoreTexts(corpus.texts[index] ?? fields(entry), terms, idf) }))
     .filter((ranked) => ranked.score > 0)
     .sort((a, b) => (b.score === a.score ? (a.entry.id < b.entry.id ? -1 : a.entry.id > b.entry.id ? 1 : 0) : b.score - a.score));
 
@@ -282,10 +456,88 @@ function clip(entry: HarnessEntry, limit: number): HarnessEntry {
  * text a human spent a review to put there. The mined section keeps its own
  * claim, scoped to itself, and no entry in either section changes a policy.
  */
+/**
+ * Which ranked entries a prompt actually carries, and which the ceiling cut.
+ *
+ * The block is cut at a character boundary, so "included" means the entry's own
+ * line survived whole. Reported as ids and counts only: this is the answer to
+ * "was the model told", and copying entry text into a record would make the
+ * record a second, unverified copy of the chain.
+ */
+/** One rendered entry line, shared with the inclusion check so the two cannot
+ * disagree about what a line costs. */
+function formatLines(ranked: readonly RankedEntry[]): string[] {
+  // The identifier and the chain sequences are the evidence: a reader of the
+  // prompt can name the entry and the signed records it came from, which is
+  // what "the prompt reports which entries it carried" means. Bounded to the
+  // first three sequences so one entry cannot spend the block's budget.
+  const seq = (entry: HarnessEntry) =>
+    `${entry.derivedFromSeq.slice(0, 3).join(",")}${entry.derivedFromSeq.length > 3 ? "…" : ""}`;
+  return ranked.map(
+    ({ entry, score }) =>
+      `- [${entry.kind}] ${entry.tool} (${entry.klass}) ${entry.content} [${entry.id}; seq ${seq(entry)}], ${score.toFixed(2)}`,
+  );
+}
+
+export type PromptInclusion = {
+  readonly ranked: number;
+  readonly included: readonly string[];
+  readonly dropped: readonly string[];
+};
+
+export const MAX_RECORDED_BUILDS = 8;
+export const MAX_RECORDED_IDS = 200;
+
+const promptBuilds: Array<PromptInclusion & { readonly at: number }> = [];
+
+/** Report what fits, without recording. Pure and order independent. */
+export function promptInclusion(
+  ranked: readonly RankedEntry[],
+  maxChars: number,
+): PromptInclusion {
+  if (!Number.isFinite(maxChars) || maxChars < 1)
+    throw new Error("maxChars must be a positive integer.");
+  const lines = formatLines(ranked);
+  const included: string[] = [];
+  const dropped: string[] = [];
+  let used = 0;
+  ranked.forEach((row, index) => {
+    used += (index === 0 ? 0 : 1) + lines[index]!.length;
+    // A line that starts before the ceiling and is cut by it is not included:
+    // half a lesson is a different claim from the one the chain signed.
+    if (used <= maxChars && included.length + dropped.length < MAX_RECORDED_IDS)
+      included.push(row.entry.id);
+    else if (dropped.length < MAX_RECORDED_IDS) dropped.push(row.entry.id);
+  });
+  return { ranked: ranked.length, included, dropped };
+}
+
+/** Record one build for the surfaces that ask what the last prompt carried. */
+export function recordPromptBuild(
+  ranked: readonly RankedEntry[],
+  maxChars: number,
+  at: number = Date.now(),
+): PromptInclusion {
+  const record = promptInclusion(ranked, maxChars);
+  promptBuilds.push({ ...record, at });
+  while (promptBuilds.length > MAX_RECORDED_BUILDS) promptBuilds.shift();
+  return record;
+}
+
+/** The last recorded builds, newest last. Ids and counts, never content. */
+export function recentPromptBuilds(): readonly (PromptInclusion & {
+  readonly at: number;
+})[] {
+  return promptBuilds.map((record) => ({ ...record }));
+}
+
+export function resetPromptBuildRecords(): void {
+  promptBuilds.length = 0;
+}
+
 export function formatForPrompt(ranked: readonly RankedEntry[], at: string): string {
   if (ranked.length === 0) return "";
-  const line = ({ entry, score }: RankedEntry) =>
-    `- [${entry.kind}] ${entry.tool} (${entry.klass}) ${entry.content}, ${score.toFixed(2)}`;
+  const line = (row: RankedEntry) => formatLines([row])[0]!;
   const approved = ranked.filter((row) => row.entry.decidedByOperator);
   const mined = ranked.filter((row) => !row.entry.decidedByOperator);
   // Each section header sits directly above its own entries. Emitting both

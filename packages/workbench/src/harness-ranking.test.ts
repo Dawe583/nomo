@@ -6,6 +6,13 @@ import {
   harnessQueryTerms,
   queryTermsFrom,
   rankEntries,
+  rankingCacheStats,
+  MAX_RECORDED_BUILDS,
+  promptInclusion,
+  recentPromptBuilds,
+  recordPromptBuild,
+  resetPromptBuildRecords,
+  resetRankingCache,
   scoreEntry,
   termIdf,
 } from "./harness-ranking.ts";
@@ -238,6 +245,18 @@ test("the digest says mined entries are not instructions", () => {
   assert.match(text, /not permission to act/);
 });
 
+test("the digest names the entry and the chain sequences it came from", () => {
+  // A prompt that says "an entry was carried" without naming it cannot be
+  // checked against the chain, which is what later-session retrieval needs.
+  const ranked = rankEntries(
+    [entry("a", "postgres tuning", "postgres was approved 6 times")],
+    queryTermsFrom({ user: "postgres" }),
+    OPTS,
+  );
+  const text = formatForPrompt(ranked, "2026-10-07");
+  assert.match(text, /\[a; seq 1,2,3\]/);
+});
+
 test("an operator-approved addendum is not filed under 'no operator decided this'", () => {
   // The approval an operator gives is the only one in the system. Filing its
   // text under a blanket claim that nothing here was operator-decided is a
@@ -265,4 +284,112 @@ test("an operator-approved addendum is not filed under 'no operator decided this
 
 test("an empty ranking renders nothing rather than an empty section", () => {
   assert.equal(formatForPrompt([], "2026-10-07"), "");
+});
+
+// The cache is module state, so a test that counts builds has to start from
+// zero and cannot rely on the order the tests above ran in.
+const CHAIN: HarnessEntry[] = [
+  entry("a", "postgres tuning", "postgres was slow on the vault"),
+  entry("b", "kubernetes rollout", "kubernetes restarted twice"),
+  entry("c", "postgres migration", "the postgres migration ran once"),
+];
+
+test("an unchanged chain is tokenised once for two consecutive turns", () => {
+  resetRankingCache();
+  const terms = queryTermsFrom({ user: "postgres kubernetes" });
+  const first = rankEntries(CHAIN, terms, OPTS);
+  const afterFirst = rankingCacheStats();
+  assert.equal(afterFirst.builds, 1);
+  assert.equal(afterFirst.hits, 0);
+
+  // The next turn asks the same question of the same chain. Re-tokenising the
+  // corpus would produce the same answer at full cost, which is the thing the
+  // counter exists to catch.
+  const second = rankEntries(CHAIN, queryTermsFrom({ user: "postgres kubernetes" }), OPTS);
+  const afterSecond = rankingCacheStats();
+  assert.equal(afterSecond.builds, 1, "the second turn must not rebuild the index");
+  assert.ok(afterSecond.hits >= 1, "the second turn must record a cache hit");
+  assert.deepEqual(second, first, "reusing the index must not change the ranking");
+});
+
+test("a cached IDF table is reused rather than recomputed for the same query", () => {
+  resetRankingCache();
+  const terms = queryTermsFrom({ user: "postgres kubernetes" });
+  termIdf(CHAIN, terms);
+  assert.equal(rankingCacheStats().builds, 1);
+  const again = termIdf(CHAIN, queryTermsFrom({ user: "postgres kubernetes" }));
+  assert.equal(rankingCacheStats().hits, 1);
+  // Same numbers, not just same size: a hit has to be a hit on the values.
+  assert.equal(again.get("postgres"), termIdf(CHAIN, terms).get("postgres"));
+});
+
+test("a new chain record invalidates the index", () => {
+  resetRankingCache();
+  const terms = queryTermsFrom({ user: "postgres kubernetes" });
+  rankEntries(CHAIN, terms, OPTS);
+  assert.equal(rankingCacheStats().builds, 1);
+
+  const grown = [...CHAIN, entry("d", "postgres checkpoint", "postgres checkpoint appeared")];
+  rankEntries(grown, terms, OPTS);
+  assert.equal(rankingCacheStats().builds, 2, "a longer chain is a different corpus");
+  assert.equal(rankingCacheStats().hits, 0, "a stale index must not answer for it");
+});
+
+test("an entry whose text changed under the same id is not served stale", () => {
+  // `learned-harness.ts` derives an id from kind, class, tool and title, not
+  // from the content, so an id-only fingerprint would happily return the old
+  // text here and score a chain that no longer exists.
+  resetRankingCache();
+  const terms = queryTermsFrom({ user: "postgres" });
+  const before = rankEntries([entry("a", "postgres", "postgres tuning")], terms, OPTS);
+  const after = rankEntries([entry("a", "postgres", "unrelated filler")], terms, OPTS);
+  assert.equal(rankingCacheStats().builds, 2);
+  assert.notEqual(after[0]?.score, before[0]?.score);
+});
+
+test("a caller cannot corrupt the cached table by mutating what it was handed", () => {
+  resetRankingCache();
+  const terms = queryTermsFrom({ user: "postgres" });
+  const handed = termIdf(CHAIN, terms) as Map<string, number>;
+  handed.set("postgres", 999);
+  assert.notEqual(termIdf(CHAIN, terms).get("postgres"), 999);
+});
+test("an inclusion report names every entry when the block fits", () => {
+  resetPromptBuildRecords();
+  const ranked = rankEntries(
+    [entry("le_a", "postgres migration", "postgres migration stalls"), entry("le_b", "postgres hold", "postgres hold repeats")],
+    queryTermsFrom({ user: "postgres migration hold" }),
+    OPTS,
+  );
+  const report = promptInclusion(ranked, 100_000);
+  assert.equal(report.ranked, ranked.length);
+  assert.deepEqual(report.included, ranked.map((row) => row.entry.id));
+  assert.deepEqual(report.dropped, []);
+});
+
+test("a ceiling reports the entries it cut and accounts for all of them", () => {
+  const ranked = rankEntries(
+    [entry("le_a", "postgres migration", "postgres migration stalls"), entry("le_b", "postgres hold", "postgres hold repeats")],
+    queryTermsFrom({ user: "postgres migration hold" }),
+    OPTS,
+  );
+  const report = promptInclusion(ranked, 1);
+  assert.equal(report.included.length, 0, "a one character ceiling carries no whole line");
+  assert.equal(report.dropped.length, report.ranked);
+  assert.equal(report.included.length + report.dropped.length, report.ranked);
+});
+
+test("the ring keeps a bounded number of builds and no content", () => {
+  resetPromptBuildRecords();
+  const ranked = rankEntries(
+    [entry("le_a", "postgres migration", "postgres migration stalls")],
+    queryTermsFrom({ user: "postgres migration" }),
+    OPTS,
+  );
+  for (let i = 0; i < MAX_RECORDED_BUILDS + 3; i += 1) recordPromptBuild(ranked, 100_000, i);
+  const records = recentPromptBuilds();
+  assert.equal(records.length, MAX_RECORDED_BUILDS);
+  assert.equal(records.at(-1)?.at, MAX_RECORDED_BUILDS + 2);
+  const text = JSON.stringify(records);
+  assert.equal(text.includes("stalls"), false, "a record holds ids, never entry text");
 });

@@ -32,8 +32,11 @@ import type { JsonlEntry } from "../../../ledger/src/store.ts";
 import { mineLearnedRules } from "../../../workbench/src/learned-rules.ts";
 import {
   measureBoard,
+  scoreCases,
   unmeasuredMetrics,
 } from "../../../workbench/src/harness-scores.ts";
+import { mineRefinementEffects } from "../../../workbench/src/refinement-outcomes.ts";
+import { LOCAL_AGENT_PRINCIPAL_ID } from "../../../workbench/src/agent-identity.ts";
 
 import {
   HARNESS_SETTINGS,
@@ -456,16 +459,27 @@ const escapeTerminalText = (value: string) =>
     (character) =>
       `\\u${character.codePointAt(0)!.toString(16).padStart(4, "0")}`,
   );
-/** A workspace chain is one score case, even when several sessions display it. */
+/**
+ * The cases the board measures, grouped exactly as the CLI and the HTTP API
+ * group them: one case per tool and class.
+ *
+ * The TUI used to make one case per workspace, so an operator with a single
+ * workspace always had one case and the verdict could never leave
+ * `insufficient-data`. A workspace shown by several sessions is still counted
+ * once.
+ */
 const verifiedScoreCases = (
   proofs: ReadonlyMap<string, readonly JsonlEntry[]>,
 ): JsonlEntry[][] => {
-  const cases = new Map<string, JsonlEntry[]>();
-  for (const [sessionId, entries] of proofs) {
-    const workspace = entries[0]?.workspace ?? sessionId;
-    if (!cases.has(workspace)) cases.set(workspace, [...entries]);
+  const seen = new Set<string>();
+  const entries: JsonlEntry[] = [];
+  for (const [sessionId, chain] of proofs) {
+    const workspace = chain[0]?.workspace ?? sessionId;
+    if (seen.has(workspace)) continue;
+    seen.add(workspace);
+    entries.push(...chain);
   }
-  return [...cases.values()];
+  return scoreCases(entries).map((group) => [...group] as JsonlEntry[]);
 };
 /** Hook commands are operator-supplied config, but they routinely carry
  * credentials inline (curl -H "Authorization: ...", --token=...). The
@@ -828,17 +842,21 @@ const EXPIRY_WARNING_SECONDS = 60;
 /**
  * Group headings for a tab that mixes several kinds of record.
  *
- * The order is the order an operator reasons in: what was signed, then what
- * the chain taught, then the machinery that produced it. Signed entries come
- * first because they are the only ones that are evidence of anything.
+ * The order is the order an operator reasons in: the chain check first, then
+ * the two bounded singleton summaries that describe it (score, harness), then
+ * the signed records themselves, then what the chain taught, then the
+ * machinery that produced it. The two singletons are hoisted above the record
+ * list because that list is unbounded: as entries grow, anything below them
+ * would eventually fall off the first screen. Signed entries stay above the
+ * derived groups, because they are the only ones that are evidence.
  */
 const LEDGER_GROUP_ORDER = [
   "verification",
+  "score",
+  "harness",
   "entry",
   "proxy",
   "learned",
-  "score",
-  "harness",
   "agent",
   "hook",
 ] as const;
@@ -2451,7 +2469,7 @@ export function composerHint(input: ComposerHintInput): string {
   const full = Math.floor(input.width) > COMPOSER_HINT_FULL_WIDTH;
   const clauses = (first: string, rest: readonly string[] = []): string =>
     full ? [first, ...rest].join(" · ") : first;
-  if (input.approval) return clauses("y allow", ["n deny", "Enter review"]);
+  if (input.approval) return "/approvals to review";
   if (input.failed) return clauses("Esc dismiss");
   if (input.running) return clauses("Esc stop", ["Ctrl+O detail"]);
   if (!input.focused) return clauses("Tab to write");
@@ -2472,6 +2490,7 @@ export type ComposerRailInput = {
   readonly model?: string;
   /** The context meter, or empty when no prompt tokens were reported. */
   readonly context?: string;
+  readonly queue?: string;
   readonly width: number;
   readonly tl: string;
   readonly h: string;
@@ -2485,12 +2504,8 @@ export type ComposerRailInput = {
 /**
  * The top rail: `╭─ <label> <hint> <dock> <chips> ───╮`, exactly `width` cells.
  *
- * Slots are added in priority order and a slot that does not fit ends the
- * sequence, so a narrow terminal keeps the label and the frame rather than
- * clipping a hint in the middle of a word. The ladder is the hint (the next
- * action), the pet dock (identity), the attachment the draft really
- * references, the model and the context meter: a status chip is dropped whole
- * before it can push the hint, the dock or a review key off the rail.
+ * Optional slots are added whole, in priority order. The queue can use
+ * remaining space, but cannot displace the action hint or a review key.
  *
  * The focus sweep lights one fill cell for six frames and then settles; it
  * changes a glyph, not only a colour, so it survives a monochrome terminal.
@@ -2506,11 +2521,14 @@ export function composerTopRail(input: ComposerRailInput): string {
     input.attachment ?? "",
     input.model ?? "",
     input.context ?? "",
+    input.queue ?? "",
   ]) {
     if (extra === "") continue;
     const candidate = `${left}${gap}${extra}`;
+    // A slot that does not fit is dropped whole, and the next one is still
+    // considered: a long model name must not cost the operator the short
+    // context meter behind it.
     if (visibleLength(candidate) + 1 <= width) left = candidate;
-    else break;
   }
   const room = Math.max(1, width - 1);
   if (visibleLength(left) > room) left = fit(left, room);
@@ -4572,6 +4590,39 @@ export class WorkspaceTui {
         : "No workspace view has been created.",
       storage ? undefined : "Run /init to set up workspace storage.",
     );
+
+    // Agent identity and revocation. The only implemented authority is this
+    // local Workbench and its signed workspace evidence. Fleet-wide revoke is
+    // always named unavailable rather than inferred from a local success.
+    const boundViews = this.workbench
+      .allViews()
+      .filter((view) => view.agent !== undefined && view.runId !== undefined);
+    if (boundViews.length === 0) {
+      add(
+        "agent revocation",
+        "identity",
+        "unknown",
+        "No run-scoped agent identity has been observed; local and fleet revocation are unmeasured.",
+        "Start a local Workbench run before evaluating revocation.",
+      );
+    } else {
+      const current = this.session();
+      const view =
+        current?.agent !== undefined && current.runId !== undefined
+          ? current
+          : boundViews.at(-1)!;
+      const agentId = view.agent!;
+      const revoked = this.workbench.isAgentRevoked(agentId);
+      add(
+        "agent revocation",
+        "identity",
+        "warn",
+        `principal ${LOCAL_AGENT_PRINCIPAL_ID} · workspace ${view.workspace} · agent ${agentId} · run ${view.runId} · agent ${revoked ? "revoked" : "active"}; local agent revoke ${revoked ? "applied" : "available"}; fleet-wide revoke unavailable because no node inventory or acknowledgement barrier exists.`,
+        revoked
+          ? "Fleet acknowledgement remains unavailable; disconnected nodes cannot be proven revoked."
+          : `/revoke-agent ${agentId} reviews local revocation.`,
+      );
+    }
 
     return checks;
   }
@@ -6883,31 +6934,48 @@ ${(doc.content ?? "").slice(0, 2000)}`;
           verifiedScoreCases(this.proofs),
           new Date().toISOString(),
         );
-        const firstPass = scoreBoard.metrics.first_pass_rate;
-        const firstPassValue =
-          firstPass.mean === null
-            ? "unmeasured"
-            : `${(firstPass.mean * 100).toFixed(1)}%`;
-        const firstPassCi =
-          firstPass.half === null
-            ? "unavailable"
-            : `±${(firstPass.half * 100).toFixed(1)}%`;
         rows.push({
           id: "harness:scores",
           kind: "score",
-          label: `${ROW_ICONS.harness} harness score ${scoreBoard.verdict}`,
+          label: `${ROW_ICONS.harness} harness score ${scoreBoard.verdict} · ${scoreBoard.caseCount} case${scoreBoard.caseCount === 1 ? "" : "s"}`,
           lines: [
             `Verdict: ${scoreBoard.verdict}.`,
-            `First-pass rate: ${firstPassValue}.`,
-            `95% CI: ${firstPassCi}; ${firstPass.n} first-pass samples across ${scoreBoard.caseCount} cases.`,
+            "Descriptive only; never changes a decision or permission.",
+            // `first_pass_rate` is computed from an empty case list, so its
+            // sample count is structurally zero. Printing a rate and a CI for
+            // it implied a measurement that cannot exist.
+            "First-pass rate: unmeasured; no producer writes this metric yet.",
             // The verdict is a sentence, not a grade: "flat" means nothing was
             // compared, which reads as "measured and unchanged" unless the
             // reason is printed next to it.
             `Reason: ${scoreBoard.reasons.join("; ")}.`,
-            ...unmeasuredMetrics(scoreBoard).map(
-              (key) => `${key}: no sample, so no rate can be computed.`,
-            ),
-            "Descriptive only; never changes a decision or permission.",
+            ...unmeasuredMetrics(scoreBoard)
+              .filter((key) => key !== "first_pass_rate")
+              .map((key) => `${key}: no sample, so no rate can be computed.`),
+            ...(() => {
+              // The last activation is the one an operator can still roll
+              // back. Naming a regression without naming the digest would be a
+              // warning nobody can act on; claiming "no regression" when a
+              // guardrail was unmeasured would be worse than saying nothing.
+              const newest = mineRefinementEffects(
+                [...this.proofs.values()].flat(),
+              ).sort((a, b) => b.activationSeq - a.activationSeq)[0];
+              if (!newest || newest.status !== "activated") return [];
+              const short = newest.digest ? newest.digest.slice(0, 8) : null;
+              const breaches = newest.effect.guardrailBreaches;
+              const unmeasured = newest.effect.unmeasuredGuardrails;
+              if (breaches.length > 0)
+                return [
+                  `Rollback candidate: ${short ?? "activation"} at seq ${newest.activationSeq} regressed ${breaches.join(", ")}.`,
+                ];
+              if (unmeasured.length > 0)
+                return [
+                  `Last activation ${short ?? "at seq " + newest.activationSeq}: ${unmeasured.join(", ")} unmeasured, so no pass is claimed.`,
+                ];
+              return [
+                `Last activation ${short ?? "at seq " + newest.activationSeq}: no guardrail regressed.`,
+              ];
+            })(),
           ],
         });
       }
@@ -8107,7 +8175,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       hold as Parameters<typeof approvalReview>[0],
     );
     this.confirmation = {
-      title: `${kind === "approved" ? "APPROVE" : "DENY"} TOOL?`,
+      title: `${kind === "approved" ? "APPROVE" : "DENY"} ${sanitizeText(hold.call.tool) || "TOOL"}?`,
       lines: [
         ...review.lines,
         "",
@@ -9383,6 +9451,44 @@ ${(doc.content ?? "").slice(0, 2000)}`;
       }
       throw Error("/subagent cancel|review");
     }
+    if (cmd === "revoke-agent") {
+      if (!arg) throw Error("/revoke-agent agent-id");
+      const sessions = this.workbench
+        .allViews()
+        .filter((view) => view.agent === arg);
+      if (!sessions.length)
+        throw Error("No local Workbench session uses that agent identity.");
+      if (this.workbench.isAgentRevoked(arg))
+        throw Error(`Agent ${arg} is already revoked locally.`);
+      const latest = sessions.at(-1)!;
+      const workspaceCount = new Set(sessions.map((view) => view.workspace)).size;
+      this.confirmation = {
+        title: `LOCAL AGENT REVOKE ${arg}?`,
+        lines: [
+          `Agent: ${arg}`,
+          `Principal: ${LOCAL_AGENT_PRINCIPAL_ID}`,
+          `Workspace: ${latest.workspace}`,
+          `Run: ${latest.runId ?? "none"}`,
+          `Known local sessions: ${sessions.length} in ${workspaceCount} workspace(s).`,
+          "",
+          "This local Workbench will stop its sessions for the agent, drop every local grant,",
+          "refuse new grants and new runs for it, and append signed agent_revoke evidence.",
+          "This does not revoke the agent on any other node. Fleet-wide revoke is unavailable",
+          "because NOMO has no node inventory or acknowledgement barrier.",
+        ],
+        apply: async () => {
+          const result = await this.workbench.revokeAgent(arg, "tui-operator");
+          this.notice = `Local agent ${arg} revoked: ${result.stoppedSessions.length} session(s) stopped, ${result.droppedGrants} grant(s) dropped.`;
+          this.detail = [
+            `LOCAL AGENT ${arg} REVOKED`,
+            "Scope: this Workbench and the signed workspace evidence it wrote.",
+            "Fleet-wide revoke remains unavailable: no node inventory or acknowledgement barrier exists.",
+          ];
+        },
+      };
+      this.scroll = 0;
+      return;
+    }
     if (cmd === "stop") {
       if (!this.sessionId) throw Error("Select a running conversation.");
       // A host session stops through Workbench like any other run, so the
@@ -9619,18 +9725,15 @@ ${(doc.content ?? "").slice(0, 2000)}`;
           verifiedScoreCases(this.proofs),
           new Date().toISOString(),
         );
-        const firstPass = board.metrics.first_pass_rate;
         this.detail = [
           `HARNESS SCORES, verdict: ${board.verdict}`,
-          `First-pass rate: ${firstPass.mean === null ? "unmeasured" : `${(firstPass.mean * 100).toFixed(1)}%`}`,
-          `95% CI: ${firstPass.half === null ? "unavailable" : `±${(firstPass.half * 100).toFixed(1)}%`}`,
-          `Sample count: ${firstPass.n} first-pass samples`,
-          `Case count: ${board.caseCount} verified tool-call cases`,
-          `Reason: ${board.reasons.join("; ")}.`,
-          ...unmeasuredMetrics(board).map(
-            (key) => `${key}: no sample, so no rate can be computed.`,
-          ),
           "Descriptive only; never changes a decision or permission.",
+          "First-pass rate: unmeasured; no producer writes this metric yet.",
+          `Case count: ${board.caseCount} verified tool-call case${board.caseCount === 1 ? "" : "s"}`,
+          `Reason: ${board.reasons.join("; ")}.`,
+          ...unmeasuredMetrics(board)
+            .filter((key) => key !== "first_pass_rate")
+            .map((key) => `${key}: no sample, so no rate can be computed.`),
         ];
         this.scroll = 0;
         return;
@@ -9707,7 +9810,7 @@ ${(doc.content ?? "").slice(0, 2000)}`;
         ),
         pending.length
           ? "/harness approve DIGEST or /harness reject DIGEST opens the exact proposal for confirmation."
-          : "No Harness proposals are awaiting an operator decision.",
+          : `No Harness proposal is awaiting a decision in this conversation (${this.sessionId ?? "none selected"}).`,
         "",
         "/harness cloud | /harness prime-agent switches the default; /harness scores reports verified chains.",
         "/harness review asks the reviewer by hand; /harness approve DIGEST or /harness reject DIGEST shows the complete proposal before confirmation.",
@@ -10105,14 +10208,12 @@ ${(doc.content ?? "").slice(0, 2000)}`;
     if (this.confirmation)
       return [
         this.confirmation.title,
-        ...(this.tab === "chat"
+        ...(this.tab === "chat" || viewportHeight < 12 || viewportHeight >= 20
           ? []
-          : viewportHeight < 12
-            ? []
-            : [
-                "y confirm · n reject · Esc cancel",
-                `PgUp/Dn scroll${this.confirmation.hunks?.chunks.length ? " · 1–9 scope" : ""}`,
-              ]),
+          : [
+              "y confirm · n reject · Esc cancel",
+              `PgUp/Dn scroll${this.confirmation.hunks?.chunks.length ? " · 1–9 scope" : ""}`,
+            ]),
         ...(viewportHeight < 12 ? [] : [""]),
         ...this.confirmation.lines.flatMap((l) => l.split("\n")),
       ];
@@ -12237,6 +12338,7 @@ export const TUI_COMMANDS = [
   ["/agents", "Runtime profiles, conversations and connectors"],
   ["/agent", "Select a profile for new conversations"],
   ["/agent-file", "Review and save a custom profile from path.json"],
+  ["/revoke-agent", "Review local agent revocation"],
   ["/hooks", "Runtime hook support and operator allowlist"],
   ["/hook-file", "Review a hook if the host supports execution"],
   ["/hook", "Enable or disable a saved hook by id"],
@@ -12560,6 +12662,7 @@ const COMMAND_ARGUMENTS: Record<string, string> = {
   "/policy-file": "connector-ID path.yaml",
   "/connector-file": "path.json",
   "/agent-file": "path.json",
+  "/revoke-agent": "agent-id",
   "/hook-file": "path.json",
   "/conformance": "adapter",
   "/compact": "",
@@ -15068,6 +15171,9 @@ export function renderWorkspace(
       attachment: railAttachment,
       model: "",
       context: railContext,
+      queue: ui.queuedPrompt
+        ? `${symbols.icons.queue} ${ui.queuedPromptPaused ? "Queue paused" : "1 queued"}`
+        : "",
       width,
       tl: symbols.frame.tl,
       h: symbols.frame.h,

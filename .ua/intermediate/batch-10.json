@@ -1,0 +1,4814 @@
+{
+ "nodes": [
+  {
+   "id": "file:packages/workbench/src/provider-oauth.ts",
+   "type": "file",
+   "name": "provider-oauth.ts",
+   "filePath": "packages/workbench/src/provider-oauth.ts",
+   "summary": "provider-oauth.ts \u2014 typescript code, 145 lines, 7 functions, 0 classes, 3 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-oauth.ts:opaqueValue",
+   "type": "function",
+   "name": "opaqueValue",
+   "filePath": "packages/workbench/src/provider-oauth.ts",
+   "lineRange": [
+    45,
+    50
+   ],
+   "summary": "opaqueValue(value, limit) \u2014 function in provider-oauth.ts, lines 45-50.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-oauth.ts:epochMilliseconds",
+   "type": "function",
+   "name": "epochMilliseconds",
+   "filePath": "packages/workbench/src/provider-oauth.ts",
+   "lineRange": [
+    52,
+    58
+   ],
+   "summary": "epochMilliseconds(value) \u2014 function in provider-oauth.ts, lines 52-58.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-oauth.ts:profile",
+   "type": "function",
+   "name": "profile",
+   "filePath": "packages/workbench/src/provider-oauth.ts",
+   "lineRange": [
+    60,
+    96
+   ],
+   "summary": "profile(access, expires, refresh, accountId\u2026) \u2014 function in provider-oauth.ts, lines 60-96.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-oauth.ts:object",
+   "type": "function",
+   "name": "object",
+   "filePath": "packages/workbench/src/provider-oauth.ts",
+   "lineRange": [
+    98,
+    102
+   ],
+   "summary": "object(value) \u2014 function in provider-oauth.ts, lines 98-102.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-oauth.ts:parsePrimeOAuthEntry",
+   "type": "function",
+   "name": "parsePrimeOAuthEntry",
+   "filePath": "packages/workbench/src/provider-oauth.ts",
+   "lineRange": [
+    107,
+    115
+   ],
+   "summary": "parsePrimeOAuthEntry(value, now) \u2014 function in provider-oauth.ts, lines 107-115.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-oauth.ts:parseClaudeCodeOAuth",
+   "type": "function",
+   "name": "parseClaudeCodeOAuth",
+   "filePath": "packages/workbench/src/provider-oauth.ts",
+   "lineRange": [
+    119,
+    133
+   ],
+   "summary": "parseClaudeCodeOAuth(value, now) \u2014 function in provider-oauth.ts, lines 119-133.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/provider-oauth.ts:oauthProfileFresh",
+   "type": "function",
+   "name": "oauthProfileFresh",
+   "filePath": "packages/workbench/src/provider-oauth.ts",
+   "lineRange": [
+    136,
+    145
+   ],
+   "summary": "oauthProfileFresh(profile, now) \u2014 function in provider-oauth.ts, lines 136-145.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/recovery-jobs.test.ts",
+   "type": "file",
+   "name": "recovery-jobs.test.ts",
+   "filePath": "packages/workbench/src/recovery-jobs.test.ts",
+   "summary": "recovery-jobs.test.ts \u2014 typescript code, 139 lines, 1 functions, 0 classes, 0 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/recovery-jobs.test.ts:fixture",
+   "type": "function",
+   "name": "fixture",
+   "filePath": "packages/workbench/src/recovery-jobs.test.ts",
+   "lineRange": [
+    8,
+    13
+   ],
+   "summary": "fixture(t) \u2014 function in recovery-jobs.test.ts, lines 8-13.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/refine-gate.test.ts",
+   "type": "file",
+   "name": "refine-gate.test.ts",
+   "filePath": "packages/workbench/src/refine-gate.test.ts",
+   "summary": "refine-gate.test.ts \u2014 typescript code, 226 lines, 2 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/workbench/src/refine-gate.test.ts:entry",
+   "type": "function",
+   "name": "entry",
+   "filePath": "packages/workbench/src/refine-gate.test.ts",
+   "lineRange": [
+    15,
+    26
+   ],
+   "summary": "entry(tool, klass) \u2014 function in refine-gate.test.ts, lines 15-26.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/refine-gate.test.ts:input",
+   "type": "function",
+   "name": "input",
+   "filePath": "packages/workbench/src/refine-gate.test.ts",
+   "lineRange": [
+    28,
+    40
+   ],
+   "summary": "input(over) \u2014 function in refine-gate.test.ts, lines 28-40.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/refine-gate.ts",
+   "type": "file",
+   "name": "refine-gate.ts",
+   "filePath": "packages/workbench/src/refine-gate.ts",
+   "summary": "refine-gate.ts \u2014 typescript code, 265 lines, 5 functions, 0 classes, 5 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/workbench/src/refine-gate.ts:resolveRefineGates",
+   "type": "function",
+   "name": "resolveRefineGates",
+   "filePath": "packages/workbench/src/refine-gate.ts",
+   "lineRange": [
+    70,
+    80
+   ],
+   "summary": "resolveRefineGates(raw) \u2014 function in refine-gate.ts, lines 70-80.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/refine-gate.ts:cheapGate",
+   "type": "function",
+   "name": "cheapGate",
+   "filePath": "packages/workbench/src/refine-gate.ts",
+   "lineRange": [
+    137,
+    185
+   ],
+   "summary": "cheapGate(input) \u2014 function in refine-gate.ts, lines 137-185.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/refine-gate.ts:refuse",
+   "type": "function",
+   "name": "refuse",
+   "filePath": "packages/workbench/src/refine-gate.ts",
+   "lineRange": [
+    187,
+    189
+   ],
+   "summary": "refuse(reason, held) \u2014 function in refine-gate.ts, lines 187-189.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/refine-gate.ts:gateReason",
+   "type": "function",
+   "name": "gateReason",
+   "filePath": "packages/workbench/src/refine-gate.ts",
+   "lineRange": [
+    192,
+    194
+   ],
+   "summary": "gateReason(decision) \u2014 function in refine-gate.ts, lines 192-194.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/refine-gate.ts:buildReviewRequest",
+   "type": "function",
+   "name": "buildReviewRequest",
+   "filePath": "packages/workbench/src/refine-gate.ts",
+   "lineRange": [
+    205,
+    266
+   ],
+   "summary": "buildReviewRequest(input) \u2014 function in refine-gate.ts, lines 205-266.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/refine-pass.test.ts",
+   "type": "file",
+   "name": "refine-pass.test.ts",
+   "filePath": "packages/workbench/src/refine-pass.test.ts",
+   "summary": "refine-pass.test.ts \u2014 typescript code, 391 lines, 4 functions, 0 classes, 0 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/workbench/src/refine-pass.test.ts:edit",
+   "type": "function",
+   "name": "edit",
+   "filePath": "packages/workbench/src/refine-pass.test.ts",
+   "lineRange": [
+    17,
+    25
+   ],
+   "summary": "edit(over) \u2014 function in refine-pass.test.ts, lines 17-25.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/refine-pass.test.ts:proposal",
+   "type": "function",
+   "name": "proposal",
+   "filePath": "packages/workbench/src/refine-pass.test.ts",
+   "lineRange": [
+    27,
+    32
+   ],
+   "summary": "proposal(edits) \u2014 function in refine-pass.test.ts, lines 27-32.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/refine-pass.test.ts:accepted",
+   "type": "function",
+   "name": "accepted",
+   "filePath": "packages/workbench/src/refine-pass.test.ts",
+   "lineRange": [
+    34,
+    34
+   ],
+   "summary": "accepted(result) \u2014 function in refine-pass.test.ts, lines 34-34.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/refine-pass.test.ts:rejections",
+   "type": "function",
+   "name": "rejections",
+   "filePath": "packages/workbench/src/refine-pass.test.ts",
+   "lineRange": [
+    35,
+    35
+   ],
+   "summary": "rejections(result) \u2014 function in refine-pass.test.ts, lines 35-35.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/refine-pass.ts",
+   "type": "file",
+   "name": "refine-pass.ts",
+   "filePath": "packages/workbench/src/refine-pass.ts",
+   "summary": "refine-pass.ts \u2014 typescript code, 580 lines, 12 functions, 0 classes, 11 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/workbench/src/refine-pass.ts:isIncompleteJson",
+   "type": "function",
+   "name": "isIncompleteJson",
+   "filePath": "packages/workbench/src/refine-pass.ts",
+   "lineRange": [
+    89,
+    108
+   ],
+   "summary": "isIncompleteJson(candidate) \u2014 function in refine-pass.ts, lines 89-108.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/refine-pass.ts:isRecord",
+   "type": "function",
+   "name": "isRecord",
+   "filePath": "packages/workbench/src/refine-pass.ts",
+   "lineRange": [
+    110,
+    112
+   ],
+   "summary": "isRecord(value) \u2014 function in refine-pass.ts, lines 110-112.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/refine-pass.ts:text",
+   "type": "function",
+   "name": "text",
+   "filePath": "packages/workbench/src/refine-pass.ts",
+   "lineRange": [
+    114,
+    116
+   ],
+   "summary": "text(value) \u2014 function in refine-pass.ts, lines 114-116.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/refine-pass.ts:seqs",
+   "type": "function",
+   "name": "seqs",
+   "filePath": "packages/workbench/src/refine-pass.ts",
+   "lineRange": [
+    118,
+    123
+   ],
+   "summary": "seqs(value) \u2014 function in refine-pass.ts, lines 118-123.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/refine-pass.ts:readEdit",
+   "type": "function",
+   "name": "readEdit",
+   "filePath": "packages/workbench/src/refine-pass.ts",
+   "lineRange": [
+    125,
+    144
+   ],
+   "summary": "readEdit(value) \u2014 function in refine-pass.ts, lines 125-144.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/refine-pass.ts:extractJsonObject",
+   "type": "function",
+   "name": "extractJsonObject",
+   "filePath": "packages/workbench/src/refine-pass.ts",
+   "lineRange": [
+    153,
+    159
+   ],
+   "summary": "extractJsonObject(text_) \u2014 function in refine-pass.ts, lines 153-159.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/refine-pass.ts:extractJsonValue",
+   "type": "function",
+   "name": "extractJsonValue",
+   "filePath": "packages/workbench/src/refine-pass.ts",
+   "lineRange": [
+    173,
+    220
+   ],
+   "summary": "extractJsonValue(text_) \u2014 function in refine-pass.ts, lines 173-220.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/refine-pass.ts:readProposal",
+   "type": "function",
+   "name": "readProposal",
+   "filePath": "packages/workbench/src/refine-pass.ts",
+   "lineRange": [
+    222,
+    230
+   ],
+   "summary": "readProposal(value) \u2014 function in refine-pass.ts, lines 222-230.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/refine-pass.ts:validateProposal",
+   "type": "function",
+   "name": "validateProposal",
+   "filePath": "packages/workbench/src/refine-pass.ts",
+   "lineRange": [
+    255,
+    340
+   ],
+   "summary": "validateProposal(proposal) \u2014 function in refine-pass.ts, lines 255-340.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/refine-pass.ts:applyProposal",
+   "type": "function",
+   "name": "applyProposal",
+   "filePath": "packages/workbench/src/refine-pass.ts",
+   "lineRange": [
+    383,
+    447
+   ],
+   "summary": "applyProposal(current, proposal, now, approval) \u2014 function in refine-pass.ts, lines 383-447.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/refine-pass.ts:contentAddressedId",
+   "type": "function",
+   "name": "contentAddressedId",
+   "filePath": "packages/workbench/src/refine-pass.ts",
+   "lineRange": [
+    455,
+    463
+   ],
+   "summary": "contentAddressedId(kind, title, content) \u2014 function in refine-pass.ts, lines 455-463.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/refine-pass.ts:buildRefineRequest",
+   "type": "function",
+   "name": "buildRefineRequest",
+   "filePath": "packages/workbench/src/refine-pass.ts",
+   "lineRange": [
+    536,
+    580
+   ],
+   "summary": "buildRefineRequest(input) \u2014 function in refine-pass.ts, lines 536-580.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/refine-trigger.test.ts",
+   "type": "file",
+   "name": "refine-trigger.test.ts",
+   "filePath": "packages/workbench/src/refine-trigger.test.ts",
+   "summary": "refine-trigger.test.ts \u2014 typescript code, 327 lines, 2 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/workbench/src/refine-trigger.test.ts:clock",
+   "type": "function",
+   "name": "clock",
+   "filePath": "packages/workbench/src/refine-trigger.test.ts",
+   "lineRange": [
+    25,
+    31
+   ],
+   "summary": "clock(ms) \u2014 function in refine-trigger.test.ts, lines 25-31.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/refine-trigger.test.ts:ready",
+   "type": "function",
+   "name": "ready",
+   "filePath": "packages/workbench/src/refine-trigger.test.ts",
+   "lineRange": [
+    34,
+    36
+   ],
+   "summary": "ready(over) \u2014 function in refine-trigger.test.ts, lines 34-36.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/refine-trigger.ts",
+   "type": "file",
+   "name": "refine-trigger.ts",
+   "filePath": "packages/workbench/src/refine-trigger.ts",
+   "summary": "refine-trigger.ts \u2014 typescript code, 321 lines, 6 functions, 0 classes, 6 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/workbench/src/refine-trigger.ts:initialTriggerState",
+   "type": "function",
+   "name": "initialTriggerState",
+   "filePath": "packages/workbench/src/refine-trigger.ts",
+   "lineRange": [
+    74,
+    84
+   ],
+   "summary": "initialTriggerState() \u2014 function in refine-trigger.ts, lines 74-84.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/refine-trigger.ts:onBranchMove",
+   "type": "function",
+   "name": "onBranchMove",
+   "filePath": "packages/workbench/src/refine-trigger.ts",
+   "lineRange": [
+    97,
+    107
+   ],
+   "summary": "onBranchMove(state) \u2014 function in refine-trigger.ts, lines 97-107.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/refine-trigger.ts:arm",
+   "type": "function",
+   "name": "arm",
+   "filePath": "packages/workbench/src/refine-trigger.ts",
+   "lineRange": [
+    110,
+    112
+   ],
+   "summary": "arm(state) \u2014 function in refine-trigger.ts, lines 110-112.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/refine-trigger.ts:requestManualReview",
+   "type": "function",
+   "name": "requestManualReview",
+   "filePath": "packages/workbench/src/refine-trigger.ts",
+   "lineRange": [
+    122,
+    124
+   ],
+   "summary": "requestManualReview(state) \u2014 function in refine-trigger.ts, lines 122-124.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/refine-trigger.ts:recordSettledTurn",
+   "type": "function",
+   "name": "recordSettledTurn",
+   "filePath": "packages/workbench/src/refine-trigger.ts",
+   "lineRange": [
+    127,
+    132
+   ],
+   "summary": "recordSettledTurn(state) \u2014 function in refine-trigger.ts, lines 127-132.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/refine-trigger.ts:serviceTrigger",
+   "type": "function",
+   "name": "serviceTrigger",
+   "filePath": "packages/workbench/src/refine-trigger.ts",
+   "lineRange": [
+    154,
+    321
+   ],
+   "summary": "serviceTrigger(state, decide, review, options) \u2014 function in refine-trigger.ts, lines 154-321.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/workbench/src/safety-boundaries.test.ts",
+   "type": "file",
+   "name": "safety-boundaries.test.ts",
+   "filePath": "packages/workbench/src/safety-boundaries.test.ts",
+   "summary": "safety-boundaries.test.ts \u2014 typescript code, 75 lines, 2 functions, 0 classes, 0 exports, 3 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/safety-boundaries.test.ts:fixture",
+   "type": "function",
+   "name": "fixture",
+   "filePath": "packages/workbench/src/safety-boundaries.test.ts",
+   "lineRange": [
+    9,
+    18
+   ],
+   "summary": "fixture(t) \u2014 function in safety-boundaries.test.ts, lines 9-18.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/safety-boundaries.test.ts:paused",
+   "type": "function",
+   "name": "paused",
+   "filePath": "packages/workbench/src/safety-boundaries.test.ts",
+   "lineRange": [
+    19,
+    27
+   ],
+   "summary": "paused(t) \u2014 function in safety-boundaries.test.ts, lines 19-27.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/schedule-runtime.test.ts",
+   "type": "file",
+   "name": "schedule-runtime.test.ts",
+   "filePath": "packages/workbench/src/schedule-runtime.test.ts",
+   "summary": "schedule-runtime.test.ts \u2014 typescript code, 695 lines, 8 functions, 0 classes, 0 exports, 3 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "function:packages/workbench/src/schedule-runtime.test.ts:models",
+   "type": "function",
+   "name": "models",
+   "filePath": "packages/workbench/src/schedule-runtime.test.ts",
+   "lineRange": [
+    43,
+    43
+   ],
+   "summary": "models() \u2014 function in schedule-runtime.test.ts, lines 43-43.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/schedule-runtime.test.ts:answer",
+   "type": "function",
+   "name": "answer",
+   "filePath": "packages/workbench/src/schedule-runtime.test.ts",
+   "lineRange": [
+    44,
+    53
+   ],
+   "summary": "answer(tokens) \u2014 function in schedule-runtime.test.ts, lines 44-53.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/schedule-runtime.test.ts:runtime",
+   "type": "function",
+   "name": "runtime",
+   "filePath": "packages/workbench/src/schedule-runtime.test.ts",
+   "lineRange": [
+    71,
+    72
+   ],
+   "summary": "runtime(app) \u2014 function in schedule-runtime.test.ts, lines 71-72.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/schedule-runtime.test.ts:surfaceOf",
+   "type": "function",
+   "name": "surfaceOf",
+   "filePath": "packages/workbench/src/schedule-runtime.test.ts",
+   "lineRange": [
+    74,
+    74
+   ],
+   "summary": "surfaceOf(f) \u2014 function in schedule-runtime.test.ts, lines 74-74.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/schedule-runtime.test.ts:persisted",
+   "type": "function",
+   "name": "persisted",
+   "filePath": "packages/workbench/src/schedule-runtime.test.ts",
+   "lineRange": [
+    79,
+    93
+   ],
+   "summary": "persisted(schedule) \u2014 function in schedule-runtime.test.ts, lines 79-93.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/schedule-runtime.test.ts:readOne",
+   "type": "function",
+   "name": "readOne",
+   "filePath": "packages/workbench/src/schedule-runtime.test.ts",
+   "lineRange": [
+    95,
+    99
+   ],
+   "summary": "readOne(surface, id) \u2014 function in schedule-runtime.test.ts, lines 95-99.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/schedule-runtime.test.ts:waitForSchedule",
+   "type": "function",
+   "name": "waitForSchedule",
+   "filePath": "packages/workbench/src/schedule-runtime.test.ts",
+   "lineRange": [
+    106,
+    121
+   ],
+   "summary": "waitForSchedule(surface, id, done) \u2014 function in schedule-runtime.test.ts, lines 106-121.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/schedule-runtime.test.ts:waitForSessionStatus",
+   "type": "function",
+   "name": "waitForSessionStatus",
+   "filePath": "packages/workbench/src/schedule-runtime.test.ts",
+   "lineRange": [
+    123,
+    136
+   ],
+   "summary": "waitForSessionStatus(app, id, status) \u2014 function in schedule-runtime.test.ts, lines 123-136.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/schedules.test.ts",
+   "type": "file",
+   "name": "schedules.test.ts",
+   "filePath": "packages/workbench/src/schedules.test.ts",
+   "summary": "schedules.test.ts \u2014 typescript code, 691 lines, 3 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "function:packages/workbench/src/schedules.test.ts:input",
+   "type": "function",
+   "name": "input",
+   "filePath": "packages/workbench/src/schedules.test.ts",
+   "lineRange": [
+    34,
+    40
+   ],
+   "summary": "input(overrides) \u2014 function in schedules.test.ts, lines 34-40.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/schedules.test.ts:schedule",
+   "type": "function",
+   "name": "schedule",
+   "filePath": "packages/workbench/src/schedules.test.ts",
+   "lineRange": [
+    42,
+    55
+   ],
+   "summary": "schedule(overrides) \u2014 function in schedules.test.ts, lines 42-55.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/schedules.test.ts:refuses",
+   "type": "function",
+   "name": "refuses",
+   "filePath": "packages/workbench/src/schedules.test.ts",
+   "lineRange": [
+    57,
+    58
+   ],
+   "summary": "refuses(run, pattern) \u2014 function in schedules.test.ts, lines 57-58.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/schedules.ts",
+   "type": "file",
+   "name": "schedules.ts",
+   "filePath": "packages/workbench/src/schedules.ts",
+   "summary": "schedules.ts \u2014 typescript code, 572 lines, 18 functions, 0 classes, 4 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/workbench/src/schedules.ts:parseScheduleInput",
+   "type": "function",
+   "name": "parseScheduleInput",
+   "filePath": "packages/workbench/src/schedules.ts",
+   "lineRange": [
+    165,
+    221
+   ],
+   "summary": "parseScheduleInput(input, maxPromptCharacters, nowMs) \u2014 function in schedules.ts, lines 165-221.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/schedules.ts:dueSchedules",
+   "type": "function",
+   "name": "dueSchedules",
+   "filePath": "packages/workbench/src/schedules.ts",
+   "lineRange": [
+    232,
+    249
+   ],
+   "summary": "dueSchedules(schedules, nowMs) \u2014 function in schedules.ts, lines 232-249.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/schedules.ts:recordScheduleRun",
+   "type": "function",
+   "name": "recordScheduleRun",
+   "filePath": "packages/workbench/src/schedules.ts",
+   "lineRange": [
+    276,
+    300
+   ],
+   "summary": "recordScheduleRun(schedule, event) \u2014 function in schedules.ts, lines 276-300.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/schedules.ts:scheduleFields",
+   "type": "function",
+   "name": "scheduleFields",
+   "filePath": "packages/workbench/src/schedules.ts",
+   "lineRange": [
+    302,
+    316
+   ],
+   "summary": "scheduleFields(input) \u2014 function in schedules.ts, lines 302-316.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/schedules.ts:clockField",
+   "type": "function",
+   "name": "clockField",
+   "filePath": "packages/workbench/src/schedules.ts",
+   "lineRange": [
+    318,
+    328
+   ],
+   "summary": "clockField(nowMs, what) \u2014 function in schedules.ts, lines 318-328.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/schedules.ts:nameField",
+   "type": "function",
+   "name": "nameField",
+   "filePath": "packages/workbench/src/schedules.ts",
+   "lineRange": [
+    330,
+    342
+   ],
+   "summary": "nameField(value) \u2014 function in schedules.ts, lines 330-342.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/schedules.ts:promptField",
+   "type": "function",
+   "name": "promptField",
+   "filePath": "packages/workbench/src/schedules.ts",
+   "lineRange": [
+    344,
+    359
+   ],
+   "summary": "promptField(value, maxLength) \u2014 function in schedules.ts, lines 344-359.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/schedules.ts:cadenceField",
+   "type": "function",
+   "name": "cadenceField",
+   "filePath": "packages/workbench/src/schedules.ts",
+   "lineRange": [
+    361,
+    389
+   ],
+   "summary": "cadenceField(value, nowMs) \u2014 function in schedules.ts, lines 361-389.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/schedules.ts:intervalField",
+   "type": "function",
+   "name": "intervalField",
+   "filePath": "packages/workbench/src/schedules.ts",
+   "lineRange": [
+    391,
+    405
+   ],
+   "summary": "intervalField(value) \u2014 function in schedules.ts, lines 391-405.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/schedules.ts:onceField",
+   "type": "function",
+   "name": "onceField",
+   "filePath": "packages/workbench/src/schedules.ts",
+   "lineRange": [
+    410,
+    425
+   ],
+   "summary": "onceField(value, nowMs) \u2014 function in schedules.ts, lines 410-425.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/schedules.ts:maxRunsField",
+   "type": "function",
+   "name": "maxRunsField",
+   "filePath": "packages/workbench/src/schedules.ts",
+   "lineRange": [
+    427,
+    441
+   ],
+   "summary": "maxRunsField(value) \u2014 function in schedules.ts, lines 427-441.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/schedules.ts:tokenBudgetField",
+   "type": "function",
+   "name": "tokenBudgetField",
+   "filePath": "packages/workbench/src/schedules.ts",
+   "lineRange": [
+    443,
+    457
+   ],
+   "summary": "tokenBudgetField(value) \u2014 function in schedules.ts, lines 443-457.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/schedules.ts:enabledField",
+   "type": "function",
+   "name": "enabledField",
+   "filePath": "packages/workbench/src/schedules.ts",
+   "lineRange": [
+    459,
+    466
+   ],
+   "summary": "enabledField(value) \u2014 function in schedules.ts, lines 459-466.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/schedules.ts:identifierField",
+   "type": "function",
+   "name": "identifierField",
+   "filePath": "packages/workbench/src/schedules.ts",
+   "lineRange": [
+    468,
+    492
+   ],
+   "summary": "identifierField(name, value, maxLength, pattern\u2026) \u2014 function in schedules.ts, lines 468-492.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/schedules.ts:firstRunAt",
+   "type": "function",
+   "name": "firstRunAt",
+   "filePath": "packages/workbench/src/schedules.ts",
+   "lineRange": [
+    496,
+    500
+   ],
+   "summary": "firstRunAt(cadence, nowMs) \u2014 function in schedules.ts, lines 496-500.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/schedules.ts:isDue",
+   "type": "function",
+   "name": "isDue",
+   "filePath": "packages/workbench/src/schedules.ts",
+   "lineRange": [
+    502,
+    505
+   ],
+   "summary": "isDue(nextRunAt, nowMs) \u2014 function in schedules.ts, lines 502-505.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/schedules.ts:nextRunAtAfter",
+   "type": "function",
+   "name": "nextRunAtAfter",
+   "filePath": "packages/workbench/src/schedules.ts",
+   "lineRange": [
+    517,
+    526
+   ],
+   "summary": "nextRunAtAfter(schedule, firedAtMs) \u2014 function in schedules.ts, lines 517-526.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/schedules.ts:runEvent",
+   "type": "function",
+   "name": "runEvent",
+   "filePath": "packages/workbench/src/schedules.ts",
+   "lineRange": [
+    528,
+    572
+   ],
+   "summary": "runEvent(event) \u2014 function in schedules.ts, lines 528-572.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/storage.test.ts",
+   "type": "file",
+   "name": "storage.test.ts",
+   "filePath": "packages/workbench/src/storage.test.ts",
+   "summary": "storage.test.ts \u2014 typescript code, 96 lines, 2 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/storage.test.ts:directory",
+   "type": "function",
+   "name": "directory",
+   "filePath": "packages/workbench/src/storage.test.ts",
+   "lineRange": [
+    11,
+    15
+   ],
+   "summary": "directory(t) \u2014 function in storage.test.ts, lines 11-15.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/storage.test.ts:deadPid",
+   "type": "function",
+   "name": "deadPid",
+   "filePath": "packages/workbench/src/storage.test.ts",
+   "lineRange": [
+    16,
+    21
+   ],
+   "summary": "deadPid() \u2014 function in storage.test.ts, lines 16-21.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/storage.ts",
+   "type": "file",
+   "name": "storage.ts",
+   "filePath": "packages/workbench/src/storage.ts",
+   "summary": "storage.ts \u2014 typescript code, 98 lines, 2 functions, 1 classes, 1 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/storage.ts:acquireLock",
+   "type": "function",
+   "name": "acquireLock",
+   "filePath": "packages/workbench/src/storage.ts",
+   "lineRange": [
+    75,
+    95
+   ],
+   "summary": "acquireLock(path) \u2014 function in storage.ts, lines 75-95.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/storage.ts:sameFile",
+   "type": "function",
+   "name": "sameFile",
+   "filePath": "packages/workbench/src/storage.ts",
+   "lineRange": [
+    96,
+    98
+   ],
+   "summary": "sameFile(a, b) \u2014 function in storage.ts, lines 96-98.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:packages/workbench/src/storage.ts:LocalStorage",
+   "type": "class",
+   "name": "LocalStorage",
+   "filePath": "packages/workbench/src/storage.ts",
+   "lineRange": [
+    8,
+    73
+   ],
+   "summary": "LocalStorage \u2014 class in storage.ts, lines 8-73, methods: recoveryVault, read, save, commit.",
+   "tags": [
+    "typescript",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/subagents.test.ts",
+   "type": "file",
+   "name": "subagents.test.ts",
+   "filePath": "packages/workbench/src/subagents.test.ts",
+   "summary": "subagents.test.ts \u2014 typescript code, 633 lines, 5 functions, 0 classes, 0 exports, 5 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "function:packages/workbench/src/subagents.test.ts:reply",
+   "type": "function",
+   "name": "reply",
+   "filePath": "packages/workbench/src/subagents.test.ts",
+   "lineRange": [
+    13,
+    16
+   ],
+   "summary": "reply(body) \u2014 function in subagents.test.ts, lines 13-16.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/subagents.test.ts:models",
+   "type": "function",
+   "name": "models",
+   "filePath": "packages/workbench/src/subagents.test.ts",
+   "lineRange": [
+    17,
+    17
+   ],
+   "summary": "models() \u2014 function in subagents.test.ts, lines 17-17.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/subagents.test.ts:answer",
+   "type": "function",
+   "name": "answer",
+   "filePath": "packages/workbench/src/subagents.test.ts",
+   "lineRange": [
+    18,
+    19
+   ],
+   "summary": "answer(content) \u2014 function in subagents.test.ts, lines 18-19.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/subagents.test.ts:successFetcher",
+   "type": "function",
+   "name": "successFetcher",
+   "filePath": "packages/workbench/src/subagents.test.ts",
+   "lineRange": [
+    20,
+    21
+   ],
+   "summary": "successFetcher(url) \u2014 function in subagents.test.ts, lines 20-21.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/subagents.test.ts:toolCatalogServer",
+   "type": "function",
+   "name": "toolCatalogServer",
+   "filePath": "packages/workbench/src/subagents.test.ts",
+   "lineRange": [
+    23,
+    49
+   ],
+   "summary": "toolCatalogServer(name, description) \u2014 function in subagents.test.ts, lines 23-49.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/subagents.ts",
+   "type": "file",
+   "name": "subagents.ts",
+   "filePath": "packages/workbench/src/subagents.ts",
+   "summary": "subagents.ts \u2014 typescript code, 53 lines, 4 functions, 0 classes, 5 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/subagents.ts:validateIdempotencyKey",
+   "type": "function",
+   "name": "validateIdempotencyKey",
+   "filePath": "packages/workbench/src/subagents.ts",
+   "lineRange": [
+    11,
+    18
+   ],
+   "summary": "validateIdempotencyKey(key) \u2014 function in subagents.ts, lines 11-18.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/subagents.ts:validateSpawnPrompt",
+   "type": "function",
+   "name": "validateSpawnPrompt",
+   "filePath": "packages/workbench/src/subagents.ts",
+   "lineRange": [
+    20,
+    27
+   ],
+   "summary": "validateSpawnPrompt(prompt, max) \u2014 function in subagents.ts, lines 20-27.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/subagents.ts:spawnWorkspaceName",
+   "type": "function",
+   "name": "spawnWorkspaceName",
+   "filePath": "packages/workbench/src/subagents.ts",
+   "lineRange": [
+    29,
+    31
+   ],
+   "summary": "spawnWorkspaceName(childId) \u2014 function in subagents.ts, lines 29-31.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/subagents.ts:subsetTools",
+   "type": "function",
+   "name": "subsetTools",
+   "filePath": "packages/workbench/src/subagents.ts",
+   "lineRange": [
+    38,
+    54
+   ],
+   "summary": "subsetTools(childTools, parentTools) \u2014 function in subagents.ts, lines 38-54.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/test-fixture.test.ts",
+   "type": "file",
+   "name": "test-fixture.test.ts",
+   "filePath": "packages/workbench/src/test-fixture.test.ts",
+   "summary": "test-fixture.test.ts \u2014 typescript code, 70 lines, 1 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/test-fixture.test.ts:fetcher",
+   "type": "function",
+   "name": "fetcher",
+   "filePath": "packages/workbench/src/test-fixture.test.ts",
+   "lineRange": [
+    10,
+    13
+   ],
+   "summary": "fetcher(url) \u2014 function in test-fixture.test.ts, lines 10-13.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/test-fixture.ts",
+   "type": "file",
+   "name": "test-fixture.ts",
+   "filePath": "packages/workbench/src/test-fixture.ts",
+   "summary": "test-fixture.ts \u2014 typescript code, 161 lines, 2 functions, 0 classes, 2 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/workbench/src/test-fixture.ts:assertIsolated",
+   "type": "function",
+   "name": "assertIsolated",
+   "filePath": "packages/workbench/src/test-fixture.ts",
+   "lineRange": [
+    80,
+    95
+   ],
+   "summary": "assertIsolated(root, env) \u2014 function in test-fixture.ts, lines 80-95.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/test-fixture.ts:isolatedWorkbench",
+   "type": "function",
+   "name": "isolatedWorkbench",
+   "filePath": "packages/workbench/src/test-fixture.ts",
+   "lineRange": [
+    110,
+    162
+   ],
+   "summary": "isolatedWorkbench(t, fetcher, extraEnv, options) \u2014 function in test-fixture.ts, lines 110-162.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/todo-tool.test.ts",
+   "type": "file",
+   "name": "todo-tool.test.ts",
+   "filePath": "packages/workbench/src/todo-tool.test.ts",
+   "summary": "todo-tool.test.ts \u2014 typescript code, 233 lines, 3 functions, 0 classes, 0 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/workbench/src/todo-tool.test.ts:models",
+   "type": "function",
+   "name": "models",
+   "filePath": "packages/workbench/src/todo-tool.test.ts",
+   "lineRange": [
+    15,
+    15
+   ],
+   "summary": "models() \u2014 function in todo-tool.test.ts, lines 15-15.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/todo-tool.test.ts:calling",
+   "type": "function",
+   "name": "calling",
+   "filePath": "packages/workbench/src/todo-tool.test.ts",
+   "lineRange": [
+    116,
+    162
+   ],
+   "summary": "calling(argumentsJson, ask) \u2014 function in todo-tool.test.ts, lines 116-162.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/todo-tool.test.ts:fixture",
+   "type": "function",
+   "name": "fixture",
+   "filePath": "packages/workbench/src/todo-tool.test.ts",
+   "lineRange": [
+    164,
+    166
+   ],
+   "summary": "fixture(t, fetcher) \u2014 function in todo-tool.test.ts, lines 164-166.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/todo-tool.ts",
+   "type": "file",
+   "name": "todo-tool.ts",
+   "filePath": "packages/workbench/src/todo-tool.ts",
+   "summary": "todo-tool.ts \u2014 typescript code, 148 lines, 3 functions, 0 classes, 5 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/todo-tool.ts:plainObject",
+   "type": "function",
+   "name": "plainObject",
+   "filePath": "packages/workbench/src/todo-tool.ts",
+   "lineRange": [
+    77,
+    79
+   ],
+   "summary": "plainObject(value) \u2014 function in todo-tool.ts, lines 77-79.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/todo-tool.ts:printable",
+   "type": "function",
+   "name": "printable",
+   "filePath": "packages/workbench/src/todo-tool.ts",
+   "lineRange": [
+    82,
+    84
+   ],
+   "summary": "printable(value) \u2014 function in todo-tool.ts, lines 82-84.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/todo-tool.ts:todoWritePlan",
+   "type": "function",
+   "name": "todoWritePlan",
+   "filePath": "packages/workbench/src/todo-tool.ts",
+   "lineRange": [
+    94,
+    148
+   ],
+   "summary": "todoWritePlan(args) \u2014 function in todo-tool.ts, lines 94-148.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/tool-catalog.test.ts",
+   "type": "file",
+   "name": "tool-catalog.test.ts",
+   "filePath": "packages/workbench/src/tool-catalog.test.ts",
+   "summary": "tool-catalog.test.ts \u2014 typescript code, 59 lines, 0 functions, 0 classes, 0 exports, 6 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/tool-catalog.ts",
+   "type": "file",
+   "name": "tool-catalog.ts",
+   "filePath": "packages/workbench/src/tool-catalog.ts",
+   "summary": "tool-catalog.ts \u2014 typescript code, 18 lines, 1 functions, 0 classes, 1 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/tool-catalog.ts:toolCatalog",
+   "type": "function",
+   "name": "toolCatalog",
+   "filePath": "packages/workbench/src/tool-catalog.ts",
+   "lineRange": [
+    4,
+    18
+   ],
+   "summary": "toolCatalog(tools, secrets) \u2014 function in tool-catalog.ts, lines 4-18.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/web-tools-runtime.test.ts",
+   "type": "file",
+   "name": "web-tools-runtime.test.ts",
+   "filePath": "packages/workbench/src/web-tools-runtime.test.ts",
+   "summary": "web-tools-runtime.test.ts \u2014 typescript code, 461 lines, 12 functions, 0 classes, 0 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/workbench/src/web-tools-runtime.test.ts:models",
+   "type": "function",
+   "name": "models",
+   "filePath": "packages/workbench/src/web-tools-runtime.test.ts",
+   "lineRange": [
+    31,
+    31
+   ],
+   "summary": "models() \u2014 function in web-tools-runtime.test.ts, lines 31-31.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/web-tools-runtime.test.ts:done",
+   "type": "function",
+   "name": "done",
+   "filePath": "packages/workbench/src/web-tools-runtime.test.ts",
+   "lineRange": [
+    32,
+    37
+   ],
+   "summary": "done(text) \u2014 function in web-tools-runtime.test.ts, lines 32-37.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/web-tools-runtime.test.ts:offered",
+   "type": "function",
+   "name": "offered",
+   "filePath": "packages/workbench/src/web-tools-runtime.test.ts",
+   "lineRange": [
+    41,
+    45
+   ],
+   "summary": "offered(body, name) \u2014 function in web-tools-runtime.test.ts, lines 41-45.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/web-tools-runtime.test.ts:toolCall",
+   "type": "function",
+   "name": "toolCall",
+   "filePath": "packages/workbench/src/web-tools-runtime.test.ts",
+   "lineRange": [
+    47,
+    71
+   ],
+   "summary": "toolCall(body, name, args, id) \u2014 function in web-tools-runtime.test.ts, lines 47-71.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/web-tools-runtime.test.ts:toolTexts",
+   "type": "function",
+   "name": "toolTexts",
+   "filePath": "packages/workbench/src/web-tools-runtime.test.ts",
+   "lineRange": [
+    73,
+    77
+   ],
+   "summary": "toolTexts(body) \u2014 function in web-tools-runtime.test.ts, lines 73-77.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/web-tools-runtime.test.ts:latestToolText",
+   "type": "function",
+   "name": "latestToolText",
+   "filePath": "packages/workbench/src/web-tools-runtime.test.ts",
+   "lineRange": [
+    79,
+    83
+   ],
+   "summary": "latestToolText(body) \u2014 function in web-tools-runtime.test.ts, lines 79-83.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/web-tools-runtime.test.ts:harnessValue",
+   "type": "function",
+   "name": "harnessValue",
+   "filePath": "packages/workbench/src/web-tools-runtime.test.ts",
+   "lineRange": [
+    88,
+    92
+   ],
+   "summary": "harnessValue(app, key) \u2014 function in web-tools-runtime.test.ts, lines 88-92.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/web-tools-runtime.test.ts:webCalls",
+   "type": "function",
+   "name": "webCalls",
+   "filePath": "packages/workbench/src/web-tools-runtime.test.ts",
+   "lineRange": [
+    96,
+    98
+   ],
+   "summary": "webCalls(calls) \u2014 function in web-tools-runtime.test.ts, lines 96-98.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/web-tools-runtime.test.ts:waitForHold",
+   "type": "function",
+   "name": "waitForHold",
+   "filePath": "packages/workbench/src/web-tools-runtime.test.ts",
+   "lineRange": [
+    100,
+    110
+   ],
+   "summary": "waitForHold(app, sessionId) \u2014 function in web-tools-runtime.test.ts, lines 100-110.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/web-tools-runtime.test.ts:approveHoldsUntilSettled",
+   "type": "function",
+   "name": "approveHoldsUntilSettled",
+   "filePath": "packages/workbench/src/web-tools-runtime.test.ts",
+   "lineRange": [
+    114,
+    132
+   ],
+   "summary": "approveHoldsUntilSettled(app, sessionId) \u2014 function in web-tools-runtime.test.ts, lines 114-132.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/web-tools-runtime.test.ts:fixturePage",
+   "type": "function",
+   "name": "fixturePage",
+   "filePath": "packages/workbench/src/web-tools-runtime.test.ts",
+   "lineRange": [
+    134,
+    150
+   ],
+   "summary": "fixturePage() \u2014 function in web-tools-runtime.test.ts, lines 134-150.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/web-tools-runtime.test.ts:searchPage",
+   "type": "function",
+   "name": "searchPage",
+   "filePath": "packages/workbench/src/web-tools-runtime.test.ts",
+   "lineRange": [
+    152,
+    167
+   ],
+   "summary": "searchPage() \u2014 function in web-tools-runtime.test.ts, lines 152-167.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/workspace-tools-guard.test.ts",
+   "type": "file",
+   "name": "workspace-tools-guard.test.ts",
+   "filePath": "packages/workbench/src/workspace-tools-guard.test.ts",
+   "summary": "workspace-tools-guard.test.ts \u2014 typescript code, 224 lines, 1 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/workbench/src/workspace-tools-guard.test.ts:hostileArguments",
+   "type": "function",
+   "name": "hostileArguments",
+   "filePath": "packages/workbench/src/workspace-tools-guard.test.ts",
+   "lineRange": [
+    78,
+    90
+   ],
+   "summary": "hostileArguments(tool, path) \u2014 function in workspace-tools-guard.test.ts, lines 78-90.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/workspace.test.ts",
+   "type": "file",
+   "name": "workspace.test.ts",
+   "filePath": "packages/workbench/src/workspace.test.ts",
+   "summary": "workspace.test.ts \u2014 typescript code, 86 lines, 1 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/workspace.test.ts:write",
+   "type": "function",
+   "name": "write",
+   "filePath": "packages/workbench/src/workspace.test.ts",
+   "lineRange": [
+    5,
+    7
+   ],
+   "summary": "write(state, id, content, path) \u2014 function in workspace.test.ts, lines 5-7.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/workbench/src/workspace.ts",
+   "type": "file",
+   "name": "workspace.ts",
+   "filePath": "packages/workbench/src/workspace.ts",
+   "summary": "workspace.ts \u2014 typescript code, 130 lines, 15 functions, 0 classes, 7 exports, 3 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/workspace.ts:createWorkspace",
+   "type": "function",
+   "name": "createWorkspace",
+   "filePath": "packages/workbench/src/workspace.ts",
+   "lineRange": [
+    36,
+    36
+   ],
+   "summary": "createWorkspace() \u2014 function in workspace.ts, lines 36-36.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/workspace.ts:workspaceToolClass",
+   "type": "function",
+   "name": "workspaceToolClass",
+   "filePath": "packages/workbench/src/workspace.ts",
+   "lineRange": [
+    38,
+    48
+   ],
+   "summary": "workspaceToolClass(name) \u2014 function in workspace.ts, lines 38-48.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/workspace.ts:executeWorkspaceTool",
+   "type": "function",
+   "name": "executeWorkspaceTool",
+   "filePath": "packages/workbench/src/workspace.ts",
+   "lineRange": [
+    50,
+    68
+   ],
+   "summary": "executeWorkspaceTool(state, input) \u2014 function in workspace.ts, lines 50-68.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/workspace.ts:previewWorkspaceUndo",
+   "type": "function",
+   "name": "previewWorkspaceUndo",
+   "filePath": "packages/workbench/src/workspace.ts",
+   "lineRange": [
+    70,
+    81
+   ],
+   "summary": "previewWorkspaceUndo(state, operationId) \u2014 function in workspace.ts, lines 70-81.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/workspace.ts:applyWorkspaceUndo",
+   "type": "function",
+   "name": "applyWorkspaceUndo",
+   "filePath": "packages/workbench/src/workspace.ts",
+   "lineRange": [
+    84,
+    93
+   ],
+   "summary": "applyWorkspaceUndo(state, input) \u2014 function in workspace.ts, lines 84-93.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/workspace.ts:duplicate",
+   "type": "function",
+   "name": "duplicate",
+   "filePath": "packages/workbench/src/workspace.ts",
+   "lineRange": [
+    95,
+    100
+   ],
+   "summary": "duplicate(state, id, digest, maxLength) \u2014 function in workspace.ts, lines 95-100.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/workspace.ts:commit",
+   "type": "function",
+   "name": "commit",
+   "filePath": "packages/workbench/src/workspace.ts",
+   "lineRange": [
+    101,
+    110
+   ],
+   "summary": "commit(state, operation) \u2014 function in workspace.ts, lines 101-110.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/workspace.ts:transition",
+   "type": "function",
+   "name": "transition",
+   "filePath": "packages/workbench/src/workspace.ts",
+   "lineRange": [
+    111,
+    113
+   ],
+   "summary": "transition(state, operation) \u2014 function in workspace.ts, lines 111-113.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/workspace.ts:result",
+   "type": "function",
+   "name": "result",
+   "filePath": "packages/workbench/src/workspace.ts",
+   "lineRange": [
+    114,
+    114
+   ],
+   "summary": "result(value) \u2014 function in workspace.ts, lines 114-114.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/workspace.ts:failure",
+   "type": "function",
+   "name": "failure",
+   "filePath": "packages/workbench/src/workspace.ts",
+   "lineRange": [
+    115,
+    115
+   ],
+   "summary": "failure(error) \u2014 function in workspace.ts, lines 115-115.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/workspace.ts:validPath",
+   "type": "function",
+   "name": "validPath",
+   "filePath": "packages/workbench/src/workspace.ts",
+   "lineRange": [
+    116,
+    119
+   ],
+   "summary": "validPath(value) \u2014 function in workspace.ts, lines 116-119.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/workspace.ts:validContent",
+   "type": "function",
+   "name": "validContent",
+   "filePath": "packages/workbench/src/workspace.ts",
+   "lineRange": [
+    120,
+    123
+   ],
+   "summary": "validContent(value) \u2014 function in workspace.ts, lines 120-123.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/workspace.ts:bytes",
+   "type": "function",
+   "name": "bytes",
+   "filePath": "packages/workbench/src/workspace.ts",
+   "lineRange": [
+    124,
+    124
+   ],
+   "summary": "bytes(value) \u2014 function in workspace.ts, lines 124-124.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/workspace.ts:hash",
+   "type": "function",
+   "name": "hash",
+   "filePath": "packages/workbench/src/workspace.ts",
+   "lineRange": [
+    125,
+    125
+   ],
+   "summary": "hash(value) \u2014 function in workspace.ts, lines 125-125.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/workbench/src/workspace.ts:timestamp",
+   "type": "function",
+   "name": "timestamp",
+   "filePath": "packages/workbench/src/workspace.ts",
+   "lineRange": [
+    126,
+    130
+   ],
+   "summary": "timestamp(value) \u2014 function in workspace.ts, lines 126-130.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/src/e2e-arc.mjs",
+   "type": "file",
+   "name": "e2e-arc.mjs",
+   "filePath": "scripts/src/e2e-arc.mjs",
+   "summary": "e2e-arc.mjs \u2014 javascript code, 205 lines, 5 functions, 0 classes, 3 exports, 3 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:scripts/src/e2e-arc.mjs:strictFactsPath",
+   "type": "function",
+   "name": "strictFactsPath",
+   "filePath": "scripts/src/e2e-arc.mjs",
+   "lineRange": [
+    33,
+    37
+   ],
+   "summary": "strictFactsPath(dir) \u2014 function in e2e-arc.mjs, lines 33-37.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/e2e-arc.mjs:pass",
+   "type": "function",
+   "name": "pass",
+   "filePath": "scripts/src/e2e-arc.mjs",
+   "lineRange": [
+    42,
+    42
+   ],
+   "summary": "pass(name) \u2014 function in e2e-arc.mjs, lines 42-42.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/e2e-arc.mjs:check",
+   "type": "function",
+   "name": "check",
+   "filePath": "scripts/src/e2e-arc.mjs",
+   "lineRange": [
+    44,
+    52
+   ],
+   "summary": "check(name, fn) \u2014 function in e2e-arc.mjs, lines 44-52.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/e2e-arc.mjs:runCli",
+   "type": "function",
+   "name": "runCli",
+   "filePath": "scripts/src/e2e-arc.mjs",
+   "lineRange": [
+    54,
+    63
+   ],
+   "summary": "runCli(args, env) \u2014 function in e2e-arc.mjs, lines 54-63.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/e2e-arc.mjs:runArcMoment",
+   "type": "function",
+   "name": "runArcMoment",
+   "filePath": "scripts/src/e2e-arc.mjs",
+   "lineRange": [
+    65,
+    190
+   ],
+   "summary": "runArcMoment() \u2014 function in e2e-arc.mjs, lines 65-190.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/src/preview-beta.mjs",
+   "type": "file",
+   "name": "preview-beta.mjs",
+   "filePath": "scripts/src/preview-beta.mjs",
+   "summary": "preview-beta.mjs \u2014 javascript code, 30 lines, 1 functions, 0 classes, 0 exports, 2 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/preview-beta.mjs:stop",
+   "type": "function",
+   "name": "stop",
+   "filePath": "scripts/src/preview-beta.mjs",
+   "lineRange": [
+    28,
+    28
+   ],
+   "summary": "stop() \u2014 function in preview-beta.mjs, lines 28-28.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/src/preview-workspace.mjs",
+   "type": "file",
+   "name": "preview-workspace.mjs",
+   "filePath": "scripts/src/preview-workspace.mjs",
+   "summary": "preview-workspace.mjs \u2014 javascript code, 46 lines, 1 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/preview-workspace.mjs:close",
+   "type": "function",
+   "name": "close",
+   "filePath": "scripts/src/preview-workspace.mjs",
+   "lineRange": [
+    31,
+    31
+   ],
+   "summary": "close() \u2014 function in preview-workspace.mjs, lines 31-31.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  }
+ ],
+ "edges": [
+  {
+   "source": "file:packages/workbench/src/provider-oauth.ts",
+   "target": "function:packages/workbench/src/provider-oauth.ts:opaqueValue",
+   "type": "contains",
+   "direction": "forward",
+   "description": "provider-oauth.ts defines opaqueValue",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-oauth.ts",
+   "target": "function:packages/workbench/src/provider-oauth.ts:epochMilliseconds",
+   "type": "contains",
+   "direction": "forward",
+   "description": "provider-oauth.ts defines epochMilliseconds",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-oauth.ts",
+   "target": "function:packages/workbench/src/provider-oauth.ts:profile",
+   "type": "contains",
+   "direction": "forward",
+   "description": "provider-oauth.ts defines profile",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-oauth.ts",
+   "target": "function:packages/workbench/src/provider-oauth.ts:object",
+   "type": "contains",
+   "direction": "forward",
+   "description": "provider-oauth.ts defines object",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-oauth.ts",
+   "target": "function:packages/workbench/src/provider-oauth.ts:parsePrimeOAuthEntry",
+   "type": "contains",
+   "direction": "forward",
+   "description": "provider-oauth.ts defines parsePrimeOAuthEntry",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-oauth.ts",
+   "target": "function:packages/workbench/src/provider-oauth.ts:parsePrimeOAuthEntry",
+   "type": "exports",
+   "direction": "forward",
+   "description": "provider-oauth.ts exports parsePrimeOAuthEntry",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/provider-oauth.ts",
+   "target": "function:packages/workbench/src/provider-oauth.ts:parseClaudeCodeOAuth",
+   "type": "contains",
+   "direction": "forward",
+   "description": "provider-oauth.ts defines parseClaudeCodeOAuth",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-oauth.ts",
+   "target": "function:packages/workbench/src/provider-oauth.ts:parseClaudeCodeOAuth",
+   "type": "exports",
+   "direction": "forward",
+   "description": "provider-oauth.ts exports parseClaudeCodeOAuth",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/provider-oauth.ts",
+   "target": "function:packages/workbench/src/provider-oauth.ts:oauthProfileFresh",
+   "type": "contains",
+   "direction": "forward",
+   "description": "provider-oauth.ts defines oauthProfileFresh",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/provider-oauth.ts",
+   "target": "function:packages/workbench/src/provider-oauth.ts:oauthProfileFresh",
+   "type": "exports",
+   "direction": "forward",
+   "description": "provider-oauth.ts exports oauthProfileFresh",
+   "weight": 0.7
+  },
+  {
+   "source": "function:packages/workbench/src/provider-oauth.ts:profile",
+   "target": "function:packages/workbench/src/provider-oauth.ts:opaqueValue",
+   "type": "calls",
+   "direction": "forward",
+   "description": "profile calls opaqueValue",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/provider-oauth.ts:profile",
+   "target": "function:packages/workbench/src/provider-oauth.ts:epochMilliseconds",
+   "type": "calls",
+   "direction": "forward",
+   "description": "profile calls epochMilliseconds",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/provider-oauth.ts:parsePrimeOAuthEntry",
+   "target": "function:packages/workbench/src/provider-oauth.ts:object",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parsePrimeOAuthEntry calls object",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/provider-oauth.ts:parsePrimeOAuthEntry",
+   "target": "function:packages/workbench/src/provider-oauth.ts:profile",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parsePrimeOAuthEntry calls profile",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/provider-oauth.ts:parseClaudeCodeOAuth",
+   "target": "function:packages/workbench/src/provider-oauth.ts:object",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parseClaudeCodeOAuth calls object",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/provider-oauth.ts:parseClaudeCodeOAuth",
+   "target": "function:packages/workbench/src/provider-oauth.ts:profile",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parseClaudeCodeOAuth calls profile",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/workbench/src/recovery-jobs.test.ts",
+   "target": "function:packages/workbench/src/recovery-jobs.test.ts:fixture",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery-jobs.test.ts defines fixture",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/refine-gate.test.ts",
+   "target": "function:packages/workbench/src/refine-gate.test.ts:entry",
+   "type": "contains",
+   "direction": "forward",
+   "description": "refine-gate.test.ts defines entry",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/refine-gate.test.ts",
+   "target": "function:packages/workbench/src/refine-gate.test.ts:input",
+   "type": "contains",
+   "direction": "forward",
+   "description": "refine-gate.test.ts defines input",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/workbench/src/refine-gate.test.ts:input",
+   "target": "function:packages/workbench/src/refine-gate.test.ts:entry",
+   "type": "calls",
+   "direction": "forward",
+   "description": "input calls entry",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/workbench/src/refine-gate.ts",
+   "target": "function:packages/workbench/src/refine-gate.ts:resolveRefineGates",
+   "type": "contains",
+   "direction": "forward",
+   "description": "refine-gate.ts defines resolveRefineGates",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/refine-gate.ts",
+   "target": "function:packages/workbench/src/refine-gate.ts:resolveRefineGates",
+   "type": "exports",
+   "direction": "forward",
+   "description": "refine-gate.ts exports resolveRefineGates",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/refine-gate.ts",
+   "target": "function:packages/workbench/src/refine-gate.ts:cheapGate",
+   "type": "contains",
+   "direction": "forward",
+   "description": "refine-gate.ts defines cheapGate",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/refine-gate.ts",
+   "target": "function:packages/workbench/src/refine-gate.ts:cheapGate",
+   "type": "exports",
+   "direction": "forward",
+   "description": "refine-gate.ts exports cheapGate",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/refine-gate.ts",
+   "target": "function:packages/workbench/src/refine-gate.ts:refuse",
+   "type": "contains",
+   "direction": "forward",
+   "description": "refine-gate.ts defines refuse",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/refine-gate.ts",
+   "target": "function:packages/workbench/src/refine-gate.ts:gateReason",
+   "type": "contains",
+   "direction": "forward",
+   "description": "refine-gate.ts defines gateReason",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/refine-gate.ts",
+   "target": "function:packages/workbench/src/refine-gate.ts:gateReason",
+   "type": "exports",
+   "direction": "forward",
+   "description": "refine-gate.ts exports gateReason",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/refine-gate.ts",
+   "target": "function:packages/workbench/src/refine-gate.ts:buildReviewRequest",
+   "type": "contains",
+   "direction": "forward",
+   "description": "refine-gate.ts defines buildReviewRequest",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/refine-gate.ts",
+   "target": "function:packages/workbench/src/refine-gate.ts:buildReviewRequest",
+   "type": "exports",
+   "direction": "forward",
+   "description": "refine-gate.ts exports buildReviewRequest",
+   "weight": 0.7
+  },
+  {
+   "source": "function:packages/workbench/src/refine-gate.ts:cheapGate",
+   "target": "function:packages/workbench/src/refine-gate.ts:refuse",
+   "type": "calls",
+   "direction": "forward",
+   "description": "cheapGate calls refuse",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/workbench/src/refine-pass.test.ts",
+   "target": "function:packages/workbench/src/refine-pass.test.ts:edit",
+   "type": "contains",
+   "direction": "forward",
+   "description": "refine-pass.test.ts defines edit",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/refine-pass.test.ts",
+   "target": "function:packages/workbench/src/refine-pass.test.ts:proposal",
+   "type": "contains",
+   "direction": "forward",
+   "description": "refine-pass.test.ts defines proposal",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/refine-pass.test.ts",
+   "target": "function:packages/workbench/src/refine-pass.test.ts:accepted",
+   "type": "contains",
+   "direction": "forward",
+   "description": "refine-pass.test.ts defines accepted",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/refine-pass.test.ts",
+   "target": "function:packages/workbench/src/refine-pass.test.ts:rejections",
+   "type": "contains",
+   "direction": "forward",
+   "description": "refine-pass.test.ts defines rejections",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/refine-pass.ts",
+   "target": "function:packages/workbench/src/refine-pass.ts:isIncompleteJson",
+   "type": "contains",
+   "direction": "forward",
+   "description": "refine-pass.ts defines isIncompleteJson",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/refine-pass.ts",
+   "target": "function:packages/workbench/src/refine-pass.ts:isIncompleteJson",
+   "type": "exports",
+   "direction": "forward",
+   "description": "refine-pass.ts exports isIncompleteJson",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/refine-pass.ts",
+   "target": "function:packages/workbench/src/refine-pass.ts:isRecord",
+   "type": "contains",
+   "direction": "forward",
+   "description": "refine-pass.ts defines isRecord",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/refine-pass.ts",
+   "target": "function:packages/workbench/src/refine-pass.ts:text",
+   "type": "contains",
+   "direction": "forward",
+   "description": "refine-pass.ts defines text",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/refine-pass.ts",
+   "target": "function:packages/workbench/src/refine-pass.ts:seqs",
+   "type": "contains",
+   "direction": "forward",
+   "description": "refine-pass.ts defines seqs",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/refine-pass.ts",
+   "target": "function:packages/workbench/src/refine-pass.ts:readEdit",
+   "type": "contains",
+   "direction": "forward",
+   "description": "refine-pass.ts defines readEdit",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/refine-pass.ts",
+   "target": "function:packages/workbench/src/refine-pass.ts:extractJsonObject",
+   "type": "contains",
+   "direction": "forward",
+   "description": "refine-pass.ts defines extractJsonObject",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/refine-pass.ts",
+   "target": "function:packages/workbench/src/refine-pass.ts:extractJsonObject",
+   "type": "exports",
+   "direction": "forward",
+   "description": "refine-pass.ts exports extractJsonObject",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/refine-pass.ts",
+   "target": "function:packages/workbench/src/refine-pass.ts:extractJsonValue",
+   "type": "contains",
+   "direction": "forward",
+   "description": "refine-pass.ts defines extractJsonValue",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/refine-pass.ts",
+   "target": "function:packages/workbench/src/refine-pass.ts:extractJsonValue",
+   "type": "exports",
+   "direction": "forward",
+   "description": "refine-pass.ts exports extractJsonValue",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/refine-pass.ts",
+   "target": "function:packages/workbench/src/refine-pass.ts:readProposal",
+   "type": "contains",
+   "direction": "forward",
+   "description": "refine-pass.ts defines readProposal",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/refine-pass.ts",
+   "target": "function:packages/workbench/src/refine-pass.ts:validateProposal",
+   "type": "contains",
+   "direction": "forward",
+   "description": "refine-pass.ts defines validateProposal",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/refine-pass.ts",
+   "target": "function:packages/workbench/src/refine-pass.ts:validateProposal",
+   "type": "exports",
+   "direction": "forward",
+   "description": "refine-pass.ts exports validateProposal",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/refine-pass.ts",
+   "target": "function:packages/workbench/src/refine-pass.ts:applyProposal",
+   "type": "contains",
+   "direction": "forward",
+   "description": "refine-pass.ts defines applyProposal",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/refine-pass.ts",
+   "target": "function:packages/workbench/src/refine-pass.ts:applyProposal",
+   "type": "exports",
+   "direction": "forward",
+   "description": "refine-pass.ts exports applyProposal",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/refine-pass.ts",
+   "target": "function:packages/workbench/src/refine-pass.ts:contentAddressedId",
+   "type": "contains",
+   "direction": "forward",
+   "description": "refine-pass.ts defines contentAddressedId",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/refine-pass.ts",
+   "target": "function:packages/workbench/src/refine-pass.ts:contentAddressedId",
+   "type": "exports",
+   "direction": "forward",
+   "description": "refine-pass.ts exports contentAddressedId",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/refine-pass.ts",
+   "target": "function:packages/workbench/src/refine-pass.ts:buildRefineRequest",
+   "type": "contains",
+   "direction": "forward",
+   "description": "refine-pass.ts defines buildRefineRequest",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/refine-pass.ts",
+   "target": "function:packages/workbench/src/refine-pass.ts:buildRefineRequest",
+   "type": "exports",
+   "direction": "forward",
+   "description": "refine-pass.ts exports buildRefineRequest",
+   "weight": 0.7
+  },
+  {
+   "source": "function:packages/workbench/src/refine-pass.ts:readEdit",
+   "target": "function:packages/workbench/src/refine-pass.ts:isRecord",
+   "type": "calls",
+   "direction": "forward",
+   "description": "readEdit calls isRecord",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/refine-pass.ts:readEdit",
+   "target": "function:packages/workbench/src/refine-pass.ts:text",
+   "type": "calls",
+   "direction": "forward",
+   "description": "readEdit calls text",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/refine-pass.ts:readEdit",
+   "target": "function:packages/workbench/src/refine-pass.ts:seqs",
+   "type": "calls",
+   "direction": "forward",
+   "description": "readEdit calls seqs",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/refine-pass.ts:extractJsonObject",
+   "target": "function:packages/workbench/src/refine-pass.ts:extractJsonValue",
+   "type": "calls",
+   "direction": "forward",
+   "description": "extractJsonObject calls extractJsonValue",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/refine-pass.ts:extractJsonObject",
+   "target": "function:packages/workbench/src/refine-pass.ts:isRecord",
+   "type": "calls",
+   "direction": "forward",
+   "description": "extractJsonObject calls isRecord",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/refine-pass.ts:extractJsonObject",
+   "target": "function:packages/workbench/src/refine-pass.ts:readProposal",
+   "type": "calls",
+   "direction": "forward",
+   "description": "extractJsonObject calls readProposal",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/refine-pass.ts:extractJsonValue",
+   "target": "function:packages/workbench/src/refine-pass.ts:isIncompleteJson",
+   "type": "calls",
+   "direction": "forward",
+   "description": "extractJsonValue calls isIncompleteJson",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/refine-pass.ts:readProposal",
+   "target": "function:packages/workbench/src/refine-pass.ts:text",
+   "type": "calls",
+   "direction": "forward",
+   "description": "readProposal calls text",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/refine-pass.ts:applyProposal",
+   "target": "function:packages/workbench/src/refine-pass.ts:contentAddressedId",
+   "type": "calls",
+   "direction": "forward",
+   "description": "applyProposal calls contentAddressedId",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/workbench/src/refine-trigger.test.ts",
+   "target": "function:packages/workbench/src/refine-trigger.test.ts:clock",
+   "type": "contains",
+   "direction": "forward",
+   "description": "refine-trigger.test.ts defines clock",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/refine-trigger.test.ts",
+   "target": "function:packages/workbench/src/refine-trigger.test.ts:ready",
+   "type": "contains",
+   "direction": "forward",
+   "description": "refine-trigger.test.ts defines ready",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/refine-trigger.ts",
+   "target": "function:packages/workbench/src/refine-trigger.ts:initialTriggerState",
+   "type": "contains",
+   "direction": "forward",
+   "description": "refine-trigger.ts defines initialTriggerState",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/refine-trigger.ts",
+   "target": "function:packages/workbench/src/refine-trigger.ts:initialTriggerState",
+   "type": "exports",
+   "direction": "forward",
+   "description": "refine-trigger.ts exports initialTriggerState",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/refine-trigger.ts",
+   "target": "function:packages/workbench/src/refine-trigger.ts:onBranchMove",
+   "type": "contains",
+   "direction": "forward",
+   "description": "refine-trigger.ts defines onBranchMove",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/refine-trigger.ts",
+   "target": "function:packages/workbench/src/refine-trigger.ts:onBranchMove",
+   "type": "exports",
+   "direction": "forward",
+   "description": "refine-trigger.ts exports onBranchMove",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/refine-trigger.ts",
+   "target": "function:packages/workbench/src/refine-trigger.ts:arm",
+   "type": "contains",
+   "direction": "forward",
+   "description": "refine-trigger.ts defines arm",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/refine-trigger.ts",
+   "target": "function:packages/workbench/src/refine-trigger.ts:arm",
+   "type": "exports",
+   "direction": "forward",
+   "description": "refine-trigger.ts exports arm",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/refine-trigger.ts",
+   "target": "function:packages/workbench/src/refine-trigger.ts:requestManualReview",
+   "type": "contains",
+   "direction": "forward",
+   "description": "refine-trigger.ts defines requestManualReview",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/refine-trigger.ts",
+   "target": "function:packages/workbench/src/refine-trigger.ts:requestManualReview",
+   "type": "exports",
+   "direction": "forward",
+   "description": "refine-trigger.ts exports requestManualReview",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/refine-trigger.ts",
+   "target": "function:packages/workbench/src/refine-trigger.ts:recordSettledTurn",
+   "type": "contains",
+   "direction": "forward",
+   "description": "refine-trigger.ts defines recordSettledTurn",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/refine-trigger.ts",
+   "target": "function:packages/workbench/src/refine-trigger.ts:recordSettledTurn",
+   "type": "exports",
+   "direction": "forward",
+   "description": "refine-trigger.ts exports recordSettledTurn",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/refine-trigger.ts",
+   "target": "function:packages/workbench/src/refine-trigger.ts:serviceTrigger",
+   "type": "contains",
+   "direction": "forward",
+   "description": "refine-trigger.ts defines serviceTrigger",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/refine-trigger.ts",
+   "target": "function:packages/workbench/src/refine-trigger.ts:serviceTrigger",
+   "type": "exports",
+   "direction": "forward",
+   "description": "refine-trigger.ts exports serviceTrigger",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/safety-boundaries.test.ts",
+   "target": "function:packages/workbench/src/safety-boundaries.test.ts:fixture",
+   "type": "contains",
+   "direction": "forward",
+   "description": "safety-boundaries.test.ts defines fixture",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/safety-boundaries.test.ts",
+   "target": "function:packages/workbench/src/safety-boundaries.test.ts:paused",
+   "type": "contains",
+   "direction": "forward",
+   "description": "safety-boundaries.test.ts defines paused",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/workbench/src/safety-boundaries.test.ts:paused",
+   "target": "function:packages/workbench/src/safety-boundaries.test.ts:fixture",
+   "type": "calls",
+   "direction": "forward",
+   "description": "paused calls fixture",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/workbench/src/schedule-runtime.test.ts",
+   "target": "function:packages/workbench/src/schedule-runtime.test.ts:models",
+   "type": "contains",
+   "direction": "forward",
+   "description": "schedule-runtime.test.ts defines models",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/schedule-runtime.test.ts",
+   "target": "function:packages/workbench/src/schedule-runtime.test.ts:answer",
+   "type": "contains",
+   "direction": "forward",
+   "description": "schedule-runtime.test.ts defines answer",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/schedule-runtime.test.ts",
+   "target": "function:packages/workbench/src/schedule-runtime.test.ts:runtime",
+   "type": "contains",
+   "direction": "forward",
+   "description": "schedule-runtime.test.ts defines runtime",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/schedule-runtime.test.ts",
+   "target": "function:packages/workbench/src/schedule-runtime.test.ts:surfaceOf",
+   "type": "contains",
+   "direction": "forward",
+   "description": "schedule-runtime.test.ts defines surfaceOf",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/schedule-runtime.test.ts",
+   "target": "function:packages/workbench/src/schedule-runtime.test.ts:persisted",
+   "type": "contains",
+   "direction": "forward",
+   "description": "schedule-runtime.test.ts defines persisted",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/schedule-runtime.test.ts",
+   "target": "function:packages/workbench/src/schedule-runtime.test.ts:readOne",
+   "type": "contains",
+   "direction": "forward",
+   "description": "schedule-runtime.test.ts defines readOne",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/schedule-runtime.test.ts",
+   "target": "function:packages/workbench/src/schedule-runtime.test.ts:waitForSchedule",
+   "type": "contains",
+   "direction": "forward",
+   "description": "schedule-runtime.test.ts defines waitForSchedule",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/schedule-runtime.test.ts",
+   "target": "function:packages/workbench/src/schedule-runtime.test.ts:waitForSessionStatus",
+   "type": "contains",
+   "direction": "forward",
+   "description": "schedule-runtime.test.ts defines waitForSessionStatus",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/workbench/src/schedule-runtime.test.ts:surfaceOf",
+   "target": "function:packages/workbench/src/schedule-runtime.test.ts:runtime",
+   "type": "calls",
+   "direction": "forward",
+   "description": "surfaceOf calls runtime",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/workbench/src/schedules.test.ts",
+   "target": "function:packages/workbench/src/schedules.test.ts:input",
+   "type": "contains",
+   "direction": "forward",
+   "description": "schedules.test.ts defines input",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/schedules.test.ts",
+   "target": "function:packages/workbench/src/schedules.test.ts:schedule",
+   "type": "contains",
+   "direction": "forward",
+   "description": "schedules.test.ts defines schedule",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/schedules.test.ts",
+   "target": "function:packages/workbench/src/schedules.test.ts:refuses",
+   "type": "contains",
+   "direction": "forward",
+   "description": "schedules.test.ts defines refuses",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/schedules.ts",
+   "target": "function:packages/workbench/src/schedules.ts:parseScheduleInput",
+   "type": "contains",
+   "direction": "forward",
+   "description": "schedules.ts defines parseScheduleInput",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/schedules.ts",
+   "target": "function:packages/workbench/src/schedules.ts:parseScheduleInput",
+   "type": "exports",
+   "direction": "forward",
+   "description": "schedules.ts exports parseScheduleInput",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/schedules.ts",
+   "target": "function:packages/workbench/src/schedules.ts:dueSchedules",
+   "type": "contains",
+   "direction": "forward",
+   "description": "schedules.ts defines dueSchedules",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/schedules.ts",
+   "target": "function:packages/workbench/src/schedules.ts:dueSchedules",
+   "type": "exports",
+   "direction": "forward",
+   "description": "schedules.ts exports dueSchedules",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/schedules.ts",
+   "target": "function:packages/workbench/src/schedules.ts:recordScheduleRun",
+   "type": "contains",
+   "direction": "forward",
+   "description": "schedules.ts defines recordScheduleRun",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/schedules.ts",
+   "target": "function:packages/workbench/src/schedules.ts:recordScheduleRun",
+   "type": "exports",
+   "direction": "forward",
+   "description": "schedules.ts exports recordScheduleRun",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/schedules.ts",
+   "target": "function:packages/workbench/src/schedules.ts:scheduleFields",
+   "type": "contains",
+   "direction": "forward",
+   "description": "schedules.ts defines scheduleFields",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/schedules.ts",
+   "target": "function:packages/workbench/src/schedules.ts:clockField",
+   "type": "contains",
+   "direction": "forward",
+   "description": "schedules.ts defines clockField",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/schedules.ts",
+   "target": "function:packages/workbench/src/schedules.ts:nameField",
+   "type": "contains",
+   "direction": "forward",
+   "description": "schedules.ts defines nameField",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/schedules.ts",
+   "target": "function:packages/workbench/src/schedules.ts:promptField",
+   "type": "contains",
+   "direction": "forward",
+   "description": "schedules.ts defines promptField",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/schedules.ts",
+   "target": "function:packages/workbench/src/schedules.ts:cadenceField",
+   "type": "contains",
+   "direction": "forward",
+   "description": "schedules.ts defines cadenceField",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/schedules.ts",
+   "target": "function:packages/workbench/src/schedules.ts:intervalField",
+   "type": "contains",
+   "direction": "forward",
+   "description": "schedules.ts defines intervalField",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/schedules.ts",
+   "target": "function:packages/workbench/src/schedules.ts:onceField",
+   "type": "contains",
+   "direction": "forward",
+   "description": "schedules.ts defines onceField",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/schedules.ts",
+   "target": "function:packages/workbench/src/schedules.ts:maxRunsField",
+   "type": "contains",
+   "direction": "forward",
+   "description": "schedules.ts defines maxRunsField",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/schedules.ts",
+   "target": "function:packages/workbench/src/schedules.ts:tokenBudgetField",
+   "type": "contains",
+   "direction": "forward",
+   "description": "schedules.ts defines tokenBudgetField",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/schedules.ts",
+   "target": "function:packages/workbench/src/schedules.ts:enabledField",
+   "type": "contains",
+   "direction": "forward",
+   "description": "schedules.ts defines enabledField",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/schedules.ts",
+   "target": "function:packages/workbench/src/schedules.ts:identifierField",
+   "type": "contains",
+   "direction": "forward",
+   "description": "schedules.ts defines identifierField",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/schedules.ts",
+   "target": "function:packages/workbench/src/schedules.ts:firstRunAt",
+   "type": "contains",
+   "direction": "forward",
+   "description": "schedules.ts defines firstRunAt",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/schedules.ts",
+   "target": "function:packages/workbench/src/schedules.ts:isDue",
+   "type": "contains",
+   "direction": "forward",
+   "description": "schedules.ts defines isDue",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/schedules.ts",
+   "target": "function:packages/workbench/src/schedules.ts:nextRunAtAfter",
+   "type": "contains",
+   "direction": "forward",
+   "description": "schedules.ts defines nextRunAtAfter",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/schedules.ts",
+   "target": "function:packages/workbench/src/schedules.ts:runEvent",
+   "type": "contains",
+   "direction": "forward",
+   "description": "schedules.ts defines runEvent",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/workbench/src/schedules.ts:parseScheduleInput",
+   "target": "function:packages/workbench/src/schedules.ts:scheduleFields",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parseScheduleInput calls scheduleFields",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/schedules.ts:parseScheduleInput",
+   "target": "function:packages/workbench/src/schedules.ts:clockField",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parseScheduleInput calls clockField",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/schedules.ts:parseScheduleInput",
+   "target": "function:packages/workbench/src/schedules.ts:nameField",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parseScheduleInput calls nameField",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/schedules.ts:parseScheduleInput",
+   "target": "function:packages/workbench/src/schedules.ts:promptField",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parseScheduleInput calls promptField",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/schedules.ts:parseScheduleInput",
+   "target": "function:packages/workbench/src/schedules.ts:cadenceField",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parseScheduleInput calls cadenceField",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/schedules.ts:parseScheduleInput",
+   "target": "function:packages/workbench/src/schedules.ts:identifierField",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parseScheduleInput calls identifierField",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/schedules.ts:parseScheduleInput",
+   "target": "function:packages/workbench/src/schedules.ts:maxRunsField",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parseScheduleInput calls maxRunsField",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/schedules.ts:parseScheduleInput",
+   "target": "function:packages/workbench/src/schedules.ts:tokenBudgetField",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parseScheduleInput calls tokenBudgetField",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/schedules.ts:parseScheduleInput",
+   "target": "function:packages/workbench/src/schedules.ts:enabledField",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parseScheduleInput calls enabledField",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/schedules.ts:parseScheduleInput",
+   "target": "function:packages/workbench/src/schedules.ts:firstRunAt",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parseScheduleInput calls firstRunAt",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/schedules.ts:dueSchedules",
+   "target": "function:packages/workbench/src/schedules.ts:clockField",
+   "type": "calls",
+   "direction": "forward",
+   "description": "dueSchedules calls clockField",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/schedules.ts:dueSchedules",
+   "target": "function:packages/workbench/src/schedules.ts:isDue",
+   "type": "calls",
+   "direction": "forward",
+   "description": "dueSchedules calls isDue",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/schedules.ts:recordScheduleRun",
+   "target": "function:packages/workbench/src/schedules.ts:runEvent",
+   "type": "calls",
+   "direction": "forward",
+   "description": "recordScheduleRun calls runEvent",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/schedules.ts:recordScheduleRun",
+   "target": "function:packages/workbench/src/schedules.ts:nextRunAtAfter",
+   "type": "calls",
+   "direction": "forward",
+   "description": "recordScheduleRun calls nextRunAtAfter",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/schedules.ts:cadenceField",
+   "target": "function:packages/workbench/src/schedules.ts:intervalField",
+   "type": "calls",
+   "direction": "forward",
+   "description": "cadenceField calls intervalField",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/schedules.ts:cadenceField",
+   "target": "function:packages/workbench/src/schedules.ts:onceField",
+   "type": "calls",
+   "direction": "forward",
+   "description": "cadenceField calls onceField",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/workbench/src/storage.test.ts",
+   "target": "function:packages/workbench/src/storage.test.ts:directory",
+   "type": "contains",
+   "direction": "forward",
+   "description": "storage.test.ts defines directory",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/storage.test.ts",
+   "target": "function:packages/workbench/src/storage.test.ts:deadPid",
+   "type": "contains",
+   "direction": "forward",
+   "description": "storage.test.ts defines deadPid",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/storage.ts",
+   "target": "function:packages/workbench/src/storage.ts:acquireLock",
+   "type": "contains",
+   "direction": "forward",
+   "description": "storage.ts defines acquireLock",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/storage.ts",
+   "target": "function:packages/workbench/src/storage.ts:sameFile",
+   "type": "contains",
+   "direction": "forward",
+   "description": "storage.ts defines sameFile",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/storage.ts",
+   "target": "class:packages/workbench/src/storage.ts:LocalStorage",
+   "type": "contains",
+   "direction": "forward",
+   "description": "storage.ts defines class LocalStorage",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/workbench/src/storage.ts:acquireLock",
+   "target": "function:packages/workbench/src/storage.ts:sameFile",
+   "type": "calls",
+   "direction": "forward",
+   "description": "acquireLock calls sameFile",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/workbench/src/subagents.test.ts",
+   "target": "function:packages/workbench/src/subagents.test.ts:reply",
+   "type": "contains",
+   "direction": "forward",
+   "description": "subagents.test.ts defines reply",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/subagents.test.ts",
+   "target": "function:packages/workbench/src/subagents.test.ts:models",
+   "type": "contains",
+   "direction": "forward",
+   "description": "subagents.test.ts defines models",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/subagents.test.ts",
+   "target": "function:packages/workbench/src/subagents.test.ts:answer",
+   "type": "contains",
+   "direction": "forward",
+   "description": "subagents.test.ts defines answer",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/subagents.test.ts",
+   "target": "function:packages/workbench/src/subagents.test.ts:successFetcher",
+   "type": "contains",
+   "direction": "forward",
+   "description": "subagents.test.ts defines successFetcher",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/subagents.test.ts",
+   "target": "function:packages/workbench/src/subagents.test.ts:toolCatalogServer",
+   "type": "contains",
+   "direction": "forward",
+   "description": "subagents.test.ts defines toolCatalogServer",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/workbench/src/subagents.test.ts:models",
+   "target": "function:packages/workbench/src/subagents.test.ts:reply",
+   "type": "calls",
+   "direction": "forward",
+   "description": "models calls reply",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/subagents.test.ts:answer",
+   "target": "function:packages/workbench/src/subagents.test.ts:reply",
+   "type": "calls",
+   "direction": "forward",
+   "description": "answer calls reply",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/subagents.test.ts:successFetcher",
+   "target": "function:packages/workbench/src/subagents.test.ts:models",
+   "type": "calls",
+   "direction": "forward",
+   "description": "successFetcher calls models",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/subagents.test.ts:successFetcher",
+   "target": "function:packages/workbench/src/subagents.test.ts:answer",
+   "type": "calls",
+   "direction": "forward",
+   "description": "successFetcher calls answer",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/workbench/src/subagents.ts",
+   "target": "function:packages/workbench/src/subagents.ts:validateIdempotencyKey",
+   "type": "contains",
+   "direction": "forward",
+   "description": "subagents.ts defines validateIdempotencyKey",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/subagents.ts",
+   "target": "function:packages/workbench/src/subagents.ts:validateIdempotencyKey",
+   "type": "exports",
+   "direction": "forward",
+   "description": "subagents.ts exports validateIdempotencyKey",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/subagents.ts",
+   "target": "function:packages/workbench/src/subagents.ts:validateSpawnPrompt",
+   "type": "contains",
+   "direction": "forward",
+   "description": "subagents.ts defines validateSpawnPrompt",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/subagents.ts",
+   "target": "function:packages/workbench/src/subagents.ts:validateSpawnPrompt",
+   "type": "exports",
+   "direction": "forward",
+   "description": "subagents.ts exports validateSpawnPrompt",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/subagents.ts",
+   "target": "function:packages/workbench/src/subagents.ts:spawnWorkspaceName",
+   "type": "contains",
+   "direction": "forward",
+   "description": "subagents.ts defines spawnWorkspaceName",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/subagents.ts",
+   "target": "function:packages/workbench/src/subagents.ts:spawnWorkspaceName",
+   "type": "exports",
+   "direction": "forward",
+   "description": "subagents.ts exports spawnWorkspaceName",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/subagents.ts",
+   "target": "function:packages/workbench/src/subagents.ts:subsetTools",
+   "type": "contains",
+   "direction": "forward",
+   "description": "subagents.ts defines subsetTools",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/subagents.ts",
+   "target": "function:packages/workbench/src/subagents.ts:subsetTools",
+   "type": "exports",
+   "direction": "forward",
+   "description": "subagents.ts exports subsetTools",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/test-fixture.test.ts",
+   "target": "function:packages/workbench/src/test-fixture.test.ts:fetcher",
+   "type": "contains",
+   "direction": "forward",
+   "description": "test-fixture.test.ts defines fetcher",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/test-fixture.ts",
+   "target": "function:packages/workbench/src/test-fixture.ts:assertIsolated",
+   "type": "contains",
+   "direction": "forward",
+   "description": "test-fixture.ts defines assertIsolated",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/test-fixture.ts",
+   "target": "function:packages/workbench/src/test-fixture.ts:assertIsolated",
+   "type": "exports",
+   "direction": "forward",
+   "description": "test-fixture.ts exports assertIsolated",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/test-fixture.ts",
+   "target": "function:packages/workbench/src/test-fixture.ts:isolatedWorkbench",
+   "type": "contains",
+   "direction": "forward",
+   "description": "test-fixture.ts defines isolatedWorkbench",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/test-fixture.ts",
+   "target": "function:packages/workbench/src/test-fixture.ts:isolatedWorkbench",
+   "type": "exports",
+   "direction": "forward",
+   "description": "test-fixture.ts exports isolatedWorkbench",
+   "weight": 0.7
+  },
+  {
+   "source": "function:packages/workbench/src/test-fixture.ts:isolatedWorkbench",
+   "target": "function:packages/workbench/src/test-fixture.ts:assertIsolated",
+   "type": "calls",
+   "direction": "forward",
+   "description": "isolatedWorkbench calls assertIsolated",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/workbench/src/todo-tool.test.ts",
+   "target": "function:packages/workbench/src/todo-tool.test.ts:models",
+   "type": "contains",
+   "direction": "forward",
+   "description": "todo-tool.test.ts defines models",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/todo-tool.test.ts",
+   "target": "function:packages/workbench/src/todo-tool.test.ts:calling",
+   "type": "contains",
+   "direction": "forward",
+   "description": "todo-tool.test.ts defines calling",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/todo-tool.test.ts",
+   "target": "function:packages/workbench/src/todo-tool.test.ts:fixture",
+   "type": "contains",
+   "direction": "forward",
+   "description": "todo-tool.test.ts defines fixture",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/workbench/src/todo-tool.test.ts:calling",
+   "target": "function:packages/workbench/src/todo-tool.test.ts:models",
+   "type": "calls",
+   "direction": "forward",
+   "description": "calling calls models",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/workbench/src/todo-tool.ts",
+   "target": "function:packages/workbench/src/todo-tool.ts:plainObject",
+   "type": "contains",
+   "direction": "forward",
+   "description": "todo-tool.ts defines plainObject",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/todo-tool.ts",
+   "target": "function:packages/workbench/src/todo-tool.ts:printable",
+   "type": "contains",
+   "direction": "forward",
+   "description": "todo-tool.ts defines printable",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/todo-tool.ts",
+   "target": "function:packages/workbench/src/todo-tool.ts:todoWritePlan",
+   "type": "contains",
+   "direction": "forward",
+   "description": "todo-tool.ts defines todoWritePlan",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/todo-tool.ts",
+   "target": "function:packages/workbench/src/todo-tool.ts:todoWritePlan",
+   "type": "exports",
+   "direction": "forward",
+   "description": "todo-tool.ts exports todoWritePlan",
+   "weight": 0.7
+  },
+  {
+   "source": "function:packages/workbench/src/todo-tool.ts:todoWritePlan",
+   "target": "function:packages/workbench/src/todo-tool.ts:plainObject",
+   "type": "calls",
+   "direction": "forward",
+   "description": "todoWritePlan calls plainObject",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/todo-tool.ts:todoWritePlan",
+   "target": "function:packages/workbench/src/todo-tool.ts:printable",
+   "type": "calls",
+   "direction": "forward",
+   "description": "todoWritePlan calls printable",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/workbench/src/tool-catalog.ts",
+   "target": "function:packages/workbench/src/tool-catalog.ts:toolCatalog",
+   "type": "contains",
+   "direction": "forward",
+   "description": "tool-catalog.ts defines toolCatalog",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/tool-catalog.ts",
+   "target": "function:packages/workbench/src/tool-catalog.ts:toolCatalog",
+   "type": "exports",
+   "direction": "forward",
+   "description": "tool-catalog.ts exports toolCatalog",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/web-tools-runtime.test.ts",
+   "target": "function:packages/workbench/src/web-tools-runtime.test.ts:models",
+   "type": "contains",
+   "direction": "forward",
+   "description": "web-tools-runtime.test.ts defines models",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/web-tools-runtime.test.ts",
+   "target": "function:packages/workbench/src/web-tools-runtime.test.ts:done",
+   "type": "contains",
+   "direction": "forward",
+   "description": "web-tools-runtime.test.ts defines done",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/web-tools-runtime.test.ts",
+   "target": "function:packages/workbench/src/web-tools-runtime.test.ts:offered",
+   "type": "contains",
+   "direction": "forward",
+   "description": "web-tools-runtime.test.ts defines offered",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/web-tools-runtime.test.ts",
+   "target": "function:packages/workbench/src/web-tools-runtime.test.ts:toolCall",
+   "type": "contains",
+   "direction": "forward",
+   "description": "web-tools-runtime.test.ts defines toolCall",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/web-tools-runtime.test.ts",
+   "target": "function:packages/workbench/src/web-tools-runtime.test.ts:toolTexts",
+   "type": "contains",
+   "direction": "forward",
+   "description": "web-tools-runtime.test.ts defines toolTexts",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/web-tools-runtime.test.ts",
+   "target": "function:packages/workbench/src/web-tools-runtime.test.ts:latestToolText",
+   "type": "contains",
+   "direction": "forward",
+   "description": "web-tools-runtime.test.ts defines latestToolText",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/web-tools-runtime.test.ts",
+   "target": "function:packages/workbench/src/web-tools-runtime.test.ts:harnessValue",
+   "type": "contains",
+   "direction": "forward",
+   "description": "web-tools-runtime.test.ts defines harnessValue",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/web-tools-runtime.test.ts",
+   "target": "function:packages/workbench/src/web-tools-runtime.test.ts:webCalls",
+   "type": "contains",
+   "direction": "forward",
+   "description": "web-tools-runtime.test.ts defines webCalls",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/web-tools-runtime.test.ts",
+   "target": "function:packages/workbench/src/web-tools-runtime.test.ts:waitForHold",
+   "type": "contains",
+   "direction": "forward",
+   "description": "web-tools-runtime.test.ts defines waitForHold",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/web-tools-runtime.test.ts",
+   "target": "function:packages/workbench/src/web-tools-runtime.test.ts:approveHoldsUntilSettled",
+   "type": "contains",
+   "direction": "forward",
+   "description": "web-tools-runtime.test.ts defines approveHoldsUntilSettled",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/web-tools-runtime.test.ts",
+   "target": "function:packages/workbench/src/web-tools-runtime.test.ts:fixturePage",
+   "type": "contains",
+   "direction": "forward",
+   "description": "web-tools-runtime.test.ts defines fixturePage",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/web-tools-runtime.test.ts",
+   "target": "function:packages/workbench/src/web-tools-runtime.test.ts:searchPage",
+   "type": "contains",
+   "direction": "forward",
+   "description": "web-tools-runtime.test.ts defines searchPage",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/workbench/src/web-tools-runtime.test.ts:toolCall",
+   "target": "function:packages/workbench/src/web-tools-runtime.test.ts:offered",
+   "type": "calls",
+   "direction": "forward",
+   "description": "toolCall calls offered",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/web-tools-runtime.test.ts:latestToolText",
+   "target": "function:packages/workbench/src/web-tools-runtime.test.ts:toolTexts",
+   "type": "calls",
+   "direction": "forward",
+   "description": "latestToolText calls toolTexts",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/workbench/src/workspace-tools-guard.test.ts",
+   "target": "function:packages/workbench/src/workspace-tools-guard.test.ts:hostileArguments",
+   "type": "contains",
+   "direction": "forward",
+   "description": "workspace-tools-guard.test.ts defines hostileArguments",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/workspace.test.ts",
+   "target": "function:packages/workbench/src/workspace.test.ts:write",
+   "type": "contains",
+   "direction": "forward",
+   "description": "workspace.test.ts defines write",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/workspace.ts",
+   "target": "function:packages/workbench/src/workspace.ts:createWorkspace",
+   "type": "contains",
+   "direction": "forward",
+   "description": "workspace.ts defines createWorkspace",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/workspace.ts",
+   "target": "function:packages/workbench/src/workspace.ts:createWorkspace",
+   "type": "exports",
+   "direction": "forward",
+   "description": "workspace.ts exports createWorkspace",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/workspace.ts",
+   "target": "function:packages/workbench/src/workspace.ts:workspaceToolClass",
+   "type": "contains",
+   "direction": "forward",
+   "description": "workspace.ts defines workspaceToolClass",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/workspace.ts",
+   "target": "function:packages/workbench/src/workspace.ts:workspaceToolClass",
+   "type": "exports",
+   "direction": "forward",
+   "description": "workspace.ts exports workspaceToolClass",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/workspace.ts",
+   "target": "function:packages/workbench/src/workspace.ts:executeWorkspaceTool",
+   "type": "contains",
+   "direction": "forward",
+   "description": "workspace.ts defines executeWorkspaceTool",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/workspace.ts",
+   "target": "function:packages/workbench/src/workspace.ts:executeWorkspaceTool",
+   "type": "exports",
+   "direction": "forward",
+   "description": "workspace.ts exports executeWorkspaceTool",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/workspace.ts",
+   "target": "function:packages/workbench/src/workspace.ts:previewWorkspaceUndo",
+   "type": "contains",
+   "direction": "forward",
+   "description": "workspace.ts defines previewWorkspaceUndo",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/workspace.ts",
+   "target": "function:packages/workbench/src/workspace.ts:previewWorkspaceUndo",
+   "type": "exports",
+   "direction": "forward",
+   "description": "workspace.ts exports previewWorkspaceUndo",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/workspace.ts",
+   "target": "function:packages/workbench/src/workspace.ts:applyWorkspaceUndo",
+   "type": "contains",
+   "direction": "forward",
+   "description": "workspace.ts defines applyWorkspaceUndo",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/workspace.ts",
+   "target": "function:packages/workbench/src/workspace.ts:applyWorkspaceUndo",
+   "type": "exports",
+   "direction": "forward",
+   "description": "workspace.ts exports applyWorkspaceUndo",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/workbench/src/workspace.ts",
+   "target": "function:packages/workbench/src/workspace.ts:duplicate",
+   "type": "contains",
+   "direction": "forward",
+   "description": "workspace.ts defines duplicate",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/workspace.ts",
+   "target": "function:packages/workbench/src/workspace.ts:commit",
+   "type": "contains",
+   "direction": "forward",
+   "description": "workspace.ts defines commit",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/workspace.ts",
+   "target": "function:packages/workbench/src/workspace.ts:transition",
+   "type": "contains",
+   "direction": "forward",
+   "description": "workspace.ts defines transition",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/workspace.ts",
+   "target": "function:packages/workbench/src/workspace.ts:result",
+   "type": "contains",
+   "direction": "forward",
+   "description": "workspace.ts defines result",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/workspace.ts",
+   "target": "function:packages/workbench/src/workspace.ts:failure",
+   "type": "contains",
+   "direction": "forward",
+   "description": "workspace.ts defines failure",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/workspace.ts",
+   "target": "function:packages/workbench/src/workspace.ts:validPath",
+   "type": "contains",
+   "direction": "forward",
+   "description": "workspace.ts defines validPath",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/workspace.ts",
+   "target": "function:packages/workbench/src/workspace.ts:validContent",
+   "type": "contains",
+   "direction": "forward",
+   "description": "workspace.ts defines validContent",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/workspace.ts",
+   "target": "function:packages/workbench/src/workspace.ts:bytes",
+   "type": "contains",
+   "direction": "forward",
+   "description": "workspace.ts defines bytes",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/workspace.ts",
+   "target": "function:packages/workbench/src/workspace.ts:hash",
+   "type": "contains",
+   "direction": "forward",
+   "description": "workspace.ts defines hash",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/workspace.ts",
+   "target": "function:packages/workbench/src/workspace.ts:timestamp",
+   "type": "contains",
+   "direction": "forward",
+   "description": "workspace.ts defines timestamp",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/workbench/src/workspace.ts:executeWorkspaceTool",
+   "target": "function:packages/workbench/src/workspace.ts:result",
+   "type": "calls",
+   "direction": "forward",
+   "description": "executeWorkspaceTool calls result",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/workspace.ts:executeWorkspaceTool",
+   "target": "function:packages/workbench/src/workspace.ts:bytes",
+   "type": "calls",
+   "direction": "forward",
+   "description": "executeWorkspaceTool calls bytes",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/workspace.ts:executeWorkspaceTool",
+   "target": "function:packages/workbench/src/workspace.ts:validPath",
+   "type": "calls",
+   "direction": "forward",
+   "description": "executeWorkspaceTool calls validPath",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/workspace.ts:executeWorkspaceTool",
+   "target": "function:packages/workbench/src/workspace.ts:validContent",
+   "type": "calls",
+   "direction": "forward",
+   "description": "executeWorkspaceTool calls validContent",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/workspace.ts:executeWorkspaceTool",
+   "target": "function:packages/workbench/src/workspace.ts:hash",
+   "type": "calls",
+   "direction": "forward",
+   "description": "executeWorkspaceTool calls hash",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/workspace.ts:executeWorkspaceTool",
+   "target": "function:packages/workbench/src/workspace.ts:duplicate",
+   "type": "calls",
+   "direction": "forward",
+   "description": "executeWorkspaceTool calls duplicate",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/workspace.ts:executeWorkspaceTool",
+   "target": "function:packages/workbench/src/workspace.ts:transition",
+   "type": "calls",
+   "direction": "forward",
+   "description": "executeWorkspaceTool calls transition",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/workspace.ts:executeWorkspaceTool",
+   "target": "function:packages/workbench/src/workspace.ts:commit",
+   "type": "calls",
+   "direction": "forward",
+   "description": "executeWorkspaceTool calls commit",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/workspace.ts:executeWorkspaceTool",
+   "target": "function:packages/workbench/src/workspace.ts:timestamp",
+   "type": "calls",
+   "direction": "forward",
+   "description": "executeWorkspaceTool calls timestamp",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/workspace.ts:executeWorkspaceTool",
+   "target": "function:packages/workbench/src/workspace.ts:failure",
+   "type": "calls",
+   "direction": "forward",
+   "description": "executeWorkspaceTool calls failure",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/workspace.ts:applyWorkspaceUndo",
+   "target": "function:packages/workbench/src/workspace.ts:hash",
+   "type": "calls",
+   "direction": "forward",
+   "description": "applyWorkspaceUndo calls hash",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/workspace.ts:applyWorkspaceUndo",
+   "target": "function:packages/workbench/src/workspace.ts:duplicate",
+   "type": "calls",
+   "direction": "forward",
+   "description": "applyWorkspaceUndo calls duplicate",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/workspace.ts:applyWorkspaceUndo",
+   "target": "function:packages/workbench/src/workspace.ts:transition",
+   "type": "calls",
+   "direction": "forward",
+   "description": "applyWorkspaceUndo calls transition",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/workspace.ts:applyWorkspaceUndo",
+   "target": "function:packages/workbench/src/workspace.ts:previewWorkspaceUndo",
+   "type": "calls",
+   "direction": "forward",
+   "description": "applyWorkspaceUndo calls previewWorkspaceUndo",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/workspace.ts:applyWorkspaceUndo",
+   "target": "function:packages/workbench/src/workspace.ts:commit",
+   "type": "calls",
+   "direction": "forward",
+   "description": "applyWorkspaceUndo calls commit",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/workspace.ts:applyWorkspaceUndo",
+   "target": "function:packages/workbench/src/workspace.ts:timestamp",
+   "type": "calls",
+   "direction": "forward",
+   "description": "applyWorkspaceUndo calls timestamp",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/workspace.ts:applyWorkspaceUndo",
+   "target": "function:packages/workbench/src/workspace.ts:failure",
+   "type": "calls",
+   "direction": "forward",
+   "description": "applyWorkspaceUndo calls failure",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/workspace.ts:commit",
+   "target": "function:packages/workbench/src/workspace.ts:bytes",
+   "type": "calls",
+   "direction": "forward",
+   "description": "commit calls bytes",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/workspace.ts:commit",
+   "target": "function:packages/workbench/src/workspace.ts:transition",
+   "type": "calls",
+   "direction": "forward",
+   "description": "commit calls transition",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/workspace.ts:transition",
+   "target": "function:packages/workbench/src/workspace.ts:result",
+   "type": "calls",
+   "direction": "forward",
+   "description": "transition calls result",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/workbench/src/workspace.ts:validContent",
+   "target": "function:packages/workbench/src/workspace.ts:bytes",
+   "type": "calls",
+   "direction": "forward",
+   "description": "validContent calls bytes",
+   "weight": 0.6
+  },
+  {
+   "source": "file:scripts/src/e2e-arc.mjs",
+   "target": "function:scripts/src/e2e-arc.mjs:strictFactsPath",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-arc.mjs defines strictFactsPath",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/e2e-arc.mjs",
+   "target": "function:scripts/src/e2e-arc.mjs:pass",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-arc.mjs defines pass",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/e2e-arc.mjs",
+   "target": "function:scripts/src/e2e-arc.mjs:check",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-arc.mjs defines check",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/e2e-arc.mjs",
+   "target": "function:scripts/src/e2e-arc.mjs:runCli",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-arc.mjs defines runCli",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/e2e-arc.mjs",
+   "target": "function:scripts/src/e2e-arc.mjs:runArcMoment",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-arc.mjs defines runArcMoment",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/e2e-arc.mjs",
+   "target": "function:scripts/src/e2e-arc.mjs:runArcMoment",
+   "type": "exports",
+   "direction": "forward",
+   "description": "e2e-arc.mjs exports runArcMoment",
+   "weight": 0.7
+  },
+  {
+   "source": "function:scripts/src/e2e-arc.mjs:check",
+   "target": "function:scripts/src/e2e-arc.mjs:pass",
+   "type": "calls",
+   "direction": "forward",
+   "description": "check calls pass",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/e2e-arc.mjs:runArcMoment",
+   "target": "function:scripts/src/e2e-arc.mjs:strictFactsPath",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runArcMoment calls strictFactsPath",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/e2e-arc.mjs:runArcMoment",
+   "target": "function:scripts/src/e2e-arc.mjs:runCli",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runArcMoment calls runCli",
+   "weight": 0.6
+  },
+  {
+   "source": "file:scripts/src/preview-beta.mjs",
+   "target": "function:scripts/src/preview-beta.mjs:stop",
+   "type": "contains",
+   "direction": "forward",
+   "description": "preview-beta.mjs defines stop",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/preview-workspace.mjs",
+   "target": "function:scripts/src/preview-workspace.mjs:close",
+   "type": "contains",
+   "direction": "forward",
+   "description": "preview-workspace.mjs defines close",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/workbench/src/recovery-jobs.test.ts",
+   "target": "file:packages/workbench/src/gui.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery-jobs.test.ts imports gui.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/recovery-jobs.test.ts",
+   "target": "file:packages/workbench/src/test-fixture.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery-jobs.test.ts imports test-fixture.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/refine-gate.test.ts",
+   "target": "file:packages/workbench/src/refine-gate.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "refine-gate.test.ts imports refine-gate.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/refine-gate.ts",
+   "target": "file:packages/workbench/src/learned-harness.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "refine-gate.ts imports learned-harness.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/refine-pass.test.ts",
+   "target": "file:packages/workbench/src/learned-harness.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "refine-pass.test.ts imports learned-harness.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/refine-pass.test.ts",
+   "target": "file:packages/workbench/src/refine-pass.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "refine-pass.test.ts imports refine-pass.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/refine-pass.ts",
+   "target": "file:packages/workbench/src/agents.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "refine-pass.ts imports agents.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/refine-pass.ts",
+   "target": "file:packages/workbench/src/learned-harness.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "refine-pass.ts imports learned-harness.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/refine-trigger.test.ts",
+   "target": "file:packages/workbench/src/refine-trigger.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "refine-trigger.test.ts imports refine-trigger.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/safety-boundaries.test.ts",
+   "target": "file:packages/workbench/src/gui.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "safety-boundaries.test.ts imports gui.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/safety-boundaries.test.ts",
+   "target": "file:packages/workbench/src/storage.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "safety-boundaries.test.ts imports storage.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/safety-boundaries.test.ts",
+   "target": "file:packages/workbench/src/test-fixture.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "safety-boundaries.test.ts imports test-fixture.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/schedule-runtime.test.ts",
+   "target": "file:packages/workbench/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "schedule-runtime.test.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/schedule-runtime.test.ts",
+   "target": "file:packages/workbench/src/schedules.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "schedule-runtime.test.ts imports schedules.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/schedule-runtime.test.ts",
+   "target": "file:packages/workbench/src/test-fixture.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "schedule-runtime.test.ts imports test-fixture.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/schedules.test.ts",
+   "target": "file:packages/workbench/src/schedules.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "schedules.test.ts imports schedules.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/storage.test.ts",
+   "target": "file:packages/workbench/src/storage.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "storage.test.ts imports storage.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/storage.ts",
+   "target": "file:packages/runtime/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "storage.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/subagents.test.ts",
+   "target": "file:packages/ledger/src/feed.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "subagents.test.ts imports feed.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/subagents.test.ts",
+   "target": "file:packages/workbench/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "subagents.test.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/subagents.test.ts",
+   "target": "file:packages/workbench/src/storage.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "subagents.test.ts imports storage.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/subagents.test.ts",
+   "target": "file:packages/workbench/src/subagents.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "subagents.test.ts imports subagents.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/subagents.test.ts",
+   "target": "file:packages/workbench/src/test-fixture.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "subagents.test.ts imports test-fixture.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/test-fixture.test.ts",
+   "target": "file:packages/workbench/src/test-fixture.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "test-fixture.test.ts imports test-fixture.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/test-fixture.ts",
+   "target": "file:packages/workbench/src/agent-runners/agent-runner.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "test-fixture.ts imports agent-runner.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/test-fixture.ts",
+   "target": "file:packages/workbench/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "test-fixture.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/todo-tool.test.ts",
+   "target": "file:packages/workbench/src/test-fixture.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "todo-tool.test.ts imports test-fixture.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/todo-tool.test.ts",
+   "target": "file:packages/workbench/src/todo-tool.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "todo-tool.test.ts imports todo-tool.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/tool-catalog.test.ts",
+   "target": "file:apps/control-plane/ui/src/commands.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "tool-catalog.test.ts imports commands.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/tool-catalog.test.ts",
+   "target": "file:packages/workbench/src/harness-tools.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "tool-catalog.test.ts imports harness-tools.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/tool-catalog.test.ts",
+   "target": "file:packages/workbench/src/test-fixture.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "tool-catalog.test.ts imports test-fixture.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/tool-catalog.test.ts",
+   "target": "file:packages/workbench/src/todo-tool.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "tool-catalog.test.ts imports todo-tool.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/tool-catalog.test.ts",
+   "target": "file:packages/workbench/src/tool-catalog.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "tool-catalog.test.ts imports tool-catalog.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/tool-catalog.test.ts",
+   "target": "file:packages/workbench/src/workspace.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "tool-catalog.test.ts imports workspace.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/tool-catalog.ts",
+   "target": "file:packages/workbench/src/workspace.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "tool-catalog.ts imports workspace.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/web-tools-runtime.test.ts",
+   "target": "file:packages/workbench/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "web-tools-runtime.test.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/web-tools-runtime.test.ts",
+   "target": "file:packages/workbench/src/test-fixture.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "web-tools-runtime.test.ts imports test-fixture.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/workspace-tools-guard.test.ts",
+   "target": "file:packages/workbench/src/workspace.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "workspace-tools-guard.test.ts imports workspace.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/workspace.test.ts",
+   "target": "file:packages/workbench/src/workspace.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "workspace.test.ts imports workspace.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/workspace.ts",
+   "target": "file:packages/workbench/src/project-sandbox.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "workspace.ts imports project-sandbox.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/workspace.ts",
+   "target": "file:packages/workbench/src/project-workspace.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "workspace.ts imports project-workspace.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/workbench/src/workspace.ts",
+   "target": "file:packages/workbench/src/todo-tool.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "workspace.ts imports todo-tool.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:scripts/src/e2e-arc.mjs",
+   "target": "file:apps/control-plane/api/server.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "e2e-arc.mjs imports server.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:scripts/src/e2e-arc.mjs",
+   "target": "file:packages/ledger/src/sign.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "e2e-arc.mjs imports sign.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:scripts/src/e2e-arc.mjs",
+   "target": "file:packages/sdk/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "e2e-arc.mjs imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:scripts/src/preview-beta.mjs",
+   "target": "file:apps/control-plane/api/server.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "preview-beta.mjs imports server.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:scripts/src/preview-beta.mjs",
+   "target": "file:packages/ledger/src/sign.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "preview-beta.mjs imports sign.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:scripts/src/preview-workspace.mjs",
+   "target": "file:apps/control-plane/api/server.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "preview-workspace.mjs imports server.ts",
+   "weight": 0.8
+  }
+ ]
+}

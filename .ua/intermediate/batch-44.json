@@ -1,0 +1,41 @@
+{
+ "nodes": [
+  {
+   "id": "file:apps/control-plane/ui/index.html",
+   "type": "file",
+   "name": "index.html",
+   "filePath": "apps/control-plane/ui/index.html",
+   "summary": "index.html \u2014 html markup, 18 lines.",
+   "tags": [
+    "html",
+    "markup"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/ui/package.json",
+   "type": "config",
+   "name": "package.json",
+   "filePath": "apps/control-plane/ui/package.json",
+   "summary": "package.json \u2014 json config, 29 lines.",
+   "tags": [
+    "json",
+    "config"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/ui/tsconfig.json",
+   "type": "config",
+   "name": "tsconfig.json",
+   "filePath": "apps/control-plane/ui/tsconfig.json",
+   "summary": "tsconfig.json \u2014 json config, 15 lines.",
+   "tags": [
+    "json",
+    "config"
+   ],
+   "complexity": "simple"
+  }
+ ],
+ "edges": []
+}

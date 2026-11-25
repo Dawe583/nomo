@@ -1,0 +1,3616 @@
+{
+ "nodes": [
+  {
+   "id": "file:cloud/recovery.mjs",
+   "type": "file",
+   "name": "recovery.mjs",
+   "filePath": "cloud/recovery.mjs",
+   "summary": "recovery.mjs \u2014 javascript code, 437 lines, 11 functions, 0 classes, 9 exports, 8 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:cloud/recovery.mjs:documentOperationId",
+   "type": "function",
+   "name": "documentOperationId",
+   "filePath": "cloud/recovery.mjs",
+   "lineRange": [
+    19,
+    19
+   ],
+   "summary": "documentOperationId(id) \u2014 function in recovery.mjs, lines 19-19.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/recovery.mjs:cloudDocumentRuntime",
+   "type": "function",
+   "name": "cloudDocumentRuntime",
+   "filePath": "cloud/recovery.mjs",
+   "lineRange": [
+    39,
+    246
+   ],
+   "summary": "cloudDocumentRuntime(owner, session, client) \u2014 function in recovery.mjs, lines 39-246.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:cloud/recovery.mjs:mutateCloudDocument",
+   "type": "function",
+   "name": "mutateCloudDocument",
+   "filePath": "cloud/recovery.mjs",
+   "lineRange": [
+    248,
+    267
+   ],
+   "summary": "mutateCloudDocument(owner, session, client, input\u2026) \u2014 function in recovery.mjs, lines 248-267.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/recovery.mjs:managedCloudUndo",
+   "type": "function",
+   "name": "managedCloudUndo",
+   "filePath": "cloud/recovery.mjs",
+   "lineRange": [
+    269,
+    304
+   ],
+   "summary": "managedCloudUndo(owner, session, client, operationId) \u2014 function in recovery.mjs, lines 269-304.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/recovery.mjs:cloudJobOperationMapKey",
+   "type": "function",
+   "name": "cloudJobOperationMapKey",
+   "filePath": "cloud/recovery.mjs",
+   "lineRange": [
+    311,
+    312
+   ],
+   "summary": "cloudJobOperationMapKey(workspace, jobId) \u2014 function in recovery.mjs, lines 311-312.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/recovery.mjs:presentCloudJob",
+   "type": "function",
+   "name": "presentCloudJob",
+   "filePath": "cloud/recovery.mjs",
+   "lineRange": [
+    314,
+    351
+   ],
+   "summary": "presentCloudJob(payload, operationMap) \u2014 function in recovery.mjs, lines 314-351.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/recovery.mjs:cloudJobOperationMap",
+   "type": "function",
+   "name": "cloudJobOperationMap",
+   "filePath": "cloud/recovery.mjs",
+   "lineRange": [
+    353,
+    369
+   ],
+   "summary": "cloudJobOperationMap(owner, request, client, retainedOperationIds) \u2014 function in recovery.mjs, lines 353-369.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/recovery.mjs:planCloudRecoveryJob",
+   "type": "function",
+   "name": "planCloudRecoveryJob",
+   "filePath": "cloud/recovery.mjs",
+   "lineRange": [
+    371,
+    388
+   ],
+   "summary": "planCloudRecoveryJob(owner, request, session, client) \u2014 function in recovery.mjs, lines 371-388.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/recovery.mjs:runCloudRecoveryJob",
+   "type": "function",
+   "name": "runCloudRecoveryJob",
+   "filePath": "cloud/recovery.mjs",
+   "lineRange": [
+    400,
+    413
+   ],
+   "summary": "runCloudRecoveryJob(owner, session, client, jobId\u2026) \u2014 function in recovery.mjs, lines 400-413.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/recovery.mjs:cloudRecoveryJobStatus",
+   "type": "function",
+   "name": "cloudRecoveryJobStatus",
+   "filePath": "cloud/recovery.mjs",
+   "lineRange": [
+    420,
+    429
+   ],
+   "summary": "cloudRecoveryJobStatus(owner, session, client, jobId) \u2014 function in recovery.mjs, lines 420-429.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/recovery.mjs:cloudRecoveryJobPlanDigest",
+   "type": "function",
+   "name": "cloudRecoveryJobPlanDigest",
+   "filePath": "cloud/recovery.mjs",
+   "lineRange": [
+    431,
+    437
+   ],
+   "summary": "cloudRecoveryJobPlanDigest(owner, session, client, jobId) \u2014 function in recovery.mjs, lines 431-437.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/conformance.test.ts",
+   "type": "file",
+   "name": "conformance.test.ts",
+   "filePath": "packages/cli/src/conformance.test.ts",
+   "summary": "conformance.test.ts \u2014 typescript code, 472 lines, 0 functions, 0 classes, 0 exports, 4 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/cli/src/conformance.ts",
+   "type": "file",
+   "name": "conformance.ts",
+   "filePath": "packages/cli/src/conformance.ts",
+   "summary": "conformance.ts \u2014 typescript code, 615 lines, 6 functions, 0 classes, 9 exports, 8 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "function:packages/cli/src/conformance.ts:requireScenario",
+   "type": "function",
+   "name": "requireScenario",
+   "filePath": "packages/cli/src/conformance.ts",
+   "lineRange": [
+    45,
+    54
+   ],
+   "summary": "requireScenario(adapterId, operation, implemented) \u2014 function in conformance.ts, lines 45-54.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/conformance.ts:filesystemConformanceFixture",
+   "type": "function",
+   "name": "filesystemConformanceFixture",
+   "filePath": "packages/cli/src/conformance.ts",
+   "lineRange": [
+    106,
+    188
+   ],
+   "summary": "filesystemConformanceFixture(operation) \u2014 function in conformance.ts, lines 106-188.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/conformance.ts:gitConformanceFixture",
+   "type": "function",
+   "name": "gitConformanceFixture",
+   "filePath": "packages/cli/src/conformance.ts",
+   "lineRange": [
+    233,
+    347
+   ],
+   "summary": "gitConformanceFixture(operation) \u2014 function in conformance.ts, lines 233-347.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/conformance.ts:managedDocumentsConformanceFixture",
+   "type": "function",
+   "name": "managedDocumentsConformanceFixture",
+   "filePath": "packages/cli/src/conformance.ts",
+   "lineRange": [
+    476,
+    554
+   ],
+   "summary": "managedDocumentsConformanceFixture(operation) \u2014 function in conformance.ts, lines 476-554.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/conformance.ts:fixtureFor",
+   "type": "function",
+   "name": "fixtureFor",
+   "filePath": "packages/cli/src/conformance.ts",
+   "lineRange": [
+    563,
+    581
+   ],
+   "summary": "fixtureFor(adapter, operation) \u2014 function in conformance.ts, lines 563-581.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/conformance.ts:runConformanceCommand",
+   "type": "function",
+   "name": "runConformanceCommand",
+   "filePath": "packages/cli/src/conformance.ts",
+   "lineRange": [
+    584,
+    615
+   ],
+   "summary": "runConformanceCommand(argv, print) \u2014 function in conformance.ts, lines 584-615.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/package-version.ts",
+   "type": "file",
+   "name": "package-version.ts",
+   "filePath": "packages/cli/src/package-version.ts",
+   "summary": "package-version.ts \u2014 typescript code, 55 lines, 2 functions, 0 classes, 1 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/package-version.ts:packageVersion",
+   "type": "function",
+   "name": "packageVersion",
+   "filePath": "packages/cli/src/package-version.ts",
+   "lineRange": [
+    27,
+    41
+   ],
+   "summary": "packageVersion() \u2014 function in package-version.ts, lines 27-41.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/package-version.ts:bundledVersion",
+   "type": "function",
+   "name": "bundledVersion",
+   "filePath": "packages/cli/src/package-version.ts",
+   "lineRange": [
+    51,
+    55
+   ],
+   "summary": "bundledVersion() \u2014 function in package-version.ts, lines 51-55.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/postgres.ts",
+   "type": "file",
+   "name": "postgres.ts",
+   "filePath": "packages/cli/src/postgres.ts",
+   "summary": "postgres.ts \u2014 typescript code, 17 lines, 1 functions, 0 classes, 1 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/postgres.ts:postgresExecutor",
+   "type": "function",
+   "name": "postgresExecutor",
+   "filePath": "packages/cli/src/postgres.ts",
+   "lineRange": [
+    6,
+    17
+   ],
+   "summary": "postgresExecutor(url) \u2014 function in postgres.ts, lines 6-17.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/recovery-collect-file.test.ts",
+   "type": "file",
+   "name": "recovery-collect-file.test.ts",
+   "filePath": "packages/cli/src/recovery-collect-file.test.ts",
+   "summary": "recovery-collect-file.test.ts \u2014 typescript code, 167 lines, 1 functions, 0 classes, 0 exports, 3 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/cli/src/recovery-collect-file.test.ts:fixture",
+   "type": "function",
+   "name": "fixture",
+   "filePath": "packages/cli/src/recovery-collect-file.test.ts",
+   "lineRange": [
+    19,
+    85
+   ],
+   "summary": "fixture(t) \u2014 function in recovery-collect-file.test.ts, lines 19-85.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/recovery-collect.test.ts",
+   "type": "file",
+   "name": "recovery-collect.test.ts",
+   "filePath": "packages/cli/src/recovery-collect.test.ts",
+   "summary": "recovery-collect.test.ts \u2014 typescript code, 232 lines, 2 functions, 0 classes, 0 exports, 3 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/cli/src/recovery-collect.test.ts:fixture",
+   "type": "function",
+   "name": "fixture",
+   "filePath": "packages/cli/src/recovery-collect.test.ts",
+   "lineRange": [
+    21,
+    78
+   ],
+   "summary": "fixture(t) \u2014 function in recovery-collect.test.ts, lines 21-78.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/recovery-collect.test.ts:requireVault",
+   "type": "function",
+   "name": "requireVault",
+   "filePath": "packages/cli/src/recovery-collect.test.ts",
+   "lineRange": [
+    224,
+    232
+   ],
+   "summary": "requireVault(f, reference) \u2014 function in recovery-collect.test.ts, lines 224-232.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/recovery-config.test.ts",
+   "type": "file",
+   "name": "recovery-config.test.ts",
+   "filePath": "packages/cli/src/recovery-config.test.ts",
+   "summary": "recovery-config.test.ts \u2014 typescript code, 236 lines, 3 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/cli/src/recovery-config.test.ts:fixture",
+   "type": "function",
+   "name": "fixture",
+   "filePath": "packages/cli/src/recovery-config.test.ts",
+   "lineRange": [
+    14,
+    23
+   ],
+   "summary": "fixture(t, config) \u2014 function in recovery-config.test.ts, lines 14-23.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/recovery-config.test.ts:inspect",
+   "type": "function",
+   "name": "inspect",
+   "filePath": "packages/cli/src/recovery-config.test.ts",
+   "lineRange": [
+    25,
+    32
+   ],
+   "summary": "inspect(path) \u2014 function in recovery-config.test.ts, lines 25-32.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/recovery-config.test.ts:doctor",
+   "type": "function",
+   "name": "doctor",
+   "filePath": "packages/cli/src/recovery-config.test.ts",
+   "lineRange": [
+    34,
+    42
+   ],
+   "summary": "doctor(path) \u2014 function in recovery-config.test.ts, lines 34-42.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/recovery-config.ts",
+   "type": "file",
+   "name": "recovery-config.ts",
+   "filePath": "packages/cli/src/recovery-config.ts",
+   "summary": "recovery-config.ts \u2014 typescript code, 319 lines, 8 functions, 0 classes, 5 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/cli/src/recovery-config.ts:isJsonObject",
+   "type": "function",
+   "name": "isJsonObject",
+   "filePath": "packages/cli/src/recovery-config.ts",
+   "lineRange": [
+    65,
+    66
+   ],
+   "summary": "isJsonObject(value) \u2014 function in recovery-config.ts, lines 65-66.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/recovery-config.ts:show",
+   "type": "function",
+   "name": "show",
+   "filePath": "packages/cli/src/recovery-config.ts",
+   "lineRange": [
+    68,
+    74
+   ],
+   "summary": "show(value) \u2014 function in recovery-config.ts, lines 68-74.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/recovery-config.ts:rootProblem",
+   "type": "function",
+   "name": "rootProblem",
+   "filePath": "packages/cli/src/recovery-config.ts",
+   "lineRange": [
+    81,
+    99
+   ],
+   "summary": "rootProblem(key, root) \u2014 function in recovery-config.ts, lines 81-99.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/recovery-config.ts:unsupportedAdapter",
+   "type": "function",
+   "name": "unsupportedAdapter",
+   "filePath": "packages/cli/src/recovery-config.ts",
+   "lineRange": [
+    108,
+    122
+   ],
+   "summary": "unsupportedAdapter(config) \u2014 function in recovery-config.ts, lines 108-122.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/recovery-config.ts:vaultCapacityProblem",
+   "type": "function",
+   "name": "vaultCapacityProblem",
+   "filePath": "packages/cli/src/recovery-config.ts",
+   "lineRange": [
+    132,
+    146
+   ],
+   "summary": "vaultCapacityProblem(capacity) \u2014 function in recovery-config.ts, lines 132-146.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/recovery-config.ts:describeRecoveryConfig",
+   "type": "function",
+   "name": "describeRecoveryConfig",
+   "filePath": "packages/cli/src/recovery-config.ts",
+   "lineRange": [
+    148,
+    292
+   ],
+   "summary": "describeRecoveryConfig(raw, configPath) \u2014 function in recovery-config.ts, lines 148-292.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/recovery-config.ts:recoveryConfigRefusal",
+   "type": "function",
+   "name": "recoveryConfigRefusal",
+   "filePath": "packages/cli/src/recovery-config.ts",
+   "lineRange": [
+    295,
+    301
+   ],
+   "summary": "recoveryConfigRefusal(report) \u2014 function in recovery-config.ts, lines 295-301.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/recovery-config.ts:renderRecoveryConfigReport",
+   "type": "function",
+   "name": "renderRecoveryConfigReport",
+   "filePath": "packages/cli/src/recovery-config.ts",
+   "lineRange": [
+    309,
+    320
+   ],
+   "summary": "renderRecoveryConfigReport(configPath, report) \u2014 function in recovery-config.ts, lines 309-320.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/recovery-git.test.ts",
+   "type": "file",
+   "name": "recovery-git.test.ts",
+   "filePath": "packages/cli/src/recovery-git.test.ts",
+   "summary": "recovery-git.test.ts \u2014 typescript code, 92 lines, 0 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/recovery-job.test.ts",
+   "type": "file",
+   "name": "recovery-job.test.ts",
+   "filePath": "packages/cli/src/recovery-job.test.ts",
+   "summary": "recovery-job.test.ts \u2014 typescript code, 175 lines, 0 functions, 0 classes, 0 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/cli/src/recovery-mcp.test.ts",
+   "type": "file",
+   "name": "recovery-mcp.test.ts",
+   "filePath": "packages/cli/src/recovery-mcp.test.ts",
+   "summary": "recovery-mcp.test.ts \u2014 typescript code, 553 lines, 0 functions, 0 classes, 0 exports, 5 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/cli/src/recovery-mcp.ts",
+   "type": "file",
+   "name": "recovery-mcp.ts",
+   "filePath": "packages/cli/src/recovery-mcp.ts",
+   "summary": "recovery-mcp.ts \u2014 typescript code, 526 lines, 10 functions, 1 classes, 1 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/cli/src/recovery-mcp.ts:errorMessage",
+   "type": "function",
+   "name": "errorMessage",
+   "filePath": "packages/cli/src/recovery-mcp.ts",
+   "lineRange": [
+    64,
+    75
+   ],
+   "summary": "errorMessage(error) \u2014 function in recovery-mcp.ts, lines 64-75.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/recovery-mcp.ts:classifyError",
+   "type": "function",
+   "name": "classifyError",
+   "filePath": "packages/cli/src/recovery-mcp.ts",
+   "lineRange": [
+    76,
+    111
+   ],
+   "summary": "classifyError(error) \u2014 function in recovery-mcp.ts, lines 76-111.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/recovery-mcp.ts:errorResult",
+   "type": "function",
+   "name": "errorResult",
+   "filePath": "packages/cli/src/recovery-mcp.ts",
+   "lineRange": [
+    112,
+    120
+   ],
+   "summary": "errorResult(category) \u2014 function in recovery-mcp.ts, lines 112-120.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/recovery-mcp.ts:validateWorkspacePath",
+   "type": "function",
+   "name": "validateWorkspacePath",
+   "filePath": "packages/cli/src/recovery-mcp.ts",
+   "lineRange": [
+    132,
+    149
+   ],
+   "summary": "validateWorkspacePath(value) \u2014 function in recovery-mcp.ts, lines 132-149.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/recovery-mcp.ts:validateFilesystemMutation",
+   "type": "function",
+   "name": "validateFilesystemMutation",
+   "filePath": "packages/cli/src/recovery-mcp.ts",
+   "lineRange": [
+    150,
+    161
+   ],
+   "summary": "validateFilesystemMutation(mutation) \u2014 function in recovery-mcp.ts, lines 150-161.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/recovery-mcp.ts:identityShape",
+   "type": "function",
+   "name": "identityShape",
+   "filePath": "packages/cli/src/recovery-mcp.ts",
+   "lineRange": [
+    163,
+    163
+   ],
+   "summary": "identityShape(label) \u2014 function in recovery-mcp.ts, lines 163-163.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/recovery-mcp.ts:isIdentity",
+   "type": "function",
+   "name": "isIdentity",
+   "filePath": "packages/cli/src/recovery-mcp.ts",
+   "lineRange": [
+    164,
+    164
+   ],
+   "summary": "isIdentity(value) \u2014 function in recovery-mcp.ts, lines 164-164.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/recovery-mcp.ts:validJobSelection",
+   "type": "function",
+   "name": "validJobSelection",
+   "filePath": "packages/cli/src/recovery-mcp.ts",
+   "lineRange": [
+    165,
+    172
+   ],
+   "summary": "validJobSelection(selection) \u2014 function in recovery-mcp.ts, lines 165-172.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/recovery-mcp.ts:tool",
+   "type": "function",
+   "name": "tool",
+   "filePath": "packages/cli/src/recovery-mcp.ts",
+   "lineRange": [
+    186,
+    207
+   ],
+   "summary": "tool(name, description, properties, required\u2026) \u2014 function in recovery-mcp.ts, lines 186-207.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/recovery-mcp.ts:recoveryMcpServer",
+   "type": "function",
+   "name": "recoveryMcpServer",
+   "filePath": "packages/cli/src/recovery-mcp.ts",
+   "lineRange": [
+    304,
+    526
+   ],
+   "summary": "recoveryMcpServer(options) \u2014 function in recovery-mcp.ts, lines 304-526.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "class:packages/cli/src/recovery-mcp.ts:RecoveryMcpError",
+   "type": "class",
+   "name": "RecoveryMcpError",
+   "filePath": "packages/cli/src/recovery-mcp.ts",
+   "lineRange": [
+    57,
+    63
+   ],
+   "summary": "RecoveryMcpError \u2014 class in recovery-mcp.ts, lines 57-63.",
+   "tags": [
+    "typescript",
+    "class"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/recovery-mode.test.ts",
+   "type": "file",
+   "name": "recovery-mode.test.ts",
+   "filePath": "packages/cli/src/recovery-mode.test.ts",
+   "summary": "recovery-mode.test.ts \u2014 typescript code, 85 lines, 2 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/recovery-mode.test.ts:workspace",
+   "type": "function",
+   "name": "workspace",
+   "filePath": "packages/cli/src/recovery-mode.test.ts",
+   "lineRange": [
+    12,
+    35
+   ],
+   "summary": "workspace(t, mode) \u2014 function in recovery-mode.test.ts, lines 12-35.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/recovery-mode.test.ts:executeWith",
+   "type": "function",
+   "name": "executeWith",
+   "filePath": "packages/cli/src/recovery-mode.test.ts",
+   "lineRange": [
+    37,
+    48
+   ],
+   "summary": "executeWith(w, approve) \u2014 function in recovery-mode.test.ts, lines 37-48.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/recovery-paths.test.ts",
+   "type": "file",
+   "name": "recovery-paths.test.ts",
+   "filePath": "packages/cli/src/recovery-paths.test.ts",
+   "summary": "recovery-paths.test.ts \u2014 typescript code, 36 lines, 0 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/recovery-paths.ts",
+   "type": "file",
+   "name": "recovery-paths.ts",
+   "filePath": "packages/cli/src/recovery-paths.ts",
+   "summary": "recovery-paths.ts \u2014 typescript code, 48 lines, 2 functions, 0 classes, 1 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/recovery-paths.ts:canonicalDestination",
+   "type": "function",
+   "name": "canonicalDestination",
+   "filePath": "packages/cli/src/recovery-paths.ts",
+   "lineRange": [
+    14,
+    32
+   ],
+   "summary": "canonicalDestination(path) \u2014 function in recovery-paths.ts, lines 14-32.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/recovery-paths.ts:assertRecoveryStateOutsideRoot",
+   "type": "function",
+   "name": "assertRecoveryStateOutsideRoot",
+   "filePath": "packages/cli/src/recovery-paths.ts",
+   "lineRange": [
+    34,
+    48
+   ],
+   "summary": "assertRecoveryStateOutsideRoot(root, state) \u2014 function in recovery-paths.ts, lines 34-48.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/recovery-retention.test.ts",
+   "type": "file",
+   "name": "recovery-retention.test.ts",
+   "filePath": "packages/cli/src/recovery-retention.test.ts",
+   "summary": "recovery-retention.test.ts \u2014 typescript code, 464 lines, 1 functions, 0 classes, 0 exports, 4 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/cli/src/recovery-retention.test.ts:fixture",
+   "type": "function",
+   "name": "fixture",
+   "filePath": "packages/cli/src/recovery-retention.test.ts",
+   "lineRange": [
+    17,
+    103
+   ],
+   "summary": "fixture(t) \u2014 function in recovery-retention.test.ts, lines 17-103.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/recovery-retention.ts",
+   "type": "file",
+   "name": "recovery-retention.ts",
+   "filePath": "packages/cli/src/recovery-retention.ts",
+   "summary": "recovery-retention.ts \u2014 typescript code, 220 lines, 8 functions, 0 classes, 7 exports, 4 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/cli/src/recovery-retention.ts:isMissing",
+   "type": "function",
+   "name": "isMissing",
+   "filePath": "packages/cli/src/recovery-retention.ts",
+   "lineRange": [
+    47,
+    49
+   ],
+   "summary": "isMissing(error) \u2014 function in recovery-retention.ts, lines 47-49.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/recovery-retention.ts:listFileVaultRetention",
+   "type": "function",
+   "name": "listFileVaultRetention",
+   "filePath": "packages/cli/src/recovery-retention.ts",
+   "lineRange": [
+    54,
+    97
+   ],
+   "summary": "listFileVaultRetention(options) \u2014 function in recovery-retention.ts, lines 54-97.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/recovery-retention.ts:listReservedVaultRetention",
+   "type": "function",
+   "name": "listReservedVaultRetention",
+   "filePath": "packages/cli/src/recovery-retention.ts",
+   "lineRange": [
+    99,
+    114
+   ],
+   "summary": "listReservedVaultRetention(vault, workspace) \u2014 function in recovery-retention.ts, lines 99-114.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/recovery-retention.ts:fileVaultReference",
+   "type": "function",
+   "name": "fileVaultReference",
+   "filePath": "packages/cli/src/recovery-retention.ts",
+   "lineRange": [
+    116,
+    143
+   ],
+   "summary": "fileVaultReference(root, workspace, digest, options) \u2014 function in recovery-retention.ts, lines 116-143.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/recovery-retention.ts:pinFileVaultLifecycle",
+   "type": "function",
+   "name": "pinFileVaultLifecycle",
+   "filePath": "packages/cli/src/recovery-retention.ts",
+   "lineRange": [
+    145,
+    163
+   ],
+   "summary": "pinFileVaultLifecycle(options) \u2014 function in recovery-retention.ts, lines 145-163.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/recovery-retention.ts:markFileVaultUnpinned",
+   "type": "function",
+   "name": "markFileVaultUnpinned",
+   "filePath": "packages/cli/src/recovery-retention.ts",
+   "lineRange": [
+    165,
+    184
+   ],
+   "summary": "markFileVaultUnpinned(options) \u2014 function in recovery-retention.ts, lines 165-184.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/recovery-retention.ts:releaseFileVaultPin",
+   "type": "function",
+   "name": "releaseFileVaultPin",
+   "filePath": "packages/cli/src/recovery-retention.ts",
+   "lineRange": [
+    186,
+    207
+   ],
+   "summary": "releaseFileVaultPin(options) \u2014 function in recovery-retention.ts, lines 186-207.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/recovery-retention.ts:reservedVaultReference",
+   "type": "function",
+   "name": "reservedVaultReference",
+   "filePath": "packages/cli/src/recovery-retention.ts",
+   "lineRange": [
+    209,
+    220
+   ],
+   "summary": "reservedVaultReference(vault, workspace, digest) \u2014 function in recovery-retention.ts, lines 209-220.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/recovery-vault-capacity.test.ts",
+   "type": "file",
+   "name": "recovery-vault-capacity.test.ts",
+   "filePath": "packages/cli/src/recovery-vault-capacity.test.ts",
+   "summary": "recovery-vault-capacity.test.ts \u2014 typescript code, 145 lines, 1 functions, 0 classes, 0 exports, 4 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/recovery-vault-capacity.test.ts:fixture",
+   "type": "function",
+   "name": "fixture",
+   "filePath": "packages/cli/src/recovery-vault-capacity.test.ts",
+   "lineRange": [
+    13,
+    61
+   ],
+   "summary": "fixture(t, persisted) \u2014 function in recovery-vault-capacity.test.ts, lines 13-61.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/recovery.ts",
+   "type": "file",
+   "name": "recovery.ts",
+   "filePath": "packages/cli/src/recovery.ts",
+   "summary": "recovery.ts \u2014 typescript code, 862 lines, 2 functions, 0 classes, 1 exports, 14 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "function:packages/cli/src/recovery.ts:readRetentionPolicy",
+   "type": "function",
+   "name": "readRetentionPolicy",
+   "filePath": "packages/cli/src/recovery.ts",
+   "lineRange": [
+    62,
+    70
+   ],
+   "summary": "readRetentionPolicy(path) \u2014 function in recovery.ts, lines 62-70.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/cli/src/recovery.ts:runRecoveryCommand",
+   "type": "function",
+   "name": "runRecoveryCommand",
+   "filePath": "packages/cli/src/recovery.ts",
+   "lineRange": [
+    91,
+    862
+   ],
+   "summary": "runRecoveryCommand(argv, env, print) \u2014 function in recovery.ts, lines 91-862.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "file:packages/connectors/src/capability-profiles.test.ts",
+   "type": "file",
+   "name": "capability-profiles.test.ts",
+   "filePath": "packages/connectors/src/capability-profiles.test.ts",
+   "summary": "capability-profiles.test.ts \u2014 typescript code, 133 lines, 1 functions, 0 classes, 0 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/capability-profiles.test.ts:profileFor",
+   "type": "function",
+   "name": "profileFor",
+   "filePath": "packages/connectors/src/capability-profiles.test.ts",
+   "lineRange": [
+    18,
+    37
+   ],
+   "summary": "profileFor(id, version) \u2014 function in capability-profiles.test.ts, lines 18-37.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/connectors/src/capability-profiles.ts",
+   "type": "file",
+   "name": "capability-profiles.ts",
+   "filePath": "packages/connectors/src/capability-profiles.ts",
+   "summary": "capability-profiles.ts \u2014 typescript code, 134 lines, 4 functions, 1 classes, 6 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/capability-profiles.ts:declareProviderProfiles",
+   "type": "function",
+   "name": "declareProviderProfiles",
+   "filePath": "packages/connectors/src/capability-profiles.ts",
+   "lineRange": [
+    54,
+    97
+   ],
+   "summary": "declareProviderProfiles(entries, runtime) \u2014 function in capability-profiles.ts, lines 54-97.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/capability-profiles.ts:hasProviderProfile",
+   "type": "function",
+   "name": "hasProviderProfile",
+   "filePath": "packages/connectors/src/capability-profiles.ts",
+   "lineRange": [
+    100,
+    102
+   ],
+   "summary": "hasProviderProfile(set, adapterId) \u2014 function in capability-profiles.ts, lines 100-102.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/capability-profiles.ts:resolveProviderProfile",
+   "type": "function",
+   "name": "resolveProviderProfile",
+   "filePath": "packages/connectors/src/capability-profiles.ts",
+   "lineRange": [
+    109,
+    124
+   ],
+   "summary": "resolveProviderProfile(set, adapterId) \u2014 function in capability-profiles.ts, lines 109-124.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/capability-profiles.ts:sharedConformanceRuntime",
+   "type": "function",
+   "name": "sharedConformanceRuntime",
+   "filePath": "packages/connectors/src/capability-profiles.ts",
+   "lineRange": [
+    132,
+    134
+   ],
+   "summary": "sharedConformanceRuntime(set) \u2014 function in capability-profiles.ts, lines 132-134.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:packages/connectors/src/capability-profiles.ts:CapabilityProfileError",
+   "type": "class",
+   "name": "CapabilityProfileError",
+   "filePath": "packages/connectors/src/capability-profiles.ts",
+   "lineRange": [
+    33,
+    41
+   ],
+   "summary": "CapabilityProfileError \u2014 class in capability-profiles.ts, lines 33-41.",
+   "tags": [
+    "typescript",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/connectors/src/capability.test.ts",
+   "type": "file",
+   "name": "capability.test.ts",
+   "filePath": "packages/connectors/src/capability.test.ts",
+   "summary": "capability.test.ts \u2014 typescript code, 207 lines, 1 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/connectors/src/capability.test.ts:errorsOf",
+   "type": "function",
+   "name": "errorsOf",
+   "filePath": "packages/connectors/src/capability.test.ts",
+   "lineRange": [
+    35,
+    35
+   ],
+   "summary": "errorsOf(profile) \u2014 function in capability.test.ts, lines 35-35.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/connectors/src/capability.ts",
+   "type": "file",
+   "name": "capability.ts",
+   "filePath": "packages/connectors/src/capability.ts",
+   "summary": "capability.ts \u2014 typescript code, 330 lines, 10 functions, 0 classes, 5 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/connectors/src/capability.ts:isNonEmptyString",
+   "type": "function",
+   "name": "isNonEmptyString",
+   "filePath": "packages/connectors/src/capability.ts",
+   "lineRange": [
+    99,
+    100
+   ],
+   "summary": "isNonEmptyString(value) \u2014 function in capability.ts, lines 99-100.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/capability.ts:isStringArray",
+   "type": "function",
+   "name": "isStringArray",
+   "filePath": "packages/connectors/src/capability.ts",
+   "lineRange": [
+    102,
+    103
+   ],
+   "summary": "isStringArray(value) \u2014 function in capability.ts, lines 102-103.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/capability.ts:isObject",
+   "type": "function",
+   "name": "isObject",
+   "filePath": "packages/connectors/src/capability.ts",
+   "lineRange": [
+    105,
+    106
+   ],
+   "summary": "isObject(value) \u2014 function in capability.ts, lines 105-106.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/capability.ts:isCalendarDate",
+   "type": "function",
+   "name": "isCalendarDate",
+   "filePath": "packages/connectors/src/capability.ts",
+   "lineRange": [
+    115,
+    124
+   ],
+   "summary": "isCalendarDate(value) \u2014 function in capability.ts, lines 115-124.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/capability.ts:unknownFields",
+   "type": "function",
+   "name": "unknownFields",
+   "filePath": "packages/connectors/src/capability.ts",
+   "lineRange": [
+    131,
+    137
+   ],
+   "summary": "unknownFields(value, allowed) \u2014 function in capability.ts, lines 131-137.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/capability.ts:validateCapabilityProfile",
+   "type": "function",
+   "name": "validateCapabilityProfile",
+   "filePath": "packages/connectors/src/capability.ts",
+   "lineRange": [
+    143,
+    249
+   ],
+   "summary": "validateCapabilityProfile(profile) \u2014 function in capability.ts, lines 143-249.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/capability.ts:validateCertification",
+   "type": "function",
+   "name": "validateCertification",
+   "filePath": "packages/connectors/src/capability.ts",
+   "lineRange": [
+    251,
+    278
+   ],
+   "summary": "validateCertification(certification, adapter) \u2014 function in capability.ts, lines 251-278.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/capability.ts:validateCertificationDecision",
+   "type": "function",
+   "name": "validateCertificationDecision",
+   "filePath": "packages/connectors/src/capability.ts",
+   "lineRange": [
+    285,
+    298
+   ],
+   "summary": "validateCertificationDecision(decision) \u2014 function in capability.ts, lines 285-298.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/capability.ts:certificationStatus",
+   "type": "function",
+   "name": "certificationStatus",
+   "filePath": "packages/connectors/src/capability.ts",
+   "lineRange": [
+    311,
+    321
+   ],
+   "summary": "certificationStatus(profile) \u2014 function in capability.ts, lines 311-321.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/capability.ts:bindsAdapter",
+   "type": "function",
+   "name": "bindsAdapter",
+   "filePath": "packages/connectors/src/capability.ts",
+   "lineRange": [
+    324,
+    330
+   ],
+   "summary": "bindsAdapter(profile, adapterId, adapterVersion) \u2014 function in capability.ts, lines 324-330.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/connectors/src/filesystem/managed.test.ts",
+   "type": "file",
+   "name": "managed.test.ts",
+   "filePath": "packages/connectors/src/filesystem/managed.test.ts",
+   "summary": "managed.test.ts \u2014 typescript code, 461 lines, 1 functions, 0 classes, 0 exports, 4 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/connectors/src/filesystem/managed.test.ts:fixture",
+   "type": "function",
+   "name": "fixture",
+   "filePath": "packages/connectors/src/filesystem/managed.test.ts",
+   "lineRange": [
+    25,
+    54
+   ],
+   "summary": "fixture(t) \u2014 function in managed.test.ts, lines 25-54.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  }
+ ],
+ "edges": [
+  {
+   "source": "file:cloud/recovery.mjs",
+   "target": "function:cloud/recovery.mjs:documentOperationId",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery.mjs defines documentOperationId",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/recovery.mjs",
+   "target": "function:cloud/recovery.mjs:documentOperationId",
+   "type": "exports",
+   "direction": "forward",
+   "description": "recovery.mjs exports documentOperationId",
+   "weight": 0.7
+  },
+  {
+   "source": "file:cloud/recovery.mjs",
+   "target": "function:cloud/recovery.mjs:cloudDocumentRuntime",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery.mjs defines cloudDocumentRuntime",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/recovery.mjs",
+   "target": "function:cloud/recovery.mjs:cloudDocumentRuntime",
+   "type": "exports",
+   "direction": "forward",
+   "description": "recovery.mjs exports cloudDocumentRuntime",
+   "weight": 0.7
+  },
+  {
+   "source": "file:cloud/recovery.mjs",
+   "target": "function:cloud/recovery.mjs:mutateCloudDocument",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery.mjs defines mutateCloudDocument",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/recovery.mjs",
+   "target": "function:cloud/recovery.mjs:mutateCloudDocument",
+   "type": "exports",
+   "direction": "forward",
+   "description": "recovery.mjs exports mutateCloudDocument",
+   "weight": 0.7
+  },
+  {
+   "source": "file:cloud/recovery.mjs",
+   "target": "function:cloud/recovery.mjs:managedCloudUndo",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery.mjs defines managedCloudUndo",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/recovery.mjs",
+   "target": "function:cloud/recovery.mjs:managedCloudUndo",
+   "type": "exports",
+   "direction": "forward",
+   "description": "recovery.mjs exports managedCloudUndo",
+   "weight": 0.7
+  },
+  {
+   "source": "file:cloud/recovery.mjs",
+   "target": "function:cloud/recovery.mjs:cloudJobOperationMapKey",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery.mjs defines cloudJobOperationMapKey",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/recovery.mjs",
+   "target": "function:cloud/recovery.mjs:presentCloudJob",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery.mjs defines presentCloudJob",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/recovery.mjs",
+   "target": "function:cloud/recovery.mjs:cloudJobOperationMap",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery.mjs defines cloudJobOperationMap",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/recovery.mjs",
+   "target": "function:cloud/recovery.mjs:planCloudRecoveryJob",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery.mjs defines planCloudRecoveryJob",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/recovery.mjs",
+   "target": "function:cloud/recovery.mjs:planCloudRecoveryJob",
+   "type": "exports",
+   "direction": "forward",
+   "description": "recovery.mjs exports planCloudRecoveryJob",
+   "weight": 0.7
+  },
+  {
+   "source": "file:cloud/recovery.mjs",
+   "target": "function:cloud/recovery.mjs:runCloudRecoveryJob",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery.mjs defines runCloudRecoveryJob",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/recovery.mjs",
+   "target": "function:cloud/recovery.mjs:runCloudRecoveryJob",
+   "type": "exports",
+   "direction": "forward",
+   "description": "recovery.mjs exports runCloudRecoveryJob",
+   "weight": 0.7
+  },
+  {
+   "source": "file:cloud/recovery.mjs",
+   "target": "function:cloud/recovery.mjs:cloudRecoveryJobStatus",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery.mjs defines cloudRecoveryJobStatus",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/recovery.mjs",
+   "target": "function:cloud/recovery.mjs:cloudRecoveryJobStatus",
+   "type": "exports",
+   "direction": "forward",
+   "description": "recovery.mjs exports cloudRecoveryJobStatus",
+   "weight": 0.7
+  },
+  {
+   "source": "file:cloud/recovery.mjs",
+   "target": "function:cloud/recovery.mjs:cloudRecoveryJobPlanDigest",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery.mjs defines cloudRecoveryJobPlanDigest",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/recovery.mjs",
+   "target": "function:cloud/recovery.mjs:cloudRecoveryJobPlanDigest",
+   "type": "exports",
+   "direction": "forward",
+   "description": "recovery.mjs exports cloudRecoveryJobPlanDigest",
+   "weight": 0.7
+  },
+  {
+   "source": "function:cloud/recovery.mjs:cloudDocumentRuntime",
+   "target": "function:cloud/recovery.mjs:documentOperationId",
+   "type": "calls",
+   "direction": "forward",
+   "description": "cloudDocumentRuntime calls documentOperationId",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/recovery.mjs:mutateCloudDocument",
+   "target": "function:cloud/recovery.mjs:cloudDocumentRuntime",
+   "type": "calls",
+   "direction": "forward",
+   "description": "mutateCloudDocument calls cloudDocumentRuntime",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/recovery.mjs:mutateCloudDocument",
+   "target": "function:cloud/recovery.mjs:documentOperationId",
+   "type": "calls",
+   "direction": "forward",
+   "description": "mutateCloudDocument calls documentOperationId",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/recovery.mjs:managedCloudUndo",
+   "target": "function:cloud/recovery.mjs:documentOperationId",
+   "type": "calls",
+   "direction": "forward",
+   "description": "managedCloudUndo calls documentOperationId",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/recovery.mjs:managedCloudUndo",
+   "target": "function:cloud/recovery.mjs:cloudDocumentRuntime",
+   "type": "calls",
+   "direction": "forward",
+   "description": "managedCloudUndo calls cloudDocumentRuntime",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/recovery.mjs:cloudJobOperationMap",
+   "target": "function:cloud/recovery.mjs:cloudJobOperationMapKey",
+   "type": "calls",
+   "direction": "forward",
+   "description": "cloudJobOperationMap calls cloudJobOperationMapKey",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/recovery.mjs:cloudJobOperationMap",
+   "target": "function:cloud/recovery.mjs:documentOperationId",
+   "type": "calls",
+   "direction": "forward",
+   "description": "cloudJobOperationMap calls documentOperationId",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/recovery.mjs:planCloudRecoveryJob",
+   "target": "function:cloud/recovery.mjs:cloudDocumentRuntime",
+   "type": "calls",
+   "direction": "forward",
+   "description": "planCloudRecoveryJob calls cloudDocumentRuntime",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/recovery.mjs:planCloudRecoveryJob",
+   "target": "function:cloud/recovery.mjs:cloudJobOperationMap",
+   "type": "calls",
+   "direction": "forward",
+   "description": "planCloudRecoveryJob calls cloudJobOperationMap",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/recovery.mjs:planCloudRecoveryJob",
+   "target": "function:cloud/recovery.mjs:presentCloudJob",
+   "type": "calls",
+   "direction": "forward",
+   "description": "planCloudRecoveryJob calls presentCloudJob",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/recovery.mjs:runCloudRecoveryJob",
+   "target": "function:cloud/recovery.mjs:cloudDocumentRuntime",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runCloudRecoveryJob calls cloudDocumentRuntime",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/recovery.mjs:runCloudRecoveryJob",
+   "target": "function:cloud/recovery.mjs:cloudJobOperationMapKey",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runCloudRecoveryJob calls cloudJobOperationMapKey",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/recovery.mjs:runCloudRecoveryJob",
+   "target": "function:cloud/recovery.mjs:presentCloudJob",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runCloudRecoveryJob calls presentCloudJob",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/recovery.mjs:cloudRecoveryJobStatus",
+   "target": "function:cloud/recovery.mjs:cloudDocumentRuntime",
+   "type": "calls",
+   "direction": "forward",
+   "description": "cloudRecoveryJobStatus calls cloudDocumentRuntime",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/recovery.mjs:cloudRecoveryJobStatus",
+   "target": "function:cloud/recovery.mjs:cloudJobOperationMapKey",
+   "type": "calls",
+   "direction": "forward",
+   "description": "cloudRecoveryJobStatus calls cloudJobOperationMapKey",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/recovery.mjs:cloudRecoveryJobStatus",
+   "target": "function:cloud/recovery.mjs:presentCloudJob",
+   "type": "calls",
+   "direction": "forward",
+   "description": "cloudRecoveryJobStatus calls presentCloudJob",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/cli/src/conformance.ts",
+   "target": "function:packages/cli/src/conformance.ts:requireScenario",
+   "type": "contains",
+   "direction": "forward",
+   "description": "conformance.ts defines requireScenario",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/conformance.ts",
+   "target": "function:packages/cli/src/conformance.ts:filesystemConformanceFixture",
+   "type": "contains",
+   "direction": "forward",
+   "description": "conformance.ts defines filesystemConformanceFixture",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/conformance.ts",
+   "target": "function:packages/cli/src/conformance.ts:filesystemConformanceFixture",
+   "type": "exports",
+   "direction": "forward",
+   "description": "conformance.ts exports filesystemConformanceFixture",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/conformance.ts",
+   "target": "function:packages/cli/src/conformance.ts:gitConformanceFixture",
+   "type": "contains",
+   "direction": "forward",
+   "description": "conformance.ts defines gitConformanceFixture",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/conformance.ts",
+   "target": "function:packages/cli/src/conformance.ts:gitConformanceFixture",
+   "type": "exports",
+   "direction": "forward",
+   "description": "conformance.ts exports gitConformanceFixture",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/conformance.ts",
+   "target": "function:packages/cli/src/conformance.ts:managedDocumentsConformanceFixture",
+   "type": "contains",
+   "direction": "forward",
+   "description": "conformance.ts defines managedDocumentsConformanceFixture",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/conformance.ts",
+   "target": "function:packages/cli/src/conformance.ts:managedDocumentsConformanceFixture",
+   "type": "exports",
+   "direction": "forward",
+   "description": "conformance.ts exports managedDocumentsConformanceFixture",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/conformance.ts",
+   "target": "function:packages/cli/src/conformance.ts:fixtureFor",
+   "type": "contains",
+   "direction": "forward",
+   "description": "conformance.ts defines fixtureFor",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/conformance.ts",
+   "target": "function:packages/cli/src/conformance.ts:runConformanceCommand",
+   "type": "contains",
+   "direction": "forward",
+   "description": "conformance.ts defines runConformanceCommand",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/conformance.ts",
+   "target": "function:packages/cli/src/conformance.ts:runConformanceCommand",
+   "type": "exports",
+   "direction": "forward",
+   "description": "conformance.ts exports runConformanceCommand",
+   "weight": 0.7
+  },
+  {
+   "source": "function:packages/cli/src/conformance.ts:filesystemConformanceFixture",
+   "target": "function:packages/cli/src/conformance.ts:requireScenario",
+   "type": "calls",
+   "direction": "forward",
+   "description": "filesystemConformanceFixture calls requireScenario",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/conformance.ts:gitConformanceFixture",
+   "target": "function:packages/cli/src/conformance.ts:requireScenario",
+   "type": "calls",
+   "direction": "forward",
+   "description": "gitConformanceFixture calls requireScenario",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/conformance.ts:managedDocumentsConformanceFixture",
+   "target": "function:packages/cli/src/conformance.ts:requireScenario",
+   "type": "calls",
+   "direction": "forward",
+   "description": "managedDocumentsConformanceFixture calls requireScenario",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/conformance.ts:fixtureFor",
+   "target": "function:packages/cli/src/conformance.ts:gitConformanceFixture",
+   "type": "calls",
+   "direction": "forward",
+   "description": "fixtureFor calls gitConformanceFixture",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/conformance.ts:fixtureFor",
+   "target": "function:packages/cli/src/conformance.ts:managedDocumentsConformanceFixture",
+   "type": "calls",
+   "direction": "forward",
+   "description": "fixtureFor calls managedDocumentsConformanceFixture",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/conformance.ts:fixtureFor",
+   "target": "function:packages/cli/src/conformance.ts:filesystemConformanceFixture",
+   "type": "calls",
+   "direction": "forward",
+   "description": "fixtureFor calls filesystemConformanceFixture",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/conformance.ts:runConformanceCommand",
+   "target": "function:packages/cli/src/conformance.ts:fixtureFor",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runConformanceCommand calls fixtureFor",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/cli/src/package-version.ts",
+   "target": "function:packages/cli/src/package-version.ts:packageVersion",
+   "type": "contains",
+   "direction": "forward",
+   "description": "package-version.ts defines packageVersion",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/package-version.ts",
+   "target": "function:packages/cli/src/package-version.ts:packageVersion",
+   "type": "exports",
+   "direction": "forward",
+   "description": "package-version.ts exports packageVersion",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/package-version.ts",
+   "target": "function:packages/cli/src/package-version.ts:bundledVersion",
+   "type": "contains",
+   "direction": "forward",
+   "description": "package-version.ts defines bundledVersion",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/cli/src/package-version.ts:packageVersion",
+   "target": "function:packages/cli/src/package-version.ts:bundledVersion",
+   "type": "calls",
+   "direction": "forward",
+   "description": "packageVersion calls bundledVersion",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/cli/src/postgres.ts",
+   "target": "function:packages/cli/src/postgres.ts:postgresExecutor",
+   "type": "contains",
+   "direction": "forward",
+   "description": "postgres.ts defines postgresExecutor",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/postgres.ts",
+   "target": "function:packages/cli/src/postgres.ts:postgresExecutor",
+   "type": "exports",
+   "direction": "forward",
+   "description": "postgres.ts exports postgresExecutor",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/recovery-collect-file.test.ts",
+   "target": "function:packages/cli/src/recovery-collect-file.test.ts:fixture",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery-collect-file.test.ts defines fixture",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/recovery-collect.test.ts",
+   "target": "function:packages/cli/src/recovery-collect.test.ts:fixture",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery-collect.test.ts defines fixture",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/recovery-collect.test.ts",
+   "target": "function:packages/cli/src/recovery-collect.test.ts:requireVault",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery-collect.test.ts defines requireVault",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/recovery-config.test.ts",
+   "target": "function:packages/cli/src/recovery-config.test.ts:fixture",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery-config.test.ts defines fixture",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/recovery-config.test.ts",
+   "target": "function:packages/cli/src/recovery-config.test.ts:inspect",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery-config.test.ts defines inspect",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/recovery-config.test.ts",
+   "target": "function:packages/cli/src/recovery-config.test.ts:doctor",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery-config.test.ts defines doctor",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/recovery-config.ts",
+   "target": "function:packages/cli/src/recovery-config.ts:isJsonObject",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery-config.ts defines isJsonObject",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/recovery-config.ts",
+   "target": "function:packages/cli/src/recovery-config.ts:isJsonObject",
+   "type": "exports",
+   "direction": "forward",
+   "description": "recovery-config.ts exports isJsonObject",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/recovery-config.ts",
+   "target": "function:packages/cli/src/recovery-config.ts:show",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery-config.ts defines show",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/recovery-config.ts",
+   "target": "function:packages/cli/src/recovery-config.ts:rootProblem",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery-config.ts defines rootProblem",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/recovery-config.ts",
+   "target": "function:packages/cli/src/recovery-config.ts:unsupportedAdapter",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery-config.ts defines unsupportedAdapter",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/recovery-config.ts",
+   "target": "function:packages/cli/src/recovery-config.ts:vaultCapacityProblem",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery-config.ts defines vaultCapacityProblem",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/recovery-config.ts",
+   "target": "function:packages/cli/src/recovery-config.ts:describeRecoveryConfig",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery-config.ts defines describeRecoveryConfig",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/recovery-config.ts",
+   "target": "function:packages/cli/src/recovery-config.ts:describeRecoveryConfig",
+   "type": "exports",
+   "direction": "forward",
+   "description": "recovery-config.ts exports describeRecoveryConfig",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/recovery-config.ts",
+   "target": "function:packages/cli/src/recovery-config.ts:recoveryConfigRefusal",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery-config.ts defines recoveryConfigRefusal",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/recovery-config.ts",
+   "target": "function:packages/cli/src/recovery-config.ts:recoveryConfigRefusal",
+   "type": "exports",
+   "direction": "forward",
+   "description": "recovery-config.ts exports recoveryConfigRefusal",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/recovery-config.ts",
+   "target": "function:packages/cli/src/recovery-config.ts:renderRecoveryConfigReport",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery-config.ts defines renderRecoveryConfigReport",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/recovery-config.ts",
+   "target": "function:packages/cli/src/recovery-config.ts:renderRecoveryConfigReport",
+   "type": "exports",
+   "direction": "forward",
+   "description": "recovery-config.ts exports renderRecoveryConfigReport",
+   "weight": 0.7
+  },
+  {
+   "source": "function:packages/cli/src/recovery-config.ts:show",
+   "target": "function:packages/cli/src/recovery-config.ts:isJsonObject",
+   "type": "calls",
+   "direction": "forward",
+   "description": "show calls isJsonObject",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/recovery-config.ts:vaultCapacityProblem",
+   "target": "function:packages/cli/src/recovery-config.ts:isJsonObject",
+   "type": "calls",
+   "direction": "forward",
+   "description": "vaultCapacityProblem calls isJsonObject",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/recovery-config.ts:vaultCapacityProblem",
+   "target": "function:packages/cli/src/recovery-config.ts:show",
+   "type": "calls",
+   "direction": "forward",
+   "description": "vaultCapacityProblem calls show",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/recovery-config.ts:describeRecoveryConfig",
+   "target": "function:packages/cli/src/recovery-config.ts:isJsonObject",
+   "type": "calls",
+   "direction": "forward",
+   "description": "describeRecoveryConfig calls isJsonObject",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/recovery-config.ts:describeRecoveryConfig",
+   "target": "function:packages/cli/src/recovery-config.ts:vaultCapacityProblem",
+   "type": "calls",
+   "direction": "forward",
+   "description": "describeRecoveryConfig calls vaultCapacityProblem",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/recovery-config.ts:describeRecoveryConfig",
+   "target": "function:packages/cli/src/recovery-config.ts:unsupportedAdapter",
+   "type": "calls",
+   "direction": "forward",
+   "description": "describeRecoveryConfig calls unsupportedAdapter",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/recovery-config.ts:describeRecoveryConfig",
+   "target": "function:packages/cli/src/recovery-config.ts:rootProblem",
+   "type": "calls",
+   "direction": "forward",
+   "description": "describeRecoveryConfig calls rootProblem",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/recovery-config.ts:describeRecoveryConfig",
+   "target": "function:packages/cli/src/recovery-config.ts:show",
+   "type": "calls",
+   "direction": "forward",
+   "description": "describeRecoveryConfig calls show",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/cli/src/recovery-mcp.ts",
+   "target": "function:packages/cli/src/recovery-mcp.ts:errorMessage",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery-mcp.ts defines errorMessage",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/recovery-mcp.ts",
+   "target": "function:packages/cli/src/recovery-mcp.ts:classifyError",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery-mcp.ts defines classifyError",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/recovery-mcp.ts",
+   "target": "function:packages/cli/src/recovery-mcp.ts:errorResult",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery-mcp.ts defines errorResult",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/recovery-mcp.ts",
+   "target": "function:packages/cli/src/recovery-mcp.ts:validateWorkspacePath",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery-mcp.ts defines validateWorkspacePath",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/recovery-mcp.ts",
+   "target": "function:packages/cli/src/recovery-mcp.ts:validateFilesystemMutation",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery-mcp.ts defines validateFilesystemMutation",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/recovery-mcp.ts",
+   "target": "function:packages/cli/src/recovery-mcp.ts:identityShape",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery-mcp.ts defines identityShape",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/recovery-mcp.ts",
+   "target": "function:packages/cli/src/recovery-mcp.ts:isIdentity",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery-mcp.ts defines isIdentity",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/recovery-mcp.ts",
+   "target": "function:packages/cli/src/recovery-mcp.ts:validJobSelection",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery-mcp.ts defines validJobSelection",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/recovery-mcp.ts",
+   "target": "function:packages/cli/src/recovery-mcp.ts:tool",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery-mcp.ts defines tool",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/recovery-mcp.ts",
+   "target": "function:packages/cli/src/recovery-mcp.ts:recoveryMcpServer",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery-mcp.ts defines recoveryMcpServer",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/recovery-mcp.ts",
+   "target": "function:packages/cli/src/recovery-mcp.ts:recoveryMcpServer",
+   "type": "exports",
+   "direction": "forward",
+   "description": "recovery-mcp.ts exports recoveryMcpServer",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/recovery-mcp.ts",
+   "target": "class:packages/cli/src/recovery-mcp.ts:RecoveryMcpError",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery-mcp.ts defines class RecoveryMcpError",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/cli/src/recovery-mcp.ts:classifyError",
+   "target": "function:packages/cli/src/recovery-mcp.ts:errorMessage",
+   "type": "calls",
+   "direction": "forward",
+   "description": "classifyError calls errorMessage",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/recovery-mcp.ts:validateFilesystemMutation",
+   "target": "function:packages/cli/src/recovery-mcp.ts:validateWorkspacePath",
+   "type": "calls",
+   "direction": "forward",
+   "description": "validateFilesystemMutation calls validateWorkspacePath",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/recovery-mcp.ts:validJobSelection",
+   "target": "function:packages/cli/src/recovery-mcp.ts:isIdentity",
+   "type": "calls",
+   "direction": "forward",
+   "description": "validJobSelection calls isIdentity",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/recovery-mcp.ts:recoveryMcpServer",
+   "target": "function:packages/cli/src/recovery-mcp.ts:isIdentity",
+   "type": "calls",
+   "direction": "forward",
+   "description": "recoveryMcpServer calls isIdentity",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/recovery-mcp.ts:recoveryMcpServer",
+   "target": "function:packages/cli/src/recovery-mcp.ts:validJobSelection",
+   "type": "calls",
+   "direction": "forward",
+   "description": "recoveryMcpServer calls validJobSelection",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/recovery-mcp.ts:recoveryMcpServer",
+   "target": "function:packages/cli/src/recovery-mcp.ts:validateFilesystemMutation",
+   "type": "calls",
+   "direction": "forward",
+   "description": "recoveryMcpServer calls validateFilesystemMutation",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/recovery-mcp.ts:recoveryMcpServer",
+   "target": "function:packages/cli/src/recovery-mcp.ts:errorResult",
+   "type": "calls",
+   "direction": "forward",
+   "description": "recoveryMcpServer calls errorResult",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/recovery-mcp.ts:recoveryMcpServer",
+   "target": "function:packages/cli/src/recovery-mcp.ts:classifyError",
+   "type": "calls",
+   "direction": "forward",
+   "description": "recoveryMcpServer calls classifyError",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/cli/src/recovery-mode.test.ts",
+   "target": "function:packages/cli/src/recovery-mode.test.ts:workspace",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery-mode.test.ts defines workspace",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/recovery-mode.test.ts",
+   "target": "function:packages/cli/src/recovery-mode.test.ts:executeWith",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery-mode.test.ts defines executeWith",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/recovery-paths.ts",
+   "target": "function:packages/cli/src/recovery-paths.ts:canonicalDestination",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery-paths.ts defines canonicalDestination",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/recovery-paths.ts",
+   "target": "function:packages/cli/src/recovery-paths.ts:assertRecoveryStateOutsideRoot",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery-paths.ts defines assertRecoveryStateOutsideRoot",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/recovery-paths.ts",
+   "target": "function:packages/cli/src/recovery-paths.ts:assertRecoveryStateOutsideRoot",
+   "type": "exports",
+   "direction": "forward",
+   "description": "recovery-paths.ts exports assertRecoveryStateOutsideRoot",
+   "weight": 0.7
+  },
+  {
+   "source": "function:packages/cli/src/recovery-paths.ts:assertRecoveryStateOutsideRoot",
+   "target": "function:packages/cli/src/recovery-paths.ts:canonicalDestination",
+   "type": "calls",
+   "direction": "forward",
+   "description": "assertRecoveryStateOutsideRoot calls canonicalDestination",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/cli/src/recovery-retention.test.ts",
+   "target": "function:packages/cli/src/recovery-retention.test.ts:fixture",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery-retention.test.ts defines fixture",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/recovery-retention.ts",
+   "target": "function:packages/cli/src/recovery-retention.ts:isMissing",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery-retention.ts defines isMissing",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/recovery-retention.ts",
+   "target": "function:packages/cli/src/recovery-retention.ts:listFileVaultRetention",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery-retention.ts defines listFileVaultRetention",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/recovery-retention.ts",
+   "target": "function:packages/cli/src/recovery-retention.ts:listFileVaultRetention",
+   "type": "exports",
+   "direction": "forward",
+   "description": "recovery-retention.ts exports listFileVaultRetention",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/recovery-retention.ts",
+   "target": "function:packages/cli/src/recovery-retention.ts:listReservedVaultRetention",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery-retention.ts defines listReservedVaultRetention",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/recovery-retention.ts",
+   "target": "function:packages/cli/src/recovery-retention.ts:listReservedVaultRetention",
+   "type": "exports",
+   "direction": "forward",
+   "description": "recovery-retention.ts exports listReservedVaultRetention",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/recovery-retention.ts",
+   "target": "function:packages/cli/src/recovery-retention.ts:fileVaultReference",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery-retention.ts defines fileVaultReference",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/recovery-retention.ts",
+   "target": "function:packages/cli/src/recovery-retention.ts:pinFileVaultLifecycle",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery-retention.ts defines pinFileVaultLifecycle",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/recovery-retention.ts",
+   "target": "function:packages/cli/src/recovery-retention.ts:pinFileVaultLifecycle",
+   "type": "exports",
+   "direction": "forward",
+   "description": "recovery-retention.ts exports pinFileVaultLifecycle",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/recovery-retention.ts",
+   "target": "function:packages/cli/src/recovery-retention.ts:markFileVaultUnpinned",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery-retention.ts defines markFileVaultUnpinned",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/recovery-retention.ts",
+   "target": "function:packages/cli/src/recovery-retention.ts:markFileVaultUnpinned",
+   "type": "exports",
+   "direction": "forward",
+   "description": "recovery-retention.ts exports markFileVaultUnpinned",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/recovery-retention.ts",
+   "target": "function:packages/cli/src/recovery-retention.ts:releaseFileVaultPin",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery-retention.ts defines releaseFileVaultPin",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/recovery-retention.ts",
+   "target": "function:packages/cli/src/recovery-retention.ts:releaseFileVaultPin",
+   "type": "exports",
+   "direction": "forward",
+   "description": "recovery-retention.ts exports releaseFileVaultPin",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/cli/src/recovery-retention.ts",
+   "target": "function:packages/cli/src/recovery-retention.ts:reservedVaultReference",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery-retention.ts defines reservedVaultReference",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/recovery-retention.ts",
+   "target": "function:packages/cli/src/recovery-retention.ts:reservedVaultReference",
+   "type": "exports",
+   "direction": "forward",
+   "description": "recovery-retention.ts exports reservedVaultReference",
+   "weight": 0.7
+  },
+  {
+   "source": "function:packages/cli/src/recovery-retention.ts:listFileVaultRetention",
+   "target": "function:packages/cli/src/recovery-retention.ts:isMissing",
+   "type": "calls",
+   "direction": "forward",
+   "description": "listFileVaultRetention calls isMissing",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/recovery-retention.ts:pinFileVaultLifecycle",
+   "target": "function:packages/cli/src/recovery-retention.ts:fileVaultReference",
+   "type": "calls",
+   "direction": "forward",
+   "description": "pinFileVaultLifecycle calls fileVaultReference",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/recovery-retention.ts:markFileVaultUnpinned",
+   "target": "function:packages/cli/src/recovery-retention.ts:fileVaultReference",
+   "type": "calls",
+   "direction": "forward",
+   "description": "markFileVaultUnpinned calls fileVaultReference",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/cli/src/recovery-retention.ts:releaseFileVaultPin",
+   "target": "function:packages/cli/src/recovery-retention.ts:fileVaultReference",
+   "type": "calls",
+   "direction": "forward",
+   "description": "releaseFileVaultPin calls fileVaultReference",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/cli/src/recovery-vault-capacity.test.ts",
+   "target": "function:packages/cli/src/recovery-vault-capacity.test.ts:fixture",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery-vault-capacity.test.ts defines fixture",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/recovery.ts",
+   "target": "function:packages/cli/src/recovery.ts:readRetentionPolicy",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery.ts defines readRetentionPolicy",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/recovery.ts",
+   "target": "function:packages/cli/src/recovery.ts:runRecoveryCommand",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery.ts defines runRecoveryCommand",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/cli/src/recovery.ts",
+   "target": "function:packages/cli/src/recovery.ts:runRecoveryCommand",
+   "type": "exports",
+   "direction": "forward",
+   "description": "recovery.ts exports runRecoveryCommand",
+   "weight": 0.7
+  },
+  {
+   "source": "function:packages/cli/src/recovery.ts:runRecoveryCommand",
+   "target": "function:packages/cli/src/recovery.ts:readRetentionPolicy",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runRecoveryCommand calls readRetentionPolicy",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/connectors/src/capability-profiles.test.ts",
+   "target": "function:packages/connectors/src/capability-profiles.test.ts:profileFor",
+   "type": "contains",
+   "direction": "forward",
+   "description": "capability-profiles.test.ts defines profileFor",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/capability-profiles.ts",
+   "target": "function:packages/connectors/src/capability-profiles.ts:declareProviderProfiles",
+   "type": "contains",
+   "direction": "forward",
+   "description": "capability-profiles.ts defines declareProviderProfiles",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/capability-profiles.ts",
+   "target": "function:packages/connectors/src/capability-profiles.ts:declareProviderProfiles",
+   "type": "exports",
+   "direction": "forward",
+   "description": "capability-profiles.ts exports declareProviderProfiles",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/connectors/src/capability-profiles.ts",
+   "target": "function:packages/connectors/src/capability-profiles.ts:hasProviderProfile",
+   "type": "contains",
+   "direction": "forward",
+   "description": "capability-profiles.ts defines hasProviderProfile",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/capability-profiles.ts",
+   "target": "function:packages/connectors/src/capability-profiles.ts:hasProviderProfile",
+   "type": "exports",
+   "direction": "forward",
+   "description": "capability-profiles.ts exports hasProviderProfile",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/connectors/src/capability-profiles.ts",
+   "target": "function:packages/connectors/src/capability-profiles.ts:resolveProviderProfile",
+   "type": "contains",
+   "direction": "forward",
+   "description": "capability-profiles.ts defines resolveProviderProfile",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/capability-profiles.ts",
+   "target": "function:packages/connectors/src/capability-profiles.ts:resolveProviderProfile",
+   "type": "exports",
+   "direction": "forward",
+   "description": "capability-profiles.ts exports resolveProviderProfile",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/connectors/src/capability-profiles.ts",
+   "target": "function:packages/connectors/src/capability-profiles.ts:sharedConformanceRuntime",
+   "type": "contains",
+   "direction": "forward",
+   "description": "capability-profiles.ts defines sharedConformanceRuntime",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/capability-profiles.ts",
+   "target": "function:packages/connectors/src/capability-profiles.ts:sharedConformanceRuntime",
+   "type": "exports",
+   "direction": "forward",
+   "description": "capability-profiles.ts exports sharedConformanceRuntime",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/connectors/src/capability-profiles.ts",
+   "target": "class:packages/connectors/src/capability-profiles.ts:CapabilityProfileError",
+   "type": "contains",
+   "direction": "forward",
+   "description": "capability-profiles.ts defines class CapabilityProfileError",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/capability.test.ts",
+   "target": "function:packages/connectors/src/capability.test.ts:errorsOf",
+   "type": "contains",
+   "direction": "forward",
+   "description": "capability.test.ts defines errorsOf",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/capability.ts",
+   "target": "function:packages/connectors/src/capability.ts:isNonEmptyString",
+   "type": "contains",
+   "direction": "forward",
+   "description": "capability.ts defines isNonEmptyString",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/capability.ts",
+   "target": "function:packages/connectors/src/capability.ts:isStringArray",
+   "type": "contains",
+   "direction": "forward",
+   "description": "capability.ts defines isStringArray",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/capability.ts",
+   "target": "function:packages/connectors/src/capability.ts:isObject",
+   "type": "contains",
+   "direction": "forward",
+   "description": "capability.ts defines isObject",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/capability.ts",
+   "target": "function:packages/connectors/src/capability.ts:isCalendarDate",
+   "type": "contains",
+   "direction": "forward",
+   "description": "capability.ts defines isCalendarDate",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/capability.ts",
+   "target": "function:packages/connectors/src/capability.ts:unknownFields",
+   "type": "contains",
+   "direction": "forward",
+   "description": "capability.ts defines unknownFields",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/capability.ts",
+   "target": "function:packages/connectors/src/capability.ts:validateCapabilityProfile",
+   "type": "contains",
+   "direction": "forward",
+   "description": "capability.ts defines validateCapabilityProfile",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/capability.ts",
+   "target": "function:packages/connectors/src/capability.ts:validateCapabilityProfile",
+   "type": "exports",
+   "direction": "forward",
+   "description": "capability.ts exports validateCapabilityProfile",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/connectors/src/capability.ts",
+   "target": "function:packages/connectors/src/capability.ts:validateCertification",
+   "type": "contains",
+   "direction": "forward",
+   "description": "capability.ts defines validateCertification",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/capability.ts",
+   "target": "function:packages/connectors/src/capability.ts:validateCertificationDecision",
+   "type": "contains",
+   "direction": "forward",
+   "description": "capability.ts defines validateCertificationDecision",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/capability.ts",
+   "target": "function:packages/connectors/src/capability.ts:certificationStatus",
+   "type": "contains",
+   "direction": "forward",
+   "description": "capability.ts defines certificationStatus",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/capability.ts",
+   "target": "function:packages/connectors/src/capability.ts:certificationStatus",
+   "type": "exports",
+   "direction": "forward",
+   "description": "capability.ts exports certificationStatus",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/connectors/src/capability.ts",
+   "target": "function:packages/connectors/src/capability.ts:bindsAdapter",
+   "type": "contains",
+   "direction": "forward",
+   "description": "capability.ts defines bindsAdapter",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/capability.ts",
+   "target": "function:packages/connectors/src/capability.ts:bindsAdapter",
+   "type": "exports",
+   "direction": "forward",
+   "description": "capability.ts exports bindsAdapter",
+   "weight": 0.7
+  },
+  {
+   "source": "function:packages/connectors/src/capability.ts:validateCapabilityProfile",
+   "target": "function:packages/connectors/src/capability.ts:isObject",
+   "type": "calls",
+   "direction": "forward",
+   "description": "validateCapabilityProfile calls isObject",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/capability.ts:validateCapabilityProfile",
+   "target": "function:packages/connectors/src/capability.ts:unknownFields",
+   "type": "calls",
+   "direction": "forward",
+   "description": "validateCapabilityProfile calls unknownFields",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/capability.ts:validateCapabilityProfile",
+   "target": "function:packages/connectors/src/capability.ts:isNonEmptyString",
+   "type": "calls",
+   "direction": "forward",
+   "description": "validateCapabilityProfile calls isNonEmptyString",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/capability.ts:validateCapabilityProfile",
+   "target": "function:packages/connectors/src/capability.ts:isStringArray",
+   "type": "calls",
+   "direction": "forward",
+   "description": "validateCapabilityProfile calls isStringArray",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/capability.ts:validateCapabilityProfile",
+   "target": "function:packages/connectors/src/capability.ts:validateCertificationDecision",
+   "type": "calls",
+   "direction": "forward",
+   "description": "validateCapabilityProfile calls validateCertificationDecision",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/capability.ts:validateCapabilityProfile",
+   "target": "function:packages/connectors/src/capability.ts:validateCertification",
+   "type": "calls",
+   "direction": "forward",
+   "description": "validateCapabilityProfile calls validateCertification",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/capability.ts:validateCertification",
+   "target": "function:packages/connectors/src/capability.ts:isObject",
+   "type": "calls",
+   "direction": "forward",
+   "description": "validateCertification calls isObject",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/capability.ts:validateCertification",
+   "target": "function:packages/connectors/src/capability.ts:unknownFields",
+   "type": "calls",
+   "direction": "forward",
+   "description": "validateCertification calls unknownFields",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/capability.ts:validateCertification",
+   "target": "function:packages/connectors/src/capability.ts:isStringArray",
+   "type": "calls",
+   "direction": "forward",
+   "description": "validateCertification calls isStringArray",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/capability.ts:validateCertification",
+   "target": "function:packages/connectors/src/capability.ts:isNonEmptyString",
+   "type": "calls",
+   "direction": "forward",
+   "description": "validateCertification calls isNonEmptyString",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/capability.ts:validateCertificationDecision",
+   "target": "function:packages/connectors/src/capability.ts:isObject",
+   "type": "calls",
+   "direction": "forward",
+   "description": "validateCertificationDecision calls isObject",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/capability.ts:validateCertificationDecision",
+   "target": "function:packages/connectors/src/capability.ts:unknownFields",
+   "type": "calls",
+   "direction": "forward",
+   "description": "validateCertificationDecision calls unknownFields",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/capability.ts:validateCertificationDecision",
+   "target": "function:packages/connectors/src/capability.ts:isCalendarDate",
+   "type": "calls",
+   "direction": "forward",
+   "description": "validateCertificationDecision calls isCalendarDate",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/capability.ts:validateCertificationDecision",
+   "target": "function:packages/connectors/src/capability.ts:isNonEmptyString",
+   "type": "calls",
+   "direction": "forward",
+   "description": "validateCertificationDecision calls isNonEmptyString",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/capability.ts:certificationStatus",
+   "target": "function:packages/connectors/src/capability.ts:validateCapabilityProfile",
+   "type": "calls",
+   "direction": "forward",
+   "description": "certificationStatus calls validateCapabilityProfile",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/connectors/src/filesystem/managed.test.ts",
+   "target": "function:packages/connectors/src/filesystem/managed.test.ts:fixture",
+   "type": "contains",
+   "direction": "forward",
+   "description": "managed.test.ts defines fixture",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/recovery.mjs",
+   "target": "file:cloud/owner.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery.mjs imports owner.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/recovery.mjs",
+   "target": "file:cloud/store.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery.mjs imports store.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/recovery.mjs",
+   "target": "file:packages/runtime/src/execute.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery.mjs imports execute.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/recovery.mjs",
+   "target": "file:packages/runtime/src/journal.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery.mjs imports journal.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/recovery.mjs",
+   "target": "file:packages/runtime/src/recovery/plan.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery.mjs imports plan.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/recovery.mjs",
+   "target": "file:packages/runtime/src/vault.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery.mjs imports vault.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/recovery.mjs",
+   "target": "file:packages/workbench/src/managed-documents.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery.mjs imports managed-documents.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/recovery.mjs",
+   "target": "file:packages/workbench/src/workspace.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery.mjs imports workspace.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/conformance.test.ts",
+   "target": "file:packages/cli/src/conformance.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "conformance.test.ts imports conformance.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/conformance.test.ts",
+   "target": "file:packages/connectors/src/postgres/conformance-fixture.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "conformance.test.ts imports conformance-fixture.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/conformance.test.ts",
+   "target": "file:packages/ledger/src/canonical.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "conformance.test.ts imports canonical.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/conformance.test.ts",
+   "target": "file:packages/runtime/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "conformance.test.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/conformance.ts",
+   "target": "file:packages/connectors/src/capability-profiles.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "conformance.ts imports capability-profiles.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/conformance.ts",
+   "target": "file:packages/connectors/src/filesystem/managed.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "conformance.ts imports managed.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/conformance.ts",
+   "target": "file:packages/connectors/src/git/managed.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "conformance.ts imports managed.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/conformance.ts",
+   "target": "file:packages/connectors/src/postgres/conformance-fixture.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "conformance.ts imports conformance-fixture.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/conformance.ts",
+   "target": "file:packages/ledger/src/sign.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "conformance.ts imports sign.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/conformance.ts",
+   "target": "file:packages/runtime/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "conformance.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/conformance.ts",
+   "target": "file:packages/workbench/src/managed-documents.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "conformance.ts imports managed-documents.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/conformance.ts",
+   "target": "file:packages/workbench/src/workspace.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "conformance.ts imports workspace.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/postgres.ts",
+   "target": "file:packages/connectors/src/postgres/replay.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "postgres.ts imports replay.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/recovery-collect-file.test.ts",
+   "target": "file:packages/cli/src/recovery.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery-collect-file.test.ts imports recovery.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/recovery-collect-file.test.ts",
+   "target": "file:packages/ledger/src/sign.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery-collect-file.test.ts imports sign.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/recovery-collect-file.test.ts",
+   "target": "file:packages/runtime/src/retention.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery-collect-file.test.ts imports retention.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/recovery-collect.test.ts",
+   "target": "file:packages/cli/src/recovery.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery-collect.test.ts imports recovery.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/recovery-collect.test.ts",
+   "target": "file:packages/ledger/src/sign.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery-collect.test.ts imports sign.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/recovery-collect.test.ts",
+   "target": "file:packages/runtime/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery-collect.test.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/recovery-config.test.ts",
+   "target": "file:packages/cli/src/recovery.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery-config.test.ts imports recovery.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/recovery-git.test.ts",
+   "target": "file:packages/cli/src/recovery.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery-git.test.ts imports recovery.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/recovery-job.test.ts",
+   "target": "file:packages/cli/src/recovery.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery-job.test.ts imports recovery.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/recovery-job.test.ts",
+   "target": "file:packages/runtime/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery-job.test.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/recovery-mcp.test.ts",
+   "target": "file:packages/cli/src/recovery-mcp.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery-mcp.test.ts imports recovery-mcp.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/recovery-mcp.test.ts",
+   "target": "file:packages/connectors/src/filesystem/managed.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery-mcp.test.ts imports managed.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/recovery-mcp.test.ts",
+   "target": "file:packages/connectors/src/git/managed.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery-mcp.test.ts imports managed.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/recovery-mcp.test.ts",
+   "target": "file:packages/ledger/src/sign.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery-mcp.test.ts imports sign.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/recovery-mcp.test.ts",
+   "target": "file:packages/runtime/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery-mcp.test.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/recovery-mcp.ts",
+   "target": "file:packages/cli/src/package-version.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery-mcp.ts imports package-version.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/recovery-mcp.ts",
+   "target": "file:packages/runtime/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery-mcp.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/recovery-mode.test.ts",
+   "target": "file:packages/cli/src/recovery.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery-mode.test.ts imports recovery.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/recovery-paths.test.ts",
+   "target": "file:packages/cli/src/recovery-paths.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery-paths.test.ts imports recovery-paths.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/recovery-retention.test.ts",
+   "target": "file:packages/cli/src/recovery-retention.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery-retention.test.ts imports recovery-retention.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/recovery-retention.test.ts",
+   "target": "file:packages/cli/src/recovery.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery-retention.test.ts imports recovery.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/recovery-retention.test.ts",
+   "target": "file:packages/ledger/src/sign.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery-retention.test.ts imports sign.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/recovery-retention.test.ts",
+   "target": "file:packages/runtime/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery-retention.test.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/recovery-retention.ts",
+   "target": "file:packages/runtime/src/reserved-vault.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery-retention.ts imports reserved-vault.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/recovery-retention.ts",
+   "target": "file:packages/runtime/src/retention.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery-retention.ts imports retention.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/recovery-retention.ts",
+   "target": "file:packages/runtime/src/vault-refusals.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery-retention.ts imports vault-refusals.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/recovery-retention.ts",
+   "target": "file:packages/runtime/src/vault.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery-retention.ts imports vault.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/recovery-vault-capacity.test.ts",
+   "target": "file:packages/cli/src/recovery.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery-vault-capacity.test.ts imports recovery.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/recovery-vault-capacity.test.ts",
+   "target": "file:packages/ledger/src/sign.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery-vault-capacity.test.ts imports sign.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/recovery-vault-capacity.test.ts",
+   "target": "file:packages/runtime/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery-vault-capacity.test.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/recovery-vault-capacity.test.ts",
+   "target": "file:packages/runtime/src/reserved-vault.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery-vault-capacity.test.ts imports reserved-vault.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/recovery.ts",
+   "target": "file:packages/cli/src/conformance.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery.ts imports conformance.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/recovery.ts",
+   "target": "file:packages/cli/src/postgres.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery.ts imports postgres.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/recovery.ts",
+   "target": "file:packages/cli/src/recovery-config.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery.ts imports recovery-config.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/recovery.ts",
+   "target": "file:packages/cli/src/recovery-health.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery.ts imports recovery-health.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/recovery.ts",
+   "target": "file:packages/cli/src/recovery-mcp.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery.ts imports recovery-mcp.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/recovery.ts",
+   "target": "file:packages/cli/src/recovery-paths.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery.ts imports recovery-paths.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/recovery.ts",
+   "target": "file:packages/cli/src/recovery-retention.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery.ts imports recovery-retention.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/recovery.ts",
+   "target": "file:packages/connectors/src/filesystem/managed.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery.ts imports managed.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/recovery.ts",
+   "target": "file:packages/connectors/src/git/managed.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery.ts imports managed.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/recovery.ts",
+   "target": "file:packages/connectors/src/postgres/managed.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery.ts imports managed.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/recovery.ts",
+   "target": "file:packages/ledger/src/sign.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery.ts imports sign.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/recovery.ts",
+   "target": "file:packages/policy/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/recovery.ts",
+   "target": "file:packages/runtime/src/file-retention.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery.ts imports file-retention.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/cli/src/recovery.ts",
+   "target": "file:packages/runtime/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/capability-profiles.test.ts",
+   "target": "file:packages/connectors/src/capability-profiles.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "capability-profiles.test.ts imports capability-profiles.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/capability-profiles.test.ts",
+   "target": "file:packages/connectors/src/capability.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "capability-profiles.test.ts imports capability.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/capability-profiles.ts",
+   "target": "file:packages/connectors/src/capability.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "capability-profiles.ts imports capability.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/capability.test.ts",
+   "target": "file:packages/connectors/src/capability.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "capability.test.ts imports capability.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/filesystem/managed.test.ts",
+   "target": "file:packages/connectors/src/filesystem/managed.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "managed.test.ts imports managed.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/filesystem/managed.test.ts",
+   "target": "file:packages/connectors/src/recovery.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "managed.test.ts imports recovery.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/filesystem/managed.test.ts",
+   "target": "file:packages/ledger/src/sign.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "managed.test.ts imports sign.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/filesystem/managed.test.ts",
+   "target": "file:packages/runtime/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "managed.test.ts imports index.ts",
+   "weight": 0.8
+  }
+ ]
+}

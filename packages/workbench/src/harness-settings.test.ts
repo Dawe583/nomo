@@ -57,7 +57,10 @@ test("every setting names a consumer, so no knob is decorative", () => {
       "contextEntryLimit",
       "refinementEnabled",
       "refinementCooldownMs",
-    ];
+      "webToolsEnabled",
+    ,
+  "sessionSearchEnabled",,
+  "autoCompactMessages",];
     if (!zeroMeansUnlimited.includes(key)) {
       assert.ok(spec.min > 0, `${key} allows zero or negative`);
     }

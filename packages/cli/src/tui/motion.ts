@@ -299,8 +299,11 @@ export function separator(
  */
 export function indeterminateBar(width: number, motion: MotionContext): string {
   const cells = Math.max(0, width);
-  const head =
-    motion.enabled && !motion.reduced ? motion.frame % (cells + 6) : 0;
+  // A frozen bar must not read as a fraction: a static four-of-twelve fill is
+  // indistinguishable from a determinate 33 %. When motion is off, say
+  // "unknown" in a shape that cannot be mistaken for progress.
+  if (!motion.enabled || motion.reduced) return `?${"·".repeat(Math.max(0, cells - 1))}`;
+  const head = motion.frame % (cells + 6);
   let bar = "";
   for (let column = 0; column < cells; column += 1) {
     const distance = column - head;

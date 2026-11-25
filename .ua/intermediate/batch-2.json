@@ -1,0 +1,5156 @@
+{
+ "nodes": [
+  {
+   "id": "file:apps/control-plane/ui/src/harness-proposals.test.ts",
+   "type": "file",
+   "name": "harness-proposals.test.ts",
+   "filePath": "apps/control-plane/ui/src/harness-proposals.test.ts",
+   "summary": "harness-proposals.test.ts \u2014 typescript code, 66 lines, 0 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/harness-proposals.ts",
+   "type": "file",
+   "name": "harness-proposals.ts",
+   "filePath": "apps/control-plane/ui/src/harness-proposals.ts",
+   "summary": "harness-proposals.ts \u2014 typescript code, 56 lines, 1 functions, 0 classes, 1 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/harness-proposals.ts:proposalEdits",
+   "type": "function",
+   "name": "proposalEdits",
+   "filePath": "apps/control-plane/ui/src/harness-proposals.ts",
+   "lineRange": [
+    31,
+    56
+   ],
+   "summary": "proposalEdits(proposal) \u2014 function in harness-proposals.ts, lines 31-56.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/harness-proposals.tsx",
+   "type": "file",
+   "name": "harness-proposals.tsx",
+   "filePath": "apps/control-plane/ui/src/harness-proposals.tsx",
+   "summary": "harness-proposals.tsx \u2014 typescript code, 159 lines, 1 functions, 0 classes, 1 exports, 3 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/harness-proposals.tsx:HarnessProposals",
+   "type": "function",
+   "name": "HarnessProposals",
+   "filePath": "apps/control-plane/ui/src/harness-proposals.tsx",
+   "lineRange": [
+    20,
+    159
+   ],
+   "summary": "HarnessProposals({ sessionId }) \u2014 function in harness-proposals.tsx, lines 20-159.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/icons.tsx",
+   "type": "file",
+   "name": "icons.tsx",
+   "filePath": "apps/control-plane/ui/src/icons.tsx",
+   "summary": "icons.tsx \u2014 typescript code, 54 lines, 1 functions, 0 classes, 1 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/icons.tsx:Icon",
+   "type": "function",
+   "name": "Icon",
+   "filePath": "apps/control-plane/ui/src/icons.tsx",
+   "lineRange": [
+    36,
+    54
+   ],
+   "summary": "Icon({ name }) \u2014 function in icons.tsx, lines 36-54.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/integrations.tsx",
+   "type": "file",
+   "name": "integrations.tsx",
+   "filePath": "apps/control-plane/ui/src/integrations.tsx",
+   "summary": "integrations.tsx \u2014 typescript code, 555 lines, 7 functions, 0 classes, 2 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/integrations.tsx:useIntegrations",
+   "type": "function",
+   "name": "useIntegrations",
+   "filePath": "apps/control-plane/ui/src/integrations.tsx",
+   "lineRange": [
+    6,
+    8
+   ],
+   "summary": "useIntegrations(enabled) \u2014 function in integrations.tsx, lines 6-8.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/integrations.tsx:cloudOnly",
+   "type": "function",
+   "name": "cloudOnly",
+   "filePath": "apps/control-plane/ui/src/integrations.tsx",
+   "lineRange": [
+    9,
+    14
+   ],
+   "summary": "cloudOnly(error, data) \u2014 function in integrations.tsx, lines 9-14.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/integrations.tsx:CloudNotice",
+   "type": "function",
+   "name": "CloudNotice",
+   "filePath": "apps/control-plane/ui/src/integrations.tsx",
+   "lineRange": [
+    15,
+    25
+   ],
+   "summary": "CloudNotice() \u2014 function in integrations.tsx, lines 15-25.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/integrations.tsx:statusLabel",
+   "type": "function",
+   "name": "statusLabel",
+   "filePath": "apps/control-plane/ui/src/integrations.tsx",
+   "lineRange": [
+    26,
+    34
+   ],
+   "summary": "statusLabel(integration, t) \u2014 function in integrations.tsx, lines 26-34.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/integrations.tsx:Integrations",
+   "type": "function",
+   "name": "Integrations",
+   "filePath": "apps/control-plane/ui/src/integrations.tsx",
+   "lineRange": [
+    35,
+    287
+   ],
+   "summary": "Integrations() \u2014 function in integrations.tsx, lines 35-287.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/integrations.tsx:ClientSetup",
+   "type": "function",
+   "name": "ClientSetup",
+   "filePath": "apps/control-plane/ui/src/integrations.tsx",
+   "lineRange": [
+    288,
+    437
+   ],
+   "summary": "ClientSetup({) \u2014 function in integrations.tsx, lines 288-437.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/integrations.tsx:IntegrationContext",
+   "type": "function",
+   "name": "IntegrationContext",
+   "filePath": "apps/control-plane/ui/src/integrations.tsx",
+   "lineRange": [
+    438,
+    555
+   ],
+   "summary": "IntegrationContext({) \u2014 function in integrations.tsx, lines 438-555.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/ledger-detail.tsx",
+   "type": "file",
+   "name": "ledger-detail.tsx",
+   "filePath": "apps/control-plane/ui/src/ledger-detail.tsx",
+   "summary": "ledger-detail.tsx \u2014 typescript code, 176 lines, 1 functions, 0 classes, 1 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/ledger-detail.tsx:LedgerDetail",
+   "type": "function",
+   "name": "LedgerDetail",
+   "filePath": "apps/control-plane/ui/src/ledger-detail.tsx",
+   "lineRange": [
+    6,
+    176
+   ],
+   "summary": "LedgerDetail({ row, close }) \u2014 function in ledger-detail.tsx, lines 6-176.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/ledger-verify.tsx",
+   "type": "file",
+   "name": "ledger-verify.tsx",
+   "filePath": "apps/control-plane/ui/src/ledger-verify.tsx",
+   "summary": "ledger-verify.tsx \u2014 typescript code, 148 lines, 1 functions, 0 classes, 1 exports, 3 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/ledger-verify.tsx:LedgerVerify",
+   "type": "function",
+   "name": "LedgerVerify",
+   "filePath": "apps/control-plane/ui/src/ledger-verify.tsx",
+   "lineRange": [
+    22,
+    146
+   ],
+   "summary": "LedgerVerify({ query }) \u2014 function in ledger-verify.tsx, lines 22-146.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/main.tsx",
+   "type": "file",
+   "name": "main.tsx",
+   "filePath": "apps/control-plane/ui/src/main.tsx",
+   "summary": "main.tsx \u2014 typescript code, 1126 lines, 3 functions, 1 classes, 0 exports, 14 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/main.tsx:MotionShell",
+   "type": "function",
+   "name": "MotionShell",
+   "filePath": "apps/control-plane/ui/src/main.tsx",
+   "lineRange": [
+    150,
+    172
+   ],
+   "summary": "MotionShell({) \u2014 function in main.tsx, lines 150-172.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/main.tsx:Root",
+   "type": "function",
+   "name": "Root",
+   "filePath": "apps/control-plane/ui/src/main.tsx",
+   "lineRange": [
+    173,
+    216
+   ],
+   "summary": "Root() \u2014 function in main.tsx, lines 173-216.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/main.tsx:App",
+   "type": "function",
+   "name": "App",
+   "filePath": "apps/control-plane/ui/src/main.tsx",
+   "lineRange": [
+    217,
+    1119
+   ],
+   "summary": "App({) \u2014 function in main.tsx, lines 217-1119.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "class:apps/control-plane/ui/src/main.tsx:AppBoundary",
+   "type": "class",
+   "name": "AppBoundary",
+   "filePath": "apps/control-plane/ui/src/main.tsx",
+   "lineRange": [
+    118,
+    147
+   ],
+   "summary": "AppBoundary \u2014 class in main.tsx, lines 118-147, methods: getDerivedStateFromError, render.",
+   "tags": [
+    "typescript",
+    "class"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/overview-state.test.ts",
+   "type": "file",
+   "name": "overview-state.test.ts",
+   "filePath": "apps/control-plane/ui/src/overview-state.test.ts",
+   "summary": "overview-state.test.ts \u2014 typescript code, 126 lines, 0 functions, 0 classes, 0 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/overview-state.ts",
+   "type": "file",
+   "name": "overview-state.ts",
+   "filePath": "apps/control-plane/ui/src/overview-state.ts",
+   "summary": "overview-state.ts \u2014 typescript code, 50 lines, 4 functions, 0 classes, 1 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/overview-state.ts:wholeCount",
+   "type": "function",
+   "name": "wholeCount",
+   "filePath": "apps/control-plane/ui/src/overview-state.ts",
+   "lineRange": [
+    19,
+    22
+   ],
+   "summary": "wholeCount(value) \u2014 function in overview-state.ts, lines 19-22.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/overview-state.ts:oneLine",
+   "type": "function",
+   "name": "oneLine",
+   "filePath": "apps/control-plane/ui/src/overview-state.ts",
+   "lineRange": [
+    24,
+    25
+   ],
+   "summary": "oneLine(value) \u2014 function in overview-state.ts, lines 24-25.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/overview-state.ts:ackState",
+   "type": "function",
+   "name": "ackState",
+   "filePath": "apps/control-plane/ui/src/overview-state.ts",
+   "lineRange": [
+    27,
+    28
+   ],
+   "summary": "ackState(value) \u2014 function in overview-state.ts, lines 27-28.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/overview-state.ts:overviewState",
+   "type": "function",
+   "name": "overviewState",
+   "filePath": "apps/control-plane/ui/src/overview-state.ts",
+   "lineRange": [
+    30,
+    50
+   ],
+   "summary": "overviewState(data) \u2014 function in overview-state.ts, lines 30-50.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/pages.tsx",
+   "type": "file",
+   "name": "pages.tsx",
+   "filePath": "apps/control-plane/ui/src/pages.tsx",
+   "summary": "pages.tsx \u2014 typescript code, 706 lines, 6 functions, 0 classes, 6 exports, 10 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/pages.tsx:Sessions",
+   "type": "function",
+   "name": "Sessions",
+   "filePath": "apps/control-plane/ui/src/pages.tsx",
+   "lineRange": [
+    22,
+    166
+   ],
+   "summary": "Sessions({ navigate }) \u2014 function in pages.tsx, lines 22-166.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/pages.tsx:Overview",
+   "type": "function",
+   "name": "Overview",
+   "filePath": "apps/control-plane/ui/src/pages.tsx",
+   "lineRange": [
+    167,
+    305
+   ],
+   "summary": "Overview({ navigate }) \u2014 function in pages.tsx, lines 167-305.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/pages.tsx:Runs",
+   "type": "function",
+   "name": "Runs",
+   "filePath": "apps/control-plane/ui/src/pages.tsx",
+   "lineRange": [
+    306,
+    365
+   ],
+   "summary": "Runs({ navigate }) \u2014 function in pages.tsx, lines 306-365.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/pages.tsx:Approvals",
+   "type": "function",
+   "name": "Approvals",
+   "filePath": "apps/control-plane/ui/src/pages.tsx",
+   "lineRange": [
+    366,
+    465
+   ],
+   "summary": "Approvals() \u2014 function in pages.tsx, lines 366-465.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/pages.tsx:Ledger",
+   "type": "function",
+   "name": "Ledger",
+   "filePath": "apps/control-plane/ui/src/pages.tsx",
+   "lineRange": [
+    466,
+    631
+   ],
+   "summary": "Ledger() \u2014 function in pages.tsx, lines 466-631.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/pages.tsx:Models",
+   "type": "function",
+   "name": "Models",
+   "filePath": "apps/control-plane/ui/src/pages.tsx",
+   "lineRange": [
+    632,
+    706
+   ],
+   "summary": "Models({ navigate }) \u2014 function in pages.tsx, lines 632-706.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/permission-mode.tsx",
+   "type": "file",
+   "name": "permission-mode.tsx",
+   "filePath": "apps/control-plane/ui/src/permission-mode.tsx",
+   "summary": "permission-mode.tsx \u2014 typescript code, 178 lines, 6 functions, 0 classes, 5 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/permission-mode.tsx:resolvePermissionMode",
+   "type": "function",
+   "name": "resolvePermissionMode",
+   "filePath": "apps/control-plane/ui/src/permission-mode.tsx",
+   "lineRange": [
+    30,
+    47
+   ],
+   "summary": "resolvePermissionMode(capabilities) \u2014 function in permission-mode.tsx, lines 30-47.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/permission-mode.tsx:usePermissionMode",
+   "type": "function",
+   "name": "usePermissionMode",
+   "filePath": "apps/control-plane/ui/src/permission-mode.tsx",
+   "lineRange": [
+    53,
+    58
+   ],
+   "summary": "usePermissionMode(capabilities, _preferences) \u2014 function in permission-mode.tsx, lines 53-58.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/permission-mode.tsx:modePrefix",
+   "type": "function",
+   "name": "modePrefix",
+   "filePath": "apps/control-plane/ui/src/permission-mode.tsx",
+   "lineRange": [
+    68,
+    80
+   ],
+   "summary": "modePrefix(mode, t) \u2014 function in permission-mode.tsx, lines 68-80.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/permission-mode.tsx:modeWords",
+   "type": "function",
+   "name": "modeWords",
+   "filePath": "apps/control-plane/ui/src/permission-mode.tsx",
+   "lineRange": [
+    88,
+    106
+   ],
+   "summary": "modeWords(mode, source, t) \u2014 function in permission-mode.tsx, lines 88-106.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/permission-mode.tsx:PermissionModeSwitch",
+   "type": "function",
+   "name": "PermissionModeSwitch",
+   "filePath": "apps/control-plane/ui/src/permission-mode.tsx",
+   "lineRange": [
+    108,
+    160
+   ],
+   "summary": "PermissionModeSwitch({) \u2014 function in permission-mode.tsx, lines 108-160.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/permission-mode.tsx:PermissionBanner",
+   "type": "function",
+   "name": "PermissionBanner",
+   "filePath": "apps/control-plane/ui/src/permission-mode.tsx",
+   "lineRange": [
+    164,
+    178
+   ],
+   "summary": "PermissionBanner({) \u2014 function in permission-mode.tsx, lines 164-178.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/provider-matrix.test.ts",
+   "type": "file",
+   "name": "provider-matrix.test.ts",
+   "filePath": "apps/control-plane/ui/src/provider-matrix.test.ts",
+   "summary": "provider-matrix.test.ts \u2014 typescript code, 121 lines, 0 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/provider-matrix.ts",
+   "type": "file",
+   "name": "provider-matrix.ts",
+   "filePath": "apps/control-plane/ui/src/provider-matrix.ts",
+   "summary": "provider-matrix.ts \u2014 typescript code, 122 lines, 5 functions, 0 classes, 1 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/provider-matrix.ts:record",
+   "type": "function",
+   "name": "record",
+   "filePath": "apps/control-plane/ui/src/provider-matrix.ts",
+   "lineRange": [
+    59,
+    63
+   ],
+   "summary": "record(value) \u2014 function in provider-matrix.ts, lines 59-63.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/provider-matrix.ts:text",
+   "type": "function",
+   "name": "text",
+   "filePath": "apps/control-plane/ui/src/provider-matrix.ts",
+   "lineRange": [
+    65,
+    67
+   ],
+   "summary": "text(value) \u2014 function in provider-matrix.ts, lines 65-67.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/provider-matrix.ts:authMethod",
+   "type": "function",
+   "name": "authMethod",
+   "filePath": "apps/control-plane/ui/src/provider-matrix.ts",
+   "lineRange": [
+    69,
+    82
+   ],
+   "summary": "authMethod(source) \u2014 function in provider-matrix.ts, lines 69-82.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/provider-matrix.ts:availability",
+   "type": "function",
+   "name": "availability",
+   "filePath": "apps/control-plane/ui/src/provider-matrix.ts",
+   "lineRange": [
+    84,
+    94
+   ],
+   "summary": "availability(available, reason) \u2014 function in provider-matrix.ts, lines 84-94.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/provider-matrix.ts:providerMatrix",
+   "type": "function",
+   "name": "providerMatrix",
+   "filePath": "apps/control-plane/ui/src/provider-matrix.ts",
+   "lineRange": [
+    97,
+    122
+   ],
+   "summary": "providerMatrix(sources) \u2014 function in provider-matrix.ts, lines 97-122.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/recovery-dialog.tsx",
+   "type": "file",
+   "name": "recovery-dialog.tsx",
+   "filePath": "apps/control-plane/ui/src/recovery-dialog.tsx",
+   "summary": "recovery-dialog.tsx \u2014 typescript code, 301 lines, 2 functions, 0 classes, 2 exports, 5 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/recovery-dialog.tsx:RecoveryReview",
+   "type": "function",
+   "name": "RecoveryReview",
+   "filePath": "apps/control-plane/ui/src/recovery-dialog.tsx",
+   "lineRange": [
+    15,
+    255
+   ],
+   "summary": "RecoveryReview({) \u2014 function in recovery-dialog.tsx, lines 15-255.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/recovery-dialog.tsx:SessionRecoveryStatus",
+   "type": "function",
+   "name": "SessionRecoveryStatus",
+   "filePath": "apps/control-plane/ui/src/recovery-dialog.tsx",
+   "lineRange": [
+    257,
+    301
+   ],
+   "summary": "SessionRecoveryStatus({ session }) \u2014 function in recovery-dialog.tsx, lines 257-301.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/recovery-review.test.ts",
+   "type": "file",
+   "name": "recovery-review.test.ts",
+   "filePath": "apps/control-plane/ui/src/recovery-review.test.ts",
+   "summary": "recovery-review.test.ts \u2014 typescript code, 124 lines, 0 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/recovery-review.ts",
+   "type": "file",
+   "name": "recovery-review.ts",
+   "filePath": "apps/control-plane/ui/src/recovery-review.ts",
+   "summary": "recovery-review.ts \u2014 typescript code, 85 lines, 4 functions, 0 classes, 4 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/recovery-review.ts:recoveryStateLabel",
+   "type": "function",
+   "name": "recoveryStateLabel",
+   "filePath": "apps/control-plane/ui/src/recovery-review.ts",
+   "lineRange": [
+    15,
+    33
+   ],
+   "summary": "recoveryStateLabel(value, locale) \u2014 function in recovery-review.ts, lines 15-33.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/recovery-review.ts:recoveryReview",
+   "type": "function",
+   "name": "recoveryReview",
+   "filePath": "apps/control-plane/ui/src/recovery-review.ts",
+   "lineRange": [
+    44,
+    59
+   ],
+   "summary": "recoveryReview(state, action) \u2014 function in recovery-review.ts, lines 44-59.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/recovery-review.ts:recoveryApplyBody",
+   "type": "function",
+   "name": "recoveryApplyBody",
+   "filePath": "apps/control-plane/ui/src/recovery-review.ts",
+   "lineRange": [
+    61,
+    69
+   ],
+   "summary": "recoveryApplyBody(state) \u2014 function in recovery-review.ts, lines 61-69.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/recovery-review.ts:recoveryStatusPath",
+   "type": "function",
+   "name": "recoveryStatusPath",
+   "filePath": "apps/control-plane/ui/src/recovery-review.ts",
+   "lineRange": [
+    71,
+    85
+   ],
+   "summary": "recoveryStatusPath(session) \u2014 function in recovery-review.ts, lines 71-85.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/redact.test.ts",
+   "type": "file",
+   "name": "redact.test.ts",
+   "filePath": "apps/control-plane/ui/src/redact.test.ts",
+   "summary": "redact.test.ts \u2014 typescript code, 92 lines, 0 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/redact.ts",
+   "type": "file",
+   "name": "redact.ts",
+   "filePath": "apps/control-plane/ui/src/redact.ts",
+   "summary": "redact.ts \u2014 typescript code, 112 lines, 5 functions, 0 classes, 4 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/redact.ts:keyParts",
+   "type": "function",
+   "name": "keyParts",
+   "filePath": "apps/control-plane/ui/src/redact.ts",
+   "lineRange": [
+    43,
+    49
+   ],
+   "summary": "keyParts(name) \u2014 function in redact.ts, lines 43-49.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/redact.ts:isSecretKey",
+   "type": "function",
+   "name": "isSecretKey",
+   "filePath": "apps/control-plane/ui/src/redact.ts",
+   "lineRange": [
+    52,
+    54
+   ],
+   "summary": "isSecretKey(name) \u2014 function in redact.ts, lines 52-54.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/redact.ts:redactUrlAuth",
+   "type": "function",
+   "name": "redactUrlAuth",
+   "filePath": "apps/control-plane/ui/src/redact.ts",
+   "lineRange": [
+    61,
+    66
+   ],
+   "summary": "redactUrlAuth(text) \u2014 function in redact.ts, lines 61-66.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/redact.ts:redactText",
+   "type": "function",
+   "name": "redactText",
+   "filePath": "apps/control-plane/ui/src/redact.ts",
+   "lineRange": [
+    68,
+    74
+   ],
+   "summary": "redactText(text) \u2014 function in redact.ts, lines 68-74.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/redact.ts:redactValue",
+   "type": "function",
+   "name": "redactValue",
+   "filePath": "apps/control-plane/ui/src/redact.ts",
+   "lineRange": [
+    84,
+    112
+   ],
+   "summary": "redactValue(value, seen, depth) \u2014 function in redact.ts, lines 84-112.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/session-context.tsx",
+   "type": "file",
+   "name": "session-context.tsx",
+   "filePath": "apps/control-plane/ui/src/session-context.tsx",
+   "summary": "session-context.tsx \u2014 typescript code, 126 lines, 1 functions, 0 classes, 1 exports, 3 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/session-context.tsx:SessionContext",
+   "type": "function",
+   "name": "SessionContext",
+   "filePath": "apps/control-plane/ui/src/session-context.tsx",
+   "lineRange": [
+    11,
+    126
+   ],
+   "summary": "SessionContext({) \u2014 function in session-context.tsx, lines 11-126.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/settings.tsx",
+   "type": "file",
+   "name": "settings.tsx",
+   "filePath": "apps/control-plane/ui/src/settings.tsx",
+   "summary": "settings.tsx \u2014 typescript code, 884 lines, 4 functions, 0 classes, 2 exports, 8 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/settings.tsx:Settings",
+   "type": "function",
+   "name": "Settings",
+   "filePath": "apps/control-plane/ui/src/settings.tsx",
+   "lineRange": [
+    13,
+    361
+   ],
+   "summary": "Settings({) \u2014 function in settings.tsx, lines 13-361.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/settings.tsx:DesktopSetup",
+   "type": "function",
+   "name": "DesktopSetup",
+   "filePath": "apps/control-plane/ui/src/settings.tsx",
+   "lineRange": [
+    362,
+    511
+   ],
+   "summary": "DesktopSetup() \u2014 function in settings.tsx, lines 362-511.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/settings.tsx:Capabilities",
+   "type": "function",
+   "name": "Capabilities",
+   "filePath": "apps/control-plane/ui/src/settings.tsx",
+   "lineRange": [
+    512,
+    554
+   ],
+   "summary": "Capabilities() \u2014 function in settings.tsx, lines 512-554.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/settings.tsx:Connections",
+   "type": "function",
+   "name": "Connections",
+   "filePath": "apps/control-plane/ui/src/settings.tsx",
+   "lineRange": [
+    557,
+    884
+   ],
+   "summary": "Connections() \u2014 function in settings.tsx, lines 557-884.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/status-label.test.ts",
+   "type": "file",
+   "name": "status-label.test.ts",
+   "filePath": "apps/control-plane/ui/src/status-label.test.ts",
+   "summary": "status-label.test.ts \u2014 typescript code, 20 lines, 2 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/status-label.test.ts:english",
+   "type": "function",
+   "name": "english",
+   "filePath": "apps/control-plane/ui/src/status-label.test.ts",
+   "lineRange": [
+    5,
+    5
+   ],
+   "summary": "english(cs, en) \u2014 function in status-label.test.ts, lines 5-5.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/status-label.test.ts:czech",
+   "type": "function",
+   "name": "czech",
+   "filePath": "apps/control-plane/ui/src/status-label.test.ts",
+   "lineRange": [
+    6,
+    6
+   ],
+   "summary": "czech(cs, en) \u2014 function in status-label.test.ts, lines 6-6.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/status-label.ts",
+   "type": "file",
+   "name": "status-label.ts",
+   "filePath": "apps/control-plane/ui/src/status-label.ts",
+   "summary": "status-label.ts \u2014 typescript code, 38 lines, 1 functions, 0 classes, 1 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/status-label.ts:statusLabel",
+   "type": "function",
+   "name": "statusLabel",
+   "filePath": "apps/control-plane/ui/src/status-label.ts",
+   "lineRange": [
+    30,
+    38
+   ],
+   "summary": "statusLabel(value, t) \u2014 function in status-label.ts, lines 30-38.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/ui.tsx",
+   "type": "file",
+   "name": "ui.tsx",
+   "filePath": "apps/control-plane/ui/src/ui.tsx",
+   "summary": "ui.tsx \u2014 typescript code, 604 lines, 11 functions, 0 classes, 13 exports, 3 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/ui.tsx:useText",
+   "type": "function",
+   "name": "useText",
+   "filePath": "apps/control-plane/ui/src/ui.tsx",
+   "lineRange": [
+    18,
+    21
+   ],
+   "summary": "useText() \u2014 function in ui.tsx, lines 18-21.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/ui.tsx:useAppliedAppearance",
+   "type": "function",
+   "name": "useAppliedAppearance",
+   "filePath": "apps/control-plane/ui/src/ui.tsx",
+   "lineRange": [
+    28,
+    53
+   ],
+   "summary": "useAppliedAppearance(appearance) \u2014 function in ui.tsx, lines 28-53.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/ui.tsx:useApi",
+   "type": "function",
+   "name": "useApi",
+   "filePath": "apps/control-plane/ui/src/ui.tsx",
+   "lineRange": [
+    54,
+    71
+   ],
+   "summary": "useApi(path, enabled, interval, retry) \u2014 function in ui.tsx, lines 54-71.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/ui.tsx:Badge",
+   "type": "function",
+   "name": "Badge",
+   "filePath": "apps/control-plane/ui/src/ui.tsx",
+   "lineRange": [
+    72,
+    103
+   ],
+   "summary": "Badge({) \u2014 function in ui.tsx, lines 72-103.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/ui.tsx:PageComponent",
+   "type": "function",
+   "name": "PageComponent",
+   "filePath": "apps/control-plane/ui/src/ui.tsx",
+   "lineRange": [
+    114,
+    128
+   ],
+   "summary": "PageComponent({) \u2014 function in ui.tsx, lines 114-128.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/ui.tsx:ErrorBox",
+   "type": "function",
+   "name": "ErrorBox",
+   "filePath": "apps/control-plane/ui/src/ui.tsx",
+   "lineRange": [
+    129,
+    137
+   ],
+   "summary": "ErrorBox({ error }) \u2014 function in ui.tsx, lines 129-137.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/ui.tsx:Empty",
+   "type": "function",
+   "name": "Empty",
+   "filePath": "apps/control-plane/ui/src/ui.tsx",
+   "lineRange": [
+    138,
+    145
+   ],
+   "summary": "Empty({ children }) \u2014 function in ui.tsx, lines 138-145.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/ui.tsx:Dialog",
+   "type": "function",
+   "name": "Dialog",
+   "filePath": "apps/control-plane/ui/src/ui.tsx",
+   "lineRange": [
+    146,
+    220
+   ],
+   "summary": "Dialog({) \u2014 function in ui.tsx, lines 146-220.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/ui.tsx:JsonDetail",
+   "type": "function",
+   "name": "JsonDetail",
+   "filePath": "apps/control-plane/ui/src/ui.tsx",
+   "lineRange": [
+    221,
+    223
+   ],
+   "summary": "JsonDetail({ value }) \u2014 function in ui.tsx, lines 221-223.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/ui.tsx:RedactedJson",
+   "type": "function",
+   "name": "RedactedJson",
+   "filePath": "apps/control-plane/ui/src/ui.tsx",
+   "lineRange": [
+    229,
+    231
+   ],
+   "summary": "RedactedJson({ value }) \u2014 function in ui.tsx, lines 229-231.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/ui.tsx:DataTable",
+   "type": "function",
+   "name": "DataTable",
+   "filePath": "apps/control-plane/ui/src/ui.tsx",
+   "lineRange": [
+    237,
+    604
+   ],
+   "summary": "DataTable({) \u2014 function in ui.tsx, lines 237-604.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/verify-scope.test.ts",
+   "type": "file",
+   "name": "verify-scope.test.ts",
+   "filePath": "apps/control-plane/ui/src/verify-scope.test.ts",
+   "summary": "verify-scope.test.ts \u2014 typescript code, 97 lines, 1 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/verify-scope.test.ts:memoryStore",
+   "type": "function",
+   "name": "memoryStore",
+   "filePath": "apps/control-plane/ui/src/verify-scope.test.ts",
+   "lineRange": [
+    12,
+    28
+   ],
+   "summary": "memoryStore() \u2014 function in verify-scope.test.ts, lines 12-28.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/verify-scope.ts",
+   "type": "file",
+   "name": "verify-scope.ts",
+   "filePath": "apps/control-plane/ui/src/verify-scope.ts",
+   "summary": "verify-scope.ts \u2014 typescript code, 126 lines, 5 functions, 0 classes, 4 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/verify-scope.ts:verifyScope",
+   "type": "function",
+   "name": "verifyScope",
+   "filePath": "apps/control-plane/ui/src/verify-scope.ts",
+   "lineRange": [
+    24,
+    72
+   ],
+   "summary": "verifyScope(data) \u2014 function in verify-scope.ts, lines 24-72.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/verify-scope.ts:readAll",
+   "type": "function",
+   "name": "readAll",
+   "filePath": "apps/control-plane/ui/src/verify-scope.ts",
+   "lineRange": [
+    84,
+    96
+   ],
+   "summary": "readAll(store) \u2014 function in verify-scope.ts, lines 84-96.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/verify-scope.ts:readCachedVerify",
+   "type": "function",
+   "name": "readCachedVerify",
+   "filePath": "apps/control-plane/ui/src/verify-scope.ts",
+   "lineRange": [
+    99,
+    104
+   ],
+   "summary": "readCachedVerify(store, query) \u2014 function in verify-scope.ts, lines 99-104.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/verify-scope.ts:cacheMatchesHead",
+   "type": "function",
+   "name": "cacheMatchesHead",
+   "filePath": "apps/control-plane/ui/src/verify-scope.ts",
+   "lineRange": [
+    107,
+    112
+   ],
+   "summary": "cacheMatchesHead(cached, head) \u2014 function in verify-scope.ts, lines 107-112.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/verify-scope.ts:writeCachedVerify",
+   "type": "function",
+   "name": "writeCachedVerify",
+   "filePath": "apps/control-plane/ui/src/verify-scope.ts",
+   "lineRange": [
+    114,
+    126
+   ],
+   "summary": "writeCachedVerify(store, entry) \u2014 function in verify-scope.ts, lines 114-126.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/workspace-controls.tsx",
+   "type": "file",
+   "name": "workspace-controls.tsx",
+   "filePath": "apps/control-plane/ui/src/workspace-controls.tsx",
+   "summary": "workspace-controls.tsx \u2014 typescript code, 404 lines, 1 functions, 0 classes, 1 exports, 3 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/workspace-controls.tsx:WorkspaceControls",
+   "type": "function",
+   "name": "WorkspaceControls",
+   "filePath": "apps/control-plane/ui/src/workspace-controls.tsx",
+   "lineRange": [
+    7,
+    404
+   ],
+   "summary": "WorkspaceControls() \u2014 function in workspace-controls.tsx, lines 7-404.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/workspace-state.test.ts",
+   "type": "file",
+   "name": "workspace-state.test.ts",
+   "filePath": "apps/control-plane/ui/src/workspace-state.test.ts",
+   "summary": "workspace-state.test.ts \u2014 typescript code, 73 lines, 0 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/workspace-state.ts",
+   "type": "file",
+   "name": "workspace-state.ts",
+   "filePath": "apps/control-plane/ui/src/workspace-state.ts",
+   "summary": "workspace-state.ts \u2014 typescript code, 84 lines, 5 functions, 0 classes, 6 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/workspace-state.ts:providerStatus",
+   "type": "function",
+   "name": "providerStatus",
+   "filePath": "apps/control-plane/ui/src/workspace-state.ts",
+   "lineRange": [
+    16,
+    27
+   ],
+   "summary": "providerStatus(provider) \u2014 function in workspace-state.ts, lines 16-27.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/workspace-state.ts:runState",
+   "type": "function",
+   "name": "runState",
+   "filePath": "apps/control-plane/ui/src/workspace-state.ts",
+   "lineRange": [
+    29,
+    43
+   ],
+   "summary": "runState(run) \u2014 function in workspace-state.ts, lines 29-43.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/workspace-state.ts:runCanStop",
+   "type": "function",
+   "name": "runCanStop",
+   "filePath": "apps/control-plane/ui/src/workspace-state.ts",
+   "lineRange": [
+    45,
+    52
+   ],
+   "summary": "runCanStop(run) \u2014 function in workspace-state.ts, lines 45-52.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/workspace-state.ts:runBlocksInput",
+   "type": "function",
+   "name": "runBlocksInput",
+   "filePath": "apps/control-plane/ui/src/workspace-state.ts",
+   "lineRange": [
+    54,
+    61
+   ],
+   "summary": "runBlocksInput(run) \u2014 function in workspace-state.ts, lines 54-61.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/workspace-state.ts:compactionResult",
+   "type": "function",
+   "name": "compactionResult",
+   "filePath": "apps/control-plane/ui/src/workspace-state.ts",
+   "lineRange": [
+    69,
+    84
+   ],
+   "summary": "compactionResult(response) \u2014 function in workspace-state.ts, lines 69-84.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/ui/src/workspace-status.tsx",
+   "type": "file",
+   "name": "workspace-status.tsx",
+   "filePath": "apps/control-plane/ui/src/workspace-status.tsx",
+   "summary": "workspace-status.tsx \u2014 typescript code, 62 lines, 2 functions, 0 classes, 2 exports, 3 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/workspace-status.tsx:ProviderNotice",
+   "type": "function",
+   "name": "ProviderNotice",
+   "filePath": "apps/control-plane/ui/src/workspace-status.tsx",
+   "lineRange": [
+    5,
+    43
+   ],
+   "summary": "ProviderNotice({) \u2014 function in workspace-status.tsx, lines 5-43.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/ui/src/workspace-status.tsx:RunStatus",
+   "type": "function",
+   "name": "RunStatus",
+   "filePath": "apps/control-plane/ui/src/workspace-status.tsx",
+   "lineRange": [
+    45,
+    62
+   ],
+   "summary": "RunStatus({ run }) \u2014 function in workspace-status.tsx, lines 45-62.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/src/cdp.mjs",
+   "type": "file",
+   "name": "cdp.mjs",
+   "filePath": "scripts/src/cdp.mjs",
+   "summary": "cdp.mjs \u2014 javascript code, 250 lines, 6 functions, 1 classes, 5 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:scripts/src/cdp.mjs:chromiumCandidates",
+   "type": "function",
+   "name": "chromiumCandidates",
+   "filePath": "scripts/src/cdp.mjs",
+   "lineRange": [
+    16,
+    61
+   ],
+   "summary": "chromiumCandidates() \u2014 function in cdp.mjs, lines 16-61.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/cdp.mjs:findChromium",
+   "type": "function",
+   "name": "findChromium",
+   "filePath": "scripts/src/cdp.mjs",
+   "lineRange": [
+    64,
+    71
+   ],
+   "summary": "findChromium() \u2014 function in cdp.mjs, lines 64-71.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/cdp.mjs:chromiumAvailable",
+   "type": "function",
+   "name": "chromiumAvailable",
+   "filePath": "scripts/src/cdp.mjs",
+   "lineRange": [
+    73,
+    75
+   ],
+   "summary": "chromiumAvailable() \u2014 function in cdp.mjs, lines 73-75.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/cdp.mjs:launchBrowser",
+   "type": "function",
+   "name": "launchBrowser",
+   "filePath": "scripts/src/cdp.mjs",
+   "lineRange": [
+    77,
+    119
+   ],
+   "summary": "launchBrowser() \u2014 function in cdp.mjs, lines 77-119.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/cdp.mjs:openPage",
+   "type": "function",
+   "name": "openPage",
+   "filePath": "scripts/src/cdp.mjs",
+   "lineRange": [
+    168,
+    241
+   ],
+   "summary": "openPage(endpoint) \u2014 function in cdp.mjs, lines 168-241.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/cdp.mjs:withBrowser",
+   "type": "function",
+   "name": "withBrowser",
+   "filePath": "scripts/src/cdp.mjs",
+   "lineRange": [
+    243,
+    250
+   ],
+   "summary": "withBrowser(run) \u2014 function in cdp.mjs, lines 243-250.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:scripts/src/cdp.mjs:Channel",
+   "type": "class",
+   "name": "Channel",
+   "filePath": "scripts/src/cdp.mjs",
+   "lineRange": [
+    121,
+    166
+   ],
+   "summary": "Channel \u2014 class in cdp.mjs, lines 121-166, methods: send, on, once.",
+   "tags": [
+    "javascript",
+    "class"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/src/ui-layout.test.mjs",
+   "type": "file",
+   "name": "ui-layout.test.mjs",
+   "filePath": "scripts/src/ui-layout.test.mjs",
+   "summary": "ui-layout.test.mjs \u2014 javascript code, 631 lines, 2 functions, 0 classes, 0 exports, 2 imports.",
+   "tags": [
+    "javascript",
+    "code",
+    "test"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "function:scripts/src/ui-layout.test.mjs:stateSkip",
+   "type": "function",
+   "name": "stateSkip",
+   "filePath": "scripts/src/ui-layout.test.mjs",
+   "lineRange": [
+    57,
+    58
+   ],
+   "summary": "stateSkip(key) \u2014 function in ui-layout.test.mjs, lines 57-58.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/ui-layout.test.mjs:viewportSkip",
+   "type": "function",
+   "name": "viewportSkip",
+   "filePath": "scripts/src/ui-layout.test.mjs",
+   "lineRange": [
+    78,
+    79
+   ],
+   "summary": "viewportSkip(viewport) \u2014 function in ui-layout.test.mjs, lines 78-79.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/src/ui-matrix-demo-server.test.mjs",
+   "type": "file",
+   "name": "ui-matrix-demo-server.test.mjs",
+   "filePath": "scripts/src/ui-matrix-demo-server.test.mjs",
+   "summary": "ui-matrix-demo-server.test.mjs \u2014 javascript code, 23 lines, 0 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "javascript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/src/ui-matrix.mjs",
+   "type": "file",
+   "name": "ui-matrix.mjs",
+   "filePath": "scripts/src/ui-matrix.mjs",
+   "summary": "ui-matrix.mjs \u2014 javascript code, 2002 lines, 27 functions, 0 classes, 6 exports, 4 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "function:scripts/src/ui-matrix.mjs:streamAnswer",
+   "type": "function",
+   "name": "streamAnswer",
+   "filePath": "scripts/src/ui-matrix.mjs",
+   "lineRange": [
+    123,
+    143
+   ],
+   "summary": "streamAnswer(response, streamed) \u2014 function in ui-matrix.mjs, lines 123-143.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/ui-matrix.mjs:startFixture",
+   "type": "function",
+   "name": "startFixture",
+   "filePath": "scripts/src/ui-matrix.mjs",
+   "lineRange": [
+    145,
+    196
+   ],
+   "summary": "startFixture() \u2014 function in ui-matrix.mjs, lines 145-196.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/ui-matrix.mjs:startDemoServer",
+   "type": "function",
+   "name": "startDemoServer",
+   "filePath": "scripts/src/ui-matrix.mjs",
+   "lineRange": [
+    198,
+    246
+   ],
+   "summary": "startDemoServer() \u2014 function in ui-matrix.mjs, lines 198-246.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/ui-matrix.mjs:startWorkspace",
+   "type": "function",
+   "name": "startWorkspace",
+   "filePath": "scripts/src/ui-matrix.mjs",
+   "lineRange": [
+    248,
+    278
+   ],
+   "summary": "startWorkspace(fixturePort) \u2014 function in ui-matrix.mjs, lines 248-278.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/ui-matrix.mjs:setDraft",
+   "type": "function",
+   "name": "setDraft",
+   "filePath": "scripts/src/ui-matrix.mjs",
+   "lineRange": [
+    409,
+    416
+   ],
+   "summary": "setDraft(text) \u2014 function in ui-matrix.mjs, lines 409-416.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/ui-matrix.mjs:waitForApp",
+   "type": "function",
+   "name": "waitForApp",
+   "filePath": "scripts/src/ui-matrix.mjs",
+   "lineRange": [
+    451,
+    471
+   ],
+   "summary": "waitForApp(page, selector, extra) \u2014 function in ui-matrix.mjs, lines 451-471.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/ui-matrix.mjs:tabWalk",
+   "type": "function",
+   "name": "tabWalk",
+   "filePath": "scripts/src/ui-matrix.mjs",
+   "lineRange": [
+    473,
+    493
+   ],
+   "summary": "tabWalk(page, steps) \u2014 function in ui-matrix.mjs, lines 473-493.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/ui-matrix.mjs:ringVisible",
+   "type": "function",
+   "name": "ringVisible",
+   "filePath": "scripts/src/ui-matrix.mjs",
+   "lineRange": [
+    497,
+    502
+   ],
+   "summary": "ringVisible(state) \u2014 function in ui-matrix.mjs, lines 497-502.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/ui-matrix.mjs:sameLayout",
+   "type": "function",
+   "name": "sameLayout",
+   "filePath": "scripts/src/ui-matrix.mjs",
+   "lineRange": [
+    538,
+    539
+   ],
+   "summary": "sameLayout(a, b) \u2014 function in ui-matrix.mjs, lines 538-539.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/ui-matrix.mjs:awaitSettledLayout",
+   "type": "function",
+   "name": "awaitSettledLayout",
+   "filePath": "scripts/src/ui-matrix.mjs",
+   "lineRange": [
+    547,
+    587
+   ],
+   "summary": "awaitSettledLayout(page) \u2014 function in ui-matrix.mjs, lines 547-587.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/ui-matrix.mjs:measureViewport",
+   "type": "function",
+   "name": "measureViewport",
+   "filePath": "scripts/src/ui-matrix.mjs",
+   "lineRange": [
+    589,
+    632
+   ],
+   "summary": "measureViewport(page, origin, sessionPath) \u2014 function in ui-matrix.mjs, lines 589-632.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/ui-matrix.mjs:measureThemesAndLocales",
+   "type": "function",
+   "name": "measureThemesAndLocales",
+   "filePath": "scripts/src/ui-matrix.mjs",
+   "lineRange": [
+    634,
+    666
+   ],
+   "summary": "measureThemesAndLocales(page, origin, sessionPath) \u2014 function in ui-matrix.mjs, lines 634-666.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/ui-matrix.mjs:measureRoutes",
+   "type": "function",
+   "name": "measureRoutes",
+   "filePath": "scripts/src/ui-matrix.mjs",
+   "lineRange": [
+    668,
+    716
+   ],
+   "summary": "measureRoutes(page, origin) \u2014 function in ui-matrix.mjs, lines 668-716.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/ui-matrix.mjs:seedConversation",
+   "type": "function",
+   "name": "seedConversation",
+   "filePath": "scripts/src/ui-matrix.mjs",
+   "lineRange": [
+    718,
+    744
+   ],
+   "summary": "seedConversation(page, origin) \u2014 function in ui-matrix.mjs, lines 718-744.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/ui-matrix.mjs:runStateProbe",
+   "type": "function",
+   "name": "runStateProbe",
+   "filePath": "scripts/src/ui-matrix.mjs",
+   "lineRange": [
+    755,
+    758
+   ],
+   "summary": "runStateProbe(origin, id) \u2014 function in ui-matrix.mjs, lines 755-758.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/ui-matrix.mjs:runState",
+   "type": "function",
+   "name": "runState",
+   "filePath": "scripts/src/ui-matrix.mjs",
+   "lineRange": [
+    761,
+    764
+   ],
+   "summary": "runState(origin, id) \u2014 function in ui-matrix.mjs, lines 761-764.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/ui-matrix.mjs:sendAndWait",
+   "type": "function",
+   "name": "sendAndWait",
+   "filePath": "scripts/src/ui-matrix.mjs",
+   "lineRange": [
+    772,
+    787
+   ],
+   "summary": "sendAndWait(page, origin, prompt) \u2014 function in ui-matrix.mjs, lines 772-787.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/ui-matrix.mjs:currentSessionId",
+   "type": "function",
+   "name": "currentSessionId",
+   "filePath": "scripts/src/ui-matrix.mjs",
+   "lineRange": [
+    790,
+    799
+   ],
+   "summary": "currentSessionId(page) \u2014 function in ui-matrix.mjs, lines 790-799.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/ui-matrix.mjs:settleRun",
+   "type": "function",
+   "name": "settleRun",
+   "filePath": "scripts/src/ui-matrix.mjs",
+   "lineRange": [
+    801,
+    808
+   ],
+   "summary": "settleRun(origin, id, states) \u2014 function in ui-matrix.mjs, lines 801-808.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/ui-matrix.mjs:measureStreaming",
+   "type": "function",
+   "name": "measureStreaming",
+   "filePath": "scripts/src/ui-matrix.mjs",
+   "lineRange": [
+    823,
+    905
+   ],
+   "summary": "measureStreaming(page, origin) \u2014 function in ui-matrix.mjs, lines 823-905.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/ui-matrix.mjs:measureRateLimit",
+   "type": "function",
+   "name": "measureRateLimit",
+   "filePath": "scripts/src/ui-matrix.mjs",
+   "lineRange": [
+    943,
+    1024
+   ],
+   "summary": "measureRateLimit(page, origin) \u2014 function in ui-matrix.mjs, lines 943-1024.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/ui-matrix.mjs:measureApproval",
+   "type": "function",
+   "name": "measureApproval",
+   "filePath": "scripts/src/ui-matrix.mjs",
+   "lineRange": [
+    1028,
+    1179
+   ],
+   "summary": "measureApproval(page, origin) \u2014 function in ui-matrix.mjs, lines 1028-1179.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:scripts/src/ui-matrix.mjs:measureRecovery",
+   "type": "function",
+   "name": "measureRecovery",
+   "filePath": "scripts/src/ui-matrix.mjs",
+   "lineRange": [
+    1182,
+    1340
+   ],
+   "summary": "measureRecovery(page, origin) \u2014 function in ui-matrix.mjs, lines 1182-1340.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:scripts/src/ui-matrix.mjs:measureDemo",
+   "type": "function",
+   "name": "measureDemo",
+   "filePath": "scripts/src/ui-matrix.mjs",
+   "lineRange": [
+    1344,
+    1388
+   ],
+   "summary": "measureDemo(page, demo) \u2014 function in ui-matrix.mjs, lines 1344-1388.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/ui-matrix.mjs:measureGallery",
+   "type": "function",
+   "name": "measureGallery",
+   "filePath": "scripts/src/ui-matrix.mjs",
+   "lineRange": [
+    1392,
+    1541
+   ],
+   "summary": "measureGallery(page, origin) \u2014 function in ui-matrix.mjs, lines 1392-1541.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:scripts/src/ui-matrix.mjs:measureDataTableRefresh",
+   "type": "function",
+   "name": "measureDataTableRefresh",
+   "filePath": "scripts/src/ui-matrix.mjs",
+   "lineRange": [
+    1546,
+    1603
+   ],
+   "summary": "measureDataTableRefresh(page, origin) \u2014 function in ui-matrix.mjs, lines 1546-1603.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/ui-matrix.mjs:measure",
+   "type": "function",
+   "name": "measure",
+   "filePath": "scripts/src/ui-matrix.mjs",
+   "lineRange": [
+    1605,
+    1995
+   ],
+   "summary": "measure() \u2014 function in ui-matrix.mjs, lines 1605-1995.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "moderate"
+  }
+ ],
+ "edges": [
+  {
+   "source": "file:apps/control-plane/ui/src/harness-proposals.ts",
+   "target": "function:apps/control-plane/ui/src/harness-proposals.ts:proposalEdits",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-proposals.ts defines proposalEdits",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/harness-proposals.ts",
+   "target": "function:apps/control-plane/ui/src/harness-proposals.ts:proposalEdits",
+   "type": "exports",
+   "direction": "forward",
+   "description": "harness-proposals.ts exports proposalEdits",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/harness-proposals.tsx",
+   "target": "function:apps/control-plane/ui/src/harness-proposals.tsx:HarnessProposals",
+   "type": "contains",
+   "direction": "forward",
+   "description": "harness-proposals.tsx defines HarnessProposals",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/harness-proposals.tsx",
+   "target": "function:apps/control-plane/ui/src/harness-proposals.tsx:HarnessProposals",
+   "type": "exports",
+   "direction": "forward",
+   "description": "harness-proposals.tsx exports HarnessProposals",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/icons.tsx",
+   "target": "function:apps/control-plane/ui/src/icons.tsx:Icon",
+   "type": "contains",
+   "direction": "forward",
+   "description": "icons.tsx defines Icon",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/icons.tsx",
+   "target": "function:apps/control-plane/ui/src/icons.tsx:Icon",
+   "type": "exports",
+   "direction": "forward",
+   "description": "icons.tsx exports Icon",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/integrations.tsx",
+   "target": "function:apps/control-plane/ui/src/integrations.tsx:useIntegrations",
+   "type": "contains",
+   "direction": "forward",
+   "description": "integrations.tsx defines useIntegrations",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/integrations.tsx",
+   "target": "function:apps/control-plane/ui/src/integrations.tsx:cloudOnly",
+   "type": "contains",
+   "direction": "forward",
+   "description": "integrations.tsx defines cloudOnly",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/integrations.tsx",
+   "target": "function:apps/control-plane/ui/src/integrations.tsx:CloudNotice",
+   "type": "contains",
+   "direction": "forward",
+   "description": "integrations.tsx defines CloudNotice",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/integrations.tsx",
+   "target": "function:apps/control-plane/ui/src/integrations.tsx:statusLabel",
+   "type": "contains",
+   "direction": "forward",
+   "description": "integrations.tsx defines statusLabel",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/integrations.tsx",
+   "target": "function:apps/control-plane/ui/src/integrations.tsx:Integrations",
+   "type": "contains",
+   "direction": "forward",
+   "description": "integrations.tsx defines Integrations",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/integrations.tsx",
+   "target": "function:apps/control-plane/ui/src/integrations.tsx:Integrations",
+   "type": "exports",
+   "direction": "forward",
+   "description": "integrations.tsx exports Integrations",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/integrations.tsx",
+   "target": "function:apps/control-plane/ui/src/integrations.tsx:ClientSetup",
+   "type": "contains",
+   "direction": "forward",
+   "description": "integrations.tsx defines ClientSetup",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/integrations.tsx",
+   "target": "function:apps/control-plane/ui/src/integrations.tsx:IntegrationContext",
+   "type": "contains",
+   "direction": "forward",
+   "description": "integrations.tsx defines IntegrationContext",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/integrations.tsx",
+   "target": "function:apps/control-plane/ui/src/integrations.tsx:IntegrationContext",
+   "type": "exports",
+   "direction": "forward",
+   "description": "integrations.tsx exports IntegrationContext",
+   "weight": 0.7
+  },
+  {
+   "source": "function:apps/control-plane/ui/src/integrations.tsx:Integrations",
+   "target": "function:apps/control-plane/ui/src/integrations.tsx:useIntegrations",
+   "type": "calls",
+   "direction": "forward",
+   "description": "Integrations calls useIntegrations",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/ui/src/integrations.tsx:Integrations",
+   "target": "function:apps/control-plane/ui/src/integrations.tsx:cloudOnly",
+   "type": "calls",
+   "direction": "forward",
+   "description": "Integrations calls cloudOnly",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/ui/src/integrations.tsx:Integrations",
+   "target": "function:apps/control-plane/ui/src/integrations.tsx:statusLabel",
+   "type": "calls",
+   "direction": "forward",
+   "description": "Integrations calls statusLabel",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/ui/src/integrations.tsx:IntegrationContext",
+   "target": "function:apps/control-plane/ui/src/integrations.tsx:useIntegrations",
+   "type": "calls",
+   "direction": "forward",
+   "description": "IntegrationContext calls useIntegrations",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/ui/src/integrations.tsx:IntegrationContext",
+   "target": "function:apps/control-plane/ui/src/integrations.tsx:cloudOnly",
+   "type": "calls",
+   "direction": "forward",
+   "description": "IntegrationContext calls cloudOnly",
+   "weight": 0.6
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/ledger-detail.tsx",
+   "target": "function:apps/control-plane/ui/src/ledger-detail.tsx:LedgerDetail",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ledger-detail.tsx defines LedgerDetail",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/ledger-detail.tsx",
+   "target": "function:apps/control-plane/ui/src/ledger-detail.tsx:LedgerDetail",
+   "type": "exports",
+   "direction": "forward",
+   "description": "ledger-detail.tsx exports LedgerDetail",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/ledger-verify.tsx",
+   "target": "function:apps/control-plane/ui/src/ledger-verify.tsx:LedgerVerify",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ledger-verify.tsx defines LedgerVerify",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/ledger-verify.tsx",
+   "target": "function:apps/control-plane/ui/src/ledger-verify.tsx:LedgerVerify",
+   "type": "exports",
+   "direction": "forward",
+   "description": "ledger-verify.tsx exports LedgerVerify",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/main.tsx",
+   "target": "function:apps/control-plane/ui/src/main.tsx:MotionShell",
+   "type": "contains",
+   "direction": "forward",
+   "description": "main.tsx defines MotionShell",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/main.tsx",
+   "target": "function:apps/control-plane/ui/src/main.tsx:Root",
+   "type": "contains",
+   "direction": "forward",
+   "description": "main.tsx defines Root",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/main.tsx",
+   "target": "function:apps/control-plane/ui/src/main.tsx:App",
+   "type": "contains",
+   "direction": "forward",
+   "description": "main.tsx defines App",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/main.tsx",
+   "target": "class:apps/control-plane/ui/src/main.tsx:AppBoundary",
+   "type": "contains",
+   "direction": "forward",
+   "description": "main.tsx defines class AppBoundary",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/overview-state.ts",
+   "target": "function:apps/control-plane/ui/src/overview-state.ts:wholeCount",
+   "type": "contains",
+   "direction": "forward",
+   "description": "overview-state.ts defines wholeCount",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/overview-state.ts",
+   "target": "function:apps/control-plane/ui/src/overview-state.ts:oneLine",
+   "type": "contains",
+   "direction": "forward",
+   "description": "overview-state.ts defines oneLine",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/overview-state.ts",
+   "target": "function:apps/control-plane/ui/src/overview-state.ts:ackState",
+   "type": "contains",
+   "direction": "forward",
+   "description": "overview-state.ts defines ackState",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/overview-state.ts",
+   "target": "function:apps/control-plane/ui/src/overview-state.ts:overviewState",
+   "type": "contains",
+   "direction": "forward",
+   "description": "overview-state.ts defines overviewState",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/overview-state.ts",
+   "target": "function:apps/control-plane/ui/src/overview-state.ts:overviewState",
+   "type": "exports",
+   "direction": "forward",
+   "description": "overview-state.ts exports overviewState",
+   "weight": 0.7
+  },
+  {
+   "source": "function:apps/control-plane/ui/src/overview-state.ts:overviewState",
+   "target": "function:apps/control-plane/ui/src/overview-state.ts:wholeCount",
+   "type": "calls",
+   "direction": "forward",
+   "description": "overviewState calls wholeCount",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/ui/src/overview-state.ts:overviewState",
+   "target": "function:apps/control-plane/ui/src/overview-state.ts:oneLine",
+   "type": "calls",
+   "direction": "forward",
+   "description": "overviewState calls oneLine",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/ui/src/overview-state.ts:overviewState",
+   "target": "function:apps/control-plane/ui/src/overview-state.ts:ackState",
+   "type": "calls",
+   "direction": "forward",
+   "description": "overviewState calls ackState",
+   "weight": 0.6
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/pages.tsx",
+   "target": "function:apps/control-plane/ui/src/pages.tsx:Sessions",
+   "type": "contains",
+   "direction": "forward",
+   "description": "pages.tsx defines Sessions",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/pages.tsx",
+   "target": "function:apps/control-plane/ui/src/pages.tsx:Sessions",
+   "type": "exports",
+   "direction": "forward",
+   "description": "pages.tsx exports Sessions",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/pages.tsx",
+   "target": "function:apps/control-plane/ui/src/pages.tsx:Overview",
+   "type": "contains",
+   "direction": "forward",
+   "description": "pages.tsx defines Overview",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/pages.tsx",
+   "target": "function:apps/control-plane/ui/src/pages.tsx:Overview",
+   "type": "exports",
+   "direction": "forward",
+   "description": "pages.tsx exports Overview",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/pages.tsx",
+   "target": "function:apps/control-plane/ui/src/pages.tsx:Runs",
+   "type": "contains",
+   "direction": "forward",
+   "description": "pages.tsx defines Runs",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/pages.tsx",
+   "target": "function:apps/control-plane/ui/src/pages.tsx:Runs",
+   "type": "exports",
+   "direction": "forward",
+   "description": "pages.tsx exports Runs",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/pages.tsx",
+   "target": "function:apps/control-plane/ui/src/pages.tsx:Approvals",
+   "type": "contains",
+   "direction": "forward",
+   "description": "pages.tsx defines Approvals",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/pages.tsx",
+   "target": "function:apps/control-plane/ui/src/pages.tsx:Approvals",
+   "type": "exports",
+   "direction": "forward",
+   "description": "pages.tsx exports Approvals",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/pages.tsx",
+   "target": "function:apps/control-plane/ui/src/pages.tsx:Ledger",
+   "type": "contains",
+   "direction": "forward",
+   "description": "pages.tsx defines Ledger",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/pages.tsx",
+   "target": "function:apps/control-plane/ui/src/pages.tsx:Ledger",
+   "type": "exports",
+   "direction": "forward",
+   "description": "pages.tsx exports Ledger",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/pages.tsx",
+   "target": "function:apps/control-plane/ui/src/pages.tsx:Models",
+   "type": "contains",
+   "direction": "forward",
+   "description": "pages.tsx defines Models",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/pages.tsx",
+   "target": "function:apps/control-plane/ui/src/pages.tsx:Models",
+   "type": "exports",
+   "direction": "forward",
+   "description": "pages.tsx exports Models",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/permission-mode.tsx",
+   "target": "function:apps/control-plane/ui/src/permission-mode.tsx:resolvePermissionMode",
+   "type": "contains",
+   "direction": "forward",
+   "description": "permission-mode.tsx defines resolvePermissionMode",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/permission-mode.tsx",
+   "target": "function:apps/control-plane/ui/src/permission-mode.tsx:resolvePermissionMode",
+   "type": "exports",
+   "direction": "forward",
+   "description": "permission-mode.tsx exports resolvePermissionMode",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/permission-mode.tsx",
+   "target": "function:apps/control-plane/ui/src/permission-mode.tsx:usePermissionMode",
+   "type": "contains",
+   "direction": "forward",
+   "description": "permission-mode.tsx defines usePermissionMode",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/permission-mode.tsx",
+   "target": "function:apps/control-plane/ui/src/permission-mode.tsx:usePermissionMode",
+   "type": "exports",
+   "direction": "forward",
+   "description": "permission-mode.tsx exports usePermissionMode",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/permission-mode.tsx",
+   "target": "function:apps/control-plane/ui/src/permission-mode.tsx:modePrefix",
+   "type": "contains",
+   "direction": "forward",
+   "description": "permission-mode.tsx defines modePrefix",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/permission-mode.tsx",
+   "target": "function:apps/control-plane/ui/src/permission-mode.tsx:modePrefix",
+   "type": "exports",
+   "direction": "forward",
+   "description": "permission-mode.tsx exports modePrefix",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/permission-mode.tsx",
+   "target": "function:apps/control-plane/ui/src/permission-mode.tsx:modeWords",
+   "type": "contains",
+   "direction": "forward",
+   "description": "permission-mode.tsx defines modeWords",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/permission-mode.tsx",
+   "target": "function:apps/control-plane/ui/src/permission-mode.tsx:PermissionModeSwitch",
+   "type": "contains",
+   "direction": "forward",
+   "description": "permission-mode.tsx defines PermissionModeSwitch",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/permission-mode.tsx",
+   "target": "function:apps/control-plane/ui/src/permission-mode.tsx:PermissionModeSwitch",
+   "type": "exports",
+   "direction": "forward",
+   "description": "permission-mode.tsx exports PermissionModeSwitch",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/permission-mode.tsx",
+   "target": "function:apps/control-plane/ui/src/permission-mode.tsx:PermissionBanner",
+   "type": "contains",
+   "direction": "forward",
+   "description": "permission-mode.tsx defines PermissionBanner",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/permission-mode.tsx",
+   "target": "function:apps/control-plane/ui/src/permission-mode.tsx:PermissionBanner",
+   "type": "exports",
+   "direction": "forward",
+   "description": "permission-mode.tsx exports PermissionBanner",
+   "weight": 0.7
+  },
+  {
+   "source": "function:apps/control-plane/ui/src/permission-mode.tsx:usePermissionMode",
+   "target": "function:apps/control-plane/ui/src/permission-mode.tsx:resolvePermissionMode",
+   "type": "calls",
+   "direction": "forward",
+   "description": "usePermissionMode calls resolvePermissionMode",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/ui/src/permission-mode.tsx:PermissionModeSwitch",
+   "target": "function:apps/control-plane/ui/src/permission-mode.tsx:modeWords",
+   "type": "calls",
+   "direction": "forward",
+   "description": "PermissionModeSwitch calls modeWords",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/ui/src/permission-mode.tsx:PermissionBanner",
+   "target": "function:apps/control-plane/ui/src/permission-mode.tsx:modeWords",
+   "type": "calls",
+   "direction": "forward",
+   "description": "PermissionBanner calls modeWords",
+   "weight": 0.6
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/provider-matrix.ts",
+   "target": "function:apps/control-plane/ui/src/provider-matrix.ts:record",
+   "type": "contains",
+   "direction": "forward",
+   "description": "provider-matrix.ts defines record",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/provider-matrix.ts",
+   "target": "function:apps/control-plane/ui/src/provider-matrix.ts:text",
+   "type": "contains",
+   "direction": "forward",
+   "description": "provider-matrix.ts defines text",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/provider-matrix.ts",
+   "target": "function:apps/control-plane/ui/src/provider-matrix.ts:authMethod",
+   "type": "contains",
+   "direction": "forward",
+   "description": "provider-matrix.ts defines authMethod",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/provider-matrix.ts",
+   "target": "function:apps/control-plane/ui/src/provider-matrix.ts:availability",
+   "type": "contains",
+   "direction": "forward",
+   "description": "provider-matrix.ts defines availability",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/provider-matrix.ts",
+   "target": "function:apps/control-plane/ui/src/provider-matrix.ts:providerMatrix",
+   "type": "contains",
+   "direction": "forward",
+   "description": "provider-matrix.ts defines providerMatrix",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/provider-matrix.ts",
+   "target": "function:apps/control-plane/ui/src/provider-matrix.ts:providerMatrix",
+   "type": "exports",
+   "direction": "forward",
+   "description": "provider-matrix.ts exports providerMatrix",
+   "weight": 0.7
+  },
+  {
+   "source": "function:apps/control-plane/ui/src/provider-matrix.ts:authMethod",
+   "target": "function:apps/control-plane/ui/src/provider-matrix.ts:text",
+   "type": "calls",
+   "direction": "forward",
+   "description": "authMethod calls text",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/ui/src/provider-matrix.ts:providerMatrix",
+   "target": "function:apps/control-plane/ui/src/provider-matrix.ts:record",
+   "type": "calls",
+   "direction": "forward",
+   "description": "providerMatrix calls record",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/ui/src/provider-matrix.ts:providerMatrix",
+   "target": "function:apps/control-plane/ui/src/provider-matrix.ts:text",
+   "type": "calls",
+   "direction": "forward",
+   "description": "providerMatrix calls text",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/ui/src/provider-matrix.ts:providerMatrix",
+   "target": "function:apps/control-plane/ui/src/provider-matrix.ts:authMethod",
+   "type": "calls",
+   "direction": "forward",
+   "description": "providerMatrix calls authMethod",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/ui/src/provider-matrix.ts:providerMatrix",
+   "target": "function:apps/control-plane/ui/src/provider-matrix.ts:availability",
+   "type": "calls",
+   "direction": "forward",
+   "description": "providerMatrix calls availability",
+   "weight": 0.6
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/recovery-dialog.tsx",
+   "target": "function:apps/control-plane/ui/src/recovery-dialog.tsx:RecoveryReview",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery-dialog.tsx defines RecoveryReview",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/recovery-dialog.tsx",
+   "target": "function:apps/control-plane/ui/src/recovery-dialog.tsx:RecoveryReview",
+   "type": "exports",
+   "direction": "forward",
+   "description": "recovery-dialog.tsx exports RecoveryReview",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/recovery-dialog.tsx",
+   "target": "function:apps/control-plane/ui/src/recovery-dialog.tsx:SessionRecoveryStatus",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery-dialog.tsx defines SessionRecoveryStatus",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/recovery-dialog.tsx",
+   "target": "function:apps/control-plane/ui/src/recovery-dialog.tsx:SessionRecoveryStatus",
+   "type": "exports",
+   "direction": "forward",
+   "description": "recovery-dialog.tsx exports SessionRecoveryStatus",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/recovery-review.ts",
+   "target": "function:apps/control-plane/ui/src/recovery-review.ts:recoveryStateLabel",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery-review.ts defines recoveryStateLabel",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/recovery-review.ts",
+   "target": "function:apps/control-plane/ui/src/recovery-review.ts:recoveryStateLabel",
+   "type": "exports",
+   "direction": "forward",
+   "description": "recovery-review.ts exports recoveryStateLabel",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/recovery-review.ts",
+   "target": "function:apps/control-plane/ui/src/recovery-review.ts:recoveryReview",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery-review.ts defines recoveryReview",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/recovery-review.ts",
+   "target": "function:apps/control-plane/ui/src/recovery-review.ts:recoveryReview",
+   "type": "exports",
+   "direction": "forward",
+   "description": "recovery-review.ts exports recoveryReview",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/recovery-review.ts",
+   "target": "function:apps/control-plane/ui/src/recovery-review.ts:recoveryApplyBody",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery-review.ts defines recoveryApplyBody",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/recovery-review.ts",
+   "target": "function:apps/control-plane/ui/src/recovery-review.ts:recoveryApplyBody",
+   "type": "exports",
+   "direction": "forward",
+   "description": "recovery-review.ts exports recoveryApplyBody",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/recovery-review.ts",
+   "target": "function:apps/control-plane/ui/src/recovery-review.ts:recoveryStatusPath",
+   "type": "contains",
+   "direction": "forward",
+   "description": "recovery-review.ts defines recoveryStatusPath",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/recovery-review.ts",
+   "target": "function:apps/control-plane/ui/src/recovery-review.ts:recoveryStatusPath",
+   "type": "exports",
+   "direction": "forward",
+   "description": "recovery-review.ts exports recoveryStatusPath",
+   "weight": 0.7
+  },
+  {
+   "source": "function:apps/control-plane/ui/src/recovery-review.ts:recoveryReview",
+   "target": "function:apps/control-plane/ui/src/recovery-review.ts:recoveryApplyBody",
+   "type": "calls",
+   "direction": "forward",
+   "description": "recoveryReview calls recoveryApplyBody",
+   "weight": 0.6
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/redact.ts",
+   "target": "function:apps/control-plane/ui/src/redact.ts:keyParts",
+   "type": "contains",
+   "direction": "forward",
+   "description": "redact.ts defines keyParts",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/redact.ts",
+   "target": "function:apps/control-plane/ui/src/redact.ts:keyParts",
+   "type": "exports",
+   "direction": "forward",
+   "description": "redact.ts exports keyParts",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/redact.ts",
+   "target": "function:apps/control-plane/ui/src/redact.ts:isSecretKey",
+   "type": "contains",
+   "direction": "forward",
+   "description": "redact.ts defines isSecretKey",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/redact.ts",
+   "target": "function:apps/control-plane/ui/src/redact.ts:isSecretKey",
+   "type": "exports",
+   "direction": "forward",
+   "description": "redact.ts exports isSecretKey",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/redact.ts",
+   "target": "function:apps/control-plane/ui/src/redact.ts:redactUrlAuth",
+   "type": "contains",
+   "direction": "forward",
+   "description": "redact.ts defines redactUrlAuth",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/redact.ts",
+   "target": "function:apps/control-plane/ui/src/redact.ts:redactText",
+   "type": "contains",
+   "direction": "forward",
+   "description": "redact.ts defines redactText",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/redact.ts",
+   "target": "function:apps/control-plane/ui/src/redact.ts:redactValue",
+   "type": "contains",
+   "direction": "forward",
+   "description": "redact.ts defines redactValue",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/redact.ts",
+   "target": "function:apps/control-plane/ui/src/redact.ts:redactValue",
+   "type": "exports",
+   "direction": "forward",
+   "description": "redact.ts exports redactValue",
+   "weight": 0.7
+  },
+  {
+   "source": "function:apps/control-plane/ui/src/redact.ts:isSecretKey",
+   "target": "function:apps/control-plane/ui/src/redact.ts:keyParts",
+   "type": "calls",
+   "direction": "forward",
+   "description": "isSecretKey calls keyParts",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/ui/src/redact.ts:redactText",
+   "target": "function:apps/control-plane/ui/src/redact.ts:redactUrlAuth",
+   "type": "calls",
+   "direction": "forward",
+   "description": "redactText calls redactUrlAuth",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/ui/src/redact.ts:redactValue",
+   "target": "function:apps/control-plane/ui/src/redact.ts:redactText",
+   "type": "calls",
+   "direction": "forward",
+   "description": "redactValue calls redactText",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/ui/src/redact.ts:redactValue",
+   "target": "function:apps/control-plane/ui/src/redact.ts:isSecretKey",
+   "type": "calls",
+   "direction": "forward",
+   "description": "redactValue calls isSecretKey",
+   "weight": 0.6
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/session-context.tsx",
+   "target": "function:apps/control-plane/ui/src/session-context.tsx:SessionContext",
+   "type": "contains",
+   "direction": "forward",
+   "description": "session-context.tsx defines SessionContext",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/session-context.tsx",
+   "target": "function:apps/control-plane/ui/src/session-context.tsx:SessionContext",
+   "type": "exports",
+   "direction": "forward",
+   "description": "session-context.tsx exports SessionContext",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/settings.tsx",
+   "target": "function:apps/control-plane/ui/src/settings.tsx:Settings",
+   "type": "contains",
+   "direction": "forward",
+   "description": "settings.tsx defines Settings",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/settings.tsx",
+   "target": "function:apps/control-plane/ui/src/settings.tsx:Settings",
+   "type": "exports",
+   "direction": "forward",
+   "description": "settings.tsx exports Settings",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/settings.tsx",
+   "target": "function:apps/control-plane/ui/src/settings.tsx:DesktopSetup",
+   "type": "contains",
+   "direction": "forward",
+   "description": "settings.tsx defines DesktopSetup",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/settings.tsx",
+   "target": "function:apps/control-plane/ui/src/settings.tsx:Capabilities",
+   "type": "contains",
+   "direction": "forward",
+   "description": "settings.tsx defines Capabilities",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/settings.tsx",
+   "target": "function:apps/control-plane/ui/src/settings.tsx:Connections",
+   "type": "contains",
+   "direction": "forward",
+   "description": "settings.tsx defines Connections",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/settings.tsx",
+   "target": "function:apps/control-plane/ui/src/settings.tsx:Connections",
+   "type": "exports",
+   "direction": "forward",
+   "description": "settings.tsx exports Connections",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/status-label.test.ts",
+   "target": "function:apps/control-plane/ui/src/status-label.test.ts:english",
+   "type": "contains",
+   "direction": "forward",
+   "description": "status-label.test.ts defines english",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/status-label.test.ts",
+   "target": "function:apps/control-plane/ui/src/status-label.test.ts:czech",
+   "type": "contains",
+   "direction": "forward",
+   "description": "status-label.test.ts defines czech",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/status-label.ts",
+   "target": "function:apps/control-plane/ui/src/status-label.ts:statusLabel",
+   "type": "contains",
+   "direction": "forward",
+   "description": "status-label.ts defines statusLabel",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/status-label.ts",
+   "target": "function:apps/control-plane/ui/src/status-label.ts:statusLabel",
+   "type": "exports",
+   "direction": "forward",
+   "description": "status-label.ts exports statusLabel",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/ui.tsx",
+   "target": "function:apps/control-plane/ui/src/ui.tsx:useText",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ui.tsx defines useText",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/ui.tsx",
+   "target": "function:apps/control-plane/ui/src/ui.tsx:useText",
+   "type": "exports",
+   "direction": "forward",
+   "description": "ui.tsx exports useText",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/ui.tsx",
+   "target": "function:apps/control-plane/ui/src/ui.tsx:useAppliedAppearance",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ui.tsx defines useAppliedAppearance",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/ui.tsx",
+   "target": "function:apps/control-plane/ui/src/ui.tsx:useAppliedAppearance",
+   "type": "exports",
+   "direction": "forward",
+   "description": "ui.tsx exports useAppliedAppearance",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/ui.tsx",
+   "target": "function:apps/control-plane/ui/src/ui.tsx:useApi",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ui.tsx defines useApi",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/ui.tsx",
+   "target": "function:apps/control-plane/ui/src/ui.tsx:useApi",
+   "type": "exports",
+   "direction": "forward",
+   "description": "ui.tsx exports useApi",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/ui.tsx",
+   "target": "function:apps/control-plane/ui/src/ui.tsx:Badge",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ui.tsx defines Badge",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/ui.tsx",
+   "target": "function:apps/control-plane/ui/src/ui.tsx:Badge",
+   "type": "exports",
+   "direction": "forward",
+   "description": "ui.tsx exports Badge",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/ui.tsx",
+   "target": "function:apps/control-plane/ui/src/ui.tsx:PageComponent",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ui.tsx defines PageComponent",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/ui.tsx",
+   "target": "function:apps/control-plane/ui/src/ui.tsx:PageComponent",
+   "type": "exports",
+   "direction": "forward",
+   "description": "ui.tsx exports PageComponent",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/ui.tsx",
+   "target": "function:apps/control-plane/ui/src/ui.tsx:ErrorBox",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ui.tsx defines ErrorBox",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/ui.tsx",
+   "target": "function:apps/control-plane/ui/src/ui.tsx:ErrorBox",
+   "type": "exports",
+   "direction": "forward",
+   "description": "ui.tsx exports ErrorBox",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/ui.tsx",
+   "target": "function:apps/control-plane/ui/src/ui.tsx:Empty",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ui.tsx defines Empty",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/ui.tsx",
+   "target": "function:apps/control-plane/ui/src/ui.tsx:Empty",
+   "type": "exports",
+   "direction": "forward",
+   "description": "ui.tsx exports Empty",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/ui.tsx",
+   "target": "function:apps/control-plane/ui/src/ui.tsx:Dialog",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ui.tsx defines Dialog",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/ui.tsx",
+   "target": "function:apps/control-plane/ui/src/ui.tsx:Dialog",
+   "type": "exports",
+   "direction": "forward",
+   "description": "ui.tsx exports Dialog",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/ui.tsx",
+   "target": "function:apps/control-plane/ui/src/ui.tsx:JsonDetail",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ui.tsx defines JsonDetail",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/ui.tsx",
+   "target": "function:apps/control-plane/ui/src/ui.tsx:JsonDetail",
+   "type": "exports",
+   "direction": "forward",
+   "description": "ui.tsx exports JsonDetail",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/ui.tsx",
+   "target": "function:apps/control-plane/ui/src/ui.tsx:RedactedJson",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ui.tsx defines RedactedJson",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/ui.tsx",
+   "target": "function:apps/control-plane/ui/src/ui.tsx:RedactedJson",
+   "type": "exports",
+   "direction": "forward",
+   "description": "ui.tsx exports RedactedJson",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/ui.tsx",
+   "target": "function:apps/control-plane/ui/src/ui.tsx:DataTable",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ui.tsx defines DataTable",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/ui.tsx",
+   "target": "function:apps/control-plane/ui/src/ui.tsx:DataTable",
+   "type": "exports",
+   "direction": "forward",
+   "description": "ui.tsx exports DataTable",
+   "weight": 0.7
+  },
+  {
+   "source": "function:apps/control-plane/ui/src/ui.tsx:Badge",
+   "target": "function:apps/control-plane/ui/src/ui.tsx:useText",
+   "type": "calls",
+   "direction": "forward",
+   "description": "Badge calls useText",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/ui/src/ui.tsx:ErrorBox",
+   "target": "function:apps/control-plane/ui/src/ui.tsx:useText",
+   "type": "calls",
+   "direction": "forward",
+   "description": "ErrorBox calls useText",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/ui/src/ui.tsx:Dialog",
+   "target": "function:apps/control-plane/ui/src/ui.tsx:useText",
+   "type": "calls",
+   "direction": "forward",
+   "description": "Dialog calls useText",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/ui/src/ui.tsx:DataTable",
+   "target": "function:apps/control-plane/ui/src/ui.tsx:useText",
+   "type": "calls",
+   "direction": "forward",
+   "description": "DataTable calls useText",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/ui/src/ui.tsx:DataTable",
+   "target": "function:apps/control-plane/ui/src/ui.tsx:useApi",
+   "type": "calls",
+   "direction": "forward",
+   "description": "DataTable calls useApi",
+   "weight": 0.6
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/verify-scope.test.ts",
+   "target": "function:apps/control-plane/ui/src/verify-scope.test.ts:memoryStore",
+   "type": "contains",
+   "direction": "forward",
+   "description": "verify-scope.test.ts defines memoryStore",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/verify-scope.ts",
+   "target": "function:apps/control-plane/ui/src/verify-scope.ts:verifyScope",
+   "type": "contains",
+   "direction": "forward",
+   "description": "verify-scope.ts defines verifyScope",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/verify-scope.ts",
+   "target": "function:apps/control-plane/ui/src/verify-scope.ts:verifyScope",
+   "type": "exports",
+   "direction": "forward",
+   "description": "verify-scope.ts exports verifyScope",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/verify-scope.ts",
+   "target": "function:apps/control-plane/ui/src/verify-scope.ts:readAll",
+   "type": "contains",
+   "direction": "forward",
+   "description": "verify-scope.ts defines readAll",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/verify-scope.ts",
+   "target": "function:apps/control-plane/ui/src/verify-scope.ts:readCachedVerify",
+   "type": "contains",
+   "direction": "forward",
+   "description": "verify-scope.ts defines readCachedVerify",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/verify-scope.ts",
+   "target": "function:apps/control-plane/ui/src/verify-scope.ts:readCachedVerify",
+   "type": "exports",
+   "direction": "forward",
+   "description": "verify-scope.ts exports readCachedVerify",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/verify-scope.ts",
+   "target": "function:apps/control-plane/ui/src/verify-scope.ts:cacheMatchesHead",
+   "type": "contains",
+   "direction": "forward",
+   "description": "verify-scope.ts defines cacheMatchesHead",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/verify-scope.ts",
+   "target": "function:apps/control-plane/ui/src/verify-scope.ts:cacheMatchesHead",
+   "type": "exports",
+   "direction": "forward",
+   "description": "verify-scope.ts exports cacheMatchesHead",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/verify-scope.ts",
+   "target": "function:apps/control-plane/ui/src/verify-scope.ts:writeCachedVerify",
+   "type": "contains",
+   "direction": "forward",
+   "description": "verify-scope.ts defines writeCachedVerify",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/verify-scope.ts",
+   "target": "function:apps/control-plane/ui/src/verify-scope.ts:writeCachedVerify",
+   "type": "exports",
+   "direction": "forward",
+   "description": "verify-scope.ts exports writeCachedVerify",
+   "weight": 0.7
+  },
+  {
+   "source": "function:apps/control-plane/ui/src/verify-scope.ts:readCachedVerify",
+   "target": "function:apps/control-plane/ui/src/verify-scope.ts:readAll",
+   "type": "calls",
+   "direction": "forward",
+   "description": "readCachedVerify calls readAll",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/ui/src/verify-scope.ts:writeCachedVerify",
+   "target": "function:apps/control-plane/ui/src/verify-scope.ts:readAll",
+   "type": "calls",
+   "direction": "forward",
+   "description": "writeCachedVerify calls readAll",
+   "weight": 0.6
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/workspace-controls.tsx",
+   "target": "function:apps/control-plane/ui/src/workspace-controls.tsx:WorkspaceControls",
+   "type": "contains",
+   "direction": "forward",
+   "description": "workspace-controls.tsx defines WorkspaceControls",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/workspace-controls.tsx",
+   "target": "function:apps/control-plane/ui/src/workspace-controls.tsx:WorkspaceControls",
+   "type": "exports",
+   "direction": "forward",
+   "description": "workspace-controls.tsx exports WorkspaceControls",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/workspace-state.ts",
+   "target": "function:apps/control-plane/ui/src/workspace-state.ts:providerStatus",
+   "type": "contains",
+   "direction": "forward",
+   "description": "workspace-state.ts defines providerStatus",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/workspace-state.ts",
+   "target": "function:apps/control-plane/ui/src/workspace-state.ts:providerStatus",
+   "type": "exports",
+   "direction": "forward",
+   "description": "workspace-state.ts exports providerStatus",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/workspace-state.ts",
+   "target": "function:apps/control-plane/ui/src/workspace-state.ts:runState",
+   "type": "contains",
+   "direction": "forward",
+   "description": "workspace-state.ts defines runState",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/workspace-state.ts",
+   "target": "function:apps/control-plane/ui/src/workspace-state.ts:runState",
+   "type": "exports",
+   "direction": "forward",
+   "description": "workspace-state.ts exports runState",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/workspace-state.ts",
+   "target": "function:apps/control-plane/ui/src/workspace-state.ts:runCanStop",
+   "type": "contains",
+   "direction": "forward",
+   "description": "workspace-state.ts defines runCanStop",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/workspace-state.ts",
+   "target": "function:apps/control-plane/ui/src/workspace-state.ts:runCanStop",
+   "type": "exports",
+   "direction": "forward",
+   "description": "workspace-state.ts exports runCanStop",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/workspace-state.ts",
+   "target": "function:apps/control-plane/ui/src/workspace-state.ts:runBlocksInput",
+   "type": "contains",
+   "direction": "forward",
+   "description": "workspace-state.ts defines runBlocksInput",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/workspace-state.ts",
+   "target": "function:apps/control-plane/ui/src/workspace-state.ts:runBlocksInput",
+   "type": "exports",
+   "direction": "forward",
+   "description": "workspace-state.ts exports runBlocksInput",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/workspace-state.ts",
+   "target": "function:apps/control-plane/ui/src/workspace-state.ts:compactionResult",
+   "type": "contains",
+   "direction": "forward",
+   "description": "workspace-state.ts defines compactionResult",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/workspace-state.ts",
+   "target": "function:apps/control-plane/ui/src/workspace-state.ts:compactionResult",
+   "type": "exports",
+   "direction": "forward",
+   "description": "workspace-state.ts exports compactionResult",
+   "weight": 0.7
+  },
+  {
+   "source": "function:apps/control-plane/ui/src/workspace-state.ts:runCanStop",
+   "target": "function:apps/control-plane/ui/src/workspace-state.ts:runState",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runCanStop calls runState",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/ui/src/workspace-state.ts:runBlocksInput",
+   "target": "function:apps/control-plane/ui/src/workspace-state.ts:runState",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runBlocksInput calls runState",
+   "weight": 0.6
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/workspace-status.tsx",
+   "target": "function:apps/control-plane/ui/src/workspace-status.tsx:ProviderNotice",
+   "type": "contains",
+   "direction": "forward",
+   "description": "workspace-status.tsx defines ProviderNotice",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/workspace-status.tsx",
+   "target": "function:apps/control-plane/ui/src/workspace-status.tsx:ProviderNotice",
+   "type": "exports",
+   "direction": "forward",
+   "description": "workspace-status.tsx exports ProviderNotice",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/workspace-status.tsx",
+   "target": "function:apps/control-plane/ui/src/workspace-status.tsx:RunStatus",
+   "type": "contains",
+   "direction": "forward",
+   "description": "workspace-status.tsx defines RunStatus",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/workspace-status.tsx",
+   "target": "function:apps/control-plane/ui/src/workspace-status.tsx:RunStatus",
+   "type": "exports",
+   "direction": "forward",
+   "description": "workspace-status.tsx exports RunStatus",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/src/cdp.mjs",
+   "target": "function:scripts/src/cdp.mjs:chromiumCandidates",
+   "type": "contains",
+   "direction": "forward",
+   "description": "cdp.mjs defines chromiumCandidates",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/cdp.mjs",
+   "target": "function:scripts/src/cdp.mjs:findChromium",
+   "type": "contains",
+   "direction": "forward",
+   "description": "cdp.mjs defines findChromium",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/cdp.mjs",
+   "target": "function:scripts/src/cdp.mjs:findChromium",
+   "type": "exports",
+   "direction": "forward",
+   "description": "cdp.mjs exports findChromium",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/src/cdp.mjs",
+   "target": "function:scripts/src/cdp.mjs:chromiumAvailable",
+   "type": "contains",
+   "direction": "forward",
+   "description": "cdp.mjs defines chromiumAvailable",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/cdp.mjs",
+   "target": "function:scripts/src/cdp.mjs:chromiumAvailable",
+   "type": "exports",
+   "direction": "forward",
+   "description": "cdp.mjs exports chromiumAvailable",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/src/cdp.mjs",
+   "target": "function:scripts/src/cdp.mjs:launchBrowser",
+   "type": "contains",
+   "direction": "forward",
+   "description": "cdp.mjs defines launchBrowser",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/cdp.mjs",
+   "target": "function:scripts/src/cdp.mjs:launchBrowser",
+   "type": "exports",
+   "direction": "forward",
+   "description": "cdp.mjs exports launchBrowser",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/src/cdp.mjs",
+   "target": "function:scripts/src/cdp.mjs:openPage",
+   "type": "contains",
+   "direction": "forward",
+   "description": "cdp.mjs defines openPage",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/cdp.mjs",
+   "target": "function:scripts/src/cdp.mjs:openPage",
+   "type": "exports",
+   "direction": "forward",
+   "description": "cdp.mjs exports openPage",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/src/cdp.mjs",
+   "target": "function:scripts/src/cdp.mjs:withBrowser",
+   "type": "contains",
+   "direction": "forward",
+   "description": "cdp.mjs defines withBrowser",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/cdp.mjs",
+   "target": "function:scripts/src/cdp.mjs:withBrowser",
+   "type": "exports",
+   "direction": "forward",
+   "description": "cdp.mjs exports withBrowser",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/src/cdp.mjs",
+   "target": "class:scripts/src/cdp.mjs:Channel",
+   "type": "contains",
+   "direction": "forward",
+   "description": "cdp.mjs defines class Channel",
+   "weight": 1.0
+  },
+  {
+   "source": "function:scripts/src/cdp.mjs:findChromium",
+   "target": "function:scripts/src/cdp.mjs:chromiumCandidates",
+   "type": "calls",
+   "direction": "forward",
+   "description": "findChromium calls chromiumCandidates",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/cdp.mjs:chromiumAvailable",
+   "target": "function:scripts/src/cdp.mjs:findChromium",
+   "type": "calls",
+   "direction": "forward",
+   "description": "chromiumAvailable calls findChromium",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/cdp.mjs:launchBrowser",
+   "target": "function:scripts/src/cdp.mjs:findChromium",
+   "type": "calls",
+   "direction": "forward",
+   "description": "launchBrowser calls findChromium",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/cdp.mjs:withBrowser",
+   "target": "function:scripts/src/cdp.mjs:launchBrowser",
+   "type": "calls",
+   "direction": "forward",
+   "description": "withBrowser calls launchBrowser",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/cdp.mjs:withBrowser",
+   "target": "function:scripts/src/cdp.mjs:openPage",
+   "type": "calls",
+   "direction": "forward",
+   "description": "withBrowser calls openPage",
+   "weight": 0.6
+  },
+  {
+   "source": "file:scripts/src/ui-layout.test.mjs",
+   "target": "function:scripts/src/ui-layout.test.mjs:stateSkip",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ui-layout.test.mjs defines stateSkip",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/ui-layout.test.mjs",
+   "target": "function:scripts/src/ui-layout.test.mjs:viewportSkip",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ui-layout.test.mjs defines viewportSkip",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/ui-matrix.mjs",
+   "target": "function:scripts/src/ui-matrix.mjs:streamAnswer",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ui-matrix.mjs defines streamAnswer",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/ui-matrix.mjs",
+   "target": "function:scripts/src/ui-matrix.mjs:startFixture",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ui-matrix.mjs defines startFixture",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/ui-matrix.mjs",
+   "target": "function:scripts/src/ui-matrix.mjs:startDemoServer",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ui-matrix.mjs defines startDemoServer",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/ui-matrix.mjs",
+   "target": "function:scripts/src/ui-matrix.mjs:startDemoServer",
+   "type": "exports",
+   "direction": "forward",
+   "description": "ui-matrix.mjs exports startDemoServer",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/src/ui-matrix.mjs",
+   "target": "function:scripts/src/ui-matrix.mjs:startWorkspace",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ui-matrix.mjs defines startWorkspace",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/ui-matrix.mjs",
+   "target": "function:scripts/src/ui-matrix.mjs:setDraft",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ui-matrix.mjs defines setDraft",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/ui-matrix.mjs",
+   "target": "function:scripts/src/ui-matrix.mjs:waitForApp",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ui-matrix.mjs defines waitForApp",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/ui-matrix.mjs",
+   "target": "function:scripts/src/ui-matrix.mjs:tabWalk",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ui-matrix.mjs defines tabWalk",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/ui-matrix.mjs",
+   "target": "function:scripts/src/ui-matrix.mjs:ringVisible",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ui-matrix.mjs defines ringVisible",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/ui-matrix.mjs",
+   "target": "function:scripts/src/ui-matrix.mjs:sameLayout",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ui-matrix.mjs defines sameLayout",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/ui-matrix.mjs",
+   "target": "function:scripts/src/ui-matrix.mjs:awaitSettledLayout",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ui-matrix.mjs defines awaitSettledLayout",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/ui-matrix.mjs",
+   "target": "function:scripts/src/ui-matrix.mjs:measureViewport",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ui-matrix.mjs defines measureViewport",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/ui-matrix.mjs",
+   "target": "function:scripts/src/ui-matrix.mjs:measureThemesAndLocales",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ui-matrix.mjs defines measureThemesAndLocales",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/ui-matrix.mjs",
+   "target": "function:scripts/src/ui-matrix.mjs:measureRoutes",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ui-matrix.mjs defines measureRoutes",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/ui-matrix.mjs",
+   "target": "function:scripts/src/ui-matrix.mjs:seedConversation",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ui-matrix.mjs defines seedConversation",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/ui-matrix.mjs",
+   "target": "function:scripts/src/ui-matrix.mjs:runStateProbe",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ui-matrix.mjs defines runStateProbe",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/ui-matrix.mjs",
+   "target": "function:scripts/src/ui-matrix.mjs:runState",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ui-matrix.mjs defines runState",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/ui-matrix.mjs",
+   "target": "function:scripts/src/ui-matrix.mjs:sendAndWait",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ui-matrix.mjs defines sendAndWait",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/ui-matrix.mjs",
+   "target": "function:scripts/src/ui-matrix.mjs:currentSessionId",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ui-matrix.mjs defines currentSessionId",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/ui-matrix.mjs",
+   "target": "function:scripts/src/ui-matrix.mjs:settleRun",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ui-matrix.mjs defines settleRun",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/ui-matrix.mjs",
+   "target": "function:scripts/src/ui-matrix.mjs:measureStreaming",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ui-matrix.mjs defines measureStreaming",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/ui-matrix.mjs",
+   "target": "function:scripts/src/ui-matrix.mjs:measureRateLimit",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ui-matrix.mjs defines measureRateLimit",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/ui-matrix.mjs",
+   "target": "function:scripts/src/ui-matrix.mjs:measureApproval",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ui-matrix.mjs defines measureApproval",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/ui-matrix.mjs",
+   "target": "function:scripts/src/ui-matrix.mjs:measureRecovery",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ui-matrix.mjs defines measureRecovery",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/ui-matrix.mjs",
+   "target": "function:scripts/src/ui-matrix.mjs:measureDemo",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ui-matrix.mjs defines measureDemo",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/ui-matrix.mjs",
+   "target": "function:scripts/src/ui-matrix.mjs:measureGallery",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ui-matrix.mjs defines measureGallery",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/ui-matrix.mjs",
+   "target": "function:scripts/src/ui-matrix.mjs:measureDataTableRefresh",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ui-matrix.mjs defines measureDataTableRefresh",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/ui-matrix.mjs",
+   "target": "function:scripts/src/ui-matrix.mjs:measure",
+   "type": "contains",
+   "direction": "forward",
+   "description": "ui-matrix.mjs defines measure",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/ui-matrix.mjs",
+   "target": "function:scripts/src/ui-matrix.mjs:measure",
+   "type": "exports",
+   "direction": "forward",
+   "description": "ui-matrix.mjs exports measure",
+   "weight": 0.7
+  },
+  {
+   "source": "function:scripts/src/ui-matrix.mjs:startFixture",
+   "target": "function:scripts/src/ui-matrix.mjs:streamAnswer",
+   "type": "calls",
+   "direction": "forward",
+   "description": "startFixture calls streamAnswer",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/ui-matrix.mjs:awaitSettledLayout",
+   "target": "function:scripts/src/ui-matrix.mjs:sameLayout",
+   "type": "calls",
+   "direction": "forward",
+   "description": "awaitSettledLayout calls sameLayout",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/ui-matrix.mjs:measureViewport",
+   "target": "function:scripts/src/ui-matrix.mjs:waitForApp",
+   "type": "calls",
+   "direction": "forward",
+   "description": "measureViewport calls waitForApp",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/ui-matrix.mjs:measureViewport",
+   "target": "function:scripts/src/ui-matrix.mjs:awaitSettledLayout",
+   "type": "calls",
+   "direction": "forward",
+   "description": "measureViewport calls awaitSettledLayout",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/ui-matrix.mjs:measureThemesAndLocales",
+   "target": "function:scripts/src/ui-matrix.mjs:waitForApp",
+   "type": "calls",
+   "direction": "forward",
+   "description": "measureThemesAndLocales calls waitForApp",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/ui-matrix.mjs:measureRoutes",
+   "target": "function:scripts/src/ui-matrix.mjs:waitForApp",
+   "type": "calls",
+   "direction": "forward",
+   "description": "measureRoutes calls waitForApp",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/ui-matrix.mjs:seedConversation",
+   "target": "function:scripts/src/ui-matrix.mjs:waitForApp",
+   "type": "calls",
+   "direction": "forward",
+   "description": "seedConversation calls waitForApp",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/ui-matrix.mjs:seedConversation",
+   "target": "function:scripts/src/ui-matrix.mjs:setDraft",
+   "type": "calls",
+   "direction": "forward",
+   "description": "seedConversation calls setDraft",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/ui-matrix.mjs:runState",
+   "target": "function:scripts/src/ui-matrix.mjs:runStateProbe",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runState calls runStateProbe",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/ui-matrix.mjs:sendAndWait",
+   "target": "function:scripts/src/ui-matrix.mjs:setDraft",
+   "type": "calls",
+   "direction": "forward",
+   "description": "sendAndWait calls setDraft",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/ui-matrix.mjs:sendAndWait",
+   "target": "function:scripts/src/ui-matrix.mjs:currentSessionId",
+   "type": "calls",
+   "direction": "forward",
+   "description": "sendAndWait calls currentSessionId",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/ui-matrix.mjs:sendAndWait",
+   "target": "function:scripts/src/ui-matrix.mjs:settleRun",
+   "type": "calls",
+   "direction": "forward",
+   "description": "sendAndWait calls settleRun",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/ui-matrix.mjs:settleRun",
+   "target": "function:scripts/src/ui-matrix.mjs:runStateProbe",
+   "type": "calls",
+   "direction": "forward",
+   "description": "settleRun calls runStateProbe",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/ui-matrix.mjs:measureStreaming",
+   "target": "function:scripts/src/ui-matrix.mjs:waitForApp",
+   "type": "calls",
+   "direction": "forward",
+   "description": "measureStreaming calls waitForApp",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/ui-matrix.mjs:measureStreaming",
+   "target": "function:scripts/src/ui-matrix.mjs:setDraft",
+   "type": "calls",
+   "direction": "forward",
+   "description": "measureStreaming calls setDraft",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/ui-matrix.mjs:measureStreaming",
+   "target": "function:scripts/src/ui-matrix.mjs:currentSessionId",
+   "type": "calls",
+   "direction": "forward",
+   "description": "measureStreaming calls currentSessionId",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/ui-matrix.mjs:measureStreaming",
+   "target": "function:scripts/src/ui-matrix.mjs:runState",
+   "type": "calls",
+   "direction": "forward",
+   "description": "measureStreaming calls runState",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/ui-matrix.mjs:measureStreaming",
+   "target": "function:scripts/src/ui-matrix.mjs:settleRun",
+   "type": "calls",
+   "direction": "forward",
+   "description": "measureStreaming calls settleRun",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/ui-matrix.mjs:measureRateLimit",
+   "target": "function:scripts/src/ui-matrix.mjs:waitForApp",
+   "type": "calls",
+   "direction": "forward",
+   "description": "measureRateLimit calls waitForApp",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/ui-matrix.mjs:measureRateLimit",
+   "target": "function:scripts/src/ui-matrix.mjs:setDraft",
+   "type": "calls",
+   "direction": "forward",
+   "description": "measureRateLimit calls setDraft",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/ui-matrix.mjs:measureRateLimit",
+   "target": "function:scripts/src/ui-matrix.mjs:currentSessionId",
+   "type": "calls",
+   "direction": "forward",
+   "description": "measureRateLimit calls currentSessionId",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/ui-matrix.mjs:measureRateLimit",
+   "target": "function:scripts/src/ui-matrix.mjs:settleRun",
+   "type": "calls",
+   "direction": "forward",
+   "description": "measureRateLimit calls settleRun",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/ui-matrix.mjs:measureRateLimit",
+   "target": "function:scripts/src/ui-matrix.mjs:runStateProbe",
+   "type": "calls",
+   "direction": "forward",
+   "description": "measureRateLimit calls runStateProbe",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/ui-matrix.mjs:measureRateLimit",
+   "target": "function:scripts/src/ui-matrix.mjs:sendAndWait",
+   "type": "calls",
+   "direction": "forward",
+   "description": "measureRateLimit calls sendAndWait",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/ui-matrix.mjs:measureApproval",
+   "target": "function:scripts/src/ui-matrix.mjs:waitForApp",
+   "type": "calls",
+   "direction": "forward",
+   "description": "measureApproval calls waitForApp",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/ui-matrix.mjs:measureApproval",
+   "target": "function:scripts/src/ui-matrix.mjs:setDraft",
+   "type": "calls",
+   "direction": "forward",
+   "description": "measureApproval calls setDraft",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/ui-matrix.mjs:measureApproval",
+   "target": "function:scripts/src/ui-matrix.mjs:currentSessionId",
+   "type": "calls",
+   "direction": "forward",
+   "description": "measureApproval calls currentSessionId",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/ui-matrix.mjs:measureApproval",
+   "target": "function:scripts/src/ui-matrix.mjs:runStateProbe",
+   "type": "calls",
+   "direction": "forward",
+   "description": "measureApproval calls runStateProbe",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/ui-matrix.mjs:measureApproval",
+   "target": "function:scripts/src/ui-matrix.mjs:settleRun",
+   "type": "calls",
+   "direction": "forward",
+   "description": "measureApproval calls settleRun",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/ui-matrix.mjs:measureRecovery",
+   "target": "function:scripts/src/ui-matrix.mjs:waitForApp",
+   "type": "calls",
+   "direction": "forward",
+   "description": "measureRecovery calls waitForApp",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/ui-matrix.mjs:measureRecovery",
+   "target": "function:scripts/src/ui-matrix.mjs:sendAndWait",
+   "type": "calls",
+   "direction": "forward",
+   "description": "measureRecovery calls sendAndWait",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/ui-matrix.mjs:measureDemo",
+   "target": "function:scripts/src/ui-matrix.mjs:waitForApp",
+   "type": "calls",
+   "direction": "forward",
+   "description": "measureDemo calls waitForApp",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/ui-matrix.mjs:measureGallery",
+   "target": "function:scripts/src/ui-matrix.mjs:waitForApp",
+   "type": "calls",
+   "direction": "forward",
+   "description": "measureGallery calls waitForApp",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/ui-matrix.mjs:measureGallery",
+   "target": "function:scripts/src/ui-matrix.mjs:tabWalk",
+   "type": "calls",
+   "direction": "forward",
+   "description": "measureGallery calls tabWalk",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/ui-matrix.mjs:measureGallery",
+   "target": "function:scripts/src/ui-matrix.mjs:ringVisible",
+   "type": "calls",
+   "direction": "forward",
+   "description": "measureGallery calls ringVisible",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/ui-matrix.mjs:measureDataTableRefresh",
+   "target": "function:scripts/src/ui-matrix.mjs:waitForApp",
+   "type": "calls",
+   "direction": "forward",
+   "description": "measureDataTableRefresh calls waitForApp",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/ui-matrix.mjs:measure",
+   "target": "function:scripts/src/ui-matrix.mjs:startFixture",
+   "type": "calls",
+   "direction": "forward",
+   "description": "measure calls startFixture",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/ui-matrix.mjs:measure",
+   "target": "function:scripts/src/ui-matrix.mjs:startWorkspace",
+   "type": "calls",
+   "direction": "forward",
+   "description": "measure calls startWorkspace",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/ui-matrix.mjs:measure",
+   "target": "function:scripts/src/ui-matrix.mjs:startDemoServer",
+   "type": "calls",
+   "direction": "forward",
+   "description": "measure calls startDemoServer",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/ui-matrix.mjs:measure",
+   "target": "function:scripts/src/ui-matrix.mjs:seedConversation",
+   "type": "calls",
+   "direction": "forward",
+   "description": "measure calls seedConversation",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/ui-matrix.mjs:measure",
+   "target": "function:scripts/src/ui-matrix.mjs:measureRoutes",
+   "type": "calls",
+   "direction": "forward",
+   "description": "measure calls measureRoutes",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/ui-matrix.mjs:measure",
+   "target": "function:scripts/src/ui-matrix.mjs:measureGallery",
+   "type": "calls",
+   "direction": "forward",
+   "description": "measure calls measureGallery",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/ui-matrix.mjs:measure",
+   "target": "function:scripts/src/ui-matrix.mjs:measureDataTableRefresh",
+   "type": "calls",
+   "direction": "forward",
+   "description": "measure calls measureDataTableRefresh",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/ui-matrix.mjs:measure",
+   "target": "function:scripts/src/ui-matrix.mjs:measureThemesAndLocales",
+   "type": "calls",
+   "direction": "forward",
+   "description": "measure calls measureThemesAndLocales",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/ui-matrix.mjs:measure",
+   "target": "function:scripts/src/ui-matrix.mjs:measureViewport",
+   "type": "calls",
+   "direction": "forward",
+   "description": "measure calls measureViewport",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/ui-matrix.mjs:measure",
+   "target": "function:scripts/src/ui-matrix.mjs:waitForApp",
+   "type": "calls",
+   "direction": "forward",
+   "description": "measure calls waitForApp",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/ui-matrix.mjs:measure",
+   "target": "function:scripts/src/ui-matrix.mjs:setDraft",
+   "type": "calls",
+   "direction": "forward",
+   "description": "measure calls setDraft",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/ui-matrix.mjs:measure",
+   "target": "function:scripts/src/ui-matrix.mjs:tabWalk",
+   "type": "calls",
+   "direction": "forward",
+   "description": "measure calls tabWalk",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/ui-matrix.mjs:measure",
+   "target": "function:scripts/src/ui-matrix.mjs:ringVisible",
+   "type": "calls",
+   "direction": "forward",
+   "description": "measure calls ringVisible",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/ui-matrix.mjs:measure",
+   "target": "function:scripts/src/ui-matrix.mjs:measureStreaming",
+   "type": "calls",
+   "direction": "forward",
+   "description": "measure calls measureStreaming",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/ui-matrix.mjs:measure",
+   "target": "function:scripts/src/ui-matrix.mjs:measureApproval",
+   "type": "calls",
+   "direction": "forward",
+   "description": "measure calls measureApproval",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/ui-matrix.mjs:measure",
+   "target": "function:scripts/src/ui-matrix.mjs:measureRecovery",
+   "type": "calls",
+   "direction": "forward",
+   "description": "measure calls measureRecovery",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/ui-matrix.mjs:measure",
+   "target": "function:scripts/src/ui-matrix.mjs:measureRateLimit",
+   "type": "calls",
+   "direction": "forward",
+   "description": "measure calls measureRateLimit",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/ui-matrix.mjs:measure",
+   "target": "function:scripts/src/ui-matrix.mjs:measureDemo",
+   "type": "calls",
+   "direction": "forward",
+   "description": "measure calls measureDemo",
+   "weight": 0.6
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/harness-proposals.test.ts",
+   "target": "file:apps/control-plane/ui/src/harness-proposals.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "harness-proposals.test.ts imports harness-proposals.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/harness-proposals.ts",
+   "target": "file:apps/control-plane/ui/src/api.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "harness-proposals.ts imports api.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/harness-proposals.tsx",
+   "target": "file:apps/control-plane/ui/src/api.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "harness-proposals.tsx imports api.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/harness-proposals.tsx",
+   "target": "file:apps/control-plane/ui/src/harness-proposals.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "harness-proposals.tsx imports harness-proposals.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/harness-proposals.tsx",
+   "target": "file:apps/control-plane/ui/src/ui.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "description": "harness-proposals.tsx imports ui.tsx",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/integrations.tsx",
+   "target": "file:apps/control-plane/ui/src/api.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "integrations.tsx imports api.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/integrations.tsx",
+   "target": "file:apps/control-plane/ui/src/ui.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "description": "integrations.tsx imports ui.tsx",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/ledger-detail.tsx",
+   "target": "file:apps/control-plane/ui/src/api.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "ledger-detail.tsx imports api.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/ledger-detail.tsx",
+   "target": "file:apps/control-plane/ui/src/ui.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "description": "ledger-detail.tsx imports ui.tsx",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/ledger-verify.tsx",
+   "target": "file:apps/control-plane/ui/src/icons.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "description": "ledger-verify.tsx imports icons.tsx",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/ledger-verify.tsx",
+   "target": "file:apps/control-plane/ui/src/ui.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "description": "ledger-verify.tsx imports ui.tsx",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/ledger-verify.tsx",
+   "target": "file:apps/control-plane/ui/src/verify-scope.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "ledger-verify.tsx imports verify-scope.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/main.tsx",
+   "target": "file:apps/control-plane/ui/src/account-gate.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "description": "main.tsx imports account-gate.tsx",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/main.tsx",
+   "target": "file:apps/control-plane/ui/src/account-sign-in.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "main.tsx imports account-sign-in.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/main.tsx",
+   "target": "file:apps/control-plane/ui/src/api.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "main.tsx imports api.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/main.tsx",
+   "target": "file:apps/control-plane/ui/src/brand.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "description": "main.tsx imports brand.tsx",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/main.tsx",
+   "target": "file:apps/control-plane/ui/src/chat.css",
+   "type": "imports",
+   "direction": "forward",
+   "description": "main.tsx imports chat.css",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/main.tsx",
+   "target": "file:apps/control-plane/ui/src/commands.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "main.tsx imports commands.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/main.tsx",
+   "target": "file:apps/control-plane/ui/src/gallery-path.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "main.tsx imports gallery-path.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/main.tsx",
+   "target": "file:apps/control-plane/ui/src/gallery.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "description": "main.tsx imports gallery.tsx",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/main.tsx",
+   "target": "file:apps/control-plane/ui/src/icons.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "description": "main.tsx imports icons.tsx",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/main.tsx",
+   "target": "file:apps/control-plane/ui/src/integrations.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "description": "main.tsx imports integrations.tsx",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/main.tsx",
+   "target": "file:apps/control-plane/ui/src/styles.css",
+   "type": "imports",
+   "direction": "forward",
+   "description": "main.tsx imports styles.css",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/main.tsx",
+   "target": "file:apps/control-plane/ui/src/ui.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "description": "main.tsx imports ui.tsx",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/main.tsx",
+   "target": "file:apps/control-plane/ui/src/workspace-state.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "main.tsx imports workspace-state.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/main.tsx",
+   "target": "file:apps/control-plane/ui/src/workspace-status.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "description": "main.tsx imports workspace-status.tsx",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/overview-state.test.ts",
+   "target": "file:apps/control-plane/ui/src/api.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "overview-state.test.ts imports api.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/overview-state.test.ts",
+   "target": "file:apps/control-plane/ui/src/overview-state.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "overview-state.test.ts imports overview-state.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/overview-state.ts",
+   "target": "file:apps/control-plane/ui/src/api.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "overview-state.ts imports api.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/pages.tsx",
+   "target": "file:apps/control-plane/ui/src/api.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "pages.tsx imports api.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/pages.tsx",
+   "target": "file:apps/control-plane/ui/src/approval-review.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "description": "pages.tsx imports approval-review.tsx",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/pages.tsx",
+   "target": "file:apps/control-plane/ui/src/approval-text.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "pages.tsx imports approval-text.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/pages.tsx",
+   "target": "file:apps/control-plane/ui/src/icons.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "description": "pages.tsx imports icons.tsx",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/pages.tsx",
+   "target": "file:apps/control-plane/ui/src/ledger-detail.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "description": "pages.tsx imports ledger-detail.tsx",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/pages.tsx",
+   "target": "file:apps/control-plane/ui/src/ledger-verify.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "description": "pages.tsx imports ledger-verify.tsx",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/pages.tsx",
+   "target": "file:apps/control-plane/ui/src/overview-state.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "pages.tsx imports overview-state.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/pages.tsx",
+   "target": "file:apps/control-plane/ui/src/ui.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "description": "pages.tsx imports ui.tsx",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/pages.tsx",
+   "target": "file:apps/control-plane/ui/src/workspace-state.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "pages.tsx imports workspace-state.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/pages.tsx",
+   "target": "file:apps/control-plane/ui/src/workspace-status.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "description": "pages.tsx imports workspace-status.tsx",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/permission-mode.tsx",
+   "target": "file:apps/control-plane/ui/src/api.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "permission-mode.tsx imports api.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/permission-mode.tsx",
+   "target": "file:apps/control-plane/ui/src/ui.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "description": "permission-mode.tsx imports ui.tsx",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/provider-matrix.test.ts",
+   "target": "file:apps/control-plane/ui/src/provider-matrix.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "provider-matrix.test.ts imports provider-matrix.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/recovery-dialog.tsx",
+   "target": "file:apps/control-plane/ui/src/api.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery-dialog.tsx imports api.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/recovery-dialog.tsx",
+   "target": "file:apps/control-plane/ui/src/document-history.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery-dialog.tsx imports document-history.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/recovery-dialog.tsx",
+   "target": "file:apps/control-plane/ui/src/icons.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery-dialog.tsx imports icons.tsx",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/recovery-dialog.tsx",
+   "target": "file:apps/control-plane/ui/src/recovery-review.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery-dialog.tsx imports recovery-review.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/recovery-dialog.tsx",
+   "target": "file:apps/control-plane/ui/src/ui.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery-dialog.tsx imports ui.tsx",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/recovery-review.test.ts",
+   "target": "file:apps/control-plane/ui/src/recovery-review.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "recovery-review.test.ts imports recovery-review.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/redact.test.ts",
+   "target": "file:apps/control-plane/ui/src/redact.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "redact.test.ts imports redact.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/session-context.tsx",
+   "target": "file:apps/control-plane/ui/src/api.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "session-context.tsx imports api.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/session-context.tsx",
+   "target": "file:apps/control-plane/ui/src/ui.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "description": "session-context.tsx imports ui.tsx",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/session-context.tsx",
+   "target": "file:apps/control-plane/ui/src/workspace-state.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "session-context.tsx imports workspace-state.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/settings.tsx",
+   "target": "file:apps/control-plane/ui/src/api.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "settings.tsx imports api.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/settings.tsx",
+   "target": "file:apps/control-plane/ui/src/desktop-downloads.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "settings.tsx imports desktop-downloads.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/settings.tsx",
+   "target": "file:apps/control-plane/ui/src/gallery-path.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "settings.tsx imports gallery-path.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/settings.tsx",
+   "target": "file:apps/control-plane/ui/src/integrations.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "description": "settings.tsx imports integrations.tsx",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/settings.tsx",
+   "target": "file:apps/control-plane/ui/src/provider-matrix.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "settings.tsx imports provider-matrix.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/settings.tsx",
+   "target": "file:apps/control-plane/ui/src/ui.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "description": "settings.tsx imports ui.tsx",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/settings.tsx",
+   "target": "file:apps/control-plane/ui/src/workspace-controls.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "description": "settings.tsx imports workspace-controls.tsx",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/settings.tsx",
+   "target": "file:apps/control-plane/ui/src/workspace-status.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "description": "settings.tsx imports workspace-status.tsx",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/status-label.test.ts",
+   "target": "file:apps/control-plane/ui/src/status-label.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "status-label.test.ts imports status-label.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/ui.tsx",
+   "target": "file:apps/control-plane/ui/src/api.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "ui.tsx imports api.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/ui.tsx",
+   "target": "file:apps/control-plane/ui/src/redact.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "ui.tsx imports redact.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/ui.tsx",
+   "target": "file:apps/control-plane/ui/src/status-label.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "ui.tsx imports status-label.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/verify-scope.test.ts",
+   "target": "file:apps/control-plane/ui/src/verify-scope.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "verify-scope.test.ts imports verify-scope.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/verify-scope.ts",
+   "target": "file:apps/control-plane/ui/src/api.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "verify-scope.ts imports api.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/workspace-controls.tsx",
+   "target": "file:apps/control-plane/ui/src/agent-input.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "workspace-controls.tsx imports agent-input.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/workspace-controls.tsx",
+   "target": "file:apps/control-plane/ui/src/api.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "workspace-controls.tsx imports api.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/workspace-controls.tsx",
+   "target": "file:apps/control-plane/ui/src/ui.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "description": "workspace-controls.tsx imports ui.tsx",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/workspace-state.test.ts",
+   "target": "file:apps/control-plane/ui/src/workspace-state.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "workspace-state.test.ts imports workspace-state.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/workspace-status.tsx",
+   "target": "file:apps/control-plane/ui/src/api.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "workspace-status.tsx imports api.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/workspace-status.tsx",
+   "target": "file:apps/control-plane/ui/src/ui.tsx",
+   "type": "imports",
+   "direction": "forward",
+   "description": "workspace-status.tsx imports ui.tsx",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/ui/src/workspace-status.tsx",
+   "target": "file:apps/control-plane/ui/src/workspace-state.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "workspace-status.tsx imports workspace-state.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:scripts/src/ui-layout.test.mjs",
+   "target": "file:scripts/src/cdp.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "ui-layout.test.mjs imports cdp.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:scripts/src/ui-layout.test.mjs",
+   "target": "file:scripts/src/ui-matrix.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "ui-layout.test.mjs imports ui-matrix.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:scripts/src/ui-matrix-demo-server.test.mjs",
+   "target": "file:scripts/src/ui-matrix.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "ui-matrix-demo-server.test.mjs imports ui-matrix.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:scripts/src/ui-matrix.mjs",
+   "target": "file:apps/control-plane/api/server.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "ui-matrix.mjs imports server.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:scripts/src/ui-matrix.mjs",
+   "target": "file:apps/control-plane/ui/src/recovery-review.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "ui-matrix.mjs imports recovery-review.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:scripts/src/ui-matrix.mjs",
+   "target": "file:cloud/demo.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "ui-matrix.mjs imports demo.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:scripts/src/ui-matrix.mjs",
+   "target": "file:scripts/src/cdp.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "ui-matrix.mjs imports cdp.mjs",
+   "weight": 0.8
+  }
+ ]
+}

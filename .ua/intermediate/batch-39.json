@@ -1,0 +1,17 @@
+{
+ "nodes": [
+  {
+   "id": "file:Dockerfile",
+   "type": "config",
+   "name": "Dockerfile",
+   "filePath": "Dockerfile",
+   "summary": "Dockerfile \u2014 dockerfile infra, 16 lines.",
+   "tags": [
+    "dockerfile",
+    "infra"
+   ],
+   "complexity": "simple"
+  }
+ ],
+ "edges": []
+}

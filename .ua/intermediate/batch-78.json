@@ -1,0 +1,869 @@
+{
+ "nodes": [
+  {
+   "id": "file:marketing/teaser/scene_v2.py",
+   "type": "file",
+   "name": "scene_v2.py",
+   "filePath": "marketing/teaser/scene_v2.py",
+   "summary": "scene_v2.py \u2014 python code, 352 lines, 11 functions, 0 classes, 11 exports, 0 imports.",
+   "tags": [
+    "python",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:marketing/teaser/scene_v2.py:put",
+   "type": "function",
+   "name": "put",
+   "filePath": "marketing/teaser/scene_v2.py",
+   "lineRange": [
+    52,
+    53
+   ],
+   "summary": "put(o, group, parent) \u2014 function in scene_v2.py, lines 52-53.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:marketing/teaser/scene_v2.py:box",
+   "type": "function",
+   "name": "box",
+   "filePath": "marketing/teaser/scene_v2.py",
+   "lineRange": [
+    55,
+    56
+   ],
+   "summary": "box(name, pos, size, mat\u2026) \u2014 function in scene_v2.py, lines 55-56.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:marketing/teaser/scene_v2.py:tube",
+   "type": "function",
+   "name": "tube",
+   "filePath": "marketing/teaser/scene_v2.py",
+   "lineRange": [
+    58,
+    65
+   ],
+   "summary": "tube(name, points, radius, mat\u2026) \u2014 function in scene_v2.py, lines 58-65.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:marketing/teaser/scene_v2.py:ring",
+   "type": "function",
+   "name": "ring",
+   "filePath": "marketing/teaser/scene_v2.py",
+   "lineRange": [
+    67,
+    69
+   ],
+   "summary": "ring(name, radius, group, mat\u2026) \u2014 function in scene_v2.py, lines 67-69.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:marketing/teaser/scene_v2.py:letters",
+   "type": "function",
+   "name": "letters",
+   "filePath": "marketing/teaser/scene_v2.py",
+   "lineRange": [
+    71,
+    76
+   ],
+   "summary": "letters(name, body, pos, size\u2026) \u2014 function in scene_v2.py, lines 71-76.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:marketing/teaser/scene_v2.py:frame",
+   "type": "function",
+   "name": "frame",
+   "filePath": "marketing/teaser/scene_v2.py",
+   "lineRange": [
+    78,
+    79
+   ],
+   "summary": "frame(name, radius, z, group\u2026) \u2014 function in scene_v2.py, lines 78-79.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:marketing/teaser/scene_v2.py:copyline",
+   "type": "function",
+   "name": "copyline",
+   "filePath": "marketing/teaser/scene_v2.py",
+   "lineRange": [
+    180,
+    186
+   ],
+   "summary": "copyline(body, y, size, mat\u2026) \u2014 function in scene_v2.py, lines 180-186.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:marketing/teaser/scene_v2.py:clamp",
+   "type": "function",
+   "name": "clamp",
+   "filePath": "marketing/teaser/scene_v2.py",
+   "lineRange": [
+    244,
+    244
+   ],
+   "summary": "clamp(x) \u2014 function in scene_v2.py, lines 244-244.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:marketing/teaser/scene_v2.py:smooth",
+   "type": "function",
+   "name": "smooth",
+   "filePath": "marketing/teaser/scene_v2.py",
+   "lineRange": [
+    245,
+    245
+   ],
+   "summary": "smooth(x) \u2014 function in scene_v2.py, lines 245-245.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:marketing/teaser/scene_v2.py:aim",
+   "type": "function",
+   "name": "aim",
+   "filePath": "marketing/teaser/scene_v2.py",
+   "lineRange": [
+    246,
+    252
+   ],
+   "summary": "aim(pos, target, roll) \u2014 function in scene_v2.py, lines 246-252.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:marketing/teaser/scene_v2.py:animate",
+   "type": "function",
+   "name": "animate",
+   "filePath": "marketing/teaser/scene_v2.py",
+   "lineRange": [
+    254,
+    344
+   ],
+   "summary": "animate(f) \u2014 function in scene_v2.py, lines 254-344.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:marketing/teaser/verify.py",
+   "type": "file",
+   "name": "verify.py",
+   "filePath": "marketing/teaser/verify.py",
+   "summary": "verify.py \u2014 python code, 18 lines, 0 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "python",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:nitro.config.ts",
+   "type": "file",
+   "name": "nitro.config.ts",
+   "filePath": "nitro.config.ts",
+   "summary": "nitro.config.ts \u2014 typescript code, 8 lines, 0 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:nomo",
+   "type": "file",
+   "name": "nomo",
+   "filePath": "nomo",
+   "summary": "nomo \u2014 unknown code, 3 lines.",
+   "tags": [
+    "unknown",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/agent-policy/package.json",
+   "type": "config",
+   "name": "package.json",
+   "filePath": "packages/agent-policy/package.json",
+   "summary": "package.json \u2014 json config, 35 lines.",
+   "tags": [
+    "json",
+    "config"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/agent-policy/src/index.ts",
+   "type": "file",
+   "name": "index.ts",
+   "filePath": "packages/agent-policy/src/index.ts",
+   "summary": "index.ts \u2014 typescript code, 11 lines, 0 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/agent-policy/tsconfig.json",
+   "type": "config",
+   "name": "tsconfig.json",
+   "filePath": "packages/agent-policy/tsconfig.json",
+   "summary": "tsconfig.json \u2014 json config, 18 lines.",
+   "tags": [
+    "json",
+    "config"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/design/nomo-hold.tui",
+   "type": "file",
+   "name": "nomo-hold.tui",
+   "filePath": "packages/cli/design/nomo-hold.tui",
+   "summary": "nomo-hold.tui \u2014 tui code, 55 lines.",
+   "tags": [
+    "tui",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/design/nomo-operations.tui",
+   "type": "file",
+   "name": "nomo-operations.tui",
+   "filePath": "packages/cli/design/nomo-operations.tui",
+   "summary": "nomo-operations.tui \u2014 tui code, 152 lines.",
+   "tags": [
+    "tui",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/cli/src/tui/README.md",
+   "type": "document",
+   "name": "README.md",
+   "filePath": "packages/cli/src/tui/README.md",
+   "summary": "README.md \u2014 markdown document, 265 lines, 13 sections: NOMO terminal interface, Visual contract, Responsive contract, Capability contract (+9 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/cli/src/tui/icons/ATTRIBUTION.md",
+   "type": "document",
+   "name": "ATTRIBUTION.md",
+   "filePath": "packages/cli/src/tui/icons/ATTRIBUTION.md",
+   "summary": "ATTRIBUTION.md \u2014 markdown document, 40 lines, 1 sections: TUI icon attribution.",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/tui/index.ts",
+   "type": "file",
+   "name": "index.ts",
+   "filePath": "packages/cli/src/tui/index.ts",
+   "summary": "index.ts \u2014 typescript code, 10 lines, 0 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/cli/src/tui/test/visual-snapshots.json",
+   "type": "config",
+   "name": "visual-snapshots.json",
+   "filePath": "packages/cli/src/tui/test/visual-snapshots.json",
+   "summary": "visual-snapshots.json \u2014 json config, 205 lines.",
+   "tags": [
+    "json",
+    "config"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/cli/src/tui/workspace-terminal.test.ts",
+   "type": "file",
+   "name": "workspace-terminal.test.ts",
+   "filePath": "packages/cli/src/tui/workspace-terminal.test.ts",
+   "summary": "workspace-terminal.test.ts \u2014 typescript code, 126 lines, 0 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/connectors/src/index.test.ts",
+   "type": "file",
+   "name": "index.test.ts",
+   "filePath": "packages/connectors/src/index.test.ts",
+   "summary": "index.test.ts \u2014 typescript code, 25 lines, 0 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/connectors/src/index.ts",
+   "type": "file",
+   "name": "index.ts",
+   "filePath": "packages/connectors/src/index.ts",
+   "summary": "index.ts \u2014 typescript code, 64 lines, 2 functions, 0 classes, 24 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/index.ts:findConnector",
+   "type": "function",
+   "name": "findConnector",
+   "filePath": "packages/connectors/src/index.ts",
+   "lineRange": [
+    51,
+    53
+   ],
+   "summary": "findConnector(available, id) \u2014 function in index.ts, lines 51-53.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/index.ts:assertUniqueIds",
+   "type": "function",
+   "name": "assertUniqueIds",
+   "filePath": "packages/connectors/src/index.ts",
+   "lineRange": [
+    56,
+    64
+   ],
+   "summary": "assertUniqueIds(available) \u2014 function in index.ts, lines 56-64.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/connectors/src/readme-contract.test.ts",
+   "type": "file",
+   "name": "readme-contract.test.ts",
+   "filePath": "packages/connectors/src/readme-contract.test.ts",
+   "summary": "readme-contract.test.ts \u2014 typescript code, 41 lines, 0 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/policy/src/no-barrel-imports.test.ts",
+   "type": "file",
+   "name": "no-barrel-imports.test.ts",
+   "filePath": "packages/policy/src/no-barrel-imports.test.ts",
+   "summary": "no-barrel-imports.test.ts \u2014 typescript code, 53 lines, 0 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/proxy/src/index.test.ts",
+   "type": "file",
+   "name": "index.test.ts",
+   "filePath": "packages/proxy/src/index.test.ts",
+   "summary": "index.test.ts \u2014 typescript code, 18 lines, 0 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/proxy/src/index.ts",
+   "type": "file",
+   "name": "index.ts",
+   "filePath": "packages/proxy/src/index.ts",
+   "summary": "index.ts \u2014 typescript code, 46 lines, 1 functions, 0 classes, 11 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/proxy/src/index.ts:isSupportedTransport",
+   "type": "function",
+   "name": "isSupportedTransport",
+   "filePath": "packages/proxy/src/index.ts",
+   "lineRange": [
+    21,
+    23
+   ],
+   "summary": "isSupportedTransport(name) \u2014 function in index.ts, lines 21-23.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/registry/docs/facts.md",
+   "type": "document",
+   "name": "facts.md",
+   "filePath": "packages/registry/docs/facts.md",
+   "summary": "facts.md \u2014 markdown document, 310 lines, 6 sections: Declared facts, WP-04a, Where a fact is used, Known fact names, Staleness (+2 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/registry/docs/migration-audit.md",
+   "type": "document",
+   "name": "migration-audit.md",
+   "filePath": "packages/registry/docs/migration-audit.md",
+   "summary": "migration-audit.md \u2014 markdown document, 198 lines, 8 sections: Registry migration audit, Summary, Entry table, Adversarial review (+4 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/security-notes.md",
+   "type": "document",
+   "name": "security-notes.md",
+   "filePath": "packages/security-notes.md",
+   "summary": "security-notes.md \u2014 markdown document, 245 lines, 15 sections: Security review, adversarial pass 2, Scope and evidence, Findings, Fixed-now scope (+11 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/verifier/README.md",
+   "type": "document",
+   "name": "README.md",
+   "filePath": "packages/verifier/README.md",
+   "summary": "README.md \u2014 markdown document, 67 lines, 5 sections: @nomo/verifier, What it checks, The commitment that it never moves, What it does not do (+1 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/verifier/package.json",
+   "type": "config",
+   "name": "package.json",
+   "filePath": "packages/verifier/package.json",
+   "summary": "package.json \u2014 json config, 40 lines.",
+   "tags": [
+    "json",
+    "config"
+   ],
+   "complexity": "simple"
+  }
+ ],
+ "edges": [
+  {
+   "source": "file:marketing/teaser/scene_v2.py",
+   "target": "function:marketing/teaser/scene_v2.py:put",
+   "type": "contains",
+   "direction": "forward",
+   "description": "scene_v2.py defines put",
+   "weight": 1.0
+  },
+  {
+   "source": "file:marketing/teaser/scene_v2.py",
+   "target": "function:marketing/teaser/scene_v2.py:put",
+   "type": "exports",
+   "direction": "forward",
+   "description": "scene_v2.py exports put",
+   "weight": 0.7
+  },
+  {
+   "source": "file:marketing/teaser/scene_v2.py",
+   "target": "function:marketing/teaser/scene_v2.py:box",
+   "type": "contains",
+   "direction": "forward",
+   "description": "scene_v2.py defines box",
+   "weight": 1.0
+  },
+  {
+   "source": "file:marketing/teaser/scene_v2.py",
+   "target": "function:marketing/teaser/scene_v2.py:box",
+   "type": "exports",
+   "direction": "forward",
+   "description": "scene_v2.py exports box",
+   "weight": 0.7
+  },
+  {
+   "source": "file:marketing/teaser/scene_v2.py",
+   "target": "function:marketing/teaser/scene_v2.py:tube",
+   "type": "contains",
+   "direction": "forward",
+   "description": "scene_v2.py defines tube",
+   "weight": 1.0
+  },
+  {
+   "source": "file:marketing/teaser/scene_v2.py",
+   "target": "function:marketing/teaser/scene_v2.py:tube",
+   "type": "exports",
+   "direction": "forward",
+   "description": "scene_v2.py exports tube",
+   "weight": 0.7
+  },
+  {
+   "source": "file:marketing/teaser/scene_v2.py",
+   "target": "function:marketing/teaser/scene_v2.py:ring",
+   "type": "contains",
+   "direction": "forward",
+   "description": "scene_v2.py defines ring",
+   "weight": 1.0
+  },
+  {
+   "source": "file:marketing/teaser/scene_v2.py",
+   "target": "function:marketing/teaser/scene_v2.py:ring",
+   "type": "exports",
+   "direction": "forward",
+   "description": "scene_v2.py exports ring",
+   "weight": 0.7
+  },
+  {
+   "source": "file:marketing/teaser/scene_v2.py",
+   "target": "function:marketing/teaser/scene_v2.py:letters",
+   "type": "contains",
+   "direction": "forward",
+   "description": "scene_v2.py defines letters",
+   "weight": 1.0
+  },
+  {
+   "source": "file:marketing/teaser/scene_v2.py",
+   "target": "function:marketing/teaser/scene_v2.py:letters",
+   "type": "exports",
+   "direction": "forward",
+   "description": "scene_v2.py exports letters",
+   "weight": 0.7
+  },
+  {
+   "source": "file:marketing/teaser/scene_v2.py",
+   "target": "function:marketing/teaser/scene_v2.py:frame",
+   "type": "contains",
+   "direction": "forward",
+   "description": "scene_v2.py defines frame",
+   "weight": 1.0
+  },
+  {
+   "source": "file:marketing/teaser/scene_v2.py",
+   "target": "function:marketing/teaser/scene_v2.py:frame",
+   "type": "exports",
+   "direction": "forward",
+   "description": "scene_v2.py exports frame",
+   "weight": 0.7
+  },
+  {
+   "source": "file:marketing/teaser/scene_v2.py",
+   "target": "function:marketing/teaser/scene_v2.py:copyline",
+   "type": "contains",
+   "direction": "forward",
+   "description": "scene_v2.py defines copyline",
+   "weight": 1.0
+  },
+  {
+   "source": "file:marketing/teaser/scene_v2.py",
+   "target": "function:marketing/teaser/scene_v2.py:copyline",
+   "type": "exports",
+   "direction": "forward",
+   "description": "scene_v2.py exports copyline",
+   "weight": 0.7
+  },
+  {
+   "source": "file:marketing/teaser/scene_v2.py",
+   "target": "function:marketing/teaser/scene_v2.py:clamp",
+   "type": "contains",
+   "direction": "forward",
+   "description": "scene_v2.py defines clamp",
+   "weight": 1.0
+  },
+  {
+   "source": "file:marketing/teaser/scene_v2.py",
+   "target": "function:marketing/teaser/scene_v2.py:clamp",
+   "type": "exports",
+   "direction": "forward",
+   "description": "scene_v2.py exports clamp",
+   "weight": 0.7
+  },
+  {
+   "source": "file:marketing/teaser/scene_v2.py",
+   "target": "function:marketing/teaser/scene_v2.py:smooth",
+   "type": "contains",
+   "direction": "forward",
+   "description": "scene_v2.py defines smooth",
+   "weight": 1.0
+  },
+  {
+   "source": "file:marketing/teaser/scene_v2.py",
+   "target": "function:marketing/teaser/scene_v2.py:smooth",
+   "type": "exports",
+   "direction": "forward",
+   "description": "scene_v2.py exports smooth",
+   "weight": 0.7
+  },
+  {
+   "source": "file:marketing/teaser/scene_v2.py",
+   "target": "function:marketing/teaser/scene_v2.py:aim",
+   "type": "contains",
+   "direction": "forward",
+   "description": "scene_v2.py defines aim",
+   "weight": 1.0
+  },
+  {
+   "source": "file:marketing/teaser/scene_v2.py",
+   "target": "function:marketing/teaser/scene_v2.py:aim",
+   "type": "exports",
+   "direction": "forward",
+   "description": "scene_v2.py exports aim",
+   "weight": 0.7
+  },
+  {
+   "source": "file:marketing/teaser/scene_v2.py",
+   "target": "function:marketing/teaser/scene_v2.py:animate",
+   "type": "contains",
+   "direction": "forward",
+   "description": "scene_v2.py defines animate",
+   "weight": 1.0
+  },
+  {
+   "source": "file:marketing/teaser/scene_v2.py",
+   "target": "function:marketing/teaser/scene_v2.py:animate",
+   "type": "exports",
+   "direction": "forward",
+   "description": "scene_v2.py exports animate",
+   "weight": 0.7
+  },
+  {
+   "source": "function:marketing/teaser/scene_v2.py:box",
+   "target": "function:marketing/teaser/scene_v2.py:put",
+   "type": "calls",
+   "direction": "forward",
+   "description": "box calls put",
+   "weight": 0.6
+  },
+  {
+   "source": "function:marketing/teaser/scene_v2.py:tube",
+   "target": "function:marketing/teaser/scene_v2.py:put",
+   "type": "calls",
+   "direction": "forward",
+   "description": "tube calls put",
+   "weight": 0.6
+  },
+  {
+   "source": "function:marketing/teaser/scene_v2.py:ring",
+   "target": "function:marketing/teaser/scene_v2.py:tube",
+   "type": "calls",
+   "direction": "forward",
+   "description": "ring calls tube",
+   "weight": 0.6
+  },
+  {
+   "source": "function:marketing/teaser/scene_v2.py:letters",
+   "target": "function:marketing/teaser/scene_v2.py:put",
+   "type": "calls",
+   "direction": "forward",
+   "description": "letters calls put",
+   "weight": 0.6
+  },
+  {
+   "source": "function:marketing/teaser/scene_v2.py:frame",
+   "target": "function:marketing/teaser/scene_v2.py:tube",
+   "type": "calls",
+   "direction": "forward",
+   "description": "frame calls tube",
+   "weight": 0.6
+  },
+  {
+   "source": "function:marketing/teaser/scene_v2.py:copyline",
+   "target": "function:marketing/teaser/scene_v2.py:letters",
+   "type": "calls",
+   "direction": "forward",
+   "description": "copyline calls letters",
+   "weight": 0.6
+  },
+  {
+   "source": "function:marketing/teaser/scene_v2.py:smooth",
+   "target": "function:marketing/teaser/scene_v2.py:clamp",
+   "type": "calls",
+   "direction": "forward",
+   "description": "smooth calls clamp",
+   "weight": 0.6
+  },
+  {
+   "source": "function:marketing/teaser/scene_v2.py:animate",
+   "target": "function:marketing/teaser/scene_v2.py:aim",
+   "type": "calls",
+   "direction": "forward",
+   "description": "animate calls aim",
+   "weight": 0.6
+  },
+  {
+   "source": "function:marketing/teaser/scene_v2.py:animate",
+   "target": "function:marketing/teaser/scene_v2.py:smooth",
+   "type": "calls",
+   "direction": "forward",
+   "description": "animate calls smooth",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/connectors/src/index.ts",
+   "target": "function:packages/connectors/src/index.ts:findConnector",
+   "type": "contains",
+   "direction": "forward",
+   "description": "index.ts defines findConnector",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/index.ts",
+   "target": "function:packages/connectors/src/index.ts:findConnector",
+   "type": "exports",
+   "direction": "forward",
+   "description": "index.ts exports findConnector",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/connectors/src/index.ts",
+   "target": "function:packages/connectors/src/index.ts:assertUniqueIds",
+   "type": "contains",
+   "direction": "forward",
+   "description": "index.ts defines assertUniqueIds",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/index.ts",
+   "target": "function:packages/connectors/src/index.ts:assertUniqueIds",
+   "type": "exports",
+   "direction": "forward",
+   "description": "index.ts exports assertUniqueIds",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/proxy/src/index.ts",
+   "target": "function:packages/proxy/src/index.ts:isSupportedTransport",
+   "type": "contains",
+   "direction": "forward",
+   "description": "index.ts defines isSupportedTransport",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/proxy/src/index.ts",
+   "target": "function:packages/proxy/src/index.ts:isSupportedTransport",
+   "type": "exports",
+   "direction": "forward",
+   "description": "index.ts exports isSupportedTransport",
+   "weight": 0.7
+  },
+  {
+   "source": "file:marketing/teaser/scene_v2.py",
+   "target": "file:marketing/teaser/scene.py",
+   "type": "imports",
+   "direction": "forward",
+   "description": "scene_v2.py imports scene.py",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/index.test.ts",
+   "target": "file:packages/connectors/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "index.test.ts imports index.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/proxy/src/index.test.ts",
+   "target": "file:packages/proxy/src/index.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "index.test.ts imports index.ts",
+   "weight": 0.8
+  }
+ ]
+}

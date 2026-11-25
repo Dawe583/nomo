@@ -1,0 +1,1832 @@
+{
+ "nodes": [
+  {
+   "id": "file:scripts/src/moment.test.mjs",
+   "type": "file",
+   "name": "moment.test.mjs",
+   "filePath": "scripts/src/moment.test.mjs",
+   "summary": "moment.test.mjs \u2014 javascript code, 50 lines, 1 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/moment.test.mjs:runMoment",
+   "type": "function",
+   "name": "runMoment",
+   "filePath": "scripts/src/moment.test.mjs",
+   "lineRange": [
+    10,
+    20
+   ],
+   "summary": "runMoment(...args) \u2014 function in moment.test.mjs, lines 10-20.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/src/no-dash.test.mjs",
+   "type": "file",
+   "name": "no-dash.test.mjs",
+   "filePath": "scripts/src/no-dash.test.mjs",
+   "summary": "no-dash.test.mjs \u2014 javascript code, 94 lines, 1 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/no-dash.test.mjs:walk",
+   "type": "function",
+   "name": "walk",
+   "filePath": "scripts/src/no-dash.test.mjs",
+   "lineRange": [
+    46,
+    83
+   ],
+   "summary": "walk(root, dir, found) \u2014 function in no-dash.test.mjs, lines 46-83.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/src/preinstall.mjs",
+   "type": "file",
+   "name": "preinstall.mjs",
+   "filePath": "scripts/src/preinstall.mjs",
+   "summary": "preinstall.mjs \u2014 javascript code, 27 lines, 0 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/src/preview-cloud.mjs",
+   "type": "file",
+   "name": "preview-cloud.mjs",
+   "filePath": "scripts/src/preview-cloud.mjs",
+   "summary": "preview-cloud.mjs \u2014 javascript code, 28 lines, 0 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/src/prime-bridge.mjs",
+   "type": "file",
+   "name": "prime-bridge.mjs",
+   "filePath": "scripts/src/prime-bridge.mjs",
+   "summary": "prime-bridge.mjs \u2014 javascript code, 254 lines, 3 functions, 0 classes, 3 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:scripts/src/prime-bridge.mjs:primeArguments",
+   "type": "function",
+   "name": "primeArguments",
+   "filePath": "scripts/src/prime-bridge.mjs",
+   "lineRange": [
+    8,
+    39
+   ],
+   "summary": "primeArguments(job, sessionDir, cwd) \u2014 function in prime-bridge.mjs, lines 8-39.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/prime-bridge.mjs:primeEvent",
+   "type": "function",
+   "name": "primeEvent",
+   "filePath": "scripts/src/prime-bridge.mjs",
+   "lineRange": [
+    40,
+    61
+   ],
+   "summary": "primeEvent(value) \u2014 function in prime-bridge.mjs, lines 40-61.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/prime-bridge.mjs:runBridge",
+   "type": "function",
+   "name": "runBridge",
+   "filePath": "scripts/src/prime-bridge.mjs",
+   "lineRange": [
+    62,
+    245
+   ],
+   "summary": "runBridge(config) \u2014 function in prime-bridge.mjs, lines 62-245.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:scripts/src/prime-bridge.test.mjs",
+   "type": "file",
+   "name": "prime-bridge.test.mjs",
+   "filePath": "scripts/src/prime-bridge.test.mjs",
+   "summary": "prime-bridge.test.mjs \u2014 javascript code, 39 lines, 0 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "javascript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/src/provider-manifest.test.mjs",
+   "type": "file",
+   "name": "provider-manifest.test.mjs",
+   "filePath": "scripts/src/provider-manifest.test.mjs",
+   "summary": "provider-manifest.test.mjs \u2014 javascript code, 278 lines, 0 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:scripts/src/release-evidence-matrix.test.mjs",
+   "type": "file",
+   "name": "release-evidence-matrix.test.mjs",
+   "filePath": "scripts/src/release-evidence-matrix.test.mjs",
+   "summary": "release-evidence-matrix.test.mjs \u2014 javascript code, 425 lines, 7 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:scripts/src/release-evidence-matrix.test.mjs:range",
+   "type": "function",
+   "name": "range",
+   "filePath": "scripts/src/release-evidence-matrix.test.mjs",
+   "lineRange": [
+    32,
+    33
+   ],
+   "summary": "range(prefix, last) \u2014 function in release-evidence-matrix.test.mjs, lines 32-33.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/release-evidence-matrix.test.mjs:countSwiftTestCases",
+   "type": "function",
+   "name": "countSwiftTestCases",
+   "filePath": "scripts/src/release-evidence-matrix.test.mjs",
+   "lineRange": [
+    76,
+    83
+   ],
+   "summary": "countSwiftTestCases(directory) \u2014 function in release-evidence-matrix.test.mjs, lines 76-83.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/release-evidence-matrix.test.mjs:countRustTestCases",
+   "type": "function",
+   "name": "countRustTestCases",
+   "filePath": "scripts/src/release-evidence-matrix.test.mjs",
+   "lineRange": [
+    217,
+    245
+   ],
+   "summary": "countRustTestCases(directory) \u2014 function in release-evidence-matrix.test.mjs, lines 217-245.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/release-evidence-matrix.test.mjs:conformanceScenarioCounts",
+   "type": "function",
+   "name": "conformanceScenarioCounts",
+   "filePath": "scripts/src/release-evidence-matrix.test.mjs",
+   "lineRange": [
+    284,
+    300
+   ],
+   "summary": "conformanceScenarioCounts() \u2014 function in release-evidence-matrix.test.mjs, lines 284-300.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/release-evidence-matrix.test.mjs:collapseWrapping",
+   "type": "function",
+   "name": "collapseWrapping",
+   "filePath": "scripts/src/release-evidence-matrix.test.mjs",
+   "lineRange": [
+    303,
+    323
+   ],
+   "summary": "collapseWrapping(text) \u2014 function in release-evidence-matrix.test.mjs, lines 303-323.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/release-evidence-matrix.test.mjs:clauseAt",
+   "type": "function",
+   "name": "clauseAt",
+   "filePath": "scripts/src/release-evidence-matrix.test.mjs",
+   "lineRange": [
+    326,
+    342
+   ],
+   "summary": "clauseAt(prose, at) \u2014 function in release-evidence-matrix.test.mjs, lines 326-342.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/release-evidence-matrix.test.mjs:suiteCountPatterns",
+   "type": "function",
+   "name": "suiteCountPatterns",
+   "filePath": "scripts/src/release-evidence-matrix.test.mjs",
+   "lineRange": [
+    345,
+    367
+   ],
+   "summary": "suiteCountPatterns() \u2014 function in release-evidence-matrix.test.mjs, lines 345-367.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/src/set-version.test.mjs",
+   "type": "file",
+   "name": "set-version.test.mjs",
+   "filePath": "scripts/src/set-version.test.mjs",
+   "summary": "set-version.test.mjs \u2014 javascript code, 204 lines, 3 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:scripts/src/set-version.test.mjs:fixture",
+   "type": "function",
+   "name": "fixture",
+   "filePath": "scripts/src/set-version.test.mjs",
+   "lineRange": [
+    37,
+    89
+   ],
+   "summary": "fixture() \u2014 function in set-version.test.mjs, lines 37-89.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/set-version.test.mjs:setVersion",
+   "type": "function",
+   "name": "setVersion",
+   "filePath": "scripts/src/set-version.test.mjs",
+   "lineRange": [
+    91,
+    95
+   ],
+   "summary": "setVersion(tree, ...argv) \u2014 function in set-version.test.mjs, lines 91-95.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/set-version.test.mjs:snapshot",
+   "type": "function",
+   "name": "snapshot",
+   "filePath": "scripts/src/set-version.test.mjs",
+   "lineRange": [
+    98,
+    109
+   ],
+   "summary": "snapshot(tree) \u2014 function in set-version.test.mjs, lines 98-109.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/src/tokenise-hit-targets.py",
+   "type": "file",
+   "name": "tokenise-hit-targets.py",
+   "filePath": "scripts/src/tokenise-hit-targets.py",
+   "summary": "tokenise-hit-targets.py \u2014 python code, 106 lines, 3 functions, 0 classes, 3 exports, 0 imports.",
+   "tags": [
+    "python",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/tokenise-hit-targets.py:tokens",
+   "type": "function",
+   "name": "tokens",
+   "filePath": "scripts/src/tokenise-hit-targets.py",
+   "lineRange": [
+    49,
+    55
+   ],
+   "summary": "tokens(document) \u2014 function in tokenise-hit-targets.py, lines 49-55.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/tokenise-hit-targets.py:convert",
+   "type": "function",
+   "name": "convert",
+   "filePath": "scripts/src/tokenise-hit-targets.py",
+   "lineRange": [
+    58,
+    79
+   ],
+   "summary": "convert(text, known) \u2014 function in tokenise-hit-targets.py, lines 58-79.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/tokenise-hit-targets.py:main",
+   "type": "function",
+   "name": "main",
+   "filePath": "scripts/src/tokenise-hit-targets.py",
+   "lineRange": [
+    82,
+    102
+   ],
+   "summary": "main(argv) \u2014 function in tokenise-hit-targets.py, lines 82-102.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/src/verify-cloud-deployment.mjs",
+   "type": "file",
+   "name": "verify-cloud-deployment.mjs",
+   "filePath": "scripts/src/verify-cloud-deployment.mjs",
+   "summary": "verify-cloud-deployment.mjs \u2014 javascript code, 78 lines, 1 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/verify-cloud-deployment.mjs:request",
+   "type": "function",
+   "name": "request",
+   "filePath": "scripts/src/verify-cloud-deployment.mjs",
+   "lineRange": [
+    13,
+    42
+   ],
+   "summary": "request(path, body) \u2014 function in verify-cloud-deployment.mjs, lines 13-42.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/src/verify-gui-deployment.mjs",
+   "type": "file",
+   "name": "verify-gui-deployment.mjs",
+   "filePath": "scripts/src/verify-gui-deployment.mjs",
+   "summary": "verify-gui-deployment.mjs \u2014 javascript code, 204 lines, 1 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:scripts/src/verify-gui-deployment.mjs:request",
+   "type": "function",
+   "name": "request",
+   "filePath": "scripts/src/verify-gui-deployment.mjs",
+   "lineRange": [
+    26,
+    59
+   ],
+   "summary": "request(path, body) \u2014 function in verify-gui-deployment.mjs, lines 26-59.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/src/verify-ledger-standalone.test.mjs",
+   "type": "file",
+   "name": "verify-ledger-standalone.test.mjs",
+   "filePath": "scripts/src/verify-ledger-standalone.test.mjs",
+   "summary": "verify-ledger-standalone.test.mjs \u2014 javascript code, 67 lines, 0 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/src/verify-opentui-terminal.py",
+   "type": "file",
+   "name": "verify-opentui-terminal.py",
+   "filePath": "scripts/src/verify-opentui-terminal.py",
+   "summary": "verify-opentui-terminal.py \u2014 python code, 322 lines, 5 functions, 0 classes, 5 exports, 0 imports.",
+   "tags": [
+    "python",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:scripts/src/verify-opentui-terminal.py:assert_requested_view",
+   "type": "function",
+   "name": "assert_requested_view",
+   "filePath": "scripts/src/verify-opentui-terminal.py",
+   "lineRange": [
+    57,
+    64
+   ],
+   "summary": "assert_requested_view(name, rows) \u2014 function in verify-opentui-terminal.py, lines 57-64.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/verify-opentui-terminal.py:strip_ansi",
+   "type": "function",
+   "name": "strip_ansi",
+   "filePath": "scripts/src/verify-opentui-terminal.py",
+   "lineRange": [
+    72,
+    74
+   ],
+   "summary": "strip_ansi(value) \u2014 function in verify-opentui-terminal.py, lines 72-74.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/verify-opentui-terminal.py:screen_rows",
+   "type": "function",
+   "name": "screen_rows",
+   "filePath": "scripts/src/verify-opentui-terminal.py",
+   "lineRange": [
+    77,
+    84
+   ],
+   "summary": "screen_rows(value) \u2014 function in verify-opentui-terminal.py, lines 77-84.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/verify-opentui-terminal.py:save_case",
+   "type": "function",
+   "name": "save_case",
+   "filePath": "scripts/src/verify-opentui-terminal.py",
+   "lineRange": [
+    87,
+    192
+   ],
+   "summary": "save_case(name, view, width, height\u2026) \u2014 function in verify-opentui-terminal.py, lines 87-192.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/verify-opentui-terminal.py:capture_double_left",
+   "type": "function",
+   "name": "capture_double_left",
+   "filePath": "scripts/src/verify-opentui-terminal.py",
+   "lineRange": [
+    195,
+    304
+   ],
+   "summary": "capture_double_left() \u2014 function in verify-opentui-terminal.py, lines 195-304.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/src/verify-tui-terminal.py",
+   "type": "file",
+   "name": "verify-tui-terminal.py",
+   "filePath": "scripts/src/verify-tui-terminal.py",
+   "summary": "verify-tui-terminal.py \u2014 python code, 1268 lines, 14 functions, 2 classes, 16 exports, 0 imports.",
+   "tags": [
+    "python",
+    "code"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "function:scripts/src/verify-tui-terminal.py:cell_width",
+   "type": "function",
+   "name": "cell_width",
+   "filePath": "scripts/src/verify-tui-terminal.py",
+   "lineRange": [
+    46,
+    51
+   ],
+   "summary": "cell_width(character) \u2014 function in verify-tui-terminal.py, lines 46-51.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/verify-tui-terminal.py:run",
+   "type": "function",
+   "name": "run",
+   "filePath": "scripts/src/verify-tui-terminal.py",
+   "lineRange": [
+    593,
+    605
+   ],
+   "summary": "run(name, body, mode, sizes) \u2014 function in verify-tui-terminal.py, lines 593-605.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/verify-tui-terminal.py:scenario_chat",
+   "type": "function",
+   "name": "scenario_chat",
+   "filePath": "scripts/src/verify-tui-terminal.py",
+   "lineRange": [
+    611,
+    715
+   ],
+   "summary": "scenario_chat(tui) \u2014 function in verify-tui-terminal.py, lines 611-715.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/verify-tui-terminal.py:scenario_tools",
+   "type": "function",
+   "name": "scenario_tools",
+   "filePath": "scripts/src/verify-tui-terminal.py",
+   "lineRange": [
+    719,
+    746
+   ],
+   "summary": "scenario_tools(tui) \u2014 function in verify-tui-terminal.py, lines 719-746.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/verify-tui-terminal.py:scenario_approval",
+   "type": "function",
+   "name": "scenario_approval",
+   "filePath": "scripts/src/verify-tui-terminal.py",
+   "lineRange": [
+    749,
+    805
+   ],
+   "summary": "scenario_approval(tui) \u2014 function in verify-tui-terminal.py, lines 749-805.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/verify-tui-terminal.py:scenario_error",
+   "type": "function",
+   "name": "scenario_error",
+   "filePath": "scripts/src/verify-tui-terminal.py",
+   "lineRange": [
+    808,
+    828
+   ],
+   "summary": "scenario_error(tui) \u2014 function in verify-tui-terminal.py, lines 808-828.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/verify-tui-terminal.py:scenario_cancel",
+   "type": "function",
+   "name": "scenario_cancel",
+   "filePath": "scripts/src/verify-tui-terminal.py",
+   "lineRange": [
+    831,
+    870
+   ],
+   "summary": "scenario_cancel(tui) \u2014 function in verify-tui-terminal.py, lines 831-870.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/verify-tui-terminal.py:scenario_resize",
+   "type": "function",
+   "name": "scenario_resize",
+   "filePath": "scripts/src/verify-tui-terminal.py",
+   "lineRange": [
+    873,
+    907
+   ],
+   "summary": "scenario_resize(tui) \u2014 function in verify-tui-terminal.py, lines 873-907.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/verify-tui-terminal.py:scenario_panels",
+   "type": "function",
+   "name": "scenario_panels",
+   "filePath": "scripts/src/verify-tui-terminal.py",
+   "lineRange": [
+    910,
+    955
+   ],
+   "summary": "scenario_panels(tui) \u2014 function in verify-tui-terminal.py, lines 910-955.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/verify-tui-terminal.py:scenario_undo",
+   "type": "function",
+   "name": "scenario_undo",
+   "filePath": "scripts/src/verify-tui-terminal.py",
+   "lineRange": [
+    958,
+    997
+   ],
+   "summary": "scenario_undo(tui) \u2014 function in verify-tui-terminal.py, lines 958-997.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/verify-tui-terminal.py:termination_case",
+   "type": "function",
+   "name": "termination_case",
+   "filePath": "scripts/src/verify-tui-terminal.py",
+   "lineRange": [
+    1003,
+    1111
+   ],
+   "summary": "termination_case(columns, rows, termination) \u2014 function in verify-tui-terminal.py, lines 1003-1111.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/verify-tui-terminal.py:scenario_double_ctrl_c",
+   "type": "function",
+   "name": "scenario_double_ctrl_c",
+   "filePath": "scripts/src/verify-tui-terminal.py",
+   "lineRange": [
+    1114,
+    1179
+   ],
+   "summary": "scenario_double_ctrl_c() \u2014 function in verify-tui-terminal.py, lines 1114-1179.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/verify-tui-terminal.py:scenario_double_ctrl_d",
+   "type": "function",
+   "name": "scenario_double_ctrl_d",
+   "filePath": "scripts/src/verify-tui-terminal.py",
+   "lineRange": [
+    1182,
+    1240
+   ],
+   "summary": "scenario_double_ctrl_d() \u2014 function in verify-tui-terminal.py, lines 1182-1240.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/verify-tui-terminal.py:main",
+   "type": "function",
+   "name": "main",
+   "filePath": "scripts/src/verify-tui-terminal.py",
+   "lineRange": [
+    1243,
+    1264
+   ],
+   "summary": "main() \u2014 function in verify-tui-terminal.py, lines 1243-1264.",
+   "tags": [
+    "python",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:scripts/src/verify-tui-terminal.py:Screen",
+   "type": "class",
+   "name": "Screen",
+   "filePath": "scripts/src/verify-tui-terminal.py",
+   "lineRange": [
+    54,
+    219
+   ],
+   "summary": "Screen \u2014 class in verify-tui-terminal.py, lines 54-219, methods: __init__, resize, feed, parse, consume, linefeed.",
+   "tags": [
+    "python",
+    "class",
+    "exported"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "class:scripts/src/verify-tui-terminal.py:Tui",
+   "type": "class",
+   "name": "Tui",
+   "filePath": "scripts/src/verify-tui-terminal.py",
+   "lineRange": [
+    395,
+    590
+   ],
+   "summary": "Tui \u2014 class in verify-tui-terminal.py, lines 395-590, methods: __init__, pump, text, fail, expect, expect_absent.",
+   "tags": [
+    "python",
+    "class",
+    "exported"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:scripts/team/prime-poll.sh",
+   "type": "file",
+   "name": "prime-poll.sh",
+   "filePath": "scripts/team/prime-poll.sh",
+   "summary": "prime-poll.sh \u2014 shell script, 12 lines.",
+   "tags": [
+    "shell",
+    "script"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/team/prime-spawn.sh",
+   "type": "file",
+   "name": "prime-spawn.sh",
+   "filePath": "scripts/team/prime-spawn.sh",
+   "summary": "prime-spawn.sh \u2014 shell script, 46 lines.",
+   "tags": [
+    "shell",
+    "script"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/tui-capture.mjs",
+   "type": "file",
+   "name": "tui-capture.mjs",
+   "filePath": "scripts/tui-capture.mjs",
+   "summary": "tui-capture.mjs \u2014 javascript code, 73 lines, 3 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/tui-capture.mjs:widths",
+   "type": "function",
+   "name": "widths",
+   "filePath": "scripts/tui-capture.mjs",
+   "lineRange": [
+    8,
+    15
+   ],
+   "summary": "widths(argv) \u2014 function in tui-capture.mjs, lines 8-15.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/tui-capture.mjs:quote",
+   "type": "function",
+   "name": "quote",
+   "filePath": "scripts/tui-capture.mjs",
+   "lineRange": [
+    17,
+    19
+   ],
+   "summary": "quote(value) \u2014 function in tui-capture.mjs, lines 17-19.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/tui-capture.mjs:runInPty",
+   "type": "function",
+   "name": "runInPty",
+   "filePath": "scripts/tui-capture.mjs",
+   "lineRange": [
+    21,
+    41
+   ],
+   "summary": "runInPty(command) \u2014 function in tui-capture.mjs, lines 21-41.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/tui-degrade.mjs",
+   "type": "file",
+   "name": "tui-degrade.mjs",
+   "filePath": "scripts/tui-degrade.mjs",
+   "summary": "tui-degrade.mjs \u2014 javascript code, 85 lines, 3 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/tui-degrade.mjs:quote",
+   "type": "function",
+   "name": "quote",
+   "filePath": "scripts/tui-degrade.mjs",
+   "lineRange": [
+    18,
+    20
+   ],
+   "summary": "quote(value) \u2014 function in tui-degrade.mjs, lines 18-20.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/tui-degrade.mjs:runInPty",
+   "type": "function",
+   "name": "runInPty",
+   "filePath": "scripts/tui-degrade.mjs",
+   "lineRange": [
+    22,
+    38
+   ],
+   "summary": "runInPty(width, env) \u2014 function in tui-degrade.mjs, lines 22-38.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/tui-degrade.mjs:runPreview",
+   "type": "function",
+   "name": "runPreview",
+   "filePath": "scripts/tui-degrade.mjs",
+   "lineRange": [
+    40,
+    78
+   ],
+   "summary": "runPreview(name, additions, width) \u2014 function in tui-degrade.mjs, lines 40-78.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/tui-raw-mode-safety.mjs",
+   "type": "file",
+   "name": "tui-raw-mode-safety.mjs",
+   "filePath": "scripts/tui-raw-mode-safety.mjs",
+   "summary": "tui-raw-mode-safety.mjs \u2014 javascript code, 49 lines, 2 functions, 0 classes, 0 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/tui-raw-mode-safety.mjs:quote",
+   "type": "function",
+   "name": "quote",
+   "filePath": "scripts/tui-raw-mode-safety.mjs",
+   "lineRange": [
+    7,
+    9
+   ],
+   "summary": "quote(value) \u2014 function in tui-raw-mode-safety.mjs, lines 7-9.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/tui-raw-mode-safety.mjs:runInPty",
+   "type": "function",
+   "name": "runInPty",
+   "filePath": "scripts/tui-raw-mode-safety.mjs",
+   "lineRange": [
+    11,
+    31
+   ],
+   "summary": "runInPty(command) \u2014 function in tui-raw-mode-safety.mjs, lines 11-31.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:site/index.html",
+   "type": "file",
+   "name": "index.html",
+   "filePath": "site/index.html",
+   "summary": "index.html \u2014 html markup, 310 lines.",
+   "tags": [
+    "html",
+    "markup"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:site/styles.css",
+   "type": "file",
+   "name": "styles.css",
+   "filePath": "site/styles.css",
+   "summary": "styles.css \u2014 css markup, 500 lines.",
+   "tags": [
+    "css",
+    "markup"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:site/whitepaper/index.html",
+   "type": "file",
+   "name": "index.html",
+   "filePath": "site/whitepaper/index.html",
+   "summary": "index.html \u2014 html markup, 405 lines.",
+   "tags": [
+    "html",
+    "markup"
+   ],
+   "complexity": "moderate"
+  }
+ ],
+ "edges": [
+  {
+   "source": "file:scripts/src/moment.test.mjs",
+   "target": "function:scripts/src/moment.test.mjs:runMoment",
+   "type": "contains",
+   "direction": "forward",
+   "description": "moment.test.mjs defines runMoment",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/no-dash.test.mjs",
+   "target": "function:scripts/src/no-dash.test.mjs:walk",
+   "type": "contains",
+   "direction": "forward",
+   "description": "no-dash.test.mjs defines walk",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/prime-bridge.mjs",
+   "target": "function:scripts/src/prime-bridge.mjs:primeArguments",
+   "type": "contains",
+   "direction": "forward",
+   "description": "prime-bridge.mjs defines primeArguments",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/prime-bridge.mjs",
+   "target": "function:scripts/src/prime-bridge.mjs:primeArguments",
+   "type": "exports",
+   "direction": "forward",
+   "description": "prime-bridge.mjs exports primeArguments",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/src/prime-bridge.mjs",
+   "target": "function:scripts/src/prime-bridge.mjs:primeEvent",
+   "type": "contains",
+   "direction": "forward",
+   "description": "prime-bridge.mjs defines primeEvent",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/prime-bridge.mjs",
+   "target": "function:scripts/src/prime-bridge.mjs:primeEvent",
+   "type": "exports",
+   "direction": "forward",
+   "description": "prime-bridge.mjs exports primeEvent",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/src/prime-bridge.mjs",
+   "target": "function:scripts/src/prime-bridge.mjs:runBridge",
+   "type": "contains",
+   "direction": "forward",
+   "description": "prime-bridge.mjs defines runBridge",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/prime-bridge.mjs",
+   "target": "function:scripts/src/prime-bridge.mjs:runBridge",
+   "type": "exports",
+   "direction": "forward",
+   "description": "prime-bridge.mjs exports runBridge",
+   "weight": 0.7
+  },
+  {
+   "source": "function:scripts/src/prime-bridge.mjs:runBridge",
+   "target": "function:scripts/src/prime-bridge.mjs:primeArguments",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runBridge calls primeArguments",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/prime-bridge.mjs:runBridge",
+   "target": "function:scripts/src/prime-bridge.mjs:primeEvent",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runBridge calls primeEvent",
+   "weight": 0.6
+  },
+  {
+   "source": "file:scripts/src/release-evidence-matrix.test.mjs",
+   "target": "function:scripts/src/release-evidence-matrix.test.mjs:range",
+   "type": "contains",
+   "direction": "forward",
+   "description": "release-evidence-matrix.test.mjs defines range",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/release-evidence-matrix.test.mjs",
+   "target": "function:scripts/src/release-evidence-matrix.test.mjs:countSwiftTestCases",
+   "type": "contains",
+   "direction": "forward",
+   "description": "release-evidence-matrix.test.mjs defines countSwiftTestCases",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/release-evidence-matrix.test.mjs",
+   "target": "function:scripts/src/release-evidence-matrix.test.mjs:countRustTestCases",
+   "type": "contains",
+   "direction": "forward",
+   "description": "release-evidence-matrix.test.mjs defines countRustTestCases",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/release-evidence-matrix.test.mjs",
+   "target": "function:scripts/src/release-evidence-matrix.test.mjs:conformanceScenarioCounts",
+   "type": "contains",
+   "direction": "forward",
+   "description": "release-evidence-matrix.test.mjs defines conformanceScenarioCounts",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/release-evidence-matrix.test.mjs",
+   "target": "function:scripts/src/release-evidence-matrix.test.mjs:collapseWrapping",
+   "type": "contains",
+   "direction": "forward",
+   "description": "release-evidence-matrix.test.mjs defines collapseWrapping",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/release-evidence-matrix.test.mjs",
+   "target": "function:scripts/src/release-evidence-matrix.test.mjs:clauseAt",
+   "type": "contains",
+   "direction": "forward",
+   "description": "release-evidence-matrix.test.mjs defines clauseAt",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/release-evidence-matrix.test.mjs",
+   "target": "function:scripts/src/release-evidence-matrix.test.mjs:suiteCountPatterns",
+   "type": "contains",
+   "direction": "forward",
+   "description": "release-evidence-matrix.test.mjs defines suiteCountPatterns",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/set-version.test.mjs",
+   "target": "function:scripts/src/set-version.test.mjs:fixture",
+   "type": "contains",
+   "direction": "forward",
+   "description": "set-version.test.mjs defines fixture",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/set-version.test.mjs",
+   "target": "function:scripts/src/set-version.test.mjs:setVersion",
+   "type": "contains",
+   "direction": "forward",
+   "description": "set-version.test.mjs defines setVersion",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/set-version.test.mjs",
+   "target": "function:scripts/src/set-version.test.mjs:snapshot",
+   "type": "contains",
+   "direction": "forward",
+   "description": "set-version.test.mjs defines snapshot",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/tokenise-hit-targets.py",
+   "target": "function:scripts/src/tokenise-hit-targets.py:tokens",
+   "type": "contains",
+   "direction": "forward",
+   "description": "tokenise-hit-targets.py defines tokens",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/tokenise-hit-targets.py",
+   "target": "function:scripts/src/tokenise-hit-targets.py:tokens",
+   "type": "exports",
+   "direction": "forward",
+   "description": "tokenise-hit-targets.py exports tokens",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/src/tokenise-hit-targets.py",
+   "target": "function:scripts/src/tokenise-hit-targets.py:convert",
+   "type": "contains",
+   "direction": "forward",
+   "description": "tokenise-hit-targets.py defines convert",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/tokenise-hit-targets.py",
+   "target": "function:scripts/src/tokenise-hit-targets.py:convert",
+   "type": "exports",
+   "direction": "forward",
+   "description": "tokenise-hit-targets.py exports convert",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/src/tokenise-hit-targets.py",
+   "target": "function:scripts/src/tokenise-hit-targets.py:main",
+   "type": "contains",
+   "direction": "forward",
+   "description": "tokenise-hit-targets.py defines main",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/tokenise-hit-targets.py",
+   "target": "function:scripts/src/tokenise-hit-targets.py:main",
+   "type": "exports",
+   "direction": "forward",
+   "description": "tokenise-hit-targets.py exports main",
+   "weight": 0.7
+  },
+  {
+   "source": "function:scripts/src/tokenise-hit-targets.py:main",
+   "target": "function:scripts/src/tokenise-hit-targets.py:tokens",
+   "type": "calls",
+   "direction": "forward",
+   "description": "main calls tokens",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/tokenise-hit-targets.py:main",
+   "target": "function:scripts/src/tokenise-hit-targets.py:convert",
+   "type": "calls",
+   "direction": "forward",
+   "description": "main calls convert",
+   "weight": 0.6
+  },
+  {
+   "source": "file:scripts/src/verify-cloud-deployment.mjs",
+   "target": "function:scripts/src/verify-cloud-deployment.mjs:request",
+   "type": "contains",
+   "direction": "forward",
+   "description": "verify-cloud-deployment.mjs defines request",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/verify-gui-deployment.mjs",
+   "target": "function:scripts/src/verify-gui-deployment.mjs:request",
+   "type": "contains",
+   "direction": "forward",
+   "description": "verify-gui-deployment.mjs defines request",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/verify-opentui-terminal.py",
+   "target": "function:scripts/src/verify-opentui-terminal.py:assert_requested_view",
+   "type": "contains",
+   "direction": "forward",
+   "description": "verify-opentui-terminal.py defines assert_requested_view",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/verify-opentui-terminal.py",
+   "target": "function:scripts/src/verify-opentui-terminal.py:assert_requested_view",
+   "type": "exports",
+   "direction": "forward",
+   "description": "verify-opentui-terminal.py exports assert_requested_view",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/src/verify-opentui-terminal.py",
+   "target": "function:scripts/src/verify-opentui-terminal.py:strip_ansi",
+   "type": "contains",
+   "direction": "forward",
+   "description": "verify-opentui-terminal.py defines strip_ansi",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/verify-opentui-terminal.py",
+   "target": "function:scripts/src/verify-opentui-terminal.py:strip_ansi",
+   "type": "exports",
+   "direction": "forward",
+   "description": "verify-opentui-terminal.py exports strip_ansi",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/src/verify-opentui-terminal.py",
+   "target": "function:scripts/src/verify-opentui-terminal.py:screen_rows",
+   "type": "contains",
+   "direction": "forward",
+   "description": "verify-opentui-terminal.py defines screen_rows",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/verify-opentui-terminal.py",
+   "target": "function:scripts/src/verify-opentui-terminal.py:screen_rows",
+   "type": "exports",
+   "direction": "forward",
+   "description": "verify-opentui-terminal.py exports screen_rows",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/src/verify-opentui-terminal.py",
+   "target": "function:scripts/src/verify-opentui-terminal.py:save_case",
+   "type": "contains",
+   "direction": "forward",
+   "description": "verify-opentui-terminal.py defines save_case",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/verify-opentui-terminal.py",
+   "target": "function:scripts/src/verify-opentui-terminal.py:save_case",
+   "type": "exports",
+   "direction": "forward",
+   "description": "verify-opentui-terminal.py exports save_case",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/src/verify-opentui-terminal.py",
+   "target": "function:scripts/src/verify-opentui-terminal.py:capture_double_left",
+   "type": "contains",
+   "direction": "forward",
+   "description": "verify-opentui-terminal.py defines capture_double_left",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/verify-opentui-terminal.py",
+   "target": "function:scripts/src/verify-opentui-terminal.py:capture_double_left",
+   "type": "exports",
+   "direction": "forward",
+   "description": "verify-opentui-terminal.py exports capture_double_left",
+   "weight": 0.7
+  },
+  {
+   "source": "function:scripts/src/verify-opentui-terminal.py:assert_requested_view",
+   "target": "function:scripts/src/verify-opentui-terminal.py:strip_ansi",
+   "type": "calls",
+   "direction": "forward",
+   "description": "assert_requested_view calls strip_ansi",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/verify-opentui-terminal.py:save_case",
+   "target": "function:scripts/src/verify-opentui-terminal.py:screen_rows",
+   "type": "calls",
+   "direction": "forward",
+   "description": "save_case calls screen_rows",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/verify-opentui-terminal.py:save_case",
+   "target": "function:scripts/src/verify-opentui-terminal.py:strip_ansi",
+   "type": "calls",
+   "direction": "forward",
+   "description": "save_case calls strip_ansi",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/verify-opentui-terminal.py:save_case",
+   "target": "function:scripts/src/verify-opentui-terminal.py:assert_requested_view",
+   "type": "calls",
+   "direction": "forward",
+   "description": "save_case calls assert_requested_view",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/verify-opentui-terminal.py:capture_double_left",
+   "target": "function:scripts/src/verify-opentui-terminal.py:screen_rows",
+   "type": "calls",
+   "direction": "forward",
+   "description": "capture_double_left calls screen_rows",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/verify-opentui-terminal.py:capture_double_left",
+   "target": "function:scripts/src/verify-opentui-terminal.py:strip_ansi",
+   "type": "calls",
+   "direction": "forward",
+   "description": "capture_double_left calls strip_ansi",
+   "weight": 0.6
+  },
+  {
+   "source": "file:scripts/src/verify-tui-terminal.py",
+   "target": "function:scripts/src/verify-tui-terminal.py:cell_width",
+   "type": "contains",
+   "direction": "forward",
+   "description": "verify-tui-terminal.py defines cell_width",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/verify-tui-terminal.py",
+   "target": "function:scripts/src/verify-tui-terminal.py:cell_width",
+   "type": "exports",
+   "direction": "forward",
+   "description": "verify-tui-terminal.py exports cell_width",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/src/verify-tui-terminal.py",
+   "target": "function:scripts/src/verify-tui-terminal.py:run",
+   "type": "contains",
+   "direction": "forward",
+   "description": "verify-tui-terminal.py defines run",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/verify-tui-terminal.py",
+   "target": "function:scripts/src/verify-tui-terminal.py:run",
+   "type": "exports",
+   "direction": "forward",
+   "description": "verify-tui-terminal.py exports run",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/src/verify-tui-terminal.py",
+   "target": "function:scripts/src/verify-tui-terminal.py:scenario_chat",
+   "type": "contains",
+   "direction": "forward",
+   "description": "verify-tui-terminal.py defines scenario_chat",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/verify-tui-terminal.py",
+   "target": "function:scripts/src/verify-tui-terminal.py:scenario_chat",
+   "type": "exports",
+   "direction": "forward",
+   "description": "verify-tui-terminal.py exports scenario_chat",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/src/verify-tui-terminal.py",
+   "target": "function:scripts/src/verify-tui-terminal.py:scenario_tools",
+   "type": "contains",
+   "direction": "forward",
+   "description": "verify-tui-terminal.py defines scenario_tools",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/verify-tui-terminal.py",
+   "target": "function:scripts/src/verify-tui-terminal.py:scenario_tools",
+   "type": "exports",
+   "direction": "forward",
+   "description": "verify-tui-terminal.py exports scenario_tools",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/src/verify-tui-terminal.py",
+   "target": "function:scripts/src/verify-tui-terminal.py:scenario_approval",
+   "type": "contains",
+   "direction": "forward",
+   "description": "verify-tui-terminal.py defines scenario_approval",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/verify-tui-terminal.py",
+   "target": "function:scripts/src/verify-tui-terminal.py:scenario_approval",
+   "type": "exports",
+   "direction": "forward",
+   "description": "verify-tui-terminal.py exports scenario_approval",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/src/verify-tui-terminal.py",
+   "target": "function:scripts/src/verify-tui-terminal.py:scenario_error",
+   "type": "contains",
+   "direction": "forward",
+   "description": "verify-tui-terminal.py defines scenario_error",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/verify-tui-terminal.py",
+   "target": "function:scripts/src/verify-tui-terminal.py:scenario_error",
+   "type": "exports",
+   "direction": "forward",
+   "description": "verify-tui-terminal.py exports scenario_error",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/src/verify-tui-terminal.py",
+   "target": "function:scripts/src/verify-tui-terminal.py:scenario_cancel",
+   "type": "contains",
+   "direction": "forward",
+   "description": "verify-tui-terminal.py defines scenario_cancel",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/verify-tui-terminal.py",
+   "target": "function:scripts/src/verify-tui-terminal.py:scenario_cancel",
+   "type": "exports",
+   "direction": "forward",
+   "description": "verify-tui-terminal.py exports scenario_cancel",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/src/verify-tui-terminal.py",
+   "target": "function:scripts/src/verify-tui-terminal.py:scenario_resize",
+   "type": "contains",
+   "direction": "forward",
+   "description": "verify-tui-terminal.py defines scenario_resize",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/verify-tui-terminal.py",
+   "target": "function:scripts/src/verify-tui-terminal.py:scenario_resize",
+   "type": "exports",
+   "direction": "forward",
+   "description": "verify-tui-terminal.py exports scenario_resize",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/src/verify-tui-terminal.py",
+   "target": "function:scripts/src/verify-tui-terminal.py:scenario_panels",
+   "type": "contains",
+   "direction": "forward",
+   "description": "verify-tui-terminal.py defines scenario_panels",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/verify-tui-terminal.py",
+   "target": "function:scripts/src/verify-tui-terminal.py:scenario_panels",
+   "type": "exports",
+   "direction": "forward",
+   "description": "verify-tui-terminal.py exports scenario_panels",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/src/verify-tui-terminal.py",
+   "target": "function:scripts/src/verify-tui-terminal.py:scenario_undo",
+   "type": "contains",
+   "direction": "forward",
+   "description": "verify-tui-terminal.py defines scenario_undo",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/verify-tui-terminal.py",
+   "target": "function:scripts/src/verify-tui-terminal.py:scenario_undo",
+   "type": "exports",
+   "direction": "forward",
+   "description": "verify-tui-terminal.py exports scenario_undo",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/src/verify-tui-terminal.py",
+   "target": "function:scripts/src/verify-tui-terminal.py:termination_case",
+   "type": "contains",
+   "direction": "forward",
+   "description": "verify-tui-terminal.py defines termination_case",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/verify-tui-terminal.py",
+   "target": "function:scripts/src/verify-tui-terminal.py:termination_case",
+   "type": "exports",
+   "direction": "forward",
+   "description": "verify-tui-terminal.py exports termination_case",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/src/verify-tui-terminal.py",
+   "target": "function:scripts/src/verify-tui-terminal.py:scenario_double_ctrl_c",
+   "type": "contains",
+   "direction": "forward",
+   "description": "verify-tui-terminal.py defines scenario_double_ctrl_c",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/verify-tui-terminal.py",
+   "target": "function:scripts/src/verify-tui-terminal.py:scenario_double_ctrl_c",
+   "type": "exports",
+   "direction": "forward",
+   "description": "verify-tui-terminal.py exports scenario_double_ctrl_c",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/src/verify-tui-terminal.py",
+   "target": "function:scripts/src/verify-tui-terminal.py:scenario_double_ctrl_d",
+   "type": "contains",
+   "direction": "forward",
+   "description": "verify-tui-terminal.py defines scenario_double_ctrl_d",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/verify-tui-terminal.py",
+   "target": "function:scripts/src/verify-tui-terminal.py:scenario_double_ctrl_d",
+   "type": "exports",
+   "direction": "forward",
+   "description": "verify-tui-terminal.py exports scenario_double_ctrl_d",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/src/verify-tui-terminal.py",
+   "target": "function:scripts/src/verify-tui-terminal.py:main",
+   "type": "contains",
+   "direction": "forward",
+   "description": "verify-tui-terminal.py defines main",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/verify-tui-terminal.py",
+   "target": "function:scripts/src/verify-tui-terminal.py:main",
+   "type": "exports",
+   "direction": "forward",
+   "description": "verify-tui-terminal.py exports main",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/src/verify-tui-terminal.py",
+   "target": "class:scripts/src/verify-tui-terminal.py:Screen",
+   "type": "contains",
+   "direction": "forward",
+   "description": "verify-tui-terminal.py defines class Screen",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/verify-tui-terminal.py",
+   "target": "class:scripts/src/verify-tui-terminal.py:Tui",
+   "type": "contains",
+   "direction": "forward",
+   "description": "verify-tui-terminal.py defines class Tui",
+   "weight": 1.0
+  },
+  {
+   "source": "function:scripts/src/verify-tui-terminal.py:main",
+   "target": "function:scripts/src/verify-tui-terminal.py:run",
+   "type": "calls",
+   "direction": "forward",
+   "description": "main calls run",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/verify-tui-terminal.py:main",
+   "target": "function:scripts/src/verify-tui-terminal.py:termination_case",
+   "type": "calls",
+   "direction": "forward",
+   "description": "main calls termination_case",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/verify-tui-terminal.py:main",
+   "target": "function:scripts/src/verify-tui-terminal.py:scenario_double_ctrl_d",
+   "type": "calls",
+   "direction": "forward",
+   "description": "main calls scenario_double_ctrl_d",
+   "weight": 0.6
+  },
+  {
+   "source": "file:scripts/tui-capture.mjs",
+   "target": "function:scripts/tui-capture.mjs:widths",
+   "type": "contains",
+   "direction": "forward",
+   "description": "tui-capture.mjs defines widths",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/tui-capture.mjs",
+   "target": "function:scripts/tui-capture.mjs:quote",
+   "type": "contains",
+   "direction": "forward",
+   "description": "tui-capture.mjs defines quote",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/tui-capture.mjs",
+   "target": "function:scripts/tui-capture.mjs:runInPty",
+   "type": "contains",
+   "direction": "forward",
+   "description": "tui-capture.mjs defines runInPty",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/tui-degrade.mjs",
+   "target": "function:scripts/tui-degrade.mjs:quote",
+   "type": "contains",
+   "direction": "forward",
+   "description": "tui-degrade.mjs defines quote",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/tui-degrade.mjs",
+   "target": "function:scripts/tui-degrade.mjs:runInPty",
+   "type": "contains",
+   "direction": "forward",
+   "description": "tui-degrade.mjs defines runInPty",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/tui-degrade.mjs",
+   "target": "function:scripts/tui-degrade.mjs:runPreview",
+   "type": "contains",
+   "direction": "forward",
+   "description": "tui-degrade.mjs defines runPreview",
+   "weight": 1.0
+  },
+  {
+   "source": "function:scripts/tui-degrade.mjs:runInPty",
+   "target": "function:scripts/tui-degrade.mjs:quote",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runInPty calls quote",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/tui-degrade.mjs:runPreview",
+   "target": "function:scripts/tui-degrade.mjs:runInPty",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runPreview calls runInPty",
+   "weight": 0.6
+  },
+  {
+   "source": "file:scripts/tui-raw-mode-safety.mjs",
+   "target": "function:scripts/tui-raw-mode-safety.mjs:quote",
+   "type": "contains",
+   "direction": "forward",
+   "description": "tui-raw-mode-safety.mjs defines quote",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/tui-raw-mode-safety.mjs",
+   "target": "function:scripts/tui-raw-mode-safety.mjs:runInPty",
+   "type": "contains",
+   "direction": "forward",
+   "description": "tui-raw-mode-safety.mjs defines runInPty",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/prime-bridge.test.mjs",
+   "target": "file:scripts/src/prime-bridge.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "prime-bridge.test.mjs imports prime-bridge.mjs",
+   "weight": 0.8
+  }
+ ]
+}

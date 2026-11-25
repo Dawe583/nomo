@@ -1,0 +1,53 @@
+{
+ "nodes": [
+  {
+   "id": "file:packages/registry/README.md",
+   "type": "document",
+   "name": "README.md",
+   "filePath": "packages/registry/README.md",
+   "summary": "README.md \u2014 markdown document, 50 lines, 5 sections: @nomo/registry, Responsible for, Must never import, Where the data actually lives (+1 more).",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/registry/package.json",
+   "type": "config",
+   "name": "package.json",
+   "filePath": "packages/registry/package.json",
+   "summary": "package.json \u2014 json config, 33 lines.",
+   "tags": [
+    "json",
+    "config"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/registry/schema.json",
+   "type": "config",
+   "name": "schema.json",
+   "filePath": "packages/registry/schema.json",
+   "summary": "schema.json \u2014 json config, 169 lines.",
+   "tags": [
+    "json",
+    "config"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:packages/registry/tsconfig.json",
+   "type": "config",
+   "name": "tsconfig.json",
+   "filePath": "packages/registry/tsconfig.json",
+   "summary": "tsconfig.json \u2014 json config, 19 lines.",
+   "tags": [
+    "json",
+    "config"
+   ],
+   "complexity": "simple"
+  }
+ ],
+ "edges": []
+}

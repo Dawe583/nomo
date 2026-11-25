@@ -45,10 +45,22 @@ export type ApprovalRecord = {
   readonly decisionToken?: string;
   readonly call: PolicyCall;
   readonly expiresAt: number;
+  /**
+   * When the hold was registered.
+   *
+   * Optional because records written before this field existed are still on
+   * disk; a decision on such a record reports no latency rather than a
+   * fabricated one.
+   */
+  readonly createdAt?: number;
   readonly status: ApprovalStatus;
   readonly notify: readonly NotifyChannel[];
   readonly by?: string;
   readonly reason?: string;
+  /** When the operator answered, and how long they took. Both are absent on a
+   * pending record and on a decision over a record with no `createdAt`. */
+  readonly decidedAt?: number;
+  readonly approvalMs?: number;
 };
 
 export type PendingApprovalRecord = Omit<ApprovalRecord, "status"> & {
@@ -222,6 +234,7 @@ export class ApprovalBroker {
       decisionToken: this.nonce(),
       call,
       expiresAt: held.expiresAt,
+      createdAt: this.now(),
       status: "pending",
       notify: notifyChannels(held.notify),
     };
@@ -250,11 +263,18 @@ export class ApprovalBroker {
       savePending(this.stateDirectory, this.pending().filter((record) => record.holdId !== holdId), this.fs);
     }
     if (!queue.resolve(holdId, release)) return false;
+    // The latency the harness measures is the operator's, not the model's: it
+    // is the time between the hold existing and the answer arriving.
+    const decidedAt = this.now();
     this.approvals.set(holdId, {
       ...current,
       status: decision.kind,
       by: decision.by,
       reason: decision.reason,
+      decidedAt,
+      ...(Number.isFinite(current.createdAt) && Number.isFinite(decidedAt)
+        ? { approvalMs: Math.max(0, decidedAt - (current.createdAt as number)) }
+        : {}),
     });
     this.queues.delete(holdId);
     return true;

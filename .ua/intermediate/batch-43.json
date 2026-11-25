@@ -1,0 +1,89 @@
+{
+ "nodes": [
+  {
+   "id": "file:apps/apple/Fixtures/Protocol/capability-handshake.json",
+   "type": "config",
+   "name": "capability-handshake.json",
+   "filePath": "apps/apple/Fixtures/Protocol/capability-handshake.json",
+   "summary": "capability-handshake.json \u2014 json config, 133 lines.",
+   "tags": [
+    "json",
+    "config"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/apple/Fixtures/Protocol/conflict.json",
+   "type": "config",
+   "name": "conflict.json",
+   "filePath": "apps/apple/Fixtures/Protocol/conflict.json",
+   "summary": "conflict.json \u2014 json config, 68 lines.",
+   "tags": [
+    "json",
+    "config"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/apple/Fixtures/Protocol/denied.json",
+   "type": "config",
+   "name": "denied.json",
+   "filePath": "apps/apple/Fixtures/Protocol/denied.json",
+   "summary": "denied.json \u2014 json config, 55 lines.",
+   "tags": [
+    "json",
+    "config"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/apple/Fixtures/Protocol/revoked.json",
+   "type": "config",
+   "name": "revoked.json",
+   "filePath": "apps/apple/Fixtures/Protocol/revoked.json",
+   "summary": "revoked.json \u2014 json config, 52 lines.",
+   "tags": [
+    "json",
+    "config"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/apple/Fixtures/Protocol/succeeded.json",
+   "type": "config",
+   "name": "succeeded.json",
+   "filePath": "apps/apple/Fixtures/Protocol/succeeded.json",
+   "summary": "succeeded.json \u2014 json config, 62 lines.",
+   "tags": [
+    "json",
+    "config"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/apple/Fixtures/Protocol/unknown.json",
+   "type": "config",
+   "name": "unknown.json",
+   "filePath": "apps/apple/Fixtures/Protocol/unknown.json",
+   "summary": "unknown.json \u2014 json config, 68 lines.",
+   "tags": [
+    "json",
+    "config"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/apple/Fixtures/Protocol/unsupported-version.json",
+   "type": "config",
+   "name": "unsupported-version.json",
+   "filePath": "apps/apple/Fixtures/Protocol/unsupported-version.json",
+   "summary": "unsupported-version.json \u2014 json config, 55 lines.",
+   "tags": [
+    "json",
+    "config"
+   ],
+   "complexity": "simple"
+  }
+ ],
+ "edges": []
+}

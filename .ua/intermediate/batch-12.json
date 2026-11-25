@@ -1,0 +1,4604 @@
+{
+ "nodes": [
+  {
+   "id": "file:apps/control-plane/api/remote-gateway.mjs",
+   "type": "file",
+   "name": "remote-gateway.mjs",
+   "filePath": "apps/control-plane/api/remote-gateway.mjs",
+   "summary": "remote-gateway.mjs \u2014 javascript code, 98 lines, 4 functions, 0 classes, 1 exports, 1 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/remote-gateway.mjs:sameToken",
+   "type": "function",
+   "name": "sameToken",
+   "filePath": "apps/control-plane/api/remote-gateway.mjs",
+   "lineRange": [
+    4,
+    9
+   ],
+   "summary": "sameToken(value, token) \u2014 function in remote-gateway.mjs, lines 4-9.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/remote-gateway.mjs:json",
+   "type": "function",
+   "name": "json",
+   "filePath": "apps/control-plane/api/remote-gateway.mjs",
+   "lineRange": [
+    10,
+    16
+   ],
+   "summary": "json(response, status, body) \u2014 function in remote-gateway.mjs, lines 10-16.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/remote-gateway.mjs:readRequestBody",
+   "type": "function",
+   "name": "readRequestBody",
+   "filePath": "apps/control-plane/api/remote-gateway.mjs",
+   "lineRange": [
+    21,
+    44
+   ],
+   "summary": "readRequestBody(request, maxBytes) \u2014 function in remote-gateway.mjs, lines 21-44.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/remote-gateway.mjs:handler",
+   "type": "function",
+   "name": "handler",
+   "filePath": "apps/control-plane/api/remote-gateway.mjs",
+   "lineRange": [
+    48,
+    98
+   ],
+   "summary": "handler(request, response) \u2014 function in remote-gateway.mjs, lines 48-98.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/api/session-cookie.mjs",
+   "type": "file",
+   "name": "session-cookie.mjs",
+   "filePath": "apps/control-plane/api/session-cookie.mjs",
+   "summary": "session-cookie.mjs \u2014 javascript code, 3 lines, 1 functions, 0 classes, 1 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/session-cookie.mjs:workspaceSessionCookie",
+   "type": "function",
+   "name": "workspaceSessionCookie",
+   "filePath": "apps/control-plane/api/session-cookie.mjs",
+   "lineRange": [
+    2,
+    3
+   ],
+   "summary": "workspaceSessionCookie() \u2014 function in session-cookie.mjs, lines 2-3.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:cloud/account-isolation.test.mjs",
+   "type": "file",
+   "name": "account-isolation.test.mjs",
+   "filePath": "cloud/account-isolation.test.mjs",
+   "summary": "account-isolation.test.mjs \u2014 javascript code, 109 lines, 0 functions, 0 classes, 0 exports, 4 imports.",
+   "tags": [
+    "javascript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:cloud/account-routes.test.mjs",
+   "type": "file",
+   "name": "account-routes.test.mjs",
+   "filePath": "cloud/account-routes.test.mjs",
+   "summary": "account-routes.test.mjs \u2014 javascript code, 607 lines, 4 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "javascript",
+    "code",
+    "test"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "function:cloud/account-routes.test.mjs:issue",
+   "type": "function",
+   "name": "issue",
+   "filePath": "cloud/account-routes.test.mjs",
+   "lineRange": [
+    51,
+    55
+   ],
+   "summary": "issue() \u2014 function in account-routes.test.mjs, lines 51-55.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/account-routes.test.mjs:post",
+   "type": "function",
+   "name": "post",
+   "filePath": "cloud/account-routes.test.mjs",
+   "lineRange": [
+    157,
+    162
+   ],
+   "summary": "post(path, body) \u2014 function in account-routes.test.mjs, lines 157-162.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/account-routes.test.mjs:signIn",
+   "type": "function",
+   "name": "signIn",
+   "filePath": "cloud/account-routes.test.mjs",
+   "lineRange": [
+    163,
+    164
+   ],
+   "summary": "signIn(email, password) \u2014 function in account-routes.test.mjs, lines 163-164.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/account-routes.test.mjs:cookieOf",
+   "type": "function",
+   "name": "cookieOf",
+   "filePath": "cloud/account-routes.test.mjs",
+   "lineRange": [
+    165,
+    165
+   ],
+   "summary": "cookieOf(response) \u2014 function in account-routes.test.mjs, lines 165-165.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:cloud/account.mjs",
+   "type": "file",
+   "name": "account.mjs",
+   "filePath": "cloud/account.mjs",
+   "summary": "account.mjs \u2014 javascript code, 630 lines, 13 functions, 0 classes, 11 exports, 2 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "function:cloud/account.mjs:hexKey",
+   "type": "function",
+   "name": "hexKey",
+   "filePath": "cloud/account.mjs",
+   "lineRange": [
+    98,
+    103
+   ],
+   "summary": "hexKey(value, name) \u2014 function in account.mjs, lines 98-103.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/account.mjs:sealSession",
+   "type": "function",
+   "name": "sealSession",
+   "filePath": "cloud/account.mjs",
+   "lineRange": [
+    106,
+    120
+   ],
+   "summary": "sealSession(session, secret) \u2014 function in account.mjs, lines 106-120.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/account.mjs:openSession",
+   "type": "function",
+   "name": "openSession",
+   "filePath": "cloud/account.mjs",
+   "lineRange": [
+    127,
+    153
+   ],
+   "summary": "openSession(value, secret) \u2014 function in account.mjs, lines 127-153.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/account.mjs:setSessionCookie",
+   "type": "function",
+   "name": "setSessionCookie",
+   "filePath": "cloud/account.mjs",
+   "lineRange": [
+    162,
+    171
+   ],
+   "summary": "setSessionCookie(res, sealed, expiresAt) \u2014 function in account.mjs, lines 162-171.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/account.mjs:clearSessionCookie",
+   "type": "function",
+   "name": "clearSessionCookie",
+   "filePath": "cloud/account.mjs",
+   "lineRange": [
+    173,
+    178
+   ],
+   "summary": "clearSessionCookie(res) \u2014 function in account.mjs, lines 173-178.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/account.mjs:readSessionCookie",
+   "type": "function",
+   "name": "readSessionCookie",
+   "filePath": "cloud/account.mjs",
+   "lineRange": [
+    181,
+    190
+   ],
+   "summary": "readSessionCookie(req) \u2014 function in account.mjs, lines 181-190.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/account.mjs:signupAllowed",
+   "type": "function",
+   "name": "signupAllowed",
+   "filePath": "cloud/account.mjs",
+   "lineRange": [
+    197,
+    198
+   ],
+   "summary": "signupAllowed() \u2014 function in account.mjs, lines 197-198.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/account.mjs:namesTheAddress",
+   "type": "function",
+   "name": "namesTheAddress",
+   "filePath": "cloud/account.mjs",
+   "lineRange": [
+    221,
+    226
+   ],
+   "summary": "namesTheAddress(body) \u2014 function in account.mjs, lines 221-226.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/account.mjs:classify",
+   "type": "function",
+   "name": "classify",
+   "filePath": "cloud/account.mjs",
+   "lineRange": [
+    240,
+    244
+   ],
+   "summary": "classify(status, body) \u2014 function in account.mjs, lines 240-244.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/account.mjs:createAccountService",
+   "type": "function",
+   "name": "createAccountService",
+   "filePath": "cloud/account.mjs",
+   "lineRange": [
+    246,
+    583
+   ],
+   "summary": "createAccountService(config) \u2014 function in account.mjs, lines 246-583.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:cloud/account.mjs:setting",
+   "type": "function",
+   "name": "setting",
+   "filePath": "cloud/account.mjs",
+   "lineRange": [
+    591,
+    594
+   ],
+   "summary": "setting(env, value) \u2014 function in account.mjs, lines 591-594.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/account.mjs:accountServiceFromEnv",
+   "type": "function",
+   "name": "accountServiceFromEnv",
+   "filePath": "cloud/account.mjs",
+   "lineRange": [
+    606,
+    614
+   ],
+   "summary": "accountServiceFromEnv() \u2014 function in account.mjs, lines 606-614.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/account.mjs:derivedKey",
+   "type": "function",
+   "name": "derivedKey",
+   "filePath": "cloud/account.mjs",
+   "lineRange": [
+    623,
+    630
+   ],
+   "summary": "derivedKey(purpose) \u2014 function in account.mjs, lines 623-630.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:cloud/account.test.mjs",
+   "type": "file",
+   "name": "account.test.mjs",
+   "filePath": "cloud/account.test.mjs",
+   "summary": "account.test.mjs \u2014 javascript code, 424 lines, 2 functions, 0 classes, 0 exports, 3 imports.",
+   "tags": [
+    "javascript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:cloud/account.test.mjs:session",
+   "type": "function",
+   "name": "session",
+   "filePath": "cloud/account.test.mjs",
+   "lineRange": [
+    36,
+    46
+   ],
+   "summary": "session() \u2014 function in account.test.mjs, lines 36-46.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/account.test.mjs:scriptedService",
+   "type": "function",
+   "name": "scriptedService",
+   "filePath": "cloud/account.test.mjs",
+   "lineRange": [
+    53,
+    64
+   ],
+   "summary": "scriptedService(reply) \u2014 function in account.test.mjs, lines 53-64.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:cloud/billing.mjs",
+   "type": "file",
+   "name": "billing.mjs",
+   "filePath": "cloud/billing.mjs",
+   "summary": "billing.mjs \u2014 javascript code, 555 lines, 13 functions, 0 classes, 5 exports, 3 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:cloud/billing.mjs:indexKey",
+   "type": "function",
+   "name": "indexKey",
+   "filePath": "cloud/billing.mjs",
+   "lineRange": [
+    76,
+    76
+   ],
+   "summary": "indexKey(customerId) \u2014 function in billing.mjs, lines 76-76.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/billing.mjs:live",
+   "type": "function",
+   "name": "live",
+   "filePath": "cloud/billing.mjs",
+   "lineRange": [
+    86,
+    86
+   ],
+   "summary": "live(status) \u2014 function in billing.mjs, lines 86-86.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/billing.mjs:envValue",
+   "type": "function",
+   "name": "envValue",
+   "filePath": "cloud/billing.mjs",
+   "lineRange": [
+    102,
+    105
+   ],
+   "summary": "envValue(name, env) \u2014 function in billing.mjs, lines 102-105.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/billing.mjs:nothing",
+   "type": "function",
+   "name": "nothing",
+   "filePath": "cloud/billing.mjs",
+   "lineRange": [
+    114,
+    121
+   ],
+   "summary": "nothing() \u2014 function in billing.mjs, lines 114-121.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/billing.mjs:classifyWebhookError",
+   "type": "function",
+   "name": "classifyWebhookError",
+   "filePath": "cloud/billing.mjs",
+   "lineRange": [
+    156,
+    166
+   ],
+   "summary": "classifyWebhookError(error, errors) \u2014 function in billing.mjs, lines 156-166.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/billing.mjs:unknownType",
+   "type": "function",
+   "name": "unknownType",
+   "filePath": "cloud/billing.mjs",
+   "lineRange": [
+    174,
+    177
+   ],
+   "summary": "unknownType(error) \u2014 function in billing.mjs, lines 174-177.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/billing.mjs:view",
+   "type": "function",
+   "name": "view",
+   "filePath": "cloud/billing.mjs",
+   "lineRange": [
+    189,
+    203
+   ],
+   "summary": "view(stored, productId) \u2014 function in billing.mjs, lines 189-203.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/billing.mjs:stored",
+   "type": "function",
+   "name": "stored",
+   "filePath": "cloud/billing.mjs",
+   "lineRange": [
+    210,
+    219
+   ],
+   "summary": "stored(data, type) \u2014 function in billing.mjs, lines 210-219.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/billing.mjs:errorClasses",
+   "type": "function",
+   "name": "errorClasses",
+   "filePath": "cloud/billing.mjs",
+   "lineRange": [
+    230,
+    234
+   ],
+   "summary": "errorClasses(namespace) \u2014 function in billing.mjs, lines 230-234.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/billing.mjs:createBillingService",
+   "type": "function",
+   "name": "createBillingService",
+   "filePath": "cloud/billing.mjs",
+   "lineRange": [
+    241,
+    386
+   ],
+   "summary": "createBillingService(config) \u2014 function in billing.mjs, lines 241-386.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/billing.mjs:billingFromEnv",
+   "type": "function",
+   "name": "billingFromEnv",
+   "filePath": "cloud/billing.mjs",
+   "lineRange": [
+    400,
+    420
+   ],
+   "summary": "billingFromEnv() \u2014 function in billing.mjs, lines 400-420.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/billing.mjs:mountBillingWebhook",
+   "type": "function",
+   "name": "mountBillingWebhook",
+   "filePath": "cloud/billing.mjs",
+   "lineRange": [
+    431,
+    490
+   ],
+   "summary": "mountBillingWebhook(app, service) \u2014 function in billing.mjs, lines 431-490.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/billing.mjs:billingRoutes",
+   "type": "function",
+   "name": "billingRoutes",
+   "filePath": "cloud/billing.mjs",
+   "lineRange": [
+    505,
+    555
+   ],
+   "summary": "billingRoutes(app, service) \u2014 function in billing.mjs, lines 505-555.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:cloud/billing.test.mjs",
+   "type": "file",
+   "name": "billing.test.mjs",
+   "filePath": "cloud/billing.test.mjs",
+   "summary": "billing.test.mjs \u2014 javascript code, 984 lines, 9 functions, 0 classes, 0 exports, 2 imports.",
+   "tags": [
+    "javascript",
+    "code",
+    "test"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "function:cloud/billing.test.mjs:readCloud",
+   "type": "function",
+   "name": "readCloud",
+   "filePath": "cloud/billing.test.mjs",
+   "lineRange": [
+    49,
+    49
+   ],
+   "summary": "readCloud(name) \u2014 function in billing.test.mjs, lines 49-49.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/billing.test.mjs:now",
+   "type": "function",
+   "name": "now",
+   "filePath": "cloud/billing.test.mjs",
+   "lineRange": [
+    50,
+    50
+   ],
+   "summary": "now() \u2014 function in billing.test.mjs, lines 50-50.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/billing.test.mjs:signed",
+   "type": "function",
+   "name": "signed",
+   "filePath": "cloud/billing.test.mjs",
+   "lineRange": [
+    58,
+    67
+   ],
+   "summary": "signed(body) \u2014 function in billing.test.mjs, lines 58-67.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/billing.test.mjs:fakeSdk",
+   "type": "function",
+   "name": "fakeSdk",
+   "filePath": "cloud/billing.test.mjs",
+   "lineRange": [
+    75,
+    85
+   ],
+   "summary": "fakeSdk() \u2014 function in billing.test.mjs, lines 75-85.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/billing.test.mjs:failingService",
+   "type": "function",
+   "name": "failingService",
+   "filePath": "cloud/billing.test.mjs",
+   "lineRange": [
+    88,
+    92
+   ],
+   "summary": "failingService(errors, validateEvent) \u2014 function in billing.test.mjs, lines 88-92.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/billing.test.mjs:subscription",
+   "type": "function",
+   "name": "subscription",
+   "filePath": "cloud/billing.test.mjs",
+   "lineRange": [
+    94,
+    109
+   ],
+   "summary": "subscription() \u2014 function in billing.test.mjs, lines 94-109.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/billing.test.mjs:knownEventTypes",
+   "type": "function",
+   "name": "knownEventTypes",
+   "filePath": "cloud/billing.test.mjs",
+   "lineRange": [
+    116,
+    122
+   ],
+   "summary": "knownEventTypes() \u2014 function in billing.test.mjs, lines 116-122.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/billing.test.mjs:memory",
+   "type": "function",
+   "name": "memory",
+   "filePath": "cloud/billing.test.mjs",
+   "lineRange": [
+    130,
+    162
+   ],
+   "summary": "memory() \u2014 function in billing.test.mjs, lines 130-162.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/billing.test.mjs:fixture",
+   "type": "function",
+   "name": "fixture",
+   "filePath": "cloud/billing.test.mjs",
+   "lineRange": [
+    170,
+    228
+   ],
+   "summary": "fixture(t) \u2014 function in billing.test.mjs, lines 170-228.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:cloud/capability-gate.mjs",
+   "type": "file",
+   "name": "capability-gate.mjs",
+   "filePath": "cloud/capability-gate.mjs",
+   "summary": "capability-gate.mjs \u2014 javascript code, 228 lines, 3 functions, 0 classes, 4 exports, 2 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:cloud/capability-gate.mjs:openCapabilities",
+   "type": "function",
+   "name": "openCapabilities",
+   "filePath": "cloud/capability-gate.mjs",
+   "lineRange": [
+    144,
+    157
+   ],
+   "summary": "openCapabilities() \u2014 function in capability-gate.mjs, lines 144-157.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/capability-gate.mjs:narrowCapabilities",
+   "type": "function",
+   "name": "narrowCapabilities",
+   "filePath": "cloud/capability-gate.mjs",
+   "lineRange": [
+    175,
+    180
+   ],
+   "summary": "narrowCapabilities(open, entitled) \u2014 function in capability-gate.mjs, lines 175-180.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/capability-gate.mjs:createCapabilityGate",
+   "type": "function",
+   "name": "createCapabilityGate",
+   "filePath": "cloud/capability-gate.mjs",
+   "lineRange": [
+    191,
+    229
+   ],
+   "summary": "createCapabilityGate(service) \u2014 function in capability-gate.mjs, lines 191-229.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:cloud/capability-gate.test.mjs",
+   "type": "file",
+   "name": "capability-gate.test.mjs",
+   "filePath": "cloud/capability-gate.test.mjs",
+   "summary": "capability-gate.test.mjs \u2014 javascript code, 654 lines, 5 functions, 0 classes, 0 exports, 4 imports.",
+   "tags": [
+    "javascript",
+    "code",
+    "test"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "function:cloud/capability-gate.test.mjs:readCloud",
+   "type": "function",
+   "name": "readCloud",
+   "filePath": "cloud/capability-gate.test.mjs",
+   "lineRange": [
+    36,
+    36
+   ],
+   "summary": "readCloud(name) \u2014 function in capability-gate.test.mjs, lines 36-36.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/capability-gate.test.mjs:memory",
+   "type": "function",
+   "name": "memory",
+   "filePath": "cloud/capability-gate.test.mjs",
+   "lineRange": [
+    48,
+    89
+   ],
+   "summary": "memory() \u2014 function in capability-gate.test.mjs, lines 48-89.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/capability-gate.test.mjs:event",
+   "type": "function",
+   "name": "event",
+   "filePath": "cloud/capability-gate.test.mjs",
+   "lineRange": [
+    92,
+    104
+   ],
+   "summary": "event(status) \u2014 function in capability-gate.test.mjs, lines 92-104.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/capability-gate.test.mjs:wired",
+   "type": "function",
+   "name": "wired",
+   "filePath": "cloud/capability-gate.test.mjs",
+   "lineRange": [
+    109,
+    131
+   ],
+   "summary": "wired() \u2014 function in capability-gate.test.mjs, lines 109-131.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/capability-gate.test.mjs:server",
+   "type": "function",
+   "name": "server",
+   "filePath": "cloud/capability-gate.test.mjs",
+   "lineRange": [
+    531,
+    592
+   ],
+   "summary": "server(t) \u2014 function in capability-gate.test.mjs, lines 531-592.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:cloud/demo.mjs",
+   "type": "file",
+   "name": "demo.mjs",
+   "filePath": "cloud/demo.mjs",
+   "summary": "demo.mjs \u2014 javascript code, 446 lines, 6 functions, 0 classes, 6 exports, 8 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:cloud/demo.mjs:demoFailureMessage",
+   "type": "function",
+   "name": "demoFailureMessage",
+   "filePath": "cloud/demo.mjs",
+   "lineRange": [
+    59,
+    72
+   ],
+   "summary": "demoFailureMessage(error) \u2014 function in demo.mjs, lines 59-72.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/demo.mjs:fail",
+   "type": "function",
+   "name": "fail",
+   "filePath": "cloud/demo.mjs",
+   "lineRange": [
+    75,
+    76
+   ],
+   "summary": "fail(message) \u2014 function in demo.mjs, lines 75-76.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/demo.mjs:demoIdentity",
+   "type": "function",
+   "name": "demoIdentity",
+   "filePath": "cloud/demo.mjs",
+   "lineRange": [
+    77,
+    101
+   ],
+   "summary": "demoIdentity(cookie, secret) \u2014 function in demo.mjs, lines 77-101.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/demo.mjs:demoCookie",
+   "type": "function",
+   "name": "demoCookie",
+   "filePath": "cloud/demo.mjs",
+   "lineRange": [
+    102,
+    108
+   ],
+   "summary": "demoCookie(id, secret) \u2014 function in demo.mjs, lines 102-108.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/demo.mjs:reserveDemoBudget",
+   "type": "function",
+   "name": "reserveDemoBudget",
+   "filePath": "cloud/demo.mjs",
+   "lineRange": [
+    109,
+    119
+   ],
+   "summary": "reserveDemoBudget(id) \u2014 function in demo.mjs, lines 109-119.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/demo.mjs:demoRouter",
+   "type": "function",
+   "name": "demoRouter",
+   "filePath": "cloud/demo.mjs",
+   "lineRange": [
+    120,
+    446
+   ],
+   "summary": "demoRouter() \u2014 function in demo.mjs, lines 120-446.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:cloud/demo.test.mjs",
+   "type": "file",
+   "name": "demo.test.mjs",
+   "filePath": "cloud/demo.test.mjs",
+   "summary": "demo.test.mjs \u2014 javascript code, 219 lines, 0 functions, 0 classes, 0 exports, 4 imports.",
+   "tags": [
+    "javascript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:cloud/env.mjs",
+   "type": "file",
+   "name": "env.mjs",
+   "filePath": "cloud/env.mjs",
+   "summary": "env.mjs \u2014 javascript code, 83 lines, 3 functions, 0 classes, 5 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/env.mjs:legacyEnvKey",
+   "type": "function",
+   "name": "legacyEnvKey",
+   "filePath": "cloud/env.mjs",
+   "lineRange": [
+    44,
+    49
+   ],
+   "summary": "legacyEnvKey(nomoKey) \u2014 function in env.mjs, lines 44-49.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/env.mjs:envValue",
+   "type": "function",
+   "name": "envValue",
+   "filePath": "cloud/env.mjs",
+   "lineRange": [
+    57,
+    61
+   ],
+   "summary": "envValue(env, nomoKey) \u2014 function in env.mjs, lines 57-61.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/env.mjs:normalizeEnv",
+   "type": "function",
+   "name": "normalizeEnv",
+   "filePath": "cloud/env.mjs",
+   "lineRange": [
+    73,
+    83
+   ],
+   "summary": "normalizeEnv(env, keys) \u2014 function in env.mjs, lines 73-83.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:cloud/env.test.mjs",
+   "type": "file",
+   "name": "env.test.mjs",
+   "filePath": "cloud/env.test.mjs",
+   "summary": "env.test.mjs \u2014 javascript code, 110 lines, 2 functions, 0 classes, 0 exports, 3 imports.",
+   "tags": [
+    "javascript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/env.test.mjs:storedSubscription",
+   "type": "function",
+   "name": "storedSubscription",
+   "filePath": "cloud/env.test.mjs",
+   "lineRange": [
+    14,
+    18
+   ],
+   "summary": "storedSubscription(product) \u2014 function in env.test.mjs, lines 14-18.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/env.test.mjs:isSubscribed",
+   "type": "function",
+   "name": "isSubscribed",
+   "filePath": "cloud/env.test.mjs",
+   "lineRange": [
+    23,
+    27
+   ],
+   "summary": "isSubscribed(env, product) \u2014 function in env.test.mjs, lines 23-27.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:cloud/integrations.mjs",
+   "type": "file",
+   "name": "integrations.mjs",
+   "filePath": "cloud/integrations.mjs",
+   "summary": "integrations.mjs \u2014 javascript code, 303 lines, 13 functions, 0 classes, 6 exports, 6 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:cloud/integrations.mjs:providerCatalog",
+   "type": "function",
+   "name": "providerCatalog",
+   "filePath": "cloud/integrations.mjs",
+   "lineRange": [
+    15,
+    16
+   ],
+   "summary": "providerCatalog(id, config) \u2014 function in integrations.mjs, lines 15-16.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/integrations.mjs:callbackBase",
+   "type": "function",
+   "name": "callbackBase",
+   "filePath": "cloud/integrations.mjs",
+   "lineRange": [
+    17,
+    19
+   ],
+   "summary": "callbackBase() \u2014 function in integrations.mjs, lines 17-19.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/integrations.mjs:epoch",
+   "type": "function",
+   "name": "epoch",
+   "filePath": "cloud/integrations.mjs",
+   "lineRange": [
+    20,
+    20
+   ],
+   "summary": "epoch() \u2014 function in integrations.mjs, lines 20-20.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/integrations.mjs:cookieName",
+   "type": "function",
+   "name": "cookieName",
+   "filePath": "cloud/integrations.mjs",
+   "lineRange": [
+    21,
+    21
+   ],
+   "summary": "cookieName(id) \u2014 function in integrations.mjs, lines 21-21.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/integrations.mjs:cookie",
+   "type": "function",
+   "name": "cookie",
+   "filePath": "cloud/integrations.mjs",
+   "lineRange": [
+    22,
+    23
+   ],
+   "summary": "cookie(id, value, age) \u2014 function in integrations.mjs, lines 22-23.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/integrations.mjs:binding",
+   "type": "function",
+   "name": "binding",
+   "filePath": "cloud/integrations.mjs",
+   "lineRange": [
+    24,
+    30
+   ],
+   "summary": "binding(req, id) \u2014 function in integrations.mjs, lines 24-30.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/integrations.mjs:clientFor",
+   "type": "function",
+   "name": "clientFor",
+   "filePath": "cloud/integrations.mjs",
+   "lineRange": [
+    31,
+    34
+   ],
+   "summary": "clientFor(owner, id, c) \u2014 function in integrations.mjs, lines 31-34.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/integrations.mjs:integrationStatus",
+   "type": "function",
+   "name": "integrationStatus",
+   "filePath": "cloud/integrations.mjs",
+   "lineRange": [
+    35,
+    61
+   ],
+   "summary": "integrationStatus(owner) \u2014 function in integrations.mjs, lines 35-61.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/integrations.mjs:integrationConfig",
+   "type": "function",
+   "name": "integrationConfig",
+   "filePath": "cloud/integrations.mjs",
+   "lineRange": [
+    62,
+    96
+   ],
+   "summary": "integrationConfig(owner, id) \u2014 function in integrations.mjs, lines 62-96.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/integrations.mjs:integrationCatalogs",
+   "type": "function",
+   "name": "integrationCatalogs",
+   "filePath": "cloud/integrations.mjs",
+   "lineRange": [
+    97,
+    117
+   ],
+   "summary": "integrationCatalogs(owner) \u2014 function in integrations.mjs, lines 97-117.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/integrations.mjs:resolveIntegration",
+   "type": "function",
+   "name": "resolveIntegration",
+   "filePath": "cloud/integrations.mjs",
+   "lineRange": [
+    118,
+    123
+   ],
+   "summary": "resolveIntegration(owner, config) \u2014 function in integrations.mjs, lines 118-123.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/integrations.mjs:mountIntegrationCallback",
+   "type": "function",
+   "name": "mountIntegrationCallback",
+   "filePath": "cloud/integrations.mjs",
+   "lineRange": [
+    124,
+    196
+   ],
+   "summary": "mountIntegrationCallback(app) \u2014 function in integrations.mjs, lines 124-196.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/integrations.mjs:mountIntegrationRoutes",
+   "type": "function",
+   "name": "mountIntegrationRoutes",
+   "filePath": "cloud/integrations.mjs",
+   "lineRange": [
+    197,
+    303
+   ],
+   "summary": "mountIntegrationRoutes(app) \u2014 function in integrations.mjs, lines 197-303.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:cloud/integrations.test.mjs",
+   "type": "file",
+   "name": "integrations.test.mjs",
+   "filePath": "cloud/integrations.test.mjs",
+   "summary": "integrations.test.mjs \u2014 javascript code, 229 lines, 0 functions, 0 classes, 0 exports, 4 imports.",
+   "tags": [
+    "javascript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:cloud/mcp.mjs",
+   "type": "file",
+   "name": "mcp.mjs",
+   "filePath": "cloud/mcp.mjs",
+   "summary": "mcp.mjs \u2014 javascript code, 1 lines, 0 functions, 0 classes, 3 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:cloud/oauth-state.mjs",
+   "type": "file",
+   "name": "oauth-state.mjs",
+   "filePath": "cloud/oauth-state.mjs",
+   "summary": "oauth-state.mjs \u2014 javascript code, 84 lines, 4 functions, 0 classes, 2 exports, 2 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/oauth-state.mjs:seal",
+   "type": "function",
+   "name": "seal",
+   "filePath": "cloud/oauth-state.mjs",
+   "lineRange": [
+    27,
+    37
+   ],
+   "summary": "seal(plaintext) \u2014 function in oauth-state.mjs, lines 27-37.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/oauth-state.mjs:unseal",
+   "type": "function",
+   "name": "unseal",
+   "filePath": "cloud/oauth-state.mjs",
+   "lineRange": [
+    39,
+    59
+   ],
+   "summary": "unseal(value) \u2014 function in oauth-state.mjs, lines 39-59.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/oauth-state.mjs:sealOwnerState",
+   "type": "function",
+   "name": "sealOwnerState",
+   "filePath": "cloud/oauth-state.mjs",
+   "lineRange": [
+    60,
+    71
+   ],
+   "summary": "sealOwnerState(owner, flow) \u2014 function in oauth-state.mjs, lines 60-71.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/oauth-state.mjs:openOwnerState",
+   "type": "function",
+   "name": "openOwnerState",
+   "filePath": "cloud/oauth-state.mjs",
+   "lineRange": [
+    77,
+    84
+   ],
+   "summary": "openOwnerState(value) \u2014 function in oauth-state.mjs, lines 77-84.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:cloud/oauth.mjs",
+   "type": "file",
+   "name": "oauth.mjs",
+   "filePath": "cloud/oauth.mjs",
+   "summary": "oauth.mjs \u2014 javascript code, 220 lines, 7 functions, 0 classes, 8 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:cloud/oauth.mjs:hash",
+   "type": "function",
+   "name": "hash",
+   "filePath": "cloud/oauth.mjs",
+   "lineRange": [
+    37,
+    37
+   ],
+   "summary": "hash(value) \u2014 function in oauth.mjs, lines 37-37.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/oauth.mjs:nonce",
+   "type": "function",
+   "name": "nonce",
+   "filePath": "cloud/oauth.mjs",
+   "lineRange": [
+    38,
+    38
+   ],
+   "summary": "nonce() \u2014 function in oauth.mjs, lines 38-38.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/oauth.mjs:providerDefinition",
+   "type": "function",
+   "name": "providerDefinition",
+   "filePath": "cloud/oauth.mjs",
+   "lineRange": [
+    39,
+    43
+   ],
+   "summary": "providerDefinition(id) \u2014 function in oauth.mjs, lines 39-43.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/oauth.mjs:authorization",
+   "type": "function",
+   "name": "authorization",
+   "filePath": "cloud/oauth.mjs",
+   "lineRange": [
+    44,
+    82
+   ],
+   "summary": "authorization(id, client, callback) \u2014 function in oauth.mjs, lines 44-82.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/oauth.mjs:validateCallback",
+   "type": "function",
+   "name": "validateCallback",
+   "filePath": "cloud/oauth.mjs",
+   "lineRange": [
+    83,
+    105
+   ],
+   "summary": "validateCallback(pending, id, binding, epoch) \u2014 function in oauth.mjs, lines 83-105.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/oauth.mjs:exchange",
+   "type": "function",
+   "name": "exchange",
+   "filePath": "cloud/oauth.mjs",
+   "lineRange": [
+    106,
+    163
+   ],
+   "summary": "exchange(id, client, grant) \u2014 function in oauth.mjs, lines 106-163.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/oauth.mjs:integrationClass",
+   "type": "function",
+   "name": "integrationClass",
+   "filePath": "cloud/oauth.mjs",
+   "lineRange": [
+    217,
+    220
+   ],
+   "summary": "integrationClass(id, name) \u2014 function in oauth.mjs, lines 217-220.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:cloud/oauth.test.mjs",
+   "type": "file",
+   "name": "oauth.test.mjs",
+   "filePath": "cloud/oauth.test.mjs",
+   "summary": "oauth.test.mjs \u2014 javascript code, 141 lines, 0 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "javascript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:cloud/owner.mjs",
+   "type": "file",
+   "name": "owner.mjs",
+   "filePath": "cloud/owner.mjs",
+   "summary": "owner.mjs \u2014 javascript code, 57 lines, 2 functions, 0 classes, 4 exports, 0 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/owner.mjs:isOwner",
+   "type": "function",
+   "name": "isOwner",
+   "filePath": "cloud/owner.mjs",
+   "lineRange": [
+    42,
+    43
+   ],
+   "summary": "isOwner(owner) \u2014 function in owner.mjs, lines 42-43.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/owner.mjs:assertOwner",
+   "type": "function",
+   "name": "assertOwner",
+   "filePath": "cloud/owner.mjs",
+   "lineRange": [
+    51,
+    57
+   ],
+   "summary": "assertOwner(owner) \u2014 function in owner.mjs, lines 51-57.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:cloud/owner.test.mjs",
+   "type": "file",
+   "name": "owner.test.mjs",
+   "filePath": "cloud/owner.test.mjs",
+   "summary": "owner.test.mjs \u2014 javascript code, 644 lines, 7 functions, 0 classes, 2 exports, 2 imports.",
+   "tags": [
+    "javascript",
+    "code",
+    "test"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "function:cloud/owner.test.mjs:readCloud",
+   "type": "function",
+   "name": "readCloud",
+   "filePath": "cloud/owner.test.mjs",
+   "lineRange": [
+    26,
+    26
+   ],
+   "summary": "readCloud(name) \u2014 function in owner.test.mjs, lines 26-26.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/owner.test.mjs:statements",
+   "type": "function",
+   "name": "statements",
+   "filePath": "cloud/owner.test.mjs",
+   "lineRange": [
+    31,
+    43
+   ],
+   "summary": "statements(source) \u2014 function in owner.test.mjs, lines 31-43.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/owner.test.mjs:skeleton",
+   "type": "function",
+   "name": "skeleton",
+   "filePath": "cloud/owner.test.mjs",
+   "lineRange": [
+    51,
+    91
+   ],
+   "summary": "skeleton(sql) \u2014 function in owner.test.mjs, lines 51-91.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/owner.test.mjs:blocks",
+   "type": "function",
+   "name": "blocks",
+   "filePath": "cloud/owner.test.mjs",
+   "lineRange": [
+    116,
+    135
+   ],
+   "summary": "blocks(sql) \u2014 function in owner.test.mjs, lines 116-135.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/owner.test.mjs:isBound",
+   "type": "function",
+   "name": "isBound",
+   "filePath": "cloud/owner.test.mjs",
+   "lineRange": [
+    154,
+    169
+   ],
+   "summary": "isBound(reference, block, single, masked) \u2014 function in owner.test.mjs, lines 154-169.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/owner.test.mjs:unscopedTables",
+   "type": "function",
+   "name": "unscopedTables",
+   "filePath": "cloud/owner.test.mjs",
+   "lineRange": [
+    179,
+    210
+   ],
+   "summary": "unscopedTables(sql) \u2014 function in owner.test.mjs, lines 179-210.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/owner.test.mjs:ownerIsBound",
+   "type": "function",
+   "name": "ownerIsBound",
+   "filePath": "cloud/owner.test.mjs",
+   "lineRange": [
+    213,
+    215
+   ],
+   "summary": "ownerIsBound(sql) \u2014 function in owner.test.mjs, lines 213-215.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:cloud/prime.mjs",
+   "type": "file",
+   "name": "prime.mjs",
+   "filePath": "cloud/prime.mjs",
+   "summary": "prime.mjs \u2014 javascript code, 237 lines, 5 functions, 0 classes, 3 exports, 4 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:cloud/prime.mjs:publicStatus",
+   "type": "function",
+   "name": "publicStatus",
+   "filePath": "cloud/prime.mjs",
+   "lineRange": [
+    6,
+    13
+   ],
+   "summary": "publicStatus(state) \u2014 function in prime.mjs, lines 6-13.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/prime.mjs:primeStatus",
+   "type": "function",
+   "name": "primeStatus",
+   "filePath": "cloud/prime.mjs",
+   "lineRange": [
+    17,
+    19
+   ],
+   "summary": "primeStatus() \u2014 function in prime.mjs, lines 17-19.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/prime.mjs:enqueuePrime",
+   "type": "function",
+   "name": "enqueuePrime",
+   "filePath": "cloud/prime.mjs",
+   "lineRange": [
+    20,
+    36
+   ],
+   "summary": "enqueuePrime(owner, session) \u2014 function in prime.mjs, lines 20-36.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/prime.mjs:workerAllowed",
+   "type": "function",
+   "name": "workerAllowed",
+   "filePath": "cloud/prime.mjs",
+   "lineRange": [
+    37,
+    47
+   ],
+   "summary": "workerAllowed(req) \u2014 function in prime.mjs, lines 37-47.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/prime.mjs:mountPrimeRoutes",
+   "type": "function",
+   "name": "mountPrimeRoutes",
+   "filePath": "cloud/prime.mjs",
+   "lineRange": [
+    48,
+    237
+   ],
+   "summary": "mountPrimeRoutes(app) \u2014 function in prime.mjs, lines 48-237.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:cloud/prime.test.mjs",
+   "type": "file",
+   "name": "prime.test.mjs",
+   "filePath": "cloud/prime.test.mjs",
+   "summary": "prime.test.mjs \u2014 javascript code, 157 lines, 0 functions, 0 classes, 0 exports, 3 imports.",
+   "tags": [
+    "javascript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "file:cloud/provider.mjs",
+   "type": "file",
+   "name": "provider.mjs",
+   "filePath": "cloud/provider.mjs",
+   "summary": "provider.mjs \u2014 javascript code, 117 lines, 6 functions, 0 classes, 3 exports, 5 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/provider.mjs:dependencies",
+   "type": "function",
+   "name": "dependencies",
+   "filePath": "cloud/provider.mjs",
+   "lineRange": [
+    16,
+    19
+   ],
+   "summary": "dependencies(overrides) \u2014 function in provider.mjs, lines 16-19.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/provider.mjs:snapshotKey",
+   "type": "function",
+   "name": "snapshotKey",
+   "filePath": "cloud/provider.mjs",
+   "lineRange": [
+    23,
+    24
+   ],
+   "summary": "snapshotKey() \u2014 function in provider.mjs, lines 23-24.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/provider.mjs:rememberProviderFailure",
+   "type": "function",
+   "name": "rememberProviderFailure",
+   "filePath": "cloud/provider.mjs",
+   "lineRange": [
+    26,
+    32
+   ],
+   "summary": "rememberProviderFailure(owner, snapshot, failure, client\u2026) \u2014 function in provider.mjs, lines 26-32.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/provider.mjs:configuration",
+   "type": "function",
+   "name": "configuration",
+   "filePath": "cloud/provider.mjs",
+   "lineRange": [
+    34,
+    52
+   ],
+   "summary": "configuration(config, deps) \u2014 function in provider.mjs, lines 34-52.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/provider.mjs:provider",
+   "type": "function",
+   "name": "provider",
+   "filePath": "cloud/provider.mjs",
+   "lineRange": [
+    54,
+    59
+   ],
+   "summary": "provider(owner, snapshot, overrides) \u2014 function in provider.mjs, lines 54-59.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/provider.mjs:providerState",
+   "type": "function",
+   "name": "providerState",
+   "filePath": "cloud/provider.mjs",
+   "lineRange": [
+    61,
+    117
+   ],
+   "summary": "providerState(owner, overrides) \u2014 function in provider.mjs, lines 61-117.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:cloud/provider.test.mjs",
+   "type": "file",
+   "name": "provider.test.mjs",
+   "filePath": "cloud/provider.test.mjs",
+   "summary": "provider.test.mjs \u2014 javascript code, 143 lines, 1 functions, 0 classes, 0 exports, 3 imports.",
+   "tags": [
+    "javascript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:cloud/provider.test.mjs:fixture",
+   "type": "function",
+   "name": "fixture",
+   "filePath": "cloud/provider.test.mjs",
+   "lineRange": [
+    7,
+    28
+   ],
+   "summary": "fixture(saved) \u2014 function in provider.test.mjs, lines 7-28.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  }
+ ],
+ "edges": [
+  {
+   "source": "file:apps/control-plane/api/remote-gateway.mjs",
+   "target": "function:apps/control-plane/api/remote-gateway.mjs:sameToken",
+   "type": "contains",
+   "direction": "forward",
+   "description": "remote-gateway.mjs defines sameToken",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/remote-gateway.mjs",
+   "target": "function:apps/control-plane/api/remote-gateway.mjs:json",
+   "type": "contains",
+   "direction": "forward",
+   "description": "remote-gateway.mjs defines json",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/remote-gateway.mjs",
+   "target": "function:apps/control-plane/api/remote-gateway.mjs:readRequestBody",
+   "type": "contains",
+   "direction": "forward",
+   "description": "remote-gateway.mjs defines readRequestBody",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/remote-gateway.mjs",
+   "target": "function:apps/control-plane/api/remote-gateway.mjs:handler",
+   "type": "contains",
+   "direction": "forward",
+   "description": "remote-gateway.mjs defines handler",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/remote-gateway.mjs",
+   "target": "function:apps/control-plane/api/remote-gateway.mjs:handler",
+   "type": "exports",
+   "direction": "forward",
+   "description": "remote-gateway.mjs exports handler",
+   "weight": 0.7
+  },
+  {
+   "source": "function:apps/control-plane/api/remote-gateway.mjs:handler",
+   "target": "function:apps/control-plane/api/remote-gateway.mjs:json",
+   "type": "calls",
+   "direction": "forward",
+   "description": "handler calls json",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/remote-gateway.mjs:handler",
+   "target": "function:apps/control-plane/api/remote-gateway.mjs:readRequestBody",
+   "type": "calls",
+   "direction": "forward",
+   "description": "handler calls readRequestBody",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/remote-gateway.mjs:handler",
+   "target": "function:apps/control-plane/api/remote-gateway.mjs:sameToken",
+   "type": "calls",
+   "direction": "forward",
+   "description": "handler calls sameToken",
+   "weight": 0.6
+  },
+  {
+   "source": "file:apps/control-plane/api/session-cookie.mjs",
+   "target": "function:apps/control-plane/api/session-cookie.mjs:workspaceSessionCookie",
+   "type": "contains",
+   "direction": "forward",
+   "description": "session-cookie.mjs defines workspaceSessionCookie",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/session-cookie.mjs",
+   "target": "function:apps/control-plane/api/session-cookie.mjs:workspaceSessionCookie",
+   "type": "exports",
+   "direction": "forward",
+   "description": "session-cookie.mjs exports workspaceSessionCookie",
+   "weight": 0.7
+  },
+  {
+   "source": "file:cloud/account-routes.test.mjs",
+   "target": "function:cloud/account-routes.test.mjs:issue",
+   "type": "contains",
+   "direction": "forward",
+   "description": "account-routes.test.mjs defines issue",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/account-routes.test.mjs",
+   "target": "function:cloud/account-routes.test.mjs:post",
+   "type": "contains",
+   "direction": "forward",
+   "description": "account-routes.test.mjs defines post",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/account-routes.test.mjs",
+   "target": "function:cloud/account-routes.test.mjs:signIn",
+   "type": "contains",
+   "direction": "forward",
+   "description": "account-routes.test.mjs defines signIn",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/account-routes.test.mjs",
+   "target": "function:cloud/account-routes.test.mjs:cookieOf",
+   "type": "contains",
+   "direction": "forward",
+   "description": "account-routes.test.mjs defines cookieOf",
+   "weight": 1.0
+  },
+  {
+   "source": "function:cloud/account-routes.test.mjs:signIn",
+   "target": "function:cloud/account-routes.test.mjs:post",
+   "type": "calls",
+   "direction": "forward",
+   "description": "signIn calls post",
+   "weight": 0.6
+  },
+  {
+   "source": "file:cloud/account.mjs",
+   "target": "function:cloud/account.mjs:hexKey",
+   "type": "contains",
+   "direction": "forward",
+   "description": "account.mjs defines hexKey",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/account.mjs",
+   "target": "function:cloud/account.mjs:sealSession",
+   "type": "contains",
+   "direction": "forward",
+   "description": "account.mjs defines sealSession",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/account.mjs",
+   "target": "function:cloud/account.mjs:sealSession",
+   "type": "exports",
+   "direction": "forward",
+   "description": "account.mjs exports sealSession",
+   "weight": 0.7
+  },
+  {
+   "source": "file:cloud/account.mjs",
+   "target": "function:cloud/account.mjs:openSession",
+   "type": "contains",
+   "direction": "forward",
+   "description": "account.mjs defines openSession",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/account.mjs",
+   "target": "function:cloud/account.mjs:openSession",
+   "type": "exports",
+   "direction": "forward",
+   "description": "account.mjs exports openSession",
+   "weight": 0.7
+  },
+  {
+   "source": "file:cloud/account.mjs",
+   "target": "function:cloud/account.mjs:setSessionCookie",
+   "type": "contains",
+   "direction": "forward",
+   "description": "account.mjs defines setSessionCookie",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/account.mjs",
+   "target": "function:cloud/account.mjs:setSessionCookie",
+   "type": "exports",
+   "direction": "forward",
+   "description": "account.mjs exports setSessionCookie",
+   "weight": 0.7
+  },
+  {
+   "source": "file:cloud/account.mjs",
+   "target": "function:cloud/account.mjs:clearSessionCookie",
+   "type": "contains",
+   "direction": "forward",
+   "description": "account.mjs defines clearSessionCookie",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/account.mjs",
+   "target": "function:cloud/account.mjs:clearSessionCookie",
+   "type": "exports",
+   "direction": "forward",
+   "description": "account.mjs exports clearSessionCookie",
+   "weight": 0.7
+  },
+  {
+   "source": "file:cloud/account.mjs",
+   "target": "function:cloud/account.mjs:readSessionCookie",
+   "type": "contains",
+   "direction": "forward",
+   "description": "account.mjs defines readSessionCookie",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/account.mjs",
+   "target": "function:cloud/account.mjs:readSessionCookie",
+   "type": "exports",
+   "direction": "forward",
+   "description": "account.mjs exports readSessionCookie",
+   "weight": 0.7
+  },
+  {
+   "source": "file:cloud/account.mjs",
+   "target": "function:cloud/account.mjs:signupAllowed",
+   "type": "contains",
+   "direction": "forward",
+   "description": "account.mjs defines signupAllowed",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/account.mjs",
+   "target": "function:cloud/account.mjs:signupAllowed",
+   "type": "exports",
+   "direction": "forward",
+   "description": "account.mjs exports signupAllowed",
+   "weight": 0.7
+  },
+  {
+   "source": "file:cloud/account.mjs",
+   "target": "function:cloud/account.mjs:namesTheAddress",
+   "type": "contains",
+   "direction": "forward",
+   "description": "account.mjs defines namesTheAddress",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/account.mjs",
+   "target": "function:cloud/account.mjs:classify",
+   "type": "contains",
+   "direction": "forward",
+   "description": "account.mjs defines classify",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/account.mjs",
+   "target": "function:cloud/account.mjs:createAccountService",
+   "type": "contains",
+   "direction": "forward",
+   "description": "account.mjs defines createAccountService",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/account.mjs",
+   "target": "function:cloud/account.mjs:createAccountService",
+   "type": "exports",
+   "direction": "forward",
+   "description": "account.mjs exports createAccountService",
+   "weight": 0.7
+  },
+  {
+   "source": "file:cloud/account.mjs",
+   "target": "function:cloud/account.mjs:setting",
+   "type": "contains",
+   "direction": "forward",
+   "description": "account.mjs defines setting",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/account.mjs",
+   "target": "function:cloud/account.mjs:accountServiceFromEnv",
+   "type": "contains",
+   "direction": "forward",
+   "description": "account.mjs defines accountServiceFromEnv",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/account.mjs",
+   "target": "function:cloud/account.mjs:accountServiceFromEnv",
+   "type": "exports",
+   "direction": "forward",
+   "description": "account.mjs exports accountServiceFromEnv",
+   "weight": 0.7
+  },
+  {
+   "source": "file:cloud/account.mjs",
+   "target": "function:cloud/account.mjs:derivedKey",
+   "type": "contains",
+   "direction": "forward",
+   "description": "account.mjs defines derivedKey",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/account.mjs",
+   "target": "function:cloud/account.mjs:derivedKey",
+   "type": "exports",
+   "direction": "forward",
+   "description": "account.mjs exports derivedKey",
+   "weight": 0.7
+  },
+  {
+   "source": "function:cloud/account.mjs:sealSession",
+   "target": "function:cloud/account.mjs:hexKey",
+   "type": "calls",
+   "direction": "forward",
+   "description": "sealSession calls hexKey",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/account.mjs:openSession",
+   "target": "function:cloud/account.mjs:hexKey",
+   "type": "calls",
+   "direction": "forward",
+   "description": "openSession calls hexKey",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/account.mjs:classify",
+   "target": "function:cloud/account.mjs:namesTheAddress",
+   "type": "calls",
+   "direction": "forward",
+   "description": "classify calls namesTheAddress",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/account.mjs:createAccountService",
+   "target": "function:cloud/account.mjs:openSession",
+   "type": "calls",
+   "direction": "forward",
+   "description": "createAccountService calls openSession",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/account.mjs:createAccountService",
+   "target": "function:cloud/account.mjs:sealSession",
+   "type": "calls",
+   "direction": "forward",
+   "description": "createAccountService calls sealSession",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/account.mjs:accountServiceFromEnv",
+   "target": "function:cloud/account.mjs:createAccountService",
+   "type": "calls",
+   "direction": "forward",
+   "description": "accountServiceFromEnv calls createAccountService",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/account.mjs:accountServiceFromEnv",
+   "target": "function:cloud/account.mjs:setting",
+   "type": "calls",
+   "direction": "forward",
+   "description": "accountServiceFromEnv calls setting",
+   "weight": 0.6
+  },
+  {
+   "source": "file:cloud/account.test.mjs",
+   "target": "function:cloud/account.test.mjs:session",
+   "type": "contains",
+   "direction": "forward",
+   "description": "account.test.mjs defines session",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/account.test.mjs",
+   "target": "function:cloud/account.test.mjs:scriptedService",
+   "type": "contains",
+   "direction": "forward",
+   "description": "account.test.mjs defines scriptedService",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/billing.mjs",
+   "target": "function:cloud/billing.mjs:indexKey",
+   "type": "contains",
+   "direction": "forward",
+   "description": "billing.mjs defines indexKey",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/billing.mjs",
+   "target": "function:cloud/billing.mjs:live",
+   "type": "contains",
+   "direction": "forward",
+   "description": "billing.mjs defines live",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/billing.mjs",
+   "target": "function:cloud/billing.mjs:envValue",
+   "type": "contains",
+   "direction": "forward",
+   "description": "billing.mjs defines envValue",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/billing.mjs",
+   "target": "function:cloud/billing.mjs:nothing",
+   "type": "contains",
+   "direction": "forward",
+   "description": "billing.mjs defines nothing",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/billing.mjs",
+   "target": "function:cloud/billing.mjs:classifyWebhookError",
+   "type": "contains",
+   "direction": "forward",
+   "description": "billing.mjs defines classifyWebhookError",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/billing.mjs",
+   "target": "function:cloud/billing.mjs:classifyWebhookError",
+   "type": "exports",
+   "direction": "forward",
+   "description": "billing.mjs exports classifyWebhookError",
+   "weight": 0.7
+  },
+  {
+   "source": "file:cloud/billing.mjs",
+   "target": "function:cloud/billing.mjs:unknownType",
+   "type": "contains",
+   "direction": "forward",
+   "description": "billing.mjs defines unknownType",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/billing.mjs",
+   "target": "function:cloud/billing.mjs:view",
+   "type": "contains",
+   "direction": "forward",
+   "description": "billing.mjs defines view",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/billing.mjs",
+   "target": "function:cloud/billing.mjs:stored",
+   "type": "contains",
+   "direction": "forward",
+   "description": "billing.mjs defines stored",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/billing.mjs",
+   "target": "function:cloud/billing.mjs:errorClasses",
+   "type": "contains",
+   "direction": "forward",
+   "description": "billing.mjs defines errorClasses",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/billing.mjs",
+   "target": "function:cloud/billing.mjs:createBillingService",
+   "type": "contains",
+   "direction": "forward",
+   "description": "billing.mjs defines createBillingService",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/billing.mjs",
+   "target": "function:cloud/billing.mjs:createBillingService",
+   "type": "exports",
+   "direction": "forward",
+   "description": "billing.mjs exports createBillingService",
+   "weight": 0.7
+  },
+  {
+   "source": "file:cloud/billing.mjs",
+   "target": "function:cloud/billing.mjs:billingFromEnv",
+   "type": "contains",
+   "direction": "forward",
+   "description": "billing.mjs defines billingFromEnv",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/billing.mjs",
+   "target": "function:cloud/billing.mjs:billingFromEnv",
+   "type": "exports",
+   "direction": "forward",
+   "description": "billing.mjs exports billingFromEnv",
+   "weight": 0.7
+  },
+  {
+   "source": "file:cloud/billing.mjs",
+   "target": "function:cloud/billing.mjs:mountBillingWebhook",
+   "type": "contains",
+   "direction": "forward",
+   "description": "billing.mjs defines mountBillingWebhook",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/billing.mjs",
+   "target": "function:cloud/billing.mjs:mountBillingWebhook",
+   "type": "exports",
+   "direction": "forward",
+   "description": "billing.mjs exports mountBillingWebhook",
+   "weight": 0.7
+  },
+  {
+   "source": "file:cloud/billing.mjs",
+   "target": "function:cloud/billing.mjs:billingRoutes",
+   "type": "contains",
+   "direction": "forward",
+   "description": "billing.mjs defines billingRoutes",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/billing.mjs",
+   "target": "function:cloud/billing.mjs:billingRoutes",
+   "type": "exports",
+   "direction": "forward",
+   "description": "billing.mjs exports billingRoutes",
+   "weight": 0.7
+  },
+  {
+   "source": "function:cloud/billing.mjs:view",
+   "target": "function:cloud/billing.mjs:nothing",
+   "type": "calls",
+   "direction": "forward",
+   "description": "view calls nothing",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/billing.mjs:view",
+   "target": "function:cloud/billing.mjs:live",
+   "type": "calls",
+   "direction": "forward",
+   "description": "view calls live",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/billing.mjs:billingFromEnv",
+   "target": "function:cloud/billing.mjs:envValue",
+   "type": "calls",
+   "direction": "forward",
+   "description": "billingFromEnv calls envValue",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/billing.mjs:billingFromEnv",
+   "target": "function:cloud/billing.mjs:createBillingService",
+   "type": "calls",
+   "direction": "forward",
+   "description": "billingFromEnv calls createBillingService",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/billing.mjs:billingRoutes",
+   "target": "function:cloud/billing.mjs:nothing",
+   "type": "calls",
+   "direction": "forward",
+   "description": "billingRoutes calls nothing",
+   "weight": 0.6
+  },
+  {
+   "source": "file:cloud/billing.test.mjs",
+   "target": "function:cloud/billing.test.mjs:readCloud",
+   "type": "contains",
+   "direction": "forward",
+   "description": "billing.test.mjs defines readCloud",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/billing.test.mjs",
+   "target": "function:cloud/billing.test.mjs:now",
+   "type": "contains",
+   "direction": "forward",
+   "description": "billing.test.mjs defines now",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/billing.test.mjs",
+   "target": "function:cloud/billing.test.mjs:signed",
+   "type": "contains",
+   "direction": "forward",
+   "description": "billing.test.mjs defines signed",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/billing.test.mjs",
+   "target": "function:cloud/billing.test.mjs:fakeSdk",
+   "type": "contains",
+   "direction": "forward",
+   "description": "billing.test.mjs defines fakeSdk",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/billing.test.mjs",
+   "target": "function:cloud/billing.test.mjs:failingService",
+   "type": "contains",
+   "direction": "forward",
+   "description": "billing.test.mjs defines failingService",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/billing.test.mjs",
+   "target": "function:cloud/billing.test.mjs:subscription",
+   "type": "contains",
+   "direction": "forward",
+   "description": "billing.test.mjs defines subscription",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/billing.test.mjs",
+   "target": "function:cloud/billing.test.mjs:knownEventTypes",
+   "type": "contains",
+   "direction": "forward",
+   "description": "billing.test.mjs defines knownEventTypes",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/billing.test.mjs",
+   "target": "function:cloud/billing.test.mjs:memory",
+   "type": "contains",
+   "direction": "forward",
+   "description": "billing.test.mjs defines memory",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/billing.test.mjs",
+   "target": "function:cloud/billing.test.mjs:fixture",
+   "type": "contains",
+   "direction": "forward",
+   "description": "billing.test.mjs defines fixture",
+   "weight": 1.0
+  },
+  {
+   "source": "function:cloud/billing.test.mjs:signed",
+   "target": "function:cloud/billing.test.mjs:now",
+   "type": "calls",
+   "direction": "forward",
+   "description": "signed calls now",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/billing.test.mjs:failingService",
+   "target": "function:cloud/billing.test.mjs:memory",
+   "type": "calls",
+   "direction": "forward",
+   "description": "failingService calls memory",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/billing.test.mjs:fixture",
+   "target": "function:cloud/billing.test.mjs:memory",
+   "type": "calls",
+   "direction": "forward",
+   "description": "fixture calls memory",
+   "weight": 0.6
+  },
+  {
+   "source": "file:cloud/capability-gate.mjs",
+   "target": "function:cloud/capability-gate.mjs:openCapabilities",
+   "type": "contains",
+   "direction": "forward",
+   "description": "capability-gate.mjs defines openCapabilities",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/capability-gate.mjs",
+   "target": "function:cloud/capability-gate.mjs:openCapabilities",
+   "type": "exports",
+   "direction": "forward",
+   "description": "capability-gate.mjs exports openCapabilities",
+   "weight": 0.7
+  },
+  {
+   "source": "file:cloud/capability-gate.mjs",
+   "target": "function:cloud/capability-gate.mjs:narrowCapabilities",
+   "type": "contains",
+   "direction": "forward",
+   "description": "capability-gate.mjs defines narrowCapabilities",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/capability-gate.mjs",
+   "target": "function:cloud/capability-gate.mjs:narrowCapabilities",
+   "type": "exports",
+   "direction": "forward",
+   "description": "capability-gate.mjs exports narrowCapabilities",
+   "weight": 0.7
+  },
+  {
+   "source": "file:cloud/capability-gate.mjs",
+   "target": "function:cloud/capability-gate.mjs:createCapabilityGate",
+   "type": "contains",
+   "direction": "forward",
+   "description": "capability-gate.mjs defines createCapabilityGate",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/capability-gate.mjs",
+   "target": "function:cloud/capability-gate.mjs:createCapabilityGate",
+   "type": "exports",
+   "direction": "forward",
+   "description": "capability-gate.mjs exports createCapabilityGate",
+   "weight": 0.7
+  },
+  {
+   "source": "function:cloud/capability-gate.mjs:createCapabilityGate",
+   "target": "function:cloud/capability-gate.mjs:narrowCapabilities",
+   "type": "calls",
+   "direction": "forward",
+   "description": "createCapabilityGate calls narrowCapabilities",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/capability-gate.mjs:createCapabilityGate",
+   "target": "function:cloud/capability-gate.mjs:openCapabilities",
+   "type": "calls",
+   "direction": "forward",
+   "description": "createCapabilityGate calls openCapabilities",
+   "weight": 0.6
+  },
+  {
+   "source": "file:cloud/capability-gate.test.mjs",
+   "target": "function:cloud/capability-gate.test.mjs:readCloud",
+   "type": "contains",
+   "direction": "forward",
+   "description": "capability-gate.test.mjs defines readCloud",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/capability-gate.test.mjs",
+   "target": "function:cloud/capability-gate.test.mjs:memory",
+   "type": "contains",
+   "direction": "forward",
+   "description": "capability-gate.test.mjs defines memory",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/capability-gate.test.mjs",
+   "target": "function:cloud/capability-gate.test.mjs:event",
+   "type": "contains",
+   "direction": "forward",
+   "description": "capability-gate.test.mjs defines event",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/capability-gate.test.mjs",
+   "target": "function:cloud/capability-gate.test.mjs:wired",
+   "type": "contains",
+   "direction": "forward",
+   "description": "capability-gate.test.mjs defines wired",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/capability-gate.test.mjs",
+   "target": "function:cloud/capability-gate.test.mjs:server",
+   "type": "contains",
+   "direction": "forward",
+   "description": "capability-gate.test.mjs defines server",
+   "weight": 1.0
+  },
+  {
+   "source": "function:cloud/capability-gate.test.mjs:wired",
+   "target": "function:cloud/capability-gate.test.mjs:memory",
+   "type": "calls",
+   "direction": "forward",
+   "description": "wired calls memory",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/capability-gate.test.mjs:wired",
+   "target": "function:cloud/capability-gate.test.mjs:event",
+   "type": "calls",
+   "direction": "forward",
+   "description": "wired calls event",
+   "weight": 0.6
+  },
+  {
+   "source": "file:cloud/demo.mjs",
+   "target": "function:cloud/demo.mjs:demoFailureMessage",
+   "type": "contains",
+   "direction": "forward",
+   "description": "demo.mjs defines demoFailureMessage",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/demo.mjs",
+   "target": "function:cloud/demo.mjs:demoFailureMessage",
+   "type": "exports",
+   "direction": "forward",
+   "description": "demo.mjs exports demoFailureMessage",
+   "weight": 0.7
+  },
+  {
+   "source": "file:cloud/demo.mjs",
+   "target": "function:cloud/demo.mjs:fail",
+   "type": "contains",
+   "direction": "forward",
+   "description": "demo.mjs defines fail",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/demo.mjs",
+   "target": "function:cloud/demo.mjs:demoIdentity",
+   "type": "contains",
+   "direction": "forward",
+   "description": "demo.mjs defines demoIdentity",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/demo.mjs",
+   "target": "function:cloud/demo.mjs:demoIdentity",
+   "type": "exports",
+   "direction": "forward",
+   "description": "demo.mjs exports demoIdentity",
+   "weight": 0.7
+  },
+  {
+   "source": "file:cloud/demo.mjs",
+   "target": "function:cloud/demo.mjs:demoCookie",
+   "type": "contains",
+   "direction": "forward",
+   "description": "demo.mjs defines demoCookie",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/demo.mjs",
+   "target": "function:cloud/demo.mjs:demoCookie",
+   "type": "exports",
+   "direction": "forward",
+   "description": "demo.mjs exports demoCookie",
+   "weight": 0.7
+  },
+  {
+   "source": "file:cloud/demo.mjs",
+   "target": "function:cloud/demo.mjs:reserveDemoBudget",
+   "type": "contains",
+   "direction": "forward",
+   "description": "demo.mjs defines reserveDemoBudget",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/demo.mjs",
+   "target": "function:cloud/demo.mjs:reserveDemoBudget",
+   "type": "exports",
+   "direction": "forward",
+   "description": "demo.mjs exports reserveDemoBudget",
+   "weight": 0.7
+  },
+  {
+   "source": "file:cloud/demo.mjs",
+   "target": "function:cloud/demo.mjs:demoRouter",
+   "type": "contains",
+   "direction": "forward",
+   "description": "demo.mjs defines demoRouter",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/demo.mjs",
+   "target": "function:cloud/demo.mjs:demoRouter",
+   "type": "exports",
+   "direction": "forward",
+   "description": "demo.mjs exports demoRouter",
+   "weight": 0.7
+  },
+  {
+   "source": "function:cloud/demo.mjs:reserveDemoBudget",
+   "target": "function:cloud/demo.mjs:fail",
+   "type": "calls",
+   "direction": "forward",
+   "description": "reserveDemoBudget calls fail",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/demo.mjs:demoRouter",
+   "target": "function:cloud/demo.mjs:demoIdentity",
+   "type": "calls",
+   "direction": "forward",
+   "description": "demoRouter calls demoIdentity",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/demo.mjs:demoRouter",
+   "target": "function:cloud/demo.mjs:fail",
+   "type": "calls",
+   "direction": "forward",
+   "description": "demoRouter calls fail",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/demo.mjs:demoRouter",
+   "target": "function:cloud/demo.mjs:demoCookie",
+   "type": "calls",
+   "direction": "forward",
+   "description": "demoRouter calls demoCookie",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/demo.mjs:demoRouter",
+   "target": "function:cloud/demo.mjs:reserveDemoBudget",
+   "type": "calls",
+   "direction": "forward",
+   "description": "demoRouter calls reserveDemoBudget",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/demo.mjs:demoRouter",
+   "target": "function:cloud/demo.mjs:demoFailureMessage",
+   "type": "calls",
+   "direction": "forward",
+   "description": "demoRouter calls demoFailureMessage",
+   "weight": 0.6
+  },
+  {
+   "source": "file:cloud/env.mjs",
+   "target": "function:cloud/env.mjs:legacyEnvKey",
+   "type": "contains",
+   "direction": "forward",
+   "description": "env.mjs defines legacyEnvKey",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/env.mjs",
+   "target": "function:cloud/env.mjs:legacyEnvKey",
+   "type": "exports",
+   "direction": "forward",
+   "description": "env.mjs exports legacyEnvKey",
+   "weight": 0.7
+  },
+  {
+   "source": "file:cloud/env.mjs",
+   "target": "function:cloud/env.mjs:envValue",
+   "type": "contains",
+   "direction": "forward",
+   "description": "env.mjs defines envValue",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/env.mjs",
+   "target": "function:cloud/env.mjs:envValue",
+   "type": "exports",
+   "direction": "forward",
+   "description": "env.mjs exports envValue",
+   "weight": 0.7
+  },
+  {
+   "source": "file:cloud/env.mjs",
+   "target": "function:cloud/env.mjs:normalizeEnv",
+   "type": "contains",
+   "direction": "forward",
+   "description": "env.mjs defines normalizeEnv",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/env.mjs",
+   "target": "function:cloud/env.mjs:normalizeEnv",
+   "type": "exports",
+   "direction": "forward",
+   "description": "env.mjs exports normalizeEnv",
+   "weight": 0.7
+  },
+  {
+   "source": "function:cloud/env.mjs:envValue",
+   "target": "function:cloud/env.mjs:legacyEnvKey",
+   "type": "calls",
+   "direction": "forward",
+   "description": "envValue calls legacyEnvKey",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/env.mjs:normalizeEnv",
+   "target": "function:cloud/env.mjs:legacyEnvKey",
+   "type": "calls",
+   "direction": "forward",
+   "description": "normalizeEnv calls legacyEnvKey",
+   "weight": 0.6
+  },
+  {
+   "source": "file:cloud/env.test.mjs",
+   "target": "function:cloud/env.test.mjs:storedSubscription",
+   "type": "contains",
+   "direction": "forward",
+   "description": "env.test.mjs defines storedSubscription",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/env.test.mjs",
+   "target": "function:cloud/env.test.mjs:isSubscribed",
+   "type": "contains",
+   "direction": "forward",
+   "description": "env.test.mjs defines isSubscribed",
+   "weight": 1.0
+  },
+  {
+   "source": "function:cloud/env.test.mjs:isSubscribed",
+   "target": "function:cloud/env.test.mjs:storedSubscription",
+   "type": "calls",
+   "direction": "forward",
+   "description": "isSubscribed calls storedSubscription",
+   "weight": 0.6
+  },
+  {
+   "source": "file:cloud/integrations.mjs",
+   "target": "function:cloud/integrations.mjs:providerCatalog",
+   "type": "contains",
+   "direction": "forward",
+   "description": "integrations.mjs defines providerCatalog",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/integrations.mjs",
+   "target": "function:cloud/integrations.mjs:callbackBase",
+   "type": "contains",
+   "direction": "forward",
+   "description": "integrations.mjs defines callbackBase",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/integrations.mjs",
+   "target": "function:cloud/integrations.mjs:epoch",
+   "type": "contains",
+   "direction": "forward",
+   "description": "integrations.mjs defines epoch",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/integrations.mjs",
+   "target": "function:cloud/integrations.mjs:cookieName",
+   "type": "contains",
+   "direction": "forward",
+   "description": "integrations.mjs defines cookieName",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/integrations.mjs",
+   "target": "function:cloud/integrations.mjs:cookie",
+   "type": "contains",
+   "direction": "forward",
+   "description": "integrations.mjs defines cookie",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/integrations.mjs",
+   "target": "function:cloud/integrations.mjs:binding",
+   "type": "contains",
+   "direction": "forward",
+   "description": "integrations.mjs defines binding",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/integrations.mjs",
+   "target": "function:cloud/integrations.mjs:clientFor",
+   "type": "contains",
+   "direction": "forward",
+   "description": "integrations.mjs defines clientFor",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/integrations.mjs",
+   "target": "function:cloud/integrations.mjs:integrationStatus",
+   "type": "contains",
+   "direction": "forward",
+   "description": "integrations.mjs defines integrationStatus",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/integrations.mjs",
+   "target": "function:cloud/integrations.mjs:integrationStatus",
+   "type": "exports",
+   "direction": "forward",
+   "description": "integrations.mjs exports integrationStatus",
+   "weight": 0.7
+  },
+  {
+   "source": "file:cloud/integrations.mjs",
+   "target": "function:cloud/integrations.mjs:integrationConfig",
+   "type": "contains",
+   "direction": "forward",
+   "description": "integrations.mjs defines integrationConfig",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/integrations.mjs",
+   "target": "function:cloud/integrations.mjs:integrationConfig",
+   "type": "exports",
+   "direction": "forward",
+   "description": "integrations.mjs exports integrationConfig",
+   "weight": 0.7
+  },
+  {
+   "source": "file:cloud/integrations.mjs",
+   "target": "function:cloud/integrations.mjs:integrationCatalogs",
+   "type": "contains",
+   "direction": "forward",
+   "description": "integrations.mjs defines integrationCatalogs",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/integrations.mjs",
+   "target": "function:cloud/integrations.mjs:integrationCatalogs",
+   "type": "exports",
+   "direction": "forward",
+   "description": "integrations.mjs exports integrationCatalogs",
+   "weight": 0.7
+  },
+  {
+   "source": "file:cloud/integrations.mjs",
+   "target": "function:cloud/integrations.mjs:resolveIntegration",
+   "type": "contains",
+   "direction": "forward",
+   "description": "integrations.mjs defines resolveIntegration",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/integrations.mjs",
+   "target": "function:cloud/integrations.mjs:resolveIntegration",
+   "type": "exports",
+   "direction": "forward",
+   "description": "integrations.mjs exports resolveIntegration",
+   "weight": 0.7
+  },
+  {
+   "source": "file:cloud/integrations.mjs",
+   "target": "function:cloud/integrations.mjs:mountIntegrationCallback",
+   "type": "contains",
+   "direction": "forward",
+   "description": "integrations.mjs defines mountIntegrationCallback",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/integrations.mjs",
+   "target": "function:cloud/integrations.mjs:mountIntegrationCallback",
+   "type": "exports",
+   "direction": "forward",
+   "description": "integrations.mjs exports mountIntegrationCallback",
+   "weight": 0.7
+  },
+  {
+   "source": "file:cloud/integrations.mjs",
+   "target": "function:cloud/integrations.mjs:mountIntegrationRoutes",
+   "type": "contains",
+   "direction": "forward",
+   "description": "integrations.mjs defines mountIntegrationRoutes",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/integrations.mjs",
+   "target": "function:cloud/integrations.mjs:mountIntegrationRoutes",
+   "type": "exports",
+   "direction": "forward",
+   "description": "integrations.mjs exports mountIntegrationRoutes",
+   "weight": 0.7
+  },
+  {
+   "source": "function:cloud/integrations.mjs:cookie",
+   "target": "function:cloud/integrations.mjs:cookieName",
+   "type": "calls",
+   "direction": "forward",
+   "description": "cookie calls cookieName",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/integrations.mjs:binding",
+   "target": "function:cloud/integrations.mjs:cookieName",
+   "type": "calls",
+   "direction": "forward",
+   "description": "binding calls cookieName",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/integrations.mjs:integrationStatus",
+   "target": "function:cloud/integrations.mjs:callbackBase",
+   "type": "calls",
+   "direction": "forward",
+   "description": "integrationStatus calls callbackBase",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/integrations.mjs:integrationStatus",
+   "target": "function:cloud/integrations.mjs:clientFor",
+   "type": "calls",
+   "direction": "forward",
+   "description": "integrationStatus calls clientFor",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/integrations.mjs:integrationConfig",
+   "target": "function:cloud/integrations.mjs:clientFor",
+   "type": "calls",
+   "direction": "forward",
+   "description": "integrationConfig calls clientFor",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/integrations.mjs:integrationCatalogs",
+   "target": "function:cloud/integrations.mjs:providerCatalog",
+   "type": "calls",
+   "direction": "forward",
+   "description": "integrationCatalogs calls providerCatalog",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/integrations.mjs:integrationCatalogs",
+   "target": "function:cloud/integrations.mjs:integrationConfig",
+   "type": "calls",
+   "direction": "forward",
+   "description": "integrationCatalogs calls integrationConfig",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/integrations.mjs:resolveIntegration",
+   "target": "function:cloud/integrations.mjs:integrationConfig",
+   "type": "calls",
+   "direction": "forward",
+   "description": "resolveIntegration calls integrationConfig",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/integrations.mjs:mountIntegrationCallback",
+   "target": "function:cloud/integrations.mjs:binding",
+   "type": "calls",
+   "direction": "forward",
+   "description": "mountIntegrationCallback calls binding",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/integrations.mjs:mountIntegrationCallback",
+   "target": "function:cloud/integrations.mjs:epoch",
+   "type": "calls",
+   "direction": "forward",
+   "description": "mountIntegrationCallback calls epoch",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/integrations.mjs:mountIntegrationCallback",
+   "target": "function:cloud/integrations.mjs:cookie",
+   "type": "calls",
+   "direction": "forward",
+   "description": "mountIntegrationCallback calls cookie",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/integrations.mjs:mountIntegrationCallback",
+   "target": "function:cloud/integrations.mjs:clientFor",
+   "type": "calls",
+   "direction": "forward",
+   "description": "mountIntegrationCallback calls clientFor",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/integrations.mjs:mountIntegrationCallback",
+   "target": "function:cloud/integrations.mjs:providerCatalog",
+   "type": "calls",
+   "direction": "forward",
+   "description": "mountIntegrationCallback calls providerCatalog",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/integrations.mjs:mountIntegrationRoutes",
+   "target": "function:cloud/integrations.mjs:integrationStatus",
+   "type": "calls",
+   "direction": "forward",
+   "description": "mountIntegrationRoutes calls integrationStatus",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/integrations.mjs:mountIntegrationRoutes",
+   "target": "function:cloud/integrations.mjs:clientFor",
+   "type": "calls",
+   "direction": "forward",
+   "description": "mountIntegrationRoutes calls clientFor",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/integrations.mjs:mountIntegrationRoutes",
+   "target": "function:cloud/integrations.mjs:callbackBase",
+   "type": "calls",
+   "direction": "forward",
+   "description": "mountIntegrationRoutes calls callbackBase",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/integrations.mjs:mountIntegrationRoutes",
+   "target": "function:cloud/integrations.mjs:epoch",
+   "type": "calls",
+   "direction": "forward",
+   "description": "mountIntegrationRoutes calls epoch",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/integrations.mjs:mountIntegrationRoutes",
+   "target": "function:cloud/integrations.mjs:cookie",
+   "type": "calls",
+   "direction": "forward",
+   "description": "mountIntegrationRoutes calls cookie",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/integrations.mjs:mountIntegrationRoutes",
+   "target": "function:cloud/integrations.mjs:providerCatalog",
+   "type": "calls",
+   "direction": "forward",
+   "description": "mountIntegrationRoutes calls providerCatalog",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/integrations.mjs:mountIntegrationRoutes",
+   "target": "function:cloud/integrations.mjs:integrationConfig",
+   "type": "calls",
+   "direction": "forward",
+   "description": "mountIntegrationRoutes calls integrationConfig",
+   "weight": 0.6
+  },
+  {
+   "source": "file:cloud/oauth-state.mjs",
+   "target": "function:cloud/oauth-state.mjs:seal",
+   "type": "contains",
+   "direction": "forward",
+   "description": "oauth-state.mjs defines seal",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/oauth-state.mjs",
+   "target": "function:cloud/oauth-state.mjs:unseal",
+   "type": "contains",
+   "direction": "forward",
+   "description": "oauth-state.mjs defines unseal",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/oauth-state.mjs",
+   "target": "function:cloud/oauth-state.mjs:sealOwnerState",
+   "type": "contains",
+   "direction": "forward",
+   "description": "oauth-state.mjs defines sealOwnerState",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/oauth-state.mjs",
+   "target": "function:cloud/oauth-state.mjs:sealOwnerState",
+   "type": "exports",
+   "direction": "forward",
+   "description": "oauth-state.mjs exports sealOwnerState",
+   "weight": 0.7
+  },
+  {
+   "source": "file:cloud/oauth-state.mjs",
+   "target": "function:cloud/oauth-state.mjs:openOwnerState",
+   "type": "contains",
+   "direction": "forward",
+   "description": "oauth-state.mjs defines openOwnerState",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/oauth-state.mjs",
+   "target": "function:cloud/oauth-state.mjs:openOwnerState",
+   "type": "exports",
+   "direction": "forward",
+   "description": "oauth-state.mjs exports openOwnerState",
+   "weight": 0.7
+  },
+  {
+   "source": "function:cloud/oauth-state.mjs:sealOwnerState",
+   "target": "function:cloud/oauth-state.mjs:seal",
+   "type": "calls",
+   "direction": "forward",
+   "description": "sealOwnerState calls seal",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/oauth-state.mjs:openOwnerState",
+   "target": "function:cloud/oauth-state.mjs:unseal",
+   "type": "calls",
+   "direction": "forward",
+   "description": "openOwnerState calls unseal",
+   "weight": 0.6
+  },
+  {
+   "source": "file:cloud/oauth.mjs",
+   "target": "function:cloud/oauth.mjs:hash",
+   "type": "contains",
+   "direction": "forward",
+   "description": "oauth.mjs defines hash",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/oauth.mjs",
+   "target": "function:cloud/oauth.mjs:hash",
+   "type": "exports",
+   "direction": "forward",
+   "description": "oauth.mjs exports hash",
+   "weight": 0.7
+  },
+  {
+   "source": "file:cloud/oauth.mjs",
+   "target": "function:cloud/oauth.mjs:nonce",
+   "type": "contains",
+   "direction": "forward",
+   "description": "oauth.mjs defines nonce",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/oauth.mjs",
+   "target": "function:cloud/oauth.mjs:nonce",
+   "type": "exports",
+   "direction": "forward",
+   "description": "oauth.mjs exports nonce",
+   "weight": 0.7
+  },
+  {
+   "source": "file:cloud/oauth.mjs",
+   "target": "function:cloud/oauth.mjs:providerDefinition",
+   "type": "contains",
+   "direction": "forward",
+   "description": "oauth.mjs defines providerDefinition",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/oauth.mjs",
+   "target": "function:cloud/oauth.mjs:providerDefinition",
+   "type": "exports",
+   "direction": "forward",
+   "description": "oauth.mjs exports providerDefinition",
+   "weight": 0.7
+  },
+  {
+   "source": "file:cloud/oauth.mjs",
+   "target": "function:cloud/oauth.mjs:authorization",
+   "type": "contains",
+   "direction": "forward",
+   "description": "oauth.mjs defines authorization",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/oauth.mjs",
+   "target": "function:cloud/oauth.mjs:authorization",
+   "type": "exports",
+   "direction": "forward",
+   "description": "oauth.mjs exports authorization",
+   "weight": 0.7
+  },
+  {
+   "source": "file:cloud/oauth.mjs",
+   "target": "function:cloud/oauth.mjs:validateCallback",
+   "type": "contains",
+   "direction": "forward",
+   "description": "oauth.mjs defines validateCallback",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/oauth.mjs",
+   "target": "function:cloud/oauth.mjs:validateCallback",
+   "type": "exports",
+   "direction": "forward",
+   "description": "oauth.mjs exports validateCallback",
+   "weight": 0.7
+  },
+  {
+   "source": "file:cloud/oauth.mjs",
+   "target": "function:cloud/oauth.mjs:exchange",
+   "type": "contains",
+   "direction": "forward",
+   "description": "oauth.mjs defines exchange",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/oauth.mjs",
+   "target": "function:cloud/oauth.mjs:exchange",
+   "type": "exports",
+   "direction": "forward",
+   "description": "oauth.mjs exports exchange",
+   "weight": 0.7
+  },
+  {
+   "source": "file:cloud/oauth.mjs",
+   "target": "function:cloud/oauth.mjs:integrationClass",
+   "type": "contains",
+   "direction": "forward",
+   "description": "oauth.mjs defines integrationClass",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/oauth.mjs",
+   "target": "function:cloud/oauth.mjs:integrationClass",
+   "type": "exports",
+   "direction": "forward",
+   "description": "oauth.mjs exports integrationClass",
+   "weight": 0.7
+  },
+  {
+   "source": "function:cloud/oauth.mjs:authorization",
+   "target": "function:cloud/oauth.mjs:providerDefinition",
+   "type": "calls",
+   "direction": "forward",
+   "description": "authorization calls providerDefinition",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/oauth.mjs:authorization",
+   "target": "function:cloud/oauth.mjs:nonce",
+   "type": "calls",
+   "direction": "forward",
+   "description": "authorization calls nonce",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/oauth.mjs:validateCallback",
+   "target": "function:cloud/oauth.mjs:hash",
+   "type": "calls",
+   "direction": "forward",
+   "description": "validateCallback calls hash",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/oauth.mjs:exchange",
+   "target": "function:cloud/oauth.mjs:providerDefinition",
+   "type": "calls",
+   "direction": "forward",
+   "description": "exchange calls providerDefinition",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/oauth.mjs:integrationClass",
+   "target": "function:cloud/oauth.mjs:providerDefinition",
+   "type": "calls",
+   "direction": "forward",
+   "description": "integrationClass calls providerDefinition",
+   "weight": 0.6
+  },
+  {
+   "source": "file:cloud/owner.mjs",
+   "target": "function:cloud/owner.mjs:isOwner",
+   "type": "contains",
+   "direction": "forward",
+   "description": "owner.mjs defines isOwner",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/owner.mjs",
+   "target": "function:cloud/owner.mjs:isOwner",
+   "type": "exports",
+   "direction": "forward",
+   "description": "owner.mjs exports isOwner",
+   "weight": 0.7
+  },
+  {
+   "source": "file:cloud/owner.mjs",
+   "target": "function:cloud/owner.mjs:assertOwner",
+   "type": "contains",
+   "direction": "forward",
+   "description": "owner.mjs defines assertOwner",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/owner.mjs",
+   "target": "function:cloud/owner.mjs:assertOwner",
+   "type": "exports",
+   "direction": "forward",
+   "description": "owner.mjs exports assertOwner",
+   "weight": 0.7
+  },
+  {
+   "source": "function:cloud/owner.mjs:assertOwner",
+   "target": "function:cloud/owner.mjs:isOwner",
+   "type": "calls",
+   "direction": "forward",
+   "description": "assertOwner calls isOwner",
+   "weight": 0.6
+  },
+  {
+   "source": "file:cloud/owner.test.mjs",
+   "target": "function:cloud/owner.test.mjs:readCloud",
+   "type": "contains",
+   "direction": "forward",
+   "description": "owner.test.mjs defines readCloud",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/owner.test.mjs",
+   "target": "function:cloud/owner.test.mjs:statements",
+   "type": "contains",
+   "direction": "forward",
+   "description": "owner.test.mjs defines statements",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/owner.test.mjs",
+   "target": "function:cloud/owner.test.mjs:skeleton",
+   "type": "contains",
+   "direction": "forward",
+   "description": "owner.test.mjs defines skeleton",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/owner.test.mjs",
+   "target": "function:cloud/owner.test.mjs:blocks",
+   "type": "contains",
+   "direction": "forward",
+   "description": "owner.test.mjs defines blocks",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/owner.test.mjs",
+   "target": "function:cloud/owner.test.mjs:isBound",
+   "type": "contains",
+   "direction": "forward",
+   "description": "owner.test.mjs defines isBound",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/owner.test.mjs",
+   "target": "function:cloud/owner.test.mjs:unscopedTables",
+   "type": "contains",
+   "direction": "forward",
+   "description": "owner.test.mjs defines unscopedTables",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/owner.test.mjs",
+   "target": "function:cloud/owner.test.mjs:unscopedTables",
+   "type": "exports",
+   "direction": "forward",
+   "description": "owner.test.mjs exports unscopedTables",
+   "weight": 0.7
+  },
+  {
+   "source": "file:cloud/owner.test.mjs",
+   "target": "function:cloud/owner.test.mjs:ownerIsBound",
+   "type": "contains",
+   "direction": "forward",
+   "description": "owner.test.mjs defines ownerIsBound",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/owner.test.mjs",
+   "target": "function:cloud/owner.test.mjs:ownerIsBound",
+   "type": "exports",
+   "direction": "forward",
+   "description": "owner.test.mjs exports ownerIsBound",
+   "weight": 0.7
+  },
+  {
+   "source": "function:cloud/owner.test.mjs:blocks",
+   "target": "function:cloud/owner.test.mjs:skeleton",
+   "type": "calls",
+   "direction": "forward",
+   "description": "blocks calls skeleton",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/owner.test.mjs:unscopedTables",
+   "target": "function:cloud/owner.test.mjs:skeleton",
+   "type": "calls",
+   "direction": "forward",
+   "description": "unscopedTables calls skeleton",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/owner.test.mjs:unscopedTables",
+   "target": "function:cloud/owner.test.mjs:blocks",
+   "type": "calls",
+   "direction": "forward",
+   "description": "unscopedTables calls blocks",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/owner.test.mjs:unscopedTables",
+   "target": "function:cloud/owner.test.mjs:isBound",
+   "type": "calls",
+   "direction": "forward",
+   "description": "unscopedTables calls isBound",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/owner.test.mjs:ownerIsBound",
+   "target": "function:cloud/owner.test.mjs:unscopedTables",
+   "type": "calls",
+   "direction": "forward",
+   "description": "ownerIsBound calls unscopedTables",
+   "weight": 0.6
+  },
+  {
+   "source": "file:cloud/prime.mjs",
+   "target": "function:cloud/prime.mjs:publicStatus",
+   "type": "contains",
+   "direction": "forward",
+   "description": "prime.mjs defines publicStatus",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/prime.mjs",
+   "target": "function:cloud/prime.mjs:primeStatus",
+   "type": "contains",
+   "direction": "forward",
+   "description": "prime.mjs defines primeStatus",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/prime.mjs",
+   "target": "function:cloud/prime.mjs:primeStatus",
+   "type": "exports",
+   "direction": "forward",
+   "description": "prime.mjs exports primeStatus",
+   "weight": 0.7
+  },
+  {
+   "source": "file:cloud/prime.mjs",
+   "target": "function:cloud/prime.mjs:enqueuePrime",
+   "type": "contains",
+   "direction": "forward",
+   "description": "prime.mjs defines enqueuePrime",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/prime.mjs",
+   "target": "function:cloud/prime.mjs:enqueuePrime",
+   "type": "exports",
+   "direction": "forward",
+   "description": "prime.mjs exports enqueuePrime",
+   "weight": 0.7
+  },
+  {
+   "source": "file:cloud/prime.mjs",
+   "target": "function:cloud/prime.mjs:workerAllowed",
+   "type": "contains",
+   "direction": "forward",
+   "description": "prime.mjs defines workerAllowed",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/prime.mjs",
+   "target": "function:cloud/prime.mjs:mountPrimeRoutes",
+   "type": "contains",
+   "direction": "forward",
+   "description": "prime.mjs defines mountPrimeRoutes",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/prime.mjs",
+   "target": "function:cloud/prime.mjs:mountPrimeRoutes",
+   "type": "exports",
+   "direction": "forward",
+   "description": "prime.mjs exports mountPrimeRoutes",
+   "weight": 0.7
+  },
+  {
+   "source": "function:cloud/prime.mjs:primeStatus",
+   "target": "function:cloud/prime.mjs:publicStatus",
+   "type": "calls",
+   "direction": "forward",
+   "description": "primeStatus calls publicStatus",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/prime.mjs:mountPrimeRoutes",
+   "target": "function:cloud/prime.mjs:primeStatus",
+   "type": "calls",
+   "direction": "forward",
+   "description": "mountPrimeRoutes calls primeStatus",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/prime.mjs:mountPrimeRoutes",
+   "target": "function:cloud/prime.mjs:workerAllowed",
+   "type": "calls",
+   "direction": "forward",
+   "description": "mountPrimeRoutes calls workerAllowed",
+   "weight": 0.6
+  },
+  {
+   "source": "file:cloud/provider.mjs",
+   "target": "function:cloud/provider.mjs:dependencies",
+   "type": "contains",
+   "direction": "forward",
+   "description": "provider.mjs defines dependencies",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/provider.mjs",
+   "target": "function:cloud/provider.mjs:snapshotKey",
+   "type": "contains",
+   "direction": "forward",
+   "description": "provider.mjs defines snapshotKey",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/provider.mjs",
+   "target": "function:cloud/provider.mjs:rememberProviderFailure",
+   "type": "contains",
+   "direction": "forward",
+   "description": "provider.mjs defines rememberProviderFailure",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/provider.mjs",
+   "target": "function:cloud/provider.mjs:rememberProviderFailure",
+   "type": "exports",
+   "direction": "forward",
+   "description": "provider.mjs exports rememberProviderFailure",
+   "weight": 0.7
+  },
+  {
+   "source": "file:cloud/provider.mjs",
+   "target": "function:cloud/provider.mjs:configuration",
+   "type": "contains",
+   "direction": "forward",
+   "description": "provider.mjs defines configuration",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/provider.mjs",
+   "target": "function:cloud/provider.mjs:provider",
+   "type": "contains",
+   "direction": "forward",
+   "description": "provider.mjs defines provider",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/provider.mjs",
+   "target": "function:cloud/provider.mjs:provider",
+   "type": "exports",
+   "direction": "forward",
+   "description": "provider.mjs exports provider",
+   "weight": 0.7
+  },
+  {
+   "source": "file:cloud/provider.mjs",
+   "target": "function:cloud/provider.mjs:providerState",
+   "type": "contains",
+   "direction": "forward",
+   "description": "provider.mjs defines providerState",
+   "weight": 1.0
+  },
+  {
+   "source": "file:cloud/provider.mjs",
+   "target": "function:cloud/provider.mjs:providerState",
+   "type": "exports",
+   "direction": "forward",
+   "description": "provider.mjs exports providerState",
+   "weight": 0.7
+  },
+  {
+   "source": "function:cloud/provider.mjs:rememberProviderFailure",
+   "target": "function:cloud/provider.mjs:dependencies",
+   "type": "calls",
+   "direction": "forward",
+   "description": "rememberProviderFailure calls dependencies",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/provider.mjs:rememberProviderFailure",
+   "target": "function:cloud/provider.mjs:snapshotKey",
+   "type": "calls",
+   "direction": "forward",
+   "description": "rememberProviderFailure calls snapshotKey",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/provider.mjs:provider",
+   "target": "function:cloud/provider.mjs:dependencies",
+   "type": "calls",
+   "direction": "forward",
+   "description": "provider calls dependencies",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/provider.mjs:provider",
+   "target": "function:cloud/provider.mjs:configuration",
+   "type": "calls",
+   "direction": "forward",
+   "description": "provider calls configuration",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/provider.mjs:providerState",
+   "target": "function:cloud/provider.mjs:dependencies",
+   "type": "calls",
+   "direction": "forward",
+   "description": "providerState calls dependencies",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/provider.mjs:providerState",
+   "target": "function:cloud/provider.mjs:configuration",
+   "type": "calls",
+   "direction": "forward",
+   "description": "providerState calls configuration",
+   "weight": 0.6
+  },
+  {
+   "source": "function:cloud/provider.mjs:providerState",
+   "target": "function:cloud/provider.mjs:snapshotKey",
+   "type": "calls",
+   "direction": "forward",
+   "description": "providerState calls snapshotKey",
+   "weight": 0.6
+  },
+  {
+   "source": "file:cloud/provider.test.mjs",
+   "target": "function:cloud/provider.test.mjs:fixture",
+   "type": "contains",
+   "direction": "forward",
+   "description": "provider.test.mjs defines fixture",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/remote-gateway.mjs",
+   "target": "file:apps/control-plane/api/session-cookie.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "remote-gateway.mjs imports session-cookie.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/account-isolation.test.mjs",
+   "target": "file:cloud/account.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "account-isolation.test.mjs imports account.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/account-isolation.test.mjs",
+   "target": "file:cloud/owner.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "account-isolation.test.mjs imports owner.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/account-isolation.test.mjs",
+   "target": "file:cloud/store.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "account-isolation.test.mjs imports store.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/account-isolation.test.mjs",
+   "target": "file:scripts/src/cloud-test-config.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "account-isolation.test.mjs imports cloud-test-config.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/account-routes.test.mjs",
+   "target": "file:cloud/account.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "account-routes.test.mjs imports account.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/account.mjs",
+   "target": "file:cloud/env.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "account.mjs imports env.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/account.mjs",
+   "target": "file:cloud/owner.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "account.mjs imports owner.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/account.test.mjs",
+   "target": "file:cloud/account.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "account.test.mjs imports account.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/account.test.mjs",
+   "target": "file:cloud/oauth-state.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "account.test.mjs imports oauth-state.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/account.test.mjs",
+   "target": "file:cloud/owner.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "account.test.mjs imports owner.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/billing.mjs",
+   "target": "file:cloud/env.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "billing.mjs imports env.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/billing.mjs",
+   "target": "file:cloud/owner.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "billing.mjs imports owner.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/billing.mjs",
+   "target": "file:cloud/store.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "billing.mjs imports store.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/billing.test.mjs",
+   "target": "file:cloud/billing.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "billing.test.mjs imports billing.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/billing.test.mjs",
+   "target": "file:cloud/owner.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "billing.test.mjs imports owner.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/capability-gate.mjs",
+   "target": "file:cloud/owner.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "capability-gate.mjs imports owner.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/capability-gate.mjs",
+   "target": "file:packages/workbench/src/gui.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "capability-gate.mjs imports gui.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/capability-gate.test.mjs",
+   "target": "file:cloud/billing.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "capability-gate.test.mjs imports billing.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/capability-gate.test.mjs",
+   "target": "file:cloud/capability-gate.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "capability-gate.test.mjs imports capability-gate.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/capability-gate.test.mjs",
+   "target": "file:cloud/owner.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "capability-gate.test.mjs imports owner.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/capability-gate.test.mjs",
+   "target": "file:packages/workbench/src/gui.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "capability-gate.test.mjs imports gui.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/demo.mjs",
+   "target": "file:cloud/env.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "demo.mjs imports env.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/demo.mjs",
+   "target": "file:cloud/owner.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "demo.mjs imports owner.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/demo.mjs",
+   "target": "file:cloud/recovery.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "demo.mjs imports recovery.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/demo.mjs",
+   "target": "file:cloud/store.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "demo.mjs imports store.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/demo.mjs",
+   "target": "file:packages/workbench/src/provider-defaults.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "demo.mjs imports provider-defaults.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/demo.mjs",
+   "target": "file:packages/workbench/src/provider.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "demo.mjs imports provider.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/demo.mjs",
+   "target": "file:packages/workbench/src/tool-catalog.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "demo.mjs imports tool-catalog.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/demo.mjs",
+   "target": "file:packages/workbench/src/workspace.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "demo.mjs imports workspace.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/demo.test.mjs",
+   "target": "file:cloud/demo.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "demo.test.mjs imports demo.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/demo.test.mjs",
+   "target": "file:cloud/owner.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "demo.test.mjs imports owner.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/demo.test.mjs",
+   "target": "file:packages/workbench/src/provider-defaults.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "demo.test.mjs imports provider-defaults.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/demo.test.mjs",
+   "target": "file:packages/workbench/src/provider.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "demo.test.mjs imports provider.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/env.test.mjs",
+   "target": "file:cloud/account.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "env.test.mjs imports account.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/env.test.mjs",
+   "target": "file:cloud/billing.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "env.test.mjs imports billing.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/env.test.mjs",
+   "target": "file:cloud/env.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "env.test.mjs imports env.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/integrations.mjs",
+   "target": "file:cloud/mcp.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "integrations.mjs imports mcp.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/integrations.mjs",
+   "target": "file:cloud/oauth-state.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "integrations.mjs imports oauth-state.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/integrations.mjs",
+   "target": "file:cloud/oauth.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "integrations.mjs imports oauth.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/integrations.mjs",
+   "target": "file:cloud/owner.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "integrations.mjs imports owner.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/integrations.mjs",
+   "target": "file:cloud/store.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "integrations.mjs imports store.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/integrations.mjs",
+   "target": "file:cloud/vercel-integration.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "integrations.mjs imports vercel-integration.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/integrations.test.mjs",
+   "target": "file:cloud/integrations.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "integrations.test.mjs imports integrations.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/integrations.test.mjs",
+   "target": "file:cloud/oauth.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "integrations.test.mjs imports oauth.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/integrations.test.mjs",
+   "target": "file:cloud/owner.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "integrations.test.mjs imports owner.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/integrations.test.mjs",
+   "target": "file:cloud/store.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "integrations.test.mjs imports store.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/oauth-state.mjs",
+   "target": "file:cloud/account.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "oauth-state.mjs imports account.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/oauth-state.mjs",
+   "target": "file:cloud/owner.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "oauth-state.mjs imports owner.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/oauth.test.mjs",
+   "target": "file:cloud/oauth.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "oauth.test.mjs imports oauth.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/owner.test.mjs",
+   "target": "file:cloud/owner.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "owner.test.mjs imports owner.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/owner.test.mjs",
+   "target": "file:cloud/store.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "owner.test.mjs imports store.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/prime.mjs",
+   "target": "file:cloud/env.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "prime.mjs imports env.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/prime.mjs",
+   "target": "file:cloud/owner.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "prime.mjs imports owner.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/prime.mjs",
+   "target": "file:cloud/store.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "prime.mjs imports store.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/prime.mjs",
+   "target": "file:packages/runtime/src/journal.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "prime.mjs imports journal.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/prime.test.mjs",
+   "target": "file:cloud/owner.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "prime.test.mjs imports owner.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/prime.test.mjs",
+   "target": "file:cloud/prime.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "prime.test.mjs imports prime.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/prime.test.mjs",
+   "target": "file:cloud/store.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "prime.test.mjs imports store.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/provider.mjs",
+   "target": "file:cloud/owner.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "provider.mjs imports owner.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/provider.mjs",
+   "target": "file:cloud/store.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "provider.mjs imports store.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/provider.mjs",
+   "target": "file:packages/workbench/src/gui.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "provider.mjs imports gui.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/provider.mjs",
+   "target": "file:packages/workbench/src/provider-defaults.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "provider.mjs imports provider-defaults.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/provider.mjs",
+   "target": "file:packages/workbench/src/provider.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "provider.mjs imports provider.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/provider.test.mjs",
+   "target": "file:cloud/owner.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "provider.test.mjs imports owner.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/provider.test.mjs",
+   "target": "file:cloud/provider.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "provider.test.mjs imports provider.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:cloud/provider.test.mjs",
+   "target": "file:packages/workbench/src/provider-defaults.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "provider.test.mjs imports provider-defaults.ts",
+   "weight": 0.8
+  }
+ ]
+}

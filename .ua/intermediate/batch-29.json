@@ -1,0 +1,3696 @@
+{
+ "nodes": [
+  {
+   "id": "file:apps/control-plane/api/companion/companion.test.ts",
+   "type": "file",
+   "name": "companion.test.ts",
+   "filePath": "apps/control-plane/api/companion/companion.test.ts",
+   "summary": "companion.test.ts \u2014 typescript code, 789 lines, 12 functions, 0 classes, 0 exports, 6 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "complex"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/companion.test.ts:startHarness",
+   "type": "function",
+   "name": "startHarness",
+   "filePath": "apps/control-plane/api/companion/companion.test.ts",
+   "lineRange": [
+    30,
+    46
+   ],
+   "summary": "startHarness(workspace, dataDir, extraEnv) \u2014 function in companion.test.ts, lines 30-46.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/companion.test.ts:pairRequest",
+   "type": "function",
+   "name": "pairRequest",
+   "filePath": "apps/control-plane/api/companion/companion.test.ts",
+   "lineRange": [
+    48,
+    54
+   ],
+   "summary": "pairRequest(harness, body, headers) \u2014 function in companion.test.ts, lines 48-54.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/companion.test.ts:pair",
+   "type": "function",
+   "name": "pair",
+   "filePath": "apps/control-plane/api/companion/companion.test.ts",
+   "lineRange": [
+    58,
+    60
+   ],
+   "summary": "pair(harness, scopes, label) \u2014 function in companion.test.ts, lines 58-60.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/companion.test.ts:mint",
+   "type": "function",
+   "name": "mint",
+   "filePath": "apps/control-plane/api/companion/companion.test.ts",
+   "lineRange": [
+    63,
+    71
+   ],
+   "summary": "mint(harness, headers) \u2014 function in companion.test.ts, lines 63-71.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/companion.test.ts:pairWith",
+   "type": "function",
+   "name": "pairWith",
+   "filePath": "apps/control-plane/api/companion/companion.test.ts",
+   "lineRange": [
+    73,
+    78
+   ],
+   "summary": "pairWith(harness, invitation, scopes, label) \u2014 function in companion.test.ts, lines 73-78.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/companion.test.ts:authorized",
+   "type": "function",
+   "name": "authorized",
+   "filePath": "apps/control-plane/api/companion/companion.test.ts",
+   "lineRange": [
+    80,
+    82
+   ],
+   "summary": "authorized(harness, path, token) \u2014 function in companion.test.ts, lines 80-82.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/companion.test.ts:revokeRequest",
+   "type": "function",
+   "name": "revokeRequest",
+   "filePath": "apps/control-plane/api/companion/companion.test.ts",
+   "lineRange": [
+    84,
+    90
+   ],
+   "summary": "revokeRequest(harness, deviceId, token, headers) \u2014 function in companion.test.ts, lines 84-90.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/companion.test.ts:wellFormed",
+   "type": "function",
+   "name": "wellFormed",
+   "filePath": "apps/control-plane/api/companion/companion.test.ts",
+   "lineRange": [
+    405,
+    405
+   ],
+   "summary": "wellFormed(value) \u2014 function in companion.test.ts, lines 405-405.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/companion.test.ts:frozenText",
+   "type": "function",
+   "name": "frozenText",
+   "filePath": "apps/control-plane/api/companion/companion.test.ts",
+   "lineRange": [
+    406,
+    407
+   ],
+   "summary": "frozenText(value, max) \u2014 function in companion.test.ts, lines 406-407.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/companion.test.ts:frozenBoundedString",
+   "type": "function",
+   "name": "frozenBoundedString",
+   "filePath": "apps/control-plane/api/companion/companion.test.ts",
+   "lineRange": [
+    408,
+    409
+   ],
+   "summary": "frozenBoundedString(value, max) \u2014 function in companion.test.ts, lines 408-409.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/companion.test.ts:frozenTimestamp",
+   "type": "function",
+   "name": "frozenTimestamp",
+   "filePath": "apps/control-plane/api/companion/companion.test.ts",
+   "lineRange": [
+    410,
+    411
+   ],
+   "summary": "frozenTimestamp(value) \u2014 function in companion.test.ts, lines 410-411.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/companion.test.ts:keysWithin",
+   "type": "function",
+   "name": "keysWithin",
+   "filePath": "apps/control-plane/api/companion/companion.test.ts",
+   "lineRange": [
+    412,
+    413
+   ],
+   "summary": "keysWithin(value, allowed) \u2014 function in companion.test.ts, lines 412-413.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/api/companion/devices.ts",
+   "type": "file",
+   "name": "devices.ts",
+   "filePath": "apps/control-plane/api/companion/devices.ts",
+   "summary": "devices.ts \u2014 typescript code, 192 lines, 9 functions, 0 classes, 10 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/devices.ts:deviceFile",
+   "type": "function",
+   "name": "deviceFile",
+   "filePath": "apps/control-plane/api/companion/devices.ts",
+   "lineRange": [
+    52,
+    54
+   ],
+   "summary": "deviceFile(env) \u2014 function in devices.ts, lines 52-54.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/devices.ts:pairingGrantsWrite",
+   "type": "function",
+   "name": "pairingGrantsWrite",
+   "filePath": "apps/control-plane/api/companion/devices.ts",
+   "lineRange": [
+    61,
+    63
+   ],
+   "summary": "pairingGrantsWrite(env) \u2014 function in devices.ts, lines 61-63.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/devices.ts:parseDevice",
+   "type": "function",
+   "name": "parseDevice",
+   "filePath": "apps/control-plane/api/companion/devices.ts",
+   "lineRange": [
+    65,
+    80
+   ],
+   "summary": "parseDevice(value) \u2014 function in devices.ts, lines 65-80.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/devices.ts:plainLabel",
+   "type": "function",
+   "name": "plainLabel",
+   "filePath": "apps/control-plane/api/companion/devices.ts",
+   "lineRange": [
+    87,
+    91
+   ],
+   "summary": "plainLabel(label) \u2014 function in devices.ts, lines 87-91.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/devices.ts:loadDevices",
+   "type": "function",
+   "name": "loadDevices",
+   "filePath": "apps/control-plane/api/companion/devices.ts",
+   "lineRange": [
+    93,
+    98
+   ],
+   "summary": "loadDevices(env) \u2014 function in devices.ts, lines 93-98.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/devices.ts:pairDevice",
+   "type": "function",
+   "name": "pairDevice",
+   "filePath": "apps/control-plane/api/companion/devices.ts",
+   "lineRange": [
+    100,
+    128
+   ],
+   "summary": "pairDevice(env, input, now) \u2014 function in devices.ts, lines 100-128.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/devices.ts:activeDeviceLimitReached",
+   "type": "function",
+   "name": "activeDeviceLimitReached",
+   "filePath": "apps/control-plane/api/companion/devices.ts",
+   "lineRange": [
+    134,
+    137
+   ],
+   "summary": "activeDeviceLimitReached(env) \u2014 function in devices.ts, lines 134-137.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/devices.ts:authenticateDevice",
+   "type": "function",
+   "name": "authenticateDevice",
+   "filePath": "apps/control-plane/api/companion/devices.ts",
+   "lineRange": [
+    143,
+    160
+   ],
+   "summary": "authenticateDevice(env, token, now) \u2014 function in devices.ts, lines 143-160.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/devices.ts:revokeDevice",
+   "type": "function",
+   "name": "revokeDevice",
+   "filePath": "apps/control-plane/api/companion/devices.ts",
+   "lineRange": [
+    166,
+    191
+   ],
+   "summary": "revokeDevice(env, deviceId, now) \u2014 function in devices.ts, lines 166-191.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/api/companion/diagnostics.ts",
+   "type": "file",
+   "name": "diagnostics.ts",
+   "filePath": "apps/control-plane/api/companion/diagnostics.ts",
+   "summary": "diagnostics.ts \u2014 typescript code, 97 lines, 7 functions, 0 classes, 2 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/diagnostics.ts:boundedSummary",
+   "type": "function",
+   "name": "boundedSummary",
+   "filePath": "apps/control-plane/api/companion/diagnostics.ts",
+   "lineRange": [
+    29,
+    41
+   ],
+   "summary": "boundedSummary(value) \u2014 function in diagnostics.ts, lines 29-41.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/diagnostics.ts:entryOf",
+   "type": "function",
+   "name": "entryOf",
+   "filePath": "apps/control-plane/api/companion/diagnostics.ts",
+   "lineRange": [
+    43,
+    51
+   ],
+   "summary": "entryOf(value) \u2014 function in diagnostics.ts, lines 43-51.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/diagnostics.ts:projectDiagnostics",
+   "type": "function",
+   "name": "projectDiagnostics",
+   "filePath": "apps/control-plane/api/companion/diagnostics.ts",
+   "lineRange": [
+    56,
+    64
+   ],
+   "summary": "projectDiagnostics(candidates) \u2014 function in diagnostics.ts, lines 56-64.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/diagnostics.ts:deviceSummary",
+   "type": "function",
+   "name": "deviceSummary",
+   "filePath": "apps/control-plane/api/companion/diagnostics.ts",
+   "lineRange": [
+    66,
+    71
+   ],
+   "summary": "deviceSummary(session) \u2014 function in diagnostics.ts, lines 66-71.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/diagnostics.ts:operationsCandidate",
+   "type": "function",
+   "name": "operationsCandidate",
+   "filePath": "apps/control-plane/api/companion/diagnostics.ts",
+   "lineRange": [
+    73,
+    79
+   ],
+   "summary": "operationsCandidate(env, workspaceId) \u2014 function in diagnostics.ts, lines 73-79.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/diagnostics.ts:registryCandidate",
+   "type": "function",
+   "name": "registryCandidate",
+   "filePath": "apps/control-plane/api/companion/diagnostics.ts",
+   "lineRange": [
+    81,
+    89
+   ],
+   "summary": "registryCandidate(env, workspaceId) \u2014 function in diagnostics.ts, lines 81-89.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/diagnostics.ts:companionDiagnostics",
+   "type": "function",
+   "name": "companionDiagnostics",
+   "filePath": "apps/control-plane/api/companion/diagnostics.ts",
+   "lineRange": [
+    91,
+    97
+   ],
+   "summary": "companionDiagnostics(env, session) \u2014 function in diagnostics.ts, lines 91-97.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/api/companion/envelope.test.ts",
+   "type": "file",
+   "name": "envelope.test.ts",
+   "filePath": "apps/control-plane/api/companion/envelope.test.ts",
+   "summary": "envelope.test.ts \u2014 typescript code, 581 lines, 10 functions, 0 classes, 0 exports, 4 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/envelope.test.ts:startHarness",
+   "type": "function",
+   "name": "startHarness",
+   "filePath": "apps/control-plane/api/companion/envelope.test.ts",
+   "lineRange": [
+    28,
+    43
+   ],
+   "summary": "startHarness(workspace, extraEnv) \u2014 function in envelope.test.ts, lines 28-43.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/envelope.test.ts:digestOf",
+   "type": "function",
+   "name": "digestOf",
+   "filePath": "apps/control-plane/api/companion/envelope.test.ts",
+   "lineRange": [
+    48,
+    50
+   ],
+   "summary": "digestOf(body) \u2014 function in envelope.test.ts, lines 48-50.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/envelope.test.ts:envelope",
+   "type": "function",
+   "name": "envelope",
+   "filePath": "apps/control-plane/api/companion/envelope.test.ts",
+   "lineRange": [
+    52,
+    69
+   ],
+   "summary": "envelope(body, overrides) \u2014 function in envelope.test.ts, lines 52-69.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/envelope.test.ts:post",
+   "type": "function",
+   "name": "post",
+   "filePath": "apps/control-plane/api/companion/envelope.test.ts",
+   "lineRange": [
+    71,
+    77
+   ],
+   "summary": "post(harness, request, headers) \u2014 function in envelope.test.ts, lines 71-77.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/envelope.test.ts:mint",
+   "type": "function",
+   "name": "mint",
+   "filePath": "apps/control-plane/api/companion/envelope.test.ts",
+   "lineRange": [
+    79,
+    87
+   ],
+   "summary": "mint(harness) \u2014 function in envelope.test.ts, lines 79-87.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/envelope.test.ts:pair",
+   "type": "function",
+   "name": "pair",
+   "filePath": "apps/control-plane/api/companion/envelope.test.ts",
+   "lineRange": [
+    89,
+    97
+   ],
+   "summary": "pair(harness, scopes, label) \u2014 function in envelope.test.ts, lines 89-97.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/envelope.test.ts:bearer",
+   "type": "function",
+   "name": "bearer",
+   "filePath": "apps/control-plane/api/companion/envelope.test.ts",
+   "lineRange": [
+    99,
+    101
+   ],
+   "summary": "bearer(token) \u2014 function in envelope.test.ts, lines 99-101.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/envelope.test.ts:assertRefusal",
+   "type": "function",
+   "name": "assertRefusal",
+   "filePath": "apps/control-plane/api/companion/envelope.test.ts",
+   "lineRange": [
+    106,
+    117
+   ],
+   "summary": "assertRefusal(response, expected) \u2014 function in envelope.test.ts, lines 106-117.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/envelope.test.ts:fixtureOf",
+   "type": "function",
+   "name": "fixtureOf",
+   "filePath": "apps/control-plane/api/companion/envelope.test.ts",
+   "lineRange": [
+    119,
+    129
+   ],
+   "summary": "fixtureOf(name, sourceRoutes, request, response) \u2014 function in envelope.test.ts, lines 119-129.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/envelope.test.ts:record",
+   "type": "function",
+   "name": "record",
+   "filePath": "apps/control-plane/api/companion/envelope.test.ts",
+   "lineRange": [
+    131,
+    140
+   ],
+   "summary": "record(harness, operationId, deviceId, status) \u2014 function in envelope.test.ts, lines 131-140.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/api/companion/envelope.ts",
+   "type": "file",
+   "name": "envelope.ts",
+   "filePath": "apps/control-plane/api/companion/envelope.ts",
+   "summary": "envelope.ts \u2014 typescript code, 579 lines, 18 functions, 0 classes, 1 exports, 7 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/envelope.ts:boundedIdentity",
+   "type": "function",
+   "name": "boundedIdentity",
+   "filePath": "apps/control-plane/api/companion/envelope.ts",
+   "lineRange": [
+    55,
+    59
+   ],
+   "summary": "boundedIdentity(value) \u2014 function in envelope.ts, lines 55-59.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/envelope.ts:isUtcTimestamp",
+   "type": "function",
+   "name": "isUtcTimestamp",
+   "filePath": "apps/control-plane/api/companion/envelope.ts",
+   "lineRange": [
+    61,
+    64
+   ],
+   "summary": "isUtcTimestamp(value) \u2014 function in envelope.ts, lines 61-64.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/envelope.ts:recordOf",
+   "type": "function",
+   "name": "recordOf",
+   "filePath": "apps/control-plane/api/companion/envelope.ts",
+   "lineRange": [
+    66,
+    68
+   ],
+   "summary": "recordOf(value) \u2014 function in envelope.ts, lines 66-68.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/envelope.ts:exactKeys",
+   "type": "function",
+   "name": "exactKeys",
+   "filePath": "apps/control-plane/api/companion/envelope.ts",
+   "lineRange": [
+    70,
+    72
+   ],
+   "summary": "exactKeys(value, allowed) \u2014 function in envelope.ts, lines 70-72.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/envelope.ts:refused",
+   "type": "function",
+   "name": "refused",
+   "filePath": "apps/control-plane/api/companion/envelope.ts",
+   "lineRange": [
+    141,
+    143
+   ],
+   "summary": "refused(httpStatus, code, message) \u2014 function in envelope.ts, lines 141-143.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/envelope.ts:handshake",
+   "type": "function",
+   "name": "handshake",
+   "filePath": "apps/control-plane/api/companion/envelope.ts",
+   "lineRange": [
+    182,
+    225
+   ],
+   "summary": "handshake(context) \u2014 function in envelope.ts, lines 182-225.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/envelope.ts:operationStatus",
+   "type": "function",
+   "name": "operationStatus",
+   "filePath": "apps/control-plane/api/companion/envelope.ts",
+   "lineRange": [
+    227,
+    241
+   ],
+   "summary": "operationStatus(context) \u2014 function in envelope.ts, lines 227-241.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/envelope.ts:statusReply",
+   "type": "function",
+   "name": "statusReply",
+   "filePath": "apps/control-plane/api/companion/envelope.ts",
+   "lineRange": [
+    250,
+    265
+   ],
+   "summary": "statusReply(operationId, status) \u2014 function in envelope.ts, lines 250-265.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/envelope.ts:deviceRevoke",
+   "type": "function",
+   "name": "deviceRevoke",
+   "filePath": "apps/control-plane/api/companion/envelope.ts",
+   "lineRange": [
+    267,
+    288
+   ],
+   "summary": "deviceRevoke(context) \u2014 function in envelope.ts, lines 267-288.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/envelope.ts:diagnosticsRead",
+   "type": "function",
+   "name": "diagnosticsRead",
+   "filePath": "apps/control-plane/api/companion/envelope.ts",
+   "lineRange": [
+    290,
+    292
+   ],
+   "summary": "diagnosticsRead(context) \u2014 function in envelope.ts, lines 290-292.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/envelope.ts:parsePairingBody",
+   "type": "function",
+   "name": "parsePairingBody",
+   "filePath": "apps/control-plane/api/companion/envelope.ts",
+   "lineRange": [
+    296,
+    314
+   ],
+   "summary": "parsePairingBody(body, grantsWrite) \u2014 function in envelope.ts, lines 296-314.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/envelope.ts:devicePair",
+   "type": "function",
+   "name": "devicePair",
+   "filePath": "apps/control-plane/api/companion/envelope.ts",
+   "lineRange": [
+    316,
+    360
+   ],
+   "summary": "devicePair(context) \u2014 function in envelope.ts, lines 316-360.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/envelope.ts:bodyRefusal",
+   "type": "function",
+   "name": "bodyRefusal",
+   "filePath": "apps/control-plane/api/companion/envelope.ts",
+   "lineRange": [
+    373,
+    384
+   ],
+   "summary": "bodyRefusal(operation, body) \u2014 function in envelope.ts, lines 373-384.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/envelope.ts:envelopeFor",
+   "type": "function",
+   "name": "envelopeFor",
+   "filePath": "apps/control-plane/api/companion/envelope.ts",
+   "lineRange": [
+    386,
+    400
+   ],
+   "summary": "envelopeFor(echo, reply, scope) \u2014 function in envelope.ts, lines 386-400.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/envelope.ts:sendJson",
+   "type": "function",
+   "name": "sendJson",
+   "filePath": "apps/control-plane/api/companion/envelope.ts",
+   "lineRange": [
+    405,
+    413
+   ],
+   "summary": "sendJson(response, statusCode, value) \u2014 function in envelope.ts, lines 405-413.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/envelope.ts:sendReply",
+   "type": "function",
+   "name": "sendReply",
+   "filePath": "apps/control-plane/api/companion/envelope.ts",
+   "lineRange": [
+    418,
+    427
+   ],
+   "summary": "sendReply(response, echo, reply, scope) \u2014 function in envelope.ts, lines 418-427.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/envelope.ts:readEnvelopeBody",
+   "type": "function",
+   "name": "readEnvelopeBody",
+   "filePath": "apps/control-plane/api/companion/envelope.ts",
+   "lineRange": [
+    432,
+    449
+   ],
+   "summary": "readEnvelopeBody(request) \u2014 function in envelope.ts, lines 432-449.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/envelope.ts:handleCompanionEnvelopeRequest",
+   "type": "function",
+   "name": "handleCompanionEnvelopeRequest",
+   "filePath": "apps/control-plane/api/companion/envelope.ts",
+   "lineRange": [
+    453,
+    579
+   ],
+   "summary": "handleCompanionEnvelopeRequest(request, response, env) \u2014 function in envelope.ts, lines 453-579.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/api/companion/idempotency.ts",
+   "type": "file",
+   "name": "idempotency.ts",
+   "filePath": "apps/control-plane/api/companion/idempotency.ts",
+   "summary": "idempotency.ts \u2014 typescript code, 107 lines, 6 functions, 0 classes, 2 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/idempotency.ts:idempotencyFile",
+   "type": "function",
+   "name": "idempotencyFile",
+   "filePath": "apps/control-plane/api/companion/idempotency.ts",
+   "lineRange": [
+    35,
+    37
+   ],
+   "summary": "idempotencyFile(env) \u2014 function in idempotency.ts, lines 35-37.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/idempotency.ts:parseStore",
+   "type": "function",
+   "name": "parseStore",
+   "filePath": "apps/control-plane/api/companion/idempotency.ts",
+   "lineRange": [
+    39,
+    63
+   ],
+   "summary": "parseStore(value) \u2014 function in idempotency.ts, lines 39-63.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/idempotency.ts:load",
+   "type": "function",
+   "name": "load",
+   "filePath": "apps/control-plane/api/companion/idempotency.ts",
+   "lineRange": [
+    65,
+    67
+   ],
+   "summary": "load(env) \u2014 function in idempotency.ts, lines 65-67.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/idempotency.ts:prune",
+   "type": "function",
+   "name": "prune",
+   "filePath": "apps/control-plane/api/companion/idempotency.ts",
+   "lineRange": [
+    69,
+    77
+   ],
+   "summary": "prune(store, now) \u2014 function in idempotency.ts, lines 69-77.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/idempotency.ts:readIdempotency",
+   "type": "function",
+   "name": "readIdempotency",
+   "filePath": "apps/control-plane/api/companion/idempotency.ts",
+   "lineRange": [
+    81,
+    93
+   ],
+   "summary": "readIdempotency(env, key, requestDigest) \u2014 function in idempotency.ts, lines 81-93.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/idempotency.ts:recordIdempotency",
+   "type": "function",
+   "name": "recordIdempotency",
+   "filePath": "apps/control-plane/api/companion/idempotency.ts",
+   "lineRange": [
+    95,
+    107
+   ],
+   "summary": "recordIdempotency(env, key, record) \u2014 function in idempotency.ts, lines 95-107.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/api/companion/invitations.ts",
+   "type": "file",
+   "name": "invitations.ts",
+   "filePath": "apps/control-plane/api/companion/invitations.ts",
+   "summary": "invitations.ts \u2014 typescript code, 254 lines, 10 functions, 0 classes, 3 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/invitations.ts:invitationDirectory",
+   "type": "function",
+   "name": "invitationDirectory",
+   "filePath": "apps/control-plane/api/companion/invitations.ts",
+   "lineRange": [
+    52,
+    54
+   ],
+   "summary": "invitationDirectory(env) \u2014 function in invitations.ts, lines 52-54.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/invitations.ts:recordFile",
+   "type": "function",
+   "name": "recordFile",
+   "filePath": "apps/control-plane/api/companion/invitations.ts",
+   "lineRange": [
+    56,
+    58
+   ],
+   "summary": "recordFile(env, invitationId) \u2014 function in invitations.ts, lines 56-58.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/invitations.ts:spentMarker",
+   "type": "function",
+   "name": "spentMarker",
+   "filePath": "apps/control-plane/api/companion/invitations.ts",
+   "lineRange": [
+    67,
+    69
+   ],
+   "summary": "spentMarker(env, invitationId) \u2014 function in invitations.ts, lines 67-69.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/invitations.ts:parseInvitation",
+   "type": "function",
+   "name": "parseInvitation",
+   "filePath": "apps/control-plane/api/companion/invitations.ts",
+   "lineRange": [
+    71,
+    86
+   ],
+   "summary": "parseInvitation(value, invitationId) \u2014 function in invitations.ts, lines 71-86.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/invitations.ts:mintInvitation",
+   "type": "function",
+   "name": "mintInvitation",
+   "filePath": "apps/control-plane/api/companion/invitations.ts",
+   "lineRange": [
+    91,
+    109
+   ],
+   "summary": "mintInvitation(env, now) \u2014 function in invitations.ts, lines 91-109.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/invitations.ts:unspentInvitations",
+   "type": "function",
+   "name": "unspentInvitations",
+   "filePath": "apps/control-plane/api/companion/invitations.ts",
+   "lineRange": [
+    114,
+    135
+   ],
+   "summary": "unspentInvitations(env, now) \u2014 function in invitations.ts, lines 114-135.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/invitations.ts:prune",
+   "type": "function",
+   "name": "prune",
+   "filePath": "apps/control-plane/api/companion/invitations.ts",
+   "lineRange": [
+    150,
+    189
+   ],
+   "summary": "prune(env, now) \u2014 function in invitations.ts, lines 150-189.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/invitations.ts:removeQuietly",
+   "type": "function",
+   "name": "removeQuietly",
+   "filePath": "apps/control-plane/api/companion/invitations.ts",
+   "lineRange": [
+    191,
+    197
+   ],
+   "summary": "removeQuietly(path) \u2014 function in invitations.ts, lines 191-197.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/invitations.ts:consumeInvitation",
+   "type": "function",
+   "name": "consumeInvitation",
+   "filePath": "apps/control-plane/api/companion/invitations.ts",
+   "lineRange": [
+    207,
+    235
+   ],
+   "summary": "consumeInvitation(env, invitation, now) \u2014 function in invitations.ts, lines 207-235.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/invitations.ts:claim",
+   "type": "function",
+   "name": "claim",
+   "filePath": "apps/control-plane/api/companion/invitations.ts",
+   "lineRange": [
+    237,
+    253
+   ],
+   "summary": "claim(directory, marker) \u2014 function in invitations.ts, lines 237-253.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/api/companion/operations.ts",
+   "type": "file",
+   "name": "operations.ts",
+   "filePath": "apps/control-plane/api/companion/operations.ts",
+   "summary": "operations.ts \u2014 typescript code, 91 lines, 7 functions, 0 classes, 5 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/operations.ts:operationsFile",
+   "type": "function",
+   "name": "operationsFile",
+   "filePath": "apps/control-plane/api/companion/operations.ts",
+   "lineRange": [
+    36,
+    38
+   ],
+   "summary": "operationsFile(env) \u2014 function in operations.ts, lines 36-38.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/operations.ts:parseStore",
+   "type": "function",
+   "name": "parseStore",
+   "filePath": "apps/control-plane/api/companion/operations.ts",
+   "lineRange": [
+    40,
+    60
+   ],
+   "summary": "parseStore(value) \u2014 function in operations.ts, lines 40-60.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/operations.ts:loadOperations",
+   "type": "function",
+   "name": "loadOperations",
+   "filePath": "apps/control-plane/api/companion/operations.ts",
+   "lineRange": [
+    62,
+    64
+   ],
+   "summary": "loadOperations(env) \u2014 function in operations.ts, lines 62-64.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/operations.ts:recordOperation",
+   "type": "function",
+   "name": "recordOperation",
+   "filePath": "apps/control-plane/api/companion/operations.ts",
+   "lineRange": [
+    69,
+    72
+   ],
+   "summary": "recordOperation(env, operation) \u2014 function in operations.ts, lines 69-72.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/operations.ts:readOperation",
+   "type": "function",
+   "name": "readOperation",
+   "filePath": "apps/control-plane/api/companion/operations.ts",
+   "lineRange": [
+    77,
+    81
+   ],
+   "summary": "readOperation(env, workspaceId, operationId) \u2014 function in operations.ts, lines 77-81.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/operations.ts:countOperations",
+   "type": "function",
+   "name": "countOperations",
+   "filePath": "apps/control-plane/api/companion/operations.ts",
+   "lineRange": [
+    83,
+    85
+   ],
+   "summary": "countOperations(env, workspaceId) \u2014 function in operations.ts, lines 83-85.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/operations.ts:revokeOperationId",
+   "type": "function",
+   "name": "revokeOperationId",
+   "filePath": "apps/control-plane/api/companion/operations.ts",
+   "lineRange": [
+    89,
+    91
+   ],
+   "summary": "revokeOperationId(deviceId) \u2014 function in operations.ts, lines 89-91.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/api/companion/routes.ts",
+   "type": "file",
+   "name": "routes.ts",
+   "filePath": "apps/control-plane/api/companion/routes.ts",
+   "summary": "routes.ts \u2014 typescript code, 246 lines, 11 functions, 0 classes, 1 exports, 5 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/routes.ts:sendJson",
+   "type": "function",
+   "name": "sendJson",
+   "filePath": "apps/control-plane/api/companion/routes.ts",
+   "lineRange": [
+    28,
+    40
+   ],
+   "summary": "sendJson(response, statusCode, value) \u2014 function in routes.ts, lines 28-40.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/routes.ts:pathname",
+   "type": "function",
+   "name": "pathname",
+   "filePath": "apps/control-plane/api/companion/routes.ts",
+   "lineRange": [
+    42,
+    48
+   ],
+   "summary": "pathname(request) \u2014 function in routes.ts, lines 42-48.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/routes.ts:recordOf",
+   "type": "function",
+   "name": "recordOf",
+   "filePath": "apps/control-plane/api/companion/routes.ts",
+   "lineRange": [
+    50,
+    52
+   ],
+   "summary": "recordOf(value) \u2014 function in routes.ts, lines 50-52.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/routes.ts:readJsonBody",
+   "type": "function",
+   "name": "readJsonBody",
+   "filePath": "apps/control-plane/api/companion/routes.ts",
+   "lineRange": [
+    61,
+    78
+   ],
+   "summary": "readJsonBody(request) \u2014 function in routes.ts, lines 61-78.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/routes.ts:parsePairingBody",
+   "type": "function",
+   "name": "parsePairingBody",
+   "filePath": "apps/control-plane/api/companion/routes.ts",
+   "lineRange": [
+    80,
+    104
+   ],
+   "summary": "parsePairingBody(body, grantsWrite) \u2014 function in routes.ts, lines 80-104.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/routes.ts:deviceSession",
+   "type": "function",
+   "name": "deviceSession",
+   "filePath": "apps/control-plane/api/companion/routes.ts",
+   "lineRange": [
+    110,
+    114
+   ],
+   "summary": "deviceSession(request, env) \u2014 function in routes.ts, lines 110-114.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/routes.ts:invite",
+   "type": "function",
+   "name": "invite",
+   "filePath": "apps/control-plane/api/companion/routes.ts",
+   "lineRange": [
+    122,
+    131
+   ],
+   "summary": "invite(request, response, env) \u2014 function in routes.ts, lines 122-131.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/routes.ts:pair",
+   "type": "function",
+   "name": "pair",
+   "filePath": "apps/control-plane/api/companion/routes.ts",
+   "lineRange": [
+    133,
+    166
+   ],
+   "summary": "pair(request, response, env) \u2014 function in routes.ts, lines 133-166.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/routes.ts:operationStatus",
+   "type": "function",
+   "name": "operationStatus",
+   "filePath": "apps/control-plane/api/companion/routes.ts",
+   "lineRange": [
+    168,
+    196
+   ],
+   "summary": "operationStatus(request, response, env, operationId) \u2014 function in routes.ts, lines 168-196.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/routes.ts:revoke",
+   "type": "function",
+   "name": "revoke",
+   "filePath": "apps/control-plane/api/companion/routes.ts",
+   "lineRange": [
+    198,
+    219
+   ],
+   "summary": "revoke(request, response, env, deviceId) \u2014 function in routes.ts, lines 198-219.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/routes.ts:handleCompanionRequest",
+   "type": "function",
+   "name": "handleCompanionRequest",
+   "filePath": "apps/control-plane/api/companion/routes.ts",
+   "lineRange": [
+    221,
+    246
+   ],
+   "summary": "handleCompanionRequest(request, response, env) \u2014 function in routes.ts, lines 221-246.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:apps/control-plane/api/companion/store.ts",
+   "type": "file",
+   "name": "store.ts",
+   "filePath": "apps/control-plane/api/companion/store.ts",
+   "summary": "store.ts \u2014 typescript code, 93 lines, 4 functions, 1 classes, 5 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/store.ts:companionDirectory",
+   "type": "function",
+   "name": "companionDirectory",
+   "filePath": "apps/control-plane/api/companion/store.ts",
+   "lineRange": [
+    24,
+    26
+   ],
+   "summary": "companionDirectory(env) \u2014 function in store.ts, lines 24-26.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/store.ts:companionWorkspace",
+   "type": "function",
+   "name": "companionWorkspace",
+   "filePath": "apps/control-plane/api/companion/store.ts",
+   "lineRange": [
+    30,
+    34
+   ],
+   "summary": "companionWorkspace(env) \u2014 function in store.ts, lines 30-34.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/store.ts:readStoreFile",
+   "type": "function",
+   "name": "readStoreFile",
+   "filePath": "apps/control-plane/api/companion/store.ts",
+   "lineRange": [
+    36,
+    59
+   ],
+   "summary": "readStoreFile(path) \u2014 function in store.ts, lines 36-59.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:apps/control-plane/api/companion/store.ts:writeStoreFile",
+   "type": "function",
+   "name": "writeStoreFile",
+   "filePath": "apps/control-plane/api/companion/store.ts",
+   "lineRange": [
+    61,
+    93
+   ],
+   "summary": "writeStoreFile(path, value) \u2014 function in store.ts, lines 61-93.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:apps/control-plane/api/companion/store.ts:CompanionStoreError",
+   "type": "class",
+   "name": "CompanionStoreError",
+   "filePath": "apps/control-plane/api/companion/store.ts",
+   "lineRange": [
+    14,
+    22
+   ],
+   "summary": "CompanionStoreError \u2014 class in store.ts, lines 14-22.",
+   "tags": [
+    "typescript",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  }
+ ],
+ "edges": [
+  {
+   "source": "file:apps/control-plane/api/companion/companion.test.ts",
+   "target": "function:apps/control-plane/api/companion/companion.test.ts:startHarness",
+   "type": "contains",
+   "direction": "forward",
+   "description": "companion.test.ts defines startHarness",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/companion.test.ts",
+   "target": "function:apps/control-plane/api/companion/companion.test.ts:pairRequest",
+   "type": "contains",
+   "direction": "forward",
+   "description": "companion.test.ts defines pairRequest",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/companion.test.ts",
+   "target": "function:apps/control-plane/api/companion/companion.test.ts:pair",
+   "type": "contains",
+   "direction": "forward",
+   "description": "companion.test.ts defines pair",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/companion.test.ts",
+   "target": "function:apps/control-plane/api/companion/companion.test.ts:mint",
+   "type": "contains",
+   "direction": "forward",
+   "description": "companion.test.ts defines mint",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/companion.test.ts",
+   "target": "function:apps/control-plane/api/companion/companion.test.ts:pairWith",
+   "type": "contains",
+   "direction": "forward",
+   "description": "companion.test.ts defines pairWith",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/companion.test.ts",
+   "target": "function:apps/control-plane/api/companion/companion.test.ts:authorized",
+   "type": "contains",
+   "direction": "forward",
+   "description": "companion.test.ts defines authorized",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/companion.test.ts",
+   "target": "function:apps/control-plane/api/companion/companion.test.ts:revokeRequest",
+   "type": "contains",
+   "direction": "forward",
+   "description": "companion.test.ts defines revokeRequest",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/companion.test.ts",
+   "target": "function:apps/control-plane/api/companion/companion.test.ts:wellFormed",
+   "type": "contains",
+   "direction": "forward",
+   "description": "companion.test.ts defines wellFormed",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/companion.test.ts",
+   "target": "function:apps/control-plane/api/companion/companion.test.ts:frozenText",
+   "type": "contains",
+   "direction": "forward",
+   "description": "companion.test.ts defines frozenText",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/companion.test.ts",
+   "target": "function:apps/control-plane/api/companion/companion.test.ts:frozenBoundedString",
+   "type": "contains",
+   "direction": "forward",
+   "description": "companion.test.ts defines frozenBoundedString",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/companion.test.ts",
+   "target": "function:apps/control-plane/api/companion/companion.test.ts:frozenTimestamp",
+   "type": "contains",
+   "direction": "forward",
+   "description": "companion.test.ts defines frozenTimestamp",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/companion.test.ts",
+   "target": "function:apps/control-plane/api/companion/companion.test.ts:keysWithin",
+   "type": "contains",
+   "direction": "forward",
+   "description": "companion.test.ts defines keysWithin",
+   "weight": 1.0
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/companion.test.ts:pair",
+   "target": "function:apps/control-plane/api/companion/companion.test.ts:pairWith",
+   "type": "calls",
+   "direction": "forward",
+   "description": "pair calls pairWith",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/companion.test.ts:pair",
+   "target": "function:apps/control-plane/api/companion/companion.test.ts:mint",
+   "type": "calls",
+   "direction": "forward",
+   "description": "pair calls mint",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/companion.test.ts:pairWith",
+   "target": "function:apps/control-plane/api/companion/companion.test.ts:pairRequest",
+   "type": "calls",
+   "direction": "forward",
+   "description": "pairWith calls pairRequest",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/companion.test.ts:frozenText",
+   "target": "function:apps/control-plane/api/companion/companion.test.ts:wellFormed",
+   "type": "calls",
+   "direction": "forward",
+   "description": "frozenText calls wellFormed",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/companion.test.ts:frozenBoundedString",
+   "target": "function:apps/control-plane/api/companion/companion.test.ts:wellFormed",
+   "type": "calls",
+   "direction": "forward",
+   "description": "frozenBoundedString calls wellFormed",
+   "weight": 0.6
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/devices.ts",
+   "target": "function:apps/control-plane/api/companion/devices.ts:deviceFile",
+   "type": "contains",
+   "direction": "forward",
+   "description": "devices.ts defines deviceFile",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/devices.ts",
+   "target": "function:apps/control-plane/api/companion/devices.ts:pairingGrantsWrite",
+   "type": "contains",
+   "direction": "forward",
+   "description": "devices.ts defines pairingGrantsWrite",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/devices.ts",
+   "target": "function:apps/control-plane/api/companion/devices.ts:pairingGrantsWrite",
+   "type": "exports",
+   "direction": "forward",
+   "description": "devices.ts exports pairingGrantsWrite",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/devices.ts",
+   "target": "function:apps/control-plane/api/companion/devices.ts:parseDevice",
+   "type": "contains",
+   "direction": "forward",
+   "description": "devices.ts defines parseDevice",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/devices.ts",
+   "target": "function:apps/control-plane/api/companion/devices.ts:plainLabel",
+   "type": "contains",
+   "direction": "forward",
+   "description": "devices.ts defines plainLabel",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/devices.ts",
+   "target": "function:apps/control-plane/api/companion/devices.ts:plainLabel",
+   "type": "exports",
+   "direction": "forward",
+   "description": "devices.ts exports plainLabel",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/devices.ts",
+   "target": "function:apps/control-plane/api/companion/devices.ts:loadDevices",
+   "type": "contains",
+   "direction": "forward",
+   "description": "devices.ts defines loadDevices",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/devices.ts",
+   "target": "function:apps/control-plane/api/companion/devices.ts:loadDevices",
+   "type": "exports",
+   "direction": "forward",
+   "description": "devices.ts exports loadDevices",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/devices.ts",
+   "target": "function:apps/control-plane/api/companion/devices.ts:pairDevice",
+   "type": "contains",
+   "direction": "forward",
+   "description": "devices.ts defines pairDevice",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/devices.ts",
+   "target": "function:apps/control-plane/api/companion/devices.ts:pairDevice",
+   "type": "exports",
+   "direction": "forward",
+   "description": "devices.ts exports pairDevice",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/devices.ts",
+   "target": "function:apps/control-plane/api/companion/devices.ts:activeDeviceLimitReached",
+   "type": "contains",
+   "direction": "forward",
+   "description": "devices.ts defines activeDeviceLimitReached",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/devices.ts",
+   "target": "function:apps/control-plane/api/companion/devices.ts:activeDeviceLimitReached",
+   "type": "exports",
+   "direction": "forward",
+   "description": "devices.ts exports activeDeviceLimitReached",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/devices.ts",
+   "target": "function:apps/control-plane/api/companion/devices.ts:authenticateDevice",
+   "type": "contains",
+   "direction": "forward",
+   "description": "devices.ts defines authenticateDevice",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/devices.ts",
+   "target": "function:apps/control-plane/api/companion/devices.ts:authenticateDevice",
+   "type": "exports",
+   "direction": "forward",
+   "description": "devices.ts exports authenticateDevice",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/devices.ts",
+   "target": "function:apps/control-plane/api/companion/devices.ts:revokeDevice",
+   "type": "contains",
+   "direction": "forward",
+   "description": "devices.ts defines revokeDevice",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/devices.ts",
+   "target": "function:apps/control-plane/api/companion/devices.ts:revokeDevice",
+   "type": "exports",
+   "direction": "forward",
+   "description": "devices.ts exports revokeDevice",
+   "weight": 0.7
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/devices.ts:parseDevice",
+   "target": "function:apps/control-plane/api/companion/devices.ts:plainLabel",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parseDevice calls plainLabel",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/devices.ts:loadDevices",
+   "target": "function:apps/control-plane/api/companion/devices.ts:deviceFile",
+   "type": "calls",
+   "direction": "forward",
+   "description": "loadDevices calls deviceFile",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/devices.ts:pairDevice",
+   "target": "function:apps/control-plane/api/companion/devices.ts:loadDevices",
+   "type": "calls",
+   "direction": "forward",
+   "description": "pairDevice calls loadDevices",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/devices.ts:pairDevice",
+   "target": "function:apps/control-plane/api/companion/devices.ts:deviceFile",
+   "type": "calls",
+   "direction": "forward",
+   "description": "pairDevice calls deviceFile",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/devices.ts:activeDeviceLimitReached",
+   "target": "function:apps/control-plane/api/companion/devices.ts:loadDevices",
+   "type": "calls",
+   "direction": "forward",
+   "description": "activeDeviceLimitReached calls loadDevices",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/devices.ts:authenticateDevice",
+   "target": "function:apps/control-plane/api/companion/devices.ts:loadDevices",
+   "type": "calls",
+   "direction": "forward",
+   "description": "authenticateDevice calls loadDevices",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/devices.ts:revokeDevice",
+   "target": "function:apps/control-plane/api/companion/devices.ts:loadDevices",
+   "type": "calls",
+   "direction": "forward",
+   "description": "revokeDevice calls loadDevices",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/devices.ts:revokeDevice",
+   "target": "function:apps/control-plane/api/companion/devices.ts:deviceFile",
+   "type": "calls",
+   "direction": "forward",
+   "description": "revokeDevice calls deviceFile",
+   "weight": 0.6
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/diagnostics.ts",
+   "target": "function:apps/control-plane/api/companion/diagnostics.ts:boundedSummary",
+   "type": "contains",
+   "direction": "forward",
+   "description": "diagnostics.ts defines boundedSummary",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/diagnostics.ts",
+   "target": "function:apps/control-plane/api/companion/diagnostics.ts:entryOf",
+   "type": "contains",
+   "direction": "forward",
+   "description": "diagnostics.ts defines entryOf",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/diagnostics.ts",
+   "target": "function:apps/control-plane/api/companion/diagnostics.ts:projectDiagnostics",
+   "type": "contains",
+   "direction": "forward",
+   "description": "diagnostics.ts defines projectDiagnostics",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/diagnostics.ts",
+   "target": "function:apps/control-plane/api/companion/diagnostics.ts:projectDiagnostics",
+   "type": "exports",
+   "direction": "forward",
+   "description": "diagnostics.ts exports projectDiagnostics",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/diagnostics.ts",
+   "target": "function:apps/control-plane/api/companion/diagnostics.ts:deviceSummary",
+   "type": "contains",
+   "direction": "forward",
+   "description": "diagnostics.ts defines deviceSummary",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/diagnostics.ts",
+   "target": "function:apps/control-plane/api/companion/diagnostics.ts:operationsCandidate",
+   "type": "contains",
+   "direction": "forward",
+   "description": "diagnostics.ts defines operationsCandidate",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/diagnostics.ts",
+   "target": "function:apps/control-plane/api/companion/diagnostics.ts:registryCandidate",
+   "type": "contains",
+   "direction": "forward",
+   "description": "diagnostics.ts defines registryCandidate",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/diagnostics.ts",
+   "target": "function:apps/control-plane/api/companion/diagnostics.ts:companionDiagnostics",
+   "type": "contains",
+   "direction": "forward",
+   "description": "diagnostics.ts defines companionDiagnostics",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/diagnostics.ts",
+   "target": "function:apps/control-plane/api/companion/diagnostics.ts:companionDiagnostics",
+   "type": "exports",
+   "direction": "forward",
+   "description": "diagnostics.ts exports companionDiagnostics",
+   "weight": 0.7
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/diagnostics.ts:entryOf",
+   "target": "function:apps/control-plane/api/companion/diagnostics.ts:boundedSummary",
+   "type": "calls",
+   "direction": "forward",
+   "description": "entryOf calls boundedSummary",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/diagnostics.ts:projectDiagnostics",
+   "target": "function:apps/control-plane/api/companion/diagnostics.ts:entryOf",
+   "type": "calls",
+   "direction": "forward",
+   "description": "projectDiagnostics calls entryOf",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/diagnostics.ts:companionDiagnostics",
+   "target": "function:apps/control-plane/api/companion/diagnostics.ts:projectDiagnostics",
+   "type": "calls",
+   "direction": "forward",
+   "description": "companionDiagnostics calls projectDiagnostics",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/diagnostics.ts:companionDiagnostics",
+   "target": "function:apps/control-plane/api/companion/diagnostics.ts:registryCandidate",
+   "type": "calls",
+   "direction": "forward",
+   "description": "companionDiagnostics calls registryCandidate",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/diagnostics.ts:companionDiagnostics",
+   "target": "function:apps/control-plane/api/companion/diagnostics.ts:operationsCandidate",
+   "type": "calls",
+   "direction": "forward",
+   "description": "companionDiagnostics calls operationsCandidate",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/diagnostics.ts:companionDiagnostics",
+   "target": "function:apps/control-plane/api/companion/diagnostics.ts:deviceSummary",
+   "type": "calls",
+   "direction": "forward",
+   "description": "companionDiagnostics calls deviceSummary",
+   "weight": 0.6
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/envelope.test.ts",
+   "target": "function:apps/control-plane/api/companion/envelope.test.ts:startHarness",
+   "type": "contains",
+   "direction": "forward",
+   "description": "envelope.test.ts defines startHarness",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/envelope.test.ts",
+   "target": "function:apps/control-plane/api/companion/envelope.test.ts:digestOf",
+   "type": "contains",
+   "direction": "forward",
+   "description": "envelope.test.ts defines digestOf",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/envelope.test.ts",
+   "target": "function:apps/control-plane/api/companion/envelope.test.ts:envelope",
+   "type": "contains",
+   "direction": "forward",
+   "description": "envelope.test.ts defines envelope",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/envelope.test.ts",
+   "target": "function:apps/control-plane/api/companion/envelope.test.ts:post",
+   "type": "contains",
+   "direction": "forward",
+   "description": "envelope.test.ts defines post",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/envelope.test.ts",
+   "target": "function:apps/control-plane/api/companion/envelope.test.ts:mint",
+   "type": "contains",
+   "direction": "forward",
+   "description": "envelope.test.ts defines mint",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/envelope.test.ts",
+   "target": "function:apps/control-plane/api/companion/envelope.test.ts:pair",
+   "type": "contains",
+   "direction": "forward",
+   "description": "envelope.test.ts defines pair",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/envelope.test.ts",
+   "target": "function:apps/control-plane/api/companion/envelope.test.ts:bearer",
+   "type": "contains",
+   "direction": "forward",
+   "description": "envelope.test.ts defines bearer",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/envelope.test.ts",
+   "target": "function:apps/control-plane/api/companion/envelope.test.ts:assertRefusal",
+   "type": "contains",
+   "direction": "forward",
+   "description": "envelope.test.ts defines assertRefusal",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/envelope.test.ts",
+   "target": "function:apps/control-plane/api/companion/envelope.test.ts:fixtureOf",
+   "type": "contains",
+   "direction": "forward",
+   "description": "envelope.test.ts defines fixtureOf",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/envelope.test.ts",
+   "target": "function:apps/control-plane/api/companion/envelope.test.ts:record",
+   "type": "contains",
+   "direction": "forward",
+   "description": "envelope.test.ts defines record",
+   "weight": 1.0
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/envelope.test.ts:envelope",
+   "target": "function:apps/control-plane/api/companion/envelope.test.ts:digestOf",
+   "type": "calls",
+   "direction": "forward",
+   "description": "envelope calls digestOf",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/envelope.test.ts:pair",
+   "target": "function:apps/control-plane/api/companion/envelope.test.ts:mint",
+   "type": "calls",
+   "direction": "forward",
+   "description": "pair calls mint",
+   "weight": 0.6
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/envelope.ts",
+   "target": "function:apps/control-plane/api/companion/envelope.ts:boundedIdentity",
+   "type": "contains",
+   "direction": "forward",
+   "description": "envelope.ts defines boundedIdentity",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/envelope.ts",
+   "target": "function:apps/control-plane/api/companion/envelope.ts:isUtcTimestamp",
+   "type": "contains",
+   "direction": "forward",
+   "description": "envelope.ts defines isUtcTimestamp",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/envelope.ts",
+   "target": "function:apps/control-plane/api/companion/envelope.ts:recordOf",
+   "type": "contains",
+   "direction": "forward",
+   "description": "envelope.ts defines recordOf",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/envelope.ts",
+   "target": "function:apps/control-plane/api/companion/envelope.ts:exactKeys",
+   "type": "contains",
+   "direction": "forward",
+   "description": "envelope.ts defines exactKeys",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/envelope.ts",
+   "target": "function:apps/control-plane/api/companion/envelope.ts:refused",
+   "type": "contains",
+   "direction": "forward",
+   "description": "envelope.ts defines refused",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/envelope.ts",
+   "target": "function:apps/control-plane/api/companion/envelope.ts:handshake",
+   "type": "contains",
+   "direction": "forward",
+   "description": "envelope.ts defines handshake",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/envelope.ts",
+   "target": "function:apps/control-plane/api/companion/envelope.ts:operationStatus",
+   "type": "contains",
+   "direction": "forward",
+   "description": "envelope.ts defines operationStatus",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/envelope.ts",
+   "target": "function:apps/control-plane/api/companion/envelope.ts:statusReply",
+   "type": "contains",
+   "direction": "forward",
+   "description": "envelope.ts defines statusReply",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/envelope.ts",
+   "target": "function:apps/control-plane/api/companion/envelope.ts:deviceRevoke",
+   "type": "contains",
+   "direction": "forward",
+   "description": "envelope.ts defines deviceRevoke",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/envelope.ts",
+   "target": "function:apps/control-plane/api/companion/envelope.ts:diagnosticsRead",
+   "type": "contains",
+   "direction": "forward",
+   "description": "envelope.ts defines diagnosticsRead",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/envelope.ts",
+   "target": "function:apps/control-plane/api/companion/envelope.ts:parsePairingBody",
+   "type": "contains",
+   "direction": "forward",
+   "description": "envelope.ts defines parsePairingBody",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/envelope.ts",
+   "target": "function:apps/control-plane/api/companion/envelope.ts:devicePair",
+   "type": "contains",
+   "direction": "forward",
+   "description": "envelope.ts defines devicePair",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/envelope.ts",
+   "target": "function:apps/control-plane/api/companion/envelope.ts:bodyRefusal",
+   "type": "contains",
+   "direction": "forward",
+   "description": "envelope.ts defines bodyRefusal",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/envelope.ts",
+   "target": "function:apps/control-plane/api/companion/envelope.ts:envelopeFor",
+   "type": "contains",
+   "direction": "forward",
+   "description": "envelope.ts defines envelopeFor",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/envelope.ts",
+   "target": "function:apps/control-plane/api/companion/envelope.ts:sendJson",
+   "type": "contains",
+   "direction": "forward",
+   "description": "envelope.ts defines sendJson",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/envelope.ts",
+   "target": "function:apps/control-plane/api/companion/envelope.ts:sendReply",
+   "type": "contains",
+   "direction": "forward",
+   "description": "envelope.ts defines sendReply",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/envelope.ts",
+   "target": "function:apps/control-plane/api/companion/envelope.ts:readEnvelopeBody",
+   "type": "contains",
+   "direction": "forward",
+   "description": "envelope.ts defines readEnvelopeBody",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/envelope.ts",
+   "target": "function:apps/control-plane/api/companion/envelope.ts:handleCompanionEnvelopeRequest",
+   "type": "contains",
+   "direction": "forward",
+   "description": "envelope.ts defines handleCompanionEnvelopeRequest",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/envelope.ts",
+   "target": "function:apps/control-plane/api/companion/envelope.ts:handleCompanionEnvelopeRequest",
+   "type": "exports",
+   "direction": "forward",
+   "description": "envelope.ts exports handleCompanionEnvelopeRequest",
+   "weight": 0.7
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/envelope.ts:handshake",
+   "target": "function:apps/control-plane/api/companion/envelope.ts:recordOf",
+   "type": "calls",
+   "direction": "forward",
+   "description": "handshake calls recordOf",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/envelope.ts:handshake",
+   "target": "function:apps/control-plane/api/companion/envelope.ts:exactKeys",
+   "type": "calls",
+   "direction": "forward",
+   "description": "handshake calls exactKeys",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/envelope.ts:handshake",
+   "target": "function:apps/control-plane/api/companion/envelope.ts:boundedIdentity",
+   "type": "calls",
+   "direction": "forward",
+   "description": "handshake calls boundedIdentity",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/envelope.ts:handshake",
+   "target": "function:apps/control-plane/api/companion/envelope.ts:refused",
+   "type": "calls",
+   "direction": "forward",
+   "description": "handshake calls refused",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/envelope.ts:operationStatus",
+   "target": "function:apps/control-plane/api/companion/envelope.ts:refused",
+   "type": "calls",
+   "direction": "forward",
+   "description": "operationStatus calls refused",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/envelope.ts:operationStatus",
+   "target": "function:apps/control-plane/api/companion/envelope.ts:statusReply",
+   "type": "calls",
+   "direction": "forward",
+   "description": "operationStatus calls statusReply",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/envelope.ts:statusReply",
+   "target": "function:apps/control-plane/api/companion/envelope.ts:refused",
+   "type": "calls",
+   "direction": "forward",
+   "description": "statusReply calls refused",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/envelope.ts:deviceRevoke",
+   "target": "function:apps/control-plane/api/companion/envelope.ts:refused",
+   "type": "calls",
+   "direction": "forward",
+   "description": "deviceRevoke calls refused",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/envelope.ts:parsePairingBody",
+   "target": "function:apps/control-plane/api/companion/envelope.ts:exactKeys",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parsePairingBody calls exactKeys",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/envelope.ts:devicePair",
+   "target": "function:apps/control-plane/api/companion/envelope.ts:recordOf",
+   "type": "calls",
+   "direction": "forward",
+   "description": "devicePair calls recordOf",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/envelope.ts:devicePair",
+   "target": "function:apps/control-plane/api/companion/envelope.ts:parsePairingBody",
+   "type": "calls",
+   "direction": "forward",
+   "description": "devicePair calls parsePairingBody",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/envelope.ts:devicePair",
+   "target": "function:apps/control-plane/api/companion/envelope.ts:refused",
+   "type": "calls",
+   "direction": "forward",
+   "description": "devicePair calls refused",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/envelope.ts:bodyRefusal",
+   "target": "function:apps/control-plane/api/companion/envelope.ts:exactKeys",
+   "type": "calls",
+   "direction": "forward",
+   "description": "bodyRefusal calls exactKeys",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/envelope.ts:bodyRefusal",
+   "target": "function:apps/control-plane/api/companion/envelope.ts:refused",
+   "type": "calls",
+   "direction": "forward",
+   "description": "bodyRefusal calls refused",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/envelope.ts:bodyRefusal",
+   "target": "function:apps/control-plane/api/companion/envelope.ts:boundedIdentity",
+   "type": "calls",
+   "direction": "forward",
+   "description": "bodyRefusal calls boundedIdentity",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/envelope.ts:sendReply",
+   "target": "function:apps/control-plane/api/companion/envelope.ts:refused",
+   "type": "calls",
+   "direction": "forward",
+   "description": "sendReply calls refused",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/envelope.ts:sendReply",
+   "target": "function:apps/control-plane/api/companion/envelope.ts:envelopeFor",
+   "type": "calls",
+   "direction": "forward",
+   "description": "sendReply calls envelopeFor",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/envelope.ts:sendReply",
+   "target": "function:apps/control-plane/api/companion/envelope.ts:sendJson",
+   "type": "calls",
+   "direction": "forward",
+   "description": "sendReply calls sendJson",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/envelope.ts:handleCompanionEnvelopeRequest",
+   "target": "function:apps/control-plane/api/companion/envelope.ts:sendReply",
+   "type": "calls",
+   "direction": "forward",
+   "description": "handleCompanionEnvelopeRequest calls sendReply",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/envelope.ts:handleCompanionEnvelopeRequest",
+   "target": "function:apps/control-plane/api/companion/envelope.ts:refused",
+   "type": "calls",
+   "direction": "forward",
+   "description": "handleCompanionEnvelopeRequest calls refused",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/envelope.ts:handleCompanionEnvelopeRequest",
+   "target": "function:apps/control-plane/api/companion/envelope.ts:readEnvelopeBody",
+   "type": "calls",
+   "direction": "forward",
+   "description": "handleCompanionEnvelopeRequest calls readEnvelopeBody",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/envelope.ts:handleCompanionEnvelopeRequest",
+   "target": "function:apps/control-plane/api/companion/envelope.ts:recordOf",
+   "type": "calls",
+   "direction": "forward",
+   "description": "handleCompanionEnvelopeRequest calls recordOf",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/envelope.ts:handleCompanionEnvelopeRequest",
+   "target": "function:apps/control-plane/api/companion/envelope.ts:boundedIdentity",
+   "type": "calls",
+   "direction": "forward",
+   "description": "handleCompanionEnvelopeRequest calls boundedIdentity",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/envelope.ts:handleCompanionEnvelopeRequest",
+   "target": "function:apps/control-plane/api/companion/envelope.ts:exactKeys",
+   "type": "calls",
+   "direction": "forward",
+   "description": "handleCompanionEnvelopeRequest calls exactKeys",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/envelope.ts:handleCompanionEnvelopeRequest",
+   "target": "function:apps/control-plane/api/companion/envelope.ts:isUtcTimestamp",
+   "type": "calls",
+   "direction": "forward",
+   "description": "handleCompanionEnvelopeRequest calls isUtcTimestamp",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/envelope.ts:handleCompanionEnvelopeRequest",
+   "target": "function:apps/control-plane/api/companion/envelope.ts:bodyRefusal",
+   "type": "calls",
+   "direction": "forward",
+   "description": "handleCompanionEnvelopeRequest calls bodyRefusal",
+   "weight": 0.6
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/idempotency.ts",
+   "target": "function:apps/control-plane/api/companion/idempotency.ts:idempotencyFile",
+   "type": "contains",
+   "direction": "forward",
+   "description": "idempotency.ts defines idempotencyFile",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/idempotency.ts",
+   "target": "function:apps/control-plane/api/companion/idempotency.ts:parseStore",
+   "type": "contains",
+   "direction": "forward",
+   "description": "idempotency.ts defines parseStore",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/idempotency.ts",
+   "target": "function:apps/control-plane/api/companion/idempotency.ts:load",
+   "type": "contains",
+   "direction": "forward",
+   "description": "idempotency.ts defines load",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/idempotency.ts",
+   "target": "function:apps/control-plane/api/companion/idempotency.ts:prune",
+   "type": "contains",
+   "direction": "forward",
+   "description": "idempotency.ts defines prune",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/idempotency.ts",
+   "target": "function:apps/control-plane/api/companion/idempotency.ts:readIdempotency",
+   "type": "contains",
+   "direction": "forward",
+   "description": "idempotency.ts defines readIdempotency",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/idempotency.ts",
+   "target": "function:apps/control-plane/api/companion/idempotency.ts:readIdempotency",
+   "type": "exports",
+   "direction": "forward",
+   "description": "idempotency.ts exports readIdempotency",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/idempotency.ts",
+   "target": "function:apps/control-plane/api/companion/idempotency.ts:recordIdempotency",
+   "type": "contains",
+   "direction": "forward",
+   "description": "idempotency.ts defines recordIdempotency",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/idempotency.ts",
+   "target": "function:apps/control-plane/api/companion/idempotency.ts:recordIdempotency",
+   "type": "exports",
+   "direction": "forward",
+   "description": "idempotency.ts exports recordIdempotency",
+   "weight": 0.7
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/idempotency.ts:load",
+   "target": "function:apps/control-plane/api/companion/idempotency.ts:parseStore",
+   "type": "calls",
+   "direction": "forward",
+   "description": "load calls parseStore",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/idempotency.ts:load",
+   "target": "function:apps/control-plane/api/companion/idempotency.ts:idempotencyFile",
+   "type": "calls",
+   "direction": "forward",
+   "description": "load calls idempotencyFile",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/idempotency.ts:readIdempotency",
+   "target": "function:apps/control-plane/api/companion/idempotency.ts:load",
+   "type": "calls",
+   "direction": "forward",
+   "description": "readIdempotency calls load",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/idempotency.ts:recordIdempotency",
+   "target": "function:apps/control-plane/api/companion/idempotency.ts:prune",
+   "type": "calls",
+   "direction": "forward",
+   "description": "recordIdempotency calls prune",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/idempotency.ts:recordIdempotency",
+   "target": "function:apps/control-plane/api/companion/idempotency.ts:load",
+   "type": "calls",
+   "direction": "forward",
+   "description": "recordIdempotency calls load",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/idempotency.ts:recordIdempotency",
+   "target": "function:apps/control-plane/api/companion/idempotency.ts:idempotencyFile",
+   "type": "calls",
+   "direction": "forward",
+   "description": "recordIdempotency calls idempotencyFile",
+   "weight": 0.6
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/invitations.ts",
+   "target": "function:apps/control-plane/api/companion/invitations.ts:invitationDirectory",
+   "type": "contains",
+   "direction": "forward",
+   "description": "invitations.ts defines invitationDirectory",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/invitations.ts",
+   "target": "function:apps/control-plane/api/companion/invitations.ts:invitationDirectory",
+   "type": "exports",
+   "direction": "forward",
+   "description": "invitations.ts exports invitationDirectory",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/invitations.ts",
+   "target": "function:apps/control-plane/api/companion/invitations.ts:recordFile",
+   "type": "contains",
+   "direction": "forward",
+   "description": "invitations.ts defines recordFile",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/invitations.ts",
+   "target": "function:apps/control-plane/api/companion/invitations.ts:spentMarker",
+   "type": "contains",
+   "direction": "forward",
+   "description": "invitations.ts defines spentMarker",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/invitations.ts",
+   "target": "function:apps/control-plane/api/companion/invitations.ts:parseInvitation",
+   "type": "contains",
+   "direction": "forward",
+   "description": "invitations.ts defines parseInvitation",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/invitations.ts",
+   "target": "function:apps/control-plane/api/companion/invitations.ts:mintInvitation",
+   "type": "contains",
+   "direction": "forward",
+   "description": "invitations.ts defines mintInvitation",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/invitations.ts",
+   "target": "function:apps/control-plane/api/companion/invitations.ts:mintInvitation",
+   "type": "exports",
+   "direction": "forward",
+   "description": "invitations.ts exports mintInvitation",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/invitations.ts",
+   "target": "function:apps/control-plane/api/companion/invitations.ts:unspentInvitations",
+   "type": "contains",
+   "direction": "forward",
+   "description": "invitations.ts defines unspentInvitations",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/invitations.ts",
+   "target": "function:apps/control-plane/api/companion/invitations.ts:prune",
+   "type": "contains",
+   "direction": "forward",
+   "description": "invitations.ts defines prune",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/invitations.ts",
+   "target": "function:apps/control-plane/api/companion/invitations.ts:removeQuietly",
+   "type": "contains",
+   "direction": "forward",
+   "description": "invitations.ts defines removeQuietly",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/invitations.ts",
+   "target": "function:apps/control-plane/api/companion/invitations.ts:consumeInvitation",
+   "type": "contains",
+   "direction": "forward",
+   "description": "invitations.ts defines consumeInvitation",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/invitations.ts",
+   "target": "function:apps/control-plane/api/companion/invitations.ts:consumeInvitation",
+   "type": "exports",
+   "direction": "forward",
+   "description": "invitations.ts exports consumeInvitation",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/invitations.ts",
+   "target": "function:apps/control-plane/api/companion/invitations.ts:claim",
+   "type": "contains",
+   "direction": "forward",
+   "description": "invitations.ts defines claim",
+   "weight": 1.0
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/invitations.ts:recordFile",
+   "target": "function:apps/control-plane/api/companion/invitations.ts:invitationDirectory",
+   "type": "calls",
+   "direction": "forward",
+   "description": "recordFile calls invitationDirectory",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/invitations.ts:spentMarker",
+   "target": "function:apps/control-plane/api/companion/invitations.ts:invitationDirectory",
+   "type": "calls",
+   "direction": "forward",
+   "description": "spentMarker calls invitationDirectory",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/invitations.ts:mintInvitation",
+   "target": "function:apps/control-plane/api/companion/invitations.ts:invitationDirectory",
+   "type": "calls",
+   "direction": "forward",
+   "description": "mintInvitation calls invitationDirectory",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/invitations.ts:mintInvitation",
+   "target": "function:apps/control-plane/api/companion/invitations.ts:prune",
+   "type": "calls",
+   "direction": "forward",
+   "description": "mintInvitation calls prune",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/invitations.ts:mintInvitation",
+   "target": "function:apps/control-plane/api/companion/invitations.ts:unspentInvitations",
+   "type": "calls",
+   "direction": "forward",
+   "description": "mintInvitation calls unspentInvitations",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/invitations.ts:mintInvitation",
+   "target": "function:apps/control-plane/api/companion/invitations.ts:recordFile",
+   "type": "calls",
+   "direction": "forward",
+   "description": "mintInvitation calls recordFile",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/invitations.ts:unspentInvitations",
+   "target": "function:apps/control-plane/api/companion/invitations.ts:invitationDirectory",
+   "type": "calls",
+   "direction": "forward",
+   "description": "unspentInvitations calls invitationDirectory",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/invitations.ts:unspentInvitations",
+   "target": "function:apps/control-plane/api/companion/invitations.ts:spentMarker",
+   "type": "calls",
+   "direction": "forward",
+   "description": "unspentInvitations calls spentMarker",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/invitations.ts:unspentInvitations",
+   "target": "function:apps/control-plane/api/companion/invitations.ts:recordFile",
+   "type": "calls",
+   "direction": "forward",
+   "description": "unspentInvitations calls recordFile",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/invitations.ts:unspentInvitations",
+   "target": "function:apps/control-plane/api/companion/invitations.ts:parseInvitation",
+   "type": "calls",
+   "direction": "forward",
+   "description": "unspentInvitations calls parseInvitation",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/invitations.ts:prune",
+   "target": "function:apps/control-plane/api/companion/invitations.ts:invitationDirectory",
+   "type": "calls",
+   "direction": "forward",
+   "description": "prune calls invitationDirectory",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/invitations.ts:prune",
+   "target": "function:apps/control-plane/api/companion/invitations.ts:recordFile",
+   "type": "calls",
+   "direction": "forward",
+   "description": "prune calls recordFile",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/invitations.ts:prune",
+   "target": "function:apps/control-plane/api/companion/invitations.ts:removeQuietly",
+   "type": "calls",
+   "direction": "forward",
+   "description": "prune calls removeQuietly",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/invitations.ts:prune",
+   "target": "function:apps/control-plane/api/companion/invitations.ts:parseInvitation",
+   "type": "calls",
+   "direction": "forward",
+   "description": "prune calls parseInvitation",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/invitations.ts:prune",
+   "target": "function:apps/control-plane/api/companion/invitations.ts:spentMarker",
+   "type": "calls",
+   "direction": "forward",
+   "description": "prune calls spentMarker",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/invitations.ts:consumeInvitation",
+   "target": "function:apps/control-plane/api/companion/invitations.ts:recordFile",
+   "type": "calls",
+   "direction": "forward",
+   "description": "consumeInvitation calls recordFile",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/invitations.ts:consumeInvitation",
+   "target": "function:apps/control-plane/api/companion/invitations.ts:parseInvitation",
+   "type": "calls",
+   "direction": "forward",
+   "description": "consumeInvitation calls parseInvitation",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/invitations.ts:consumeInvitation",
+   "target": "function:apps/control-plane/api/companion/invitations.ts:claim",
+   "type": "calls",
+   "direction": "forward",
+   "description": "consumeInvitation calls claim",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/invitations.ts:consumeInvitation",
+   "target": "function:apps/control-plane/api/companion/invitations.ts:invitationDirectory",
+   "type": "calls",
+   "direction": "forward",
+   "description": "consumeInvitation calls invitationDirectory",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/invitations.ts:consumeInvitation",
+   "target": "function:apps/control-plane/api/companion/invitations.ts:spentMarker",
+   "type": "calls",
+   "direction": "forward",
+   "description": "consumeInvitation calls spentMarker",
+   "weight": 0.6
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/operations.ts",
+   "target": "function:apps/control-plane/api/companion/operations.ts:operationsFile",
+   "type": "contains",
+   "direction": "forward",
+   "description": "operations.ts defines operationsFile",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/operations.ts",
+   "target": "function:apps/control-plane/api/companion/operations.ts:parseStore",
+   "type": "contains",
+   "direction": "forward",
+   "description": "operations.ts defines parseStore",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/operations.ts",
+   "target": "function:apps/control-plane/api/companion/operations.ts:loadOperations",
+   "type": "contains",
+   "direction": "forward",
+   "description": "operations.ts defines loadOperations",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/operations.ts",
+   "target": "function:apps/control-plane/api/companion/operations.ts:loadOperations",
+   "type": "exports",
+   "direction": "forward",
+   "description": "operations.ts exports loadOperations",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/operations.ts",
+   "target": "function:apps/control-plane/api/companion/operations.ts:recordOperation",
+   "type": "contains",
+   "direction": "forward",
+   "description": "operations.ts defines recordOperation",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/operations.ts",
+   "target": "function:apps/control-plane/api/companion/operations.ts:recordOperation",
+   "type": "exports",
+   "direction": "forward",
+   "description": "operations.ts exports recordOperation",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/operations.ts",
+   "target": "function:apps/control-plane/api/companion/operations.ts:readOperation",
+   "type": "contains",
+   "direction": "forward",
+   "description": "operations.ts defines readOperation",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/operations.ts",
+   "target": "function:apps/control-plane/api/companion/operations.ts:readOperation",
+   "type": "exports",
+   "direction": "forward",
+   "description": "operations.ts exports readOperation",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/operations.ts",
+   "target": "function:apps/control-plane/api/companion/operations.ts:countOperations",
+   "type": "contains",
+   "direction": "forward",
+   "description": "operations.ts defines countOperations",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/operations.ts",
+   "target": "function:apps/control-plane/api/companion/operations.ts:countOperations",
+   "type": "exports",
+   "direction": "forward",
+   "description": "operations.ts exports countOperations",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/operations.ts",
+   "target": "function:apps/control-plane/api/companion/operations.ts:revokeOperationId",
+   "type": "contains",
+   "direction": "forward",
+   "description": "operations.ts defines revokeOperationId",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/operations.ts",
+   "target": "function:apps/control-plane/api/companion/operations.ts:revokeOperationId",
+   "type": "exports",
+   "direction": "forward",
+   "description": "operations.ts exports revokeOperationId",
+   "weight": 0.7
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/operations.ts:loadOperations",
+   "target": "function:apps/control-plane/api/companion/operations.ts:parseStore",
+   "type": "calls",
+   "direction": "forward",
+   "description": "loadOperations calls parseStore",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/operations.ts:loadOperations",
+   "target": "function:apps/control-plane/api/companion/operations.ts:operationsFile",
+   "type": "calls",
+   "direction": "forward",
+   "description": "loadOperations calls operationsFile",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/operations.ts:recordOperation",
+   "target": "function:apps/control-plane/api/companion/operations.ts:operationsFile",
+   "type": "calls",
+   "direction": "forward",
+   "description": "recordOperation calls operationsFile",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/operations.ts:recordOperation",
+   "target": "function:apps/control-plane/api/companion/operations.ts:loadOperations",
+   "type": "calls",
+   "direction": "forward",
+   "description": "recordOperation calls loadOperations",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/operations.ts:readOperation",
+   "target": "function:apps/control-plane/api/companion/operations.ts:loadOperations",
+   "type": "calls",
+   "direction": "forward",
+   "description": "readOperation calls loadOperations",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/operations.ts:countOperations",
+   "target": "function:apps/control-plane/api/companion/operations.ts:loadOperations",
+   "type": "calls",
+   "direction": "forward",
+   "description": "countOperations calls loadOperations",
+   "weight": 0.6
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/routes.ts",
+   "target": "function:apps/control-plane/api/companion/routes.ts:sendJson",
+   "type": "contains",
+   "direction": "forward",
+   "description": "routes.ts defines sendJson",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/routes.ts",
+   "target": "function:apps/control-plane/api/companion/routes.ts:pathname",
+   "type": "contains",
+   "direction": "forward",
+   "description": "routes.ts defines pathname",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/routes.ts",
+   "target": "function:apps/control-plane/api/companion/routes.ts:recordOf",
+   "type": "contains",
+   "direction": "forward",
+   "description": "routes.ts defines recordOf",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/routes.ts",
+   "target": "function:apps/control-plane/api/companion/routes.ts:readJsonBody",
+   "type": "contains",
+   "direction": "forward",
+   "description": "routes.ts defines readJsonBody",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/routes.ts",
+   "target": "function:apps/control-plane/api/companion/routes.ts:parsePairingBody",
+   "type": "contains",
+   "direction": "forward",
+   "description": "routes.ts defines parsePairingBody",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/routes.ts",
+   "target": "function:apps/control-plane/api/companion/routes.ts:deviceSession",
+   "type": "contains",
+   "direction": "forward",
+   "description": "routes.ts defines deviceSession",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/routes.ts",
+   "target": "function:apps/control-plane/api/companion/routes.ts:invite",
+   "type": "contains",
+   "direction": "forward",
+   "description": "routes.ts defines invite",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/routes.ts",
+   "target": "function:apps/control-plane/api/companion/routes.ts:pair",
+   "type": "contains",
+   "direction": "forward",
+   "description": "routes.ts defines pair",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/routes.ts",
+   "target": "function:apps/control-plane/api/companion/routes.ts:operationStatus",
+   "type": "contains",
+   "direction": "forward",
+   "description": "routes.ts defines operationStatus",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/routes.ts",
+   "target": "function:apps/control-plane/api/companion/routes.ts:revoke",
+   "type": "contains",
+   "direction": "forward",
+   "description": "routes.ts defines revoke",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/routes.ts",
+   "target": "function:apps/control-plane/api/companion/routes.ts:handleCompanionRequest",
+   "type": "contains",
+   "direction": "forward",
+   "description": "routes.ts defines handleCompanionRequest",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/routes.ts",
+   "target": "function:apps/control-plane/api/companion/routes.ts:handleCompanionRequest",
+   "type": "exports",
+   "direction": "forward",
+   "description": "routes.ts exports handleCompanionRequest",
+   "weight": 0.7
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/routes.ts:parsePairingBody",
+   "target": "function:apps/control-plane/api/companion/routes.ts:recordOf",
+   "type": "calls",
+   "direction": "forward",
+   "description": "parsePairingBody calls recordOf",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/routes.ts:invite",
+   "target": "function:apps/control-plane/api/companion/routes.ts:sendJson",
+   "type": "calls",
+   "direction": "forward",
+   "description": "invite calls sendJson",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/routes.ts:invite",
+   "target": "function:apps/control-plane/api/companion/routes.ts:readJsonBody",
+   "type": "calls",
+   "direction": "forward",
+   "description": "invite calls readJsonBody",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/routes.ts:invite",
+   "target": "function:apps/control-plane/api/companion/routes.ts:recordOf",
+   "type": "calls",
+   "direction": "forward",
+   "description": "invite calls recordOf",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/routes.ts:pair",
+   "target": "function:apps/control-plane/api/companion/routes.ts:sendJson",
+   "type": "calls",
+   "direction": "forward",
+   "description": "pair calls sendJson",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/routes.ts:pair",
+   "target": "function:apps/control-plane/api/companion/routes.ts:parsePairingBody",
+   "type": "calls",
+   "direction": "forward",
+   "description": "pair calls parsePairingBody",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/routes.ts:pair",
+   "target": "function:apps/control-plane/api/companion/routes.ts:readJsonBody",
+   "type": "calls",
+   "direction": "forward",
+   "description": "pair calls readJsonBody",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/routes.ts:operationStatus",
+   "target": "function:apps/control-plane/api/companion/routes.ts:sendJson",
+   "type": "calls",
+   "direction": "forward",
+   "description": "operationStatus calls sendJson",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/routes.ts:operationStatus",
+   "target": "function:apps/control-plane/api/companion/routes.ts:readJsonBody",
+   "type": "calls",
+   "direction": "forward",
+   "description": "operationStatus calls readJsonBody",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/routes.ts:operationStatus",
+   "target": "function:apps/control-plane/api/companion/routes.ts:recordOf",
+   "type": "calls",
+   "direction": "forward",
+   "description": "operationStatus calls recordOf",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/routes.ts:operationStatus",
+   "target": "function:apps/control-plane/api/companion/routes.ts:deviceSession",
+   "type": "calls",
+   "direction": "forward",
+   "description": "operationStatus calls deviceSession",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/routes.ts:revoke",
+   "target": "function:apps/control-plane/api/companion/routes.ts:sendJson",
+   "type": "calls",
+   "direction": "forward",
+   "description": "revoke calls sendJson",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/routes.ts:revoke",
+   "target": "function:apps/control-plane/api/companion/routes.ts:recordOf",
+   "type": "calls",
+   "direction": "forward",
+   "description": "revoke calls recordOf",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/routes.ts:revoke",
+   "target": "function:apps/control-plane/api/companion/routes.ts:readJsonBody",
+   "type": "calls",
+   "direction": "forward",
+   "description": "revoke calls readJsonBody",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/routes.ts:revoke",
+   "target": "function:apps/control-plane/api/companion/routes.ts:deviceSession",
+   "type": "calls",
+   "direction": "forward",
+   "description": "revoke calls deviceSession",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/routes.ts:handleCompanionRequest",
+   "target": "function:apps/control-plane/api/companion/routes.ts:pathname",
+   "type": "calls",
+   "direction": "forward",
+   "description": "handleCompanionRequest calls pathname",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/routes.ts:handleCompanionRequest",
+   "target": "function:apps/control-plane/api/companion/routes.ts:sendJson",
+   "type": "calls",
+   "direction": "forward",
+   "description": "handleCompanionRequest calls sendJson",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/routes.ts:handleCompanionRequest",
+   "target": "function:apps/control-plane/api/companion/routes.ts:pair",
+   "type": "calls",
+   "direction": "forward",
+   "description": "handleCompanionRequest calls pair",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/routes.ts:handleCompanionRequest",
+   "target": "function:apps/control-plane/api/companion/routes.ts:invite",
+   "type": "calls",
+   "direction": "forward",
+   "description": "handleCompanionRequest calls invite",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/routes.ts:handleCompanionRequest",
+   "target": "function:apps/control-plane/api/companion/routes.ts:deviceSession",
+   "type": "calls",
+   "direction": "forward",
+   "description": "handleCompanionRequest calls deviceSession",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/routes.ts:handleCompanionRequest",
+   "target": "function:apps/control-plane/api/companion/routes.ts:operationStatus",
+   "type": "calls",
+   "direction": "forward",
+   "description": "handleCompanionRequest calls operationStatus",
+   "weight": 0.6
+  },
+  {
+   "source": "function:apps/control-plane/api/companion/routes.ts:handleCompanionRequest",
+   "target": "function:apps/control-plane/api/companion/routes.ts:revoke",
+   "type": "calls",
+   "direction": "forward",
+   "description": "handleCompanionRequest calls revoke",
+   "weight": 0.6
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/store.ts",
+   "target": "function:apps/control-plane/api/companion/store.ts:companionDirectory",
+   "type": "contains",
+   "direction": "forward",
+   "description": "store.ts defines companionDirectory",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/store.ts",
+   "target": "function:apps/control-plane/api/companion/store.ts:companionDirectory",
+   "type": "exports",
+   "direction": "forward",
+   "description": "store.ts exports companionDirectory",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/store.ts",
+   "target": "function:apps/control-plane/api/companion/store.ts:companionWorkspace",
+   "type": "contains",
+   "direction": "forward",
+   "description": "store.ts defines companionWorkspace",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/store.ts",
+   "target": "function:apps/control-plane/api/companion/store.ts:companionWorkspace",
+   "type": "exports",
+   "direction": "forward",
+   "description": "store.ts exports companionWorkspace",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/store.ts",
+   "target": "function:apps/control-plane/api/companion/store.ts:readStoreFile",
+   "type": "contains",
+   "direction": "forward",
+   "description": "store.ts defines readStoreFile",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/store.ts",
+   "target": "function:apps/control-plane/api/companion/store.ts:readStoreFile",
+   "type": "exports",
+   "direction": "forward",
+   "description": "store.ts exports readStoreFile",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/store.ts",
+   "target": "function:apps/control-plane/api/companion/store.ts:writeStoreFile",
+   "type": "contains",
+   "direction": "forward",
+   "description": "store.ts defines writeStoreFile",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/store.ts",
+   "target": "function:apps/control-plane/api/companion/store.ts:writeStoreFile",
+   "type": "exports",
+   "direction": "forward",
+   "description": "store.ts exports writeStoreFile",
+   "weight": 0.7
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/store.ts",
+   "target": "class:apps/control-plane/api/companion/store.ts:CompanionStoreError",
+   "type": "contains",
+   "direction": "forward",
+   "description": "store.ts defines class CompanionStoreError",
+   "weight": 1.0
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/companion.test.ts",
+   "target": "file:apps/control-plane/api/companion/devices.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "companion.test.ts imports devices.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/companion.test.ts",
+   "target": "file:apps/control-plane/api/companion/diagnostics.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "companion.test.ts imports diagnostics.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/companion.test.ts",
+   "target": "file:apps/control-plane/api/companion/invitations.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "companion.test.ts imports invitations.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/companion.test.ts",
+   "target": "file:apps/control-plane/api/companion/operations.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "companion.test.ts imports operations.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/companion.test.ts",
+   "target": "file:apps/control-plane/api/companion/store.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "companion.test.ts imports store.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/companion.test.ts",
+   "target": "file:apps/control-plane/api/server.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "companion.test.ts imports server.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/devices.ts",
+   "target": "file:apps/control-plane/api/companion/operations.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "devices.ts imports operations.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/devices.ts",
+   "target": "file:apps/control-plane/api/companion/store.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "devices.ts imports store.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/diagnostics.ts",
+   "target": "file:apps/control-plane/api/companion/devices.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "diagnostics.ts imports devices.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/diagnostics.ts",
+   "target": "file:apps/control-plane/api/companion/operations.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "diagnostics.ts imports operations.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/envelope.test.ts",
+   "target": "file:apps/control-plane/api/companion/devices.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "envelope.test.ts imports devices.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/envelope.test.ts",
+   "target": "file:apps/control-plane/api/companion/operations.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "envelope.test.ts imports operations.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/envelope.test.ts",
+   "target": "file:apps/control-plane/api/server.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "envelope.test.ts imports server.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/envelope.test.ts",
+   "target": "file:packages/ledger/src/canonical.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "envelope.test.ts imports canonical.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/envelope.ts",
+   "target": "file:apps/control-plane/api/companion/devices.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "envelope.ts imports devices.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/envelope.ts",
+   "target": "file:apps/control-plane/api/companion/diagnostics.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "envelope.ts imports diagnostics.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/envelope.ts",
+   "target": "file:apps/control-plane/api/companion/idempotency.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "envelope.ts imports idempotency.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/envelope.ts",
+   "target": "file:apps/control-plane/api/companion/invitations.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "envelope.ts imports invitations.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/envelope.ts",
+   "target": "file:apps/control-plane/api/companion/operations.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "envelope.ts imports operations.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/envelope.ts",
+   "target": "file:apps/control-plane/api/companion/store.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "envelope.ts imports store.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/envelope.ts",
+   "target": "file:packages/ledger/src/canonical.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "envelope.ts imports canonical.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/idempotency.ts",
+   "target": "file:apps/control-plane/api/companion/store.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "idempotency.ts imports store.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/invitations.ts",
+   "target": "file:apps/control-plane/api/companion/store.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "invitations.ts imports store.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/operations.ts",
+   "target": "file:apps/control-plane/api/companion/store.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "operations.ts imports store.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/routes.ts",
+   "target": "file:apps/control-plane/api/companion/devices.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "routes.ts imports devices.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/routes.ts",
+   "target": "file:apps/control-plane/api/companion/diagnostics.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "routes.ts imports diagnostics.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/routes.ts",
+   "target": "file:apps/control-plane/api/companion/invitations.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "routes.ts imports invitations.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/routes.ts",
+   "target": "file:apps/control-plane/api/companion/operations.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "routes.ts imports operations.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:apps/control-plane/api/companion/routes.ts",
+   "target": "file:apps/control-plane/api/companion/store.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "routes.ts imports store.ts",
+   "weight": 0.8
+  }
+ ]
+}

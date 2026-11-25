@@ -1,0 +1,565 @@
+{
+ "nodes": [
+  {
+   "id": "file:packages/connectors/src/probes/cache.test.ts",
+   "type": "file",
+   "name": "cache.test.ts",
+   "filePath": "packages/connectors/src/probes/cache.test.ts",
+   "summary": "cache.test.ts \u2014 typescript code, 134 lines, 0 functions, 0 classes, 0 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/connectors/src/probes/cache.ts",
+   "type": "file",
+   "name": "cache.ts",
+   "filePath": "packages/connectors/src/probes/cache.ts",
+   "summary": "cache.ts \u2014 typescript code, 77 lines, 3 functions, 0 classes, 2 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/probes/cache.ts:probeCache",
+   "type": "function",
+   "name": "probeCache",
+   "filePath": "packages/connectors/src/probes/cache.ts",
+   "lineRange": [
+    32,
+    66
+   ],
+   "summary": "probeCache(seconds, clock) \u2014 function in cache.ts, lines 32-66.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/probes/cache.ts:digestCall",
+   "type": "function",
+   "name": "digestCall",
+   "filePath": "packages/connectors/src/probes/cache.ts",
+   "lineRange": [
+    68,
+    70
+   ],
+   "summary": "digestCall(probeId, call) \u2014 function in cache.ts, lines 68-70.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/probes/cache.ts:stableJson",
+   "type": "function",
+   "name": "stableJson",
+   "filePath": "packages/connectors/src/probes/cache.ts",
+   "lineRange": [
+    72,
+    77
+   ],
+   "summary": "stableJson(value) \u2014 function in cache.ts, lines 72-77.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/connectors/src/probes/postgres.test.ts",
+   "type": "file",
+   "name": "postgres.test.ts",
+   "filePath": "packages/connectors/src/probes/postgres.test.ts",
+   "summary": "postgres.test.ts \u2014 typescript code, 57 lines, 0 functions, 0 classes, 0 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/connectors/src/probes/postgres.ts",
+   "type": "file",
+   "name": "postgres.ts",
+   "filePath": "packages/connectors/src/probes/postgres.ts",
+   "summary": "postgres.ts \u2014 typescript code, 96 lines, 6 functions, 0 classes, 2 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/probes/postgres.ts:parsePredicateInput",
+   "type": "function",
+   "name": "parsePredicateInput",
+   "filePath": "packages/connectors/src/probes/postgres.ts",
+   "lineRange": [
+    58,
+    64
+   ],
+   "summary": "parsePredicateInput(args) \u2014 function in postgres.ts, lines 58-64.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/probes/postgres.ts:runQuery",
+   "type": "function",
+   "name": "runQuery",
+   "filePath": "packages/connectors/src/probes/postgres.ts",
+   "lineRange": [
+    66,
+    69
+   ],
+   "summary": "runQuery(exec, statement) \u2014 function in postgres.ts, lines 66-69.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/probes/postgres.ts:loadForeignKeys",
+   "type": "function",
+   "name": "loadForeignKeys",
+   "filePath": "packages/connectors/src/probes/postgres.ts",
+   "lineRange": [
+    71,
+    79
+   ],
+   "summary": "loadForeignKeys(exec) \u2014 function in postgres.ts, lines 71-79.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/probes/postgres.ts:readCount",
+   "type": "function",
+   "name": "readCount",
+   "filePath": "packages/connectors/src/probes/postgres.ts",
+   "lineRange": [
+    81,
+    86
+   ],
+   "summary": "readCount(rows) \u2014 function in postgres.ts, lines 81-86.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/probes/postgres.ts:readString",
+   "type": "function",
+   "name": "readString",
+   "filePath": "packages/connectors/src/probes/postgres.ts",
+   "lineRange": [
+    88,
+    92
+   ],
+   "summary": "readString(row, key) \u2014 function in postgres.ts, lines 88-92.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/probes/postgres.ts:quoteIdent",
+   "type": "function",
+   "name": "quoteIdent",
+   "filePath": "packages/connectors/src/probes/postgres.ts",
+   "lineRange": [
+    94,
+    96
+   ],
+   "summary": "quoteIdent(value) \u2014 function in postgres.ts, lines 94-96.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/connectors/src/probes/registry.test.ts",
+   "type": "file",
+   "name": "registry.test.ts",
+   "filePath": "packages/connectors/src/probes/registry.test.ts",
+   "summary": "registry.test.ts \u2014 typescript code, 20 lines, 0 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/connectors/src/probes/registry.ts",
+   "type": "file",
+   "name": "registry.ts",
+   "filePath": "packages/connectors/src/probes/registry.ts",
+   "summary": "registry.ts \u2014 typescript code, 43 lines, 2 functions, 0 classes, 2 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/probes/registry.ts:pickProbes",
+   "type": "function",
+   "name": "pickProbes",
+   "filePath": "packages/connectors/src/probes/registry.ts",
+   "lineRange": [
+    25,
+    29
+   ],
+   "summary": "pickProbes(connectorId) \u2014 function in registry.ts, lines 25-29.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/probes/registry.ts:fallbackBlastRadius",
+   "type": "function",
+   "name": "fallbackBlastRadius",
+   "filePath": "packages/connectors/src/probes/registry.ts",
+   "lineRange": [
+    31,
+    37
+   ],
+   "summary": "fallbackBlastRadius(args) \u2014 function in registry.ts, lines 31-37.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/connectors/src/probes/s3.test.ts",
+   "type": "file",
+   "name": "s3.test.ts",
+   "filePath": "packages/connectors/src/probes/s3.test.ts",
+   "summary": "s3.test.ts \u2014 typescript code, 45 lines, 0 functions, 0 classes, 0 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/connectors/src/probes/s3.ts",
+   "type": "file",
+   "name": "s3.ts",
+   "filePath": "packages/connectors/src/probes/s3.ts",
+   "summary": "s3.ts \u2014 typescript code, 54 lines, 2 functions, 0 classes, 2 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/probes/s3.ts:parseS3Input",
+   "type": "function",
+   "name": "parseS3Input",
+   "filePath": "packages/connectors/src/probes/s3.ts",
+   "lineRange": [
+    43,
+    49
+   ],
+   "summary": "parseS3Input(args) \u2014 function in s3.ts, lines 43-49.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/probes/s3.ts:requireS3",
+   "type": "function",
+   "name": "requireS3",
+   "filePath": "packages/connectors/src/probes/s3.ts",
+   "lineRange": [
+    51,
+    54
+   ],
+   "summary": "requireS3(exec) \u2014 function in s3.ts, lines 51-54.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  }
+ ],
+ "edges": [
+  {
+   "source": "file:packages/connectors/src/probes/cache.ts",
+   "target": "function:packages/connectors/src/probes/cache.ts:probeCache",
+   "type": "contains",
+   "direction": "forward",
+   "description": "cache.ts defines probeCache",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/probes/cache.ts",
+   "target": "function:packages/connectors/src/probes/cache.ts:probeCache",
+   "type": "exports",
+   "direction": "forward",
+   "description": "cache.ts exports probeCache",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/connectors/src/probes/cache.ts",
+   "target": "function:packages/connectors/src/probes/cache.ts:digestCall",
+   "type": "contains",
+   "direction": "forward",
+   "description": "cache.ts defines digestCall",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/probes/cache.ts",
+   "target": "function:packages/connectors/src/probes/cache.ts:stableJson",
+   "type": "contains",
+   "direction": "forward",
+   "description": "cache.ts defines stableJson",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/connectors/src/probes/cache.ts:digestCall",
+   "target": "function:packages/connectors/src/probes/cache.ts:stableJson",
+   "type": "calls",
+   "direction": "forward",
+   "description": "digestCall calls stableJson",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/connectors/src/probes/postgres.ts",
+   "target": "function:packages/connectors/src/probes/postgres.ts:parsePredicateInput",
+   "type": "contains",
+   "direction": "forward",
+   "description": "postgres.ts defines parsePredicateInput",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/probes/postgres.ts",
+   "target": "function:packages/connectors/src/probes/postgres.ts:runQuery",
+   "type": "contains",
+   "direction": "forward",
+   "description": "postgres.ts defines runQuery",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/probes/postgres.ts",
+   "target": "function:packages/connectors/src/probes/postgres.ts:loadForeignKeys",
+   "type": "contains",
+   "direction": "forward",
+   "description": "postgres.ts defines loadForeignKeys",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/probes/postgres.ts",
+   "target": "function:packages/connectors/src/probes/postgres.ts:readCount",
+   "type": "contains",
+   "direction": "forward",
+   "description": "postgres.ts defines readCount",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/probes/postgres.ts",
+   "target": "function:packages/connectors/src/probes/postgres.ts:readString",
+   "type": "contains",
+   "direction": "forward",
+   "description": "postgres.ts defines readString",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/probes/postgres.ts",
+   "target": "function:packages/connectors/src/probes/postgres.ts:quoteIdent",
+   "type": "contains",
+   "direction": "forward",
+   "description": "postgres.ts defines quoteIdent",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/connectors/src/probes/postgres.ts:loadForeignKeys",
+   "target": "function:packages/connectors/src/probes/postgres.ts:runQuery",
+   "type": "calls",
+   "direction": "forward",
+   "description": "loadForeignKeys calls runQuery",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/probes/postgres.ts:loadForeignKeys",
+   "target": "function:packages/connectors/src/probes/postgres.ts:readString",
+   "type": "calls",
+   "direction": "forward",
+   "description": "loadForeignKeys calls readString",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/connectors/src/probes/registry.ts",
+   "target": "function:packages/connectors/src/probes/registry.ts:pickProbes",
+   "type": "contains",
+   "direction": "forward",
+   "description": "registry.ts defines pickProbes",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/probes/registry.ts",
+   "target": "function:packages/connectors/src/probes/registry.ts:pickProbes",
+   "type": "exports",
+   "direction": "forward",
+   "description": "registry.ts exports pickProbes",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/connectors/src/probes/registry.ts",
+   "target": "function:packages/connectors/src/probes/registry.ts:fallbackBlastRadius",
+   "type": "contains",
+   "direction": "forward",
+   "description": "registry.ts defines fallbackBlastRadius",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/probes/registry.ts",
+   "target": "function:packages/connectors/src/probes/registry.ts:fallbackBlastRadius",
+   "type": "exports",
+   "direction": "forward",
+   "description": "registry.ts exports fallbackBlastRadius",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/connectors/src/probes/s3.ts",
+   "target": "function:packages/connectors/src/probes/s3.ts:parseS3Input",
+   "type": "contains",
+   "direction": "forward",
+   "description": "s3.ts defines parseS3Input",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/probes/s3.ts",
+   "target": "function:packages/connectors/src/probes/s3.ts:requireS3",
+   "type": "contains",
+   "direction": "forward",
+   "description": "s3.ts defines requireS3",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/probes/cache.test.ts",
+   "target": "file:packages/connectors/src/probes/cache.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "cache.test.ts imports cache.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/probes/cache.test.ts",
+   "target": "file:packages/connectors/src/probes/registry.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "cache.test.ts imports registry.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/probes/cache.ts",
+   "target": "file:packages/connectors/src/probes/registry.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "cache.ts imports registry.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/probes/postgres.test.ts",
+   "target": "file:packages/connectors/src/probes/postgres.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "postgres.test.ts imports postgres.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/probes/postgres.test.ts",
+   "target": "file:packages/connectors/src/probes/registry.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "postgres.test.ts imports registry.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/probes/postgres.ts",
+   "target": "file:packages/connectors/src/probes/registry.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "postgres.ts imports registry.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/probes/registry.test.ts",
+   "target": "file:packages/connectors/src/probes/registry.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "registry.test.ts imports registry.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/probes/registry.ts",
+   "target": "file:packages/connectors/src/probes/postgres.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "registry.ts imports postgres.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/probes/registry.ts",
+   "target": "file:packages/connectors/src/probes/s3.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "registry.ts imports s3.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/probes/s3.test.ts",
+   "target": "file:packages/connectors/src/probes/registry.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "s3.test.ts imports registry.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/probes/s3.test.ts",
+   "target": "file:packages/connectors/src/probes/s3.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "s3.test.ts imports s3.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/probes/s3.ts",
+   "target": "file:packages/connectors/src/probes/registry.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "s3.ts imports registry.ts",
+   "weight": 0.8
+  }
+ ]
+}

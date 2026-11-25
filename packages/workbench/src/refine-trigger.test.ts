@@ -5,12 +5,18 @@ import {
   arm,
   initialTriggerState,
   onBranchMove,
+  persistTriggerState,
   recordSettledTurn,
   requestManualReview,
+  restoreTriggerState,
+  restoreTriggerStates,
   serviceTrigger,
   type RoundOutcome,
   type TriggerState,
 } from "./refine-trigger.ts";
+import { cheapGate, type GateDecision } from "./refine-gate.ts";
+import type { HarnessEntry } from "./learned-harness.ts";
+import { isolatedWorkbench } from "./test-fixture.ts";
 
 /** A gate that always proceeds, so the trigger is tested on its own. */
 const GO = { proceed: true as const, instructions: "" };
@@ -324,4 +330,296 @@ test("an outcome with no round reports no version, so nothing can be applied", a
   assert.equal(result.outcome.kind, "not-run");
   assert.equal(result.startedAtBranchVersion, null);
   assert.equal(result.startedAtBranchVersion, null, "nothing ran, so there is nothing to apply");
+});
+
+/* ------------------------------------------------------------------------- *
+ * Persistence: the cooldown has to survive a restart.
+ *
+ * The gate these tests consult is the real one, not a stub, because the claim
+ * being proved is about the refusal the product shows: a restart that forgets
+ * the cooldown is a free review, and "free review" is a statement about
+ * `cheapGate` answering `under-cooldown`.
+ * ------------------------------------------------------------------------- */
+
+/** The production defaults, spelled out so a test cannot pass by inheriting a
+ * cooldown of zero from somewhere else. */
+const GATES = { enabled: true, turnInterval: 1, cooldownMs: 20 * 60_000 } as const;
+
+const candidate: HarnessEntry = {
+  id: "entry-1",
+  kind: "lesson",
+  scope: "workspace",
+  tool: "shell",
+  klass: "r1",
+  title: "a repeated approval",
+  content: "the operator approved the same call twice",
+  derivedFromSeq: [1],
+  repeats: 2,
+  createdAt: new Date(0).toISOString(),
+};
+
+/** The gate, fed exactly as the runtime feeds it. */
+function decide(state: TriggerState, now: number): GateDecision {
+  return cheapGate({
+    gates: GATES,
+    pending: state.pending,
+    hasPendingReview: state.pendingReview !== null,
+    inFlight: state.inFlight,
+    manual: state.manualReviewRequested,
+    settledTurns: state.settledTurnsSinceReview,
+    msSinceLastReview: state.lastReviewAt === null ? null : now - state.lastReviewAt,
+    candidates: [candidate],
+    harnessStateAvailable: true,
+    surface: "checkpoint",
+  });
+}
+
+/** A stored state, through real JSON, so the round trip is the stored one and
+ * not an object identity that never left the process. */
+function roundTrip(state: TriggerState): unknown {
+  return JSON.parse(JSON.stringify(persistTriggerState(state)));
+}
+
+test("a cooldown survives a restart and still refuses under-cooldown", () => {
+  const now = 10_000_000;
+  const before = ready({ settledTurnsSinceReview: 40, lastReviewAt: now - 60_000 });
+  const restored = restoreTriggerState(roundTrip(before), now);
+  assert.ok(restored, "a stored state must come back, or the restart bought a review");
+  assert.equal(restored.lastReviewAt, before.lastReviewAt);
+  assert.equal(restored.pending, true);
+  assert.equal(restored.settledTurnsSinceReview, 40);
+
+  const decision = decide(restored, now);
+  assert.equal(decision.proceed, false);
+  assert.equal(
+    decision.reason,
+    "under-cooldown",
+    "a restart inside the cooldown must not reopen the gate",
+  );
+  assert.equal(decision.held, true, "the armed trigger survives the refusal");
+
+  // And the stamp is a delay, not a wedge: once the cooldown really elapses the
+  // same restored state is allowed to spend.
+  const after = now + GATES.cooldownMs;
+  assert.equal(decide(restored, after).proceed, true);
+});
+
+test("a stale inFlight is not restored as in flight, and pays the cooldown", () => {
+  // The process died while a round was running. Restoring the flag would hold
+  // `in-flight` for the life of the next process, and the gate would never
+  // open again; dropping it without a stamp would let the restart buy the
+  // review the crashed round may already have paid for. The state comes back
+  // not in flight, with a fresh cooldown.
+  const now = 20_000_000;
+  const crashed = ready({
+    settledTurnsSinceReview: 40,
+    inFlight: true,
+    lastReviewAt: now - 24 * 60 * 60_000,
+  });
+  const restored = restoreTriggerState(roundTrip(crashed), now);
+  assert.ok(restored);
+  assert.equal(restored.inFlight, false, "a crash must not wedge the gate on in-flight forever");
+  assert.equal(restored.lastReviewAt, now, "the interrupted round costs a cooldown");
+
+  const decision = decide(restored, now);
+  assert.equal(decision.proceed, false);
+  assert.equal(decision.reason, "under-cooldown");
+  assert.notEqual(decision.reason, "in-flight", "nothing is running after a restart");
+});
+
+test("a corrupt timestamp becomes now, never a free review", () => {
+  // `null` means "no attempt", so an unreadable record that became `null`
+  // would be the one shape of damage that opens the gate. It costs a cooldown
+  // instead.
+  const now = 5_000_000;
+  for (const lastReviewAt of ["yesterday", 0 / 0, Number.POSITIVE_INFINITY, {}, undefined]) {
+    const restored = restoreTriggerState(
+      { ...persistTriggerState(ready()), lastReviewAt },
+      now,
+    );
+    assert.ok(restored);
+    assert.equal(restored.lastReviewAt, now, `a ${String(lastReviewAt)} stamp was trusted`);
+    const decision = decide(restored, now);
+    assert.equal(decision.proceed, false);
+    assert.equal(decision.reason, "under-cooldown");
+  }
+  // A timestamp in the future is not a real attempt time either. Trusting it
+  // would hold the gate shut until the clock caught up, so it is clamped to
+  // one full cooldown from now.
+  const future = restoreTriggerState(
+    { ...persistTriggerState(ready()), lastReviewAt: now + 86_400_000 },
+    now,
+  );
+  assert.ok(future);
+  assert.equal(future.lastReviewAt, now);
+});
+
+test("counts and flags that are not what this process writes fall back safely", () => {
+  const now = 7_000_000;
+  const restored = restoreTriggerState(
+    {
+      pending: "yes",
+      manualReviewRequested: 1,
+      settledTurnsSinceReview: -3,
+      lastReviewAt: null,
+      inFlight: false,
+      branchVersion: 1.5,
+      pendingReview: 42,
+    },
+    now,
+  );
+  assert.ok(restored);
+  assert.equal(restored.pending, false);
+  assert.equal(restored.manualReviewRequested, false);
+  assert.equal(restored.settledTurnsSinceReview, 0, "a negative turn count must not open the gate");
+  assert.equal(restored.branchVersion, 0);
+  assert.equal(restored.pendingReview, null);
+  assert.equal(restored.lastReviewAt, null, "an explicit null is a real 'no attempt'");
+
+  // Not a state at all is a different answer from an empty one: the caller has
+  // to be able to tell a corrupt record from a workspace that never stored one.
+  for (const value of [null, 42, "state", [1, 2]]) {
+    assert.equal(restoreTriggerState(value, now), undefined);
+  }
+});
+
+test("restored entries are keyed by session, and a gone session's entry is dropped", () => {
+  const now = 8_000_000;
+  const live = ready({ lastReviewAt: now - 1_000 });
+  const snapshot = {
+    live: JSON.parse(JSON.stringify(persistTriggerState(live))),
+    gone: JSON.parse(JSON.stringify(persistTriggerState(ready({ pendingReview: "stale" })))),
+    corrupt: "not a state",
+  };
+
+  const restored = restoreTriggerStates(snapshot, now, new Set(["live"]));
+  assert.deepEqual([...restored.states.keys()], ["live"]);
+  assert.equal(restored.states.get("live")!.lastReviewAt, live.lastReviewAt);
+  assert.equal(restored.changed, true, "a dropped entry is a repair the caller must write back");
+
+  // A snapshot that needs no repair is reported as unchanged, so a start does
+  // not rewrite the store for nothing.
+  const clean = restoreTriggerStates(
+    { live: JSON.parse(JSON.stringify(persistTriggerState(live))) },
+    now,
+    new Set(["live"]),
+  );
+  assert.equal(clean.changed, false);
+  assert.equal(clean.states.size, 1);
+  // No key at all is not a repair: a workspace written before this existed has
+  // nothing to clean.
+  assert.deepEqual(restoreTriggerStates(undefined, now, new Set()), {
+    states: new Map(),
+    changed: false,
+  });
+});
+
+/* ------------------------------------------------------------------------- *
+ * The same claim through the real store: a restart inside the cooldown
+ * refuses, and a crashed round neither wedges the gate nor buys a review.
+ * ------------------------------------------------------------------------- */
+
+/** Counts model calls, so "no free review" is a measurement and not a reading
+ * of the note. */
+function countingFetcher() {
+  let calls = 0;
+  const fetcher = async (url: unknown) => {
+    if (String(url).endsWith("/models"))
+      return Response.json({ data: [{ id: "fixture" }] });
+    calls += 1;
+    return Response.json({
+      choices: [{ message: { role: "assistant", content: "Ready" }, finish_reason: "stop" }],
+    });
+  };
+  return { fetcher, calls: () => calls };
+}
+
+type TriggerInternals = {
+  harnessTriggers: Map<string, TriggerState>;
+  persist(): void;
+};
+
+async function triggerFixture(t: { after(fn: () => Promise<void>): void }) {
+  const counter = countingFetcher();
+  const f = await isolatedWorkbench(t, counter.fetcher, {}, {
+    prefix: "nomo-trigger-persist-",
+  });
+  const session = await f.app.start("Review the workspace", "fixture");
+  await f.app.settled();
+  const internals = f.app as unknown as TriggerInternals;
+  return {
+    f,
+    session,
+    calls: counter.calls,
+    /** Writes a state the way a previous process would have left it. */
+    seed(state: TriggerState) {
+      internals.harnessTriggers.set(session.id, state);
+      internals.persist();
+    },
+    async restart() {
+      await f.app.shutdown();
+      const reopened = f.restart({ keepOpen: true });
+      return {
+        app: reopened,
+        triggers: (reopened as unknown as TriggerInternals).harnessTriggers,
+      };
+    },
+  };
+}
+
+test("a restart inside the cooldown refuses with under-cooldown", async (t) => {
+  const { session, seed, restart, calls } = await triggerFixture(t);
+  const stamp = Date.now() - 60_000;
+  seed({
+    ...initialTriggerState(),
+    pending: true,
+    settledTurnsSinceReview: 40,
+    lastReviewAt: stamp,
+  });
+  const spentBefore = calls();
+
+  const { app, triggers } = await restart();
+  const restored = triggers.get(session.id);
+  assert.ok(restored, "the trigger did not survive the restart");
+  assert.equal(restored.lastReviewAt, stamp, "the cooldown moved across the restart");
+  assert.equal(restored.inFlight, false);
+
+  const result = await app.requestHarnessReview(session.id);
+  assert.equal(result.kind, "armed", "a held refusal keeps the request for a later boundary");
+  assert.match(result.note, /cooldown/);
+  assert.equal(
+    calls(),
+    spentBefore,
+    "a restart inside the cooldown spent a model call, which is the free review",
+  );
+});
+
+test("a restart after a crash mid-round neither wedges the gate nor buys a review", async (t) => {
+  const { session, seed, restart, calls } = await triggerFixture(t);
+  // A round was in flight when the process died, and its stamp is old enough
+  // that the cooldown would otherwise have elapsed.
+  seed({
+    ...initialTriggerState(),
+    pending: true,
+    settledTurnsSinceReview: 40,
+    inFlight: true,
+    lastReviewAt: Date.now() - 24 * 60 * 60_000,
+  });
+  const spentBefore = calls();
+  const restartedAt = Date.now();
+
+  const { app, triggers } = await restart();
+  const restored = triggers.get(session.id);
+  assert.ok(restored);
+  assert.equal(restored.inFlight, false, "a crashed round must not hold the gate shut forever");
+  assert.ok(
+    restored.lastReviewAt !== null && restored.lastReviewAt >= restartedAt,
+    "the interrupted round must stamp a cooldown, or the restart buys it",
+  );
+
+  const result = await app.requestHarnessReview(session.id);
+  assert.equal(result.kind, "armed");
+  assert.match(result.note, /cooldown/);
+  assert.doesNotMatch(result.note, /in flight/, "nothing is in flight after a restart");
+  assert.equal(calls(), spentBefore, "the crashed round's review was paid for twice");
 });

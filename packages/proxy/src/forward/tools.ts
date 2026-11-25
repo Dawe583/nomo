@@ -44,6 +44,12 @@ export type LedgerEntryInput = {
    * from an attribution that names a policy and no rule.
    */
   readonly attribution?: LedgerAttribution;
+  /**
+   * How long the operator took to answer a hold, on a record that records an
+   * answer. Absent on a call that was never held, and absent when the hold
+   * expired or was cancelled: a timeout is the window elapsing, not a decision.
+   */
+  readonly approvalMs?: number;
 };
 
 export type InterceptDeps = {
@@ -220,6 +226,7 @@ export async function interceptCall(
           "hold:approved",
           digest,
           attribution,
+          answerLatency(resolution.call, now),
         );
         return {
           jsonrpc: "2.0",
@@ -240,6 +247,9 @@ export async function interceptCall(
         `hold:${result}`,
         digest,
         attribution,
+        // A timeout is the window elapsing, not an operator answering. Writing
+        // the window here would put a fabricated decision time on the board.
+        result === "denied" ? answerLatency(resolution.call, now) : undefined,
       );
       return holdError(resolution.call, resolution.outcome, "hold");
     });
@@ -350,6 +360,9 @@ async function writeLedger(
   decision: string,
   argsDigest: string,
   attribution: LedgerAttribution | undefined,
+  /** How long the operator took to answer a hold. Absent on a call that was
+   * never held, so the harness can tell "no hold" from "held and answered". */
+  approvalMs?: number,
 ): Promise<void> {
   await deps.ledger({
     at: now().toISOString(),
@@ -357,6 +370,7 @@ async function writeLedger(
     klass,
     decision,
     argsDigest,
+    ...(approvalMs === undefined ? {} : { approvalMs }),
     // Spread rather than a bare undefined: canonicalJson refuses undefined,
     // and a record that names no policy must simply not carry the field.
     ...(attribution === undefined ? {} : { attribution }),
@@ -424,6 +438,17 @@ function toHeldCall(
     expiresAt: heldAt + decision.seconds * 1000,
     notify: decision.notify,
   };
+}
+
+/**
+ * The operator's latency, read from the same clock the record's `at` uses.
+ *
+ * A hold with no finite start, or a clock that moved backwards, reports no
+ * latency rather than a number nobody observed.
+ */
+function answerLatency(call: HeldCall, now: () => Date): number | undefined {
+  const ms = now().getTime() - call.heldAt;
+  return Number.isFinite(ms) && ms >= 0 ? ms : undefined;
 }
 
 function holdError(

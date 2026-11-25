@@ -93,6 +93,17 @@ describe("interceptCall", () => {
     const result = await (verdict as { promise: Promise<unknown> }).promise;
     assert.deepEqual(result, { jsonrpc: "2.0", id: 0, result: { approved: true } });
     assert.deepEqual(ledger.map((entry) => (entry as { decision: string }).decision), ["hold", "hold:approved"]);
+    // The harness measures the operator's latency, so the record that says the
+    // hold was answered has to carry how long the answer took.
+    const approved = ledger.find(
+      (entry) => (entry as { decision: string }).decision === "hold:approved",
+    ) as { approvalMs?: number };
+    const ms = approved.approvalMs;
+    assert.equal(typeof ms, "number");
+    assert.ok(
+      typeof ms === "number" && Number.isFinite(ms) && ms >= 0,
+      `approvalMs must be a real duration, got ${String(ms)}`,
+    );
   });
 
   test("maps denied and expired holds to readable errors", async () => {
@@ -100,6 +111,7 @@ describe("interceptCall", () => {
       { kind: "released", release: { kind: "denied", by: "alice" } },
       { kind: "expired" },
     ] as const) {
+      const ledger: unknown[] = [];
       const verdict = await interceptCall(call, {
         classify: () => classified("r2"),
         policy: () => ({ kind: "hold", ruleIndex: 2, seconds: 30, notify: ["cli"], rationale: "needs a human" }),
@@ -108,13 +120,27 @@ describe("interceptCall", () => {
           outcome,
           call: { id: "h1", tool: call.tool, klass: "r2", blastRadius: 12, ruleIndex: 2, rationale: "needs a human", args: call.args, heldAt: 1, expiresAt: 2, notify: ["cli"] },
         }),
-        ledger: () => {},
+        ledger: (entry) => { ledger.push(entry); },
       });
       const error = await (verdict as { promise: Promise<JsonRpcError> }).promise;
       assert.equal(error.error.code, -32003);
       assert.match(error.error.message, /postgres\.query/);
       assert.match(error.error.message, /r2/);
       assert.match(error.error.message, /Do not retry/);
+      // A denial is an operator answering; a timeout is the window elapsing.
+      // Only the first may claim a decision latency.
+      const record = ledger.find(
+        (entry) => (entry as { decision: string }).decision === `hold:${outcome.kind === "expired" ? "expired" : "denied"}`,
+      ) as { approvalMs?: number };
+      assert.ok(record, "the hold outcome must be recorded");
+      if (outcome.kind === "expired")
+        assert.equal(
+          Object.prototype.hasOwnProperty.call(record, "approvalMs"),
+          false,
+          "an expired hold must not report an operator decision time",
+        );
+      else
+        assert.equal(typeof record.approvalMs, "number", "a denial reports how long the operator took");
     }
   });
 
@@ -136,6 +162,14 @@ describe("interceptCall", () => {
     assert.equal(error.error.code, -32800);
     assert.match(error.error.message, /cancelled before dispatch/);
     assert.deepEqual(ledger.map((entry) => (entry as { decision: string }).decision), ["hold", "hold:cancelled"]);
+    const cancelled = ledger.find(
+      (entry) => (entry as { decision: string }).decision === "hold:cancelled",
+    ) as { approvalMs?: number };
+    assert.equal(
+      Object.prototype.hasOwnProperty.call(cancelled, "approvalMs"),
+      false,
+      "a cancelled hold is not an operator decision",
+    );
   });
 
   test("classifies an unknown tool as r3", async () => {

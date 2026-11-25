@@ -1,0 +1,4434 @@
+{
+ "nodes": [
+  {
+   "id": "file:packages/connectors/src/reverse-engine.test.ts",
+   "type": "file",
+   "name": "reverse-engine.test.ts",
+   "filePath": "packages/connectors/src/reverse-engine.test.ts",
+   "summary": "reverse-engine.test.ts \u2014 typescript code, 550 lines, 5 functions, 1 classes, 0 exports, 16 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/connectors/src/reverse-engine.test.ts:isAppliedResult",
+   "type": "function",
+   "name": "isAppliedResult",
+   "filePath": "packages/connectors/src/reverse-engine.test.ts",
+   "lineRange": [
+    439,
+    441
+   ],
+   "summary": "isAppliedResult(value) \u2014 function in reverse-engine.test.ts, lines 439-441.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/reverse-engine.test.ts:testLineQueue",
+   "type": "function",
+   "name": "testLineQueue",
+   "filePath": "packages/connectors/src/reverse-engine.test.ts",
+   "lineRange": [
+    445,
+    470
+   ],
+   "summary": "testLineQueue() \u2014 function in reverse-engine.test.ts, lines 445-470.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/reverse-engine.test.ts:postgresUpstream",
+   "type": "function",
+   "name": "postgresUpstream",
+   "filePath": "packages/connectors/src/reverse-engine.test.ts",
+   "lineRange": [
+    472,
+    488
+   ],
+   "summary": "postgresUpstream(events, exec) \u2014 function in reverse-engine.test.ts, lines 472-488.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/reverse-engine.test.ts:ledgerBodies",
+   "type": "function",
+   "name": "ledgerBodies",
+   "filePath": "packages/connectors/src/reverse-engine.test.ts",
+   "lineRange": [
+    490,
+    493
+   ],
+   "summary": "ledgerBodies(path) \u2014 function in reverse-engine.test.ts, lines 490-493.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/reverse-engine.test.ts:s3Upstream",
+   "type": "function",
+   "name": "s3Upstream",
+   "filePath": "packages/connectors/src/reverse-engine.test.ts",
+   "lineRange": [
+    532,
+    550
+   ],
+   "summary": "s3Upstream(events, client) \u2014 function in reverse-engine.test.ts, lines 532-550.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:packages/connectors/src/reverse-engine.test.ts:MemoryS3Client",
+   "type": "class",
+   "name": "MemoryS3Client",
+   "filePath": "packages/connectors/src/reverse-engine.test.ts",
+   "lineRange": [
+    502,
+    530
+   ],
+   "summary": "MemoryS3Client \u2014 class in reverse-engine.test.ts, lines 502-530, methods: getObject, putObject, deleteObject, getBucketVersioning.",
+   "tags": [
+    "typescript",
+    "class"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/connectors/src/s3/apply-guard.test.ts",
+   "type": "file",
+   "name": "apply-guard.test.ts",
+   "filePath": "packages/connectors/src/s3/apply-guard.test.ts",
+   "summary": "apply-guard.test.ts \u2014 typescript code, 272 lines, 1 functions, 0 classes, 0 exports, 3 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/connectors/src/s3/apply-guard.test.ts:recorder",
+   "type": "function",
+   "name": "recorder",
+   "filePath": "packages/connectors/src/s3/apply-guard.test.ts",
+   "lineRange": [
+    41,
+    55
+   ],
+   "summary": "recorder(onPut) \u2014 function in apply-guard.test.ts, lines 41-55.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/connectors/src/s3/apply.test.ts",
+   "type": "file",
+   "name": "apply.test.ts",
+   "filePath": "packages/connectors/src/s3/apply.test.ts",
+   "summary": "apply.test.ts \u2014 typescript code, 134 lines, 0 functions, 0 classes, 0 exports, 3 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/connectors/src/s3/apply.ts",
+   "type": "file",
+   "name": "apply.ts",
+   "filePath": "packages/connectors/src/s3/apply.ts",
+   "summary": "apply.ts \u2014 typescript code, 219 lines, 5 functions, 0 classes, 1 exports, 3 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/connectors/src/s3/apply.ts:applyRestore",
+   "type": "function",
+   "name": "applyRestore",
+   "filePath": "packages/connectors/src/s3/apply.ts",
+   "lineRange": [
+    56,
+    62
+   ],
+   "summary": "applyRestore(store, client, input) \u2014 function in apply.ts, lines 56-62.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/s3/apply.ts:statusOf",
+   "type": "function",
+   "name": "statusOf",
+   "filePath": "packages/connectors/src/s3/apply.ts",
+   "lineRange": [
+    78,
+    81
+   ],
+   "summary": "statusOf(error) \u2014 function in apply.ts, lines 78-81.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/s3/apply.ts:restore",
+   "type": "function",
+   "name": "restore",
+   "filePath": "packages/connectors/src/s3/apply.ts",
+   "lineRange": [
+    83,
+    141
+   ],
+   "summary": "restore(store, client, input) \u2014 function in apply.ts, lines 83-141.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/s3/apply.ts:proveRestore",
+   "type": "function",
+   "name": "proveRestore",
+   "filePath": "packages/connectors/src/s3/apply.ts",
+   "lineRange": [
+    162,
+    211
+   ],
+   "summary": "proveRestore(store, client, input, bytes) \u2014 function in apply.ts, lines 162-211.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/s3/apply.ts:isNotFound",
+   "type": "function",
+   "name": "isNotFound",
+   "filePath": "packages/connectors/src/s3/apply.ts",
+   "lineRange": [
+    213,
+    219
+   ],
+   "summary": "isNotFound(error) \u2014 function in apply.ts, lines 213-219.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/connectors/src/s3/capture.ts",
+   "type": "file",
+   "name": "capture.ts",
+   "filePath": "packages/connectors/src/s3/capture.ts",
+   "summary": "capture.ts \u2014 typescript code, 73 lines, 2 functions, 1 classes, 3 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/s3/capture.ts:captureObject",
+   "type": "function",
+   "name": "captureObject",
+   "filePath": "packages/connectors/src/s3/capture.ts",
+   "lineRange": [
+    34,
+    69
+   ],
+   "summary": "captureObject(store, client, call, now) \u2014 function in capture.ts, lines 34-69.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/s3/capture.ts:sha256",
+   "type": "function",
+   "name": "sha256",
+   "filePath": "packages/connectors/src/s3/capture.ts",
+   "lineRange": [
+    71,
+    73
+   ],
+   "summary": "sha256(bytes) \u2014 function in capture.ts, lines 71-73.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:packages/connectors/src/s3/capture.ts:CaptureFailedError",
+   "type": "class",
+   "name": "CaptureFailedError",
+   "filePath": "packages/connectors/src/s3/capture.ts",
+   "lineRange": [
+    20,
+    32
+   ],
+   "summary": "CaptureFailedError \u2014 class in capture.ts, lines 20-32.",
+   "tags": [
+    "typescript",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/connectors/src/s3/classify.ts",
+   "type": "file",
+   "name": "classify.ts",
+   "filePath": "packages/connectors/src/s3/classify.ts",
+   "summary": "classify.ts \u2014 typescript code, 101 lines, 4 functions, 1 classes, 2 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/s3/classify.ts:mfaDeleteValue",
+   "type": "function",
+   "name": "mfaDeleteValue",
+   "filePath": "packages/connectors/src/s3/classify.ts",
+   "lineRange": [
+    58,
+    60
+   ],
+   "summary": "mfaDeleteValue(value) \u2014 function in classify.ts, lines 58-60.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/s3/classify.ts:versioningValue",
+   "type": "function",
+   "name": "versioningValue",
+   "filePath": "packages/connectors/src/s3/classify.ts",
+   "lineRange": [
+    62,
+    64
+   ],
+   "summary": "versioningValue(value) \u2014 function in classify.ts, lines 62-64.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/s3/classify.ts:s3Facts",
+   "type": "function",
+   "name": "s3Facts",
+   "filePath": "packages/connectors/src/s3/classify.ts",
+   "lineRange": [
+    66,
+    93
+   ],
+   "summary": "s3Facts(call, client, now) \u2014 function in classify.ts, lines 66-93.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/s3/classify.ts:isNotFound",
+   "type": "function",
+   "name": "isNotFound",
+   "filePath": "packages/connectors/src/s3/classify.ts",
+   "lineRange": [
+    95,
+    101
+   ],
+   "summary": "isNotFound(error) \u2014 function in classify.ts, lines 95-101.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:packages/connectors/src/s3/classify.ts:ProbeError",
+   "type": "class",
+   "name": "ProbeError",
+   "filePath": "packages/connectors/src/s3/classify.ts",
+   "lineRange": [
+    40,
+    51
+   ],
+   "summary": "ProbeError \u2014 class in classify.ts, lines 40-51.",
+   "tags": [
+    "typescript",
+    "class",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/connectors/src/s3/inverse.ts",
+   "type": "file",
+   "name": "inverse.ts",
+   "filePath": "packages/connectors/src/s3/inverse.ts",
+   "summary": "inverse.ts \u2014 typescript code, 23 lines, 1 functions, 0 classes, 1 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/s3/inverse.ts:restoreObject",
+   "type": "function",
+   "name": "restoreObject",
+   "filePath": "packages/connectors/src/s3/inverse.ts",
+   "lineRange": [
+    16,
+    23
+   ],
+   "summary": "restoreObject(client, call, image) \u2014 function in inverse.ts, lines 16-23.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/connectors/src/s3/s3.test.ts",
+   "type": "file",
+   "name": "s3.test.ts",
+   "filePath": "packages/connectors/src/s3/s3.test.ts",
+   "summary": "s3.test.ts \u2014 typescript code, 175 lines, 4 functions, 1 classes, 0 exports, 5 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/connectors/src/s3/s3.test.ts:objectKey",
+   "type": "function",
+   "name": "objectKey",
+   "filePath": "packages/connectors/src/s3/s3.test.ts",
+   "lineRange": [
+    49,
+    51
+   ],
+   "summary": "objectKey(input) \u2014 function in s3.test.ts, lines 49-51.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/s3/s3.test.ts:quotedHex",
+   "type": "function",
+   "name": "quotedHex",
+   "filePath": "packages/connectors/src/s3/s3.test.ts",
+   "lineRange": [
+    53,
+    55
+   ],
+   "summary": "quotedHex(bytes) \u2014 function in s3.test.ts, lines 53-55.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/s3/s3.test.ts:localSnapshotStore",
+   "type": "function",
+   "name": "localSnapshotStore",
+   "filePath": "packages/connectors/src/s3/s3.test.ts",
+   "lineRange": [
+    164,
+    171
+   ],
+   "summary": "localSnapshotStore() \u2014 function in s3.test.ts, lines 164-171.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/s3/s3.test.ts:fact",
+   "type": "function",
+   "name": "fact",
+   "filePath": "packages/connectors/src/s3/s3.test.ts",
+   "lineRange": [
+    173,
+    175
+   ],
+   "summary": "fact(facts, name) \u2014 function in s3.test.ts, lines 173-175.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:packages/connectors/src/s3/s3.test.ts:FakeS3Client",
+   "type": "class",
+   "name": "FakeS3Client",
+   "filePath": "packages/connectors/src/s3/s3.test.ts",
+   "lineRange": [
+    15,
+    47
+   ],
+   "summary": "FakeS3Client \u2014 class in s3.test.ts, lines 15-47, methods: getBucketVersioning, getObject, putObject, deleteObject.",
+   "tags": [
+    "typescript",
+    "class"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/connectors/src/snapshot/local.ts",
+   "type": "file",
+   "name": "local.ts",
+   "filePath": "packages/connectors/src/snapshot/local.ts",
+   "summary": "local.ts \u2014 typescript code, 369 lines, 20 functions, 0 classes, 2 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/connectors/src/snapshot/local.ts:LocalSnapshotStore",
+   "type": "function",
+   "name": "LocalSnapshotStore",
+   "filePath": "packages/connectors/src/snapshot/local.ts",
+   "lineRange": [
+    24,
+    159
+   ],
+   "summary": "LocalSnapshotStore(root, options) \u2014 function in local.ts, lines 24-159.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/snapshot/local.ts:withNamespaceLock",
+   "type": "function",
+   "name": "withNamespaceLock",
+   "filePath": "packages/connectors/src/snapshot/local.ts",
+   "lineRange": [
+    161,
+    176
+   ],
+   "summary": "withNamespaceLock(root, namespace, run) \u2014 function in local.ts, lines 161-176.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/snapshot/local.ts:sidecarPath",
+   "type": "function",
+   "name": "sidecarPath",
+   "filePath": "packages/connectors/src/snapshot/local.ts",
+   "lineRange": [
+    178,
+    180
+   ],
+   "summary": "sidecarPath(snapshotPath) \u2014 function in local.ts, lines 178-180.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/snapshot/local.ts:writeSidecar",
+   "type": "function",
+   "name": "writeSidecar",
+   "filePath": "packages/connectors/src/snapshot/local.ts",
+   "lineRange": [
+    182,
+    200
+   ],
+   "summary": "writeSidecar(dir, digestHex, incoming) \u2014 function in local.ts, lines 182-200.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/snapshot/local.ts:mergeMeta",
+   "type": "function",
+   "name": "mergeMeta",
+   "filePath": "packages/connectors/src/snapshot/local.ts",
+   "lineRange": [
+    202,
+    212
+   ],
+   "summary": "mergeMeta(existing, incoming) \u2014 function in local.ts, lines 202-212.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/snapshot/local.ts:readSidecar",
+   "type": "function",
+   "name": "readSidecar",
+   "filePath": "packages/connectors/src/snapshot/local.ts",
+   "lineRange": [
+    214,
+    229
+   ],
+   "summary": "readSidecar(snapshotPath, required) \u2014 function in local.ts, lines 214-229.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/snapshot/local.ts:snapshotMeta",
+   "type": "function",
+   "name": "snapshotMeta",
+   "filePath": "packages/connectors/src/snapshot/local.ts",
+   "lineRange": [
+    231,
+    250
+   ],
+   "summary": "snapshotMeta(parsed) \u2014 function in local.ts, lines 231-250.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/snapshot/local.ts:readEntryMeta",
+   "type": "function",
+   "name": "readEntryMeta",
+   "filePath": "packages/connectors/src/snapshot/local.ts",
+   "lineRange": [
+    253,
+    258
+   ],
+   "summary": "readEntryMeta(reference) \u2014 function in local.ts, lines 253-258.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/snapshot/local.ts:writeAll",
+   "type": "function",
+   "name": "writeAll",
+   "filePath": "packages/connectors/src/snapshot/local.ts",
+   "lineRange": [
+    260,
+    268
+   ],
+   "summary": "writeAll(path, bytes) \u2014 function in local.ts, lines 260-268.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/snapshot/local.ts:budgetEvictions",
+   "type": "function",
+   "name": "budgetEvictions",
+   "filePath": "packages/connectors/src/snapshot/local.ts",
+   "lineRange": [
+    270,
+    285
+   ],
+   "summary": "budgetEvictions(root, namespace, maxBytes, incomingPath\u2026) \u2014 function in local.ts, lines 270-285.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/snapshot/local.ts:deleteSnapshots",
+   "type": "function",
+   "name": "deleteSnapshots",
+   "filePath": "packages/connectors/src/snapshot/local.ts",
+   "lineRange": [
+    287,
+    302
+   ],
+   "summary": "deleteSnapshots(files) \u2014 function in local.ts, lines 287-302.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/snapshot/local.ts:deleteOlderThan",
+   "type": "function",
+   "name": "deleteOlderThan",
+   "filePath": "packages/connectors/src/snapshot/local.ts",
+   "lineRange": [
+    304,
+    308
+   ],
+   "summary": "deleteOlderThan(root, namespace, cutoff) \u2014 function in local.ts, lines 304-308.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/snapshot/local.ts:validCutoff",
+   "type": "function",
+   "name": "validCutoff",
+   "filePath": "packages/connectors/src/snapshot/local.ts",
+   "lineRange": [
+    310,
+    315
+   ],
+   "summary": "validCutoff(cutoff) \u2014 function in local.ts, lines 310-315.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/snapshot/local.ts:snapshotFiles",
+   "type": "function",
+   "name": "snapshotFiles",
+   "filePath": "packages/connectors/src/snapshot/local.ts",
+   "lineRange": [
+    319,
+    340
+   ],
+   "summary": "snapshotFiles(root, namespace) \u2014 function in local.ts, lines 319-340.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/snapshot/local.ts:namespaceDir",
+   "type": "function",
+   "name": "namespaceDir",
+   "filePath": "packages/connectors/src/snapshot/local.ts",
+   "lineRange": [
+    342,
+    344
+   ],
+   "summary": "namespaceDir(root, namespace) \u2014 function in local.ts, lines 342-344.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/snapshot/local.ts:pathForReference",
+   "type": "function",
+   "name": "pathForReference",
+   "filePath": "packages/connectors/src/snapshot/local.ts",
+   "lineRange": [
+    346,
+    348
+   ],
+   "summary": "pathForReference(root, reference) \u2014 function in local.ts, lines 346-348.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/snapshot/local.ts:assertSafeNamespace",
+   "type": "function",
+   "name": "assertSafeNamespace",
+   "filePath": "packages/connectors/src/snapshot/local.ts",
+   "lineRange": [
+    350,
+    354
+   ],
+   "summary": "assertSafeNamespace(namespace) \u2014 function in local.ts, lines 350-354.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/snapshot/local.ts:assertSafeReference",
+   "type": "function",
+   "name": "assertSafeReference",
+   "filePath": "packages/connectors/src/snapshot/local.ts",
+   "lineRange": [
+    356,
+    361
+   ],
+   "summary": "assertSafeReference(reference) \u2014 function in local.ts, lines 356-361.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/snapshot/local.ts:isNodeError",
+   "type": "function",
+   "name": "isNodeError",
+   "filePath": "packages/connectors/src/snapshot/local.ts",
+   "lineRange": [
+    363,
+    365
+   ],
+   "summary": "isNodeError(error) \u2014 function in local.ts, lines 363-365.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/snapshot/local.ts:isPutError",
+   "type": "function",
+   "name": "isPutError",
+   "filePath": "packages/connectors/src/snapshot/local.ts",
+   "lineRange": [
+    367,
+    369
+   ],
+   "summary": "isPutError(error) \u2014 function in local.ts, lines 367-369.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/connectors/src/snapshot/redact.ts",
+   "type": "file",
+   "name": "redact.ts",
+   "filePath": "packages/connectors/src/snapshot/redact.ts",
+   "summary": "redact.ts \u2014 typescript code, 18 lines, 2 functions, 0 classes, 2 exports, 1 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/snapshot/redact.ts:identityRedaction",
+   "type": "function",
+   "name": "identityRedaction",
+   "filePath": "packages/connectors/src/snapshot/redact.ts",
+   "lineRange": [
+    3,
+    5
+   ],
+   "summary": "identityRedaction(input) \u2014 function in redact.ts, lines 3-5.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/snapshot/redact.ts:applyRedaction",
+   "type": "function",
+   "name": "applyRedaction",
+   "filePath": "packages/connectors/src/snapshot/redact.ts",
+   "lineRange": [
+    11,
+    18
+   ],
+   "summary": "applyRedaction(bytes, hook, namespace, metadata) \u2014 function in redact.ts, lines 11-18.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/connectors/src/snapshot/s3.ts",
+   "type": "file",
+   "name": "s3.ts",
+   "filePath": "packages/connectors/src/snapshot/s3.ts",
+   "summary": "s3.ts \u2014 typescript code, 83 lines, 3 functions, 0 classes, 1 exports, 2 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/snapshot/s3.ts:S3SnapshotStore",
+   "type": "function",
+   "name": "S3SnapshotStore",
+   "filePath": "packages/connectors/src/snapshot/s3.ts",
+   "lineRange": [
+    27,
+    73
+   ],
+   "summary": "S3SnapshotStore(client, options) \u2014 function in s3.ts, lines 27-73.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/snapshot/s3.ts:keyFor",
+   "type": "function",
+   "name": "keyFor",
+   "filePath": "packages/connectors/src/snapshot/s3.ts",
+   "lineRange": [
+    75,
+    79
+   ],
+   "summary": "keyFor(prefix, namespace, digest) \u2014 function in s3.ts, lines 75-79.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/snapshot/s3.ts:trimSlashes",
+   "type": "function",
+   "name": "trimSlashes",
+   "filePath": "packages/connectors/src/snapshot/s3.ts",
+   "lineRange": [
+    81,
+    83
+   ],
+   "summary": "trimSlashes(value) \u2014 function in s3.ts, lines 81-83.",
+   "tags": [
+    "typescript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/connectors/src/snapshot/snapshot.test.ts",
+   "type": "file",
+   "name": "snapshot.test.ts",
+   "filePath": "packages/connectors/src/snapshot/snapshot.test.ts",
+   "summary": "snapshot.test.ts \u2014 typescript code, 319 lines, 2 functions, 0 classes, 0 exports, 4 imports.",
+   "tags": [
+    "typescript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:packages/connectors/src/snapshot/snapshot.test.ts:tempRoot",
+   "type": "function",
+   "name": "tempRoot",
+   "filePath": "packages/connectors/src/snapshot/snapshot.test.ts",
+   "lineRange": [
+    15,
+    17
+   ],
+   "summary": "tempRoot() \u2014 function in snapshot.test.ts, lines 15-17.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/snapshot/snapshot.test.ts:filePath",
+   "type": "function",
+   "name": "filePath",
+   "filePath": "packages/connectors/src/snapshot/snapshot.test.ts",
+   "lineRange": [
+    317,
+    319
+   ],
+   "summary": "filePath(root, namespace, digest) \u2014 function in snapshot.test.ts, lines 317-319.",
+   "tags": [
+    "typescript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/connectors/src/snapshot/store.ts",
+   "type": "file",
+   "name": "store.ts",
+   "filePath": "packages/connectors/src/snapshot/store.ts",
+   "summary": "store.ts \u2014 typescript code, 43 lines, 3 functions, 0 classes, 3 exports, 0 imports.",
+   "tags": [
+    "typescript",
+    "code"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/snapshot/store.ts:sha256Digest",
+   "type": "function",
+   "name": "sha256Digest",
+   "filePath": "packages/connectors/src/snapshot/store.ts",
+   "lineRange": [
+    33,
+    35
+   ],
+   "summary": "sha256Digest(bytes) \u2014 function in store.ts, lines 33-35.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/snapshot/store.ts:makePutError",
+   "type": "function",
+   "name": "makePutError",
+   "filePath": "packages/connectors/src/snapshot/store.ts",
+   "lineRange": [
+    37,
+    39
+   ],
+   "summary": "makePutError(kind, namespace, message, cause) \u2014 function in store.ts, lines 37-39.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:packages/connectors/src/snapshot/store.ts:makeGetError",
+   "type": "function",
+   "name": "makeGetError",
+   "filePath": "packages/connectors/src/snapshot/store.ts",
+   "lineRange": [
+    41,
+    43
+   ],
+   "summary": "makeGetError(kind, reference, message, cause) \u2014 function in store.ts, lines 41-43.",
+   "tags": [
+    "typescript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/src/e2e-connectors.mjs",
+   "type": "file",
+   "name": "e2e-connectors.mjs",
+   "filePath": "scripts/src/e2e-connectors.mjs",
+   "summary": "e2e-connectors.mjs \u2014 javascript code, 403 lines, 22 functions, 2 classes, 7 exports, 15 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:scripts/src/e2e-connectors.mjs:pass",
+   "type": "function",
+   "name": "pass",
+   "filePath": "scripts/src/e2e-connectors.mjs",
+   "lineRange": [
+    30,
+    34
+   ],
+   "summary": "pass(name) \u2014 function in e2e-connectors.mjs, lines 30-34.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/e2e-connectors.mjs:fail",
+   "type": "function",
+   "name": "fail",
+   "filePath": "scripts/src/e2e-connectors.mjs",
+   "lineRange": [
+    36,
+    41
+   ],
+   "summary": "fail(name, error) \u2014 function in e2e-connectors.mjs, lines 36-41.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/e2e-connectors.mjs:check",
+   "type": "function",
+   "name": "check",
+   "filePath": "scripts/src/e2e-connectors.mjs",
+   "lineRange": [
+    43,
+    50
+   ],
+   "summary": "check(name, fn) \u2014 function in e2e-connectors.mjs, lines 43-50.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/e2e-connectors.mjs:runAllChecks",
+   "type": "function",
+   "name": "runAllChecks",
+   "filePath": "scripts/src/e2e-connectors.mjs",
+   "lineRange": [
+    52,
+    69
+   ],
+   "summary": "runAllChecks() \u2014 function in e2e-connectors.mjs, lines 52-69.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/e2e-connectors.mjs:runPostgresRoundTrip",
+   "type": "function",
+   "name": "runPostgresRoundTrip",
+   "filePath": "scripts/src/e2e-connectors.mjs",
+   "lineRange": [
+    71,
+    95
+   ],
+   "summary": "runPostgresRoundTrip() \u2014 function in e2e-connectors.mjs, lines 71-95.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/e2e-connectors.mjs:runPostgresDrift",
+   "type": "function",
+   "name": "runPostgresDrift",
+   "filePath": "scripts/src/e2e-connectors.mjs",
+   "lineRange": [
+    97,
+    109
+   ],
+   "summary": "runPostgresDrift() \u2014 function in e2e-connectors.mjs, lines 97-109.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/e2e-connectors.mjs:runReplayDryRun",
+   "type": "function",
+   "name": "runReplayDryRun",
+   "filePath": "scripts/src/e2e-connectors.mjs",
+   "lineRange": [
+    111,
+    163
+   ],
+   "summary": "runReplayDryRun() \u2014 function in e2e-connectors.mjs, lines 111-163.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/e2e-connectors.mjs:runS3RoundTrip",
+   "type": "function",
+   "name": "runS3RoundTrip",
+   "filePath": "scripts/src/e2e-connectors.mjs",
+   "lineRange": [
+    165,
+    199
+   ],
+   "summary": "runS3RoundTrip() \u2014 function in e2e-connectors.mjs, lines 165-199.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/e2e-connectors.mjs:runS3Drift",
+   "type": "function",
+   "name": "runS3Drift",
+   "filePath": "scripts/src/e2e-connectors.mjs",
+   "lineRange": [
+    201,
+    214
+   ],
+   "summary": "runS3Drift() \u2014 function in e2e-connectors.mjs, lines 201-214.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/e2e-connectors.mjs:putSnapshot",
+   "type": "function",
+   "name": "putSnapshot",
+   "filePath": "scripts/src/e2e-connectors.mjs",
+   "lineRange": [
+    335,
+    337
+   ],
+   "summary": "putSnapshot(store, namespace, value) \u2014 function in e2e-connectors.mjs, lines 335-337.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/e2e-connectors.mjs:writeManifest",
+   "type": "function",
+   "name": "writeManifest",
+   "filePath": "scripts/src/e2e-connectors.mjs",
+   "lineRange": [
+    339,
+    341
+   ],
+   "summary": "writeManifest(snapshotDir, record) \u2014 function in e2e-connectors.mjs, lines 339-341.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/e2e-connectors.mjs:postgresSchema",
+   "type": "function",
+   "name": "postgresSchema",
+   "filePath": "scripts/src/e2e-connectors.mjs",
+   "lineRange": [
+    343,
+    345
+   ],
+   "summary": "postgresSchema() \u2014 function in e2e-connectors.mjs, lines 343-345.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/e2e-connectors.mjs:argsDigest",
+   "type": "function",
+   "name": "argsDigest",
+   "filePath": "scripts/src/e2e-connectors.mjs",
+   "lineRange": [
+    347,
+    349
+   ],
+   "summary": "argsDigest(value) \u2014 function in e2e-connectors.mjs, lines 347-349.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/e2e-connectors.mjs:cloneRows",
+   "type": "function",
+   "name": "cloneRows",
+   "filePath": "scripts/src/e2e-connectors.mjs",
+   "lineRange": [
+    351,
+    353
+   ],
+   "summary": "cloneRows(rows) \u2014 function in e2e-connectors.mjs, lines 351-353.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/e2e-connectors.mjs:tableFromSql",
+   "type": "function",
+   "name": "tableFromSql",
+   "filePath": "scripts/src/e2e-connectors.mjs",
+   "lineRange": [
+    355,
+    361
+   ],
+   "summary": "tableFromSql(sql) \u2014 function in e2e-connectors.mjs, lines 355-361.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/e2e-connectors.mjs:whereColumns",
+   "type": "function",
+   "name": "whereColumns",
+   "filePath": "scripts/src/e2e-connectors.mjs",
+   "lineRange": [
+    363,
+    366
+   ],
+   "summary": "whereColumns(sql) \u2014 function in e2e-connectors.mjs, lines 363-366.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/e2e-connectors.mjs:assignmentColumns",
+   "type": "function",
+   "name": "assignmentColumns",
+   "filePath": "scripts/src/e2e-connectors.mjs",
+   "lineRange": [
+    368,
+    371
+   ],
+   "summary": "assignmentColumns(sql) \u2014 function in e2e-connectors.mjs, lines 368-371.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/e2e-connectors.mjs:insertColumns",
+   "type": "function",
+   "name": "insertColumns",
+   "filePath": "scripts/src/e2e-connectors.mjs",
+   "lineRange": [
+    373,
+    376
+   ],
+   "summary": "insertColumns(sql) \u2014 function in e2e-connectors.mjs, lines 373-376.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/e2e-connectors.mjs:literalWhere",
+   "type": "function",
+   "name": "literalWhere",
+   "filePath": "scripts/src/e2e-connectors.mjs",
+   "lineRange": [
+    378,
+    382
+   ],
+   "summary": "literalWhere(sql) \u2014 function in e2e-connectors.mjs, lines 378-382.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/e2e-connectors.mjs:quotedHex",
+   "type": "function",
+   "name": "quotedHex",
+   "filePath": "scripts/src/e2e-connectors.mjs",
+   "lineRange": [
+    384,
+    386
+   ],
+   "summary": "quotedHex(bytes) \u2014 function in e2e-connectors.mjs, lines 384-386.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/e2e-connectors.mjs:notFound",
+   "type": "function",
+   "name": "notFound",
+   "filePath": "scripts/src/e2e-connectors.mjs",
+   "lineRange": [
+    388,
+    393
+   ],
+   "summary": "notFound() \u2014 function in e2e-connectors.mjs, lines 388-393.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/e2e-connectors.mjs:escapeRegExp",
+   "type": "function",
+   "name": "escapeRegExp",
+   "filePath": "scripts/src/e2e-connectors.mjs",
+   "lineRange": [
+    395,
+    397
+   ],
+   "summary": "escapeRegExp(value) \u2014 function in e2e-connectors.mjs, lines 395-397.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:scripts/src/e2e-connectors.mjs:FakeQueryExecutor",
+   "type": "class",
+   "name": "FakeQueryExecutor",
+   "filePath": "scripts/src/e2e-connectors.mjs",
+   "lineRange": [
+    216,
+    293
+   ],
+   "summary": "FakeQueryExecutor \u2014 class in e2e-connectors.mjs, lines 216-293, methods: begin, commit, rollback, table, applyUpdate, query.",
+   "tags": [
+    "javascript",
+    "class"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "class:scripts/src/e2e-connectors.mjs:FakeS3Client",
+   "type": "class",
+   "name": "FakeS3Client",
+   "filePath": "scripts/src/e2e-connectors.mjs",
+   "lineRange": [
+    295,
+    333
+   ],
+   "summary": "FakeS3Client \u2014 class in e2e-connectors.mjs, lines 295-333, methods: getBucketVersioning, getObject, putObject, deleteObject.",
+   "tags": [
+    "javascript",
+    "class"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/src/e2e-connectors.test.mjs",
+   "type": "file",
+   "name": "e2e-connectors.test.mjs",
+   "filePath": "scripts/src/e2e-connectors.test.mjs",
+   "summary": "e2e-connectors.test.mjs \u2014 javascript code, 38 lines, 0 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "javascript",
+    "code",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/src/e2e-final.mjs",
+   "type": "file",
+   "name": "e2e-final.mjs",
+   "filePath": "scripts/src/e2e-final.mjs",
+   "summary": "e2e-final.mjs \u2014 javascript code, 485 lines, 27 functions, 0 classes, 2 exports, 7 imports.",
+   "tags": [
+    "javascript",
+    "code"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:scripts/src/e2e-final.mjs:pass",
+   "type": "function",
+   "name": "pass",
+   "filePath": "scripts/src/e2e-final.mjs",
+   "lineRange": [
+    24,
+    28
+   ],
+   "summary": "pass(name) \u2014 function in e2e-final.mjs, lines 24-28.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/e2e-final.mjs:fail",
+   "type": "function",
+   "name": "fail",
+   "filePath": "scripts/src/e2e-final.mjs",
+   "lineRange": [
+    30,
+    35
+   ],
+   "summary": "fail(name, error) \u2014 function in e2e-final.mjs, lines 30-35.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/e2e-final.mjs:note",
+   "type": "function",
+   "name": "note",
+   "filePath": "scripts/src/e2e-final.mjs",
+   "lineRange": [
+    37,
+    41
+   ],
+   "summary": "note(name, reason) \u2014 function in e2e-final.mjs, lines 37-41.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/e2e-final.mjs:check",
+   "type": "function",
+   "name": "check",
+   "filePath": "scripts/src/e2e-final.mjs",
+   "lineRange": [
+    43,
+    52
+   ],
+   "summary": "check(name, fn) \u2014 function in e2e-final.mjs, lines 43-52.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/e2e-final.mjs:waitFor",
+   "type": "function",
+   "name": "waitFor",
+   "filePath": "scripts/src/e2e-final.mjs",
+   "lineRange": [
+    54,
+    61
+   ],
+   "summary": "waitFor(predicate, label) \u2014 function in e2e-final.mjs, lines 54-61.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/e2e-final.mjs:textFrom",
+   "type": "function",
+   "name": "textFrom",
+   "filePath": "scripts/src/e2e-final.mjs",
+   "lineRange": [
+    63,
+    65
+   ],
+   "summary": "textFrom(response) \u2014 function in e2e-final.mjs, lines 63-65.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/e2e-final.mjs:parseJsonLines",
+   "type": "function",
+   "name": "parseJsonLines",
+   "filePath": "scripts/src/e2e-final.mjs",
+   "lineRange": [
+    67,
+    74
+   ],
+   "summary": "parseJsonLines(buffer) \u2014 function in e2e-final.mjs, lines 67-74.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/e2e-final.mjs:hasApproveSurface",
+   "type": "function",
+   "name": "hasApproveSurface",
+   "filePath": "scripts/src/e2e-final.mjs",
+   "lineRange": [
+    79,
+    81
+   ],
+   "summary": "hasApproveSurface() \u2014 function in e2e-final.mjs, lines 79-81.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/e2e-final.mjs:hasHttpSurface",
+   "type": "function",
+   "name": "hasHttpSurface",
+   "filePath": "scripts/src/e2e-final.mjs",
+   "lineRange": [
+    83,
+    86
+   ],
+   "summary": "hasHttpSurface() \u2014 function in e2e-final.mjs, lines 83-86.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/e2e-final.mjs:readFileSyncText",
+   "type": "function",
+   "name": "readFileSyncText",
+   "filePath": "scripts/src/e2e-final.mjs",
+   "lineRange": [
+    88,
+    90
+   ],
+   "summary": "readFileSyncText(path) \u2014 function in e2e-final.mjs, lines 88-90.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/e2e-final.mjs:runCommand",
+   "type": "function",
+   "name": "runCommand",
+   "filePath": "scripts/src/e2e-final.mjs",
+   "lineRange": [
+    92,
+    113
+   ],
+   "summary": "runCommand(command, args) \u2014 function in e2e-final.mjs, lines 92-113.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/e2e-final.mjs:runCli",
+   "type": "function",
+   "name": "runCli",
+   "filePath": "scripts/src/e2e-final.mjs",
+   "lineRange": [
+    115,
+    117
+   ],
+   "summary": "runCli(args, env) \u2014 function in e2e-final.mjs, lines 115-117.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/e2e-final.mjs:strictFactsPath",
+   "type": "function",
+   "name": "strictFactsPath",
+   "filePath": "scripts/src/e2e-final.mjs",
+   "lineRange": [
+    119,
+    128
+   ],
+   "summary": "strictFactsPath(rootDir) \u2014 function in e2e-final.mjs, lines 119-128.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/e2e-final.mjs:policyPath",
+   "type": "function",
+   "name": "policyPath",
+   "filePath": "scripts/src/e2e-final.mjs",
+   "lineRange": [
+    130,
+    149
+   ],
+   "summary": "policyPath(rootDir) \u2014 function in e2e-final.mjs, lines 130-149.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/e2e-final.mjs:spawnProxy",
+   "type": "function",
+   "name": "spawnProxy",
+   "filePath": "scripts/src/e2e-final.mjs",
+   "lineRange": [
+    151,
+    184
+   ],
+   "summary": "spawnProxy(args, env) \u2014 function in e2e-final.mjs, lines 151-184.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/e2e-final.mjs:send",
+   "type": "function",
+   "name": "send",
+   "filePath": "scripts/src/e2e-final.mjs",
+   "lineRange": [
+    186,
+    188
+   ],
+   "summary": "send(child, message) \u2014 function in e2e-final.mjs, lines 186-188.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/e2e-final.mjs:closeProxy",
+   "type": "function",
+   "name": "closeProxy",
+   "filePath": "scripts/src/e2e-final.mjs",
+   "lineRange": [
+    190,
+    193
+   ],
+   "summary": "closeProxy(child) \u2014 function in e2e-final.mjs, lines 190-193.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/e2e-final.mjs:readLedgerRecords",
+   "type": "function",
+   "name": "readLedgerRecords",
+   "filePath": "scripts/src/e2e-final.mjs",
+   "lineRange": [
+    195,
+    198
+   ],
+   "summary": "readLedgerRecords(ledgerFile) \u2014 function in e2e-final.mjs, lines 195-198.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/e2e-final.mjs:runStdioProductMoment",
+   "type": "function",
+   "name": "runStdioProductMoment",
+   "filePath": "scripts/src/e2e-final.mjs",
+   "lineRange": [
+    200,
+    281
+   ],
+   "summary": "runStdioProductMoment() \u2014 function in e2e-final.mjs, lines 200-281.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/e2e-final.mjs:runVerifyMoment",
+   "type": "function",
+   "name": "runVerifyMoment",
+   "filePath": "scripts/src/e2e-final.mjs",
+   "lineRange": [
+    283,
+    289
+   ],
+   "summary": "runVerifyMoment(state) \u2014 function in e2e-final.mjs, lines 283-289.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/e2e-final.mjs:runTaintMoment",
+   "type": "function",
+   "name": "runTaintMoment",
+   "filePath": "scripts/src/e2e-final.mjs",
+   "lineRange": [
+    291,
+    298
+   ],
+   "summary": "runTaintMoment(state) \u2014 function in e2e-final.mjs, lines 291-298.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/e2e-final.mjs:runFeedMoment",
+   "type": "function",
+   "name": "runFeedMoment",
+   "filePath": "scripts/src/e2e-final.mjs",
+   "lineRange": [
+    300,
+    309
+   ],
+   "summary": "runFeedMoment(state) \u2014 function in e2e-final.mjs, lines 300-309.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/e2e-final.mjs:runAttestationMoment",
+   "type": "function",
+   "name": "runAttestationMoment",
+   "filePath": "scripts/src/e2e-final.mjs",
+   "lineRange": [
+    311,
+    327
+   ],
+   "summary": "runAttestationMoment(state) \u2014 function in e2e-final.mjs, lines 311-327.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/e2e-final.mjs:runTamperMoment",
+   "type": "function",
+   "name": "runTamperMoment",
+   "filePath": "scripts/src/e2e-final.mjs",
+   "lineRange": [
+    329,
+    348
+   ],
+   "summary": "runTamperMoment(state) \u2014 function in e2e-final.mjs, lines 329-348.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/e2e-final.mjs:runDriftMoment",
+   "type": "function",
+   "name": "runDriftMoment",
+   "filePath": "scripts/src/e2e-final.mjs",
+   "lineRange": [
+    350,
+    401
+   ],
+   "summary": "runDriftMoment() \u2014 function in e2e-final.mjs, lines 350-401.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/e2e-final.mjs:runHttpMoment",
+   "type": "function",
+   "name": "runHttpMoment",
+   "filePath": "scripts/src/e2e-final.mjs",
+   "lineRange": [
+    403,
+    461
+   ],
+   "summary": "runHttpMoment() \u2014 function in e2e-final.mjs, lines 403-461.",
+   "tags": [
+    "javascript",
+    "function"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/e2e-final.mjs:runAllChecks",
+   "type": "function",
+   "name": "runAllChecks",
+   "filePath": "scripts/src/e2e-final.mjs",
+   "lineRange": [
+    463,
+    474
+   ],
+   "summary": "runAllChecks() \u2014 function in e2e-final.mjs, lines 463-474.",
+   "tags": [
+    "javascript",
+    "function",
+    "exported"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/src/handbook.test.mjs",
+   "type": "file",
+   "name": "handbook.test.mjs",
+   "filePath": "scripts/src/handbook.test.mjs",
+   "summary": "handbook.test.mjs \u2014 javascript code, 422 lines, 3 functions, 0 classes, 0 exports, 2 imports.",
+   "tags": [
+    "javascript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:scripts/src/handbook.test.mjs:read",
+   "type": "function",
+   "name": "read",
+   "filePath": "scripts/src/handbook.test.mjs",
+   "lineRange": [
+    51,
+    51
+   ],
+   "summary": "read(file) \u2014 function in handbook.test.mjs, lines 51-51.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/handbook.test.mjs:withoutFences",
+   "type": "function",
+   "name": "withoutFences",
+   "filePath": "scripts/src/handbook.test.mjs",
+   "lineRange": [
+    56,
+    58
+   ],
+   "summary": "withoutFences(text) \u2014 function in handbook.test.mjs, lines 56-58.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/handbook.test.mjs:occurrences",
+   "type": "function",
+   "name": "occurrences",
+   "filePath": "scripts/src/handbook.test.mjs",
+   "lineRange": [
+    60,
+    62
+   ],
+   "summary": "occurrences(text, pattern) \u2014 function in handbook.test.mjs, lines 60-62.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:scripts/src/install-nomo.test.mjs",
+   "type": "file",
+   "name": "install-nomo.test.mjs",
+   "filePath": "scripts/src/install-nomo.test.mjs",
+   "summary": "install-nomo.test.mjs \u2014 javascript code, 511 lines, 5 functions, 0 classes, 0 exports, 1 imports.",
+   "tags": [
+    "javascript",
+    "code",
+    "test"
+   ],
+   "complexity": "moderate"
+  },
+  {
+   "id": "function:scripts/src/install-nomo.test.mjs:sandbox",
+   "type": "function",
+   "name": "sandbox",
+   "filePath": "scripts/src/install-nomo.test.mjs",
+   "lineRange": [
+    44,
+    101
+   ],
+   "summary": "sandbox() \u2014 function in install-nomo.test.mjs, lines 44-101.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/install-nomo.test.mjs:makeTree",
+   "type": "function",
+   "name": "makeTree",
+   "filePath": "scripts/src/install-nomo.test.mjs",
+   "lineRange": [
+    111,
+    126
+   ],
+   "summary": "makeTree(home) \u2014 function in install-nomo.test.mjs, lines 111-126.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/install-nomo.test.mjs:outputOf",
+   "type": "function",
+   "name": "outputOf",
+   "filePath": "scripts/src/install-nomo.test.mjs",
+   "lineRange": [
+    128,
+    128
+   ],
+   "summary": "outputOf(run) \u2014 function in install-nomo.test.mjs, lines 128-128.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/install-nomo.test.mjs:readLog",
+   "type": "function",
+   "name": "readLog",
+   "filePath": "scripts/src/install-nomo.test.mjs",
+   "lineRange": [
+    129,
+    135
+   ],
+   "summary": "readLog(path) \u2014 function in install-nomo.test.mjs, lines 129-135.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "function:scripts/src/install-nomo.test.mjs:forwardedArgs",
+   "type": "function",
+   "name": "forwardedArgs",
+   "filePath": "scripts/src/install-nomo.test.mjs",
+   "lineRange": [
+    138,
+    145
+   ],
+   "summary": "forwardedArgs(argvLog, tree) \u2014 function in install-nomo.test.mjs, lines 138-145.",
+   "tags": [
+    "javascript",
+    "function",
+    "test"
+   ],
+   "complexity": "simple"
+  }
+ ],
+ "edges": [
+  {
+   "source": "file:packages/connectors/src/reverse-engine.test.ts",
+   "target": "function:packages/connectors/src/reverse-engine.test.ts:isAppliedResult",
+   "type": "contains",
+   "direction": "forward",
+   "description": "reverse-engine.test.ts defines isAppliedResult",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/reverse-engine.test.ts",
+   "target": "function:packages/connectors/src/reverse-engine.test.ts:testLineQueue",
+   "type": "contains",
+   "direction": "forward",
+   "description": "reverse-engine.test.ts defines testLineQueue",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/reverse-engine.test.ts",
+   "target": "function:packages/connectors/src/reverse-engine.test.ts:postgresUpstream",
+   "type": "contains",
+   "direction": "forward",
+   "description": "reverse-engine.test.ts defines postgresUpstream",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/reverse-engine.test.ts",
+   "target": "function:packages/connectors/src/reverse-engine.test.ts:ledgerBodies",
+   "type": "contains",
+   "direction": "forward",
+   "description": "reverse-engine.test.ts defines ledgerBodies",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/reverse-engine.test.ts",
+   "target": "function:packages/connectors/src/reverse-engine.test.ts:s3Upstream",
+   "type": "contains",
+   "direction": "forward",
+   "description": "reverse-engine.test.ts defines s3Upstream",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/reverse-engine.test.ts",
+   "target": "class:packages/connectors/src/reverse-engine.test.ts:MemoryS3Client",
+   "type": "contains",
+   "direction": "forward",
+   "description": "reverse-engine.test.ts defines class MemoryS3Client",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/s3/apply-guard.test.ts",
+   "target": "function:packages/connectors/src/s3/apply-guard.test.ts:recorder",
+   "type": "contains",
+   "direction": "forward",
+   "description": "apply-guard.test.ts defines recorder",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/s3/apply.ts",
+   "target": "function:packages/connectors/src/s3/apply.ts:applyRestore",
+   "type": "contains",
+   "direction": "forward",
+   "description": "apply.ts defines applyRestore",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/s3/apply.ts",
+   "target": "function:packages/connectors/src/s3/apply.ts:applyRestore",
+   "type": "exports",
+   "direction": "forward",
+   "description": "apply.ts exports applyRestore",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/connectors/src/s3/apply.ts",
+   "target": "function:packages/connectors/src/s3/apply.ts:statusOf",
+   "type": "contains",
+   "direction": "forward",
+   "description": "apply.ts defines statusOf",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/s3/apply.ts",
+   "target": "function:packages/connectors/src/s3/apply.ts:restore",
+   "type": "contains",
+   "direction": "forward",
+   "description": "apply.ts defines restore",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/s3/apply.ts",
+   "target": "function:packages/connectors/src/s3/apply.ts:proveRestore",
+   "type": "contains",
+   "direction": "forward",
+   "description": "apply.ts defines proveRestore",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/s3/apply.ts",
+   "target": "function:packages/connectors/src/s3/apply.ts:isNotFound",
+   "type": "contains",
+   "direction": "forward",
+   "description": "apply.ts defines isNotFound",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/connectors/src/s3/apply.ts:applyRestore",
+   "target": "function:packages/connectors/src/s3/apply.ts:restore",
+   "type": "calls",
+   "direction": "forward",
+   "description": "applyRestore calls restore",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/s3/apply.ts:applyRestore",
+   "target": "function:packages/connectors/src/s3/apply.ts:statusOf",
+   "type": "calls",
+   "direction": "forward",
+   "description": "applyRestore calls statusOf",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/s3/apply.ts:restore",
+   "target": "function:packages/connectors/src/s3/apply.ts:isNotFound",
+   "type": "calls",
+   "direction": "forward",
+   "description": "restore calls isNotFound",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/s3/apply.ts:restore",
+   "target": "function:packages/connectors/src/s3/apply.ts:statusOf",
+   "type": "calls",
+   "direction": "forward",
+   "description": "restore calls statusOf",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/s3/apply.ts:restore",
+   "target": "function:packages/connectors/src/s3/apply.ts:proveRestore",
+   "type": "calls",
+   "direction": "forward",
+   "description": "restore calls proveRestore",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/connectors/src/s3/capture.ts",
+   "target": "function:packages/connectors/src/s3/capture.ts:captureObject",
+   "type": "contains",
+   "direction": "forward",
+   "description": "capture.ts defines captureObject",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/s3/capture.ts",
+   "target": "function:packages/connectors/src/s3/capture.ts:captureObject",
+   "type": "exports",
+   "direction": "forward",
+   "description": "capture.ts exports captureObject",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/connectors/src/s3/capture.ts",
+   "target": "function:packages/connectors/src/s3/capture.ts:sha256",
+   "type": "contains",
+   "direction": "forward",
+   "description": "capture.ts defines sha256",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/s3/capture.ts",
+   "target": "function:packages/connectors/src/s3/capture.ts:sha256",
+   "type": "exports",
+   "direction": "forward",
+   "description": "capture.ts exports sha256",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/connectors/src/s3/capture.ts",
+   "target": "class:packages/connectors/src/s3/capture.ts:CaptureFailedError",
+   "type": "contains",
+   "direction": "forward",
+   "description": "capture.ts defines class CaptureFailedError",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/connectors/src/s3/capture.ts:captureObject",
+   "target": "function:packages/connectors/src/s3/capture.ts:sha256",
+   "type": "calls",
+   "direction": "forward",
+   "description": "captureObject calls sha256",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/connectors/src/s3/classify.ts",
+   "target": "function:packages/connectors/src/s3/classify.ts:mfaDeleteValue",
+   "type": "contains",
+   "direction": "forward",
+   "description": "classify.ts defines mfaDeleteValue",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/s3/classify.ts",
+   "target": "function:packages/connectors/src/s3/classify.ts:versioningValue",
+   "type": "contains",
+   "direction": "forward",
+   "description": "classify.ts defines versioningValue",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/s3/classify.ts",
+   "target": "function:packages/connectors/src/s3/classify.ts:s3Facts",
+   "type": "contains",
+   "direction": "forward",
+   "description": "classify.ts defines s3Facts",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/s3/classify.ts",
+   "target": "function:packages/connectors/src/s3/classify.ts:s3Facts",
+   "type": "exports",
+   "direction": "forward",
+   "description": "classify.ts exports s3Facts",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/connectors/src/s3/classify.ts",
+   "target": "function:packages/connectors/src/s3/classify.ts:isNotFound",
+   "type": "contains",
+   "direction": "forward",
+   "description": "classify.ts defines isNotFound",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/s3/classify.ts",
+   "target": "class:packages/connectors/src/s3/classify.ts:ProbeError",
+   "type": "contains",
+   "direction": "forward",
+   "description": "classify.ts defines class ProbeError",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/connectors/src/s3/classify.ts:s3Facts",
+   "target": "function:packages/connectors/src/s3/classify.ts:versioningValue",
+   "type": "calls",
+   "direction": "forward",
+   "description": "s3Facts calls versioningValue",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/s3/classify.ts:s3Facts",
+   "target": "function:packages/connectors/src/s3/classify.ts:mfaDeleteValue",
+   "type": "calls",
+   "direction": "forward",
+   "description": "s3Facts calls mfaDeleteValue",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/s3/classify.ts:s3Facts",
+   "target": "function:packages/connectors/src/s3/classify.ts:isNotFound",
+   "type": "calls",
+   "direction": "forward",
+   "description": "s3Facts calls isNotFound",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/connectors/src/s3/inverse.ts",
+   "target": "function:packages/connectors/src/s3/inverse.ts:restoreObject",
+   "type": "contains",
+   "direction": "forward",
+   "description": "inverse.ts defines restoreObject",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/s3/inverse.ts",
+   "target": "function:packages/connectors/src/s3/inverse.ts:restoreObject",
+   "type": "exports",
+   "direction": "forward",
+   "description": "inverse.ts exports restoreObject",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/connectors/src/s3/s3.test.ts",
+   "target": "function:packages/connectors/src/s3/s3.test.ts:objectKey",
+   "type": "contains",
+   "direction": "forward",
+   "description": "s3.test.ts defines objectKey",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/s3/s3.test.ts",
+   "target": "function:packages/connectors/src/s3/s3.test.ts:quotedHex",
+   "type": "contains",
+   "direction": "forward",
+   "description": "s3.test.ts defines quotedHex",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/s3/s3.test.ts",
+   "target": "function:packages/connectors/src/s3/s3.test.ts:localSnapshotStore",
+   "type": "contains",
+   "direction": "forward",
+   "description": "s3.test.ts defines localSnapshotStore",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/s3/s3.test.ts",
+   "target": "function:packages/connectors/src/s3/s3.test.ts:fact",
+   "type": "contains",
+   "direction": "forward",
+   "description": "s3.test.ts defines fact",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/s3/s3.test.ts",
+   "target": "class:packages/connectors/src/s3/s3.test.ts:FakeS3Client",
+   "type": "contains",
+   "direction": "forward",
+   "description": "s3.test.ts defines class FakeS3Client",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/snapshot/local.ts",
+   "target": "function:packages/connectors/src/snapshot/local.ts:LocalSnapshotStore",
+   "type": "contains",
+   "direction": "forward",
+   "description": "local.ts defines LocalSnapshotStore",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/snapshot/local.ts",
+   "target": "function:packages/connectors/src/snapshot/local.ts:LocalSnapshotStore",
+   "type": "exports",
+   "direction": "forward",
+   "description": "local.ts exports LocalSnapshotStore",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/connectors/src/snapshot/local.ts",
+   "target": "function:packages/connectors/src/snapshot/local.ts:withNamespaceLock",
+   "type": "contains",
+   "direction": "forward",
+   "description": "local.ts defines withNamespaceLock",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/snapshot/local.ts",
+   "target": "function:packages/connectors/src/snapshot/local.ts:sidecarPath",
+   "type": "contains",
+   "direction": "forward",
+   "description": "local.ts defines sidecarPath",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/snapshot/local.ts",
+   "target": "function:packages/connectors/src/snapshot/local.ts:writeSidecar",
+   "type": "contains",
+   "direction": "forward",
+   "description": "local.ts defines writeSidecar",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/snapshot/local.ts",
+   "target": "function:packages/connectors/src/snapshot/local.ts:mergeMeta",
+   "type": "contains",
+   "direction": "forward",
+   "description": "local.ts defines mergeMeta",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/snapshot/local.ts",
+   "target": "function:packages/connectors/src/snapshot/local.ts:readSidecar",
+   "type": "contains",
+   "direction": "forward",
+   "description": "local.ts defines readSidecar",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/snapshot/local.ts",
+   "target": "function:packages/connectors/src/snapshot/local.ts:snapshotMeta",
+   "type": "contains",
+   "direction": "forward",
+   "description": "local.ts defines snapshotMeta",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/snapshot/local.ts",
+   "target": "function:packages/connectors/src/snapshot/local.ts:readEntryMeta",
+   "type": "contains",
+   "direction": "forward",
+   "description": "local.ts defines readEntryMeta",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/snapshot/local.ts",
+   "target": "function:packages/connectors/src/snapshot/local.ts:readEntryMeta",
+   "type": "exports",
+   "direction": "forward",
+   "description": "local.ts exports readEntryMeta",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/connectors/src/snapshot/local.ts",
+   "target": "function:packages/connectors/src/snapshot/local.ts:writeAll",
+   "type": "contains",
+   "direction": "forward",
+   "description": "local.ts defines writeAll",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/snapshot/local.ts",
+   "target": "function:packages/connectors/src/snapshot/local.ts:budgetEvictions",
+   "type": "contains",
+   "direction": "forward",
+   "description": "local.ts defines budgetEvictions",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/snapshot/local.ts",
+   "target": "function:packages/connectors/src/snapshot/local.ts:deleteSnapshots",
+   "type": "contains",
+   "direction": "forward",
+   "description": "local.ts defines deleteSnapshots",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/snapshot/local.ts",
+   "target": "function:packages/connectors/src/snapshot/local.ts:deleteOlderThan",
+   "type": "contains",
+   "direction": "forward",
+   "description": "local.ts defines deleteOlderThan",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/snapshot/local.ts",
+   "target": "function:packages/connectors/src/snapshot/local.ts:validCutoff",
+   "type": "contains",
+   "direction": "forward",
+   "description": "local.ts defines validCutoff",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/snapshot/local.ts",
+   "target": "function:packages/connectors/src/snapshot/local.ts:snapshotFiles",
+   "type": "contains",
+   "direction": "forward",
+   "description": "local.ts defines snapshotFiles",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/snapshot/local.ts",
+   "target": "function:packages/connectors/src/snapshot/local.ts:namespaceDir",
+   "type": "contains",
+   "direction": "forward",
+   "description": "local.ts defines namespaceDir",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/snapshot/local.ts",
+   "target": "function:packages/connectors/src/snapshot/local.ts:pathForReference",
+   "type": "contains",
+   "direction": "forward",
+   "description": "local.ts defines pathForReference",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/snapshot/local.ts",
+   "target": "function:packages/connectors/src/snapshot/local.ts:assertSafeNamespace",
+   "type": "contains",
+   "direction": "forward",
+   "description": "local.ts defines assertSafeNamespace",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/snapshot/local.ts",
+   "target": "function:packages/connectors/src/snapshot/local.ts:assertSafeReference",
+   "type": "contains",
+   "direction": "forward",
+   "description": "local.ts defines assertSafeReference",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/snapshot/local.ts",
+   "target": "function:packages/connectors/src/snapshot/local.ts:isNodeError",
+   "type": "contains",
+   "direction": "forward",
+   "description": "local.ts defines isNodeError",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/snapshot/local.ts",
+   "target": "function:packages/connectors/src/snapshot/local.ts:isPutError",
+   "type": "contains",
+   "direction": "forward",
+   "description": "local.ts defines isPutError",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/connectors/src/snapshot/local.ts:withNamespaceLock",
+   "target": "function:packages/connectors/src/snapshot/local.ts:assertSafeNamespace",
+   "type": "calls",
+   "direction": "forward",
+   "description": "withNamespaceLock calls assertSafeNamespace",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/snapshot/local.ts:withNamespaceLock",
+   "target": "function:packages/connectors/src/snapshot/local.ts:namespaceDir",
+   "type": "calls",
+   "direction": "forward",
+   "description": "withNamespaceLock calls namespaceDir",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/snapshot/local.ts:writeSidecar",
+   "target": "function:packages/connectors/src/snapshot/local.ts:sidecarPath",
+   "type": "calls",
+   "direction": "forward",
+   "description": "writeSidecar calls sidecarPath",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/snapshot/local.ts:writeSidecar",
+   "target": "function:packages/connectors/src/snapshot/local.ts:readSidecar",
+   "type": "calls",
+   "direction": "forward",
+   "description": "writeSidecar calls readSidecar",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/snapshot/local.ts:writeSidecar",
+   "target": "function:packages/connectors/src/snapshot/local.ts:mergeMeta",
+   "type": "calls",
+   "direction": "forward",
+   "description": "writeSidecar calls mergeMeta",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/snapshot/local.ts:writeSidecar",
+   "target": "function:packages/connectors/src/snapshot/local.ts:writeAll",
+   "type": "calls",
+   "direction": "forward",
+   "description": "writeSidecar calls writeAll",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/snapshot/local.ts:readSidecar",
+   "target": "function:packages/connectors/src/snapshot/local.ts:sidecarPath",
+   "type": "calls",
+   "direction": "forward",
+   "description": "readSidecar calls sidecarPath",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/snapshot/local.ts:readSidecar",
+   "target": "function:packages/connectors/src/snapshot/local.ts:isNodeError",
+   "type": "calls",
+   "direction": "forward",
+   "description": "readSidecar calls isNodeError",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/snapshot/local.ts:readSidecar",
+   "target": "function:packages/connectors/src/snapshot/local.ts:snapshotMeta",
+   "type": "calls",
+   "direction": "forward",
+   "description": "readSidecar calls snapshotMeta",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/snapshot/local.ts:readEntryMeta",
+   "target": "function:packages/connectors/src/snapshot/local.ts:readSidecar",
+   "type": "calls",
+   "direction": "forward",
+   "description": "readEntryMeta calls readSidecar",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/snapshot/local.ts:budgetEvictions",
+   "target": "function:packages/connectors/src/snapshot/local.ts:snapshotFiles",
+   "type": "calls",
+   "direction": "forward",
+   "description": "budgetEvictions calls snapshotFiles",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/snapshot/local.ts:budgetEvictions",
+   "target": "function:packages/connectors/src/snapshot/local.ts:readSidecar",
+   "type": "calls",
+   "direction": "forward",
+   "description": "budgetEvictions calls readSidecar",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/snapshot/local.ts:deleteSnapshots",
+   "target": "function:packages/connectors/src/snapshot/local.ts:sidecarPath",
+   "type": "calls",
+   "direction": "forward",
+   "description": "deleteSnapshots calls sidecarPath",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/snapshot/local.ts:deleteOlderThan",
+   "target": "function:packages/connectors/src/snapshot/local.ts:validCutoff",
+   "type": "calls",
+   "direction": "forward",
+   "description": "deleteOlderThan calls validCutoff",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/snapshot/local.ts:deleteOlderThan",
+   "target": "function:packages/connectors/src/snapshot/local.ts:snapshotFiles",
+   "type": "calls",
+   "direction": "forward",
+   "description": "deleteOlderThan calls snapshotFiles",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/snapshot/local.ts:deleteOlderThan",
+   "target": "function:packages/connectors/src/snapshot/local.ts:deleteSnapshots",
+   "type": "calls",
+   "direction": "forward",
+   "description": "deleteOlderThan calls deleteSnapshots",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/snapshot/local.ts:snapshotFiles",
+   "target": "function:packages/connectors/src/snapshot/local.ts:namespaceDir",
+   "type": "calls",
+   "direction": "forward",
+   "description": "snapshotFiles calls namespaceDir",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/snapshot/local.ts:snapshotFiles",
+   "target": "function:packages/connectors/src/snapshot/local.ts:isNodeError",
+   "type": "calls",
+   "direction": "forward",
+   "description": "snapshotFiles calls isNodeError",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/snapshot/local.ts:snapshotFiles",
+   "target": "function:packages/connectors/src/snapshot/local.ts:readSidecar",
+   "type": "calls",
+   "direction": "forward",
+   "description": "snapshotFiles calls readSidecar",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/snapshot/local.ts:pathForReference",
+   "target": "function:packages/connectors/src/snapshot/local.ts:namespaceDir",
+   "type": "calls",
+   "direction": "forward",
+   "description": "pathForReference calls namespaceDir",
+   "weight": 0.6
+  },
+  {
+   "source": "function:packages/connectors/src/snapshot/local.ts:assertSafeReference",
+   "target": "function:packages/connectors/src/snapshot/local.ts:assertSafeNamespace",
+   "type": "calls",
+   "direction": "forward",
+   "description": "assertSafeReference calls assertSafeNamespace",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/connectors/src/snapshot/redact.ts",
+   "target": "function:packages/connectors/src/snapshot/redact.ts:identityRedaction",
+   "type": "contains",
+   "direction": "forward",
+   "description": "redact.ts defines identityRedaction",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/snapshot/redact.ts",
+   "target": "function:packages/connectors/src/snapshot/redact.ts:identityRedaction",
+   "type": "exports",
+   "direction": "forward",
+   "description": "redact.ts exports identityRedaction",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/connectors/src/snapshot/redact.ts",
+   "target": "function:packages/connectors/src/snapshot/redact.ts:applyRedaction",
+   "type": "contains",
+   "direction": "forward",
+   "description": "redact.ts defines applyRedaction",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/snapshot/redact.ts",
+   "target": "function:packages/connectors/src/snapshot/redact.ts:applyRedaction",
+   "type": "exports",
+   "direction": "forward",
+   "description": "redact.ts exports applyRedaction",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/connectors/src/snapshot/s3.ts",
+   "target": "function:packages/connectors/src/snapshot/s3.ts:S3SnapshotStore",
+   "type": "contains",
+   "direction": "forward",
+   "description": "s3.ts defines S3SnapshotStore",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/snapshot/s3.ts",
+   "target": "function:packages/connectors/src/snapshot/s3.ts:S3SnapshotStore",
+   "type": "exports",
+   "direction": "forward",
+   "description": "s3.ts exports S3SnapshotStore",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/connectors/src/snapshot/s3.ts",
+   "target": "function:packages/connectors/src/snapshot/s3.ts:keyFor",
+   "type": "contains",
+   "direction": "forward",
+   "description": "s3.ts defines keyFor",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/snapshot/s3.ts",
+   "target": "function:packages/connectors/src/snapshot/s3.ts:trimSlashes",
+   "type": "contains",
+   "direction": "forward",
+   "description": "s3.ts defines trimSlashes",
+   "weight": 1.0
+  },
+  {
+   "source": "function:packages/connectors/src/snapshot/s3.ts:S3SnapshotStore",
+   "target": "function:packages/connectors/src/snapshot/s3.ts:trimSlashes",
+   "type": "calls",
+   "direction": "forward",
+   "description": "S3SnapshotStore calls trimSlashes",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/connectors/src/snapshot/snapshot.test.ts",
+   "target": "function:packages/connectors/src/snapshot/snapshot.test.ts:tempRoot",
+   "type": "contains",
+   "direction": "forward",
+   "description": "snapshot.test.ts defines tempRoot",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/snapshot/snapshot.test.ts",
+   "target": "function:packages/connectors/src/snapshot/snapshot.test.ts:filePath",
+   "type": "contains",
+   "direction": "forward",
+   "description": "snapshot.test.ts defines filePath",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/snapshot/store.ts",
+   "target": "function:packages/connectors/src/snapshot/store.ts:sha256Digest",
+   "type": "contains",
+   "direction": "forward",
+   "description": "store.ts defines sha256Digest",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/snapshot/store.ts",
+   "target": "function:packages/connectors/src/snapshot/store.ts:sha256Digest",
+   "type": "exports",
+   "direction": "forward",
+   "description": "store.ts exports sha256Digest",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/connectors/src/snapshot/store.ts",
+   "target": "function:packages/connectors/src/snapshot/store.ts:makePutError",
+   "type": "contains",
+   "direction": "forward",
+   "description": "store.ts defines makePutError",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/snapshot/store.ts",
+   "target": "function:packages/connectors/src/snapshot/store.ts:makePutError",
+   "type": "exports",
+   "direction": "forward",
+   "description": "store.ts exports makePutError",
+   "weight": 0.7
+  },
+  {
+   "source": "file:packages/connectors/src/snapshot/store.ts",
+   "target": "function:packages/connectors/src/snapshot/store.ts:makeGetError",
+   "type": "contains",
+   "direction": "forward",
+   "description": "store.ts defines makeGetError",
+   "weight": 1.0
+  },
+  {
+   "source": "file:packages/connectors/src/snapshot/store.ts",
+   "target": "function:packages/connectors/src/snapshot/store.ts:makeGetError",
+   "type": "exports",
+   "direction": "forward",
+   "description": "store.ts exports makeGetError",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/src/e2e-connectors.mjs",
+   "target": "function:scripts/src/e2e-connectors.mjs:pass",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-connectors.mjs defines pass",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/e2e-connectors.mjs",
+   "target": "function:scripts/src/e2e-connectors.mjs:fail",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-connectors.mjs defines fail",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/e2e-connectors.mjs",
+   "target": "function:scripts/src/e2e-connectors.mjs:check",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-connectors.mjs defines check",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/e2e-connectors.mjs",
+   "target": "function:scripts/src/e2e-connectors.mjs:check",
+   "type": "exports",
+   "direction": "forward",
+   "description": "e2e-connectors.mjs exports check",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/src/e2e-connectors.mjs",
+   "target": "function:scripts/src/e2e-connectors.mjs:runAllChecks",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-connectors.mjs defines runAllChecks",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/e2e-connectors.mjs",
+   "target": "function:scripts/src/e2e-connectors.mjs:runAllChecks",
+   "type": "exports",
+   "direction": "forward",
+   "description": "e2e-connectors.mjs exports runAllChecks",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/src/e2e-connectors.mjs",
+   "target": "function:scripts/src/e2e-connectors.mjs:runPostgresRoundTrip",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-connectors.mjs defines runPostgresRoundTrip",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/e2e-connectors.mjs",
+   "target": "function:scripts/src/e2e-connectors.mjs:runPostgresRoundTrip",
+   "type": "exports",
+   "direction": "forward",
+   "description": "e2e-connectors.mjs exports runPostgresRoundTrip",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/src/e2e-connectors.mjs",
+   "target": "function:scripts/src/e2e-connectors.mjs:runPostgresDrift",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-connectors.mjs defines runPostgresDrift",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/e2e-connectors.mjs",
+   "target": "function:scripts/src/e2e-connectors.mjs:runPostgresDrift",
+   "type": "exports",
+   "direction": "forward",
+   "description": "e2e-connectors.mjs exports runPostgresDrift",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/src/e2e-connectors.mjs",
+   "target": "function:scripts/src/e2e-connectors.mjs:runReplayDryRun",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-connectors.mjs defines runReplayDryRun",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/e2e-connectors.mjs",
+   "target": "function:scripts/src/e2e-connectors.mjs:runReplayDryRun",
+   "type": "exports",
+   "direction": "forward",
+   "description": "e2e-connectors.mjs exports runReplayDryRun",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/src/e2e-connectors.mjs",
+   "target": "function:scripts/src/e2e-connectors.mjs:runS3RoundTrip",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-connectors.mjs defines runS3RoundTrip",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/e2e-connectors.mjs",
+   "target": "function:scripts/src/e2e-connectors.mjs:runS3RoundTrip",
+   "type": "exports",
+   "direction": "forward",
+   "description": "e2e-connectors.mjs exports runS3RoundTrip",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/src/e2e-connectors.mjs",
+   "target": "function:scripts/src/e2e-connectors.mjs:runS3Drift",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-connectors.mjs defines runS3Drift",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/e2e-connectors.mjs",
+   "target": "function:scripts/src/e2e-connectors.mjs:runS3Drift",
+   "type": "exports",
+   "direction": "forward",
+   "description": "e2e-connectors.mjs exports runS3Drift",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/src/e2e-connectors.mjs",
+   "target": "function:scripts/src/e2e-connectors.mjs:putSnapshot",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-connectors.mjs defines putSnapshot",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/e2e-connectors.mjs",
+   "target": "function:scripts/src/e2e-connectors.mjs:writeManifest",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-connectors.mjs defines writeManifest",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/e2e-connectors.mjs",
+   "target": "function:scripts/src/e2e-connectors.mjs:postgresSchema",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-connectors.mjs defines postgresSchema",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/e2e-connectors.mjs",
+   "target": "function:scripts/src/e2e-connectors.mjs:argsDigest",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-connectors.mjs defines argsDigest",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/e2e-connectors.mjs",
+   "target": "function:scripts/src/e2e-connectors.mjs:cloneRows",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-connectors.mjs defines cloneRows",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/e2e-connectors.mjs",
+   "target": "function:scripts/src/e2e-connectors.mjs:tableFromSql",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-connectors.mjs defines tableFromSql",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/e2e-connectors.mjs",
+   "target": "function:scripts/src/e2e-connectors.mjs:whereColumns",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-connectors.mjs defines whereColumns",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/e2e-connectors.mjs",
+   "target": "function:scripts/src/e2e-connectors.mjs:assignmentColumns",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-connectors.mjs defines assignmentColumns",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/e2e-connectors.mjs",
+   "target": "function:scripts/src/e2e-connectors.mjs:insertColumns",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-connectors.mjs defines insertColumns",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/e2e-connectors.mjs",
+   "target": "function:scripts/src/e2e-connectors.mjs:literalWhere",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-connectors.mjs defines literalWhere",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/e2e-connectors.mjs",
+   "target": "function:scripts/src/e2e-connectors.mjs:quotedHex",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-connectors.mjs defines quotedHex",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/e2e-connectors.mjs",
+   "target": "function:scripts/src/e2e-connectors.mjs:notFound",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-connectors.mjs defines notFound",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/e2e-connectors.mjs",
+   "target": "function:scripts/src/e2e-connectors.mjs:escapeRegExp",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-connectors.mjs defines escapeRegExp",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/e2e-connectors.mjs",
+   "target": "class:scripts/src/e2e-connectors.mjs:FakeQueryExecutor",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-connectors.mjs defines class FakeQueryExecutor",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/e2e-connectors.mjs",
+   "target": "class:scripts/src/e2e-connectors.mjs:FakeS3Client",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-connectors.mjs defines class FakeS3Client",
+   "weight": 1.0
+  },
+  {
+   "source": "function:scripts/src/e2e-connectors.mjs:check",
+   "target": "function:scripts/src/e2e-connectors.mjs:pass",
+   "type": "calls",
+   "direction": "forward",
+   "description": "check calls pass",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/e2e-connectors.mjs:check",
+   "target": "function:scripts/src/e2e-connectors.mjs:fail",
+   "type": "calls",
+   "direction": "forward",
+   "description": "check calls fail",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/e2e-connectors.mjs:runAllChecks",
+   "target": "function:scripts/src/e2e-connectors.mjs:check",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runAllChecks calls check",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/e2e-connectors.mjs:runAllChecks",
+   "target": "function:scripts/src/e2e-connectors.mjs:runPostgresRoundTrip",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runAllChecks calls runPostgresRoundTrip",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/e2e-connectors.mjs:runAllChecks",
+   "target": "function:scripts/src/e2e-connectors.mjs:runPostgresDrift",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runAllChecks calls runPostgresDrift",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/e2e-connectors.mjs:runAllChecks",
+   "target": "function:scripts/src/e2e-connectors.mjs:runReplayDryRun",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runAllChecks calls runReplayDryRun",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/e2e-connectors.mjs:runAllChecks",
+   "target": "function:scripts/src/e2e-connectors.mjs:runS3RoundTrip",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runAllChecks calls runS3RoundTrip",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/e2e-connectors.mjs:runAllChecks",
+   "target": "function:scripts/src/e2e-connectors.mjs:runS3Drift",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runAllChecks calls runS3Drift",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/e2e-connectors.mjs:runPostgresRoundTrip",
+   "target": "function:scripts/src/e2e-connectors.mjs:cloneRows",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runPostgresRoundTrip calls cloneRows",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/e2e-connectors.mjs:runPostgresRoundTrip",
+   "target": "function:scripts/src/e2e-connectors.mjs:postgresSchema",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runPostgresRoundTrip calls postgresSchema",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/e2e-connectors.mjs:runPostgresRoundTrip",
+   "target": "function:scripts/src/e2e-connectors.mjs:putSnapshot",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runPostgresRoundTrip calls putSnapshot",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/e2e-connectors.mjs:runPostgresRoundTrip",
+   "target": "function:scripts/src/e2e-connectors.mjs:writeManifest",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runPostgresRoundTrip calls writeManifest",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/e2e-connectors.mjs:runPostgresRoundTrip",
+   "target": "function:scripts/src/e2e-connectors.mjs:argsDigest",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runPostgresRoundTrip calls argsDigest",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/e2e-connectors.mjs:runPostgresDrift",
+   "target": "function:scripts/src/e2e-connectors.mjs:postgresSchema",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runPostgresDrift calls postgresSchema",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/e2e-connectors.mjs:runReplayDryRun",
+   "target": "function:scripts/src/e2e-connectors.mjs:argsDigest",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runReplayDryRun calls argsDigest",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/e2e-connectors.mjs:runReplayDryRun",
+   "target": "function:scripts/src/e2e-connectors.mjs:writeManifest",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runReplayDryRun calls writeManifest",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/e2e-connectors.mjs:runReplayDryRun",
+   "target": "function:scripts/src/e2e-connectors.mjs:escapeRegExp",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runReplayDryRun calls escapeRegExp",
+   "weight": 0.6
+  },
+  {
+   "source": "file:scripts/src/e2e-final.mjs",
+   "target": "function:scripts/src/e2e-final.mjs:pass",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-final.mjs defines pass",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/e2e-final.mjs",
+   "target": "function:scripts/src/e2e-final.mjs:fail",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-final.mjs defines fail",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/e2e-final.mjs",
+   "target": "function:scripts/src/e2e-final.mjs:note",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-final.mjs defines note",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/e2e-final.mjs",
+   "target": "function:scripts/src/e2e-final.mjs:check",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-final.mjs defines check",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/e2e-final.mjs",
+   "target": "function:scripts/src/e2e-final.mjs:check",
+   "type": "exports",
+   "direction": "forward",
+   "description": "e2e-final.mjs exports check",
+   "weight": 0.7
+  },
+  {
+   "source": "file:scripts/src/e2e-final.mjs",
+   "target": "function:scripts/src/e2e-final.mjs:waitFor",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-final.mjs defines waitFor",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/e2e-final.mjs",
+   "target": "function:scripts/src/e2e-final.mjs:textFrom",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-final.mjs defines textFrom",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/e2e-final.mjs",
+   "target": "function:scripts/src/e2e-final.mjs:parseJsonLines",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-final.mjs defines parseJsonLines",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/e2e-final.mjs",
+   "target": "function:scripts/src/e2e-final.mjs:hasApproveSurface",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-final.mjs defines hasApproveSurface",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/e2e-final.mjs",
+   "target": "function:scripts/src/e2e-final.mjs:hasHttpSurface",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-final.mjs defines hasHttpSurface",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/e2e-final.mjs",
+   "target": "function:scripts/src/e2e-final.mjs:readFileSyncText",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-final.mjs defines readFileSyncText",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/e2e-final.mjs",
+   "target": "function:scripts/src/e2e-final.mjs:runCommand",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-final.mjs defines runCommand",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/e2e-final.mjs",
+   "target": "function:scripts/src/e2e-final.mjs:runCli",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-final.mjs defines runCli",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/e2e-final.mjs",
+   "target": "function:scripts/src/e2e-final.mjs:strictFactsPath",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-final.mjs defines strictFactsPath",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/e2e-final.mjs",
+   "target": "function:scripts/src/e2e-final.mjs:policyPath",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-final.mjs defines policyPath",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/e2e-final.mjs",
+   "target": "function:scripts/src/e2e-final.mjs:spawnProxy",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-final.mjs defines spawnProxy",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/e2e-final.mjs",
+   "target": "function:scripts/src/e2e-final.mjs:send",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-final.mjs defines send",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/e2e-final.mjs",
+   "target": "function:scripts/src/e2e-final.mjs:closeProxy",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-final.mjs defines closeProxy",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/e2e-final.mjs",
+   "target": "function:scripts/src/e2e-final.mjs:readLedgerRecords",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-final.mjs defines readLedgerRecords",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/e2e-final.mjs",
+   "target": "function:scripts/src/e2e-final.mjs:runStdioProductMoment",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-final.mjs defines runStdioProductMoment",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/e2e-final.mjs",
+   "target": "function:scripts/src/e2e-final.mjs:runVerifyMoment",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-final.mjs defines runVerifyMoment",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/e2e-final.mjs",
+   "target": "function:scripts/src/e2e-final.mjs:runTaintMoment",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-final.mjs defines runTaintMoment",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/e2e-final.mjs",
+   "target": "function:scripts/src/e2e-final.mjs:runFeedMoment",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-final.mjs defines runFeedMoment",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/e2e-final.mjs",
+   "target": "function:scripts/src/e2e-final.mjs:runAttestationMoment",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-final.mjs defines runAttestationMoment",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/e2e-final.mjs",
+   "target": "function:scripts/src/e2e-final.mjs:runTamperMoment",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-final.mjs defines runTamperMoment",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/e2e-final.mjs",
+   "target": "function:scripts/src/e2e-final.mjs:runDriftMoment",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-final.mjs defines runDriftMoment",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/e2e-final.mjs",
+   "target": "function:scripts/src/e2e-final.mjs:runHttpMoment",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-final.mjs defines runHttpMoment",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/e2e-final.mjs",
+   "target": "function:scripts/src/e2e-final.mjs:runAllChecks",
+   "type": "contains",
+   "direction": "forward",
+   "description": "e2e-final.mjs defines runAllChecks",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/e2e-final.mjs",
+   "target": "function:scripts/src/e2e-final.mjs:runAllChecks",
+   "type": "exports",
+   "direction": "forward",
+   "description": "e2e-final.mjs exports runAllChecks",
+   "weight": 0.7
+  },
+  {
+   "source": "function:scripts/src/e2e-final.mjs:check",
+   "target": "function:scripts/src/e2e-final.mjs:pass",
+   "type": "calls",
+   "direction": "forward",
+   "description": "check calls pass",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/e2e-final.mjs:check",
+   "target": "function:scripts/src/e2e-final.mjs:fail",
+   "type": "calls",
+   "direction": "forward",
+   "description": "check calls fail",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/e2e-final.mjs:hasHttpSurface",
+   "target": "function:scripts/src/e2e-final.mjs:readFileSyncText",
+   "type": "calls",
+   "direction": "forward",
+   "description": "hasHttpSurface calls readFileSyncText",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/e2e-final.mjs:runCli",
+   "target": "function:scripts/src/e2e-final.mjs:runCommand",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runCli calls runCommand",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/e2e-final.mjs:runStdioProductMoment",
+   "target": "function:scripts/src/e2e-final.mjs:strictFactsPath",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runStdioProductMoment calls strictFactsPath",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/e2e-final.mjs:runStdioProductMoment",
+   "target": "function:scripts/src/e2e-final.mjs:policyPath",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runStdioProductMoment calls policyPath",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/e2e-final.mjs:runStdioProductMoment",
+   "target": "function:scripts/src/e2e-final.mjs:hasApproveSurface",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runStdioProductMoment calls hasApproveSurface",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/e2e-final.mjs:runStdioProductMoment",
+   "target": "function:scripts/src/e2e-final.mjs:spawnProxy",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runStdioProductMoment calls spawnProxy",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/e2e-final.mjs:runStdioProductMoment",
+   "target": "function:scripts/src/e2e-final.mjs:send",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runStdioProductMoment calls send",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/e2e-final.mjs:runStdioProductMoment",
+   "target": "function:scripts/src/e2e-final.mjs:waitFor",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runStdioProductMoment calls waitFor",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/e2e-final.mjs:runStdioProductMoment",
+   "target": "function:scripts/src/e2e-final.mjs:textFrom",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runStdioProductMoment calls textFrom",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/e2e-final.mjs:runStdioProductMoment",
+   "target": "function:scripts/src/e2e-final.mjs:runCli",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runStdioProductMoment calls runCli",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/e2e-final.mjs:runStdioProductMoment",
+   "target": "function:scripts/src/e2e-final.mjs:readLedgerRecords",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runStdioProductMoment calls readLedgerRecords",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/e2e-final.mjs:runStdioProductMoment",
+   "target": "function:scripts/src/e2e-final.mjs:closeProxy",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runStdioProductMoment calls closeProxy",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/e2e-final.mjs:runVerifyMoment",
+   "target": "function:scripts/src/e2e-final.mjs:runCli",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runVerifyMoment calls runCli",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/e2e-final.mjs:runTaintMoment",
+   "target": "function:scripts/src/e2e-final.mjs:runCli",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runTaintMoment calls runCli",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/e2e-final.mjs:runFeedMoment",
+   "target": "function:scripts/src/e2e-final.mjs:runCli",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runFeedMoment calls runCli",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/e2e-final.mjs:runAttestationMoment",
+   "target": "function:scripts/src/e2e-final.mjs:runCommand",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runAttestationMoment calls runCommand",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/e2e-final.mjs:runAttestationMoment",
+   "target": "function:scripts/src/e2e-final.mjs:runCli",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runAttestationMoment calls runCli",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/e2e-final.mjs:runTamperMoment",
+   "target": "function:scripts/src/e2e-final.mjs:runCli",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runTamperMoment calls runCli",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/e2e-final.mjs:runDriftMoment",
+   "target": "function:scripts/src/e2e-final.mjs:runCli",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runDriftMoment calls runCli",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/e2e-final.mjs:runHttpMoment",
+   "target": "function:scripts/src/e2e-final.mjs:hasHttpSurface",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runHttpMoment calls hasHttpSurface",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/e2e-final.mjs:runHttpMoment",
+   "target": "function:scripts/src/e2e-final.mjs:note",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runHttpMoment calls note",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/e2e-final.mjs:runHttpMoment",
+   "target": "function:scripts/src/e2e-final.mjs:strictFactsPath",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runHttpMoment calls strictFactsPath",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/e2e-final.mjs:runHttpMoment",
+   "target": "function:scripts/src/e2e-final.mjs:policyPath",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runHttpMoment calls policyPath",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/e2e-final.mjs:runHttpMoment",
+   "target": "function:scripts/src/e2e-final.mjs:waitFor",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runHttpMoment calls waitFor",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/e2e-final.mjs:runHttpMoment",
+   "target": "function:scripts/src/e2e-final.mjs:spawnProxy",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runHttpMoment calls spawnProxy",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/e2e-final.mjs:runHttpMoment",
+   "target": "function:scripts/src/e2e-final.mjs:send",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runHttpMoment calls send",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/e2e-final.mjs:runHttpMoment",
+   "target": "function:scripts/src/e2e-final.mjs:textFrom",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runHttpMoment calls textFrom",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/e2e-final.mjs:runHttpMoment",
+   "target": "function:scripts/src/e2e-final.mjs:closeProxy",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runHttpMoment calls closeProxy",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/e2e-final.mjs:runHttpMoment",
+   "target": "function:scripts/src/e2e-final.mjs:runCli",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runHttpMoment calls runCli",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/e2e-final.mjs:runAllChecks",
+   "target": "function:scripts/src/e2e-final.mjs:check",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runAllChecks calls check",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/e2e-final.mjs:runAllChecks",
+   "target": "function:scripts/src/e2e-final.mjs:runVerifyMoment",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runAllChecks calls runVerifyMoment",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/e2e-final.mjs:runAllChecks",
+   "target": "function:scripts/src/e2e-final.mjs:runTaintMoment",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runAllChecks calls runTaintMoment",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/e2e-final.mjs:runAllChecks",
+   "target": "function:scripts/src/e2e-final.mjs:runFeedMoment",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runAllChecks calls runFeedMoment",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/e2e-final.mjs:runAllChecks",
+   "target": "function:scripts/src/e2e-final.mjs:runAttestationMoment",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runAllChecks calls runAttestationMoment",
+   "weight": 0.6
+  },
+  {
+   "source": "function:scripts/src/e2e-final.mjs:runAllChecks",
+   "target": "function:scripts/src/e2e-final.mjs:runTamperMoment",
+   "type": "calls",
+   "direction": "forward",
+   "description": "runAllChecks calls runTamperMoment",
+   "weight": 0.6
+  },
+  {
+   "source": "file:scripts/src/handbook.test.mjs",
+   "target": "function:scripts/src/handbook.test.mjs:read",
+   "type": "contains",
+   "direction": "forward",
+   "description": "handbook.test.mjs defines read",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/handbook.test.mjs",
+   "target": "function:scripts/src/handbook.test.mjs:withoutFences",
+   "type": "contains",
+   "direction": "forward",
+   "description": "handbook.test.mjs defines withoutFences",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/handbook.test.mjs",
+   "target": "function:scripts/src/handbook.test.mjs:occurrences",
+   "type": "contains",
+   "direction": "forward",
+   "description": "handbook.test.mjs defines occurrences",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/install-nomo.test.mjs",
+   "target": "function:scripts/src/install-nomo.test.mjs:sandbox",
+   "type": "contains",
+   "direction": "forward",
+   "description": "install-nomo.test.mjs defines sandbox",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/install-nomo.test.mjs",
+   "target": "function:scripts/src/install-nomo.test.mjs:makeTree",
+   "type": "contains",
+   "direction": "forward",
+   "description": "install-nomo.test.mjs defines makeTree",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/install-nomo.test.mjs",
+   "target": "function:scripts/src/install-nomo.test.mjs:outputOf",
+   "type": "contains",
+   "direction": "forward",
+   "description": "install-nomo.test.mjs defines outputOf",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/install-nomo.test.mjs",
+   "target": "function:scripts/src/install-nomo.test.mjs:readLog",
+   "type": "contains",
+   "direction": "forward",
+   "description": "install-nomo.test.mjs defines readLog",
+   "weight": 1.0
+  },
+  {
+   "source": "file:scripts/src/install-nomo.test.mjs",
+   "target": "function:scripts/src/install-nomo.test.mjs:forwardedArgs",
+   "type": "contains",
+   "direction": "forward",
+   "description": "install-nomo.test.mjs defines forwardedArgs",
+   "weight": 1.0
+  },
+  {
+   "source": "function:scripts/src/install-nomo.test.mjs:forwardedArgs",
+   "target": "function:scripts/src/install-nomo.test.mjs:readLog",
+   "type": "calls",
+   "direction": "forward",
+   "description": "forwardedArgs calls readLog",
+   "weight": 0.6
+  },
+  {
+   "source": "file:packages/connectors/src/reverse-engine.test.ts",
+   "target": "file:packages/connectors/src/manifest.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "reverse-engine.test.ts imports manifest.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/reverse-engine.test.ts",
+   "target": "file:packages/connectors/src/postgres/capture.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "reverse-engine.test.ts imports capture.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/reverse-engine.test.ts",
+   "target": "file:packages/connectors/src/postgres/inverse.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "reverse-engine.test.ts imports inverse.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/reverse-engine.test.ts",
+   "target": "file:packages/connectors/src/postgres/parse.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "reverse-engine.test.ts imports parse.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/reverse-engine.test.ts",
+   "target": "file:packages/connectors/src/postgres/replay.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "reverse-engine.test.ts imports replay.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/reverse-engine.test.ts",
+   "target": "file:packages/connectors/src/registry.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "reverse-engine.test.ts imports registry.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/reverse-engine.test.ts",
+   "target": "file:packages/connectors/src/s3/classify.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "reverse-engine.test.ts imports classify.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/reverse-engine.test.ts",
+   "target": "file:packages/connectors/src/snapshot/local.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "reverse-engine.test.ts imports local.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/reverse-engine.test.ts",
+   "target": "file:packages/ledger/src/sign.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "reverse-engine.test.ts imports sign.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/reverse-engine.test.ts",
+   "target": "file:packages/ledger/src/store.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "reverse-engine.test.ts imports store.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/reverse-engine.test.ts",
+   "target": "file:packages/ledger/src/verify.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "reverse-engine.test.ts imports verify.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/reverse-engine.test.ts",
+   "target": "file:packages/proxy/src/bin.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "reverse-engine.test.ts imports bin.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/reverse-engine.test.ts",
+   "target": "file:packages/proxy/src/forward/legacy-binding.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "reverse-engine.test.ts imports legacy-binding.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/reverse-engine.test.ts",
+   "target": "file:packages/proxy/src/forward/tools.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "reverse-engine.test.ts imports tools.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/reverse-engine.test.ts",
+   "target": "file:packages/proxy/src/legacy-root.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "reverse-engine.test.ts imports legacy-root.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/reverse-engine.test.ts",
+   "target": "file:packages/proxy/src/transport/stdio.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "reverse-engine.test.ts imports stdio.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/s3/apply-guard.test.ts",
+   "target": "file:packages/connectors/src/s3/apply.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "apply-guard.test.ts imports apply.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/s3/apply-guard.test.ts",
+   "target": "file:packages/connectors/src/s3/capture.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "apply-guard.test.ts imports capture.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/s3/apply-guard.test.ts",
+   "target": "file:packages/connectors/src/s3/classify.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "apply-guard.test.ts imports classify.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/s3/apply.test.ts",
+   "target": "file:packages/connectors/src/s3/apply.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "apply.test.ts imports apply.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/s3/apply.test.ts",
+   "target": "file:packages/connectors/src/s3/capture.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "apply.test.ts imports capture.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/s3/apply.test.ts",
+   "target": "file:packages/connectors/src/s3/classify.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "apply.test.ts imports classify.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/s3/apply.ts",
+   "target": "file:packages/connectors/src/s3/capture.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "apply.ts imports capture.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/s3/apply.ts",
+   "target": "file:packages/connectors/src/s3/classify.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "apply.ts imports classify.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/s3/apply.ts",
+   "target": "file:packages/connectors/src/s3/inverse.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "apply.ts imports inverse.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/s3/capture.ts",
+   "target": "file:packages/connectors/src/s3/classify.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "capture.ts imports classify.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/s3/inverse.ts",
+   "target": "file:packages/connectors/src/s3/classify.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "inverse.ts imports classify.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/s3/s3.test.ts",
+   "target": "file:packages/connectors/src/s3/apply.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "s3.test.ts imports apply.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/s3/s3.test.ts",
+   "target": "file:packages/connectors/src/s3/capture.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "s3.test.ts imports capture.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/s3/s3.test.ts",
+   "target": "file:packages/connectors/src/s3/classify.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "s3.test.ts imports classify.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/s3/s3.test.ts",
+   "target": "file:packages/connectors/src/s3/inverse.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "s3.test.ts imports inverse.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/s3/s3.test.ts",
+   "target": "file:packages/connectors/src/snapshot/local.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "s3.test.ts imports local.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/snapshot/local.ts",
+   "target": "file:packages/connectors/src/snapshot/redact.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "local.ts imports redact.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/snapshot/local.ts",
+   "target": "file:packages/connectors/src/snapshot/store.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "local.ts imports store.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/snapshot/redact.ts",
+   "target": "file:packages/connectors/src/snapshot/store.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "redact.ts imports store.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/snapshot/s3.ts",
+   "target": "file:packages/connectors/src/snapshot/redact.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "s3.ts imports redact.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/snapshot/s3.ts",
+   "target": "file:packages/connectors/src/snapshot/store.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "s3.ts imports store.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/snapshot/snapshot.test.ts",
+   "target": "file:packages/connectors/src/snapshot/local.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "snapshot.test.ts imports local.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/snapshot/snapshot.test.ts",
+   "target": "file:packages/connectors/src/snapshot/redact.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "snapshot.test.ts imports redact.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/snapshot/snapshot.test.ts",
+   "target": "file:packages/connectors/src/snapshot/s3.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "snapshot.test.ts imports s3.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:packages/connectors/src/snapshot/snapshot.test.ts",
+   "target": "file:packages/connectors/src/snapshot/store.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "snapshot.test.ts imports store.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:scripts/src/e2e-connectors.mjs",
+   "target": "file:packages/cli/src/replay.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "e2e-connectors.mjs imports replay.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:scripts/src/e2e-connectors.mjs",
+   "target": "file:packages/connectors/src/manifest.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "e2e-connectors.mjs imports manifest.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:scripts/src/e2e-connectors.mjs",
+   "target": "file:packages/connectors/src/postgres/capture.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "e2e-connectors.mjs imports capture.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:scripts/src/e2e-connectors.mjs",
+   "target": "file:packages/connectors/src/postgres/classify.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "e2e-connectors.mjs imports classify.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:scripts/src/e2e-connectors.mjs",
+   "target": "file:packages/connectors/src/postgres/inverse.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "e2e-connectors.mjs imports inverse.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:scripts/src/e2e-connectors.mjs",
+   "target": "file:packages/connectors/src/postgres/parse.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "e2e-connectors.mjs imports parse.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:scripts/src/e2e-connectors.mjs",
+   "target": "file:packages/connectors/src/postgres/replay.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "e2e-connectors.mjs imports replay.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:scripts/src/e2e-connectors.mjs",
+   "target": "file:packages/connectors/src/s3/apply.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "e2e-connectors.mjs imports apply.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:scripts/src/e2e-connectors.mjs",
+   "target": "file:packages/connectors/src/s3/capture.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "e2e-connectors.mjs imports capture.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:scripts/src/e2e-connectors.mjs",
+   "target": "file:packages/connectors/src/s3/inverse.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "e2e-connectors.mjs imports inverse.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:scripts/src/e2e-connectors.mjs",
+   "target": "file:packages/connectors/src/snapshot/local.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "e2e-connectors.mjs imports local.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:scripts/src/e2e-connectors.mjs",
+   "target": "file:packages/connectors/src/snapshot/s3.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "e2e-connectors.mjs imports s3.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:scripts/src/e2e-connectors.mjs",
+   "target": "file:packages/connectors/src/snapshot/store.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "e2e-connectors.mjs imports store.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:scripts/src/e2e-connectors.mjs",
+   "target": "file:packages/ledger/src/sign.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "e2e-connectors.mjs imports sign.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:scripts/src/e2e-connectors.mjs",
+   "target": "file:packages/ledger/src/store.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "e2e-connectors.mjs imports store.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:scripts/src/e2e-connectors.test.mjs",
+   "target": "file:scripts/src/e2e-connectors.mjs",
+   "type": "imports",
+   "direction": "forward",
+   "description": "e2e-connectors.test.mjs imports e2e-connectors.mjs",
+   "weight": 0.8
+  },
+  {
+   "source": "file:scripts/src/e2e-final.mjs",
+   "target": "file:packages/cli/src/argv.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "e2e-final.mjs imports argv.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:scripts/src/e2e-final.mjs",
+   "target": "file:packages/connectors/src/postgres/capture.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "e2e-final.mjs imports capture.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:scripts/src/e2e-final.mjs",
+   "target": "file:packages/connectors/src/postgres/parse.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "e2e-final.mjs imports parse.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:scripts/src/e2e-final.mjs",
+   "target": "file:packages/connectors/src/snapshot/local.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "e2e-final.mjs imports local.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:scripts/src/e2e-final.mjs",
+   "target": "file:packages/connectors/src/snapshot/store.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "e2e-final.mjs imports store.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:scripts/src/e2e-final.mjs",
+   "target": "file:packages/ledger/src/sign.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "e2e-final.mjs imports sign.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:scripts/src/e2e-final.mjs",
+   "target": "file:packages/ledger/src/store.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "e2e-final.mjs imports store.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:scripts/src/handbook.test.mjs",
+   "target": "file:packages/cli/src/argv.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "handbook.test.mjs imports argv.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:scripts/src/handbook.test.mjs",
+   "target": "file:packages/workbench/src/provider-defaults.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "handbook.test.mjs imports provider-defaults.ts",
+   "weight": 0.8
+  },
+  {
+   "source": "file:scripts/src/install-nomo.test.mjs",
+   "target": "file:packages/cli/src/argv.ts",
+   "type": "imports",
+   "direction": "forward",
+   "description": "install-nomo.test.mjs imports argv.ts",
+   "weight": 0.8
+  }
+ ]
+}

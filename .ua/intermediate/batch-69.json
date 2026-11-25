@@ -1,0 +1,41 @@
+{
+ "nodes": [
+  {
+   "id": "file:packages/runtime/README.md",
+   "type": "document",
+   "name": "README.md",
+   "filePath": "packages/runtime/README.md",
+   "summary": "README.md \u2014 markdown document, 44 lines, 2 sections: @nomo/runtime, Recovery jobs.",
+   "tags": [
+    "markdown",
+    "docs"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/runtime/package.json",
+   "type": "config",
+   "name": "package.json",
+   "filePath": "packages/runtime/package.json",
+   "summary": "package.json \u2014 json config, 33 lines.",
+   "tags": [
+    "json",
+    "config"
+   ],
+   "complexity": "simple"
+  },
+  {
+   "id": "file:packages/runtime/tsconfig.json",
+   "type": "config",
+   "name": "tsconfig.json",
+   "filePath": "packages/runtime/tsconfig.json",
+   "summary": "tsconfig.json \u2014 json config, 18 lines.",
+   "tags": [
+    "json",
+    "config"
+   ],
+   "complexity": "simple"
+  }
+ ],
+ "edges": []
+}
