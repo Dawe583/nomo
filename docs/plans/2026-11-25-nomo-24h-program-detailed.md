@@ -284,6 +284,12 @@ shows only `runs@*`.
 
 **Rollback.** Revert the row builder and the five hashes.
 
+**As built.** Runs rows now carry state, truncated model, measured or honestly
+unreported tokens, elapsed time and progress. The empty state says
+`No runs in this conversation.` and both empty and one-run visual fixtures are
+captured at five sizes as `runs-empty@*` and `runs-one@*`. Enter still opens
+the existing read-only run inspector, so row selection already has a hit target.
+
 ### T2.2. `mcp` panel parity (1.5 h)
 
 **Files.** `workspace.ts`, `workspace-mcp.test.ts`, snapshots.

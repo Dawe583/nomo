@@ -9545,3 +9545,6 @@ Commit 3280db90942408dbc286a70f42124b4a3a33b277, subject Polish shared TUI motio
 - 2026-11-25 · Q9 and Q10 completed in the free parent session.
   Manual contract review found no contradiction requiring CONTEXT or STANDARDS edits. The program handoff page now records verified gates, shipped slices,
   limits, blocked provider work, forbidden actions, and the exact next ready node T2.1. Doc truth remains 9/9 after removing the stale planned-handoff inventory entry. [[NOMO TUI Control Center]]
+- 2026-11-25 · T2.1 runs panel parity completed in the free parent session.
+  Runs rows now carry state, truncated model, measured or honestly unreported tokens, elapsed time and progress. Empty state says `No runs in this conversation.`;
+  visual fixtures cover empty and one-run frames at five sizes. Verified: workspace.test 128/128, focused controls/terminal/snapshots 36/36, CLI typecheck 0, wider TUI 530/530. [[NOMO TUI Control Center]]

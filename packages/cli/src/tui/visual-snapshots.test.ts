@@ -53,6 +53,8 @@ const CHILD_SESSION_ID = "sess-child";
 const PARENT_RUN_ID = "run-1";
 const CHILD_RUN_ID = "run-child";
 
+let visibleViews: readonly SessionView[] = [];
+
 const TERMINAL_SIZES = [
   [40, 12],
   [80, 24],
@@ -70,6 +72,8 @@ const SCENARIOS = [
   "ledger",
   "approvals",
   "settings",
+  "runs-empty",
+  "runs-one",
 ] as const;
 
 type Scenario = (typeof SCENARIOS)[number];
@@ -304,6 +308,8 @@ const CHILD_VIEW: SessionView = {
  * that moves every second, which is the one clock the approvals panel reads
  * outside the fixture, so the fixture omits it and the panel says so.
  */
+const DEFAULT_VIEWS: readonly SessionView[] = [PARENT_VIEW, CHILD_VIEW];
+
 const FIXTURE_HOLDS = [
   {
     holdId: "hold-1",
@@ -474,6 +480,7 @@ function resetPanel(ui: WorkspaceTui): void {
   ui.scroll = 0;
   ui.petSplashUntil = 0;
   ui.sessionId = PARENT_SESSION_ID;
+  visibleViews = DEFAULT_VIEWS;
 }
 
 function applyScenario(ui: WorkspaceTui, scenario: Scenario): void {
@@ -509,6 +516,14 @@ function applyScenario(ui: WorkspaceTui, scenario: Scenario): void {
       // detail, which is what the next frame reads to replace the Chat body.
       ui.refreshSettingsPanel();
       ui.lines();
+      return;
+    case "runs-empty":
+      visibleViews = [];
+      ui.choose("runs");
+      return;
+    case "runs-one":
+      visibleViews = [PARENT_VIEW];
+      ui.choose("runs");
       return;
   }
 }
@@ -581,6 +596,7 @@ test("visual snapshots match the committed frame hashes", async (t) => {
   });
 
   const views: readonly SessionView[] = [PARENT_VIEW, CHILD_VIEW];
+  visibleViews = DEFAULT_VIEWS;
   // The builtin tool registry is the real list; only the session lookup is
   // pinned, because no live session exists for these fixtures.
   const builtinTools = app.availableTools(undefined);
@@ -588,7 +604,7 @@ test("visual snapshots match the committed frame hashes", async (t) => {
     views.find((view) => view.id === id),
   );
   t.mock.method(app, "list", () => [...views]);
-  t.mock.method(app, "allViews", () => [...views]);
+  t.mock.method(app, "allViews", () => [...visibleViews]);
   t.mock.method(app, "availableTools", () => builtinTools);
   t.mock.method(
     app,

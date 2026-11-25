@@ -120,7 +120,7 @@ test("shared runs view is available in plain one-shot output", async (t) => {
   // The runs panel leads with its own title and the honest record count, then
   // states that the provider still needs setup. Plain output stays plain.
   assert.match(result.stdout, /▶ RUNS · 0 recorded/);
-  assert.match(result.stdout, /No run records are available/);
+  assert.match(result.stdout, /No runs in this conversation\./);
   assert.match(result.stdout, /Provider unknown \| setup-required/);
   assert.doesNotMatch(result.stdout, /\x1b/);
 });

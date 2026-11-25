@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-25T12:17:15Z",
+  "updatedAt": "2026-11-25T12:25:11Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -1094,6 +1094,48 @@
         "NO_COLOR=1 node --test scripts/src/doc-truth.test.mjs observed exit 0: tests 9, pass 9, fail 0, duration_ms 99.381458."
       ],
       "stopCondition": "Stop if the handoff names a next node that is gated or depends on a provider-costing call."
+    },
+    {
+      "id": "t2-1-runs-panel-parity",
+      "status": "done",
+      "owner": "devin-6293643153014f56bb088c9a71fde97a",
+      "dependsOn": [
+        "t1-design-contract"
+      ],
+      "scope": [
+        "packages/cli/src/tui/workspace.ts",
+        "packages/cli/src/tui/workspace-controls.test.ts",
+        "packages/cli/src/tui/workspace-terminal.test.ts",
+        "packages/cli/src/tui/visual-snapshots.test.ts",
+        "packages/cli/src/tui/test/visual-snapshots.json",
+        "docs/plans/2026-11-25-nomo-24h-program-detailed.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "empty state and one-run frame render at five sizes",
+        "rows carry measured status, model, tokens and elapsed time",
+        "no row exceeds terminal width",
+        "row selection opens the existing inspector"
+      ],
+      "verifier": [
+        "node --test packages/cli/src/tui/workspace.test.ts",
+        "node --test packages/cli/src/tui/workspace-controls.test.ts packages/cli/src/tui/workspace-terminal.test.ts packages/cli/src/tui/visual-snapshots.test.ts",
+        "pnpm --filter @nomo/cli typecheck",
+        "node --test --test-concurrency=1 packages/cli/src/tui/*.test.ts"
+      ],
+      "evidence": [
+        "Rows now carry state, compact truncated model, measured tokens or tokens not reported, elapsed duration or time unknown, progress and session prefix. Detail lines keep the full model and token facts. Empty state is exactly \"No runs in this conversation.\" and footers name Esc returns to Chat.",
+        "Reviewed rendered runs-empty@80x24 and runs-one@80x24 before accepting snapshots: empty state, one measured run with 120 tokens and 9s, width-contained rows and Esc hints were visible. Visual snapshot update wrote 50 frame hashes, adding runs-empty and runs-one at five sizes.",
+        "NO_COLOR=1 node --test packages/cli/src/tui/workspace.test.ts observed exit 0: tests 128, pass 128, fail 0, duration_ms 4650.613834.",
+        "NO_COLOR=1 node --test packages/cli/src/tui/workspace-controls.test.ts packages/cli/src/tui/workspace-terminal.test.ts packages/cli/src/tui/visual-snapshots.test.ts observed exit 0 after the final source state: tests 36, pass 36, fail 0, duration_ms 7289.698042.",
+        "pnpm --filter @nomo/cli typecheck observed exit 0.",
+        "NO_COLOR=1 node --test --test-concurrency=1 packages/cli/src/tui/*.test.ts observed exit 0 before a net-zero optimization experiment was reverted: tests 530, pass 530, fail 0, duration_ms 32238.272625.",
+        "git diff --check observed exit 0."
+      ],
+      "stopCondition": "Stop if rows invent missing tokens or elapsed time, exceed terminal width, or snapshot changes affect non-runs frames."
     }
   ]
 }

@@ -102,6 +102,61 @@ test("runs navigation keeps unknown outcomes and missing progress explicit", asy
   }
 });
 
+test("runs rows carry measured tokens and elapsed time without overflowing narrow frames", async (t) => {
+  const { app, ui } = await fixture(t);
+  await app.configure({
+    baseUrl: "https://fixture.invalid/v1",
+    apiKey: "fixture",
+  });
+  const session = await app.start("Measure this run", "fixture");
+  await app.settled();
+  const base = app.get(session.id)!;
+  const runId = "run-measured";
+  const longModel = "fixture-model-with-a-name-that-keeps-going-past-the-row-width";
+  const view = {
+    ...base,
+    model: longModel,
+    events: [
+      {
+        seq: 1,
+        at: "2026-01-02T03:04:10.000Z",
+        kind: "tool",
+        type: "run.status",
+        text: "idle",
+        payload: { status: "idle" },
+        runId,
+        sessionId: session.id,
+      },
+      {
+        seq: 2,
+        at: "2026-01-02T03:04:11.000Z",
+        kind: "usage",
+        type: "usage.reported",
+        text: "usage",
+        payload: { total_tokens: 123, source: "provider" },
+        runId,
+        sessionId: session.id,
+      },
+    ],
+  };
+  t.mock.method(app, "allViews", () => [view]);
+  await ui.initialize();
+  await ui.command("/runs");
+  const row = ui.items()[0]!;
+  assert.match(row.label, /idle/);
+  assert.match(row.label, /123 tokens/);
+  assert.match(row.label, /1s/);
+  assert.ok(!row.label.includes(longModel), "the compact row truncates a long model name");
+  assert.match(row.lines.join("\n"), new RegExp(`Model: ${longModel}`));
+  assert.match(row.lines.join("\n"), /Tokens: 123 tokens/);
+  assert.match(row.lines.join("\n"), /Duration: 1s/);
+  for (const width of [40, 80]) {
+    const lines = stripAnsi(renderWorkspace(ui, width, 24)).split("\n");
+    assert.ok(lines.every((line) => visibleLength(line) <= width));
+  }
+  assert.match(ui.lines().join("\n"), /Esc returns to Chat/);
+});
+
 test("status shows the agent identity binding and separates local revoke from fleet revoke", async (t) => {
   const { app, ui } = await fixture(t);
   await app.configure({
