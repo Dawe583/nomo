@@ -1,0 +1,23 @@
+{
+	"nodes":[
+		{"id":"a1b2c3d4e5f60718","type":"file","x":425,"y":0,"width":430,"height":140,"file":"00 Start Here/NOMO Project Home.md"},
+		{"id":"b1c2d3e4f5061728","type":"group","x":0,"y":240,"width":410,"height":720,"label":"Product & Strategy"},
+		{"id":"c1d2e3f405162738","type":"group","x":455,"y":240,"width":410,"height":440,"label":"Architecture & Memory"},
+		{"id":"d1e2f30415263748","type":"group","x":910,"y":240,"width":410,"height":720,"label":"Work & Delivery"},
+		{"id":"e1f2031425364758","type":"file","x":20,"y":310,"width":370,"height":90,"file":"02 Product and Strategy/NOMO Field Expert Strategy.md"},
+		{"id":"f102132435465768","type":"file","x":20,"y":430,"width":370,"height":90,"file":"02 Product and Strategy/NOMO Product Direction.md"},
+		{"id":"0123456789abcdef","type":"file","x":20,"y":550,"width":370,"height":90,"file":"01 Governance and Memory/NOMO Decisions.md"},
+		{"id":"1234567890abcdef","type":"file","x":20,"y":670,"width":370,"height":90,"file":"02 Product and Strategy/NOMO Product Roadmap.md"},
+		{"id":"234567890abcdef1","type":"file","x":475,"y":310,"width":370,"height":90,"file":"03 Architecture and Engineering/NOMO Code Graph.md"},
+		{"id":"34567890abcdef12","type":"file","x":475,"y":430,"width":370,"height":90,"file":"01 Governance and Memory/NOMO Memory Rules.md"},
+		{"id":"4567890abcdef123","type":"file","x":930,"y":310,"width":370,"height":90,"file":"04 Workstreams and Delivery/NOMO TUI Control Center.md"},
+		{"id":"567890abcdef1234","type":"file","x":930,"y":430,"width":370,"height":90,"file":"08 Work Log/NOMO Work Log.md"},
+		{"id":"67890abcdef12345","type":"file","x":930,"y":550,"width":370,"height":90,"file":"04 Workstreams and Delivery/NOMO Hunt Queue.md"},
+		{"id":"7890abcdef123456","type":"file","x":930,"y":670,"width":370,"height":90,"file":"04 Workstreams and Delivery/NOMO Loop Graph.md"}
+	],
+	"edges":[
+		{"id":"89abcdef01234567","fromNode":"a1b2c3d4e5f60718","fromSide":"bottom","toNode":"b1c2d3e4f5061728","toSide":"top","toEnd":"arrow"},
+		{"id":"9abcdef012345678","fromNode":"a1b2c3d4e5f60718","fromSide":"bottom","toNode":"c1d2e3f405162738","toSide":"top","toEnd":"arrow"},
+		{"id":"abcdef0123456789","fromNode":"a1b2c3d4e5f60718","fromSide":"bottom","toNode":"d1e2f30415263748","toSide":"top","toEnd":"arrow"}
+	]
+}
