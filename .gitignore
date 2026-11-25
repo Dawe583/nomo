@@ -16,10 +16,11 @@ node_modules
 # directory the build left behind.
 .pnpm-store/
 
-# The work graph is loop state for one checkout, not repository content. It is
-# ignored rather than classified, so a lane that holds a graph and a clean gate
-# checkout that does not both describe the same tree.
-.nomo/
+# Most work-graph state is loop state for one checkout. The canonical graph is
+# repository content because cloud sessions bootstrap from it; other .nomo
+# files stay local.
+.nomo/*
+!.nomo/work-state.json
 
 # IDEs and editors
 /.idea
