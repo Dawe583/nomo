@@ -57,6 +57,17 @@ node scripts/src/harness-replay.mjs <chain.jsonl>
 node scripts/src/trajectory-export.mjs <chain.jsonl> [--out <path>]
 ```
 
+## Names that must not be confused
+
+- **Bandit:** chooses among fixed harness arms from measured rewards. The arms
+  do not learn internal weights.
+- **Policy search:** compares prompt or settings variants on the frozen eval
+  and activates one only through operator approval. The eval is measurement,
+  not model training.
+- **Gradient RL:** updates model weights from reward through a training
+  algorithm. This repository has no trainable local model, GPU budget or such
+  training path, so no NOMO surface may claim RL training.
+
 ## Boundaries
 
 Activation never happens from a score alone. The operator types the full digest

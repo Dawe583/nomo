@@ -9498,3 +9498,7 @@ Commit 3280db90942408dbc286a70f42124b4a3a33b277, subject Polish shared TUI motio
   trend and rollback, with record names and commands. It states exactly that the loop is a contextual bandit and policy
   search, not reinforcement learning. Manual read completed; command usage checked; no em dash or en dash; diff check clean.
   [[NOMO TUI Control Center]]
+- 2026-11-25 · R7 wording guard completed in the free parent session.
+  `docs/HARNESS-LEARNING.md` now explicitly separates bandit, policy search and gradient RL. It says gradient RL updates
+  model weights and that this repository has no trainable local model, GPU budget or training path, so no NOMO surface
+  may claim RL training. Manual read completed; no em dash or en dash; diff check clean. [[NOMO TUI Control Center]]

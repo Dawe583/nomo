@@ -26,7 +26,7 @@
 - ledger: `node --test --test-concurrency=1 packages/ledger/src/*.test.ts` → 142 tests, 142 pass, 0 fail after H13 integration
 - `pnpm --filter @nomo/workbench typecheck` → exit 0
 - agent-identity: 11/11 including revocation surviving restart without local session evidence
-- H1-H4, H7, H8, H9, R1, R2, R3, R4, R5, H5, H12 and H13 are done; oracle eval 14/14 proves plumbing only, not model capability; R2 is a contextual bandit, not RL
+- H1-H4, H7, H8, H9, R1, R2, R3, R4, R5, R7, H5, H12 and H13 are done; oracle eval 14/14 proves plumbing only, not model capability; R2 is a contextual bandit, not RL
 - Do not trust these numbers without re-running the gate you depend on.
 
 ## Product gates status (Track F)

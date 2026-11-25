@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-25T11:39:44Z",
+  "updatedAt": "2026-11-25T11:40:37Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -712,12 +712,14 @@
     },
     {
       "id": "r7-wording-guard",
-      "status": "pending",
-      "owner": "child-ae870e11b6de42c4a8c7dcd794009e18",
+      "status": "done",
+      "owner": "devin-6293643153014f56bb088c9a71fde97a",
       "dependsOn": [
         "h12-learning-loop-docs"
       ],
       "scope": [
+        "docs/HARNESS-LEARNING.md",
+        "docs/plans/2026-11-25-nomo-24h-program-detailed.md",
         ".nomo/work-state.json"
       ],
       "protectedPaths": [
@@ -730,7 +732,10 @@
         "see plan package verifier"
       ],
       "evidence": [
-        "Delegated to child session ae870e11b6de42c4a8c7dcd794009e18; parent retains integration and graph recording ownership."
+        "Implemented in the parent free-for-teams session after the delegated child was terminated before progress. docs/HARNESS-LEARNING.md now explicitly separates bandit, policy search and gradient RL.",
+        "Manual read verifier: docs/HARNESS-LEARNING.md read end to end after the R7 edit. It states that gradient RL updates model weights and that this repository has no trainable local model, GPU budget or training path, so no NOMO surface may claim RL training.",
+        "rg -n \"[\u2014\u2013]\" docs/HARNESS-LEARNING.md observed exit 1 with no matches.",
+        "git diff --check observed exit 0."
       ],
       "stopCondition": "After one targeted repair, record the blocker and continue independent work."
     },
