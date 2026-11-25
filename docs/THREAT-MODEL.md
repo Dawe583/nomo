@@ -727,7 +727,13 @@ grouping for their own measurement. Rewards ingested from bare eval files
 without those explicit measurements export with empty tool calls rather than
 adopting unrelated positional entries. Bare uningested measurement files have
 only the weaker case/variant family; ingestion provenance is the precise link.
-This affects measurement correctness, not secrecy.
+This affects measurement correctness, not secrecy. A production eval verifier
+is an operator-allowlisted exact hook command. It is validated before provider
+cost, runs only after settlement, and its signed chain evidence carries outcome,
+code, duration and a digest of the command rather than stdout or stderr. A
+timeout or spawn failure is verifier failure, not evidence that the evaluated
+case failed. The hook still executes with local operator authority, so the
+allowlist remains the trust boundary.
 Trailing unattributed tool calls are reported and not silently attached to a
 later case.
 

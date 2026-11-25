@@ -378,6 +378,13 @@ export type SessionEvent = {
   readonly payload?: Record<string, unknown>;
   readonly schemaVersion?: number;
 };
+export type HarnessEvalGateResult = {
+  readonly outcome: HookResult["outcome"];
+  readonly code: number | null;
+  readonly durationMs: number;
+  readonly passed: boolean;
+};
+
 export type SessionView = {
   readonly id: string;
   readonly workspace: string;
@@ -4861,6 +4868,80 @@ export class Workbench {
       },
     );
     return record;
+  }
+
+  /** Validate one eval verifier before a provider run starts. The exact
+   * allowlist string is the authority; prefix or shell matching would smuggle
+   * an unapproved command into a measured path. */
+  validateHarnessEvalGate(command: string): string {
+    const exact = typeof command === "string" ? command.trim() : "";
+    if (!exact || !this.hookAllowlist.includes(exact))
+      throw new Error("The eval verifier is not on the operator hook allowlist.");
+    return exact;
+  }
+
+  /** Run one operator-allowlisted verifier for a settled attributed eval.
+   *
+   * The result is evidence for a reward, not a model-visible observation: the
+   * method returns only outcome metadata and the chain record carries a digest
+   * of the exact command, never its stdout or stderr. A spawn error or timeout
+   * is not a failed case because it says nothing about the run's output. */
+  async runHarnessEvalGate(
+    sessionId: string,
+    command: string,
+  ): Promise<HarnessEvalGateResult> {
+    const session = this.sessions.get(sessionId);
+    if (!session) throw new Error("Session not found.");
+    if (!session.evalAttribution)
+      throw new Error("Eval gates require a session started with harnessEval identity.");
+    if (session.view.status !== "idle")
+      throw new Error("Wait for the eval run to settle before running its verifier.");
+    const exact = this.validateHarnessEvalGate(command);
+    const result = await runHook(
+      {
+        id: `harness-eval-gate-${sessionId}`,
+        event: "after-run",
+        command: exact,
+        enabled: true,
+      },
+      {
+        sessionId,
+        workspace: session.view.workspace,
+        runId: session.view.runId,
+        harnessEval: { ...session.evalAttribution },
+      },
+      {
+        timeoutMs: this.hookTimeoutFromEnv ?? this.harness.hookTimeoutMs,
+        env: this.env,
+      },
+    );
+    const passed = hookSucceeded(result);
+    await this.commitWorkspace(
+      session,
+      this.workspace(sessionId),
+      "harness.eval-gate",
+      {},
+      result.outcome === "exited"
+        ? passed
+          ? "eval-gate:passed"
+          : "eval-gate:failed"
+        : `eval-gate:${result.outcome}`,
+      undefined,
+      undefined,
+      {
+        commandDigest: `sha256:${await sha256Hex(exact)}`,
+        outcome: result.outcome,
+        code: result.code,
+        durationMs: result.durationMs,
+        passed,
+      },
+    );
+    return {
+      outcome: result.outcome,
+      code: result.code,
+      durationMs: result.durationMs,
+      passed,
+    };
   }
 
   patchHarnessSettings(body: Record<string, unknown>): HarnessSettings {

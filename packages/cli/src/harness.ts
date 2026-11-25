@@ -109,6 +109,18 @@ export type HarnessSurface = {
   ): Promise<{ readonly id: string; readonly status?: string }>;
   /** Wait for one run, when the surface owns runs. */
   waitForRun?(id: string): Promise<{ readonly status?: string }>;
+  /** Validate one eval verifier before any provider run starts. */
+  validateHarnessEvalGate?(command: string): string;
+  /** Run one operator-allowlisted eval verifier, when the surface owns hooks. */
+  runHarnessEvalGate?(
+    sessionId: string,
+    command: string,
+  ): Promise<{
+    readonly outcome: "exited" | "timeout" | "spawn-error" | "disabled";
+    readonly code: number | null;
+    readonly durationMs: number;
+    readonly passed: boolean;
+  }>;
   pendingApprovalsFor(
     sessionId: string,
   ): Promise<
@@ -172,7 +184,7 @@ const USAGE = [
   "  nomo harness reward --session <id> <caseId> show measured reward records",
   "  nomo harness ingest-rewards --session <id> <records.jsonl> append measured eval rewards",
   "  nomo harness ingest-eval --session <id> <measurements.jsonl> append rewards and attributed tool measurements",
-  "  nomo harness run-eval --case <id> --variant <id> --run <n> (--prompt <text> | --prompt-file <path>) [--model <id>] [--agent <id>] [--idempotency-key <key>]",
+  "  nomo harness run-eval --case <id> --variant <id> --run <n> (--prompt <text> | --prompt-file <path>) [--model <id>] [--agent <id>] [--idempotency-key <key>] [--gate <exact-command> --weights breach=<n>,cost=<n>,latency=<n>]",
   "                                      run one attributed production eval case and wait; provider cost may apply",
   "  nomo harness entries --session <id> show what the harness holds",
   "  nomo harness ratchet --session <id> measure the guardrails before and after the last refinement",
@@ -195,6 +207,8 @@ type Flags = {
   readonly prompt: string;
   readonly promptFile: string;
   readonly idempotencyKey: string;
+  readonly gate: string;
+  readonly weights: string;
   readonly unknown: readonly string[];
 };
 
@@ -211,6 +225,8 @@ function parseFlags(args: readonly string[]): Flags {
   let prompt = "";
   let promptFile = "";
   let idempotencyKey = "";
+  let gate = "";
+  let weights = "";
   const unknown: string[] = [];
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index]!;
@@ -268,13 +284,23 @@ function parseFlags(args: readonly string[]): Flags {
       index += 1;
       continue;
     }
+    if (arg === "--gate") {
+      gate = args[index + 1] ?? "";
+      index += 1;
+      continue;
+    }
+    if (arg === "--weights") {
+      weights = args[index + 1] ?? "";
+      index += 1;
+      continue;
+    }
     if (arg.startsWith("-")) {
       unknown.push(arg);
       continue;
     }
     digest = arg;
   }
-  return { session, reason, digest, clear, caseId, variantId, run, model, agent, prompt, promptFile, idempotencyKey, unknown };
+  return { session, reason, digest, clear, caseId, variantId, run, model, agent, prompt, promptFile, idempotencyKey, gate, weights, unknown };
 }
 
 const REWARD_FIELDS = [
@@ -414,6 +440,19 @@ function describeEdit(edit: {
   } | records ${edit.derivedFromSeq.join(", ")}`;
 }
 
+function parseWeightsArg(text: string): RewardInput["weights"] {
+  const weights: Record<string, number> = {};
+  for (const part of text.split(",")) {
+    const match = /^(breach|cost|latency)=([0-9]+(?:\.[0-9]+)?)$/.exec(part);
+    if (!match || weights[match[1]!] !== undefined)
+      throw new Error("Invalid weights: use exactly breach=<n>,cost=<n>,latency=<n> with non-negative finite numbers.");
+    weights[match[1]!] = Number(match[2]);
+  }
+  if (Object.keys(weights).length !== 3)
+    throw new Error("Invalid weights: use exactly breach=<n>,cost=<n>,latency=<n> with non-negative finite numbers.");
+  return weights as unknown as RewardInput["weights"];
+}
+
 /**
  * A harness decision binds only to the full digest the operator typed.
  * Short shell rendering is display text, never authorization input.
@@ -453,9 +492,9 @@ export async function runHarnessCommand(
   }
   if (
     action !== "run-eval" &&
-    (flags.caseId || flags.variantId || flags.run || flags.model || flags.agent || flags.prompt || flags.promptFile || flags.idempotencyKey)
+    (flags.caseId || flags.variantId || flags.run || flags.model || flags.agent || flags.prompt || flags.promptFile || flags.idempotencyKey || flags.gate || flags.weights)
   ) {
-    io.stderr("The eval case, variant, run, model, agent, prompt and idempotency options belong to run-eval.");
+    io.stderr("The eval case, variant, run, model, agent, prompt, idempotency, gate and weights options belong to run-eval.");
     io.stderr(USAGE);
     return 1;
   }
@@ -540,13 +579,38 @@ export async function runHarnessCommand(
         io.stderr("run-eval takes its prompt through --prompt or --prompt-file, not a positional argument.");
         return 1;
       }
-      if (!workbench.startHarnessEval || !workbench.waitForRun) {
+      if (
+        !workbench.startHarnessEval ||
+        !workbench.waitForRun ||
+        (flags.gate && (!workbench.runHarnessEvalGate || !workbench.validateHarnessEvalGate))
+      ) {
         io.stderr("This harness surface cannot start measured production eval runs.");
         return 1;
+      }
+      if ((flags.gate ? 1 : 0) !== (flags.weights ? 1 : 0)) {
+        io.stderr("run-eval measurement needs --gate and --weights together.");
+        return 1;
+      }
+      let weights: RewardInput["weights"] | undefined;
+      if (flags.weights) {
+        try {
+          weights = parseWeightsArg(flags.weights);
+        } catch (error) {
+          io.stderr(error instanceof Error ? error.message : String(error));
+          return 1;
+        }
       }
       if ((flags.prompt ? 1 : 0) + (flags.promptFile ? 1 : 0) !== 1) {
         io.stderr("run-eval needs exactly one prompt source: --prompt <text> or --prompt-file <path>.");
         return 1;
+      }
+      if (flags.gate) {
+        try {
+          workbench.validateHarnessEvalGate!(flags.gate);
+        } catch (error) {
+          io.stderr(error instanceof Error ? error.message : String(error));
+          return 1;
+        }
       }
       let attribution;
       try {
@@ -582,7 +646,27 @@ export async function runHarnessCommand(
       );
       const settled = await workbench.waitForRun(started.id);
       io.stdout(`run-eval: session ${started.id} status ${settled.status ?? "unknown"}`);
-      return settled.status === "idle" ? 0 : 1;
+      if (settled.status !== "idle") return 1;
+      if (!flags.gate) return 0;
+      const gate = await workbench.runHarnessEvalGate!(started.id, flags.gate);
+      if (gate.outcome !== "exited") {
+        io.stderr("The eval verifier did not produce a pass or fail outcome, so no reward was recorded.");
+        return 1;
+      }
+      const record = await workbench.recordHarnessReward!(started.id, {
+        caseId: attribution.caseId,
+        variantId: attribution.variantId,
+        baselineVariantId: null,
+        changedAxis: null,
+        passed: gate.passed,
+        guardrails: {},
+        costUsd: "unmeasured",
+        latencyMs: "unmeasured",
+        approvalMs: "unmeasured",
+        weights: weights!,
+      });
+      io.stdout(`run-eval: verifier ${gate.passed ? "passed" : "failed"} reward ${String(record.reward)}`);
+      return 0;
     }
     if (action === "ingest-rewards" || action === "ingest-eval") {
       if (!workbench.recordHarnessReward || (action === "ingest-eval" && !workbench.recordHarnessEvalTool)) {
