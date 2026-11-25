@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-25T15:14:40Z",
+  "updatedAt": "2026-11-25T19:20:40.643262Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -2087,6 +2087,73 @@
         "git diff --check observed exit 0."
       ],
       "stopCondition": "Stop if eval output becomes execution authority, trajectory export copies unallowlisted content, rewards are accepted without recomputation, or the docs claim model capability or RL."
+    },
+    {
+      "id": "h19-reward-ingestion-path",
+      "status": "done",
+      "owner": "devin-6293643153014f56bb088c9a71fde97a",
+      "dependsOn": [
+        "h15-end-to-end-fixture-dry-run",
+        "q13-harness-security-review"
+      ],
+      "scope": [
+        "packages/cli/src/harness.ts",
+        "packages/cli/src/harness.test.ts",
+        "packages/workbench/src/index.ts",
+        "packages/workbench/src/harness-scores.ts",
+        "scripts/src/harness-e2e-fixture.test.mjs",
+        "docs/HARNESS-LEARNING.md",
+        "docs/plans/2026-11-25-nomo-24h-program-detailed.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "bare eval reward records can enter the signed workspace chain through an operator command",
+        "invalid or tampered input is validated before any write",
+        "exact reruns skip already ingested records instead of duplicating them",
+        "no prompt, tool output, or record body prints in command output"
+      ],
+      "verifier": [
+        "node --test scripts/src/harness-e2e-fixture.test.mjs",
+        "node --test packages/cli/src/harness.test.ts",
+        "pnpm --filter @nomo/cli typecheck",
+        "node --test --test-concurrency=1 packages/cli/src/*.test.ts"
+      ],
+      "evidence": [
+        "NO_COLOR=1 node --test scripts/src/harness-e2e-fixture.test.mjs observed final exit 0: tests 2, pass 2, fail 0, duration_ms 2614.300458. The ingestion integration proves whole-file validation before write, exact rerun skip, partial-position resume, independent equal-valued measurements as new evidence, bounded 1 MiB input, tamper refusal and no SECRET-PROMPT-CANARY in stderr.",
+        "NO_COLOR=1 node --test packages/cli/src/harness.test.ts observed final exit 0: tests 22, pass 22, fail 0, duration_ms 251.937875.",
+        "pnpm --filter @nomo/cli typecheck observed final exit 0. pnpm --filter @nomo/workbench typecheck observed final exit 0.",
+        "NO_COLOR=1 node --test --test-concurrency=1 packages/cli/src/*.test.ts observed final exit 0: tests 327, pass 327, fail 0, skipped 0, duration_ms 182488.382125. The first wide run had one pre-existing stale recovery-doctor expectation unrelated to H19; q14-cli-wide-suite-repair aligned that test with the implemented value-omission contract before this final green run.",
+        "git diff --check observed exit 0. node scripts/src/work-graph-check.mjs observed exit 0: graph-check: duplicate ids 0 / dangling deps 0 / done without evidence 0. Secret scan of the diff found only deliberate SECRET-PROMPT-CANARY negative-test strings, no credentials."
+      ],
+      "stopCondition": "Stop if ingestion would execute tools, contact a provider, silently rewrite a tampered reward, duplicate records on exact rerun, or print record content."
+    },
+    {
+      "id": "q14-cli-wide-suite-repair",
+      "status": "done",
+      "owner": "devin-6293643153014f56bb088c9a71fde97a",
+      "dependsOn": [
+        "q13-harness-security-review"
+      ],
+      "scope": [
+        "packages/cli/src/recovery-config.test.ts",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "the recovery doctor test matches the implemented value-omission contract so the wide CLI suite can run green"
+      ],
+      "verifier": [
+        "node --test packages/cli/src/recovery-config.test.ts"
+      ],
+      "evidence": [
+        "NO_COLOR=1 node --test packages/cli/src/recovery-config.test.ts observed exit 0 after aligning the stale expectation with the implemented omitted-value output: tests 11, pass 11, fail 0, duration_ms 396.29825."
+      ],
+      "stopCondition": "Stop if the repair hides a regression, prints sensitive config values, or weakens the recovery doctor contract."
     }
   ]
 }

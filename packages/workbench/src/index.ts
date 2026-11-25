@@ -232,9 +232,11 @@ import {
 } from "./policy-profile.ts";
 import { mineLearnedRules } from "./learned-rules.ts";
 import {
+  rewardIngestionProvenance,
   rewardRecord,
   type RewardInput,
   type RewardRecord,
+  type RewardIngestionProvenance,
 } from "./harness-scores.ts";
 import { mineHarnessEntries, type HarnessEntry } from "./learned-harness.ts";
 import type { SpawnSubagentOptions } from "./subagents.ts";
@@ -4732,6 +4734,7 @@ export class Workbench {
   async recordHarnessReward(
     sessionId: string,
     input: RewardInput,
+    provenance?: RewardIngestionProvenance,
   ): Promise<RewardRecord> {
     const session = this.sessions.get(sessionId);
     if (!session) throw new Error("Session not found.");
@@ -4744,7 +4747,12 @@ export class Workbench {
       "reward:recorded",
       undefined,
       undefined,
-      { ...record },
+      {
+        ...record,
+        ...(provenance === undefined
+          ? {}
+          : { rewardIngestion: rewardIngestionProvenance(provenance) }),
+      },
     );
     return record;
   }

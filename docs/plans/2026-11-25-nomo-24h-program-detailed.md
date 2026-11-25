@@ -1067,6 +1067,19 @@ These are real, scoped follow-ups, not wishes. ~40 h.
     review names the remaining same-user signature ceiling, positional
     misattribution, future provider-adapter gate and the explicit absence of
     training or gradient RL.
+14. **H19 Reward ingestion**: bare eval reward files enter the signed workspace
+    chain through an operator command. 2 h.
+
+    As built: `nomo harness ingest-rewards --session <id> <records.jsonl>`
+    validates the whole file before writing. It accepts only bounded
+    `nomo.reward.v1` fields, exact weights and rewards that recompute exactly;
+    prompt or tool-content side channels are refused without being printed.
+    Valid records are appended through `recordHarnessReward` with sha256 file
+    digest plus record position as signed ingestion metadata. An exact rerun
+    skips positions already written, a partial write resumes missing positions,
+    and an independent measurement file with equal values remains new evidence.
+    Files are bounded to 1 MiB. No tool, provider, network or model execution
+    is part of ingestion.
 
 ## 12. Program checklist
 

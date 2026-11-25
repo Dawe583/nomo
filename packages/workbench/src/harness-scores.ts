@@ -685,6 +685,37 @@ export type RewardRecord = {
 
 export type RewardInput = Omit<RewardRecord, "schema" | "reward">;
 
+/** File and position identity for reward ingestion. This is chain metadata,
+ * not part of the measurement schema: it lets an exact rerun resume without
+ * conflating two independent measurements that happen to have equal values. */
+export type RewardIngestionProvenance = {
+  readonly fileDigest: string;
+  readonly index: number;
+  readonly count: number;
+};
+
+/** Validate ingestion provenance before it becomes signed chain metadata. */
+export function rewardIngestionProvenance(value: unknown): RewardIngestionProvenance {
+  if (value === null || typeof value !== "object" || Array.isArray(value))
+    throw new TypeError("reward ingestion provenance: expected an object");
+  const record = value as Record<string, unknown>;
+  if (typeof record.fileDigest !== "string" || !/^[a-f0-9]{64}$/.test(record.fileDigest))
+    throw new TypeError("reward ingestion provenance: fileDigest must be a sha256 hex digest");
+  if (!Number.isSafeInteger(record.count) || (record.count as number) < 1)
+    throw new TypeError("reward ingestion provenance: count must be a positive safe integer");
+  if (
+    !Number.isSafeInteger(record.index) ||
+    (record.index as number) < 0 ||
+    (record.index as number) >= (record.count as number)
+  )
+    throw new TypeError("reward ingestion provenance: index must be inside count");
+  return {
+    fileDigest: record.fileDigest,
+    index: record.index as number,
+    count: record.count as number,
+  };
+}
+
 function measured(name: string, value: unknown): Measured {
   if (value === "unmeasured") return value;
   if (typeof value !== "number" || !Number.isFinite(value) || value < 0)

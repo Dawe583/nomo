@@ -12,11 +12,20 @@
  * signed chain of the workspace, and neither holds a proposal in process
  * memory.
  */
+import { createHash } from "node:crypto";
 import { existsSync } from "node:fs";
+import { readFile, stat } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { Workbench } from "../../workbench/src/index.ts";
 import type { HarnessSettings } from "../../workbench/src/harness-settings.ts";
+import {
+  REWARD_SCHEMA,
+  rewardRecord,
+  type RewardInput,
+  type RewardRecord,
+  type RewardIngestionProvenance,
+} from "../../workbench/src/harness-scores.ts";
 import { dataDir } from "../../ledger/src/paths.ts";
 
 export type HarnessIo = {
@@ -68,6 +77,12 @@ export type HarnessSurface = {
   patchHarnessTextSettings(
     body: Record<string, unknown>,
   ): { readonly refinementModel: string };
+  /** Append one measured reward record, when the surface owns the chain. */
+  recordHarnessReward?(
+    sessionId: string,
+    input: RewardInput,
+    provenance?: RewardIngestionProvenance,
+  ): Promise<RewardRecord>;
   pendingApprovalsFor(
     sessionId: string,
   ): Promise<
@@ -129,6 +144,7 @@ const USAGE = [
   "  nomo harness reject --session <id> <digest> --reason <text>",
   "  nomo harness rollback --session <id> <digest>",
   "  nomo harness reward --session <id> <caseId> show measured reward records",
+  "  nomo harness ingest-rewards --session <id> <records.jsonl> append measured eval rewards",
   "  nomo harness entries --session <id> show what the harness holds",
   "  nomo harness ratchet --session <id> measure the guardrails before and after the last refinement",
   "  nomo harness trend --session <id> show measured effects by activation",
@@ -176,6 +192,97 @@ function parseFlags(args: readonly string[]): Flags {
   return { session, reason, digest, clear, unknown };
 }
 
+const REWARD_FIELDS = [
+  "schema",
+  "caseId",
+  "variantId",
+  "baselineVariantId",
+  "changedAxis",
+  "passed",
+  "guardrails",
+  "costUsd",
+  "latencyMs",
+  "approvalMs",
+  "weights",
+  "reward",
+] as const;
+const REWARD_FIELD_SET = new Set<string>(REWARD_FIELDS);
+const MAX_REWARD_FILE_BYTES = 1024 * 1024;
+const REWARD_IDENTIFIER = /^[A-Za-z0-9_.:\/-]{1,128}$/;
+const rewardIdentifier = (value: unknown): value is string =>
+  typeof value === "string" && REWARD_IDENTIFIER.test(value);
+
+type ValidatedReward = {
+  readonly input: RewardInput;
+};
+
+/**
+ * Validate one exported reward without printing its content. `rewardRecord`
+ * rebuilds the measurement from explicit fields; the stored reward must equal
+ * that recomputation exactly, so a tampered file is refused rather than
+ * silently corrected. Unknown fields are refused because they are outside the
+ * schema and could be a side channel for prompt or tool content.
+ */
+function validateExportedReward(value: unknown, where: string): ValidatedReward {
+  if (value === null || typeof value !== "object" || Array.isArray(value))
+    throw new Error(`${where}: expected a reward object`);
+  const body = value as Record<string, unknown>;
+  if (Object.keys(body).some((key) => !REWARD_FIELD_SET.has(key)))
+    throw new Error(`${where}: unknown reward field`);
+  if (body.schema !== REWARD_SCHEMA)
+    throw new Error(`${where}: expected schema ${REWARD_SCHEMA}`);
+  if (
+    body.guardrails === null ||
+    typeof body.guardrails !== "object" ||
+    Array.isArray(body.guardrails)
+  )
+    throw new Error(`${where}: guardrails must be an object`);
+  if (!rewardIdentifier(body.caseId) || !rewardIdentifier(body.variantId))
+    throw new Error(`${where}: caseId and variantId must be bounded identifiers`);
+  for (const key of ["baselineVariantId", "changedAxis"] as const)
+    if (body[key] !== null && !rewardIdentifier(body[key]))
+      throw new Error(`${where}: ${key} must be a bounded identifier or null`);
+  if (Object.keys(body.guardrails).some((key) => !REWARD_IDENTIFIER.test(key)))
+    throw new Error(`${where}: guardrail names must be bounded identifiers`);
+  if (
+    body.weights === null ||
+    typeof body.weights !== "object" ||
+    Array.isArray(body.weights) ||
+    Object.keys(body.weights).some((key) => !["breach", "cost", "latency"].includes(key))
+  )
+    throw new Error(`${where}: weights must contain only breach, cost and latency`);
+  let record: RewardRecord;
+  try {
+    record = rewardRecord(body as unknown as RewardInput);
+  } catch (error) {
+    throw new Error(
+      `${where}: invalid reward record: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+  if (record.reward !== body.reward)
+    throw new Error(`${where}: stored reward does not recompute`);
+  return { input: body as unknown as RewardInput };
+}
+
+/** The ingestion position carried by one chain body when it belongs to the
+ * file currently being ingested. Hostile or malformed metadata is ignored as
+ * provenance, never trusted as a reason to skip a measurement. */
+function chainedIngestionIndex(body: unknown, fileDigest: string, count: number): number | null {
+  if (body === null || typeof body !== "object" || Array.isArray(body)) return null;
+  const ingestion = (body as Record<string, unknown>).rewardIngestion;
+  if (ingestion === null || typeof ingestion !== "object" || Array.isArray(ingestion)) return null;
+  const provenance = ingestion as Record<string, unknown>;
+  if (
+    provenance.fileDigest !== fileDigest ||
+    provenance.count !== count ||
+    !Number.isSafeInteger(provenance.index) ||
+    (provenance.index as number) < 0 ||
+    (provenance.index as number) >= count
+  )
+    return null;
+  return provenance.index as number;
+}
+
 /** One line per edit, so a proposal can be read in a terminal. */
 function describeEdit(edit: {
   readonly action: string;
@@ -221,7 +328,7 @@ export async function runHarnessCommand(
     io.stdout(USAGE);
     return action ? 0 : 1;
   }
-  if (!["list", "entries", "approve", "reject", "rollback", "reward", "model", "ratchet", "trend"].includes(action)) {
+  if (!["list", "entries", "approve", "reject", "rollback", "reward", "ingest-rewards", "model", "ratchet", "trend"].includes(action)) {
     io.stderr(`Unknown harness action ${action}.`);
     io.stderr(USAGE);
     return 1;
@@ -277,7 +384,15 @@ export async function runHarnessCommand(
     return 1;
   }
   if (!["list", "entries", "model", "ratchet", "trend"].includes(action) && !flags.digest) {
-    io.stderr(`The ${action} action needs ${action === "reward" ? "a case id" : "the digest of the proposal"}.`);
+    io.stderr(
+      `The ${action} action needs ${
+        action === "reward"
+          ? "a case id"
+          : action === "ingest-rewards"
+            ? "a records JSONL file"
+            : "the digest of the proposal"
+      }.`,
+    );
     io.stderr(USAGE);
     return 1;
   }
@@ -300,6 +415,75 @@ export async function runHarnessCommand(
     ? await deps.workbench()
     : new Workbench(env);
   try {
+    if (action === "ingest-rewards") {
+      if (!workbench.recordHarnessReward) {
+        io.stderr("This harness surface cannot record measured rewards.");
+        return 1;
+      }
+      const session = workbench.get?.(flags.session);
+      if (!session) {
+        io.stderr("Session not found.");
+        return 1;
+      }
+      let raw;
+      try {
+        const info = await stat(flags.digest);
+        if (!info.isFile() || info.size > MAX_REWARD_FILE_BYTES) {
+          io.stderr("Invalid reward file: expected a reward JSONL file of at most 1 MiB. Nothing was written.");
+          return 1;
+        }
+        raw = await readFile(flags.digest, "utf8");
+      } catch {
+        io.stderr("Reward records could not be read.");
+        return 1;
+      }
+      const lines = raw.split(/\r?\n/);
+      const validated: ValidatedReward[] = [];
+      for (const [index, line] of lines.entries()) {
+        if (!line.trim()) continue;
+        let value: unknown;
+        try {
+          value = JSON.parse(line);
+        } catch {
+          io.stderr(`Invalid reward file: line ${index + 1} is not JSON. Nothing was written.`);
+          return 1;
+        }
+        try {
+          validated.push(validateExportedReward(value, `line ${index + 1}`));
+        } catch (error) {
+          io.stderr(
+            `Invalid reward file: ${error instanceof Error ? error.message : String(error)}. Nothing was written.`,
+          );
+          return 1;
+        }
+      }
+      if (!validated.length) {
+        io.stderr("Invalid reward file: no reward records. Nothing was written.");
+        return 1;
+      }
+
+      const fileDigest = createHash("sha256").update(raw).digest("hex");
+      const count = validated.length;
+      const proof = workbench.ledger ? await workbench.ledger(session.workspace) : undefined;
+      const ingested = new Set(
+        (proof?.entries ?? [])
+          .map((entry) => chainedIngestionIndex(entry.body, fileDigest, count))
+          .filter((index): index is number => typeof index === "number"),
+      );
+      const toWrite = validated
+        .map((record, index) => ({
+          record,
+          provenance: { fileDigest, index, count },
+        }))
+        .filter(({ provenance }) => !ingested.has(provenance.index));
+      const duplicates = validated.length - toWrite.length;
+      for (const { record, provenance } of toWrite)
+        await workbench.recordHarnessReward(flags.session, record.input, provenance);
+      io.stdout(
+        `ingest-rewards: ${toWrite.length} written, ${duplicates} duplicates skipped, ${validated.length} validated`,
+      );
+      return 0;
+    }
     if (action === "reward") {
       const session = workbench.get?.(flags.session);
       if (!session) {
