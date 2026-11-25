@@ -702,6 +702,13 @@ model call.
 
 **Verifier.** `node --test scripts/src/harness-*.test.mjs`.
 
+**As built.** `scripts/src/harness-e2e-fixture.test.mjs` starts an isolated
+Workbench against the in-memory fixture provider, activates one exact-digest
+proposal, runs the frozen eval through the deterministic offline runner, writes
+the first measured reward into the workspace chain through
+`recordHarnessReward`, reads it back with `nomo harness reward`, and rolls the
+activation back. There is no live model, provider or network call.
+
 ## 7. Track C — RL policy search work packages
 
 Honest scope: a contextual bandit over harness variants. Not gradient RL.

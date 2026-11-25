@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-25T11:51:47Z",
+  "updatedAt": "2026-11-25T11:55:45Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -884,6 +884,44 @@
         "git diff --check observed exit 0."
       ],
       "stopCondition": "Stop if reporting a reward would require guessing a missing measurement or trusting a reward that does not recompute."
+    },
+    {
+      "id": "h15-end-to-end-fixture-dry-run",
+      "status": "done",
+      "owner": "devin-6293643153014f56bb088c9a71fde97a",
+      "dependsOn": [
+        "h5-activation-rollback",
+        "h11-eval-runner-adapter",
+        "h14-operator-commands"
+      ],
+      "scope": [
+        "scripts/src/harness-e2e-fixture.test.mjs",
+        "packages/workbench/src/index.ts",
+        "docs/plans/2026-11-25-nomo-24h-program-detailed.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "A fixture proposal activates through exact digest approval.",
+        "The frozen eval measures it without a live model or network.",
+        "A reward is written to the workspace chain and read back without guessing.",
+        "The activation rolls back."
+      ],
+      "verifier": [
+        "node --test scripts/src/harness-*.test.mjs",
+        "pnpm --filter @nomo/workbench typecheck"
+      ],
+      "evidence": [
+        "Implemented in the parent free-for-teams session. The dry run uses the in-memory fixture provider and deterministic offline eval runner: no live model, provider or network call.",
+        "NO_COLOR=1 node --test scripts/src/harness-e2e-fixture.test.mjs observed exit 0: tests 1, pass 1, fail 0, duration_ms 1691.189042.",
+        "Inside that test the eval command observed total: 14/14 passed; the first reward was written to the workspace chain, `runHarnessCommand reward` printed recompute=match, and rollback ended with refinement:rolled-back naming the activation digest.",
+        "NO_COLOR=1 node --test --test-concurrency=1 scripts/src/harness-*.test.mjs observed exit 0: tests 42, pass 42, fail 0, duration_ms 6708.537375.",
+        "pnpm --filter @nomo/workbench typecheck observed exit 0 after adding recordHarnessReward.",
+        "git diff --check observed exit 0."
+      ],
+      "stopCondition": "Stop if the dry run requires a live provider, network access or an unverified reward record."
     }
   ]
 }

@@ -231,6 +231,11 @@ import {
   resolvePolicyProfile,
 } from "./policy-profile.ts";
 import { mineLearnedRules } from "./learned-rules.ts";
+import {
+  rewardRecord,
+  type RewardInput,
+  type RewardRecord,
+} from "./harness-scores.ts";
 import { mineHarnessEntries, type HarnessEntry } from "./learned-harness.ts";
 import type { SpawnSubagentOptions } from "./subagents.ts";
 import {
@@ -4716,6 +4721,32 @@ export class Workbench {
     this.persist();
     return this.harnessTextSettings();
   }
+  /** Append one measured reward record to the session workspace chain.
+   *
+   * The record is rebuilt through `rewardRecord` before it is written, so a
+   * caller cannot ask the chain to carry a reward that does not recompute from
+   * its own inputs. The record keeps its explicit weights; current settings are
+   * a reporting input, never a rewrite of the measurement. */
+  async recordHarnessReward(
+    sessionId: string,
+    input: RewardInput,
+  ): Promise<RewardRecord> {
+    const session = this.sessions.get(sessionId);
+    if (!session) throw new Error("Session not found.");
+    const record = rewardRecord(input);
+    await this.commitWorkspace(
+      session,
+      this.workspace(sessionId),
+      "harness.reward",
+      { caseId: record.caseId, variantId: record.variantId },
+      "reward:recorded",
+      undefined,
+      undefined,
+      { ...record },
+    );
+    return record;
+  }
+
   patchHarnessSettings(body: Record<string, unknown>): HarnessSettings {
     // Validated before anything is stored: harnessSettingsPatch refuses an
     // unknown key by name and a non-numeric value rather than reporting a
