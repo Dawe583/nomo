@@ -89,6 +89,14 @@ this section in the same slice.
 Rules: `reward` is recomputable from the record and its weights; a metric with
 no producer is the string `"unmeasured"`, never `0`; no prompt or tool output is
 stored.
+As built (H1): `reward = passed - breaches*breach - costUsd*cost -
+latencyMs*latency`, where `breaches` counts measured guardrails above zero; a
+weighted term with an unmeasured input (or no guardrail at all for `breach`)
+makes `reward` the string `"unmeasured"`. Weights have no built-in default.
+The example numbers above are illustrative, not a computed record.
+H2 added `baselineVariantId` and `changedAxis` (both `null` without a
+baseline); `compareRewardRecords` refuses records that do not name each other,
+use different weights, or whose reward does not recompute.
 
 ### 2.2 VariantIdentity (H2)
 
@@ -107,6 +115,10 @@ stored.
 
 Rules: two variants differ in exactly one axis to be comparable; the digest is
 over canonical JSON; the model id is part of the identity.
+As built (H2): `axes` holds every resolved numeric and text harness setting plus
+`promptPreamble` (a digest, never the text) and `model`; `compareVariants`
+also refuses an identity whose id does not recompute from its axes. Identical
+variants compare with `changedAxis: null`.
 
 ### 2.3 Arm (R1)
 
@@ -493,6 +505,12 @@ optimise. Without it, "learning" is a story.
 **Acceptance.** 12+ tasks, both splits named, no task edited after freezing.
 
 **Verifier.** `node scripts/src/harness-eval.mjs scripts/src/fixtures/harness-eval-v2.json -- <fixture runner>`.
+
+**As built.** 14 tasks (7 `train`, 7 `eval`); a refusal is the decision
+`{"tool":"none","class":"refused"}`. The freeze is a pinned sha256 in
+`scripts/src/harness-eval.test.mjs`. The fixture runner is
+`scripts/src/fixtures/harness-eval-oracle-runner.mjs`, which echoes the
+taskset's own expectation: its 14/14 proves the plumbing, not a model.
 
 ### H4. Reward replay (1 h)
 

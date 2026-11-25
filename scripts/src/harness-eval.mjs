@@ -17,7 +17,8 @@
  *         "id": "read-before-edit",      // required, unique, never a prompt
  *         "prompt": "…",                 // required, sent to the runner on stdin
  *         "expectedTool": "read",        // required, exact string match
- *         "expectedClass": "inspect"     // required, exact string match
+ *         "expectedClass": "inspect",    // required, exact string match
+ *         "split": "train"               // optional; "train" or "eval" when present
  *       }
  *     ]
  *   }
@@ -26,6 +27,9 @@
  * prompt on stdin and must print its decision as a single line of JSON:
  *
  *   {"tool":"read","class":"inspect"}
+ *
+ * A runner that declines to call any tool prints `{"tool":"none","class":"refused"}`;
+ * tasks whose correct answer is a refusal expect exactly that.
  *
  * Anything else the runner writes is discarded unread: the decision line is the
  * only thing this script parses and the only thing it prints. Raw stdout is
@@ -43,17 +47,47 @@
  *   node scripts/src/harness-eval.mjs <taskset.json> [--runs <n>]
  *     [--timeout <ms>] -- <runner argv...>
  *
+ * Reward records: with `--records <path> --weights breach=<n>,cost=<n>,latency=<n>`
+ * the script also writes one `nomo.reward.v1` JSON line per task (see
+ * `packages/workbench/src/harness-scores.ts`). Latency is the mean wall-clock
+ * time of the runner process across the paired runs, spawn included. Cost,
+ * approval time and guardrails have no producer here, so they are written as
+ * "unmeasured" (guardrails as `{}`), and any weighted term among them makes the
+ * reward "unmeasured". The weights are required: there is no built-in default.
+ * Records carry ids and numbers only, never a prompt or runner output.
+ *
+ * Variant identity: records also need `--variant <variant.json>`, a file of
+ * `{"model": "...", "promptPreamble": "...", "settings": {...}}` describing the
+ * harness the runner was configured with. Its sha256 identity (see
+ * `variantIdentity` in `packages/workbench/src/harness-settings.ts`) is written
+ * as `variantId`. With `--baseline <variant.json>` the record also names the
+ * baseline and the one axis that separates them; a baseline that differs in
+ * more than one axis is refused before anything runs. The script cannot prove
+ * the runner honoured the variant: the file is the operator's declaration.
+ *
  * Exit codes: 0 = every task passed, or skipped; 1 = a task failed, produced no
  * decision, or the runner did not start; 2 = usage or taskset error.
  */
 import { spawnSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { basename } from "node:path";
 import { fileURLToPath } from "node:url";
+import { performance } from "node:perf_hooks";
+
+import {
+  parseRewardWeights,
+  rewardRecord,
+} from "../../packages/workbench/src/harness-scores.ts";
+import {
+  compareVariants,
+  variantIdentity,
+} from "../../packages/workbench/src/harness-settings.ts";
 
 const usage =
   "usage: node scripts/src/harness-eval.mjs <taskset.json> [--runs <n>] " +
-  "[--timeout <ms>] -- <runner argv...>";
+  "[--timeout <ms>] [--records <path> --weights breach=<n>,cost=<n>,latency=<n> " +
+  "--variant <variant.json> [--baseline <variant.json>]] " +
+  "-- <runner argv...>";
 
 const DEFAULT_RUNS = 2;
 const DEFAULT_TIMEOUT_MS = 60_000;
@@ -105,8 +139,15 @@ export function parseTaskset(raw) {
     if (!prompt) errors.push(`${where}.prompt: required`);
     if (!expectedTool) errors.push(`${where}.expectedTool: required`);
     if (!expectedClass) errors.push(`${where}.expectedClass: required`);
-    if (!taskId || !prompt || !expectedTool || !expectedClass) return;
-    tasks.push({ id: taskId, prompt, expectedTool, expectedClass });
+    const hasSplit = task.split !== undefined;
+    const splitOk = !hasSplit || task.split === "train" || task.split === "eval";
+    if (!splitOk) errors.push(`${where}.split: must be "train" or "eval"`);
+    if (!taskId || !prompt || !expectedTool || !expectedClass || !splitOk) return;
+    tasks.push(
+      hasSplit
+        ? { id: taskId, prompt, expectedTool, expectedClass, split: task.split }
+        : { id: taskId, prompt, expectedTool, expectedClass },
+    );
   });
   return { id, tasks, errors };
 }
@@ -197,6 +238,7 @@ export function scoreTask(task, attempts) {
 /** Runs one task once. Never throws, never returns stdout. */
 export function runAttempt(task, runner, timeoutMs) {
   const [command, ...args] = runner;
+  const started = performance.now();
   const result = spawnSync(command, args, {
     input: task.prompt,
     encoding: "utf8",
@@ -210,7 +252,81 @@ export function runAttempt(task, runner, timeoutMs) {
     // reported. ENOENT is the common case and it is still just "did not start".
     return { error: true };
   }
-  return { decision: parseDecision(result.stdout), code: result.status };
+  return {
+    decision: parseDecision(result.stdout),
+    code: result.status,
+    elapsedMs: performance.now() - started,
+  };
+}
+
+/** Parses `breach=<n>,cost=<n>,latency=<n>` into validated reward weights. */
+export function parseWeightsArg(raw) {
+  const weights = {};
+  for (const part of String(raw ?? "").split(",")) {
+    const match = /^([a-z]+)=(\d+(?:\.\d+)?)$/.exec(part.trim());
+    if (!match) throw new TypeError(`weights: unusable entry "${part}"`);
+    weights[match[1]] = Number(match[2]);
+  }
+  return parseRewardWeights(weights);
+}
+
+/** Reads a variant file into its identity. Errors name the file, not content. */
+export function loadVariant(path) {
+  let value;
+  try {
+    value = JSON.parse(readFileSync(path, "utf8"));
+  } catch {
+    throw new TypeError(`variant could not be read as JSON: ${path}`);
+  }
+  if (!value || typeof value !== "object" || Array.isArray(value))
+    throw new TypeError(`variant must be an object: ${path}`);
+  return variantIdentity({
+    settings: value.settings ?? {},
+    promptPreamble: value.promptPreamble,
+    model: value.model,
+  });
+}
+
+/** The variant fields every record carries, or a refusal when the baseline
+ * differs in more than one axis. */
+export function resolveVariant(variantPath, baselinePath) {
+  const identity = loadVariant(variantPath);
+  if (!baselinePath)
+    return { variantId: identity.variantId, baselineVariantId: null, changedAxis: null };
+  const baseline = loadVariant(baselinePath);
+  const comparison = compareVariants(baseline, identity);
+  if (!comparison.comparable) throw new TypeError(`baseline refused: ${comparison.reason}`);
+  return {
+    variantId: identity.variantId,
+    baselineVariantId: baseline.variantId,
+    changedAxis: comparison.changedAxis,
+  };
+}
+
+/**
+ * One reward record for one task, built from its paired attempts. A runner
+ * that did not start has no latency, so the case latency is then unmeasured.
+ */
+export function caseRewardRecord(task, attempts, result, weights, variant) {
+  const timed = attempts.every((attempt) => typeof attempt?.elapsedMs === "number");
+  const latencyMs =
+    timed && attempts.length > 0
+      ? Math.round(
+          attempts.reduce((sum, attempt) => sum + attempt.elapsedMs, 0) / attempts.length,
+        )
+      : "unmeasured";
+  return rewardRecord({
+    caseId: task.id,
+    variantId: variant.variantId,
+    baselineVariantId: variant.baselineVariantId,
+    changedAxis: variant.changedAxis,
+    passed: result.status === "pass",
+    guardrails: {},
+    costUsd: "unmeasured",
+    latencyMs,
+    approvalMs: "unmeasured",
+    weights,
+  });
 }
 
 function row(result, width) {
@@ -227,6 +343,10 @@ function parseArgs(argv) {
     runs: DEFAULT_RUNS,
     timeout: DEFAULT_TIMEOUT_MS,
     runner: [],
+    records: "",
+    weights: "",
+    variant: "",
+    baseline: "",
     help: false,
     unknown: [],
   };
@@ -254,6 +374,16 @@ function parseArgs(argv) {
       }
       if (arg === "--runs") options.runs = Number(raw);
       else options.timeout = Number(raw);
+      continue;
+    }
+    if (arg === "--records" || arg === "--weights" || arg === "--variant" || arg === "--baseline") {
+      const raw = argv[index + 1];
+      index += 1;
+      if (!raw) {
+        options.unknown.push(`${arg} needs a value`);
+        continue;
+      }
+      options[arg.slice(2)] = raw;
       continue;
     }
     if (!options.tasksetPath && !arg.startsWith("-")) {
@@ -285,6 +415,29 @@ export function main(argv) {
   if (!Number.isInteger(options.timeout) || options.timeout < 1) {
     console.error("harness-eval: --timeout must be a positive whole number of ms.");
     return 2;
+  }
+  if (Boolean(options.records) !== Boolean(options.weights)) {
+    console.error("harness-eval: --records and --weights are required together.");
+    return 2;
+  }
+  if (Boolean(options.records) !== Boolean(options.variant)) {
+    console.error("harness-eval: --records and --variant are required together.");
+    return 2;
+  }
+  if (options.baseline && !options.variant) {
+    console.error("harness-eval: --baseline needs --variant.");
+    return 2;
+  }
+  let weights = null;
+  let variant = null;
+  if (options.weights) {
+    try {
+      weights = parseWeightsArg(options.weights);
+      variant = resolveVariant(options.variant, options.baseline);
+    } catch (error) {
+      console.error(`harness-eval: ${error.message}`);
+      return 2;
+    }
   }
   if (options.runner.length === 0) {
     // Mirrors provider-smoke: the check is callable without the thing it
@@ -325,14 +478,35 @@ export function main(argv) {
 
   const width = Math.max(...taskset.tasks.map((task) => task.id.length));
   const results = [];
+  const records = [];
   for (const task of taskset.tasks) {
     const attempts = [];
     for (let run = 0; run < options.runs; run += 1) {
       attempts.push(runAttempt(task, options.runner, options.timeout));
     }
-    results.push(scoreTask(task, attempts));
+    const result = scoreTask(task, attempts);
+    results.push(result);
+    if (weights) records.push(caseRewardRecord(task, attempts, result, weights, variant));
   }
   for (const result of results) console.log(row(result, width));
+  if (weights) {
+    try {
+      writeFileSync(
+        options.records,
+        records.map((record) => JSON.stringify(record)).join("\n") + "\n",
+      );
+    } catch {
+      console.error(`harness-eval: records could not be written: ${options.records}`);
+      return 1;
+    }
+    console.log(`records: ${records.length} written to ${options.records}`);
+    console.log(
+      `variant: ${variant.variantId}` +
+        (variant.baselineVariantId
+          ? ` baseline=${variant.baselineVariantId} changedAxis=${variant.changedAxis ?? "none"}`
+          : ""),
+    );
+  }
 
   const count = (status) =>
     results.filter((result) => result.status === status).length;

@@ -26,6 +26,9 @@
  *    a preference, and `preferencePatch` already refuses it.
  */
 
+import { createHash } from "node:crypto";
+import { canonicalJson } from "../../ledger/src/canonical.ts";
+
 /** Every tunable limit, with the bound an operator may set it within. The
  * minimum and maximum are the values the run path can actually honour, so a
  * clamp can never produce a limit the code would refuse to enforce. */
@@ -596,4 +599,72 @@ export function harnessTextSettingsView(settings: HarnessTextSettings) {
       changed: settings[key] !== HARNESS_TEXT_SETTINGS[key].default,
     }),
   );
+}
+
+/**
+ * A harness variant's identity: every axis that can change what a run does.
+ *
+ * The axes are the resolved numeric and text settings, a digest of the prompt
+ * preamble (the text itself never enters the identity) and the model id. The
+ * id is a sha256 over the canonical JSON of the axes, so two variants with the
+ * same id agree on every axis. Two variants are comparable only when they
+ * differ in at most one axis; otherwise "A beat B" could be any of the changed
+ * axes and the comparison would claim a cause nobody isolated.
+ */
+export type VariantAxes = Readonly<Record<string, number | string>>;
+
+export type VariantIdentity = {
+  readonly variantId: string;
+  readonly axes: VariantAxes;
+};
+
+export type VariantComparison =
+  | { readonly comparable: true; readonly changedAxis: string | null }
+  | { readonly comparable: false; readonly changedAxes: readonly string[]; readonly reason: string };
+
+const sha256 = (text: string): string =>
+  `sha256:${createHash("sha256").update(text, "utf8").digest("hex")}`;
+
+export function variantIdentity(input: {
+  readonly settings?: Readonly<Record<string, unknown>>;
+  readonly promptPreamble: string;
+  readonly model: string;
+}): VariantIdentity {
+  if (typeof input.promptPreamble !== "string")
+    throw new TypeError("promptPreamble: expected a string");
+  if (typeof input.model !== "string" || !input.model || !MODEL_ID.test(input.model))
+    throw new TypeError("model: expected a provider model id");
+  const numeric: Record<string, unknown> = {};
+  const text: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(input.settings ?? {})) {
+    if (Object.hasOwn(HARNESS_TEXT_SETTINGS, key)) text[key] = value;
+    else numeric[key] = value;
+  }
+  const axes: VariantAxes = {
+    ...defaultHarnessSettings(),
+    ...harnessSettingsPatch(numeric),
+    ...defaultHarnessTextSettings(),
+    ...harnessTextSettingsPatch(text),
+    promptPreamble: sha256(input.promptPreamble),
+    model: input.model,
+  };
+  return { variantId: sha256(canonicalJson(axes)), axes };
+}
+
+/** Name the single axis two variants differ in, or refuse the comparison. A
+ * variant whose id does not match its own axes is refused too, so a hand-edited
+ * identity cannot pass as comparable. */
+export function compareVariants(a: VariantIdentity, b: VariantIdentity): VariantComparison {
+  for (const variant of [a, b])
+    if (sha256(canonicalJson(variant.axes)) !== variant.variantId)
+      return { comparable: false, changedAxes: [], reason: `${variant.variantId} does not match its axes` };
+  const keys = [...new Set([...Object.keys(a.axes), ...Object.keys(b.axes)])].sort();
+  const changedAxes = keys.filter((key) => a.axes[key] !== b.axes[key]);
+  if (changedAxes.length > 1)
+    return {
+      comparable: false,
+      changedAxes,
+      reason: `variants differ in ${changedAxes.length} axes (${changedAxes.join(", ")}); only one may change`,
+    };
+  return { comparable: true, changedAxis: changedAxes[0] ?? null };
 }
