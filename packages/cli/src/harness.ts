@@ -479,6 +479,31 @@ function measuredUsageCost(
   return total;
 }
 
+function measuredApprovalMs(
+  entries: readonly { readonly body: unknown }[],
+  attribution: ReturnType<typeof evalCaseAttribution>,
+  complete: boolean,
+): RewardInput["approvalMs"] {
+  if (!complete) return "unmeasured";
+  let total = 0;
+  let decisions = 0;
+  for (const entry of entries) {
+    const body = objectRecord(entry.body);
+    if (
+      body === null ||
+      !matchesEvalAttribution(body, attribution) ||
+      (body.decision !== "hold:approved" && body.decision !== "hold:denied")
+    )
+      continue;
+    decisions += 1;
+    const value = body.approvalMs;
+    if (typeof value !== "number" || !Number.isFinite(value) || value < 0)
+      return "unmeasured";
+    total += value;
+  }
+  return decisions === 0 ? 0 : total;
+}
+
 async function evalUsageEvidence(
   workbench: HarnessSurface,
   workspace: string,
@@ -842,7 +867,7 @@ export async function runHarnessCommand(
           ? measuredUsageCost(usageEvidence.entries, attribution, usageEvidence.workspaceCount)
           : "unmeasured",
         latencyMs: started.idempotentReplay === true ? "unmeasured" : latencyMs,
-        approvalMs: "unmeasured",
+        approvalMs: measuredApprovalMs(usageEvidence.entries, attribution, usageEvidence.complete),
         weights: weights!,
       });
       io.stdout(`run-eval: verifier ${gate.passed ? "passed" : "failed"} reward ${String(record.reward)}`);

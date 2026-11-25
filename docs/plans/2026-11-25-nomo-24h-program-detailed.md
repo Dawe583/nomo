@@ -1124,7 +1124,7 @@ These are real, scoped follow-ups, not wishes. ~40 h.
     Workbench rejects mismatched reward or eval-tool writes before they enter
     the chain. H20c7 applies the same unambiguous-run rule to explicit offline
     eval-tool measurements inside their case, variant and ingestion-file
-    family; repeated pending runs are refused rather than merged. H21 closes the production eval loop with an allowlisted verifier gate and signed reward recording. H22 adds signed usage receipts, truthful cost aggregation, bounded wall-clock latency and idempotent verifier or reward reuse. H23 measures exact-attributed reward guardrails from bounded decision and classification outcomes, with partial child evidence unmeasured.
+    family; repeated pending runs are refused rather than merged. H21 closes the production eval loop with an allowlisted verifier gate and signed reward recording. H22 adds signed usage receipts, truthful cost aggregation, bounded wall-clock latency and idempotent verifier or reward reuse. H23 measures exact-attributed reward guardrails from bounded decision and classification outcomes, with partial child evidence unmeasured. H24 records operator-decided hold latency and aggregates exact approval evidence.
 
 ## 12. Program checklist
 
