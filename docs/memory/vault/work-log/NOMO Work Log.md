@@ -9624,3 +9624,8 @@ Commit 3280db90942408dbc286a70f42124b4a3a33b277, subject Polish shared TUI motio
   Audit found that the proxy already wrote `approvalMs`; the public `readLedgerFeed` projection dropped it. The feed now projects only finite nonnegative latency while keeping arguments and payloads out. Integration proof now covers both proxy `hold:denied` and internal operator-approved Workbench holds. Verified: focused 67/67, ledger 143/143, Workbench wide 1202 pass with 0 fail, scripts 398 pass with 0 fail, docs 10/10, ledger/Workbench/CLI typechecks exit 0. [[NOMO Harness]]
 - 2026-11-26 · H18 factorial bandit report surface completed in the free parent session.
   `scripts/src/harness-factorial-bandit-report.mjs` now gives an existing factorial history a read-only operator measurement surface: cells, samples, main effects, interaction, budget, spend and stop state. Empty cells and incomplete effects remain unmeasured; the command never samples, approves, trains or deploys. `harness-factorial-bandit.ts` is no longer an orphan. Verified: focused 6/6, bandit 15/15, docs 10/10, scripts 402 pass with 0 fail, Workbench typecheck exit 0. [[NOMO Harness]]
+
+
+## 2026-11-26 HP1 operator-scope core
+
+Implemented the HP1 core operator chain in the workbench. Exact-digest activated operator-approved lessons can be promoted into `nomo-operator-harness`, replayed into every conversation, and demoted without repeating. Focused verifier: 84 tests, 84 pass, 0 fail. Workbench typecheck exit 0. CLI and HTTP operator surfaces remain a follow-up slice.
