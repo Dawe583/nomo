@@ -31,7 +31,7 @@
 
 - F1 later-session retrieval: DONE — opt-in `NOMO_SHARED_LEARNING_WORKSPACES` read-only union, digest names entry id + chain seqs
 - F2 approval end-to-end: DONE — hold writes signed hold:approved with approvedBy; verified in agent-messages-tool tests
-- F3 identity/fleet truth: DONE as the local-truth slice. TUI status shows the binding, `/revoke-agent` is confirmed and local, durable restart is tested; fleet-wide revoke remains honestly documented as unavailable until registry, node inventory, ack barrier and reconcile exist
+- F3 identity/fleet truth: DONE as the local-truth slice. TUI status shows the binding, `/revoke-agent` is confirmed and local, durable restart is tested including revocation without local session evidence; fleet-wide revoke remains honestly documented as unavailable until registry, node inventory, ack barrier and reconcile exist
 - F4 provider release path: PENDING — needs explicit authorization for a real provider call
 
 ## Rules that are not negotiable

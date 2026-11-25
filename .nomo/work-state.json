@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-25T02:20:00+01:00",
+  "updatedAt": "2026-11-25T02:35:00+01:00",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -43,6 +43,39 @@
         "git status --short .gitignore .nomo/work-state.json observed M .gitignore and ?? .nomo/work-state.json before commit."
       ],
       "stopCondition": "If tracking the graph conflicts with a newer explicit repository rule, stop and report rather than hiding the conflict."
+    },
+    {
+      "id": "f3a-local-revocation-persistence",
+      "status": "done",
+      "owner": "devin-6293643153014f56bb088c9a71fde97a",
+      "dependsOn": [
+        "f3-identity-fleet-truth"
+      ],
+      "scope": [
+        "packages/workbench/src/agent-identity.ts",
+        "packages/workbench/src/agent-identity.test.ts",
+        "packages/workbench/src/index.ts",
+        ".nomo/work-state.json",
+        "docs/memory/vault/work-log/NOMO Work Log.md"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "Local agent revocation survives restart even when the agent has no local session evidence chain."
+      ],
+      "verifier": [
+        "node --test packages/workbench/src/agent-identity.test.ts",
+        "pnpm --filter @nomo/workbench typecheck",
+        "node --test --test-concurrency=1 packages/workbench/src/*.test.ts"
+      ],
+      "evidence": [
+        "RED before implementation: node --test packages/workbench/src/agent-identity.test.ts observed exit 1; tests 11, pass 10, fail 1, duration_ms 1642.837667. Failure: revocation without local sessions did not survive restart.",
+        "GREEN: node --test packages/workbench/src/agent-identity.test.ts observed exit 0; tests 11, pass 11, fail 0, skipped 0, duration_ms 1528.643708.",
+        "pnpm --filter @nomo/workbench typecheck observed exit 0.",
+        "Wider gate: node --test --test-concurrency=1 packages/workbench/src/*.test.ts observed exit 0; tests 1151, pass 1149, fail 0, skipped 2, duration_ms 93436.266791."
+      ],
+      "stopCondition": "After one targeted repair, record the failure and continue independent delegated work."
     },
     {
       "id": "f3-identity-fleet-truth",

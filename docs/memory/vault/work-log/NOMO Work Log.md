@@ -9435,6 +9435,12 @@ Commit 3280db90942408dbc286a70f42124b4a3a33b277, subject Polish shared TUI motio
   Devin Cloud session can continue 24/7 against the plans in docs/plans and the graph in .nomo/work-state.json.
   F3 still open: TUI revocation row, fleet-wide revoke with ack.
   [[NOMO TUI Control Center]]
+- 2026-11-25 · F3 revocation persistence edge repaired in Devin Cloud.
+  Verifier review found that direct local revocation without any session evidence chain was process-only. The issuer
+  now exposes its revoked agent set, Workbench persists that set in its own storage snapshot, restores it on boot,
+  and still restores signed per-workspace evidence. Observed: agent-identity 11/11, Workbench typecheck exit 0,
+  wider Workbench suite 1151 tests, 1149 pass, 0 fail, 2 skipped. This is still local revocation only, not fleet revoke.
+  [[NOMO TUI Control Center]]
 - 2026-11-25 · F3 local-truth slice completed in Devin Cloud.
   TUI status now has an agent revocation row naming principal, workspace, agent, run, local state and the missing
   fleet acknowledgement path. `/revoke-agent` opens an explicit confirmation, applies only local Workbench
