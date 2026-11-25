@@ -51,6 +51,7 @@ test("run-eval drives a real governed production run and the chain carries its c
       "--variant", EVAL_CASE.variantId,
       "--run", String(EVAL_CASE.run),
       "--model", MODEL,
+      "--idempotency-key", "cli-eval-idem-1",
       "--prompt", "List the managed documents.",
     ],
     {
@@ -64,6 +65,27 @@ test("run-eval drives a real governed production run and the chain carries its c
   assert.ok(match, `unexpected output: ${out.join("\\n")}`);
   const session = fixture.app.get(match[1]!);
   assert.ok(session, "the command output must name a live session");
+  const turnsAfterCommand = turn;
+  const repeated = await fixture.app.startHarnessEval(
+    "List the managed documents.",
+    MODEL,
+    EVAL_CASE,
+    undefined,
+    "cli-eval-idem-1",
+  );
+  assert.equal(repeated.id, session.id, "the same exact keyed eval request must reuse the session");
+  assert.equal(turn, turnsAfterCommand, "an idempotent retry must not start another provider run");
+  await assert.rejects(
+    fixture.app.startHarnessEval(
+      "List the managed documents.",
+      MODEL,
+      { ...EVAL_CASE, run: 2 },
+      undefined,
+      "cli-eval-idem-1",
+    ),
+    /Idempotency key belongs to another request/,
+  );
+  assert.equal(turn, turnsAfterCommand, "a conflicting keyed eval request must not start a provider run");
   const proof = await fixture.app.ledger(session.workspace);
   const entries = (proof?.entries ?? []).map((entry) => entry.body as Record<string, unknown>);
   const calls = entries.filter((body) => body.tool === "void_workspace_list");

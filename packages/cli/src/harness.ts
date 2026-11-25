@@ -105,6 +105,7 @@ export type HarnessSurface = {
     model: string | undefined,
     attribution: unknown,
     agent?: string,
+    idempotencyKey?: string,
   ): Promise<{ readonly id: string; readonly status?: string }>;
   /** Wait for one run, when the surface owns runs. */
   waitForRun?(id: string): Promise<{ readonly status?: string }>;
@@ -171,7 +172,7 @@ const USAGE = [
   "  nomo harness reward --session <id> <caseId> show measured reward records",
   "  nomo harness ingest-rewards --session <id> <records.jsonl> append measured eval rewards",
   "  nomo harness ingest-eval --session <id> <measurements.jsonl> append rewards and attributed tool measurements",
-  "  nomo harness run-eval --case <id> --variant <id> --run <n> (--prompt <text> | --prompt-file <path>) [--model <id>] [--agent <id>]",
+  "  nomo harness run-eval --case <id> --variant <id> --run <n> (--prompt <text> | --prompt-file <path>) [--model <id>] [--agent <id>] [--idempotency-key <key>]",
   "                                      run one attributed production eval case and wait; provider cost may apply",
   "  nomo harness entries --session <id> show what the harness holds",
   "  nomo harness ratchet --session <id> measure the guardrails before and after the last refinement",
@@ -193,6 +194,7 @@ type Flags = {
   readonly agent: string;
   readonly prompt: string;
   readonly promptFile: string;
+  readonly idempotencyKey: string;
   readonly unknown: readonly string[];
 };
 
@@ -208,6 +210,7 @@ function parseFlags(args: readonly string[]): Flags {
   let agent = "";
   let prompt = "";
   let promptFile = "";
+  let idempotencyKey = "";
   const unknown: string[] = [];
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index]!;
@@ -260,13 +263,18 @@ function parseFlags(args: readonly string[]): Flags {
       index += 1;
       continue;
     }
+    if (arg === "--idempotency-key") {
+      idempotencyKey = args[index + 1] ?? "";
+      index += 1;
+      continue;
+    }
     if (arg.startsWith("-")) {
       unknown.push(arg);
       continue;
     }
     digest = arg;
   }
-  return { session, reason, digest, clear, caseId, variantId, run, model, agent, prompt, promptFile, unknown };
+  return { session, reason, digest, clear, caseId, variantId, run, model, agent, prompt, promptFile, idempotencyKey, unknown };
 }
 
 const REWARD_FIELDS = [
@@ -445,9 +453,9 @@ export async function runHarnessCommand(
   }
   if (
     action !== "run-eval" &&
-    (flags.caseId || flags.variantId || flags.run || flags.model || flags.agent || flags.prompt || flags.promptFile)
+    (flags.caseId || flags.variantId || flags.run || flags.model || flags.agent || flags.prompt || flags.promptFile || flags.idempotencyKey)
   ) {
-    io.stderr("The eval case, variant, run, model, agent and prompt options belong to run-eval.");
+    io.stderr("The eval case, variant, run, model, agent, prompt and idempotency options belong to run-eval.");
     io.stderr(USAGE);
     return 1;
   }
@@ -570,6 +578,7 @@ export async function runHarnessCommand(
         flags.model || undefined,
         attribution,
         flags.agent || undefined,
+        flags.idempotencyKey || undefined,
       );
       const settled = await workbench.waitForRun(started.id);
       io.stdout(`run-eval: session ${started.id} status ${settled.status ?? "unknown"}`);

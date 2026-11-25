@@ -1114,7 +1114,9 @@ These are real, scoped follow-ups, not wishes. ~40 h.
     production run through `startHarnessEval`, waits for the terminal state,
     prints it and returns nonzero outside `idle`. It can incur provider cost
     only through that explicit invocation. It does not compute reward or claim
-    a passed eval by itself.
+    a passed eval by itself. H20c4 adds `--idempotency-key`, so an exact CLI
+    retry reuses the same run and a different request under that key is
+    refused before another provider run starts.
 
 ## 12. Program checklist
 
