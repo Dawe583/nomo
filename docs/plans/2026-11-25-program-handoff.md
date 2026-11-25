@@ -65,10 +65,11 @@ Last full local dry run was recorded in Q8 and merged to `main` as `96675914`.
 
 ## Next ready node
 
-Start T5.3, motion budget. Exact first action: open
-`docs/plans/2026-11-25-nomo-24h-program-detailed.md` section T5.3, inspect
-`packages/cli/src/tui/motion.ts` and `a11y.test.ts`, then verify or implement
-one animation frame per 100 ms and byte-identical reduced-motion words.
+Start T6, mouse parity. Exact first action: open
+`docs/plans/2026-11-25-nomo-24h-program-detailed.md` section T6, inspect
+`packages/cli/src/tui/mouse-selection.ts`, `workspace-runner.ts` and
+`workspace-terminal.test.ts`, then implement or verify wheel, click, selection
+and resize hit-target parity on every panel.
 
 After T2.5, continue T4 panel navigation, then T4, T5.x, T6, T7, T8,
 T9 and T10 as the detailed program orders them. Do not start T11 unless the

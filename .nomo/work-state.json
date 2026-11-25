@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-25T14:07:00Z",
+  "updatedAt": "2026-11-25T14:09:33Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -1418,6 +1418,43 @@
         "No source edit was needed because the requested behavior already existed; this node records verification rather than adding duplicate implementation."
       ],
       "stopCondition": "Stop if listening becomes a third blink/face, the atlas disagrees with the renderer, reduced motion starts mid-cycle, or a frame depends on wall-clock time."
+    },
+    {
+      "id": "t5-3-motion-budget",
+      "status": "done",
+      "owner": "devin-6293643153014f56bb088c9a71fde97a",
+      "dependsOn": [
+        "t5-2-second-blink-listening-pose"
+      ],
+      "scope": [
+        "packages/cli/src/tui/motion.ts",
+        "packages/cli/src/tui/pet.ts",
+        "packages/cli/src/tui/workspace-runner.ts",
+        "packages/cli/src/tui/a11y.test.ts",
+        "docs/plans/2026-11-25-nomo-24h-program-detailed.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "one animation frame per 100 ms",
+        "reduced motion byte-identical words to frozen frame",
+        "budget is tested"
+      ],
+      "verifier": [
+        "node --test packages/cli/src/tui/a11y.test.ts packages/cli/src/tui/pet.test.ts",
+        "pnpm --filter @nomo/cli typecheck",
+        "node --test --test-concurrency=1 packages/cli/src/tui/*.test.ts"
+      ],
+      "evidence": [
+        "Source review: MOTION_TICK_MS is 100 in motion.ts; motionFrameAt floors elapsed time by that shared tick; runWorkspaceTui uses motionFrameAt for the frame counter and MOTION_TICK_MS for its motion timer; pet TICK_MS aliases MOTION_TICK_MS.",
+        "NO_COLOR=1 node --test packages/cli/src/tui/a11y.test.ts packages/cli/src/tui/pet.test.ts observed exit 0: tests 63, pass 63, fail 0, duration_ms 328.481292. The new a11y test asserts motionFrameAt boundaries 0/99 -> 0, 100/199 -> 1 and 200 -> 2; the existing reduced-motion test asserts frozen frames 17 and 37 byte-equal frame zero and animated frames keep the same word multiset.",
+        "pnpm --filter @nomo/cli typecheck observed exit 0.",
+        "NO_COLOR=1 node --test --test-concurrency=1 packages/cli/src/tui/*.test.ts observed exit 0: tests 535, pass 535, fail 0, duration_ms 40118.09325.",
+        "git diff --check observed exit 0."
+      ],
+      "stopCondition": "Stop if motion exceeds one frame per 100 ms, reduced motion changes words, or a runner/pet timer uses an independent animation cadence."
     }
   ]
 }

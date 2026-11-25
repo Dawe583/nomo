@@ -4,7 +4,7 @@ import { dirname, join } from "node:path";
 import { envValue } from "../../../ledger/src/env-compat.ts";
 import { dataDir } from "../../../ledger/src/paths.ts";
 import { box, fit, pad, sanitizeText, visibleLength } from "./layout.ts";
-import { SPINNER, type MotionContext } from "./motion.ts";
+import { MOTION_TICK_MS, SPINNER, type MotionContext } from "./motion.ts";
 import { getSymbolSet, type SymbolPreset } from "./theme-config.ts";
 
 // NIB, the animated NOMO pet.
@@ -76,7 +76,7 @@ export const PET_BUBBLE_ROWS = 2;
 export const PET_REACTION_MAX_WIDTH = 40;
 
 /** The motion tick the frame counter advances on. */
-const TICK_MS = 100;
+const TICK_MS = MOTION_TICK_MS;
 /** Ticks per approval breathe step: twelve ticks are the 1200 ms cadence. */
 const BREATHE_TICKS = PET_APPROVAL_BREATHE_MS / TICK_MS;
 /** Ticks a waiting face holds before it swaps. */

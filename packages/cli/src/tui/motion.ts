@@ -37,6 +37,14 @@ export function motionContext(
   return { frame, enabled, reduced };
 }
 
+/** The workspace motion budget: at most one animation frame per 100 ms. */
+export const MOTION_TICK_MS = 100;
+
+/** The motion frame for elapsed time under the shared 100 ms budget. */
+export function motionFrameAt(elapsedMs: number): number {
+  return Math.floor(elapsedMs / MOTION_TICK_MS);
+}
+
 // Braille spinner: ten frames, one cell each, widely supported and slower
 // than a block spinner so a busy run does not strobe.
 export const SPINNER = [

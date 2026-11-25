@@ -440,6 +440,13 @@ frozen frame's words; test the budget.
 
 **Verifier.** `node --test packages/cli/src/tui/a11y.test.ts`.
 
+**As built.** `motion.ts` now owns the shared 100 ms budget through
+`MOTION_TICK_MS` and `motionFrameAt`; the workspace runner uses the same helper
+for both its frame counter and motion timer instead of separate literals, and
+the pet tick aliases the shared budget. The a11y suite tests the exact 99/100/
+199/200 ms boundaries. The existing reduced-motion test proves frozen frames
+ignore the counter while animating frames keep the same words.
+
 ### T6. Mouse parity (1.0 h)
 
 **Files.** `mouse-selection.ts`, `workspace-runner.ts`,
