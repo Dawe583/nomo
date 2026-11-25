@@ -129,6 +129,18 @@ const TEST_ONLY_ENV_VARS = [
     why: "scripts/src/release-packaging.test.mjs uses it as an explicit opt-in for its npm-registry integration test. It controls the test runner, not product behavior.",
   },
   {
+    name: "NOMO_UPDATE_SNAPSHOTS",
+    why: "packages/cli/src/tui/visual-snapshots.test.ts reads it inside the test itself as the explicit operator opt-in that rewrites reviewed snapshot hashes. It controls the test harness, not product behavior.",
+  },
+  {
+    name: "NOMO_HOST_CLI_SMOKE",
+    why: "packages/workbench/src/agent-runners/host-cli.test.ts reads it inside the test itself to gate one explicitly approved local provider smoke. It controls the test harness, not product behavior.",
+  },
+  {
+    name: "NOMO_PROFILE_EXTRA",
+    why: "packages/workbench/src/agent-runners/host-cli.test.ts sets it as a hostile sentinel that must be filtered from the delegated host environment. The assertion proves absence, so product code must not read it.",
+  },
+  {
     name: "NOMO_A_B",
     why: "packages/ledger/src/env-compat.test.ts checks that legacyEnvKey maps only the prefix. Synthetic fixture for the prefix boundary; never read by product code.",
   },
