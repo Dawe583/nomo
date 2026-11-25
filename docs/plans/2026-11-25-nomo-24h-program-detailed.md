@@ -993,6 +993,12 @@ These are real, scoped follow-ups, not wishes. ~40 h.
    conversation refuses the change and keeps its model.
 4. **T16 Ledger view**: signed/derived split, chain status, filter by class.
    3 h.
+
+   As built: the signed/derived split and chain status were already grouped,
+   ordered and verified. Managed and proxy rows now show their risk class in
+   the row label, so typing `r1` or another class into the existing filter is a
+   visible, explainable filter rather than a search over hidden JSON detail.
+   Four intentional ledger snapshot hashes were refreshed after review.
 5. **T17 Command palette**: fuzzy ranking, recent commands, no hidden action.
    2 h.
 6. **T18 Theme system**: one token file, contrast test for every pair, no

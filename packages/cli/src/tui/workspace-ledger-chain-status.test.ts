@@ -102,8 +102,13 @@ test("the ledger tab reports a failed workspace as degraded, not as missing rows
   assert.equal(entryRows[0]!.sessionId, VERIFIED_SESSION);
   assert.equal(
     entryRows[0]!.label,
-    "allow:resolved · postgres.row.update · chain000 #1",
+    "allow:resolved · [R1] postgres.row.update · chain000 #1",
   );
+  ui.filter = "r1";
+  assert.equal(ui.items().filter((row) => row.kind === "entry").length, 1);
+  ui.filter = "r2";
+  assert.equal(ui.items().filter((row) => row.kind === "entry").length, 0);
+  ui.filter = "";
 
   // The failed workspace contributes no record rows of any kind. A row here
   // would be a record the TUI never verified, printed beside records it did.
