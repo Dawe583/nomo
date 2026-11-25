@@ -1083,17 +1083,17 @@ These are real, scoped follow-ups, not wishes. ~40 h.
 
 ## 12. Program checklist
 
-- [ ] T1 design contract linked from README
-- [ ] Five panels at parity with empty states and 40x12 snapshots
-- [ ] Composer rail exactly `columns` cells at five widths
-- [ ] 40+ snapshots and 54+ PTY assertions green
-- [ ] Reward record reproducible from the chain
-- [ ] Variant identity comparable on one axis
-- [ ] 12+ frozen eval tasks with train/eval split
-- [ ] Activation requires a typed digest; rollback on guardrail regression
-- [ ] Trend command answers "is it learning?" with a number
-- [ ] Bandit simulation prefers the better arm and stops at budget
-- [ ] Inventories, doc-truth and smoke green or named
-- [ ] Handoff page names the next ready node
-- [ ] No secret, no prompt text and no tool output in any record
-- [ ] No test, snapshot or guardrail deleted to reach green
+- [x] T1 design contract linked from README
+- [x] Five panels at parity with empty states and 40x12 snapshots
+- [x] Composer rail exactly `columns` cells at five widths
+- [x] 40+ snapshots and 54+ PTY assertions green
+- [x] Reward record reproducible from the chain
+- [x] Variant identity comparable on one axis
+- [x] 12+ frozen eval tasks with train/eval split
+- [x] Activation requires a typed digest; rollback on guardrail regression
+- [x] Trend command answers "is it learning?" with a number
+- [x] Bandit simulation prefers the better arm and stops at budget
+- [x] Inventories, doc-truth and smoke green or named
+- [x] Handoff page names the next ready node
+- [x] No secret, no prompt text and no tool output in any record
+- [x] No test, snapshot or guardrail deleted to reach green

@@ -42,14 +42,17 @@ Last full local dry run was recorded in Q8 and merged to `main` as `96675914`.
 
 - The deterministic eval runner proves plumbing and governance only. It does
   not prove model capability.
-- `nomo.reward.v1` records can be written through `recordHarnessReward`. Bare
-  eval record files still need a production ingestion path if eval output is
-  meant to enter the chain outside a fixture.
-- Scripts remain red in six pre-existing areas: control-plane colour literals,
-  test env-var scanner findings, hidden-directory licence coverage,
-  historical/generated em-dash files, and the CLI 1.0.1 versus root 0.1.0
-  version mismatch counted by two release metadata tests.
+- `nomo.reward.v1` records can enter the signed workspace chain through
+  `nomo harness ingest-rewards --session <id> <records.jsonl>` (H19). The
+  command validates the whole file before writing, recomputes rewards exactly,
+  refuses side-channel fields without printing them and resumes exact or
+  partial ingestion by file digest plus record position.
+- The Q8 script-suite failure list is historical evidence, not current state.
+  Q11 fixed the CLI 1.0.1 versus root 0.1.0 version mismatch. The full scripts
+  suite has not been re-run after H19, so no smaller current failure count is
+  claimed here.
 - H9 trajectory grouping is positional until tool entries carry case ids.
+  No attribution redesign is claimed.
 
 ## Blocked or gated
 
@@ -65,11 +68,15 @@ Last full local dry run was recorded in Q8 and merged to `main` as `96675914`.
 
 ## Next ready node
 
-T13 is complete as verification of existing behavior. H16 remains blocked on operator opt-in/review of a real-run corpus before freezing; H17 depends on H16 plus human labels. Autonomous expansion backlog is exhausted. H16/H17 remain blocked on operator opt-in, review and labels; T11, Q5, G3 and G4 remain approval-gated. T11, Q5, G3 and G4 remain approval-gated. T11 remains owner-gated; Q5, G3 and G4 remain approval-gated.
+The original autonomous expansion backlog through Q13 is complete, and H19
+closed the reward-ingestion production gap. H16 remains blocked on operator
+opt-in/review of a real-run corpus before freezing; H17 depends on H16 plus
+human labels. T11 remains owner-gated; Q5, G3 and G4 remain approval-gated.
 
-After T2.5, continue T4 panel navigation, then T4, T5.x, T6, T7, T8,
-T9 and T10 as the detailed program orders them. Do not start T11 unless the
-owner explicitly chooses the optional parity spike.
+A possible H20 case-attribution redesign is discovery work, not a ready
+implementation node: current eval records do not execute tools, so simply
+adding a case id field to chain entries would not create truthful attribution.
+Do not start T11 unless the owner explicitly chooses the optional parity spike.
 
 ## Do not do
 

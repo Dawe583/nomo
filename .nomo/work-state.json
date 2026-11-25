@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-25T19:20:40.643262Z",
+  "updatedAt": "2026-11-25T19:22:11.863038Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -2154,6 +2154,39 @@
         "NO_COLOR=1 node --test packages/cli/src/recovery-config.test.ts observed exit 0 after aligning the stale expectation with the implemented omitted-value output: tests 11, pass 11, fail 0, duration_ms 396.29825."
       ],
       "stopCondition": "Stop if the repair hides a regression, prints sensitive config values, or weakens the recovery doctor contract."
+    },
+    {
+      "id": "q15-program-doc-consistency",
+      "status": "done",
+      "owner": "devin-6293643153014f56bb088c9a71fde97a",
+      "dependsOn": [
+        "h19-reward-ingestion-path",
+        "q14-cli-wide-suite-repair"
+      ],
+      "scope": [
+        "docs/plans/2026-11-25-program-handoff.md",
+        "docs/plans/2026-11-25-nomo-24h-program-detailed.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "handoff no longer claims the fixed version mismatch or missing H19 ingestion path",
+        "program checklist reflects verified completion without claiming unrun current script-suite counts",
+        "H20 attribution is described as discovery, not ready implementation"
+      ],
+      "verifier": [
+        "node --test scripts/src/doc-truth.test.mjs scripts/src/handbook.test.mjs",
+        "git diff --check",
+        "node scripts/src/work-graph-check.mjs"
+      ],
+      "evidence": [
+        "Manual review: the handoff now marks the Q8 scripts failure list historical, credits Q11 with the fixed version mismatch, documents the H19 ingestion path, and describes H20 case attribution as discovery because current eval records do not execute tools.",
+        "NO_COLOR=1 node --test scripts/src/doc-truth.test.mjs scripts/src/handbook.test.mjs observed exit 0: tests 23, pass 23, fail 0, duration_ms 267.92325.",
+        "git diff --check observed exit 0."
+      ],
+      "stopCondition": "Stop if documentation claims a current verifier count that was not run, hides blocked/gated nodes, or presents H20 attribution as already designed."
     }
   ]
 }
