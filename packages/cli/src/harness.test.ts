@@ -166,12 +166,13 @@ test("run-eval starts one attributed production run and waits for its terminal s
         model: string | undefined;
         attribution: unknown;
         agent: string | undefined;
+        idempotencyKey: string | undefined;
       }
     | undefined;
   let waited = "";
   const surface = fake({
-    async startHarnessEval(prompt, model, attribution, agent) {
-      seen = { prompt, model, attribution, agent };
+    async startHarnessEval(prompt, model, attribution, agent, idempotencyKey) {
+      seen = { prompt, model, attribution, agent, idempotencyKey };
       return { id: "eval-session-1", status: "running" };
     },
     async waitForRun(id) {
@@ -189,6 +190,7 @@ test("run-eval starts one attributed production run and waits for its terminal s
       "--model", "fixture-model",
       "--agent", "fixture-agent",
       "--prompt", "Write the managed note.",
+      "--idempotency-key", "eval-cli-key-1",
     ],
     terminal,
     { workbench: async () => surface },
@@ -198,6 +200,7 @@ test("run-eval starts one attributed production run and waits for its terminal s
     prompt: "Write the managed note.",
     model: "fixture-model",
     agent: "fixture-agent",
+    idempotencyKey: "eval-cli-key-1",
     attribution: {
       caseId: "case-api",
       variantId: "sha256:" + "a".repeat(64),

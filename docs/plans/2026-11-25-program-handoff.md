@@ -90,7 +90,8 @@ attribution is implemented for explicitly started eval runs; legacy entries
 without `harnessEval` keep positional treatment. H20c exposes that path through
 `POST /api/sessions` optional `harnessEval` and `nomo harness run-eval`. The
 CLI waits for terminal state, but reward computation and ingestion remain
-separate explicit measurement steps.
+separate explicit measurement steps. H20c4 exposes `--idempotency-key` for
+safe exact retries of provider-costing eval runs.
 
 ## Do not do
 

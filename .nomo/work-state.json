@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-25T21:59:12.529851Z",
+  "updatedAt": "2026-11-25T22:04:58.586847Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -2744,6 +2744,60 @@
       ],
       "stopCondition": "Stop if the surface would imply reward measurement, pass/fail judgment, fleet-wide effect or provider access beyond the explicitly invoked production run.",
       "completedAt": "2026-11-25T21:59:12.529851Z"
+    },
+    {
+      "id": "h20c4-eval-cli-idempotency",
+      "status": "done",
+      "owner": "devin-6293643153014f56bb088c9a71fde97a",
+      "dependsOn": [
+        "h20c3-production-eval-operator-surface"
+      ],
+      "scope": [
+        "packages/workbench/src/index.ts",
+        "packages/cli/src/harness.ts",
+        "packages/cli/src/harness.test.ts",
+        "packages/cli/src/harness-run-eval.test.ts",
+        "docs/HARNESS-LEARNING.md",
+        "docs/HANDBOOK.md",
+        "docs/HANDBOOK.cs.md",
+        "docs/plans/2026-11-25-nomo-24h-program-detailed.md",
+        "docs/plans/2026-11-25-program-handoff.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "nomo harness run-eval can name an idempotency key for a provider-costing production eval run",
+        "an exact retry with the same key reuses the existing session without another provider turn",
+        "the same key with different eval identity is refused before another provider turn starts",
+        "the option is rejected on unrelated harness actions instead of being silently ignored"
+      ],
+      "verifier": [
+        "node --test packages/cli/src/harness.test.ts packages/cli/src/harness-run-eval.test.ts",
+        "node --test apps/control-plane/api/server.test.ts",
+        "node --test packages/workbench/src/gui.test.ts packages/workbench/src/lifecycle.test.ts packages/workbench/src/reversal-record.test.ts",
+        "node --test scripts/src/doc-truth.test.mjs scripts/src/no-dash.test.mjs",
+        "pnpm --filter @nomo/cli typecheck",
+        "pnpm --filter @nomo/workbench typecheck",
+        "pnpm exec tsc -p apps/control-plane/tsconfig.json",
+        "node --test scripts/src/*.test.mjs",
+        "git diff --check"
+      ],
+      "evidence": [
+        "CLI verifier: 26 tests, 26 pass, 0 fail, duration_ms 274.74775",
+        "control-plane API verifier: 49 tests, 49 pass, 0 fail, duration_ms 1190.146875",
+        "workbench verifier: 22 tests, 22 pass, 0 fail, duration_ms 2566.857209",
+        "docs verifier: 10 tests, 10 pass, 0 fail, duration_ms 104.708208",
+        "pnpm --filter @nomo/cli typecheck: exit 0",
+        "pnpm --filter @nomo/workbench typecheck: exit 0",
+        "pnpm exec tsc -p apps/control-plane/tsconfig.json: exit 0",
+        "wider scripts suite: 419 tests, 386 pass, 0 fail, cancelled 0, skipped 32, todo 1, duration_ms 8723.968833",
+        "git diff --check: exit 0",
+        "real governed integration: the exact keyed retry returned the same session with zero additional provider turns, while the same key with run 2 rejected and started zero provider turns"
+      ],
+      "stopCondition": "Stop if idempotency would hide a genuinely different eval request or if implementing it requires weakening existing Workbench request validation.",
+      "completedAt": "2026-11-25T22:04:58.586847Z"
     }
   ]
 }

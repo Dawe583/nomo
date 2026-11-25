@@ -856,7 +856,7 @@ nomo harness promote --session <id> <digest-or-prefix>
 nomo harness demote <promotion-digest-or-prefix>
 nomo harness global
 nomo harness ratchet --session <id> [<digest-or-prefix>]
-nomo harness run-eval --case <id> --variant <id> --run <n> (--prompt <text> | --prompt-file <path>) [--model <id>] [--agent <id>]
+nomo harness run-eval --case <id> --variant <id> --run <n> (--prompt <text> | --prompt-file <path>) [--model <id>] [--agent <id>] [--idempotency-key <key>]
 nomo harness entries --session <id>
 nomo harness model [<model-id>|--clear]
 nomo goal start --session <id> --token-budget <n> [--gate <exact-command>]... <objective>
@@ -882,7 +882,9 @@ Notes that save time:
   nonzero when that state is not `idle`. It can incur provider cost because it
   is an explicit model run. Its chain entries carry only the bounded eval
   identity, never prompt, arguments, results or document content. It does not
-  compute a reward or claim a passed eval by itself.
+  compute a reward or claim a passed eval by itself. `--idempotency-key` makes
+  an exact retry safe: it reuses the same request and refuses a different one
+  under the same key.
 - `nomo harness entries` prints each mined rule as policy file text. The rule is
   not in force: the text is what an operator pastes into their own policy file,
   ahead of the terminal catch-all, if they agree with it. The web panel's

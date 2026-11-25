@@ -4300,11 +4300,12 @@ export class Workbench {
     model: string | undefined,
     attribution: unknown,
     agent?: string,
+    idempotencyKey?: string,
   ): Promise<SessionView> {
     return this.start(
       prompt,
       model,
-      undefined,
+      idempotencyKey,
       undefined,
       agent,
       false,

@@ -753,7 +753,7 @@ nomo harness promote --session <id> <digest-or-prefix>
 nomo harness demote <promotion-digest-or-prefix>
 nomo harness global
 nomo harness ratchet --session <id> [<digest-or-prefix>]
-nomo harness run-eval --case <id> --variant <id> --run <n> (--prompt <text> | --prompt-file <path>) [--model <id>] [--agent <id>]
+nomo harness run-eval --case <id> --variant <id> --run <n> (--prompt <text> | --prompt-file <path>) [--model <id>] [--agent <id>] [--idempotency-key <key>]
 nomo harness entries --session <id>
 nomo harness model [<model-id>|--clear]
 nomo goal start --session <id> --token-budget <n> [--gate <exact-command>]... <objective>
@@ -779,7 +779,9 @@ Poznámky, které ušetří čas:
   kód, když stav není `idle`. Může stát provider poplatek, protože jde o
   explicitní modelový běh. Chain záznamy nesou jen ohraničenou eval identitu,
   nikdy prompt, argumenty, výsledky ani obsah dokumentů. Samo o sobě nepočítá
-  reward ani netvrdí, že eval prošel.
+  reward ani netvrdí, že eval prošel. `--idempotency-key` umožní bezpečný
+  opakovaný pokus: stejný požadavek se znovu použije a jiný požadavek pod
+  stejným klíčem se odmítne.
 - `nomo harness entries` vypíše každé vytěžené pravidlo jako text policy
   souboru. Pravidlo není v platnosti: text slouží k vložení do vlastního policy
   souboru, před koncové catch-all pravidlo, pokud s ním operátor souhlasí.
