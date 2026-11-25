@@ -9502,3 +9502,8 @@ Commit 3280db90942408dbc286a70f42124b4a3a33b277, subject Polish shared TUI motio
   `docs/HARNESS-LEARNING.md` now explicitly separates bandit, policy search and gradient RL. It says gradient RL updates
   model weights and that this repository has no trainable local model, GPU budget or training path, so no NOMO surface
   may claim RL training. Manual read completed; no em dash or en dash; diff check clean. [[NOMO TUI Control Center]]
+- 2026-11-25 · R6 simulation report completed in the free parent session.
+  `scripts/src/harness-bandit-sim.mjs` now runs a deterministic two-arm compaction simulation without a model call or
+  network and prints simple regret, samples per arm, spent and budgeted tokens, and stop reason. Observed table:
+  compaction-75 170 samples, compaction-150 8 samples, regret=4.00, spentTokens=178000, stop=separated. Narrow test 2/2;
+  harness eval/replay/simulation set 36/36. [[NOMO TUI Control Center]]
