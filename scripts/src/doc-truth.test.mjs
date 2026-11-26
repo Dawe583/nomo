@@ -524,12 +524,31 @@ test("every dead path in a record document is inventoried with a reason", () => 
   );
 });
 
+function hasSubstantiveFile(path) {
+  let entries;
+  try {
+    entries = readdirSync(path, { withFileTypes: true });
+  } catch {
+    return existsSync(path);
+  }
+  for (const entry of entries) {
+    if (entry.name === ".DS_Store" || entry.name === "__pycache__") continue;
+    const child = join(path, entry.name);
+    if (entry.isDirectory()) {
+      if (hasSubstantiveFile(child)) return true;
+    } else if (!entry.name.endsWith(".pyc")) {
+      return true;
+    }
+  }
+  return false;
+}
+
 test("the inventory is not stale", () => {
   // A listed path that now exists is an entry nobody deleted. This is what stops
   // the inventory from becoming a permanent waiver. Generated paths are allowed
   // to exist because the gate creates them before running doc-truth.
   const resolved = Object.keys(INVENTORY)
-    .filter((path) => existsSync(path) && !GENERATED_PATHS.has(path))
+    .filter((path) => hasSubstantiveFile(path) && !GENERATED_PATHS.has(path))
     .sort();
   assert.deepEqual(
     resolved,
