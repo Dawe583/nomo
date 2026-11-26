@@ -79,3 +79,10 @@ This is not a production transport. There is no real Workbench event source, int
 The client direction now has the same versioned NDJSON envelope discipline as the server direction. `serializeTuiClientMessage` emits exactly one JSON object and `parseTuiClientMessage` validates the envelope before delegating intent shape and idempotency rules to the existing `parseTuiIntent` authority.
 
 The isolated Rust spike can emit a versioned `view.select` intent for a validated protocol view. The cross-language proof runs the Rust binary, parses its output with the TypeScript client codec and recovers the exact intent. This is codec evidence only; no server executes the intent yet.
+
+
+## R2a adapter-backed fixture transport, 2026-11-26
+
+The fixture TCP server no longer treats a hand-written JSON file as the source of truth. It constructs an in-memory `SessionView` fixture and passes the read-only projection through `tuiSnapshotFromWorkbench` before serializing and validating each snapshot envelope. The Rust transport proof still observes `fixture-model` followed by `transport-model` and `tokens 777` in a real PTY.
+
+This remains fixture-backed transport, not a real Workbench server. The projection is synthetic, there is no live event subscription, no intent execution and no production wiring.

@@ -9769,3 +9769,8 @@ The isolated Rust spike now consumes versioned snapshot envelopes over loopback 
 ## 2026-11-26 R0d client intent envelope codec
 
 The client direction of the terminal protocol now uses a versioned NDJSON envelope too. TypeScript validates the envelope and delegates intent shape plus idempotency to the existing intent parser; the isolated Rust spike can emit a validated `view.select` envelope, and TypeScript parses that exact output cross-language. Verified before recording: protocol tests 14/14, cargo tests 6/6, parity test 1/1, TCP transport proof PASS. This is still codec evidence only: no server executes intents and no production wiring exists. [[NOMO TUI]]
+
+
+## 2026-11-26 R2a adapter-backed fixture transport and full TUI regression
+
+The fixture TCP server now builds snapshots through `tuiSnapshotFromWorkbench` from an in-memory session projection instead of treating hand-written JSON as truth. The Rust real-PTY transport proof still shows the live update from `fixture-model` to `transport-model` and `tokens 777`. After the protocol and Rust slices, full `pnpm run test:tui` passed with 550/550 Node tests and every PTY scenario at every size. This remains synthetic fixture transport, not a live Workbench server, intent execution or production wiring. [[NOMO TUI]]

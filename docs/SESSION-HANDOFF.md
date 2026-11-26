@@ -123,6 +123,14 @@
 - Verified: protocol tests 14/14, cargo tests 6/6, parity test 1/1, TCP transport proof PASS.
 - Honest limit: codec only; no server executes intents, no intent acknowledgement semantics are final and no production wiring exists.
 
+
+## R2a adapter-backed fixture transport (2026-11-26)
+
+- The TCP fixture server now generates snapshots by passing an in-memory `SessionView` projection through `tuiSnapshotFromWorkbench` rather than reading a hand-written JSON snapshot as truth.
+- Real PTY transport proof remains green: `fixture-model` changes to `transport-model` and `tokens 777` over loopback TCP.
+- Full TUI regression after the protocol and Rust slices: `pnpm run test:tui` exit 0, 550/550 Node tests pass, every PTY scenario at every size passes.
+- Honest limit: still synthetic fixture state; no live Workbench event subscription, intent execution or production wiring.
+
 ## Rules that are not negotiable
 
 - No push, merge, deploy, hosted CI, dependency install, or provider-costing call unless the user explicitly asks in the current task. (This push was explicitly authorized by the user on 2026-11-25.)
