@@ -2,6 +2,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   parseTuiIntent,
+  parseTuiProtocolMessage,
+  serializeTuiProtocolMessage,
   tuiApprovalSummary,
   tuiRenderState,
   tuiSessionSummary,
@@ -202,6 +204,46 @@ test("render state carries client context beside server-owned workbench state", 
   assert.equal(render.client.terminal.columns, 40);
   assert.equal(render.workbench.session?.id, "session-1");
   assert.equal("activeView" in render.workbench, false);
+});
+
+
+test("protocol messages round trip as one validated NDJSON object", () => {
+  const snapshot = tuiSnapshot({
+    session: view,
+    provider: { providerId: "fixture-provider", status: "ready" },
+    palette: [{ command: "/help", description: "All commands" }],
+  });
+  const line = serializeTuiProtocolMessage({ type: "snapshot", snapshot });
+  assert.equal(line.includes("\n"), false);
+  const parsed = parseTuiProtocolMessage(line);
+  assert.equal(parsed.version, TUI_PROTOCOL_VERSION);
+  assert.deepEqual(parsed.event, { type: "snapshot", snapshot });
+});
+
+test("protocol messages fail closed for malformed JSON, versions and wire shape", () => {
+  assert.throws(() => parseTuiProtocolMessage("{"), /malformed JSON/u);
+  assert.throws(
+    () => parseTuiProtocolMessage(JSON.stringify({ version: 2, event: { type: "diagnostic", message: "x" } })),
+    /version must be 1/u,
+  );
+  assert.throws(
+    () => parseTuiProtocolMessage(JSON.stringify({ version: 1, event: { type: "unknown" } })),
+    /unknown event type/u,
+  );
+  assert.throws(
+    () =>
+      parseTuiProtocolMessage(
+        JSON.stringify({
+          version: 1,
+          event: {
+            type: "transcript.appended",
+            sessionId: "session-1",
+            event: { seq: 0, at: "2026-01-01T00:00:00.000Z", kind: "assistant", text: "bad" },
+          },
+        }),
+      ),
+    /event\.event\.seq/u,
+  );
 });
 
 test("approval normalization preserves malformed tools without inventing status", () => {

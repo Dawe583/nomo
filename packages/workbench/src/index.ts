@@ -10982,7 +10982,10 @@ export class Workbench {
 
 export {
   parseTuiIntent,
+  parseTuiProtocolMessage,
+  serializeTuiProtocolMessage,
   tuiApprovalSummary,
+  tuiProtocolMessage,
   tuiRenderState,
   tuiSessionSummary,
   tuiSnapshot,

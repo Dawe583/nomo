@@ -72,9 +72,47 @@ struct ProtocolUsage {
     run_token_count: u64,
 }
 
+#[derive(Deserialize)]
+struct ProtocolMessage {
+    version: u8,
+    event: ProtocolServerEvent,
+}
+
+#[derive(Deserialize)]
+#[serde(tag = "type")]
+enum ProtocolServerEvent {
+    #[serde(rename = "snapshot")]
+    Snapshot { snapshot: ProtocolSnapshot },
+    #[serde(other)]
+    Other,
+}
+
+#[derive(Deserialize)]
+#[serde(untagged)]
+enum SnapshotInput {
+    Message(ProtocolMessage),
+    Snapshot(ProtocolSnapshot),
+}
+
 fn snapshot_facts(path: &str) -> Result<(String, u64), Box<dyn std::error::Error>> {
     let raw = std::fs::read_to_string(path)?;
-    let snapshot: ProtocolSnapshot = serde_json::from_str(&raw)?;
+    let input: SnapshotInput = serde_json::from_str(&raw)?;
+    let snapshot = match input {
+        SnapshotInput::Snapshot(snapshot) => snapshot,
+        SnapshotInput::Message(message) => {
+            if message.version != 1 {
+                return Err(
+                    format!("unsupported TUI protocol version: {}", message.version).into(),
+                );
+            }
+            match message.event {
+                ProtocolServerEvent::Snapshot { snapshot } => snapshot,
+                ProtocolServerEvent::Other => {
+                    return Err("TUI protocol message is not a snapshot event".into());
+                }
+            }
+        }
+    };
     if snapshot.version != 1 {
         return Err(format!("unsupported TUI protocol version: {}", snapshot.version).into());
     }
@@ -433,6 +471,39 @@ mod tests {
         let frame = frame_lines(80, 24, "other-model", 777);
         assert!(frame.iter().any(|row| row.contains("model other-model")));
         assert!(frame.iter().any(|row| row.contains("tokens 777")));
+    }
+
+    #[test]
+    fn versioned_snapshot_envelope_is_accepted() {
+        let raw = std::fs::read_to_string("fixtures/snapshot.json").expect("read fixture");
+        let snapshot: serde_json::Value = serde_json::from_str(&raw).expect("fixture json");
+        let envelope = serde_json::json!({
+            "version": 1,
+            "event": { "type": "snapshot", "snapshot": snapshot }
+        });
+        let path = std::env::temp_dir().join("nomo-rust-spike-envelope.json");
+        std::fs::write(
+            &path,
+            serde_json::to_string(&envelope).expect("serialize envelope"),
+        )
+        .expect("write envelope");
+        let (model, tokens) =
+            snapshot_facts(path.to_str().expect("utf8 path")).expect("envelope parses");
+        let _ = std::fs::remove_file(path);
+        assert_eq!(model, "fixture-model");
+        assert_eq!(tokens, 120);
+    }
+
+    #[test]
+    fn non_snapshot_envelope_is_rejected() {
+        let path = std::env::temp_dir().join("nomo-rust-spike-diagnostic.json");
+        std::fs::write(
+            &path,
+            r#"{"version":1,"event":{"type":"diagnostic","message":"hello"}}"#,
+        )
+        .expect("write diagnostic");
+        assert!(snapshot_facts(path.to_str().expect("utf8 path")).is_err());
+        let _ = std::fs::remove_file(path);
     }
 
     #[test]

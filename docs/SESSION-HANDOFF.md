@@ -97,6 +97,15 @@
 - Verified: protocol tests 10/10 and `@nomo/workbench` typecheck exit 0.
 - Honest limit: in-process adaptation only; no transport server, event stream or production Rust wiring.
 
+
+## R0c versioned NDJSON wire codec (2026-11-26)
+
+- TypeScript now serializes and parses the versioned protocol envelope. Parsing validates the envelope and server-event wire shape; malformed JSON, wrong versions, unknown event types and invalid transcript event shape fail closed.
+- The isolated Rust spike accepts either a bare snapshot or the same versioned snapshot envelope.
+- Cross-language proof: TypeScript serialized the envelope, the TypeScript parser validated it, Rust consumed the file and reproduced the canonical 80x24 Help hash exactly.
+- Verified: protocol tests 12/12, Rust cargo tests 5/5, Rust parity test 1/1.
+- Honest limit: codec only; no streaming transport, intent channel, transcript subscription or production wiring.
+
 ## Rules that are not negotiable
 
 - No push, merge, deploy, hosted CI, dependency install, or provider-costing call unless the user explicitly asks in the current task. (This push was explicitly authorized by the user on 2026-11-25.)

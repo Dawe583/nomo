@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-26T22:15:48.756129Z",
+  "updatedAt": "2026-11-26T22:18:29.866805Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -4316,6 +4316,50 @@
         "The adapter test proves transcript pagination, approval normalization and absence of activeView/terminal in server state."
       ],
       "stopCondition": "Stop before transport server, production wiring, provider traffic, release, publish or deploy."
+    },
+    {
+      "id": "r0c-ndjson-wire-codec",
+      "status": "done",
+      "owner": "devin-desktop-local-2026-11-26",
+      "dependsOn": [
+        "r0b-workbench-snapshot-adapter"
+      ],
+      "scope": [
+        "packages/workbench/src/tui-protocol.ts",
+        "packages/workbench/src/tui-protocol.test.ts",
+        "packages/workbench/src/index.ts",
+        "scripts/tui-rs-spike/src/main.rs",
+        "scripts/src/tui-rs-parity.test.mjs",
+        "docs/plans/2026-11-26-tui-protocol-boundary.md",
+        "docs/SESSION-HANDOFF.md",
+        "docs/memory/vault/work-log/NOMO Work Log.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "TypeScript can serialize and parse the versioned protocol envelope as one NDJSON object",
+        "server event wire shape fails closed for malformed JSON, wrong versions, unknown event types and malformed transcript events",
+        "the isolated Rust spike accepts the same versioned snapshot envelope and rejects non-snapshot envelopes",
+        "a TypeScript-serialized envelope consumed by Rust reproduces the canonical frame hash",
+        "no streaming transport or production wiring is introduced"
+      ],
+      "verifier": [
+        "node --test packages/workbench/src/tui-protocol.test.ts",
+        "cd scripts/tui-rs-spike && cargo test --offline --quiet",
+        "node --test scripts/src/tui-rs-parity.test.mjs",
+        "pnpm --filter @nomo/workbench typecheck",
+        "node scripts/src/work-graph-check.mjs",
+        "git diff --check"
+      ],
+      "evidence": [
+        "node --test packages/workbench/src/tui-protocol.test.ts: 12 tests, 12 pass, 0 fail, duration_ms 157.085375.",
+        "cd scripts/tui-rs-spike && cargo test --offline --quiet: 5 passed, 0 failed.",
+        "node --test scripts/src/tui-rs-parity.test.mjs: 1 test, 1 pass, 0 fail, duration_ms 1497.982958, including the TypeScript-serialized envelope consumed by Rust.",
+        "pnpm --filter @nomo/workbench typecheck: exit 0."
+      ],
+      "stopCondition": "Stop before streaming transport, intent channel, transcript subscription, production wiring, provider traffic, release, publish or deploy."
     }
   ]
 }

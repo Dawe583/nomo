@@ -327,6 +327,207 @@ export function parseTuiIntent(
   invalid(`unknown type ${value.type}`);
 }
 
+
+function invalidProtocolMessage(message: string): never {
+  throw new Error(`Invalid TUI protocol message: ${message}`);
+}
+
+function wireRecord(value: unknown, field: string): Record<string, unknown> {
+  if (!isRecord(value)) invalidProtocolMessage(`${field} must be an object`);
+  return value;
+}
+
+function wireText(value: unknown, field: string, max = 4096): string {
+  if (typeof value !== "string") invalidProtocolMessage(`${field} must be a string`);
+  if (!value.trim()) invalidProtocolMessage(`${field} must not be empty`);
+  if (value.length > max) invalidProtocolMessage(`${field} exceeds ${max} characters`);
+  return value;
+}
+
+function wireInteger(value: unknown, field: string, minimum = 0): number {
+  if (typeof value !== "number" || !Number.isInteger(value) || value < minimum)
+    invalidProtocolMessage(`${field} must be an integer at least ${minimum}`);
+  return value;
+}
+
+function wireArray(value: unknown, field: string): readonly unknown[] {
+  if (!Array.isArray(value)) invalidProtocolMessage(`${field} must be an array`);
+  return value;
+}
+
+function wireSession(value: unknown, field: string): void {
+  const session = wireRecord(value, field);
+  wireText(session.id, `${field}.id`, 160);
+  wireText(session.workspace, `${field}.workspace`, 240);
+  wireText(session.model, `${field}.model`, 240);
+  wireText(session.status, `${field}.status`, 80);
+  wireInteger(session.continuationCount, `${field}.continuationCount`);
+  wireInteger(session.runTokenCount, `${field}.runTokenCount`);
+}
+
+function wireTranscriptEvent(value: unknown, field: string): void {
+  const event = wireRecord(value, field);
+  wireInteger(event.seq, `${field}.seq`, 1);
+  wireText(event.at, `${field}.at`, 80);
+  wireText(event.kind, `${field}.kind`, 80);
+  if (typeof event.text !== "string")
+    invalidProtocolMessage(`${field}.text must be a string`);
+}
+
+function wireTranscriptPage(value: unknown, field: string): void {
+  const page = wireRecord(value, field);
+  wireText(page.sessionId, `${field}.sessionId`, 160);
+  wireArray(page.events, `${field}.events`).forEach((event, index) =>
+    wireTranscriptEvent(event, `${field}.events.${index}`),
+  );
+  wireInteger(page.latestSeq, `${field}.latestSeq`);
+  wireInteger(page.oldestSeq, `${field}.oldestSeq`);
+  if (typeof page.hasMore !== "boolean")
+    invalidProtocolMessage(`${field}.hasMore must be a boolean`);
+  if (page.nextBeforeSeq !== null && page.nextBeforeSeq !== undefined)
+    wireInteger(page.nextBeforeSeq, `${field}.nextBeforeSeq`, 1);
+}
+
+function wireUsage(value: unknown, field: string): void {
+  const usage = wireRecord(value, field);
+  wireInteger(usage.contextMessages, `${field}.contextMessages`);
+  wireInteger(usage.runTokenCount, `${field}.runTokenCount`);
+  for (const key of ["promptTokens", "completionTokens", "totalTokens"])
+    if (usage[key] !== undefined) wireInteger(usage[key], `${field}.${key}`);
+  if (
+    usage.cost !== undefined &&
+    (typeof usage.cost !== "number" || !Number.isFinite(usage.cost))
+  )
+    invalidProtocolMessage(`${field}.cost must be finite`);
+}
+
+function wireApproval(value: unknown, field: string): void {
+  const approval = wireRecord(value, field);
+  wireText(approval.holdId, `${field}.holdId`, 256);
+  if (approval.sessionId !== undefined)
+    wireText(approval.sessionId, `${field}.sessionId`, 160);
+  try {
+    tuiApprovalSummary(approval as TuiApprovalInput);
+  } catch (error) {
+    invalidProtocolMessage(
+      `${field}.${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+}
+
+function wireProvider(value: unknown, field: string): void {
+  const provider = wireRecord(value, field);
+  if (
+    !["ready", "setup-required", "rate-limited", "unavailable"].includes(
+      String(provider.status),
+    )
+  )
+    invalidProtocolMessage(`${field}.status is not a protocol provider status`);
+  if (provider.providerId !== undefined)
+    wireText(provider.providerId, `${field}.providerId`, 200);
+  if (provider.model !== undefined) wireText(provider.model, `${field}.model`, 240);
+  if (provider.detail !== undefined)
+    wireText(provider.detail, `${field}.detail`, 1000);
+}
+
+function wireSnapshot(value: unknown, field: string): void {
+  const snapshot = wireRecord(value, field);
+  if (snapshot.version !== TUI_PROTOCOL_VERSION)
+    invalidProtocolMessage(`${field}.version must be ${TUI_PROTOCOL_VERSION}`);
+  if (snapshot.session !== undefined) wireSession(snapshot.session, `${field}.session`);
+  wireArray(snapshot.sessions, `${field}.sessions`).forEach((session, index) =>
+    wireSession(session, `${field}.sessions.${index}`),
+  );
+  if (snapshot.transcript !== undefined)
+    wireTranscriptPage(snapshot.transcript, `${field}.transcript`);
+  wireArray(snapshot.approvals, `${field}.approvals`).forEach((approval, index) =>
+    wireApproval(approval, `${field}.approvals.${index}`),
+  );
+  wireProvider(snapshot.provider, `${field}.provider`);
+  if (snapshot.usage !== undefined) wireUsage(snapshot.usage, `${field}.usage`);
+  wireArray(snapshot.palette, `${field}.palette`).forEach((command, index) => {
+    const row = wireRecord(command, `${field}.palette.${index}`);
+    wireText(row.command, `${field}.palette.${index}.command`, 200);
+    wireText(row.description, `${field}.palette.${index}.description`, 500);
+  });
+  wireArray(snapshot.diagnostics, `${field}.diagnostics`).forEach(
+    (diagnostic, index) =>
+      wireText(diagnostic, `${field}.diagnostics.${index}`, 1000),
+  );
+}
+
+function wireServerEvent(event: Record<string, unknown>): void {
+  const type = wireText(event.type, "event.type", 80);
+  if (type === "snapshot") {
+    wireSnapshot(event.snapshot, "event.snapshot");
+    return;
+  }
+  if (type === "transcript.appended") {
+    wireText(event.sessionId, "event.sessionId", 160);
+    wireTranscriptEvent(event.event, "event.event");
+    return;
+  }
+  if (type === "session.updated") {
+    wireSession(event.session, "event.session");
+    return;
+  }
+  if (type === "approval.changed") {
+    wireApproval(event.approval, "event.approval");
+    return;
+  }
+  if (type === "provider.changed") {
+    wireProvider(event.provider, "event.provider");
+    return;
+  }
+  if (type === "intent.accepted") {
+    wireText(event.idempotencyKey, "event.idempotencyKey", 128);
+    return;
+  }
+  if (type === "intent.rejected") {
+    if (event.idempotencyKey !== undefined)
+      wireText(event.idempotencyKey, "event.idempotencyKey", 128);
+    const error = wireRecord(event.error, "event.error");
+    wireText(error.code, "event.error.code", 120);
+    wireText(error.message, "event.error.message", 1000);
+    return;
+  }
+  if (type === "diagnostic") {
+    wireText(event.message, "event.message", 1000);
+    return;
+  }
+  invalidProtocolMessage(`unknown event type ${type}`);
+}
+
+/** Wrap one server event in the versioned protocol envelope. */
+export function tuiProtocolMessage(event: TuiServerEvent): TuiProtocolMessage {
+  return { version: TUI_PROTOCOL_VERSION, event };
+}
+
+/** Serialize one envelope as exactly one NDJSON object; framing newlines are
+ * owned by the transport, not by the codec. */
+export function serializeTuiProtocolMessage(event: TuiServerEvent): string {
+  return JSON.stringify(tuiProtocolMessage(event));
+}
+
+/** Parse and validate one versioned NDJSON object. Unknown fields are ignored
+ * for forward compatibility; required wire shape fails closed. */
+export function parseTuiProtocolMessage(line: string): TuiProtocolMessage {
+  let raw: unknown;
+  try {
+    raw = JSON.parse(line);
+  } catch (error) {
+    invalidProtocolMessage(
+      `malformed JSON: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+  const message = wireRecord(raw, "message");
+  if (message.version !== TUI_PROTOCOL_VERSION)
+    invalidProtocolMessage(`version must be ${TUI_PROTOCOL_VERSION}`);
+  const event = wireRecord(message.event, "message.event");
+  wireServerEvent(event);
+  return message as unknown as TuiProtocolMessage;
+}
+
 export function tuiSessionSummary(view: SessionView): TuiSessionSummary {
   return {
     id: view.id,

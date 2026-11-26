@@ -9754,3 +9754,8 @@ The isolated Rust Help spike now reads a versioned JSON snapshot shaped after th
 ## 2026-11-26 R0b read-only workbench snapshot adapter
 
 The protocol boundary now has a read-only adapter from workbench projections into a wire snapshot. Explicit session selection is required, unknown sessions fail closed, approvals are normalized at the boundary, and provider probing plus client-owned view or terminal state stay outside the server snapshot. Verified before recording: protocol tests 10/10, Workbench typecheck exit 0. This is not yet a transport or production wiring. [[NOMO TUI]]
+
+
+## 2026-11-26 R0c versioned NDJSON wire codec
+
+The terminal protocol now has a versioned NDJSON object codec in TypeScript and matching snapshot-envelope acceptance in the isolated Rust spike. TypeScript validates envelope and server-event wire shape, Rust rejects wrong versions and non-snapshot envelopes, and the cross-language proof reproduces the canonical 80x24 Help hash exactly. Verified before recording: protocol tests 12/12, cargo tests 5/5, parity test 1/1. This is still only a codec, not streaming transport, intents, transcript subscription or production wiring. [[NOMO TUI]]

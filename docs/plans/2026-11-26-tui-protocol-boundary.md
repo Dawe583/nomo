@@ -56,3 +56,12 @@ This remains a narrow seam, not a protocol client. There is no snapshot runtime 
 `tuiSnapshotFromWorkbench` now adapts the read-only `allViews` and `approvals` projections into the wire snapshot. It requires the active session id explicitly, fails closed for an unknown session, normalizes approvals through the existing boundary and never probes providers or copies active view or terminal capabilities into server state.
 
 This is still in-process adaptation only. There is no transport server, no event stream and no production Rust wiring.
+
+
+## R0c versioned NDJSON wire codec, 2026-11-26
+
+The TypeScript boundary now has a versioned protocol envelope codec: `serializeTuiProtocolMessage` writes exactly one JSON object without owning transport newlines, and `parseTuiProtocolMessage` validates the envelope plus server-event wire shape before returning it. Required malformed versions, unknown event types and malformed transcript event shape fail closed.
+
+The isolated Rust spike accepts either the original bare snapshot fixture or the same versioned snapshot envelope. The cross-language proof serializes an envelope in TypeScript, validates it with the TypeScript parser, passes that file to Rust and reproduces the canonical 80x24 Help hash exactly.
+
+This is a codec only. There is still no streaming transport, intent channel, transcript subscription or production wiring.

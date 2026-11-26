@@ -2,8 +2,9 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { tmpdir } from "node:os";
 
 const root = new URL("../..", import.meta.url).pathname;
 const spike = join(root, "scripts/tui-rs-spike");
@@ -24,6 +25,11 @@ const sizes = [
   [200, 48],
 ];
 const presets = ["ascii", "unicode", "nerd"];
+
+const {
+  parseTuiProtocolMessage,
+  serializeTuiProtocolMessage,
+} = await import("../../packages/workbench/src/tui-protocol.ts");
 
 test("Rust Help spike matches canonical hashes through a snapshot-shaped input", () => {
   execFileSync("cargo", ["build", "--offline", "--quiet"], {
@@ -51,5 +57,28 @@ test("Rust Help spike matches canonical hashes through a snapshot-shaped input",
         `${preset} ${columns}x${rows} frame hash`,
       );
     }
+  }
+
+  const fixture = join(spike, "fixtures/snapshot.json");
+  const snapshot = JSON.parse(readFileSync(fixture, "utf8"));
+  const wire = serializeTuiProtocolMessage({ type: "snapshot", snapshot });
+  assert.deepEqual(parseTuiProtocolMessage(wire).event, {
+    type: "snapshot",
+    snapshot,
+  });
+  const directory = mkdtempSync(join(tmpdir(), "nomo-rust-wire-"));
+  try {
+    const envelopePath = join(directory, "snapshot.ndjson");
+    writeFileSync(envelopePath, wire, "utf8");
+    const frame = execFileSync(binary, ["80", "24", "unicode", envelopePath], {
+      encoding: "utf8",
+    });
+    assert.equal(
+      createHash("sha256").update(frame, "utf8").digest("hex"),
+      snapshots.frames["help@80x24"].sha256,
+      "TypeScript-serialized envelope accepted by Rust",
+    );
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
   }
 });
