@@ -149,6 +149,15 @@
 - Verified: protocol 14/14, cargo 6/6, parity 1/1, original PTY matrix PASS, live transport proof PASS.
 - Honest limit: polling rather than subscription/invalidation; full snapshots only; transcript text not rendered; no intent execution, authentication, reconnect/backpressure policy or production wiring.
 
+
+## R3 bounded bidirectional run.stop proof (2026-11-26)
+
+- Rust connected mode now carries the active session id and sends a versioned `run.stop` client envelope when `s` is pressed. Protocol bytes share the TCP connection while terminal input remains local.
+- The server buffers partial NDJSON lines, validates them with `parseTuiClientMessage`, executes only `run.stop` through the real Workbench and sends validated `intent.rejected` for unsupported or failing intents.
+- Real PTY proof passes: `status running` appears, pressing `s` changes the live footer to `status cancelled`, token count stays truthful, width bounds and terminal restore hold.
+- Verified: protocol 14/14, cargo 7/7, parity 1/1, original PTY matrix PASS, bidirectional transport proof PASS.
+- Honest limit: exactly one control intent; no prompt submission, approvals, palette execution, generic acknowledgement semantics, authentication, reconnect/backpressure policy or production wiring.
+
 ## Rules that are not negotiable
 
 - No push, merge, deploy, hosted CI, dependency install, or provider-costing call unless the user explicitly asks in the current task. (This push was explicitly authorized by the user on 2026-11-25.)

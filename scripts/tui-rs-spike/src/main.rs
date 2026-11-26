@@ -12,7 +12,7 @@ use ratatui::{
     Frame, Terminal,
 };
 use serde::Deserialize;
-use std::io::{BufRead, BufReader};
+use std::io::{BufRead, BufReader, Write};
 use std::net::TcpStream;
 use std::sync::mpsc;
 use std::thread;
@@ -100,6 +100,7 @@ struct ProtocolTranscriptEvent {
 
 #[derive(Clone)]
 struct SnapshotFacts {
+    session_id: String,
     model: String,
     run_tokens: u64,
     status: String,
@@ -110,6 +111,7 @@ struct SnapshotFacts {
 impl SnapshotFacts {
     fn fixture() -> Self {
         Self {
+            session_id: "sess-visual".to_string(),
             model: FIXTURE_MODEL.to_string(),
             run_tokens: FIXTURE_RUN_TOKENS,
             status: "idle".to_string(),
@@ -169,6 +171,9 @@ fn facts_from_snapshot(snapshot: &ProtocolSnapshot) -> SnapshotFacts {
     let session = snapshot.session.as_ref();
     let transcript = snapshot.transcript.as_ref();
     SnapshotFacts {
+        session_id: session
+            .map(|value| value.id.clone())
+            .unwrap_or_else(|| "sess-visual".to_string()),
         model: session
             .map(|value| value.model.clone())
             .unwrap_or_else(|| FIXTURE_MODEL.to_string()),
@@ -417,6 +422,7 @@ fn frame_lines_with_live(
 
 fn frame_lines(columns: usize, rows: usize, model: &str, run_tokens: u64) -> Vec<String> {
     let facts = SnapshotFacts {
+        session_id: "sess-visual".to_string(),
         model: model.to_string(),
         run_tokens,
         status: "idle".to_string(),
@@ -439,8 +445,10 @@ fn run_interactive(
 ) -> Result<(), Box<dyn std::error::Error>> {
     let connected = connect.is_some();
     let (tx, rx) = mpsc::channel::<SnapshotFacts>();
+    let mut writer = None;
     if let Some(address) = connect {
         let stream = TcpStream::connect(address)?;
+        writer = Some(stream.try_clone()?);
         thread::spawn(move || {
             let reader = BufReader::new(stream);
             for line in reader.lines() {
@@ -483,6 +491,13 @@ fn run_interactive(
             Event::Key(key) if key.kind == KeyEventKind::Press => {
                 if matches!(key.code, KeyCode::Char('q') | KeyCode::Esc) {
                     break;
+                }
+                if connected && matches!(key.code, KeyCode::Char('s')) {
+                    if let Some(stream) = writer.as_mut() {
+                        let line = client_run_stop_message(&facts.session_id)?;
+                        stream.write_all(line.as_bytes())?;
+                        stream.write_all(b"\n")?;
+                    }
                 }
             }
             Event::Resize(columns, rows) => {
@@ -547,6 +562,17 @@ fn client_view_select_message(view: &str) -> Result<String, Box<dyn std::error::
     .to_string())
 }
 
+fn client_run_stop_message(session_id: &str) -> Result<String, Box<dyn std::error::Error>> {
+    if session_id.trim().is_empty() || session_id.len() > 160 {
+        return Err("invalid TUI session id".into());
+    }
+    Ok(serde_json::json!({
+        "version": 1,
+        "intent": { "type": "run.stop", "sessionId": session_id }
+    })
+    .to_string())
+}
+
 fn flag_value(args: &[String], name: &str) -> Option<String> {
     let prefix = format!("--{}=", name);
     args.iter()
@@ -605,8 +631,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 #[cfg(test)]
 mod tests {
     use super::{
-        client_view_select_message, frame_lines, snapshot_facts, visible_len, FIXTURE_MODEL,
-        FIXTURE_RUN_TOKENS,
+        client_run_stop_message, client_view_select_message, frame_lines, snapshot_facts,
+        visible_len, FIXTURE_MODEL, FIXTURE_RUN_TOKENS,
     };
 
     #[test]
@@ -686,5 +712,16 @@ mod tests {
         assert_eq!(value["intent"]["view"], "help");
         assert!(!line.contains('\n'));
         assert!(client_view_select_message("not-a-view").is_err());
+    }
+
+    #[test]
+    fn client_run_stop_intent_is_versioned_ndjson() {
+        let line = client_run_stop_message("session-1").expect("intent serializes");
+        let value: serde_json::Value = serde_json::from_str(&line).expect("intent json");
+        assert_eq!(value["version"], 1);
+        assert_eq!(value["intent"]["type"], "run.stop");
+        assert_eq!(value["intent"]["sessionId"], "session-1");
+        assert!(!line.contains('\n'));
+        assert!(client_run_stop_message("").is_err());
     }
 }

@@ -104,3 +104,10 @@ The isolated Rust spike now parses the optional transcript page and carries sess
 The bounded server now starts one real host-only Workbench run whose fixture runner emits delayed events, polls the real projection at 100 ms, and writes a new validated snapshot only when the wire payload changes. The real PTY proof observes `status running` become `status idle` with a truthful transcript page count while exact terminal bounds hold.
 
 This is live polling, not a Workbench subscription or event-driven invalidation. Full snapshots are still sent, transcript text is not rendered, there is no intent execution, authentication, reconnect/backpressure policy or production wiring.
+
+
+## R3 bounded bidirectional run.stop proof, 2026-11-26
+
+The loopback transport is now bidirectional for one deliberately narrow control intent. The Rust interactive client carries the active session id from the snapshot, serializes a versioned `run.stop` client envelope when the operator presses `s`, writes it as NDJSON on the same TCP connection and keeps terminal input separate from protocol input.
+
+The fixture server buffers partial client lines, validates them with `parseTuiClientMessage`, executes only `run.stop` through the real Workbench and rejects every other intent with a validated `intent.rejected` event. The cancellable fixture host runner observes the abort signal and terminates cancelled; the polling snapshot stream carries the truthful status back to Rust. No generic acknowledgement semantic is claimed for control intents: state transition or explicit rejection is the evidence.

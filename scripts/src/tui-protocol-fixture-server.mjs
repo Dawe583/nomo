@@ -6,6 +6,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Workbench } from "../../packages/workbench/src/index.ts";
 import {
+  parseTuiClientMessage,
   parseTuiProtocolMessage,
   serializeTuiProtocolMessage,
   tuiSnapshotFromWorkbench,
@@ -27,15 +28,20 @@ const runner = (host) => ({
     workspaceMode: "opaque",
     cancellation: "may-be-unknown",
   }),
-  start: async () => {
+  start: async (input) => {
     const runId = randomUUID();
     async function* events() {
       yield { type: "status", runId, sequence: 1, status: "starting" };
-      await delay(300);
+      await delay(200);
       yield { type: "status", runId, sequence: 2, status: "running" };
-      await delay(300);
+      for (let step = 0; step < 100; step += 1) {
+        await delay(100);
+        if (input.signal.aborted) {
+          yield { type: "terminal", runId, sequence: 3, status: "cancelled" };
+          return;
+        }
+      }
       yield { type: "assistant-message", runId, sequence: 3, text: `${host} complete` };
-      await delay(300);
       yield { type: "terminal", runId, sequence: 4, status: "completed" };
     }
     return {
@@ -79,10 +85,34 @@ const snapshotFor = () =>
     provider: { status: "unavailable" },
   });
 
-const encode = (snapshot) => {
-  const line = serializeTuiProtocolMessage({ type: "snapshot", snapshot });
+const encodeEvent = (event) => {
+  const line = serializeTuiProtocolMessage(event);
   parseTuiProtocolMessage(line);
   return `${line}\n`;
+};
+
+const encode = (snapshot) => encodeEvent({ type: "snapshot", snapshot });
+
+const rejectIntent = (socket, error) => {
+  if (socket.destroyed) return;
+  socket.write(encodeEvent({
+    type: "intent.rejected",
+    error: {
+      code: "fixture-intent-rejected",
+      message: (error instanceof Error ? error.message : String(error)).slice(0, 500),
+    },
+  }));
+};
+
+const handleIntent = async (socket, line) => {
+  try {
+    const message = parseTuiClientMessage(line);
+    if (message.intent.type !== "run.stop")
+      throw new Error(`fixture transport does not execute ${message.intent.type}`);
+    app.stopRun(message.intent.sessionId);
+  } catch (error) {
+    rejectIntent(socket, error);
+  }
 };
 
 const server = createServer((socket) => {
@@ -98,6 +128,17 @@ const server = createServer((socket) => {
   };
   publish();
   const timer = setInterval(publish, 100);
+  let incoming = "";
+  socket.on("data", (chunk) => {
+    incoming += chunk.toString("utf8");
+    let index = incoming.indexOf("\n");
+    while (index >= 0) {
+      const line = incoming.slice(0, index);
+      incoming = incoming.slice(index + 1);
+      if (line.trim()) void handleIntent(socket, line);
+      index = incoming.indexOf("\n");
+    }
+  });
   socket.on("close", () => clearInterval(timer));
 });
 

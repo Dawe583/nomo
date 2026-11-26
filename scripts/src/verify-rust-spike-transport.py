@@ -99,7 +99,8 @@ def run_case(columns=80, rows=24):
             assert marker in screen.text(), f"missing {marker}\n{screen.text()}"
         wait_for("host-fixture-live/host")
         wait_for("status running")
-        wait_for("status idle", timeout=8)
+        os.write(master, b"s")
+        wait_for("status cancelled", timeout=8)
         assert "tokens 0" in screen.text(), "host session token count did not render"
         assert "page " in screen.text(), "live transcript page count did not render"
         assert screen.overflow == 0, f"terminal rows overflowed: {screen.overflow}"

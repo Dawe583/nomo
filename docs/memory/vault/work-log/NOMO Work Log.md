@@ -9784,3 +9784,8 @@ The transport proof now uses a real isolated `Workbench` with two host-only sess
 ## 2026-11-26 R2c live Workbench status stream surface
 
 The isolated Rust spike now understands transcript-page metadata and shows session status plus truthful page position only in connected mode, leaving canonical Help byte parity unchanged. The bounded server starts a real host-only Workbench run, polls the real projection and emits changed validated snapshots as delayed fixture events arrive; the real PTY proof watches `status running` become `status idle`. Protocol, cargo, parity and PTY checks stay green. This is polling with full snapshots, not subscription/invalidation, transcript rendering, intent execution or production wiring. [[NOMO TUI]]
+
+
+## 2026-11-26 R3 bounded bidirectional run.stop proof
+
+The isolated Rust transport is now bidirectional for one narrow control intent. Pressing `s` sends a versioned `run.stop` envelope over the same loopback TCP connection; the server validates it, executes it against the real Workbench, and the polling snapshot stream returns truthful `status cancelled` in a real PTY. Unsupported or failing intents receive validated rejection events. Protocol, cargo, parity and original PTY checks stay green. This is not prompt submission, approvals, palette execution, generic acknowledgement semantics or production wiring. [[NOMO TUI]]
