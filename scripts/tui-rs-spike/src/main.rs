@@ -1,5 +1,8 @@
 use crossterm::{
-    event::{self, Event, KeyCode, KeyEventKind, KeyModifiers},
+    event::{
+        self, DisableBracketedPaste, EnableBracketedPaste, Event, KeyCode, KeyEventKind,
+        KeyModifiers,
+    },
     execute,
     terminal::{
         disable_raw_mode, enable_raw_mode, size as terminal_size, EnterAlternateScreen,
@@ -353,7 +356,14 @@ fn visible_len(value: &str) -> usize {
 fn fit(value: &str, width: usize) -> String {
     let mut out = String::new();
     let mut used = 0usize;
-    for point in value.chars() {
+    for raw in value.chars() {
+        let point = if matches!(raw, '\n' | '\r') {
+            '⏎'
+        } else if raw.is_control() {
+            ' '
+        } else {
+            raw
+        };
         let cell = UnicodeWidthStr::width(point.to_string().as_str());
         if used + cell > width {
             break;
@@ -362,6 +372,90 @@ fn fit(value: &str, width: usize) -> String {
         used += cell;
     }
     out
+}
+
+struct Composer {
+    text: String,
+    cursor: usize,
+}
+
+impl Composer {
+    fn new() -> Self {
+        Self {
+            text: String::new(),
+            cursor: 0,
+        }
+    }
+
+    fn insert_char(&mut self, ch: char) {
+        if self.text.len() + ch.len_utf8() > 500 {
+            return;
+        }
+        self.text.insert(self.cursor, ch);
+        self.cursor += ch.len_utf8();
+    }
+
+    fn insert_str(&mut self, value: &str) {
+        for ch in value.chars() {
+            self.insert_char(ch);
+        }
+    }
+
+    fn backspace(&mut self) {
+        if self.cursor == 0 {
+            return;
+        }
+        let previous = self.text[..self.cursor]
+            .char_indices()
+            .last()
+            .map_or(0, |(index, _)| index);
+        self.text.replace_range(previous..self.cursor, "");
+        self.cursor = previous;
+    }
+
+    fn delete(&mut self) {
+        if self.cursor >= self.text.len() {
+            return;
+        }
+        let ch = self.text[self.cursor..]
+            .chars()
+            .next()
+            .expect("cursor is before a character");
+        self.text
+            .replace_range(self.cursor..self.cursor + ch.len_utf8(), "");
+    }
+
+    fn left(&mut self) {
+        if self.cursor == 0 {
+            return;
+        }
+        self.cursor = self.text[..self.cursor]
+            .char_indices()
+            .last()
+            .map_or(0, |(index, _)| index);
+    }
+
+    fn right(&mut self) {
+        if let Some(ch) = self.text[self.cursor..].chars().next() {
+            self.cursor += ch.len_utf8();
+        }
+    }
+
+    fn display(&self) -> String {
+        let mut raw = self.text.clone();
+        raw.insert(self.cursor, '▏');
+        raw.chars()
+            .map(|ch| {
+                if matches!(ch, '\n' | '\r') {
+                    '⏎'
+                } else if ch.is_control() {
+                    ' '
+                } else {
+                    ch
+                }
+            })
+            .collect()
+    }
 }
 
 fn pad(value: &str, width: usize) -> String {
@@ -691,13 +785,13 @@ fn run_interactive(
 
     enable_raw_mode()?;
     let mut stdout = std::io::stdout();
-    execute!(stdout, EnterAlternateScreen)?;
+    execute!(stdout, EnterAlternateScreen, EnableBracketedPaste)?;
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
     let mut size = (columns, rows);
     let mut facts = initial_facts;
     let mut scroll = 0usize;
-    let mut composer: Option<String> = None;
+    let mut composer: Option<Composer> = None;
     let mut redraw = true;
     loop {
         let mut updated = false;
@@ -710,13 +804,14 @@ fn run_interactive(
             updated = true;
         }
         if redraw || updated {
+            let composer_text = composer.as_ref().map(Composer::display);
             let lines = frame_lines_with_live(
                 size.0 as usize,
                 size.1 as usize,
                 &facts,
                 connected,
                 scroll,
-                composer.as_deref(),
+                composer_text.as_deref(),
             );
             terminal.draw(|frame| draw_lines(frame, &lines))?;
             redraw = false;
@@ -725,6 +820,12 @@ fn run_interactive(
             continue;
         }
         match event::read()? {
+            Event::Paste(text) => {
+                if let Some(buffer) = composer.as_mut() {
+                    buffer.insert_str(&text);
+                    redraw = true;
+                }
+            }
             Event::Key(key) if key.kind == KeyEventKind::Press => {
                 if !connected {
                     if matches!(key.code, KeyCode::Char('q') | KeyCode::Esc) {
@@ -737,8 +838,11 @@ fn run_interactive(
                         KeyCode::Esc => {
                             composer = None;
                         }
+                        KeyCode::Enter if key.modifiers.contains(KeyModifiers::ALT) => {
+                            buffer.insert_char('\n');
+                        }
                         KeyCode::Enter => {
-                            let prompt = buffer.trim().to_string();
+                            let prompt = buffer.text.trim().to_string();
                             if !prompt.is_empty() {
                                 if let Some(stream) = writer.as_mut() {
                                     let key = next_idempotency_key();
@@ -749,8 +853,15 @@ fn run_interactive(
                             }
                             composer = None;
                         }
-                        KeyCode::Backspace => {
-                            buffer.pop();
+                        KeyCode::Backspace => buffer.backspace(),
+                        KeyCode::Delete => buffer.delete(),
+                        KeyCode::Left => buffer.left(),
+                        KeyCode::Right => buffer.right(),
+                        KeyCode::Home => buffer.cursor = 0,
+                        KeyCode::End => buffer.cursor = buffer.text.len(),
+                        KeyCode::Char('u') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+                            buffer.text.clear();
+                            buffer.cursor = 0;
                         }
                         KeyCode::Char(ch)
                             if matches!(
@@ -758,9 +869,7 @@ fn run_interactive(
                                 KeyModifiers::NONE | KeyModifiers::SHIFT
                             ) =>
                         {
-                            if buffer.len() < 500 {
-                                buffer.push(ch);
-                            }
+                            buffer.insert_char(ch);
                         }
                         _ => {}
                     }
@@ -825,7 +934,7 @@ fn run_interactive(
                         }
                     }
                     KeyCode::Char('i') => {
-                        composer = Some(String::new());
+                        composer = Some(Composer::new());
                         redraw = true;
                     }
                     KeyCode::Char('s') => {
@@ -851,7 +960,11 @@ fn run_interactive(
         }
     }
     disable_raw_mode()?;
-    execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
+    execute!(
+        terminal.backend_mut(),
+        DisableBracketedPaste,
+        LeaveAlternateScreen
+    )?;
     terminal.show_cursor()?;
     Ok(())
 }
@@ -1023,8 +1136,8 @@ mod tests {
     use super::{
         apply_wire_update, client_run_stop_message, client_session_create_message,
         client_session_select_message, client_view_select_message, frame_lines,
-        frame_lines_with_live, snapshot_facts, visible_len, wire_update_from_raw, SnapshotFacts,
-        TranscriptRow, FIXTURE_MODEL, FIXTURE_RUN_TOKENS,
+        frame_lines_with_live, snapshot_facts, visible_len, wire_update_from_raw, Composer,
+        SnapshotFacts, TranscriptRow, FIXTURE_MODEL, FIXTURE_RUN_TOKENS,
     };
 
     #[test]
@@ -1140,6 +1253,26 @@ mod tests {
         assert_eq!(value["intent"]["sessionId"], "session-1");
         assert!(!line.contains('\n'));
         assert!(client_session_select_message("").is_err());
+    }
+
+    #[test]
+    fn composer_edits_unicode_cursor_and_sanitizes_display() {
+        let mut composer = Composer::new();
+        composer.insert_str("abč");
+        composer.left();
+        composer.insert_char('X');
+        assert_eq!(composer.text, "abXč");
+        composer.backspace();
+        assert_eq!(composer.text, "abč");
+        composer.right();
+        assert_eq!(composer.cursor, composer.text.len());
+        composer.left();
+        composer.delete();
+        assert_eq!(composer.text, "ab");
+        composer.insert_str("\nž");
+        assert_eq!(composer.text, "ab\nž");
+        composer.cursor = 0;
+        assert_eq!(composer.display(), "▏ab⏎ž");
     }
     #[test]
     fn connected_frame_surfaces_latest_assistant_text() {

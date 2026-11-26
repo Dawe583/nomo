@@ -220,6 +220,15 @@
 - Verified: protocol 14/14, Workbench typecheck PASS, cargo 12/12, Rust parity 1/1, original PTY matrix PASS, transport proof PASS.
 - Honest limit: no session manager, fuzzy search, titles, ordering control, multi-client ownership, unread markers, transcript paging or production semantics.
 
+
+## R11 composer editing, bracketed paste and control-safe rendering (2026-11-26)
+
+- Rust composer is cursor-aware: Left/Right/Home/End, Backspace/Delete, Ctrl+U clear, Unicode-boundary-safe insertion and shared bounded typing/paste path. Display uses `▏` as insertion marker.
+- Interactive mode enables bracketed paste and disables it before terminal restore. `Event::Paste` inserts payloads instead of interpreting them as keystrokes.
+- Control-safe rendering maps newline/carriage return to `⏎` and other controls to spaces, preventing exact-row corruption. Real PTY proof pastes `hello\nrust composer`, submits it and observes the sanitized row in the live Workbench transcript.
+- Verified: protocol 14/14, cargo 13/13, Rust parity 1/1, original PTY matrix PASS, transport proof PASS.
+- Honest limit: no terminal cursor positioning, selection, undo, clipboard integration, word movement, multiline editor viewport or soft-wrapped editing. Alt+Enter is terminal-dependent; bracketed paste is the proven multiline path.
+
 ## Rules that are not negotiable
 
 - No push, merge, deploy, hosted CI, dependency install, or provider-costing call unless the user explicitly asks in the current task. (This push was explicitly authorized by the user on 2026-11-25.)

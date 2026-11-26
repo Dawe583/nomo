@@ -9824,3 +9824,8 @@ The connected Rust spike now has a narrow prompt composer. Pressing `i` opens bo
 ## 2026-11-26 R10 bounded session selection and projection switching
 
 The Rust transport proof now supports bounded session selection. `[` and `]` cycle the snapshot session list through validated `session.select` envelopes; the fixture server validates the target and switches projection immediately. The real PTY proof moves between the initial host run and a composer-created run and observes both transcripts. Focused protocol, typecheck, Rust, parity and PTY gates pass. This is not yet a session manager or production navigation model. [[NOMO TUI]]
+
+
+## 2026-11-26 R11 composer editing, bracketed paste and control-safe rendering
+
+The Rust composer is now cursor-aware with Unicode-safe editing, Ctrl+U clear and bounded insertion shared by typing and bracketed paste. Paste payloads no longer become keystrokes, and control characters render as visible safe glyphs instead of corrupting exact rows. The real PTY proof pastes a multiline prompt, submits it and observes the sanitized transcript row through real Workbench projection. Focused gates pass. This is not yet a full multiline editor with selection, undo or terminal cursor positioning. [[NOMO TUI]]

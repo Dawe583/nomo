@@ -170,3 +170,13 @@ The protocol now validates a narrow `session.select` client intent. It is projec
 The fixture server validates the id against the current snapshot session list, switches only its active projection and publishes immediately because projection selection is server-local rather than a Workbench mutation. Session creation also publishes deterministically after creation. The real PTY proof creates a second session, moves back to the initial cancelled host run with `[`, returns to the created run with `]`, and observes each transcript's distinct final row across terminal wrapping.
 
 This is bounded selection, not a session manager: no fuzzy search, titles, ordering control, multi-client ownership, unread markers, transcript paging across the wire or production semantics exist.
+
+
+## R11 composer editing, bracketed paste and control-safe rendering, 2026-11-26
+
+The Rust composer is now cursor-aware rather than append-only. Left/Right/Home/End move by Unicode scalar boundaries, Backspace/Delete edit at the cursor, Ctrl+U clears the buffer, Alt+Enter inserts a newline where the terminal reports it, and a bounded 500-byte insert path is shared by typing and paste. The composer display uses an explicit `▏` insertion marker; `q` remains text while composing.
+
+Interactive mode enables bracketed paste and disables it before restoring the terminal. `Event::Paste` inserts the pasted payload at the cursor instead of interpreting it as keystrokes. Control characters can no longer corrupt exact row geometry: rendering maps newline/carriage return to `⏎` and other control characters to spaces. The real PTY proof pastes `hello
+rust composer` as one bracketed paste, submits it, and observes the sanitized transcript row through real Workbench projection.
+
+This is still not a full editor: no terminal cursor positioning, selection, undo, clipboard integration, word movement, multi-line viewport or soft-wrapped editing exists. Alt+Enter depends on terminal key encoding; bracketed paste is the proven multiline path.
