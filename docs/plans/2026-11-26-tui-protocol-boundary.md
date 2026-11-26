@@ -118,3 +118,10 @@ The fixture server buffers partial client lines, validates them with `parseTuiCl
 The isolated Rust client now carries the latest assistant transcript text from the protocol page and renders it only in connected interactive mode. The non-connected Help frame remains the canonical byte-parity surface. The fixture host runner emits an early bounded assistant message before it waits, so the real PTY proof sees `live transcript visible` while the run is active and then verifies `run.stop` cancellation.
 
 This is a narrow proof surface, not a chat view: no scrolling transcript, role separation, markdown rendering, paging, prompt composer or production wiring exists.
+
+
+## R5 bounded transcript rows, 2026-11-26
+
+The connected Rust surface now carries the newest eight non-empty transcript rows in ascending order and renders each as a bounded `kind text` row before the static Help reference content. Rows are wrapped through the same cell-width pipeline and remain inside the exact terminal frame. Canonical non-connected Help parity is unchanged.
+
+This is still a proof surface rather than a chat view: no scrolling, role styling, markdown, pagination controls, composer or production wiring exists.

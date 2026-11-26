@@ -166,6 +166,14 @@
 - Verified: cargo 8/8, Rust parity 1/1, transport proof PASS, protocol 14/14, original PTY matrix PASS.
 - Honest limit: narrow proof surface only; no scrolling chat, role separation, markdown rendering, paging, composer or production wiring.
 
+
+## R5 bounded transcript rows (2026-11-26)
+
+- Connected Rust mode now carries and renders the newest eight non-empty transcript rows in ascending order as bounded `kind text` rows.
+- The rows use the same cell-width wrapping/padding pipeline and remain inside exact terminal bounds; non-connected canonical Help parity stays unchanged.
+- Verified: cargo 8/8, transport proof PASS, Rust parity 1/1, original PTY matrix PASS, protocol 14/14.
+- Honest limit: proof surface only; no scrolling, role styling, markdown, pagination controls, composer or production wiring.
+
 ## Rules that are not negotiable
 
 - No push, merge, deploy, hosted CI, dependency install, or provider-costing call unless the user explicitly asks in the current task. (This push was explicitly authorized by the user on 2026-11-25.)

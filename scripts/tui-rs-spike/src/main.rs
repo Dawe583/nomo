@@ -106,7 +106,7 @@ struct SnapshotFacts {
     status: String,
     event_count: u64,
     latest_seq: u64,
-    assistant_text: String,
+    transcript_lines: Vec<(String, String)>,
 }
 
 impl SnapshotFacts {
@@ -118,7 +118,7 @@ impl SnapshotFacts {
             status: "idle".to_string(),
             event_count: 0,
             latest_seq: 0,
-            assistant_text: String::new(),
+            transcript_lines: Vec::new(),
         }
     }
 }
@@ -190,13 +190,20 @@ fn facts_from_snapshot(snapshot: &ProtocolSnapshot) -> SnapshotFacts {
             .unwrap_or_else(|| "idle".to_string()),
         event_count: transcript.map_or(0, |page| page.events.len() as u64),
         latest_seq: transcript.map_or(0, |page| page.latest_seq),
-        assistant_text: transcript
-            .and_then(|page| {
+        transcript_lines: transcript
+            .map(|page| {
                 page.events
                     .iter()
+                    .filter(|event| !event.text.trim().is_empty())
+                    .map(|event| (event.kind.clone(), event.text.clone()))
+                    .collect::<Vec<_>>()
+                    .into_iter()
                     .rev()
-                    .find(|event| event.kind == "assistant")
-                    .map(|event| event.text.clone())
+                    .take(8)
+                    .collect::<Vec<_>>()
+                    .into_iter()
+                    .rev()
+                    .collect()
             })
             .unwrap_or_default(),
     }
@@ -403,8 +410,10 @@ fn frame_lines_with_live(
     let body_budget = rows.saturating_sub(6 + footer_count);
     let mut body = Vec::new();
     let mut source = Vec::new();
-    if live && !facts.assistant_text.is_empty() {
-        source.push(format!("LIVE {}", facts.assistant_text));
+    if live && !facts.transcript_lines.is_empty() {
+        for (kind, text) in &facts.transcript_lines {
+            source.push(format!("{} {}", kind, text));
+        }
         source.push(String::new());
     }
     source.extend(content_lines(body_width));
@@ -445,7 +454,7 @@ fn frame_lines(columns: usize, rows: usize, model: &str, run_tokens: u64) -> Vec
         status: "idle".to_string(),
         event_count: 0,
         latest_seq: 0,
-        assistant_text: String::new(),
+        transcript_lines: Vec::new(),
     };
     frame_lines_with_live(columns, rows, &facts, false)
 }
@@ -751,7 +760,10 @@ mod tests {
             status: "running".to_string(),
             event_count: 1,
             latest_seq: 1,
-            assistant_text: "live transcript visible".to_string(),
+            transcript_lines: vec![(
+                "assistant".to_string(),
+                "live transcript visible".to_string(),
+            )],
         };
         let frame = frame_lines_with_live(80, 24, &facts, true);
         assert!(frame

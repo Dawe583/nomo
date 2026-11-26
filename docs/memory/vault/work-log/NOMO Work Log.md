@@ -9794,3 +9794,8 @@ The isolated Rust transport is now bidirectional for one narrow control intent. 
 ## 2026-11-26 R4 bounded transcript text surface
 
 The isolated Rust client now renders the latest assistant transcript text in connected mode while preserving canonical Help byte parity outside that mode. In the real Workbench transport proof, `live transcript visible` appears during the run before `s` sends the validated stop intent and the footer becomes cancelled. Cargo, parity, protocol and original PTY checks stay green. This is not yet a chat view: no scrolling transcript, roles, markdown, paging, composer or production wiring. [[NOMO TUI]]
+
+
+## 2026-11-26 R5 bounded transcript rows
+
+The connected Rust spike now renders the newest eight non-empty transcript rows in ascending order as bounded `kind text` rows, using the same cell-width pipeline and preserving canonical non-connected Help parity. Cargo, transport, parity, PTY and protocol checks stay green. This is still not a chat view: no scrolling, styling, markdown, pagination controls, composer or production wiring. [[NOMO TUI]]
