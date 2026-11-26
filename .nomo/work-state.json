@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-26T10:06:20Z",
+  "updatedAt": "2026-11-26T10:13:00Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -3525,6 +3525,185 @@
       ],
       "stopCondition": "After one targeted repair, record the exact failing verifier output and continue an independent ready node. Stop immediately if content, prompt text, secrets or decision authority enters the retrieval record.",
       "completedAt": "2026-11-26T10:06:20Z"
+    },
+    {
+      "id": "d1-session-search-wiring",
+      "status": "done",
+      "owner": "devin-3309bbeef254415e92cba37026acc1cf",
+      "dependsOn": [
+        "c2-retrieval-hit-accounting"
+      ],
+      "scope": [
+        "packages/workbench/src/session-search.ts",
+        "packages/workbench/src/session-search-tool.test.ts",
+        "packages/workbench/src/workspace.ts",
+        "packages/workbench/src/index.ts",
+        "scripts/src/module-inventory.test.mjs",
+        "docs/memory/vault/work-log/NOMO Work Log.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "session search is reachable from a real session when explicitly enabled",
+        "results are bounded, redacted and exclude the caller",
+        "the module-inventory orphan allowlist has no session-search entry"
+      ],
+      "verifier": [
+        "pnpm --filter @nomo/workbench exec node --experimental-strip-types --test src/session-search.test.ts src/session-search-tool.test.ts src/plan.test.ts src/plan-tool.test.ts src/goals.test.ts src/goal-runtime.test.ts src/project-context-files.test.ts src/project-access.test.ts",
+        "node --test scripts/src/module-inventory.test.mjs",
+        "pnpm --filter @nomo/workbench typecheck",
+        "pnpm --filter @nomo/workbench test",
+        "git diff --check"
+      ],
+      "evidence": [
+        "Audit proof: session-search.ts has 2 production importers; the real-session test proves the enabled tool is offered, returns a bounded redacted hit after restart and excludes the caller, while disabled by default.",
+        "Focused wiring verifier: pnpm --filter @nomo/workbench exec node --experimental-strip-types --test src/session-search.test.ts src/session-search-tool.test.ts src/plan.test.ts src/plan-tool.test.ts src/goals.test.ts src/goal-runtime.test.ts src/project-context-files.test.ts src/project-access.test.ts observed 85 tests, 84 pass, 0 fail, 1 skipped, duration_ms 907.983166.",
+        "Module inventory verifier: node --test scripts/src/module-inventory.test.mjs observed 2 tests, 2 pass, 0 fail, duration_ms 125.767292; scanned 281 non-test files, resolved 181 workbench import edges, found 49 modules and only test-fixture.ts without an importer.",
+        "pnpm --filter @nomo/workbench typecheck observed exit 0.",
+        "Workbench wide verifier from the unchanged production tree: pnpm --filter @nomo/workbench test observed 1434 tests, 1431 pass, 0 fail, 3 skipped, duration_ms 29305.505042.",
+        "git diff --check observed exit 0.",
+        "Not verified: no hosted CI, provider smoke, paid benchmark or live credential path was run.",
+        "Docs verifier after recording: node --test scripts/src/doc-truth.test.mjs scripts/src/no-dash.test.mjs observed 10 tests, 10 pass, 0 fail, duration_ms 175.174125.",
+        "node scripts/src/work-graph-check.mjs after recording observed graph-check: duplicate ids 0 / dangling deps 0 / done without evidence 0."
+      ],
+      "completedAt": "2026-11-26T10:12:00Z",
+      "stopCondition": "Audit only. If production reachability is absent, implement the smallest truthful wiring surface rather than recording completion."
+    },
+    {
+      "id": "d2-plan-tool-wiring",
+      "status": "done",
+      "owner": "devin-3309bbeef254415e92cba37026acc1cf",
+      "dependsOn": [
+        "d1-session-search-wiring"
+      ],
+      "scope": [
+        "packages/workbench/src/plan.ts",
+        "packages/workbench/src/plan-tool.test.ts",
+        "packages/workbench/src/workspace.ts",
+        "packages/workbench/src/index.ts",
+        "scripts/src/module-inventory.test.mjs",
+        "docs/memory/vault/work-log/NOMO Work Log.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "nomo_plan_update is reachable from a real session",
+        "the accepted plan returns to the model and persists across restart",
+        "the module-inventory orphan allowlist has no plan entry"
+      ],
+      "verifier": [
+        "pnpm --filter @nomo/workbench exec node --experimental-strip-types --test src/session-search.test.ts src/session-search-tool.test.ts src/plan.test.ts src/plan-tool.test.ts src/goals.test.ts src/goal-runtime.test.ts src/project-context-files.test.ts src/project-access.test.ts",
+        "node --test scripts/src/module-inventory.test.mjs",
+        "pnpm --filter @nomo/workbench typecheck",
+        "pnpm --filter @nomo/workbench test",
+        "git diff --check"
+      ],
+      "evidence": [
+        "Audit proof: plan.ts has 3 production importers; the real-session test proves nomo_plan_update is offered, its result returns to the model, invalid replacements are refused and the accepted plan survives restart.",
+        "Focused wiring verifier: pnpm --filter @nomo/workbench exec node --experimental-strip-types --test src/session-search.test.ts src/session-search-tool.test.ts src/plan.test.ts src/plan-tool.test.ts src/goals.test.ts src/goal-runtime.test.ts src/project-context-files.test.ts src/project-access.test.ts observed 85 tests, 84 pass, 0 fail, 1 skipped, duration_ms 907.983166.",
+        "Module inventory verifier: node --test scripts/src/module-inventory.test.mjs observed 2 tests, 2 pass, 0 fail, duration_ms 125.767292; scanned 281 non-test files, resolved 181 workbench import edges, found 49 modules and only test-fixture.ts without an importer.",
+        "pnpm --filter @nomo/workbench typecheck observed exit 0.",
+        "Workbench wide verifier from the unchanged production tree: pnpm --filter @nomo/workbench test observed 1434 tests, 1431 pass, 0 fail, 3 skipped, duration_ms 29305.505042.",
+        "git diff --check observed exit 0.",
+        "Not verified: no hosted CI, provider smoke, paid benchmark or live credential path was run.",
+        "Docs verifier after recording: node --test scripts/src/doc-truth.test.mjs scripts/src/no-dash.test.mjs observed 10 tests, 10 pass, 0 fail, duration_ms 175.174125.",
+        "node scripts/src/work-graph-check.mjs after recording observed graph-check: duplicate ids 0 / dangling deps 0 / done without evidence 0."
+      ],
+      "completedAt": "2026-11-26T10:12:00Z",
+      "stopCondition": "Audit only. If production reachability is absent, implement the smallest truthful wiring surface rather than recording completion."
+    },
+    {
+      "id": "d3-goals-wiring",
+      "status": "done",
+      "owner": "devin-3309bbeef254415e92cba37026acc1cf",
+      "dependsOn": [
+        "d2-plan-tool-wiring"
+      ],
+      "scope": [
+        "packages/workbench/src/goals.ts",
+        "packages/workbench/src/goal-runtime.test.ts",
+        "packages/workbench/src/index.ts",
+        "scripts/src/module-inventory.test.mjs",
+        "docs/memory/vault/work-log/NOMO Work Log.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "operator goals are reachable from a real session",
+        "allowlisted gates run, forbidden gates never run, and terminal states persist truthfully",
+        "the module-inventory orphan allowlist has no goals entry"
+      ],
+      "verifier": [
+        "pnpm --filter @nomo/workbench exec node --experimental-strip-types --test src/session-search.test.ts src/session-search-tool.test.ts src/plan.test.ts src/plan-tool.test.ts src/goals.test.ts src/goal-runtime.test.ts src/project-context-files.test.ts src/project-access.test.ts",
+        "node --test scripts/src/module-inventory.test.mjs",
+        "pnpm --filter @nomo/workbench typecheck",
+        "pnpm --filter @nomo/workbench test",
+        "git diff --check"
+      ],
+      "evidence": [
+        "Audit proof: goals.ts has a production importer in index.ts; the real-session runtime tests prove an operator goal starts work, a passing allowlisted gate completes it, a forbidden gate never runs and stalled or budget-limited states stop continuation.",
+        "Focused wiring verifier: pnpm --filter @nomo/workbench exec node --experimental-strip-types --test src/session-search.test.ts src/session-search-tool.test.ts src/plan.test.ts src/plan-tool.test.ts src/goals.test.ts src/goal-runtime.test.ts src/project-context-files.test.ts src/project-access.test.ts observed 85 tests, 84 pass, 0 fail, 1 skipped, duration_ms 907.983166.",
+        "Module inventory verifier: node --test scripts/src/module-inventory.test.mjs observed 2 tests, 2 pass, 0 fail, duration_ms 125.767292; scanned 281 non-test files, resolved 181 workbench import edges, found 49 modules and only test-fixture.ts without an importer.",
+        "pnpm --filter @nomo/workbench typecheck observed exit 0.",
+        "Workbench wide verifier from the unchanged production tree: pnpm --filter @nomo/workbench test observed 1434 tests, 1431 pass, 0 fail, 3 skipped, duration_ms 29305.505042.",
+        "git diff --check observed exit 0.",
+        "Not verified: no hosted CI, provider smoke, paid benchmark or live credential path was run.",
+        "Docs verifier after recording: node --test scripts/src/doc-truth.test.mjs scripts/src/no-dash.test.mjs observed 10 tests, 10 pass, 0 fail, duration_ms 175.174125.",
+        "node scripts/src/work-graph-check.mjs after recording observed graph-check: duplicate ids 0 / dangling deps 0 / done without evidence 0."
+      ],
+      "completedAt": "2026-11-26T10:12:00Z",
+      "stopCondition": "Audit only. If production reachability is absent, implement the smallest truthful wiring surface rather than recording completion."
+    },
+    {
+      "id": "d4-project-context-wiring",
+      "status": "done",
+      "owner": "devin-3309bbeef254415e92cba37026acc1cf",
+      "dependsOn": [
+        "d3-goals-wiring"
+      ],
+      "scope": [
+        "packages/workbench/src/project-context-files.ts",
+        "packages/workbench/src/project-context-files.test.ts",
+        "packages/workbench/src/project-access.test.ts",
+        "packages/workbench/src/index.ts",
+        "scripts/src/module-inventory.test.mjs",
+        "docs/memory/vault/work-log/NOMO Work Log.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "project context files are reachable from a real confirmed project session",
+        "unsafe, oversized or untracked context files are refused rather than read",
+        "the module-inventory orphan allowlist has no project-context-files entry"
+      ],
+      "verifier": [
+        "pnpm --filter @nomo/workbench exec node --experimental-strip-types --test src/session-search.test.ts src/session-search-tool.test.ts src/plan.test.ts src/plan-tool.test.ts src/goals.test.ts src/goal-runtime.test.ts src/project-context-files.test.ts src/project-access.test.ts",
+        "node --test scripts/src/module-inventory.test.mjs",
+        "pnpm --filter @nomo/workbench typecheck",
+        "pnpm --filter @nomo/workbench test",
+        "git diff --check"
+      ],
+      "evidence": [
+        "Audit proof: project-context-files.ts has a production importer in index.ts; project-access tests prove confirmed custom-profile sessions receive project capability after explicit confirmation and restart reconfirmation, while context-file tests refuse oversized, symlinked, non-UTF8 and untracked files.",
+        "Focused wiring verifier: pnpm --filter @nomo/workbench exec node --experimental-strip-types --test src/session-search.test.ts src/session-search-tool.test.ts src/plan.test.ts src/plan-tool.test.ts src/goals.test.ts src/goal-runtime.test.ts src/project-context-files.test.ts src/project-access.test.ts observed 85 tests, 84 pass, 0 fail, 1 skipped, duration_ms 907.983166.",
+        "Module inventory verifier: node --test scripts/src/module-inventory.test.mjs observed 2 tests, 2 pass, 0 fail, duration_ms 125.767292; scanned 281 non-test files, resolved 181 workbench import edges, found 49 modules and only test-fixture.ts without an importer.",
+        "pnpm --filter @nomo/workbench typecheck observed exit 0.",
+        "Workbench wide verifier from the unchanged production tree: pnpm --filter @nomo/workbench test observed 1434 tests, 1431 pass, 0 fail, 3 skipped, duration_ms 29305.505042.",
+        "git diff --check observed exit 0.",
+        "Not verified: no hosted CI, provider smoke, paid benchmark or live credential path was run.",
+        "Docs verifier after recording: node --test scripts/src/doc-truth.test.mjs scripts/src/no-dash.test.mjs observed 10 tests, 10 pass, 0 fail, duration_ms 175.174125.",
+        "node scripts/src/work-graph-check.mjs after recording observed graph-check: duplicate ids 0 / dangling deps 0 / done without evidence 0."
+      ],
+      "completedAt": "2026-11-26T10:12:00Z",
+      "stopCondition": "Audit only. If production reachability is absent, implement the smallest truthful wiring surface rather than recording completion."
     }
   ]
 }
