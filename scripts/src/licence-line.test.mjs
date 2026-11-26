@@ -565,6 +565,19 @@ test("the classification lists did not drift from the tree", () => {
   }
 });
 
+function hasSubstantiveFile(path) {
+  for (const entry of readdirSync(path, { withFileTypes: true })) {
+    if (entry.name === ".DS_Store" || entry.name === "__pycache__") continue;
+    const child = join(path, entry.name);
+    if (entry.isDirectory()) {
+      if (hasSubstantiveFile(child)) return true;
+    } else if (!entry.name.endsWith(".pyc")) {
+      return true;
+    }
+  }
+  return false;
+}
+
 test("the licence line covers every directory in the tree", () => {
   // The partition. `git ls-files` rather than readdirSync, because the question is
   // what the repository contains rather than what a build happened to leave
@@ -611,6 +624,7 @@ test("the licence line covers every directory in the tree", () => {
   for (const name of readdirSync("apps").sort()) {
     if (!statSync(join("apps", name)).isDirectory()) continue;
     const path = `apps/${name}`;
+    if (!hasSubstantiveFile(path)) continue;
     assert.ok(
       LICENCE_LINE.has(path),
       `${path} has no licence status in the gate. An unclassified app is not an open app.`,

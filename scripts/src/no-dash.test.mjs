@@ -17,6 +17,12 @@ const EXCLUDE_DIRS = new Set([
   "prime-src",
   ".build",
   ".cache",
+  // Sibling worktrees, protected submodules, agent scratch state and browser
+  // captures are not authored text in this checkout.
+  ".worktrees",
+  ".gstack",
+  ".playwright-mcp",
+  "nomo-web",
   // Machine-generated repository understanding indexes. They are scanned
   // artifacts, not authored interface or documentation text.
   ".ua",
