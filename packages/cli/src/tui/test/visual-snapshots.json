@@ -42,22 +42,22 @@
       "maxVisibleLength": 52
     },
     "chat-busy@80x24": {
-      "sha256": "fa28fc5dafcd78dbb534180f19daab09a9a85f9bbdf4f274c81a8204d1a5b1d5",
+      "sha256": "a07f8c59d352efa9ce5104e1349b8d34ea73e7298354f0f322721b9bcc35376b",
       "rows": 24,
       "maxVisibleLength": 80
     },
     "chat-busy@120x40": {
-      "sha256": "fd0b10b502599a2a2589978c1aa73eed3e177478e7f6a5ce3bd0701cf5c83330",
+      "sha256": "cd4472fa8fc29c043cd93025ecb30319062315c0e57b4b7117a68c71441c57e0",
       "rows": 40,
       "maxVisibleLength": 120
     },
     "chat-busy@160x45": {
-      "sha256": "32b8be6b664fb3de6ce6a9829a58f9c706a343aacc4066e4a7287f4a67ea37b9",
+      "sha256": "c6a985ed7d376655edb4930e7e85dec9ab253e1cccd8476af6f8377f66cd02b2",
       "rows": 45,
       "maxVisibleLength": 160
     },
     "chat-busy@200x48": {
-      "sha256": "99c99e47240ddd528363899c79f7d6d9d8664f4a8ddfe1c9586670d27234fc10",
+      "sha256": "c29cf280646b3a26c94725200a724cd5ce8bf95d3d5211efa31edf87a3689617",
       "rows": 48,
       "maxVisibleLength": 200
     },

@@ -94,6 +94,7 @@ import {
   visibleLength,
 } from "./layout.ts";
 import { inlineMarkdownParts } from "./chat-markdown.ts";
+import { minimapEventsFromRows, renderMinimap } from "./minimap.ts";
 import { detectCapabilities } from "./caps.ts";
 import type { TerminalCapabilities } from "./types.ts";
 import { renderShortcutLegend } from "./shortcuts.ts";
@@ -13318,6 +13319,9 @@ export function sessionRowFactSpans(
   };
 }
 
+/** Chat may spend one edge column on a positional minimap from this width. */
+export const CHAT_MINIMAP_MIN_WIDTH = 72;
+
 export function renderWorkspace(
   ui: WorkspaceTui,
   columns: number,
@@ -14078,7 +14082,16 @@ export function renderWorkspace(
   // The rail is a fixed right column, so the transcript is laid out to the
   // narrower width it leaves. Nothing is ever painted over a transcript row:
   // the two panes cannot overlap because the text was wrapped for the pane.
-  const bodyTextWidth = Math.max(1, width - 4 - chatRailWidth);
+  const chatMinimapWidth =
+    chatBaseVisible &&
+    terminalWidth >= CHAT_MINIMAP_MIN_WIDTH &&
+    sessionEvents.length > 0
+      ? 1
+      : 0;
+  const bodyTextWidth = Math.max(
+    1,
+    width - 4 - chatRailWidth - chatMinimapWidth,
+  );
   const reserved =
     header.length +
     banner.length +
@@ -14242,7 +14255,7 @@ export function renderWorkspace(
     // is one column past it. Publishing both keeps mouse selection on the
     // transcript instead of letting it repaint the status rail.
     textWidth: bodyTextWidth,
-    ...(chatRailWidth > 0
+    ...(chatRailWidth + chatMinimapWidth > 0
       ? { railStart: chatPanelMarginX + 1 + bodyTextWidth }
       : {}),
   };
@@ -14261,6 +14274,24 @@ export function renderWorkspace(
   }
   const palette = getPalette(ui.themeConfig.colorTheme);
   const symbols = getSymbols(ui.themeConfig.symbolPreset);
+  const chatMinimap =
+    chatMinimapWidth > 0 && styled !== undefined
+      ? renderMinimap(minimapEventsFromRows(styled), {
+          height: bodyHeight,
+          viewportStart: offset,
+          viewportEnd: Math.min(lines.length, offset + bodyHeight),
+          totalEvents: lines.length,
+          ascii: ui.themeConfig.symbolPreset === "ascii",
+          paint: (value, tone, bold) =>
+            paintWithPalette(
+              value,
+              tone as keyof ColorPalette,
+              palette,
+              caps,
+              bold,
+            ),
+        })
+      : [];
   // The NIB card is an overlay on the body viewport, not a panel: it replaces
   // the top body rows for as long as it is open, so the composer, the dock and
   // the frame height never move. The title names the key that closes it.
@@ -15665,10 +15696,17 @@ export function renderWorkspace(
         heading,
       );
     };
+    const minimapCell = (index: number): string =>
+      chatMinimapWidth > 0 ? (chatMinimap[index] ?? " ") : "";
     const chatBodyRows =
       chatRail.length > 0
-        ? bodyRows.map((row, index) => `${row}${railRow(chatRail[index] ?? "")}`)
-        : bodyRows;
+        ? bodyRows.map(
+            (row, index) =>
+              `${row}${railRow(chatRail[index] ?? "")}${minimapCell(index)}`,
+          )
+        : chatMinimapWidth > 0
+          ? bodyRows.map((row, index) => `${row}${minimapCell(index)}`)
+          : bodyRows;
     // The sticky breadcrumb is drawn only while the transcript is scrolled up
     // and there is more transcript than the body can show. It takes one body
     // row rather than adding one, so the composer, the status row and the
@@ -15823,7 +15861,7 @@ export function renderWorkspace(
       // The rail paints on the transcript rows only, so the band starts after
       // the header, the sticky line and the overlay rows. A click inside it
       // belongs to the rail.
-      ...(chatRail.length > 0
+      ...(chatRail.length > 0 || chatMinimapWidth > 0
         ? {
             railTop:
               chatPrefix.length +

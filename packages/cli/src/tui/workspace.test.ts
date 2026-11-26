@@ -42,6 +42,7 @@ import {
   chatRows,
   commandSuggestions,
   compactTaskHeaderLabel,
+  CHAT_MINIMAP_MIN_WIDTH,
   COMPOSER_SLOT_LADDER,
   composerAttachmentChip,
   composerBottomRail,
@@ -3144,8 +3145,8 @@ test("the TODO rail and chip come from the assistant's real checklist", async (t
   const railWidth = Math.min(34, Math.max(24, Math.floor(innerWidth * 0.28)));
   assert.equal(
     wideRows[headingRow]!.indexOf("TODO 1/5"),
-    2 + innerWidth - railWidth,
-    "the rail is the fixed right column",
+    2 + innerWidth - railWidth - 1,
+    "the rail keeps its fixed column before the one-cell minimap edge",
   );
   // The gauge shares the heading row, so the card gains a shape without
   // spending a row on it. One of five done fills the first fifth.
@@ -3624,8 +3625,8 @@ test("the chat rail shows real child activity at five terminal sizes", async (t)
   assert.ok(activity !== undefined, "the real child tool rides its own row");
   assert.match(
     activity!,
-    /✓ todo_write\s*$/,
-    "the recorded name is printed and no target is invented",
+    /✓ todo_write\s+▸\s*$/,
+    "the recorded name is printed, the minimap stays at the edge and no target is invented",
   );
   assert.ok(
     wide.indexOf(activity!) > heading,
@@ -4527,7 +4528,7 @@ test("the rail never paints over transcript text", async (t) => {
   ).split("\n");
   const innerWidth = 120 - 4;
   const railWidth = Math.min(34, Math.max(24, Math.floor(innerWidth * 0.28)));
-  const railStart = 2 + innerWidth - railWidth;
+  const railStart = 2 + innerWidth - railWidth - 1;
   assert.ok(
     rows.some((row) => row.slice(0, railStart).includes("X")),
     "the transcript is still drawn",

@@ -10,6 +10,7 @@ import {
   MODE_ICON,
   TAB_ICONS,
   TAB_ICON_TONE,
+  CHAT_MINIMAP_MIN_WIDTH,
   WorkspaceTui,
   chatRows,
   filterKeyForTab,
@@ -3600,11 +3601,13 @@ function chatRailGeometry(columns: number) {
   const margin = columns >= 56 ? 2 : columns >= 40 ? 1 : 0;
   const width = Math.max(1, columns - margin * 2);
   const railWidth = Math.min(34, Math.max(24, Math.floor(width * 0.28)));
-  const textWidth = Math.max(1, width - 4 - railWidth);
+  const minimapWidth = columns >= CHAT_MINIMAP_MIN_WIDTH ? 1 : 0;
+  const textWidth = Math.max(1, width - 4 - railWidth - minimapWidth);
   return {
     margin,
     width,
     railWidth,
+    minimapWidth,
     textWidth,
     railStart: margin + 1 + textWidth,
   };
@@ -3760,24 +3763,39 @@ test("a highlight clamps to its width limit and keeps the default", () => {
   assert.equal(stripAnsi(clamped), frame);
 });
 
-test("40x12 and 80x24 keep every row selectable without a rail", async (t) => {
+test("40x12 keeps every row selectable while 80x24 bounds the minimap edge", async (t) => {
   for (const [columns, rows] of [
     [40, 12],
     [80, 24],
   ] as const) {
     const { ui, frame } = await railFrame(t, columns, rows);
+    const minimap = columns >= CHAT_MINIMAP_MIN_WIDTH;
     assert.equal(
-      ui.viewport.railStart,
-      undefined,
-      `${columns}x${rows} publishes no rail`,
+      typeof ui.viewport.railStart === "number",
+      minimap,
+      `${columns}x${rows} publishes the nontranscript edge only when the minimap is visible`,
     );
-    assert.equal(ui.viewport.railTop, undefined);
-    assert.equal(ui.viewport.railRows, undefined);
-    assert.equal(
-      railOwnsPoint(ui.viewport, { x: columns - 1, y: rows - 1 }),
-      false,
-      `${columns}x${rows} keeps the last cell selectable`,
-    );
+    assert.equal(typeof ui.viewport.railTop === "number", minimap);
+    assert.equal(typeof ui.viewport.railRows === "number", minimap);
+    if (minimap) {
+      const edgeRow = ui.viewport.railTop!;
+      assert.equal(
+        railOwnsPoint(ui.viewport, { x: columns - 1, y: edgeRow - 1 }),
+        true,
+        `${columns}x${rows} keeps the minimap out of text selection`,
+      );
+      assert.equal(
+        railOwnsPoint(ui.viewport, { x: (ui.viewport.railStart ?? 1) - 2, y: edgeRow - 1 }),
+        false,
+        `${columns}x${rows} keeps the transcript edge selectable`,
+      );
+    } else {
+      assert.equal(
+        railOwnsPoint(ui.viewport, { x: columns - 1, y: rows - 1 }),
+        false,
+        `${columns}x${rows} keeps the last cell selectable`,
+      );
+    }
     const line = stripAnsi(frame)
       .split("\n")
       .find((row) => row.includes("ship it"));

@@ -107,6 +107,19 @@ meaning is in its text.
   `rounded`. ASCII terminals use square `+` corners.
 - Other screens open as full-screen framed panels; Escape returns to Chat.
 
+## Chat minimap
+
+- Chat may spend one right-edge column on a positional minimap from
+  `CHAT_MINIMAP_MIN_WIDTH` (72 terminal columns) when a real conversation
+  exists. Below that width the transcript keeps every cell.
+- The minimap is one cell wide and never wraps, covers or clips transcript
+  text. When the status rail is present the minimap remains the outermost edge;
+  when it is absent the minimap is the only reserved edge column.
+- Minimap glyphs are positional density, not content. The viewport marker and
+  event glyphs differ in ASCII and Unicode presets, and colour is never the
+  only carrier. Mouse selection treats the column as non-transcript chrome.
+- At 40 columns there is no minimap: the 40-column rule outranks decoration.
+
 ## Motion budget
 
 - One motion frame per 100 ms at most (the runner's motion timer). An idle,

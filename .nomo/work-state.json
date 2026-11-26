@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-26T23:44:56.212999Z",
+  "updatedAt": "2026-11-26T23:49:10.680871Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -5292,6 +5292,48 @@
         "node --test packages/cli/src/tui/minimap.test.ts: 4 passed, 0 failed."
       ],
       "stopCondition": "Stop before workspace wiring, snapshot changes or mouse hit behavior."
+    },
+    {
+      "id": "u3b-chat-minimap-wiring",
+      "status": "done",
+      "owner": "devin-desktop-local-2026-11-26",
+      "dependsOn": [
+        "u3a-minimap-primitives"
+      ],
+      "scope": [
+        "packages/cli/src/tui/workspace.ts",
+        "packages/cli/src/tui/workspace.test.ts",
+        "packages/cli/src/tui/workspace-parity.test.ts",
+        "packages/cli/src/tui/test/visual-snapshots.json",
+        "packages/cli/src/tui/DESIGN.md",
+        "docs/plans/2026-11-26-tui-upgrade-completion.md",
+        "docs/SESSION-HANDOFF.md",
+        "docs/memory/vault/work-log/NOMO Work Log.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "Chat shows a one-cell positional minimap from 72 columns when a real conversation exists",
+        "transcript text never overlaps the minimap or status rail",
+        "mouse selection treats the minimap as non-transcript chrome",
+        "40-column frames do not gain the decoration",
+        "ASCII preset uses ASCII minimap glyphs",
+        "visual snapshot change is intentional and reviewed"
+      ],
+      "verifier": [
+        "pnpm --dir packages/cli typecheck",
+        "node --test --test-concurrency=1 packages/cli/src/tui/workspace.test.ts packages/cli/src/tui/workspace-parity.test.ts packages/cli/src/tui/a11y.test.ts packages/cli/src/tui/visual-snapshots.test.ts packages/cli/src/tui/minimap.test.ts",
+        "node scripts/src/work-graph-check.mjs",
+        "git diff --check"
+      ],
+      "evidence": [
+        "pnpm --dir packages/cli typecheck: exit 0.",
+        "Focused workspace/parity/a11y/visual/minimap tests: 251 passed, 0 failed.",
+        "Manual captured-frame review at chat-busy@80x24: minimap occupies only the outer one-cell edge and does not cover transcript text; NOMO_UPDATE_SNAPSHOTS=1 then wrote 120 hashes."
+      ],
+      "stopCondition": "Stop before minimap click/drag navigation, virtual scrollback or production Rust wiring."
     }
   ]
 }

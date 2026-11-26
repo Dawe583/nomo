@@ -275,6 +275,10 @@ TypeScript TUI completion audit recorded. Original T1-T18 plus transcript-positi
 
 The orphaned minimap module is now a tested primitive: exact-height one-cell rendering, row-to-event mapping, approval precedence, sequence gaps, unicode and complete ASCII glyphs. Evidence: CLI typecheck exit 0; focused minimap tests 4/4. It is not yet wired into Chat.
 
+## U3b Chat minimap wiring (2026-11-26)
+
+Chat now wires the tested minimap as a one-cell positional edge from 72 columns when a real conversation exists. The transcript is wrapped one cell narrower, mouse selection treats the edge as chrome, ASCII uses ASCII glyphs, and 40-column frames are unchanged. Intended visual change reviewed at 80x24 before accepting snapshots. Evidence: CLI typecheck exit 0; focused workspace/parity/a11y/visual/minimap tests 251/251; 120 visual snapshot hashes accepted intentionally.
+
 ## Rules that are not negotiable
 
 - No push, merge, deploy, hosted CI, dependency install, or provider-costing call unless the user explicitly asks in the current task. (This push was explicitly authorized by the user on 2026-11-25.)
