@@ -34,14 +34,15 @@ const runner = (host) => ({
       yield { type: "status", runId, sequence: 1, status: "starting" };
       await delay(200);
       yield { type: "status", runId, sequence: 2, status: "running" };
+      await delay(200);
+      yield { type: "assistant-message", runId, sequence: 3, text: "live transcript visible" };
       for (let step = 0; step < 100; step += 1) {
         await delay(100);
         if (input.signal.aborted) {
-          yield { type: "terminal", runId, sequence: 3, status: "cancelled" };
+          yield { type: "terminal", runId, sequence: 4, status: "cancelled" };
           return;
         }
       }
-      yield { type: "assistant-message", runId, sequence: 3, text: `${host} complete` };
       yield { type: "terminal", runId, sequence: 4, status: "completed" };
     }
     return {

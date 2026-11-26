@@ -111,3 +111,10 @@ This is live polling, not a Workbench subscription or event-driven invalidation.
 The loopback transport is now bidirectional for one deliberately narrow control intent. The Rust interactive client carries the active session id from the snapshot, serializes a versioned `run.stop` client envelope when the operator presses `s`, writes it as NDJSON on the same TCP connection and keeps terminal input separate from protocol input.
 
 The fixture server buffers partial client lines, validates them with `parseTuiClientMessage`, executes only `run.stop` through the real Workbench and rejects every other intent with a validated `intent.rejected` event. The cancellable fixture host runner observes the abort signal and terminates cancelled; the polling snapshot stream carries the truthful status back to Rust. No generic acknowledgement semantic is claimed for control intents: state transition or explicit rejection is the evidence.
+
+
+## R4 bounded transcript text surface, 2026-11-26
+
+The isolated Rust client now carries the latest assistant transcript text from the protocol page and renders it only in connected interactive mode. The non-connected Help frame remains the canonical byte-parity surface. The fixture host runner emits an early bounded assistant message before it waits, so the real PTY proof sees `live transcript visible` while the run is active and then verifies `run.stop` cancellation.
+
+This is a narrow proof surface, not a chat view: no scrolling transcript, role separation, markdown rendering, paging, prompt composer or production wiring exists.

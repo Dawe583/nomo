@@ -158,6 +158,14 @@
 - Verified: protocol 14/14, cargo 7/7, parity 1/1, original PTY matrix PASS, bidirectional transport proof PASS.
 - Honest limit: exactly one control intent; no prompt submission, approvals, palette execution, generic acknowledgement semantics, authentication, reconnect/backpressure policy or production wiring.
 
+
+## R4 bounded transcript text surface (2026-11-26)
+
+- Rust connected mode now extracts the latest assistant transcript text from protocol pages and renders it live. Non-connected Help output preserves canonical byte parity.
+- The real Workbench fixture emits `live transcript visible` before waiting; the PTY proof sees that text while running, then pressing `s` cancels the run through the validated `run.stop` intent.
+- Verified: cargo 8/8, Rust parity 1/1, transport proof PASS, protocol 14/14, original PTY matrix PASS.
+- Honest limit: narrow proof surface only; no scrolling chat, role separation, markdown rendering, paging, composer or production wiring.
+
 ## Rules that are not negotiable
 
 - No push, merge, deploy, hosted CI, dependency install, or provider-costing call unless the user explicitly asks in the current task. (This push was explicitly authorized by the user on 2026-11-25.)

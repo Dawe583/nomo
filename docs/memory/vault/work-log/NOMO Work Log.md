@@ -9789,3 +9789,8 @@ The isolated Rust spike now understands transcript-page metadata and shows sessi
 ## 2026-11-26 R3 bounded bidirectional run.stop proof
 
 The isolated Rust transport is now bidirectional for one narrow control intent. Pressing `s` sends a versioned `run.stop` envelope over the same loopback TCP connection; the server validates it, executes it against the real Workbench, and the polling snapshot stream returns truthful `status cancelled` in a real PTY. Unsupported or failing intents receive validated rejection events. Protocol, cargo, parity and original PTY checks stay green. This is not prompt submission, approvals, palette execution, generic acknowledgement semantics or production wiring. [[NOMO TUI]]
+
+
+## 2026-11-26 R4 bounded transcript text surface
+
+The isolated Rust client now renders the latest assistant transcript text in connected mode while preserving canonical Help byte parity outside that mode. In the real Workbench transport proof, `live transcript visible` appears during the run before `s` sends the validated stop intent and the footer becomes cancelled. Cargo, parity, protocol and original PTY checks stay green. This is not yet a chat view: no scrolling transcript, roles, markdown, paging, composer or production wiring. [[NOMO TUI]]

@@ -106,6 +106,7 @@ struct SnapshotFacts {
     status: String,
     event_count: u64,
     latest_seq: u64,
+    assistant_text: String,
 }
 
 impl SnapshotFacts {
@@ -117,6 +118,7 @@ impl SnapshotFacts {
             status: "idle".to_string(),
             event_count: 0,
             latest_seq: 0,
+            assistant_text: String::new(),
         }
     }
 }
@@ -188,6 +190,15 @@ fn facts_from_snapshot(snapshot: &ProtocolSnapshot) -> SnapshotFacts {
             .unwrap_or_else(|| "idle".to_string()),
         event_count: transcript.map_or(0, |page| page.events.len() as u64),
         latest_seq: transcript.map_or(0, |page| page.latest_seq),
+        assistant_text: transcript
+            .and_then(|page| {
+                page.events
+                    .iter()
+                    .rev()
+                    .find(|event| event.kind == "assistant")
+                    .map(|event| event.text.clone())
+            })
+            .unwrap_or_default(),
     }
 }
 
@@ -391,7 +402,13 @@ fn frame_lines_with_live(
     let footer_count = if columns >= 120 { 2usize } else { 3usize };
     let body_budget = rows.saturating_sub(6 + footer_count);
     let mut body = Vec::new();
-    for line in content_lines(body_width) {
+    let mut source = Vec::new();
+    if live && !facts.assistant_text.is_empty() {
+        source.push(format!("LIVE {}", facts.assistant_text));
+        source.push(String::new());
+    }
+    source.extend(content_lines(body_width));
+    for line in source {
         for chunk in wrap_cells(&line, body_width) {
             body.push(chunk);
         }
@@ -428,6 +445,7 @@ fn frame_lines(columns: usize, rows: usize, model: &str, run_tokens: u64) -> Vec
         status: "idle".to_string(),
         event_count: 0,
         latest_seq: 0,
+        assistant_text: String::new(),
     };
     frame_lines_with_live(columns, rows, &facts, false)
 }
@@ -631,8 +649,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 #[cfg(test)]
 mod tests {
     use super::{
-        client_run_stop_message, client_view_select_message, frame_lines, snapshot_facts,
-        visible_len, FIXTURE_MODEL, FIXTURE_RUN_TOKENS,
+        client_run_stop_message, client_view_select_message, frame_lines, frame_lines_with_live,
+        snapshot_facts, visible_len, SnapshotFacts, FIXTURE_MODEL, FIXTURE_RUN_TOKENS,
     };
 
     #[test]
@@ -723,5 +741,25 @@ mod tests {
         assert_eq!(value["intent"]["sessionId"], "session-1");
         assert!(!line.contains('\n'));
         assert!(client_run_stop_message("").is_err());
+    }
+    #[test]
+    fn connected_frame_surfaces_latest_assistant_text() {
+        let facts = SnapshotFacts {
+            session_id: "session-1".to_string(),
+            model: "model".to_string(),
+            run_tokens: 0,
+            status: "running".to_string(),
+            event_count: 1,
+            latest_seq: 1,
+            assistant_text: "live transcript visible".to_string(),
+        };
+        let frame = frame_lines_with_live(80, 24, &facts, true);
+        assert!(frame
+            .iter()
+            .any(|row| row.contains("live transcript visible")));
+        let canonical = frame_lines_with_live(80, 24, &facts, false);
+        assert!(!canonical
+            .iter()
+            .any(|row| row.contains("live transcript visible")));
     }
 }

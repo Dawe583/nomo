@@ -99,6 +99,7 @@ def run_case(columns=80, rows=24):
             assert marker in screen.text(), f"missing {marker}\n{screen.text()}"
         wait_for("host-fixture-live/host")
         wait_for("status running")
+        wait_for("live transcript visible")
         os.write(master, b"s")
         wait_for("status cancelled", timeout=8)
         assert "tokens 0" in screen.text(), "host session token count did not render"
