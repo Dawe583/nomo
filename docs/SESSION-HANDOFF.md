@@ -115,6 +115,14 @@
 - Existing evidence remains green: protocol 12/12, cargo 5/5, parity 1/1, original PTY matrix PASS.
 - Honest limit: fixture-only transport; no real Workbench event source, intents, transcript subscription, authentication, reconnect/backpressure policy or production wiring.
 
+
+## R0d client intent envelope codec (2026-11-26)
+
+- TypeScript now serializes and parses versioned client intent envelopes. Intent shape and idempotency remain owned by the existing `parseTuiIntent` validator.
+- The isolated Rust spike can emit a versioned `view.select` intent for a validated protocol view. Cross-language proof parses the Rust output with the TypeScript codec and recovers the exact intent.
+- Verified: protocol tests 14/14, cargo tests 6/6, parity test 1/1, TCP transport proof PASS.
+- Honest limit: codec only; no server executes intents, no intent acknowledgement semantics are final and no production wiring exists.
+
 ## Rules that are not negotiable
 
 - No push, merge, deploy, hosted CI, dependency install, or provider-costing call unless the user explicitly asks in the current task. (This push was explicitly authorized by the user on 2026-11-25.)

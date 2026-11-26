@@ -1,8 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  parseTuiClientMessage,
   parseTuiIntent,
   parseTuiProtocolMessage,
+  serializeTuiClientMessage,
   serializeTuiProtocolMessage,
   tuiApprovalSummary,
   tuiRenderState,
@@ -243,6 +245,37 @@ test("protocol messages fail closed for malformed JSON, versions and wire shape"
         }),
       ),
     /event\.event\.seq/u,
+  );
+});
+
+
+test("client intent messages round trip as versioned NDJSON objects", () => {
+  const intent = {
+    type: "session.create" as const,
+    prompt: "Plan the release",
+    idempotencyKey: "fixture-intent-1",
+  };
+  const line = serializeTuiClientMessage(intent);
+  assert.equal(line.includes("\n"), false);
+  assert.deepEqual(parseTuiClientMessage(line), {
+    version: TUI_PROTOCOL_VERSION,
+    intent,
+  });
+  assert.deepEqual(parseTuiClientMessage(serializeTuiClientMessage({ type: "view.select", view: "help" })).intent, {
+    type: "view.select",
+    view: "help",
+  });
+});
+
+test("client intent messages fail closed for malformed envelopes and intents", () => {
+  assert.throws(() => parseTuiClientMessage("{"), /malformed JSON/u);
+  assert.throws(
+    () => parseTuiClientMessage(JSON.stringify({ version: 2, intent: { type: "view.select", view: "help" } })),
+    /version must be 1/u,
+  );
+  assert.throws(
+    () => parseTuiClientMessage(JSON.stringify({ version: 1, intent: { type: "session.create", prompt: "x", idempotencyKey: "bad key" } })),
+    /idempotencyKey/u,
   );
 });
 

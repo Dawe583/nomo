@@ -206,6 +206,11 @@ export type TuiProtocolMessage = {
   readonly event: TuiServerEvent;
 };
 
+export type TuiClientMessage = {
+  readonly version: typeof TUI_PROTOCOL_VERSION;
+  readonly intent: TuiIntent;
+};
+
 export type TuiIntent =
   | {
       readonly type: "session.create";
@@ -496,6 +501,43 @@ function wireServerEvent(event: Record<string, unknown>): void {
     return;
   }
   invalidProtocolMessage(`unknown event type ${type}`);
+}
+
+/** Wrap one operator intent in the versioned client envelope. */
+export function tuiClientMessage(intent: TuiIntent): TuiClientMessage {
+  return { version: TUI_PROTOCOL_VERSION, intent };
+}
+
+/** Serialize one client envelope as exactly one NDJSON object; framing
+ * newlines are owned by the transport, not by the codec. */
+export function serializeTuiClientMessage(intent: TuiIntent): string {
+  return JSON.stringify(tuiClientMessage(intent));
+}
+
+/** Parse and validate one versioned client envelope. The intent validator
+ * remains the single authority for operator intent shape and idempotency. */
+export function parseTuiClientMessage(line: string): TuiClientMessage {
+  let raw: unknown;
+  try {
+    raw = JSON.parse(line);
+  } catch (error) {
+    invalidProtocolMessage(
+      `malformed JSON: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+  const message = wireRecord(raw, "message");
+  if (message.version !== TUI_PROTOCOL_VERSION)
+    invalidProtocolMessage(`version must be ${TUI_PROTOCOL_VERSION}`);
+  try {
+    return {
+      version: TUI_PROTOCOL_VERSION,
+      intent: parseTuiIntent(message.intent),
+    };
+  } catch (error) {
+    invalidProtocolMessage(
+      `intent.${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
 }
 
 /** Wrap one server event in the versioned protocol envelope. */

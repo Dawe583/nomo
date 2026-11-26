@@ -10981,10 +10981,13 @@ export class Workbench {
 }
 
 export {
+  parseTuiClientMessage,
   parseTuiIntent,
   parseTuiProtocolMessage,
+  serializeTuiClientMessage,
   serializeTuiProtocolMessage,
   tuiApprovalSummary,
+  tuiClientMessage,
   tuiProtocolMessage,
   tuiRenderState,
   tuiSessionSummary,
@@ -10998,6 +11001,7 @@ export {
 export type {
   TuiApprovalInput,
   TuiClientContext,
+  TuiClientMessage,
   TuiApprovalSummary,
   TuiIntent,
   TuiPaletteCommand,

@@ -446,6 +446,32 @@ fn render_with_ratatui(
     Ok(output.join("\n"))
 }
 
+fn client_view_select_message(view: &str) -> Result<String, Box<dyn std::error::Error>> {
+    const VIEWS: &[&str] = &[
+        "chat",
+        "sessions",
+        "runs",
+        "documents",
+        "ledger",
+        "approvals",
+        "policy",
+        "tools",
+        "mcp",
+        "status",
+        "models",
+        "usage",
+        "help",
+    ];
+    if !VIEWS.contains(&view) {
+        return Err(format!("unsupported TUI view: {view}").into());
+    }
+    Ok(serde_json::json!({
+        "version": 1,
+        "intent": { "type": "view.select", "view": view }
+    })
+    .to_string())
+}
+
 fn flag_value(args: &[String], name: &str) -> Option<String> {
     let prefix = format!("--{}=", name);
     args.iter()
@@ -454,6 +480,11 @@ fn flag_value(args: &[String], name: &str) -> Option<String> {
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = std::env::args().collect();
+    if args.get(1).map(String::as_str) == Some("client-intent") {
+        let view = args.get(2).map(String::as_str).unwrap_or("help");
+        print!("{}", client_view_select_message(view)?);
+        return Ok(());
+    }
     if args.get(1).map(String::as_str) == Some("interactive") {
         let columns = args.get(2).map_or(80, |value| value.parse().unwrap_or(80));
         let rows = args.get(3).map_or(24, |value| value.parse().unwrap_or(24));
@@ -500,7 +531,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 #[cfg(test)]
 mod tests {
-    use super::{frame_lines, snapshot_facts, visible_len, FIXTURE_MODEL, FIXTURE_RUN_TOKENS};
+    use super::{
+        client_view_select_message, frame_lines, snapshot_facts, visible_len, FIXTURE_MODEL,
+        FIXTURE_RUN_TOKENS,
+    };
 
     #[test]
     fn frame_shape_is_exact_across_the_parity_matrix() {
@@ -570,5 +604,16 @@ mod tests {
         std::fs::write(&path, r#"{"version":2}"#).expect("write fixture");
         assert!(snapshot_facts(path.to_str().expect("utf8 path")).is_err());
         let _ = std::fs::remove_file(path);
+    }
+
+    #[test]
+    fn client_view_intent_is_versioned_ndjson() {
+        let line = client_view_select_message("help").expect("intent serializes");
+        let value: serde_json::Value = serde_json::from_str(&line).expect("intent json");
+        assert_eq!(value["version"], 1);
+        assert_eq!(value["intent"]["type"], "view.select");
+        assert_eq!(value["intent"]["view"], "help");
+        assert!(!line.contains('\n'));
+        assert!(client_view_select_message("not-a-view").is_err());
     }
 }

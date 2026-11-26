@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-26T22:20:27.504866Z",
+  "updatedAt": "2026-11-26T22:22:16.644021Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -4404,6 +4404,52 @@
         "python3 scripts/src/verify-rust-spike-pty.py: PASS at 40x12, 80x24 and 120x40."
       ],
       "stopCondition": "Stop before real Workbench event streaming, intents, transcript subscription, authentication, production wiring, provider traffic, release, publish or deploy."
+    },
+    {
+      "id": "r0d-client-intent-envelope-codec",
+      "status": "done",
+      "owner": "devin-desktop-local-2026-11-26",
+      "dependsOn": [
+        "r0c-ndjson-wire-codec"
+      ],
+      "scope": [
+        "packages/workbench/src/tui-protocol.ts",
+        "packages/workbench/src/tui-protocol.test.ts",
+        "packages/workbench/src/index.ts",
+        "scripts/tui-rs-spike/src/main.rs",
+        "scripts/src/tui-rs-parity.test.mjs",
+        "docs/plans/2026-11-26-tui-protocol-boundary.md",
+        "docs/SESSION-HANDOFF.md",
+        "docs/memory/vault/work-log/NOMO Work Log.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "client intents use a versioned NDJSON envelope",
+        "the existing intent parser remains the authority for intent shape and idempotency",
+        "the isolated Rust spike can emit a validated view.select intent",
+        "TypeScript parses the Rust-emitted client envelope cross-language",
+        "no intent execution or production wiring is claimed"
+      ],
+      "verifier": [
+        "node --test packages/workbench/src/tui-protocol.test.ts",
+        "cd scripts/tui-rs-spike && cargo test --offline --quiet",
+        "node --test scripts/src/tui-rs-parity.test.mjs",
+        "python3 scripts/src/verify-rust-spike-transport.py",
+        "pnpm --filter @nomo/workbench typecheck",
+        "node scripts/src/work-graph-check.mjs",
+        "git diff --check"
+      ],
+      "evidence": [
+        "node --test packages/workbench/src/tui-protocol.test.ts: 14 tests, 14 pass, 0 fail, duration_ms 107.241083.",
+        "cd scripts/tui-rs-spike && cargo test --offline --quiet: 6 passed, 0 failed.",
+        "node --test scripts/src/tui-rs-parity.test.mjs: 1 test, 1 pass, 0 fail, duration_ms 701.495958, including Rust client intent parsed by TypeScript.",
+        "python3 scripts/src/verify-rust-spike-transport.py: PASS bounded transport prototype.",
+        "pnpm --filter @nomo/workbench typecheck: exit 0."
+      ],
+      "stopCondition": "Stop before intent execution, acknowledgement semantic changes, real Workbench event streaming, production wiring, provider traffic, release, publish or deploy."
     }
   ]
 }

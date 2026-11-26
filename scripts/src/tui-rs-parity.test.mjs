@@ -27,6 +27,7 @@ const sizes = [
 const presets = ["ascii", "unicode", "nerd"];
 
 const {
+  parseTuiClientMessage,
   parseTuiProtocolMessage,
   serializeTuiProtocolMessage,
 } = await import("../../packages/workbench/src/tui-protocol.ts");
@@ -78,6 +79,14 @@ test("Rust Help spike matches canonical hashes through a snapshot-shaped input",
       snapshots.frames["help@80x24"].sha256,
       "TypeScript-serialized envelope accepted by Rust",
     );
+
+    const clientLine = execFileSync(binary, ["client-intent", "help"], {
+      encoding: "utf8",
+    });
+    assert.deepEqual(parseTuiClientMessage(clientLine), {
+      version: 1,
+      intent: { type: "view.select", view: "help" },
+    });
   } finally {
     rmSync(directory, { recursive: true, force: true });
   }

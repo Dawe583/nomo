@@ -72,3 +72,10 @@ This is a codec only. There is still no streaming transport, intent channel, tra
 A fixture-only transport prototype now connects the isolated Rust spike to a Node TCP server. The server serializes versioned snapshot envelopes through the TypeScript codec, validates each line before writing it, sends an initial snapshot and then a changed snapshot, and the Rust interactive mode updates the visible footer in a real PTY. The proof uses only loopback TCP and fixture data.
 
 This is not a production transport. There is no real Workbench event source, intent channel, transcript subscription, authentication, reconnect policy, backpressure policy or production wiring.
+
+
+## R0d client intent envelope codec, 2026-11-26
+
+The client direction now has the same versioned NDJSON envelope discipline as the server direction. `serializeTuiClientMessage` emits exactly one JSON object and `parseTuiClientMessage` validates the envelope before delegating intent shape and idempotency rules to the existing `parseTuiIntent` authority.
+
+The isolated Rust spike can emit a versioned `view.select` intent for a validated protocol view. The cross-language proof runs the Rust binary, parses its output with the TypeScript client codec and recovers the exact intent. This is codec evidence only; no server executes the intent yet.

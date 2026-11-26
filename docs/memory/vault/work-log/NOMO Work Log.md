@@ -9764,3 +9764,8 @@ The terminal protocol now has a versioned NDJSON object codec in TypeScript and 
 ## 2026-11-26 R2 bounded TCP transport proof
 
 The isolated Rust spike now consumes versioned snapshot envelopes over loopback TCP in a real PTY. A fixture Node server writes TypeScript-validated NDJSON snapshots, and the Rust interactive mode redraws from `fixture-model` to `transport-model` with `tokens 777` before restoring the terminal on quit. Existing protocol, parity, cargo and PTY checks stay green. This is fixture-only transport: no real Workbench event source, intents, transcript subscription, authentication, reconnect or backpressure policy, and no production wiring. [[NOMO TUI]]
+
+
+## 2026-11-26 R0d client intent envelope codec
+
+The client direction of the terminal protocol now uses a versioned NDJSON envelope too. TypeScript validates the envelope and delegates intent shape plus idempotency to the existing intent parser; the isolated Rust spike can emit a validated `view.select` envelope, and TypeScript parses that exact output cross-language. Verified before recording: protocol tests 14/14, cargo tests 6/6, parity test 1/1, TCP transport proof PASS. This is still codec evidence only: no server executes intents and no production wiring exists. [[NOMO TUI]]
