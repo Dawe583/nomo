@@ -134,3 +134,12 @@ Connected interactive mode is now a separate live Chat proof surface rather than
 The fixture host runner emits thirty small assistant rows before the visible final row. The real PTY proof scrolls to the oldest row with `g`, returns to the bottom with `G`, and then proves `run.stop` cancellation. Canonical non-connected Help parity remains unchanged.
 
 This is a transcript viewport proof, not the product chat composer: no markdown, role styling, horizontal virtualization, keyboard focus model, prompt input or production wiring exists.
+
+
+## R7 incremental transcript and session streaming, 2026-11-26
+
+The bounded server now sends exactly one full snapshot when a client connects. While the selected session remains append-only, subsequent wire traffic is granular: each new transcript row is emitted as a validated `transcript.appended` event and each changed session summary as a validated `session.updated` event. A session change or sequence regression falls back to a fresh full snapshot rather than silently patching mismatched state.
+
+The Rust client now keeps sequence-bearing transcript rows, applies transcript and session updates incrementally, deduplicates by sequence, caps the retained page at 100 rows and preserves canonical non-connected Help parity. The real PTY proof still scrolls through incrementally supplied rows and cancels through `run.stop`, so the granular wire path is required for the observed transcript.
+
+The transport is still polling-based. There is no Workbench invalidation subscription, usage/provider/approval incremental event, composer, authentication, reconnect/backpressure policy or production wiring.

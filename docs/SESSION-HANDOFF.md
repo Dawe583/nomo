@@ -183,6 +183,15 @@
 - Verified: cargo 9/9, transport proof PASS, Rust parity 1/1, original PTY matrix PASS, protocol 14/14. Canonical non-connected Help parity is unchanged.
 - Honest limit: transcript viewport proof only; no markdown, role styling, focus model, composer, horizontal virtualization or production wiring.
 
+
+## R7 incremental transcript and session streaming (2026-11-26)
+
+- Server sends one initial full snapshot, then granular validated `transcript.appended` and `session.updated` events while the selected session remains append-only. Session change or sequence regression falls back to a full snapshot.
+- Rust now stores sequence-bearing transcript rows, deduplicates/applies incremental events, caps retained rows at 100 and updates session facts without replacing the whole projection.
+- Real PTY proof passes after scroll top/bottom and `run.stop`; because later full snapshots are not sent in the normal path, the visible incrementally arriving rows prove the granular wire path.
+- Verified: cargo 10/10, transport proof PASS, Rust parity 1/1, original PTY matrix PASS, protocol 14/14.
+- Honest limit: still polling-based; no Workbench invalidation subscription, usage/provider/approval increments, composer, authentication, reconnect/backpressure policy or production wiring.
+
 ## Rules that are not negotiable
 
 - No push, merge, deploy, hosted CI, dependency install, or provider-costing call unless the user explicitly asks in the current task. (This push was explicitly authorized by the user on 2026-11-25.)

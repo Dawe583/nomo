@@ -131,16 +131,43 @@ const handleIntent = async (socket, line) => {
 
 const server = createServer((socket) => {
   socket.on("error", () => {});
-  let last = "";
+  const initial = snapshotFor();
+  socket.write(encode(initial));
+  let currentSessionId = initial.session?.id;
+  let sentTranscriptSeq = initial.transcript?.latestSeq ?? 0;
+  let lastSessionJson = JSON.stringify(initial.session ?? null);
   const publish = () => {
     if (socket.destroyed) return;
-    const line = encode(snapshotFor());
-    if (line !== last) {
-      socket.write(line);
-      last = line;
+    const snapshot = snapshotFor();
+    if (snapshot.session?.id !== currentSessionId) {
+      socket.write(encode(snapshot));
+      currentSessionId = snapshot.session?.id;
+      sentTranscriptSeq = snapshot.transcript?.latestSeq ?? 0;
+      lastSessionJson = JSON.stringify(snapshot.session ?? null);
+      return;
+    }
+    const page = snapshot.transcript;
+    if (page) {
+      if (page.latestSeq < sentTranscriptSeq) {
+        socket.write(encode(snapshot));
+        sentTranscriptSeq = page.latestSeq;
+      } else {
+        for (const event of page.events.filter((row) => row.seq > sentTranscriptSeq)) {
+          socket.write(encodeEvent({
+            type: "transcript.appended",
+            sessionId: page.sessionId,
+            event,
+          }));
+          sentTranscriptSeq = Math.max(sentTranscriptSeq, event.seq);
+        }
+      }
+    }
+    const sessionJson = JSON.stringify(snapshot.session ?? null);
+    if (sessionJson !== lastSessionJson && snapshot.session) {
+      socket.write(encodeEvent({ type: "session.updated", session: snapshot.session }));
+      lastSessionJson = sessionJson;
     }
   };
-  publish();
   const timer = setInterval(publish, 100);
   let incoming = "";
   socket.on("data", (chunk) => {

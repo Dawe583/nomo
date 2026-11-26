@@ -9804,3 +9804,8 @@ The connected Rust spike now renders the newest eight non-empty transcript rows 
 ## 2026-11-26 R6 connected transcript viewport
 
 The connected Rust spike is now a real transcript-viewport proof rather than Help content with rows prepended. It renders bounded protocol transcript rows, starts pinned to the bottom and supports keyboard scrolling with exact cell-width bounds; the real PTY proof scrolls from the newest row to the oldest and back before cancellation. Canonical non-connected Help parity remains unchanged and all focused gates pass. This is not yet a composer or product chat surface. [[NOMO TUI]]
+
+
+## 2026-11-26 R7 incremental transcript and session streaming
+
+The bounded transport now sends one initial full snapshot and then granular validated `transcript.appended` / `session.updated` events. Rust keeps sequence-bearing rows, deduplicates and caps the retained page while preserving canonical non-connected parity. The real PTY proof depends on incrementally supplied rows for its scroll and cancellation flow. This remains polling-based and lacks subscription, usage/provider/approval increments, composer, authentication, reconnect/backpressure policy and production wiring. [[NOMO TUI]]

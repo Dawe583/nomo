@@ -99,6 +99,13 @@ struct ProtocolTranscriptEvent {
 }
 
 #[derive(Clone)]
+struct TranscriptRow {
+    seq: u64,
+    kind: String,
+    text: String,
+}
+
+#[derive(Clone)]
 struct SnapshotFacts {
     session_id: String,
     model: String,
@@ -106,7 +113,7 @@ struct SnapshotFacts {
     status: String,
     event_count: u64,
     latest_seq: u64,
-    transcript_lines: Vec<(String, String)>,
+    transcript_events: Vec<TranscriptRow>,
 }
 
 impl SnapshotFacts {
@@ -118,7 +125,7 @@ impl SnapshotFacts {
             status: "idle".to_string(),
             event_count: 0,
             latest_seq: 0,
-            transcript_lines: Vec::new(),
+            transcript_events: Vec::new(),
         }
     }
 }
@@ -134,6 +141,14 @@ struct ProtocolMessage {
 enum ProtocolServerEvent {
     #[serde(rename = "snapshot")]
     Snapshot { snapshot: ProtocolSnapshot },
+    #[serde(rename = "transcript.appended")]
+    TranscriptAppended {
+        #[serde(rename = "sessionId")]
+        session_id: String,
+        event: ProtocolTranscriptEvent,
+    },
+    #[serde(rename = "session.updated")]
+    SessionUpdated { session: ProtocolSession },
     #[serde(other)]
     Other,
 }
@@ -143,6 +158,102 @@ enum ProtocolServerEvent {
 enum SnapshotInput {
     Message(ProtocolMessage),
     Snapshot(ProtocolSnapshot),
+}
+
+enum WireUpdate {
+    Snapshot(SnapshotFacts),
+    TranscriptAppended {
+        session_id: String,
+        event: TranscriptRow,
+    },
+    SessionUpdated(ProtocolSession),
+}
+
+fn capped_transcript(mut rows: Vec<TranscriptRow>) -> Vec<TranscriptRow> {
+    if rows.len() > 100 {
+        rows = rows.split_off(rows.len() - 100);
+    }
+    rows
+}
+
+fn apply_wire_update(facts: &mut SnapshotFacts, update: WireUpdate) {
+    match update {
+        WireUpdate::Snapshot(next) => *facts = next,
+        WireUpdate::TranscriptAppended { session_id, event } => {
+            if session_id != facts.session_id
+                || facts
+                    .transcript_events
+                    .iter()
+                    .any(|existing| existing.seq == event.seq)
+            {
+                return;
+            }
+            facts.transcript_events.push(event);
+            facts.transcript_events.sort_by_key(|row| row.seq);
+            facts.transcript_events =
+                capped_transcript(std::mem::take(&mut facts.transcript_events));
+            facts.event_count = facts.transcript_events.len() as u64;
+            facts.latest_seq = facts
+                .transcript_events
+                .last()
+                .map_or(facts.latest_seq, |row| row.seq);
+        }
+        WireUpdate::SessionUpdated(session) => {
+            if session.id != facts.session_id {
+                return;
+            }
+            facts.model = session.model;
+            facts.status = session.status;
+            facts.run_tokens = session.run_token_count;
+        }
+    }
+}
+
+fn wire_update_from_raw(raw: &str) -> Result<WireUpdate, Box<dyn std::error::Error>> {
+    let input: SnapshotInput = serde_json::from_str(raw)?;
+    match input {
+        SnapshotInput::Snapshot(snapshot) => {
+            if snapshot.version != 1 {
+                return Err(
+                    format!("unsupported TUI protocol version: {}", snapshot.version).into(),
+                );
+            }
+            Ok(WireUpdate::Snapshot(facts_from_snapshot(&snapshot)))
+        }
+        SnapshotInput::Message(message) => {
+            if message.version != 1 {
+                return Err(
+                    format!("unsupported TUI protocol version: {}", message.version).into(),
+                );
+            }
+            match message.event {
+                ProtocolServerEvent::Snapshot { snapshot } => {
+                    if snapshot.version != 1 {
+                        return Err(format!(
+                            "unsupported TUI protocol version: {}",
+                            snapshot.version
+                        )
+                        .into());
+                    }
+                    Ok(WireUpdate::Snapshot(facts_from_snapshot(&snapshot)))
+                }
+                ProtocolServerEvent::TranscriptAppended { session_id, event } => {
+                    Ok(WireUpdate::TranscriptAppended {
+                        session_id,
+                        event: TranscriptRow {
+                            seq: event.seq,
+                            kind: event.kind,
+                            text: event.text,
+                        },
+                    })
+                }
+                ProtocolServerEvent::SessionUpdated { session } => {
+                    Ok(WireUpdate::SessionUpdated(session))
+                }
+                ProtocolServerEvent::Other => Err("unsupported TUI protocol event".into()),
+            }
+        }
+    }
 }
 
 fn snapshot_from_raw(raw: &str) -> Result<ProtocolSnapshot, Box<dyn std::error::Error>> {
@@ -157,7 +268,9 @@ fn snapshot_from_raw(raw: &str) -> Result<ProtocolSnapshot, Box<dyn std::error::
             }
             match message.event {
                 ProtocolServerEvent::Snapshot { snapshot } => snapshot,
-                ProtocolServerEvent::Other => {
+                ProtocolServerEvent::TranscriptAppended { .. }
+                | ProtocolServerEvent::SessionUpdated { .. }
+                | ProtocolServerEvent::Other => {
                     return Err("TUI protocol message is not a snapshot event".into());
                 }
             }
@@ -190,12 +303,15 @@ fn facts_from_snapshot(snapshot: &ProtocolSnapshot) -> SnapshotFacts {
             .unwrap_or_else(|| "idle".to_string()),
         event_count: transcript.map_or(0, |page| page.events.len() as u64),
         latest_seq: transcript.map_or(0, |page| page.latest_seq),
-        transcript_lines: transcript
+        transcript_events: transcript
             .map(|page| {
                 page.events
                     .iter()
-                    .filter(|event| !event.text.trim().is_empty())
-                    .map(|event| (event.kind.clone(), event.text.clone()))
+                    .map(|event| TranscriptRow {
+                        seq: event.seq,
+                        kind: event.kind.clone(),
+                        text: event.text.clone(),
+                    })
                     .collect::<Vec<_>>()
                     .into_iter()
                     .rev()
@@ -416,12 +532,16 @@ fn footer_lines(width: usize, facts: &SnapshotFacts, live: bool, scroll: usize) 
 
 fn transcript_body_lines(facts: &SnapshotFacts, width: usize) -> Vec<String> {
     let mut rows = Vec::new();
-    if facts.transcript_lines.is_empty() {
+    if facts.transcript_events.is_empty() {
         rows.push("waiting for transcript".to_string());
         return rows;
     }
-    for (kind, text) in &facts.transcript_lines {
-        let label = format!("{} {}", kind, text);
+    for event in facts
+        .transcript_events
+        .iter()
+        .filter(|event| !event.text.trim().is_empty())
+    {
+        let label = format!("{} {}", event.kind, event.text);
         rows.extend(wrap_cells(&label, width));
     }
     rows
@@ -501,7 +621,7 @@ fn frame_lines(columns: usize, rows: usize, model: &str, run_tokens: u64) -> Vec
         status: "idle".to_string(),
         event_count: 0,
         latest_seq: 0,
-        transcript_lines: Vec::new(),
+        transcript_events: Vec::new(),
     };
     frame_lines_with_live(columns, rows, &facts, false, 0)
 }
@@ -518,7 +638,7 @@ fn run_interactive(
     connect: Option<String>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let connected = connect.is_some();
-    let (tx, rx) = mpsc::channel::<SnapshotFacts>();
+    let (tx, rx) = mpsc::channel::<WireUpdate>();
     let mut writer = None;
     if let Some(address) = connect {
         let stream = TcpStream::connect(address)?;
@@ -530,8 +650,8 @@ fn run_interactive(
                 if line.trim().is_empty() {
                     continue;
                 }
-                if let Ok(facts) = snapshot_facts_from_raw(&line) {
-                    if tx.send(facts).is_err() {
+                if let Ok(update) = wire_update_from_raw(&line) {
+                    if tx.send(update).is_err() {
                         break;
                     }
                 }
@@ -550,8 +670,8 @@ fn run_interactive(
     let mut redraw = true;
     loop {
         let mut updated = false;
-        while let Ok(next_facts) = rx.try_recv() {
-            facts = next_facts;
+        while let Ok(update) = rx.try_recv() {
+            apply_wire_update(&mut facts, update);
             updated = true;
         }
         if redraw || updated {
@@ -746,8 +866,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 #[cfg(test)]
 mod tests {
     use super::{
-        client_run_stop_message, client_view_select_message, frame_lines, frame_lines_with_live,
-        snapshot_facts, visible_len, SnapshotFacts, FIXTURE_MODEL, FIXTURE_RUN_TOKENS,
+        apply_wire_update, client_run_stop_message, client_view_select_message, frame_lines,
+        frame_lines_with_live, snapshot_facts, visible_len, wire_update_from_raw, SnapshotFacts,
+        TranscriptRow, FIXTURE_MODEL, FIXTURE_RUN_TOKENS,
     };
 
     #[test]
@@ -848,10 +969,11 @@ mod tests {
             status: "running".to_string(),
             event_count: 1,
             latest_seq: 1,
-            transcript_lines: vec![(
-                "assistant".to_string(),
-                "live transcript visible".to_string(),
-            )],
+            transcript_events: vec![TranscriptRow {
+                seq: 1,
+                kind: "assistant".to_string(),
+                text: "live transcript visible".to_string(),
+            }],
         };
         let frame = frame_lines_with_live(80, 24, &facts, true, 0);
         assert!(frame
@@ -871,8 +993,12 @@ mod tests {
             status: "running".to_string(),
             event_count: 30,
             latest_seq: 30,
-            transcript_lines: (0..30)
-                .map(|index| ("assistant".to_string(), format!("row-{index:02}")))
+            transcript_events: (0..30)
+                .map(|index| TranscriptRow {
+                    seq: index + 1,
+                    kind: "assistant".to_string(),
+                    text: format!("row-{index:02}"),
+                })
                 .collect(),
         };
         let bottom = frame_lines_with_live(80, 24, &facts, true, 0);
@@ -883,5 +1009,27 @@ mod tests {
         assert!(!top.iter().any(|row| row.contains("row-29")));
         assert_eq!(top.len(), 24);
         assert!(top.iter().all(|row| visible_len(row) == 80));
+    }
+    #[test]
+    fn transcript_and_session_updates_apply_incrementally() {
+        let mut facts = SnapshotFacts::fixture();
+        let appended = wire_update_from_raw(
+            r#"{"version":1,"event":{"type":"transcript.appended","sessionId":"sess-visual","event":{"seq":1,"at":"2026-01-01T00:00:00.000Z","kind":"assistant","type":"message.completed","text":"incremental row"}}}"#,
+        )
+        .expect("append update parses");
+        apply_wire_update(&mut facts, appended);
+        assert!(facts
+            .transcript_events
+            .iter()
+            .any(|row| row.text == "incremental row"));
+        assert_eq!(facts.latest_seq, 1);
+        let updated = wire_update_from_raw(
+            r#"{"version":1,"event":{"type":"session.updated","session":{"id":"sess-visual","workspace":"ws","model":"updated-model","status":"running","continuationCount":0,"runTokenCount":7}}}"#,
+        )
+        .expect("session update parses");
+        apply_wire_update(&mut facts, updated);
+        assert_eq!(facts.model, "updated-model");
+        assert_eq!(facts.status, "running");
+        assert_eq!(facts.run_tokens, 7);
     }
 }
