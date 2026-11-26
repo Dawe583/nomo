@@ -1339,7 +1339,10 @@ test("a prompt sent during a run is queued, never dropped", async (t) => {
   await ui.command("second prompt");
   assert.equal(ui.queuedPrompt, "second prompt");
   assert.match(ui.notice, /queued/i);
-  release!(
+  for (let attempt = 0; release === undefined && attempt < 100; attempt += 1)
+    await new Promise((resolve) => setTimeout(resolve, 10));
+  assert.ok(release);
+  release(
     Response.json({
       choices: [{ message: { role: "assistant", content: "done" } }],
     }),

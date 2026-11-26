@@ -9674,3 +9674,13 @@ Audit found the retrieval index already implemented and production-reachable thr
 ## 2026-11-26 F1 later-session retrieval gate audit
 
 Audit found the product gate already implemented, so no duplicate implementation was written. A later session retrieves an operator-approved learned entry only inside the operator-named shared learning scope, the digest names the entry id and signed chain sequences, isolation remains the default, and C2 hit records prove which entries entered provider input without copying content. Session search remains opt-in, bounded, redacted, restart-safe and caller-excluding. Verified: focused retrieval and session-search 75/75, Workbench wide 1434 tests with 1431 pass, 0 fail and 3 skipped, Workbench typecheck exit 0.
+
+
+## 2026-11-26 Q20 ledger visual snapshot repair
+
+Review showed the four stale ledger frame hashes came from the intentional authored-text dash cleanup in `84574a94`; no committed TUI source change followed it before this repair. Updated only the four ledger hash fields, with row shape and content-free snapshot storage unchanged. Verified: visual snapshot 2/2, TUI wide 549 pass with 0 fail plus terminal verifier PASS every scenario at every size, diff check exit 0. [[NOMO TUI]]
+
+
+## 2026-11-26 Q21 queued-prompt test race repair
+
+Diagnosis showed the queued-prompt test released the provider gate before the first provider request existed, so the release was a no-op and the run stayed open. The test now waits, with a bounded timeout, for the real provider request before resolving it; queue assertions are unchanged. Verified: focused 1/1, TUI wide 549 pass with 0 fail plus terminal verifier PASS every scenario at every size, diff check exit 0. [[NOMO TUI]]
