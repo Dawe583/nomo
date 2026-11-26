@@ -201,6 +201,15 @@
 - Verified: Workbench typecheck PASS, subscription test 1/1, host-run tests 2/2, protocol 14/14, cargo 10/10, Rust parity 1/1, original PTY matrix PASS, transport proof PASS.
 - Honest limit: invalidation is coalesced rather than typed end-to-end; usage/provider/approval incremental handling, composer, authentication, reconnect/backpressure policy and production wiring remain absent.
 
+
+## R9 bounded composer and session.create proof (2026-11-26)
+
+- Rust connected mode now supports `i` prompt input with bounded editing, Escape cancel and Enter submit. Submission serializes validated `session.create` with a fresh idempotency key; `q` remains text while composing.
+- The fixture server deduplicates creation by idempotency key, starts a real host-only Workbench run using the prompt as its task, switches the projected active session and emits validated `intent.accepted` after the run exists.
+- Real PTY proof passes the full chain: scroll/cancel initial run, type `hello rust composer`, submit it and observe `assistant live transcript visible: hello rust composer`.
+- Verified: protocol 14/14, cargo 11/11, Rust parity 1/1, original PTY matrix PASS, transport proof PASS.
+- Honest limit: fixture executor proves protocol/idempotency/projection switching, not provider-backed session creation; no cursor movement, paste, multiline input, validation display, model selection or concurrent-create ordering.
+
 ## Rules that are not negotiable
 
 - No push, merge, deploy, hosted CI, dependency install, or provider-costing call unless the user explicitly asks in the current task. (This push was explicitly authorized by the user on 2026-11-25.)

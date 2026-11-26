@@ -46,7 +46,7 @@ const runner = (host) => ({
         };
       }
       sequence += 1;
-      yield { type: "assistant-message", runId, sequence, text: "live transcript visible" };
+      yield { type: "assistant-message", runId, sequence, text: `live transcript visible: ${input.task.slice(0, 120)}` };
       for (let step = 0; step < 100; step += 1) {
         await delay(100);
         if (input.signal.aborted) {
@@ -78,11 +78,11 @@ const app = new Workbench({
 app.registerHostRunner(runner("fixture-live"));
 
 const cwdDigest = `sha256:${createHash("sha256").update(root).digest("hex")}`;
-const startHostRun = async (host) => {
+const startHostRun = async (host, task = `Produce the ${host} transport fixture.`) => {
   const preview = await app.prepareHostRun({
     sourceId: `fixture:${host}`,
     host,
-    task: `Produce the ${host} transport fixture.`,
+    task,
     cwdDigest,
   });
   return app.startHostRun({
@@ -93,9 +93,12 @@ const startHostRun = async (host) => {
 
 const live = await startHostRun("fixture-live");
 
+let activeSessionId = live.id;
+const creations = new Map();
+
 const snapshotFor = () =>
   tuiSnapshotFromWorkbench(app, {
-    sessionId: live.id,
+    sessionId: activeSessionId,
     provider: { status: "unavailable" },
   });
 
@@ -121,9 +124,27 @@ const rejectIntent = (socket, error) => {
 const handleIntent = async (socket, line) => {
   try {
     const message = parseTuiClientMessage(line);
-    if (message.intent.type !== "run.stop")
+    if (message.intent.type === "run.stop") {
+      app.stopRun(message.intent.sessionId);
+      return;
+    }
+    if (message.intent.type !== "session.create")
       throw new Error(`fixture transport does not execute ${message.intent.type}`);
-    app.stopRun(message.intent.sessionId);
+    let creation = creations.get(message.intent.idempotencyKey);
+    if (!creation) {
+      creation = (async () => {
+        const view = await startHostRun("fixture-live", message.intent.prompt);
+        activeSessionId = view.id;
+        return view;
+      })();
+      creations.set(message.intent.idempotencyKey, creation);
+    }
+    await creation;
+    if (!socket.destroyed)
+      socket.write(encodeEvent({
+        type: "intent.accepted",
+        idempotencyKey: message.intent.idempotencyKey,
+      }));
   } catch (error) {
     rejectIntent(socket, error);
   }

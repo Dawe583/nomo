@@ -107,6 +107,11 @@ def run_case(columns=80, rows=24):
         wait_for("live transcript visible")
         os.write(master, b"s")
         wait_for("status cancelled", timeout=8)
+        os.write(master, b"i")
+        os.write(master, b"hello rust composer")
+        wait_for("prompt> hello rust composer")
+        os.write(master, b"\r")
+        wait_for("assistant live transcript visible: hello rust composer", timeout=8)
         assert "tokens 0" in screen.text(), "host session token count did not render"
         assert "page " in screen.text(), "live transcript page count did not render"
         assert screen.overflow == 0, f"terminal rows overflowed: {screen.overflow}"

@@ -9814,3 +9814,8 @@ The bounded transport now sends one initial full snapshot and then granular vali
 ## 2026-11-26 R8 event-driven Workbench invalidation
 
 Workbench now exposes additive coalesced state invalidation through `subscribe(listener)`. The bounded transport server no longer polls: subscription invalidation triggers projection diffing and granular transcript/session wire updates, while the real PTY proof still scrolls and cancels correctly. Workbench typecheck, subscription and host-run tests, protocol, Rust, parity and PTY gates pass. Remaining gaps include typed end-to-end domain events, usage/provider/approval increments, composer, authentication, reconnect/backpressure policy and production wiring. [[NOMO TUI]]
+
+
+## 2026-11-26 R9 bounded composer and session.create proof
+
+The connected Rust spike now has a narrow prompt composer. Pressing `i` opens bounded input, Enter sends a validated idempotent `session.create` envelope, and the fixture server starts a real host-only Workbench run, switches projection and acknowledges the creation. The real PTY proof types `hello rust composer` and observes it in the live transcript. All focused gates pass. This proves protocol/idempotency/projection switching, not provider-backed creation or production composer behavior. [[NOMO TUI]]

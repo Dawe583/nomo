@@ -152,3 +152,12 @@ Workbench now exposes a narrow additive `subscribe(listener)` invalidation API. 
 The bounded transport server no longer polls at 100 ms. Each connection still receives one initial full snapshot, then a subscription causes the projection diff to emit granular `transcript.appended` and `session.updated` events when Workbench state changes. The real PTY proof passes with polling removed, including scrollback and `run.stop` cancellation.
 
 Remaining limits are explicit: invalidation is coalesced rather than typed end-to-end, usage/provider/approval changes do not yet have dedicated incremental transport handling, and there is still no composer, authentication, reconnect/backpressure policy or production wiring.
+
+
+## R9 bounded composer and session.create proof, 2026-11-26
+
+The connected Rust proof surface now has a deliberately narrow composer. `i` enters prompt input, printable ASCII/Unicode characters and Backspace edit a bounded 500-byte buffer, Escape cancels the composer, and Enter serializes one validated `session.create` client envelope with a fresh protocol-shaped idempotency key. While composing, `q` is input rather than quit; outside the composer `q` and Escape retain their existing meanings.
+
+The fixture server executes only this explicit creation intent by starting another real host-only Workbench run whose task is the supplied prompt. Creations are deduplicated by idempotency key, the active projected session switches to the created run and the server emits a validated `intent.accepted` after the run exists. The Rust client ignores the acknowledgement visually; the real PTY proof instead observes the created prompt in the live transcript. This exercises the envelope, idempotency boundary, server validation and projection switching, not provider-backed session creation.
+
+This is not production chat input: no cursor movement, paste handling, editing keys, multiline input, validation display, model selection or provider semantics exist. Concurrent creation ordering is deliberately outside the single-client fixture proof.

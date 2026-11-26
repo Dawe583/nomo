@@ -1,5 +1,5 @@
 use crossterm::{
-    event::{self, Event, KeyCode, KeyEventKind},
+    event::{self, Event, KeyCode, KeyEventKind, KeyModifiers},
     execute,
     terminal::{
         disable_raw_mode, enable_raw_mode, size as terminal_size, EnterAlternateScreen,
@@ -16,6 +16,7 @@ use std::io::{BufRead, BufReader, Write};
 use std::net::TcpStream;
 use std::sync::mpsc;
 use std::thread;
+use std::time::{SystemTime, UNIX_EPOCH};
 use unicode_width::UnicodeWidthStr;
 
 const FIXTURE_MODEL: &str = "fixture-model";
@@ -470,13 +471,22 @@ fn content_lines(width: usize) -> Vec<String> {
     rows
 }
 
-fn footer_lines(width: usize, facts: &SnapshotFacts, live: bool, scroll: usize) -> Vec<String> {
+fn footer_lines(
+    width: usize,
+    facts: &SnapshotFacts,
+    live: bool,
+    scroll: usize,
+    composer: Option<&str>,
+) -> Vec<String> {
     let model = facts.model.as_str();
     let run_tokens = facts.run_tokens;
     if width < 50 {
         vec![
             if live {
-                "↑↓ scroll · g/G · s stop · q quit".to_string()
+                composer.map_or_else(
+                    || "↑↓ scroll · g/G · s stop · i prompt · q quit".to_string(),
+                    |prompt| format!("prompt> {}", prompt),
+                )
             } else {
                 "↑↓/PgUp/PgDn scroll · Esc Chat".to_string()
             },
@@ -493,7 +503,10 @@ fn footer_lines(width: usize, facts: &SnapshotFacts, live: bool, scroll: usize) 
     } else if width < 120 {
         vec![
             if live {
-                "↑/↓ scroll · g/G top/bottom · s stop · q quit".to_string()
+                composer.map_or_else(
+                    || "↑/↓ scroll · g/G · s stop · i prompt · q quit".to_string(),
+                    |prompt| format!("prompt> {}", prompt),
+                )
             } else {
                 "↑/↓ scroll · PgUp/PgDn page · Esc returns to Chat".to_string()
             },
@@ -517,7 +530,10 @@ fn footer_lines(width: usize, facts: &SnapshotFacts, live: bool, scroll: usize) 
     } else {
         vec![
             if live {
-                "↑/↓ scroll · g/G top/bottom · s stop · q quit".to_string()
+                composer.map_or_else(
+                    || "↑/↓ scroll · g/G · s stop · i prompt · q quit".to_string(),
+                    |prompt| format!("prompt> {}", prompt),
+                )
             } else {
                 "↑/↓ scroll · PgUp/PgDn page · Esc returns to Chat".to_string()
             },
@@ -558,6 +574,7 @@ fn frame_lines_with_live(
     facts: &SnapshotFacts,
     live: bool,
     scroll: usize,
+    composer: Option<&str>,
 ) -> Vec<String> {
     let body_width = columns.saturating_sub(6).max(1);
     let budget = body_budget(columns, rows);
@@ -602,7 +619,7 @@ fn frame_lines_with_live(
         out.push(pad(&format!("   {}", fit(&line, body_width)), columns));
     }
     out.push(format!(" {}{} ", "─".repeat(columns.saturating_sub(2)), ""));
-    let footer = footer_lines(columns, facts, live, scroll);
+    let footer = footer_lines(columns, facts, live, scroll, composer);
     for line in footer.iter().take(3) {
         out.push(pad(&format!(" {}", line), columns));
     }
@@ -623,7 +640,7 @@ fn frame_lines(columns: usize, rows: usize, model: &str, run_tokens: u64) -> Vec
         latest_seq: 0,
         transcript_events: Vec::new(),
     };
-    frame_lines_with_live(columns, rows, &facts, false, 0)
+    frame_lines_with_live(columns, rows, &facts, false, 0, None)
 }
 
 fn draw_lines(frame: &mut Frame, lines: &[String]) {
@@ -667,6 +684,7 @@ fn run_interactive(
     let mut size = (columns, rows);
     let mut facts = initial_facts;
     let mut scroll = 0usize;
+    let mut composer: Option<String> = None;
     let mut redraw = true;
     loop {
         let mut updated = false;
@@ -675,8 +693,14 @@ fn run_interactive(
             updated = true;
         }
         if redraw || updated {
-            let lines =
-                frame_lines_with_live(size.0 as usize, size.1 as usize, &facts, connected, scroll);
+            let lines = frame_lines_with_live(
+                size.0 as usize,
+                size.1 as usize,
+                &facts,
+                connected,
+                scroll,
+                composer.as_deref(),
+            );
             terminal.draw(|frame| draw_lines(frame, &lines))?;
             redraw = false;
         }
@@ -685,49 +709,92 @@ fn run_interactive(
         }
         match event::read()? {
             Event::Key(key) if key.kind == KeyEventKind::Press => {
-                if matches!(key.code, KeyCode::Char('q') | KeyCode::Esc) {
-                    break;
+                if !connected {
+                    if matches!(key.code, KeyCode::Char('q') | KeyCode::Esc) {
+                        break;
+                    }
+                    continue;
                 }
-                if connected {
-                    let width = size.0 as usize;
-                    let height = size.1 as usize;
-                    let max_scroll = transcript_body_lines(&facts, width.saturating_sub(6).max(1))
-                        .len()
-                        .saturating_sub(body_budget(width, height));
+                if let Some(buffer) = composer.as_mut() {
                     match key.code {
-                        KeyCode::Up | KeyCode::Char('k') => {
-                            scroll = (scroll + 1).min(max_scroll);
-                            redraw = true;
+                        KeyCode::Esc => {
+                            composer = None;
                         }
-                        KeyCode::Down | KeyCode::Char('j') => {
-                            scroll = scroll.saturating_sub(1);
-                            redraw = true;
+                        KeyCode::Enter => {
+                            let prompt = buffer.trim().to_string();
+                            if !prompt.is_empty() {
+                                if let Some(stream) = writer.as_mut() {
+                                    let key = next_idempotency_key();
+                                    let line = client_session_create_message(&prompt, &key)?;
+                                    stream.write_all(line.as_bytes())?;
+                                    stream.write_all(b"\n")?;
+                                }
+                            }
+                            composer = None;
                         }
-                        KeyCode::PageUp => {
-                            scroll = (scroll + body_budget(width, height)).min(max_scroll);
-                            redraw = true;
+                        KeyCode::Backspace => {
+                            buffer.pop();
                         }
-                        KeyCode::PageDown => {
-                            scroll = scroll.saturating_sub(body_budget(width, height));
-                            redraw = true;
-                        }
-                        KeyCode::Home | KeyCode::Char('g') => {
-                            scroll = max_scroll;
-                            redraw = true;
-                        }
-                        KeyCode::End | KeyCode::Char('G') => {
-                            scroll = 0;
-                            redraw = true;
-                        }
-                        KeyCode::Char('s') => {
-                            if let Some(stream) = writer.as_mut() {
-                                let line = client_run_stop_message(&facts.session_id)?;
-                                stream.write_all(line.as_bytes())?;
-                                stream.write_all(b"\n")?;
+                        KeyCode::Char(ch)
+                            if matches!(
+                                key.modifiers,
+                                KeyModifiers::NONE | KeyModifiers::SHIFT
+                            ) =>
+                        {
+                            if buffer.len() < 500 {
+                                buffer.push(ch);
                             }
                         }
                         _ => {}
                     }
+                    redraw = true;
+                    continue;
+                }
+                if matches!(key.code, KeyCode::Char('q') | KeyCode::Esc) {
+                    break;
+                }
+                let width = size.0 as usize;
+                let height = size.1 as usize;
+                let max_scroll = transcript_body_lines(&facts, width.saturating_sub(6).max(1))
+                    .len()
+                    .saturating_sub(body_budget(width, height));
+                match key.code {
+                    KeyCode::Up | KeyCode::Char('k') => {
+                        scroll = (scroll + 1).min(max_scroll);
+                        redraw = true;
+                    }
+                    KeyCode::Down | KeyCode::Char('j') => {
+                        scroll = scroll.saturating_sub(1);
+                        redraw = true;
+                    }
+                    KeyCode::PageUp => {
+                        scroll = (scroll + body_budget(width, height)).min(max_scroll);
+                        redraw = true;
+                    }
+                    KeyCode::PageDown => {
+                        scroll = scroll.saturating_sub(body_budget(width, height));
+                        redraw = true;
+                    }
+                    KeyCode::Home | KeyCode::Char('g') => {
+                        scroll = max_scroll;
+                        redraw = true;
+                    }
+                    KeyCode::End | KeyCode::Char('G') => {
+                        scroll = 0;
+                        redraw = true;
+                    }
+                    KeyCode::Char('i') => {
+                        composer = Some(String::new());
+                        redraw = true;
+                    }
+                    KeyCode::Char('s') => {
+                        if let Some(stream) = writer.as_mut() {
+                            let line = client_run_stop_message(&facts.session_id)?;
+                            stream.write_all(line.as_bytes())?;
+                            stream.write_all(b"\n")?;
+                        }
+                    }
+                    _ => {}
                 }
             }
             Event::Resize(columns, rows) => {
@@ -808,6 +875,42 @@ fn client_run_stop_message(session_id: &str) -> Result<String, Box<dyn std::erro
     .to_string())
 }
 
+fn valid_idempotency_key(key: &str) -> bool {
+    (8..=128).contains(&key.len())
+        && key
+            .chars()
+            .all(|ch| ch.is_ascii_alphanumeric() || matches!(ch, ':' | '_' | '-'))
+}
+
+fn client_session_create_message(
+    prompt: &str,
+    idempotency_key: &str,
+) -> Result<String, Box<dyn std::error::Error>> {
+    if prompt.trim().is_empty() || prompt.len() > 500 {
+        return Err("invalid TUI prompt".into());
+    }
+    if !valid_idempotency_key(idempotency_key) {
+        return Err("invalid TUI idempotency key".into());
+    }
+    Ok(serde_json::json!({
+        "version": 1,
+        "intent": {
+            "type": "session.create",
+            "prompt": prompt,
+            "idempotencyKey": idempotency_key
+        }
+    })
+    .to_string())
+}
+
+fn next_idempotency_key() -> String {
+    let nanos = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|duration| duration.as_nanos())
+        .unwrap_or(0);
+    format!("rust:{}:{nanos}", std::process::id())
+}
+
 fn flag_value(args: &[String], name: &str) -> Option<String> {
     let prefix = format!("--{}=", name);
     args.iter()
@@ -866,9 +969,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 #[cfg(test)]
 mod tests {
     use super::{
-        apply_wire_update, client_run_stop_message, client_view_select_message, frame_lines,
-        frame_lines_with_live, snapshot_facts, visible_len, wire_update_from_raw, SnapshotFacts,
-        TranscriptRow, FIXTURE_MODEL, FIXTURE_RUN_TOKENS,
+        apply_wire_update, client_run_stop_message, client_session_create_message,
+        client_view_select_message, frame_lines, frame_lines_with_live, snapshot_facts,
+        visible_len, wire_update_from_raw, SnapshotFacts, TranscriptRow, FIXTURE_MODEL,
+        FIXTURE_RUN_TOKENS,
     };
 
     #[test]
@@ -960,6 +1064,20 @@ mod tests {
         assert!(!line.contains('\n'));
         assert!(client_run_stop_message("").is_err());
     }
+
+    #[test]
+    fn client_session_create_intent_is_versioned_ndjson() {
+        let line = client_session_create_message("hello composer", "rust:1:abcdef")
+            .expect("intent serializes");
+        let value: serde_json::Value = serde_json::from_str(&line).expect("intent json");
+        assert_eq!(value["version"], 1);
+        assert_eq!(value["intent"]["type"], "session.create");
+        assert_eq!(value["intent"]["prompt"], "hello composer");
+        assert_eq!(value["intent"]["idempotencyKey"], "rust:1:abcdef");
+        assert!(!line.contains('\n'));
+        assert!(client_session_create_message(" ", "rust:1:abcdef").is_err());
+        assert!(client_session_create_message("hello", "bad key").is_err());
+    }
     #[test]
     fn connected_frame_surfaces_latest_assistant_text() {
         let facts = SnapshotFacts {
@@ -975,11 +1093,11 @@ mod tests {
                 text: "live transcript visible".to_string(),
             }],
         };
-        let frame = frame_lines_with_live(80, 24, &facts, true, 0);
+        let frame = frame_lines_with_live(80, 24, &facts, true, 0, None);
         assert!(frame
             .iter()
             .any(|row| row.contains("live transcript visible")));
-        let canonical = frame_lines_with_live(80, 24, &facts, false, 0);
+        let canonical = frame_lines_with_live(80, 24, &facts, false, 0, None);
         assert!(!canonical
             .iter()
             .any(|row| row.contains("live transcript visible")));
@@ -1001,10 +1119,10 @@ mod tests {
                 })
                 .collect(),
         };
-        let bottom = frame_lines_with_live(80, 24, &facts, true, 0);
+        let bottom = frame_lines_with_live(80, 24, &facts, true, 0, None);
         assert!(bottom.iter().any(|row| row.contains("row-29")));
         assert!(!bottom.iter().any(|row| row.contains("row-00")));
-        let top = frame_lines_with_live(80, 24, &facts, true, usize::MAX);
+        let top = frame_lines_with_live(80, 24, &facts, true, usize::MAX, None);
         assert!(top.iter().any(|row| row.contains("row-00")));
         assert!(!top.iter().any(|row| row.contains("row-29")));
         assert_eq!(top.len(), 24);
