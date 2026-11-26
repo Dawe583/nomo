@@ -600,7 +600,7 @@ Tři věci z referencí, které se do NOMO **neportují**, a důvod:
    `harness-scores.ts`; vlastní hillclimb zůstává jako nástroj pro práci na
    harnessu, ne jako produkt.
 3. **Auto-compaction z prime.** Hotovo jako samostatný řez HP2
-   (2026-11-21), mimo refaktor učení: `Workbench.autoCompact` komprimuje na
+   (2026-11-21), mimo refaktor učení: automatická komprese v run loopu komprimuje na
    začátku každého tahu, když konverzace drží `autoCompactMessages` zpráv
    nebo by rozpočet kontextu profilu agenta odmítl další požadavek. Shrnutí
    píše vlastní model konverzace, je označené jako nedůvěryhodná historie a

@@ -17,6 +17,8 @@ test("Stop does not release capacity until the original provider settles; shutdo
     return Response.json({ choices: [{ message: { role: "assistant", content: "Late answer" }, finish_reason: "stop" }] });
   }, {}, { prefix: "nomo-stop-", beforeShutdown: release });
   const session = await app.start("First", "fixture");
+  for (let poll = 0; poll < 200 && calls === 0; poll++) await delay(5);
+  assert.equal(calls, 1, "the first provider request must be in flight before cancellation");
   app.cancel(session.id);
   assert.throws(() => app.send(session.id, "Second"), /not ready/);
   await assert.rejects(

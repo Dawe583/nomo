@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-25T23:20:52.738841Z",
+  "updatedAt": "2026-11-26T00:12:00Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -3424,6 +3424,56 @@
       ],
       "stopCondition": "Stop if a surface weakens exact digest authority, promotes pending or rolled back entries, or turns operator lessons into decision authority.",
       "completedAt": "2026-11-26T01:05:00Z"
+    },
+    {
+      "id": "hp2-automatic-run-compaction",
+      "status": "done",
+      "owner": "devin-6293643153014f56bb088c9a71fde97a",
+      "dependsOn": [
+        "hp1b-operator-scope-surfaces"
+      ],
+      "scope": [
+        "packages/workbench/src/index.ts",
+        "packages/workbench/src/hp2-auto-compaction.test.ts",
+        "packages/workbench/src/lifecycle.test.ts",
+        "docs/HARNESS-SETTINGS.md",
+        "docs/NOMO-AGENT-HARNESS-SPEC.md",
+        "docs/plans/2026-11-25-program-handoff.md",
+        "docs/memory/vault/work-log/NOMO Work Log.md",
+        "docs/SESSION-HANDOFF.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "a conversation that used to stop at the message cap continues past it with exactly one labelled untrusted summary",
+        "automatic compaction uses the conversation provider summary and falls back to the raw extract when summarisation fails",
+        "system message and latest user turn are retained and compactMessages continues to refuse split tool groups",
+        "the transient learned-entry digest is absent from summary input and stored conversation while still reaching the provider request",
+        "agent context-budget refusal triggers compaction, repeated compaction does not summarize only its own summary",
+        "automatic compaction arms the refinement trigger and records compaction usage tokens without changing policy authority"
+      ],
+      "verifier": [
+        "pnpm --filter @nomo/workbench exec node --experimental-strip-types --test src/hp2-auto-compaction.test.ts",
+        "pnpm --filter @nomo/workbench exec node --experimental-strip-types --test src/hp2-auto-compaction.test.ts src/compaction-summary.test.ts src/context.test.ts src/workbench.test.ts src/harness-retrieval-wiring.test.ts src/refine-trigger.test.ts src/agents.test.ts src/lifecycle.test.ts",
+        "pnpm --filter @nomo/workbench test",
+        "pnpm --filter @nomo/workbench typecheck",
+        "node --test scripts/src/doc-truth.test.mjs scripts/src/no-dash.test.mjs",
+        "node --test --test-concurrency=1 scripts/src/*.test.mjs",
+        "git diff --check"
+      ],
+      "evidence": [
+        "HP2 verifier: 5 tests, 5 pass, 0 fail, cancelled 0, skipped 0, todo 0, duration_ms 726.097",
+        "focused verifier: 107 tests, 107 pass, 0 fail, cancelled 0, skipped 0, todo 0, duration_ms 8719.508459",
+        "Workbench wide verifier: 1432 tests, 1429 pass, 0 fail, cancelled 0, skipped 3, todo 0, duration_ms 28154.695125",
+        "pnpm --filter @nomo/workbench typecheck: exit 0",
+        "docs verifier: 10 tests, 10 pass, 0 fail, cancelled 0, skipped 0, todo 0, duration_ms 176.713833",
+        "scripts verifier: 435 tests, 402 pass, 0 fail, cancelled 0, skipped 32, todo 1, duration_ms 37800.863083",
+        "git diff --check: exit 0"
+      ],
+      "stopCondition": "Stop if a summary becomes system authority, a tool group is split, a learned-entry digest persists, policy authority changes, or compaction hides provider spend.",
+      "completedAt": "2026-11-26T00:12:00Z"
     }
   ]
 }

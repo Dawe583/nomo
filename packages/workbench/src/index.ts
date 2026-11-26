@@ -349,6 +349,7 @@ import {
   type ModelImage,
   type ModelImageInput,
   type ModelMessage,
+  type ModelReply,
   type ImageMimeType,
   type ProviderConfig,
 } from "./provider.ts";
@@ -4484,7 +4485,7 @@ export class Workbench {
       throw new Error(
         "Previous tool batch is incomplete. Create a branch before continuing; historical tools will not be replayed.",
       );
-    if (session.messages.length >= 199)
+    if (session.messages.length >= 199 && this.harness.autoCompactMessages === 0)
       throw new Error("Session context limit reached. Start a new session.");
     if (!session.provider) {
       const config = this.config;
@@ -4610,7 +4611,10 @@ export class Workbench {
    * context, because a turn that said "ignore your instructions" would
    * otherwise be quoted back as an instruction.
    */
-  async summarizeForCompaction(id: string): Promise<string | undefined> {
+  private async compactionSummary(
+    id: string,
+    signal?: AbortSignal,
+  ): Promise<{ readonly summary?: string; readonly usage?: ModelReply["usage"] } | undefined> {
     const session = this.sessions.get(id);
     if (!session) return undefined;
     const provider = session.provider;
@@ -4631,15 +4635,23 @@ export class Workbench {
           },
         ],
         [],
-        session.controller.signal,
+        signal ?? session.controller.signal,
       );
       const text = (reply.message.content ?? "").trim();
-      return text ? text.slice(0, COMPACTION_SUMMARY_CHARACTERS) : undefined;
-    } catch {
+      return {
+        ...(text ? { summary: text.slice(0, COMPACTION_SUMMARY_CHARACTERS) } : {}),
+        ...(reply.usage ? { usage: reply.usage } : {}),
+      };
+    } catch (error) {
+      if (session.controller.signal.aborted || signal?.aborted) throw error;
       // A summary is an improvement, never a condition. The raw extract is
       // what the compaction used before, and it still works.
       return undefined;
     }
+  }
+
+  async summarizeForCompaction(id: string): Promise<string | undefined> {
+    return (await this.compactionSummary(id))?.summary;
   }
 
   private drainQueued(): void {
@@ -10196,21 +10208,29 @@ export class Workbench {
           : null,
     };
   }
+  private contextBound(
+    session: Session,
+    tools: readonly unknown[],
+    outputTokens = 4096,
+  ): number {
+    // UTF-8 bytes plus protocol overhead are a conservative token bound, not
+    // a fabricated tokenizer measurement. Reserve the provider's fixed output
+    // ceiling too; an oversized combined context never dispatches.
+    return (
+      Buffer.byteLength(JSON.stringify(session.messages)) +
+      Buffer.byteLength(JSON.stringify(tools)) +
+      1024 +
+      outputTokens
+    );
+  }
+
   private checkContextBudget(
     session: Session,
     tools: readonly unknown[],
     outputTokens = 4096,
   ) {
     if (!session.agentProfile) return;
-    // UTF-8 bytes plus protocol overhead are a conservative token bound, not
-    // a fabricated tokenizer measurement. Reserve the provider's fixed output
-    // ceiling too; an oversized combined context never dispatches.
-    const bound =
-      Buffer.byteLength(JSON.stringify(session.messages)) +
-      Buffer.byteLength(JSON.stringify(tools)) +
-      1024 +
-      outputTokens;
-    if (bound > session.agentProfile.maxContextTokens)
+    if (this.contextBound(session, tools, outputTokens) > session.agentProfile.maxContextTokens)
       throw new Error(
         "Agent context budget reached. Increase the budget or compact before continuing.",
       );
@@ -10420,31 +10440,115 @@ export class Workbench {
         // setting, so the model is handed a summarized conversation rather
         // than the run stopping at the context limit. Zero disables it.
         const autoCompactAt = this.harness.autoCompactMessages;
-        if (autoCompactAt > 0 && session.messages.length >= autoCompactAt) {
-          const compacted = compactMessages(
-            session.view.id,
-            session.messages,
-            session.messageIds,
+        const contextBudgetWouldRefuse =
+          session.agentProfile !== undefined &&
+          this.contextBound(session, tools) > session.agentProfile.maxContextTokens;
+        if (autoCompactAt > 0 && (session.messages.length >= autoCompactAt || contextBudgetWouldRefuse)) {
+          // The retrieval digest is ephemeral prompt context, not conversation
+          // history. Take it out before summarising and compacting, then put it
+          // back for this run's provider request. Persisting it would make the
+          // harness's own retrieval text part of the evidence it reads later.
+          const activeMarker =
+            digestMarker !== undefined && session.messages.includes(digestMarker)
+              ? digestMarker
+              : undefined;
+          if (activeMarker)
+            session.messages = session.messages.filter((message) => message !== activeMarker);
+          const omitted = omittedByCompaction(session.messages);
+          const hasNewHistory = omitted.some((message, index) =>
+            index !== 0 ||
+            typeof message.content !== "string" ||
+            !message.content.startsWith("NOMO context summary."),
           );
-          session.messages = compacted.messages;
-          session.messageIds = compacted.messageIds;
-          session.view = {
-            ...session.view,
-            compaction: compacted.result,
-            contextMessages: session.messages.length,
-          };
-          this.event(
-            session,
-            "tool",
-            "Context compacted automatically.",
-            {
-              atMessages: autoCompactAt,
-              afterMessages: session.messages.length,
-              omittedMessages: compacted.result.omittedMessageCount,
-            },
-            "context.compacted",
-          );
-          this.persist();
+          if (!hasNewHistory) {
+            // A retained tail can still be longer than the threshold. Without
+            // new omitted history, compacting again would only summarize the
+            // previous summary and pay for no new information.
+            if (activeMarker) session.messages.push(activeMarker);
+            this.checkContextBudget(session, tools);
+            if (session.messages.length >= 200)
+              throw new Error("Session context limit reached. Start a new session.");
+          } else {
+            const summaryResult = await this.compactionSummary(session.view.id, signal);
+            const summary = summaryResult?.summary;
+            // The summary call spent provider tokens even when the compaction
+            // itself later refuses an incomplete tool group. Record that cost
+            // before the compaction can throw, or the spend disappears.
+            if (summaryResult?.usage) {
+              this.event(
+                session,
+                "usage",
+                `${summaryResult.usage.total_tokens ?? "Unknown"} tokens reported by the compaction summary`,
+                {
+                  ...summaryResult.usage,
+                  model: session.view.model,
+                  source: "compaction",
+                  cost: summaryResult.usage.cost_usd ?? null,
+                  ...(typeof summaryResult.usage.cost_usd === "number"
+                    ? { costUsd: summaryResult.usage.cost_usd }
+                    : {}),
+                },
+              );
+              if (summaryResult.usage.total_tokens)
+                session.view = {
+                  ...session.view,
+                  runTokenCount:
+                    session.view.runTokenCount + summaryResult.usage.total_tokens,
+                };
+            }
+            const compacted = compactMessages(
+              session.view.id,
+              session.messages,
+              session.messageIds,
+              summary ? { summary } : {},
+            );
+            session.messages = compacted.messages;
+            session.messageIds = compacted.messageIds;
+            if (activeMarker) session.messages.push(activeMarker);
+            // Compaction rewrote the prefix, so hash the compacted
+            // conversation once as the next chained batch. Keeping `previous`
+            // preserves the causal chain; resetting only the cursor prevents
+            // the shifted tail from being skipped or double-counted.
+            hashed = 0;
+            session.view = {
+              ...session.view,
+              compaction: compacted.result,
+              contextMessages: session.messages.length,
+            };
+            this.event(
+              session,
+              "tool",
+              "Context compacted automatically.",
+              {
+                automatic: true,
+                atMessages: autoCompactAt,
+                afterMessages: session.messages.length,
+                omittedMessages: compacted.result.omittedMessageCount,
+                contextBudgetWouldRefuse,
+              },
+              "context.compacted",
+            );
+            // Manual compaction is the documented arming point for the harness.
+            // Automatic compaction is the same conversation boundary, so it must
+            // arm the same trigger rather than silently bypassing learning.
+            this.harnessTriggers.set(
+              session.view.id,
+              arm(this.harnessTriggers.get(session.view.id) ?? initialTriggerState()),
+            );
+            this.persist();
+            if (maxRunTokens > 0 && session.view.runTokenCount >= maxRunTokens) {
+              session.view = { ...session.view, status: "idle" };
+              this.event(
+                session,
+                "tool",
+                `Run token budget reached (${maxRunTokens}). Review the ledger before continuing.`,
+                { status: "idle" },
+                "run.status",
+              );
+              this.persist();
+              return;
+            }
+          }
         }
         this.checkContextBudget(session, tools);
         // The record a tool call produces has to name what asked for it, and

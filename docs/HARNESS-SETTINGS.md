@@ -82,8 +82,8 @@ term. Missing measurements still stay `unmeasured`; these settings never turn an
 absent producer into zero. The breach weight remains explicit at the reward
 call site because it defines the objective being measured.
 
-`autoCompactMessages` (HP2) is read by `autoCompact` at the top of every turn
-in `run`. When the conversation holds that many messages, or an agent profile's
+`autoCompactMessages` (HP2) is read by the automatic compaction step at the
+top of every turn in `run`. When the conversation holds that many messages, or an agent profile's
 `maxContextTokens` would refuse the next request, the run compacts first: the
 same provider and model write a summary of the dropped turns, labelled as
 untrusted history in a user message, and a summary that fails falls back to
