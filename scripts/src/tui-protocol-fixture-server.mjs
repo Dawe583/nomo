@@ -34,16 +34,29 @@ const runner = (host) => ({
       yield { type: "status", runId, sequence: 1, status: "starting" };
       await delay(200);
       yield { type: "status", runId, sequence: 2, status: "running" };
-      await delay(200);
-      yield { type: "assistant-message", runId, sequence: 3, text: "live transcript visible" };
+      let sequence = 2;
+      for (let index = 0; index < 30; index += 1) {
+        await delay(10);
+        sequence += 1;
+        yield {
+          type: "assistant-message",
+          runId,
+          sequence,
+          text: `live transcript ${String(index).padStart(2, "0")}`,
+        };
+      }
+      sequence += 1;
+      yield { type: "assistant-message", runId, sequence, text: "live transcript visible" };
       for (let step = 0; step < 100; step += 1) {
         await delay(100);
         if (input.signal.aborted) {
-          yield { type: "terminal", runId, sequence: 4, status: "cancelled" };
+          sequence += 1;
+          yield { type: "terminal", runId, sequence, status: "cancelled" };
           return;
         }
       }
-      yield { type: "terminal", runId, sequence: 4, status: "completed" };
+      sequence += 1;
+      yield { type: "terminal", runId, sequence, status: "completed" };
     }
     return {
       id: runId,

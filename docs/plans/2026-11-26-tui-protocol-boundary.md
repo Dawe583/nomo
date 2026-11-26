@@ -125,3 +125,12 @@ This is a narrow proof surface, not a chat view: no scrolling transcript, role s
 The connected Rust surface now carries the newest eight non-empty transcript rows in ascending order and renders each as a bounded `kind text` row before the static Help reference content. Rows are wrapped through the same cell-width pipeline and remain inside the exact terminal frame. Canonical non-connected Help parity is unchanged.
 
 This is still a proof surface rather than a chat view: no scrolling, role styling, markdown, pagination controls, composer or production wiring exists.
+
+
+## R6 connected transcript viewport, 2026-11-26
+
+Connected interactive mode is now a separate live Chat proof surface rather than Help content with transcript rows prepended. It renders only protocol transcript rows in the body, keeps the newest 100 non-empty events bounded by the protocol page, wraps through the same cell-width pipeline and starts pinned to the bottom. `Up/Down`, `k/j`, `PageUp/PageDown`, `Home/End` and `g/G` scroll the wrapped viewport; the footer carries a compact `sc` offset and live key help no longer claims Escape returns to Chat.
+
+The fixture host runner emits thirty small assistant rows before the visible final row. The real PTY proof scrolls to the oldest row with `g`, returns to the bottom with `G`, and then proves `run.stop` cancellation. Canonical non-connected Help parity remains unchanged.
+
+This is a transcript viewport proof, not the product chat composer: no markdown, role styling, horizontal virtualization, keyboard focus model, prompt input or production wiring exists.

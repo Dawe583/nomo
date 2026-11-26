@@ -100,6 +100,11 @@ def run_case(columns=80, rows=24):
         wait_for("host-fixture-live/host")
         wait_for("status running")
         wait_for("live transcript visible")
+        os.write(master, b"g")
+        wait_for("tool Host run started")
+        assert "live transcript 00" in screen.text(), "top scroll did not expose the oldest assistant row"
+        os.write(master, b"G")
+        wait_for("live transcript visible")
         os.write(master, b"s")
         wait_for("status cancelled", timeout=8)
         assert "tokens 0" in screen.text(), "host session token count did not render"

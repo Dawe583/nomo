@@ -9799,3 +9799,8 @@ The isolated Rust client now renders the latest assistant transcript text in con
 ## 2026-11-26 R5 bounded transcript rows
 
 The connected Rust spike now renders the newest eight non-empty transcript rows in ascending order as bounded `kind text` rows, using the same cell-width pipeline and preserving canonical non-connected Help parity. Cargo, transport, parity, PTY and protocol checks stay green. This is still not a chat view: no scrolling, styling, markdown, pagination controls, composer or production wiring. [[NOMO TUI]]
+
+
+## 2026-11-26 R6 connected transcript viewport
+
+The connected Rust spike is now a real transcript-viewport proof rather than Help content with rows prepended. It renders bounded protocol transcript rows, starts pinned to the bottom and supports keyboard scrolling with exact cell-width bounds; the real PTY proof scrolls from the newest row to the oldest and back before cancellation. Canonical non-connected Help parity remains unchanged and all focused gates pass. This is not yet a composer or product chat surface. [[NOMO TUI]]

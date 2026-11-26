@@ -199,7 +199,7 @@ fn facts_from_snapshot(snapshot: &ProtocolSnapshot) -> SnapshotFacts {
                     .collect::<Vec<_>>()
                     .into_iter()
                     .rev()
-                    .take(8)
+                    .take(100)
                     .collect::<Vec<_>>()
                     .into_iter()
                     .rev()
@@ -354,14 +354,21 @@ fn content_lines(width: usize) -> Vec<String> {
     rows
 }
 
-fn footer_lines(width: usize, facts: &SnapshotFacts, live: bool) -> Vec<String> {
+fn footer_lines(width: usize, facts: &SnapshotFacts, live: bool, scroll: usize) -> Vec<String> {
     let model = facts.model.as_str();
     let run_tokens = facts.run_tokens;
     if width < 50 {
         vec![
-            "↑↓/PgUp/PgDn scroll · Esc Chat".to_string(),
             if live {
-                format!("status {} · page {}", facts.status, facts.event_count)
+                "↑↓ scroll · g/G · s stop · q quit".to_string()
+            } else {
+                "↑↓/PgUp/PgDn scroll · Esc Chat".to_string()
+            },
+            if live {
+                format!(
+                    "status {} · page {} · sc{}",
+                    facts.status, facts.event_count, scroll
+                )
             } else {
                 "mode: normal".to_string()
             },
@@ -369,7 +376,11 @@ fn footer_lines(width: usize, facts: &SnapshotFacts, live: bool) -> Vec<String> 
         ]
     } else if width < 120 {
         vec![
-            "↑/↓ scroll · PgUp/PgDn page · Esc returns to Chat".to_string(),
+            if live {
+                "↑/↓ scroll · g/G top/bottom · s stop · q quit".to_string()
+            } else {
+                "↑/↓ scroll · PgUp/PgDn page · Esc returns to Chat".to_string()
+            },
             if width < 64 {
                 format!("model {} · mode  ◆ mode: normal", model)
             } else {
@@ -380,8 +391,8 @@ fn footer_lines(width: usize, facts: &SnapshotFacts, live: bool) -> Vec<String> 
             },
             if live {
                 format!(
-                    "tokens {} · cost ? · status {} · page {}/{}",
-                    run_tokens, facts.status, facts.event_count, facts.latest_seq
+                    "tokens {} · cost ? · status {} · page {}/{} · sc{}",
+                    run_tokens, facts.status, facts.event_count, facts.latest_seq, scroll
                 )
             } else {
                 format!("tokens {} · cost ? · activity details", run_tokens)
@@ -389,9 +400,13 @@ fn footer_lines(width: usize, facts: &SnapshotFacts, live: bool) -> Vec<String> 
         ]
     } else {
         vec![
-            "↑/↓ scroll · PgUp/PgDn page · Esc returns to Chat".to_string(),
             if live {
-                format!("model {} · mode  ◆ mode: normal (local only, not enforced)  · tokens {} · cost ? · status {} · page {}/{}", model, run_tokens, facts.status, facts.event_count, facts.latest_seq)
+                "↑/↓ scroll · g/G top/bottom · s stop · q quit".to_string()
+            } else {
+                "↑/↓ scroll · PgUp/PgDn page · Esc returns to Chat".to_string()
+            },
+            if live {
+                format!("model {} · mode  ◆ mode: normal (local only, not enforced)  · tokens {} · cost ? · status {} · page {}/{} · sc{}", model, run_tokens, facts.status, facts.event_count, facts.latest_seq, scroll)
             } else {
                 format!("model {} · mode  ◆ mode: normal (local only, not enforced)  · tokens {} · cost ? · activity details", model, run_tokens)
             },
@@ -399,43 +414,75 @@ fn footer_lines(width: usize, facts: &SnapshotFacts, live: bool) -> Vec<String> 
     }
 }
 
+fn transcript_body_lines(facts: &SnapshotFacts, width: usize) -> Vec<String> {
+    let mut rows = Vec::new();
+    if facts.transcript_lines.is_empty() {
+        rows.push("waiting for transcript".to_string());
+        return rows;
+    }
+    for (kind, text) in &facts.transcript_lines {
+        let label = format!("{} {}", kind, text);
+        rows.extend(wrap_cells(&label, width));
+    }
+    rows
+}
+
+fn body_budget(columns: usize, rows: usize) -> usize {
+    let footer_count = if columns >= 120 { 2usize } else { 3usize };
+    rows.saturating_sub(6 + footer_count)
+}
+
 fn frame_lines_with_live(
     columns: usize,
     rows: usize,
     facts: &SnapshotFacts,
     live: bool,
+    scroll: usize,
 ) -> Vec<String> {
     let body_width = columns.saturating_sub(6).max(1);
-    let footer_count = if columns >= 120 { 2usize } else { 3usize };
-    let body_budget = rows.saturating_sub(6 + footer_count);
-    let mut body = Vec::new();
-    let mut source = Vec::new();
-    if live && !facts.transcript_lines.is_empty() {
-        for (kind, text) in &facts.transcript_lines {
-            source.push(format!("{} {}", kind, text));
+    let budget = body_budget(columns, rows);
+    let body = if live {
+        let lines = transcript_body_lines(facts, body_width);
+        let max_scroll = lines.len().saturating_sub(budget);
+        let clamped_scroll = scroll.min(max_scroll);
+        let start = lines.len().saturating_sub(budget + clamped_scroll);
+        let end = (start + budget).min(lines.len());
+        let mut viewport = lines[start..end].to_vec();
+        while viewport.len() < budget {
+            viewport.push(String::new());
         }
-        source.push(String::new());
-    }
-    source.extend(content_lines(body_width));
-    for line in source {
-        for chunk in wrap_cells(&line, body_width) {
-            body.push(chunk);
+        viewport
+    } else {
+        let mut static_body = Vec::new();
+        for line in content_lines(body_width) {
+            static_body.extend(wrap_cells(&line, body_width));
         }
-    }
-    body.truncate(body_budget);
-    while body.len() < body_budget {
-        body.push(String::new());
-    }
+        static_body.truncate(budget);
+        while static_body.len() < budget {
+            static_body.push(String::new());
+        }
+        static_body
+    };
 
-    let mut out = vec![
-        pad(" NOMO  ? Help", columns),
-        pad(" ← Chat  ·  Esc returns to Chat", columns),
-    ];
+    let mut out = if live {
+        vec![
+            pad(" NOMO  live Chat", columns),
+            pad(
+                " ↑/↓ scroll · g/G top/bottom · s stop · Esc/q quit",
+                columns,
+            ),
+        ]
+    } else {
+        vec![
+            pad(" NOMO  ? Help", columns),
+            pad(" ← Chat  ·  Esc returns to Chat", columns),
+        ]
+    };
     for line in body {
         out.push(pad(&format!("   {}", fit(&line, body_width)), columns));
     }
     out.push(format!(" {}{} ", "─".repeat(columns.saturating_sub(2)), ""));
-    let footer = footer_lines(columns, facts, live);
+    let footer = footer_lines(columns, facts, live, scroll);
     for line in footer.iter().take(3) {
         out.push(pad(&format!(" {}", line), columns));
     }
@@ -456,7 +503,7 @@ fn frame_lines(columns: usize, rows: usize, model: &str, run_tokens: u64) -> Vec
         latest_seq: 0,
         transcript_lines: Vec::new(),
     };
-    frame_lines_with_live(columns, rows, &facts, false)
+    frame_lines_with_live(columns, rows, &facts, false, 0)
 }
 
 fn draw_lines(frame: &mut Frame, lines: &[String]) {
@@ -499,6 +546,7 @@ fn run_interactive(
     let mut terminal = Terminal::new(backend)?;
     let mut size = (columns, rows);
     let mut facts = initial_facts;
+    let mut scroll = 0usize;
     let mut redraw = true;
     loop {
         let mut updated = false;
@@ -507,7 +555,8 @@ fn run_interactive(
             updated = true;
         }
         if redraw || updated {
-            let lines = frame_lines_with_live(size.0 as usize, size.1 as usize, &facts, connected);
+            let lines =
+                frame_lines_with_live(size.0 as usize, size.1 as usize, &facts, connected, scroll);
             terminal.draw(|frame| draw_lines(frame, &lines))?;
             redraw = false;
         }
@@ -519,16 +568,55 @@ fn run_interactive(
                 if matches!(key.code, KeyCode::Char('q') | KeyCode::Esc) {
                     break;
                 }
-                if connected && matches!(key.code, KeyCode::Char('s')) {
-                    if let Some(stream) = writer.as_mut() {
-                        let line = client_run_stop_message(&facts.session_id)?;
-                        stream.write_all(line.as_bytes())?;
-                        stream.write_all(b"\n")?;
+                if connected {
+                    let width = size.0 as usize;
+                    let height = size.1 as usize;
+                    let max_scroll = transcript_body_lines(&facts, width.saturating_sub(6).max(1))
+                        .len()
+                        .saturating_sub(body_budget(width, height));
+                    match key.code {
+                        KeyCode::Up | KeyCode::Char('k') => {
+                            scroll = (scroll + 1).min(max_scroll);
+                            redraw = true;
+                        }
+                        KeyCode::Down | KeyCode::Char('j') => {
+                            scroll = scroll.saturating_sub(1);
+                            redraw = true;
+                        }
+                        KeyCode::PageUp => {
+                            scroll = (scroll + body_budget(width, height)).min(max_scroll);
+                            redraw = true;
+                        }
+                        KeyCode::PageDown => {
+                            scroll = scroll.saturating_sub(body_budget(width, height));
+                            redraw = true;
+                        }
+                        KeyCode::Home | KeyCode::Char('g') => {
+                            scroll = max_scroll;
+                            redraw = true;
+                        }
+                        KeyCode::End | KeyCode::Char('G') => {
+                            scroll = 0;
+                            redraw = true;
+                        }
+                        KeyCode::Char('s') => {
+                            if let Some(stream) = writer.as_mut() {
+                                let line = client_run_stop_message(&facts.session_id)?;
+                                stream.write_all(line.as_bytes())?;
+                                stream.write_all(b"\n")?;
+                            }
+                        }
+                        _ => {}
                     }
                 }
             }
             Event::Resize(columns, rows) => {
                 size = (columns, rows);
+                let max_scroll =
+                    transcript_body_lines(&facts, (columns as usize).saturating_sub(6).max(1))
+                        .len()
+                        .saturating_sub(body_budget(columns as usize, rows as usize));
+                scroll = scroll.min(max_scroll);
                 redraw = true;
             }
             _ => {}
@@ -765,13 +853,35 @@ mod tests {
                 "live transcript visible".to_string(),
             )],
         };
-        let frame = frame_lines_with_live(80, 24, &facts, true);
+        let frame = frame_lines_with_live(80, 24, &facts, true, 0);
         assert!(frame
             .iter()
             .any(|row| row.contains("live transcript visible")));
-        let canonical = frame_lines_with_live(80, 24, &facts, false);
+        let canonical = frame_lines_with_live(80, 24, &facts, false, 0);
         assert!(!canonical
             .iter()
             .any(|row| row.contains("live transcript visible")));
+    }
+    #[test]
+    fn connected_transcript_scrolls_to_top_and_bottom() {
+        let facts = SnapshotFacts {
+            session_id: "session-1".to_string(),
+            model: "model".to_string(),
+            run_tokens: 0,
+            status: "running".to_string(),
+            event_count: 30,
+            latest_seq: 30,
+            transcript_lines: (0..30)
+                .map(|index| ("assistant".to_string(), format!("row-{index:02}")))
+                .collect(),
+        };
+        let bottom = frame_lines_with_live(80, 24, &facts, true, 0);
+        assert!(bottom.iter().any(|row| row.contains("row-29")));
+        assert!(!bottom.iter().any(|row| row.contains("row-00")));
+        let top = frame_lines_with_live(80, 24, &facts, true, usize::MAX);
+        assert!(top.iter().any(|row| row.contains("row-00")));
+        assert!(!top.iter().any(|row| row.contains("row-29")));
+        assert_eq!(top.len(), 24);
+        assert!(top.iter().all(|row| visible_len(row) == 80));
     }
 }

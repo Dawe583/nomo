@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-26T22:43:02.446262Z",
+  "updatedAt": "2026-11-26T22:46:39.096795Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -4703,6 +4703,50 @@
         "node --test packages/workbench/src/tui-protocol.test.ts: 14 tests, 14 pass, 0 fail, duration_ms 96.55125."
       ],
       "stopCondition": "Stop before chat scrolling, role styling, markdown rendering, composer, production wiring, provider traffic, release, publish or deploy."
+    },
+    {
+      "id": "r6-connected-transcript-viewport",
+      "status": "done",
+      "owner": "devin-desktop-local-2026-11-26",
+      "dependsOn": [
+        "r5-bounded-transcript-rows"
+      ],
+      "scope": [
+        "scripts/tui-rs-spike/src/main.rs",
+        "scripts/src/tui-protocol-fixture-server.mjs",
+        "scripts/src/verify-rust-spike-transport.py",
+        "docs/plans/2026-11-26-tui-protocol-boundary.md",
+        "docs/SESSION-HANDOFF.md",
+        "docs/memory/vault/work-log/NOMO Work Log.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "connected Rust mode renders protocol transcript rows as a distinct live Chat proof surface",
+        "transcript rows are bounded to the protocol page, cell-width wrapped and bottom-pinned",
+        "keyboard scrolling supports line, page, top and bottom movement with exact terminal bounds",
+        "real PTY proof scrolls to the oldest emitted row and back before run.stop cancellation",
+        "canonical non-connected Help parity remains unchanged and no composer or production wiring is claimed"
+      ],
+      "verifier": [
+        "cd scripts/tui-rs-spike && cargo test --offline --quiet",
+        "python3 scripts/src/verify-rust-spike-transport.py",
+        "node --test scripts/src/tui-rs-parity.test.mjs",
+        "python3 scripts/src/verify-rust-spike-pty.py",
+        "node --test packages/workbench/src/tui-protocol.test.ts",
+        "node scripts/src/work-graph-check.mjs",
+        "git diff --check"
+      ],
+      "evidence": [
+        "cd scripts/tui-rs-spike && cargo test --offline --quiet: 9 passed, 0 failed, including top/bottom viewport assertions.",
+        "python3 scripts/src/verify-rust-spike-transport.py: PASS Rust spike Workbench TCP transport updates at 80x24; PASS real-Workbench bounded transport prototype after g/G scroll proof.",
+        "node --test scripts/src/tui-rs-parity.test.mjs: 1 test, 1 pass, 0 fail, duration_ms 556.875584.",
+        "python3 scripts/src/verify-rust-spike-pty.py: PASS at 40x12, 80x24 and 120x40.",
+        "node --test packages/workbench/src/tui-protocol.test.ts: 14 tests, 14 pass, 0 fail, duration_ms 110.376417."
+      ],
+      "stopCondition": "Stop before markdown/role styling, prompt composer, focus model, production wiring, provider traffic, release, publish or deploy."
     }
   ]
 }

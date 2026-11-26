@@ -174,6 +174,15 @@
 - Verified: cargo 8/8, transport proof PASS, Rust parity 1/1, original PTY matrix PASS, protocol 14/14.
 - Honest limit: proof surface only; no scrolling, role styling, markdown, pagination controls, composer or production wiring.
 
+
+## R6 connected transcript viewport (2026-11-26)
+
+- Connected Rust mode is now a live Chat proof surface: protocol transcript rows replace static Help content, are wrapped through the same cell-width pipeline and start pinned to the bottom.
+- The client keeps the newest 100 non-empty transcript events and supports `Up/Down`, `k/j`, `PageUp/PageDown`, `Home/End` and `g/G`; footer shows compact scroll state and correct live keys.
+- The fixture run emits 30 assistant rows. Real PTY proof scrolls to `tool Host run started` / `live transcript 00`, returns to bottom, then cancels through `run.stop`.
+- Verified: cargo 9/9, transport proof PASS, Rust parity 1/1, original PTY matrix PASS, protocol 14/14. Canonical non-connected Help parity is unchanged.
+- Honest limit: transcript viewport proof only; no markdown, role styling, focus model, composer, horizontal virtualization or production wiring.
+
 ## Rules that are not negotiable
 
 - No push, merge, deploy, hosted CI, dependency install, or provider-costing call unless the user explicitly asks in the current task. (This push was explicitly authorized by the user on 2026-11-25.)
