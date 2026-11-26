@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-26T23:40:34.783199Z",
+  "updatedAt": "2026-11-26T23:42:04.290215Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -5219,6 +5219,42 @@
         "Source audit: minimap.ts, chat-markdown.ts and run-activity.ts have no production imports in this checkout; palette.ts/workspace.ts already implement fuzzy/frecency/aliases/preview; .nomo/work-state.json marks T1-T18, t20 transcript position and t21 aliases done."
       ],
       "stopCondition": "Stop before implementation; U2+ own source changes."
+    },
+    {
+      "id": "u2-shared-inline-markdown-wiring",
+      "status": "done",
+      "owner": "devin-desktop-local-2026-11-26",
+      "dependsOn": [
+        "u1-typescript-tui-completion-audit"
+      ],
+      "scope": [
+        "packages/cli/src/tui/chat-markdown.ts",
+        "packages/cli/src/tui/workspace.ts",
+        "docs/plans/2026-11-26-tui-upgrade-completion.md",
+        "docs/SESSION-HANDOFF.md",
+        "docs/memory/vault/work-log/NOMO Work Log.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "chat-markdown.ts has a production import from workspace.ts",
+        "workspace.ts no longer owns a duplicate inline strong/code parser",
+        "rendered frame behavior is unchanged",
+        "user-authored text remains unchanged"
+      ],
+      "verifier": [
+        "pnpm --dir packages/cli typecheck",
+        "node --test --test-concurrency=1 packages/cli/src/tui/workspace.test.ts packages/cli/src/tui/a11y.test.ts packages/cli/src/tui/visual-snapshots.test.ts",
+        "node scripts/src/work-graph-check.mjs",
+        "git diff --check"
+      ],
+      "evidence": [
+        "pnpm --dir packages/cli typecheck: exit 0.",
+        "node --test --test-concurrency=1 packages/cli/src/tui/workspace.test.ts packages/cli/src/tui/a11y.test.ts packages/cli/src/tui/visual-snapshots.test.ts: 144 passed, 0 failed."
+      ],
+      "stopCondition": "Stop before visual changes, link rendering changes or deletion of the module file."
     }
   ]
 }

@@ -28,3 +28,7 @@ U6 audit application chrome/unread indicators and implement only gaps not alread
 U7 final audit, documentation and handoff.
 
 Each implementation slice must keep exact rows/columns, never paint a terminal background, preserve ASCII/monochrome/reduced-motion facts, update visual snapshots only for intended visual changes, and commit atomically after focused verification.
+
+## U2 shared inline Markdown wiring
+
+`chat-markdown.ts` is no longer orphaned: it now owns the safe strong/code inline-Markdown span splitter and `workspace.ts` consumes it. The obsolete unused whole-line helper was removed in-place; user-authored text and rendered frames are unchanged. Evidence: CLI typecheck exit 0; focused workspace/a11y/visual snapshot tests 144/144. No visual snapshot accepted.

@@ -267,6 +267,10 @@ The connected Rust proof now enables mouse capture, maps wheel up/down to three-
 
 TypeScript TUI completion audit recorded. Original T1-T18 plus transcript-position and palette-alias work is already done; remaining work is integration/retirement of orphaned minimap/chat-markdown/run-activity modules, selective terminal-native gaps, unread/application-chrome polish and final audit. Rust is deferred by owner decision.
 
+## U2 shared inline Markdown wiring (2026-11-26)
+
+`chat-markdown.ts` is no longer orphaned: it now owns the safe strong/code inline-Markdown span splitter and `workspace.ts` consumes it. The obsolete unused whole-line helper was removed in-place; user-authored text and rendered frames are unchanged. Evidence: CLI typecheck exit 0; focused workspace/a11y/visual snapshot tests 144/144. No visual snapshot accepted.
+
 ## Rules that are not negotiable
 
 - No push, merge, deploy, hosted CI, dependency install, or provider-costing call unless the user explicitly asks in the current task. (This push was explicitly authorized by the user on 2026-11-25.)
