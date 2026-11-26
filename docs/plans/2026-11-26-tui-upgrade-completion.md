@@ -44,3 +44,7 @@ Chat now wires the tested minimap as a one-cell positional edge from 72 columns 
 ## U4 shared run activity helpers
 
 `run-activity.ts` is no longer an orphaned duplicate formatter: it now owns shared tool-payload record guarding, secret redaction, private-reasoning key filtering and output extraction used by `workspace.ts`. The canonical redaction preserves private-key-block and credential/token handling. Evidence: CLI typecheck exit 0; run-activity tests 2/2; focused workspace/parity/a11y/visual tests 247/247; frames unchanged.
+
+## Full PTY matrix checkpoint
+
+Full TypeScript TUI PTY matrix after the minimap and run-activity consolidation: PASS for every scenario at 40x12, 80x24, 120x40, 160x45 and 200x48, including terminal restore, bracketed paste, mouse and exit paths.
