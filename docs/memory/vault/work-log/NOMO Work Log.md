@@ -9829,3 +9829,8 @@ The Rust transport proof now supports bounded session selection. `[` and `]` cyc
 ## 2026-11-26 R11 composer editing, bracketed paste and control-safe rendering
 
 The Rust composer is now cursor-aware with Unicode-safe editing, Ctrl+U clear and bounded insertion shared by typing and bracketed paste. Paste payloads no longer become keystrokes, and control characters render as visible safe glyphs instead of corrupting exact rows. The real PTY proof pastes a multiline prompt, submits it and observes the sanitized transcript row through real Workbench projection. Focused gates pass. This is not yet a full multiline editor with selection, undo or terminal cursor positioning. [[NOMO TUI]]
+
+
+## 2026-11-26 R12 semantic transcript label styling
+
+The connected Rust spike now applies semantic styling to first transcript role labels while preserving exact emitted text and never painting a background. Colors degrade to bold/dim emphasis under `NO_COLOR`; canonical static rendering remains plain and byte-stable. TestBackend, cargo, protocol, parity, original PTY and real transport gates pass. Theme configuration, markdown highlighting and contrast auditing remain future work. [[NOMO TUI]]

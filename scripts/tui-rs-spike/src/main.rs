@@ -11,6 +11,8 @@ use crossterm::{
 };
 use ratatui::{
     backend::{CrosstermBackend, TestBackend},
+    style::{Color, Modifier, Style},
+    text::{Line, Span, Text},
     widgets::Paragraph,
     Frame, Terminal,
 };
@@ -750,9 +752,50 @@ fn frame_lines(columns: usize, rows: usize, model: &str, run_tokens: u64) -> Vec
     frame_lines_with_live(columns, rows, &facts, false, 0, None)
 }
 
-fn draw_lines(frame: &mut Frame, lines: &[String]) {
-    let text = lines.join("\n");
-    frame.render_widget(Paragraph::new(text), frame.area());
+fn role_style(kind: &str, color: bool) -> Style {
+    let mut style = Style::default();
+    if color {
+        style = style.fg(match kind {
+            "assistant" => Color::Green,
+            "user" => Color::Cyan,
+            "tool" => Color::Yellow,
+            "error" => Color::Red,
+            "usage" => Color::Magenta,
+            _ => Color::Reset,
+        });
+    }
+    match kind {
+        "assistant" | "user" | "error" => style.add_modifier(Modifier::BOLD),
+        "tool" | "usage" => style.add_modifier(Modifier::DIM),
+        _ => style,
+    }
+}
+
+fn styled_line(line: &str, live: bool, color: bool) -> Line<'static> {
+    if !live {
+        return Line::raw(line.to_string());
+    }
+    let indent = line.len() - line.trim_start().len();
+    let rest = &line[indent..];
+    for kind in ["assistant", "user", "tool", "error", "usage"] {
+        let prefix = format!("{kind} ");
+        if rest.starts_with(&prefix) {
+            return Line::from(vec![
+                Span::raw(line[..indent].to_string()),
+                Span::styled(kind.to_string(), role_style(kind, color)),
+                Span::raw(rest[kind.len()..].to_string()),
+            ]);
+        }
+    }
+    Line::raw(line.to_string())
+}
+
+fn draw_lines(frame: &mut Frame, lines: &[String], live: bool, color: bool) {
+    let rows = lines
+        .iter()
+        .map(|line| styled_line(line, live, color))
+        .collect::<Vec<_>>();
+    frame.render_widget(Paragraph::new(Text::from(rows)), frame.area());
 }
 
 fn run_interactive(
@@ -813,7 +856,14 @@ fn run_interactive(
                 scroll,
                 composer_text.as_deref(),
             );
-            terminal.draw(|frame| draw_lines(frame, &lines))?;
+            terminal.draw(|frame| {
+                draw_lines(
+                    frame,
+                    &lines,
+                    connected,
+                    std::env::var_os("NO_COLOR").is_none(),
+                )
+            })?;
             redraw = false;
         }
         if !event::poll(std::time::Duration::from_millis(100))? {
@@ -1135,9 +1185,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 mod tests {
     use super::{
         apply_wire_update, client_run_stop_message, client_session_create_message,
-        client_session_select_message, client_view_select_message, frame_lines,
-        frame_lines_with_live, snapshot_facts, visible_len, wire_update_from_raw, Composer,
-        SnapshotFacts, TranscriptRow, FIXTURE_MODEL, FIXTURE_RUN_TOKENS,
+        client_session_select_message, client_view_select_message, draw_lines, frame_lines,
+        frame_lines_with_live, snapshot_facts, visible_len, wire_update_from_raw, Color, Composer,
+        Modifier, SnapshotFacts, Terminal, TestBackend, TranscriptRow, FIXTURE_MODEL,
+        FIXTURE_RUN_TOKENS,
     };
 
     #[test]
@@ -1347,5 +1398,20 @@ mod tests {
         assert_eq!(facts.model, "updated-model");
         assert_eq!(facts.status, "running");
         assert_eq!(facts.run_tokens, 7);
+    }
+    #[test]
+    fn live_role_labels_are_styled_without_changing_text() {
+        let lines = vec!["   assistant answer".to_string()];
+        let backend = TestBackend::new(30, 1);
+        let mut terminal = Terminal::new(backend).expect("test terminal");
+        terminal
+            .draw(|frame| draw_lines(frame, &lines, true, true))
+            .expect("draw styled line");
+        let buffer = terminal.backend().buffer();
+        let text = (0..30).map(|x| buffer[(x, 0)].symbol()).collect::<String>();
+        assert_eq!(text.trim_end(), "   assistant answer");
+        assert_eq!(buffer[(3, 0)].fg, Color::Green);
+        assert!(buffer[(3, 0)].modifier.contains(Modifier::BOLD));
+        assert_eq!(buffer[(12, 0)].fg, Color::Reset);
     }
 }

@@ -180,3 +180,12 @@ Interactive mode enables bracketed paste and disables it before restoring the te
 rust composer` as one bracketed paste, submits it, and observes the sanitized transcript row through real Workbench projection.
 
 This is still not a full editor: no terminal cursor positioning, selection, undo, clipboard integration, word movement, multi-line viewport or soft-wrapped editing exists. Alt+Enter depends on terminal key encoding; bracketed paste is the proven multiline path.
+
+
+## R12 semantic transcript label styling, 2026-11-26
+
+The connected Rust surface now applies semantic terminal styling to the first transcript role token while preserving the exact rendered text. `assistant`, `user`, `tool`, `error` and `usage` labels receive distinct foreground colors when color is enabled; role emphasis degrades to bold/dim modifiers when `NO_COLOR` is set. No background is painted and continuation text remains unstyled, so user-authored content is not recolored or rewritten.
+
+Static canonical rendering intentionally stays plain and byte-stable. The styled path exists only in connected interactive mode. A TestBackend unit check proves that the role label carries the expected style while the emitted cells keep the same text. Real PTY transport and parity gates remain green.
+
+This is semantic label styling, not full theme support: no palette configuration, markdown syntax highlighting, style-aware wrapping, contrast audit or theme persistence exists.

@@ -229,6 +229,15 @@
 - Verified: protocol 14/14, cargo 13/13, Rust parity 1/1, original PTY matrix PASS, transport proof PASS.
 - Honest limit: no terminal cursor positioning, selection, undo, clipboard integration, word movement, multiline editor viewport or soft-wrapped editing. Alt+Enter is terminal-dependent; bracketed paste is the proven multiline path.
 
+
+## R12 semantic transcript label styling (2026-11-26)
+
+- Connected Rust mode now styles first transcript role tokens semantically: assistant/user/tool/error/usage get distinct foreground colors when enabled and bold/dim emphasis otherwise. No background is painted; continuation text and user-authored content stay unstyled.
+- Static canonical rendering remains plain and byte-stable; styling exists only in connected interactive mode.
+- TestBackend proof verifies exact text preservation and expected role-label style. Real PTY transport, original PTY matrix, cargo, protocol and parity gates pass.
+- Verified: protocol 14/14, cargo 14/14, Rust parity 1/1, original PTY matrix PASS, transport proof PASS.
+- Honest limit: no theme palette/configuration, markdown highlighting, style-aware wrapping, contrast audit or theme persistence.
+
 ## Rules that are not negotiable
 
 - No push, merge, deploy, hosted CI, dependency install, or provider-costing call unless the user explicitly asks in the current task. (This push was explicitly authorized by the user on 2026-11-25.)
