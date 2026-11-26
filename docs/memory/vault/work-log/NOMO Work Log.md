@@ -9644,3 +9644,23 @@ Implemented automatic compaction in the workbench run loop. The run compacts bef
 ## 2026-11-26 C2 retrieval hit accounting
 
 Audit found the existing prompt-inclusion ring was bounded and content-free but not production-reachable: the production retrieval path never recorded it, the unused helper had no session or request correlation, and inclusion accounting ignored rendered headers. The production run loop now writes one `harness.retrieval` session event per provider turn at the provider-input handoff. The event carries the chained request digest, candidate and ranked counts, included and dropped learned-entry ids with exact counts, and no prompt or entry text; empty turns record negative evidence. Inclusion accounting now uses the same row layout as the renderer, so headers, newlines and truncation are counted exactly. The existing session events API exposes the record without a new surface, and harness events stay out of the chat transcript. Verified before recording: focused retrieval 47/47, workbench targeted 40/40, Workbench wide 1434 tests with 1431 pass, 0 fail and 3 skipped, Workbench typecheck exit 0, credential-pattern scan of added lines 0, diff check exit 0.
+
+
+## 2026-11-26 D1 session-search wiring audit
+
+Audit found the capability already wired, so no duplicate implementation was written. The opt-in `nomo_session_search` tool is reachable in a real session, disabled by default, bounded, redacted, restart-safe and caller-excluding. Verified: focused wiring 85 tests with 84 pass, 0 fail and 1 skipped, module inventory 2/2 with `session-search.ts` at 2 production importers and no orphan allowlist entry, Workbench typecheck exit 0.
+
+
+## 2026-11-26 D2 plan-tool wiring audit
+
+Audit found the capability already wired, so no duplicate implementation was written. `nomo_plan_update` is offered in a real session, returns the accepted replacement to the model, refuses invalid replacements and persists across restart. Verified: focused wiring 85 tests with 84 pass, 0 fail and 1 skipped, module inventory 2/2 with `plan.ts` at 3 production importers and no orphan allowlist entry, Workbench typecheck exit 0.
+
+
+## 2026-11-26 D3 goals wiring audit
+
+Audit found the capability already wired, so no duplicate implementation was written. Operator goals run through real sessions with allowlisted process gates, forbidden gates never execute, and terminal stalled, completed or budget-limited states stop continuation truthfully. Verified: focused wiring 85 tests with 84 pass, 0 fail and 1 skipped, module inventory 2/2 with `goals.ts` at 1 production importer and no orphan allowlist entry, Workbench typecheck exit 0.
+
+
+## 2026-11-26 D4 project-context wiring audit
+
+Audit found the capability already wired, so no duplicate implementation was written. Confirmed custom-profile project sessions receive project context capability only after explicit confirmation and reconfirm after restart, while oversized, symlinked, non-UTF8 and untracked context files are refused. Verified: focused wiring 85 tests with 84 pass, 0 fail and 1 skipped, module inventory 2/2 with `project-context-files.ts` at 1 production importer and no orphan allowlist entry, Workbench typecheck exit 0.
