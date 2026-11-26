@@ -676,6 +676,22 @@ fn body_budget(columns: usize, rows: usize) -> usize {
     rows.saturating_sub(6 + footer_count)
 }
 
+fn scrollbar_window(total: usize, budget: usize, scroll: usize) -> Option<(usize, usize)> {
+    if total <= budget || budget == 0 {
+        return None;
+    }
+    let max_scroll = total - budget;
+    let clamped_scroll = scroll.min(max_scroll);
+    let thumb = ((budget * budget) / total).max(1).min(budget);
+    let travel = budget - thumb;
+    let position = if max_scroll == 0 {
+        0
+    } else {
+        travel - (clamped_scroll * travel) / max_scroll
+    };
+    Some((position, thumb))
+}
+
 fn frame_lines_with_live(
     columns: usize,
     rows: usize,
@@ -686,10 +702,12 @@ fn frame_lines_with_live(
 ) -> Vec<String> {
     let body_width = columns.saturating_sub(6).max(1);
     let budget = body_budget(columns, rows);
+    let mut scrollbar = None;
     let body = if live {
         let lines = transcript_body_lines(facts, body_width);
         let max_scroll = lines.len().saturating_sub(budget);
         let clamped_scroll = scroll.min(max_scroll);
+        scrollbar = scrollbar_window(lines.len(), budget, clamped_scroll);
         let start = lines.len().saturating_sub(budget + clamped_scroll);
         let end = (start + budget).min(lines.len());
         let mut viewport = lines[start..end].to_vec();
@@ -725,6 +743,23 @@ fn frame_lines_with_live(
     };
     for line in body {
         out.push(pad(&format!("   {}", fit(&line, body_width)), columns));
+    }
+    if live {
+        if let Some((position, thumb)) = scrollbar {
+            for body_row in 0..budget {
+                let out_index = 2 + body_row;
+                if out_index >= out.len() {
+                    break;
+                }
+                let marker = if body_row >= position && body_row < position + thumb {
+                    '█'
+                } else {
+                    '│'
+                };
+                out[out_index].pop();
+                out[out_index].push(marker);
+            }
+        }
     }
     out.push(format!(" {}{} ", "─".repeat(columns.saturating_sub(2)), ""));
     let footer = footer_lines(columns, facts, live, scroll, composer);
@@ -1374,6 +1409,10 @@ mod tests {
         let top = frame_lines_with_live(80, 24, &facts, true, usize::MAX, None);
         assert!(top.iter().any(|row| row.contains("row-00")));
         assert!(!top.iter().any(|row| row.contains("row-29")));
+        assert!(bottom[16].ends_with('█'));
+        assert!(bottom[2].ends_with('│'));
+        assert!(top[2].ends_with('█'));
+        assert!(top[10].ends_with('│'));
         assert_eq!(top.len(), 24);
         assert!(top.iter().all(|row| visible_len(row) == 80));
     }

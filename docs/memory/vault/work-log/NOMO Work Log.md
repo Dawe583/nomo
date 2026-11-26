@@ -9834,3 +9834,8 @@ The Rust composer is now cursor-aware with Unicode-safe editing, Ctrl+U clear an
 ## 2026-11-26 R12 semantic transcript label styling
 
 The connected Rust spike now applies semantic styling to first transcript role labels while preserving exact emitted text and never painting a background. Colors degrade to bold/dim emphasis under `NO_COLOR`; canonical static rendering remains plain and byte-stable. TestBackend, cargo, protocol, parity, original PTY and real transport gates pass. Theme configuration, markdown highlighting and contrast auditing remain future work. [[NOMO TUI]]
+
+
+## 2026-11-26 R13 transcript scrollbar and viewport position
+
+The connected Rust transcript now has a proportional right-edge scrollbar using existing padding: `│` track and `█` thumb, bottom-aligned at bottom-pinned scroll and top-aligned at maximum scroll. Exact frame geometry and canonical Help parity remain unchanged; unit and real PTY proofs pass. It is positional only, not a minimap or mouse interface. [[NOMO TUI]]

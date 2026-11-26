@@ -189,3 +189,12 @@ The connected Rust surface now applies semantic terminal styling to the first tr
 Static canonical rendering intentionally stays plain and byte-stable. The styled path exists only in connected interactive mode. A TestBackend unit check proves that the role label carries the expected style while the emitted cells keep the same text. Real PTY transport and parity gates remain green.
 
 This is semantic label styling, not full theme support: no palette configuration, markdown syntax highlighting, style-aware wrapping, contrast audit or theme persistence exists.
+
+
+## R13 transcript scrollbar and viewport position, 2026-11-26
+
+The connected transcript viewport now uses its already reserved rightmost padding column as a bounded scrollbar whenever the wrapped transcript exceeds the visible body. `│` is the track and `█` is the thumb. Thumb size is proportional to visible rows over total wrapped rows; its position is inverted from the bottom-relative scroll offset, so bottom-pinned scroll `0` places the thumb at the bottom and maximum scroll places it at the top. The marker never narrows transcript text because body rendering already reserves trailing padding.
+
+Canonical non-connected Help rendering is unchanged. Unit assertions cover top and bottom thumb positions and exact frame width; the real PTY transport proof asserts that the thumb is visible in the live scrolling transcript.
+
+This is a positional scrollbar, not a minimap: it carries no content density, mouse hit target, drag behavior, unread marker or semantic styling.

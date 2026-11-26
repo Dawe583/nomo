@@ -238,6 +238,15 @@
 - Verified: protocol 14/14, cargo 14/14, Rust parity 1/1, original PTY matrix PASS, transport proof PASS.
 - Honest limit: no theme palette/configuration, markdown highlighting, style-aware wrapping, contrast audit or theme persistence.
 
+
+## R13 transcript scrollbar and viewport position (2026-11-26)
+
+- Connected Rust transcript view now renders a bounded right-edge scrollbar only when content overflows: `│` track and `█` proportional thumb. Bottom-pinned scroll puts the thumb at the bottom; maximum scroll puts it at the top.
+- The marker uses existing trailing padding, so transcript width and exact terminal geometry are unchanged. Canonical non-connected Help parity remains unchanged.
+- Unit assertions cover thumb position and exact width; real PTY transport asserts the thumb in the live scrolling transcript.
+- Verified: cargo 14/14, transport proof PASS, Rust parity 1/1, original PTY matrix PASS, protocol 14/14.
+- Honest limit: positional scrollbar only; no minimap content, mouse hit target, drag behavior or unread marker.
+
 ## Rules that are not negotiable
 
 - No push, merge, deploy, hosted CI, dependency install, or provider-costing call unless the user explicitly asks in the current task. (This push was explicitly authorized by the user on 2026-11-25.)
