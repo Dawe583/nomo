@@ -9684,3 +9684,8 @@ Review showed the four stale ledger frame hashes came from the intentional autho
 ## 2026-11-26 Q21 queued-prompt test race repair
 
 Diagnosis showed the queued-prompt test released the provider gate before the first provider request existed, so the release was a no-op and the run stayed open. The test now waits, with a bounded timeout, for the real provider request before resolving it; queue assertions are unchanged. Verified: focused 1/1, TUI wide 549 pass with 0 fail plus terminal verifier PASS every scenario at every size, diff check exit 0. [[NOMO TUI]]
+
+
+## 2026-11-26 F2 operator approval end-to-end audit
+
+Audit found the governed approval path already implemented end to end: a real governed fixture call waits for explicit confirmation, approval dispatches once and writes signed `hold:approved` evidence with the operator identity, denial does not dispatch, and restart or cancellation cannot release the tool. The missing acceptance proof was only the visible operator decision line; the integration test now pins the existing approved and denied notices. Verified: focused approval 1/1, CLI and Workbench typechecks exit 0, TUI wide 549 pass with 0 fail plus terminal verifier PASS every scenario at every size, diff check exit 0. [[NOMO TUI]]
