@@ -97,9 +97,9 @@ def run_case(columns=80, rows=24):
             while marker not in screen.text() and time.monotonic() < deadline:
                 pump(0.1)
             assert marker in screen.text(), f"missing {marker}\n{screen.text()}"
-        wait_for("fixture-model")
-        wait_for("transport-model")
-        assert "tokens 777" in screen.text(), "updated token count did not render"
+        wait_for("host-fixture-a/host")
+        wait_for("host-fixture-b/host")
+        assert "tokens 0" in screen.text(), "host session token count did not render"
         assert screen.overflow == 0, f"terminal rows overflowed: {screen.overflow}"
         os.write(master, b"q")
         deadline = time.monotonic() + 5
@@ -123,7 +123,7 @@ def run_case(columns=80, rows=24):
             server.kill()
             server.wait()
         shutil.rmtree(directory, ignore_errors=True)
-    print(f"PASS: Rust spike TCP transport updates at {columns}x{rows}", flush=True)
+    print(f"PASS: Rust spike Workbench TCP transport updates at {columns}x{rows}", flush=True)
 
 
 def main():
@@ -133,7 +133,7 @@ def main():
         check=True,
     )
     run_case()
-    print("PASS: Rust spike bounded transport prototype", flush=True)
+    print("PASS: Rust spike real-Workbench bounded transport prototype", flush=True)
     return 0
 
 if __name__ == "__main__":

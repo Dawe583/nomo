@@ -131,6 +131,15 @@
 - Full TUI regression after the protocol and Rust slices: `pnpm run test:tui` exit 0, 550/550 Node tests pass, every PTY scenario at every size passes.
 - Honest limit: still synthetic fixture state; no live Workbench event subscription, intent execution or production wiring.
 
+
+## R2b real Workbench-backed bounded transport (2026-11-26)
+
+- The fixture TCP server now creates a real isolated `Workbench`, registers two contract-shaped fixture host runners and starts two real host-only sessions through the normal consent path.
+- Served snapshots are produced by `tuiSnapshotFromWorkbench(app, ...)`, so Rust consumes real Workbench projections rather than hand-built session objects.
+- Real PTY proof passes at 80x24: footer changes from `host-fixture-a/host` to `host-fixture-b/host` and truthfully renders `tokens 0`.
+- Verified: protocol 14/14, cargo 6/6, Rust parity 1/1, original PTY matrix PASS, real-Workbench transport proof PASS.
+- Honest limit: host runners are local contract doubles; snapshots are selected after settlement rather than live event subscription; no intent execution, authentication, reconnect/backpressure policy or production wiring.
+
 ## Rules that are not negotiable
 
 - No push, merge, deploy, hosted CI, dependency install, or provider-costing call unless the user explicitly asks in the current task. (This push was explicitly authorized by the user on 2026-11-25.)

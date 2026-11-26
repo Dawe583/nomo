@@ -86,3 +86,12 @@ The isolated Rust spike can emit a versioned `view.select` intent for a validate
 The fixture TCP server no longer treats a hand-written JSON file as the source of truth. It constructs an in-memory `SessionView` fixture and passes the read-only projection through `tuiSnapshotFromWorkbench` before serializing and validating each snapshot envelope. The Rust transport proof still observes `fixture-model` followed by `transport-model` and `tokens 777` in a real PTY.
 
 This remains fixture-backed transport, not a real Workbench server. The projection is synthetic, there is no live event subscription, no intent execution and no production wiring.
+
+
+## R2b real Workbench-backed bounded transport, 2026-11-26
+
+The transport fixture now instantiates a real `Workbench` in isolated temporary storage, registers two contract-shaped fixture host runners and starts two real host-only sessions through the normal consent path. Snapshots served over loopback TCP are produced by `tuiSnapshotFromWorkbench(app, ...)`, so the Rust client consumes real Workbench projections rather than a hand-built `SessionView` object.
+
+The Rust real-PTY proof sees the first host session footer (`host-fixture-a/host`) and then the second (`host-fixture-b/host`) with the truthful zero token count. Protocol, Rust unit, parity and original PTY checks remain green.
+
+This is still not production transport. The host runners are local contract doubles, the snapshots are selected after the runs have settled rather than pushed from a live event subscription, there is no intent execution, authentication, reconnect or backpressure policy, and no production wiring.

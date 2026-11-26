@@ -9774,3 +9774,8 @@ The client direction of the terminal protocol now uses a versioned NDJSON envelo
 ## 2026-11-26 R2a adapter-backed fixture transport and full TUI regression
 
 The fixture TCP server now builds snapshots through `tuiSnapshotFromWorkbench` from an in-memory session projection instead of treating hand-written JSON as truth. The Rust real-PTY transport proof still shows the live update from `fixture-model` to `transport-model` and `tokens 777`. After the protocol and Rust slices, full `pnpm run test:tui` passed with 550/550 Node tests and every PTY scenario at every size. This remains synthetic fixture transport, not a live Workbench server, intent execution or production wiring. [[NOMO TUI]]
+
+
+## 2026-11-26 R2b real Workbench-backed bounded transport
+
+The transport proof now uses a real isolated `Workbench` with two host-only sessions created through the normal consent path. Snapshots served over loopback TCP come from `tuiSnapshotFromWorkbench(app, ...)`, and the Rust real-PTY footer changes from `host-fixture-a/host` to `host-fixture-b/host` with truthful zero tokens. Protocol, cargo, parity and original PTY checks stay green. The host runners are local contract doubles and snapshots are selected after settlement; this is not live subscription, intent execution or production wiring. [[NOMO TUI]]
