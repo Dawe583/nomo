@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-26T19:04:25.641037Z",
+  "updatedAt": "2026-11-26T21:52:01.139410Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -4041,6 +4041,47 @@
       ],
       "stopCondition": "Do not delete user residue files or weaken licence, dash or documentation assertions to reach green.",
       "completedAt": "2026-11-26T19:04:25.641037Z"
+    },
+    {
+      "id": "r0-tui-protocol-boundary",
+      "status": "done",
+      "owner": "devin-desktop-local-2026-11-26",
+      "dependsOn": [
+        "q23-local-residue-quality-gate-repair"
+      ],
+      "scope": [
+        "packages/workbench/src/tui-protocol.ts",
+        "packages/workbench/src/tui-protocol.test.ts",
+        "packages/workbench/src/index.ts",
+        "docs/plans/2026-11-26-tui-protocol-boundary.md",
+        ".nomo/work-state.json",
+        "docs/SESSION-HANDOFF.md",
+        "docs/memory/vault/work-log/NOMO Work Log.md"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "a typed versioned boundary separates terminal frontend state from operator intent without exposing TypeScript object graphs",
+        "transcript content is a separate paged channel from static session metadata",
+        "operator intents are validated at the boundary and carry explicit idempotency where a retry can duplicate work",
+        "the strangler migration path and byte-parity gate are documented",
+        "no Rust implementation or production migration is introduced"
+      ],
+      "verifier": [
+        "node --test packages/workbench/src/tui-protocol.test.ts",
+        "pnpm --filter @nomo/workbench typecheck",
+        "node scripts/src/work-graph-check.mjs",
+        "git diff --check"
+      ],
+      "evidence": [
+        "node --test packages/workbench/src/tui-protocol.test.ts: 8 tests, 8 pass, 0 fail, duration_ms 114.263541.",
+        "pnpm --filter @nomo/workbench typecheck: exit 0.",
+        "pnpm --filter @nomo/cli typecheck: exit 0.",
+        "The protocol separates server-owned snapshots from client-owned render context; static session metadata excludes transcript events and prompts, while paged transcript content remains a separate channel.",
+        "No Rust implementation, production wiring, release, deploy, benchmark or provider communication was introduced."
+      ],
+      "stopCondition": "Stop before production wiring, Rust implementation, release, publish, deploy or any provider benchmark."
     }
   ]
 }

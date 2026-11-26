@@ -10979,3 +10979,34 @@ export class Workbench {
     }
   }
 }
+
+export {
+  parseTuiIntent,
+  tuiApprovalSummary,
+  tuiRenderState,
+  tuiSessionSummary,
+  tuiSnapshot,
+  tuiTranscriptPage,
+  tuiUsageStatus,
+  TUI_PROTOCOL_VERSION,
+  TUI_VIEWS,
+} from "./tui-protocol.ts";
+export type {
+  TuiApprovalInput,
+  TuiClientContext,
+  TuiApprovalSummary,
+  TuiIntent,
+  TuiPaletteCommand,
+  TuiProtocolError,
+  TuiProtocolMessage,
+  TuiProviderStatus,
+  TuiRenderState,
+  TuiServerEvent,
+  TuiSessionSummary,
+  TuiSnapshot,
+  TuiTerminalCapabilities,
+  TuiTranscriptEvent,
+  TuiTranscriptPage,
+  TuiUsageStatus,
+  TuiViewName,
+} from "./tui-protocol.ts";

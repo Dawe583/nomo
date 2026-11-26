@@ -43,6 +43,14 @@
 - Provider smoke is verified only for the OpenAI-compatible OpenRouter path named in F4. This is not a benchmark and not proof of OpenCode Zen availability.
 - No release, tag, deploy, npm publication or hosted job was performed. G4 still needs an explicit owner decision on version target, changelog, tag and deploy path immediately before release.
 
+
+## R0 terminal protocol boundary (2026-11-26)
+
+- `packages/workbench/src/tui-protocol.ts` now defines the first versioned boundary for a future Rust or other terminal frontend: server-owned snapshots, paged transcript content, usage/provider/approval/palette state, validated operator intents and versioned server-event envelopes.
+- Active panel and terminal capabilities are client-owned render context, not workbench state. Static session metadata deliberately excludes transcript text and event payloads.
+- This is a contract only: no Rust implementation, production wiring, release, benchmark or migration has started. The byte-parity and strangler adoption gates are documented in `docs/plans/2026-11-26-tui-protocol-boundary.md`.
+- Verified after the slice: focused protocol tests 8/8, `@nomo/workbench` typecheck exit 0, `@nomo/cli` typecheck exit 0.
+
 ## Rules that are not negotiable
 
 - No push, merge, deploy, hosted CI, dependency install, or provider-costing call unless the user explicitly asks in the current task. (This push was explicitly authorized by the user on 2026-11-25.)
