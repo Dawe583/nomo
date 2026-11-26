@@ -8,7 +8,7 @@
 
 1. `AGENTS.md`, `AGENTS.local.md`, `.opencode/prompts/nomo-system.md`, `docs/agent-work-system.md`
 2. `.nomo/work-state.json` - the task graph. A node is done only when its verifier output is quoted in its evidence.
-3. `docs/plans/2026-11-25-nomo-24h-program-detailed.md` - the active program (T1-T12 TUI, H1-H15 harness, R1-R7 bandit/policy search, Q1-Q10 quality, F1-F4 product gates, G gated work)
+3. `docs/plans/2026-11-25-nomo-24h-program-detailed.md` and `docs/plans/2026-11-25-nomo-master-workflow.md` - the active programs (TUI, harness, bandit/policy search, quality, product gates, measurement wiring)
 4. `docs/superpowers/specs/2026-10-08-nomo-agent-identity-fleet-capability-map.md` - the product spec: run stop vs agent revoke vs fleet revoke, identity registry as revocation authority
 5. `docs/memory/vault/start-here/NOMO Project Home.md` and `docs/memory/vault/governance/NOMO Memory Rules.md` - the project memory imported from the Obsidian vault
 
@@ -20,13 +20,13 @@
 - `.agents/skills/`, `.devin/skills/` - the full local skill set, copied for cloud parity
 - `docs/CONTEXT.md`, `docs/DECISIONS.md`, `docs/STANDARDS.md` - authoritative repository contracts
 
-## Verified state at push (commit 657c8d77 line, 2026-11-25)
+## Verified state before the HP2 commit (2026-11-26)
 
-- scripts: `node --test scripts/src/*.test.mjs` → 417 tests, 384 pass, 0 fail, 32 skipped, 1 todo after Q17
-- `pnpm --filter @nomo/cli typecheck` → exit 0 after Q17
-- `pnpm --filter @nomo/workbench typecheck` → exit 0 after Q17
-- agent-identity: 11/11 including revocation surviving restart without local session evidence
-- H1-H15, H18-H20b, R1-R8, T1-T10 and T12-T18 are done; Q1-Q17 are done. Oracle eval proves plumbing only, not model capability; R2 is a contextual bandit, not RL
+- scripts: `node --test --test-concurrency=1 scripts/src/*.test.mjs` → 435 tests, 402 pass, 0 fail, 32 skipped, 1 todo
+- Workbench: `pnpm --filter @nomo/workbench test` → 1432 tests, 1429 pass, 0 fail, 3 skipped
+- `pnpm --filter @nomo/workbench typecheck` → exit 0
+- HP1 operator-scope promotions are done, including CLI and HTTP surfaces. HP2 automatic run-loop compaction is done: model summary with raw fallback, no persisted learned-entry digest, no self-summary loop, harness trigger arming and compaction usage accounting
+- H1-H15, H18-H26 measurement slices recorded in the graph, R1-R8, T1-T10 and T12-T18 are done; Q1-Q17 are done. Oracle eval proves plumbing only, not model capability; R2 is a contextual bandit, not RL
 - Do not trust these numbers without re-running the gate you depend on.
 
 ## Product gates status (Track F)

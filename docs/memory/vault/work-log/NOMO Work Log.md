@@ -9634,3 +9634,8 @@ Implemented the HP1 core operator chain in the workbench. Exact-digest activated
 ## 2026-11-26 HP1 operator surfaces
 
 Added CLI commands `promote`, `demote` and `global` plus matching control-plane HTTP routes for HP1. Focused CLI/API verifier: 75 tests, 75 pass, 0 fail. CLI typecheck and control-plane typecheck both exit 0.
+
+
+## 2026-11-26 HP2 automatic run-loop compaction
+
+Implemented automatic compaction in the workbench run loop. The run compacts before the configured message threshold or an agent context-budget refusal, uses the conversation model for a bounded untrusted summary, falls back to the raw extract, keeps tool groups intact, removes the transient learned-entry digest before summarising and persistence, avoids summarising only its own prior summary, arms the refinement trigger like manual compaction, and records compaction usage tokens under `source: "compaction"`. Also made the pre-existing lifecycle cancellation test wait until the first provider request is genuinely in flight; the assertion is stronger and the product behavior is unchanged. Verified before recording: focused 107/107, HP2 5/5, Workbench wide 1432 tests with 1429 pass, 0 fail and 3 skipped, Workbench typecheck exit 0, docs 10/10, scripts 435 tests with 402 pass, 0 fail, 32 skipped and 1 todo, diff check exit 0.
