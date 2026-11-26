@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-26T10:32:00Z",
+  "updatedAt": "2026-11-26T11:38:28.299170Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -730,7 +730,7 @@
       "evidence": [
         "Implemented in the parent free-for-teams session after the delegated child was terminated before progress. docs/HARNESS-LEARNING.md now documents proposal -> approval -> activation -> measurement -> replay -> trend -> rollback, exact digest activation, one-command rollback, signed record names and commands.",
         "Manual read verifier: docs/HARNESS-LEARNING.md read end to end after writing; command usage checked against harness-replay and trajectory-export usage lines; exact reward, bandit, trajectory and rollback record names included; document states contextual bandit and policy search, not reinforcement learning.",
-        "rg -n \"[—–]\" docs/HARNESS-LEARNING.md observed exit 1 with no matches, so the file uses no em dash or en dash.",
+        "rg -n \"[\u2014\u2013]\" docs/HARNESS-LEARNING.md observed exit 1 with no matches, so the file uses no em dash or en dash.",
         "git diff --check observed exit 0."
       ],
       "stopCondition": "After one targeted repair, record the blocker and continue independent work."
@@ -759,7 +759,7 @@
       "evidence": [
         "Implemented in the parent free-for-teams session after the delegated child was terminated before progress. docs/HARNESS-LEARNING.md now explicitly separates bandit, policy search and gradient RL.",
         "Manual read verifier: docs/HARNESS-LEARNING.md read end to end after the R7 edit. It states that gradient RL updates model weights and that this repository has no trainable local model, GPU budget or training path, so no NOMO surface may claim RL training.",
-        "rg -n \"[—–]\" docs/HARNESS-LEARNING.md observed exit 1 with no matches.",
+        "rg -n \"[\u2014\u2013]\" docs/HARNESS-LEARNING.md observed exit 1 with no matches.",
         "git diff --check observed exit 0."
       ],
       "stopCondition": "After one targeted repair, record the blocker and continue independent work."
@@ -1349,7 +1349,7 @@
         "node --test --test-concurrency=1 packages/cli/src/tui/*.test.ts"
       ],
       "evidence": [
-        "Reviewed rendered empty workspace frames at 40x12 and 52x16 before accepting snapshots: titles, primary facts and Esc hints remain visible; compact mode reads the whole label `mode: normal`, and the 52-column hint reads `Type filter · ↑↓ select · Enter open · Esc Chat` without clipping Tab/Esc.",
+        "Reviewed rendered empty workspace frames at 40x12 and 52x16 before accepting snapshots: titles, primary facts and Esc hints remain visible; compact mode reads the whole label `mode: normal`, and the 52-column hint reads `Type filter \u00b7 \u2191\u2193 select \u00b7 Enter open \u00b7 Esc Chat` without clipping Tab/Esc.",
         "NO_COLOR=1 node --test packages/cli/src/tui/workspace-narrow.test.ts observed exit 0: tests 1, pass 1, fail 0, duration_ms 244.309208.",
         "NOMO_UPDATE_SNAPSHOTS=1 node --test packages/cli/src/tui/visual-snapshots.test.ts observed exit 0 and wrote 120 frame hashes.",
         "NO_COLOR=1 node --test packages/cli/src/tui/workspace.test.ts packages/cli/src/tui/workspace-parity.test.ts packages/cli/src/tui/workspace-narrow.test.ts observed exit 0: tests 231, pass 231, fail 0, duration_ms 12030.20725.",
@@ -1830,7 +1830,7 @@
         "node --test --test-concurrency=1 packages/cli/src/tui/*.test.ts"
       ],
       "evidence": [
-        "NO_COLOR=1 node --test packages/cli/src/tui/workspace-ledger-chain-status.test.ts observed exit 0: tests 1, pass 1, fail 0, duration_ms 305.074625. The row is allow:resolved · [R1] postgres.row.update · chain000 #1; filter r1 keeps one entry and filter r2 keeps zero.",
+        "NO_COLOR=1 node --test packages/cli/src/tui/workspace-ledger-chain-status.test.ts observed exit 0: tests 1, pass 1, fail 0, duration_ms 305.074625. The row is allow:resolved \u00b7 [R1] postgres.row.update \u00b7 chain000 #1; filter r1 keeps one entry and filter r2 keeps zero.",
         "pnpm --filter @nomo/cli typecheck observed exit 0.",
         "NO_COLOR=1 node --test packages/cli/src/tui/workspace-parity.test.ts packages/cli/src/tui/workspace-ledger-chain-status.test.ts packages/cli/src/tui/workspace-narrow.test.ts observed exit 0: tests 105, pass 105, fail 0, duration_ms 12418.632833.",
         "NOMO_UPDATE_SNAPSHOTS=1 NO_COLOR=1 node --test packages/cli/src/tui/visual-snapshots.test.ts observed exit 0: wrote 120 frame hashes, tests 2, pass 2, fail 0; only four intentional ledger hashes changed.",
@@ -3791,6 +3791,105 @@
       ],
       "stopCondition": "Audit first. If reachability or evidence is missing, implement only the smallest truthful production surface; stop if content, secrets or decision authority enters retrieval evidence.",
       "completedAt": "2026-11-26T10:31:00Z"
+    },
+    {
+      "id": "f2-operator-approval-end-to-end",
+      "status": "pending",
+      "owner": "devin-3309bbeef254415e92cba37026acc1cf",
+      "dependsOn": [
+        "f1-later-session-retrieval-gate"
+      ],
+      "scope": [
+        "packages/cli/src/tui/workspace.ts",
+        "packages/cli/src/tui/workspace-approval.test.ts",
+        "packages/workbench/src/index.ts",
+        "docs/memory/vault/work-log/NOMO Work Log.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "a governed tool call waits for explicit operator approval",
+        "approval dispatches once and writes signed hold:approved evidence with the operator identity",
+        "denial, cancellation and restart cannot release the tool",
+        "the TUI shows a visible decision line after approval or denial"
+      ],
+      "verifier": [
+        "node --experimental-strip-types --test packages/cli/src/tui/workspace-approval.test.ts",
+        "pnpm --filter @nomo/cli typecheck",
+        "pnpm --filter @nomo/workbench typecheck",
+        "pnpm run test:tui",
+        "git diff --check"
+      ],
+      "evidence": [],
+      "stopCondition": "Audit first. If only visible-decision proof is missing, add the smallest assertion; if behavior is missing, implement the smallest truthful surface. Never weaken hold, restart or denial safety."
+    },
+    {
+      "id": "q20-ledger-visual-snapshot-repair",
+      "status": "done",
+      "owner": "devin-3309bbeef254415e92cba37026acc1cf",
+      "dependsOn": [
+        "q17-script-suite-repair"
+      ],
+      "scope": [
+        "packages/cli/src/tui/test/visual-snapshots.json",
+        "packages/cli/src/tui/visual-snapshots.test.ts",
+        "docs/memory/vault/work-log/NOMO Work Log.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "the four ledger visual snapshot hashes match the current intentionally rendered frames",
+        "no snapshot frame text is committed",
+        "the visual snapshot verifier is green without weakening assertions"
+      ],
+      "verifier": [
+        "node --experimental-strip-types --test packages/cli/src/tui/visual-snapshots.test.ts",
+        "pnpm run test:tui",
+        "git diff --check"
+      ],
+      "evidence": [
+        "Review before update: 84574a94 fix(quality): remove dashes from authored text is the newest committed change to packages/cli/src/tui/workspace.ts; git log 84574a94..HEAD for workspace.ts and visual-snapshots.json was empty before this repair, so the four ledger mismatches were stale hashes from that intentional text cleanup.",
+        "NOMO_UPDATE_SNAPSHOTS=1 node --experimental-strip-types --test packages/cli/src/tui/visual-snapshots.test.ts: 2 pass, 0 fail, duration_ms 389.87825; diff numstat 4 additions and 4 deletions, only ledger@80x24, ledger@120x40, ledger@160x45 and ledger@200x48 sha256 values changed; rows and maxVisibleLength unchanged.",
+        "node --experimental-strip-types --test packages/cli/src/tui/visual-snapshots.test.ts: 2 pass, 0 fail, duration_ms 340.900042; snapshot holds 120 frame hashes and stores hashes and shape only.",
+        "pnpm run test:tui: node tests 549 pass, 0 fail, 0 skipped, duration_ms 39559.857291; terminal verifier PASS every scenario at every size; git diff --check exit 0."
+      ],
+      "stopCondition": "Only update hashes after reviewing the source change that altered the frames. Stop if any other scenario mismatches or frame text would enter the snapshot."
+    },
+    {
+      "id": "q21-queued-prompt-test-race-repair",
+      "status": "done",
+      "owner": "devin-3309bbeef254415e92cba37026acc1cf",
+      "dependsOn": [
+        "q20-ledger-visual-snapshot-repair"
+      ],
+      "scope": [
+        "packages/cli/src/tui/workspace-parity.test.ts",
+        "docs/memory/vault/work-log/NOMO Work Log.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "the queued-prompt TUI test waits for the provider request before releasing it",
+        "the focused queued-prompt test passes deterministically",
+        "the wider TUI verifier is not blocked by this race"
+      ],
+      "verifier": [
+        "node --experimental-strip-types --test --test-name-pattern='a prompt sent during a run is queued, never dropped' packages/cli/src/tui/workspace-parity.test.ts",
+        "pnpm run test:tui",
+        "git diff --check"
+      ],
+      "evidence": [
+        "Root cause reproduction before repair: ui.command returned while release was false; the release call was a no-op, the provider request started afterward, one job stayed open and events stopped at harness.retrieval. This was a test synchronization race, not queue behavior loss.",
+        "node --experimental-strip-types --test --test-name-pattern='a prompt sent during a run is queued, never dropped' packages/cli/src/tui/workspace-parity.test.ts: 1 pass, 0 fail, duration_ms 326.530125 after the bounded wait for the provider request.",
+        "pnpm run test:tui: node tests 549 pass, 0 fail, 0 skipped, duration_ms 39559.857291; terminal verifier PASS every scenario at every size; git diff --check exit 0."
+      ],
+      "stopCondition": "Repair only the test synchronization race. Do not weaken queue assertions, provider validation, or snapshot checks."
     }
   ]
 }
