@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-26T23:38:12.832482Z",
+  "updatedAt": "2026-11-26T23:40:34.783199Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -5188,6 +5188,37 @@
         "node --test scripts/src/tui-rs-parity.test.mjs: 1 pass, 0 fail."
       ],
       "stopCondition": "Stop before click/drag/selection, production wiring, provider traffic, release, publish or deploy."
+    },
+    {
+      "id": "u1-typescript-tui-completion-audit",
+      "status": "done",
+      "owner": "devin-desktop-local-2026-11-26",
+      "dependsOn": [
+        "t21-command-palette-aliases"
+      ],
+      "scope": [
+        "docs/plans/2026-11-26-tui-upgrade-completion.md",
+        "docs/SESSION-HANDOFF.md",
+        "docs/memory/vault/work-log/NOMO Work Log.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "distinguish completed original TUI plan items from real remaining gaps",
+        "identify orphaned minimap, chat-markdown and run-activity modules accurately",
+        "do not duplicate existing palette, approval, mouse, accessibility or snapshot behavior",
+        "record Rust deferral and exact completion order"
+      ],
+      "verifier": [
+        "node scripts/src/work-graph-check.mjs",
+        "git diff --check"
+      ],
+      "evidence": [
+        "Source audit: minimap.ts, chat-markdown.ts and run-activity.ts have no production imports in this checkout; palette.ts/workspace.ts already implement fuzzy/frecency/aliases/preview; .nomo/work-state.json marks T1-T18, t20 transcript position and t21 aliases done."
+      ],
+      "stopCondition": "Stop before implementation; U2+ own source changes."
     }
   ]
 }

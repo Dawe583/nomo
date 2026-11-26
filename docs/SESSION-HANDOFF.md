@@ -263,6 +263,10 @@ Live application chrome now shows status and session position in the connected R
 
 The connected Rust proof now enables mouse capture, maps wheel up/down to three-line scrollback movement, and disables capture before terminal restore. Real PTY proof uses SGR wheel sequences to reach the oldest transcript rows and return to bottom. Evidence: cargo 15/15; transport PASS including mouse wheel; PTY matrix PASS; parity 1/1. Limit: wheel scrolling only, no click/drag/selection/production wiring.
 
+## U1 TypeScript TUI completion audit (2026-11-26)
+
+TypeScript TUI completion audit recorded. Original T1-T18 plus transcript-position and palette-alias work is already done; remaining work is integration/retirement of orphaned minimap/chat-markdown/run-activity modules, selective terminal-native gaps, unread/application-chrome polish and final audit. Rust is deferred by owner decision.
+
 ## Rules that are not negotiable
 
 - No push, merge, deploy, hosted CI, dependency install, or provider-costing call unless the user explicitly asks in the current task. (This push was explicitly authorized by the user on 2026-11-25.)
