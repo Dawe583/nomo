@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-26T21:52:01.139410Z",
+  "updatedAt": "2026-11-26T21:53:37.693196Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -4082,6 +4082,42 @@
         "No Rust implementation, production wiring, release, deploy, benchmark or provider communication was introduced."
       ],
       "stopCondition": "Stop before production wiring, Rust implementation, release, publish, deploy or any provider benchmark."
+    },
+    {
+      "id": "t20-transcript-position-indicator",
+      "status": "done",
+      "owner": "devin-desktop-local-2026-11-26",
+      "dependsOn": [
+        "r0-tui-protocol-boundary"
+      ],
+      "scope": [
+        "packages/cli/src/tui/workspace.ts",
+        "packages/cli/src/tui/workspace.test.ts",
+        "docs/SESSION-HANDOFF.md",
+        "docs/memory/vault/work-log/NOMO Work Log.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "a scrolled transcript names exact viewport position and rows below it",
+        "the indicator uses an existing sticky row and never changes frame row count or relies on colour",
+        "no minimap, virtual scrollback rewrite or production Rust migration is claimed"
+      ],
+      "verifier": [
+        "node --test packages/cli/src/tui/workspace.test.ts",
+        "node --test packages/cli/src/tui/a11y.test.ts packages/cli/src/tui/visual-snapshots.test.ts",
+        "pnpm --filter @nomo/cli typecheck",
+        "node scripts/src/work-graph-check.mjs",
+        "git diff --check"
+      ],
+      "evidence": [
+        "node --test packages/cli/src/tui/workspace.test.ts: 128 tests, 128 pass, 0 fail, duration_ms 6070.730834.",
+        "node --test packages/cli/src/tui/a11y.test.ts packages/cli/src/tui/visual-snapshots.test.ts: 16 tests, 16 pass, 0 fail, 120 frame hashes held.",
+        "pnpm --filter @nomo/cli typecheck: exit 0."
+      ],
+      "stopCondition": "Stop before a minimap, virtual scrollback rewrite, production Rust wiring or release action."
     }
   ]
 }

@@ -6550,6 +6550,17 @@ test("the sticky transcript line names the breadcrumb and the phase", () => {
     width: 60,
   });
   assert.equal(line, "▲ Chat > Visual snapshot · Writing");
+  const positioned = stickyTranscriptLine({
+    title: "Visual snapshot",
+    phase: "Writing",
+    arrow: "▲",
+    width: 80,
+    position: { first: 11, last: 20, total: 90, below: 70 },
+  });
+  assert.equal(
+    positioned,
+    "▲ Chat > Visual snapshot · Writing · 11-20/90 · 70 below",
+  );
   const untitled = stickyTranscriptLine({
     title: "",
     phase: "Idle",

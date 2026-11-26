@@ -9724,3 +9724,8 @@ The scripts quality suite first failed in `no-dash` because the scan walked sibl
 ## 2026-11-26 R0 terminal protocol boundary
 
 The first Rust-migration prerequisite is now a small typed contract rather than a rewrite. `packages/workbench/src/tui-protocol.ts` separates server-owned workbench snapshots from paged transcript content and client-owned render context, validates operator intents with explicit idempotency keys for prompt mutations, normalizes approval summaries without inventing malformed state, and documents versioned server-event envelopes. The migration plan records the strangler path and byte-parity adoption gate. No Rust implementation, production wiring, release or benchmark was introduced. Verified before recording: focused protocol tests 8/8, Workbench typecheck exit 0, CLI typecheck exit 0. [[NOMO TUI]]
+
+
+## 2026-11-26 T20 transcript position indicator
+
+The scrolled transcript breadcrumb now names the exact visible row range and how many rows remain below the viewport, so the operator can tell where they are without a colour-only scrollbar or another frame row. This is deliberately smaller than a minimap or virtual scrollback rewrite. Verified before recording: focused workspace suite 128/128, accessibility plus visual snapshots 16/16, CLI typecheck exit 0. [[NOMO TUI]]

@@ -13241,6 +13241,13 @@ export type StickyTranscriptInput = {
   readonly phase: string;
   /** The scrolled-up marker, one cell in the active preset. */
   readonly arrow: string;
+  /** Exact transcript viewport position and rows still below it. */
+  readonly position?: {
+    readonly first: number;
+    readonly last: number;
+    readonly total: number;
+    readonly below: number;
+  };
   readonly width: number;
 };
 
@@ -13260,7 +13267,15 @@ export function stickyTranscriptLine(input: StickyTranscriptInput): string {
   const phase = sanitizeText(stripAnsi(input.phase)).replace(/\s+/g, " ").trim();
   const breadcrumb = title === "" ? "Chat" : `Chat > ${title}`;
   const arrow = visibleLength(input.arrow) === 1 ? input.arrow : "^";
-  return fit(`${arrow} ${breadcrumb}${phase === "" ? "" : ` · ${phase}`}`, width);
+  const position = input.position;
+  const place =
+    position === undefined
+      ? ""
+      : ` · ${position.first}-${position.last}/${position.total}${position.below > 0 ? ` · ${position.below} below` : ""}`;
+  return fit(
+    `${arrow} ${breadcrumb}${phase === "" ? "" : ` · ${phase}`}${place}`,
+    width,
+  );
 }
 
 /** A horizontal span in terminal cells, zero based. */
@@ -15696,6 +15711,22 @@ export function renderWorkspace(
                     ? taskPhaseWord(sessionSummary.lastVisible, waiting)
                     : "Idle",
                 arrow: symbols.arrow.up,
+                position: {
+                  first: offset + 1,
+                  last: Math.min(
+                    offset + Math.max(0, availableBodyRows - 1),
+                    lines.length,
+                  ),
+                  total: lines.length,
+                  below: Math.max(
+                    0,
+                    lines.length -
+                      Math.min(
+                        offset + Math.max(0, availableBodyRows - 1),
+                        lines.length,
+                      ),
+                  ),
+                },
                 width,
               }),
               width,
