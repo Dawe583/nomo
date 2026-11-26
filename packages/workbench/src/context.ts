@@ -3,10 +3,10 @@ import type { CompactionResult } from "./agents.ts";
 import type { ModelMessage } from "./provider.ts";
 import type { HarnessEntry } from "./learned-harness.ts";
 import {
-  formatForPrompt,
   queryTermsFrom,
   rankEntries,
-  recordPromptBuild,
+  recordPromptInclusion,
+  renderPromptBlock,
 } from "./harness-ranking.ts";
 
 /** Retain an entire user turn so provider tool-call/result pairs stay intact.
@@ -128,10 +128,10 @@ export function buildHarnessContext(
     perKindLimit: 3,
     contentChars: 500,
   });
-  const block = formatForPrompt(ranked, new Date().toISOString());
   // The cut happens here, so this is the only place that can say which entries
   // the model was actually given. Recorded before returning, so the answer
   // describes the block the caller sends.
-  recordPromptBuild(ranked, maxChars);
-  return block.length <= maxChars ? block : block.slice(0, maxChars);
+  const rendered = renderPromptBlock(ranked, new Date().toISOString(), maxChars);
+  recordPromptInclusion(rendered.inclusion);
+  return rendered.block;
 }

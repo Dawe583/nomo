@@ -500,9 +500,10 @@ test("long sessions keep advancing event cursors and refuse unbounded context", 
   assert.equal(
     events.filter((e) => e.type !== "run.status" && e.type !== "harness.review")
       .length,
-    297,
+    396,
   );
   assert.equal(events.filter((e) => e.type === "harness.review").length, 99);
+  assert.equal(events.filter((e) => e.type === "harness.retrieval").length, 99);
   assert.equal(events[0]!.seq, 1);
   assert.ok(events.at(-1)!.seq > 200);
   assert.throws(
