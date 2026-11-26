@@ -9809,3 +9809,8 @@ The connected Rust spike is now a real transcript-viewport proof rather than Hel
 ## 2026-11-26 R7 incremental transcript and session streaming
 
 The bounded transport now sends one initial full snapshot and then granular validated `transcript.appended` / `session.updated` events. Rust keeps sequence-bearing rows, deduplicates and caps the retained page while preserving canonical non-connected parity. The real PTY proof depends on incrementally supplied rows for its scroll and cancellation flow. This remains polling-based and lacks subscription, usage/provider/approval increments, composer, authentication, reconnect/backpressure policy and production wiring. [[NOMO TUI]]
+
+
+## 2026-11-26 R8 event-driven Workbench invalidation
+
+Workbench now exposes additive coalesced state invalidation through `subscribe(listener)`. The bounded transport server no longer polls: subscription invalidation triggers projection diffing and granular transcript/session wire updates, while the real PTY proof still scrolls and cancels correctly. Workbench typecheck, subscription and host-run tests, protocol, Rust, parity and PTY gates pass. Remaining gaps include typed end-to-end domain events, usage/provider/approval increments, composer, authentication, reconnect/backpressure policy and production wiring. [[NOMO TUI]]

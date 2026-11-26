@@ -192,6 +192,15 @@
 - Verified: cargo 10/10, transport proof PASS, Rust parity 1/1, original PTY matrix PASS, protocol 14/14.
 - Honest limit: still polling-based; no Workbench invalidation subscription, usage/provider/approval increments, composer, authentication, reconnect/backpressure policy or production wiring.
 
+
+## R8 event-driven Workbench invalidation (2026-11-26)
+
+- Workbench now has additive `subscribe(listener)`: notifications are coalesced into a later microtask, never fired inside a partial mutation, and listener failures are contained.
+- Persistence and session transcript events invalidate subscribers. The fixture server no longer polls; subscription invalidation drives projection diffing and granular `transcript.appended` / `session.updated` transport events.
+- Real PTY proof passes with polling removed: transcript rows arrive, `g/G` scrolling works, `s` cancels and terminal restore holds.
+- Verified: Workbench typecheck PASS, subscription test 1/1, host-run tests 2/2, protocol 14/14, cargo 10/10, Rust parity 1/1, original PTY matrix PASS, transport proof PASS.
+- Honest limit: invalidation is coalesced rather than typed end-to-end; usage/provider/approval incremental handling, composer, authentication, reconnect/backpressure policy and production wiring remain absent.
+
 ## Rules that are not negotiable
 
 - No push, merge, deploy, hosted CI, dependency install, or provider-costing call unless the user explicitly asks in the current task. (This push was explicitly authorized by the user on 2026-11-25.)

@@ -143,3 +143,12 @@ The bounded server now sends exactly one full snapshot when a client connects. W
 The Rust client now keeps sequence-bearing transcript rows, applies transcript and session updates incrementally, deduplicates by sequence, caps the retained page at 100 rows and preserves canonical non-connected Help parity. The real PTY proof still scrolls through incrementally supplied rows and cancels through `run.stop`, so the granular wire path is required for the observed transcript.
 
 The transport is still polling-based. There is no Workbench invalidation subscription, usage/provider/approval incremental event, composer, authentication, reconnect/backpressure policy or production wiring.
+
+
+## R8 event-driven Workbench invalidation, 2026-11-26
+
+Workbench now exposes a narrow additive `subscribe(listener)` invalidation API. Notifications are coalesced into a later microtask, so observers never run inside a partially applied mutation; listener failures are contained. State persistence and session transcript events both invalidate subscribers. This is an invalidation signal, not a mutable event stream and not a promise that every future domain object will have its own event type.
+
+The bounded transport server no longer polls at 100 ms. Each connection still receives one initial full snapshot, then a subscription causes the projection diff to emit granular `transcript.appended` and `session.updated` events when Workbench state changes. The real PTY proof passes with polling removed, including scrollback and `run.stop` cancellation.
+
+Remaining limits are explicit: invalidation is coalesced rather than typed end-to-end, usage/provider/approval changes do not yet have dedicated incremental transport handling, and there is still no composer, authentication, reconnect/backpressure policy or production wiring.

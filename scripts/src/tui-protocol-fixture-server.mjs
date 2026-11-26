@@ -168,7 +168,7 @@ const server = createServer((socket) => {
       lastSessionJson = sessionJson;
     }
   };
-  const timer = setInterval(publish, 100);
+  const unsubscribe = app.subscribe(publish);
   let incoming = "";
   socket.on("data", (chunk) => {
     incoming += chunk.toString("utf8");
@@ -180,7 +180,7 @@ const server = createServer((socket) => {
       index = incoming.indexOf("\n");
     }
   });
-  socket.on("close", () => clearInterval(timer));
+  socket.on("close", () => unsubscribe());
 });
 
 server.listen(0, "127.0.0.1", () => {

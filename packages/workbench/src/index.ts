@@ -1454,10 +1454,39 @@ export class Workbench {
   private readonly preparedHostRuns = new Map<string, PreparedHostRun>();
   private readonly activeAgentRuns = new Map<string, ActiveAgentRunnerRun>();
   private readonly activeHostRuns = new Map<string, ActiveHostRun>();
+  private readonly stateListeners = new Set<() => void>();
+  private stateListenersQueued = false;
   private projectAccess?: ProjectAccess;
   private projectExecutionTail: Promise<void> = Promise.resolve();
   private projectExecutionQueued = 0;
   private closing = false;
+  /** Subscribe to a coalesced invalidation signal for Workbench state.
+   *
+   * The listener runs in a later microtask after the mutation batch, never in
+   * the middle of it. Listener failures are contained so an observer cannot
+   * corrupt the state transition it is observing. */
+  subscribe(listener: () => void): () => void {
+    if (typeof listener !== "function")
+      throw new Error("Workbench listener must be a function.");
+    this.stateListeners.add(listener);
+    return () => {
+      this.stateListeners.delete(listener);
+    };
+  }
+  private notifyStateListeners(): void {
+    if (!this.stateListeners.size || this.stateListenersQueued) return;
+    this.stateListenersQueued = true;
+    queueMicrotask(() => {
+      this.stateListenersQueued = false;
+      for (const listener of [...this.stateListeners]) {
+        try {
+          listener();
+        } catch {
+          // Observer failures must not corrupt the mutation they observed.
+        }
+      }
+    });
+  }
   running() {
     return this.jobs.size > 0;
   }
@@ -1974,6 +2003,7 @@ export class Workbench {
       ),
     });
     this.hasState = true;
+    this.notifyStateListeners();
   }
 
   /**
@@ -4873,6 +4903,7 @@ export class Workbench {
       updatedAt: at,
       events: trimViewEvents(session, [...session.view.events, appended]),
     };
+    this.notifyStateListeners();
   }
   getPreferences() {
     return { ...this.preferences };
