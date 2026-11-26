@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-26T10:13:00Z",
+  "updatedAt": "2026-11-26T10:19:00Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -3480,6 +3480,7 @@
       "status": "done",
       "owner": "devin-3309bbeef254415e92cba37026acc1cf",
       "dependsOn": [
+        "c1-retrieval-index",
         "hp2-automatic-run-compaction"
       ],
       "scope": [
@@ -3704,6 +3705,44 @@
       ],
       "completedAt": "2026-11-26T10:12:00Z",
       "stopCondition": "Audit only. If production reachability is absent, implement the smallest truthful wiring surface rather than recording completion."
+    },
+    {
+      "id": "c1-retrieval-index",
+      "status": "done",
+      "owner": "devin-3309bbeef254415e92cba37026acc1cf",
+      "dependsOn": [],
+      "scope": [
+        "packages/workbench/src/harness-ranking.ts",
+        "packages/workbench/src/harness-ranking.test.ts",
+        "docs/memory/vault/work-log/NOMO Work Log.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "two consecutive turns with an unchanged chain do no re-tokenisation, measured by a counter",
+        "the cached IDF table is reused for the same query",
+        "a new chain record invalidates the index"
+      ],
+      "verifier": [
+        "pnpm --filter @nomo/workbench exec node --experimental-strip-types --test src/harness-ranking.test.ts",
+        "pnpm --filter @nomo/workbench typecheck",
+        "pnpm --filter @nomo/workbench test",
+        "git diff --check"
+      ],
+      "evidence": [
+        "Audit proof: harness-ranking.ts keeps cachedCorpus and cached IDF state, rankEntries reuses them for unchanged input and the tests measure tokenisation and cache invalidation counters.",
+        "Focused verifier after audit: pnpm --filter @nomo/workbench exec node --experimental-strip-types --test src/harness-ranking.test.ts observed 38 tests, 38 pass, 0 fail, duration_ms 86.049542, including unchanged-chain tokenisation, cached-IDF reuse, new-chain invalidation and stale-entry protection.",
+        "pnpm --filter @nomo/workbench typecheck observed exit 0.",
+        "Workbench wide verifier from the unchanged production tree: pnpm --filter @nomo/workbench test observed 1434 tests, 1431 pass, 0 fail, 3 skipped, duration_ms 29305.505042.",
+        "git diff --check observed exit 0.",
+        "Not verified: no hosted CI, provider smoke, paid benchmark or live credential path was run.",
+        "Docs verifier after recording: node --test scripts/src/doc-truth.test.mjs scripts/src/no-dash.test.mjs observed 10 tests, 10 pass, 0 fail, duration_ms 71.90025.",
+        "node scripts/src/work-graph-check.mjs after recording observed graph-check: duplicate ids 0 / dangling deps 0 / done without evidence 0."
+      ],
+      "completedAt": "2026-11-26T10:18:00Z",
+      "stopCondition": "Audit only. If caching is absent or production unreachable, implement the smallest truthful indexing surface rather than recording completion."
     }
   ]
 }

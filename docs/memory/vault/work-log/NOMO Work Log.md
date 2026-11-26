@@ -9664,3 +9664,8 @@ Audit found the capability already wired, so no duplicate implementation was wri
 ## 2026-11-26 D4 project-context wiring audit
 
 Audit found the capability already wired, so no duplicate implementation was written. Confirmed custom-profile project sessions receive project context capability only after explicit confirmation and reconfirm after restart, while oversized, symlinked, non-UTF8 and untracked context files are refused. Verified: focused wiring 85 tests with 84 pass, 0 fail and 1 skipped, module inventory 2/2 with `project-context-files.ts` at 1 production importer and no orphan allowlist entry, Workbench typecheck exit 0.
+
+
+## 2026-11-26 C1 retrieval index audit
+
+Audit found the retrieval index already implemented and production-reachable through `rankEntries`, so no duplicate implementation was written. An unchanged chain tokenises once across consecutive turns, the cached IDF table is reused for the same query, caller mutation cannot corrupt the cache, and a new chain record or changed entry invalidates it. Verified: focused ranking 38/38, Workbench typecheck exit 0, wide Workbench evidence from the unchanged production tree 1431 pass with 0 fail and 3 skipped.
