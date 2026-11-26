@@ -465,6 +465,48 @@ export function tuiSnapshot(input: {
   };
 }
 
+/** Adapt the read-only workbench projection into the wire snapshot without
+ * probing providers or letting the client choose server state. The active
+ * session is explicit because panel focus is client-owned render context. */
+export function tuiSnapshotFromWorkbench(
+  source: {
+    readonly allViews: () => readonly SessionView[];
+    readonly approvals: () => readonly TuiApprovalInput[];
+  },
+  input: {
+    readonly sessionId?: string;
+    readonly provider: TuiProviderStatus;
+    readonly palette?: readonly TuiPaletteCommand[];
+    readonly diagnostics?: readonly string[];
+    readonly transcriptLimit?: number;
+    readonly transcriptBeforeSeq?: number;
+  },
+): TuiSnapshot {
+  const sessions = source.allViews();
+  const session =
+    input.sessionId === undefined
+      ? undefined
+      : sessions.find((candidate) => candidate.id === input.sessionId);
+  if (input.sessionId !== undefined && session === undefined)
+    throw new Error(`Unknown TUI snapshot session: ${input.sessionId}`);
+  return tuiSnapshot({
+    ...(session === undefined ? {} : { session }),
+    sessions,
+    approvals: source.approvals().map(tuiApprovalSummary),
+    provider: input.provider,
+    ...(input.palette === undefined ? {} : { palette: input.palette }),
+    ...(input.diagnostics === undefined
+      ? {}
+      : { diagnostics: input.diagnostics }),
+    ...(input.transcriptLimit === undefined
+      ? {}
+      : { transcriptLimit: input.transcriptLimit }),
+    ...(input.transcriptBeforeSeq === undefined
+      ? {}
+      : { transcriptBeforeSeq: input.transcriptBeforeSeq }),
+  });
+}
+
 export function tuiRenderState(input: {
   readonly client: TuiClientContext;
   readonly workbench: TuiSnapshot;

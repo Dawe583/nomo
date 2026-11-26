@@ -9749,3 +9749,8 @@ The isolated Rust Help spike now exercises the real terminal path, not only rata
 ## 2026-11-26 R1c Rust snapshot-shaped input seam
 
 The isolated Rust Help spike now reads a versioned JSON snapshot shaped after the R0 terminal protocol. Serde validates the wire shape and version, and the footer uses the snapshot session model plus usage or session run-token count. Canonical fixture input preserves exact byte parity across the whole matrix, and the interactive PTY smoke passes the fixture through the real terminal path. This is still not a protocol client: no shared schema validator, transport, transcript channel, intents, server events or production wiring exist. Verified before recording: cargo test 3/3, parity test 1/1, PTY matrix PASS. [[NOMO TUI]]
+
+
+## 2026-11-26 R0b read-only workbench snapshot adapter
+
+The protocol boundary now has a read-only adapter from workbench projections into a wire snapshot. Explicit session selection is required, unknown sessions fail closed, approvals are normalized at the boundary, and provider probing plus client-owned view or terminal state stay outside the server snapshot. Verified before recording: protocol tests 10/10, Workbench typecheck exit 0. This is not yet a transport or production wiring. [[NOMO TUI]]

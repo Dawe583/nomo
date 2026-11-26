@@ -10986,6 +10986,7 @@ export {
   tuiRenderState,
   tuiSessionSummary,
   tuiSnapshot,
+  tuiSnapshotFromWorkbench,
   tuiTranscriptPage,
   tuiUsageStatus,
   TUI_PROTOCOL_VERSION,

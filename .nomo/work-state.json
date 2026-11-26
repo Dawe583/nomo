@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-26T22:14:17.675042Z",
+  "updatedAt": "2026-11-26T22:15:48.756129Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -4277,6 +4277,45 @@
         "A custom fixture with model other-model and 777 run tokens makes both facts visible; protocol version 2 is rejected."
       ],
       "stopCondition": "Stop before transport, transcript channel, intents, production wiring, adoption claims, provider traffic, release, publish or deploy."
+    },
+    {
+      "id": "r0b-workbench-snapshot-adapter",
+      "status": "done",
+      "owner": "devin-desktop-local-2026-11-26",
+      "dependsOn": [
+        "r1c-rust-snapshot-input-seam"
+      ],
+      "scope": [
+        "packages/workbench/src/tui-protocol.ts",
+        "packages/workbench/src/tui-protocol.test.ts",
+        "packages/workbench/src/index.ts",
+        "docs/plans/2026-11-26-tui-protocol-boundary.md",
+        "docs/SESSION-HANDOFF.md",
+        "docs/memory/vault/work-log/NOMO Work Log.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "read-only workbench projections adapt into the protocol snapshot",
+        "explicit active session selection is required and unknown sessions fail closed",
+        "approvals normalize through the existing boundary",
+        "provider probing and client-owned active view or terminal capabilities stay outside server-owned state",
+        "no transport or production wiring is introduced"
+      ],
+      "verifier": [
+        "node --test packages/workbench/src/tui-protocol.test.ts",
+        "pnpm --filter @nomo/workbench typecheck",
+        "node scripts/src/work-graph-check.mjs",
+        "git diff --check"
+      ],
+      "evidence": [
+        "node --test packages/workbench/src/tui-protocol.test.ts: 10 tests, 10 pass, 0 fail, duration_ms 83.26875.",
+        "pnpm --filter @nomo/workbench typecheck: exit 0.",
+        "The adapter test proves transcript pagination, approval normalization and absence of activeView/terminal in server state."
+      ],
+      "stopCondition": "Stop before transport server, production wiring, provider traffic, release, publish or deploy."
     }
   ]
 }

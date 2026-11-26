@@ -49,3 +49,10 @@ This is not adoption evidence. The spike still has hardcoded fixture content, no
 The isolated Rust spike now accepts a versioned JSON snapshot shaped after the R0 protocol contract. It validates the version and required wire fields with Serde, reads the session model and usage or session run-token count, and drives the Help footer from that input rather than from compile-time-only facts. The canonical fixture still reproduces every committed Help hash exactly.
 
 This remains a narrow seam, not a protocol client. There is no snapshot runtime validator shared with TypeScript, no websocket or IPC transport, no transcript channel, no intent submission, no server events and no production wiring.
+
+
+## R0b read-only workbench adapter, 2026-11-26
+
+`tuiSnapshotFromWorkbench` now adapts the read-only `allViews` and `approvals` projections into the wire snapshot. It requires the active session id explicitly, fails closed for an unknown session, normalizes approvals through the existing boundary and never probes providers or copies active view or terminal capabilities into server state.
+
+This is still in-process adaptation only. There is no transport server, no event stream and no production Rust wiring.

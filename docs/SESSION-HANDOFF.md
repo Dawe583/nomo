@@ -89,6 +89,14 @@
 - Honest limit: this is not a protocol client. There is no shared TypeScript/Rust schema validator, transport, transcript channel, intents, server events or production wiring.
 - Verified: cargo test 3/3, `node --test scripts/src/tui-rs-parity.test.mjs` 1/1, `python3 scripts/src/verify-rust-spike-pty.py` matrix PASS.
 
+
+## R0b read-only workbench snapshot adapter (2026-11-26)
+
+- `tuiSnapshotFromWorkbench` adapts `allViews` and `approvals` into the protocol snapshot. Explicit session selection is required for a transcript; unknown sessions fail closed.
+- The adapter normalizes approvals through the existing boundary, does not probe providers and keeps active view plus terminal capabilities outside server-owned state.
+- Verified: protocol tests 10/10 and `@nomo/workbench` typecheck exit 0.
+- Honest limit: in-process adaptation only; no transport server, event stream or production Rust wiring.
+
 ## Rules that are not negotiable
 
 - No push, merge, deploy, hosted CI, dependency install, or provider-costing call unless the user explicitly asks in the current task. (This push was explicitly authorized by the user on 2026-11-25.)

@@ -6,6 +6,7 @@ import {
   tuiRenderState,
   tuiSessionSummary,
   tuiSnapshot,
+  tuiSnapshotFromWorkbench,
   tuiTranscriptPage,
   tuiUsageStatus,
   TUI_PROTOCOL_VERSION,
@@ -132,6 +133,50 @@ test("snapshot separates metadata, transcript, provider state and terminal capab
   assert.equal(snapshot.transcript?.events.at(-1)?.seq, 4);
   assert.equal(snapshot.usage?.totalTokens, 30);
   assert.equal(snapshot.approvals[0]?.tool, "shell.exec");
+});
+
+test("workbench snapshots adapt views and normalize approvals without client state", () => {
+  const approvalInput = {
+    holdId: "session-1:hold-1",
+    sessionId: "session-1",
+    status: "pending",
+    expiresAt: 123,
+    call: { tool: " shell.exec ", klass: "r2" },
+  };
+  const snapshot = tuiSnapshotFromWorkbench(
+    {
+      allViews: () => [view],
+      approvals: () => [approvalInput],
+    },
+    {
+      sessionId: "session-1",
+      provider: { providerId: "fixture-provider", status: "ready" },
+      transcriptLimit: 2,
+    },
+  );
+  assert.equal(snapshot.session?.id, "session-1");
+  assert.deepEqual(
+    snapshot.transcript?.events.map((event) => event.seq),
+    [3, 4],
+  );
+  assert.equal(snapshot.approvals[0]?.tool, "shell.exec");
+  assert.equal(snapshot.approvals[0]?.reversibilityClass, "r2");
+  assert.equal("activeView" in snapshot, false);
+  assert.equal("terminal" in snapshot, false);
+});
+
+test("workbench snapshots fail closed for an unknown explicit session", () => {
+  assert.throws(
+    () =>
+      tuiSnapshotFromWorkbench(
+        { allViews: () => [view], approvals: () => [] },
+        {
+          sessionId: "missing-session",
+          provider: { providerId: "fixture-provider", status: "ready" },
+        },
+      ),
+    /Unknown TUI snapshot session: missing-session/u,
+  );
 });
 
 test("render state carries client context beside server-owned workbench state", () => {
