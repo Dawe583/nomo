@@ -35,3 +35,10 @@ If any gate fails, the spike remains an experiment and the hand-written TypeScri
 ## Security boundary
 
 The protocol does not make prompt content safe by omission. Prompt content exists only in the explicit transcript or prompt-submit channel. Static snapshots carry identity, state, counters and status. Approval decisions require an explicit decision and operator identity. Prompt submission and session creation require client-generated idempotency keys so a terminal retry cannot silently become two user intents.
+
+
+## R1 spike result, 2026-11-26
+
+A bounded spike now exists at `scripts/tui-rs-spike`. It uses `ratatui` and `crossterm`, renders the canonical monochrome Help fixture, and matches the committed TypeScript frame hash byte-for-byte at 40x12, 52x16, 80x24, 120x40, 160x45 and 200x48 for the ascii, unicode and nerd arguments. The three presets are byte identical because the canonical Help surface uses shared glyphs in all three.
+
+This is not adoption evidence. The spike still has hardcoded fixture content, no typed protocol client, no input loop, no scrollback, no mouse or bracketed-paste behavior, no approval flow and no real PTY matrix. It proves only that a narrow static Help surface can be reproduced exactly with the current layout rules.

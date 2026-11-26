@@ -9734,3 +9734,8 @@ The scrolled transcript breadcrumb now names the exact visible row range and how
 ## 2026-11-26 T21 command palette aliases
 
 Command palette search now understands a small audited alias set for approvals, keybindings, models, sessions, settings and usage, while every row and execution path remains the canonical slash command. Aliases are visible in preview data rather than becoming hidden actions. Verified before recording: palette visual 4/4, palette-focused workspace tests pass, CLI typecheck exit 0. [[NOMO TUI]]
+
+
+## 2026-11-26 R1 bounded Rust Help spike
+
+The first Rust terminal spike exists outside production wiring in `scripts/tui-rs-spike`. It uses `ratatui` plus `crossterm` and matches the canonical monochrome TypeScript Help frame byte-for-byte at all six matrix sizes for ascii, unicode and nerd arguments. The presets are identical because this surface uses shared glyphs. This is not Rust adoption: the fixture content is hardcoded and there is no protocol client, input loop, scrollback, mouse, bracketed paste, approval flow or real PTY matrix. Verified before recording: cargo test 1/1 offline, Rust parity test 1/1. [[NOMO TUI]]

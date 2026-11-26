@@ -98,3 +98,6 @@ __pycache__/
 
 # Local advisor harness config. Personal tooling, not product code.
 WATCHDOG.yml
+
+# Rust spike build output
+scripts/tui-rs-spike/target/

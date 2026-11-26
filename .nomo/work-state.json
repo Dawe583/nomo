@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-26T22:01:54.970119Z",
+  "updatedAt": "2026-11-26T22:08:41.103175Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -4155,6 +4155,46 @@
         "pnpm --filter @nomo/cli typecheck: exit 0."
       ],
       "stopCondition": "Stop before a parallel command registry, hidden action surface or production Rust wiring."
+    },
+    {
+      "id": "r1-rust-help-parity-spike",
+      "status": "done",
+      "owner": "devin-desktop-local-2026-11-26",
+      "dependsOn": [
+        "r0-tui-protocol-boundary"
+      ],
+      "scope": [
+        "scripts/tui-rs-spike/Cargo.toml",
+        "scripts/tui-rs-spike/Cargo.lock",
+        "scripts/tui-rs-spike/src/main.rs",
+        "scripts/src/tui-rs-parity.test.mjs",
+        "docs/plans/2026-11-26-tui-protocol-boundary.md",
+        "docs/SESSION-HANDOFF.md",
+        "docs/memory/vault/work-log/NOMO Work Log.md",
+        ".nomo/work-state.json",
+        ".gitignore"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "one bounded Rust ratatui plus crossterm spike reproduces a simple existing screen without production wiring",
+        "byte-for-byte parity is proven against canonical monochrome Help hashes at all six matrix sizes for ascii, unicode and nerd arguments",
+        "limitations are recorded honestly and Rust is not adopted beyond the spike"
+      ],
+      "verifier": [
+        "cd scripts/tui-rs-spike && cargo test --offline --quiet",
+        "node --test scripts/src/tui-rs-parity.test.mjs",
+        "node scripts/src/work-graph-check.mjs",
+        "git diff --check"
+      ],
+      "evidence": [
+        "cd scripts/tui-rs-spike && cargo test --offline --quiet: 1 passed, 0 failed.",
+        "node --test scripts/src/tui-rs-parity.test.mjs: 1 test, 1 pass, 0 fail, duration_ms 808.692375.",
+        "The parity test checks exact row count, exact visible row width and SHA-256 equality for 18 combinations: 6 sizes times ascii, unicode and nerd.",
+        "The spike has hardcoded fixture content and no protocol client, input loop, scrollback, mouse, bracketed paste, approval flow or real PTY matrix."
+      ],
+      "stopCondition": "Stop before production Rust wiring, adoption claims, provider traffic, release, publish or deploy."
     }
   ]
 }

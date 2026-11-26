@@ -1,0 +1,54 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
+import { execFileSync } from "node:child_process";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
+const root = new URL("../..", import.meta.url).pathname;
+const spike = join(root, "scripts/tui-rs-spike");
+const binary = join(spike, "target/debug/nomo-tui-rs-spike");
+const snapshots = JSON.parse(
+  readFileSync(
+    join(root, "packages/cli/src/tui/test/visual-snapshots.json"),
+    "utf8",
+  ),
+);
+
+const sizes = [
+  [40, 12],
+  [52, 16],
+  [80, 24],
+  [120, 40],
+  [160, 45],
+  [200, 48],
+];
+const presets = ["ascii", "unicode", "nerd"];
+
+test("Rust Help spike matches the canonical monochrome frame hashes", () => {
+  execFileSync("cargo", ["build", "--offline", "--quiet"], {
+    cwd: spike,
+    stdio: "pipe",
+  });
+  for (const preset of presets) {
+    for (const [columns, rows] of sizes) {
+      const frame = execFileSync(
+        binary,
+        [String(columns), String(rows), preset],
+        { encoding: "utf8" },
+      );
+      const lines = frame.split("\n");
+      assert.equal(lines.length, rows, `${preset} ${columns}x${rows} row count`);
+      assert.ok(
+        lines.every((line) => line.length === columns),
+        `${preset} ${columns}x${rows} exact visible width`,
+      );
+      const sha256 = createHash("sha256").update(frame, "utf8").digest("hex");
+      assert.equal(
+        sha256,
+        snapshots.frames[`help@${columns}x${rows}`].sha256,
+        `${preset} ${columns}x${rows} frame hash`,
+      );
+    }
+  }
+});

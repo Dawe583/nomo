@@ -64,6 +64,14 @@
 - Palette fuzzy search now accepts a small audited set of operator aliases while rows still show only canonical slash commands. Preview data exposes aliases beside the command summary and usage shape.
 - Verified: palette visual tests 4/4, palette-focused workspace tests pass, `@nomo/cli` typecheck exit 0.
 
+
+## R1 bounded Rust Help spike (2026-11-26)
+
+- `scripts/tui-rs-spike` is an isolated experiment using `ratatui` and `crossterm`; it is not wired into production launch paths.
+- Verified byte-for-byte against committed canonical monochrome Help hashes at 40x12, 52x16, 80x24, 120x40, 160x45 and 200x48 for ascii, unicode and nerd arguments. The presets are identical because this Help surface uses shared glyphs.
+- Honest limit: fixture content is hardcoded and there is no protocol client, input loop, scrollback, mouse, bracketed paste, approval flow or real PTY evidence. Rust is not adopted beyond this spike.
+- Verified: `cargo test --offline --quiet` 1/1 and `node --test scripts/src/tui-rs-parity.test.mjs` 1/1.
+
 ## Rules that are not negotiable
 
 - No push, merge, deploy, hosted CI, dependency install, or provider-costing call unless the user explicitly asks in the current task. (This push was explicitly authorized by the user on 2026-11-25.)
