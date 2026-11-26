@@ -9669,3 +9669,8 @@ Audit found the capability already wired, so no duplicate implementation was wri
 ## 2026-11-26 C1 retrieval index audit
 
 Audit found the retrieval index already implemented and production-reachable through `rankEntries`, so no duplicate implementation was written. An unchanged chain tokenises once across consecutive turns, the cached IDF table is reused for the same query, caller mutation cannot corrupt the cache, and a new chain record or changed entry invalidates it. Verified: focused ranking 38/38, Workbench typecheck exit 0, wide Workbench evidence from the unchanged production tree 1431 pass with 0 fail and 3 skipped.
+
+
+## 2026-11-26 F1 later-session retrieval gate audit
+
+Audit found the product gate already implemented, so no duplicate implementation was written. A later session retrieves an operator-approved learned entry only inside the operator-named shared learning scope, the digest names the entry id and signed chain sequences, isolation remains the default, and C2 hit records prove which entries entered provider input without copying content. Session search remains opt-in, bounded, redacted, restart-safe and caller-excluding. Verified: focused retrieval and session-search 75/75, Workbench wide 1434 tests with 1431 pass, 0 fail and 3 skipped, Workbench typecheck exit 0.
