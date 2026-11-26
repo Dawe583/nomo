@@ -23,7 +23,7 @@
 ## Verified state after the F2 audit (2026-11-26)
 
 - Implementation heads before this handoff refresh: `tui-merge-main` `87044f9c`; `origin/main` `87044f9c`
-- Graph: `.nomo/work-state.json` has 109 nodes, 109 done, including C1-C2, D1-D4, F1-F4, Q1-Q22, H1-H15, H18-H26, R1-R8 and T1-T18 as applicable
+- Graph: `.nomo/work-state.json` has 110 nodes, 110 done, including C1-C2, D1-D4, F1-F4, Q1-Q23, H1-H15, H18-H26, R1-R8 and T1-T18 as applicable
 - Latest TUI gate: `pnpm run test:tui` → 549 tests, 549 pass, 0 fail; terminal verifier PASS every scenario at every size
 - Latest typechecks from that gate: `pnpm --filter @nomo/cli typecheck` → exit 0; `pnpm --filter @nomo/workbench typecheck` → exit 0
 - Latest Workbench wide evidence before the test-only TUI repairs: 1434 tests, 1431 pass, 0 fail, 3 skipped
@@ -37,6 +37,11 @@
 - F2 approval end-to-end: DONE - governed hold waits for confirmation, approval dispatches once, signed hold:approved evidence carries approvedBy, denial/restart/cancellation cannot release, and the TUI decision notice is pinned in the integration test
 - F3 identity/fleet truth: DONE as the local-truth slice. TUI status shows the binding, `/revoke-agent` is confirmed and local, durable restart is tested including revocation without local session evidence; fleet-wide revoke remains honestly documented as unavailable until registry, node inventory, ack barrier and reconcile exist
 - F4 provider release path: DONE - real provider smoke is verified through OpenRouter using locally configured credential material. Final output: `PASS provider-smoke: nvidia/nemotron-3.5-lightning:free answered in 1084 ms; reply 5 chars; usage prompt_tokens=23 completion_tokens=138 total_tokens=161.` No credential, prompt or response content is recorded
+
+## Release decision after provider smoke (2026-11-26)
+
+- Provider smoke is verified only for the OpenAI-compatible OpenRouter path named in F4. This is not a benchmark and not proof of OpenCode Zen availability.
+- No release, tag, deploy, npm publication or hosted job was performed. G4 still needs an explicit owner decision on version target, changelog, tag and deploy path immediately before release.
 
 ## Rules that are not negotiable
 

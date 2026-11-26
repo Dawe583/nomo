@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-26T18:57:21.550823Z",
+  "updatedAt": "2026-11-26T19:04:25.641037Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -4003,6 +4003,44 @@
       ],
       "stopCondition": "Do not retry the smoke or add provider communication without new explicit user authorization.",
       "completedAt": "2026-11-26T18:57:21.550823Z"
+    },
+    {
+      "id": "q23-local-residue-quality-gate-repair",
+      "status": "done",
+      "owner": "devin-desktop-local-2026-11-26",
+      "dependsOn": [
+        "q22-session-handoff-refresh"
+      ],
+      "scope": [
+        "scripts/src/no-dash.test.mjs",
+        "scripts/src/licence-line.test.mjs",
+        ".nomo/work-state.json",
+        "docs/memory/vault/work-log/NOMO Work Log.md",
+        "docs/SESSION-HANDOFF.md"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "quality gates scan authored files in this checkout rather than sibling worktrees, protected submodule content, agent scratch state, browser captures or generated cache residue",
+        "the scripts quality suite is green without weakening assertions"
+      ],
+      "verifier": [
+        "node --test scripts/src/no-dash.test.mjs",
+        "node --test scripts/src/licence-line.test.mjs",
+        "node --test --test-concurrency=1 scripts/src/*.test.mjs",
+        "git diff --check"
+      ],
+      "evidence": [
+        "Initial reproduction: node --test --test-concurrency=1 scripts/src/*.test.mjs exited 1 in no-dash with 548 matches dominated by .worktrees, .gstack scratch, browser captures and protected nomo-web content rather than authored files in this checkout.",
+        "node --test scripts/src/no-dash.test.mjs after narrowing the scan: 1 pass, 0 fail, duration_ms 355.136125.",
+        "Second suite reproduction progressed to licence-line and exited 1 because apps/appwrite-mcp existed only as local generated .DS_Store, __pycache__ and .pyc residue.",
+        "node --test scripts/src/licence-line.test.mjs after ignoring directories without substantive authored files: 13 pass, 0 fail, duration_ms 322.77025.",
+        "Final node --test --test-concurrency=1 scripts/src/*.test.mjs: 435 tests, 401 pass, 0 fail, 33 skipped, 1 todo, duration_ms 42129.514792.",
+        "Release decision recorded: provider smoke proves only the OpenRouter smoke path; no release, tag, deploy or npm publication was performed because G4 still requires explicit owner decisions."
+      ],
+      "stopCondition": "Do not delete user residue files or weaken licence, dash or documentation assertions to reach green.",
+      "completedAt": "2026-11-26T19:04:25.641037Z"
     }
   ]
 }
