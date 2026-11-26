@@ -9694,3 +9694,8 @@ Audit found the governed approval path already implemented end to end: a real go
 ## 2026-11-26 Q22 session handoff refresh
 
 `docs/SESSION-HANDOFF.md` now names the current recorded heads, graph completion, latest TUI and typecheck evidence, production-reachable C2 retrieval accounting, audited F1 and F2 completion, local-truth F3 completion, and the still-blocked F4 provider release path. No release, provider capability, fleet revocation or RL claim was added. Verified: doc truth 9/9, graph check 0 duplicates, 0 dangling dependencies and 0 done nodes without evidence, diff check exit 0. [[NOMO Documentation]]
+
+
+## 2026-11-26 F4 provider release path audit
+
+Audit settled F4 as a named blocker rather than a release claim. The existing Q5 smoke record proves the command exits safely with SKIP because `NOMO_SMOKE_API_KEY` is absent, nothing was sent and no provider capability is proven. The current environment still has no `NOMO_SMOKE_API_KEY`; no smoke was run and no key was printed. The exact missing authority is a real provider smoke credential plus explicit cost authorization. [[NOMO Release]]
