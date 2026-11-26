@@ -1,7 +1,7 @@
 use crossterm::{
     event::{
-        self, DisableBracketedPaste, EnableBracketedPaste, Event, KeyCode, KeyEventKind,
-        KeyModifiers,
+        self, DisableBracketedPaste, DisableMouseCapture, EnableBracketedPaste, EnableMouseCapture,
+        Event, KeyCode, KeyEventKind, KeyModifiers, MouseEventKind,
     },
     execute,
     terminal::{
@@ -892,7 +892,12 @@ fn run_interactive(
 
     enable_raw_mode()?;
     let mut stdout = std::io::stdout();
-    execute!(stdout, EnterAlternateScreen, EnableBracketedPaste)?;
+    execute!(
+        stdout,
+        EnterAlternateScreen,
+        EnableBracketedPaste,
+        EnableMouseCapture
+    )?;
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
     let mut size = (columns, rows);
@@ -947,6 +952,24 @@ fn run_interactive(
             continue;
         }
         match event::read()? {
+            Event::Mouse(mouse) if connected && composer.is_none() => {
+                let width = size.0 as usize;
+                let height = size.1 as usize;
+                let max_scroll = transcript_body_lines(&facts, width.saturating_sub(6).max(1))
+                    .len()
+                    .saturating_sub(body_budget(width, height));
+                match mouse.kind {
+                    MouseEventKind::ScrollUp => {
+                        scroll = (scroll + 3).min(max_scroll);
+                        redraw = true;
+                    }
+                    MouseEventKind::ScrollDown => {
+                        scroll = scroll.saturating_sub(3);
+                        redraw = true;
+                    }
+                    _ => {}
+                }
+            }
             Event::Paste(text) => {
                 if let Some(buffer) = composer.as_mut() {
                     buffer.insert_str(&text);
@@ -1090,6 +1113,7 @@ fn run_interactive(
     execute!(
         terminal.backend_mut(),
         DisableBracketedPaste,
+        DisableMouseCapture,
         LeaveAlternateScreen
     )?;
     terminal.show_cursor()?;

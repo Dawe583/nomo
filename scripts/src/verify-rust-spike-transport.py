@@ -101,6 +101,13 @@ def run_case(columns=80, rows=24):
         wait_for("status running")
         wait_for("live transcript visible")
         assert "█" in screen.text(), "live scrollbar thumb did not render"
+        for _ in range(20):
+            os.write(master, b"\x1b[<64;10;5M")
+        wait_for("tool Host run started")
+        assert "live transcript 00" in screen.text(), "mouse wheel did not reach the oldest transcript rows"
+        for _ in range(20):
+            os.write(master, b"\x1b[<65;10;5M")
+        wait_for("live transcript visible")
         os.write(master, b"g")
         wait_for("tool Host run started")
         assert "live transcript 00" in screen.text(), "top scroll did not expose the oldest assistant row"

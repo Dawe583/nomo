@@ -211,3 +211,7 @@ This is row anchoring only. There is no unread/new-message pill, per-event ident
 ## R15 live application chrome, 2026-11-26
 
 Live application chrome now shows status and session position in the connected Rust header, with compact key hints. Canonical Help parity is unchanged. Evidence: cargo 15/15; transport PASS; parity 1/1; PTY matrix PASS; protocol 14/14. Limit: proof chrome only, no production wiring.
+
+## R16 mouse wheel scrollback, 2026-11-26
+
+The connected Rust proof now enables mouse capture, maps wheel up/down to three-line scrollback movement, and disables capture before terminal restore. Real PTY proof uses SGR wheel sequences to reach the oldest transcript rows and return to bottom. Evidence: cargo 15/15; transport PASS including mouse wheel; PTY matrix PASS; parity 1/1. Limit: wheel scrolling only, no click/drag/selection/production wiring.

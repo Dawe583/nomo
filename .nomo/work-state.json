@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-26T23:07:38.252680Z",
+  "updatedAt": "2026-11-26T23:38:12.832482Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -5148,6 +5148,46 @@
         "node --test packages/workbench/src/tui-protocol.test.ts: 14 pass, 0 fail."
       ],
       "stopCondition": "Stop before production wiring, provider traffic, release, publish or deploy."
+    },
+    {
+      "id": "r16-mouse-wheel-scrollback",
+      "status": "done",
+      "owner": "devin-desktop-local-2026-11-26",
+      "dependsOn": [
+        "r15-live-application-chrome"
+      ],
+      "scope": [
+        "scripts/tui-rs-spike/src/main.rs",
+        "scripts/src/verify-rust-spike-transport.py",
+        "docs/plans/2026-11-26-tui-protocol-boundary.md",
+        "docs/SESSION-HANDOFF.md",
+        "docs/memory/vault/work-log/NOMO Work Log.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "connected Rust mode enables mouse capture and disables it before restore",
+        "mouse wheel up/down moves scrollback by bounded three-line steps",
+        "real PTY proof reaches oldest rows and returns to bottom through SGR wheel input",
+        "no click, drag, selection or production wiring is claimed"
+      ],
+      "verifier": [
+        "cd scripts/tui-rs-spike && cargo test --offline --quiet",
+        "python3 scripts/src/verify-rust-spike-transport.py",
+        "python3 scripts/src/verify-rust-spike-pty.py",
+        "node --test scripts/src/tui-rs-parity.test.mjs",
+        "node scripts/src/work-graph-check.mjs",
+        "git diff --check"
+      ],
+      "evidence": [
+        "cd scripts/tui-rs-spike && cargo test --offline --quiet: 15 passed, 0 failed.",
+        "python3 scripts/src/verify-rust-spike-transport.py: PASS Rust spike Workbench TCP transport updates at 80x24; PASS real-Workbench bounded transport prototype including SGR mouse wheel proof.",
+        "python3 scripts/src/verify-rust-spike-pty.py: PASS at 40x12, 80x24 and 120x40.",
+        "node --test scripts/src/tui-rs-parity.test.mjs: 1 pass, 0 fail."
+      ],
+      "stopCondition": "Stop before click/drag/selection, production wiring, provider traffic, release, publish or deploy."
     }
   ]
 }
