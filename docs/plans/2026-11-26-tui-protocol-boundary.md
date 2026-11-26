@@ -42,3 +42,10 @@ The protocol does not make prompt content safe by omission. Prompt content exist
 A bounded spike now exists at `scripts/tui-rs-spike`. It uses `ratatui` and `crossterm`, renders the canonical monochrome Help fixture, and matches the committed TypeScript frame hash byte-for-byte at 40x12, 52x16, 80x24, 120x40, 160x45 and 200x48 for the ascii, unicode and nerd arguments. The three presets are byte identical because the canonical Help surface uses shared glyphs in all three.
 
 This is not adoption evidence. The spike still has hardcoded fixture content, no typed protocol client, no input loop, no scrollback, no mouse or bracketed-paste behavior, no approval flow and no real PTY matrix. It proves only that a narrow static Help surface can be reproduced exactly with the current layout rules.
+
+
+## R1c snapshot-shaped input seam, 2026-11-26
+
+The isolated Rust spike now accepts a versioned JSON snapshot shaped after the R0 protocol contract. It validates the version and required wire fields with Serde, reads the session model and usage or session run-token count, and drives the Help footer from that input rather than from compile-time-only facts. The canonical fixture still reproduces every committed Help hash exactly.
+
+This remains a narrow seam, not a protocol client. There is no snapshot runtime validator shared with TypeScript, no websocket or IPC transport, no transcript channel, no intent submission, no server events and no production wiring.

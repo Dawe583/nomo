@@ -80,6 +80,15 @@
 - Static byte parity remains green after the interactive-mode change.
 - Honest limit: still no typed protocol client, transcript interaction, scrollback, mouse, bracketed paste, approval flow or adoption decision.
 
+
+## R1c Rust snapshot-shaped input seam (2026-11-26)
+
+- The isolated spike can read a versioned JSON snapshot shaped after the R0 contract. Serde validates the wire shape and version; the Help footer uses the snapshot session model and usage or session run-token count.
+- Canonical fixture input preserves exact byte parity at all six sizes and for ascii, unicode and nerd arguments. Interactive PTY smoke now passes the fixture through the real terminal path as well.
+- Rust unit evidence also proves changed snapshot values change the footer and an unknown protocol version is rejected.
+- Honest limit: this is not a protocol client. There is no shared TypeScript/Rust schema validator, transport, transcript channel, intents, server events or production wiring.
+- Verified: cargo test 3/3, `node --test scripts/src/tui-rs-parity.test.mjs` 1/1, `python3 scripts/src/verify-rust-spike-pty.py` matrix PASS.
+
 ## Rules that are not negotiable
 
 - No push, merge, deploy, hosted CI, dependency install, or provider-costing call unless the user explicitly asks in the current task. (This push was explicitly authorized by the user on 2026-11-25.)

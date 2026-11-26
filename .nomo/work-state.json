@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-26T22:10:42.060539Z",
+  "updatedAt": "2026-11-26T22:14:17.675042Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -4233,6 +4233,50 @@
         "Still missing: typed protocol client, transcript interaction, scrollback, mouse, bracketed paste, approval flow and production wiring."
       ],
       "stopCondition": "Stop before production Rust wiring, adoption claims, release, publish, deploy or provider traffic."
+    },
+    {
+      "id": "r1c-rust-snapshot-input-seam",
+      "status": "done",
+      "owner": "devin-desktop-local-2026-11-26",
+      "dependsOn": [
+        "r1b-rust-spike-interactive-pty"
+      ],
+      "scope": [
+        "scripts/tui-rs-spike/Cargo.toml",
+        "scripts/tui-rs-spike/Cargo.lock",
+        "scripts/tui-rs-spike/src/main.rs",
+        "scripts/tui-rs-spike/fixtures/snapshot.json",
+        "scripts/src/tui-rs-parity.test.mjs",
+        "scripts/src/verify-rust-spike-pty.py",
+        "docs/plans/2026-11-26-tui-protocol-boundary.md",
+        "docs/SESSION-HANDOFF.md",
+        "docs/memory/vault/work-log/NOMO Work Log.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "the isolated Rust spike accepts a versioned snapshot-shaped JSON input",
+        "Serde validates required wire shape and rejects an unknown protocol version",
+        "snapshot session model and usage or session run-token count drive visible footer facts",
+        "canonical fixture input preserves byte parity and the interactive PTY smoke passes the fixture through the real terminal path",
+        "no protocol client or production adoption is claimed"
+      ],
+      "verifier": [
+        "cd scripts/tui-rs-spike && cargo test --offline --quiet",
+        "node --test scripts/src/tui-rs-parity.test.mjs",
+        "python3 scripts/src/verify-rust-spike-pty.py",
+        "node scripts/src/work-graph-check.mjs",
+        "git diff --check"
+      ],
+      "evidence": [
+        "cd scripts/tui-rs-spike && cargo test --offline --quiet: 3 passed, 0 failed.",
+        "node --test scripts/src/tui-rs-parity.test.mjs: 1 test, 1 pass, 0 fail, duration_ms 983.755917; every case uses the snapshot fixture as input.",
+        "python3 scripts/src/verify-rust-spike-pty.py: PASS at 40x12, 80x24 and 120x40; PASS real PTY smoke matrix with fixture input.",
+        "A custom fixture with model other-model and 777 run tokens makes both facts visible; protocol version 2 is rejected."
+      ],
+      "stopCondition": "Stop before transport, transcript channel, intents, production wiring, adoption claims, provider traffic, release, publish or deploy."
     }
   ]
 }

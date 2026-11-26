@@ -25,16 +25,17 @@ const sizes = [
 ];
 const presets = ["ascii", "unicode", "nerd"];
 
-test("Rust Help spike matches the canonical monochrome frame hashes", () => {
+test("Rust Help spike matches canonical hashes through a snapshot-shaped input", () => {
   execFileSync("cargo", ["build", "--offline", "--quiet"], {
     cwd: spike,
     stdio: "pipe",
   });
   for (const preset of presets) {
     for (const [columns, rows] of sizes) {
+      const fixture = join(spike, "fixtures/snapshot.json");
       const frame = execFileSync(
         binary,
-        [String(columns), String(rows), preset],
+        [String(columns), String(rows), preset, fixture],
         { encoding: "utf8" },
       );
       const lines = frame.split("\n");

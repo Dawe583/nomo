@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "session": {
+    "id": "sess-visual",
+    "workspace": "ws-sess-visual",
+    "model": "fixture-model",
+    "status": "idle",
+    "continuationCount": 0,
+    "runTokenCount": 120
+  },
+  "usage": {
+    "contextMessages": 4,
+    "runTokenCount": 120,
+    "totalTokens": 120
+  },
+  "sessions": [],
+  "approvals": [],
+  "provider": {
+    "status": "ready",
+    "providerId": "fixture",
+    "model": "fixture-model"
+  },
+  "palette": [],
+  "diagnostics": []
+}

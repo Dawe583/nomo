@@ -11,7 +11,91 @@ use ratatui::{
     widgets::Paragraph,
     Frame, Terminal,
 };
+use serde::Deserialize;
 use unicode_width::UnicodeWidthStr;
+
+const FIXTURE_MODEL: &str = "fixture-model";
+const FIXTURE_RUN_TOKENS: u64 = 120;
+
+#[allow(dead_code)]
+#[derive(Deserialize)]
+struct ProtocolSnapshot {
+    version: u8,
+    session: Option<ProtocolSession>,
+    sessions: Vec<ProtocolSession>,
+    approvals: Vec<ProtocolApproval>,
+    provider: ProtocolProvider,
+    usage: Option<ProtocolUsage>,
+    palette: Vec<ProtocolPaletteCommand>,
+    diagnostics: Vec<String>,
+}
+
+#[allow(dead_code)]
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct ProtocolSession {
+    id: String,
+    workspace: String,
+    model: String,
+    status: String,
+    continuation_count: u64,
+    run_token_count: u64,
+}
+
+#[allow(dead_code)]
+#[derive(Deserialize)]
+struct ProtocolApproval {
+    #[serde(rename = "holdId")]
+    hold_id: String,
+    tool: String,
+    status: String,
+}
+
+#[allow(dead_code)]
+#[derive(Deserialize)]
+struct ProtocolProvider {
+    status: String,
+}
+
+#[allow(dead_code)]
+#[derive(Deserialize)]
+struct ProtocolPaletteCommand {
+    command: String,
+    description: String,
+}
+
+#[allow(dead_code)]
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct ProtocolUsage {
+    context_messages: u64,
+    run_token_count: u64,
+}
+
+fn snapshot_facts(path: &str) -> Result<(String, u64), Box<dyn std::error::Error>> {
+    let raw = std::fs::read_to_string(path)?;
+    let snapshot: ProtocolSnapshot = serde_json::from_str(&raw)?;
+    if snapshot.version != 1 {
+        return Err(format!("unsupported TUI protocol version: {}", snapshot.version).into());
+    }
+    let model = snapshot
+        .session
+        .as_ref()
+        .map(|session| session.model.clone())
+        .unwrap_or_else(|| FIXTURE_MODEL.to_string());
+    let tokens = snapshot
+        .usage
+        .as_ref()
+        .map(|usage| usage.run_token_count)
+        .or_else(|| {
+            snapshot
+                .session
+                .as_ref()
+                .map(|session| session.run_token_count)
+        })
+        .unwrap_or(FIXTURE_RUN_TOKENS);
+    Ok((model, tokens))
+}
 
 fn visible_len(value: &str) -> usize {
     UnicodeWidthStr::width(value)
@@ -150,32 +234,35 @@ fn content_lines(width: usize) -> Vec<String> {
     rows
 }
 
-fn footer_lines(width: usize) -> Vec<String> {
+fn footer_lines(width: usize, model: &str, run_tokens: u64) -> Vec<String> {
     if width < 50 {
         vec![
             "↑↓/PgUp/PgDn scroll · Esc Chat".to_string(),
             "mode: normal".to_string(),
-            "model fixture-model · tokens 120".to_string(),
+            format!("model {} · tokens {}", model, run_tokens),
         ]
     } else if width < 120 {
         vec![
             "↑/↓ scroll · PgUp/PgDn page · Esc returns to Chat".to_string(),
             if width < 64 {
-                "model fixture-model · mode  ◆ mode: normal".to_string()
+                format!("model {} · mode  ◆ mode: normal", model)
             } else {
-                "model fixture-model · mode  ◆ mode: normal (local only, not enforced)".to_string()
+                format!(
+                    "model {} · mode  ◆ mode: normal (local only, not enforced)",
+                    model
+                )
             },
-            "tokens 120 · cost ? · activity details".to_string(),
+            format!("tokens {} · cost ? · activity details", run_tokens),
         ]
     } else {
         vec![
             "↑/↓ scroll · PgUp/PgDn page · Esc returns to Chat".to_string(),
-            "model fixture-model · mode  ◆ mode: normal (local only, not enforced)  · tokens 120 · cost ? · activity details".to_string(),
+            format!("model {} · mode  ◆ mode: normal (local only, not enforced)  · tokens {} · cost ? · activity details", model, run_tokens),
         ]
     }
 }
 
-fn frame_lines(columns: usize, rows: usize) -> Vec<String> {
+fn frame_lines(columns: usize, rows: usize, model: &str, run_tokens: u64) -> Vec<String> {
     let body_width = columns.saturating_sub(6).max(1);
     let footer_count = if columns >= 120 { 2usize } else { 3usize };
     let body_budget = rows.saturating_sub(6 + footer_count);
@@ -198,7 +285,7 @@ fn frame_lines(columns: usize, rows: usize) -> Vec<String> {
         out.push(pad(&format!("   {}", fit(&line, body_width)), columns));
     }
     out.push(format!(" {}{} ", "─".repeat(columns.saturating_sub(2)), ""));
-    let footer = footer_lines(columns);
+    let footer = footer_lines(columns, model, run_tokens);
     for line in footer.iter().take(3) {
         out.push(pad(&format!(" {}", line), columns));
     }
@@ -214,14 +301,19 @@ fn draw_lines(frame: &mut Frame, lines: &[String]) {
     frame.render_widget(Paragraph::new(text), frame.area());
 }
 
-fn run_interactive(columns: u16, rows: u16) -> Result<(), Box<dyn std::error::Error>> {
+fn run_interactive(
+    columns: u16,
+    rows: u16,
+    model: &str,
+    run_tokens: u64,
+) -> Result<(), Box<dyn std::error::Error>> {
     enable_raw_mode()?;
     let mut stdout = std::io::stdout();
     execute!(stdout, EnterAlternateScreen)?;
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
     let mut size = (columns, rows);
-    let lines = frame_lines(size.0 as usize, size.1 as usize);
+    let lines = frame_lines(size.0 as usize, size.1 as usize, model, run_tokens);
     terminal.draw(|frame| draw_lines(frame, &lines))?;
     loop {
         if !event::poll(std::time::Duration::from_millis(100))? {
@@ -235,7 +327,12 @@ fn run_interactive(columns: u16, rows: u16) -> Result<(), Box<dyn std::error::Er
             }
             Event::Resize(columns, rows) => {
                 size = (columns, rows);
-                let lines = frame_lines(size.0 as usize, size.1 as usize);
+                let lines = frame_lines(
+                    size.0 as usize,
+                    size.1 as usize,
+                    FIXTURE_MODEL,
+                    FIXTURE_RUN_TOKENS,
+                );
                 terminal.draw(|frame| draw_lines(frame, &lines))?;
             }
             _ => {}
@@ -275,7 +372,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     if args.get(1).map(String::as_str) == Some("interactive") {
         let columns = args.get(2).map_or(80, |value| value.parse().unwrap_or(80));
         let rows = args.get(3).map_or(24, |value| value.parse().unwrap_or(24));
-        return run_interactive(columns, rows);
+        let (model, run_tokens) = if let Some(path) = args.get(4) {
+            snapshot_facts(path)?
+        } else {
+            (FIXTURE_MODEL.to_string(), FIXTURE_RUN_TOKENS)
+        };
+        return run_interactive(columns, rows, &model, run_tokens);
     }
     let (columns, rows) = if args.len() >= 3 {
         (args[1].parse::<u16>()?, args[2].parse::<u16>()?)
@@ -289,14 +391,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             _ => return Err(format!("unsupported symbol preset: {preset}").into()),
         }
     }
-    let lines = frame_lines(columns as usize, rows as usize);
+    let (model, run_tokens) = if let Some(path) = args.get(4) {
+        let (model, tokens) = snapshot_facts(path)?;
+        (model, tokens)
+    } else {
+        (FIXTURE_MODEL.to_string(), FIXTURE_RUN_TOKENS)
+    };
+    let lines = frame_lines(columns as usize, rows as usize, &model, run_tokens);
     print!("{}", render_with_ratatui(&lines, columns, rows)?);
     Ok(())
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{frame_lines, visible_len};
+    use super::{frame_lines, snapshot_facts, visible_len, FIXTURE_MODEL, FIXTURE_RUN_TOKENS};
 
     #[test]
     fn frame_shape_is_exact_across_the_parity_matrix() {
@@ -308,11 +416,30 @@ mod tests {
             (160, 45),
             (200, 48),
         ] {
-            let frame = frame_lines(columns, rows);
+            let frame = frame_lines(columns, rows, FIXTURE_MODEL, FIXTURE_RUN_TOKENS);
             assert_eq!(frame.len(), rows);
             for row in frame {
                 assert_eq!(visible_len(&row), columns);
             }
         }
+    }
+
+    #[test]
+    fn protocol_snapshot_drives_footer_facts() {
+        let (model, tokens) =
+            snapshot_facts("fixtures/snapshot.json").expect("fixture snapshot parses");
+        assert_eq!(model, "fixture-model");
+        assert_eq!(tokens, 120);
+        let frame = frame_lines(80, 24, "other-model", 777);
+        assert!(frame.iter().any(|row| row.contains("model other-model")));
+        assert!(frame.iter().any(|row| row.contains("tokens 777")));
+    }
+
+    #[test]
+    fn protocol_snapshot_rejects_unknown_version() {
+        let path = std::env::temp_dir().join("nomo-rust-spike-version.json");
+        std::fs::write(&path, r#"{"version":2}"#).expect("write fixture");
+        assert!(snapshot_facts(path.to_str().expect("utf8 path")).is_err());
+        let _ = std::fs::remove_file(path);
     }
 }

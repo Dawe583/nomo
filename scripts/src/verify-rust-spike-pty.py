@@ -33,7 +33,7 @@ def run_case(columns, rows):
         "NO_COLOR": "1",
     }
     process = subprocess.Popen(
-        [str(ROOT / "scripts/tui-rs-spike/target/debug/nomo-tui-rs-spike"), "interactive", str(columns), str(rows)],
+        [str(ROOT / "scripts/tui-rs-spike/target/debug/nomo-tui-rs-spike"), "interactive", str(columns), str(rows), str(ROOT / "scripts/tui-rs-spike/fixtures/snapshot.json")],
         cwd=ROOT,
         env=env,
         stdin=slave,

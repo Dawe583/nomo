@@ -9744,3 +9744,8 @@ The first Rust terminal spike exists outside production wiring in `scripts/tui-r
 ## 2026-11-26 R1b Rust spike interactive PTY smoke
 
 The isolated Rust Help spike now exercises the real terminal path, not only ratatui TestBackend: crossterm raw mode and alternate screen enter and restore, resize redraws, and `q` or Esc exits. Real PTY smoke passes at 40x12, 80x24 and 120x40, and static byte parity remains green. This is still not adoption: there is no typed protocol client, transcript interaction, scrollback, mouse, bracketed paste, approval flow or production wiring. [[NOMO TUI]]
+
+
+## 2026-11-26 R1c Rust snapshot-shaped input seam
+
+The isolated Rust Help spike now reads a versioned JSON snapshot shaped after the R0 terminal protocol. Serde validates the wire shape and version, and the footer uses the snapshot session model plus usage or session run-token count. Canonical fixture input preserves exact byte parity across the whole matrix, and the interactive PTY smoke passes the fixture through the real terminal path. This is still not a protocol client: no shared schema validator, transport, transcript channel, intents, server events or production wiring exist. Verified before recording: cargo test 3/3, parity test 1/1, PTY matrix PASS. [[NOMO TUI]]
