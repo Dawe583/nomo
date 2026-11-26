@@ -124,6 +124,7 @@ test("TUI approvals dispatch once only after confirmation; denial, cancellation 
   await ui.confirm();
   await app.settled();
   assert.equal(dispatched, 1);
+  assert.match(ui.notice, /approved; check the ledger/i);
   assert.equal(
     app.decide(first.holdId, { kind: "approved", by: "again" }),
     false,
@@ -141,6 +142,7 @@ test("TUI approvals dispatch once only after confirmation; denial, cancellation 
   await ui.confirm();
   await app.settled();
   assert.equal(dispatched, 1);
+  assert.match(ui.notice, /denied; check the ledger/i);
   const third = await held();
   const recoveredDir = join(root, "snapshot");
   await mkdir(recoveredDir);

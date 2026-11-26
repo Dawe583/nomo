@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-26T11:38:28.299170Z",
+  "updatedAt": "2026-11-26T11:39:12.876451Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -3794,7 +3794,7 @@
     },
     {
       "id": "f2-operator-approval-end-to-end",
-      "status": "pending",
+      "status": "done",
       "owner": "devin-3309bbeef254415e92cba37026acc1cf",
       "dependsOn": [
         "f1-later-session-retrieval-gate"
@@ -3822,7 +3822,13 @@
         "pnpm run test:tui",
         "git diff --check"
       ],
-      "evidence": [],
+      "evidence": [
+        "Audit found the governed path already implemented in packages/cli/src/tui/workspace-approval.test.ts and workspace.ts: a fixture aws.ses.email.send call is held, no dispatch occurs before confirmation, approval dispatches exactly once, duplicate decide returns false, ledger evidence carries decision hold:approved and approvedBy tui-operator, denial does not dispatch, restart marks the hold interrupted and cannot approve it, and cancellation cannot later be approved.",
+        "Acceptance-proof gap closed with assertions that ui.notice matches /approved; check the ledger/i after approval and /denied; check the ledger/i after denial, pinning the existing visible operator decision line without changing product behavior.",
+        "node --experimental-strip-types --test packages/cli/src/tui/workspace-approval.test.ts: 1 pass, 0 fail, duration_ms 781.863958.",
+        "pnpm --filter @nomo/cli typecheck exit 0; pnpm --filter @nomo/workbench typecheck exit 0.",
+        "pnpm run test:tui: node tests 549 pass, 0 fail, 0 skipped, duration_ms 39559.857291; terminal verifier PASS every scenario at every size; git diff --check exit 0."
+      ],
       "stopCondition": "Audit first. If only visible-decision proof is missing, add the smallest assertion; if behavior is missing, implement the smallest truthful surface. Never weaken hold, restart or denial safety."
     },
     {
