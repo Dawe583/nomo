@@ -12,6 +12,10 @@ use ratatui::{
     Frame, Terminal,
 };
 use serde::Deserialize;
+use std::io::{BufRead, BufReader};
+use std::net::TcpStream;
+use std::sync::mpsc;
+use std::thread;
 use unicode_width::UnicodeWidthStr;
 
 const FIXTURE_MODEL: &str = "fixture-model";
@@ -94,9 +98,8 @@ enum SnapshotInput {
     Snapshot(ProtocolSnapshot),
 }
 
-fn snapshot_facts(path: &str) -> Result<(String, u64), Box<dyn std::error::Error>> {
-    let raw = std::fs::read_to_string(path)?;
-    let input: SnapshotInput = serde_json::from_str(&raw)?;
+fn snapshot_from_raw(raw: &str) -> Result<ProtocolSnapshot, Box<dyn std::error::Error>> {
+    let input: SnapshotInput = serde_json::from_str(raw)?;
     let snapshot = match input {
         SnapshotInput::Snapshot(snapshot) => snapshot,
         SnapshotInput::Message(message) => {
@@ -116,6 +119,10 @@ fn snapshot_facts(path: &str) -> Result<(String, u64), Box<dyn std::error::Error
     if snapshot.version != 1 {
         return Err(format!("unsupported TUI protocol version: {}", snapshot.version).into());
     }
+    Ok(snapshot)
+}
+
+fn facts_from_snapshot(snapshot: &ProtocolSnapshot) -> (String, u64) {
     let model = snapshot
         .session
         .as_ref()
@@ -132,7 +139,15 @@ fn snapshot_facts(path: &str) -> Result<(String, u64), Box<dyn std::error::Error
                 .map(|session| session.run_token_count)
         })
         .unwrap_or(FIXTURE_RUN_TOKENS);
-    Ok((model, tokens))
+    (model, tokens)
+}
+
+fn snapshot_facts_from_raw(raw: &str) -> Result<(String, u64), Box<dyn std::error::Error>> {
+    Ok(facts_from_snapshot(&snapshot_from_raw(raw)?))
+}
+
+fn snapshot_facts(path: &str) -> Result<(String, u64), Box<dyn std::error::Error>> {
+    snapshot_facts_from_raw(&std::fs::read_to_string(path)?)
 }
 
 fn visible_len(value: &str) -> usize {
@@ -342,18 +357,50 @@ fn draw_lines(frame: &mut Frame, lines: &[String]) {
 fn run_interactive(
     columns: u16,
     rows: u16,
-    model: &str,
-    run_tokens: u64,
+    initial_model: &str,
+    initial_run_tokens: u64,
+    connect: Option<String>,
 ) -> Result<(), Box<dyn std::error::Error>> {
+    let (tx, rx) = mpsc::channel::<(String, u64)>();
+    if let Some(address) = connect {
+        let stream = TcpStream::connect(address)?;
+        thread::spawn(move || {
+            let reader = BufReader::new(stream);
+            for line in reader.lines() {
+                let Ok(line) = line else { break };
+                if line.trim().is_empty() {
+                    continue;
+                }
+                if let Ok(facts) = snapshot_facts_from_raw(&line) {
+                    if tx.send(facts).is_err() {
+                        break;
+                    }
+                }
+            }
+        });
+    }
+
     enable_raw_mode()?;
     let mut stdout = std::io::stdout();
     execute!(stdout, EnterAlternateScreen)?;
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
     let mut size = (columns, rows);
-    let lines = frame_lines(size.0 as usize, size.1 as usize, model, run_tokens);
-    terminal.draw(|frame| draw_lines(frame, &lines))?;
+    let mut model = initial_model.to_string();
+    let mut run_tokens = initial_run_tokens;
+    let mut redraw = true;
     loop {
+        let mut updated = false;
+        while let Ok((next_model, next_tokens)) = rx.try_recv() {
+            model = next_model;
+            run_tokens = next_tokens;
+            updated = true;
+        }
+        if redraw || updated {
+            let lines = frame_lines(size.0 as usize, size.1 as usize, &model, run_tokens);
+            terminal.draw(|frame| draw_lines(frame, &lines))?;
+            redraw = false;
+        }
         if !event::poll(std::time::Duration::from_millis(100))? {
             continue;
         }
@@ -365,13 +412,7 @@ fn run_interactive(
             }
             Event::Resize(columns, rows) => {
                 size = (columns, rows);
-                let lines = frame_lines(
-                    size.0 as usize,
-                    size.1 as usize,
-                    FIXTURE_MODEL,
-                    FIXTURE_RUN_TOKENS,
-                );
-                terminal.draw(|frame| draw_lines(frame, &lines))?;
+                redraw = true;
             }
             _ => {}
         }
@@ -405,17 +446,34 @@ fn render_with_ratatui(
     Ok(output.join("\n"))
 }
 
+fn flag_value(args: &[String], name: &str) -> Option<String> {
+    let prefix = format!("--{}=", name);
+    args.iter()
+        .find_map(|value| value.strip_prefix(&prefix).map(str::to_string))
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = std::env::args().collect();
     if args.get(1).map(String::as_str) == Some("interactive") {
         let columns = args.get(2).map_or(80, |value| value.parse().unwrap_or(80));
         let rows = args.get(3).map_or(24, |value| value.parse().unwrap_or(24));
-        let (model, run_tokens) = if let Some(path) = args.get(4) {
-            snapshot_facts(path)?
+        let snapshot_path = flag_value(&args, "snapshot").or_else(|| {
+            args.get(4)
+                .filter(|value| !value.starts_with("--"))
+                .cloned()
+        });
+        let (model, run_tokens) = if let Some(path) = snapshot_path {
+            snapshot_facts(&path)?
         } else {
             (FIXTURE_MODEL.to_string(), FIXTURE_RUN_TOKENS)
         };
-        return run_interactive(columns, rows, &model, run_tokens);
+        return run_interactive(
+            columns,
+            rows,
+            &model,
+            run_tokens,
+            flag_value(&args, "connect"),
+        );
     }
     let (columns, rows) = if args.len() >= 3 {
         (args[1].parse::<u16>()?, args[2].parse::<u16>()?)

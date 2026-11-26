@@ -106,6 +106,15 @@
 - Verified: protocol tests 12/12, Rust cargo tests 5/5, Rust parity test 1/1.
 - Honest limit: codec only; no streaming transport, intent channel, transcript subscription or production wiring.
 
+
+## R2 bounded TCP transport proof (2026-11-26)
+
+- `scripts/src/tui-protocol-fixture-server.mjs` serves validated versioned snapshot envelopes over loopback TCP using fixture data only.
+- The isolated Rust interactive spike can connect to that server, consume NDJSON snapshots on a reader thread and redraw the footer when the model and run-token count change.
+- Real PTY proof passes at 80x24: `fixture-model` appears first, then `transport-model` and `tokens 777`, width stays bounded, and `q` exits with terminal restore.
+- Existing evidence remains green: protocol 12/12, cargo 5/5, parity 1/1, original PTY matrix PASS.
+- Honest limit: fixture-only transport; no real Workbench event source, intents, transcript subscription, authentication, reconnect/backpressure policy or production wiring.
+
 ## Rules that are not negotiable
 
 - No push, merge, deploy, hosted CI, dependency install, or provider-costing call unless the user explicitly asks in the current task. (This push was explicitly authorized by the user on 2026-11-25.)

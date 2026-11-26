@@ -9759,3 +9759,8 @@ The protocol boundary now has a read-only adapter from workbench projections int
 ## 2026-11-26 R0c versioned NDJSON wire codec
 
 The terminal protocol now has a versioned NDJSON object codec in TypeScript and matching snapshot-envelope acceptance in the isolated Rust spike. TypeScript validates envelope and server-event wire shape, Rust rejects wrong versions and non-snapshot envelopes, and the cross-language proof reproduces the canonical 80x24 Help hash exactly. Verified before recording: protocol tests 12/12, cargo tests 5/5, parity test 1/1. This is still only a codec, not streaming transport, intents, transcript subscription or production wiring. [[NOMO TUI]]
+
+
+## 2026-11-26 R2 bounded TCP transport proof
+
+The isolated Rust spike now consumes versioned snapshot envelopes over loopback TCP in a real PTY. A fixture Node server writes TypeScript-validated NDJSON snapshots, and the Rust interactive mode redraws from `fixture-model` to `transport-model` with `tokens 777` before restoring the terminal on quit. Existing protocol, parity, cargo and PTY checks stay green. This is fixture-only transport: no real Workbench event source, intents, transcript subscription, authentication, reconnect or backpressure policy, and no production wiring. [[NOMO TUI]]

@@ -65,3 +65,10 @@ The TypeScript boundary now has a versioned protocol envelope codec: `serializeT
 The isolated Rust spike accepts either the original bare snapshot fixture or the same versioned snapshot envelope. The cross-language proof serializes an envelope in TypeScript, validates it with the TypeScript parser, passes that file to Rust and reproduces the canonical 80x24 Help hash exactly.
 
 This is a codec only. There is still no streaming transport, intent channel, transcript subscription or production wiring.
+
+
+## R2 bounded TCP transport proof, 2026-11-26
+
+A fixture-only transport prototype now connects the isolated Rust spike to a Node TCP server. The server serializes versioned snapshot envelopes through the TypeScript codec, validates each line before writing it, sends an initial snapshot and then a changed snapshot, and the Rust interactive mode updates the visible footer in a real PTY. The proof uses only loopback TCP and fixture data.
+
+This is not a production transport. There is no real Workbench event source, intent channel, transcript subscription, authentication, reconnect policy, backpressure policy or production wiring.
