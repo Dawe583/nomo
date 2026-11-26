@@ -255,6 +255,10 @@
 - Verified: cargo 15/15, transport proof PASS, Rust parity 1/1, original PTY matrix PASS, protocol 14/14.
 - Honest limit: row anchoring only; no unread/new-message pill, per-event anchoring across width/wrapping changes, mouse interaction or production chat behavior.
 
+## R15 live application chrome (2026-11-26)
+
+Live application chrome now shows status and session position in the connected Rust header, with compact key hints. Canonical Help parity is unchanged. Evidence: cargo 15/15; transport PASS; parity 1/1; PTY matrix PASS; protocol 14/14. Limit: proof chrome only, no production wiring.
+
 ## Rules that are not negotiable
 
 - No push, merge, deploy, hosted CI, dependency install, or provider-costing call unless the user explicitly asks in the current task. (This push was explicitly authorized by the user on 2026-11-25.)

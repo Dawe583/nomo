@@ -9844,3 +9844,7 @@ The connected Rust transcript now has a proportional right-edge scrollbar using 
 ## 2026-11-26 R14 anchored scrollback under live append
 
 The Rust transcript viewport now preserves the user's reading position when new rows arrive: bottom-pinned scroll still follows live output, while nonzero scroll offsets shift with appended wrapped rows so visible content does not drift. The real PTY proof uses heartbeat rows and verifies the oldest row remains visible while scrolling back. Focused gates pass. Unread markers and identity-stable anchoring across width changes remain future work. [[NOMO TUI]]
+
+## 2026-11-26 R15 live application chrome
+
+Live application chrome now shows status and session position in the connected Rust header, with compact key hints. Canonical Help parity is unchanged. Evidence: cargo 15/15; transport PASS; parity 1/1; PTY matrix PASS; protocol 14/14. Limit: proof chrome only, no production wiring.

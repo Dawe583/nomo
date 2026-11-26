@@ -207,3 +207,7 @@ The connected Rust viewport now distinguishes bottom-pinned following from ancho
 The fixture host emits bounded heartbeat rows while waiting for cancellation. The real PTY proof scrolls to the oldest row, waits through additional live appends, and verifies that the oldest row remains visible before returning to bottom. Canonical non-connected Help parity remains unchanged.
 
 This is row anchoring only. There is no unread/new-message pill, per-event identity anchoring across wrapping changes, mouse interaction or production chat behavior.
+
+## R15 live application chrome, 2026-11-26
+
+Live application chrome now shows status and session position in the connected Rust header, with compact key hints. Canonical Help parity is unchanged. Evidence: cargo 15/15; transport PASS; parity 1/1; PTY matrix PASS; protocol 14/14. Limit: proof chrome only, no production wiring.

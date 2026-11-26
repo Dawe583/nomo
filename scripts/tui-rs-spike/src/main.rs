@@ -741,10 +741,26 @@ fn frame_lines_with_live(
     };
 
     let mut out = if live {
+        let session_position = if facts.sessions.is_empty() {
+            "-".to_string()
+        } else {
+            let current = facts
+                .sessions
+                .iter()
+                .position(|session| session.id == facts.session_id)
+                .map_or(0, |index| index + 1);
+            format!("{}/{}", current, facts.sessions.len())
+        };
         vec![
-            pad(" NOMO  live Chat", columns),
             pad(
-                " ↑/↓ scroll · g/G top/bottom · s stop · Esc/q quit",
+                &format!(
+                    " NOMO  live Chat · {} · session {}",
+                    facts.status, session_position
+                ),
+                columns,
+            ),
+            pad(
+                " [/] sessions · i prompt · s stop · g/G scroll · q quit",
                 columns,
             ),
         ]
