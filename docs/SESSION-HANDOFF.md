@@ -23,7 +23,7 @@
 ## Verified state after the F2 audit (2026-11-26)
 
 - Implementation heads before this handoff refresh: `tui-merge-main` `87044f9c`; `origin/main` `87044f9c`
-- Graph: `.nomo/work-state.json` has 109 nodes, 108 done and 1 blocked, including C1-C2, D1-D4, F1-F4, Q1-Q22, H1-H15, H18-H26, R1-R8 and T1-T18 as applicable
+- Graph: `.nomo/work-state.json` has 109 nodes, 109 done, including C1-C2, D1-D4, F1-F4, Q1-Q22, H1-H15, H18-H26, R1-R8 and T1-T18 as applicable
 - Latest TUI gate: `pnpm run test:tui` → 549 tests, 549 pass, 0 fail; terminal verifier PASS every scenario at every size
 - Latest typechecks from that gate: `pnpm --filter @nomo/cli typecheck` → exit 0; `pnpm --filter @nomo/workbench typecheck` → exit 0
 - Latest Workbench wide evidence before the test-only TUI repairs: 1434 tests, 1431 pass, 0 fail, 3 skipped
@@ -36,7 +36,7 @@
 - F1 later-session retrieval: DONE - opt-in `NOMO_SHARED_LEARNING_WORKSPACES` read-only union, digest names entry id + chain seqs, and retrieval hit accounting names carried entry ids without content
 - F2 approval end-to-end: DONE - governed hold waits for confirmation, approval dispatches once, signed hold:approved evidence carries approvedBy, denial/restart/cancellation cannot release, and the TUI decision notice is pinned in the integration test
 - F3 identity/fleet truth: DONE as the local-truth slice. TUI status shows the binding, `/revoke-agent` is confirmed and local, durable restart is tested including revocation without local session evidence; fleet-wide revoke remains honestly documented as unavailable until registry, node inventory, ack barrier and reconcile exist
-- F4 provider release path: BLOCKED - configured local providers were smoke-tested without exposing credentials: OpenCode `iceman-free` and `deepseek-v4.1-flash-free` returned HTTP 429, OpenRouter returned HTTP 402, and the local FreeLLMAPI endpoint did not answer. No provider error code or token usage was reported, and no provider capability is proven
+- F4 provider release path: DONE - real provider smoke is verified through OpenRouter using locally configured credential material. Final output: `PASS provider-smoke: nvidia/nemotron-3.5-lightning:free answered in 1084 ms; reply 5 chars; usage prompt_tokens=23 completion_tokens=138 total_tokens=161.` No credential, prompt or response content is recorded
 
 ## Rules that are not negotiable
 
