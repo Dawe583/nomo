@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-26T23:05:40.751992Z",
+  "updatedAt": "2026-11-26T23:07:05.465925Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -5063,6 +5063,50 @@
         "node --test packages/workbench/src/tui-protocol.test.ts: 14 tests, 14 pass, 0 fail, duration_ms 93.819083."
       ],
       "stopCondition": "Stop before minimap content, mouse input, production wiring, provider traffic, release, publish or deploy."
+    },
+    {
+      "id": "r14-anchored-scrollback-live-append",
+      "status": "done",
+      "owner": "devin-desktop-local-2026-11-26",
+      "dependsOn": [
+        "r13-transcript-scrollbar-position"
+      ],
+      "scope": [
+        "scripts/tui-rs-spike/src/main.rs",
+        "scripts/src/tui-protocol-fixture-server.mjs",
+        "scripts/src/verify-rust-spike-transport.py",
+        "docs/plans/2026-11-26-tui-protocol-boundary.md",
+        "docs/SESSION-HANDOFF.md",
+        "docs/memory/vault/work-log/NOMO Work Log.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "bottom-pinned scroll continues following live output",
+        "nonzero scroll remains anchored to the same rows when live rows append",
+        "session projection changes still reset to bottom",
+        "real PTY proof verifies the oldest row remains visible through heartbeat appends",
+        "canonical parity remains unchanged and no production behavior is claimed"
+      ],
+      "verifier": [
+        "cd scripts/tui-rs-spike && cargo test --offline --quiet",
+        "python3 scripts/src/verify-rust-spike-transport.py",
+        "node --test scripts/src/tui-rs-parity.test.mjs",
+        "python3 scripts/src/verify-rust-spike-pty.py",
+        "node --test packages/workbench/src/tui-protocol.test.ts",
+        "node scripts/src/work-graph-check.mjs",
+        "git diff --check"
+      ],
+      "evidence": [
+        "cd scripts/tui-rs-spike && cargo test --offline --quiet: 15 passed, 0 failed.",
+        "python3 scripts/src/verify-rust-spike-transport.py: PASS Rust spike Workbench TCP transport updates at 80x24; PASS real-Workbench bounded transport prototype including anchored scrollback proof.",
+        "node --test scripts/src/tui-rs-parity.test.mjs: 1 test, 1 pass, 0 fail, duration_ms 686.684958.",
+        "python3 scripts/src/verify-rust-spike-pty.py: PASS at 40x12, 80x24 and 120x40.",
+        "node --test packages/workbench/src/tui-protocol.test.ts: 14 tests, 14 pass, 0 fail, duration_ms 119.302459."
+      ],
+      "stopCondition": "Stop before unread markers, mouse interaction, production wiring, provider traffic, release, publish or deploy."
     }
   ]
 }

@@ -104,6 +104,8 @@ def run_case(columns=80, rows=24):
         os.write(master, b"g")
         wait_for("tool Host run started")
         assert "live transcript 00" in screen.text(), "top scroll did not expose the oldest assistant row"
+        pump(0.7)
+        assert "tool Host run started" in screen.text(), "appended rows moved the anchored top viewport"
         os.write(master, b"G")
         wait_for("live transcript visible")
         os.write(master, b"s")

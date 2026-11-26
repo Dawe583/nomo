@@ -9839,3 +9839,8 @@ The connected Rust spike now applies semantic styling to first transcript role l
 ## 2026-11-26 R13 transcript scrollbar and viewport position
 
 The connected Rust transcript now has a proportional right-edge scrollbar using existing padding: `│` track and `█` thumb, bottom-aligned at bottom-pinned scroll and top-aligned at maximum scroll. Exact frame geometry and canonical Help parity remain unchanged; unit and real PTY proofs pass. It is positional only, not a minimap or mouse interface. [[NOMO TUI]]
+
+
+## 2026-11-26 R14 anchored scrollback under live append
+
+The Rust transcript viewport now preserves the user's reading position when new rows arrive: bottom-pinned scroll still follows live output, while nonzero scroll offsets shift with appended wrapped rows so visible content does not drift. The real PTY proof uses heartbeat rows and verifies the oldest row remains visible while scrolling back. Focused gates pass. Unread markers and identity-stable anchoring across width changes remain future work. [[NOMO TUI]]

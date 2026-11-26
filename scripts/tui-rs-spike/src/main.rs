@@ -692,6 +692,19 @@ fn scrollbar_window(total: usize, budget: usize, scroll: usize) -> Option<(usize
     Some((position, thumb))
 }
 
+fn anchored_scroll(
+    before_rows: usize,
+    after_rows: usize,
+    scroll: usize,
+    max_scroll: usize,
+) -> usize {
+    if scroll == 0 {
+        0
+    } else {
+        (scroll + after_rows.saturating_sub(before_rows)).min(max_scroll)
+    }
+}
+
 fn frame_lines_with_live(
     columns: usize,
     rows: usize,
@@ -873,13 +886,26 @@ fn run_interactive(
     let mut redraw = true;
     loop {
         let mut updated = false;
+        let body_width = (size.0 as usize).saturating_sub(6).max(1);
+        let before_rows = transcript_body_lines(&facts, body_width).len();
+        let mut session_changed = false;
         while let Ok(update) = rx.try_recv() {
             let previous_session = facts.session_id.clone();
             apply_wire_update(&mut facts, update);
             if facts.session_id != previous_session {
-                scroll = 0;
+                session_changed = true;
             }
             updated = true;
+        }
+        if updated {
+            if session_changed {
+                scroll = 0;
+            } else {
+                let after_rows = transcript_body_lines(&facts, body_width).len();
+                let max_scroll =
+                    after_rows.saturating_sub(body_budget(size.0 as usize, size.1 as usize));
+                scroll = anchored_scroll(before_rows, after_rows, scroll, max_scroll);
+            }
         }
         if redraw || updated {
             let composer_text = composer.as_ref().map(Composer::display);
@@ -1219,7 +1245,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 #[cfg(test)]
 mod tests {
     use super::{
-        apply_wire_update, client_run_stop_message, client_session_create_message,
+        anchored_scroll, apply_wire_update, client_run_stop_message, client_session_create_message,
         client_session_select_message, client_view_select_message, draw_lines, frame_lines,
         frame_lines_with_live, snapshot_facts, visible_len, wire_update_from_raw, Color, Composer,
         Modifier, SnapshotFacts, Terminal, TestBackend, TranscriptRow, FIXTURE_MODEL,
@@ -1452,5 +1478,12 @@ mod tests {
         assert_eq!(buffer[(3, 0)].fg, Color::Green);
         assert!(buffer[(3, 0)].modifier.contains(Modifier::BOLD));
         assert_eq!(buffer[(12, 0)].fg, Color::Reset);
+    }
+    #[test]
+    fn scrolled_transcript_stays_anchored_when_rows_append() {
+        assert_eq!(anchored_scroll(20, 23, 5, 20), 8);
+        assert_eq!(anchored_scroll(20, 23, 0, 20), 0);
+        assert_eq!(anchored_scroll(20, 18, 5, 20), 5);
+        assert_eq!(anchored_scroll(20, 40, 18, 20), 20);
     }
 }

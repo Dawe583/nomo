@@ -49,6 +49,10 @@ const runner = (host) => ({
       yield { type: "assistant-message", runId, sequence, text: `live transcript visible: ${input.task.slice(0, 120)}` };
       for (let step = 0; step < 100; step += 1) {
         await delay(100);
+        if (step % 3 === 0) {
+          sequence += 1;
+          yield { type: "assistant-message", runId, sequence, text: `heartbeat ${step}` };
+        }
         if (input.signal.aborted) {
           sequence += 1;
           yield { type: "terminal", runId, sequence, status: "cancelled" };

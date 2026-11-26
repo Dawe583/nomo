@@ -198,3 +198,12 @@ The connected transcript viewport now uses its already reserved rightmost paddin
 Canonical non-connected Help rendering is unchanged. Unit assertions cover top and bottom thumb positions and exact frame width; the real PTY transport proof asserts that the thumb is visible in the live scrolling transcript.
 
 This is a positional scrollbar, not a minimap: it carries no content density, mouse hit target, drag behavior, unread marker or semantic styling.
+
+
+## R14 anchored scrollback under live append, 2026-11-26
+
+The connected Rust viewport now distinguishes bottom-pinned following from anchored reading. Scroll `0` still follows the newest row. Any nonzero scroll offset is increased by the number of newly wrapped rows that arrive while the user is reading, so the same content stays in place instead of drifting downward. Session projection changes still reset to bottom because they replace the viewed transcript.
+
+The fixture host emits bounded heartbeat rows while waiting for cancellation. The real PTY proof scrolls to the oldest row, waits through additional live appends, and verifies that the oldest row remains visible before returning to bottom. Canonical non-connected Help parity remains unchanged.
+
+This is row anchoring only. There is no unread/new-message pill, per-event identity anchoring across wrapping changes, mouse interaction or production chat behavior.

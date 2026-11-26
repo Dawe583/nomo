@@ -247,6 +247,14 @@
 - Verified: cargo 14/14, transport proof PASS, Rust parity 1/1, original PTY matrix PASS, protocol 14/14.
 - Honest limit: positional scrollbar only; no minimap content, mouse hit target, drag behavior or unread marker.
 
+
+## R14 anchored scrollback under live append (2026-11-26)
+
+- Rust connected viewport now keeps a nonzero scroll position anchored when new wrapped rows arrive; scroll `0` still follows the bottom. Session changes reset to bottom because they replace the transcript.
+- Fixture host emits bounded heartbeat rows while waiting. Real PTY proof scrolls to the oldest row, waits through live appends and verifies the oldest row remains visible before returning to bottom.
+- Verified: cargo 15/15, transport proof PASS, Rust parity 1/1, original PTY matrix PASS, protocol 14/14.
+- Honest limit: row anchoring only; no unread/new-message pill, per-event anchoring across width/wrapping changes, mouse interaction or production chat behavior.
+
 ## Rules that are not negotiable
 
 - No push, merge, deploy, hosted CI, dependency install, or provider-costing call unless the user explicitly asks in the current task. (This push was explicitly authorized by the user on 2026-11-25.)
