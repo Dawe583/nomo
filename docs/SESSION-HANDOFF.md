@@ -279,6 +279,10 @@ The orphaned minimap module is now a tested primitive: exact-height one-cell ren
 
 Chat now wires the tested minimap as a one-cell positional edge from 72 columns when a real conversation exists. The transcript is wrapped one cell narrower, mouse selection treats the edge as chrome, ASCII uses ASCII glyphs, and 40-column frames are unchanged. Intended visual change reviewed at 80x24 before accepting snapshots. Evidence: CLI typecheck exit 0; focused workspace/parity/a11y/visual/minimap tests 251/251; 120 visual snapshot hashes accepted intentionally.
 
+## U4 shared run activity helpers (2026-11-26)
+
+`run-activity.ts` is no longer an orphaned duplicate formatter: it now owns shared tool-payload record guarding, secret redaction, private-reasoning key filtering and output extraction used by `workspace.ts`. The canonical redaction preserves private-key-block and credential/token handling. Evidence: CLI typecheck exit 0; run-activity tests 2/2; focused workspace/parity/a11y/visual tests 247/247; frames unchanged.
+
 ## Rules that are not negotiable
 
 - No push, merge, deploy, hosted CI, dependency install, or provider-costing call unless the user explicitly asks in the current task. (This push was explicitly authorized by the user on 2026-11-25.)

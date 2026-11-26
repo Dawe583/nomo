@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-26T23:49:10.680871Z",
+  "updatedAt": "2026-11-26T23:51:20.750337Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -5334,6 +5334,45 @@
         "Manual captured-frame review at chat-busy@80x24: minimap occupies only the outer one-cell edge and does not cover transcript text; NOMO_UPDATE_SNAPSHOTS=1 then wrote 120 hashes."
       ],
       "stopCondition": "Stop before minimap click/drag navigation, virtual scrollback or production Rust wiring."
+    },
+    {
+      "id": "u4-shared-run-activity-helpers",
+      "status": "done",
+      "owner": "devin-desktop-local-2026-11-26",
+      "dependsOn": [
+        "u3b-chat-minimap-wiring"
+      ],
+      "scope": [
+        "packages/cli/src/tui/run-activity.ts",
+        "packages/cli/src/tui/run-activity.test.ts",
+        "packages/cli/src/tui/workspace.ts",
+        "docs/plans/2026-11-26-tui-upgrade-completion.md",
+        "docs/SESSION-HANDOFF.md",
+        "docs/memory/vault/work-log/NOMO Work Log.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "run-activity.ts has production imports from workspace.ts",
+        "workspace.ts no longer duplicates tool detail record redaction or output extraction helpers",
+        "private reasoning keys stay hidden and credential/token/private-key material is redacted",
+        "rendered frames and snapshots remain unchanged"
+      ],
+      "verifier": [
+        "pnpm --dir packages/cli typecheck",
+        "node --test packages/cli/src/tui/run-activity.test.ts",
+        "node --test --test-concurrency=1 packages/cli/src/tui/workspace.test.ts packages/cli/src/tui/workspace-parity.test.ts packages/cli/src/tui/a11y.test.ts packages/cli/src/tui/visual-snapshots.test.ts",
+        "node scripts/src/work-graph-check.mjs",
+        "git diff --check"
+      ],
+      "evidence": [
+        "pnpm --dir packages/cli typecheck: exit 0.",
+        "node --test packages/cli/src/tui/run-activity.test.ts: 2 passed, 0 failed.",
+        "Focused workspace/parity/a11y/visual tests: 247 passed, 0 failed."
+      ],
+      "stopCondition": "Stop before changing tool-card layout, provider behavior or deleting additional legacy code."
     }
   ]
 }

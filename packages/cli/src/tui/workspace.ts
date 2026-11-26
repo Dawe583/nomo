@@ -95,6 +95,12 @@ import {
 } from "./layout.ts";
 import { inlineMarkdownParts } from "./chat-markdown.ts";
 import { minimapEventsFromRows, renderMinimap } from "./minimap.ts";
+import {
+  isPrivateToolDetailKey,
+  redactToolDetail,
+  toolDetailRecord,
+  toolOutputText,
+} from "./run-activity.ts";
 import { detectCapabilities } from "./caps.ts";
 import type { TerminalCapabilities } from "./types.ts";
 import { renderShortcutLegend } from "./shortcuts.ts";
@@ -11379,34 +11385,6 @@ function displayedEventText(event: SessionEvent): string {
   );
 }
 
-function toolDetailRecord(value: unknown): Record<string, unknown> | undefined {
-  return typeof value === "object" && value !== null && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
-    : undefined;
-}
-
-function redactToolDetail(value: string): string {
-  // Preserve real line boundaries for activity previews. Sanitizing the whole
-  // value first turns newlines into visible question marks and flattens code.
-  return stripAnsi(value)
-    .split(/\r\n?|\n/)
-    .map((line) => sanitizeText(line))
-    .join("\n")
-    .replace(
-      /\b(?:sk-[A-Za-z0-9_-]{12,}|gh[pousr]_[A-Za-z0-9_]{12,}|xox[baprs]-[A-Za-z0-9-]{12,})\b/g,
-      "[redacted]",
-    )
-    .replace(
-      /\b((?:api[_-]?key|access[_-]?token|refresh[_-]?token|secret|password|authorization)\s*[:=]\s*)(?:"[^"]*"|'[^']*'|[^\s,;&]+)/gi,
-      "$1[redacted]",
-    )
-    .replace(/\bBearer\s+[A-Za-z0-9._~+/-]+=*/gi, "Bearer [redacted]")
-    .replace(
-      /([?&](?:api[_-]?key|token|secret|password)=)[^&\s]+/gi,
-      "$1[redacted]",
-    );
-}
-
 /**
  * Gutter and range options for a code preview.
  *
@@ -11470,13 +11448,6 @@ function toolCodePreview(
     "  └ code",
     ...omitted,
   ];
-}
-
-const PRIVATE_TOOL_DETAIL_KEY =
-  /(?:^|[_-])(?:chain[_-]?of[_-]?thought|(?:private|internal)[_-]?(?:reasoning|thoughts?)|reasoning|thoughts?)(?:$|[_-])/i;
-
-function isPrivateToolDetailKey(key: string): boolean {
-  return PRIVATE_TOOL_DETAIL_KEY.test(key);
 }
 
 function toolDetailValue(
@@ -11544,23 +11515,6 @@ function toolDetailValue(
     return [`${key}: { ${keys.join(", ")}${suffix} }`];
   }
   return [`${key}: unavailable`];
-}
-
-function toolOutputText(value: unknown): string[] {
-  if (typeof value === "string") return [value];
-  if (Array.isArray(value)) return value.flatMap(toolOutputText);
-  const record = toolDetailRecord(value);
-  if (!record) return [];
-  if (Array.isArray(record.content)) {
-    const content = record.content.flatMap((block) => {
-      const item = toolDetailRecord(block);
-      return typeof item?.text === "string" ? [item.text] : [];
-    });
-    if (content.length) return content;
-  }
-  return ["stdout", "output", "text", "message", "stderr"].flatMap((key) =>
-    typeof record[key] === "string" ? [record[key] as string] : [],
-  );
 }
 
 type ToolCardKind = "read" | "write" | "edit" | "bash";
