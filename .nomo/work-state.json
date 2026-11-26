@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-26T11:41:32.972581Z",
+  "updatedAt": "2026-11-26T11:42:40.029279Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -3929,6 +3929,37 @@
         "git diff --check exit 0."
       ],
       "stopCondition": "Update orientation only. Do not claim provider capability, release readiness, fleet-wide revocation, RL, or fresh verifier evidence that was not observed."
+    },
+    {
+      "id": "f4-provider-release-path",
+      "status": "done",
+      "owner": "devin-3309bbeef254415e92cba37026acc1cf",
+      "dependsOn": [
+        "q5-provider-smoke"
+      ],
+      "scope": [
+        ".nomo/work-state.json",
+        "docs/memory/vault/work-log/NOMO Work Log.md",
+        "docs/SESSION-HANDOFF.md"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "provider release path is either proven by smoke or the exact missing authority is recorded",
+        "no key is printed, invented, or exposed",
+        "no provider capability or release readiness is claimed"
+      ],
+      "verifier": [
+        "credential presence check without printing the key",
+        "node scripts/src/work-graph-check.mjs",
+        "git diff --check"
+      ],
+      "evidence": [
+        "Audit of q5-provider-smoke evidence: node scripts/src/provider-smoke.mjs exited 0 with stdout \"SKIP provider-smoke: NOMO_SMOKE_API_KEY is not set, so nothing was sent. No provider capability is proven.\"",
+        "Current environment check without printing the key: NOMO_SMOKE_API_KEY absent. Therefore the exact missing authority is a real provider smoke credential and explicit cost authorization; F4 is settled as a named blocker, not as provider capability."
+      ],
+      "stopCondition": "Do not run provider smoke without a real credential and cost cap. Do not claim release readiness."
     }
   ]
 }

@@ -23,7 +23,7 @@
 ## Verified state after the F2 audit (2026-11-26)
 
 - Implementation heads before this handoff refresh: `tui-merge-main` `9b2ccd11`; `main` merge `6548e65f`
-- Graph: `.nomo/work-state.json` has 107 nodes, 107 done, including C1-C2, D1-D4, F1-F3, Q1-Q22, H1-H15, H18-H26, R1-R8 and T1-T18 as applicable
+- Graph: `.nomo/work-state.json` has 108 nodes, 108 done, including C1-C2, D1-D4, F1-F4, Q1-Q22, H1-H15, H18-H26, R1-R8 and T1-T18 as applicable
 - Latest TUI gate: `pnpm run test:tui` → 549 tests, 549 pass, 0 fail; terminal verifier PASS every scenario at every size
 - Latest typechecks from that gate: `pnpm --filter @nomo/cli typecheck` → exit 0; `pnpm --filter @nomo/workbench typecheck` → exit 0
 - Latest Workbench wide evidence before the test-only TUI repairs: 1434 tests, 1431 pass, 0 fail, 3 skipped
