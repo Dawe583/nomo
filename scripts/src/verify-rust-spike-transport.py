@@ -97,9 +97,11 @@ def run_case(columns=80, rows=24):
             while marker not in screen.text() and time.monotonic() < deadline:
                 pump(0.1)
             assert marker in screen.text(), f"missing {marker}\n{screen.text()}"
-        wait_for("host-fixture-a/host")
-        wait_for("host-fixture-b/host")
+        wait_for("host-fixture-live/host")
+        wait_for("status running")
+        wait_for("status idle", timeout=8)
         assert "tokens 0" in screen.text(), "host session token count did not render"
+        assert "page " in screen.text(), "live transcript page count did not render"
         assert screen.overflow == 0, f"terminal rows overflowed: {screen.overflow}"
         os.write(master, b"q")
         deadline = time.monotonic() + 5

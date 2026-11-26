@@ -140,6 +140,15 @@
 - Verified: protocol 14/14, cargo 6/6, Rust parity 1/1, original PTY matrix PASS, real-Workbench transport proof PASS.
 - Honest limit: host runners are local contract doubles; snapshots are selected after settlement rather than live event subscription; no intent execution, authentication, reconnect/backpressure policy or production wiring.
 
+
+## R2c live Workbench status stream surface (2026-11-26)
+
+- Rust now parses optional transcript pages and carries session status, page event count and latest sequence. Connected interactive mode renders those facts; the non-connected Help frame preserves exact canonical byte parity.
+- The bounded server starts one real host-only Workbench run with delayed fixture events, polls the real projection every 100 ms and emits only changed validated snapshots.
+- Real PTY proof passes: `host-fixture-live/host` appears, `status running` becomes `status idle`, truthful page count renders, rows stay bounded and terminal restore succeeds.
+- Verified: protocol 14/14, cargo 6/6, parity 1/1, original PTY matrix PASS, live transport proof PASS.
+- Honest limit: polling rather than subscription/invalidation; full snapshots only; transcript text not rendered; no intent execution, authentication, reconnect/backpressure policy or production wiring.
+
 ## Rules that are not negotiable
 
 - No push, merge, deploy, hosted CI, dependency install, or provider-costing call unless the user explicitly asks in the current task. (This push was explicitly authorized by the user on 2026-11-25.)

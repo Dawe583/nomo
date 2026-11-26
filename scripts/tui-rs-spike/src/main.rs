@@ -27,6 +27,7 @@ struct ProtocolSnapshot {
     version: u8,
     session: Option<ProtocolSession>,
     sessions: Vec<ProtocolSession>,
+    transcript: Option<ProtocolTranscriptPage>,
     approvals: Vec<ProtocolApproval>,
     provider: ProtocolProvider,
     usage: Option<ProtocolUsage>,
@@ -76,6 +77,48 @@ struct ProtocolUsage {
     run_token_count: u64,
 }
 
+#[allow(dead_code)]
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct ProtocolTranscriptPage {
+    session_id: String,
+    events: Vec<ProtocolTranscriptEvent>,
+    latest_seq: u64,
+    oldest_seq: u64,
+    has_more: bool,
+    next_before_seq: Option<u64>,
+}
+
+#[allow(dead_code)]
+#[derive(Deserialize)]
+struct ProtocolTranscriptEvent {
+    seq: u64,
+    at: String,
+    kind: String,
+    text: String,
+}
+
+#[derive(Clone)]
+struct SnapshotFacts {
+    model: String,
+    run_tokens: u64,
+    status: String,
+    event_count: u64,
+    latest_seq: u64,
+}
+
+impl SnapshotFacts {
+    fn fixture() -> Self {
+        Self {
+            model: FIXTURE_MODEL.to_string(),
+            run_tokens: FIXTURE_RUN_TOKENS,
+            status: "idle".to_string(),
+            event_count: 0,
+            latest_seq: 0,
+        }
+    }
+}
+
 #[derive(Deserialize)]
 struct ProtocolMessage {
     version: u8,
@@ -122,31 +165,32 @@ fn snapshot_from_raw(raw: &str) -> Result<ProtocolSnapshot, Box<dyn std::error::
     Ok(snapshot)
 }
 
-fn facts_from_snapshot(snapshot: &ProtocolSnapshot) -> (String, u64) {
-    let model = snapshot
-        .session
-        .as_ref()
-        .map(|session| session.model.clone())
-        .unwrap_or_else(|| FIXTURE_MODEL.to_string());
-    let tokens = snapshot
-        .usage
-        .as_ref()
-        .map(|usage| usage.run_token_count)
-        .or_else(|| {
-            snapshot
-                .session
-                .as_ref()
-                .map(|session| session.run_token_count)
-        })
-        .unwrap_or(FIXTURE_RUN_TOKENS);
-    (model, tokens)
+fn facts_from_snapshot(snapshot: &ProtocolSnapshot) -> SnapshotFacts {
+    let session = snapshot.session.as_ref();
+    let transcript = snapshot.transcript.as_ref();
+    SnapshotFacts {
+        model: session
+            .map(|value| value.model.clone())
+            .unwrap_or_else(|| FIXTURE_MODEL.to_string()),
+        run_tokens: snapshot
+            .usage
+            .as_ref()
+            .map(|usage| usage.run_token_count)
+            .or_else(|| session.map(|value| value.run_token_count))
+            .unwrap_or(FIXTURE_RUN_TOKENS),
+        status: session
+            .map(|value| value.status.clone())
+            .unwrap_or_else(|| "idle".to_string()),
+        event_count: transcript.map_or(0, |page| page.events.len() as u64),
+        latest_seq: transcript.map_or(0, |page| page.latest_seq),
+    }
 }
 
-fn snapshot_facts_from_raw(raw: &str) -> Result<(String, u64), Box<dyn std::error::Error>> {
+fn snapshot_facts_from_raw(raw: &str) -> Result<SnapshotFacts, Box<dyn std::error::Error>> {
     Ok(facts_from_snapshot(&snapshot_from_raw(raw)?))
 }
 
-fn snapshot_facts(path: &str) -> Result<(String, u64), Box<dyn std::error::Error>> {
+fn snapshot_facts(path: &str) -> Result<SnapshotFacts, Box<dyn std::error::Error>> {
     snapshot_facts_from_raw(&std::fs::read_to_string(path)?)
 }
 
@@ -287,11 +331,17 @@ fn content_lines(width: usize) -> Vec<String> {
     rows
 }
 
-fn footer_lines(width: usize, model: &str, run_tokens: u64) -> Vec<String> {
+fn footer_lines(width: usize, facts: &SnapshotFacts, live: bool) -> Vec<String> {
+    let model = facts.model.as_str();
+    let run_tokens = facts.run_tokens;
     if width < 50 {
         vec![
             "↑↓/PgUp/PgDn scroll · Esc Chat".to_string(),
-            "mode: normal".to_string(),
+            if live {
+                format!("status {} · page {}", facts.status, facts.event_count)
+            } else {
+                "mode: normal".to_string()
+            },
             format!("model {} · tokens {}", model, run_tokens),
         ]
     } else if width < 120 {
@@ -305,17 +355,33 @@ fn footer_lines(width: usize, model: &str, run_tokens: u64) -> Vec<String> {
                     model
                 )
             },
-            format!("tokens {} · cost ? · activity details", run_tokens),
+            if live {
+                format!(
+                    "tokens {} · cost ? · status {} · page {}/{}",
+                    run_tokens, facts.status, facts.event_count, facts.latest_seq
+                )
+            } else {
+                format!("tokens {} · cost ? · activity details", run_tokens)
+            },
         ]
     } else {
         vec![
             "↑/↓ scroll · PgUp/PgDn page · Esc returns to Chat".to_string(),
-            format!("model {} · mode  ◆ mode: normal (local only, not enforced)  · tokens {} · cost ? · activity details", model, run_tokens),
+            if live {
+                format!("model {} · mode  ◆ mode: normal (local only, not enforced)  · tokens {} · cost ? · status {} · page {}/{}", model, run_tokens, facts.status, facts.event_count, facts.latest_seq)
+            } else {
+                format!("model {} · mode  ◆ mode: normal (local only, not enforced)  · tokens {} · cost ? · activity details", model, run_tokens)
+            },
         ]
     }
 }
 
-fn frame_lines(columns: usize, rows: usize, model: &str, run_tokens: u64) -> Vec<String> {
+fn frame_lines_with_live(
+    columns: usize,
+    rows: usize,
+    facts: &SnapshotFacts,
+    live: bool,
+) -> Vec<String> {
     let body_width = columns.saturating_sub(6).max(1);
     let footer_count = if columns >= 120 { 2usize } else { 3usize };
     let body_budget = rows.saturating_sub(6 + footer_count);
@@ -338,7 +404,7 @@ fn frame_lines(columns: usize, rows: usize, model: &str, run_tokens: u64) -> Vec
         out.push(pad(&format!("   {}", fit(&line, body_width)), columns));
     }
     out.push(format!(" {}{} ", "─".repeat(columns.saturating_sub(2)), ""));
-    let footer = footer_lines(columns, model, run_tokens);
+    let footer = footer_lines(columns, facts, live);
     for line in footer.iter().take(3) {
         out.push(pad(&format!(" {}", line), columns));
     }
@@ -349,6 +415,17 @@ fn frame_lines(columns: usize, rows: usize, model: &str, run_tokens: u64) -> Vec
     out.into_iter().map(|line| pad(&line, columns)).collect()
 }
 
+fn frame_lines(columns: usize, rows: usize, model: &str, run_tokens: u64) -> Vec<String> {
+    let facts = SnapshotFacts {
+        model: model.to_string(),
+        run_tokens,
+        status: "idle".to_string(),
+        event_count: 0,
+        latest_seq: 0,
+    };
+    frame_lines_with_live(columns, rows, &facts, false)
+}
+
 fn draw_lines(frame: &mut Frame, lines: &[String]) {
     let text = lines.join("\n");
     frame.render_widget(Paragraph::new(text), frame.area());
@@ -357,11 +434,11 @@ fn draw_lines(frame: &mut Frame, lines: &[String]) {
 fn run_interactive(
     columns: u16,
     rows: u16,
-    initial_model: &str,
-    initial_run_tokens: u64,
+    initial_facts: SnapshotFacts,
     connect: Option<String>,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let (tx, rx) = mpsc::channel::<(String, u64)>();
+    let connected = connect.is_some();
+    let (tx, rx) = mpsc::channel::<SnapshotFacts>();
     if let Some(address) = connect {
         let stream = TcpStream::connect(address)?;
         thread::spawn(move || {
@@ -386,18 +463,16 @@ fn run_interactive(
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
     let mut size = (columns, rows);
-    let mut model = initial_model.to_string();
-    let mut run_tokens = initial_run_tokens;
+    let mut facts = initial_facts;
     let mut redraw = true;
     loop {
         let mut updated = false;
-        while let Ok((next_model, next_tokens)) = rx.try_recv() {
-            model = next_model;
-            run_tokens = next_tokens;
+        while let Ok(next_facts) = rx.try_recv() {
+            facts = next_facts;
             updated = true;
         }
         if redraw || updated {
-            let lines = frame_lines(size.0 as usize, size.1 as usize, &model, run_tokens);
+            let lines = frame_lines_with_live(size.0 as usize, size.1 as usize, &facts, connected);
             terminal.draw(|frame| draw_lines(frame, &lines))?;
             redraw = false;
         }
@@ -493,18 +568,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .filter(|value| !value.starts_with("--"))
                 .cloned()
         });
-        let (model, run_tokens) = if let Some(path) = snapshot_path {
+        let facts = if let Some(path) = snapshot_path {
             snapshot_facts(&path)?
         } else {
-            (FIXTURE_MODEL.to_string(), FIXTURE_RUN_TOKENS)
+            SnapshotFacts::fixture()
         };
-        return run_interactive(
-            columns,
-            rows,
-            &model,
-            run_tokens,
-            flag_value(&args, "connect"),
-        );
+        return run_interactive(columns, rows, facts, flag_value(&args, "connect"));
     }
     let (columns, rows) = if args.len() >= 3 {
         (args[1].parse::<u16>()?, args[2].parse::<u16>()?)
@@ -518,13 +587,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             _ => return Err(format!("unsupported symbol preset: {preset}").into()),
         }
     }
-    let (model, run_tokens) = if let Some(path) = args.get(4) {
-        let (model, tokens) = snapshot_facts(path)?;
-        (model, tokens)
+    let facts = if let Some(path) = args.get(4) {
+        snapshot_facts(path)?
     } else {
-        (FIXTURE_MODEL.to_string(), FIXTURE_RUN_TOKENS)
+        SnapshotFacts::fixture()
     };
-    let lines = frame_lines(columns as usize, rows as usize, &model, run_tokens);
+    let lines = frame_lines(
+        columns as usize,
+        rows as usize,
+        &facts.model,
+        facts.run_tokens,
+    );
     print!("{}", render_with_ratatui(&lines, columns, rows)?);
     Ok(())
 }
@@ -556,10 +629,9 @@ mod tests {
 
     #[test]
     fn protocol_snapshot_drives_footer_facts() {
-        let (model, tokens) =
-            snapshot_facts("fixtures/snapshot.json").expect("fixture snapshot parses");
-        assert_eq!(model, "fixture-model");
-        assert_eq!(tokens, 120);
+        let facts = snapshot_facts("fixtures/snapshot.json").expect("fixture snapshot parses");
+        assert_eq!(facts.model, "fixture-model");
+        assert_eq!(facts.run_tokens, 120);
         let frame = frame_lines(80, 24, "other-model", 777);
         assert!(frame.iter().any(|row| row.contains("model other-model")));
         assert!(frame.iter().any(|row| row.contains("tokens 777")));
@@ -579,11 +651,10 @@ mod tests {
             serde_json::to_string(&envelope).expect("serialize envelope"),
         )
         .expect("write envelope");
-        let (model, tokens) =
-            snapshot_facts(path.to_str().expect("utf8 path")).expect("envelope parses");
+        let facts = snapshot_facts(path.to_str().expect("utf8 path")).expect("envelope parses");
         let _ = std::fs::remove_file(path);
-        assert_eq!(model, "fixture-model");
-        assert_eq!(tokens, 120);
+        assert_eq!(facts.model, "fixture-model");
+        assert_eq!(facts.run_tokens, 120);
     }
 
     #[test]

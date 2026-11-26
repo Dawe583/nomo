@@ -9779,3 +9779,8 @@ The fixture TCP server now builds snapshots through `tuiSnapshotFromWorkbench` f
 ## 2026-11-26 R2b real Workbench-backed bounded transport
 
 The transport proof now uses a real isolated `Workbench` with two host-only sessions created through the normal consent path. Snapshots served over loopback TCP come from `tuiSnapshotFromWorkbench(app, ...)`, and the Rust real-PTY footer changes from `host-fixture-a/host` to `host-fixture-b/host` with truthful zero tokens. Protocol, cargo, parity and original PTY checks stay green. The host runners are local contract doubles and snapshots are selected after settlement; this is not live subscription, intent execution or production wiring. [[NOMO TUI]]
+
+
+## 2026-11-26 R2c live Workbench status stream surface
+
+The isolated Rust spike now understands transcript-page metadata and shows session status plus truthful page position only in connected mode, leaving canonical Help byte parity unchanged. The bounded server starts a real host-only Workbench run, polls the real projection and emits changed validated snapshots as delayed fixture events arrive; the real PTY proof watches `status running` become `status idle`. Protocol, cargo, parity and PTY checks stay green. This is polling with full snapshots, not subscription/invalidation, transcript rendering, intent execution or production wiring. [[NOMO TUI]]

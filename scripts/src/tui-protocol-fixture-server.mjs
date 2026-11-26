@@ -11,6 +11,8 @@ import {
   tuiSnapshotFromWorkbench,
 } from "../../packages/workbench/src/tui-protocol.ts";
 
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 const runner = (host) => ({
   describe: () => ({
     id: `host-${host}`,
@@ -29,8 +31,11 @@ const runner = (host) => ({
     const runId = randomUUID();
     async function* events() {
       yield { type: "status", runId, sequence: 1, status: "starting" };
+      await delay(300);
       yield { type: "status", runId, sequence: 2, status: "running" };
+      await delay(300);
       yield { type: "assistant-message", runId, sequence: 3, text: `${host} complete` };
+      await delay(300);
       yield { type: "terminal", runId, sequence: 4, status: "completed" };
     }
     return {
@@ -50,8 +55,7 @@ const app = new Workbench({
   NOMO_LEDGER_DIR: join(root, "ledger"),
   TMPDIR: root,
 });
-app.registerHostRunner(runner("fixture-a"));
-app.registerHostRunner(runner("fixture-b"));
+app.registerHostRunner(runner("fixture-live"));
 
 const cwdDigest = `sha256:${createHash("sha256").update(root).digest("hex")}`;
 const startHostRun = async (host) => {
@@ -67,14 +71,11 @@ const startHostRun = async (host) => {
   });
 };
 
-const first = await startHostRun("fixture-a");
-await app.settled();
-const second = await startHostRun("fixture-b");
-await app.settled();
+const live = await startHostRun("fixture-live");
 
-const snapshotFor = (sessionId) =>
+const snapshotFor = () =>
   tuiSnapshotFromWorkbench(app, {
-    sessionId,
+    sessionId: live.id,
     provider: { status: "unavailable" },
   });
 
@@ -86,11 +87,18 @@ const encode = (snapshot) => {
 
 const server = createServer((socket) => {
   socket.on("error", () => {});
-  socket.write(encode(snapshotFor(first.id)));
-  const timer = setTimeout(() => {
-    if (!socket.destroyed) socket.write(encode(snapshotFor(second.id)));
-  }, 700);
-  socket.on("close", () => clearTimeout(timer));
+  let last = "";
+  const publish = () => {
+    if (socket.destroyed) return;
+    const line = encode(snapshotFor());
+    if (line !== last) {
+      socket.write(line);
+      last = line;
+    }
+  };
+  publish();
+  const timer = setInterval(publish, 100);
+  socket.on("close", () => clearInterval(timer));
 });
 
 server.listen(0, "127.0.0.1", () => {

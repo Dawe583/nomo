@@ -95,3 +95,12 @@ The transport fixture now instantiates a real `Workbench` in isolated temporary 
 The Rust real-PTY proof sees the first host session footer (`host-fixture-a/host`) and then the second (`host-fixture-b/host`) with the truthful zero token count. Protocol, Rust unit, parity and original PTY checks remain green.
 
 This is still not production transport. The host runners are local contract doubles, the snapshots are selected after the runs have settled rather than pushed from a live event subscription, there is no intent execution, authentication, reconnect or backpressure policy, and no production wiring.
+
+
+## R2c live Workbench status stream surface, 2026-11-26
+
+The isolated Rust spike now parses the optional transcript page and carries session status, page event count and latest sequence in addition to model and token facts. These extra facts are shown only in connected interactive mode; the non-connected Help frame still uses the canonical footer and preserves byte parity.
+
+The bounded server now starts one real host-only Workbench run whose fixture runner emits delayed events, polls the real projection at 100 ms, and writes a new validated snapshot only when the wire payload changes. The real PTY proof observes `status running` become `status idle` with a truthful transcript page count while exact terminal bounds hold.
+
+This is live polling, not a Workbench subscription or event-driven invalidation. Full snapshots are still sent, transcript text is not rendered, there is no intent execution, authentication, reconnect/backpressure policy or production wiring.

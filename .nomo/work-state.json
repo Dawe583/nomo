@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-26T22:35:30.512670Z",
+  "updatedAt": "2026-11-26T22:38:38.876852Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -4530,6 +4530,50 @@
         "python3 scripts/src/verify-rust-spike-pty.py: PASS at 40x12, 80x24 and 120x40."
       ],
       "stopCondition": "Stop before live event subscription, intent execution, authentication, production wiring, provider traffic, release, publish or deploy."
+    },
+    {
+      "id": "r2c-live-workbench-status-stream",
+      "status": "done",
+      "owner": "devin-desktop-local-2026-11-26",
+      "dependsOn": [
+        "r2b-real-workbench-bounded-transport"
+      ],
+      "scope": [
+        "scripts/tui-rs-spike/src/main.rs",
+        "scripts/src/tui-protocol-fixture-server.mjs",
+        "scripts/src/verify-rust-spike-transport.py",
+        "docs/plans/2026-11-26-tui-protocol-boundary.md",
+        "docs/SESSION-HANDOFF.md",
+        "docs/memory/vault/work-log/NOMO Work Log.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "Rust parses optional transcript-page metadata and carries session status, page event count and latest sequence",
+        "connected interactive mode renders live status facts without changing canonical non-connected byte parity",
+        "the server polls a real host-only Workbench projection and emits only changed validated snapshots",
+        "real PTY proof observes running-to-idle status and truthful transcript page position",
+        "no subscription, transcript rendering, intent execution or production wiring is claimed"
+      ],
+      "verifier": [
+        "python3 scripts/src/verify-rust-spike-transport.py",
+        "node --test scripts/src/tui-rs-parity.test.mjs",
+        "python3 scripts/src/verify-rust-spike-pty.py",
+        "node --test packages/workbench/src/tui-protocol.test.ts",
+        "cd scripts/tui-rs-spike && cargo test --offline --quiet",
+        "node scripts/src/work-graph-check.mjs",
+        "git diff --check"
+      ],
+      "evidence": [
+        "python3 scripts/src/verify-rust-spike-transport.py: PASS Rust spike Workbench TCP transport updates at 80x24; PASS real-Workbench bounded transport prototype with running-to-idle live status.",
+        "node --test scripts/src/tui-rs-parity.test.mjs: 1 test, 1 pass, 0 fail, duration_ms 856.946833.",
+        "python3 scripts/src/verify-rust-spike-pty.py: PASS at 40x12, 80x24 and 120x40.",
+        "node --test packages/workbench/src/tui-protocol.test.ts: 14 tests, 14 pass, 0 fail, duration_ms 151.4655.",
+        "cd scripts/tui-rs-spike && cargo test --offline --quiet: 6 passed, 0 failed."
+      ],
+      "stopCondition": "Stop before subscription/invalidation architecture, transcript rendering, intent execution, authentication, production wiring, provider traffic, release, publish or deploy."
     }
   ]
 }
