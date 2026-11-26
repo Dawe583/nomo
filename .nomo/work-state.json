@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-26T11:39:12.876451Z",
+  "updatedAt": "2026-11-26T11:41:32.972581Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -3896,6 +3896,39 @@
         "pnpm run test:tui: node tests 549 pass, 0 fail, 0 skipped, duration_ms 39559.857291; terminal verifier PASS every scenario at every size; git diff --check exit 0."
       ],
       "stopCondition": "Repair only the test synchronization race. Do not weaken queue assertions, provider validation, or snapshot checks."
+    },
+    {
+      "id": "q22-session-handoff-refresh",
+      "status": "done",
+      "owner": "devin-3309bbeef254415e92cba37026acc1cf",
+      "dependsOn": [
+        "f2-operator-approval-end-to-end",
+        "q21-queued-prompt-test-race-repair"
+      ],
+      "scope": [
+        "docs/SESSION-HANDOFF.md",
+        "docs/memory/vault/work-log/NOMO Work Log.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "the handoff names current recorded heads and graph completion truthfully",
+        "Track F status matches the audited F1, F2 and local-truth F3 state",
+        "blocked provider release remains blocked rather than claimed"
+      ],
+      "verifier": [
+        "node --test scripts/src/doc-truth.test.mjs",
+        "node scripts/src/work-graph-check.mjs",
+        "git diff --check"
+      ],
+      "evidence": [
+        "docs/SESSION-HANDOFF.md now records tui-merge-main 9b2ccd11, main merge 6548e65f, graph completion, latest TUI and typecheck evidence, production-reachable C2 accounting, F1/F2 done, local-truth F3 done, and F4 blocked by missing NOMO_SMOKE_API_KEY.",
+        "node --test scripts/src/doc-truth.test.mjs: 9 pass, 0 fail, duration_ms 80.167166.",
+        "git diff --check exit 0."
+      ],
+      "stopCondition": "Update orientation only. Do not claim provider capability, release readiness, fleet-wide revocation, RL, or fresh verifier evidence that was not observed."
     }
   ]
 }

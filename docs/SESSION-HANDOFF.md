@@ -20,19 +20,21 @@
 - `.agents/skills/`, `.devin/skills/` - the full local skill set, copied for cloud parity
 - `docs/CONTEXT.md`, `docs/DECISIONS.md`, `docs/STANDARDS.md` - authoritative repository contracts
 
-## Verified state before the HP2 commit (2026-11-26)
+## Verified state after the F2 audit (2026-11-26)
 
-- scripts: `node --test --test-concurrency=1 scripts/src/*.test.mjs` → 435 tests, 402 pass, 0 fail, 32 skipped, 1 todo
-- Workbench: `pnpm --filter @nomo/workbench test` → 1432 tests, 1429 pass, 0 fail, 3 skipped
-- `pnpm --filter @nomo/workbench typecheck` → exit 0
-- HP1 operator-scope promotions are done, including CLI and HTTP surfaces. HP2 automatic run-loop compaction is done: model summary with raw fallback, no persisted learned-entry digest, no self-summary loop, harness trigger arming and compaction usage accounting
-- H1-H15, H18-H26 measurement slices recorded in the graph, R1-R8, T1-T10 and T12-T18 are done; Q1-Q17 are done. Oracle eval proves plumbing only, not model capability; R2 is a contextual bandit, not RL
+- Implementation heads before this handoff refresh: `tui-merge-main` `9b2ccd11`; `main` merge `6548e65f`
+- Graph: `.nomo/work-state.json` has 107 nodes, 107 done, including C1-C2, D1-D4, F1-F3, Q1-Q22, H1-H15, H18-H26, R1-R8 and T1-T18 as applicable
+- Latest TUI gate: `pnpm run test:tui` → 549 tests, 549 pass, 0 fail; terminal verifier PASS every scenario at every size
+- Latest typechecks from that gate: `pnpm --filter @nomo/cli typecheck` → exit 0; `pnpm --filter @nomo/workbench typecheck` → exit 0
+- Latest Workbench wide evidence before the test-only TUI repairs: 1434 tests, 1431 pass, 0 fail, 3 skipped
+- HP1 operator-scope promotions and HP2 automatic run-loop compaction are done. C2 retrieval hit accounting is production-reachable as one bounded content-free `harness.retrieval` record per provider turn
+- Oracle eval proves plumbing only, not model capability; R2 is a contextual bandit, not RL
 - Do not trust these numbers without re-running the gate you depend on.
 
 ## Product gates status (Track F)
 
-- F1 later-session retrieval: DONE - opt-in `NOMO_SHARED_LEARNING_WORKSPACES` read-only union, digest names entry id + chain seqs
-- F2 approval end-to-end: DONE - hold writes signed hold:approved with approvedBy; verified in agent-messages-tool tests
+- F1 later-session retrieval: DONE - opt-in `NOMO_SHARED_LEARNING_WORKSPACES` read-only union, digest names entry id + chain seqs, and retrieval hit accounting names carried entry ids without content
+- F2 approval end-to-end: DONE - governed hold waits for confirmation, approval dispatches once, signed hold:approved evidence carries approvedBy, denial/restart/cancellation cannot release, and the TUI decision notice is pinned in the integration test
 - F3 identity/fleet truth: DONE as the local-truth slice. TUI status shows the binding, `/revoke-agent` is confirmed and local, durable restart is tested including revocation without local session evidence; fleet-wide revoke remains honestly documented as unavailable until registry, node inventory, ack barrier and reconcile exist
 - F4 provider release path: BLOCKED - owner approval exists, but `NOMO_SMOKE_API_KEY` is absent. Q5 completed only as SKIP: no provider capability is proven
 

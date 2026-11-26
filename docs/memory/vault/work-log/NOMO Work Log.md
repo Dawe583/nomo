@@ -9689,3 +9689,8 @@ Diagnosis showed the queued-prompt test released the provider gate before the fi
 ## 2026-11-26 F2 operator approval end-to-end audit
 
 Audit found the governed approval path already implemented end to end: a real governed fixture call waits for explicit confirmation, approval dispatches once and writes signed `hold:approved` evidence with the operator identity, denial does not dispatch, and restart or cancellation cannot release the tool. The missing acceptance proof was only the visible operator decision line; the integration test now pins the existing approved and denied notices. Verified: focused approval 1/1, CLI and Workbench typechecks exit 0, TUI wide 549 pass with 0 fail plus terminal verifier PASS every scenario at every size, diff check exit 0. [[NOMO TUI]]
+
+
+## 2026-11-26 Q22 session handoff refresh
+
+`docs/SESSION-HANDOFF.md` now names the current recorded heads, graph completion, latest TUI and typecheck evidence, production-reachable C2 retrieval accounting, audited F1 and F2 completion, local-truth F3 completion, and the still-blocked F4 provider release path. No release, provider capability, fleet revocation or RL claim was added. Verified: doc truth 9/9, graph check 0 duplicates, 0 dangling dependencies and 0 done nodes without evidence, diff check exit 0. [[NOMO Documentation]]
