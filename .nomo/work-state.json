@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-26T23:42:04.290215Z",
+  "updatedAt": "2026-11-26T23:44:56.212999Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -5255,6 +5255,43 @@
         "node --test --test-concurrency=1 packages/cli/src/tui/workspace.test.ts packages/cli/src/tui/a11y.test.ts packages/cli/src/tui/visual-snapshots.test.ts: 144 passed, 0 failed."
       ],
       "stopCondition": "Stop before visual changes, link rendering changes or deletion of the module file."
+    },
+    {
+      "id": "u3a-minimap-primitives",
+      "status": "done",
+      "owner": "devin-desktop-local-2026-11-26",
+      "dependsOn": [
+        "u2-shared-inline-markdown-wiring"
+      ],
+      "scope": [
+        "packages/cli/src/tui/minimap.ts",
+        "packages/cli/src/tui/minimap.test.ts",
+        "docs/plans/2026-11-26-tui-upgrade-completion.md",
+        "docs/SESSION-HANDOFF.md",
+        "docs/memory/vault/work-log/NOMO Work Log.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "minimap renders exactly the requested height as one-cell rows",
+        "rendered Chat rows map to user assistant tool error or unknown density without reading raw Markdown",
+        "approval type outranks generic tool kind",
+        "ASCII preset is complete and monochrome-safe",
+        "module remains unwired until the geometry slice"
+      ],
+      "verifier": [
+        "pnpm --dir packages/cli typecheck",
+        "node --test packages/cli/src/tui/minimap.test.ts",
+        "node scripts/src/work-graph-check.mjs",
+        "git diff --check"
+      ],
+      "evidence": [
+        "pnpm --dir packages/cli typecheck: exit 0.",
+        "node --test packages/cli/src/tui/minimap.test.ts: 4 passed, 0 failed."
+      ],
+      "stopCondition": "Stop before workspace wiring, snapshot changes or mouse hit behavior."
     }
   ]
 }
