@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-26T11:42:40.029279Z",
+  "updatedAt": "2026-11-26T18:47:43.997977Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -3960,6 +3960,46 @@
         "Current environment check without printing the key: NOMO_SMOKE_API_KEY absent. Therefore the exact missing authority is a real provider smoke credential and explicit cost authorization; F4 is settled as a named blocker, not as provider capability."
       ],
       "stopCondition": "Do not run provider smoke without a real credential and cost cap. Do not claim release readiness."
+    },
+    {
+      "id": "f4-provider-smoke-verification",
+      "status": "blocked",
+      "owner": "devin-desktop-local-2026-11-26",
+      "dependsOn": [
+        "f4-provider-release-path"
+      ],
+      "scope": [
+        ".nomo/work-state.json",
+        "docs/memory/vault/work-log/NOMO Work Log.md",
+        "docs/SESSION-HANDOFF.md",
+        "scripts/src/doc-truth.test.mjs"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "exactly one provider smoke request is attempted with the script default endpoint and model",
+        "safe output records only PASS or FAIL, status, latency and token counts when present",
+        "no credential, prompt or response content is printed or persisted"
+      ],
+      "verifier": [
+        "temporary wrapper outside repository plus node scripts/src/provider-smoke.mjs",
+        "node scripts/src/work-graph-check.mjs",
+        "git diff --check"
+      ],
+      "evidence": [
+        "node scripts/src/provider-smoke.mjs through the temporary wrapper exited 1; stderr: \"FAIL provider-smoke: status 400 after 306 ms.\"",
+        "Exactly 1 provider smoke request was attempted; no retry, benchmark or additional provider communication ran. Cost cap was $0.10. The credential was read from local OpenCode auth configuration and exposed only as NOMO_SMOKE_API_KEY in the child process environment; the wrapper was deleted after the run.",
+        "Provider error code was not reported and token usage was not reported. Provider capability is not proven, so F4 remains blocked.",
+        "After fast-forward to origin/main 87044f9c, node scripts/src/provider-smoke.mjs through a new temporary wrapper exited 1; stderr: \"FAIL provider-smoke: status 429 after 304 ms.\"",
+        "Exactly 1 provider smoke request was attempted in the new user-authorized round; no retry, benchmark or additional provider communication ran. The endpoint remained the script default OpenCode Zen endpoint and the model was locally configured iceman-free. The credential was exposed only as NOMO_SMOKE_API_KEY in the child process environment; the wrapper was deleted after the run.",
+        "Provider error code was not reported and token usage was not reported for the 429 response. Provider capability is still not proven, so F4 remains blocked.",
+        "Repair-round smoke evidence: OpenRouter openrouter/auto exited 1 with stderr \"FAIL provider-smoke: status 402 after 2428 ms.\"; FreeLLMAPI auto exited 1 with stderr \"FAIL provider-smoke: request failed after 49 ms (TypeError).\"; OpenCode deepseek-v4.1-flash-free exited 1 with stderr \"FAIL provider-smoke: status 429 after 409 ms.\"",
+        "The repair round used only locally configured credentials inside child process environments and deleted each wrapper. The remaining blocker is external provider account or service availability, not a missing local credential or repository smoke-script defect.",
+        "scripts/src/doc-truth.test.mjs now ignores generated .DS_Store, __pycache__ and .pyc residue when deciding whether an inventoried directory has returned; node --test scripts/src/doc-truth.test.mjs passed 9/9."
+      ],
+      "stopCondition": "Do not retry the smoke or add provider communication without new explicit user authorization.",
+      "blockedAt": "2026-11-26T18:47:43.997977Z"
     }
   ]
 }

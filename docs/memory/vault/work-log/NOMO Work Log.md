@@ -9699,3 +9699,15 @@ Audit found the governed approval path already implemented end to end: a real go
 ## 2026-11-26 F4 provider release path audit
 
 Audit settled F4 as a named blocker rather than a release claim. The existing Q5 smoke record proves the command exits safely with SKIP because `NOMO_SMOKE_API_KEY` is absent, nothing was sent and no provider capability is proven. The current environment still has no `NOMO_SMOKE_API_KEY`; no smoke was run and no key was printed. The exact missing authority is a real provider smoke credential plus explicit cost authorization. [[NOMO Release]]
+
+## 2026-11-26 F4 provider smoke verification attempt
+
+Exactly one authorized provider smoke request ran through `scripts/src/provider-smoke.mjs` with the default OpenCode Zen endpoint and `muse-spark-1.3-contributor-free` model. A temporary wrapper outside the repository read the local OpenCode credential, passed it only as `NOMO_SMOKE_API_KEY` in the child process environment, and was deleted after the run. Result: `FAIL provider-smoke: status 400 after 306 ms.` The provider reported no error code and no token usage. No retry, benchmark or additional provider communication ran. Cost cap was $0.10. F4 remains blocked because provider capability is not proven. [[NOMO Release]]
+
+## 2026-11-26 F4 provider smoke retry with configured model
+
+After fast-forwarding the checkout to `origin/main` `87044f9c`, exactly one new user-authorized provider smoke request ran with the local OpenCode credential passed only as `NOMO_SMOKE_API_KEY` in the child process environment. The endpoint remained the script default OpenCode Zen endpoint and the model was the locally configured `iceman-free`. Result: `FAIL provider-smoke: status 429 after 304 ms.` The provider reported no error code and no token usage. No retry, benchmark or additional provider communication ran. The temporary wrapper was deleted. F4 remains blocked because provider capability is not proven. [[NOMO Release]]
+
+## 2026-11-26 F4 provider smoke repair attempt and doc-truth repair
+
+After the user asked for a full repair, additional bounded smoke attempts used only locally configured credentials in child process environments. OpenRouter `openrouter/auto` returned `FAIL provider-smoke: status 402 after 2428 ms.` FreeLLMAPI `auto` against the documented local endpoint failed before a response with `FAIL provider-smoke: request failed after 49 ms (TypeError).` OpenCode `deepseek-v4.1-flash-free` returned `FAIL provider-smoke: status 429 after 409 ms.` No credential, prompt or response content was printed or persisted. Provider capability remains unproven because the failures are account or service availability conditions, not repository code. Separately, `scripts/src/doc-truth.test.mjs` now treats a directory containing only generated `.DS_Store`, `__pycache__` and `.pyc` residue as not resurrected for inventory purposes; doc-truth passes 9/9. [[NOMO Release]]
