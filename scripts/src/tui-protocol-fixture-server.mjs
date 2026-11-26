@@ -121,11 +121,18 @@ const rejectIntent = (socket, error) => {
   }));
 };
 
-const handleIntent = async (socket, line) => {
+const handleIntent = async (socket, line, publish) => {
   try {
     const message = parseTuiClientMessage(line);
     if (message.intent.type === "run.stop") {
       app.stopRun(message.intent.sessionId);
+      return;
+    }
+    if (message.intent.type === "session.select") {
+      if (!snapshotFor().sessions.some((session) => session.id === message.intent.sessionId))
+        throw new Error(`unknown fixture session ${message.intent.sessionId}`);
+      activeSessionId = message.intent.sessionId;
+      publish();
       return;
     }
     if (message.intent.type !== "session.create")
@@ -140,6 +147,7 @@ const handleIntent = async (socket, line) => {
       creations.set(message.intent.idempotencyKey, creation);
     }
     await creation;
+    publish();
     if (!socket.destroyed)
       socket.write(encodeEvent({
         type: "intent.accepted",
@@ -197,7 +205,7 @@ const server = createServer((socket) => {
     while (index >= 0) {
       const line = incoming.slice(0, index);
       incoming = incoming.slice(index + 1);
-      if (line.trim()) void handleIntent(socket, line);
+      if (line.trim()) void handleIntent(socket, line, publish);
       index = incoming.indexOf("\n");
     }
   });

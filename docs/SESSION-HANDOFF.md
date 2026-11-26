@@ -210,6 +210,16 @@
 - Verified: protocol 14/14, cargo 11/11, Rust parity 1/1, original PTY matrix PASS, transport proof PASS.
 - Honest limit: fixture executor proves protocol/idempotency/projection switching, not provider-backed session creation; no cursor movement, paste, multiline input, validation display, model selection or concurrent-create ordering.
 
+
+## R10 bounded session selection and projection switching (2026-11-26)
+
+- Protocol now validates `session.select` as projection control, without an idempotency key because it is not a domain mutation.
+- Rust keeps the snapshot session list, cycles it with `[`/`]`, sends versioned selection envelopes and resets scroll when projection changes.
+- Fixture server validates the selected id, switches active projection and publishes immediately; creation publish is deterministic too.
+- Real PTY proof creates a second session, moves to the initial cancelled run with `[` and back to the created run with `]`, observing distinct final transcript rows across wrapping.
+- Verified: protocol 14/14, Workbench typecheck PASS, cargo 12/12, Rust parity 1/1, original PTY matrix PASS, transport proof PASS.
+- Honest limit: no session manager, fuzzy search, titles, ordering control, multi-client ownership, unread markers, transcript paging or production semantics.
+
 ## Rules that are not negotiable
 
 - No push, merge, deploy, hosted CI, dependency install, or provider-costing call unless the user explicitly asks in the current task. (This push was explicitly authorized by the user on 2026-11-25.)

@@ -224,6 +224,7 @@ export type TuiIntent =
       readonly prompt: string;
       readonly idempotencyKey: string;
     }
+  | { readonly type: "session.select"; readonly sessionId: string }
   | { readonly type: "run.stop"; readonly sessionId: string }
   | {
       readonly type: "approval.decide";
@@ -294,6 +295,12 @@ export function parseTuiIntent(
       sessionId: text(value.sessionId, "sessionId", 160),
       prompt: text(value.prompt, "prompt", promptMax, { trim: false }),
       idempotencyKey: idempotencyKey(value.idempotencyKey),
+    };
+  }
+  if (value.type === "session.select") {
+    return {
+      type: "session.select",
+      sessionId: text(value.sessionId, "sessionId", 160),
     };
   }
   if (value.type === "run.stop") {

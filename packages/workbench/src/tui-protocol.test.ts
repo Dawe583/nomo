@@ -265,6 +265,10 @@ test("client intent messages round trip as versioned NDJSON objects", () => {
     type: "view.select",
     view: "help",
   });
+  assert.deepEqual(
+    parseTuiClientMessage(serializeTuiClientMessage({ type: "session.select", sessionId: "session-1" })).intent,
+    { type: "session.select", sessionId: "session-1" },
+  );
 });
 
 test("client intent messages fail closed for malformed envelopes and intents", () => {

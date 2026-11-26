@@ -37,7 +37,7 @@ struct ProtocolSnapshot {
 }
 
 #[allow(dead_code)]
-#[derive(Deserialize)]
+#[derive(Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct ProtocolSession {
     id: String,
@@ -115,6 +115,7 @@ struct SnapshotFacts {
     event_count: u64,
     latest_seq: u64,
     transcript_events: Vec<TranscriptRow>,
+    sessions: Vec<ProtocolSession>,
 }
 
 impl SnapshotFacts {
@@ -127,6 +128,7 @@ impl SnapshotFacts {
             event_count: 0,
             latest_seq: 0,
             transcript_events: Vec::new(),
+            sessions: Vec::new(),
         }
     }
 }
@@ -203,9 +205,18 @@ fn apply_wire_update(facts: &mut SnapshotFacts, update: WireUpdate) {
             if session.id != facts.session_id {
                 return;
             }
-            facts.model = session.model;
-            facts.status = session.status;
+            facts.model = session.model.clone();
+            facts.status = session.status.clone();
             facts.run_tokens = session.run_token_count;
+            if let Some(existing) = facts
+                .sessions
+                .iter_mut()
+                .find(|existing| existing.id == session.id)
+            {
+                *existing = session;
+            } else {
+                facts.sessions.push(session);
+            }
         }
     }
 }
@@ -323,6 +334,7 @@ fn facts_from_snapshot(snapshot: &ProtocolSnapshot) -> SnapshotFacts {
                     .collect()
             })
             .unwrap_or_default(),
+        sessions: snapshot.sessions.clone(),
     }
 }
 
@@ -484,7 +496,7 @@ fn footer_lines(
         vec![
             if live {
                 composer.map_or_else(
-                    || "↑↓ scroll · g/G · s stop · i prompt · q quit".to_string(),
+                    || "↑↓ scroll · [/] session · i prompt · s stop".to_string(),
                     |prompt| format!("prompt> {}", prompt),
                 )
             } else {
@@ -504,7 +516,7 @@ fn footer_lines(
         vec![
             if live {
                 composer.map_or_else(
-                    || "↑/↓ scroll · g/G · s stop · i prompt · q quit".to_string(),
+                    || "↑/↓ scroll · [/] session · i prompt · s stop".to_string(),
                     |prompt| format!("prompt> {}", prompt),
                 )
             } else {
@@ -531,7 +543,7 @@ fn footer_lines(
         vec![
             if live {
                 composer.map_or_else(
-                    || "↑/↓ scroll · g/G · s stop · i prompt · q quit".to_string(),
+                    || "↑/↓ scroll · [/] session · i prompt · s stop".to_string(),
                     |prompt| format!("prompt> {}", prompt),
                 )
             } else {
@@ -639,6 +651,7 @@ fn frame_lines(columns: usize, rows: usize, model: &str, run_tokens: u64) -> Vec
         event_count: 0,
         latest_seq: 0,
         transcript_events: Vec::new(),
+        sessions: Vec::new(),
     };
     frame_lines_with_live(columns, rows, &facts, false, 0, None)
 }
@@ -689,7 +702,11 @@ fn run_interactive(
     loop {
         let mut updated = false;
         while let Ok(update) = rx.try_recv() {
+            let previous_session = facts.session_id.clone();
             apply_wire_update(&mut facts, update);
+            if facts.session_id != previous_session {
+                scroll = 0;
+            }
             updated = true;
         }
         if redraw || updated {
@@ -783,6 +800,30 @@ fn run_interactive(
                         scroll = 0;
                         redraw = true;
                     }
+                    KeyCode::Char('[') | KeyCode::Char(']') => {
+                        if !facts.sessions.is_empty() {
+                            let current = facts
+                                .sessions
+                                .iter()
+                                .position(|session| session.id == facts.session_id)
+                                .unwrap_or(0);
+                            let delta: isize = if key.code == KeyCode::Char('[') {
+                                -1
+                            } else {
+                                1
+                            };
+                            let len = facts.sessions.len() as isize;
+                            let next = (current as isize + delta).rem_euclid(len) as usize;
+                            let session_id = facts.sessions[next].id.clone();
+                            if session_id != facts.session_id {
+                                if let Some(stream) = writer.as_mut() {
+                                    let line = client_session_select_message(&session_id)?;
+                                    stream.write_all(line.as_bytes())?;
+                                    stream.write_all(b"\n")?;
+                                }
+                            }
+                        }
+                    }
                     KeyCode::Char('i') => {
                         composer = Some(String::new());
                         redraw = true;
@@ -871,6 +912,17 @@ fn client_run_stop_message(session_id: &str) -> Result<String, Box<dyn std::erro
     Ok(serde_json::json!({
         "version": 1,
         "intent": { "type": "run.stop", "sessionId": session_id }
+    })
+    .to_string())
+}
+
+fn client_session_select_message(session_id: &str) -> Result<String, Box<dyn std::error::Error>> {
+    if session_id.trim().is_empty() || session_id.len() > 160 {
+        return Err("invalid TUI session id".into());
+    }
+    Ok(serde_json::json!({
+        "version": 1,
+        "intent": { "type": "session.select", "sessionId": session_id }
     })
     .to_string())
 }
@@ -970,9 +1022,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 mod tests {
     use super::{
         apply_wire_update, client_run_stop_message, client_session_create_message,
-        client_view_select_message, frame_lines, frame_lines_with_live, snapshot_facts,
-        visible_len, wire_update_from_raw, SnapshotFacts, TranscriptRow, FIXTURE_MODEL,
-        FIXTURE_RUN_TOKENS,
+        client_session_select_message, client_view_select_message, frame_lines,
+        frame_lines_with_live, snapshot_facts, visible_len, wire_update_from_raw, SnapshotFacts,
+        TranscriptRow, FIXTURE_MODEL, FIXTURE_RUN_TOKENS,
     };
 
     #[test]
@@ -1078,6 +1130,17 @@ mod tests {
         assert!(client_session_create_message(" ", "rust:1:abcdef").is_err());
         assert!(client_session_create_message("hello", "bad key").is_err());
     }
+
+    #[test]
+    fn client_session_select_intent_is_versioned_ndjson() {
+        let line = client_session_select_message("session-1").expect("intent serializes");
+        let value: serde_json::Value = serde_json::from_str(&line).expect("intent json");
+        assert_eq!(value["version"], 1);
+        assert_eq!(value["intent"]["type"], "session.select");
+        assert_eq!(value["intent"]["sessionId"], "session-1");
+        assert!(!line.contains('\n'));
+        assert!(client_session_select_message("").is_err());
+    }
     #[test]
     fn connected_frame_surfaces_latest_assistant_text() {
         let facts = SnapshotFacts {
@@ -1092,6 +1155,7 @@ mod tests {
                 kind: "assistant".to_string(),
                 text: "live transcript visible".to_string(),
             }],
+            sessions: Vec::new(),
         };
         let frame = frame_lines_with_live(80, 24, &facts, true, 0, None);
         assert!(frame
@@ -1118,6 +1182,7 @@ mod tests {
                     text: format!("row-{index:02}"),
                 })
                 .collect(),
+            sessions: Vec::new(),
         };
         let bottom = frame_lines_with_live(80, 24, &facts, true, 0, None);
         assert!(bottom.iter().any(|row| row.contains("row-29")));

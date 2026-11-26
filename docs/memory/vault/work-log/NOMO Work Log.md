@@ -9819,3 +9819,8 @@ Workbench now exposes additive coalesced state invalidation through `subscribe(l
 ## 2026-11-26 R9 bounded composer and session.create proof
 
 The connected Rust spike now has a narrow prompt composer. Pressing `i` opens bounded input, Enter sends a validated idempotent `session.create` envelope, and the fixture server starts a real host-only Workbench run, switches projection and acknowledges the creation. The real PTY proof types `hello rust composer` and observes it in the live transcript. All focused gates pass. This proves protocol/idempotency/projection switching, not provider-backed creation or production composer behavior. [[NOMO TUI]]
+
+
+## 2026-11-26 R10 bounded session selection and projection switching
+
+The Rust transport proof now supports bounded session selection. `[` and `]` cycle the snapshot session list through validated `session.select` envelopes; the fixture server validates the target and switches projection immediately. The real PTY proof moves between the initial host run and a composer-created run and observes both transcripts. Focused protocol, typecheck, Rust, parity and PTY gates pass. This is not yet a session manager or production navigation model. [[NOMO TUI]]

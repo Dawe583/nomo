@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-26T22:55:31.600534Z",
+  "updatedAt": "2026-11-26T22:58:55.389392Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -4884,6 +4884,55 @@
         "python3 scripts/src/verify-rust-spike-pty.py: PASS at 40x12, 80x24 and 120x40."
       ],
       "stopCondition": "Stop before provider-backed creation, full composer editing, paste/multiline input, concurrent-create ordering, authentication, production wiring, provider traffic, release, publish or deploy."
+    },
+    {
+      "id": "r10-bounded-session-selection",
+      "status": "done",
+      "owner": "devin-desktop-local-2026-11-26",
+      "dependsOn": [
+        "r9-bounded-composer-session-create"
+      ],
+      "scope": [
+        "packages/workbench/src/tui-protocol.ts",
+        "packages/workbench/src/tui-protocol.test.ts",
+        "scripts/tui-rs-spike/src/main.rs",
+        "scripts/src/tui-protocol-fixture-server.mjs",
+        "scripts/src/verify-rust-spike-transport.py",
+        "docs/plans/2026-11-26-tui-protocol-boundary.md",
+        "docs/SESSION-HANDOFF.md",
+        "docs/memory/vault/work-log/NOMO Work Log.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "protocol validates session.select as projection control without idempotency",
+        "Rust keeps the snapshot session list and cycles it with bracket keys using versioned envelopes",
+        "scroll resets when projection changes",
+        "server validates the selected id and immediately republishes the active projection",
+        "real PTY proof switches between the initial and composer-created sessions and observes both transcripts",
+        "no session manager or production semantics are claimed"
+      ],
+      "verifier": [
+        "node --test packages/workbench/src/tui-protocol.test.ts",
+        "pnpm -C packages/workbench typecheck",
+        "python3 scripts/src/verify-rust-spike-transport.py",
+        "cd scripts/tui-rs-spike && cargo test --offline --quiet",
+        "node --test scripts/src/tui-rs-parity.test.mjs",
+        "python3 scripts/src/verify-rust-spike-pty.py",
+        "node scripts/src/work-graph-check.mjs",
+        "git diff --check"
+      ],
+      "evidence": [
+        "node --test packages/workbench/src/tui-protocol.test.ts: 14 tests, 14 pass, 0 fail, duration_ms 144.544625.",
+        "pnpm -C packages/workbench typecheck: PASS.",
+        "python3 scripts/src/verify-rust-spike-transport.py: PASS Rust spike Workbench TCP transport updates at 80x24; PASS real-Workbench bounded transport prototype including [ and ] projection switching.",
+        "cd scripts/tui-rs-spike && cargo test --offline --quiet: 12 passed, 0 failed.",
+        "node --test scripts/src/tui-rs-parity.test.mjs: 1 test, 1 pass, 0 fail, duration_ms 544.697041.",
+        "python3 scripts/src/verify-rust-spike-pty.py: PASS at 40x12, 80x24 and 120x40."
+      ],
+      "stopCondition": "Stop before session-manager UX, transcript paging, multi-client ownership, production wiring, provider traffic, release, publish or deploy."
     }
   ]
 }

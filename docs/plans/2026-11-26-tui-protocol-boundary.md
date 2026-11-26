@@ -161,3 +161,12 @@ The connected Rust proof surface now has a deliberately narrow composer. `i` ent
 The fixture server executes only this explicit creation intent by starting another real host-only Workbench run whose task is the supplied prompt. Creations are deduplicated by idempotency key, the active projected session switches to the created run and the server emits a validated `intent.accepted` after the run exists. The Rust client ignores the acknowledgement visually; the real PTY proof instead observes the created prompt in the live transcript. This exercises the envelope, idempotency boundary, server validation and projection switching, not provider-backed session creation.
 
 This is not production chat input: no cursor movement, paste handling, editing keys, multiline input, validation display, model selection or provider semantics exist. Concurrent creation ordering is deliberately outside the single-client fixture proof.
+
+
+## R10 bounded session selection and projection switching, 2026-11-26
+
+The protocol now validates a narrow `session.select` client intent. It is projection control, like the existing view intent, not a domain mutation and therefore carries no idempotency key. The Rust client keeps the snapshot session list, cycles it with `[` and `]`, sends the selected session id as a versioned envelope and resets scroll to the bottom when a snapshot changes the projected session.
+
+The fixture server validates the id against the current snapshot session list, switches only its active projection and publishes immediately because projection selection is server-local rather than a Workbench mutation. Session creation also publishes deterministically after creation. The real PTY proof creates a second session, moves back to the initial cancelled host run with `[`, returns to the created run with `]`, and observes each transcript's distinct final row across terminal wrapping.
+
+This is bounded selection, not a session manager: no fuzzy search, titles, ordering control, multi-client ownership, unread markers, transcript paging across the wire or production semantics exist.
