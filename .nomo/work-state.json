@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-26T10:19:00Z",
+  "updatedAt": "2026-11-26T10:32:00Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -3743,6 +3743,54 @@
       ],
       "completedAt": "2026-11-26T10:18:00Z",
       "stopCondition": "Audit only. If caching is absent or production unreachable, implement the smallest truthful indexing surface rather than recording completion."
+    },
+    {
+      "id": "f1-later-session-retrieval-gate",
+      "status": "done",
+      "owner": "devin-3309bbeef254415e92cba37026acc1cf",
+      "dependsOn": [
+        "c2-retrieval-hit-accounting",
+        "d1-session-search-wiring"
+      ],
+      "scope": [
+        "packages/workbench/src/session-search.ts",
+        "packages/workbench/src/harness-ranking.ts",
+        "packages/workbench/src/index.ts",
+        "packages/workbench/src/session-search.test.ts",
+        "packages/workbench/src/session-search-tool.test.ts",
+        "packages/workbench/src/harness-ranking.test.ts",
+        "packages/workbench/src/harness-retrieval-wiring.test.ts",
+        "docs/memory/vault/work-log/NOMO Work Log.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "a later session can retrieve a prior operator-approved learned decision only within the operator-named shared learning scope",
+        "the prompt digest names the entry id and signed chain sequences it came from",
+        "retrieval hit accounting proves which entries entered the provider input without copying content",
+        "session search remains opt-in, bounded, redacted and caller-excluding"
+      ],
+      "verifier": [
+        "pnpm --filter @nomo/workbench exec node --experimental-strip-types --test src/session-search.test.ts src/session-search-tool.test.ts src/harness-ranking.test.ts src/harness-retrieval-wiring.test.ts",
+        "pnpm --filter @nomo/workbench typecheck",
+        "pnpm --filter @nomo/workbench test",
+        "git diff --check"
+      ],
+      "evidence": [
+        "Audit proof: no duplicate implementation was needed. harness-retrieval-wiring tests prove a later session retrieves an operator-approved lesson only when NOMO_SHARED_LEARNING_WORKSPACES names the source workspace, the prompt digest carries the lesson with entry id and signed chain sequences, isolation is the default, and C2 hit records prove inclusion through distinct request digests without lesson text.",
+        "Focused verifier: pnpm --filter @nomo/workbench exec node --experimental-strip-types --test src/session-search.test.ts src/session-search-tool.test.ts src/harness-ranking.test.ts src/harness-retrieval-wiring.test.ts observed 75 tests, 75 pass, 0 fail, cancelled 0, skipped 0, todo 0, duration_ms 3621.044.",
+        "Session-search evidence inside that verifier proves the tool is disabled by default, enabled search survives restart, results are bounded and redacted, and the caller is excluded.",
+        "pnpm --filter @nomo/workbench typecheck observed exit 0.",
+        "Workbench wide verifier: pnpm --filter @nomo/workbench test observed 1434 tests, 1431 pass, 0 fail, cancelled 0, skipped 3, todo 0, duration_ms 34811.806417.",
+        "git diff --check observed exit 0.",
+        "Not verified: no hosted CI, provider smoke, paid benchmark or live credential path was run.",
+        "Docs verifier after recording: node --test scripts/src/doc-truth.test.mjs scripts/src/no-dash.test.mjs observed 10 tests, 10 pass, 0 fail, duration_ms 232.955.",
+        "node scripts/src/work-graph-check.mjs after recording observed graph-check: duplicate ids 0 / dangling deps 0 / done without evidence 0."
+      ],
+      "stopCondition": "Audit first. If reachability or evidence is missing, implement only the smallest truthful production surface; stop if content, secrets or decision authority enters retrieval evidence.",
+      "completedAt": "2026-11-26T10:31:00Z"
     }
   ]
 }
