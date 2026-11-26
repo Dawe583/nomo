@@ -1,6 +1,7 @@
 import test, { type TestContext } from "node:test";
 import assert from "node:assert/strict";
 import { retrievalContext } from "./index.ts";
+import { MAX_RECORDED_IDS } from "./harness-ranking.ts";
 import { isolatedWorkbench } from "./test-fixture.ts";
 import { HARNESS_SETTINGS } from "./harness-settings.ts";
 import type { RefinementProposal } from "./refine-pass.ts";
@@ -335,4 +336,84 @@ test("an operator can switch refinement off, and the gate obeys", async (t) => {
       (event) => event.kind === "usage" && event.payload?.source === "harness",
     );
   assert.deepEqual(fromHarness, [], "a disabled harness must not call the model");
+});
+
+test("each provider turn records bounded content-free retrieval hits with the request digest", async (t) => {
+  const bodies: Array<Record<string, unknown>> = [];
+  let calls = 0;
+  const fetcher = async (url: unknown, init?: RequestInit) => {
+    if (String(url).endsWith("/models")) return models();
+    const body = JSON.parse(String(init?.body)) as Record<string, unknown>;
+    bodies.push(body);
+    calls += 1;
+    if (calls === 2) {
+      const tools = (body.tools ?? []) as Array<{
+        function: { name: string; description: string };
+      }>;
+      const list = tools.find((tool) =>
+        tool.function.description.startsWith("void_workspace_list:"),
+      );
+      assert.ok(list);
+      return Response.json({
+        choices: [{
+          message: {
+            role: "assistant",
+            content: null,
+            tool_calls: [{
+              id: "list",
+              type: "function",
+              function: { name: list.function.name, arguments: "{}" },
+            }],
+          },
+          finish_reason: "tool_calls",
+        }],
+      });
+    }
+    return answer();
+  };
+  const { app } = await isolatedWorkbench(t, fetcher as typeof fetch, {}, {
+    prefix: "nomo-harness-retrieval-hits-",
+  });
+  const session = await app.start("Review the migration", "fixture");
+  await app.settled();
+  const initialRecords = app.get(session.id)!.events.filter((event) => event.type === "harness.retrieval");
+  assert.equal(initialRecords.length, 1, "even a no-candidate turn records empty negative evidence");
+  assert.equal(initialRecords[0]!.payload?.candidates, 0);
+  assert.deepEqual(initialRecords[0]!.payload?.included, []);
+  await app.editDocument(session.id, {
+    path: "source.md",
+    content: "signed source record",
+    expectedRevision: null,
+  });
+  await app.refineHarness(session.id, lessonProposal());
+  const pending = await app.pendingApprovalsFor(session.id);
+  await app.approveHarnessProposal(session.id, pending[0]!.digest);
+
+  bodies.length = 0;
+  app.send(session.id, "Why does the same postgres migration keep stalling?");
+  await app.settled();
+
+  assert.equal(calls, 3, "the follow-up run takes exactly two provider turns");
+  const learned = (await app.harnessEntries(session.workspace)).find((entry) => entry.content === LESSON);
+  assert.ok(learned);
+  const records = app.get(session.id)!.events.filter((event) => event.type === "harness.retrieval");
+  assert.equal(records.length, 3, "one inclusion record per provider turn");
+  const hitRecords = records.filter((record) => Number(record.payload?.includedCount) > 0);
+  assert.equal(hitRecords.length, 2, "both follow-up turns carry the approved entry");
+  const requestDigests = new Set<string>();
+  for (const record of hitRecords) {
+    const payload = record.payload as Record<string, unknown>;
+    assert.equal(typeof payload.requestDigest, "string");
+    requestDigests.add(String(payload.requestDigest));
+    assert.equal(typeof payload.ranked, "number");
+    assert.ok((payload.included as string[]).includes(learned.id));
+    assert.ok(Number(payload.includedCount) >= 1);
+    assert.ok(
+      (payload.included as string[]).length + (payload.dropped as string[]).length <= MAX_RECORDED_IDS,
+      "the id lists remain bounded",
+    );
+  }
+  assert.equal(requestDigests.size, 2, "each turn is tied to its own request digest");
+  const serialized = JSON.stringify(records.map((record) => ({ text: record.text, payload: record.payload })));
+  assert.equal(serialized.includes(LESSON), false, "the record carries ids and counts, never entry text");
 });

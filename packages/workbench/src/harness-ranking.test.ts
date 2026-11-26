@@ -376,7 +376,25 @@ test("a ceiling reports the entries it cut and accounts for all of them", () => 
   const report = promptInclusion(ranked, 1);
   assert.equal(report.included.length, 0, "a one character ceiling carries no whole line");
   assert.equal(report.dropped.length, report.ranked);
-  assert.equal(report.included.length + report.dropped.length, report.ranked);
+  assert.equal(report.includedCount + report.droppedCount, report.ranked);
+});
+
+test("inclusion accounting counts the rendered headers and newlines exactly", () => {
+  const ranked = rankEntries(
+    [entry("le_a", "postgres migration", "postgres migration stalls"), entry("le_b", "postgres hold", "postgres hold repeats")],
+    queryTermsFrom({ user: "postgres migration hold" }),
+    OPTS,
+  );
+  const at = "2026-01-01T00:00:00.000Z";
+  const block = formatForPrompt(ranked, at);
+  const firstLine = block.split("\n").find((line) => line.includes(`[${ranked[0]!.entry.id};`));
+  assert.ok(firstLine);
+  const firstEnd = block.indexOf(firstLine) + firstLine.length;
+  const report = promptInclusion(ranked, firstEnd, at);
+  assert.deepEqual(report.included, [ranked[0]!.entry.id]);
+  assert.deepEqual(report.dropped, [ranked[1]!.entry.id]);
+  assert.equal(report.includedCount, 1);
+  assert.equal(report.droppedCount, 1);
 });
 
 test("the ring keeps a bounded number of builds and no content", () => {

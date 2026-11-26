@@ -254,9 +254,11 @@ import {
   subsetTools,
 } from "./subagents.ts";
 import {
-  formatForPrompt,
+  MAX_RECORDED_IDS,
   queryTermsFrom,
   rankEntries,
+  recordPromptInclusion,
+  renderPromptBlock,
 } from "./harness-ranking.ts";
 import {
   applyProposal,
@@ -582,16 +584,29 @@ export function denialText(
  * Nothing here reaches `decide`. The block is context the model may read, not
  * an approval, and no entry's mined rule is consulted on this path.
  */
+function retrievalPrompt(
+  entries: readonly HarnessEntry[],
+  query: string,
+  settings: HarnessSettings,
+) {
+  const ranked = rankEntries(entries, queryTermsFrom({ user: query }), {
+    perKindLimit: settings.contextEntryLimit,
+    contentChars: settings.contextCharsPerEntry,
+  });
+  const rendered = renderPromptBlock(ranked, new Date().toISOString());
+  return {
+    text: rendered.block,
+    inclusion: rendered.inclusion,
+    rankedIds: ranked.map((row) => row.entry.id),
+  };
+}
+
 export function retrievalContext(
   entries: readonly HarnessEntry[],
   query: string,
   settings: HarnessSettings,
 ): string {
-  const ranked = rankEntries(entries, queryTermsFrom({ user: query }), {
-    perKindLimit: settings.contextEntryLimit,
-    contentChars: settings.contextCharsPerEntry,
-  });
-  return formatForPrompt(ranked, new Date().toISOString());
+  return retrievalPrompt(entries, query, settings).text;
 }
 
 /**
@@ -10250,6 +10265,7 @@ export class Workbench {
     // Declared outside the try so the finally below can always take the block
     // back out, whichever way the run ends.
     let digestMarker: ModelMessage | undefined;
+    let retrieval: ReturnType<typeof retrievalPrompt> | undefined;
     /**
      * Flushes the answer and reasoning text buffered by the turn in flight.
      * Declared outside the try so a run that fails mid-stream still records
@@ -10374,11 +10390,14 @@ export class Workbench {
         const latestUser = [...session.messages]
           .reverse()
           .find((message) => message.role === "user");
-        const retrieved = retrievalContext(
-          entriesForPrompt,
-          String(latestUser?.content ?? ""),
-          this.harness,
-        );
+        retrieval = entriesForPrompt.length > 0
+          ? retrievalPrompt(
+            entriesForPrompt,
+            String(latestUser?.content ?? ""),
+            this.harness,
+          )
+          : undefined;
+        const retrieved = retrieval?.text ?? "";
         // A quarter of the operator's ceiling, so guidance can never crowd out
         // the retrieved context that was there first. Both blocks already fit
         // their own budgets; this is the share, not a second limit.
@@ -10568,6 +10587,47 @@ export class Workbench {
           throw new Error(
             "Session context limit reached. Start a new session.",
           );
+        // The request digest above covers the exact provider input for this
+        // turn. Record at the handoff point rather than where the string was
+        // built: a digest absent from that input is a drop, never a hit. An
+        // empty record is still the turn's truthful negative evidence.
+        const digestActive =
+          retrieval !== undefined &&
+          digestMarker !== undefined &&
+          retrieval.text !== "" &&
+          session.messages.includes(digestMarker) &&
+          typeof digestMarker.content === "string" &&
+          digestMarker.content.includes(retrieval.text);
+        const included = digestActive ? retrieval!.inclusion.included : [];
+        const dropped = digestActive
+          ? retrieval!.inclusion.dropped
+          : (retrieval?.rankedIds ?? []).slice(0, MAX_RECORDED_IDS);
+        const record = recordPromptInclusion(
+          {
+            ranked: retrieval?.inclusion.ranked ?? 0,
+            included,
+            dropped,
+            includedCount: digestActive ? retrieval!.inclusion.includedCount : 0,
+            droppedCount: digestActive ? retrieval!.inclusion.droppedCount : (retrieval?.inclusion.ranked ?? 0),
+          },
+          Date.now(),
+          { sessionId: session.view.id, requestDigest: session.requestDigest },
+        );
+        this.event(
+          session,
+          "tool",
+          "Learned-entry prompt inclusion recorded.",
+          {
+            requestDigest: session.requestDigest,
+            candidates: entriesForPrompt.length,
+            ranked: record.ranked,
+            included: record.included,
+            dropped: record.dropped,
+            includedCount: record.includedCount,
+            droppedCount: record.droppedCount,
+          },
+          "harness.retrieval",
+        );
         let delta = "";
         let reasoning = "";
         let flushed = Date.now();
