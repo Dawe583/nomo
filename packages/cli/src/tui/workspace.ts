@@ -13105,6 +13105,8 @@ export function palettePreviewLines(
   const lines: string[] = [row(`PREVIEW · ${item.group.toUpperCase()}`), row("")];
   lines.push(row(sanitizeText(item.id)));
   for (const line of wrap([sanitizeText(item.hint)], cells)) lines.push(row(line));
+  if (item.aliases?.length)
+    lines.push(row(`aliases: ${item.aliases.map(sanitizeText).join(", ")}`));
   const usage = commandArgumentHint(item.id);
   if (usage !== undefined && usage !== "") {
     for (const line of wrap(

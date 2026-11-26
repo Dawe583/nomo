@@ -98,3 +98,19 @@ test("recent commands float above unfrequented commands without hiding the rest"
     "frecency changes order only; it must not hide a command",
   );
 });
+
+test("operator aliases discover canonical commands and remain visible in preview data", () => {
+  const items = paletteFromCommands([
+    ["/keybindings", "Keyboard shortcut reference"],
+    ["/usage", "Token usage and cost"],
+    ["/sessions", "Open conversation history"],
+  ]);
+  assert.equal(filterPalette(items, "keys")[0]?.id, "/keybindings");
+  assert.equal(filterPalette(items, "tokens")[0]?.id, "/usage");
+  assert.equal(filterPalette(items, "history")[0]?.id, "/sessions");
+  assert.deepEqual(items.find((item) => item.id === "/usage")?.aliases, [
+    "stats",
+    "tokens",
+    "cost",
+  ]);
+});

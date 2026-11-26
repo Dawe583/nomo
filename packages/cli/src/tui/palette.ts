@@ -431,6 +431,17 @@ function defaultGroupOf(id: string): PaletteGroup {
 
 // Builds palette items from the existing TUI_COMMANDS shape (id and hint
 // tuples), so workspace.ts needs no parallel command registry.
+// Operator words that are not the command id itself. They improve discovery
+// without creating another action surface or hiding the canonical slash command.
+const PALETTE_ALIASES: Readonly<Record<string, readonly string[]>> = {
+  "/approvals": ["review", "permissions"],
+  "/keybindings": ["keys", "shortcuts"],
+  "/models": ["model", "provider"],
+  "/sessions": ["history", "conversations", "resume"],
+  "/settings": ["config", "preferences"],
+  "/usage": ["stats", "tokens", "cost"],
+};
+
 export function paletteFromCommands(
   commands: readonly (readonly [string, string])[],
   groupOf?: (id: string) => PaletteGroup,
@@ -444,6 +455,9 @@ export function paletteFromCommands(
       hint,
       icon: commandIcon(id, group),
       group,
+      ...(PALETTE_ALIASES[id] === undefined
+        ? {}
+        : { aliases: PALETTE_ALIASES[id] }),
     };
     return item;
   });

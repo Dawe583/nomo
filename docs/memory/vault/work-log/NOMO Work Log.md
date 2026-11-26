@@ -9729,3 +9729,8 @@ The first Rust-migration prerequisite is now a small typed contract rather than 
 ## 2026-11-26 T20 transcript position indicator
 
 The scrolled transcript breadcrumb now names the exact visible row range and how many rows remain below the viewport, so the operator can tell where they are without a colour-only scrollbar or another frame row. This is deliberately smaller than a minimap or virtual scrollback rewrite. Verified before recording: focused workspace suite 128/128, accessibility plus visual snapshots 16/16, CLI typecheck exit 0. [[NOMO TUI]]
+
+
+## 2026-11-26 T21 command palette aliases
+
+Command palette search now understands a small audited alias set for approvals, keybindings, models, sessions, settings and usage, while every row and execution path remains the canonical slash command. Aliases are visible in preview data rather than becoming hidden actions. Verified before recording: palette visual 4/4, palette-focused workspace tests pass, CLI typecheck exit 0. [[NOMO TUI]]

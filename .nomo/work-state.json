@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-26T21:53:37.693196Z",
+  "updatedAt": "2026-11-26T22:01:54.970119Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -4118,6 +4118,43 @@
         "pnpm --filter @nomo/cli typecheck: exit 0."
       ],
       "stopCondition": "Stop before a minimap, virtual scrollback rewrite, production Rust wiring or release action."
+    },
+    {
+      "id": "t21-command-palette-aliases",
+      "status": "done",
+      "owner": "devin-desktop-local-2026-11-26",
+      "dependsOn": [
+        "t20-transcript-position-indicator"
+      ],
+      "scope": [
+        "packages/cli/src/tui/palette.ts",
+        "packages/cli/src/tui/workspace.ts",
+        "packages/cli/src/tui/palette-visual.test.ts",
+        "docs/SESSION-HANDOFF.md",
+        "docs/memory/vault/work-log/NOMO Work Log.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "operator aliases improve discovery without creating hidden actions or replacing canonical commands",
+        "preview data exposes aliases in text",
+        "fuzzy search, recency and exact frame behavior remain intact"
+      ],
+      "verifier": [
+        "node --test packages/cli/src/tui/palette-visual.test.ts",
+        "node --test packages/cli/src/tui/workspace.test.ts --test-name-pattern palette",
+        "pnpm --filter @nomo/cli typecheck",
+        "node scripts/src/work-graph-check.mjs",
+        "git diff --check"
+      ],
+      "evidence": [
+        "node --test packages/cli/src/tui/palette-visual.test.ts: 4 tests, 4 pass, 0 fail, duration_ms 176.9515.",
+        "node --test packages/cli/src/tui/workspace.test.ts --test-name-pattern palette: pass.",
+        "pnpm --filter @nomo/cli typecheck: exit 0."
+      ],
+      "stopCondition": "Stop before a parallel command registry, hidden action surface or production Rust wiring."
     }
   ]
 }

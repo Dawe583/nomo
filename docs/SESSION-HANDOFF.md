@@ -58,6 +58,12 @@
 - This is a position indicator, not a minimap or virtual scrollback rewrite. The composer, review keys and exact frame shape are unchanged.
 - Verified: focused TUI workspace suite 128/128, accessibility plus visual snapshots 16/16, `@nomo/cli` typecheck exit 0.
 
+
+## T21 command palette aliases (2026-11-26)
+
+- Palette fuzzy search now accepts a small audited set of operator aliases while rows still show only canonical slash commands. Preview data exposes aliases beside the command summary and usage shape.
+- Verified: palette visual tests 4/4, palette-focused workspace tests pass, `@nomo/cli` typecheck exit 0.
+
 ## Rules that are not negotiable
 
 - No push, merge, deploy, hosted CI, dependency install, or provider-costing call unless the user explicitly asks in the current task. (This push was explicitly authorized by the user on 2026-11-25.)
