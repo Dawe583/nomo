@@ -1,5 +1,16 @@
-use crossterm::terminal::size as terminal_size;
-use ratatui::{backend::TestBackend, widgets::Paragraph, Terminal};
+use crossterm::{
+    event::{self, Event, KeyCode, KeyEventKind},
+    execute,
+    terminal::{
+        disable_raw_mode, enable_raw_mode, size as terminal_size, EnterAlternateScreen,
+        LeaveAlternateScreen,
+    },
+};
+use ratatui::{
+    backend::{CrosstermBackend, TestBackend},
+    widgets::Paragraph,
+    Frame, Terminal,
+};
 use unicode_width::UnicodeWidthStr;
 
 fn visible_len(value: &str) -> usize {
@@ -198,6 +209,44 @@ fn frame_lines(columns: usize, rows: usize) -> Vec<String> {
     out.into_iter().map(|line| pad(&line, columns)).collect()
 }
 
+fn draw_lines(frame: &mut Frame, lines: &[String]) {
+    let text = lines.join("\n");
+    frame.render_widget(Paragraph::new(text), frame.area());
+}
+
+fn run_interactive(columns: u16, rows: u16) -> Result<(), Box<dyn std::error::Error>> {
+    enable_raw_mode()?;
+    let mut stdout = std::io::stdout();
+    execute!(stdout, EnterAlternateScreen)?;
+    let backend = CrosstermBackend::new(stdout);
+    let mut terminal = Terminal::new(backend)?;
+    let mut size = (columns, rows);
+    let lines = frame_lines(size.0 as usize, size.1 as usize);
+    terminal.draw(|frame| draw_lines(frame, &lines))?;
+    loop {
+        if !event::poll(std::time::Duration::from_millis(100))? {
+            continue;
+        }
+        match event::read()? {
+            Event::Key(key) if key.kind == KeyEventKind::Press => {
+                if matches!(key.code, KeyCode::Char('q') | KeyCode::Esc) {
+                    break;
+                }
+            }
+            Event::Resize(columns, rows) => {
+                size = (columns, rows);
+                let lines = frame_lines(size.0 as usize, size.1 as usize);
+                terminal.draw(|frame| draw_lines(frame, &lines))?;
+            }
+            _ => {}
+        }
+    }
+    disable_raw_mode()?;
+    execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
+    terminal.show_cursor()?;
+    Ok(())
+}
+
 fn render_with_ratatui(
     lines: &[String],
     columns: u16,
@@ -223,6 +272,11 @@ fn render_with_ratatui(
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = std::env::args().collect();
+    if args.get(1).map(String::as_str) == Some("interactive") {
+        let columns = args.get(2).map_or(80, |value| value.parse().unwrap_or(80));
+        let rows = args.get(3).map_or(24, |value| value.parse().unwrap_or(24));
+        return run_interactive(columns, rows);
+    }
     let (columns, rows) = if args.len() >= 3 {
         (args[1].parse::<u16>()?, args[2].parse::<u16>()?)
     } else {

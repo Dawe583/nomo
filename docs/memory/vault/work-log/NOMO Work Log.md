@@ -9739,3 +9739,8 @@ Command palette search now understands a small audited alias set for approvals, 
 ## 2026-11-26 R1 bounded Rust Help spike
 
 The first Rust terminal spike exists outside production wiring in `scripts/tui-rs-spike`. It uses `ratatui` plus `crossterm` and matches the canonical monochrome TypeScript Help frame byte-for-byte at all six matrix sizes for ascii, unicode and nerd arguments. The presets are identical because this surface uses shared glyphs. This is not Rust adoption: the fixture content is hardcoded and there is no protocol client, input loop, scrollback, mouse, bracketed paste, approval flow or real PTY matrix. Verified before recording: cargo test 1/1 offline, Rust parity test 1/1. [[NOMO TUI]]
+
+
+## 2026-11-26 R1b Rust spike interactive PTY smoke
+
+The isolated Rust Help spike now exercises the real terminal path, not only ratatui TestBackend: crossterm raw mode and alternate screen enter and restore, resize redraws, and `q` or Esc exits. Real PTY smoke passes at 40x12, 80x24 and 120x40, and static byte parity remains green. This is still not adoption: there is no typed protocol client, transcript interaction, scrollback, mouse, bracketed paste, approval flow or production wiring. [[NOMO TUI]]

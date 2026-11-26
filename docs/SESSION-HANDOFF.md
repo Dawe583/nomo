@@ -72,6 +72,14 @@
 - Honest limit: fixture content is hardcoded and there is no protocol client, input loop, scrollback, mouse, bracketed paste, approval flow or real PTY evidence. Rust is not adopted beyond this spike.
 - Verified: `cargo test --offline --quiet` 1/1 and `node --test scripts/src/tui-rs-parity.test.mjs` 1/1.
 
+
+## R1b Rust spike interactive PTY smoke (2026-11-26)
+
+- The isolated Rust spike now also has an interactive `ratatui`/`crossterm` mode with raw mode, alternate screen, resize redraw and `q`/Esc exit. This is still not production wiring.
+- Real PTY smoke passes at 40x12, 80x24 and 120x40: frame renders, terminal width does not overflow, alternate screen enters and restores, and `q` exits cleanly.
+- Static byte parity remains green after the interactive-mode change.
+- Honest limit: still no typed protocol client, transcript interaction, scrollback, mouse, bracketed paste, approval flow or adoption decision.
+
 ## Rules that are not negotiable
 
 - No push, merge, deploy, hosted CI, dependency install, or provider-costing call unless the user explicitly asks in the current task. (This push was explicitly authorized by the user on 2026-11-25.)

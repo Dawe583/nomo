@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-26T22:08:41.103175Z",
+  "updatedAt": "2026-11-26T22:10:42.060539Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -4195,6 +4195,44 @@
         "The spike has hardcoded fixture content and no protocol client, input loop, scrollback, mouse, bracketed paste, approval flow or real PTY matrix."
       ],
       "stopCondition": "Stop before production Rust wiring, adoption claims, provider traffic, release, publish or deploy."
+    },
+    {
+      "id": "r1b-rust-spike-interactive-pty",
+      "status": "done",
+      "owner": "devin-desktop-local-2026-11-26",
+      "dependsOn": [
+        "r1-rust-help-parity-spike"
+      ],
+      "scope": [
+        "scripts/tui-rs-spike/src/main.rs",
+        "scripts/src/verify-rust-spike-pty.py",
+        "docs/SESSION-HANDOFF.md",
+        "docs/memory/vault/work-log/NOMO Work Log.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "the isolated Rust spike exercises a real crossterm terminal path without production wiring",
+        "PTY smoke proves frame rendering, bounded width, alternate screen entry and restore, and clean quit at representative sizes",
+        "static byte parity remains green",
+        "no Rust adoption is claimed"
+      ],
+      "verifier": [
+        "node --test scripts/src/tui-rs-parity.test.mjs",
+        "python3 scripts/src/verify-rust-spike-pty.py",
+        "cd scripts/tui-rs-spike && cargo test --offline --quiet",
+        "node scripts/src/work-graph-check.mjs",
+        "git diff --check"
+      ],
+      "evidence": [
+        "node --test scripts/src/tui-rs-parity.test.mjs: pass after the interactive-mode change.",
+        "python3 scripts/src/verify-rust-spike-pty.py: PASS at 40x12, 80x24 and 120x40; PASS real PTY smoke matrix.",
+        "cd scripts/tui-rs-spike && cargo test --offline --quiet: 1 passed, 0 failed.",
+        "Still missing: typed protocol client, transcript interaction, scrollback, mouse, bracketed paste, approval flow and production wiring."
+      ],
+      "stopCondition": "Stop before production Rust wiring, adoption claims, release, publish, deploy or provider traffic."
     }
   ]
 }
