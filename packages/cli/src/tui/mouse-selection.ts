@@ -16,6 +16,15 @@ export type MouseSelectionBounds = Readonly<{
   railTop?: number;
   /** Rows the rail band paints below `railTop`. */
   railRows?: number;
+  /** One-based outermost transcript minimap column, when painted. */
+  minimapStart?: number;
+  /** One-based first row of the minimap band. */
+  minimapTop?: number;
+  /** Rows the minimap band paints below `minimapTop`. */
+  minimapRows?: number;
+  /** Total transcript rows and visible transcript height for minimap navigation. */
+  total?: number;
+  height?: number;
 }>;
 
 /**
@@ -41,6 +50,63 @@ export function railOwnsPoint(
  * panel margin, so the rail column is also the exclusive end of everything a
  * selection may cover.
  */
+/** True when a zero-based screen point lands on the transcript minimap. */
+export function minimapOwnsPoint(
+  bounds: MouseSelectionBounds,
+  point: MousePoint,
+): boolean {
+  const { minimapStart, minimapTop, minimapRows } = bounds;
+  if (minimapStart === undefined || minimapTop === undefined) return false;
+  if (!minimapRows || minimapRows < 1) return false;
+  return (
+    point.x + 1 === minimapStart &&
+    point.y + 1 >= minimapTop &&
+    point.y + 1 < minimapTop + minimapRows
+  );
+}
+
+/**
+ * Transcript offset represented by a minimap row. The row is inverted through
+ * the same proportional scale the minimap renderer uses, then centred in the
+ * viewport and clamped to the valid scroll range.
+ */
+export function minimapOffsetAtPoint(
+  bounds: MouseSelectionBounds,
+  point: MousePoint,
+  clampY = false,
+): number | undefined {
+  const { minimapTop, minimapRows, total, height } = bounds;
+  if (
+    minimapTop === undefined ||
+    minimapRows === undefined ||
+    total === undefined ||
+    height === undefined ||
+    minimapRows < 1 ||
+    total < 1
+  )
+    return undefined;
+  if (!clampY && !minimapOwnsPoint(bounds, point)) return undefined;
+  const maximumRow = minimapTop + minimapRows - 1;
+  const oneBasedRow = clampY
+    ? Math.max(minimapTop, Math.min(maximumRow, point.y + 1))
+    : point.y + 1;
+  const rowIndex = Math.max(0, Math.min(minimapRows - 1, oneBasedRow - minimapTop));
+  const position =
+    total > minimapRows
+      ? (rowIndex + 0.5) / minimapRows
+      : minimapRows === 1
+        ? 0
+        : rowIndex / (minimapRows - 1);
+  const transcriptRow = Math.min(total - 1, Math.floor(position * total));
+  const maximumOffset = Math.max(0, total - height);
+  if (rowIndex === 0) return 0;
+  if (rowIndex === minimapRows - 1) return maximumOffset;
+  return Math.max(
+    0,
+    Math.min(maximumOffset, transcriptRow - Math.floor(height / 2)),
+  );
+}
+
 export function mouseSelectionLimit(
   columns: number,
   bounds: MouseSelectionBounds,

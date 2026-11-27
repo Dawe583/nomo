@@ -3147,6 +3147,12 @@ export class WorkspaceTui {
     railTop?: number;
     /** Rows the rail band paints below `railTop`. */
     railRows?: number;
+    /** One-based outermost transcript minimap column, when painted. */
+    minimapStart?: number;
+    /** One-based first row of the minimap band. */
+    minimapTop?: number;
+    /** Rows the minimap band paints below `minimapTop`. */
+    minimapRows?: number;
     /**
      * Rows of the body budget the sticky transcript line took, 0 when it is
      * not drawn. Paging counts them as window, so a page down still lands on
@@ -14212,6 +14218,9 @@ export function renderWorkspace(
     ...(chatRailWidth + chatMinimapWidth > 0
       ? { railStart: chatPanelMarginX + 1 + bodyTextWidth }
       : {}),
+    ...(chatMinimapWidth > 0
+      ? { minimapStart: chatPanelMarginX + width }
+      : {}),
   };
   // User prompt rows drive the { and } jumps without depending on display text.
   ui.promptRows = lines
@@ -15823,6 +15832,16 @@ export function renderWorkspace(
               (stickyRow === undefined ? 0 : 1) +
               1,
             railRows: visibleChatBody.length,
+          }
+        : {}),
+      ...(chatMinimapWidth > 0
+        ? {
+            minimapTop:
+              chatPrefix.length +
+              chatPanelTopMarginY +
+              (stickyRow === undefined ? 0 : 1) +
+              1,
+            minimapRows: visibleChatBody.length,
           }
         : {}),
     };

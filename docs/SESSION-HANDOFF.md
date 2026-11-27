@@ -295,6 +295,10 @@ OSC52 clipboard primitive added and tested: exact UTF-8 round trip through base6
 
 Prompt and mouse-selection copy now use the OS clipboard first and fall back to a bounded user-initiated OSC52 terminal sequence only after system clipboard failure. The UI says “sent to terminal clipboard” for OSC52 because the terminal does not acknowledge acceptance. Oversize copies fail closed. `writeGraphics` now treats Node backpressure as queued output rather than failure. Evidence: CLI typecheck exit 0; clipboard/runner/terminal unit tests 7/7; focused workspace/parity/a11y/visual/terminal tests 258/258; full PTY matrix PASS at every scenario and size.
 
+## U6a minimap navigation geometry (2026-11-26)
+
+Minimap mouse-navigation geometry is now published and tested: exact outermost column/body band, proportional inverse mapping, endpoint clamping and drag clamping. No mouse behavior or frame output changed yet. Evidence: CLI typecheck exit 0; minimap mouse tests 3/3; focused workspace/parity/visual tests 233/233.
+
 ## Rules that are not negotiable
 
 - No push, merge, deploy, hosted CI, dependency install, or provider-costing call unless the user explicitly asks in the current task. (This push was explicitly authorized by the user on 2026-11-25.)
