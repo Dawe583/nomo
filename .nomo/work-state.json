@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-27T01:20:43.256210Z",
+  "updatedAt": "2026-11-27T01:21:05.808776Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -5568,6 +5568,39 @@
         "Reviewed help@80x24, shortened the copy and intentionally refreshed 120 hashes; only the four Help wide frames changed."
       ],
       "stopCondition": "Stop before further application-chrome redesign; audit existing unread/chrome coverage first."
+    },
+    {
+      "id": "u6d-application-chrome-unread-audit",
+      "status": "done",
+      "owner": "devin-desktop-local-2026-11-26",
+      "dependsOn": [
+        "u6c-minimap-navigation-discoverability"
+      ],
+      "scope": [
+        "docs/plans/2026-11-26-tui-upgrade-completion.md",
+        "docs/SESSION-HANDOFF.md",
+        "docs/memory/vault/work-log/NOMO Work Log.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "audit compares requested unread/application chrome against existing implementation",
+        "no duplicate chrome layer is added when existing surfaces already carry the facts",
+        "remaining implementation work is limited to evidenced gaps"
+      ],
+      "verifier": [
+        "source inspection of stickyTranscriptLine, panelFrameTitle and Chat chrome",
+        "node scripts/src/work-graph-check.mjs",
+        "git diff --check"
+      ],
+      "evidence": [
+        "stickyTranscriptLine already carries breadcrumb, phase, exact first-last/total position and N below while scrolled up.",
+        "panelFrameTitle already renders a persistent NOMO <panel> title across non-Chat panels; Chat already has header/task rail/footer status chrome.",
+        "No additional implementation committed because a second unread/application bar would duplicate existing facts."
+      ],
+      "stopCondition": "Proceed to U7 final verification and handoff."
     }
   ]
 }

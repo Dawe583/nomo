@@ -9896,3 +9896,7 @@ Chat minimap is now interactive: a plain left click or drag on the one-cell edge
 ## 2026-11-26 U6c minimap navigation discoverability
 
 Interactive minimap navigation is now discoverable in Help and the design contract: chat help names minimap click/drag, scroll help names it beside PgUp/PgDn and /bottom, and DESIGN.md records that the edge is both non-selection chrome and a proportional navigation control. The 80x24 frame was reviewed and text shortened to avoid needless wrapping. Evidence: CLI typecheck exit 0; focused workspace/a11y/visual/minimap-mouse tests 148/148; 120 visual snapshots intentionally refreshed for the four Help text changes. [[NOMO TUI]]
+
+## 2026-11-26 U6d application chrome and unread audit verdict
+
+Application chrome/unread audit verdict: no additional chrome layer is justified. Unread/new-output coverage already exists through the sticky transcript breadcrumb, exact `first-last/total` position and explicit `N below` count while scrolled up; unified chrome already exists through the persistent `NOMO <panel>` frame title across panels and the Chat header/footer/task rail. Adding another bar or unread pill would duplicate existing facts and cost rows. The real implementation gap found in this audit was minimap discoverability/navigation, completed in U6a-U6c. [[NOMO TUI]]
