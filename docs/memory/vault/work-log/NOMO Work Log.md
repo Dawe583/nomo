@@ -9900,3 +9900,7 @@ Interactive minimap navigation is now discoverable in Help and the design contra
 ## 2026-11-26 U6d application chrome and unread audit verdict
 
 Application chrome/unread audit verdict: no additional chrome layer is justified. Unread/new-output coverage already exists through the sticky transcript breadcrumb, exact `first-last/total` position and explicit `N below` count while scrolled up; unified chrome already exists through the persistent `NOMO <panel>` frame title across panels and the Chat header/footer/task rail. Adding another bar or unread pill would duplicate existing facts and cost rows. The real implementation gap found in this audit was minimap discoverability/navigation, completed in U6a-U6c. [[NOMO TUI]]
+
+## 2026-11-26 U7a atomic PTY fixture state
+
+PTY fixture state is now published atomically with temp-file write plus rename. Root cause of the two intermittent matrix failures was a non-atomic state rewrite every 100 ms: the Python reader could catch a partial JSON file, treat it as `{}` and misread missing `undos`/`dispatched` fields as a mutation or double dispatch. Isolated Undo reproduction passed 5/5 before the fix, but the full matrix then exposed the same race in Approval. After the atomic-write fix the full PTY matrix passed every scenario at every size. [[NOMO TUI]]

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-27T01:21:05.808776Z",
+  "updatedAt": "2026-11-27T09:37:06.346484Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -5601,6 +5601,41 @@
         "No additional implementation committed because a second unread/application bar would duplicate existing facts."
       ],
       "stopCondition": "Proceed to U7 final verification and handoff."
+    },
+    {
+      "id": "u7a-atomic-pty-fixture-state",
+      "status": "done",
+      "owner": "devin-desktop-local-2026-11-26",
+      "dependsOn": [
+        "u6d-application-chrome-unread-audit"
+      ],
+      "scope": [
+        "scripts/src/verify-tui-terminal.py",
+        "docs/plans/2026-11-26-tui-upgrade-completion.md",
+        "docs/SESSION-HANDOFF.md",
+        "docs/memory/vault/work-log/NOMO Work Log.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "fixture state readers never observe a partially written JSON object",
+        "full PTY matrix passes after the fix",
+        "no product runtime behavior changes"
+      ],
+      "verifier": [
+        "python3 -m py_compile scripts/src/verify-tui-terminal.py",
+        "python3 scripts/src/verify-tui-terminal.py",
+        "node scripts/src/work-graph-check.mjs",
+        "git diff --check"
+      ],
+      "evidence": [
+        "Failure evidence before fix: paste confirmed the Undo mutation at 120x40, then the tool dispatched more than once at 40x12 on rerun; isolated Undo reproduction passed 5/5, indicating a harness race rather than product behavior.",
+        "python3 -m py_compile scripts/src/verify-tui-terminal.py: exit 0.",
+        "python3 scripts/src/verify-tui-terminal.py after atomic state publication: PASS every scenario at every size."
+      ],
+      "stopCondition": "Continue U7 final audit and do not treat the earlier intermittent failures as product regressions."
     }
   ]
 }

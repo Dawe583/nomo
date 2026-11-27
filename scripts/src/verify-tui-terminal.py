@@ -223,7 +223,7 @@ class Screen:
 # Fixture provider, loopback MCP server and session seed
 # --------------------------------------------------------------------------
 FIXTURE = """
-import { writeFileSync } from 'node:fs';
+import { renameSync, writeFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 
 const mode = process.env.NOMO_FIXTURE_MODE || 'chat';
@@ -353,7 +353,9 @@ WorkspaceTui.prototype.initialize = async function () {
   const snapshot = () => {
     const workspace = this.workbench.workspace(first.id);
     const events = this.workbench.get(first.id).events;
-    writeFileSync(process.env.NOMO_FIXTURE_STATE, JSON.stringify({
+    const statePath = process.env.NOMO_FIXTURE_STATE;
+    const temporaryStatePath = statePath + '.' + process.pid + '.tmp';
+    const stateJson = JSON.stringify({
       mode,
       connectorId,
       dispatched,
@@ -380,7 +382,9 @@ WorkspaceTui.prototype.initialize = async function () {
       // records them so the same command is asserted at every size.
       notice: this.notice ?? null,
       activity: this.toolActivityMode,
-    }));
+    });
+    writeFileSync(temporaryStatePath, stateJson);
+    renameSync(temporaryStatePath, statePath);
   };
   snapshot();
   setInterval(snapshot, 100);
