@@ -291,6 +291,10 @@ Full TypeScript TUI PTY matrix after the minimap and run-activity consolidation:
 
 OSC52 clipboard primitive added and tested: exact UTF-8 round trip through base64, safe payload alphabet, explicit empty/oversize refusal. It is not yet wired into the runner fallback. Evidence: CLI typecheck exit 0; clipboard tests 2/2.
 
+## U5b OSC52 clipboard fallback (2026-11-26)
+
+Prompt and mouse-selection copy now use the OS clipboard first and fall back to a bounded user-initiated OSC52 terminal sequence only after system clipboard failure. The UI says “sent to terminal clipboard” for OSC52 because the terminal does not acknowledge acceptance. Oversize copies fail closed. `writeGraphics` now treats Node backpressure as queued output rather than failure. Evidence: CLI typecheck exit 0; clipboard/runner/terminal unit tests 7/7; focused workspace/parity/a11y/visual/terminal tests 258/258; full PTY matrix PASS at every scenario and size.
+
 ## Rules that are not negotiable
 
 - No push, merge, deploy, hosted CI, dependency install, or provider-costing call unless the user explicitly asks in the current task. (This push was explicitly authorized by the user on 2026-11-25.)

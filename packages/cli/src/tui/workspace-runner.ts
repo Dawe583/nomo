@@ -51,7 +51,11 @@ import {
   kittyTabIconsTransfer,
 } from "./brand.ts";
 import { detectCapabilities } from "./caps.ts";
-import { copyTextToClipboard } from "./clipboard.ts";
+import {
+  OSC52_CLIPBOARD_MAX_BYTES,
+  copyTextToClipboard,
+  osc52ClipboardSequence,
+} from "./clipboard.ts";
 import {
   highlightMouseSelection,
   mouseSelectionLimit,
@@ -70,6 +74,32 @@ import {
   parseWorkspaceKeybindings,
   type WorkspaceKeybindings,
 } from "./workspace-keybindings.ts";
+
+export type WorkspaceClipboardPath = "system" | "terminal";
+
+/**
+ * Copy through the OS clipboard first. OSC52 is only a user-initiated fallback:
+ * a terminal write proves the control sequence was sent, not that the terminal
+ * accepted it into its clipboard.
+ */
+export async function copyWorkspaceText(
+  value: string,
+  writeTerminalControl: (sequence: string) => boolean,
+  copySystem: (value: string) => Promise<void> = copyTextToClipboard,
+): Promise<WorkspaceClipboardPath> {
+  try {
+    await copySystem(value);
+    return "system";
+  } catch (systemError) {
+    const sequence = osc52ClipboardSequence(value);
+    if (sequence && writeTerminalControl(sequence)) return "terminal";
+    if (!sequence && Buffer.byteLength(value, "utf8") > OSC52_CLIPBOARD_MAX_BYTES)
+      throw Error(
+        "Clipboard is unavailable and the copy is too large for the terminal clipboard fallback.",
+      );
+    throw systemError;
+  }
+}
 
 function modelPickerPageSize(ui: WorkspaceTui, direction: -1 | 1): number {
   const picker = ui.modelPicker;
@@ -2219,9 +2249,14 @@ export async function runWorkspaceTui(
           return;
         }
         busy = true;
-        void copyTextToClipboard(input.value)
-          .then(() => {
-            ui.notice = "Prompt copied to clipboard.";
+        void copyWorkspaceText(input.value, (sequence) =>
+          terminal.writeGraphics(sequence),
+        )
+          .then((path) => {
+            ui.notice =
+              path === "terminal"
+                ? "Prompt sent to terminal clipboard."
+                : "Prompt copied to clipboard.";
           })
           .catch((error) => {
             ui.notice = message(error);
@@ -2956,9 +2991,14 @@ export async function runWorkspaceTui(
               : "";
           draw();
           if (selectedText.length > 0) {
-            void copyTextToClipboard(selectedText)
-              .then(() => {
-                ui.notice = "Selection copied to clipboard.";
+            void copyWorkspaceText(selectedText, (sequence) =>
+              terminal.writeGraphics(sequence),
+            )
+              .then((path) => {
+                ui.notice =
+                  path === "terminal"
+                    ? "Selection sent to terminal clipboard."
+                    : "Selection copied to clipboard.";
               })
               .catch((error) => {
                 ui.notice = message(error);

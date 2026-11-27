@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-27T00:01:45.229483Z",
+  "updatedAt": "2026-11-27T00:11:07.987012Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -5409,6 +5409,49 @@
         "node --test packages/cli/src/tui/clipboard.test.ts: 2 passed, 0 failed."
       ],
       "stopCondition": "Stop before runner fallback wiring or success-copy wording changes."
+    },
+    {
+      "id": "u5b-osc52-clipboard-fallback",
+      "status": "done",
+      "owner": "devin-desktop-local-2026-11-26",
+      "dependsOn": [
+        "u5a-osc52-clipboard-primitive"
+      ],
+      "scope": [
+        "packages/cli/src/tui/workspace-runner.ts",
+        "packages/cli/src/tui/workspace-terminal.ts",
+        "packages/cli/src/tui/workspace-runner-clipboard.test.ts",
+        "docs/plans/2026-11-26-tui-upgrade-completion.md",
+        "docs/SESSION-HANDOFF.md",
+        "docs/memory/vault/work-log/NOMO Work Log.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "system clipboard remains the first choice",
+        "OSC52 is used only as a user-initiated fallback after system clipboard failure",
+        "OSC52 copy never silently truncates oversize text",
+        "terminal fallback wording says sent rather than copied",
+        "Node output backpressure is not mistaken for write failure",
+        "terminal modes and existing frame behavior remain intact"
+      ],
+      "verifier": [
+        "pnpm --dir packages/cli typecheck",
+        "node --test packages/cli/src/tui/workspace-runner-clipboard.test.ts packages/cli/src/tui/workspace-terminal-lifecycle.test.ts",
+        "node --test --test-concurrency=1 packages/cli/src/tui/workspace.test.ts packages/cli/src/tui/workspace-parity.test.ts packages/cli/src/tui/a11y.test.ts packages/cli/src/tui/visual-snapshots.test.ts packages/cli/src/tui/workspace-terminal.test.ts",
+        "python3 scripts/src/verify-tui-terminal.py",
+        "node scripts/src/work-graph-check.mjs",
+        "git diff --check"
+      ],
+      "evidence": [
+        "pnpm --dir packages/cli typecheck: exit 0.",
+        "workspace-runner-clipboard + terminal lifecycle tests: 7 passed, 0 failed.",
+        "focused workspace/parity/a11y/visual/terminal tests: 258 passed, 0 failed.",
+        "python3 scripts/src/verify-tui-terminal.py: PASS every scenario at every size, including terminal restore and bracketed paste."
+      ],
+      "stopCondition": "Stop before tmux/terminal-specific OSC52 passthrough negotiation or clipboard readback; terminals do not provide a portable acknowledgement."
     }
   ]
 }

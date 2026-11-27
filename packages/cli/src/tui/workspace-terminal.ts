@@ -315,7 +315,8 @@ export function createWorkspaceTerminal(
     writeGraphics(sequence: string) {
       if (!started || stopped || suspended || !output.isTTY || !sequence)
         return false;
-      return output.write(sequence);
+      output.write(sequence);
+      return true;
     },
     measureCellPixels(timeoutMs = 160) {
       if (
