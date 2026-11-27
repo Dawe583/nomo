@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-27T09:37:06.346484Z",
+  "updatedAt": "2026-11-27T09:44:09.520783Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -5636,6 +5636,42 @@
         "python3 scripts/src/verify-tui-terminal.py after atomic state publication: PASS every scenario at every size."
       ],
       "stopCondition": "Continue U7 final audit and do not treat the earlier intermittent failures as product regressions."
+    },
+    {
+      "id": "u7b-paired-perf-scaling-measurement",
+      "status": "done",
+      "owner": "devin-desktop-local-2026-11-26",
+      "dependsOn": [
+        "u7a-atomic-pty-fixture-state"
+      ],
+      "scope": [
+        "packages/cli/src/tui/perf-budget.test.ts",
+        "docs/plans/2026-11-26-tui-upgrade-completion.md",
+        "docs/SESSION-HANDOFF.md",
+        "docs/memory/vault/work-log/NOMO Work Log.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "perf scaling guard resists time-varying CPU load without weakening the quadratic tripwire",
+        "small and large cold builds are interleaved before comparison",
+        "rows scaling remains an exact deterministic assertion",
+        "no product runtime code changes"
+      ],
+      "verifier": [
+        "pnpm --dir packages/cli typecheck",
+        "node --test packages/cli/src/tui/perf-budget.test.ts",
+        "node scripts/src/work-graph-check.mjs",
+        "git diff --check"
+      ],
+      "evidence": [
+        "Before the fix full CLI suite was 900/901 with only this scaling test red at a noisy 3.12x; five isolated repetitions passed at 1.57x-2.06x.",
+        "pnpm --dir packages/cli typecheck: exit 0.",
+        "node --test packages/cli/src/tui/perf-budget.test.ts: 2 passed, 0 failed; rows 2.00x, paired median time 2.02x."
+      ],
+      "stopCondition": "Run the full CLI suite again before closing U7."
     }
   ]
 }

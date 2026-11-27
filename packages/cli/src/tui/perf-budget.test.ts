@@ -355,25 +355,32 @@ test("transcript work grows with the event count, not with its square", async (t
   const small = await fixture(t, buildEvents(200));
   const large = await fixture(t, buildEvents(400));
 
-  /** One cold frame, repeated, so a single scheduling hiccup cannot decide. */
+  /** One cold frame. Callers interleave sizes so load drift cannot decide. */
   const coldFrame = (fixture: PerfFixture): { ms: number; total: number } => {
-    let best = Number.POSITIVE_INFINITY;
-    let total = 0;
-    for (let attempt = 0; attempt < 3; attempt += 1) {
-      const ui = fixture.makeUi();
-      best = Math.min(best, timeFrame(() => renderFrame(ui, 200, 48, true)));
-      total = ui.viewport.total;
-    }
-    return { ms: best, total };
+    const ui = fixture.makeUi();
+    const ms = timeFrame(() => renderFrame(ui, 200, 48, true));
+    return { ms, total: ui.viewport.total };
   };
 
-  const smallFrame = coldFrame(small);
-  const largeFrame = coldFrame(large);
-  const rowRatio = largeFrame.total / Math.max(1, smallFrame.total);
-  const timeRatio = largeFrame.ms / Math.max(0.01, smallFrame.ms);
+  let smallTotal = 0;
+  let largeTotal = 0;
+  let smallBest = Number.POSITIVE_INFINITY;
+  let largeBest = Number.POSITIVE_INFINITY;
+  const pairedRatios: number[] = [];
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const smallFrame = coldFrame(small);
+    const largeFrame = coldFrame(large);
+    smallTotal = smallFrame.total;
+    largeTotal = largeFrame.total;
+    smallBest = Math.min(smallBest, smallFrame.ms);
+    largeBest = Math.min(largeBest, largeFrame.ms);
+    pairedRatios.push(largeFrame.ms / Math.max(0.01, smallFrame.ms));
+  }
+  const rowRatio = largeTotal / Math.max(1, smallTotal);
+  const timeRatio = percentile(pairedRatios, 0.5);
 
   t.diagnostic(
-    `200x48 cold build: 200 turns ${fixed(smallFrame.ms)} ms / ${smallFrame.total} rows, 400 turns ${fixed(largeFrame.ms)} ms / ${largeFrame.total} rows (rows ${fixed(rowRatio)}x, time ${fixed(timeRatio)}x)`,
+    `200x48 cold build: 200 turns ${fixed(smallBest)} ms best / ${smallTotal} rows, 400 turns ${fixed(largeBest)} ms best / ${largeTotal} rows (rows ${fixed(rowRatio)}x, paired median time ${fixed(timeRatio)}x)`,
   );
 
   // Rows are deterministic, so this is the honest scaling signal: twice the
@@ -387,6 +394,6 @@ test("transcript work grows with the event count, not with its square", async (t
   // O(n^2) row pass over doubled input would land near 4x.
   assert.ok(
     timeRatio < 3,
-    `doubling the transcript cost ${fixed(timeRatio)}x the cold build (${fixed(smallFrame.ms)} ms to ${fixed(largeFrame.ms)} ms), which looks superlinear`,
+    `doubling the transcript cost ${fixed(timeRatio)}x the paired cold builds (${fixed(smallBest)} ms best to ${fixed(largeBest)} ms best), which looks superlinear`,
   );
 });

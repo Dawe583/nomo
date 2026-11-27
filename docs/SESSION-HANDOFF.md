@@ -315,6 +315,10 @@ Application chrome/unread audit verdict: no additional chrome layer is justified
 
 PTY fixture state is now published atomically with temp-file write plus rename. Root cause of the two intermittent matrix failures was a non-atomic state rewrite every 100 ms: the Python reader could catch a partial JSON file, treat it as `{}` and misread missing `undos`/`dispatched` fields as a mutation or double dispatch. Isolated Undo reproduction passed 5/5 before the fix, but the full matrix then exposed the same race in Approval. After the atomic-write fix the full PTY matrix passed every scenario at every size.
 
+## U7b paired perf scaling measurement (2026-11-26)
+
+Perf scaling measurement is now paired and median-based. The full CLI suite exposed a harness measurement flake: one unpaired cold-build phase could run under different CPU load and produce a false superlinear ratio even though isolated runs passed 5/5 at 1.57x-2.06x. The test now interleaves small/large cold builds across five pairs and compares the paired median; a real quadratic pass still approaches 4x. Evidence: CLI typecheck exit 0; focused perf budget 2/2, rows exactly 2.00x and paired median time 2.02x.
+
 ## Rules that are not negotiable
 
 - No push, merge, deploy, hosted CI, dependency install, or provider-costing call unless the user explicitly asks in the current task. (This push was explicitly authorized by the user on 2026-11-25.)
