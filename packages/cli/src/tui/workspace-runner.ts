@@ -58,6 +58,8 @@ import {
 } from "./clipboard.ts";
 import {
   highlightMouseSelection,
+  minimapOffsetAtPoint,
+  minimapOwnsPoint,
   mouseSelectionLimit,
   railOwnsPoint,
   selectedMouseText,
@@ -1237,6 +1239,22 @@ export function applyWorkspaceWheel(
   return true;
 }
 
+/** Apply a click or drag position on the Chat minimap to transcript scrolling. */
+export function applyWorkspaceMinimapNavigation(
+  ui: WorkspaceTui,
+  point: MousePoint,
+  clampY = false,
+): boolean {
+  const target = minimapOffsetAtPoint(ui.viewport, point, clampY);
+  if (target === undefined) return false;
+  const maximumOffset = Math.max(
+    0,
+    ui.viewport.total - ui.viewport.height,
+  );
+  ui.scroll = target >= maximumOffset ? -1 : target;
+  return true;
+}
+
 export async function runWorkspaceTui(
   argv: readonly string[],
 ): Promise<number> {
@@ -1421,6 +1439,7 @@ export async function runWorkspaceTui(
     splashTimer: NodeJS.Timeout | undefined;
   let mouseSelection: { anchor: MousePoint; focus: MousePoint } | undefined;
   let selectionDragging = false;
+  let minimapDragging = false;
   let renderedFrame = "";
   const setInputEditing = (editing: boolean, reset = false) => {
     input.editing = editing;
@@ -2936,6 +2955,10 @@ export async function runWorkspaceTui(
         y: Math.max(0, event.y - 1),
       };
       if (event.motion) {
+        if (minimapDragging) {
+          if (applyWorkspaceMinimapNavigation(ui, point, true)) draw();
+          return;
+        }
         if (selectionDragging && mouseSelection) {
           mouseSelection = { ...mouseSelection, focus: point };
           draw();
@@ -2969,6 +2992,11 @@ export async function runWorkspaceTui(
       }
       const button = event.button & ~32;
       if (!event.pressed) {
+        if (minimapDragging) {
+          minimapDragging = false;
+          draw();
+          return;
+        }
         if (selectionDragging && mouseSelection) {
           const moved =
             mouseSelection.anchor.x !== point.x ||
@@ -3022,6 +3050,15 @@ export async function runWorkspaceTui(
         if (railOwnsPoint(ui.viewport, point)) return;
         mouseSelection = { anchor: point, focus: point };
         selectionDragging = true;
+        draw();
+        return;
+      }
+      if (button === 0 && minimapOwnsPoint(ui.viewport, point)) {
+        lastMouseClick = undefined;
+        mouseSelection = undefined;
+        selectionDragging = false;
+        minimapDragging = true;
+        applyWorkspaceMinimapNavigation(ui, point);
         draw();
         return;
       }

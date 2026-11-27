@@ -299,6 +299,10 @@ Prompt and mouse-selection copy now use the OS clipboard first and fall back to 
 
 Minimap mouse-navigation geometry is now published and tested: exact outermost column/body band, proportional inverse mapping, endpoint clamping and drag clamping. No mouse behavior or frame output changed yet. Evidence: CLI typecheck exit 0; minimap mouse tests 3/3; focused workspace/parity/visual tests 233/233.
 
+## U6b interactive minimap navigation (2026-11-26)
+
+Chat minimap is now interactive: a plain left click or drag on the one-cell edge proportionally jumps/centres the transcript, clamps drags inside the band and restores live-follow at the bottom. Text selection still treats the edge as chrome. Evidence: CLI typecheck exit 0; minimap mouse/terminal lifecycle tests 7/7; focused workspace/parity/terminal/visual tests 244/244; no visual snapshot change.
+
 ## Rules that are not negotiable
 
 - No push, merge, deploy, hosted CI, dependency install, or provider-costing call unless the user explicitly asks in the current task. (This push was explicitly authorized by the user on 2026-11-25.)

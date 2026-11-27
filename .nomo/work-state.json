@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-27T00:13:45.681139Z",
+  "updatedAt": "2026-11-27T00:14:54.335297Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -5491,6 +5491,45 @@
         "focused workspace/parity/visual tests: 233 passed, 0 failed."
       ],
       "stopCondition": "Stop before wiring click or drag behavior into workspace-runner."
+    },
+    {
+      "id": "u6b-interactive-minimap-navigation",
+      "status": "done",
+      "owner": "devin-desktop-local-2026-11-26",
+      "dependsOn": [
+        "u6a-minimap-navigation-geometry"
+      ],
+      "scope": [
+        "packages/cli/src/tui/workspace-runner.ts",
+        "packages/cli/src/tui/minimap-mouse.test.ts",
+        "docs/plans/2026-11-26-tui-upgrade-completion.md",
+        "docs/SESSION-HANDOFF.md",
+        "docs/memory/vault/work-log/NOMO Work Log.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "plain left click on minimap jumps to the represented transcript position",
+        "drag clamps vertical movement inside the painted band",
+        "bottom of minimap restores live-follow mode",
+        "minimap interaction never opens text selection",
+        "no frame or visual snapshot changes"
+      ],
+      "verifier": [
+        "pnpm --dir packages/cli typecheck",
+        "node --test packages/cli/src/tui/minimap-mouse.test.ts packages/cli/src/tui/workspace-terminal-lifecycle.test.ts",
+        "node --test --test-concurrency=1 packages/cli/src/tui/workspace.test.ts packages/cli/src/tui/workspace-parity.test.ts packages/cli/src/tui/workspace-terminal.test.ts packages/cli/src/tui/visual-snapshots.test.ts",
+        "node scripts/src/work-graph-check.mjs",
+        "git diff --check"
+      ],
+      "evidence": [
+        "pnpm --dir packages/cli typecheck: exit 0.",
+        "minimap mouse + terminal lifecycle tests: 7 passed, 0 failed.",
+        "focused workspace/parity/terminal/visual tests: 244 passed, 0 failed."
+      ],
+      "stopCondition": "Stop before changing minimap rendering, keyboard shortcuts or wheel semantics."
     }
   ]
 }
