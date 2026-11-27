@@ -9,7 +9,7 @@ function write(message) {
 }
 
 function logCall(method, tool) {
-  const path = process.env.NOMO_E2E_FIXTURE_LOG;
+  const path = process.argv[2] ?? process.env.NOMO_E2E_FIXTURE_LOG;
   if (path) appendFileSync(path, `${JSON.stringify({ method, tool })}\n`);
 }
 
