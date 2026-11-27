@@ -319,6 +319,16 @@ PTY fixture state is now published atomically with temp-file write plus rename. 
 
 Perf scaling measurement is now paired and median-based. The full CLI suite exposed a harness measurement flake: one unpaired cold-build phase could run under different CPU load and produce a false superlinear ratio even though isolated runs passed 5/5 at 1.57x-2.06x. The test now interleaves small/large cold builds across five pairs and compares the paired median; a real quadratic pass still approaches 4x. Evidence: CLI typecheck exit 0; focused perf budget 2/2, rows exactly 2.00x and paired median time 2.02x.
 
+## U7 final TypeScript TUI verdict (2026-11-26)
+
+The scoped TypeScript TUI upgrade track is complete. The formerly orphaned modules are integrated, Chat has a positional interactive minimap, clipboard copy has a bounded OSC52 terminal fallback, unread/context state remains covered by the existing sticky positional breadcrumb and panel chrome, and the two harness races found during final verification were fixed at their root causes rather than hidden.
+
+Final evidence on this checkout: CLI typecheck exit 0; full CLI suite 901/901 passing; focused perf budget 2/2 with steady-state p95 4.44 ms at 200x48 and 3.38 ms at 80x24 against a 50 ms budget; transcript row scaling exactly 2.00x with paired median time 2.02x; full PTY matrix PASS for every scenario at 40x12, 80x24, 120x40, 160x45 and 200x48, including bracketed paste, mouse, terminal restore and exit paths; work graph 0/0/0; doc-truth 9/9; `git diff --check` exit 0. The only dirty worktree entry is the protected `nomo-web` submodule/dirty marker, which was not touched.
+
+Deliberate residual non-goals: cell-level damage tracking and scroll-region optimization remain deferred because measured frame cost has a large margin; terminal-specific tmux/OSC52 passthrough negotiation and clipboard readback remain out of scope because terminals do not portably acknowledge clipboard acceptance; production Rust wiring and R16 reconnect/backpressure remain deferred by owner direction. These are documented non-goals, not hidden incomplete work.
+
+Out-of-scope product blockers remain unchanged: H16 needs explicit operator opt-in and reviewed real runs; H17 depends on H16 and human-labelled validation; G1 needs trainable model/hardware; G3 needs explicit paid-benchmark authorization; G4 needs owner release/version/tag/deploy decisions. Real-service E2E, distribution/publication and physical device evidence are separate release-readiness lanes, not missing pieces of this TypeScript TUI track.
+
 ## Rules that are not negotiable
 
 - No push, merge, deploy, hosted CI, dependency install, or provider-costing call unless the user explicitly asks in the current task. (This push was explicitly authorized by the user on 2026-11-25.)

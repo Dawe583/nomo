@@ -1,6 +1,6 @@
 # TypeScript TUI upgrade completion audit, 2026-11-26
 
-Status: verified audit. This is not a claim that the upgrade is complete.
+Status: completed scoped TypeScript TUI upgrade audit. The gaps below were the audit baseline; U2-U7 record their resolution or deliberate deferral. This is not a claim that NOMO is release-ready or that the Rust migration is complete.
 
 ## Already complete and not to be duplicated
 
@@ -8,7 +8,7 @@ The original TUI improvement plan is implemented: T1 design contract, T2 panel p
 
 The command palette already has fuzzy ranking, aliases, frecency and a width-gated preview pane. Approvals already have evidence, risk classes, countdowns, sticky banner and review detail. Mouse selection, clipboard copy, visual snapshots, PTY coverage, monochrome/ASCII/reduced-motion parity and row-level diffed terminal writes already exist.
 
-## Verified remaining gaps
+## Verified remaining gaps at the audit baseline
 
 1. `packages/cli/src/tui/minimap.ts` is a real minimap implementation integrated from older OMP work, but no production source imports it and it has no focused test. It is orphaned rather than user-visible.
 2. `packages/cli/src/tui/chat-markdown.ts` is also unimported. Its safe inline-Markdown behavior is now duplicated inside `workspace.ts`; keeping both invites drift. Either wire the shared module or retire it deliberately.
@@ -80,3 +80,13 @@ PTY fixture state is now published atomically with temp-file write plus rename. 
 ## U7b paired perf scaling measurement
 
 Perf scaling measurement is now paired and median-based. The full CLI suite exposed a harness measurement flake: one unpaired cold-build phase could run under different CPU load and produce a false superlinear ratio even though isolated runs passed 5/5 at 1.57x-2.06x. The test now interleaves small/large cold builds across five pairs and compares the paired median; a real quadratic pass still approaches 4x. Evidence: CLI typecheck exit 0; focused perf budget 2/2, rows exactly 2.00x and paired median time 2.02x.
+
+## U7 final verification and scoped completion verdict
+
+The scoped TypeScript TUI upgrade track is complete. The formerly orphaned modules are integrated, Chat has a positional interactive minimap, clipboard copy has a bounded OSC52 terminal fallback, unread/context state remains covered by the existing sticky positional breadcrumb and panel chrome, and the two harness races found during final verification were fixed at their root causes rather than hidden.
+
+Final evidence on this checkout: CLI typecheck exit 0; full CLI suite 901/901 passing; focused perf budget 2/2 with steady-state p95 4.44 ms at 200x48 and 3.38 ms at 80x24 against a 50 ms budget; transcript row scaling exactly 2.00x with paired median time 2.02x; full PTY matrix PASS for every scenario at 40x12, 80x24, 120x40, 160x45 and 200x48, including bracketed paste, mouse, terminal restore and exit paths; work graph 0/0/0; doc-truth 9/9; `git diff --check` exit 0. The only dirty worktree entry is the protected `nomo-web` submodule/dirty marker, which was not touched.
+
+Deliberate residual non-goals: cell-level damage tracking and scroll-region optimization remain deferred because measured frame cost has a large margin; terminal-specific tmux/OSC52 passthrough negotiation and clipboard readback remain out of scope because terminals do not portably acknowledge clipboard acceptance; production Rust wiring and R16 reconnect/backpressure remain deferred by owner direction. These are documented non-goals, not hidden incomplete work.
+
+Out-of-scope product blockers remain unchanged: H16 needs explicit operator opt-in and reviewed real runs; H17 depends on H16 and human-labelled validation; G1 needs trainable model/hardware; G3 needs explicit paid-benchmark authorization; G4 needs owner release/version/tag/deploy decisions. Real-service E2E, distribution/publication and physical device evidence are separate release-readiness lanes, not missing pieces of this TypeScript TUI track.

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-27T09:44:09.520783Z",
+  "updatedAt": "2026-11-27T09:49:58.458663Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -5672,6 +5672,50 @@
         "node --test packages/cli/src/tui/perf-budget.test.ts: 2 passed, 0 failed; rows 2.00x, paired median time 2.02x."
       ],
       "stopCondition": "Run the full CLI suite again before closing U7."
+    },
+    {
+      "id": "u7c-final-typescript-tui-verification",
+      "status": "done",
+      "owner": "devin-desktop-local-2026-11-26",
+      "dependsOn": [
+        "u7b-paired-perf-scaling-measurement"
+      ],
+      "scope": [
+        "docs/plans/2026-11-26-tui-upgrade-completion.md",
+        "docs/SESSION-HANDOFF.md",
+        "docs/memory/vault/work-log/NOMO Work Log.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "scoped TypeScript TUI upgrade audit is closed with evidence",
+        "full CLI suite passes after final harness fixes",
+        "full PTY matrix passes at every supported size",
+        "performance remains inside the published frame budget",
+        "remaining non-goals and external product blockers are explicitly separated from completed TUI scope",
+        "protected nomo-web remains unmodified"
+      ],
+      "verifier": [
+        "pnpm --dir packages/cli typecheck",
+        "pnpm --dir packages/cli test",
+        "node --test packages/cli/src/tui/perf-budget.test.ts",
+        "python3 scripts/src/verify-tui-terminal.py",
+        "node scripts/src/work-graph-check.mjs",
+        "node --test scripts/src/doc-truth.test.mjs",
+        "git diff --check"
+      ],
+      "evidence": [
+        "pnpm --dir packages/cli typecheck: exit 0.",
+        "pnpm --dir packages/cli test: 901 passed, 0 failed.",
+        "node --test packages/cli/src/tui/perf-budget.test.ts: 2 passed, 0 failed; p95 4.44 ms at 200x48 and 3.38 ms at 80x24 versus 50 ms budget; rows 2.00x and paired median time 2.02x.",
+        "python3 scripts/src/verify-tui-terminal.py: PASS every scenario at every size, including bracketed paste, mouse, terminal restore and exit paths.",
+        "node scripts/src/work-graph-check.mjs: duplicate ids 0 / dangling deps 0 / done without evidence 0.",
+        "node --test scripts/src/doc-truth.test.mjs: 9 passed, 0 failed.",
+        "git diff --check: exit 0; git status shows only the protected dirty nomo-web marker."
+      ],
+      "stopCondition": "TypeScript TUI track closed. Do not treat deferred Rust, cell-damage optimization, terminal-specific clipboard negotiation or external product release blockers as hidden TUI work."
     }
   ]
 }
