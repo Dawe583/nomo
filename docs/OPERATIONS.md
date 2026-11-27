@@ -527,6 +527,12 @@ node scripts/src/verify-s3-wire.mjs
 node scripts/src/disposable-postgres.mjs -- node scripts/src/verify-postgres-replay-wire.mjs
 ```
 
+For the full local disposable-service gate in one sequential command:
+
+```sh
+node scripts/src/verify-local-real-service.mjs
+```
+
 Drift refusal means the current target no longer matches the captured before image. Operationally:
 
 1. Do not retry the same replay blindly.

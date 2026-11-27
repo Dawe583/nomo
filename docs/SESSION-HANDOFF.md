@@ -349,6 +349,10 @@ S3 loopback wire-protocol replay is verified. `scripts/src/local-s3-fixture.mjs`
 
 PostgreSQL legacy replay real-service wire proof is verified. `scripts/src/verify-postgres-replay-wire.mjs` runs only inside `disposable-postgres.mjs`, requires `NOMO_TEST_DATABASE_ISOLATED=1`, captures a persisted before-image through the connector API, executes the forward update, and invokes the real `node packages/cli/bin/nomo.mjs replay` subprocess with `NOMO_PG_URL`. Evidence: wrapper command exited 0. Roundtrip exit 0 restored `draft`, printed `applied: update-0-public.replay_wire_orders`, appended signed reversal seq 2 and left 2 ledger entries. Drift exit 1 preserved `human`, printed `column status changed`, and left only the original ledger entry. This closes the legacy persisted PostgreSQL replay slice against a disposable real service; it is separate from managed PostgreSQL recovery evidence and does not close production, cloud Neon, direct-versus-proxied transcript, or independent S3 service gates.
 
+## E7 unified local real-service verifier (2026-11-27)
+
+Unified local real-service verification is reproducible through `node scripts/src/verify-local-real-service.mjs`. The runner executes three sequential gates because disposable PostgreSQL owns fixed loopback ports: cloud integration on disposable PostgreSQL, legacy PostgreSQL replay on disposable PostgreSQL, and S3 loopback wire replay. Evidence: one fresh run exited 0 with PASS cloud integration (19084 ms), PASS legacy PostgreSQL replay (2501 ms), PASS S3 loopback wire replay (1498 ms), and final `PASS local real-service verification: 3/3 steps completed`. This command is local release evidence only: it does not prove production services, cloud Neon, independent S3-compatible storage, direct-versus-proxied transcripts, or the R3 hold path.
+
 ## Rules that are not negotiable
 
 - No push, merge, deploy, hosted CI, dependency install, or provider-costing call unless the user explicitly asks in the current task. (This push was explicitly authorized by the user on 2026-11-25.)

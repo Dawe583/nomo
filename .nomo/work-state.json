@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-27T19:17:17.857438Z",
+  "updatedAt": "2026-11-27T19:18:41.667217Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -5918,6 +5918,46 @@
         "The proof uses a real local disposable PostgreSQL cluster and production pg executor path; it is not production Postgres or cloud Neon evidence."
       ],
       "stopCondition": "Continue with other unblocked release evidence; do not claim managed recovery or production service coverage from this legacy replay proof."
+    },
+    {
+      "id": "e7-unified-local-real-service-verifier",
+      "status": "done",
+      "owner": "devin-desktop-local-2026-11-27",
+      "dependsOn": [
+        "e2-disposable-postgres-real-service-slice",
+        "e5-s3-loopback-wire-replay-verification",
+        "e6-postgres-replay-real-service-wire-verification"
+      ],
+      "scope": [
+        "scripts/src/verify-local-real-service.mjs",
+        "docs/OPERATIONS.md",
+        "docs/SESSION-HANDOFF.md",
+        "docs/memory/vault/work-log/NOMO Work Log.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "run disposable PostgreSQL cloud integration, PostgreSQL replay and S3 wire replay from one command",
+        "execute sequentially because the PostgreSQL harness owns fixed loopback ports",
+        "report pass/fail per step and fail closed on the first failing step",
+        "document remaining real-service boundaries"
+      ],
+      "verifier": [
+        "node scripts/src/verify-local-real-service.mjs",
+        "node --test scripts/src/doc-truth.test.mjs",
+        "node scripts/src/work-graph-check.mjs",
+        "git diff --check"
+      ],
+      "evidence": [
+        "Fresh unified run exited 0.",
+        "PASS cloud integration on disposable PostgreSQL (19084 ms).",
+        "PASS legacy PostgreSQL replay on disposable PostgreSQL (2501 ms).",
+        "PASS S3 loopback wire replay (1498 ms).",
+        "Final output: PASS local real-service verification: 3/3 steps completed."
+      ],
+      "stopCondition": "Proceed to audit the still-open direct-versus-proxied transcript and R3 hold release gap."
     }
   ]
 }
