@@ -84,10 +84,13 @@ Wave 5 source status, pending integrated verification:
   prior proxy exited.
 - Replay can plan from persisted Postgres snapshots without an executor. Apply
   still needs a real executor supplied through the binary environment or host
-  injection. Persisted S3 replay now has loopback wire-protocol evidence through
-  the production AWS SDK adapter and a real CLI subprocess: capture survives in
-  the local snapshot format, restore appends a signed reversal, and human drift
-  is refused without appending that reversal. This is not independent
+  injection. Persisted PostgreSQL replay now has real-service evidence through
+  `verify-postgres-replay-wire.mjs` inside the disposable loopback cluster:
+  exact row restore, signed reversal append and human-drift refusal without a
+  reversal. Persisted S3 replay has loopback wire-protocol evidence through the
+  production AWS SDK adapter and a real CLI subprocess: capture survives in the
+  local snapshot format, restore appends a signed reversal, and human drift is
+  refused without appending that reversal. The S3 evidence is not independent
   MinIO/AWS/S3-compatible service certification because the endpoint is the
   repository fixture. In-process injected-executor tests alone do not close
   those gaps.

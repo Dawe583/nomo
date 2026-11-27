@@ -524,6 +524,7 @@ Executors come from the host environment. For Postgres, set `NOMO_PG_URL` before
 ```sh
 node scripts/src/e2e-connectors.mjs
 node scripts/src/verify-s3-wire.mjs
+node scripts/src/disposable-postgres.mjs -- node scripts/src/verify-postgres-replay-wire.mjs
 ```
 
 Drift refusal means the current target no longer matches the captured before image. Operationally:

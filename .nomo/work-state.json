@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-27T19:14:21.246456Z",
+  "updatedAt": "2026-11-27T19:17:17.857438Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -5878,6 +5878,46 @@
         "No independent MinIO/AWS/S3-compatible service was installed or claimed; the release real-service gate remains open."
       ],
       "stopCondition": "Continue with other unblocked local release evidence; do not claim real S3-compatible service certification until an independent disposable service is available or provisioning is explicitly authorized."
+    },
+    {
+      "id": "e6-postgres-replay-real-service-wire-verification",
+      "status": "done",
+      "owner": "devin-desktop-local-2026-11-27",
+      "dependsOn": [
+        "e2-disposable-postgres-real-service-slice"
+      ],
+      "scope": [
+        "scripts/src/verify-postgres-replay-wire.mjs",
+        "docs/RELEASE.md",
+        "docs/OPERATIONS.md",
+        "docs/RECOVERY-COVERAGE.md",
+        "docs/SESSION-HANDOFF.md",
+        "docs/memory/vault/work-log/NOMO Work Log.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "capture a persisted legacy PostgreSQL before-image through the connector API",
+        "run replay through the real nomo CLI subprocess and real disposable PostgreSQL service",
+        "prove exact row restore and signed reversal append",
+        "prove human drift refusal preserves current rows and appends no reversal",
+        "document the boundary against managed recovery, production services and independent S3 certification"
+      ],
+      "verifier": [
+        "node scripts/src/disposable-postgres.mjs -- node scripts/src/verify-postgres-replay-wire.mjs",
+        "node --test scripts/src/doc-truth.test.mjs",
+        "node scripts/src/work-graph-check.mjs",
+        "git diff --check"
+      ],
+      "evidence": [
+        "Disposable wrapper command exited 0.",
+        "Roundtrip subprocess exit 0: final status draft, applied update-0-public.replay_wire_orders, signed reversal seq 2, ledger entries 2.",
+        "Drift subprocess exit 1: final status human, column status changed reported, ledger entries 1.",
+        "The proof uses a real local disposable PostgreSQL cluster and production pg executor path; it is not production Postgres or cloud Neon evidence."
+      ],
+      "stopCondition": "Continue with other unblocked release evidence; do not claim managed recovery or production service coverage from this legacy replay proof."
     }
   ]
 }
