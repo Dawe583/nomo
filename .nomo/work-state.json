@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-27T19:18:41.667217Z",
+  "updatedAt": "2026-11-27T19:22:36.380936Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -5958,6 +5958,44 @@
         "Final output: PASS local real-service verification: 3/3 steps completed."
       ],
       "stopCondition": "Proceed to audit the still-open direct-versus-proxied transcript and R3 hold release gap."
+    },
+    {
+      "id": "e8-proxy-transcript-held-dispatch-verification",
+      "status": "done",
+      "owner": "devin-desktop-local-2026-11-27",
+      "dependsOn": [
+        "e7-unified-local-real-service-verifier"
+      ],
+      "scope": [
+        "fixtures/e2e-server.mjs",
+        "scripts/src/verify-proxy-transcripts.mjs",
+        "docs/SESSION-HANDOFF.md",
+        "docs/memory/vault/work-log/NOMO Work Log.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "compare direct and proxied allowed-tool transcripts against the real proxy subprocess",
+        "prove an approved held write reaches upstream exactly once",
+        "prove an expired held write never reaches upstream",
+        "preserve the proxy upstream environment allowlist",
+        "document the remaining service-specific transcript boundary"
+      ],
+      "verifier": [
+        "node scripts/src/verify-proxy-transcripts.mjs",
+        "node scripts/src/work-graph-check.mjs",
+        "git diff --check"
+      ],
+      "evidence": [
+        "verify-proxy-transcripts exited 0 and reported passed=true.",
+        "Direct and proxied tools/list results deep-equal; direct and proxied echo results deep-equal; initialize protocolVersion 2025-06-18 on both paths.",
+        "approvedUpstreamCalls=1 and deleteCallsAfterExpiry=1; expiredResult=expired.",
+        "Ledger decisions include allow, allow:resolved, hold, hold:approved, hold and hold:expired.",
+        "The proof uses the generic MCP fixture, not service-specific Postgres/S3 upstreams or independent S3 storage."
+      ],
+      "stopCondition": "Next audit whether service-specific Postgres/S3 proxied transcripts and the installable-artifact release lane are locally actionable."
     }
   ]
 }

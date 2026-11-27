@@ -353,6 +353,10 @@ PostgreSQL legacy replay real-service wire proof is verified. `scripts/src/verif
 
 Unified local real-service verification is reproducible through `node scripts/src/verify-local-real-service.mjs`. The runner executes three sequential gates because disposable PostgreSQL owns fixed loopback ports: cloud integration on disposable PostgreSQL, legacy PostgreSQL replay on disposable PostgreSQL, and S3 loopback wire replay. Evidence: one fresh run exited 0 with PASS cloud integration (19084 ms), PASS legacy PostgreSQL replay (2501 ms), PASS S3 loopback wire replay (1498 ms), and final `PASS local real-service verification: 3/3 steps completed`. This command is local release evidence only: it does not prove production services, cloud Neon, independent S3-compatible storage, direct-versus-proxied transcripts, or the R3 hold path.
 
+## E8 proxy transcript and held-dispatch verification (2026-11-27)
+
+Proxy transcript and held-dispatch proof is verified for the generic MCP fixture. `scripts/src/verify-proxy-transcripts.mjs` spawns the fixture upstream directly and through the real `nomo-proxy` subprocess. Evidence: direct and proxied `tools/list` results are deep-equal, direct and proxied echo results are deep-equal, initialize protocol versions match at `2025-06-18`, the approved `orders_delete` hold reached upstream exactly once, and after the second hold expired the upstream delete-call count remained 1 with client result `expired`. Ledger decisions include `hold:approved` and `hold:expired`. The fixture logs upstream dispatch through an explicit argv log path because the proxy correctly strips unallowlisted environment variables from upstreams. This closes the local generic transcript/R3 no-write-before-release slice only; it does not yet prove service-specific Postgres or S3 proxied transcripts, human identity, or independent S3-compatible storage.
+
 ## Rules that are not negotiable
 
 - No push, merge, deploy, hosted CI, dependency install, or provider-costing call unless the user explicitly asks in the current task. (This push was explicitly authorized by the user on 2026-11-25.)
