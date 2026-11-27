@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-27T09:52:50.873779Z",
+  "updatedAt": "2026-11-27T18:58:27.990292Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -5750,6 +5750,50 @@
         "docker, podman, minio, s3rver and localstack are missing. Existing S3 coverage inspected uses FakeS3Client, so real S3-compatible storage remains unproven locally."
       ],
       "stopCondition": "Next implement only the disposable PostgreSQL harness/service slice; do not install packages or touch production-like services."
+    },
+    {
+      "id": "e2-disposable-postgres-real-service-slice",
+      "status": "done",
+      "owner": "devin-desktop-local-2026-11-27",
+      "dependsOn": [
+        "e1-real-service-e2e-audit"
+      ],
+      "scope": [
+        "scripts/src/disposable-postgres.mjs",
+        "scripts/src/disposable-postgres.test.mjs",
+        "scripts/src/local-postgres-wsproxy.mjs",
+        "scripts/src/local-postgres-wsproxy.test.mjs",
+        "scripts/src/verify-managed-postgres.mjs",
+        "scripts/src/check-managed-cloud.mjs",
+        "docs/SESSION-HANDOFF.md",
+        "docs/memory/vault/work-log/NOMO Work Log.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "provision a disposable loopback-only PostgreSQL cluster without installing anything",
+        "serve the Neon websocket transport through a loopback-only proxy",
+        "scope disposable credentials to one child process and redact them",
+        "clean up database and proxy processes after success or failure",
+        "pass the managed PostgreSQL verifier and cloud integration suite locally"
+      ],
+      "verifier": [
+        "node --test scripts/src/disposable-postgres.test.mjs scripts/src/local-postgres-wsproxy.test.mjs",
+        "node scripts/src/disposable-postgres.mjs -- node --import ./scripts/src/cloud-test-preload.mjs scripts/src/verify-managed-postgres.mjs",
+        "node scripts/src/disposable-postgres.mjs -- node scripts/src/check-cloud-integration.mjs",
+        "node scripts/src/work-graph-check.mjs",
+        "git diff --check"
+      ],
+      "evidence": [
+        "Focused wrapper/proxy tests: 9 passed, 0 failed.",
+        "Neon probe through the websocket proxy returned SELECT 1 row and exited 0.",
+        "verify-managed-postgres exit 0; output passed=true, backend real PostgreSQL / Neon, networkPartitionTest=true, with all crash/recovery/deadlock/metadata/partition checks listed.",
+        "check-cloud-integration exit 0; SQL scenarios 5/5 pass 0 fail 0 skipped, managed cloud PASS, and verify-managed-postgres PASS.",
+        "docker/podman/MinIO/s3rver/LocalStack absent; no S3-compatible real service was installed or claimed."
+      ],
+      "stopCondition": "Continue only with S3-compatible storage if a disposable service is already available or the user explicitly authorizes installing/provisioning one."
     }
   ]
 }
