@@ -70,7 +70,12 @@ try {
   };
   assert.equal((await fetch(`${origin}/api/sessions/${id}/workspace`)).status, 401);
   await write(OPERATOR_OWNER, `session:${id}`, { id, workspace, createdAt: new Date().toISOString(), model: 'fixture-managed', status: 'running', events: [], messages: [{ role: 'user', content: 'Create a managed document.' }], tools: workspaceTools.map(tool => ({ ...tool, builtin: true })), provider: { secret: encrypt({ baseUrl: providerUrl, apiKey: secret }) }, generation: 1, turn: 0, queue: [] });
-  assert.equal(await advance(OPERATOR_OWNER, id, 1), 'next');
+  const firstAdvance = await advance(OPERATOR_OWNER, id, 1);
+  if (firstAdvance !== 'next') {
+    const failed = await read(OPERATOR_OWNER, `session:${id}`);
+    console.error('first advance diagnostics', JSON.stringify(failed?.events?.slice(-4)));
+  }
+  assert.equal(firstAdvance, 'next');
   assert.equal(await advance(OPERATOR_OWNER, id, 1), 'wait');
   const pending = await read(OPERATOR_OWNER, `session:${id}`);
   assert.equal(await read(OPERATOR_OWNER, `workspace:${id}`), undefined);
