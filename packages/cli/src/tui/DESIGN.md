@@ -117,7 +117,7 @@ meaning is in its text.
   when it is absent the minimap is the only reserved edge column.
 - Minimap glyphs are positional density, not content. The viewport marker and
   event glyphs differ in ASCII and Unicode presets, and colour is never the
-  only carrier. Mouse selection treats the column as non-transcript chrome.
+  only carrier. Mouse selection treats the column as non-transcript chrome; a plain click or drag navigates the transcript proportionally.
 - At 40 columns there is no minimap: the 40-column rule outranks decoration.
 
 ## Motion budget

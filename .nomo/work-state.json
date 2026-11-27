@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-27T00:14:54.335297Z",
+  "updatedAt": "2026-11-27T01:20:43.256210Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -5530,6 +5530,44 @@
         "focused workspace/parity/terminal/visual tests: 244 passed, 0 failed."
       ],
       "stopCondition": "Stop before changing minimap rendering, keyboard shortcuts or wheel semantics."
+    },
+    {
+      "id": "u6c-minimap-navigation-discoverability",
+      "status": "done",
+      "owner": "devin-desktop-local-2026-11-26",
+      "dependsOn": [
+        "u6b-interactive-minimap-navigation"
+      ],
+      "scope": [
+        "packages/cli/src/tui/workspace.ts",
+        "packages/cli/src/tui/DESIGN.md",
+        "packages/cli/src/tui/test/visual-snapshots.json",
+        "docs/plans/2026-11-26-tui-upgrade-completion.md",
+        "docs/SESSION-HANDOFF.md",
+        "docs/memory/vault/work-log/NOMO Work Log.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "Help names minimap click/drag navigation in compact text",
+        "DESIGN.md records the interactive minimap contract",
+        "visual changes are intentional and reviewed at 80x24",
+        "frame geometry and accessibility remain intact"
+      ],
+      "verifier": [
+        "pnpm --dir packages/cli typecheck",
+        "node --test --test-concurrency=1 packages/cli/src/tui/workspace.test.ts packages/cli/src/tui/a11y.test.ts packages/cli/src/tui/visual-snapshots.test.ts packages/cli/src/tui/minimap-mouse.test.ts",
+        "node scripts/src/work-graph-check.mjs",
+        "git diff --check"
+      ],
+      "evidence": [
+        "pnpm --dir packages/cli typecheck: exit 0.",
+        "focused workspace/a11y/visual/minimap-mouse tests: 148 passed, 0 failed.",
+        "Reviewed help@80x24, shortened the copy and intentionally refreshed 120 hashes; only the four Help wide frames changed."
+      ],
+      "stopCondition": "Stop before further application-chrome redesign; audit existing unread/chrome coverage first."
     }
   ]
 }

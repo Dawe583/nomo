@@ -9892,3 +9892,7 @@ Minimap mouse-navigation geometry is now published and tested: exact outermost c
 ## 2026-11-26 U6b interactive minimap navigation
 
 Chat minimap is now interactive: a plain left click or drag on the one-cell edge proportionally jumps/centres the transcript, clamps drags inside the band and restores live-follow at the bottom. Text selection still treats the edge as chrome. Evidence: CLI typecheck exit 0; minimap mouse/terminal lifecycle tests 7/7; focused workspace/parity/terminal/visual tests 244/244; no visual snapshot change. [[NOMO TUI]]
+
+## 2026-11-26 U6c minimap navigation discoverability
+
+Interactive minimap navigation is now discoverable in Help and the design contract: chat help names minimap click/drag, scroll help names it beside PgUp/PgDn and /bottom, and DESIGN.md records that the edge is both non-selection chrome and a proportional navigation control. The 80x24 frame was reviewed and text shortened to avoid needless wrapping. Evidence: CLI typecheck exit 0; focused workspace/a11y/visual/minimap-mouse tests 148/148; 120 visual snapshots intentionally refreshed for the four Help text changes. [[NOMO TUI]]

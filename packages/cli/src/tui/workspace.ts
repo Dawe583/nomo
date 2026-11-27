@@ -16494,7 +16494,7 @@ function helpLines(width: number): string[] {
             {
               label: "chat",
               value:
-                "Type to send; Enter sends; Shift+Enter adds a line. PgUp/PgDn scroll; Up/Down browse one-line history.",
+                "Type to send; Enter sends; Shift+Enter adds a line. PgUp/PgDn scroll; minimap click/drag jumps; Up/Down browse history.",
             },
             {
               label: "selection",
@@ -16533,7 +16533,7 @@ function helpLines(width: number): string[] {
             },
             {
               label: "scroll",
-              value: "PgUp/PgDn, or /bottom to follow the latest",
+              value: "PgUp/PgDn, minimap click/drag, or /bottom to follow",
             },
             {
               label: "stop",
