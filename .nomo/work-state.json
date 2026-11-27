@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-27T19:22:36.380936Z",
+  "updatedAt": "2026-11-27T19:23:31.838807Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -5996,6 +5996,40 @@
         "The proof uses the generic MCP fixture, not service-specific Postgres/S3 upstreams or independent S3 storage."
       ],
       "stopCondition": "Next audit whether service-specific Postgres/S3 proxied transcripts and the installable-artifact release lane are locally actionable."
+    },
+    {
+      "id": "e9-service-proxy-and-installable-artifact-audit",
+      "status": "done",
+      "owner": "devin-desktop-local-2026-11-27",
+      "dependsOn": [
+        "e8-proxy-transcript-held-dispatch-verification"
+      ],
+      "scope": [
+        "docs/SESSION-HANDOFF.md",
+        "docs/memory/vault/work-log/NOMO Work Log.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "identify whether service-specific connector binding is wired in the standalone proxy",
+        "identify the existing bundle and packaging evidence boundary",
+        "choose the next honest implementation slices without overclaiming"
+      ],
+      "verifier": [
+        "rg legacyBindingRoot packages scripts docs",
+        "rg bundle-cli/release-packaging docs/RELEASE.md scripts/src",
+        "node scripts/src/work-graph-check.mjs",
+        "git diff --check"
+      ],
+      "evidence": [
+        "legacyBindingRoot supports exactly postgres.row.update, postgres.row.delete and aws.s3.object.delete.",
+        "packages/proxy/bin/nomo-proxy.mjs passes no legacyBinding to runProxy, so standalone service-specific connector capture is not wired.",
+        "SDK/tests compose legacyBindingRoot directly; that is not standalone binary proof.",
+        "bundle-cli and release-packaging infrastructure exists, but documented clean offline packing evidence is limited to packages/verifier; CLI compiled-distribution release blocker remains open."
+      ],
+      "stopCondition": "Implement the standalone service-binding wiring or explicit refusal next, then audit the compiled CLI bundle contract."
     }
   ]
 }
