@@ -1,10 +1,16 @@
 #!/usr/bin/env node
+import { appendFileSync } from "node:fs";
 import { createInterface } from "node:readline";
 
 const rl = createInterface({ input: process.stdin, crlfDelay: Infinity });
 
 function write(message) {
   process.stdout.write(`${JSON.stringify(message)}\n`);
+}
+
+function logCall(method, tool) {
+  const path = process.env.NOMO_E2E_FIXTURE_LOG;
+  if (path) appendFileSync(path, `${JSON.stringify({ method, tool })}\n`);
 }
 
 function result(id, value) {
@@ -76,6 +82,7 @@ function handle(message) {
   if (!("id" in message)) return;
 
   if (message.method === "initialize") {
+    logCall("initialize");
     result(message.id, {
       protocolVersion: "2025-06-18",
       capabilities: { tools: { listChanged: false } },
@@ -85,11 +92,13 @@ function handle(message) {
   }
 
   if (message.method === "tools/list") {
+    logCall("tools/list");
     result(message.id, toolList());
     return;
   }
 
   if (message.method === "tools/call") {
+    logCall("tools/call", isObject(message.params) && typeof message.params.name === "string" ? message.params.name : undefined);
     callTool(message.id, message.params);
     return;
   }
