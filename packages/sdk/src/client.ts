@@ -2,7 +2,8 @@ import { mkdir, stat, writeFile } from "node:fs/promises";
 import { homedir, tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { ledgerDir as defaultLedgerDir } from "../../ledger/src/store.ts";
+import { ledgerDir as defaultLedgerDir, jsonlStore } from "../../ledger/src/store.ts";
+import { devKeyProvider } from "../../ledger/src/sign.ts";
 import { verifyLedgerFile } from "../../ledger/src/verify.ts";
 import {
   DEGRADED_VERIFICATION_NOTE,
@@ -14,6 +15,8 @@ import type { ApprovalRecord, HeldCall, HoldQueue, PolicyCall } from "../../poli
 import { PolicyStartupError as ProxyPolicyStartupError, runProxy } from "../../proxy/src/bin.ts";
 import type { ProxyPosture, UpstreamEvents } from "../../proxy/src/bin.ts";
 import type { LegacyBindingResolver } from "../../proxy/src/forward/legacy-binding.ts";
+import type { ConnectorRegistry } from "../../connectors/src/registry.ts";
+import { connectorLegacyBinding } from "./connector-binding.ts";
 import type { JsonObject, JsonRpcError, JsonRpcId, JsonRpcMessage, JsonRpcResult } from "../../proxy/src/rpc.ts";
 import { upstreamHttp } from "../../proxy/src/transport/http.ts";
 
@@ -47,6 +50,16 @@ export type NomoClientOptions = {
    * posture then refuses such a call outright.
    */
   readonly legacyBinding?: LegacyBindingResolver;
+  /**
+   * Connector-backed legacy binding inputs. The host owns executor and client
+   * lifecycles inside the connector registry; the client owns the shared ledger
+   * append queue for this run. Mutually exclusive with legacyBinding.
+   */
+  readonly connectorBinding?: {
+    readonly connectors: ConnectorRegistry;
+    readonly snapshotDir: string;
+    readonly completed?: (result: unknown) => boolean;
+  };
   /**
    * Environment the verification key is resolved from. Defaults to the
    * process environment; injectable so an embedder resolves against the same
@@ -116,6 +129,7 @@ export class NomoClient implements McpLikeClient {
   readonly #factsPath: string | undefined;
   readonly #posture: ProxyPosture;
   readonly #legacyBinding: LegacyBindingResolver | undefined;
+  readonly #connectorBinding: NomoClientOptions["connectorBinding"];
   readonly #requestTimeoutMs: number;
   readonly #holdPollMs: number;
   readonly #clock: NomoClock;
@@ -144,7 +158,10 @@ export class NomoClient implements McpLikeClient {
     this.#policyPath = options.policyPath;
     this.#factsPath = options.factsPath;
     this.#posture = options.posture ?? "fail-closed";
+    if (options.legacyBinding !== undefined && options.connectorBinding !== undefined)
+      throw new Error("legacyBinding and connectorBinding are mutually exclusive");
     this.#legacyBinding = options.legacyBinding;
+    this.#connectorBinding = options.connectorBinding;
     this.#requestTimeoutMs = options.requestTimeoutMs ?? 60_000;
     this.#holdPollMs = options.holdPollMs ?? 10;
     this.#clock = options.clock ?? defaultClock;
@@ -270,10 +287,26 @@ export class NomoClient implements McpLikeClient {
         : undefined;
       const upstreamCommand = "upstreamCommand" in connect ? connect.upstreamCommand : ["http", connect.httpUrl];
       const upstreamEnv = "upstreamEnv" in connect ? connect.upstreamEnv : undefined;
+      let ledgerStore;
+      let legacyBinding = this.#legacyBinding;
+      if (this.#connectorBinding !== undefined) {
+        ledgerStore = jsonlStore(await devKeyProvider({ env: this.#env }), { dir: this.#ledgerDir });
+        const store = ledgerStore;
+        legacyBinding = connectorLegacyBinding({
+          connectors: this.#connectorBinding.connectors,
+          snapshotDir: this.#connectorBinding.snapshotDir,
+          ledger: { append: (body) => store.append(body) },
+          workspace: this.#workspace,
+          ...(this.#connectorBinding.completed === undefined
+            ? {}
+            : { completed: this.#connectorBinding.completed }),
+        });
+      }
       await runProxy({
         upstreamCommand,
         upstreamEnv,
-        legacyBinding: this.#legacyBinding,
+        legacyBinding,
+        ledgerStore,
         upstreamSpawn,
         policyPath,
         factsPath: this.#factsPath,

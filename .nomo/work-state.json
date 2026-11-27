@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-27T19:23:31.838807Z",
+  "updatedAt": "2026-11-27T23:05:55.251110Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -730,7 +730,7 @@
       "evidence": [
         "Implemented in the parent free-for-teams session after the delegated child was terminated before progress. docs/HARNESS-LEARNING.md now documents proposal -> approval -> activation -> measurement -> replay -> trend -> rollback, exact digest activation, one-command rollback, signed record names and commands.",
         "Manual read verifier: docs/HARNESS-LEARNING.md read end to end after writing; command usage checked against harness-replay and trajectory-export usage lines; exact reward, bandit, trajectory and rollback record names included; document states contextual bandit and policy search, not reinforcement learning.",
-        "rg -n \"[\u2014\u2013]\" docs/HARNESS-LEARNING.md observed exit 1 with no matches, so the file uses no em dash or en dash.",
+        "rg -n \"[—–]\" docs/HARNESS-LEARNING.md observed exit 1 with no matches, so the file uses no em dash or en dash.",
         "git diff --check observed exit 0."
       ],
       "stopCondition": "After one targeted repair, record the blocker and continue independent work."
@@ -759,7 +759,7 @@
       "evidence": [
         "Implemented in the parent free-for-teams session after the delegated child was terminated before progress. docs/HARNESS-LEARNING.md now explicitly separates bandit, policy search and gradient RL.",
         "Manual read verifier: docs/HARNESS-LEARNING.md read end to end after the R7 edit. It states that gradient RL updates model weights and that this repository has no trainable local model, GPU budget or training path, so no NOMO surface may claim RL training.",
-        "rg -n \"[\u2014\u2013]\" docs/HARNESS-LEARNING.md observed exit 1 with no matches.",
+        "rg -n \"[—–]\" docs/HARNESS-LEARNING.md observed exit 1 with no matches.",
         "git diff --check observed exit 0."
       ],
       "stopCondition": "After one targeted repair, record the blocker and continue independent work."
@@ -1349,7 +1349,7 @@
         "node --test --test-concurrency=1 packages/cli/src/tui/*.test.ts"
       ],
       "evidence": [
-        "Reviewed rendered empty workspace frames at 40x12 and 52x16 before accepting snapshots: titles, primary facts and Esc hints remain visible; compact mode reads the whole label `mode: normal`, and the 52-column hint reads `Type filter \u00b7 \u2191\u2193 select \u00b7 Enter open \u00b7 Esc Chat` without clipping Tab/Esc.",
+        "Reviewed rendered empty workspace frames at 40x12 and 52x16 before accepting snapshots: titles, primary facts and Esc hints remain visible; compact mode reads the whole label `mode: normal`, and the 52-column hint reads `Type filter · ↑↓ select · Enter open · Esc Chat` without clipping Tab/Esc.",
         "NO_COLOR=1 node --test packages/cli/src/tui/workspace-narrow.test.ts observed exit 0: tests 1, pass 1, fail 0, duration_ms 244.309208.",
         "NOMO_UPDATE_SNAPSHOTS=1 node --test packages/cli/src/tui/visual-snapshots.test.ts observed exit 0 and wrote 120 frame hashes.",
         "NO_COLOR=1 node --test packages/cli/src/tui/workspace.test.ts packages/cli/src/tui/workspace-parity.test.ts packages/cli/src/tui/workspace-narrow.test.ts observed exit 0: tests 231, pass 231, fail 0, duration_ms 12030.20725.",
@@ -1830,7 +1830,7 @@
         "node --test --test-concurrency=1 packages/cli/src/tui/*.test.ts"
       ],
       "evidence": [
-        "NO_COLOR=1 node --test packages/cli/src/tui/workspace-ledger-chain-status.test.ts observed exit 0: tests 1, pass 1, fail 0, duration_ms 305.074625. The row is allow:resolved \u00b7 [R1] postgres.row.update \u00b7 chain000 #1; filter r1 keeps one entry and filter r2 keeps zero.",
+        "NO_COLOR=1 node --test packages/cli/src/tui/workspace-ledger-chain-status.test.ts observed exit 0: tests 1, pass 1, fail 0, duration_ms 305.074625. The row is allow:resolved · [R1] postgres.row.update · chain000 #1; filter r1 keeps one entry and filter r2 keeps zero.",
         "pnpm --filter @nomo/cli typecheck observed exit 0.",
         "NO_COLOR=1 node --test packages/cli/src/tui/workspace-parity.test.ts packages/cli/src/tui/workspace-ledger-chain-status.test.ts packages/cli/src/tui/workspace-narrow.test.ts observed exit 0: tests 105, pass 105, fail 0, duration_ms 12418.632833.",
         "NOMO_UPDATE_SNAPSHOTS=1 NO_COLOR=1 node --test packages/cli/src/tui/visual-snapshots.test.ts observed exit 0: wrote 120 frame hashes, tests 2, pass 2, fail 0; only four intentional ledger hashes changed.",
@@ -6030,6 +6030,165 @@
         "bundle-cli and release-packaging infrastructure exists, but documented clean offline packing evidence is limited to packages/verifier; CLI compiled-distribution release blocker remains open."
       ],
       "stopCondition": "Implement the standalone service-binding wiring or explicit refusal next, then audit the compiled CLI bundle contract."
+    },
+    {
+      "id": "e10-standalone-unbound-service-binding-refusal",
+      "status": "done",
+      "owner": "devin-desktop-local-2026-11-27",
+      "dependsOn": [
+        "e9-service-proxy-and-installable-artifact-audit"
+      ],
+      "scope": [
+        "packages/proxy/bin/nomo-proxy.mjs",
+        "packages/proxy/src/bin.ts",
+        "packages/proxy/src/forward/tools.ts",
+        "packages/proxy/src/bin.test.ts",
+        "docs/SESSION-HANDOFF.md",
+        "docs/memory/vault/work-log/NOMO Work Log.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "standalone proxy explicitly refuses recoverable legacy tools when no durable connector binding exists",
+        "refusal occurs before upstream dispatch and preserves signed ledger evidence",
+        "embedded hosts keep the prior envelope-only behavior unless they opt in"
+      ],
+      "verifier": [
+        "pnpm --filter @nomo/proxy typecheck",
+        "node --test packages/proxy/src/bin.test.ts",
+        "real packages/proxy/bin/nomo-proxy.mjs witness for aws.s3.object.delete",
+        "git diff --check",
+        "node scripts/src/work-graph-check.mjs"
+      ],
+      "evidence": [
+        "pnpm --filter @nomo/proxy typecheck exited 0.",
+        "node --test packages/proxy/src/bin.test.ts reported tests 36, pass 36, fail 0.",
+        "Real binary witness exited 0; JSON-RPC denial said host has no durable connector binding for aws.s3.object.delete and upstream was not called.",
+        "The real-binary ledger contained seq 1 decision allow and seq 2 decision allow:capture-failed; no upstream tools/call was dispatched.",
+        "git diff --check exited 0.",
+        "node scripts/src/work-graph-check.mjs reported duplicate ids 0 / dangling deps 0 / done without evidence 0."
+      ],
+      "stopCondition": "Next honest slice: audit whether the existing CLI bundle satisfies the compiled artifact contract, or implement real connector binding wiring separately."
+    },
+    {
+      "id": "e11-cli-compiled-artifact-audit",
+      "status": "done",
+      "owner": "devin-desktop-local-2026-11-27",
+      "dependsOn": [
+        "e10-standalone-unbound-service-binding-refusal"
+      ],
+      "scope": [
+        "docs/RELEASE.md",
+        "scripts/src/bundle-cli.mjs",
+        "scripts/src/bundle-cli.test.mjs",
+        "scripts/src/release-packaging.test.mjs",
+        "docs/SESSION-HANDOFF.md",
+        "docs/memory/vault/work-log/NOMO Work Log.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "identify whether existing CLI bundle infrastructure satisfies the compiled artifact contract",
+        "run the existing local packaging/bundle checks without network or publication",
+        "state the remaining release boundary honestly"
+      ],
+      "verifier": [
+        "node --test scripts/src/bundle-cli.test.mjs scripts/src/release-packaging.test.mjs",
+        "node scripts/src/work-graph-check.mjs",
+        "git diff --check"
+      ],
+      "evidence": [
+        "Combined bundle/release packaging run exited 0: 45 tests, 44 pass, 0 fail, 1 skipped.",
+        "The skipped test is packages/cli fresh-cache install integration runs, gated by NOMO_NETWORK_PACKAGING_TEST=1 for the npm registry integration.",
+        "bundle-cli.mjs builds executable Rollup chunks, provider-manifest.json and licensed TUI icons, clears stale output and rejects an unreplaced version placeholder.",
+        "Offline clean-install evidence remains limited to packages/verifier; packages/cli remains private and no network/publication action was run."
+      ],
+      "stopCondition": "Next requires explicit authorization/decision: run the network packaging integration and decide CLI publication/privacy scope."
+    },
+    {
+      "id": "e12-shared-connector-legacy-binding-composition",
+      "status": "done",
+      "owner": "devin-desktop-local-2026-11-27",
+      "dependsOn": [
+        "e11-cli-compiled-artifact-audit"
+      ],
+      "scope": [
+        "packages/sdk/src/connector-binding.ts",
+        "packages/sdk/src/connector-binding.test.ts",
+        "packages/sdk/src/index.ts",
+        "docs/SESSION-HANDOFF.md",
+        "docs/memory/vault/work-log/NOMO Work Log.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "provide one production SDK composition for connector-backed legacy bindings",
+        "cover every tool advertised by LEGACY_BINDING_NAMES",
+        "preserve manifest and signed ledger evidence",
+        "state that live host wiring remains separate"
+      ],
+      "verifier": [
+        "pnpm --filter @nomo/sdk typecheck",
+        "node --test packages/sdk/src/connector-binding.test.ts",
+        "node --test packages/sdk/src/*.test.ts",
+        "git diff --check",
+        "node scripts/src/work-graph-check.mjs"
+      ],
+      "evidence": [
+        "pnpm --filter @nomo/sdk typecheck exited 0.",
+        "node --test packages/sdk/src/connector-binding.test.ts reported 1 pass and 0 fail.",
+        "node --test packages/sdk/src/*.test.ts reported 19 tests, 19 pass, 0 fail.",
+        "connectorLegacyBinding routes postgres.row.update, postgres.row.delete and aws.s3.object.delete through the matching connector capture and writes through manifestWriter.",
+        "git diff --check exited 0."
+      ],
+      "stopCondition": "Next honest slice: wire connectorLegacyBinding into one real host with explicit executor, snapshot and ledger lifecycle; standalone nomo-proxy remains fail-closed for unbound service tools until then."
+    },
+    {
+      "id": "e13-sdk-host-connector-binding-wiring",
+      "status": "done",
+      "owner": "devin-desktop-local-2026-11-27",
+      "dependsOn": [
+        "e12-shared-connector-legacy-binding-composition"
+      ],
+      "scope": [
+        "packages/sdk/src/client.ts",
+        "packages/sdk/src/client.test.ts",
+        "packages/proxy/src/bin.ts",
+        "docs/SESSION-HANDOFF.md",
+        "docs/memory/vault/work-log/NOMO Work Log.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "wire connectorLegacyBinding into a real embedded host path",
+        "use one shared ledger append queue for proxy decisions and binding outcomes",
+        "preserve existing behavior for hosts that do not opt in"
+      ],
+      "verifier": [
+        "pnpm --filter @nomo/proxy typecheck",
+        "pnpm --filter @nomo/sdk typecheck",
+        "node --test packages/sdk/src/client.test.ts packages/sdk/src/connector-binding.test.ts",
+        "node --test packages/proxy/src/bin.test.ts",
+        "git diff --check",
+        "node scripts/src/work-graph-check.mjs"
+      ],
+      "evidence": [
+        "pnpm --filter @nomo/proxy typecheck exited 0.",
+        "pnpm --filter @nomo/sdk typecheck exited 0.",
+        "node --test packages/sdk/src/client.test.ts packages/sdk/src/connector-binding.test.ts reported 19 tests, 19 pass, 0 fail.",
+        "The client host test proves capture reaches the supplied connector and the shared ledger verifies with execute:dispatched and execute:completed.",
+        "node --test packages/proxy/src/bin.test.ts reported 36 tests, 36 pass, 0 fail.",
+        "git diff --check exited 0."
+      ],
+      "stopCondition": "Next honest slice: construct real Postgres/S3 executors in one production host and manage their lifecycle explicitly, or keep standalone proxy refusal until that host contract exists."
     }
   ]
 }

@@ -20,6 +20,7 @@ import {
 
 import { NomoClient, createNomoClient, CLIENT_MAX_ERROR_BYTES, CLIENT_MAX_ERROR_LINES } from "./client.ts";
 import { legacyBindingRoot } from "../../proxy/src/legacy-root.ts";
+import type { ConnectorCall, ConnectorRegistry } from "../../connectors/src/registry.ts";
 import { HoldDeniedError, LedgerVerifyError, RefusedError } from "./errors.ts";
 const fixtureServer = fileURLToPath(new URL("../../../fixtures/e2e-server.mjs", import.meta.url));
 async function fixturePolicy(): Promise<string> {
@@ -553,6 +554,57 @@ test("a legacy binding supplied to the client is what the proxy uses", async (t)
   const bareResult = await bare.request("tools/call", { name: "postgres.row.update", arguments: { id: "row-1" } });
   assert.ok(bareResult, "an unbound call is still answered by the upstream");
   assert.deepEqual(captured, ["postgres.row.update"], "the bare call must not reach the binding");
+});
+
+test("connectorBinding wires connector capture through the client's shared ledger store", async (t) => {
+  const dir = await mkdtemp(join(tmpdir(), "nomo-sdk-connector-host-"));
+  t.after(async () => { await rm(dir, { recursive: true, force: true }); });
+  const { privateKey } = generateKeyPairSync("ed25519");
+  const pkcs8 = privateKey.export({ type: "pkcs8", format: "der" }).toString("base64");
+  const signer = keyProviderFromPkcs8(Buffer.from(pkcs8, "base64"));
+  const captured: string[] = [];
+  const digest = `sha256:${"a".repeat(64)}` as const;
+  const connector = {
+    id: "postgres" as const,
+    surface: "postgres",
+    probes: [],
+    classify: async (call: ConnectorCall) => ({ call, facts: [], blastRadius: undefined, notes: [] }),
+    async capture(call: ConnectorCall) {
+      captured.push(call.tool);
+      return {
+        digest,
+        reference: { namespace: "postgres-default", digest, uri: "file:///snapshot" },
+        facts: [],
+        capturedAt: new Date().toISOString(),
+      };
+    },
+    inverse: async () => { throw new Error("not used"); },
+    apply: async () => { throw new Error("not used"); },
+  };
+  const s3 = { ...connector, id: "s3" as const, surface: "s3" };
+  const connectors = { postgres: connector, s3 } satisfies ConnectorRegistry;
+  const ledgerDir = join(dir, "ledger");
+  const client = createNomoClient({
+    connect: { upstreamCommand: [process.execPath, await boundUpstream(dir)] },
+    policyPath: await boundPolicy(dir),
+    ledgerDir,
+    env: { NOMO_SIGNING_KEY: pkcs8 },
+    connectorBinding: { connectors, snapshotDir: join(dir, "snapshots"), completed: () => true },
+  });
+  t.after(() => client.close());
+
+  await client.request("tools/call", { name: "postgres.row.update", arguments: { id: "row-1" } });
+
+  assert.deepEqual(captured, ["postgres.row.update"]);
+  const verified = await verifyLedgerFile(join(ledgerDir, "default.jsonl"), {
+    publicKey: (id) => signer.publicKey(id),
+  });
+  assert.equal(verified.ok, true);
+  const decisions = (await readFile(join(ledgerDir, "default.jsonl"), "utf8"))
+    .trim().split("\n")
+    .map((line) => (JSON.parse(line) as { body: { decision?: string } }).body.decision);
+  assert.ok(decisions.includes("execute:dispatched"));
+  assert.ok(decisions.includes("execute:completed"));
 });
 
 test("an unknown binding name is refused at construction", () => {

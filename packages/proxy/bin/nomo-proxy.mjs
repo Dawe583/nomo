@@ -51,6 +51,7 @@ async function main() {
       posture,
       ledgerDir,
       workspace,
+      refuseUnboundLegacyBindings: true,
       onHold(queue) {
         const broker = new ApprovalBroker({ stateDir });
         try {

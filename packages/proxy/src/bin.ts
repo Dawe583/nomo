@@ -29,7 +29,7 @@ import {
   type LegacyCaptureEvidence,
   type LegacyProxyBinding,
 } from "./forward/legacy-binding.ts";
-import { interceptCall } from "./forward/tools.ts";
+import { interceptCall, LegacyCaptureRefusalError } from "./forward/tools.ts";
 import type {
   InterceptedCall,
   JsonRpcError,
@@ -43,6 +43,7 @@ import type {
   JsonRpcNotification,
   JsonRpcRequest,
 } from "./rpc.ts";
+import { LEGACY_BINDING_NAMES } from "./legacy-root.ts";
 import { relayNotification } from "./relay/notifications.ts";
 import { relayServerRequest, relayServerResponse } from "./relay/requests.ts";
 import type { JsonRpcResponse } from "./relay/requests.ts";
@@ -99,6 +100,8 @@ export type ProxyOptions = {
   readonly ledgerDir?: string;
   /** Optional signer for an embedded proxy; defaults to the development key. */
   readonly keyProvider?: KeyProvider;
+  /** Optional precomposed ledger store for hosts that must share one append queue with a binding. */
+  readonly ledgerStore?: LedgerStore<unknown, JsonlEntry, JsonlReceipt>;
   readonly workspace?: string;
   /**
    * WP-R02 capture gate for the legacy proxy path. Defaults to an envelope
@@ -108,6 +111,13 @@ export type ProxyOptions = {
   readonly legacyCapture?: (call: InterceptedCall) => Promise<unknown>;
   /** Optional durable host binding for explicitly supported legacy tools. */
   readonly legacyBinding?: LegacyBindingResolver;
+  /**
+   * Refuse a recoverable legacy tool when this host has no durable connector
+   * binding for it. Embedded hosts that intentionally allow envelope-only
+   * capture leave this off; the standalone binary turns it on because it has
+   * no connector wiring.
+   */
+  readonly refuseUnboundLegacyBindings?: boolean;
   readonly upstreamSpawn?: (events: UpstreamEvents) => UpstreamProcess;
   readonly input?: AsyncIterable<string>;
   readonly output?: (line: string) => void;
@@ -195,11 +205,11 @@ export async function runProxy(options: ProxyOptions): Promise<void> {
   // the posture promises that a call without a ledger record never forwards.
   const ledgerStore:
     LedgerStore<unknown, JsonlEntry, JsonlReceipt> | undefined =
-    options.ledgerDir === undefined
+    options.ledgerStore ?? (options.ledgerDir === undefined
       ? undefined
       : jsonlStore(options.keyProvider ?? (await devKeyProvider()), {
           dir: options.ledgerDir,
-        });
+        }));
   let resolveUpstreamClosed: () => void = () => {};
   const upstreamClosed = new Promise<void>((resolve) => {
     resolveUpstreamClosed = resolve;
@@ -539,6 +549,7 @@ export async function runProxy(options: ProxyOptions): Promise<void> {
             options.workspace ?? "default",
             options.legacyCapture,
             options.legacyBinding,
+            options.refuseUnboundLegacyBindings,
             state.controller.signal,
             () => {
               if (state.controller.signal.aborted)
@@ -768,6 +779,7 @@ async function handleToolCall(
   workspace: string,
   legacyCapture?: (call: InterceptedCall) => Promise<unknown>,
   legacyBinding?: LegacyBindingResolver,
+  refuseUnboundLegacyBindings?: boolean,
   signal?: AbortSignal,
   beforeDispatch?: () => void,
   onDispatched?: (upstreamId: JsonRpcId) => void,
@@ -812,13 +824,22 @@ async function handleToolCall(
     capture:
       binding === null
         ? (legacyCapture ??
-          (async (candidate, argsDigest) =>
-            captureLegacyEnvelope(
+          (async (candidate, argsDigest) => {
+            if (
+              refuseUnboundLegacyBindings === true &&
+              (LEGACY_BINDING_NAMES as readonly string[]).includes(candidate.tool)
+            ) {
+              throw new LegacyCaptureRefusalError(
+                `host has no durable connector binding for ${candidate.tool}`,
+              );
+            }
+            return captureLegacyEnvelope(
               candidate.tool,
               candidate.args,
               candidate.workspace ?? workspace,
               argsDigest,
-            )))
+            );
+          }))
         : async (candidate, argsDigest) => {
             const evidence = await binding.capture(candidate, argsDigest);
             validateLegacyCapture(candidate, argsDigest, evidence);

@@ -24,6 +24,17 @@ export type InterceptedCall = {
   readonly workspace?: string;
 };
 
+export class LegacyCaptureRefusalError extends Error {
+  readonly rationale: string;
+
+  constructor(rationale: string) {
+    if (rationale.trim() === "") throw new Error("legacy capture refusal rationale is required");
+    super(rationale);
+    this.name = "LegacyCaptureRefusalError";
+    this.rationale = rationale;
+  }
+}
+
 export type CallVerdict =
   | { readonly kind: "allow" }
   | { readonly kind: "deny"; readonly error: JsonRpcError }
@@ -145,14 +156,14 @@ export async function interceptCall(
         "allow",
         attribution,
       );
-      if (captured === null) {
+      if (!captured.ok) {
         return {
           kind: "deny",
           error: denyError(
             call,
             policyCall,
             -1,
-            "snapshot capture failed; upstream was not called",
+            `${captured.rationale}; upstream was not called`,
           ),
         };
       }
@@ -205,14 +216,14 @@ export async function interceptCall(
           "hold",
           attribution,
         );
-        if (captured === null) {
+        if (!captured.ok) {
           return holdError(
             resolution.call,
             {
               kind: "released",
               release: {
                 kind: "denied",
-                by: "snapshot capture failed; upstream was not called",
+                by: `${captured.rationale}; upstream was not called`,
               },
             },
             "hold",
@@ -326,6 +337,10 @@ function chooseBlastRadius(
  * capture dependency resolves to a blocked dispatch, and the caller answers
  * deny locally without contacting the upstream.
  */
+type CaptureGateResult =
+  | { readonly ok: true }
+  | { readonly ok: false; readonly rationale: string };
+
 async function runCaptureGate(
   deps: InterceptDeps,
   now: () => Date,
@@ -334,11 +349,12 @@ async function runCaptureGate(
   argsDigest: string,
   decision: string,
   attribution: LedgerAttribution | undefined,
-): Promise<unknown> {
-  if (deps.capture === undefined) return true;
+): Promise<CaptureGateResult> {
+  if (deps.capture === undefined) return { ok: true };
   try {
-    return await deps.capture(call, argsDigest);
-  } catch {
+    await deps.capture(call, argsDigest);
+    return { ok: true };
+  } catch (error) {
     await writeLedger(
       deps,
       now,
@@ -348,8 +364,13 @@ async function runCaptureGate(
       argsDigest,
       attribution,
     );
-    return null;
+    return { ok: false, rationale: captureFailureRationale(error) };
   }
+}
+
+function captureFailureRationale(error: unknown): string {
+  if (error instanceof LegacyCaptureRefusalError) return error.rationale;
+  return "snapshot capture failed";
 }
 
 async function writeLedger(

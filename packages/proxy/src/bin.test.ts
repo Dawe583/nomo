@@ -347,6 +347,23 @@ describe("runProxy", () => {
     assert.match(error.error.message, /Do not retry/);
   });
 
+  test("an unbound service-specific legacy tool is explicitly refused before upstream", async () => {
+    const harness = await makeHarness("allow", "fail-closed", true);
+
+    await harness.run([toolCall(224, "aws.s3.object.delete")]);
+
+    assert.deepEqual(harness.upstreamMessages, []);
+    assert.equal(harness.outputMessages.length, 1);
+    const response = harness.outputMessages[0] as {
+      readonly id: number;
+      readonly error: { readonly message: string };
+    };
+    assert.equal(response.id, 224);
+    assert.match(response.error.message, /no durable connector binding/);
+    assert.match(response.error.message, /aws\.s3\.object\.delete/);
+    assert.match(response.error.message, /upstream was not called/);
+  });
+
   test("cancellation is read while a tool call waits for approval", { timeout: 5_000 }, async (t) => {
     const directory = await mkdtemp(join(tmpdir(), "nomo-proxy-cancel-"));
     t.after(() => rm(directory, { recursive: true, force: true }));
@@ -1622,6 +1639,7 @@ type Harness = {
 async function makeHarness(
   decision: Decision,
   posture: ProxyOptions["posture"] = "fail-closed",
+  refuseUnboundLegacyBindings = false,
 ): Promise<Harness> {
   const dir = await mkdtemp(join(tmpdir(), "nomo-proxy-"));
   const policyPath = join(dir, "policy.yml");
@@ -1648,6 +1666,7 @@ async function makeHarness(
         upstreamCommand: ["fake"],
         policyPath,
         posture,
+        refuseUnboundLegacyBindings,
         // Fail-closed tests exercise the real ledger path, so every harness
         // gets its own directory: a shared one would let records from one
         // test chain into another's expectations.

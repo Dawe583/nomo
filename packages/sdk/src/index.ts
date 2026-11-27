@@ -1,5 +1,7 @@
 export { NomoClient, createNomoClient } from "./client.ts";
 export { managedClient } from "./managed.ts";
+export { connectorLegacyBinding } from "./connector-binding.ts";
+export type { ConnectorLegacyBindingOptions } from "./connector-binding.ts";
 export type {
   RecoveryAdapter,
   RecoveryJobPlan,
