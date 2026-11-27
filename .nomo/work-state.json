@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-27T18:58:27.990292Z",
+  "updatedAt": "2026-11-27T19:06:31.844741Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -5794,6 +5794,42 @@
         "docker/podman/MinIO/s3rver/LocalStack absent; no S3-compatible real service was installed or claimed."
       ],
       "stopCondition": "Continue only with S3-compatible storage if a disposable service is already available or the user explicitly authorizes installing/provisioning one."
+    },
+    {
+      "id": "e4-s3-compatible-service-audit",
+      "status": "done",
+      "owner": "devin-desktop-local-2026-11-27",
+      "dependsOn": [
+        "e2-disposable-postgres-real-service-slice"
+      ],
+      "scope": [
+        "docs/SESSION-HANDOFF.md",
+        "docs/memory/vault/work-log/NOMO Work Log.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "inventory locally available S3-compatible service options without installing anything",
+        "identify the existing real AWS SDK adapter and replay boundary",
+        "separate protocol-fixture evidence from real-service certification"
+      ],
+      "verifier": [
+        "command -v minio s3rver localstack garage rclone seaweedfs radosgw docker podman colima orbstack aws",
+        "python3 module probe for moto/minio/boto3/s3rver",
+        "rg NOMO_S3_ENDPOINT/AWS_REGION/s3Executor packages scripts docs",
+        "node scripts/src/work-graph-check.mjs",
+        "git diff --check"
+      ],
+      "evidence": [
+        "No local independent disposable S3-compatible service or container runtime is installed; Python moto/minio/boto3 are absent.",
+        "packages/cli/src/s3.ts uses @aws-sdk/client-s3 GetObject/PutObject/DeleteObject/GetBucketVersioning and supports NOMO_S3_ENDPOINT with forcePathStyle.",
+        "packages/cli/src/replay.ts dynamically wires s3Executor when NOMO_S3_ENABLED=1, but current evidence is not a live endpoint run.",
+        "scripts/src/e2e-connectors.mjs proves capture/restore/drift only through an in-process FakeS3Client.",
+        "A loopback wire-protocol fixture is the largest honest local increment; it must not be documented as independent real S3 certification."
+      ],
+      "stopCondition": "Do not claim the release real-S3 gate closed until an independent disposable S3-compatible service is available or the owner explicitly authorizes provisioning one."
     }
   ]
 }
