@@ -9876,3 +9876,7 @@ Chat now wires the tested minimap as a one-cell positional edge from 72 columns 
 ## 2026-11-26 Full PTY matrix checkpoint
 
 Full TypeScript TUI PTY matrix after the minimap and run-activity consolidation: PASS for every scenario at 40x12, 80x24, 120x40, 160x45 and 200x48, including terminal restore, bracketed paste, mouse and exit paths. [[NOMO TUI]]
+
+## 2026-11-26 U5a OSC52 clipboard primitive
+
+OSC52 clipboard primitive added and tested: exact UTF-8 round trip through base64, safe payload alphabet, explicit empty/oversize refusal. It is not yet wired into the runner fallback. Evidence: CLI typecheck exit 0; clipboard tests 2/2. [[NOMO TUI]]

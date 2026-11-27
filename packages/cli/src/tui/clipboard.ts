@@ -49,6 +49,19 @@ function tryCopy(
   });
 }
 
+export const OSC52_CLIPBOARD_MAX_BYTES = 64 * 1024;
+
+/**
+ * Build one terminal clipboard control sequence. Base64 keeps user text inside
+ * the safe OSC payload alphabet; oversize copies fail instead of silently
+ * truncating text the operator asked to copy.
+ */
+export function osc52ClipboardSequence(value: string): string | undefined {
+  if (!value || Buffer.byteLength(value, "utf8") > OSC52_CLIPBOARD_MAX_BYTES)
+    return undefined;
+  return `\x1b]52;c;${Buffer.from(value, "utf8").toString("base64")}\x1b\\`;
+}
+
 /** Copy text through the OS clipboard command without invoking a shell. */
 async function writeTextToClipboard(value: string): Promise<void> {
   if (value.length === 0) throw Error("There is no prompt to copy.");
