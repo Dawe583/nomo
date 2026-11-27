@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-27T09:49:58.458663Z",
+  "updatedAt": "2026-11-27T09:52:50.873779Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -5716,6 +5716,40 @@
         "git diff --check: exit 0; git status shows only the protected dirty nomo-web marker."
       ],
       "stopCondition": "TypeScript TUI track closed. Do not treat deferred Rust, cell-damage optimization, terminal-specific clipboard negotiation or external product release blockers as hidden TUI work."
+    },
+    {
+      "id": "e1-real-service-e2e-audit",
+      "status": "done",
+      "owner": "devin-desktop-local-2026-11-26",
+      "dependsOn": [
+        "u7c-final-typescript-tui-verification"
+      ],
+      "scope": [
+        "docs/SESSION-HANDOFF.md",
+        "docs/memory/vault/work-log/NOMO Work Log.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "identify existing real PostgreSQL verifier and exact opt-in contract",
+        "identify local service capabilities without installing anything",
+        "separate unblocked disposable Postgres work from missing S3-compatible storage",
+        "do not mutate global service state"
+      ],
+      "verifier": [
+        "source inspection of docs/RELEASE.md, docs/CLOUD-INTEGRATION.md and scripts/src/verify-managed-postgres.mjs",
+        "local command availability and loopback probes",
+        "node scripts/src/work-graph-check.mjs",
+        "git diff --check"
+      ],
+      "evidence": [
+        "verify-managed-postgres.mjs requires NOMO_RECOVERY_DATABASE_TEST=1 and DATABASE_URL database exactly void_gui_upgrade_preview, with direct non-pooler host.",
+        "Local binaries exist: postgres, initdb, pg_ctl from postgresql@17. psql probe to 127.0.0.1:5432 exited 2 with connection refused.",
+        "docker, podman, minio, s3rver and localstack are missing. Existing S3 coverage inspected uses FakeS3Client, so real S3-compatible storage remains unproven locally."
+      ],
+      "stopCondition": "Next implement only the disposable PostgreSQL harness/service slice; do not install packages or touch production-like services."
     }
   ]
 }

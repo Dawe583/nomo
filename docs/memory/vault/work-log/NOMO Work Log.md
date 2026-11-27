@@ -9919,3 +9919,7 @@ Deliberate residual non-goals: cell-level damage tracking and scroll-region opti
 
 Out-of-scope product blockers remain unchanged: H16 needs explicit operator opt-in and reviewed real runs; H17 depends on H16 and human-labelled validation; G1 needs trainable model/hardware; G3 needs explicit paid-benchmark authorization; G4 needs owner release/version/tag/deploy decisions. Real-service E2E, distribution/publication and physical device evidence are separate release-readiness lanes, not missing pieces of this TypeScript TUI track.
  [[NOMO TUI]]
+
+## 2026-11-26 E1 real-service E2E audit baseline
+
+Real-service E2E audit baseline: `scripts/src/verify-managed-postgres.mjs` is a strong opt-in real PostgreSQL verifier, but it is not self-provisioning; it requires `NOMO_RECOVERY_DATABASE_TEST=1` and a direct `DATABASE_URL` whose database is exactly `void_gui_upgrade_preview`. This machine has Homebrew PostgreSQL 17 binaries (`postgres`, `initdb`, `pg_ctl`) but no server listening on 127.0.0.1:5432, so the smallest unblocked slice is a temporary initdb/pg_ctl disposable Postgres harness. Docker, podman, MinIO, s3rver and LocalStack are absent. Existing S3 inverse/drift coverage uses fake clients, so real S3-compatible storage remains unproven locally. No code or service state was changed in this audit. [[NOMO Recovery]]
