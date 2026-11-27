@@ -83,10 +83,14 @@ Wave 5 source status, pending integrated verification:
   human identity. After a crash, remove a stale lock only after confirming the
   prior proxy exited.
 - Replay can plan from persisted Postgres snapshots without an executor. Apply
-  reports `ExecutorNotConfigured` without configuration and
-  `ExecutorAdapterUnavailable` even when `NOMO_PG_URL` is present. No production
-  driver is installed. Persisted S3 replay and live binary drift proof remain
-  open. In-process injected-executor tests do not close those gaps.
+  still needs a real executor supplied through the binary environment or host
+  injection. Persisted S3 replay now has loopback wire-protocol evidence through
+  the production AWS SDK adapter and a real CLI subprocess: capture survives in
+  the local snapshot format, restore appends a signed reversal, and human drift
+  is refused without appending that reversal. This is not independent
+  MinIO/AWS/S3-compatible service certification because the endpoint is the
+  repository fixture. In-process injected-executor tests alone do not close
+  those gaps.
 
 ## Blocks public release
 

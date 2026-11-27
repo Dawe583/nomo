@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-11-27T19:06:31.844741Z",
+  "updatedAt": "2026-11-27T19:14:21.246456Z",
   "authority": [
     "docs/CONTEXT.md",
     "docs/DECISIONS.md",
@@ -5830,6 +5830,54 @@
         "A loopback wire-protocol fixture is the largest honest local increment; it must not be documented as independent real S3 certification."
       ],
       "stopCondition": "Do not claim the release real-S3 gate closed until an independent disposable S3-compatible service is available or the owner explicitly authorizes provisioning one."
+    },
+    {
+      "id": "e5-s3-loopback-wire-replay-verification",
+      "status": "done",
+      "owner": "devin-desktop-local-2026-11-27",
+      "dependsOn": [
+        "e4-s3-compatible-service-audit"
+      ],
+      "scope": [
+        "scripts/src/local-s3-fixture.mjs",
+        "scripts/src/local-s3-fixture.test.mjs",
+        "scripts/src/local-s3-fixture.d.mts",
+        "scripts/src/verify-s3-wire.mjs",
+        "packages/cli/src/s3.ts",
+        "packages/cli/src/s3.test.ts",
+        "docs/RELEASE.md",
+        "docs/OPERATIONS.md",
+        "docs/SESSION-HANDOFF.md",
+        "docs/memory/vault/work-log/NOMO Work Log.md",
+        ".nomo/work-state.json"
+      ],
+      "protectedPaths": [
+        "nomo-web/**"
+      ],
+      "acceptance": [
+        "implement a loopback-only S3 wire fixture without new dependencies",
+        "exercise the real AWS SDK adapter rather than an in-process fake client",
+        "run persisted capture and replay through the real nomo CLI subprocess",
+        "prove exact restore bytes, signed reversal append, drift refusal and no reversal after refusal",
+        "document the boundary that this is not independent S3-compatible service certification"
+      ],
+      "verifier": [
+        "node --test scripts/src/local-s3-fixture.test.mjs packages/cli/src/s3.test.ts",
+        "cd packages/cli && npx tsc -p tsconfig.json --noEmit",
+        "node scripts/src/verify-s3-wire.mjs",
+        "node --test scripts/src/doc-truth.test.mjs",
+        "node scripts/src/work-graph-check.mjs",
+        "git diff --check"
+      ],
+      "evidence": [
+        "Focused fixture/executor tests: 4 passed, 0 failed.",
+        "CLI typecheck passed after adding the fixture declaration file.",
+        "verify-s3-wire exited 0 and reported passed=true with 13 loopback HTTP requests.",
+        "Roundtrip subprocess exit 0: exact bytes restored, applied restore printed, signed reversal seq 2 appended, ledger entries 2.",
+        "Drift subprocess exit 1: human-changed bytes preserved, drift printed, no reversal appended, ledger entries 1.",
+        "No independent MinIO/AWS/S3-compatible service was installed or claimed; the release real-service gate remains open."
+      ],
+      "stopCondition": "Continue with other unblocked local release evidence; do not claim real S3-compatible service certification until an independent disposable service is available or provisioning is explicitly authorized."
     }
   ]
 }

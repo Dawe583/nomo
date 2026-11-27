@@ -519,10 +519,11 @@ The binary wires the static connector set. Check what is wired and which executo
 node packages/cli/bin/nomo.mjs replay --list-connectors
 ```
 
-Executors come from the host environment. For Postgres, set `NOMO_PG_URL` before apply. Without it, apply fails with a typed `ExecutorNotConfigured` error that names the missing variable. S3 replay additionally needs a host adapter and persisted replay metadata, which the local binary does not write yet. The connector end-to-end script proves replay and drift refusal in process:
+Executors come from the host environment. For Postgres, set `NOMO_PG_URL` before apply. Without it, apply fails with a typed `ExecutorNotConfigured` error that names the missing variable. S3 replay uses `NOMO_S3_ENABLED=1`, standard AWS credentials, `AWS_REGION`, and optional `NOMO_S3_ENDPOINT` for compatible loopback or service endpoints. A host must still capture snapshots and write the manifest through the connector API; replay does not invent missing capture metadata. The connector end-to-end script proves the in-process contract, while the wire verifier proves the production AWS SDK adapter and real CLI subprocess against the repository loopback fixture:
 
 ```sh
 node scripts/src/e2e-connectors.mjs
+node scripts/src/verify-s3-wire.mjs
 ```
 
 Drift refusal means the current target no longer matches the captured before image. Operationally:
